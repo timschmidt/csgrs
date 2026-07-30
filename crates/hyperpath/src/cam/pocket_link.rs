@@ -14,7 +14,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals, point2_equal};
 use hyperreal::Real;
 
 use crate::cam::{
@@ -144,7 +144,7 @@ pub fn rectangular_pocket_link_graph(
 
     let mut ring_segments = Vec::with_capacity(report.rings.len() * 4);
     for ring in &report.rings {
-        ring_segments.extend(ring_boundary_segments(ring));
+        ring_segments.extend(ring_boundary_segments(ring, policy)?);
     }
 
     let mut links = Vec::new();
@@ -163,33 +163,40 @@ pub fn rectangular_pocket_link_graph(
     })
 }
 
-fn ring_boundary_segments(ring: &PocketOffsetRing) -> [PocketRingSegment; 4] {
+fn ring_boundary_segments(
+    ring: &PocketOffsetRing,
+    policy: PredicatePolicy,
+) -> Result<[PocketRingSegment; 4], PocketLinkGraphError> {
     let min_min = ring.min.clone();
     let max_min = Point2::new(ring.max.x.clone(), ring.min.y.clone());
     let max_max = ring.max.clone();
     let min_max = Point2::new(ring.min.x.clone(), ring.max.y.clone());
-    [
+    Ok([
         PocketRingSegment {
             ring_index: ring.index,
             side: PocketRingSide::MinY,
-            segment: LinePathSegment::new(min_min.clone(), max_min.clone()),
+            segment: LinePathSegment::new(min_min.clone(), max_min.clone(), policy)
+                .map_err(|_| PocketLinkGraphError::UnknownComparison)?,
         },
         PocketRingSegment {
             ring_index: ring.index,
             side: PocketRingSide::MaxX,
-            segment: LinePathSegment::new(max_min, max_max.clone()),
+            segment: LinePathSegment::new(max_min, max_max.clone(), policy)
+                .map_err(|_| PocketLinkGraphError::UnknownComparison)?,
         },
         PocketRingSegment {
             ring_index: ring.index,
             side: PocketRingSide::MaxY,
-            segment: LinePathSegment::new(max_max, min_max.clone()),
+            segment: LinePathSegment::new(max_max, min_max.clone(), policy)
+                .map_err(|_| PocketLinkGraphError::UnknownComparison)?,
         },
         PocketRingSegment {
             ring_index: ring.index,
             side: PocketRingSide::MinX,
-            segment: LinePathSegment::new(min_max, min_min),
+            segment: LinePathSegment::new(min_max, min_min, policy)
+                .map_err(|_| PocketLinkGraphError::UnknownComparison)?,
         },
-    ]
+    ])
 }
 
 fn lower_left_dogleg(
@@ -242,7 +249,8 @@ fn push_link_leg(
     if !same_axis(&start, &end, policy)? {
         return Err(PocketLinkGraphError::InvalidConnectorEndpoint);
     }
-    let segment = LinePathSegment::new(start.clone(), end.clone());
+    let segment = LinePathSegment::new(start.clone(), end.clone(), policy)
+        .map_err(|_| PocketLinkGraphError::UnknownComparison)?;
     if !points_equal(segment.start(), &start, policy) || !points_equal(segment.end(), &end, policy)
     {
         return Err(PocketLinkGraphError::InvalidConnectorEndpoint);
@@ -278,8 +286,7 @@ fn same_axis(
 }
 
 fn points_equal(first: &Point2, second: &Point2, policy: PredicatePolicy) -> bool {
-    compare_reals_with_policy(&first.x, &second.x, policy).value() == Some(Ordering::Equal)
-        && compare_reals_with_policy(&first.y, &second.y, policy).value() == Some(Ordering::Equal)
+    point2_equal(first, second, policy).value() == Some(true)
 }
 
 fn compare(
@@ -287,7 +294,7 @@ fn compare(
     second: &Real,
     policy: PredicatePolicy,
 ) -> Result<Ordering, PocketLinkGraphError> {
-    compare_reals_with_policy(first, second, policy)
+    compare_reals(first, second, policy)
         .value()
         .ok_or(PocketLinkGraphError::UnknownComparison)
 }

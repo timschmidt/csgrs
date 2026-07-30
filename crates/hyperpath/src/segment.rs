@@ -9,8 +9,8 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{
-    Aabb2Facts, Certainty, Escalation, Point2, PredicateOutcome, PredicatePolicy, RefinementNeed,
-    Segment2Facts, aabb2_facts, compare_reals_with_policy, point2_equal, segment2_facts,
+    Aabb2Facts, Point2, PredicateOutcome, PredicatePolicy, Segment2Facts, Sign, aabb2_facts,
+    classify_real_sign, compare_reals, point2_equal, segment2_facts,
 };
 use hyperreal::{Real, RealExactSetFacts, RealSign, SymbolicDependencyMask};
 
@@ -34,6 +34,13 @@ pub enum SegmentParameterOrder {
     After,
     /// The ordering could not be certified under the requested predicate policy.
     Unknown,
+}
+
+/// Errors while constructing a line segment's ordered cached bounds.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LinePathSegmentError {
+    /// The selected predicate policy could not order an endpoint coordinate.
+    PredicateUnresolved,
 }
 
 /// Cached structural facts for one line path segment.
@@ -64,17 +71,21 @@ pub struct LinePathSegment {
 }
 
 impl LinePathSegment {
-    /// Construct a segment and cache endpoint facts.
-    pub fn new(start: Point2, end: Point2) -> Self {
-        let (bounds_min, bounds_max) = bounds_for_points(&start, &end);
-        let facts = line_segment_facts(&start, &end);
-        Self {
+    /// Construct a segment with an explicit policy for its ordered cached bounds.
+    pub fn new(
+        start: Point2,
+        end: Point2,
+        policy: PredicatePolicy,
+    ) -> Result<Self, LinePathSegmentError> {
+        let (bounds_min, bounds_max) = bounds_for_points(&start, &end, policy)?;
+        let facts = line_segment_facts(&start, &end, &bounds_min, &bounds_max, policy);
+        Ok(Self {
             start,
             end,
             bounds_min,
             bounds_max,
             facts,
-        }
+        })
     }
 
     /// Return the start point.
@@ -152,16 +163,16 @@ impl LinePathSegment {
         policy: PredicatePolicy,
     ) -> SegmentParameterOrder {
         let coordinate_order = match self.facts.axis_aligned {
-            Some(Axis::X) => compare_reals_with_policy(&first.x, &second.x, policy).value(),
-            Some(Axis::Y) => compare_reals_with_policy(&first.y, &second.y, policy).value(),
+            Some(Axis::X) => compare_reals(&first.x, &second.x, policy).value(),
+            Some(Axis::Y) => compare_reals(&first.y, &second.y, policy).value(),
             None => return SegmentParameterOrder::Unknown,
         };
         let Some(ordering) = coordinate_order else {
             return SegmentParameterOrder::Unknown;
         };
         let forward = match self.facts.axis_aligned {
-            Some(Axis::X) => compare_reals_with_policy(&self.start.x, &self.end.x, policy).value(),
-            Some(Axis::Y) => compare_reals_with_policy(&self.start.y, &self.end.y, policy).value(),
+            Some(Axis::X) => compare_reals(&self.start.x, &self.end.x, policy).value(),
+            Some(Axis::Y) => compare_reals(&self.start.y, &self.end.y, policy).value(),
             None => None,
         };
         match (ordering, forward) {
@@ -176,31 +187,27 @@ impl LinePathSegment {
     pub fn exact_endpoint_equal(
         &self,
         other: &Self,
-        _policy: PredicatePolicy,
+        policy: PredicatePolicy,
     ) -> PredicateOutcome<bool> {
-        let same_direction = point2_equal(&self.start, &other.start)
-            .value()
-            .zip(point2_equal(&self.end, &other.end).value())
-            .map(|(a, b)| a && b);
-        let reverse_direction = point2_equal(&self.start, &other.end)
-            .value()
-            .zip(point2_equal(&self.end, &other.start).value())
-            .map(|(a, b)| a && b);
-        match (same_direction, reverse_direction) {
-            (Some(true), _) | (_, Some(true)) => {
-                PredicateOutcome::decided(true, Certainty::Exact, Escalation::Exact)
-            }
-            (Some(false), Some(false)) => {
-                PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact)
-            }
-            _ => PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided),
-        }
+        let same_direction = point2_equal(&self.start, &other.start, policy)
+            .and(point2_equal(&self.end, &other.end, policy));
+        let reverse_direction = point2_equal(&self.start, &other.end, policy).and(point2_equal(
+            &self.end,
+            &other.start,
+            policy,
+        ));
+        same_direction.or(reverse_direction)
     }
 }
 
-fn line_segment_facts(start: &Point2, end: &Point2) -> LinePathSegmentFacts {
+fn line_segment_facts(
+    start: &Point2,
+    end: &Point2,
+    bounds_min: &Point2,
+    bounds_max: &Point2,
+    policy: PredicatePolicy,
+) -> LinePathSegmentFacts {
     let segment = segment2_facts(start, end);
-    let (bounds_min, bounds_max) = bounds_for_points(start, end);
     let coordinates = [&start.x, &start.y, &end.x, &end.y];
     let endpoint_exact = Real::exact_set_facts(coordinates);
     let symbolic_dependencies = coordinates
@@ -208,9 +215,9 @@ fn line_segment_facts(start: &Point2, end: &Point2) -> LinePathSegmentFacts {
         .fold(SymbolicDependencyMask::NONE, |mask, value| {
             mask.union(value.detailed_facts().symbolic.dependencies)
         });
-    let axis_aligned = if same_real(&start.y, &end.y) == Some(true) {
+    let axis_aligned = if same_real(&start.y, &end.y, policy) == Some(true) {
         Some(Axis::X)
-    } else if same_real(&start.x, &end.x) == Some(true) {
+    } else if same_real(&start.x, &end.x, policy) == Some(true) {
         Some(Axis::Y)
     } else {
         None
@@ -221,40 +228,41 @@ fn line_segment_facts(start: &Point2, end: &Point2) -> LinePathSegmentFacts {
         symbolic_dependencies,
         axis_aligned,
         known_degenerate: segment.known_degenerate(),
-        bounds: aabb2_facts(&bounds_min, &bounds_max),
+        bounds: aabb2_facts(bounds_min, bounds_max),
     }
 }
 
-fn bounds_for_points(first: &Point2, second: &Point2) -> (Point2, Point2) {
-    let min_x = min_real(&first.x, &second.x).unwrap_or_else(|| first.x.clone());
-    let max_x = max_real(&first.x, &second.x).unwrap_or_else(|| first.x.clone());
-    let min_y = min_real(&first.y, &second.y).unwrap_or_else(|| first.y.clone());
-    let max_y = max_real(&first.y, &second.y).unwrap_or_else(|| first.y.clone());
-    (Point2::new(min_x, min_y), Point2::new(max_x, max_y))
+fn bounds_for_points(
+    first: &Point2,
+    second: &Point2,
+    policy: PredicatePolicy,
+) -> Result<(Point2, Point2), LinePathSegmentError> {
+    let x_order = compare_reals(&first.x, &second.x, policy)
+        .value()
+        .ok_or(LinePathSegmentError::PredicateUnresolved)?;
+    let y_order = compare_reals(&first.y, &second.y, policy)
+        .value()
+        .ok_or(LinePathSegmentError::PredicateUnresolved)?;
+    let (min_x, max_x) = ordered_pair(&first.x, &second.x, x_order);
+    let (min_y, max_y) = ordered_pair(&first.y, &second.y, y_order);
+    Ok((Point2::new(min_x, min_y), Point2::new(max_x, max_y)))
 }
 
-fn min_real(first: &Real, second: &Real) -> Option<Real> {
-    match compare_reals_with_policy(first, second, PredicatePolicy).value()? {
-        Ordering::Less | Ordering::Equal => Some(first.clone()),
-        Ordering::Greater => Some(second.clone()),
+fn ordered_pair(first: &Real, second: &Real, ordering: Ordering) -> (Real, Real) {
+    match ordering {
+        Ordering::Less | Ordering::Equal => (first.clone(), second.clone()),
+        Ordering::Greater => (second.clone(), first.clone()),
     }
 }
 
-fn max_real(first: &Real, second: &Real) -> Option<Real> {
-    match compare_reals_with_policy(first, second, PredicatePolicy).value()? {
-        Ordering::Less | Ordering::Equal => Some(second.clone()),
-        Ordering::Greater => Some(first.clone()),
-    }
-}
-
-fn same_real(left: &Real, right: &Real) -> Option<bool> {
-    compare_reals_with_policy(left, right, PredicatePolicy)
+fn same_real(left: &Real, right: &Real, policy: PredicatePolicy) -> Option<bool> {
+    compare_reals(left, right, policy)
         .value()
         .map(|ordering| ordering == Ordering::Equal)
 }
 
 fn absolute_difference(left: &Real, right: &Real, policy: PredicatePolicy) -> Option<Real> {
-    match compare_reals_with_policy(left, right, policy).value()? {
+    match compare_reals(left, right, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(right.clone() - left.clone()),
         Ordering::Greater => Some(left.clone() - right.clone()),
     }
@@ -268,6 +276,12 @@ fn order_to_parameter(ordering: Ordering) -> SegmentParameterOrder {
     }
 }
 
-pub(crate) fn real_sign(value: &Real) -> Option<RealSign> {
-    value.structural_facts().sign
+pub(crate) fn real_sign_with_policy(value: &Real, policy: PredicatePolicy) -> Option<RealSign> {
+    classify_real_sign(value, policy)
+        .value()
+        .map(|sign| match sign {
+            Sign::Negative => RealSign::Negative,
+            Sign::Zero => RealSign::Zero,
+            Sign::Positive => RealSign::Positive,
+        })
 }

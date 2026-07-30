@@ -15,8 +15,8 @@
 //! of Robotic Manipulators Along Specified Paths" (1985): path geometry is
 //! fixed first, then exact scalar motion constraints are certified over it.
 
-use hyperlimit::PredicatePolicy;
-use hyperreal::{Real, RealSign};
+use hyperlimit::{PredicatePolicy, Sign, classify_real_sign};
+use hyperreal::Real;
 use hypersolve::{
     CandidateCertificationReport, Constraint, ConstraintKind, Expr, Problem, certify_candidate,
     context_from_problem,
@@ -191,13 +191,13 @@ pub fn certify_jerk_ramp_feed_schedule(
     if route.len() != proposals.len() {
         return Err(RouteCertificationError::ScheduleShapeMismatch);
     }
-    require_positive_feed(&max_feed_rate)?;
-    require_positive_acceleration(&max_acceleration)?;
-    require_positive_jerk(&max_jerk)?;
+    require_positive_feed(&max_feed_rate, policy)?;
+    require_positive_acceleration(&max_acceleration, policy)?;
+    require_positive_jerk(&max_jerk, policy)?;
 
     let mut spans = Vec::with_capacity(route.len());
     for (index, (element, proposal)) in route.iter().zip(proposals).enumerate() {
-        validate_proposal(proposal)?;
+        validate_proposal(proposal, policy)?;
         let path_length = element_length(element, policy)?;
         let certification = certify_jerk_ramp_span_candidate(
             path_length.clone(),
@@ -245,16 +245,16 @@ pub fn certify_multi_phase_jerk_ramp_feed_schedule(
     if route.len() != phases.len() || phases.iter().any(Vec::is_empty) {
         return Err(RouteCertificationError::ScheduleShapeMismatch);
     }
-    require_positive_feed(&max_feed_rate)?;
-    require_positive_acceleration(&max_acceleration)?;
-    require_positive_jerk(&max_jerk)?;
+    require_positive_feed(&max_feed_rate, policy)?;
+    require_positive_acceleration(&max_acceleration, policy)?;
+    require_positive_jerk(&max_jerk, policy)?;
 
     let mut elements = Vec::with_capacity(route.len());
     for (index, (element, element_phases)) in route.iter().zip(phases).enumerate() {
         let route_length = element_length(element, policy)?;
         let mut phase_reports = Vec::with_capacity(element_phases.len());
         for (phase_index, phase) in element_phases.iter().enumerate() {
-            validate_phase(phase)?;
+            validate_phase(phase, policy)?;
             let certification = certify_jerk_ramp_span_candidate(
                 phase.path_length.clone(),
                 &phase.ramp,
@@ -562,24 +562,32 @@ fn midpoint_feed_cap_constraint(
     }
 }
 
-fn validate_proposal(proposal: &JerkRampSpanProposal) -> Result<(), RouteCertificationError> {
-    require_nonnegative_feed(&proposal.start_feed)?;
-    require_nonnegative_feed(&proposal.end_feed)?;
-    match proposal.traversal_time.structural_facts().sign {
-        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeTime),
-        Some(RealSign::Zero) => Err(RouteCertificationError::ZeroTime),
-        _ => Ok(()),
+fn validate_proposal(
+    proposal: &JerkRampSpanProposal,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    require_nonnegative_feed(&proposal.start_feed, policy)?;
+    require_nonnegative_feed(&proposal.end_feed, policy)?;
+    match classify_real_sign(&proposal.traversal_time, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeTime),
+        Some(Sign::Zero) => Err(RouteCertificationError::ZeroTime),
+        Some(Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }
 
-fn validate_phase(phase: &JerkRampPhaseProposal) -> Result<(), RouteCertificationError> {
-    match phase.path_length.structural_facts().sign {
-        Some(RealSign::Negative) | Some(RealSign::Zero) => {
+fn validate_phase(
+    phase: &JerkRampPhaseProposal,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(&phase.path_length, policy).value() {
+        Some(Sign::Negative | Sign::Zero) => {
             return Err(RouteCertificationError::UnsupportedRouteGeometry);
         }
-        _ => {}
+        Some(Sign::Positive) => {}
+        None => return Err(RouteCertificationError::PredicateUnresolved),
     }
-    validate_proposal(&phase.ramp)
+    validate_proposal(&phase.ramp, policy)
 }
 
 fn certify_problem(problem: Problem) -> CandidateCertificationReport {
@@ -588,33 +596,49 @@ fn certify_problem(problem: Problem) -> CandidateCertificationReport {
     certify_candidate(&analysis, &context)
 }
 
-fn require_nonnegative_feed(value: &Real) -> Result<(), RouteCertificationError> {
-    match value.structural_facts().sign {
-        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
-        _ => Ok(()),
+fn require_nonnegative_feed(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
+        Some(Sign::Zero | Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }
 
-fn require_positive_feed(value: &Real) -> Result<(), RouteCertificationError> {
-    match value.structural_facts().sign {
-        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
-        Some(RealSign::Zero) => Err(RouteCertificationError::ZeroFeedRate),
-        _ => Ok(()),
+fn require_positive_feed(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
+        Some(Sign::Zero) => Err(RouteCertificationError::ZeroFeedRate),
+        Some(Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }
 
-fn require_positive_acceleration(value: &Real) -> Result<(), RouteCertificationError> {
-    match value.structural_facts().sign {
-        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeAcceleration),
-        Some(RealSign::Zero) => Err(RouteCertificationError::ZeroAcceleration),
-        _ => Ok(()),
+fn require_positive_acceleration(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeAcceleration),
+        Some(Sign::Zero) => Err(RouteCertificationError::ZeroAcceleration),
+        Some(Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }
 
-fn require_positive_jerk(value: &Real) -> Result<(), RouteCertificationError> {
-    match value.structural_facts().sign {
-        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeJerk),
-        Some(RealSign::Zero) => Err(RouteCertificationError::ZeroJerk),
-        _ => Ok(()),
+fn require_positive_jerk(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeJerk),
+        Some(Sign::Zero) => Err(RouteCertificationError::ZeroJerk),
+        Some(Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }

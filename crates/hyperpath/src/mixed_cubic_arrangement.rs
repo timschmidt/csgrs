@@ -12,7 +12,7 @@
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals, point2_equal};
 use hyperreal::{Rational, Real, RealExactSetFacts};
 use hypersolve::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
@@ -855,7 +855,7 @@ fn reject_degenerate_lines(
 ) -> Result<(), LineCubicBezierArrangementError> {
     for (index, line) in lines.iter().enumerate() {
         if line.facts().known_degenerate == Some(true)
-            || compare_reals_with_policy(&line.length_squared(), &Real::zero(), policy).value()
+            || compare_reals(&line.length_squared(), &Real::zero(), policy).value()
                 == Some(Ordering::Equal)
         {
             return Err(LineCubicBezierArrangementError::DegenerateLine { line: index });
@@ -1126,7 +1126,7 @@ fn exact_rational_grid_witness(
             ) {
                 continue;
             }
-            if compare_reals_with_policy(
+            if compare_reals(
                 &evaluate_real_polynomial(&root.polynomial_coefficients, &candidate),
                 &Real::zero(),
                 policy,
@@ -1190,8 +1190,8 @@ fn exact_value_inside_interval(
     upper_bound: &Real,
     policy: PredicatePolicy,
 ) -> bool {
-    let lower = compare_reals_with_policy(value, lower_bound, policy).value();
-    let upper = compare_reals_with_policy(value, upper_bound, policy).value();
+    let lower = compare_reals(value, lower_bound, policy).value();
+    let upper = compare_reals(value, upper_bound, policy).value();
     matches!(lower, Some(Ordering::Equal | Ordering::Greater))
         && matches!(upper, Some(Ordering::Equal | Ordering::Less))
 }
@@ -1663,15 +1663,15 @@ fn classify_line_parameter_image(
 }
 
 fn interval_inside_unit(lower: &Real, upper: &Real, policy: PredicatePolicy) -> Option<bool> {
-    let lower_zero = compare_reals_with_policy(lower, &Real::zero(), policy).value()?;
-    let upper_one = compare_reals_with_policy(upper, &Real::one(), policy).value()?;
+    let lower_zero = compare_reals(lower, &Real::zero(), policy).value()?;
+    let upper_one = compare_reals(upper, &Real::one(), policy).value()?;
     if matches!(lower_zero, Ordering::Equal | Ordering::Greater)
         && matches!(upper_one, Ordering::Equal | Ordering::Less)
     {
         return Some(true);
     }
-    let upper_zero = compare_reals_with_policy(upper, &Real::zero(), policy).value()?;
-    let lower_one = compare_reals_with_policy(lower, &Real::one(), policy).value()?;
+    let upper_zero = compare_reals(upper, &Real::zero(), policy).value()?;
+    let lower_one = compare_reals(lower, &Real::one(), policy).value()?;
     if matches!(upper_zero, Ordering::Less) || matches!(lower_one, Ordering::Greater) {
         Some(false)
     } else {
@@ -2111,11 +2111,11 @@ fn certified_min_max(
     right_upper: &Real,
     policy: PredicatePolicy,
 ) -> Option<(Real, Real)> {
-    let lower = match compare_reals_with_policy(left_lower, right_lower, policy).value()? {
+    let lower = match compare_reals(left_lower, right_lower, policy).value()? {
         Ordering::Less | Ordering::Equal => left_lower.clone(),
         Ordering::Greater => right_lower.clone(),
     };
-    let upper = match compare_reals_with_policy(left_upper, right_upper, policy).value()? {
+    let upper = match compare_reals(left_upper, right_upper, policy).value()? {
         Ordering::Less | Ordering::Equal => right_upper.clone(),
         Ordering::Greater => left_upper.clone(),
     };
@@ -2166,14 +2166,14 @@ fn solve_quadratic_or_linear_roots(
     c: Real,
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_linear_roots(b, c, policy),
         Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
     }
 }
 
 fn solve_linear_roots(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
-    match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+    match compare_reals(&b, &Real::zero(), policy).value()? {
         Ordering::Equal => Some(Vec::new()),
         Ordering::Less | Ordering::Greater => Some(vec![(-c / b).ok()?]),
     }
@@ -2181,7 +2181,7 @@ fn solve_linear_roots(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<R
 
 fn solve_quadratic_roots(a: Real, b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
     let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
-    match compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? {
+    match compare_reals(&discriminant, &Real::zero(), policy).value()? {
         Ordering::Less => Some(Vec::new()),
         Ordering::Equal => Some(vec![((-b) / (Real::from(2) * a)).ok()?]),
         Ordering::Greater => {
@@ -2200,8 +2200,8 @@ fn real_in_closed_interval(
     upper: &Real,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    let lower_cmp = compare_reals_with_policy(value, lower, policy).value()?;
-    let upper_cmp = compare_reals_with_policy(value, upper, policy).value()?;
+    let lower_cmp = compare_reals(value, lower, policy).value()?;
+    let upper_cmp = compare_reals(value, upper, policy).value()?;
     Some(
         matches!(lower_cmp, Ordering::Equal | Ordering::Greater)
             && matches!(upper_cmp, Ordering::Equal | Ordering::Less),
@@ -2250,7 +2250,7 @@ fn compare_exact_cubic_overlap_line_parameters(
     right: &Real,
     policy: PredicatePolicy,
 ) -> LineCubicBezierAlgebraicOverlapBreakpointOrderClass {
-    match compare_reals_with_policy(left, right, policy).value() {
+    match compare_reals(left, right, policy).value() {
         Some(Ordering::Less) => LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before,
         Some(Ordering::Equal) => LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Equal,
         Some(Ordering::Greater) => LineCubicBezierAlgebraicOverlapBreakpointOrderClass::After,
@@ -2298,18 +2298,18 @@ fn compare_algebraic_intervals(
     policy: PredicatePolicy,
 ) -> LineCubicBezierAlgebraicBreakpointOrderClass {
     if let (Some(left_exact), Some(right_exact)) = (left_exact, right_exact) {
-        return match compare_reals_with_policy(left_exact, right_exact, policy).value() {
+        return match compare_reals(left_exact, right_exact, policy).value() {
             Some(Ordering::Less) => LineCubicBezierAlgebraicBreakpointOrderClass::Before,
             Some(Ordering::Equal) => LineCubicBezierAlgebraicBreakpointOrderClass::Equal,
             Some(Ordering::Greater) => LineCubicBezierAlgebraicBreakpointOrderClass::After,
             None => LineCubicBezierAlgebraicBreakpointOrderClass::Unknown,
         };
     }
-    match compare_reals_with_policy(left_upper, right_lower, policy).value() {
+    match compare_reals(left_upper, right_lower, policy).value() {
         Some(Ordering::Less) => return LineCubicBezierAlgebraicBreakpointOrderClass::Before,
         Some(Ordering::Equal | Ordering::Greater) | None => {}
     }
-    match compare_reals_with_policy(right_upper, left_lower, policy).value() {
+    match compare_reals(right_upper, left_lower, policy).value() {
         Some(Ordering::Less) => LineCubicBezierAlgebraicBreakpointOrderClass::After,
         Some(Ordering::Equal | Ordering::Greater) | None => {
             LineCubicBezierAlgebraicBreakpointOrderClass::Unknown
@@ -2322,10 +2322,10 @@ fn insert_line_breakpoint(
     line_index: usize,
     line: &LinePathSegment,
     point: Point2,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> Result<(), LineCubicBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match point2_equal(&existing.point, &point).value() {
+        match point2_equal(&existing.point, &point, policy).value() {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => return Err(LineCubicBezierArrangementError::UndecidablePointEquality),
@@ -2358,7 +2358,7 @@ fn insert_exact_cubic_breakpoint(
     policy: PredicatePolicy,
 ) -> Result<(), LineCubicBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match compare_reals_with_policy(&existing.parameter, &parameter, policy).value() {
+        match compare_reals(&existing.parameter, &parameter, policy).value() {
             Some(Ordering::Equal) => return Ok(()),
             Some(Ordering::Less | Ordering::Greater) => {}
             None => {
@@ -2408,7 +2408,7 @@ fn sort_and_dedup_line_breakpoints(
         let mut deduped: Vec<MixedCubicLineArrangementBreakpoint> = Vec::new();
         for point in points.drain(..) {
             if let Some(last) = deduped.last() {
-                match point2_equal(&last.point, &point.point).value() {
+                match point2_equal(&last.point, &point.point, policy).value() {
                     Some(true) => continue,
                     Some(false) => {}
                     None => {
@@ -2443,7 +2443,7 @@ fn compare_line_parameters(
     right: &MixedCubicLineArrangementBreakpoint,
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
-    compare_reals_with_policy(
+    compare_reals(
         &(left.parameter_numerator.clone() * right.parameter_denominator.clone()),
         &(right.parameter_numerator.clone() * left.parameter_denominator.clone()),
         policy,
@@ -2458,14 +2458,14 @@ fn sort_and_dedup_cubic_breakpoints(
     for (curve_index, points) in breakpoints.iter_mut().enumerate() {
         certify_cubic_orders(points, curve_index, policy)?;
         points.sort_by(|left, right| {
-            compare_reals_with_policy(&left.parameter, &right.parameter, policy)
+            compare_reals(&left.parameter, &right.parameter, policy)
                 .value()
                 .expect("cubic breakpoint order was certified before sorting")
         });
         let mut deduped: Vec<CubicBezierRealBreakpoint> = Vec::new();
         for point in points.drain(..) {
             if let Some(last) = deduped.last() {
-                match compare_reals_with_policy(&last.parameter, &point.parameter, policy).value() {
+                match compare_reals(&last.parameter, &point.parameter, policy).value() {
                     Some(Ordering::Equal) => continue,
                     Some(Ordering::Less | Ordering::Greater) => {}
                     None => {
@@ -2489,7 +2489,7 @@ fn certify_cubic_orders(
 ) -> Result<(), LineCubicBezierArrangementError> {
     for left in 0..points.len() {
         for right in (left + 1)..points.len() {
-            compare_reals_with_policy(&points[left].parameter, &points[right].parameter, policy)
+            compare_reals(&points[left].parameter, &points[right].parameter, policy)
                 .value()
                 .ok_or(LineCubicBezierArrangementError::UndecidableCubicOrder {
                     curve: curve_index,
@@ -2513,7 +2513,12 @@ fn build_line_fragments(
                 source_line: window[0].line,
                 start: window[0].clone(),
                 end: window[1].clone(),
-                segment: LinePathSegment::new(window[0].point.clone(), window[1].point.clone()),
+                segment: LinePathSegment::new(
+                    window[0].point.clone(),
+                    window[1].point.clone(),
+                    policy,
+                )
+                .map_err(|_| LineCubicBezierArrangementError::UndecidablePointEquality)?,
             });
         }
     }
@@ -2528,9 +2533,7 @@ fn build_cubic_fragments(
     let mut fragments = Vec::new();
     for points in breakpoints {
         for window in points.windows(2) {
-            match compare_reals_with_policy(&window[0].parameter, &window[1].parameter, policy)
-                .value()
-            {
+            match compare_reals(&window[0].parameter, &window[1].parameter, policy).value() {
                 Some(Ordering::Equal) => continue,
                 Some(Ordering::Less | Ordering::Greater) => {}
                 None => {

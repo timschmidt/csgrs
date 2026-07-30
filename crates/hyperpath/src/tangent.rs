@@ -11,7 +11,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals, point2_equal};
 use hyperreal::Real;
 use hypersolve::{
     CandidateCertificationReport, Constraint, ConstraintKind, Expr, Problem, SymbolId,
@@ -273,11 +273,11 @@ pub fn classify_tangent_alignment(
     }
 
     let cross = tangent_cross(first, second);
-    match compare_reals_with_policy(&cross, &Real::zero(), policy).value() {
+    match compare_reals(&cross, &Real::zero(), policy).value() {
         Some(Ordering::Less | Ordering::Greater) => TangentAlignment::NotParallel,
         Some(Ordering::Equal) => {
             let dot = tangent_dot(first, second);
-            match compare_reals_with_policy(&dot, &Real::zero(), policy).value() {
+            match compare_reals(&dot, &Real::zero(), policy).value() {
                 Some(Ordering::Greater) => TangentAlignment::SameDirection,
                 Some(Ordering::Less) => TangentAlignment::OppositeDirection,
                 Some(Ordering::Equal) => TangentAlignment::Degenerate,
@@ -302,7 +302,7 @@ pub fn classify_tangent_join(
     second_tangent: &Point2,
     policy: PredicatePolicy,
 ) -> TangentJoinReport {
-    match point2_equal(first_endpoint, second_endpoint).value() {
+    match point2_equal(first_endpoint, second_endpoint, policy).value() {
         Some(false) => TangentJoinReport {
             class: TangentJoinClass::EndpointMismatch,
             endpoints_equal: Some(false),
@@ -539,7 +539,7 @@ pub fn tangent_norm_squared(vector: &Point2) -> Real {
 }
 
 fn is_zero_vector(vector: &Point2, policy: PredicatePolicy) -> Option<bool> {
-    match compare_reals_with_policy(&tangent_norm_squared(vector), &Real::zero(), policy).value()? {
+    match compare_reals(&tangent_norm_squared(vector), &Real::zero(), policy).value()? {
         Ordering::Equal => Some(true),
         Ordering::Greater => Some(false),
         Ordering::Less => None,

@@ -11,7 +11,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals, point2_equal};
 use hyperreal::{Real, RealExactSetFacts};
 
 use crate::bezier::QuadraticBezier;
@@ -192,7 +192,7 @@ pub fn arrange_line_segments_with_quadratic_beziers(
                     == LineQuadraticBezierIntersectionClass::Overlap
                     && candidate_line.iter().any(|line_point| {
                         candidate_bezier.iter().any(|bezier_point| {
-                            point2_equal(&line_point.point, &bezier_point.point)
+                            point2_equal(&line_point.point, &bezier_point.point, policy)
                                 .value()
                                 .is_none()
                         })
@@ -205,20 +205,20 @@ pub fn arrange_line_segments_with_quadratic_beziers(
                         .enumerate()
                         .any(|(left, event)| {
                             intersection.intersections[left + 1..].iter().any(|other| {
-                                compare_reals_with_policy(
-                                    &event.parameter,
-                                    &other.parameter,
-                                    policy,
-                                )
-                                .value()
-                                .is_none()
+                                compare_reals(&event.parameter, &other.parameter, policy)
+                                    .value()
+                                    .is_none()
                             })
                         });
                 let overlap_image_uncertain = intersection.class
                     == LineQuadraticBezierIntersectionClass::Overlap
                     && intersection.intersections.iter().any(|event| {
-                        point2_equal(&eval_quadratic_real(curve, &event.parameter), &event.point)
-                            .value()
+                        point2_equal(
+                            &eval_quadratic_real(curve, &event.parameter),
+                            &event.point,
+                            policy,
+                        )
+                        .value()
                             != Some(true)
                     });
                 if intersection.class == LineQuadraticBezierIntersectionClass::Overlap
@@ -297,7 +297,7 @@ fn reject_degenerate_lines(
 ) -> Result<(), LineQuadraticBezierArrangementError> {
     for (index, line) in lines.iter().enumerate() {
         if line.facts().known_degenerate == Some(true)
-            || compare_reals_with_policy(&line.length_squared(), &Real::zero(), policy).value()
+            || compare_reals(&line.length_squared(), &Real::zero(), policy).value()
                 == Some(Ordering::Equal)
         {
             return Err(LineQuadraticBezierArrangementError::DegenerateLine { line: index });
@@ -345,10 +345,10 @@ fn insert_line_breakpoint(
     line_index: usize,
     line: &LinePathSegment,
     point: Point2,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> Result<(), LineQuadraticBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match point2_equal(&existing.point, &point).value() {
+        match point2_equal(&existing.point, &point, policy).value() {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => return Err(LineQuadraticBezierArrangementError::UndecidablePointEquality),
@@ -365,7 +365,7 @@ fn insert_bezier_breakpoint(
     policy: PredicatePolicy,
 ) -> Result<(), LineQuadraticBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match compare_reals_with_policy(&existing.parameter, &event.parameter, policy).value() {
+        match compare_reals(&existing.parameter, &event.parameter, policy).value() {
             Some(Ordering::Equal) => return Ok(()),
             Some(Ordering::Less | Ordering::Greater) => {}
             None => {
@@ -450,7 +450,7 @@ fn compare_line_parameters(
     right: &MixedLineArrangementBreakpoint,
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
-    compare_reals_with_policy(
+    compare_reals(
         &(left.parameter_numerator.clone() * right.parameter_denominator.clone()),
         &(right.parameter_numerator.clone() * left.parameter_denominator.clone()),
         policy,
@@ -465,14 +465,14 @@ fn sort_and_dedup_bezier_breakpoints(
     for (curve_index, points) in breakpoints.iter_mut().enumerate() {
         certify_bezier_orders(points, curve_index, policy)?;
         points.sort_by(|left, right| {
-            compare_reals_with_policy(&left.parameter, &right.parameter, policy)
+            compare_reals(&left.parameter, &right.parameter, policy)
                 .value()
                 .expect("Bezier breakpoint order was certified before sorting")
         });
         let mut deduped: Vec<QuadraticBezierRealBreakpoint> = Vec::new();
         for point in points.drain(..) {
             if let Some(last) = deduped.last() {
-                match compare_reals_with_policy(&last.parameter, &point.parameter, policy).value() {
+                match compare_reals(&last.parameter, &point.parameter, policy).value() {
                     Some(Ordering::Equal) => continue,
                     Some(Ordering::Less | Ordering::Greater) => {}
                     None => {
@@ -498,7 +498,7 @@ fn certify_bezier_orders(
 ) -> Result<(), LineQuadraticBezierArrangementError> {
     for left in 0..points.len() {
         for right in (left + 1)..points.len() {
-            compare_reals_with_policy(&points[left].parameter, &points[right].parameter, policy)
+            compare_reals(&points[left].parameter, &points[right].parameter, policy)
                 .value()
                 .ok_or(
                     LineQuadraticBezierArrangementError::UndecidableBezierOrder {
@@ -524,7 +524,12 @@ fn build_line_fragments(
                 source_line: window[0].line,
                 start: window[0].clone(),
                 end: window[1].clone(),
-                segment: LinePathSegment::new(window[0].point.clone(), window[1].point.clone()),
+                segment: LinePathSegment::new(
+                    window[0].point.clone(),
+                    window[1].point.clone(),
+                    policy,
+                )
+                .map_err(|_| LineQuadraticBezierArrangementError::UndecidablePointEquality)?,
             });
         }
     }
@@ -539,9 +544,7 @@ fn build_bezier_fragments(
     let mut fragments = Vec::new();
     for points in breakpoints {
         for window in points.windows(2) {
-            match compare_reals_with_policy(&window[0].parameter, &window[1].parameter, policy)
-                .value()
-            {
+            match compare_reals(&window[0].parameter, &window[1].parameter, policy).value() {
                 Some(Ordering::Equal) => continue,
                 Some(Ordering::Less | Ordering::Greater) => {}
                 None => {

@@ -9,7 +9,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals, point2_equal};
 use hyperreal::{Real, RealExactSetFacts};
 use hypersolve::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
@@ -1162,7 +1162,7 @@ fn compare_parameters(
     right: BezierParameter,
     policy: PredicatePolicy,
 ) -> Result<Ordering, BezierArrangementError> {
-    compare_reals_with_policy(&left.to_real(), &right.to_real(), policy)
+    compare_reals(&left.to_real(), &right.to_real(), policy)
         .value()
         .ok_or(BezierArrangementError::UndecidableParameterOrder)
 }
@@ -1425,7 +1425,7 @@ fn solve_quadratic_coordinate_roots(
     let a = p0.clone() - Real::from(2) * p1.clone() + p2.clone();
     let b = Real::from(2) * (p1 - p0.clone());
     let c = p0 - fixed;
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_linear_root(b, c, policy),
         Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
     }
@@ -1442,7 +1442,7 @@ fn solve_quadratic_implicit_line_roots(
     let a = q0.clone() - Real::from(2) * q1.clone() + q2;
     let b = Real::from(2) * (q1 - q0.clone());
     let c = q0;
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_linear_root(b, c, policy),
         Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
     }
@@ -1461,7 +1461,7 @@ fn solve_rational_quadratic_coordinate_roots(
     let a = q0.clone() - Real::from(2) * q1.clone() + q2.clone();
     let b = Real::from(2) * (q1 - q0.clone());
     let c = q0;
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_linear_root(b, c, policy),
         Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
     }
@@ -1479,7 +1479,7 @@ fn solve_rational_quadratic_implicit_line_roots(
     let a = q0.clone() - Real::from(2) * q1.clone() + q2;
     let b = Real::from(2) * (q1 - q0.clone());
     let c = q0;
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_linear_root(b, c, policy),
         Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
     }
@@ -1492,8 +1492,8 @@ fn solve_cubic_coordinate_roots_up_to_quadratic(
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
     let (a, b, c, d) = cubic_coordinate_polynomial(curve, axis, fixed);
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
-        Ordering::Equal => match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals(&b, &Real::zero(), policy).value()? {
             Ordering::Equal => solve_linear_root(c, d, policy),
             Ordering::Less | Ordering::Greater => solve_quadratic_roots(b, c, d, policy),
         },
@@ -1507,8 +1507,8 @@ fn solve_cubic_implicit_line_roots_up_to_quadratic(
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
     let (a, b, c, d) = cubic_implicit_line_polynomial(segment, curve);
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
-        Ordering::Equal => match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals(&b, &Real::zero(), policy).value()? {
             Ordering::Equal => solve_linear_root(c, d, policy),
             Ordering::Less | Ordering::Greater => solve_quadratic_roots(b, c, d, policy),
         },
@@ -1636,7 +1636,7 @@ fn true_cubic_algebraic_support_report_from_polynomial(
     policy: PredicatePolicy,
 ) -> LineCubicBezierIntersectionReport {
     let (a, b, c, d) = polynomial;
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value() {
+    match compare_reals(&a, &Real::zero(), policy).value() {
         Some(Ordering::Less | Ordering::Greater) => {}
         Some(Ordering::Equal) | None => return line_cubic_unknown_report(),
     }
@@ -1819,15 +1819,15 @@ fn algebraic_interval_against_closed_bounds(
     bound_max: &Real,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    let lower_inside = compare_reals_with_policy(lower, bound_min, policy).value()?;
-    let upper_inside = compare_reals_with_policy(upper, bound_max, policy).value()?;
+    let lower_inside = compare_reals(lower, bound_min, policy).value()?;
+    let upper_inside = compare_reals(upper, bound_max, policy).value()?;
     if matches!(lower_inside, Ordering::Equal | Ordering::Greater)
         && matches!(upper_inside, Ordering::Equal | Ordering::Less)
     {
         return Some(true);
     }
-    let upper_before_min = compare_reals_with_policy(upper, bound_min, policy).value()?;
-    let lower_after_max = compare_reals_with_policy(lower, bound_max, policy).value()?;
+    let upper_before_min = compare_reals(upper, bound_min, policy).value()?;
+    let lower_after_max = compare_reals(lower, bound_max, policy).value()?;
     if matches!(upper_before_min, Ordering::Less) || matches!(lower_after_max, Ordering::Greater) {
         Some(false)
     } else {
@@ -1846,10 +1846,10 @@ fn classify_algebraic_root_unit_domain(
             None => LineCubicAlgebraicRootDomain::Unknown,
         };
     }
-    let lower_zero = compare_reals_with_policy(&root.interval.lower, &Real::zero(), policy).value();
-    let upper_one = compare_reals_with_policy(&root.interval.upper, &Real::one(), policy).value();
-    let upper_zero = compare_reals_with_policy(&root.interval.upper, &Real::zero(), policy).value();
-    let lower_one = compare_reals_with_policy(&root.interval.lower, &Real::one(), policy).value();
+    let lower_zero = compare_reals(&root.interval.lower, &Real::zero(), policy).value();
+    let upper_one = compare_reals(&root.interval.upper, &Real::one(), policy).value();
+    let upper_zero = compare_reals(&root.interval.upper, &Real::zero(), policy).value();
+    let lower_one = compare_reals(&root.interval.lower, &Real::one(), policy).value();
     if matches!(lower_zero, Some(Ordering::Equal | Ordering::Greater))
         && matches!(upper_one, Some(Ordering::Equal | Ordering::Less))
     {
@@ -1874,10 +1874,10 @@ fn classify_rational_quadratic_inverse_root_domain(
             None => LineRationalQuadraticBezierInverseRootDomain::Unknown,
         };
     }
-    let lower_zero = compare_reals_with_policy(&root.interval.lower, &Real::zero(), policy).value();
-    let upper_one = compare_reals_with_policy(&root.interval.upper, &Real::one(), policy).value();
-    let upper_zero = compare_reals_with_policy(&root.interval.upper, &Real::zero(), policy).value();
-    let lower_one = compare_reals_with_policy(&root.interval.lower, &Real::one(), policy).value();
+    let lower_zero = compare_reals(&root.interval.lower, &Real::zero(), policy).value();
+    let upper_one = compare_reals(&root.interval.upper, &Real::one(), policy).value();
+    let upper_zero = compare_reals(&root.interval.upper, &Real::zero(), policy).value();
+    let lower_one = compare_reals(&root.interval.lower, &Real::one(), policy).value();
     if matches!(lower_zero, Some(Ordering::Equal | Ordering::Greater))
         && matches!(upper_one, Some(Ordering::Equal | Ordering::Less))
     {
@@ -1921,8 +1921,8 @@ fn implicit_line_support_coefficient(segment: &LinePathSegment, point: &Point2) 
 }
 
 fn solve_linear_root(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
-    match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
-        Ordering::Equal => match compare_reals_with_policy(&c, &Real::zero(), policy).value()? {
+    match compare_reals(&b, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals(&c, &Real::zero(), policy).value()? {
             Ordering::Equal => None,
             Ordering::Less | Ordering::Greater => Some(Vec::new()),
         },
@@ -1932,7 +1932,7 @@ fn solve_linear_root(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Re
 
 fn solve_quadratic_roots(a: Real, b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
     let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
-    match compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? {
+    match compare_reals(&discriminant, &Real::zero(), policy).value()? {
         Ordering::Less => Some(Vec::new()),
         Ordering::Equal => Some(vec![((-b) / (Real::from(2) * a)).ok()?]),
         Ordering::Greater => {
@@ -1952,11 +1952,9 @@ fn quadratic_line_overlap_report(
     fixed: Real,
     policy: PredicatePolicy,
 ) -> Option<LineQuadraticBezierIntersectionReport> {
-    if compare_reals_with_policy(&support_coordinate(curve.start(), axis), &fixed, policy)
-        .value()?
+    if compare_reals(&support_coordinate(curve.start(), axis), &fixed, policy).value()?
         != Ordering::Equal
-        || compare_reals_with_policy(&support_coordinate(curve.end(), axis), &fixed, policy)
-            .value()?
+        || compare_reals(&support_coordinate(curve.end(), axis), &fixed, policy).value()?
             != Ordering::Equal
     {
         return Some(LineQuadraticBezierIntersectionReport {
@@ -1982,7 +1980,7 @@ fn quadratic_line_overlap_report(
         &max_real(&segment_a, &segment_b, policy)?,
         policy,
     )?;
-    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+    match compare_reals(&overlap_min, &overlap_max, policy).value()? {
         Ordering::Greater => Some(LineQuadraticBezierIntersectionReport {
             class: LineQuadraticBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
@@ -2051,7 +2049,7 @@ fn quadratic_general_line_overlap_report(
         policy,
     )?;
     let overlap_max = min_real(&max_real(&curve_a, &curve_b, policy)?, &Real::one(), policy)?;
-    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+    match compare_reals(&overlap_min, &overlap_max, policy).value()? {
         Ordering::Greater => Some(LineQuadraticBezierIntersectionReport {
             class: LineQuadraticBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
@@ -2133,7 +2131,7 @@ fn cubic_general_line_overlap_report(
         policy,
     )?;
     let overlap_max = min_real(&max_real(&curve_a, &curve_b, policy)?, &Real::one(), policy)?;
-    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+    match compare_reals(&overlap_min, &overlap_max, policy).value()? {
         Ordering::Greater => Some(LineCubicBezierIntersectionReport {
             class: LineCubicBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
@@ -2212,7 +2210,7 @@ fn cubic_line_overlap_report(
         &max_real(&segment_a, &segment_b, policy)?,
         policy,
     )?;
-    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+    match compare_reals(&overlap_min, &overlap_max, policy).value()? {
         Ordering::Greater => Some(LineCubicBezierIntersectionReport {
             class: LineCubicBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
@@ -2323,7 +2321,7 @@ fn rational_quadratic_line_overlap_report(
         &max_real(&segment_a, &segment_b, policy)?,
         policy,
     )?;
-    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+    match compare_reals(&overlap_min, &overlap_max, policy).value()? {
         Ordering::Greater => Some(LineRationalQuadraticBezierIntersectionReport {
             class: LineRationalQuadraticBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
@@ -2413,7 +2411,7 @@ fn rational_quadratic_general_line_overlap_report(
         policy,
     )?;
     let overlap_max = min_real(&max_real(&curve_a, &curve_b, policy)?, &Real::one(), policy)?;
-    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+    match compare_reals(&overlap_min, &overlap_max, policy).value()? {
         Ordering::Greater => Some(LineRationalQuadraticBezierIntersectionReport {
             class: LineRationalQuadraticBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
@@ -2470,8 +2468,8 @@ fn is_degree_elevated_line(curve: &QuadraticBezier, policy: PredicatePolicy) -> 
     let x_sum = curve.start().x.clone() + curve.end().x.clone();
     let y_sum = curve.start().y.clone() + curve.end().y.clone();
     Some(
-        compare_reals_with_policy(&x_mid, &x_sum, policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&y_mid, &y_sum, policy).value()? == Ordering::Equal,
+        compare_reals(&x_mid, &x_sum, policy).value()? == Ordering::Equal
+            && compare_reals(&y_mid, &y_sum, policy).value()? == Ordering::Equal,
     )
 }
 
@@ -2493,8 +2491,8 @@ fn quadratic_line_image_monotone(
     let first = varying_coordinate(curve.control(), axis) - varying_coordinate(curve.start(), axis);
     let second = varying_coordinate(curve.end(), axis) - varying_coordinate(curve.control(), axis);
     let signs = [
-        compare_reals_with_policy(&first, &Real::zero(), policy).value()?,
-        compare_reals_with_policy(&second, &Real::zero(), policy).value()?,
+        compare_reals(&first, &Real::zero(), policy).value()?,
+        compare_reals(&second, &Real::zero(), policy).value()?,
     ];
     let nonnegative = signs.iter().all(|sign| *sign != Ordering::Less);
     let nonpositive = signs.iter().all(|sign| *sign != Ordering::Greater);
@@ -2511,8 +2509,8 @@ fn quadratic_scalar_image_monotone(controls: &[Real; 3], policy: PredicatePolicy
     let first = controls[1].clone() - controls[0].clone();
     let second = controls[2].clone() - controls[1].clone();
     let signs = [
-        compare_reals_with_policy(&first, &Real::zero(), policy).value()?,
-        compare_reals_with_policy(&second, &Real::zero(), policy).value()?,
+        compare_reals(&first, &Real::zero(), policy).value()?,
+        compare_reals(&second, &Real::zero(), policy).value()?,
     ];
     let nonnegative = signs.iter().all(|sign| *sign != Ordering::Less);
     let nonpositive = signs.iter().all(|sign| *sign != Ordering::Greater);
@@ -2530,10 +2528,10 @@ fn is_degree_elevated_cubic_line(curve: &CubicBezier, policy: PredicatePolicy) -
     let second_x = curve.start().x.clone() + Real::from(2) * curve.end().x.clone();
     let second_y = curve.start().y.clone() + Real::from(2) * curve.end().y.clone();
     Some(
-        compare_reals_with_policy(&three_x1, &first_x, policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&three_y1, &first_y, policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&three_x2, &second_x, policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&three_y2, &second_y, policy).value()? == Ordering::Equal,
+        compare_reals(&three_x1, &first_x, policy).value()? == Ordering::Equal
+            && compare_reals(&three_y1, &first_y, policy).value()? == Ordering::Equal
+            && compare_reals(&three_x2, &second_x, policy).value()? == Ordering::Equal
+            && compare_reals(&three_y2, &second_y, policy).value()? == Ordering::Equal,
     )
 }
 
@@ -2544,25 +2542,13 @@ fn cubic_same_support(
     policy: PredicatePolicy,
 ) -> Option<bool> {
     Some(
-        compare_reals_with_policy(&support_coordinate(curve.start(), axis), fixed, policy)
-            .value()?
+        compare_reals(&support_coordinate(curve.start(), axis), fixed, policy).value()?
             == Ordering::Equal
-            && compare_reals_with_policy(
-                &support_coordinate(curve.control0(), axis),
-                fixed,
-                policy,
-            )
-            .value()?
+            && compare_reals(&support_coordinate(curve.control0(), axis), fixed, policy).value()?
                 == Ordering::Equal
-            && compare_reals_with_policy(
-                &support_coordinate(curve.control1(), axis),
-                fixed,
-                policy,
-            )
-            .value()?
+            && compare_reals(&support_coordinate(curve.control1(), axis), fixed, policy).value()?
                 == Ordering::Equal
-            && compare_reals_with_policy(&support_coordinate(curve.end(), axis), fixed, policy)
-                .value()?
+            && compare_reals(&support_coordinate(curve.end(), axis), fixed, policy).value()?
                 == Ordering::Equal,
     )
 }
@@ -2576,9 +2562,9 @@ fn quadratic_general_same_support(
     let q1 = implicit_line_support_coefficient(segment, curve.control());
     let q2 = implicit_line_support_coefficient(segment, curve.end());
     Some(
-        compare_reals_with_policy(&q0, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&q1, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&q2, &Real::zero(), policy).value()? == Ordering::Equal,
+        compare_reals(&q0, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&q1, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&q2, &Real::zero(), policy).value()? == Ordering::Equal,
     )
 }
 
@@ -2592,10 +2578,10 @@ fn cubic_general_same_support(
     let q2 = implicit_line_support_coefficient(segment, curve.control1());
     let q3 = implicit_line_support_coefficient(segment, curve.end());
     Some(
-        compare_reals_with_policy(&q0, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&q1, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&q2, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&q3, &Real::zero(), policy).value()? == Ordering::Equal,
+        compare_reals(&q0, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&q1, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&q2, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&q3, &Real::zero(), policy).value()? == Ordering::Equal,
     )
 }
 
@@ -2644,7 +2630,7 @@ fn classify_cubic_hodograph_controls(
 ) -> LineCubicBezierSupportOverlapMonotonicity {
     let mut signs = Vec::with_capacity(3);
     for control in controls {
-        let Some(sign) = compare_reals_with_policy(control, &Real::zero(), policy).value() else {
+        let Some(sign) = compare_reals(control, &Real::zero(), policy).value() else {
             return LineCubicBezierSupportOverlapMonotonicity::Unknown;
         };
         signs.push(sign);
@@ -2729,7 +2715,7 @@ fn line_image_parameter(
     let start = varying_coordinate(curve.start(), axis);
     let end = varying_coordinate(curve.end(), axis);
     let denominator = end - start.clone();
-    match compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? {
+    match compare_reals(&denominator, &Real::zero(), policy).value()? {
         Ordering::Equal => None,
         Ordering::Less | Ordering::Greater => ((value.clone() - start) / denominator).ok(),
     }
@@ -2747,7 +2733,7 @@ fn solve_quadratic_varying_roots(
     let a = p0.clone() - Real::from(2) * p1.clone() + p2.clone();
     let b = Real::from(2) * (p1 - p0.clone());
     let c = p0 - fixed;
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_linear_root(b, c, policy),
         Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
     }
@@ -2772,7 +2758,7 @@ fn quadratic_line_image_parameter(
         }
         let mut duplicate = false;
         for existing in &accepted {
-            match compare_reals_with_policy(existing, &root, policy).value()? {
+            match compare_reals(existing, &root, policy).value()? {
                 Ordering::Equal => {
                     duplicate = true;
                     break;
@@ -2798,7 +2784,7 @@ fn quadratic_scalar_image_parameter(
     let a = controls[0].clone() - Real::from(2) * controls[1].clone() + controls[2].clone();
     let b = Real::from(2) * (controls[1].clone() - controls[0].clone());
     let c = controls[0].clone() - value.clone();
-    let roots = match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    let roots = match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_linear_root(b, c, policy)?,
         Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy)?,
     };
@@ -2810,11 +2796,7 @@ fn quadratic_scalar_image_parameter(
             None => return None,
         }
         if accepted.iter().try_fold(false, |duplicate, existing| {
-            Some(
-                duplicate
-                    || compare_reals_with_policy(existing, &root, policy).value()?
-                        == Ordering::Equal,
-            )
+            Some(duplicate || compare_reals(existing, &root, policy).value()? == Ordering::Equal)
         })? {
             continue;
         }
@@ -2832,15 +2814,11 @@ fn cubic_line_image_parameter(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Option<Real> {
-    match compare_reals_with_policy(value, &varying_coordinate(curve.start(), axis), policy)
-        .value()?
-    {
+    match compare_reals(value, &varying_coordinate(curve.start(), axis), policy).value()? {
         Ordering::Equal => return Some(Real::zero()),
         Ordering::Less | Ordering::Greater => {}
     }
-    match compare_reals_with_policy(value, &varying_coordinate(curve.end(), axis), policy)
-        .value()?
-    {
+    match compare_reals(value, &varying_coordinate(curve.end(), axis), policy).value()? {
         Ordering::Equal => return Some(Real::one()),
         Ordering::Less | Ordering::Greater => {}
     }
@@ -2848,7 +2826,7 @@ fn cubic_line_image_parameter(
     let end = varying_coordinate(curve.end(), axis);
     let denominator = end - start.clone();
     if is_degree_elevated_cubic_line(curve, policy)? {
-        return match compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? {
+        return match compare_reals(&denominator, &Real::zero(), policy).value()? {
             Ordering::Equal => None,
             Ordering::Less | Ordering::Greater => ((value.clone() - start) / denominator).ok(),
         };
@@ -2862,13 +2840,13 @@ fn cubic_line_image_parameter(
             None => return None,
         }
         let point = eval_cubic_at_real(curve, &root);
-        match compare_reals_with_policy(&varying_coordinate(&point, axis), value, policy).value()? {
+        match compare_reals(&varying_coordinate(&point, axis), value, policy).value()? {
             Ordering::Equal => {}
             Ordering::Less | Ordering::Greater => continue,
         }
         let mut duplicate = false;
         for existing in &accepted {
-            match compare_reals_with_policy(existing, &root, policy).value()? {
+            match compare_reals(existing, &root, policy).value()? {
                 Ordering::Equal => {
                     duplicate = true;
                     break;
@@ -2891,17 +2869,17 @@ fn cubic_scalar_image_parameter(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Option<Real> {
-    match compare_reals_with_policy(value, &controls[0], policy).value()? {
+    match compare_reals(value, &controls[0], policy).value()? {
         Ordering::Equal => return Some(Real::zero()),
         Ordering::Less | Ordering::Greater => {}
     }
-    match compare_reals_with_policy(value, &controls[3], policy).value()? {
+    match compare_reals(value, &controls[3], policy).value()? {
         Ordering::Equal => return Some(Real::one()),
         Ordering::Less | Ordering::Greater => {}
     }
     if cubic_scalar_image_is_affine(controls, policy)? {
         let denominator = controls[3].clone() - controls[0].clone();
-        return match compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? {
+        return match compare_reals(&denominator, &Real::zero(), policy).value()? {
             Ordering::Equal => None,
             Ordering::Less | Ordering::Greater => {
                 ((value.clone() - controls[0].clone()) / denominator).ok()
@@ -2918,11 +2896,7 @@ fn cubic_scalar_image_parameter(
             None => return None,
         }
         if accepted.iter().try_fold(false, |duplicate, existing| {
-            Some(
-                duplicate
-                    || compare_reals_with_policy(existing, &root, policy).value()?
-                        == Ordering::Equal,
-            )
+            Some(duplicate || compare_reals(existing, &root, policy).value()? == Ordering::Equal)
         })? {
             continue;
         }
@@ -2942,9 +2916,8 @@ fn cubic_scalar_image_is_affine(controls: &[Real; 4], policy: PredicatePolicy) -
         - controls[0].clone()
         - Real::from(2) * controls[3].clone();
     Some(
-        compare_reals_with_policy(&first, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&second, &Real::zero(), policy).value()?
-                == Ordering::Equal,
+        compare_reals(&first, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&second, &Real::zero(), policy).value()? == Ordering::Equal,
     )
 }
 
@@ -2960,8 +2933,8 @@ fn solve_cubic_scalar_roots_up_to_quadratic(
         + Real::from(3) * controls[2].clone();
     let c = Real::from(3) * (controls[1].clone() - controls[0].clone());
     let d = controls[0].clone() - value;
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
-        Ordering::Equal => match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals(&b, &Real::zero(), policy).value()? {
             Ordering::Equal => solve_linear_root(c, d, policy),
             Ordering::Less | Ordering::Greater => solve_quadratic_roots(b, c, d, policy),
         },
@@ -2976,8 +2949,8 @@ fn solve_cubic_varying_roots_up_to_quadratic(
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
     let (a, b, c, d) = cubic_varying_coordinate_polynomial(curve, axis, value);
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
-        Ordering::Equal => match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals(&b, &Real::zero(), policy).value()? {
             Ordering::Equal => solve_linear_root(c, d, policy),
             Ordering::Less | Ordering::Greater => solve_quadratic_roots(b, c, d, policy),
         },
@@ -3012,9 +2985,9 @@ fn rational_quadratic_same_support(
         rational_conic_support_coefficient(curve.control(), curve.control_weight(), axis, fixed);
     let q2 = rational_conic_support_coefficient(curve.end(), &Real::one(), axis, fixed);
     Some(
-        compare_reals_with_policy(&q0, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&q1, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&q2, &Real::zero(), policy).value()? == Ordering::Equal,
+        compare_reals(&q0, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&q1, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&q2, &Real::zero(), policy).value()? == Ordering::Equal,
     )
 }
 
@@ -3028,9 +3001,9 @@ fn rational_quadratic_general_same_support(
         rational_conic_implicit_line_coefficient(segment, curve.control(), curve.control_weight());
     let q2 = rational_conic_implicit_line_coefficient(segment, curve.end(), &Real::one());
     Some(
-        compare_reals_with_policy(&q0, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&q1, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&q2, &Real::zero(), policy).value()? == Ordering::Equal,
+        compare_reals(&q0, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&q1, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&q2, &Real::zero(), policy).value()? == Ordering::Equal,
     )
 }
 
@@ -3078,8 +3051,7 @@ fn rational_quadratic_inverse_boundary_roots(
     for (source, value) in boundaries {
         if retained.iter().any(
             |existing: &LineRationalQuadraticBezierInverseBoundaryRoots| {
-                compare_reals_with_policy(&existing.value, &value, policy).value()
-                    == Some(Ordering::Equal)
+                compare_reals(&existing.value, &value, policy).value() == Some(Ordering::Equal)
             },
         ) {
             continue;
@@ -3112,9 +3084,9 @@ fn represent_rational_quadratic_inverse_roots(
     let b = Real::from(2) * (q1 - q0.clone());
     let c = q0;
     let zero = Real::zero();
-    let a_zero = compare_reals_with_policy(&a, &zero, policy).value();
-    let b_zero = compare_reals_with_policy(&b, &zero, policy).value();
-    let c_zero = compare_reals_with_policy(&c, &zero, policy).value();
+    let a_zero = compare_reals(&a, &zero, policy).value();
+    let b_zero = compare_reals(&b, &zero, policy).value();
+    let c_zero = compare_reals(&c, &zero, policy).value();
     if matches!(a_zero, Some(Ordering::Equal))
         && matches!(b_zero, Some(Ordering::Equal))
         && matches!(c_zero, Some(Ordering::Equal))
@@ -3182,7 +3154,7 @@ fn classify_rational_quadratic_hodograph_controls(
 ) -> LineRationalQuadraticBezierSupportOverlapMonotonicity {
     let mut signs = Vec::with_capacity(3);
     for control in controls {
-        let Some(sign) = compare_reals_with_policy(control, &Real::zero(), policy).value() else {
+        let Some(sign) = compare_reals(control, &Real::zero(), policy).value() else {
             return LineRationalQuadraticBezierSupportOverlapMonotonicity::Unknown;
         };
         signs.push(sign);
@@ -3210,7 +3182,7 @@ fn solve_rational_quadratic_varying_roots(
     let a = q0.clone() - Real::from(2) * q1.clone() + q2.clone();
     let b = Real::from(2) * (q1 - q0.clone());
     let c = q0;
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_linear_root(b, c, policy),
         Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
     }
@@ -3240,13 +3212,13 @@ fn rational_quadratic_line_image_parameter(
             None => return None,
         }
         let point = eval_rational_quadratic_at_real(curve, &root, policy)?;
-        match compare_reals_with_policy(&varying_coordinate(&point, axis), value, policy).value()? {
+        match compare_reals(&varying_coordinate(&point, axis), value, policy).value()? {
             Ordering::Equal => {}
             Ordering::Less | Ordering::Greater => continue,
         }
         let mut duplicate = false;
         for existing in &accepted {
-            match compare_reals_with_policy(existing, &root, policy).value()? {
+            match compare_reals(existing, &root, policy).value()? {
                 Ordering::Equal => {
                     duplicate = true;
                     break;
@@ -3280,13 +3252,13 @@ fn rational_quadratic_line_parameter_image_parameter(
             None => return None,
         }
         let image = line_parameter_for_point_from_controls(curve, scalar_controls, &root, policy)?;
-        match compare_reals_with_policy(&image, value, policy).value()? {
+        match compare_reals(&image, value, policy).value()? {
             Ordering::Equal => {}
             Ordering::Less | Ordering::Greater => continue,
         }
         let mut duplicate = false;
         for existing in &accepted {
-            match compare_reals_with_policy(existing, &root, policy).value()? {
+            match compare_reals(existing, &root, policy).value()? {
                 Ordering::Equal => {
                     duplicate = true;
                     break;
@@ -3316,7 +3288,7 @@ fn solve_rational_quadratic_scalar_image_roots(
     let a = q0.clone() - Real::from(2) * q1.clone() + q2.clone();
     let b = Real::from(2) * (q1 - q0.clone());
     let c = q0;
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_linear_root(b, c, policy),
         Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
     }
@@ -3332,7 +3304,7 @@ fn line_parameter_for_point_from_controls(
     let w = one_minus_t.clone() * one_minus_t.clone()
         + Real::from(2) * one_minus_t.clone() * parameter.clone() * curve.control_weight().clone()
         + parameter.clone() * parameter.clone();
-    match compare_reals_with_policy(&w, &Real::zero(), policy).value()? {
+    match compare_reals(&w, &Real::zero(), policy).value()? {
         Ordering::Equal => None,
         Ordering::Less | Ordering::Greater => {
             let numerator = one_minus_t.clone() * one_minus_t * scalar_controls[0].clone()
@@ -3423,13 +3395,11 @@ fn roots_are_tangent(
     let a = p0.clone() - Real::from(2) * p1.clone() + p2.clone();
     let b = Real::from(2) * (p1 - p0.clone());
     let c = p0 - fixed;
-    if compare_reals_with_policy(&a, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(&a, &Real::zero(), policy).value()? == Ordering::Equal {
         return Some(false);
     }
     let discriminant = b.clone() * b - Real::from(4) * a * c;
-    Some(
-        compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal,
-    )
+    Some(compare_reals(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal)
 }
 
 fn implicit_line_quadratic_roots_are_tangent(
@@ -3443,13 +3413,11 @@ fn implicit_line_quadratic_roots_are_tangent(
     let a = q0.clone() - Real::from(2) * q1.clone() + q2;
     let b = Real::from(2) * (q1 - q0.clone());
     let c = q0;
-    if compare_reals_with_policy(&a, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(&a, &Real::zero(), policy).value()? == Ordering::Equal {
         return Some(false);
     }
     let discriminant = b.clone() * b - Real::from(4) * a * c;
-    Some(
-        compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal,
-    )
+    Some(compare_reals(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal)
 }
 
 fn rational_quadratic_roots_are_tangent(
@@ -3469,13 +3437,11 @@ fn rational_quadratic_roots_are_tangent(
     let a = q0.clone() - Real::from(2) * q1.clone() + q2.clone();
     let b = Real::from(2) * (q1 - q0.clone());
     let c = q0;
-    if compare_reals_with_policy(&a, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(&a, &Real::zero(), policy).value()? == Ordering::Equal {
         return Some(false);
     }
     let discriminant = b.clone() * b - Real::from(4) * a * c;
-    Some(
-        compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal,
-    )
+    Some(compare_reals(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal)
 }
 
 fn implicit_line_rational_quadratic_roots_are_tangent(
@@ -3490,13 +3456,11 @@ fn implicit_line_rational_quadratic_roots_are_tangent(
     let a = q0.clone() - Real::from(2) * q1.clone() + q2;
     let b = Real::from(2) * (q1 - q0.clone());
     let c = q0;
-    if compare_reals_with_policy(&a, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(&a, &Real::zero(), policy).value()? == Ordering::Equal {
         return Some(false);
     }
     let discriminant = b.clone() * b - Real::from(4) * a * c;
-    Some(
-        compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal,
-    )
+    Some(compare_reals(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal)
 }
 
 fn cubic_roots_are_tangent_up_to_quadratic(
@@ -3517,16 +3481,14 @@ fn cubic_roots_are_tangent_up_to_quadratic(
     let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
     let c = Real::from(3) * (p1 - p0.clone());
     let d = p0 - fixed;
-    if compare_reals_with_policy(&a, &Real::zero(), policy).value()? != Ordering::Equal {
+    if compare_reals(&a, &Real::zero(), policy).value()? != Ordering::Equal {
         return None;
     }
-    if compare_reals_with_policy(&b, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(&b, &Real::zero(), policy).value()? == Ordering::Equal {
         return Some(false);
     }
     let discriminant = c.clone() * c - Real::from(4) * b * d;
-    Some(
-        compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal,
-    )
+    Some(compare_reals(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal)
 }
 
 fn implicit_line_cubic_roots_are_tangent_up_to_quadratic(
@@ -3535,21 +3497,19 @@ fn implicit_line_cubic_roots_are_tangent_up_to_quadratic(
     policy: PredicatePolicy,
 ) -> Option<bool> {
     let (a, b, c, d) = cubic_implicit_line_polynomial(segment, curve);
-    if compare_reals_with_policy(&a, &Real::zero(), policy).value()? != Ordering::Equal {
+    if compare_reals(&a, &Real::zero(), policy).value()? != Ordering::Equal {
         return None;
     }
-    if compare_reals_with_policy(&b, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(&b, &Real::zero(), policy).value()? == Ordering::Equal {
         return Some(false);
     }
     let discriminant = c.clone() * c - Real::from(4) * b * d;
-    Some(
-        compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal,
-    )
+    Some(compare_reals(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal)
 }
 
 fn parameter_in_unit_interval(parameter: &Real, policy: PredicatePolicy) -> Option<bool> {
-    let lower = compare_reals_with_policy(parameter, &Real::zero(), policy).value()?;
-    let upper = compare_reals_with_policy(parameter, &Real::one(), policy).value()?;
+    let lower = compare_reals(parameter, &Real::zero(), policy).value()?;
+    let upper = compare_reals(parameter, &Real::one(), policy).value()?;
     Some(!matches!(lower, Ordering::Less) && !matches!(upper, Ordering::Greater))
 }
 
@@ -3563,22 +3523,22 @@ fn point_inside_segment_bounds(
     let y_min = min_real(&segment.start().y, &segment.end().y, policy)?;
     let y_max = max_real(&segment.start().y, &segment.end().y, policy)?;
     Some(
-        compare_reals_with_policy(&point.x, &x_min, policy).value()? != Ordering::Less
-            && compare_reals_with_policy(&point.x, &x_max, policy).value()? != Ordering::Greater
-            && compare_reals_with_policy(&point.y, &y_min, policy).value()? != Ordering::Less
-            && compare_reals_with_policy(&point.y, &y_max, policy).value()? != Ordering::Greater,
+        compare_reals(&point.x, &x_min, policy).value()? != Ordering::Less
+            && compare_reals(&point.x, &x_max, policy).value()? != Ordering::Greater
+            && compare_reals(&point.y, &y_min, policy).value()? != Ordering::Less
+            && compare_reals(&point.y, &y_max, policy).value()? != Ordering::Greater,
     )
 }
 
 fn min_real(first: &Real, second: &Real, policy: PredicatePolicy) -> Option<Real> {
-    match compare_reals_with_policy(first, second, policy).value()? {
+    match compare_reals(first, second, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(first.clone()),
         Ordering::Greater => Some(second.clone()),
     }
 }
 
 fn max_real(first: &Real, second: &Real, policy: PredicatePolicy) -> Option<Real> {
-    match compare_reals_with_policy(first, second, policy).value()? {
+    match compare_reals(first, second, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(second.clone()),
         Ordering::Greater => Some(first.clone()),
     }
@@ -3588,10 +3548,10 @@ fn push_unique_intersection(
     intersections: &mut Vec<LineQuadraticBezierIntersection>,
     parameter: Real,
     point: Point2,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> Option<()> {
     for existing in intersections.iter() {
-        if point2_equal(&existing.point, &point).value()? {
+        if point2_equal(&existing.point, &point, policy).value()? {
             return Some(());
         }
     }
@@ -3605,7 +3565,7 @@ fn sort_line_quadratic_intersections(
 ) -> Option<()> {
     for left in 0..intersections.len() {
         for right in (left + 1)..intersections.len() {
-            compare_reals_with_policy(
+            compare_reals(
                 &intersections[left].parameter,
                 &intersections[right].parameter,
                 policy,
@@ -3614,7 +3574,7 @@ fn sort_line_quadratic_intersections(
         }
     }
     intersections.sort_by(|left, right| {
-        compare_reals_with_policy(&left.parameter, &right.parameter, policy)
+        compare_reals(&left.parameter, &right.parameter, policy)
             .value()
             .expect("pairwise line/quadratic parameter order was certified before sorting")
     });
@@ -3667,7 +3627,7 @@ fn eval_rational_quadratic_at_real(
     let b2 = parameter.clone() * parameter.clone();
     let weighted_b1 = b1 * curve.control_weight().clone();
     let denominator = b0.clone() + weighted_b1.clone() + b2.clone();
-    if compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(&denominator, &Real::zero(), policy).value()? == Ordering::Equal {
         return None;
     }
     let x = curve.start().x.clone() * b0.clone()
@@ -3686,10 +3646,10 @@ fn push_unique_rational_quadratic_intersection(
     intersections: &mut Vec<LineRationalQuadraticBezierIntersection>,
     parameter: Real,
     point: Point2,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> Option<()> {
     for existing in intersections.iter() {
-        if point2_equal(&existing.point, &point).value()? {
+        if point2_equal(&existing.point, &point, policy).value()? {
             return Some(());
         }
     }
@@ -3703,7 +3663,7 @@ fn sort_rational_quadratic_intersections(
 ) -> Option<()> {
     for left in 0..intersections.len() {
         for right in (left + 1)..intersections.len() {
-            compare_reals_with_policy(
+            compare_reals(
                 &intersections[left].parameter,
                 &intersections[right].parameter,
                 policy,
@@ -3712,7 +3672,7 @@ fn sort_rational_quadratic_intersections(
         }
     }
     intersections.sort_by(|left, right| {
-        compare_reals_with_policy(&left.parameter, &right.parameter, policy)
+        compare_reals(&left.parameter, &right.parameter, policy)
             .value()
             .expect("pairwise line/rational-quadratic parameter order was certified before sorting")
     });
@@ -3723,10 +3683,10 @@ fn push_unique_cubic_intersection(
     intersections: &mut Vec<LineCubicBezierIntersection>,
     parameter: Real,
     point: Point2,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> Option<()> {
     for existing in intersections.iter() {
-        if point2_equal(&existing.point, &point).value()? {
+        if point2_equal(&existing.point, &point, policy).value()? {
             return Some(());
         }
     }
@@ -3740,7 +3700,7 @@ fn sort_cubic_intersections(
 ) -> Option<()> {
     for left in 0..intersections.len() {
         for right in (left + 1)..intersections.len() {
-            compare_reals_with_policy(
+            compare_reals(
                 &intersections[left].parameter,
                 &intersections[right].parameter,
                 policy,
@@ -3749,7 +3709,7 @@ fn sort_cubic_intersections(
         }
     }
     intersections.sort_by(|left, right| {
-        compare_reals_with_policy(&left.parameter, &right.parameter, policy)
+        compare_reals(&left.parameter, &right.parameter, policy)
             .value()
             .expect("pairwise line/cubic parameter order was certified before sorting")
     });

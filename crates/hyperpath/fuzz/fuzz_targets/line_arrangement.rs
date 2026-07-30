@@ -2,8 +2,8 @@
 
 use hyperlimit::PredicatePolicy;
 use hyperpath::{
-    LineArrangementCellFaceClass, LineArrangementError, LineArrangementEventClass,
-    LinePathSegment, arrange_line_segments,
+    LineArrangementCellFaceClass, LineArrangementError, LineArrangementEventClass, LinePathSegment,
+    arrange_line_segments,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -28,17 +28,23 @@ fuzz_target!(|data: &[u8]| {
     let first = LinePathSegment::new(
         p(signed(data[0]), signed(data[1])),
         p(signed(data[2]), signed(data[3])),
-    );
+        PredicatePolicy::STRICT,
+    )
+    .expect("strict fuzz segment");
     let second = LinePathSegment::new(
         p(signed(data[4]), signed(data[5])),
         p(signed(data[6]), signed(data[7])),
-    );
+        PredicatePolicy::STRICT,
+    )
+    .expect("strict fuzz segment");
     let third = LinePathSegment::new(
         p(signed(data[8]), signed(data[9])),
         p(signed(data[10]), signed(data[11])),
-    );
+        PredicatePolicy::STRICT,
+    )
+    .expect("strict fuzz segment");
 
-    match arrange_line_segments(&[first, second, third], PredicatePolicy::default()) {
+    match arrange_line_segments(&[first, second, third], PredicatePolicy::STRICT) {
         Ok(report) => {
             assert_eq!(report.breakpoints.len(), 3);
             assert_eq!(report.events.len(), 3);
@@ -62,10 +68,11 @@ fuzz_target!(|data: &[u8]| {
     let y = signed(data[13]);
     let dx = i64::from(data[14] % 64) + 1;
     let dy = i64::from(data[15] % 64) + 1;
-    let horizontal = LinePathSegment::new(p(x - dx, y), p(x + dx, y));
-    let vertical = LinePathSegment::new(p(x, y - dy), p(x, y + dy));
-    let report =
-        arrange_line_segments(&[horizontal, vertical], PredicatePolicy::default()).unwrap();
+    let horizontal = LinePathSegment::new(p(x - dx, y), p(x + dx, y), PredicatePolicy::STRICT)
+        .expect("strict fuzz segment");
+    let vertical = LinePathSegment::new(p(x, y - dy), p(x, y + dy), PredicatePolicy::STRICT)
+        .expect("strict fuzz segment");
+    let report = arrange_line_segments(&[horizontal, vertical], PredicatePolicy::STRICT).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -76,12 +83,16 @@ fuzz_target!(|data: &[u8]| {
     assert!(report.cell_graph.faces.is_empty());
 
     let square = [
-        LinePathSegment::new(p(0, 0), p(4, 0)),
-        LinePathSegment::new(p(4, 0), p(4, 4)),
-        LinePathSegment::new(p(4, 4), p(0, 4)),
-        LinePathSegment::new(p(0, 4), p(0, 0)),
+        LinePathSegment::new(p(0, 0), p(4, 0), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+        LinePathSegment::new(p(4, 0), p(4, 4), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+        LinePathSegment::new(p(4, 4), p(0, 4), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+        LinePathSegment::new(p(0, 4), p(0, 0), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
     ];
-    let square_report = arrange_line_segments(&square, PredicatePolicy::default()).unwrap();
+    let square_report = arrange_line_segments(&square, PredicatePolicy::STRICT).unwrap();
     assert_eq!(square_report.cell_graph.vertices.len(), 4);
     assert_eq!(square_report.cell_graph.edges.len(), 4);
     assert_eq!(square_report.cell_graph.faces.len(), 2);

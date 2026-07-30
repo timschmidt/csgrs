@@ -32,16 +32,21 @@ fuzz_target!(|data: &[u8]| {
         LinePathSegment::new(
             p(signed(data[1]), signed(data[2])),
             p(signed(data[3]), signed(data[4])),
-        ),
+            PredicatePolicy::STRICT,
+        )
+        .expect("strict fuzz segment"),
         r(i64::from(data[5] % 64)),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     assert!(
         PcbObroundPad::new(
             NetId(2),
             TraceLayer(0),
-            LinePathSegment::new(p(0, 0), p(1, 0)),
+            LinePathSegment::new(p(0, 0), p(1, 0), PredicatePolicy::STRICT)
+                .expect("strict fuzz segment"),
             r(-1),
+            PredicatePolicy::STRICT
         )
         .is_err()
     );
@@ -58,19 +63,23 @@ fuzz_target!(|data: &[u8]| {
             LinePathSegment::new(
                 p(signed(data[8]), signed(data[9])),
                 p(signed(data[10]), signed(data[11])),
-            ),
+                PredicatePolicy::STRICT,
+            )
+            .expect("strict fuzz segment"),
             r(i64::from(data[12] % 48)),
+            PredicatePolicy::STRICT,
         )
         .unwrap(),
+        PredicatePolicy::STRICT,
     );
     let clearance = r(i64::from(data[13] % 48));
     let trace_report =
-        check_trace_obround_pad_clearance(&trace, &pad, &clearance, PredicatePolicy::default());
+        check_trace_obround_pad_clearance(&trace, &pad, &clearance, PredicatePolicy::STRICT);
     assert_ne!(trace_report.status, ClearanceStatus::Unknown);
 
-    let board = PcbBoardOutline::new(p(-180, -180), p(180, 180)).unwrap();
+    let board = PcbBoardOutline::new(p(-180, -180), p(180, 180), PredicatePolicy::STRICT).unwrap();
     let board_report =
-        check_obround_pad_board_clearance(&pad, &board, &clearance, PredicatePolicy::default());
+        check_obround_pad_board_clearance(&pad, &board, &clearance, PredicatePolicy::STRICT);
     assert_ne!(board_report.status, ClearanceStatus::Unknown);
 
     let center = p(signed(data[14]), signed(data[15]));
@@ -78,30 +87,41 @@ fuzz_target!(|data: &[u8]| {
     let degenerate = PcbObroundPad::new(
         NetId(3),
         TraceLayer(0),
-        LinePathSegment::new(center.clone(), center.clone()),
+        LinePathSegment::new(center.clone(), center.clone(), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
         diameter.clone(),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
-    let circular = PcbCircularPad::new(NetId(3), TraceLayer(0), center, diameter).unwrap();
+    let circular = PcbCircularPad::new(
+        NetId(3),
+        TraceLayer(0),
+        center,
+        diameter,
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
     let axis_trace = PcbTrace::new(
         NetId(u32::from(data[17] % 3)),
         TraceLayer(0),
-        SweptLineSegment::new(LinePathSegment::new(p(-160, 0), p(160, 0)), r(2)).unwrap(),
+        SweptLineSegment::new(
+            LinePathSegment::new(p(-160, 0), p(160, 0), PredicatePolicy::STRICT)
+                .expect("strict fuzz segment"),
+            r(2),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap(),
+        PredicatePolicy::STRICT,
     );
     assert_eq!(
         check_trace_obround_pad_clearance(
             &axis_trace,
             &degenerate,
             &clearance,
-            PredicatePolicy::default(),
+            PredicatePolicy::STRICT,
         )
         .status,
-        check_trace_pad_clearance(
-            &axis_trace,
-            &circular,
-            &clearance,
-            PredicatePolicy::default()
-        )
-        .status,
+        check_trace_pad_clearance(&axis_trace, &circular, &clearance, PredicatePolicy::STRICT)
+            .status,
     );
 });

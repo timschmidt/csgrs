@@ -13,8 +13,8 @@
 //! candidates, then `hypersolve`
 //! replays the denominator-free polynomial residual before accepting them.
 
-use hyperlimit::Point2;
-use hyperreal::{Real, RealExactSetFacts, RealSign};
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign};
+use hyperreal::{Real, RealExactSetFacts};
 use hypersolve::{
     CandidateCertificationReport, Constraint, Expr, Problem, certify_candidate,
     context_from_problem,
@@ -118,20 +118,25 @@ pub enum PhCurveError {
     UnsupportedDivision,
     /// Target length was structurally negative.
     NegativeLength,
+    /// The selected predicate policy could not certify a required sign.
+    PredicateUnresolved,
 }
 
 impl CubicPythagoreanHodograph {
-    /// Construct a cubic PH span.
+    /// Construct a cubic PH span with an explicit predicate policy.
     pub fn new(
         start: Point2,
         u0: Real,
         v0: Real,
         u1: Real,
         v1: Real,
+        policy: PredicatePolicy,
     ) -> Result<Self, PhCurveError> {
         let facts = cubic_ph_facts(&start, &u0, &v0, &u1, &v1)?;
-        if facts.exact_length.structural_facts().sign == Some(RealSign::Zero) {
-            return Err(PhCurveError::DegenerateHodograph);
+        match classify_real_sign(&facts.exact_length, policy).value() {
+            Some(Sign::Zero) => return Err(PhCurveError::DegenerateHodograph),
+            Some(Sign::Positive) => {}
+            Some(Sign::Negative) | None => return Err(PhCurveError::PredicateUnresolved),
         }
         Ok(Self {
             start,
@@ -191,7 +196,7 @@ impl CubicPythagoreanHodograph {
 }
 
 impl QuinticPythagoreanHodograph {
-    /// Construct a quintic PH span.
+    /// Construct a quintic PH span with an explicit predicate policy.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         start: Point2,
@@ -201,10 +206,13 @@ impl QuinticPythagoreanHodograph {
         v0: Real,
         v1: Real,
         v2: Real,
+        policy: PredicatePolicy,
     ) -> Result<Self, PhCurveError> {
         let facts = quintic_ph_facts(&start, &u0, &u1, &u2, &v0, &v1, &v2)?;
-        if facts.exact_length.structural_facts().sign == Some(RealSign::Zero) {
-            return Err(PhCurveError::DegenerateHodograph);
+        match classify_real_sign(&facts.exact_length, policy).value() {
+            Some(Sign::Zero) => return Err(PhCurveError::DegenerateHodograph),
+            Some(Sign::Positive) => {}
+            Some(Sign::Negative) | None => return Err(PhCurveError::PredicateUnresolved),
         }
         Ok(Self {
             start,
@@ -293,13 +301,17 @@ impl QuinticPythagoreanHodograph {
 /// `(A, B, C)` are the exact speed polynomial coefficients. This is a native
 /// PH inverse-length replay: a caller may propose `t`, but exact arithmetic
 /// decides whether that proposal matches the retained length.
+/// Certify a cubic PH inverse-length candidate under an explicit predicate policy.
 pub fn certify_cubic_ph_inverse_length(
     curve: &CubicPythagoreanHodograph,
     target_length: Real,
     parameter: BezierParameter,
+    policy: PredicatePolicy,
 ) -> Result<CubicPhInverseLengthReport, PhCurveError> {
-    if target_length.structural_facts().sign == Some(RealSign::Negative) {
-        return Err(PhCurveError::NegativeLength);
+    match classify_real_sign(&target_length, policy).value() {
+        Some(Sign::Negative) => return Err(PhCurveError::NegativeLength),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(PhCurveError::PredicateUnresolved),
     }
     let (a, b, c) = curve.speed_polynomial_coefficients();
     let mut problem = Problem::default();
@@ -328,13 +340,17 @@ pub fn certify_cubic_ph_inverse_length(
 /// `60*s - 60*A0*t - 30*A1*t^2 - 20*A2*t^3 - 15*A3*t^4 - 12*A4*t^5 = 0`.
 /// This extends native PH inverse-length replay from cubic to quintic curves
 /// while keeping all decisions in exact polynomial arithmetic.
+/// Certify a quintic PH inverse-length candidate under an explicit predicate policy.
 pub fn certify_quintic_ph_inverse_length(
     curve: &QuinticPythagoreanHodograph,
     target_length: Real,
     parameter: BezierParameter,
+    policy: PredicatePolicy,
 ) -> Result<QuinticPhInverseLengthReport, PhCurveError> {
-    if target_length.structural_facts().sign == Some(RealSign::Negative) {
-        return Err(PhCurveError::NegativeLength);
+    match classify_real_sign(&target_length, policy).value() {
+        Some(Sign::Negative) => return Err(PhCurveError::NegativeLength),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(PhCurveError::PredicateUnresolved),
     }
     let [a0, a1, a2, a3, a4] = curve.speed_polynomial_coefficients();
     let mut problem = Problem::default();

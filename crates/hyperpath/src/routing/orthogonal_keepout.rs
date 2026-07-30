@@ -11,7 +11,7 @@ use std::cmp::Ordering;
 
 use hyperlimit::{
     Point2, PredicatePolicy, SegmentIntersection, classify_segment_intersection_with_facts,
-    compare_reals_with_policy,
+    compare_reals,
 };
 use hyperreal::Real;
 
@@ -25,17 +25,17 @@ pub(super) fn validate_orthogonal_keepout_vertices(
     if vertices.len() < 4 {
         return Err(MeanderError::InvalidObstaclePolygon);
     }
-    match compare_reals_with_policy(&signed_area_twice(vertices), &Real::zero(), policy).value() {
+    match compare_reals(&signed_area_twice(vertices), &Real::zero(), policy).value() {
         Some(Ordering::Less | Ordering::Greater) => {}
         Some(Ordering::Equal) => return Err(MeanderError::InvalidObstaclePolygon),
         None => return Err(MeanderError::ObstacleDecisionUnknown),
     }
-    for edge in polygon_edges(vertices) {
+    for edge in polygon_edges(vertices, policy)? {
         if edge.facts().axis_aligned.is_none() || edge.facts().known_degenerate != Some(false) {
             return Err(MeanderError::InvalidObstaclePolygon);
         }
     }
-    let edges = polygon_edges(vertices);
+    let edges = polygon_edges(vertices, policy)?;
     for first_index in 0..edges.len() {
         for second_index in (first_index + 1)..edges.len() {
             if adjacent_edges(first_index, second_index, edges.len()) {
@@ -50,6 +50,7 @@ pub(super) fn validate_orthogonal_keepout_vertices(
                 second.end(),
                 first.facts().segment,
                 second.facts().segment,
+                policy,
             )
             .value()
             .ok_or(MeanderError::ObstacleDecisionUnknown)?;
@@ -71,7 +72,7 @@ pub(super) fn segment_intersects_orthogonal_keepout(
     {
         return Ok(true);
     }
-    for edge in polygon_edges(vertices) {
+    for edge in polygon_edges(vertices, policy)? {
         let relation = classify_segment_intersection_with_facts(
             segment.start(),
             segment.end(),
@@ -79,6 +80,7 @@ pub(super) fn segment_intersects_orthogonal_keepout(
             edge.end(),
             segment.facts().segment,
             edge.facts().segment,
+            policy,
         )
         .value()
         .ok_or(MeanderError::ObstacleDecisionUnknown)?;
@@ -101,7 +103,7 @@ fn point_inside_orthogonal_polygon(
         if point_on_closed_segment(point, start, end, policy)? {
             return Ok(true);
         }
-        if compare_reals_with_policy(&start.x, &end.x, policy)
+        if compare_reals(&start.x, &end.x, policy)
             .value()
             .ok_or(MeanderError::ObstacleDecisionUnknown)?
             != Ordering::Equal
@@ -109,10 +111,10 @@ fn point_inside_orthogonal_polygon(
             continue;
         }
         let (min_y, max_y) = ordered_pair(&start.y, &end.y, policy)?;
-        let above_low = compare_reals_with_policy(&min_y, &point.y, policy)
+        let above_low = compare_reals(&min_y, &point.y, policy)
             .value()
             .ok_or(MeanderError::ObstacleDecisionUnknown)?;
-        let below_high = compare_reals_with_policy(&point.y, &max_y, policy)
+        let below_high = compare_reals(&point.y, &max_y, policy)
             .value()
             .ok_or(MeanderError::ObstacleDecisionUnknown)?;
         if !matches!(above_low, Ordering::Less | Ordering::Equal)
@@ -120,7 +122,7 @@ fn point_inside_orthogonal_polygon(
         {
             continue;
         }
-        if compare_reals_with_policy(&point.x, &start.x, policy)
+        if compare_reals(&point.x, &start.x, policy)
             .value()
             .ok_or(MeanderError::ObstacleDecisionUnknown)?
             == Ordering::Less
@@ -138,7 +140,7 @@ fn point_on_closed_segment(
     policy: PredicatePolicy,
 ) -> Result<bool, MeanderError> {
     let cross_value = edge_cross(start, end, point);
-    if compare_reals_with_policy(&cross_value, &Real::zero(), policy)
+    if compare_reals(&cross_value, &Real::zero(), policy)
         .value()
         .ok_or(MeanderError::ObstacleDecisionUnknown)?
         != Ordering::Equal
@@ -148,22 +150,22 @@ fn point_on_closed_segment(
     let (min_x, max_x) = ordered_pair(&start.x, &end.x, policy)?;
     let (min_y, max_y) = ordered_pair(&start.y, &end.y, policy)?;
     Ok(matches!(
-        compare_reals_with_policy(&min_x, &point.x, policy)
+        compare_reals(&min_x, &point.x, policy)
             .value()
             .ok_or(MeanderError::ObstacleDecisionUnknown)?,
         Ordering::Less | Ordering::Equal
     ) && matches!(
-        compare_reals_with_policy(&point.x, &max_x, policy)
+        compare_reals(&point.x, &max_x, policy)
             .value()
             .ok_or(MeanderError::ObstacleDecisionUnknown)?,
         Ordering::Less | Ordering::Equal
     ) && matches!(
-        compare_reals_with_policy(&min_y, &point.y, policy)
+        compare_reals(&min_y, &point.y, policy)
             .value()
             .ok_or(MeanderError::ObstacleDecisionUnknown)?,
         Ordering::Less | Ordering::Equal
     ) && matches!(
-        compare_reals_with_policy(&point.y, &max_y, policy)
+        compare_reals(&point.y, &max_y, policy)
             .value()
             .ok_or(MeanderError::ObstacleDecisionUnknown)?,
         Ordering::Less | Ordering::Equal
@@ -175,7 +177,7 @@ fn ordered_pair(
     second: &Real,
     policy: PredicatePolicy,
 ) -> Result<(Real, Real), MeanderError> {
-    match compare_reals_with_policy(first, second, policy)
+    match compare_reals(first, second, policy)
         .value()
         .ok_or(MeanderError::ObstacleDecisionUnknown)?
     {
@@ -194,13 +196,18 @@ fn signed_area_twice(vertices: &[Point2]) -> Real {
     area
 }
 
-fn polygon_edges(vertices: &[Point2]) -> Vec<LinePathSegment> {
+fn polygon_edges(
+    vertices: &[Point2],
+    policy: PredicatePolicy,
+) -> Result<Vec<LinePathSegment>, MeanderError> {
     (0..vertices.len())
         .map(|index| {
             LinePathSegment::new(
                 vertices[index].clone(),
                 vertices[(index + 1) % vertices.len()].clone(),
+                policy,
             )
+            .map_err(|_| MeanderError::ObstacleDecisionUnknown)
         })
         .collect()
 }

@@ -16,10 +16,12 @@ fn trace(net: u32, y: i32) -> PcbTrace {
         NetId(net),
         TraceLayer(0),
         SweptLineSegment::new(
-            LinePathSegment::new(point(0, y), point(10, y)),
+            LinePathSegment::new(point(0, y), point(10, y), PredicatePolicy::STRICT).unwrap(),
             Real::from(2),
+            PredicatePolicy::STRICT,
         )
         .unwrap(),
+        PredicatePolicy::STRICT,
     )
 }
 
@@ -28,7 +30,12 @@ fn exact_clearance_fast_path_does_not_request_approximation() {
     hyperreal::dispatch_trace::reset();
     let _recording = hyperreal::dispatch_trace::recording_scope();
 
-    let report = check_trace_clearance(&trace(1, 0), &trace(2, 5), &Real::from(3), PredicatePolicy);
+    let report = check_trace_clearance(
+        &trace(1, 0),
+        &trace(2, 5),
+        &Real::from(3),
+        PredicatePolicy::STRICT,
+    );
     assert_eq!(report.status, ClearanceStatus::CertifiedClear);
 
     let correlation = hyperreal::dispatch_trace::snapshot_trace().correlation_summary();

@@ -1,5 +1,6 @@
 #![no_main]
 
+use hyperlimit::PredicatePolicy;
 use hyperpath::{ArcDirection, NetId, parse_specctra_grid_trace_records};
 use hyperpath::{
     SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
@@ -14,7 +15,7 @@ fuzz_target!(|data: &[u8]| {
     if let Ok(text) = std::str::from_utf8(data) {
         let _ = parse_specctra_grid_route_records(text);
         let _ = parse_specctra_grid_trace_records(text);
-        let _ = import_specctra_text_route(text);
+        let _ = import_specctra_text_route(text, PredicatePolicy::STRICT);
     }
 
     if data.len() >= 16 {

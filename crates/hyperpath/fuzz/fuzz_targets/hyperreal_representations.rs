@@ -18,12 +18,33 @@ fuzz_target!(|_data: &[u8]| {
                 Point2::new(tx.clone(), ty + Real::from(2)),
             ];
             let segments = [
-                LinePathSegment::new(points[0].clone(), points[1].clone()),
-                LinePathSegment::new(points[1].clone(), points[2].clone()),
-                LinePathSegment::new(points[2].clone(), points[3].clone()),
-                LinePathSegment::new(points[3].clone(), points[0].clone()),
+                LinePathSegment::new(
+                    points[0].clone(),
+                    points[1].clone(),
+                    PredicatePolicy::STRICT,
+                )
+                .expect("strict fuzz segment"),
+                LinePathSegment::new(
+                    points[1].clone(),
+                    points[2].clone(),
+                    PredicatePolicy::STRICT,
+                )
+                .expect("strict fuzz segment"),
+                LinePathSegment::new(
+                    points[2].clone(),
+                    points[3].clone(),
+                    PredicatePolicy::STRICT,
+                )
+                .expect("strict fuzz segment"),
+                LinePathSegment::new(
+                    points[3].clone(),
+                    points[0].clone(),
+                    PredicatePolicy::STRICT,
+                )
+                .expect("strict fuzz segment"),
             ];
-            let report = arrange_line_segments(&segments, PredicatePolicy).expect("exact square");
+            let report =
+                arrange_line_segments(&segments, PredicatePolicy::STRICT).expect("exact square");
             assert_eq!(report.cell_graph.vertices.len(), 4);
             assert_eq!(report.cell_graph.edges.len(), 4);
             assert!(report.cell_graph.faces.iter().any(|face| {

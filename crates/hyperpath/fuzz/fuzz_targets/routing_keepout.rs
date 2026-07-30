@@ -3,7 +3,7 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     LinePathSegment, MeanderKeepout, MeanderObstacle, OffsetSide,
-    keepout_aware_detour_meander, classify_meander_placement_slots_with_keepouts,
+    classify_meander_placement_slots_with_keepouts, keepout_aware_detour_meander,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -34,7 +34,8 @@ fuzz_target!(|data: &[u8]| {
     } else {
         OffsetSide::Right
     };
-    let source = LinePathSegment::new(p(0, 0), p(length, 0));
+    let source = LinePathSegment::new(p(0, 0), p(length, 0), PredicatePolicy::STRICT)
+        .expect("strict fuzz segment");
     let center_y = match side {
         OffsetSide::Left => amplitude,
         OffsetSide::Right => -amplitude,
@@ -65,7 +66,7 @@ fuzz_target!(|data: &[u8]| {
         bump_count,
         side,
         keepouts.clone(),
-        PredicatePolicy::default(),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     assert_eq!(report.slots.len(), bump_count as usize);
@@ -77,13 +78,14 @@ fuzz_target!(|data: &[u8]| {
         bump_count,
         side,
         keepouts,
-        PredicatePolicy::default(),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     assert_eq!(routed.selected_sides.len(), bump_count as usize);
     assert_eq!(routed.selected_sides[0], opposite(side));
 
-    let diagonal = LinePathSegment::new(p(0, 0), p(3, 4));
+    let diagonal = LinePathSegment::new(p(0, 0), p(3, 4), PredicatePolicy::STRICT)
+        .expect("strict fuzz segment");
     assert_eq!(
         keepout_aware_detour_meander(
             &diagonal,
@@ -91,7 +93,7 @@ fuzz_target!(|data: &[u8]| {
             1,
             side,
             Vec::new(),
-            PredicatePolicy::default()
+            PredicatePolicy::STRICT
         )
         .unwrap_err(),
         hyperpath::MeanderError::UnsupportedSourceGeometry

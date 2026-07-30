@@ -2,9 +2,8 @@
 
 use hyperlimit::PredicatePolicy;
 use hyperpath::{
-    ArcDirection, CurveArrangementCellFaceClass, ExplicitCircularArc,
-    LineArcArrangementEventClass, LineArrangementError, LinePathSegment,
-    arrange_line_segments_with_explicit_arcs,
+    ArcDirection, CurveArrangementCellFaceClass, ExplicitCircularArc, LineArcArrangementEventClass,
+    LineArrangementError, LinePathSegment, arrange_line_segments_with_explicit_arcs,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -35,17 +34,20 @@ fuzz_target!(|data: &[u8]| {
         p(cx + radius, cy),
         p(cx + radius, cy),
         ArcDirection::Ccw,
+        PredicatePolicy::STRICT,
     )
     .unwrap();
 
     let arbitrary = LinePathSegment::new(
         p(signed(data[3]), signed(data[4])),
         p(signed(data[5]), signed(data[6])),
-    );
+        PredicatePolicy::STRICT,
+    )
+    .expect("strict fuzz segment");
     match arrange_line_segments_with_explicit_arcs(
         &[arbitrary],
         &[arc.clone()],
-        PredicatePolicy::default(),
+        PredicatePolicy::STRICT,
     ) {
         Ok(report) => {
             assert_eq!(report.events.len(), 1);
@@ -76,12 +78,22 @@ fuzz_target!(|data: &[u8]| {
     }
 
     let pad = i64::from(data[7] % 64) + 1;
-    let horizontal = LinePathSegment::new(p(cx - radius - pad, cy), p(cx + radius + pad, cy));
-    let vertical = LinePathSegment::new(p(cx, cy - radius - pad), p(cx, cy + radius + pad));
+    let horizontal = LinePathSegment::new(
+        p(cx - radius - pad, cy),
+        p(cx + radius + pad, cy),
+        PredicatePolicy::STRICT,
+    )
+    .expect("strict fuzz segment");
+    let vertical = LinePathSegment::new(
+        p(cx, cy - radius - pad),
+        p(cx, cy + radius + pad),
+        PredicatePolicy::STRICT,
+    )
+    .expect("strict fuzz segment");
     let report = arrange_line_segments_with_explicit_arcs(
         &[horizontal, vertical],
         &[arc.clone()],
-        PredicatePolicy::default(),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
 
@@ -99,7 +111,7 @@ fuzz_target!(|data: &[u8]| {
     );
 
     let circle_only =
-        arrange_line_segments_with_explicit_arcs(&[], &[arc], PredicatePolicy::default()).unwrap();
+        arrange_line_segments_with_explicit_arcs(&[], &[arc], PredicatePolicy::STRICT).unwrap();
     assert_eq!(circle_only.cell_graph.vertices.len(), 1);
     assert_eq!(circle_only.cell_graph.edges.len(), 1);
     assert!(circle_only.cell_graph.faces.iter().any(|face| {

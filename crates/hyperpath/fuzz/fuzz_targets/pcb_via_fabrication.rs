@@ -2,9 +2,8 @@
 
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    NetId, PcbViaStack, TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport,
-    ViaDrillIntent, ViaFabricationAcceptance, ViaFabricationPolicy,
-    certify_via_fabrication_policy,
+    NetId, PcbViaStack, TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport, ViaDrillIntent,
+    ViaFabricationAcceptance, ViaFabricationPolicy, certify_via_fabrication_policy,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -48,6 +47,7 @@ fuzz_target!(|data: &[u8]| {
         r(land),
         r(drill),
         intent,
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     let policy = if allow_all {
@@ -58,15 +58,10 @@ fuzz_target!(|data: &[u8]| {
             r(aspect),
         )
     } else {
-        ViaFabricationPolicy::through_only(
-            board_layers,
-            r(board_thickness),
-            r(minimum),
-            r(aspect),
-        )
+        ViaFabricationPolicy::through_only(board_layers, r(board_thickness), r(minimum), r(aspect))
     };
 
-    let Ok(report) = certify_via_fabrication_policy(&via, &policy, PredicatePolicy::default()) else {
+    let Ok(report) = certify_via_fabrication_policy(&via, &policy, PredicatePolicy::STRICT) else {
         return;
     };
     let annular_ok = land >= drill + 2 * minimum;
@@ -92,7 +87,10 @@ fuzz_target!(|data: &[u8]| {
     if matches!(report.acceptance, ViaFabricationAcceptance::Accepted) {
         assert!(report.transition_policy.allowed);
         assert!(aspect_ok);
-        assert!(intent == ViaDrillIntent::Plated || report.transition_policy.transition.spanned_layers == 1);
+        assert!(
+            intent == ViaDrillIntent::Plated
+                || report.transition_policy.transition.spanned_layers == 1
+        );
         if intent == ViaDrillIntent::Plated {
             assert!(annular_ok);
         }

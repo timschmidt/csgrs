@@ -44,7 +44,7 @@ fuzz_target!(|data: &[u8]| {
         std::slice::from_ref(&trace),
         &[],
         std::slice::from_ref(&rule),
-        PredicatePolicy::default(),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     assert_eq!(report.items.len(), 1);

@@ -43,6 +43,7 @@ fuzz_target!(|data: &[u8]| {
         r(width),
         r(height),
         r(radius),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
 
@@ -61,27 +62,22 @@ fuzz_target!(|data: &[u8]| {
         NetId(u32::from(data[7] % 4)),
         trace_layer,
         SweptLineSegment::new(
-            LinePathSegment::new(trace_start, trace_end),
+            LinePathSegment::new(trace_start, trace_end, PredicatePolicy::STRICT)
+                .expect("strict fuzz segment"),
             r(i64::from(data[12] % 32)),
+            PredicatePolicy::STRICT,
         )
         .unwrap(),
+        PredicatePolicy::STRICT,
     );
     let clearance = r(i64::from(data[13] % 32));
-    let rounded_report = check_trace_rounded_rect_pad_clearance(
-        &trace,
-        &pad,
-        &clearance,
-        PredicatePolicy::default(),
-    );
+    let rounded_report =
+        check_trace_rounded_rect_pad_clearance(&trace, &pad, &clearance, PredicatePolicy::STRICT);
     assert_ne!(rounded_report.status, ClearanceStatus::Unknown);
 
-    let board = PcbBoardOutline::new(p(-160, -160), p(160, 160)).unwrap();
-    let board_report = check_rounded_rect_pad_board_clearance(
-        &pad,
-        &board,
-        &clearance,
-        PredicatePolicy::default(),
-    );
+    let board = PcbBoardOutline::new(p(-160, -160), p(160, 160), PredicatePolicy::STRICT).unwrap();
+    let board_report =
+        check_rounded_rect_pad_board_clearance(&pad, &board, &clearance, PredicatePolicy::STRICT);
     assert_ne!(board_report.status, ClearanceStatus::Unknown);
 
     let zero_radius = PcbRoundedRectPad::new(
@@ -91,6 +87,7 @@ fuzz_target!(|data: &[u8]| {
         r(width),
         r(height),
         r(0),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     let rect = PcbRectPad::new(
@@ -99,33 +96,39 @@ fuzz_target!(|data: &[u8]| {
         pad_center.clone(),
         r(width),
         r(height),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     let rounded_zero_report = check_trace_rounded_rect_pad_clearance(
         &trace,
         &zero_radius,
         &clearance,
-        PredicatePolicy::default(),
+        PredicatePolicy::STRICT,
     );
     let rect_report =
-        check_trace_rect_pad_clearance(&trace, &rect, &clearance, PredicatePolicy::default());
+        check_trace_rect_pad_clearance(&trace, &rect, &clearance, PredicatePolicy::STRICT);
     assert_eq!(rounded_zero_report.status, rect_report.status);
     assert_eq!(
         check_rounded_rect_pad_board_clearance(
             &zero_radius,
             &board,
             &clearance,
-            PredicatePolicy::default()
+            PredicatePolicy::STRICT
         )
         .status,
-        check_rect_pad_board_clearance(&rect, &board, &clearance, PredicatePolicy::default())
-            .status,
+        check_rect_pad_board_clearance(&rect, &board, &clearance, PredicatePolicy::STRICT).status,
     );
 
     let diameter = i64::from(data[14] % 64);
     let circle_center = p(signed(data[15]), signed(data[16]));
-    let circular =
-        PcbCircularPad::new(NetId(3), TraceLayer(0), circle_center.clone(), r(diameter)).unwrap();
+    let circular = PcbCircularPad::new(
+        NetId(3),
+        TraceLayer(0),
+        circle_center.clone(),
+        r(diameter),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
     let rounded_circle = PcbRoundedRectPad::new(
         NetId(3),
         TraceLayer(0),
@@ -133,26 +136,34 @@ fuzz_target!(|data: &[u8]| {
         r(diameter),
         r(diameter),
         r(diameter / 2),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     let circle_trace = PcbTrace::new(
         NetId(u32::from(data[17] % 3)),
         TraceLayer(0),
-        SweptLineSegment::new(LinePathSegment::new(p(-200, 0), p(200, 0)), r(2)).unwrap(),
+        SweptLineSegment::new(
+            LinePathSegment::new(p(-200, 0), p(200, 0), PredicatePolicy::STRICT)
+                .expect("strict fuzz segment"),
+            r(2),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap(),
+        PredicatePolicy::STRICT,
     );
     assert_eq!(
         check_trace_rounded_rect_pad_clearance(
             &circle_trace,
             &rounded_circle,
             &clearance,
-            PredicatePolicy::default(),
+            PredicatePolicy::STRICT,
         )
         .status,
         check_trace_pad_clearance(
             &circle_trace,
             &circular,
             &clearance,
-            PredicatePolicy::default()
+            PredicatePolicy::STRICT
         )
         .status,
     );

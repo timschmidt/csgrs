@@ -9,7 +9,7 @@ use std::cmp::Ordering;
 
 use hyperlimit::{
     Point2, PredicatePolicy, SegmentIntersection, classify_segment_intersection_with_facts,
-    compare_reals_with_policy,
+    compare_reals,
 };
 use hyperreal::{Real, RealExactSetFacts};
 
@@ -49,26 +49,24 @@ pub struct PcbConvexPad {
 }
 
 impl PcbConvexPad {
-    /// Construct a convex polygon pad with native provenance.
+    /// Construct a convex polygon pad under an explicit predicate policy.
     pub fn new(
         net: crate::pcb::NetId,
         layer: crate::pcb::TraceLayer,
         vertices: Vec<Point2>,
+        policy: PredicatePolicy,
     ) -> Result<Self, BoardContourError> {
         if vertices.len() < 3 {
             return Err(BoardContourError::TooFewVertices);
         }
         let signed_area_twice = polygon_signed_area_twice(&vertices);
-        let orientation =
-            match compare_reals_with_policy(&signed_area_twice, &Real::zero(), PredicatePolicy)
-                .value()
-            {
-                Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
-                Some(Ordering::Less) => BoardContourOrientation::Clockwise,
-                Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
-                None => return Err(BoardContourError::UnknownOrientation),
-            };
-        validate_strict_convexity(&vertices, orientation)?;
+        let orientation = match compare_reals(&signed_area_twice, &Real::zero(), policy).value() {
+            Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
+            Some(Ordering::Less) => BoardContourOrientation::Clockwise,
+            Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
+            None => return Err(BoardContourError::UnknownOrientation),
+        };
+        validate_strict_convexity(&vertices, orientation, policy)?;
         let refs = vertices
             .iter()
             .flat_map(|point| [&point.x, &point.y])
@@ -183,26 +181,18 @@ fn classify_swept_distance(
     let overlap_limit_squared = trace_width.clone() * trace_width.clone();
     let clearance_limit = trace_width.clone() + required_clearance.clone() * Real::from(2);
     let clearance_limit_squared = clearance_limit.clone() * clearance_limit;
-    let status =
-        match compare_reals_with_policy(&four_distance_squared, &overlap_limit_squared, policy)
-            .value()
-        {
-            Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
-            Some(Ordering::Greater) => {
-                match compare_reals_with_policy(
-                    &four_distance_squared,
-                    &clearance_limit_squared,
-                    policy,
-                )
-                .value()
-                {
-                    Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
-                    Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
-                    None => ClearanceStatus::Unknown,
-                }
+    let status = match compare_reals(&four_distance_squared, &overlap_limit_squared, policy).value()
+    {
+        Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
+        Some(Ordering::Greater) => {
+            match compare_reals(&four_distance_squared, &clearance_limit_squared, policy).value() {
+                Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
+                Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
+                None => ClearanceStatus::Unknown,
             }
-            None => ClearanceStatus::Unknown,
-        };
+        }
+        None => ClearanceStatus::Unknown,
+    };
     TraceClearanceReport {
         status,
         centerline_intersection: None,
@@ -220,7 +210,7 @@ fn segment_convex_polygon_distance_squared(
     {
         return Some(Real::zero());
     }
-    let edges = polygon_edges(pad.vertices());
+    let edges = polygon_edges(pad.vertices(), policy)?;
     let mut minimum = None;
     for edge in &edges {
         let intersection = classify_segment_intersection_with_facts(
@@ -230,6 +220,7 @@ fn segment_convex_polygon_distance_squared(
             edge.end(),
             segment.facts().segment,
             edge.facts().segment,
+            policy,
         )
         .value()?;
         if !matches!(intersection, SegmentIntersection::Disjoint) {
@@ -283,7 +274,7 @@ fn point_inside_convex_polygon(
         let edge_start = &vertices[index];
         let edge_end = &vertices[(index + 1) % vertices.len()];
         let side = oriented_edge_side(edge_start, edge_end, point, orientation);
-        if compare_reals_with_policy(&side, &Real::zero(), policy).value()? == Ordering::Less {
+        if compare_reals(&side, &Real::zero(), policy).value()? == Ordering::Less {
             return Some(false);
         }
     }
@@ -308,20 +299,20 @@ fn point_segment_distance_squared(
         point.y.clone() - segment.end().y.clone(),
     );
     let length_squared = squared_norm(&ab);
-    match compare_reals_with_policy(&length_squared, &Real::zero(), policy).value()? {
+    match compare_reals(&length_squared, &Real::zero(), policy).value()? {
         Ordering::Equal => return Some(squared_norm(&ap)),
         Ordering::Less => return None,
         Ordering::Greater => {}
     }
     let projection = dot(&ap, &ab);
     if !matches!(
-        compare_reals_with_policy(&projection, &Real::zero(), policy).value()?,
+        compare_reals(&projection, &Real::zero(), policy).value()?,
         Ordering::Greater
     ) {
         return Some(squared_norm(&ap));
     }
     if !matches!(
-        compare_reals_with_policy(&projection, &length_squared, policy).value()?,
+        compare_reals(&projection, &length_squared, policy).value()?,
         Ordering::Less
     ) {
         return Some(squared_norm(&bp));
@@ -334,6 +325,7 @@ fn point_segment_distance_squared(
 fn validate_strict_convexity(
     vertices: &[Point2],
     orientation: BoardContourOrientation,
+    policy: PredicatePolicy,
 ) -> Result<(), BoardContourError> {
     for index in 0..vertices.len() {
         let previous = &vertices[index];
@@ -344,7 +336,7 @@ fn validate_strict_convexity(
             BoardContourOrientation::CounterClockwise => Ordering::Greater,
             BoardContourOrientation::Clockwise => Ordering::Less,
         };
-        match compare_reals_with_policy(&cross_value, &Real::zero(), PredicatePolicy).value() {
+        match compare_reals(&cross_value, &Real::zero(), policy).value() {
             Some(Ordering::Equal) => return Err(BoardContourError::CollinearEdge),
             Some(ordering) if ordering == expected => {}
             Some(_) => return Err(BoardContourError::NonConvex),
@@ -364,13 +356,15 @@ fn polygon_signed_area_twice(vertices: &[Point2]) -> Real {
     area
 }
 
-fn polygon_edges(vertices: &[Point2]) -> Vec<LinePathSegment> {
+fn polygon_edges(vertices: &[Point2], policy: PredicatePolicy) -> Option<Vec<LinePathSegment>> {
     (0..vertices.len())
         .map(|index| {
             LinePathSegment::new(
                 vertices[index].clone(),
                 vertices[(index + 1) % vertices.len()].clone(),
+                policy,
             )
+            .ok()
         })
         .collect()
 }
@@ -384,16 +378,16 @@ fn vertex_extrema(
     let mut min_y = vertices[0].y.clone();
     let mut max_y = vertices[0].y.clone();
     for vertex in vertices.iter().skip(1) {
-        if compare_reals_with_policy(&vertex.x, &min_x, policy).value()? == Ordering::Less {
+        if compare_reals(&vertex.x, &min_x, policy).value()? == Ordering::Less {
             min_x = vertex.x.clone();
         }
-        if compare_reals_with_policy(&vertex.x, &max_x, policy).value()? == Ordering::Greater {
+        if compare_reals(&vertex.x, &max_x, policy).value()? == Ordering::Greater {
             max_x = vertex.x.clone();
         }
-        if compare_reals_with_policy(&vertex.y, &min_y, policy).value()? == Ordering::Less {
+        if compare_reals(&vertex.y, &min_y, policy).value()? == Ordering::Less {
             min_y = vertex.y.clone();
         }
-        if compare_reals_with_policy(&vertex.y, &max_y, policy).value()? == Ordering::Greater {
+        if compare_reals(&vertex.y, &max_y, policy).value()? == Ordering::Greater {
             max_y = vertex.y.clone();
         }
     }
@@ -408,12 +402,12 @@ fn classify_margins(
     let mut minimum_margin = margins[0].clone();
     for margin in margins {
         if matches!(
-            compare_reals_with_policy(margin, &minimum_margin, policy).value(),
+            compare_reals(margin, &minimum_margin, policy).value(),
             Some(Ordering::Less)
         ) {
             minimum_margin = margin.clone();
         }
-        match compare_reals_with_policy(margin, required, policy).value()? {
+        match compare_reals(margin, required, policy).value()? {
             Ordering::Less => return Some((ClearanceStatus::ClearanceViolation, margin.clone())),
             Ordering::Equal | Ordering::Greater => {}
         }
@@ -427,9 +421,7 @@ fn update_minimum_distance(
     policy: PredicatePolicy,
 ) -> Option<()> {
     let replace = match minimum.as_ref() {
-        Some(current) => {
-            compare_reals_with_policy(&candidate, current, policy).value()? == Ordering::Less
-        }
+        Some(current) => compare_reals(&candidate, current, policy).value()? == Ordering::Less,
         None => true,
     };
     if replace {

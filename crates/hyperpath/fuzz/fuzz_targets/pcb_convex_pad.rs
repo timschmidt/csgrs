@@ -38,10 +38,17 @@ fuzz_target!(|data: &[u8]| {
             p(center_x, center_y - radius),
             p(center_x - radius, center_y),
         ],
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     assert_eq!(
-        PcbConvexPad::new(NetId(2), TraceLayer(0), vec![p(0, 0), p(1, 0)]).unwrap_err(),
+        PcbConvexPad::new(
+            NetId(2),
+            TraceLayer(0),
+            vec![p(0, 0), p(1, 0)],
+            PredicatePolicy::STRICT
+        )
+        .unwrap_err(),
         BoardContourError::TooFewVertices
     );
 
@@ -57,19 +64,23 @@ fuzz_target!(|data: &[u8]| {
             LinePathSegment::new(
                 p(signed(data[6]), signed(data[7])),
                 p(signed(data[8]), signed(data[9])),
-            ),
+                PredicatePolicy::STRICT,
+            )
+            .expect("strict fuzz segment"),
             r(i64::from(data[10] % 48)),
+            PredicatePolicy::STRICT,
         )
         .unwrap(),
+        PredicatePolicy::STRICT,
     );
     let clearance = r(i64::from(data[11] % 48));
     let trace_report =
-        check_trace_convex_pad_clearance(&trace, &diamond, &clearance, PredicatePolicy::default());
+        check_trace_convex_pad_clearance(&trace, &diamond, &clearance, PredicatePolicy::STRICT);
     assert_ne!(trace_report.status, ClearanceStatus::Unknown);
 
-    let board = PcbBoardOutline::new(p(-180, -180), p(180, 180)).unwrap();
+    let board = PcbBoardOutline::new(p(-180, -180), p(180, 180), PredicatePolicy::STRICT).unwrap();
     let board_report =
-        check_convex_pad_board_clearance(&diamond, &board, &clearance, PredicatePolicy::default());
+        check_convex_pad_board_clearance(&diamond, &board, &clearance, PredicatePolicy::STRICT);
     assert_ne!(board_report.status, ClearanceStatus::Unknown);
 
     let half_w = i64::from(data[12] % 32) + 1;
@@ -84,6 +95,7 @@ fuzz_target!(|data: &[u8]| {
             p(signed(data[14]) + half_w, signed(data[15]) + half_h),
             p(signed(data[14]) - half_w, signed(data[15]) + half_h),
         ],
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     let rect = PcbRectPad::new(
@@ -92,26 +104,34 @@ fuzz_target!(|data: &[u8]| {
         rect_center,
         r(half_w * 2),
         r(half_h * 2),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     let axis_trace = PcbTrace::new(
         NetId(u32::from(data[16] % 3)),
         TraceLayer(0),
         SweptLineSegment::new(
-            LinePathSegment::new(p(-160, signed(data[17])), p(160, signed(data[17]))),
+            LinePathSegment::new(
+                p(-160, signed(data[17])),
+                p(160, signed(data[17])),
+                PredicatePolicy::STRICT,
+            )
+            .expect("strict fuzz segment"),
             r(2),
+            PredicatePolicy::STRICT,
         )
         .unwrap(),
+        PredicatePolicy::STRICT,
     );
     assert_eq!(
         check_trace_convex_pad_clearance(
             &axis_trace,
             &convex_rect,
             &clearance,
-            PredicatePolicy::default(),
+            PredicatePolicy::STRICT,
         )
         .status,
-        check_trace_rect_pad_clearance(&axis_trace, &rect, &clearance, PredicatePolicy::default())
+        check_trace_rect_pad_clearance(&axis_trace, &rect, &clearance, PredicatePolicy::STRICT)
             .status,
     );
 });

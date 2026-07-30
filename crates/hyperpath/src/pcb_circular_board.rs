@@ -8,8 +8,8 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
-use hyperreal::{Real, RealExactSetFacts, RealSign};
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign, compare_reals};
+use hyperreal::{Real, RealExactSetFacts};
 
 use crate::pcb::{
     ClearanceStatus, PadBoardClearanceReport, PcbCircularPad, PcbTrace, TraceClearanceReport,
@@ -42,13 +42,17 @@ pub struct PcbCircularBoardOutline {
 }
 
 impl PcbCircularBoardOutline {
-    /// Construct a circular board outline.
-    pub fn new(center: Point2, radius: Real) -> Result<Self, &'static str> {
-        let radius_class = match radius.structural_facts().sign {
-            Some(RealSign::Negative) => return Err("circular board radius must be nonnegative"),
-            Some(RealSign::Zero) => TraceWidthClass::Zero,
-            Some(RealSign::Positive) => TraceWidthClass::Positive,
-            None => TraceWidthClass::Unknown,
+    /// Construct a circular board outline with an explicit predicate policy.
+    pub fn new(
+        center: Point2,
+        radius: Real,
+        policy: PredicatePolicy,
+    ) -> Result<Self, &'static str> {
+        let radius_class = match classify_real_sign(&radius, policy).value() {
+            Some(Sign::Negative) => return Err("circular board radius must be nonnegative"),
+            Some(Sign::Zero) => TraceWidthClass::Zero,
+            Some(Sign::Positive) => TraceWidthClass::Positive,
+            None => return Err("circular board radius sign is unresolved"),
         };
         let facts = PcbCircularBoardOutlineFacts {
             exact: Real::exact_set_facts([&center.x, &center.y, &radius]),
@@ -144,7 +148,7 @@ fn max_trace_endpoint_distance_squared(
 ) -> Option<Real> {
     let start_distance = squared_distance(trace.swept().centerline().start(), board.center());
     let end_distance = squared_distance(trace.swept().centerline().end(), board.center());
-    match compare_reals_with_policy(&start_distance, &end_distance, policy).value()? {
+    match compare_reals(&start_distance, &end_distance, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(end_distance),
         Ordering::Greater => Some(start_distance),
     }
@@ -157,14 +161,14 @@ fn classify_inside_circular_board(
     policy: PredicatePolicy,
 ) -> ClearanceStatus {
     let allowable_doubled = board_radius.clone() * Real::from(2) - required_doubled.clone();
-    match compare_reals_with_policy(&allowable_doubled, &Real::zero(), policy).value() {
+    match compare_reals(&allowable_doubled, &Real::zero(), policy).value() {
         Some(Ordering::Less) => return ClearanceStatus::ClearanceViolation,
         Some(Ordering::Equal | Ordering::Greater) => {}
         None => return ClearanceStatus::Unknown,
     }
     let lhs = distance_squared * Real::from(4);
     let rhs = allowable_doubled.clone() * allowable_doubled;
-    match compare_reals_with_policy(&lhs, &rhs, policy).value() {
+    match compare_reals(&lhs, &rhs, policy).value() {
         Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::CertifiedClear,
         Some(Ordering::Greater) => ClearanceStatus::ClearanceViolation,
         None => ClearanceStatus::Unknown,

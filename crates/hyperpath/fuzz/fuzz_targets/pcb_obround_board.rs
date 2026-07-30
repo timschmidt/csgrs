@@ -30,12 +30,21 @@ fuzz_target!(|data: &[u8]| {
         LinePathSegment::new(
             p(signed(data[0]), signed(data[1])),
             p(signed(data[2]), signed(data[3])),
-        ),
+            PredicatePolicy::STRICT,
+        )
+        .expect("strict fuzz segment"),
         r(i64::from(data[4] % 96)),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     assert_eq!(
-        PcbObroundBoardOutline::new(LinePathSegment::new(p(0, 0), p(1, 0)), r(-1)).unwrap_err(),
+        PcbObroundBoardOutline::new(
+            LinePathSegment::new(p(0, 0), p(1, 0), PredicatePolicy::STRICT)
+                .expect("strict fuzz segment"),
+            r(-1),
+            PredicatePolicy::STRICT
+        )
+        .unwrap_err(),
         "obround board diameter must be nonnegative"
     );
 
@@ -46,14 +55,18 @@ fuzz_target!(|data: &[u8]| {
             LinePathSegment::new(
                 p(signed(data[5]), signed(data[6])),
                 p(signed(data[7]), signed(data[8])),
-            ),
+                PredicatePolicy::STRICT,
+            )
+            .expect("strict fuzz segment"),
             r(i64::from(data[9] % 64)),
+            PredicatePolicy::STRICT,
         )
         .unwrap(),
+        PredicatePolicy::STRICT,
     );
     let clearance = r(i64::from(data[10] % 64));
     let trace_report =
-        check_trace_obround_board_clearance(&trace, &board, &clearance, PredicatePolicy::default());
+        check_trace_obround_board_clearance(&trace, &board, &clearance, PredicatePolicy::STRICT);
     assert_ne!(trace_report.status, ClearanceStatus::Unknown);
 
     let pad = PcbCircularPad::new(
@@ -61,18 +74,24 @@ fuzz_target!(|data: &[u8]| {
         TraceLayer(0),
         p(signed(data[11]), signed(data[12])),
         r(i64::from(data[13] % 64)),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     let pad_report = check_circular_pad_obround_board_clearance(
         &pad,
         &board,
         &clearance,
-        PredicatePolicy::default(),
+        PredicatePolicy::STRICT,
     );
     assert_ne!(pad_report.status, ClearanceStatus::Unknown);
 
-    let roomy = PcbObroundBoardOutline::new(LinePathSegment::new(p(0, 0), p(100, 0)), r(64))
-        .unwrap();
+    let roomy = PcbObroundBoardOutline::new(
+        LinePathSegment::new(p(0, 0), p(100, 0), PredicatePolicy::STRICT)
+            .expect("strict fuzz segment"),
+        r(64),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
     let centered_trace = PcbTrace::new(
         NetId(3),
         TraceLayer(0),
@@ -80,17 +99,21 @@ fuzz_target!(|data: &[u8]| {
             LinePathSegment::new(
                 p(i64::from(data[14] % 50), 0),
                 p(50 + i64::from(data[15] % 50), 0),
-            ),
+                PredicatePolicy::STRICT,
+            )
+            .expect("strict fuzz segment"),
             r(8),
+            PredicatePolicy::STRICT,
         )
         .unwrap(),
+        PredicatePolicy::STRICT,
     );
     assert_eq!(
         check_trace_obround_board_clearance(
             &centered_trace,
             &roomy,
             &r(0),
-            PredicatePolicy::default(),
+            PredicatePolicy::STRICT,
         )
         .status,
         ClearanceStatus::CertifiedClear,

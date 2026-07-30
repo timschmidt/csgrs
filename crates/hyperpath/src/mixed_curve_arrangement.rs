@@ -18,7 +18,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals, point2_equal};
 use hyperreal::{Real, RealExactSetFacts};
 
 use crate::arc::{ExplicitArcPointClassification, ExplicitCircularArc};
@@ -620,10 +620,10 @@ fn merge_conic_line_breakpoints(
 fn insert_line_breakpoint(
     breakpoints: &mut Vec<MixedLineArrangementBreakpoint>,
     point: MixedLineArrangementBreakpoint,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> Result<(), LineMixedBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match point2_equal(&existing.point, &point.point).value() {
+        match point2_equal(&existing.point, &point.point, policy).value() {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => return Err(LineMixedBezierArrangementError::UndecidablePointEquality),
@@ -671,7 +671,7 @@ fn sort_and_dedup_line_breakpoints(
         let mut deduped: Vec<MixedLineArrangementBreakpoint> = Vec::new();
         for point in points.drain(..) {
             if let Some(last) = deduped.last() {
-                match point2_equal(&last.point, &point.point).value() {
+                match point2_equal(&last.point, &point.point, policy).value() {
                     Some(true) => continue,
                     Some(false) => {}
                     None => return Err(LineMixedBezierArrangementError::UndecidablePointEquality),
@@ -689,7 +689,7 @@ fn compare_line_parameters(
     right: &MixedLineArrangementBreakpoint,
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
-    compare_reals_with_policy(
+    compare_reals(
         &(left.parameter_numerator.clone() * right.parameter_denominator.clone()),
         &(right.parameter_numerator.clone() * left.parameter_denominator.clone()),
         policy,
@@ -711,7 +711,12 @@ fn build_line_fragments(
                 source_line: window[0].line,
                 start: window[0].clone(),
                 end: window[1].clone(),
-                segment: LinePathSegment::new(window[0].point.clone(), window[1].point.clone()),
+                segment: LinePathSegment::new(
+                    window[0].point.clone(),
+                    window[1].point.clone(),
+                    policy,
+                )
+                .map_err(|_| LineMixedBezierArrangementError::UndecidablePointEquality)?,
             });
         }
     }
@@ -1221,7 +1226,7 @@ fn compare_required(
     right: &Real,
     policy: PredicatePolicy,
 ) -> Result<Ordering, LineMixedBezierArrangementError> {
-    compare_reals_with_policy(left, right, policy)
+    compare_reals(left, right, policy)
         .value()
         .ok_or(LineMixedBezierArrangementError::UndecidablePointEquality)
 }
@@ -1306,12 +1311,12 @@ fn update_min_max(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Result<(), LineMixedBezierArrangementError> {
-    match compare_reals_with_policy(value, min, policy).value() {
+    match compare_reals(value, min, policy).value() {
         Some(Ordering::Less) => *min = value.clone(),
         Some(Ordering::Equal | Ordering::Greater) => {}
         None => return Err(LineMixedBezierArrangementError::UndecidablePointEquality),
     }
-    match compare_reals_with_policy(value, max, policy).value() {
+    match compare_reals(value, max, policy).value() {
         Some(Ordering::Greater) => *max = value.clone(),
         Some(Ordering::Equal | Ordering::Less) => {}
         None => return Err(LineMixedBezierArrangementError::UndecidablePointEquality),
@@ -1373,7 +1378,7 @@ fn endpoint_corner_contact(
     ];
 
     for (left_endpoint, left_point, right_endpoint, right_point) in endpoint_pairs {
-        match point2_equal(left_point, right_point).value() {
+        match point2_equal(left_point, right_point, policy).value() {
             Some(true) => {
                 if boxes_touch_only_at_corner(left, right, left_point, policy)? {
                     return Ok(Some((left_endpoint, right_endpoint)));
@@ -1399,7 +1404,7 @@ fn endpoint_tangent_class(
         return Err(LineMixedBezierArrangementError::UndecidablePointEquality);
     }
     let cross = left_tangent.x * right_tangent.y - left_tangent.y * right_tangent.x;
-    match compare_reals_with_policy(&cross, &Real::zero(), policy).value() {
+    match compare_reals(&cross, &Real::zero(), policy).value() {
         Some(Ordering::Greater) => Ok(MixedCurveEndpointTangentClass::CounterClockwise),
         Some(Ordering::Less) => Ok(MixedCurveEndpointTangentClass::Clockwise),
         Some(Ordering::Equal) => Ok(MixedCurveEndpointTangentClass::Collinear),
@@ -1487,7 +1492,7 @@ fn is_less(
     right: &Real,
     policy: PredicatePolicy,
 ) -> Result<bool, LineMixedBezierArrangementError> {
-    match compare_reals_with_policy(left, right, policy).value() {
+    match compare_reals(left, right, policy).value() {
         Some(Ordering::Less) => Ok(true),
         Some(Ordering::Equal | Ordering::Greater) => Ok(false),
         None => Err(LineMixedBezierArrangementError::UndecidablePointEquality),
@@ -1507,7 +1512,7 @@ fn real_equal(
     right: &Real,
     policy: PredicatePolicy,
 ) -> Result<bool, LineMixedBezierArrangementError> {
-    match compare_reals_with_policy(left, right, policy).value() {
+    match compare_reals(left, right, policy).value() {
         Some(Ordering::Equal) => Ok(true),
         Some(Ordering::Less | Ordering::Greater) => Ok(false),
         None => Err(LineMixedBezierArrangementError::UndecidablePointEquality),
@@ -1518,7 +1523,7 @@ fn affine_homogeneous_point(
     point: &crate::bezier_arrangement::HomogeneousPoint2,
     policy: PredicatePolicy,
 ) -> Result<Point2, LineMixedBezierArrangementError> {
-    match compare_reals_with_policy(&point.w, &Real::zero(), policy).value() {
+    match compare_reals(&point.w, &Real::zero(), policy).value() {
         Some(Ordering::Less | Ordering::Greater) => Ok(Point2::new(
             (point.x.clone() / point.w.clone())
                 .map_err(|_| LineMixedBezierArrangementError::UndecidablePointEquality)?,

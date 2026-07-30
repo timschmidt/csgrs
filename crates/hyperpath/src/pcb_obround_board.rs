@@ -10,8 +10,8 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
-use hyperreal::{Real, RealExactSetFacts, RealSign};
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign, compare_reals};
+use hyperreal::{Real, RealExactSetFacts};
 
 use crate::pcb::{
     ClearanceStatus, PadBoardClearanceReport, PcbCircularPad, PcbTrace, TraceClearanceReport,
@@ -52,13 +52,17 @@ pub struct PcbObroundBoardOutline {
 }
 
 impl PcbObroundBoardOutline {
-    /// Construct an obround board outline.
-    pub fn new(spine: LinePathSegment, diameter: Real) -> Result<Self, &'static str> {
-        let diameter_class = match diameter.structural_facts().sign {
-            Some(RealSign::Negative) => return Err("obround board diameter must be nonnegative"),
-            Some(RealSign::Zero) => TraceWidthClass::Zero,
-            Some(RealSign::Positive) => TraceWidthClass::Positive,
-            None => TraceWidthClass::Unknown,
+    /// Construct an obround board outline with an explicit predicate policy.
+    pub fn new(
+        spine: LinePathSegment,
+        diameter: Real,
+        policy: PredicatePolicy,
+    ) -> Result<Self, &'static str> {
+        let diameter_class = match classify_real_sign(&diameter, policy).value() {
+            Some(Sign::Negative) => return Err("obround board diameter must be nonnegative"),
+            Some(Sign::Zero) => TraceWidthClass::Zero,
+            Some(Sign::Positive) => TraceWidthClass::Positive,
+            None => return Err("obround board diameter sign is unresolved"),
         };
         let facts = PcbObroundBoardOutlineFacts {
             exact: Real::exact_set_facts([
@@ -158,7 +162,7 @@ fn classify_points_inside_eroded_obround_board<'a>(
     policy: PredicatePolicy,
 ) -> ClearanceStatus {
     let allowable_doubled = board.diameter().clone() - required_doubled.clone();
-    match compare_reals_with_policy(&allowable_doubled, &Real::zero(), policy).value() {
+    match compare_reals(&allowable_doubled, &Real::zero(), policy).value() {
         Some(Ordering::Less) => return ClearanceStatus::ClearanceViolation,
         Some(Ordering::Equal | Ordering::Greater) => {}
         None => return ClearanceStatus::Unknown,
@@ -170,7 +174,7 @@ fn classify_points_inside_eroded_obround_board<'a>(
             return ClearanceStatus::Unknown;
         };
         let lhs = distance_squared * Real::from(4);
-        match compare_reals_with_policy(&lhs, &allowable_squared, policy).value() {
+        match compare_reals(&lhs, &allowable_squared, policy).value() {
             Some(Ordering::Less | Ordering::Equal) => {}
             Some(Ordering::Greater) => return ClearanceStatus::ClearanceViolation,
             None => return ClearanceStatus::Unknown,
@@ -197,20 +201,20 @@ fn point_segment_distance_squared(
         point.y.clone() - segment.end().y.clone(),
     );
     let length_squared = squared_norm(&ab);
-    match compare_reals_with_policy(&length_squared, &Real::zero(), policy).value()? {
+    match compare_reals(&length_squared, &Real::zero(), policy).value()? {
         Ordering::Equal => return Some(squared_norm(&ap)),
         Ordering::Less => return None,
         Ordering::Greater => {}
     }
     let projection = dot(&ap, &ab);
     if !matches!(
-        compare_reals_with_policy(&projection, &Real::zero(), policy).value()?,
+        compare_reals(&projection, &Real::zero(), policy).value()?,
         Ordering::Greater
     ) {
         return Some(squared_norm(&ap));
     }
     if !matches!(
-        compare_reals_with_policy(&projection, &length_squared, policy).value()?,
+        compare_reals(&projection, &length_squared, policy).value()?,
         Ordering::Less
     ) {
         return Some(squared_norm(&bp));

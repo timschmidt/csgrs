@@ -12,8 +12,8 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
-use hyperreal::{Real, RealSign};
+use hyperlimit::{PredicatePolicy, Sign, classify_real_sign, compare_reals};
+use hyperreal::Real;
 
 use crate::pcb::{ClearanceStatus, NetId, TraceClearanceReport, TraceLayer, check_trace_clearance};
 use crate::specctra::{
@@ -235,7 +235,7 @@ pub fn audit_specctra_route_rule_widths(
     rules: &[SpecctraRouteRuleRecord],
     policy: PredicatePolicy,
 ) -> Result<SpecctraRouteRuleAudit, SpecctraRouteRuleAuditError> {
-    validate_rules(rules)?;
+    validate_rules(rules, policy)?;
     let mut items = Vec::with_capacity(traces.len() + arcs.len());
     for (index, trace) in traces.iter().enumerate() {
         items.push(audit_item(
@@ -280,7 +280,7 @@ pub fn audit_specctra_trace_rule_clearances(
     let item_report = audit_specctra_route_rule_widths(traces, &[], rules, policy)?;
     let lowered_traces = traces
         .iter()
-        .map(import_specctra_trace_record)
+        .map(|record| import_specctra_trace_record(record, policy))
         .collect::<Result<Vec<_>, _>>()
         .map_err(SpecctraRouteRuleAuditError::InvalidTrace)?;
 
@@ -322,12 +322,19 @@ pub fn audit_specctra_trace_rule_clearances(
     })
 }
 
-fn validate_rules(rules: &[SpecctraRouteRuleRecord]) -> Result<(), SpecctraRouteRuleAuditError> {
+fn validate_rules(
+    rules: &[SpecctraRouteRuleRecord],
+    policy: PredicatePolicy,
+) -> Result<(), SpecctraRouteRuleAuditError> {
     for rule in rules {
-        if rule.width.structural_facts().sign == Some(RealSign::Negative)
-            || rule.clearance.structural_facts().sign == Some(RealSign::Negative)
-        {
-            return Err(SpecctraRouteRuleAuditError::NegativeRuleValue);
+        for value in [&rule.width, &rule.clearance] {
+            match classify_real_sign(value, policy).value() {
+                Some(Sign::Negative) => {
+                    return Err(SpecctraRouteRuleAuditError::NegativeRuleValue);
+                }
+                Some(Sign::Zero | Sign::Positive) => {}
+                None => return Err(SpecctraRouteRuleAuditError::UnknownRuleOrdering),
+            }
         }
     }
     Ok(())
@@ -342,8 +349,10 @@ fn audit_item(
     rules: &[SpecctraRouteRuleRecord],
     policy: PredicatePolicy,
 ) -> Result<SpecctraRouteRuleItemAudit, SpecctraRouteRuleAuditError> {
-    if width.structural_facts().sign == Some(RealSign::Negative) {
-        return Err(SpecctraRouteRuleAuditError::NegativeRouteWidth);
+    match classify_real_sign(&width, policy).value() {
+        Some(Sign::Negative) => return Err(SpecctraRouteRuleAuditError::NegativeRouteWidth),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(SpecctraRouteRuleAuditError::UnknownRuleOrdering),
     }
     let Some(selected_scope) = rules
         .iter()
@@ -383,7 +392,7 @@ fn audit_item(
         }
     }
     let effective_width = effective_width.expect("selected scope implies at least one rule");
-    let width_status = match compare_reals_with_policy(&width, &effective_width, policy).value() {
+    let width_status = match compare_reals(&width, &effective_width, policy).value() {
         Some(Ordering::Less) => SpecctraRouteRuleWidthStatus::Violation,
         Some(Ordering::Equal | Ordering::Greater) => SpecctraRouteRuleWidthStatus::Certified,
         None => SpecctraRouteRuleWidthStatus::Unknown,
@@ -429,7 +438,7 @@ fn max_real_option(
     let Some(current) = current else {
         return Ok(candidate);
     };
-    match compare_reals_with_policy(&current, &candidate, policy)
+    match compare_reals(&current, &candidate, policy)
         .value()
         .ok_or(SpecctraRouteRuleAuditError::UnknownRuleOrdering)?
     {

@@ -12,7 +12,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign, compare_reals};
 use hyperreal::Real;
 use hypersolve::{
     CandidateCertificationReport, Constraint, Expr, Problem, SymbolId, VariableId,
@@ -485,6 +485,8 @@ pub enum MeanderError {
     ObstacleConflict,
     /// Obstacle intersection could not be decided exactly.
     ObstacleDecisionUnknown,
+    /// The selected predicate policy could not certify a scalar sign.
+    PredicateUnresolved,
 }
 
 /// Errors while certifying exact route-level continuous parameters.
@@ -520,6 +522,8 @@ pub enum RouteCertificationError {
     ZeroCornerRadius,
     /// Lookahead schedule vectors do not match the retained route shape.
     ScheduleShapeMismatch,
+    /// The selected predicate policy could not certify a scalar sign.
+    PredicateUnresolved,
 }
 
 /// Create a one-bump rectangular meander from an exact extra length.
@@ -535,9 +539,9 @@ pub fn single_detour_meander(
     side: OffsetSide,
     policy: PredicatePolicy,
 ) -> Result<SingleDetourMeander, MeanderError> {
-    match extra_length.structural_facts().sign {
-        Some(hyperreal::RealSign::Negative) => return Err(MeanderError::NegativeExtraLength),
-        Some(hyperreal::RealSign::Zero) => {
+    match classify_real_sign(&extra_length, policy).value() {
+        Some(Sign::Negative) => return Err(MeanderError::NegativeExtraLength),
+        Some(Sign::Zero) => {
             return Ok(SingleDetourMeander {
                 source: source.clone(),
                 extra_length,
@@ -545,7 +549,8 @@ pub fn single_detour_meander(
                 segments: vec![source.clone()],
             });
         }
-        _ => {}
+        Some(Sign::Positive) => {}
+        None => return Err(MeanderError::PredicateUnresolved),
     }
 
     source
@@ -555,8 +560,13 @@ pub fn single_detour_meander(
         (extra_length.clone() / Real::from(2)).map_err(|_| MeanderError::UnsupportedDivision)?;
     let offset = offset_axis_aligned_segment(source, amplitude.clone(), side, policy)
         .map_err(MeanderError::Offset)?;
-    let first = LinePathSegment::new(source.start().clone(), offset.segment.start().clone());
-    let last = LinePathSegment::new(offset.segment.end().clone(), source.end().clone());
+    let first = line_segment_with_policy(
+        source.start().clone(),
+        offset.segment.start().clone(),
+        policy,
+    )?;
+    let last =
+        line_segment_with_policy(offset.segment.end().clone(), source.end().clone(), policy)?;
     Ok(SingleDetourMeander {
         source: source.clone(),
         extra_length,
@@ -645,9 +655,9 @@ pub fn obstacle_aware_detour_meander(
     if bump_count == 0 {
         return Err(MeanderError::ZeroBumps);
     }
-    match extra_length.structural_facts().sign {
-        Some(hyperreal::RealSign::Negative) => return Err(MeanderError::NegativeExtraLength),
-        Some(hyperreal::RealSign::Zero) => {
+    match classify_real_sign(&extra_length, policy).value() {
+        Some(Sign::Negative) => return Err(MeanderError::NegativeExtraLength),
+        Some(Sign::Zero) => {
             let meander = MultiDetourMeander {
                 source: source.clone(),
                 extra_length,
@@ -661,7 +671,8 @@ pub fn obstacle_aware_detour_meander(
                 obstacles,
             });
         }
-        _ => {}
+        Some(Sign::Positive) => {}
+        None => return Err(MeanderError::PredicateUnresolved),
     }
 
     source
@@ -732,9 +743,9 @@ pub fn keepout_aware_detour_meander(
     if bump_count == 0 {
         return Err(MeanderError::ZeroBumps);
     }
-    match extra_length.structural_facts().sign {
-        Some(hyperreal::RealSign::Negative) => return Err(MeanderError::NegativeExtraLength),
-        Some(hyperreal::RealSign::Zero) => {
+    match classify_real_sign(&extra_length, policy).value() {
+        Some(Sign::Negative) => return Err(MeanderError::NegativeExtraLength),
+        Some(Sign::Zero) => {
             let meander = MultiDetourMeander {
                 source: source.clone(),
                 extra_length,
@@ -748,7 +759,8 @@ pub fn keepout_aware_detour_meander(
                 keepouts,
             });
         }
-        _ => {}
+        Some(Sign::Positive) => {}
+        None => return Err(MeanderError::PredicateUnresolved),
     }
 
     source
@@ -818,8 +830,10 @@ pub fn classify_meander_placement_slots(
     if bump_count == 0 {
         return Err(MeanderError::ZeroBumps);
     }
-    if amplitude.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
-        return Err(MeanderError::NegativeAmplitude);
+    match classify_real_sign(&amplitude, policy).value() {
+        Some(Sign::Negative) => return Err(MeanderError::NegativeAmplitude),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(MeanderError::PredicateUnresolved),
     }
     source
         .axis_length(policy)
@@ -892,8 +906,10 @@ pub fn classify_meander_placement_slots_with_keepouts(
     if bump_count == 0 {
         return Err(MeanderError::ZeroBumps);
     }
-    if amplitude.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
-        return Err(MeanderError::NegativeAmplitude);
+    match classify_real_sign(&amplitude, policy).value() {
+        Some(Sign::Negative) => return Err(MeanderError::NegativeAmplitude),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(MeanderError::PredicateUnresolved),
     }
     source
         .axis_length(policy)
@@ -1001,15 +1017,18 @@ pub fn certify_constant_feed_time(
     if route.is_empty() {
         return Err(RouteCertificationError::EmptyRoute);
     }
-    match feed_rate.structural_facts().sign {
-        Some(hyperreal::RealSign::Negative) => {
+    match classify_real_sign(&feed_rate, policy).value() {
+        Some(Sign::Negative) => {
             return Err(RouteCertificationError::NegativeFeedRate);
         }
-        Some(hyperreal::RealSign::Zero) => return Err(RouteCertificationError::ZeroFeedRate),
-        _ => {}
+        Some(Sign::Zero) => return Err(RouteCertificationError::ZeroFeedRate),
+        Some(Sign::Positive) => {}
+        None => return Err(RouteCertificationError::PredicateUnresolved),
     }
-    if target_time.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
-        return Err(RouteCertificationError::NegativeTime);
+    match classify_real_sign(&target_time, policy).value() {
+        Some(Sign::Negative) => return Err(RouteCertificationError::NegativeTime),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(RouteCertificationError::PredicateUnresolved),
     }
     let path_length = route_axis_length(route, policy)
         .ok_or(RouteCertificationError::UnsupportedRouteGeometry)?;
@@ -1051,24 +1070,28 @@ pub fn certify_acceleration_limited_feed_time(
     if route.is_empty() {
         return Err(RouteCertificationError::EmptyRoute);
     }
-    match max_feed_rate.structural_facts().sign {
-        Some(hyperreal::RealSign::Negative) => {
+    match classify_real_sign(&max_feed_rate, policy).value() {
+        Some(Sign::Negative) => {
             return Err(RouteCertificationError::NegativeFeedRate);
         }
-        Some(hyperreal::RealSign::Zero) => return Err(RouteCertificationError::ZeroFeedRate),
-        _ => {}
+        Some(Sign::Zero) => return Err(RouteCertificationError::ZeroFeedRate),
+        Some(Sign::Positive) => {}
+        None => return Err(RouteCertificationError::PredicateUnresolved),
     }
-    match acceleration.structural_facts().sign {
-        Some(hyperreal::RealSign::Negative) => {
+    match classify_real_sign(&acceleration, policy).value() {
+        Some(Sign::Negative) => {
             return Err(RouteCertificationError::NegativeAcceleration);
         }
-        Some(hyperreal::RealSign::Zero) => {
+        Some(Sign::Zero) => {
             return Err(RouteCertificationError::ZeroAcceleration);
         }
-        _ => {}
+        Some(Sign::Positive) => {}
+        None => return Err(RouteCertificationError::PredicateUnresolved),
     }
-    if target_time.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
-        return Err(RouteCertificationError::NegativeTime);
+    match classify_real_sign(&target_time, policy).value() {
+        Some(Sign::Negative) => return Err(RouteCertificationError::NegativeTime),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(RouteCertificationError::PredicateUnresolved),
     }
     let path_length = route_axis_length(route, policy)
         .ok_or(RouteCertificationError::UnsupportedRouteGeometry)?;
@@ -1106,11 +1129,12 @@ fn build_nonuniform_detour_meander_with_side(
     if amplitudes.is_empty() {
         return Err(MeanderError::ZeroBumps);
     }
-    if amplitudes
-        .iter()
-        .any(|amplitude| amplitude.structural_facts().sign == Some(hyperreal::RealSign::Negative))
-    {
-        return Err(MeanderError::NegativeAmplitude);
+    for amplitude in &amplitudes {
+        match classify_real_sign(amplitude, policy).value() {
+            Some(Sign::Negative) => return Err(MeanderError::NegativeAmplitude),
+            Some(Sign::Zero | Sign::Positive) => {}
+            None => return Err(MeanderError::PredicateUnresolved),
+        }
     }
     let extra_length = amplitudes
         .iter()
@@ -1118,13 +1142,17 @@ fn build_nonuniform_detour_meander_with_side(
         .fold(Real::zero(), |sum, amplitude| {
             sum + amplitude * Real::from(2)
         });
-    if extra_length.structural_facts().sign == Some(hyperreal::RealSign::Zero) {
-        return Ok(NonUniformDetourMeander {
-            source: source.clone(),
-            extra_length,
-            amplitudes,
-            segments: vec![source.clone()],
-        });
+    match classify_real_sign(&extra_length, policy).value() {
+        Some(Sign::Zero) => {
+            return Ok(NonUniformDetourMeander {
+                source: source.clone(),
+                extra_length,
+                amplitudes,
+                segments: vec![source.clone()],
+            });
+        }
+        Some(Sign::Positive) => {}
+        Some(Sign::Negative) | None => return Err(MeanderError::PredicateUnresolved),
     }
 
     source
@@ -1151,29 +1179,31 @@ fn build_nonuniform_detour_meander_with_side(
 
     let mut segments = Vec::with_capacity(amplitudes.len() * 3);
     for (index, amplitude) in amplitudes.iter().enumerate() {
-        if amplitude.structural_facts().sign == Some(hyperreal::RealSign::Zero) {
+        if classify_real_sign(amplitude, policy).value() == Some(Sign::Zero) {
             let index = u64::try_from(index).map_err(|_| MeanderError::BumpCountTooLarge)?;
             let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
             let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
-            segments.push(LinePathSegment::new(start, end));
+            segments.push(line_segment_with_policy(start, end, policy)?);
             continue;
         }
         let index = u64::try_from(index).map_err(|_| MeanderError::BumpCountTooLarge)?;
         let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
         let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
-        let base = LinePathSegment::new(start, end);
+        let base = line_segment_with_policy(start, end, policy)?;
         let offset =
             offset_axis_aligned_segment(&base, amplitude.clone(), side_for_index(index), policy)
                 .map_err(MeanderError::Offset)?;
-        segments.push(LinePathSegment::new(
+        segments.push(line_segment_with_policy(
             base.start().clone(),
             offset.segment.start().clone(),
-        ));
+            policy,
+        )?);
         segments.push(offset.segment.clone());
-        segments.push(LinePathSegment::new(
+        segments.push(line_segment_with_policy(
             offset.segment.end().clone(),
             base.end().clone(),
-        ));
+            policy,
+        )?);
     }
 
     Ok(NonUniformDetourMeander {
@@ -1194,9 +1224,9 @@ fn build_multi_detour_meander_with_side(
     if bump_count == 0 {
         return Err(MeanderError::ZeroBumps);
     }
-    match extra_length.structural_facts().sign {
-        Some(hyperreal::RealSign::Negative) => return Err(MeanderError::NegativeExtraLength),
-        Some(hyperreal::RealSign::Zero) => {
+    match classify_real_sign(&extra_length, policy).value() {
+        Some(Sign::Negative) => return Err(MeanderError::NegativeExtraLength),
+        Some(Sign::Zero) => {
             return Ok(MultiDetourMeander {
                 source: source.clone(),
                 extra_length,
@@ -1205,7 +1235,8 @@ fn build_multi_detour_meander_with_side(
                 segments: vec![source.clone()],
             });
         }
-        _ => {}
+        Some(Sign::Positive) => {}
+        None => return Err(MeanderError::PredicateUnresolved),
     }
 
     source
@@ -1235,19 +1266,21 @@ fn build_multi_detour_meander_with_side(
     for index in 0..bump_count {
         let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
         let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
-        let base = LinePathSegment::new(start, end);
+        let base = line_segment_with_policy(start, end, policy)?;
         let offset =
             offset_axis_aligned_segment(&base, amplitude.clone(), side_for_index(index), policy)
                 .map_err(MeanderError::Offset)?;
-        segments.push(LinePathSegment::new(
+        segments.push(line_segment_with_policy(
             base.start().clone(),
             offset.segment.start().clone(),
-        ));
+            policy,
+        )?);
         segments.push(offset.segment.clone());
-        segments.push(LinePathSegment::new(
+        segments.push(line_segment_with_policy(
             offset.segment.end().clone(),
             base.end().clone(),
-        ));
+            policy,
+        )?);
     }
 
     Ok(MultiDetourMeander {
@@ -1281,7 +1314,7 @@ fn classify_meander_placement_slots_with_step(
     for index in 0..bump_count {
         let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
         let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
-        let base = LinePathSegment::new(start, end);
+        let base = line_segment_with_policy(start, end, policy)?;
         candidates.push(MeanderPlacementCandidate {
             base,
             amplitude: amplitude.clone(),
@@ -1311,7 +1344,7 @@ fn classify_meander_placement_slots_with_keepout_step(
     for index in 0..bump_count {
         let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
         let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
-        let base = LinePathSegment::new(start, end);
+        let base = line_segment_with_policy(start, end, policy)?;
         candidates.push(MeanderPlacementCandidate {
             base,
             amplitude: amplitude.clone(),
@@ -1346,8 +1379,10 @@ fn classify_meander_candidates_with_keepouts(
     let mut slots = Vec::with_capacity(candidates.len());
     let opposite = opposite_side(preferred_side);
     for (index, candidate) in candidates.iter().enumerate() {
-        if candidate.amplitude.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
-            return Err(MeanderError::NegativeAmplitude);
+        match classify_real_sign(&candidate.amplitude, policy).value() {
+            Some(Sign::Negative) => return Err(MeanderError::NegativeAmplitude),
+            Some(Sign::Zero | Sign::Positive) => {}
+            None => return Err(MeanderError::PredicateUnresolved),
         }
         candidate
             .base
@@ -1405,9 +1440,9 @@ fn candidate_bump_blocked(
         .map_err(MeanderError::Offset)?;
     let offset_segment = offset.segment;
     let candidate_segments = [
-        LinePathSegment::new(base.start().clone(), offset_segment.start().clone()),
+        line_segment_with_policy(base.start().clone(), offset_segment.start().clone(), policy)?,
         offset_segment.clone(),
-        LinePathSegment::new(offset_segment.end().clone(), base.end().clone()),
+        line_segment_with_policy(offset_segment.end().clone(), base.end().clone(), policy)?,
     ];
     candidate_segments
         .iter()
@@ -1433,8 +1468,8 @@ fn validate_obstacles(
     policy: PredicatePolicy,
 ) -> Result<(), MeanderError> {
     for obstacle in obstacles {
-        let ordered_x = compare_reals_with_policy(&obstacle.min.x, &obstacle.max.x, policy).value();
-        let ordered_y = compare_reals_with_policy(&obstacle.min.y, &obstacle.max.y, policy).value();
+        let ordered_x = compare_reals(&obstacle.min.x, &obstacle.max.x, policy).value();
+        let ordered_y = compare_reals(&obstacle.min.y, &obstacle.max.y, policy).value();
         if !matches!(
             ordered_x,
             Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
@@ -1458,8 +1493,10 @@ pub(crate) fn validate_meander_keepouts(
                 validate_obstacles(std::slice::from_ref(obstacle), policy)?;
             }
             MeanderKeepout::Circular { radius, .. } => {
-                if radius.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
-                    return Err(MeanderError::NegativeObstacleRadius);
+                match classify_real_sign(radius, policy).value() {
+                    Some(Sign::Negative) => return Err(MeanderError::NegativeObstacleRadius),
+                    Some(Sign::Zero | Sign::Positive) => {}
+                    None => return Err(MeanderError::PredicateUnresolved),
                 }
             }
             MeanderKeepout::OrthogonalPolygon { vertices } => {
@@ -1537,7 +1574,7 @@ fn segment_intersects_circular_keepout(
     )?;
     let distance_squared = dx.clone() * dx + dy.clone() * dy;
     let radius_squared = radius.clone() * radius.clone();
-    match compare_reals_with_policy(&distance_squared, &radius_squared, policy).value() {
+    match compare_reals(&distance_squared, &radius_squared, policy).value() {
         Some(Ordering::Less | Ordering::Equal) => Ok(true),
         Some(Ordering::Greater) => Ok(false),
         None => Err(MeanderError::ObstacleDecisionUnknown),
@@ -1550,12 +1587,12 @@ fn distance_to_interval(
     max: &Real,
     policy: PredicatePolicy,
 ) -> Result<Real, MeanderError> {
-    match compare_reals_with_policy(coordinate, min, policy).value() {
+    match compare_reals(coordinate, min, policy).value() {
         Some(Ordering::Less) => return Ok(min.clone() - coordinate.clone()),
         Some(Ordering::Equal | Ordering::Greater) => {}
         None => return Err(MeanderError::ObstacleDecisionUnknown),
     }
-    match compare_reals_with_policy(max, coordinate, policy).value() {
+    match compare_reals(max, coordinate, policy).value() {
         Some(Ordering::Less) => Ok(coordinate.clone() - max.clone()),
         Some(Ordering::Equal | Ordering::Greater) => Ok(Real::zero()),
         None => Err(MeanderError::ObstacleDecisionUnknown),
@@ -1567,7 +1604,7 @@ fn strict_less_with_policy(
     right: &Real,
     policy: PredicatePolicy,
 ) -> Result<bool, MeanderError> {
-    match hyperlimit::compare_reals_with_policy(left, right, policy).value() {
+    match hyperlimit::compare_reals(left, right, policy).value() {
         Some(std::cmp::Ordering::Less) => Ok(true),
         Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => Ok(false),
         None => Err(MeanderError::ObstacleDecisionUnknown),
@@ -1599,6 +1636,14 @@ fn route_axis_length(segments: &[LinePathSegment], policy: PredicatePolicy) -> O
         })
 }
 
+fn line_segment_with_policy(
+    start: Point2,
+    end: Point2,
+    policy: PredicatePolicy,
+) -> Result<LinePathSegment, MeanderError> {
+    LinePathSegment::new(start, end, policy).map_err(|_| MeanderError::PredicateUnresolved)
+}
+
 fn classify_acceleration_limited_profile(
     path_length: &Real,
     max_feed_rate: &Real,
@@ -1607,7 +1652,7 @@ fn classify_acceleration_limited_profile(
 ) -> Option<AccelerationLimitedFeedProfileClass> {
     let accel_distance_product = acceleration.clone() * path_length.clone();
     let feed_squared = max_feed_rate.clone() * max_feed_rate.clone();
-    match compare_reals_with_policy(&accel_distance_product, &feed_squared, policy).value()? {
+    match compare_reals(&accel_distance_product, &feed_squared, policy).value()? {
         Ordering::Less => Some(AccelerationLimitedFeedProfileClass::Triangular),
         Ordering::Equal => Some(AccelerationLimitedFeedProfileClass::Boundary),
         Ordering::Greater => Some(AccelerationLimitedFeedProfileClass::Trapezoidal),

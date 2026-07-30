@@ -6,7 +6,7 @@
 //! in the PCB module while general curve offsets remain future `hypercurve`
 //! work.
 
-use hyperlimit::PredicatePolicy;
+use hyperlimit::{PredicatePolicy, Sign, classify_real_sign};
 use hyperreal::{Real, RealExactSetFacts};
 
 use crate::segment::LinePathSegment;
@@ -29,16 +29,17 @@ pub struct SweptLineSegment {
 }
 
 impl SweptLineSegment {
-    /// Construct swept geometry when width is certified nonnegative.
-    pub fn new(centerline: LinePathSegment, width: Real) -> Result<Self, &'static str> {
-        let width_nonnegative = match width.structural_facts().sign {
-            Some(hyperreal::RealSign::Negative) => Some(false),
-            Some(hyperreal::RealSign::Zero | hyperreal::RealSign::Positive) => Some(true),
-            None => None,
+    /// Construct swept geometry with an explicit predicate policy.
+    pub fn new(
+        centerline: LinePathSegment,
+        width: Real,
+        policy: PredicatePolicy,
+    ) -> Result<Self, &'static str> {
+        let width_nonnegative = match classify_real_sign(&width, policy).value() {
+            Some(Sign::Negative) => return Err("swept path width must be nonnegative"),
+            Some(Sign::Zero | Sign::Positive) => Some(true),
+            None => return Err("swept path width sign is unresolved"),
         };
-        if width_nonnegative == Some(false) {
-            return Err("swept path width must be nonnegative");
-        }
         let coordinates = [
             &centerline.start().x,
             &centerline.start().y,

@@ -10,8 +10,8 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
-use hyperreal::{Real, RealSign};
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign, compare_reals};
+use hyperreal::Real;
 
 use crate::arc::{ArcDirection, CircularArc, CircularArcError, ExplicitCircularArc};
 use crate::bezier::{BezierParameter, CubicBezier, HigherOrderBezier, QuadraticBezier};
@@ -46,6 +46,8 @@ pub enum LineOffsetError {
     UnknownDirection,
     /// Offset distance was structurally negative.
     NegativeDistance,
+    /// The selected predicate policy could not certify the distance sign.
+    PredicateUnresolved,
 }
 
 /// One exact circular-arc offset candidate.
@@ -81,6 +83,8 @@ pub enum ArcOffsetError {
     EndpointScaleFailed,
     /// The resulting arc failed ordinary arc construction validation.
     InvalidArc(CircularArcError),
+    /// The selected predicate policy could not certify the distance sign.
+    PredicateUnresolved,
 }
 
 /// One exact Bezier offset sample candidate.
@@ -121,6 +125,8 @@ pub enum BezierOffsetError {
     NegativeDistance,
     /// Hodograph speed was zero or could not be certified positive.
     DegenerateTangent,
+    /// The selected predicate policy could not certify the distance sign.
+    PredicateUnresolved,
 }
 
 /// Offset a certified axis-aligned line segment by an exact distance.
@@ -135,8 +141,10 @@ pub fn offset_axis_aligned_segment(
     side: OffsetSide,
     policy: PredicatePolicy,
 ) -> Result<LineOffsetCandidate, LineOffsetError> {
-    if distance.structural_facts().sign == Some(RealSign::Negative) {
-        return Err(LineOffsetError::NegativeDistance);
+    match classify_real_sign(&distance, policy).value() {
+        Some(Sign::Negative) => return Err(LineOffsetError::NegativeDistance),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(LineOffsetError::PredicateUnresolved),
     }
     let axis = segment
         .facts()
@@ -152,7 +160,8 @@ pub fn offset_axis_aligned_segment(
     Ok(LineOffsetCandidate {
         side,
         distance,
-        segment: LinePathSegment::new(start, end),
+        segment: LinePathSegment::new(start, end, policy)
+            .map_err(|_| LineOffsetError::PredicateUnresolved)?,
     })
 }
 
@@ -169,8 +178,10 @@ pub fn offset_cardinal_arc(
     side: OffsetSide,
     policy: PredicatePolicy,
 ) -> Result<ArcOffsetCandidate, ArcOffsetError> {
-    if distance.structural_facts().sign == Some(RealSign::Negative) {
-        return Err(ArcOffsetError::NegativeDistance);
+    match classify_real_sign(&distance, policy).value() {
+        Some(Sign::Negative) => return Err(ArcOffsetError::NegativeDistance),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(ArcOffsetError::PredicateUnresolved),
     }
     let outward = matches!(
         (arc.direction(), side),
@@ -180,7 +191,7 @@ pub fn offset_cardinal_arc(
         arc.radius().clone() + distance.clone()
     } else {
         let candidate = arc.radius().clone() - distance.clone();
-        let ordering = compare_reals_with_policy(&candidate, &Real::zero(), policy).value();
+        let ordering = compare_reals(&candidate, &Real::zero(), policy).value();
         if !matches!(ordering, Some(Ordering::Greater)) {
             return Err(ArcOffsetError::RadiusWouldCollapse);
         }
@@ -192,6 +203,7 @@ pub fn offset_cardinal_arc(
         arc.start_cardinal(),
         arc.end_cardinal(),
         arc.direction(),
+        policy,
     )
     .map_err(ArcOffsetError::InvalidArc)?;
     Ok(ArcOffsetCandidate {
@@ -215,8 +227,10 @@ pub fn offset_explicit_arc(
     side: OffsetSide,
     policy: PredicatePolicy,
 ) -> Result<ExplicitArcOffsetCandidate, ArcOffsetError> {
-    if distance.structural_facts().sign == Some(RealSign::Negative) {
-        return Err(ArcOffsetError::NegativeDistance);
+    match classify_real_sign(&distance, policy).value() {
+        Some(Sign::Negative) => return Err(ArcOffsetError::NegativeDistance),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(ArcOffsetError::PredicateUnresolved),
     }
     let outward = matches!(
         (arc.direction(), side),
@@ -226,7 +240,7 @@ pub fn offset_explicit_arc(
         arc.radius().clone() + distance.clone()
     } else {
         let candidate = arc.radius().clone() - distance.clone();
-        let ordering = compare_reals_with_policy(&candidate, &Real::zero(), policy).value();
+        let ordering = compare_reals(&candidate, &Real::zero(), policy).value();
         if !matches!(ordering, Some(Ordering::Greater)) {
             return Err(ArcOffsetError::RadiusWouldCollapse);
         }
@@ -236,9 +250,15 @@ pub fn offset_explicit_arc(
         (radius.clone() / arc.radius().clone()).map_err(|_| ArcOffsetError::EndpointScaleFailed)?;
     let start = scaled_radial_point(arc.center(), arc.start(), &scale);
     let end = scaled_radial_point(arc.center(), arc.end(), &scale);
-    let offset_arc =
-        ExplicitCircularArc::new(arc.center().clone(), radius, start, end, arc.direction())
-            .map_err(ArcOffsetError::InvalidArc)?;
+    let offset_arc = ExplicitCircularArc::new(
+        arc.center().clone(),
+        radius,
+        start,
+        end,
+        arc.direction(),
+        policy,
+    )
+    .map_err(ArcOffsetError::InvalidArc)?;
     Ok(ExplicitArcOffsetCandidate {
         side,
         distance,
@@ -291,8 +311,8 @@ fn segment_direction(
     policy: PredicatePolicy,
 ) -> Result<Ordering, LineOffsetError> {
     let ordering = match axis {
-        Axis::X => compare_reals_with_policy(&segment.start().x, &segment.end().x, policy).value(),
-        Axis::Y => compare_reals_with_policy(&segment.start().y, &segment.end().y, policy).value(),
+        Axis::X => compare_reals(&segment.start().x, &segment.end().x, policy).value(),
+        Axis::Y => compare_reals(&segment.start().y, &segment.end().y, policy).value(),
     };
     match ordering {
         Some(Ordering::Less | Ordering::Greater) => Ok(ordering.unwrap()),
@@ -308,14 +328,16 @@ fn bezier_offset_sample_from_parts(
     side: OffsetSide,
     policy: PredicatePolicy,
 ) -> Result<BezierOffsetSampleCandidate, BezierOffsetError> {
-    if distance.structural_facts().sign == Some(RealSign::Negative) {
-        return Err(BezierOffsetError::NegativeDistance);
+    match classify_real_sign(&distance, policy).value() {
+        Some(Sign::Negative) => return Err(BezierOffsetError::NegativeDistance),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(BezierOffsetError::PredicateUnresolved),
     }
     let speed_squared = Real::signed_product_sum(
         [true, true],
         [[&tangent.x, &tangent.x], [&tangent.y, &tangent.y]],
     );
-    let ordering = compare_reals_with_policy(&speed_squared, &Real::zero(), policy).value();
+    let ordering = compare_reals(&speed_squared, &Real::zero(), policy).value();
     if !matches!(ordering, Some(Ordering::Greater)) {
         return Err(BezierOffsetError::DegenerateTangent);
     }

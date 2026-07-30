@@ -10,8 +10,8 @@
 //! keeping polynomial curve structure available for later exact arc-length and
 //! feed-rate planning.
 
-use hyperlimit::Point2;
-use hyperreal::{Rational, Real, RealExactSetFacts, RealSign};
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign};
+use hyperreal::{Rational, Real, RealExactSetFacts};
 
 /// Exact rational Bezier parameter in the closed interval `[0, 1]`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -171,6 +171,8 @@ pub enum RationalQuadraticBezierError {
     NegativeWeight,
     /// Homogeneous denominator could not be divided through exactly.
     DenominatorFailure,
+    /// The selected predicate policy could not certify the weight sign.
+    PredicateUnresolved,
 }
 
 impl CubicBezier {
@@ -477,15 +479,18 @@ impl HigherOrderBezier {
 }
 
 impl RationalQuadraticBezier {
-    /// Construct a rational quadratic Bezier.
+    /// Construct a rational quadratic Bezier with an explicit predicate policy.
     pub fn new(
         start: Point2,
         control: Point2,
         end: Point2,
         control_weight: Real,
+        policy: PredicatePolicy,
     ) -> Result<Self, RationalQuadraticBezierError> {
-        if control_weight.structural_facts().sign == Some(RealSign::Negative) {
-            return Err(RationalQuadraticBezierError::NegativeWeight);
+        match classify_real_sign(&control_weight, policy).value() {
+            Some(Sign::Negative) => return Err(RationalQuadraticBezierError::NegativeWeight),
+            Some(Sign::Zero | Sign::Positive) => {}
+            None => return Err(RationalQuadraticBezierError::PredicateUnresolved),
         }
         let facts = rational_quadratic_bezier_facts(&start, &control, &end, &control_weight);
         Ok(Self {

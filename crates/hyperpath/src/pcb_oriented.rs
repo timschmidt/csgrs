@@ -8,10 +8,10 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{
-    Point2, PredicatePolicy, SegmentIntersection, classify_segment_intersection_with_facts,
-    compare_reals_with_policy,
+    Point2, PredicatePolicy, SegmentIntersection, Sign, classify_real_sign,
+    classify_segment_intersection_with_facts, compare_reals,
 };
-use hyperreal::{Real, RealExactSetFacts, RealSign};
+use hyperreal::{Real, RealExactSetFacts};
 
 use crate::pcb::{
     ClearanceStatus, PadBoardClearanceReport, PcbBoardOutline, PcbTrace, TraceClearanceReport,
@@ -65,11 +65,12 @@ impl PcbOrientedRectPad {
         local_x: Point2,
         policy: PredicatePolicy,
     ) -> Result<Self, &'static str> {
-        let width_class = classify_nonnegative_extent(&width, "oriented rect pad width")?;
-        let height_class = classify_nonnegative_extent(&height, "oriented rect pad height")?;
+        let width_class = classify_nonnegative_extent(&width, "oriented rect pad width", policy)?;
+        let height_class =
+            classify_nonnegative_extent(&height, "oriented rect pad height", policy)?;
         let local_x_length_squared = squared_norm(&local_x);
         if !matches!(
-            compare_reals_with_policy(&local_x_length_squared, &Real::from(1), policy).value(),
+            compare_reals(&local_x_length_squared, &Real::from(1), policy).value(),
             Some(Ordering::Equal)
         ) {
             return Err("oriented rect pad local x axis must be exact unit length");
@@ -209,15 +210,16 @@ pub fn check_oriented_rect_pad_board_clearance(
 fn classify_nonnegative_extent(
     value: &Real,
     label: &'static str,
+    policy: PredicatePolicy,
 ) -> Result<TraceWidthClass, &'static str> {
-    match value.structural_facts().sign {
-        Some(RealSign::Negative) if label == "oriented rect pad width" => {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) if label == "oriented rect pad width" => {
             Err("oriented rect pad width must be nonnegative")
         }
-        Some(RealSign::Negative) => Err("oriented rect pad height must be nonnegative"),
-        Some(RealSign::Zero) => Ok(TraceWidthClass::Zero),
-        Some(RealSign::Positive) => Ok(TraceWidthClass::Positive),
-        None => Ok(TraceWidthClass::Unknown),
+        Some(Sign::Negative) => Err("oriented rect pad height must be nonnegative"),
+        Some(Sign::Zero) => Ok(TraceWidthClass::Zero),
+        Some(Sign::Positive) => Ok(TraceWidthClass::Positive),
+        None => Err("oriented rect pad extent sign is unresolved"),
     }
 }
 
@@ -231,26 +233,18 @@ fn classify_swept_distance_squared(
     let overlap_limit_squared = trace_width.clone() * trace_width.clone();
     let clearance_limit = trace_width.clone() + required_clearance.clone() * Real::from(2);
     let clearance_limit_squared = clearance_limit.clone() * clearance_limit;
-    let status =
-        match compare_reals_with_policy(&four_distance_squared, &overlap_limit_squared, policy)
-            .value()
-        {
-            Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
-            Some(Ordering::Greater) => {
-                match compare_reals_with_policy(
-                    &four_distance_squared,
-                    &clearance_limit_squared,
-                    policy,
-                )
-                .value()
-                {
-                    Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
-                    Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
-                    None => ClearanceStatus::Unknown,
-                }
+    let status = match compare_reals(&four_distance_squared, &overlap_limit_squared, policy).value()
+    {
+        Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
+        Some(Ordering::Greater) => {
+            match compare_reals(&four_distance_squared, &clearance_limit_squared, policy).value() {
+                Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
+                Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
+                None => ClearanceStatus::Unknown,
             }
-            None => ClearanceStatus::Unknown,
-        };
+        }
+        None => ClearanceStatus::Unknown,
+    };
     TraceClearanceReport {
         status,
         centerline_intersection: None,
@@ -269,7 +263,7 @@ fn segment_oriented_rect_distance_squared(
     {
         return Some(Real::zero());
     }
-    let edges = oriented_rect_edges(&corners);
+    let edges = oriented_rect_edges(&corners, policy)?;
     for edge in &edges {
         let intersection = classify_segment_intersection_with_facts(
             segment.start(),
@@ -278,6 +272,7 @@ fn segment_oriented_rect_distance_squared(
             edge.end(),
             segment.facts().segment,
             edge.facts().segment,
+            policy,
         )
         .value()?;
         if !matches!(intersection, SegmentIntersection::Disjoint) {
@@ -325,11 +320,10 @@ fn point_inside_oriented_rect(
     let local_y = dot(&delta, &pad.local_y());
     Some(
         !matches!(
-            compare_reals_with_policy(&abs_real(&local_x, policy)?, &half_width, policy).value()?,
+            compare_reals(&abs_real(&local_x, policy)?, &half_width, policy).value()?,
             Ordering::Greater
         ) && !matches!(
-            compare_reals_with_policy(&abs_real(&local_y, policy)?, &half_height, policy)
-                .value()?,
+            compare_reals(&abs_real(&local_y, policy)?, &half_height, policy).value()?,
             Ordering::Greater
         ),
     )
@@ -353,20 +347,20 @@ fn point_segment_distance_squared(
         point.y.clone() - segment.end().y.clone(),
     );
     let length_squared = squared_norm(&ab);
-    match compare_reals_with_policy(&length_squared, &Real::zero(), policy).value()? {
+    match compare_reals(&length_squared, &Real::zero(), policy).value()? {
         Ordering::Equal => return Some(squared_norm(&ap)),
         Ordering::Less => return None,
         Ordering::Greater => {}
     }
     let projection = dot(&ap, &ab);
     if !matches!(
-        compare_reals_with_policy(&projection, &Real::zero(), policy).value()?,
+        compare_reals(&projection, &Real::zero(), policy).value()?,
         Ordering::Greater
     ) {
         return Some(squared_norm(&ap));
     }
     if !matches!(
-        compare_reals_with_policy(&projection, &length_squared, policy).value()?,
+        compare_reals(&projection, &length_squared, policy).value()?,
         Ordering::Less
     ) {
         return Some(squared_norm(&bp));
@@ -404,13 +398,16 @@ fn oriented_rect_corners(pad: &PcbOrientedRectPad) -> Option<[Point2; 4]> {
     ])
 }
 
-fn oriented_rect_edges(corners: &[Point2; 4]) -> [LinePathSegment; 4] {
-    [
-        LinePathSegment::new(corners[0].clone(), corners[1].clone()),
-        LinePathSegment::new(corners[1].clone(), corners[2].clone()),
-        LinePathSegment::new(corners[2].clone(), corners[3].clone()),
-        LinePathSegment::new(corners[3].clone(), corners[0].clone()),
-    ]
+fn oriented_rect_edges(
+    corners: &[Point2; 4],
+    policy: PredicatePolicy,
+) -> Option<[LinePathSegment; 4]> {
+    Some([
+        LinePathSegment::new(corners[0].clone(), corners[1].clone(), policy).ok()?,
+        LinePathSegment::new(corners[1].clone(), corners[2].clone(), policy).ok()?,
+        LinePathSegment::new(corners[2].clone(), corners[3].clone(), policy).ok()?,
+        LinePathSegment::new(corners[3].clone(), corners[0].clone(), policy).ok()?,
+    ])
 }
 
 fn corner_extrema(
@@ -422,16 +419,16 @@ fn corner_extrema(
     let mut min_y = corners[0].y.clone();
     let mut max_y = corners[0].y.clone();
     for corner in corners.iter().skip(1) {
-        if compare_reals_with_policy(&corner.x, &min_x, policy).value()? == Ordering::Less {
+        if compare_reals(&corner.x, &min_x, policy).value()? == Ordering::Less {
             min_x = corner.x.clone();
         }
-        if compare_reals_with_policy(&corner.x, &max_x, policy).value()? == Ordering::Greater {
+        if compare_reals(&corner.x, &max_x, policy).value()? == Ordering::Greater {
             max_x = corner.x.clone();
         }
-        if compare_reals_with_policy(&corner.y, &min_y, policy).value()? == Ordering::Less {
+        if compare_reals(&corner.y, &min_y, policy).value()? == Ordering::Less {
             min_y = corner.y.clone();
         }
-        if compare_reals_with_policy(&corner.y, &max_y, policy).value()? == Ordering::Greater {
+        if compare_reals(&corner.y, &max_y, policy).value()? == Ordering::Greater {
             max_y = corner.y.clone();
         }
     }
@@ -446,12 +443,12 @@ fn classify_margins(
     let mut minimum_margin = margins[0].clone();
     for margin in margins {
         if matches!(
-            compare_reals_with_policy(margin, &minimum_margin, policy).value(),
+            compare_reals(margin, &minimum_margin, policy).value(),
             Some(Ordering::Less)
         ) {
             minimum_margin = margin.clone();
         }
-        match compare_reals_with_policy(margin, required, policy).value()? {
+        match compare_reals(margin, required, policy).value()? {
             Ordering::Less => return Some((ClearanceStatus::ClearanceViolation, margin.clone())),
             Ordering::Equal | Ordering::Greater => {}
         }
@@ -465,9 +462,7 @@ fn update_minimum_distance(
     policy: PredicatePolicy,
 ) -> Option<()> {
     let replace = match minimum.as_ref() {
-        Some(current) => {
-            compare_reals_with_policy(&candidate, current, policy).value()? == Ordering::Less
-        }
+        Some(current) => compare_reals(&candidate, current, policy).value()? == Ordering::Less,
         None => true,
     };
     if replace {
@@ -484,7 +479,7 @@ fn unknown_pad_board_report() -> PadBoardClearanceReport {
 }
 
 fn abs_real(value: &Real, policy: PredicatePolicy) -> Option<Real> {
-    match compare_reals_with_policy(value, &Real::zero(), policy).value()? {
+    match compare_reals(value, &Real::zero(), policy).value()? {
         Ordering::Less => Some(-value.clone()),
         Ordering::Equal | Ordering::Greater => Some(value.clone()),
     }

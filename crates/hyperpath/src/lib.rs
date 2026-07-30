@@ -235,7 +235,9 @@ pub use routing::{
     length_match_problem, multi_detour_meander, nonuniform_detour_meander,
     obstacle_aware_detour_meander, single_detour_meander,
 };
-pub use segment::{Axis, LinePathSegment, LinePathSegmentFacts, SegmentParameterOrder};
+pub use segment::{
+    Axis, LinePathSegment, LinePathSegmentError, LinePathSegmentFacts, SegmentParameterOrder,
+};
 pub use solve::{
     PcbConstraintSet, RectangularRegion, ToolpathConstraintSet, bezier_offset_sample_constraints,
     center_clearance_squared_constraint, constant_feed_time_equation,

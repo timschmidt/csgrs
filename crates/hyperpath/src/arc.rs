@@ -10,7 +10,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign, compare_reals};
 use hyperreal::{Rational, Real, RealExactSetFacts, RealSign};
 
 use crate::segment::{Axis, LinePathSegment};
@@ -369,23 +369,27 @@ pub enum CircularArcError {
     StartPointOffCircle,
     /// End endpoint is not exactly on the retained circle.
     EndPointOffCircle,
+    /// The selected predicate policy could not certify a required construction decision.
+    PredicateUnresolved,
 }
 
 impl CircularArc {
-    /// Construct a cardinal circular arc.
+    /// Construct a cardinal circular arc with an explicit predicate policy.
     pub fn cardinal(
         center: Point2,
         radius: Real,
         start: CardinalPoint,
         end: CardinalPoint,
         direction: ArcDirection,
+        policy: PredicatePolicy,
     ) -> Result<Self, CircularArcError> {
         let start_cardinal = start;
         let end_cardinal = end;
-        match radius.structural_facts().sign {
-            Some(RealSign::Negative) => return Err(CircularArcError::NegativeRadius),
-            Some(RealSign::Zero) => return Err(CircularArcError::DegenerateRadius),
-            _ => {}
+        match classify_real_sign(&radius, policy).value() {
+            Some(Sign::Negative) => return Err(CircularArcError::NegativeRadius),
+            Some(Sign::Zero) => return Err(CircularArcError::DegenerateRadius),
+            Some(Sign::Positive) => {}
+            None => return Err(CircularArcError::PredicateUnresolved),
         }
         let facts = CircularArcFacts {
             exact: Real::exact_set_facts([&center.x, &center.y, &radius]),
@@ -488,28 +492,51 @@ impl CircularArc {
 }
 
 impl ExplicitCircularArc {
-    /// Construct an explicit circular arc.
+    /// Construct an explicit circular arc with an explicit predicate policy.
     pub fn new(
         center: Point2,
         radius: Real,
         start: Point2,
         end: Point2,
         direction: ArcDirection,
+        policy: PredicatePolicy,
     ) -> Result<Self, CircularArcError> {
-        match radius.structural_facts().sign {
-            Some(RealSign::Negative) => return Err(CircularArcError::NegativeRadius),
-            Some(RealSign::Zero) => return Err(CircularArcError::DegenerateRadius),
-            _ => {}
+        match classify_real_sign(&radius, policy).value() {
+            Some(Sign::Negative) => return Err(CircularArcError::NegativeRadius),
+            Some(Sign::Zero) => return Err(CircularArcError::DegenerateRadius),
+            Some(Sign::Positive) => {}
+            None => return Err(CircularArcError::PredicateUnresolved),
         }
         let radius_squared = radius.clone() * radius.clone();
-        if point_radius_squared(&center, &start) != radius_squared {
-            return Err(CircularArcError::StartPointOffCircle);
+        match compare_reals(
+            &point_radius_squared(&center, &start),
+            &radius_squared,
+            policy,
+        )
+        .value()
+        {
+            Some(Ordering::Equal) => {}
+            Some(_) => return Err(CircularArcError::StartPointOffCircle),
+            None => return Err(CircularArcError::PredicateUnresolved),
         }
-        if point_radius_squared(&center, &end) != radius_squared {
-            return Err(CircularArcError::EndPointOffCircle);
+        match compare_reals(
+            &point_radius_squared(&center, &end),
+            &radius_squared,
+            policy,
+        )
+        .value()
+        {
+            Some(Ordering::Equal) => {}
+            Some(_) => return Err(CircularArcError::EndPointOffCircle),
+            None => return Err(CircularArcError::PredicateUnresolved),
         }
         let chord_length_squared = point_distance_squared(&start, &end);
-        let known_full_circle = chord_length_squared == Real::zero();
+        let known_full_circle =
+            match compare_reals(&chord_length_squared, &Real::zero(), policy).value() {
+                Some(Ordering::Equal) => true,
+                Some(_) => false,
+                None => return Err(CircularArcError::PredicateUnresolved),
+            };
         let (radial_dot, radial_cross) = radial_dot_cross(&center, &start, &end);
         let sweep_class = classify_explicit_sweep(&radial_cross, known_full_circle, direction);
         let facts = ExplicitCircularArcFacts {
@@ -630,7 +657,7 @@ impl ExplicitCircularArc {
         point: &Point2,
         policy: PredicatePolicy,
     ) -> ExplicitArcPointClassification {
-        match compare_reals_with_policy(
+        match compare_reals(
             &point_radius_squared(&self.center, point),
             &self.facts.radius_squared,
             policy,
@@ -723,7 +750,7 @@ impl ExplicitCircularArc {
         let b = Real::from(2) * (dx.clone() * sx.clone() + dy.clone() * sy.clone());
         let c = sx.clone() * sx + sy.clone() * sy - self.facts.radius_squared.clone();
 
-        let Some(a_order) = compare_reals_with_policy(&a, &Real::zero(), policy).value() else {
+        let Some(a_order) = compare_reals(&a, &Real::zero(), policy).value() else {
             return line_arc_unknown_report();
         };
         if a_order == Ordering::Equal {
@@ -731,8 +758,7 @@ impl ExplicitCircularArc {
         }
 
         let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
-        let Some(discriminant_order) =
-            compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()
+        let Some(discriminant_order) = compare_reals(&discriminant, &Real::zero(), policy).value()
         else {
             return line_arc_unknown_report();
         };
@@ -802,9 +828,7 @@ impl ExplicitCircularArc {
             Axis::Y => segment.start().x.clone() - self.center.x.clone(),
         };
         let radicand = self.facts.radius_squared.clone() - fixed_delta.clone() * fixed_delta;
-        let Some(radicand_order) =
-            compare_reals_with_policy(&radicand, &Real::zero(), policy).value()
-        else {
+        let Some(radicand_order) = compare_reals(&radicand, &Real::zero(), policy).value() else {
             return line_arc_unknown_report();
         };
         if radicand_order == Ordering::Less {
@@ -1257,8 +1281,8 @@ fn real_between_closed(
     max: &Real,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    let lower = compare_reals_with_policy(value, min, policy).value()?;
-    let upper = compare_reals_with_policy(value, max, policy).value()?;
+    let lower = compare_reals(value, min, policy).value()?;
+    let upper = compare_reals(value, max, policy).value()?;
     Some(
         matches!(lower, Ordering::Equal | Ordering::Greater)
             && matches!(upper, Ordering::Equal | Ordering::Less),
@@ -1267,9 +1291,8 @@ fn real_between_closed(
 
 fn push_unique_point(points: &mut Vec<Point2>, candidate: Point2, policy: PredicatePolicy) {
     if points.iter().any(|point| {
-        compare_reals_with_policy(&point.x, &candidate.x, policy).value() == Some(Ordering::Equal)
-            && compare_reals_with_policy(&point.y, &candidate.y, policy).value()
-                == Some(Ordering::Equal)
+        compare_reals(&point.x, &candidate.x, policy).value() == Some(Ordering::Equal)
+            && compare_reals(&point.y, &candidate.y, policy).value() == Some(Ordering::Equal)
     }) {
         return;
     }
@@ -1301,7 +1324,7 @@ fn same_arc_orientation_and_endpoints(
 }
 
 fn same_real_with_policy(first: &Real, second: &Real, policy: PredicatePolicy) -> Option<bool> {
-    Some(compare_reals_with_policy(first, second, policy).value()? == Ordering::Equal)
+    Some(compare_reals(first, second, policy).value()? == Ordering::Equal)
 }
 
 fn point_equal_with_policy(
@@ -1378,9 +1401,7 @@ fn circle_secant_points(
     let dx = second.center.x.clone() - first.center.x.clone();
     let dy = second.center.y.clone() - first.center.y.clone();
     let distance_squared = Real::signed_product_sum([true, true], [[&dx, &dx], [&dy, &dy]]);
-    if compare_reals_with_policy(&distance_squared, &Real::zero(), policy).value()?
-        == Ordering::Equal
-    {
+    if compare_reals(&distance_squared, &Real::zero(), policy).value()? == Ordering::Equal {
         return None;
     }
 
@@ -1395,7 +1416,7 @@ fn circle_secant_points(
 
     let radicand = Real::from(4) * distance_squared * first.facts.radius_squared.clone()
         - numerator.clone() * numerator;
-    let radicand_order = compare_reals_with_policy(&radicand, &Real::zero(), policy).value()?;
+    let radicand_order = compare_reals(&radicand, &Real::zero(), policy).value()?;
     if radicand_order == Ordering::Less {
         return None;
     }
@@ -1436,7 +1457,7 @@ fn classify_circle_relation_from_squares(
         return ExplicitCircleRelationClass::SameCircle;
     }
     let Some(sum_ordering) =
-        compare_reals_with_policy(center_distance_squared, radius_sum_squared, policy).value()
+        compare_reals(center_distance_squared, radius_sum_squared, policy).value()
     else {
         return ExplicitCircleRelationClass::Unknown;
     };
@@ -1444,12 +1465,9 @@ fn classify_circle_relation_from_squares(
         Ordering::Greater => ExplicitCircleRelationClass::Separate,
         Ordering::Equal => ExplicitCircleRelationClass::ExternallyTangent,
         Ordering::Less => {
-            let Some(diff_ordering) = compare_reals_with_policy(
-                center_distance_squared,
-                radius_difference_squared,
-                policy,
-            )
-            .value() else {
+            let Some(diff_ordering) =
+                compare_reals(center_distance_squared, radius_difference_squared, policy).value()
+            else {
                 return ExplicitCircleRelationClass::Unknown;
             };
             match diff_ordering {
@@ -1541,7 +1559,7 @@ fn directed_cross_sign(
         ArcDirection::Ccw => ccw_cross,
         ArcDirection::Cw => -ccw_cross,
     };
-    compare_reals_with_policy(&directed, &Real::zero(), policy).value()
+    compare_reals(&directed, &Real::zero(), policy).value()
 }
 
 fn is_nonnegative(ordering: Ordering) -> bool {

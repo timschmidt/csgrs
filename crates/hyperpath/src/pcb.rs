@@ -13,11 +13,11 @@ use std::cmp::Ordering;
 
 use hyperlimit::{
     Point2, PredicatePolicy, SegmentIntersection, classify_segment_intersection_with_facts,
-    compare_reals_with_policy,
+    compare_reals,
 };
 use hyperreal::{Real, RealExactSetFacts};
 
-use crate::segment::{Axis, LinePathSegment, real_sign};
+use crate::segment::{Axis, LinePathSegment, real_sign_with_policy};
 use crate::swept::SweptLineSegment;
 
 mod drill_policy;
@@ -356,16 +356,16 @@ pub struct PcbCardinalRectPad {
 }
 
 impl PcbBoardOutline {
-    /// Construct an axis-aligned board outline.
-    pub fn new(min: Point2, max: Point2) -> Result<Self, &'static str> {
+    /// Construct an axis-aligned board outline under an explicit predicate policy.
+    pub fn new(min: Point2, max: Point2, policy: PredicatePolicy) -> Result<Self, &'static str> {
         if !matches!(
-            compare_reals_with_policy(&min.x, &max.x, PredicatePolicy).value(),
+            compare_reals(&min.x, &max.x, policy).value(),
             Some(Ordering::Less | Ordering::Equal)
         ) {
             return Err("board outline x bounds must be ordered");
         }
         if !matches!(
-            compare_reals_with_policy(&min.y, &max.y, PredicatePolicy).value(),
+            compare_reals(&min.y, &max.y, policy).value(),
             Some(Ordering::Less | Ordering::Equal)
         ) {
             return Err("board outline y bounds must be ordered");
@@ -391,22 +391,19 @@ impl PcbBoardOutline {
 }
 
 impl PcbConvexBoardOutline {
-    /// Construct a strictly convex board outline.
-    pub fn new(vertices: Vec<Point2>) -> Result<Self, BoardContourError> {
+    /// Construct a strictly convex board outline under an explicit predicate policy.
+    pub fn new(vertices: Vec<Point2>, policy: PredicatePolicy) -> Result<Self, BoardContourError> {
         if vertices.len() < 3 {
             return Err(BoardContourError::TooFewVertices);
         }
         let signed_area_twice = polygon_signed_area_twice(&vertices);
-        let orientation =
-            match compare_reals_with_policy(&signed_area_twice, &Real::zero(), PredicatePolicy)
-                .value()
-            {
-                Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
-                Some(Ordering::Less) => BoardContourOrientation::Clockwise,
-                Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
-                None => return Err(BoardContourError::UnknownOrientation),
-            };
-        validate_strict_convexity(&vertices, orientation)?;
+        let orientation = match compare_reals(&signed_area_twice, &Real::zero(), policy).value() {
+            Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
+            Some(Ordering::Less) => BoardContourOrientation::Clockwise,
+            Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
+            None => return Err(BoardContourError::UnknownOrientation),
+        };
+        validate_strict_convexity(&vertices, orientation, policy)?;
         let refs = vertices
             .iter()
             .flat_map(|point| [&point.x, &point.y])
@@ -436,23 +433,20 @@ impl PcbConvexBoardOutline {
 }
 
 impl PcbOrthogonalBoardOutline {
-    /// Construct a simple orthogonal board outline.
-    pub fn new(vertices: Vec<Point2>) -> Result<Self, BoardContourError> {
+    /// Construct a simple orthogonal board outline under an explicit predicate policy.
+    pub fn new(vertices: Vec<Point2>, policy: PredicatePolicy) -> Result<Self, BoardContourError> {
         if vertices.len() < 3 {
             return Err(BoardContourError::TooFewVertices);
         }
         let signed_area_twice = polygon_signed_area_twice(&vertices);
-        let orientation =
-            match compare_reals_with_policy(&signed_area_twice, &Real::zero(), PredicatePolicy)
-                .value()
-            {
-                Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
-                Some(Ordering::Less) => BoardContourOrientation::Clockwise,
-                Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
-                None => return Err(BoardContourError::UnknownOrientation),
-            };
-        validate_orthogonal_edges(&vertices)?;
-        validate_simple_polygon_edges(&vertices)?;
+        let orientation = match compare_reals(&signed_area_twice, &Real::zero(), policy).value() {
+            Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
+            Some(Ordering::Less) => BoardContourOrientation::Clockwise,
+            Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
+            None => return Err(BoardContourError::UnknownOrientation),
+        };
+        validate_orthogonal_edges(&vertices, policy)?;
+        validate_simple_polygon_edges(&vertices, policy)?;
         let refs = vertices
             .iter()
             .flat_map(|point| [&point.x, &point.y])
@@ -482,18 +476,25 @@ impl PcbOrthogonalBoardOutline {
 }
 
 impl PcbRectPad {
-    /// Construct an axis-aligned rectangular pad.
+    /// Construct an axis-aligned rectangular pad under an explicit predicate policy.
     pub fn new(
         net: NetId,
         layer: TraceLayer,
         center: Point2,
         width: Real,
         height: Real,
+        policy: PredicatePolicy,
     ) -> Result<Self, &'static str> {
-        if real_sign(&width) == Some(hyperreal::RealSign::Negative) {
+        if !matches!(
+            real_sign_with_policy(&width, policy),
+            Some(hyperreal::RealSign::Zero | hyperreal::RealSign::Positive)
+        ) {
             return Err("rect pad width must be nonnegative");
         }
-        if real_sign(&height) == Some(hyperreal::RealSign::Negative) {
+        if !matches!(
+            real_sign_with_policy(&height, policy),
+            Some(hyperreal::RealSign::Zero | hyperreal::RealSign::Positive)
+        ) {
             return Err("rect pad height must be nonnegative");
         }
         Ok(Self {
@@ -532,7 +533,7 @@ impl PcbRectPad {
 }
 
 impl PcbRoundedRectPad {
-    /// Construct an axis-aligned rounded rectangular pad.
+    /// Construct an axis-aligned rounded rectangular pad under an explicit predicate policy.
     pub fn new(
         net: NetId,
         layer: TraceLayer,
@@ -540,26 +541,31 @@ impl PcbRoundedRectPad {
         width: Real,
         height: Real,
         corner_radius: Real,
+        policy: PredicatePolicy,
     ) -> Result<Self, &'static str> {
-        if real_sign(&width) == Some(hyperreal::RealSign::Negative) {
+        if !matches!(
+            real_sign_with_policy(&width, policy),
+            Some(hyperreal::RealSign::Zero | hyperreal::RealSign::Positive)
+        ) {
             return Err("rounded rect pad width must be nonnegative");
         }
-        if real_sign(&height) == Some(hyperreal::RealSign::Negative) {
+        if !matches!(
+            real_sign_with_policy(&height, policy),
+            Some(hyperreal::RealSign::Zero | hyperreal::RealSign::Positive)
+        ) {
             return Err("rounded rect pad height must be nonnegative");
         }
-        let corner_radius_class = match real_sign(&corner_radius) {
+        let corner_radius_class = match real_sign_with_policy(&corner_radius, policy) {
             Some(hyperreal::RealSign::Negative) => {
                 return Err("rounded rect pad corner radius must be nonnegative");
             }
             Some(hyperreal::RealSign::Zero) => TraceWidthClass::Zero,
             Some(hyperreal::RealSign::Positive) => TraceWidthClass::Positive,
-            None => TraceWidthClass::Unknown,
+            None => return Err("rounded rect pad corner radius sign is unresolved"),
         };
         let doubled_radius = corner_radius.clone() * Real::from(2);
-        let radius_within_width =
-            compare_reals_with_policy(&doubled_radius, &width, PredicatePolicy).value();
-        let radius_within_height =
-            compare_reals_with_policy(&doubled_radius, &height, PredicatePolicy).value();
+        let radius_within_width = compare_reals(&doubled_radius, &width, policy).value();
+        let radius_within_height = compare_reals(&doubled_radius, &height, policy).value();
         if !matches!(radius_within_width, Some(Ordering::Less | Ordering::Equal))
             || !matches!(radius_within_height, Some(Ordering::Less | Ordering::Equal))
         {
@@ -617,7 +623,7 @@ impl PcbRoundedRectPad {
 }
 
 impl PcbCardinalRectPad {
-    /// Construct a cardinally rotated rectangular pad.
+    /// Construct a cardinally rotated rectangular pad under an explicit predicate policy.
     pub fn new(
         net: NetId,
         layer: TraceLayer,
@@ -625,11 +631,18 @@ impl PcbCardinalRectPad {
         width: Real,
         height: Real,
         rotation: CardinalRotation,
+        policy: PredicatePolicy,
     ) -> Result<Self, &'static str> {
-        if real_sign(&width) == Some(hyperreal::RealSign::Negative) {
+        if !matches!(
+            real_sign_with_policy(&width, policy),
+            Some(hyperreal::RealSign::Zero | hyperreal::RealSign::Positive)
+        ) {
             return Err("cardinal rect pad width must be nonnegative");
         }
-        if real_sign(&height) == Some(hyperreal::RealSign::Negative) {
+        if !matches!(
+            real_sign_with_policy(&height, policy),
+            Some(hyperreal::RealSign::Zero | hyperreal::RealSign::Positive)
+        ) {
             return Err("cardinal rect pad height must be nonnegative");
         }
         Ok(Self {
@@ -672,8 +685,8 @@ impl PcbCardinalRectPad {
         self.rotation
     }
 
-    /// Return the exact axis-aligned rectangle equivalent for this rotation.
-    pub fn effective_rect(&self) -> Result<PcbRectPad, &'static str> {
+    /// Return the exact axis-aligned equivalent under an explicit predicate policy.
+    pub fn effective_rect(&self, policy: PredicatePolicy) -> Result<PcbRectPad, &'static str> {
         match self.rotation {
             CardinalRotation::Deg0 | CardinalRotation::Deg180 => PcbRectPad::new(
                 self.net,
@@ -681,6 +694,7 @@ impl PcbCardinalRectPad {
                 self.center.clone(),
                 self.width.clone(),
                 self.height.clone(),
+                policy,
             ),
             CardinalRotation::Deg90 | CardinalRotation::Deg270 => PcbRectPad::new(
                 self.net,
@@ -688,6 +702,7 @@ impl PcbCardinalRectPad {
                 self.center.clone(),
                 self.height.clone(),
                 self.width.clone(),
+                policy,
             ),
         }
     }
@@ -705,18 +720,19 @@ pub struct PcbViaStack {
 }
 
 impl PcbViaStack {
-    /// Construct a via stack with the same circular land on every spanned layer.
+    /// Construct a via stack under an explicit predicate policy.
     pub fn new(
         net: NetId,
         start_layer: TraceLayer,
         end_layer: TraceLayer,
         center: Point2,
         land_diameter: Real,
+        policy: PredicatePolicy,
     ) -> Result<Self, &'static str> {
         if start_layer > end_layer {
             return Err("via start layer must not be above end layer");
         }
-        let pad = PcbCircularPad::new(net, start_layer, center, land_diameter)?;
+        let pad = PcbCircularPad::new(net, start_layer, center, land_diameter, policy)?;
         Ok(Self {
             net,
             start_layer,
@@ -727,7 +743,7 @@ impl PcbViaStack {
         })
     }
 
-    /// Construct a via stack with an exact drill diameter.
+    /// Construct a plated drilled via stack under an explicit predicate policy.
     pub fn with_drill(
         net: NetId,
         start_layer: TraceLayer,
@@ -735,6 +751,7 @@ impl PcbViaStack {
         center: Point2,
         land_diameter: Real,
         drill_diameter: Real,
+        policy: PredicatePolicy,
     ) -> Result<Self, &'static str> {
         Self::with_drill_intent(
             net,
@@ -744,10 +761,12 @@ impl PcbViaStack {
             land_diameter,
             drill_diameter,
             ViaDrillIntent::Plated,
+            policy,
         )
     }
 
-    /// Construct a via stack with an exact drill diameter and retained process intent.
+    /// Construct a drilled via stack under an explicit predicate policy.
+    #[allow(clippy::too_many_arguments)]
     pub fn with_drill_intent(
         net: NetId,
         start_layer: TraceLayer,
@@ -756,9 +775,13 @@ impl PcbViaStack {
         land_diameter: Real,
         drill_diameter: Real,
         drill_intent: ViaDrillIntent,
+        policy: PredicatePolicy,
     ) -> Result<Self, &'static str> {
-        let mut via = Self::new(net, start_layer, end_layer, center, land_diameter)?;
-        if real_sign(&drill_diameter) == Some(hyperreal::RealSign::Negative) {
+        let mut via = Self::new(net, start_layer, end_layer, center, land_diameter, policy)?;
+        if !matches!(
+            real_sign_with_policy(&drill_diameter, policy),
+            Some(hyperreal::RealSign::Zero | hyperreal::RealSign::Positive)
+        ) {
             return Err("via drill diameter must be nonnegative");
         }
         via.drill_diameter = Some(drill_diameter);
@@ -918,11 +941,11 @@ impl PcbViaStack {
         let Some(drill) = self.drill_diameter.as_ref() else {
             return ViaAnnularRingReport::UnknownNoDrill;
         };
-        if real_sign(minimum) == Some(hyperreal::RealSign::Negative) {
+        if real_sign_with_policy(minimum, policy) == Some(hyperreal::RealSign::Negative) {
             return ViaAnnularRingReport::InvalidMinimum;
         }
         let required = drill.clone() + minimum.clone() * Real::from(2);
-        match compare_reals_with_policy(self.land_diameter(), &required, policy).value() {
+        match compare_reals(self.land_diameter(), &required, policy).value() {
             Some(Ordering::Less) => ViaAnnularRingReport::Violation,
             Some(Ordering::Equal | Ordering::Greater) => ViaAnnularRingReport::Certified,
             None => ViaAnnularRingReport::Unknown,
@@ -988,20 +1011,21 @@ pub enum ViaAnnularRingReport {
 }
 
 impl PcbCircularPad {
-    /// Construct a circular pad or via land.
+    /// Construct a circular pad or via land under an explicit predicate policy.
     pub fn new(
         net: NetId,
         layer: TraceLayer,
         center: Point2,
         diameter: Real,
+        policy: PredicatePolicy,
     ) -> Result<Self, &'static str> {
-        let diameter_class = match real_sign(&diameter) {
+        let diameter_class = match real_sign_with_policy(&diameter, policy) {
             Some(hyperreal::RealSign::Negative) => {
                 return Err("pad diameter must be nonnegative");
             }
             Some(hyperreal::RealSign::Zero) => TraceWidthClass::Zero,
             Some(hyperreal::RealSign::Positive) => TraceWidthClass::Positive,
-            None => TraceWidthClass::Unknown,
+            None => return Err("pad diameter sign is unresolved"),
         };
         let facts = PcbPadFacts {
             exact: Real::exact_set_facts([&center.x, &center.y, &diameter]),
@@ -1043,9 +1067,14 @@ impl PcbCircularPad {
 }
 
 impl PcbTrace {
-    /// Construct a PCB trace from swept geometry and net metadata.
-    pub fn new(net: NetId, layer: TraceLayer, swept: SweptLineSegment) -> Self {
-        let width_class = match real_sign(swept.width()) {
+    /// Construct a PCB trace while classifying cached width facts under an explicit policy.
+    pub fn new(
+        net: NetId,
+        layer: TraceLayer,
+        swept: SweptLineSegment,
+        policy: PredicatePolicy,
+    ) -> Self {
+        let width_class = match real_sign_with_policy(swept.width(), policy) {
             Some(hyperreal::RealSign::Zero) => TraceWidthClass::Zero,
             Some(hyperreal::RealSign::Positive) => TraceWidthClass::Positive,
             _ => TraceWidthClass::Unknown,
@@ -1157,7 +1186,7 @@ pub fn check_trace_clearance(
 
     let axis_gap = axis_aligned_gap(first.swept.centerline(), second.swept.centerline(), policy);
     if let Some(gap) = axis_gap.as_ref()
-        && real_sign(gap) == Some(hyperreal::RealSign::Positive)
+        && real_sign_with_policy(gap, policy) == Some(hyperreal::RealSign::Positive)
     {
         return trace_clearance_from_axis_gap(
             first,
@@ -1176,6 +1205,7 @@ pub fn check_trace_clearance(
         second.swept.centerline().end(),
         first.swept.centerline().facts().segment,
         second.swept.centerline().facts().segment,
+        policy,
     )
     .value();
 
@@ -1224,7 +1254,7 @@ fn trace_clearance_from_axis_gap(
     let required = first.swept.width().clone()
         + second.swept.width().clone()
         + required_clearance.clone() * Real::from(2);
-    let status = match compare_reals_with_policy(&doubled_gap, &required, policy).value() {
+    let status = match compare_reals(&doubled_gap, &required, policy).value() {
         Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
         Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
         None => ClearanceStatus::Unknown,
@@ -1273,26 +1303,18 @@ pub fn check_trace_pad_clearance(
         + required_clearance.clone() * Real::from(2);
     let clearance_limit_squared = clearance_limit.clone() * clearance_limit;
 
-    let status =
-        match compare_reals_with_policy(&four_distance_squared, &overlap_limit_squared, policy)
-            .value()
-        {
-            Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
-            Some(Ordering::Greater) => {
-                match compare_reals_with_policy(
-                    &four_distance_squared,
-                    &clearance_limit_squared,
-                    policy,
-                )
-                .value()
-                {
-                    Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
-                    Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
-                    None => ClearanceStatus::Unknown,
-                }
+    let status = match compare_reals(&four_distance_squared, &overlap_limit_squared, policy).value()
+    {
+        Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
+        Some(Ordering::Greater) => {
+            match compare_reals(&four_distance_squared, &clearance_limit_squared, policy).value() {
+                Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
+                Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
+                None => ClearanceStatus::Unknown,
             }
-            None => ClearanceStatus::Unknown,
-        };
+        }
+        None => ClearanceStatus::Unknown,
+    };
 
     TraceClearanceReport {
         status,
@@ -1315,13 +1337,15 @@ pub fn check_trace_via_clearance(
             axis_gap: None,
         };
     }
-    let pad = PcbCircularPad::new(
+    let Ok(pad) = PcbCircularPad::new(
         via.net(),
         trace.layer(),
         via.center().clone(),
         via.land_diameter().clone(),
-    )
-    .expect("validated via stack land diameter remains valid");
+        policy,
+    ) else {
+        return unknown_clearance_report();
+    };
     check_trace_pad_clearance(trace, &pad, required_clearance, policy)
 }
 
@@ -1350,13 +1374,15 @@ pub fn check_trace_via_drill_clearance(
     let Some(drill_diameter) = via.drill_diameter() else {
         return unknown_clearance_report();
     };
-    let drill = PcbCircularPad::new(
+    let Ok(drill) = PcbCircularPad::new(
         via.net(),
         trace.layer(),
         via.center().clone(),
         drill_diameter.clone(),
-    )
-    .expect("validated via drill diameter remains valid");
+        policy,
+    ) else {
+        return unknown_clearance_report();
+    };
     check_trace_pad_clearance(trace, &drill, required_clearance, policy)
 }
 
@@ -1393,26 +1419,18 @@ pub fn check_trace_rect_pad_clearance(
     let overlap_limit_squared = overlap_limit.clone() * overlap_limit;
     let clearance_limit = trace.swept.width().clone() + required_clearance.clone() * Real::from(2);
     let clearance_limit_squared = clearance_limit.clone() * clearance_limit;
-    let status =
-        match compare_reals_with_policy(&four_distance_squared, &overlap_limit_squared, policy)
-            .value()
-        {
-            Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
-            Some(Ordering::Greater) => {
-                match compare_reals_with_policy(
-                    &four_distance_squared,
-                    &clearance_limit_squared,
-                    policy,
-                )
-                .value()
-                {
-                    Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
-                    Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
-                    None => ClearanceStatus::Unknown,
-                }
+    let status = match compare_reals(&four_distance_squared, &overlap_limit_squared, policy).value()
+    {
+        Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
+        Some(Ordering::Greater) => {
+            match compare_reals(&four_distance_squared, &clearance_limit_squared, policy).value() {
+                Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
+                Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
+                None => ClearanceStatus::Unknown,
             }
-            None => ClearanceStatus::Unknown,
-        };
+        }
+        None => ClearanceStatus::Unknown,
+    };
     TraceClearanceReport {
         status,
         centerline_intersection: None,
@@ -1463,26 +1481,18 @@ pub fn check_trace_rounded_rect_pad_clearance(
         + rounded_kernel_diameter
         + required_clearance.clone() * Real::from(2);
     let clearance_limit_squared = clearance_limit.clone() * clearance_limit;
-    let status =
-        match compare_reals_with_policy(&four_distance_squared, &overlap_limit_squared, policy)
-            .value()
-        {
-            Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
-            Some(Ordering::Greater) => {
-                match compare_reals_with_policy(
-                    &four_distance_squared,
-                    &clearance_limit_squared,
-                    policy,
-                )
-                .value()
-                {
-                    Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
-                    Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
-                    None => ClearanceStatus::Unknown,
-                }
+    let status = match compare_reals(&four_distance_squared, &overlap_limit_squared, policy).value()
+    {
+        Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
+        Some(Ordering::Greater) => {
+            match compare_reals(&four_distance_squared, &clearance_limit_squared, policy).value() {
+                Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
+                Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
+                None => ClearanceStatus::Unknown,
             }
-            None => ClearanceStatus::Unknown,
-        };
+        }
+        None => ClearanceStatus::Unknown,
+    };
     TraceClearanceReport {
         status,
         centerline_intersection: None,
@@ -1502,7 +1512,7 @@ pub fn check_trace_cardinal_rect_pad_clearance(
     required_clearance: &Real,
     policy: PredicatePolicy,
 ) -> TraceClearanceReport {
-    match pad.effective_rect() {
+    match pad.effective_rect(policy) {
         Ok(rect) => check_trace_rect_pad_clearance(trace, &rect, required_clearance, policy),
         Err(_) => TraceClearanceReport {
             status: ClearanceStatus::Unknown,
@@ -1597,7 +1607,7 @@ pub fn check_trace_convex_board_clearance(
             trace.swept.centerline().end(),
         ] {
             let signed = oriented_edge_side(edge_start, edge_end, point, board.orientation);
-            match compare_reals_with_policy(&signed, &Real::zero(), policy).value() {
+            match compare_reals(&signed, &Real::zero(), policy).value() {
                 Some(Ordering::Less) => {
                     return TraceClearanceReport {
                         status: ClearanceStatus::ClearanceViolation,
@@ -1610,7 +1620,7 @@ pub fn check_trace_convex_board_clearance(
             }
             let lhs = signed.clone() * signed * Real::from(4);
             let rhs = required_squared.clone() * edge_length_squared.clone();
-            match compare_reals_with_policy(&lhs, &rhs, policy).value() {
+            match compare_reals(&lhs, &rhs, policy).value() {
                 Some(Ordering::Less) => {
                     return TraceClearanceReport {
                         status: ClearanceStatus::ClearanceViolation,
@@ -1670,10 +1680,13 @@ pub fn check_trace_orthogonal_board_clearance(
     let required_squared = required_doubled.clone() * required_doubled;
     let mut minimum_distance_squared: Option<Real> = None;
     for edge_index in 0..board.vertices.len() {
-        let edge = LinePathSegment::new(
+        let Ok(edge) = LinePathSegment::new(
             board.vertices[edge_index].clone(),
             board.vertices[(edge_index + 1) % board.vertices.len()].clone(),
-        );
+            policy,
+        ) else {
+            return unknown_clearance_report();
+        };
         match classify_segment_intersection_with_facts(
             trace_segment.start(),
             trace_segment.end(),
@@ -1681,6 +1694,7 @@ pub fn check_trace_orthogonal_board_clearance(
             edge.end(),
             trace_segment.facts().segment,
             edge.facts().segment,
+            policy,
         )
         .value()
         {
@@ -1705,7 +1719,7 @@ pub fn check_trace_orthogonal_board_clearance(
         };
         let replace_minimum = match minimum_distance_squared.as_ref() {
             Some(minimum) => matches!(
-                compare_reals_with_policy(&distance_squared, minimum, policy).value(),
+                compare_reals(&distance_squared, minimum, policy).value(),
                 Some(Ordering::Less)
             ),
             None => true,
@@ -1718,7 +1732,7 @@ pub fn check_trace_orthogonal_board_clearance(
         return unknown_clearance_report();
     };
     let lhs = minimum_distance_squared * Real::from(4);
-    let status = match compare_reals_with_policy(&lhs, &required_squared, policy).value() {
+    let status = match compare_reals(&lhs, &required_squared, policy).value() {
         Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
         Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
         None => ClearanceStatus::Unknown,
@@ -1833,7 +1847,7 @@ pub fn check_cardinal_rect_pad_board_clearance(
     required_clearance: &Real,
     policy: PredicatePolicy,
 ) -> PadBoardClearanceReport {
-    match pad.effective_rect() {
+    match pad.effective_rect(policy) {
         Ok(rect) => check_rect_pad_board_clearance(&rect, board, required_clearance, policy),
         Err(_) => unknown_pad_board_report(),
     }
@@ -1937,9 +1951,9 @@ fn axis_aligned_gap(
                 &second.end().y,
                 policy,
             )?;
-            if real_sign(&x_gap) == Some(hyperreal::RealSign::Zero) {
+            if real_sign_with_policy(&x_gap, policy) == Some(hyperreal::RealSign::Zero) {
                 Some(y_gap)
-            } else if real_sign(&y_gap) == Some(hyperreal::RealSign::Zero) {
+            } else if real_sign_with_policy(&y_gap, policy) == Some(hyperreal::RealSign::Zero) {
                 Some(x_gap)
             } else {
                 None
@@ -1965,13 +1979,13 @@ fn classify_doubled_margins(
     let mut minimum_margin = margins[0].clone();
     for margin in margins {
         if matches!(
-            compare_reals_with_policy(margin, &minimum_margin, policy).value(),
+            compare_reals(margin, &minimum_margin, policy).value(),
             Some(Ordering::Less)
         ) {
             minimum_margin = margin.clone();
         }
         let doubled_margin = margin.clone() * Real::from(2);
-        match compare_reals_with_policy(&doubled_margin, required_doubled, policy).value()? {
+        match compare_reals(&doubled_margin, required_doubled, policy).value()? {
             Ordering::Less => return Some((ClearanceStatus::ClearanceViolation, margin.clone())),
             Ordering::Equal | Ordering::Greater => {}
         }
@@ -1992,6 +2006,7 @@ fn polygon_signed_area_twice(vertices: &[Point2]) -> Real {
 fn validate_strict_convexity(
     vertices: &[Point2],
     orientation: BoardContourOrientation,
+    policy: PredicatePolicy,
 ) -> Result<(), BoardContourError> {
     for index in 0..vertices.len() {
         let previous = &vertices[index];
@@ -2002,7 +2017,7 @@ fn validate_strict_convexity(
             BoardContourOrientation::CounterClockwise => Ordering::Greater,
             BoardContourOrientation::Clockwise => Ordering::Less,
         };
-        match compare_reals_with_policy(&cross, &Real::zero(), PredicatePolicy).value() {
+        match compare_reals(&cross, &Real::zero(), policy).value() {
             Some(Ordering::Equal) => return Err(BoardContourError::CollinearEdge),
             Some(ordering) if ordering == expected => {}
             Some(_) => return Err(BoardContourError::NonConvex),
@@ -2012,15 +2027,18 @@ fn validate_strict_convexity(
     Ok(())
 }
 
-fn validate_orthogonal_edges(vertices: &[Point2]) -> Result<(), BoardContourError> {
+fn validate_orthogonal_edges(
+    vertices: &[Point2],
+    policy: PredicatePolicy,
+) -> Result<(), BoardContourError> {
     for index in 0..vertices.len() {
         let start = &vertices[index];
         let end = &vertices[(index + 1) % vertices.len()];
-        let same_x = compare_reals_with_policy(&start.x, &end.x, PredicatePolicy)
+        let same_x = compare_reals(&start.x, &end.x, policy)
             .value()
             .ok_or(BoardContourError::UnknownOrientation)?
             == Ordering::Equal;
-        let same_y = compare_reals_with_policy(&start.y, &end.y, PredicatePolicy)
+        let same_y = compare_reals(&start.y, &end.y, policy)
             .value()
             .ok_or(BoardContourError::UnknownOrientation)?
             == Ordering::Equal;
@@ -2033,8 +2051,11 @@ fn validate_orthogonal_edges(vertices: &[Point2]) -> Result<(), BoardContourErro
     Ok(())
 }
 
-fn validate_simple_polygon_edges(vertices: &[Point2]) -> Result<(), BoardContourError> {
-    let edges = polygon_edges(vertices);
+fn validate_simple_polygon_edges(
+    vertices: &[Point2],
+    policy: PredicatePolicy,
+) -> Result<(), BoardContourError> {
+    let edges = polygon_edges(vertices, policy)?;
     for first in 0..edges.len() {
         for second in (first + 1)..edges.len() {
             if polygon_edges_are_adjacent(first, second, edges.len()) {
@@ -2047,6 +2068,7 @@ fn validate_simple_polygon_edges(vertices: &[Point2]) -> Result<(), BoardContour
                 edges[second].end(),
                 edges[first].facts().segment,
                 edges[second].facts().segment,
+                policy,
             )
             .value()
             .ok_or(BoardContourError::UnknownOrientation)?;
@@ -2058,13 +2080,18 @@ fn validate_simple_polygon_edges(vertices: &[Point2]) -> Result<(), BoardContour
     Ok(())
 }
 
-fn polygon_edges(vertices: &[Point2]) -> Vec<LinePathSegment> {
+fn polygon_edges(
+    vertices: &[Point2],
+    policy: PredicatePolicy,
+) -> Result<Vec<LinePathSegment>, BoardContourError> {
     (0..vertices.len())
         .map(|index| {
             LinePathSegment::new(
                 vertices[index].clone(),
                 vertices[(index + 1) % vertices.len()].clone(),
+                policy,
             )
+            .map_err(|_| BoardContourError::UnknownOrientation)
         })
         .collect()
 }
@@ -2092,21 +2119,21 @@ fn classify_point_in_orthogonal_polygon(
         if point_on_axis_aligned_segment(point, start, end, policy)? {
             return Some(OrthogonalPointLocation::Boundary);
         }
-        if compare_reals_with_policy(&start.x, &end.x, policy).value()? != Ordering::Equal {
+        if compare_reals(&start.x, &end.x, policy).value()? != Ordering::Equal {
             continue;
         }
         let y_min = real_min(&start.y, &end.y, policy)?;
         let y_max = real_max(&start.y, &end.y, policy)?;
         let crosses_lower = !matches!(
-            compare_reals_with_policy(&point.y, y_min, policy).value()?,
+            compare_reals(&point.y, y_min, policy).value()?,
             Ordering::Less
         );
         let crosses_upper = matches!(
-            compare_reals_with_policy(&point.y, y_max, policy).value()?,
+            compare_reals(&point.y, y_max, policy).value()?,
             Ordering::Less
         );
         let right_of_point = matches!(
-            compare_reals_with_policy(&start.x, &point.x, policy).value()?,
+            compare_reals(&start.x, &point.x, policy).value()?,
             Ordering::Greater
         );
         if crosses_lower && crosses_upper && right_of_point {
@@ -2126,16 +2153,14 @@ fn point_on_axis_aligned_segment(
     end: &Point2,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    let same_x = compare_reals_with_policy(&start.x, &end.x, policy).value()? == Ordering::Equal;
-    let same_y = compare_reals_with_policy(&start.y, &end.y, policy).value()? == Ordering::Equal;
+    let same_x = compare_reals(&start.x, &end.x, policy).value()? == Ordering::Equal;
+    let same_y = compare_reals(&start.y, &end.y, policy).value()? == Ordering::Equal;
     if same_x {
-        let point_same_x =
-            compare_reals_with_policy(&point.x, &start.x, policy).value()? == Ordering::Equal;
+        let point_same_x = compare_reals(&point.x, &start.x, policy).value()? == Ordering::Equal;
         return Some(point_same_x && interval_contains_point(&start.y, &end.y, &point.y, policy)?);
     }
     if same_y {
-        let point_same_y =
-            compare_reals_with_policy(&point.y, &start.y, policy).value()? == Ordering::Equal;
+        let point_same_y = compare_reals(&point.y, &start.y, policy).value()? == Ordering::Equal;
         return Some(point_same_y && interval_contains_point(&start.x, &end.x, &point.x, policy)?);
     }
     Some(false)
@@ -2176,12 +2201,12 @@ fn classify_margins(
     let mut minimum_margin = margins[0].clone();
     for margin in margins {
         if matches!(
-            compare_reals_with_policy(margin, &minimum_margin, policy).value(),
+            compare_reals(margin, &minimum_margin, policy).value(),
             Some(Ordering::Less)
         ) {
             minimum_margin = margin.clone();
         }
-        match compare_reals_with_policy(margin, required, policy).value()? {
+        match compare_reals(margin, required, policy).value()? {
             Ordering::Less => return Some((ClearanceStatus::ClearanceViolation, margin.clone())),
             Ordering::Equal | Ordering::Greater => {}
         }
@@ -2199,7 +2224,7 @@ fn intervals_overlap(
     let lower = real_max(real_min(a0, a1, policy)?, real_min(b0, b1, policy)?, policy)?;
     let upper = real_min(real_max(a0, a1, policy)?, real_max(b0, b1, policy)?, policy)?;
     Some(!matches!(
-        compare_reals_with_policy(lower, upper, policy).value()?,
+        compare_reals(lower, upper, policy).value()?,
         Ordering::Greater
     ))
 }
@@ -2213,13 +2238,11 @@ fn interval_contains_point(
     let min = real_min(a0, a1, policy)?;
     let max = real_max(a0, a1, policy)?;
     Some(
-        !matches!(
-            compare_reals_with_policy(point, min, policy).value()?,
-            Ordering::Less
-        ) && !matches!(
-            compare_reals_with_policy(point, max, policy).value()?,
-            Ordering::Greater
-        ),
+        !matches!(compare_reals(point, min, policy).value()?, Ordering::Less)
+            && !matches!(
+                compare_reals(point, max, policy).value()?,
+                Ordering::Greater
+            ),
     )
 }
 
@@ -2235,7 +2258,7 @@ fn interval_gap(
     }
     let a_max = real_max(a0, a1, policy)?;
     let b_min = real_min(b0, b1, policy)?;
-    if compare_reals_with_policy(a_max, b_min, policy).value()? == Ordering::Less {
+    if compare_reals(a_max, b_min, policy).value()? == Ordering::Less {
         return Some(b_min.clone() - a_max.clone());
     }
     let b_max = real_max(b0, b1, policy)?;
@@ -2244,7 +2267,7 @@ fn interval_gap(
 }
 
 fn coordinate_gap(first: &Real, second: &Real, policy: PredicatePolicy) -> Option<Real> {
-    match compare_reals_with_policy(first, second, policy).value()? {
+    match compare_reals(first, second, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(second.clone() - first.clone()),
         Ordering::Greater => Some(first.clone() - second.clone()),
     }
@@ -2275,10 +2298,10 @@ fn axis_aligned_point_segment_distance_squared(
 fn interval_point_gap(a0: &Real, a1: &Real, point: &Real, policy: PredicatePolicy) -> Option<Real> {
     let min = real_min(a0, a1, policy)?;
     let max = real_max(a0, a1, policy)?;
-    if compare_reals_with_policy(point, min, policy).value()? == Ordering::Less {
+    if compare_reals(point, min, policy).value()? == Ordering::Less {
         return Some(min.clone() - point.clone());
     }
-    if compare_reals_with_policy(point, max, policy).value()? == Ordering::Greater {
+    if compare_reals(point, max, policy).value()? == Ordering::Greater {
         return Some(point.clone() - max.clone());
     }
     Some(Real::zero())
@@ -2382,14 +2405,14 @@ fn rounded_rect_inner_bounds(pad: &PcbRoundedRectPad) -> Option<(Real, Real, Rea
 }
 
 fn real_min<'a>(left: &'a Real, right: &'a Real, policy: PredicatePolicy) -> Option<&'a Real> {
-    match compare_reals_with_policy(left, right, policy).value()? {
+    match compare_reals(left, right, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(left),
         Ordering::Greater => Some(right),
     }
 }
 
 fn real_max<'a>(left: &'a Real, right: &'a Real, policy: PredicatePolicy) -> Option<&'a Real> {
-    match compare_reals_with_policy(left, right, policy).value()? {
+    match compare_reals(left, right, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(right),
         Ordering::Greater => Some(left),
     }

@@ -9,7 +9,7 @@
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals, point2_equal};
 use hyperreal::{Real, RealExactSetFacts};
 use hypersolve::AlgebraicRootRepresentation;
 
@@ -554,7 +554,7 @@ fn reject_degenerate_lines(
 ) -> Result<(), LineRationalQuadraticBezierArrangementError> {
     for (index, line) in lines.iter().enumerate() {
         if line.facts().known_degenerate == Some(true)
-            || compare_reals_with_policy(&line.length_squared(), &Real::zero(), policy).value()
+            || compare_reals(&line.length_squared(), &Real::zero(), policy).value()
                 == Some(Ordering::Equal)
         {
             return Err(
@@ -864,13 +864,11 @@ fn compare_exact_conic_line_parameters(
     right: &Real,
     policy: PredicatePolicy,
 ) -> Option<LineRationalQuadraticBezierAlgebraicBreakpointOrderClass> {
-    Some(
-        match compare_reals_with_policy(left, right, policy).value()? {
-            Ordering::Less => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before,
-            Ordering::Equal => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Equal,
-            Ordering::Greater => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::After,
-        },
-    )
+    Some(match compare_reals(left, right, policy).value()? {
+        Ordering::Less => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before,
+        Ordering::Equal => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Equal,
+        Ordering::Greater => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::After,
+    })
 }
 
 fn algebraic_conic_curve_order_between(
@@ -1105,7 +1103,7 @@ fn affine_conic_point_exact_interval(
     policy: PredicatePolicy,
 ) -> Option<ConicPointInterval> {
     let homogeneous = homogeneous_eval_real(curve, parameter);
-    match compare_reals_with_policy(&homogeneous.w, &Real::zero(), policy).value()? {
+    match compare_reals(&homogeneous.w, &Real::zero(), policy).value()? {
         Ordering::Equal => None,
         Ordering::Less | Ordering::Greater => {
             let x = (homogeneous.x / homogeneous.w.clone()).ok()?;
@@ -1142,11 +1140,11 @@ fn certified_min_max(
     right_upper: &Real,
     policy: PredicatePolicy,
 ) -> Option<(Real, Real)> {
-    let lower = match compare_reals_with_policy(left_lower, right_lower, policy).value()? {
+    let lower = match compare_reals(left_lower, right_lower, policy).value()? {
         Ordering::Less | Ordering::Equal => left_lower.clone(),
         Ordering::Greater => right_lower.clone(),
     };
-    let upper = match compare_reals_with_policy(left_upper, right_upper, policy).value()? {
+    let upper = match compare_reals(left_upper, right_upper, policy).value()? {
         Ordering::Less | Ordering::Equal => right_upper.clone(),
         Ordering::Greater => left_upper.clone(),
     };
@@ -1212,14 +1210,14 @@ fn solve_conic_quadratic_or_linear_roots(
     c: Real,
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_conic_linear_roots(b, c, policy),
         Ordering::Less | Ordering::Greater => solve_conic_quadratic_roots(a, b, c, policy),
     }
 }
 
 fn solve_conic_linear_roots(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
-    match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+    match compare_reals(&b, &Real::zero(), policy).value()? {
         Ordering::Equal => Some(Vec::new()),
         Ordering::Less | Ordering::Greater => Some(vec![(-c / b).ok()?]),
     }
@@ -1232,7 +1230,7 @@ fn solve_conic_quadratic_roots(
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
     let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
-    match compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? {
+    match compare_reals(&discriminant, &Real::zero(), policy).value()? {
         Ordering::Less => Some(Vec::new()),
         Ordering::Equal => Some(vec![((-b) / (Real::from(2) * a)).ok()?]),
         Ordering::Greater => {
@@ -1251,8 +1249,8 @@ fn real_in_closed_interval(
     upper: &Real,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    let lower_cmp = compare_reals_with_policy(value, lower, policy).value()?;
-    let upper_cmp = compare_reals_with_policy(value, upper, policy).value()?;
+    let lower_cmp = compare_reals(value, lower, policy).value()?;
+    let upper_cmp = compare_reals(value, upper, policy).value()?;
     Some(
         matches!(lower_cmp, Ordering::Equal | Ordering::Greater)
             && matches!(upper_cmp, Ordering::Equal | Ordering::Less),
@@ -1267,7 +1265,7 @@ fn compare_algebraic_conic_parameters(
     if let (Some(left_exact), Some(right_exact)) =
         (&left.interval.exact_root, &right.interval.exact_root)
     {
-        return match compare_reals_with_policy(left_exact, right_exact, policy).value() {
+        return match compare_reals(left_exact, right_exact, policy).value() {
             Some(Ordering::Less) => {
                 LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before
             }
@@ -1280,13 +1278,13 @@ fn compare_algebraic_conic_parameters(
             None => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown,
         };
     }
-    match compare_reals_with_policy(&left.interval.upper, &right.interval.lower, policy).value() {
+    match compare_reals(&left.interval.upper, &right.interval.lower, policy).value() {
         Some(Ordering::Less) => {
             return LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before;
         }
         Some(Ordering::Equal | Ordering::Greater) | None => {}
     }
-    match compare_reals_with_policy(&right.interval.upper, &left.interval.lower, policy).value() {
+    match compare_reals(&right.interval.upper, &left.interval.lower, policy).value() {
         Some(Ordering::Less) => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::After,
         Some(Ordering::Equal | Ordering::Greater) | None => {
             LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown
@@ -1299,10 +1297,10 @@ fn insert_line_breakpoint(
     line_index: usize,
     line: &LinePathSegment,
     point: Point2,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> Result<(), LineRationalQuadraticBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match point2_equal(&existing.point, &point).value() {
+        match point2_equal(&existing.point, &point, policy).value() {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => {
@@ -1337,7 +1335,7 @@ fn insert_exact_conic_breakpoint(
     policy: PredicatePolicy,
 ) -> Result<(), LineRationalQuadraticBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match compare_reals_with_policy(&existing.parameter, &parameter, policy).value() {
+        match compare_reals(&existing.parameter, &parameter, policy).value() {
             Some(Ordering::Equal) => return Ok(()),
             Some(Ordering::Less | Ordering::Greater) => {}
             None => {
@@ -1389,7 +1387,7 @@ fn sort_and_dedup_line_breakpoints(
         let mut deduped: Vec<MixedConicLineArrangementBreakpoint> = Vec::new();
         for point in points.drain(..) {
             if let Some(last) = deduped.last() {
-                match point2_equal(&last.point, &point.point).value() {
+                match point2_equal(&last.point, &point.point, policy).value() {
                     Some(true) => continue,
                     Some(false) => {}
                     None => {
@@ -1428,7 +1426,7 @@ fn compare_line_parameters(
     right: &MixedConicLineArrangementBreakpoint,
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
-    compare_reals_with_policy(
+    compare_reals(
         &(left.parameter_numerator.clone() * right.parameter_denominator.clone()),
         &(right.parameter_numerator.clone() * left.parameter_denominator.clone()),
         policy,
@@ -1443,14 +1441,14 @@ fn sort_and_dedup_conic_breakpoints(
     for (curve_index, points) in breakpoints.iter_mut().enumerate() {
         certify_conic_orders(points, curve_index, policy)?;
         points.sort_by(|left, right| {
-            compare_reals_with_policy(&left.parameter, &right.parameter, policy)
+            compare_reals(&left.parameter, &right.parameter, policy)
                 .value()
                 .expect("conic breakpoint order was certified before sorting")
         });
         let mut deduped: Vec<RationalQuadraticBezierRealBreakpoint> = Vec::new();
         for point in points.drain(..) {
             if let Some(last) = deduped.last() {
-                match compare_reals_with_policy(&last.parameter, &point.parameter, policy).value() {
+                match compare_reals(&last.parameter, &point.parameter, policy).value() {
                     Some(Ordering::Equal) => continue,
                     Some(Ordering::Less | Ordering::Greater) => {}
                     None => {
@@ -1476,7 +1474,7 @@ fn certify_conic_orders(
 ) -> Result<(), LineRationalQuadraticBezierArrangementError> {
     for left in 0..points.len() {
         for right in (left + 1)..points.len() {
-            compare_reals_with_policy(&points[left].parameter, &points[right].parameter, policy)
+            compare_reals(&points[left].parameter, &points[right].parameter, policy)
                 .value()
                 .ok_or(
                     LineRationalQuadraticBezierArrangementError::UndecidableConicOrder {
@@ -1502,7 +1500,14 @@ fn build_line_fragments(
                 source_line: window[0].line,
                 start: window[0].clone(),
                 end: window[1].clone(),
-                segment: LinePathSegment::new(window[0].point.clone(), window[1].point.clone()),
+                segment: LinePathSegment::new(
+                    window[0].point.clone(),
+                    window[1].point.clone(),
+                    policy,
+                )
+                .map_err(|_| {
+                    LineRationalQuadraticBezierArrangementError::UndecidablePointEquality
+                })?,
             });
         }
     }
@@ -1517,9 +1522,7 @@ fn build_conic_fragments(
     let mut fragments = Vec::new();
     for points in breakpoints {
         for window in points.windows(2) {
-            match compare_reals_with_policy(&window[0].parameter, &window[1].parameter, policy)
-                .value()
-            {
+            match compare_reals(&window[0].parameter, &window[1].parameter, policy).value() {
                 Some(Ordering::Equal) => continue,
                 Some(Ordering::Less | Ordering::Greater) => {}
                 None => {

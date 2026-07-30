@@ -10,7 +10,7 @@
 //! records before geometry import. The boundary follows Yap, "Towards Exact
 //! Geometric Computation," *Computational Geometry* 7.1-2 (1997).
 
-use hyperlimit::Point2;
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign};
 use hyperreal::{Rational, Real};
 use std::borrow::Cow;
 use std::fmt::Write;
@@ -386,10 +386,13 @@ impl SpecctraRoute {
     }
 
     /// Import exact trace records, stopping at the first invalid record.
-    pub fn from_records(records: &[SpecctraTraceRecord]) -> Result<Self, SpecctraImportError> {
+    pub fn from_records(
+        records: &[SpecctraTraceRecord],
+        policy: PredicatePolicy,
+    ) -> Result<Self, SpecctraImportError> {
         records
             .iter()
-            .map(import_specctra_trace_record)
+            .map(|record| import_specctra_trace_record(record, policy))
             .collect::<Result<Vec<_>, _>>()
             .map(Self::new)
     }
@@ -398,8 +401,9 @@ impl SpecctraRoute {
     pub fn from_trace_and_via_records(
         traces: &[SpecctraTraceRecord],
         vias: &[SpecctraViaRecord],
+        policy: PredicatePolicy,
     ) -> Result<Self, SpecctraImportError> {
-        Self::from_trace_via_and_arc_records(traces, vias, &[])
+        Self::from_trace_via_and_arc_records(traces, vias, &[], policy)
     }
 
     /// Import exact trace, via, and arc records, stopping at the first invalid record.
@@ -407,18 +411,19 @@ impl SpecctraRoute {
         traces: &[SpecctraTraceRecord],
         vias: &[SpecctraViaRecord],
         arcs: &[SpecctraArcWireRecord],
+        policy: PredicatePolicy,
     ) -> Result<Self, SpecctraImportError> {
         let traces = traces
             .iter()
-            .map(import_specctra_trace_record)
+            .map(|record| import_specctra_trace_record(record, policy))
             .collect::<Result<Vec<_>, _>>()?;
         let vias = vias
             .iter()
-            .map(import_specctra_via_record)
+            .map(|record| import_specctra_via_record(record, policy))
             .collect::<Result<Vec<_>, _>>()?;
         let arcs = arcs
             .iter()
-            .map(import_specctra_arc_wire_record)
+            .map(|record| import_specctra_arc_wire_record(record, policy))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self::with_vias_and_arcs(traces, vias, arcs))
     }
@@ -445,6 +450,8 @@ pub enum SpecctraImportError {
     InvalidArcGeometry,
     /// Route rule clearance or width was exactly negative.
     NegativeRuleValue,
+    /// The workspace predicate policy could not certify an imported scalar sign.
+    PredicateUnresolved,
 }
 
 /// Errors while parsing the minimal DSN/SES-style route text form.
@@ -478,6 +485,8 @@ pub enum SpecctraParseError {
     InvalidDrillIntent,
     /// Route rule clearance or width was exactly negative after exact lowering.
     NegativeRuleValue,
+    /// The workspace predicate policy could not certify a lowered scalar sign.
+    PredicateUnresolved,
 }
 
 impl From<SpecctraImportError> for SpecctraParseError {
@@ -492,6 +501,7 @@ impl From<SpecctraImportError> for SpecctraParseError {
             SpecctraImportError::ReversedLayerSpan => Self::ReversedLayerSpan,
             SpecctraImportError::InvalidArcGeometry => Self::InvalidArcGeometry,
             SpecctraImportError::NegativeRuleValue => Self::NegativeRuleValue,
+            SpecctraImportError::PredicateUnresolved => Self::PredicateUnresolved,
         }
     }
 }
@@ -557,6 +567,7 @@ pub fn specctra_grid_via_record(
 /// projected or flattened.
 pub fn specctra_grid_arc_wire_record(
     record: SpecctraGridArcWireRecord,
+    policy: PredicatePolicy,
 ) -> Result<SpecctraArcWireRecord, SpecctraImportError> {
     validate_grid(record.grid_denominator)?;
     let radius = grid_real(record.radius, record.grid_denominator)?;
@@ -578,6 +589,7 @@ pub fn specctra_grid_arc_wire_record(
             grid_real(record.end_y, record.grid_denominator)?,
         ),
         record.direction,
+        policy,
     )
     .map_err(|_| SpecctraImportError::InvalidArcGeometry)?;
     Ok(SpecctraArcWireRecord {
@@ -596,6 +608,7 @@ pub fn specctra_grid_arc_wire_record(
 /// preserves Yap's exact object/predicate split for DSN/SES import.
 pub fn specctra_grid_keepout_record(
     record: SpecctraGridKeepoutRecord,
+    policy: PredicatePolicy,
 ) -> Result<SpecctraKeepoutRecord, SpecctraImportError> {
     validate_grid(record.grid_denominator)?;
     let keepout = match record.shape {
@@ -642,7 +655,7 @@ pub fn specctra_grid_keepout_record(
                 })
                 .collect::<Result<Vec<_>, SpecctraImportError>>()?;
             let keepout = MeanderKeepout::OrthogonalPolygon { vertices };
-            validate_imported_keepout(&keepout)?;
+            validate_imported_keepout(&keepout, policy)?;
             keepout
         }
     };
@@ -674,19 +687,27 @@ pub fn specctra_grid_route_rule_record(
     })
 }
 
-/// Lower an exact Specctra route record into a validated PCB trace.
+/// Lower an exact trace record under an explicit predicate policy.
 pub fn import_specctra_trace_record(
     record: &SpecctraTraceRecord,
+    policy: PredicatePolicy,
 ) -> Result<PcbTrace, SpecctraImportError> {
-    let centerline = LinePathSegment::new(record.start.clone(), record.end.clone());
-    let swept = SweptLineSegment::new(centerline, record.width.clone())
-        .map_err(|_| SpecctraImportError::NegativeWidth)?;
-    Ok(PcbTrace::new(record.net, record.layer, swept))
+    let centerline = LinePathSegment::new(record.start.clone(), record.end.clone(), policy)
+        .map_err(|_| SpecctraImportError::PredicateUnresolved)?;
+    let swept =
+        SweptLineSegment::new(centerline, record.width.clone(), policy).map_err(|message| {
+            match message {
+                "swept path width must be nonnegative" => SpecctraImportError::NegativeWidth,
+                _ => SpecctraImportError::PredicateUnresolved,
+            }
+        })?;
+    Ok(PcbTrace::new(record.net, record.layer, swept, policy))
 }
 
-/// Lower an exact Specctra via record into a validated PCB via stack.
+/// Lower an exact via record under an explicit predicate policy.
 pub fn import_specctra_via_record(
     record: &SpecctraViaRecord,
+    policy: PredicatePolicy,
 ) -> Result<PcbViaStack, SpecctraImportError> {
     PcbViaStack::with_drill_intent(
         record.net,
@@ -696,22 +717,29 @@ pub fn import_specctra_via_record(
         record.land_diameter.clone(),
         record.drill_diameter.clone(),
         record.drill_intent,
+        policy,
     )
     .map_err(|message| match message {
         "via start layer must not be above end layer" => SpecctraImportError::ReversedLayerSpan,
         "pad diameter must be nonnegative" | "via drill diameter must be nonnegative" => {
             SpecctraImportError::NegativeDiameter
         }
-        _ => SpecctraImportError::NegativeDiameter,
+        "pad diameter sign is unresolved" | "via drill diameter sign is unresolved" => {
+            SpecctraImportError::PredicateUnresolved
+        }
+        _ => SpecctraImportError::PredicateUnresolved,
     })
 }
 
-/// Lower an exact Specctra arc-wire record into a retained route arc.
+/// Lower an exact arc-wire record under an explicit predicate policy.
 pub fn import_specctra_arc_wire_record(
     record: &SpecctraArcWireRecord,
+    policy: PredicatePolicy,
 ) -> Result<SpecctraRouteArc, SpecctraImportError> {
-    if record.width.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
-        return Err(SpecctraImportError::NegativeWidth);
+    match classify_real_sign(&record.width, policy).value() {
+        Some(Sign::Negative) => return Err(SpecctraImportError::NegativeWidth),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(SpecctraImportError::PredicateUnresolved),
     }
     Ok(SpecctraRouteArc {
         net: record.net,
@@ -750,15 +778,16 @@ pub fn import_specctra_keepout_record(record: &SpecctraKeepoutRecord) -> Meander
     record.keepout.clone()
 }
 
-fn validate_imported_keepout(keepout: &MeanderKeepout) -> Result<(), SpecctraImportError> {
-    validate_meander_keepouts(std::slice::from_ref(keepout), hyperlimit::PredicatePolicy).map_err(
-        |error| match error {
-            MeanderError::NegativeObstacleRadius => SpecctraImportError::NegativeRadius,
-            MeanderError::InvalidObstacleBounds => SpecctraImportError::InvalidKeepoutBounds,
-            MeanderError::InvalidObstaclePolygon => SpecctraImportError::InvalidKeepoutPolygon,
-            _ => SpecctraImportError::InvalidKeepoutPolygon,
-        },
-    )
+fn validate_imported_keepout(
+    keepout: &MeanderKeepout,
+    policy: PredicatePolicy,
+) -> Result<(), SpecctraImportError> {
+    validate_meander_keepouts(std::slice::from_ref(keepout), policy).map_err(|error| match error {
+        MeanderError::NegativeObstacleRadius => SpecctraImportError::NegativeRadius,
+        MeanderError::InvalidObstacleBounds => SpecctraImportError::InvalidKeepoutBounds,
+        MeanderError::InvalidObstaclePolygon => SpecctraImportError::InvalidKeepoutPolygon,
+        _ => SpecctraImportError::InvalidKeepoutPolygon,
+    })
 }
 
 /// Serialize fixed-grid route records into a small DSN/SES-style S-expression.
@@ -969,7 +998,10 @@ pub fn parse_specctra_grid_route_records(
 }
 
 /// Parse and lower the canonical fixed-grid route subset into validated traces.
-pub fn import_specctra_text_route(input: &str) -> Result<SpecctraRoute, SpecctraParseError> {
+pub fn import_specctra_text_route(
+    input: &str,
+    policy: PredicatePolicy,
+) -> Result<SpecctraRoute, SpecctraParseError> {
     let records = parse_specctra_grid_route_records(input)?;
     let exact_traces = records
         .traces
@@ -984,9 +1016,14 @@ pub fn import_specctra_text_route(input: &str) -> Result<SpecctraRoute, Specctra
     let exact_arcs = records
         .arcs
         .into_iter()
-        .map(specctra_grid_arc_wire_record)
+        .map(|record| specctra_grid_arc_wire_record(record, policy))
         .collect::<Result<Vec<_>, _>>()?;
-    SpecctraRoute::from_trace_via_and_arc_records(&exact_traces, &exact_vias, &exact_arcs)
+    records
+        .keepouts
+        .into_iter()
+        .map(|record| specctra_grid_keepout_record(record, policy))
+        .collect::<Result<Vec<_>, _>>()?;
+    SpecctraRoute::from_trace_via_and_arc_records(&exact_traces, &exact_vias, &exact_arcs, policy)
         .map_err(Into::into)
 }
 
@@ -1396,7 +1433,6 @@ impl<'tokens, 'input> Parser<'tokens, 'input> {
             width,
             grid_denominator,
         };
-        specctra_grid_arc_wire_record(record)?;
         Ok(record)
     }
 
@@ -1429,7 +1465,6 @@ impl<'tokens, 'input> Parser<'tokens, 'input> {
             shape: shape.ok_or(SpecctraParseError::InvalidSyntax)?,
             grid_denominator,
         };
-        specctra_grid_keepout_record(record.clone())?;
         Ok(record)
     }
 

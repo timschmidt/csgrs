@@ -10,8 +10,8 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
-use hyperreal::{Real, RealExactSetFacts, RealSign};
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign, compare_reals, point2_equal};
+use hyperreal::{Real, RealExactSetFacts};
 
 mod pocket_link;
 mod rest;
@@ -86,6 +86,8 @@ pub enum PocketRingError {
     NonPositiveStepover,
     /// No rings were requested.
     ZeroMaxRings,
+    /// The selected predicate policy could not certify the tool-radius sign.
+    PredicateUnresolved,
 }
 
 /// Fill direction for exact rectangular additive bead schedules.
@@ -131,6 +133,8 @@ pub enum RectangularBeadError {
     NonPositiveSpacing,
     /// No beads were requested.
     ZeroMaxBeads,
+    /// The selected predicate policy could not certify generated segment bounds.
+    PredicateUnresolved,
 }
 
 /// One exact connector between adjacent additive bead centerlines.
@@ -187,6 +191,8 @@ pub enum InfillGraphError {
     EmptyBeads,
     /// A generated connector endpoint failed exact equality validation.
     InvalidConnectorEndpoint,
+    /// The selected predicate policy could not certify generated segment bounds.
+    PredicateUnresolved,
 }
 
 /// Exact support-footprint containment status.
@@ -295,9 +301,13 @@ pub enum RegionBooleanError {
 }
 
 impl RectangularPocket {
-    /// Construct an exact rectangular pocket.
-    pub fn new(min: Point2, max: Point2) -> Result<Self, RectangularPocketError> {
-        if !ordered_closed(&min.x, &max.x) || !ordered_closed(&min.y, &max.y) {
+    /// Construct an exact rectangular pocket under an explicit predicate policy.
+    pub fn new(
+        min: Point2,
+        max: Point2,
+        policy: PredicatePolicy,
+    ) -> Result<Self, RectangularPocketError> {
+        if !ordered_closed(&min.x, &max.x, policy) || !ordered_closed(&min.y, &max.y, policy) {
             return Err(RectangularPocketError::UnorderedBounds);
         }
         let exact = Real::exact_set_facts([&min.x, &min.y, &max.x, &max.y]);
@@ -347,12 +357,12 @@ pub fn rectangular_pocket_rings(
     if max_rings == 0 {
         return Err(PocketRingError::ZeroMaxRings);
     }
-    if tool_radius.structural_facts().sign == Some(RealSign::Negative) {
-        return Err(PocketRingError::NegativeToolRadius);
+    match classify_real_sign(&tool_radius, policy).value() {
+        Some(Sign::Negative) => return Err(PocketRingError::NegativeToolRadius),
+        Some(Sign::Zero | Sign::Positive) => {}
+        None => return Err(PocketRingError::PredicateUnresolved),
     }
-    if compare_reals_with_policy(&stepover, &Real::zero(), policy).value()
-        != Some(Ordering::Greater)
-    {
+    if compare_reals(&stepover, &Real::zero(), policy).value() != Some(Ordering::Greater) {
         return Err(PocketRingError::NonPositiveStepover);
     }
 
@@ -402,13 +412,10 @@ pub fn rectangular_beads(
     if max_beads == 0 {
         return Err(RectangularBeadError::ZeroMaxBeads);
     }
-    if compare_reals_with_policy(&bead_width, &Real::zero(), policy).value()
-        != Some(Ordering::Greater)
-    {
+    if compare_reals(&bead_width, &Real::zero(), policy).value() != Some(Ordering::Greater) {
         return Err(RectangularBeadError::NonPositiveBeadWidth);
     }
-    if compare_reals_with_policy(&spacing, &Real::zero(), policy).value() != Some(Ordering::Greater)
-    {
+    if compare_reals(&spacing, &Real::zero(), policy).value() != Some(Ordering::Greater) {
         return Err(RectangularBeadError::NonPositiveSpacing);
     }
     let half_width = (bead_width.clone() / Real::from(2))
@@ -426,8 +433,7 @@ pub fn rectangular_beads(
             BeadFillAxis::Horizontal => region.max.y.clone() - half_width.clone(),
             BeadFillAxis::Vertical => region.max.x.clone() - half_width.clone(),
         };
-        let Some(ordering) = compare_reals_with_policy(&pitch_position, &limit, policy).value()
-        else {
+        let Some(ordering) = compare_reals(&pitch_position, &limit, policy).value() else {
             break RectangularScheduleStop::Unknown;
         };
         if ordering == Ordering::Greater {
@@ -438,12 +444,15 @@ pub fn rectangular_beads(
             BeadFillAxis::Horizontal => crate::segment::LinePathSegment::new(
                 Point2::new(region.min.x.clone(), pitch_position.clone()),
                 Point2::new(region.max.x.clone(), pitch_position.clone()),
+                policy,
             ),
             BeadFillAxis::Vertical => crate::segment::LinePathSegment::new(
                 Point2::new(pitch_position.clone(), region.min.y.clone()),
                 Point2::new(pitch_position.clone(), region.max.y.clone()),
+                policy,
             ),
-        };
+        }
+        .map_err(|_| RectangularBeadError::PredicateUnresolved)?;
         beads.push(AdditiveBeadLine {
             index: beads.len(),
             segment,
@@ -492,22 +501,28 @@ pub fn rectangular_serpentine_infill_graph(
         .enumerate()
         .map(|(index, bead)| {
             if index % 2 == 0 {
-                bead.segment.clone()
+                Ok(bead.segment.clone())
             } else {
                 crate::segment::LinePathSegment::new(
                     bead.segment.end().clone(),
                     bead.segment.start().clone(),
+                    policy,
                 )
+                .map_err(|_| InfillGraphError::PredicateUnresolved)
             }
         })
-        .collect();
+        .collect::<Result<_, _>>()?;
 
     let mut links = Vec::new();
     for (index, pair) in deposition_segments.windows(2).enumerate() {
         let current = &pair[0];
         let next = &pair[1];
-        let connector =
-            crate::segment::LinePathSegment::new(current.end().clone(), next.start().clone());
+        let connector = crate::segment::LinePathSegment::new(
+            current.end().clone(),
+            next.start().clone(),
+            policy,
+        )
+        .map_err(|_| InfillGraphError::PredicateUnresolved)?;
         if !points_equal(current.end(), connector.start(), policy)
             || !points_equal(next.start(), connector.end(), policy)
         {
@@ -545,8 +560,7 @@ pub fn rectangular_support_footprint(
     xy_margin: Real,
     policy: PredicatePolicy,
 ) -> Result<RectangularSupportReport, SupportFootprintError> {
-    if compare_reals_with_policy(&xy_margin, &Real::zero(), policy).value() == Some(Ordering::Less)
-    {
+    if compare_reals(&xy_margin, &Real::zero(), policy).value() == Some(Ordering::Less) {
         return Err(SupportFootprintError::NegativeMargin);
     }
 
@@ -558,7 +572,7 @@ pub fn rectangular_support_footprint(
         overhang.max.x.clone() + xy_margin.clone(),
         overhang.max.y.clone() + xy_margin.clone(),
     );
-    let footprint = RectangularPocket::new(footprint_min, footprint_max)
+    let footprint = RectangularPocket::new(footprint_min, footprint_max, policy)
         .map_err(|_| SupportFootprintError::InvalidFootprint)?;
     let status = classify_rect_containment(&footprint, &base, policy);
 
@@ -585,10 +599,10 @@ pub fn intersect_rectangular_regions(
         min_real(&first.max.x, &second.max.x, policy)?,
         min_real(&first.max.y, &second.max.y, policy)?,
     );
-    let x_order = compare_reals_with_policy(&min.x, &max.x, policy)
+    let x_order = compare_reals(&min.x, &max.x, policy)
         .value()
         .ok_or(RegionBooleanError::UnknownComparison)?;
-    let y_order = compare_reals_with_policy(&min.y, &max.y, policy)
+    let y_order = compare_reals(&min.y, &max.y, policy)
         .value()
         .ok_or(RegionBooleanError::UnknownComparison)?;
     let (intersection, relation) = match (x_order, y_order) {
@@ -596,13 +610,13 @@ pub fn intersect_rectangular_regions(
             (None, RectangularRegionRelation::Disjoint)
         }
         (Ordering::Equal, _) | (_, Ordering::Equal) => {
-            let intersection =
-                RectangularPocket::new(min, max).map_err(|_| RegionBooleanError::InvalidRegion)?;
+            let intersection = RectangularPocket::new(min, max, policy)
+                .map_err(|_| RegionBooleanError::InvalidRegion)?;
             (Some(intersection), RectangularRegionRelation::Touching)
         }
         (Ordering::Less, Ordering::Less) => {
-            let intersection =
-                RectangularPocket::new(min, max).map_err(|_| RegionBooleanError::InvalidRegion)?;
+            let intersection = RectangularPocket::new(min, max, policy)
+                .map_err(|_| RegionBooleanError::InvalidRegion)?;
             (Some(intersection), RectangularRegionRelation::AreaOverlap)
         }
     };
@@ -689,8 +703,8 @@ fn inset_rect(
         pocket.max.x.clone() - inset.clone(),
         pocket.max.y.clone() - inset.clone(),
     );
-    let x_order = compare_reals_with_policy(&min.x, &max.x, policy).value()?;
-    let y_order = compare_reals_with_policy(&min.y, &max.y, policy).value()?;
+    let x_order = compare_reals(&min.x, &max.x, policy).value()?;
+    let y_order = compare_reals(&min.y, &max.y, policy).value()?;
     if matches!(x_order, Ordering::Less | Ordering::Equal)
         && matches!(y_order, Ordering::Less | Ordering::Equal)
     {
@@ -706,10 +720,10 @@ fn classify_rect_containment(
     policy: PredicatePolicy,
 ) -> SupportFootprintStatus {
     let comparisons = [
-        compare_reals_with_policy(&outer.min.x, &inner.min.x, policy).value(),
-        compare_reals_with_policy(&outer.min.y, &inner.min.y, policy).value(),
-        compare_reals_with_policy(&inner.max.x, &outer.max.x, policy).value(),
-        compare_reals_with_policy(&inner.max.y, &outer.max.y, policy).value(),
+        compare_reals(&outer.min.x, &inner.min.x, policy).value(),
+        compare_reals(&outer.min.y, &inner.min.y, policy).value(),
+        compare_reals(&inner.max.x, &outer.max.x, policy).value(),
+        compare_reals(&inner.max.y, &outer.max.y, policy).value(),
     ];
     if comparisons.iter().any(Option::is_none) {
         return SupportFootprintStatus::Unknown;
@@ -732,8 +746,10 @@ fn push_positive_rect(
     policy: PredicatePolicy,
 ) -> Result<(), RegionBooleanError> {
     if positive_extent(&min.x, &max.x, policy)? && positive_extent(&min.y, &max.y, policy)? {
-        output
-            .push(RectangularPocket::new(min, max).map_err(|_| RegionBooleanError::InvalidRegion)?);
+        output.push(
+            RectangularPocket::new(min, max, policy)
+                .map_err(|_| RegionBooleanError::InvalidRegion)?,
+        );
     }
     Ok(())
 }
@@ -743,7 +759,7 @@ fn positive_extent(
     max: &Real,
     policy: PredicatePolicy,
 ) -> Result<bool, RegionBooleanError> {
-    Ok(compare_reals_with_policy(min, max, policy)
+    Ok(compare_reals(min, max, policy)
         .value()
         .ok_or(RegionBooleanError::UnknownComparison)?
         == Ordering::Less)
@@ -754,7 +770,7 @@ fn max_real(
     second: &Real,
     policy: PredicatePolicy,
 ) -> Result<Real, RegionBooleanError> {
-    match compare_reals_with_policy(first, second, policy)
+    match compare_reals(first, second, policy)
         .value()
         .ok_or(RegionBooleanError::UnknownComparison)?
     {
@@ -768,7 +784,7 @@ fn min_real(
     second: &Real,
     policy: PredicatePolicy,
 ) -> Result<Real, RegionBooleanError> {
-    match compare_reals_with_policy(first, second, policy)
+    match compare_reals(first, second, policy)
         .value()
         .ok_or(RegionBooleanError::UnknownComparison)?
     {
@@ -778,13 +794,12 @@ fn min_real(
 }
 
 fn points_equal(first: &Point2, second: &Point2, policy: PredicatePolicy) -> bool {
-    compare_reals_with_policy(&first.x, &second.x, policy).value() == Some(Ordering::Equal)
-        && compare_reals_with_policy(&first.y, &second.y, policy).value() == Some(Ordering::Equal)
+    point2_equal(first, second, policy).value() == Some(true)
 }
 
-fn ordered_closed(min: &Real, max: &Real) -> bool {
+fn ordered_closed(min: &Real, max: &Real, policy: PredicatePolicy) -> bool {
     matches!(
-        compare_reals_with_policy(min, max, PredicatePolicy).value(),
+        compare_reals(min, max, policy).value(),
         Some(Ordering::Less | Ordering::Equal)
     )
 }

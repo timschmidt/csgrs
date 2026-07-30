@@ -59,7 +59,7 @@ fuzz_target!(|data: &[u8]| {
     .unwrap();
 
     let report =
-        audit_specctra_trace_rule_clearances(&[first, second], &[rule], PredicatePolicy::default())
+        audit_specctra_trace_rule_clearances(&[first, second], &[rule], PredicatePolicy::STRICT)
             .unwrap();
     assert_eq!(report.pairs.len(), 1);
 

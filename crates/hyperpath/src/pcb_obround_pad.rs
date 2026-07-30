@@ -8,10 +8,10 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{
-    Point2, PredicatePolicy, SegmentIntersection, classify_segment_intersection_with_facts,
-    compare_reals_with_policy,
+    Point2, PredicatePolicy, SegmentIntersection, Sign, classify_real_sign,
+    classify_segment_intersection_with_facts, compare_reals,
 };
-use hyperreal::{Real, RealExactSetFacts, RealSign};
+use hyperreal::{Real, RealExactSetFacts};
 
 use crate::pcb::{
     ClearanceStatus, PadBoardClearanceReport, PcbBoardOutline, PcbTrace, TraceClearanceReport,
@@ -50,18 +50,19 @@ pub struct PcbObroundPad {
 }
 
 impl PcbObroundPad {
-    /// Construct an obround pad.
+    /// Construct an obround pad with an explicit predicate policy.
     pub fn new(
         net: crate::pcb::NetId,
         layer: crate::pcb::TraceLayer,
         spine: LinePathSegment,
         diameter: Real,
+        policy: PredicatePolicy,
     ) -> Result<Self, &'static str> {
-        let diameter_class = match diameter.structural_facts().sign {
-            Some(RealSign::Negative) => return Err("obround pad diameter must be nonnegative"),
-            Some(RealSign::Zero) => TraceWidthClass::Zero,
-            Some(RealSign::Positive) => TraceWidthClass::Positive,
-            None => TraceWidthClass::Unknown,
+        let diameter_class = match classify_real_sign(&diameter, policy).value() {
+            Some(Sign::Negative) => return Err("obround pad diameter must be nonnegative"),
+            Some(Sign::Zero) => TraceWidthClass::Zero,
+            Some(Sign::Positive) => TraceWidthClass::Positive,
+            None => return Err("obround pad diameter sign is unresolved"),
         };
         let facts = PcbObroundPadFacts {
             exact: Real::exact_set_facts([
@@ -186,26 +187,18 @@ fn classify_swept_segment_distance(
     let clearance_limit =
         trace_width.clone() + pad_diameter.clone() + required_clearance.clone() * Real::from(2);
     let clearance_limit_squared = clearance_limit.clone() * clearance_limit;
-    let status =
-        match compare_reals_with_policy(&four_distance_squared, &overlap_limit_squared, policy)
-            .value()
-        {
-            Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
-            Some(Ordering::Greater) => {
-                match compare_reals_with_policy(
-                    &four_distance_squared,
-                    &clearance_limit_squared,
-                    policy,
-                )
-                .value()
-                {
-                    Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
-                    Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
-                    None => ClearanceStatus::Unknown,
-                }
+    let status = match compare_reals(&four_distance_squared, &overlap_limit_squared, policy).value()
+    {
+        Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
+        Some(Ordering::Greater) => {
+            match compare_reals(&four_distance_squared, &clearance_limit_squared, policy).value() {
+                Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
+                Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
+                None => ClearanceStatus::Unknown,
             }
-            None => ClearanceStatus::Unknown,
-        };
+        }
+        None => ClearanceStatus::Unknown,
+    };
     TraceClearanceReport {
         status,
         centerline_intersection: None,
@@ -225,6 +218,7 @@ fn segment_segment_distance_squared(
         second.end(),
         first.facts().segment,
         second.facts().segment,
+        policy,
     )
     .value()?;
     if !matches!(intersection, SegmentIntersection::Disjoint) {
@@ -272,20 +266,20 @@ fn point_segment_distance_squared(
         point.y.clone() - segment.end().y.clone(),
     );
     let length_squared = squared_norm(&ab);
-    match compare_reals_with_policy(&length_squared, &Real::zero(), policy).value()? {
+    match compare_reals(&length_squared, &Real::zero(), policy).value()? {
         Ordering::Equal => return Some(squared_norm(&ap)),
         Ordering::Less => return None,
         Ordering::Greater => {}
     }
     let projection = dot(&ap, &ab);
     if !matches!(
-        compare_reals_with_policy(&projection, &Real::zero(), policy).value()?,
+        compare_reals(&projection, &Real::zero(), policy).value()?,
         Ordering::Greater
     ) {
         return Some(squared_norm(&ap));
     }
     if !matches!(
-        compare_reals_with_policy(&projection, &length_squared, policy).value()?,
+        compare_reals(&projection, &length_squared, policy).value()?,
         Ordering::Less
     ) {
         return Some(squared_norm(&bp));
@@ -318,12 +312,12 @@ fn classify_margins(
     let mut minimum_margin = margins[0].clone();
     for margin in margins {
         if matches!(
-            compare_reals_with_policy(margin, &minimum_margin, policy).value(),
+            compare_reals(margin, &minimum_margin, policy).value(),
             Some(Ordering::Less)
         ) {
             minimum_margin = margin.clone();
         }
-        match compare_reals_with_policy(margin, required, policy).value()? {
+        match compare_reals(margin, required, policy).value()? {
             Ordering::Less => return Some((ClearanceStatus::ClearanceViolation, margin.clone())),
             Ordering::Equal | Ordering::Greater => {}
         }
@@ -337,9 +331,7 @@ fn update_minimum_distance(
     policy: PredicatePolicy,
 ) -> Option<()> {
     let replace = match minimum.as_ref() {
-        Some(current) => {
-            compare_reals_with_policy(&candidate, current, policy).value()? == Ordering::Less
-        }
+        Some(current) => compare_reals(&candidate, current, policy).value()? == Ordering::Less,
         None => true,
     };
     if replace {
@@ -364,14 +356,14 @@ fn unknown_pad_board_report() -> PadBoardClearanceReport {
 }
 
 fn real_min<'a>(left: &'a Real, right: &'a Real, policy: PredicatePolicy) -> Option<&'a Real> {
-    match compare_reals_with_policy(left, right, policy).value()? {
+    match compare_reals(left, right, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(left),
         Ordering::Greater => Some(right),
     }
 }
 
 fn real_max<'a>(left: &'a Real, right: &'a Real, policy: PredicatePolicy) -> Option<&'a Real> {
-    match compare_reals_with_policy(left, right, policy).value()? {
+    match compare_reals(left, right, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(right),
         Ordering::Greater => Some(left),
     }

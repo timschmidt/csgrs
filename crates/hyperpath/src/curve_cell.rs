@@ -8,7 +8,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals, point2_equal};
 use hyperreal::Real;
 use hypersolve::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
@@ -761,10 +761,10 @@ fn build_curve_cell_graph_full(
 fn curve_vertex_index(
     vertices: &mut Vec<CurveArrangementCellVertex>,
     point: &Point2,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> Result<usize, CurveArrangementCellError> {
     for (index, vertex) in vertices.iter().enumerate() {
-        match point2_equal(&vertex.point, point).value() {
+        match point2_equal(&vertex.point, point, policy).value() {
             Some(true) => return Ok(index),
             Some(false) => {}
             None => return Err(CurveArrangementCellError::UndecidablePointEquality),
@@ -805,11 +805,11 @@ fn find_duplicate_curve_edge(
 }
 
 fn real_equal(left: &Real, right: &Real, policy: PredicatePolicy) -> bool {
-    compare_reals_with_policy(left, right, policy).value() == Some(Ordering::Equal)
+    compare_reals(left, right, policy).value() == Some(Ordering::Equal)
 }
 
-fn point_equal(left: &Point2, right: &Point2, _policy: PredicatePolicy) -> bool {
-    point2_equal(left, right).value() == Some(true)
+fn point_equal(left: &Point2, right: &Point2, policy: PredicatePolicy) -> bool {
+    point2_equal(left, right, policy).value() == Some(true)
 }
 
 fn homogeneous_point_equal(
@@ -996,7 +996,7 @@ fn compare_curve_half_edge_angle(
         _ => {}
     }
     let cross = left_vector.x * right_vector.y - left_vector.y * right_vector.x;
-    match compare_reals_with_policy(&cross, &Real::zero(), policy).value()? {
+    match compare_reals(&cross, &Real::zero(), policy).value()? {
         Ordering::Greater => Some(Ordering::Less),
         Ordering::Less => Some(Ordering::Greater),
         Ordering::Equal => Some(Ordering::Equal),
@@ -1072,17 +1072,16 @@ fn curve_half_edge_tangent(
 
 fn vector_is_zero(vector: &Point2, policy: PredicatePolicy) -> Option<bool> {
     Some(
-        compare_reals_with_policy(&vector.x, &Real::zero(), policy).value()? == Ordering::Equal
-            && compare_reals_with_policy(&vector.y, &Real::zero(), policy).value()?
-                == Ordering::Equal,
+        compare_reals(&vector.x, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals(&vector.y, &Real::zero(), policy).value()? == Ordering::Equal,
     )
 }
 
 fn direction_upper_half(dx: &Real, dy: &Real, policy: PredicatePolicy) -> Option<bool> {
-    match compare_reals_with_policy(dy, &Real::zero(), policy).value()? {
+    match compare_reals(dy, &Real::zero(), policy).value()? {
         Ordering::Greater => Some(true),
         Ordering::Less => Some(false),
-        Ordering::Equal => match compare_reals_with_policy(dx, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals(dx, &Real::zero(), policy).value()? {
             Ordering::Less => Some(false),
             Ordering::Equal | Ordering::Greater => Some(true),
         },
@@ -1171,7 +1170,7 @@ fn curve_cell_faces(
                 edge: half_edges[start].edge,
             });
         };
-        match compare_reals_with_policy(&area, &Real::zero(), policy).value() {
+        match compare_reals(&area, &Real::zero(), policy).value() {
             Some(Ordering::Equal) => continue,
             Some(Ordering::Greater) => faces.push(CurveArrangementCellFace {
                 half_edges: cycle,
@@ -1539,10 +1538,10 @@ fn arc_midpoint_candidate(
     for candidate in candidates {
         match arc.classify_point(&candidate, policy) {
             ExplicitArcPointClassification::OnArc => {
-                if point2_equal(&candidate, arc.start()).value()? {
+                if point2_equal(&candidate, arc.start(), policy).value()? {
                     continue;
                 }
-                if point2_equal(&candidate, arc.end()).value()? {
+                if point2_equal(&candidate, arc.end(), policy).value()? {
                     continue;
                 }
                 return Some(candidate);
@@ -1750,7 +1749,7 @@ fn line_ray_crossing(
     if point_on_segment(point, start, end, policy) == Some(true) {
         return RayCrossingResult::Boundary;
     }
-    let start_above = match compare_reals_with_policy(&start.y, &point.y, policy).value() {
+    let start_above = match compare_reals(&start.y, &point.y, policy).value() {
         Some(order) => matches!(order, Ordering::Greater | Ordering::Equal),
         None => {
             return RayCrossingResult::Unknown(
@@ -1758,7 +1757,7 @@ fn line_ray_crossing(
             );
         }
     };
-    let end_above = match compare_reals_with_policy(&end.y, &point.y, policy).value() {
+    let end_above = match compare_reals(&end.y, &point.y, policy).value() {
         Some(order) => matches!(order, Ordering::Greater | Ordering::Equal),
         None => {
             return RayCrossingResult::Unknown(
@@ -1785,7 +1784,7 @@ fn point_on_segment(
 ) -> Option<bool> {
     let cross_value = (end.x.clone() - start.x.clone()) * (point.y.clone() - start.y.clone())
         - (end.y.clone() - start.y.clone()) * (point.x.clone() - start.x.clone());
-    if compare_reals_with_policy(&cross_value, &Real::zero(), policy).value()? != Ordering::Equal {
+    if compare_reals(&cross_value, &Real::zero(), policy).value()? != Ordering::Equal {
         return Some(false);
     }
     Some(
@@ -1824,7 +1823,7 @@ fn explicit_arc_ray_crossing(
 
     let dy = point.y.clone() - arc.center().y.clone();
     let radicand = arc.radius().clone() * arc.radius().clone() - dy.clone() * dy;
-    match compare_reals_with_policy(&radicand, &Real::zero(), policy).value() {
+    match compare_reals(&radicand, &Real::zero(), policy).value() {
         Some(Ordering::Less) => RayCrossingResult::Crossings(0),
         Some(Ordering::Equal) => {
             let candidate = Point2::new(arc.center().x.clone(), point.y.clone());
@@ -1835,7 +1834,7 @@ fn explicit_arc_ray_crossing(
                     {
                         return RayCrossingResult::Crossings(0);
                     }
-                    match compare_reals_with_policy(&candidate.x, &point.x, policy).value() {
+                    match compare_reals(&candidate.x, &point.x, policy).value() {
                         Some(Ordering::Less) => RayCrossingResult::Crossings(0),
                         Some(Ordering::Equal) => RayCrossingResult::Boundary,
                         Some(Ordering::Greater) => RayCrossingResult::Crossings(0),
@@ -1897,10 +1896,10 @@ fn arc_endpoint_owned_by_half_open_traversal(
     arc: &ExplicitCircularArc,
     candidate: &Point2,
     forward: bool,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> Option<bool> {
-    let is_start = point2_equal(candidate, arc.start()).value()?;
-    let is_end = point2_equal(candidate, arc.end()).value()?;
+    let is_start = point2_equal(candidate, arc.start(), policy).value()?;
+    let is_end = point2_equal(candidate, arc.end(), policy).value()?;
     if forward && is_end {
         return Some(false);
     }
@@ -1952,7 +1951,7 @@ fn cubic_ray_crossing(
     let p2 = fragment.curve.control1().y.clone() - point.y.clone();
     let p3 = fragment.curve.end().y.clone() - point.y.clone();
     let cubic = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
-    if compare_reals_with_policy(&cubic, &Real::zero(), policy).value() != Some(Ordering::Equal) {
+    if compare_reals(&cubic, &Real::zero(), policy).value() != Some(Ordering::Equal) {
         return algebraic_cubic_ray_crossing(
             point,
             fragment,
@@ -2060,24 +2059,22 @@ fn algebraic_cubic_ray_crossing(
 
         if let Some(triple_root) = &triple_root {
             match algebraic_root_interval_contains_real(&root, triple_root, policy) {
-                Some(true) => {
-                    match compare_reals_with_policy(&d3y, &Real::zero(), policy).value() {
-                        Some(Ordering::Less | Ordering::Greater) => {
-                            crossings += 1;
-                            continue;
-                        }
-                        Some(Ordering::Equal) => {
-                            return RayCrossingResult::Unknown(
-                                CurveArrangementLoopRoleBlocker::TangentContact,
-                            );
-                        }
-                        None => {
-                            return RayCrossingResult::Unknown(
-                                CurveArrangementLoopRoleBlocker::UnsupportedCubicRay,
-                            );
-                        }
+                Some(true) => match compare_reals(&d3y, &Real::zero(), policy).value() {
+                    Some(Ordering::Less | Ordering::Greater) => {
+                        crossings += 1;
+                        continue;
                     }
-                }
+                    Some(Ordering::Equal) => {
+                        return RayCrossingResult::Unknown(
+                            CurveArrangementLoopRoleBlocker::TangentContact,
+                        );
+                    }
+                    None => {
+                        return RayCrossingResult::Unknown(
+                            CurveArrangementLoopRoleBlocker::UnsupportedCubicRay,
+                        );
+                    }
+                },
                 Some(false) => {}
                 None => {
                     return RayCrossingResult::Unknown(
@@ -2102,7 +2099,7 @@ fn algebraic_cubic_ray_crossing(
                 ) {
                     Some(Ordering::Less | Ordering::Greater) => continue,
                     Some(Ordering::Equal) => {
-                        match compare_reals_with_policy(&d3y, &Real::zero(), policy).value() {
+                        match compare_reals(&d3y, &Real::zero(), policy).value() {
                             Some(Ordering::Less | Ordering::Greater) => crossings += 1,
                             Some(Ordering::Equal) => {
                                 return RayCrossingResult::Unknown(
@@ -2192,19 +2189,16 @@ fn cubic_triple_root(
     policy: PredicatePolicy,
 ) -> Option<Real> {
     let (d, b, c, a) = polynomial;
-    if compare_reals_with_policy(a, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(a, &Real::zero(), policy).value()? == Ordering::Equal {
         return None;
     }
     let first_identity = b.clone() * b.clone() - Real::from(3) * a.clone() * c.clone();
-    if compare_reals_with_policy(&first_identity, &Real::zero(), policy).value()? != Ordering::Equal
-    {
+    if compare_reals(&first_identity, &Real::zero(), policy).value()? != Ordering::Equal {
         return None;
     }
     let second_identity =
         b.clone() * b.clone() * b.clone() - Real::from(27) * a.clone() * a.clone() * d.clone();
-    if compare_reals_with_policy(&second_identity, &Real::zero(), policy).value()?
-        != Ordering::Equal
-    {
+    if compare_reals(&second_identity, &Real::zero(), policy).value()? != Ordering::Equal {
         return None;
     }
     (-b.clone() / (Real::from(3) * a.clone())).ok()
@@ -2216,10 +2210,10 @@ fn algebraic_root_interval_contains_real(
     policy: PredicatePolicy,
 ) -> Option<bool> {
     if let Some(witness) = root.exact_rational_witness() {
-        return Some(compare_reals_with_policy(witness, value, policy).value()? == Ordering::Equal);
+        return Some(compare_reals(witness, value, policy).value()? == Ordering::Equal);
     }
-    let lower = compare_reals_with_policy(&root.interval.lower, value, policy).value()?;
-    let upper = compare_reals_with_policy(&root.interval.upper, value, policy).value()?;
+    let lower = compare_reals(&root.interval.lower, value, policy).value()?;
+    let upper = compare_reals(&root.interval.upper, value, policy).value()?;
     Some(lower != Ordering::Greater && upper != Ordering::Less)
 }
 
@@ -2233,30 +2227,22 @@ fn algebraic_parameter_in_half_open_unit(
             Some(true) => {}
             other => return other,
         }
-        if forward
-            && compare_reals_with_policy(witness, &Real::one(), policy).value()? == Ordering::Equal
-        {
+        if forward && compare_reals(witness, &Real::one(), policy).value()? == Ordering::Equal {
             return Some(false);
         }
-        if !forward
-            && compare_reals_with_policy(witness, &Real::zero(), policy).value()? == Ordering::Equal
-        {
+        if !forward && compare_reals(witness, &Real::zero(), policy).value()? == Ordering::Equal {
             return Some(false);
         }
         return Some(true);
     }
 
-    let lower_zero =
-        compare_reals_with_policy(&root.interval.lower, &Real::zero(), policy).value()?;
-    let upper_one =
-        compare_reals_with_policy(&root.interval.upper, &Real::one(), policy).value()?;
+    let lower_zero = compare_reals(&root.interval.lower, &Real::zero(), policy).value()?;
+    let upper_one = compare_reals(&root.interval.upper, &Real::one(), policy).value()?;
     if matches!(lower_zero, Ordering::Greater) && matches!(upper_one, Ordering::Less) {
         return Some(true);
     }
-    let upper_zero =
-        compare_reals_with_policy(&root.interval.upper, &Real::zero(), policy).value()?;
-    let lower_one =
-        compare_reals_with_policy(&root.interval.lower, &Real::one(), policy).value()?;
+    let upper_zero = compare_reals(&root.interval.upper, &Real::zero(), policy).value()?;
+    let lower_one = compare_reals(&root.interval.lower, &Real::one(), policy).value()?;
     if matches!(upper_zero, Ordering::Less) || matches!(lower_one, Ordering::Greater) {
         Some(false)
     } else {
@@ -2274,15 +2260,13 @@ fn compare_algebraic_image_to_real(
     }
     let representation = image.representation.as_ref()?;
     if let Some(exact) = representation.exact_rational_witness() {
-        return compare_reals_with_policy(exact, value, policy).value();
+        return compare_reals(exact, value, policy).value();
     }
-    let upper_value =
-        compare_reals_with_policy(&representation.interval.upper, value, policy).value()?;
+    let upper_value = compare_reals(&representation.interval.upper, value, policy).value()?;
     if upper_value == Ordering::Less {
         return Some(Ordering::Less);
     }
-    let lower_value =
-        compare_reals_with_policy(&representation.interval.lower, value, policy).value()?;
+    let lower_value = compare_reals(&representation.interval.lower, value, policy).value()?;
     if lower_value == Ordering::Greater {
         return Some(Ordering::Greater);
     }
@@ -2305,7 +2289,7 @@ fn compare_algebraic_root_polynomial_to_real(
 ) -> Option<Ordering> {
     if let Some(witness) = root.exact_rational_witness() {
         let image = eval_power_polynomial(coefficients, witness);
-        return compare_reals_with_policy(&image, value, policy).value();
+        return compare_reals(&image, value, policy).value();
     }
     let image = transform_algebraic_root_polynomial_image(root, coefficients, policy);
     compare_algebraic_image_to_real(&image, value, policy)
@@ -2439,9 +2423,7 @@ where
                 CurveArrangementLoopRoleBlocker::UndecidablePredicate,
             );
         };
-        if compare_reals_with_policy(&curve_point.x, &point.x, policy).value()
-            == Some(Ordering::Equal)
-        {
+        if compare_reals(&curve_point.x, &point.x, policy).value() == Some(Ordering::Equal) {
             return RayCrossingResult::Boundary;
         }
         let Some(derivative) = y_derivative(&root) else {
@@ -2449,14 +2431,14 @@ where
                 CurveArrangementLoopRoleBlocker::UndecidablePredicate,
             );
         };
-        match compare_reals_with_policy(&derivative, &Real::zero(), policy).value() {
+        match compare_reals(&derivative, &Real::zero(), policy).value() {
             Some(Ordering::Equal) => {
                 let Some(second_derivative) = y_second_derivative(&root) else {
                     return RayCrossingResult::Unknown(
                         CurveArrangementLoopRoleBlocker::UndecidablePredicate,
                     );
                 };
-                match compare_reals_with_policy(&second_derivative, &Real::zero(), policy).value() {
+                match compare_reals(&second_derivative, &Real::zero(), policy).value() {
                     Some(Ordering::Less | Ordering::Greater) => continue,
                     Some(Ordering::Equal) => {
                         return RayCrossingResult::Unknown(
@@ -2486,7 +2468,7 @@ where
 }
 
 fn ray_x_crossing(point: &Point2, x: &Real, policy: PredicatePolicy) -> RayCrossingResult {
-    match compare_reals_with_policy(x, &point.x, policy).value() {
+    match compare_reals(x, &point.x, policy).value() {
         Some(Ordering::Greater) => RayCrossingResult::Crossings(1),
         Some(Ordering::Less) => RayCrossingResult::Crossings(0),
         Some(Ordering::Equal) => RayCrossingResult::Boundary,
@@ -2496,9 +2478,9 @@ fn ray_x_crossing(point: &Point2, x: &Real, policy: PredicatePolicy) -> RayCross
 
 fn traversal_half_open_parameter(parameter: &Real, forward: bool, policy: PredicatePolicy) -> bool {
     if forward {
-        compare_reals_with_policy(parameter, &Real::one(), policy).value() != Some(Ordering::Equal)
+        compare_reals(parameter, &Real::one(), policy).value() != Some(Ordering::Equal)
     } else {
-        compare_reals_with_policy(parameter, &Real::zero(), policy).value() != Some(Ordering::Equal)
+        compare_reals(parameter, &Real::zero(), policy).value() != Some(Ordering::Equal)
     }
 }
 
@@ -2594,7 +2576,7 @@ fn affine_point_from_homogeneous(
     point: &HomogeneousPoint2,
     policy: PredicatePolicy,
 ) -> Result<Point2, CurveArrangementCellError> {
-    match compare_reals_with_policy(&point.w, &Real::zero(), policy).value() {
+    match compare_reals(&point.w, &Real::zero(), policy).value() {
         Some(Ordering::Equal) | None => Err(CurveArrangementCellError::UndecidablePointEquality),
         Some(Ordering::Less | Ordering::Greater) => Ok(Point2::new(
             (point.x.clone() / point.w.clone())
@@ -2785,7 +2767,7 @@ fn eval_conic_cell_fragment(
     let w = fragment.start_control.w.clone() * start_weight
         + fragment.control.w.clone() * control_weight
         + fragment.end_control.w.clone() * end_weight;
-    if compare_reals_with_policy(&w, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(&w, &Real::zero(), policy).value()? == Ordering::Equal {
         return None;
     }
     Some(Point2::new(div_real(x, w.clone())?, div_real(y, w)?))
@@ -2888,9 +2870,7 @@ fn quadratic_coefficients_are_zero(
     Some(
         coefficients
             .iter()
-            .map(|coefficient| {
-                compare_reals_with_policy(coefficient, &Real::zero(), policy).value()
-            })
+            .map(|coefficient| compare_reals(coefficient, &Real::zero(), policy).value())
             .collect::<Option<Vec<_>>>()?
             .into_iter()
             .all(|order| order == Ordering::Equal),
@@ -2905,16 +2885,13 @@ fn certify_quadratic_weight_nonzero_sign(
         weight_power[0].clone(),
         weight_power[0].clone() + weight_power[1].clone() + weight_power[2].clone(),
     ];
-    if compare_reals_with_policy(&weight_power[2], &Real::zero(), policy).value()?
-        != Ordering::Equal
-    {
+    if compare_reals(&weight_power[2], &Real::zero(), policy).value()? != Ordering::Equal {
         let vertex = div_real(
             -weight_power[1].clone(),
             Real::from(2) * weight_power[2].clone(),
         )?;
-        let vertex_after_start =
-            compare_reals_with_policy(&vertex, &Real::zero(), policy).value()?;
-        let vertex_before_end = compare_reals_with_policy(&vertex, &Real::one(), policy).value()?;
+        let vertex_after_start = compare_reals(&vertex, &Real::zero(), policy).value()?;
+        let vertex_before_end = compare_reals(&vertex, &Real::one(), policy).value()?;
         if vertex_after_start == Ordering::Greater && vertex_before_end == Ordering::Less {
             values.push(
                 weight_power[0].clone()
@@ -2925,7 +2902,7 @@ fn certify_quadratic_weight_nonzero_sign(
     }
     let signs = values
         .iter()
-        .map(|value| compare_reals_with_policy(value, &Real::zero(), policy).value())
+        .map(|value| compare_reals(value, &Real::zero(), policy).value())
         .collect::<Option<Vec<_>>>()?;
     if signs.contains(&Ordering::Equal) {
         return None;
@@ -2947,13 +2924,13 @@ fn integrate_quadratic_over_weight_square(
     let c0 = &weight[0];
     let c1 = &weight[1];
     let c2 = &weight[2];
-    let c2_order = compare_reals_with_policy(c2, &Real::zero(), policy).value()?;
+    let c2_order = compare_reals(c2, &Real::zero(), policy).value()?;
     if c2_order == Ordering::Equal {
         return integrate_quadratic_over_linear_weight_square(numerator, c0, c1, policy);
     }
 
     let discriminant = c1.clone() * c1.clone() - Real::from(4) * c2.clone() * c0.clone();
-    if compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal {
         return None;
     }
 
@@ -2984,7 +2961,7 @@ fn integrate_quadratic_over_linear_weight_square(
     c1: &Real,
     policy: PredicatePolicy,
 ) -> Option<Real> {
-    if compare_reals_with_policy(c1, &Real::zero(), policy).value()? == Ordering::Equal {
+    if compare_reals(c1, &Real::zero(), policy).value()? == Ordering::Equal {
         let denominator = c0.clone() * c0.clone();
         return Some(
             div_real(numerator[0].clone(), denominator.clone())?
@@ -3044,7 +3021,7 @@ fn integrate_reciprocal_quadratic_0_1(
     discriminant: &Real,
     policy: PredicatePolicy,
 ) -> Option<Real> {
-    match compare_reals_with_policy(discriminant, &Real::zero(), policy).value()? {
+    match compare_reals(discriminant, &Real::zero(), policy).value()? {
         Ordering::Less => {
             let positive_discriminant = -discriminant.clone();
             let scale = positive_discriminant.sqrt().ok()?;
@@ -3099,7 +3076,7 @@ fn rational_over_quadratic_at_one(
 }
 
 fn ln_abs_real(value: Real, policy: PredicatePolicy) -> Option<Real> {
-    match compare_reals_with_policy(&value, &Real::zero(), policy).value()? {
+    match compare_reals(&value, &Real::zero(), policy).value()? {
         Ordering::Greater => value.ln().ok(),
         Ordering::Less => (-value).ln().ok(),
         Ordering::Equal => None,
@@ -3112,14 +3089,14 @@ fn solve_quadratic_or_linear_real(
     c: Real,
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+    match compare_reals(&a, &Real::zero(), policy).value()? {
         Ordering::Equal => solve_linear_real(b, c, policy),
         Ordering::Less | Ordering::Greater => solve_quadratic_real(a, b, c, policy),
     }
 }
 
 fn solve_linear_real(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
-    match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+    match compare_reals(&b, &Real::zero(), policy).value()? {
         Ordering::Equal => Some(Vec::new()),
         Ordering::Less | Ordering::Greater => Some(vec![div_real(-c, b)?]),
     }
@@ -3127,7 +3104,7 @@ fn solve_linear_real(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Re
 
 fn solve_quadratic_real(a: Real, b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
     let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
-    match compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? {
+    match compare_reals(&discriminant, &Real::zero(), policy).value()? {
         Ordering::Less => Some(Vec::new()),
         Ordering::Equal => Some(vec![div_real(-b, Real::from(2) * a)?]),
         Ordering::Greater => {
@@ -3147,12 +3124,12 @@ fn real_between_closed(
     right: &Real,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    let (min, max) = match compare_reals_with_policy(left, right, policy).value()? {
+    let (min, max) = match compare_reals(left, right, policy).value()? {
         Ordering::Less | Ordering::Equal => (left, right),
         Ordering::Greater => (right, left),
     };
-    let lower = compare_reals_with_policy(value, min, policy).value()?;
-    let upper = compare_reals_with_policy(value, max, policy).value()?;
+    let lower = compare_reals(value, min, policy).value()?;
+    let upper = compare_reals(value, max, policy).value()?;
     Some(
         matches!(lower, Ordering::Equal | Ordering::Greater)
             && matches!(upper, Ordering::Equal | Ordering::Less),
@@ -3160,8 +3137,8 @@ fn real_between_closed(
 }
 
 fn real_in_unit_interval_closed(value: &Real, policy: PredicatePolicy) -> Option<bool> {
-    let lower = compare_reals_with_policy(value, &Real::zero(), policy).value()?;
-    let upper = compare_reals_with_policy(value, &Real::one(), policy).value()?;
+    let lower = compare_reals(value, &Real::zero(), policy).value()?;
+    let upper = compare_reals(value, &Real::one(), policy).value()?;
     Some(
         matches!(lower, Ordering::Equal | Ordering::Greater)
             && matches!(upper, Ordering::Equal | Ordering::Less),

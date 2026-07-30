@@ -9,8 +9,8 @@
 //! Development* 34.5 (1990): the curve derivative is the square of a complex
 //! polynomial hodograph, giving exact endpoint tangents and polynomial length.
 
-use hyperlimit::Point2;
-use hyperreal::{Real, RealSign};
+use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign};
+use hyperreal::Real;
 use hypersolve::{
     CandidateCertificationReport, Constraint, ConstraintKind, Expr, Problem, certify_candidate,
     context_from_problem,
@@ -62,19 +62,21 @@ impl QuinticPhG1SmoothingReport {
 /// with the opposite tangent is a reversed join, not a valid G1 smoothing
 /// acceptance. Zero source or PH endpoint tangents reject before replay because
 /// they cannot prove an oriented G1 branch.
+/// Certify a quintic PH G1 smoothing candidate under an explicit predicate policy.
 pub fn certify_quintic_ph_g1_smoothing(
     curve: &QuinticPythagoreanHodograph,
     start: Point2,
     start_tangent: Point2,
     end: Point2,
     end_tangent: Point2,
+    policy: PredicatePolicy,
 ) -> Result<QuinticPhG1SmoothingReport, PhCurveError> {
     let curve_start_derivative = curve.start_derivative();
     let curve_end_derivative = curve.end_derivative();
-    require_nonzero_tangent(&start_tangent)?;
-    require_nonzero_tangent(&end_tangent)?;
-    require_nonzero_tangent(&curve_start_derivative)?;
-    require_nonzero_tangent(&curve_end_derivative)?;
+    require_nonzero_tangent(&start_tangent, policy)?;
+    require_nonzero_tangent(&end_tangent, policy)?;
+    require_nonzero_tangent(&curve_start_derivative, policy)?;
+    require_nonzero_tangent(&curve_end_derivative, policy)?;
 
     let mut problem = Problem::default();
     add_point_equality_rows(&mut problem, "PH smoothing start", curve.start(), &start);
@@ -112,10 +114,12 @@ pub fn certify_quintic_ph_g1_smoothing(
 /// `outgoing.start` along `outgoing.start_tangent`. This keeps the smoothing
 /// candidate separate from route planning: a solver may propose the PH
 /// hodograph, but exact replay decides whether the candidate is admissible.
+/// Certify smoothing between two spans under an explicit predicate policy.
 pub fn certify_quintic_ph_g1_smoothing_between(
     curve: &QuinticPythagoreanHodograph,
     incoming: &TangentSpan,
     outgoing: &TangentSpan,
+    policy: PredicatePolicy,
 ) -> Result<QuinticPhG1SmoothingReport, PhCurveError> {
     certify_quintic_ph_g1_smoothing(
         curve,
@@ -123,6 +127,7 @@ pub fn certify_quintic_ph_g1_smoothing_between(
         incoming.end_tangent.clone(),
         outgoing.start.clone(),
         outgoing.start_tangent.clone(),
+        policy,
     )
 }
 
@@ -171,10 +176,11 @@ fn add_same_direction_rows(
     });
 }
 
-fn require_nonzero_tangent(tangent: &Point2) -> Result<(), PhCurveError> {
+fn require_nonzero_tangent(tangent: &Point2, policy: PredicatePolicy) -> Result<(), PhCurveError> {
     let norm = tangent.x.clone() * tangent.x.clone() + tangent.y.clone() * tangent.y.clone();
-    match norm.structural_facts().sign {
-        Some(RealSign::Zero) => Err(PhCurveError::DegenerateTangent),
-        _ => Ok(()),
+    match classify_real_sign(&norm, policy).value() {
+        Some(Sign::Zero) => Err(PhCurveError::DegenerateTangent),
+        Some(Sign::Positive) => Ok(()),
+        Some(Sign::Negative) | None => Err(PhCurveError::PredicateUnresolved),
     }
 }

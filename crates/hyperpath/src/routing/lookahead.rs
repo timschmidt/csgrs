@@ -15,8 +15,8 @@
 //! "Time-Optimal Control of Robotic Manipulators Along Specified Paths"
 //! (1985), specialized here to scalar feed along an already chosen path.
 
-use hyperlimit::PredicatePolicy;
-use hyperreal::{Real, RealSign};
+use hyperlimit::{PredicatePolicy, Sign, classify_real_sign};
+use hyperreal::Real;
 use hypersolve::{
     CandidateCertificationReport, Constraint, ConstraintKind, Expr, Problem, certify_candidate,
     context_from_problem,
@@ -126,16 +126,16 @@ pub fn certify_lookahead_feed_schedule(
         return Err(RouteCertificationError::ScheduleShapeMismatch);
     }
 
-    require_nonnegative_feed(&schedule.entry_feed)?;
-    require_nonnegative_feed(&schedule.exit_feed)?;
+    require_nonnegative_feed(&schedule.entry_feed, policy)?;
+    require_nonnegative_feed(&schedule.exit_feed, policy)?;
     for feed in &schedule.corner_feeds {
-        require_nonnegative_feed(feed)?;
+        require_nonnegative_feed(feed, policy)?;
     }
     for radius in &schedule.corner_radii {
-        require_positive_corner_radius(radius)?;
+        require_positive_corner_radius(radius, policy)?;
     }
-    require_positive_feed(&max_feed_rate)?;
-    require_positive_acceleration(&max_acceleration)?;
+    require_positive_feed(&max_feed_rate, policy)?;
+    require_positive_acceleration(&max_acceleration, policy)?;
 
     let corners = certify_local_corner_limits(
         spans,
@@ -351,33 +351,49 @@ fn certify_problem(problem: Problem) -> CandidateCertificationReport {
     certify_candidate(&analysis, &context)
 }
 
-fn require_nonnegative_feed(value: &Real) -> Result<(), RouteCertificationError> {
-    match value.structural_facts().sign {
-        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
-        _ => Ok(()),
+fn require_nonnegative_feed(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
+        Some(Sign::Zero | Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }
 
-fn require_positive_feed(value: &Real) -> Result<(), RouteCertificationError> {
-    match value.structural_facts().sign {
-        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
-        Some(RealSign::Zero) => Err(RouteCertificationError::ZeroFeedRate),
-        _ => Ok(()),
+fn require_positive_feed(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
+        Some(Sign::Zero) => Err(RouteCertificationError::ZeroFeedRate),
+        Some(Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }
 
-fn require_positive_acceleration(value: &Real) -> Result<(), RouteCertificationError> {
-    match value.structural_facts().sign {
-        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeAcceleration),
-        Some(RealSign::Zero) => Err(RouteCertificationError::ZeroAcceleration),
-        _ => Ok(()),
+fn require_positive_acceleration(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeAcceleration),
+        Some(Sign::Zero) => Err(RouteCertificationError::ZeroAcceleration),
+        Some(Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }
 
-fn require_positive_corner_radius(value: &Real) -> Result<(), RouteCertificationError> {
-    match value.structural_facts().sign {
-        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeCornerRadius),
-        Some(RealSign::Zero) => Err(RouteCertificationError::ZeroCornerRadius),
-        _ => Ok(()),
+fn require_positive_corner_radius(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeCornerRadius),
+        Some(Sign::Zero) => Err(RouteCertificationError::ZeroCornerRadius),
+        Some(Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }

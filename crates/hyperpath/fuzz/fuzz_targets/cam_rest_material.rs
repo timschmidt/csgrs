@@ -28,7 +28,12 @@ fn ordered_rect(bytes: &[u8]) -> Option<RectangularPocket> {
     if x0 == x1 || y0 == y1 {
         return None;
     }
-    RectangularPocket::new(p(x0.min(x1), y0.min(y1)), p(x0.max(x1), y0.max(y1))).ok()
+    RectangularPocket::new(
+        p(x0.min(x1), y0.min(y1)),
+        p(x0.max(x1), y0.max(y1)),
+        PredicatePolicy::STRICT,
+    )
+    .ok()
 }
 
 fuzz_target!(|data: &[u8]| {
@@ -50,7 +55,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let graph = rectangular_rest_material_graph(stock.clone(), cutters, PredicatePolicy::default())
+    let graph = rectangular_rest_material_graph(stock.clone(), cutters, PredicatePolicy::STRICT)
         .expect("integer rectangle rest graph should certify");
     assert!(graph.all_area_certified());
     assert_eq!(
@@ -60,7 +65,10 @@ fuzz_target!(|data: &[u8]| {
     for stage in &graph.stages {
         assert!(stage.area_certification.all_satisfied());
         assert_eq!(stage.cuts.len(), stage.before.len());
-        assert_eq!(stage.after.len(), graph.stages[stage.cutter_index].after.len());
+        assert_eq!(
+            stage.after.len(),
+            graph.stages[stage.cutter_index].after.len()
+        );
         for piece in &stage.after {
             assert_ne!(piece.min().x, piece.max().x);
             assert_ne!(piece.min().y, piece.max().y);

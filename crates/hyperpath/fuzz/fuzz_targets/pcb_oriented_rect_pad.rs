@@ -55,7 +55,7 @@ fuzz_target!(|data: &[u8]| {
         r(width),
         r(height),
         local_x.clone(),
-        PredicatePolicy::default(),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     assert_eq!(pad.facts().local_x_length_squared, r(1));
@@ -72,27 +72,23 @@ fuzz_target!(|data: &[u8]| {
             LinePathSegment::new(
                 p(signed(data[8]), signed(data[9])),
                 p(signed(data[10]), signed(data[11])),
-            ),
+                PredicatePolicy::STRICT,
+            )
+            .expect("strict fuzz segment"),
             r(i64::from(data[12] % 24)),
+            PredicatePolicy::STRICT,
         )
         .unwrap(),
+        PredicatePolicy::STRICT,
     );
     let clearance = r(i64::from(data[13] % 24));
-    let trace_report = check_trace_oriented_rect_pad_clearance(
-        &trace,
-        &pad,
-        &clearance,
-        PredicatePolicy::default(),
-    );
+    let trace_report =
+        check_trace_oriented_rect_pad_clearance(&trace, &pad, &clearance, PredicatePolicy::STRICT);
     assert_ne!(trace_report.status, ClearanceStatus::Unknown);
 
-    let board = PcbBoardOutline::new(p(-200, -200), p(200, 200)).unwrap();
-    let board_report = check_oriented_rect_pad_board_clearance(
-        &pad,
-        &board,
-        &clearance,
-        PredicatePolicy::default(),
-    );
+    let board = PcbBoardOutline::new(p(-200, -200), p(200, 200), PredicatePolicy::STRICT).unwrap();
+    let board_report =
+        check_oriented_rect_pad_board_clearance(&pad, &board, &clearance, PredicatePolicy::STRICT);
     assert_ne!(board_report.status, ClearanceStatus::Unknown);
 
     let axis_pad = PcbOrientedRectPad::new(
@@ -102,10 +98,18 @@ fuzz_target!(|data: &[u8]| {
         r(width),
         r(height),
         Point2::new(r(1), r(0)),
-        PredicatePolicy::default(),
+        PredicatePolicy::STRICT,
     )
     .unwrap();
-    let rect = PcbRectPad::new(NetId(3), TraceLayer(0), center, r(width), r(height)).unwrap();
+    let rect = PcbRectPad::new(
+        NetId(3),
+        TraceLayer(0),
+        center,
+        r(width),
+        r(height),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
     let axis_trace = PcbTrace::new(
         NetId(u32::from(data[14] % 3)),
         TraceLayer(0),
@@ -113,20 +117,24 @@ fuzz_target!(|data: &[u8]| {
             LinePathSegment::new(
                 p(signed(data[15]), signed(data[16])),
                 p(signed(data[17]), signed(data[16])),
-            ),
+                PredicatePolicy::STRICT,
+            )
+            .expect("strict fuzz segment"),
             r(2),
+            PredicatePolicy::STRICT,
         )
         .unwrap(),
+        PredicatePolicy::STRICT,
     );
     assert_eq!(
         check_trace_oriented_rect_pad_clearance(
             &axis_trace,
             &axis_pad,
             &clearance,
-            PredicatePolicy::default(),
+            PredicatePolicy::STRICT,
         )
         .status,
-        check_trace_rect_pad_clearance(&axis_trace, &rect, &clearance, PredicatePolicy::default())
+        check_trace_rect_pad_clearance(&axis_trace, &rect, &clearance, PredicatePolicy::STRICT)
             .status,
     );
     assert_eq!(
@@ -134,10 +142,9 @@ fuzz_target!(|data: &[u8]| {
             &axis_pad,
             &board,
             &clearance,
-            PredicatePolicy::default(),
+            PredicatePolicy::STRICT,
         )
         .status,
-        check_rect_pad_board_clearance(&rect, &board, &clearance, PredicatePolicy::default())
-            .status,
+        check_rect_pad_board_clearance(&rect, &board, &clearance, PredicatePolicy::STRICT).status,
     );
 });

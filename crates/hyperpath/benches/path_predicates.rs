@@ -1,3 +1,31 @@
+macro_rules! strict_segment {
+    ($start:expr, $end:expr $(,)?) => {
+        LinePathSegment::new($start, $end, hyperlimit::PredicatePolicy::STRICT)
+            .expect("strict benchmark segment bounds")
+    };
+    ($start:expr, $end:expr, $policy:expr $(,)?) => {
+        LinePathSegment::new($start, $end, $policy)
+    };
+}
+
+macro_rules! strict_new {
+    ($type:ty; $($argument:expr),+ $(,)?) => {
+        <$type>::new(
+            $($argument,)*
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+    };
+}
+
+macro_rules! strict_drilled_via {
+    ($($argument:expr),+ $(,)?) => {
+        PcbViaStack::with_drill(
+            $($argument,)*
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+    };
+}
+
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
@@ -79,24 +107,40 @@ fn pq(x_num: i64, x_den: i64, y_num: i64, y_den: i64) -> Point2 {
 }
 
 fn trace(net: u32, start: Point2, end: Point2) -> PcbTrace {
-    PcbTrace::new(
+    strict_new!(PcbTrace;
         NetId(net),
         TraceLayer(0),
-        SweptLineSegment::new(LinePathSegment::new(start, end), r(2)).unwrap(),
+        strict_new!(SweptLineSegment; strict_segment!(start, end), r(2)).unwrap(),
     )
 }
 
 fn path_predicates(c: &mut Criterion) {
-    let tangent_segment = LinePathSegment::new(p(0, 0), p(1000, 250));
+    let segment_start = p(0, 0);
+    let segment_end = p(1000, 250);
+    c.bench_function("line_segment_exact_construction", |b| {
+        b.iter(|| {
+            strict_segment!(
+                black_box(segment_start.clone()),
+                black_box(segment_end.clone()),
+            )
+        })
+    });
+    let tangent_segment = strict_segment!(p(0, 0), p(1000, 250));
     c.bench_function("line_segment_exact_tangent", |b| {
         b.iter(|| tangent_segment.start_tangent())
     });
     c.bench_function("tangent_alignment_exact_predicate", |b| {
-        b.iter(|| classify_tangent_alignment(&p(3, 4), &p(6, 8), PredicatePolicy))
+        b.iter(|| classify_tangent_alignment(&p(3, 4), &p(6, 8), PredicatePolicy::STRICT))
     });
     c.bench_function("tangent_join_exact_predicate", |b| {
         b.iter(|| {
-            classify_tangent_join(&p(10, 20), &p(3, 4), &p(10, 20), &p(6, 8), PredicatePolicy)
+            classify_tangent_join(
+                &p(10, 20),
+                &p(3, 4),
+                &p(10, 20),
+                &p(6, 8),
+                PredicatePolicy::STRICT,
+            )
         })
     });
     let tangent_chain = vec![
@@ -114,60 +158,61 @@ fn path_predicates(c: &mut Criterion) {
         },
     ];
     c.bench_function("tangent_chain_exact_predicate", |b| {
-        b.iter(|| classify_tangent_chain(&tangent_chain, PredicatePolicy))
+        b.iter(|| classify_tangent_chain(&tangent_chain, PredicatePolicy::STRICT))
     });
     c.bench_function("g1_chain_hypersolve_certification", |b| {
         b.iter(|| certify_g1_chain(&tangent_chain))
     });
     let line_arrangement_segments = vec![
-        LinePathSegment::new(p(0, 0), p(1000, 0)),
-        LinePathSegment::new(p(500, -250), p(500, 250)),
-        LinePathSegment::new(p(250, 0), p(750, 0)),
-        LinePathSegment::new(p(1000, 0), p(1200, 200)),
+        strict_segment!(p(0, 0), p(1000, 0)),
+        strict_segment!(p(500, -250), p(500, 250)),
+        strict_segment!(p(250, 0), p(750, 0)),
+        strict_segment!(p(1000, 0), p(1200, 200)),
     ];
     c.bench_function("line_arrangement_exact_cleanup", |b| {
-        b.iter(|| arrange_line_segments(&line_arrangement_segments, PredicatePolicy))
+        b.iter(|| arrange_line_segments(&line_arrangement_segments, PredicatePolicy::STRICT))
     });
     let line_cell_square = vec![
-        LinePathSegment::new(p(0, 0), p(1000, 0)),
-        LinePathSegment::new(p(1000, 0), p(1000, 1000)),
-        LinePathSegment::new(p(1000, 1000), p(0, 1000)),
-        LinePathSegment::new(p(0, 1000), p(0, 0)),
-        LinePathSegment::new(p(0, 0), p(1000, 1000)),
+        strict_segment!(p(0, 0), p(1000, 0)),
+        strict_segment!(p(1000, 0), p(1000, 1000)),
+        strict_segment!(p(1000, 1000), p(0, 1000)),
+        strict_segment!(p(0, 1000), p(0, 0)),
+        strict_segment!(p(0, 0), p(1000, 1000)),
     ];
     c.bench_function("line_arrangement_exact_cell_graph", |b| {
-        b.iter(|| arrange_line_segments(&line_cell_square, PredicatePolicy))
+        b.iter(|| arrange_line_segments(&line_cell_square, PredicatePolicy::STRICT))
     });
     let line_arc_lines = vec![
-        LinePathSegment::new(p(-600, 0), p(600, 0)),
-        LinePathSegment::new(p(0, -600), p(0, 600)),
-        LinePathSegment::new(p(-500, 500), p(500, 500)),
+        strict_segment!(p(-600, 0), p(600, 0)),
+        strict_segment!(p(0, -600), p(0, 600)),
+        strict_segment!(p(-500, 500), p(500, 500)),
     ];
     let line_arc_arcs = vec![
-        ExplicitCircularArc::new(p(0, 0), r(500), p(500, 0), p(500, 0), ArcDirection::Ccw).unwrap(),
+        strict_new!(ExplicitCircularArc; p(0, 0), r(500), p(500, 0), p(500, 0), ArcDirection::Ccw)
+            .unwrap(),
     ];
     c.bench_function("line_arc_arrangement_axis_cleanup", |b| {
         b.iter(|| {
             arrange_line_segments_with_explicit_arcs(
                 &line_arc_lines,
                 &line_arc_arcs,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let line_arc_general_lines = vec![LinePathSegment::new(p(-600, -800), p(600, 800))];
+    let line_arc_general_lines = vec![strict_segment!(p(-600, -800), p(600, 800))];
     c.bench_function("line_arc_arrangement_general_line_cleanup", |b| {
         b.iter(|| {
             arrange_line_segments_with_explicit_arcs(
                 &line_arc_general_lines,
                 &line_arc_arcs,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let line_arc_cell_lines = vec![LinePathSegment::new(p(-500, 0), p(500, 0))];
+    let line_arc_cell_lines = vec![strict_segment!(p(-500, 0), p(500, 0))];
     let line_arc_cell_arcs = vec![
-        ExplicitCircularArc::new(p(0, 0), r(500), p(500, 0), p(-500, 0), ArcDirection::Ccw)
+        strict_new!(ExplicitCircularArc; p(0, 0), r(500), p(500, 0), p(-500, 0), ArcDirection::Ccw)
             .unwrap(),
     ];
     c.bench_function("line_arc_arrangement_exact_cell_graph", |b| {
@@ -175,12 +220,12 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_explicit_arcs(
                 &line_arc_cell_lines,
                 &line_arc_cell_arcs,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let arc_arrangement_arcs = vec![
-        ExplicitCircularArc::new(
+        strict_new!(ExplicitCircularArc;
             p(-300, 0),
             r(500),
             p(-300, -500),
@@ -188,7 +233,7 @@ fn path_predicates(c: &mut Criterion) {
             ArcDirection::Ccw,
         )
         .unwrap(),
-        ExplicitCircularArc::new(
+        strict_new!(ExplicitCircularArc;
             p(300, 0),
             r(500),
             p(300, 500),
@@ -196,25 +241,27 @@ fn path_predicates(c: &mut Criterion) {
             ArcDirection::Ccw,
         )
         .unwrap(),
-        ExplicitCircularArc::new(p(0, 0), r(500), p(500, 0), p(-500, 0), ArcDirection::Ccw)
+        strict_new!(ExplicitCircularArc; p(0, 0), r(500), p(500, 0), p(-500, 0), ArcDirection::Ccw)
             .unwrap(),
     ];
     c.bench_function("explicit_arc_arrangement_split_cleanup", |b| {
-        b.iter(|| arrange_explicit_arcs(&arc_arrangement_arcs, PredicatePolicy))
+        b.iter(|| arrange_explicit_arcs(&arc_arrangement_arcs, PredicatePolicy::STRICT))
     });
     let arc_cell_arcs = vec![
-        ExplicitCircularArc::new(p(0, 0), r(500), p(500, 0), p(-500, 0), ArcDirection::Ccw)
+        strict_new!(ExplicitCircularArc; p(0, 0), r(500), p(500, 0), p(-500, 0), ArcDirection::Ccw)
             .unwrap(),
-        ExplicitCircularArc::new(p(0, 0), r(500), p(-500, 0), p(500, 0), ArcDirection::Ccw)
+        strict_new!(ExplicitCircularArc; p(0, 0), r(500), p(-500, 0), p(500, 0), ArcDirection::Ccw)
             .unwrap(),
     ];
     c.bench_function("explicit_arc_arrangement_exact_cell_graph", |b| {
-        b.iter(|| arrange_explicit_arcs(&arc_cell_arcs, PredicatePolicy))
+        b.iter(|| arrange_explicit_arcs(&arc_cell_arcs, PredicatePolicy::STRICT))
     });
     let tangent_span_arc =
-        ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw).unwrap();
+        strict_new!(ExplicitCircularArc; p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw)
+            .unwrap();
     let tangent_span_curve = CubicBezier::new(p(-3, 4), p(-7, 1), p(-9, 1), p(-13, 4));
-    let tangent_span_conic = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(2)).unwrap();
+    let tangent_span_conic =
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(2, 4), p(4, 0), r(2)).unwrap();
     c.bench_function("tangent_span_from_exact_primitives", |b| {
         b.iter(|| {
             (
@@ -260,13 +307,13 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("quadratic_bezier_exact_speed_squared", |b| {
         b.iter(|| bezier.speed_squared(half))
     });
-    let line_quadratic_line = LinePathSegment::new(p(0, 0), p(1000, 0));
+    let line_quadratic_line = strict_segment!(p(0, 0), p(1000, 0));
     c.bench_function("line_quadratic_bezier_exact_events", |b| {
         b.iter(|| {
             intersect_axis_aligned_line_quadratic_bezier(
                 &line_quadratic_line,
                 &bezier,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -275,44 +322,44 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_quadratic_beziers(
                 std::slice::from_ref(&line_quadratic_line),
                 std::slice::from_ref(&bezier),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let line_quadratic_cell_line = LinePathSegment::new(p(0, 0), p(1000, 0));
+    let line_quadratic_cell_line = strict_segment!(p(0, 0), p(1000, 0));
     let line_quadratic_cell_curve = QuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0));
     c.bench_function("line_quadratic_bezier_exact_cell_graph", |b| {
         b.iter(|| {
             arrange_line_segments_with_quadratic_beziers(
                 std::slice::from_ref(&line_quadratic_cell_line),
                 std::slice::from_ref(&line_quadratic_cell_curve),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let line_quadratic_diagonal_line = LinePathSegment::new(p(0, 100), p(400, 300));
+    let line_quadratic_diagonal_line = strict_segment!(p(0, 100), p(400, 300));
     let line_quadratic_diagonal_curve = QuadraticBezier::new(p(0, 0), p(200, 400), p(400, 0));
     c.bench_function("line_quadratic_bezier_general_line_exact_cell_graph", |b| {
         b.iter(|| {
             arrange_line_segments_with_quadratic_beziers(
                 std::slice::from_ref(&line_quadratic_diagonal_line),
                 std::slice::from_ref(&line_quadratic_diagonal_curve),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let line_quadratic_overlap_line = LinePathSegment::new(p(250, 0), p(750, 0));
+    let line_quadratic_overlap_line = strict_segment!(p(250, 0), p(750, 0));
     let line_quadratic_overlap_curve = QuadraticBezier::new(p(0, 0), p(500, 0), p(1000, 0));
     c.bench_function("line_quadratic_bezier_overlap_promotion", |b| {
         b.iter(|| {
             arrange_line_segments_with_quadratic_beziers(
                 std::slice::from_ref(&line_quadratic_overlap_line),
                 std::slice::from_ref(&line_quadratic_overlap_curve),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let line_quadratic_nonlinear_overlap_line = LinePathSegment::new(p(250, 0), p(750, 0));
+    let line_quadratic_nonlinear_overlap_line = strict_segment!(p(250, 0), p(750, 0));
     let line_quadratic_nonlinear_overlap_curve =
         QuadraticBezier::new(p(0, 0), p(300, 0), p(1000, 0));
     c.bench_function("line_quadratic_bezier_nonlinear_overlap_promotion", |b| {
@@ -320,12 +367,12 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_quadratic_beziers(
                 std::slice::from_ref(&line_quadratic_nonlinear_overlap_line),
                 std::slice::from_ref(&line_quadratic_nonlinear_overlap_curve),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let line_quadratic_general_nonlinear_overlap_line =
-        LinePathSegment::new(pq(9, 16, 9, 16), pq(33, 16, 33, 16));
+        strict_segment!(pq(9, 16, 9, 16), pq(33, 16, 33, 16));
     let line_quadratic_general_nonlinear_overlap_curve =
         QuadraticBezier::new(p(0, 0), p(1, 1), p(3, 3));
     c.bench_function(
@@ -335,7 +382,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_quadratic_beziers(
                     std::slice::from_ref(&line_quadratic_general_nonlinear_overlap_line),
                     std::slice::from_ref(&line_quadratic_general_nonlinear_overlap_curve),
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
@@ -350,7 +397,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_quadratic_beziers(
                 std::slice::from_ref(&bezier),
                 &bezier_events,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -361,7 +408,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_quadratic_beziers(
                 &[quadratic_loop_upper.clone(), quadratic_loop_lower.clone()],
                 &[vec![], vec![]],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| (report.cell_graph.faces, report.cell_graph.loop_roles))
         })
@@ -384,7 +431,7 @@ fn path_predicates(c: &mut Criterion) {
                     true_cubic_loop_inner_lower.clone(),
                 ],
                 &[vec![], vec![], vec![], vec![]],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph.loop_roles)
         })
@@ -399,7 +446,7 @@ fn path_predicates(c: &mut Criterion) {
                     duplicate_cubic_reverse.clone(),
                 ],
                 &[vec![], vec![]],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph.edges)
         })
@@ -419,7 +466,7 @@ fn path_predicates(c: &mut Criterion) {
                     tangent_quadratic_right_lower.clone(),
                 ],
                 &[vec![], vec![], vec![], vec![]],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph.loop_roles)
         })
@@ -448,12 +495,13 @@ fn path_predicates(c: &mut Criterion) {
                     triple_root_cubic_return.clone(),
                 ],
                 &[vec![], vec![], vec![], vec![]],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph.loop_roles)
         })
     });
-    let conic = RationalQuadraticBezier::new(p(0, 0), p(500, 200), p(1000, 0), r(2)).unwrap();
+    let conic =
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(500, 200), p(1000, 0), r(2)).unwrap();
     c.bench_function("rational_quadratic_bezier_exact_eval", |b| {
         b.iter(|| conic.eval(half))
     });
@@ -468,18 +516,18 @@ fn path_predicates(c: &mut Criterion) {
             arrange_rational_quadratic_beziers(
                 std::slice::from_ref(&conic),
                 &bezier_events,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let conic_loop_upper =
-        RationalQuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0), r(2)).unwrap();
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(500, 1000), p(1000, 0), r(2)).unwrap();
     let conic_loop_lower =
-        RationalQuadraticBezier::new(p(1000, 0), p(500, -1000), p(0, 0), r(2)).unwrap();
+        strict_new!(RationalQuadraticBezier; p(1000, 0), p(500, -1000), p(0, 0), r(2)).unwrap();
     let nested_conic_loop_upper =
-        RationalQuadraticBezier::new(p(250, 0), p(500, 375), p(750, 0), r(2)).unwrap();
+        strict_new!(RationalQuadraticBezier; p(250, 0), p(500, 375), p(750, 0), r(2)).unwrap();
     let nested_conic_loop_lower =
-        RationalQuadraticBezier::new(p(750, 0), p(500, -375), p(250, 0), r(2)).unwrap();
+        strict_new!(RationalQuadraticBezier; p(750, 0), p(500, -375), p(250, 0), r(2)).unwrap();
     c.bench_function("rational_quadratic_bezier_loop_role_replay", |b| {
         b.iter(|| {
             arrange_rational_quadratic_beziers(
@@ -490,25 +538,26 @@ fn path_predicates(c: &mut Criterion) {
                     nested_conic_loop_lower.clone(),
                 ],
                 &[vec![], vec![], vec![], vec![]],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph.loop_roles)
         })
     });
-    let line_conic = RationalQuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0), r(1)).unwrap();
-    let line_conic_line = LinePathSegment::new(p(0, 375), p(1000, 375));
+    let line_conic =
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(500, 1000), p(1000, 0), r(1)).unwrap();
+    let line_conic_line = strict_segment!(p(0, 375), p(1000, 375));
     c.bench_function("line_rational_quadratic_bezier_exact_events", |b| {
         b.iter(|| {
             intersect_axis_aligned_line_rational_quadratic_bezier(
                 &line_conic_line,
                 &line_conic,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let line_conic_diagonal =
-        RationalQuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0), r(1)).unwrap();
-    let line_conic_diagonal_line = LinePathSegment::new(p(0, 250), p(1000, 750));
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(500, 1000), p(1000, 0), r(1)).unwrap();
+    let line_conic_diagonal_line = strict_segment!(p(0, 250), p(1000, 750));
     c.bench_function(
         "line_rational_quadratic_bezier_general_line_exact_events",
         |b| {
@@ -516,14 +565,14 @@ fn path_predicates(c: &mut Criterion) {
                 intersect_line_rational_quadratic_bezier(
                     &line_conic_diagonal_line,
                     &line_conic_diagonal,
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
     );
     let line_conic_general_overlap =
-        RationalQuadraticBezier::new(p(0, 0), p(500, 500), p(1000, 1000), r(1)).unwrap();
-    let line_conic_general_overlap_line = LinePathSegment::new(p(250, 250), p(750, 750));
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(500, 500), p(1000, 1000), r(1)).unwrap();
+    let line_conic_general_overlap_line = strict_segment!(p(250, 250), p(750, 750));
     c.bench_function(
         "line_rational_quadratic_bezier_general_overlap_promotion",
         |b| {
@@ -531,7 +580,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_general_overlap_line),
                     std::slice::from_ref(&line_conic_general_overlap),
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
@@ -541,7 +590,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_rational_quadratic_beziers(
                 std::slice::from_ref(&line_conic_line),
                 std::slice::from_ref(&line_conic),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -550,51 +599,51 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_rational_quadratic_beziers(
                 std::slice::from_ref(&line_conic_line),
                 std::slice::from_ref(&line_conic),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| (report.cell_graph.faces, report.cell_graph.loop_roles))
         })
     });
     let line_conic_atan_area =
-        RationalQuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0), rq(1, 2)).unwrap();
-    let line_conic_atan_chord = LinePathSegment::new(p(0, 0), p(1000, 0));
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(500, 1000), p(1000, 0), rq(1, 2)).unwrap();
+    let line_conic_atan_chord = strict_segment!(p(0, 0), p(1000, 0));
     c.bench_function("line_rational_quadratic_bezier_atan_cell_area", |b| {
         b.iter(|| {
             arrange_line_segments_with_rational_quadratic_beziers(
                 std::slice::from_ref(&line_conic_atan_chord),
                 std::slice::from_ref(&line_conic_atan_area),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph.faces)
         })
     });
     let line_conic_log_area =
-        RationalQuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0), r(2)).unwrap();
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(500, 1000), p(1000, 0), r(2)).unwrap();
     c.bench_function("line_rational_quadratic_bezier_log_cell_area", |b| {
         b.iter(|| {
             arrange_line_segments_with_rational_quadratic_beziers(
                 std::slice::from_ref(&line_conic_atan_chord),
                 std::slice::from_ref(&line_conic_log_area),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph.faces)
         })
     });
     let line_conic_overlap =
-        RationalQuadraticBezier::new(p(0, 0), p(500, 0), p(1000, 0), r(2)).unwrap();
-    let line_conic_overlap_line = LinePathSegment::new(pq(3500, 11, 0, 1), pq(7500, 11, 0, 1));
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(500, 0), p(1000, 0), r(2)).unwrap();
+    let line_conic_overlap_line = strict_segment!(pq(3500, 11, 0, 1), pq(7500, 11, 0, 1));
     c.bench_function("line_rational_quadratic_bezier_overlap_promotion", |b| {
         b.iter(|| {
             arrange_line_segments_with_rational_quadratic_beziers(
                 std::slice::from_ref(&line_conic_overlap_line),
                 std::slice::from_ref(&line_conic_overlap),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let line_conic_nonmonotone_overlap =
-        RationalQuadraticBezier::new(p(0, 0), p(1000, 0), p(0, 0), r(1)).unwrap();
-    let line_conic_nonmonotone_line = LinePathSegment::new(p(125, 0), p(375, 0));
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(1000, 0), p(0, 0), r(1)).unwrap();
+    let line_conic_nonmonotone_line = strict_segment!(p(125, 0), p(375, 0));
     c.bench_function(
         "line_rational_quadratic_bezier_algebraic_order_evidence",
         |b| {
@@ -602,7 +651,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_nonmonotone_line),
                     std::slice::from_ref(&line_conic_nonmonotone_overlap),
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
@@ -614,7 +663,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_nonmonotone_line),
                     std::slice::from_ref(&line_conic_nonmonotone_overlap),
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
@@ -626,7 +675,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_nonmonotone_line),
                     std::slice::from_ref(&line_conic_nonmonotone_overlap),
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
@@ -638,7 +687,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_nonmonotone_line),
                     std::slice::from_ref(&line_conic_nonmonotone_overlap),
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
@@ -650,14 +699,14 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_nonmonotone_line),
                     std::slice::from_ref(&line_conic_nonmonotone_overlap),
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
     );
     let line_conic_exact_root_overlap =
-        RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
-    let line_conic_exact_root_line = LinePathSegment::new(p(0, 0), p(3, 0));
+        strict_new!(RationalQuadraticBezier; p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
+    let line_conic_exact_root_line = strict_segment!(p(0, 0), p(3, 0));
     c.bench_function(
         "line_rational_quadratic_bezier_exact_algebraic_promotion",
         |b| {
@@ -665,7 +714,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_exact_root_line),
                     std::slice::from_ref(&line_conic_exact_root_overlap),
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
@@ -683,7 +732,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_cubic_beziers(
                 std::slice::from_ref(&cubic),
                 &bezier_events,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -694,16 +743,16 @@ fn path_predicates(c: &mut Criterion) {
             arrange_cubic_beziers(
                 &[cubic_loop_upper.clone(), cubic_loop_lower.clone()],
                 &[vec![], vec![]],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph)
         })
     });
-    let mixed_family_line = LinePathSegment::new(p(0, 0), p(2000, 0));
+    let mixed_family_line = strict_segment!(p(0, 0), p(2000, 0));
     let mixed_family_quadratic = QuadraticBezier::new(p(0, 0), p(200, 400), p(400, 0));
     let mixed_family_cubic = CubicBezier::new(p(800, 0), p(800, 300), p(1200, 300), p(1200, 0));
     let mixed_family_conic =
-        RationalQuadraticBezier::new(p(1600, 0), p(1800, 400), p(2000, 0), r(2)).unwrap();
+        strict_new!(RationalQuadraticBezier; p(1600, 0), p(1800, 400), p(2000, 0), r(2)).unwrap();
     c.bench_function("line_mixed_bezier_arrangement_exact_cell_graph", |b| {
         b.iter(|| {
             arrange_line_segments_with_mixed_beziers(
@@ -711,18 +760,19 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&mixed_family_quadratic),
                 std::slice::from_ref(&mixed_family_cubic),
                 std::slice::from_ref(&mixed_family_conic),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph)
         })
     });
-    let mixed_curve_line = LinePathSegment::new(p(0, 0), p(2800, 0));
+    let mixed_curve_line = strict_segment!(p(0, 0), p(2800, 0));
     let mixed_curve_arc =
-        ExplicitCircularArc::new(p(200, 0), r(200), p(0, 0), p(400, 0), ArcDirection::Cw).unwrap();
+        strict_new!(ExplicitCircularArc; p(200, 0), r(200), p(0, 0), p(400, 0), ArcDirection::Cw)
+            .unwrap();
     let mixed_curve_quadratic = QuadraticBezier::new(p(800, 0), p(1000, 400), p(1200, 0));
     let mixed_curve_cubic = CubicBezier::new(p(1600, 0), p(1600, 300), p(2000, 300), p(2000, 0));
     let mixed_curve_conic =
-        RationalQuadraticBezier::new(p(2400, 0), p(2600, 400), p(2800, 0), r(2)).unwrap();
+        strict_new!(RationalQuadraticBezier; p(2400, 0), p(2600, 400), p(2800, 0), r(2)).unwrap();
     c.bench_function("line_mixed_curve_arrangement_exact_cell_graph", |b| {
         b.iter(|| {
             arrange_line_segments_with_mixed_curves(
@@ -731,14 +781,15 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&mixed_curve_quadratic),
                 std::slice::from_ref(&mixed_curve_cubic),
                 std::slice::from_ref(&mixed_curve_conic),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph)
         })
     });
-    let sweep_box_line = LinePathSegment::new(p(0, 0), p(800, 0));
+    let sweep_box_line = strict_segment!(p(0, 0), p(800, 0));
     let sweep_box_arc =
-        ExplicitCircularArc::new(p(400, 0), r(400), p(0, 0), p(800, 0), ArcDirection::Cw).unwrap();
+        strict_new!(ExplicitCircularArc; p(400, 0), r(400), p(0, 0), p(800, 0), ArcDirection::Cw)
+            .unwrap();
     let sweep_box_quadratic = QuadraticBezier::new(p(200, -100), p(400, -300), p(600, -100));
     c.bench_function("line_mixed_curve_sweep_box_admission", |b| {
         b.iter(|| {
@@ -748,12 +799,12 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&sweep_box_quadratic),
                 &[],
                 &[],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph)
         })
     });
-    let bezier_extrema_box_line = LinePathSegment::new(p(0, 0), p(400, 0));
+    let bezier_extrema_box_line = strict_segment!(p(0, 0), p(400, 0));
     let bezier_extrema_box_quadratic = QuadraticBezier::new(p(0, 0), p(200, 200), p(400, 0));
     let bezier_extrema_box_cubic = CubicBezier::new(
         p(0, 200),
@@ -768,13 +819,13 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&bezier_extrema_box_quadratic),
                 std::slice::from_ref(&bezier_extrema_box_cubic),
                 &[],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| (report.fragment_envelopes, report.fragment_separations))
         })
     });
     let conic_extrema_box_conic =
-        RationalQuadraticBezier::new(p(0, 200), p(200, 0), p(400, 200), rq(1, 3)).unwrap();
+        strict_new!(RationalQuadraticBezier; p(0, 200), p(200, 0), p(400, 200), rq(1, 3)).unwrap();
     c.bench_function("line_mixed_conic_extrema_box_admission", |b| {
         b.iter(|| {
             arrange_line_segments_with_mixed_beziers(
@@ -782,16 +833,16 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&bezier_extrema_box_quadratic),
                 &[],
                 std::slice::from_ref(&conic_extrema_box_conic),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| (report.fragment_envelopes, report.fragment_separations))
         })
     });
-    let mixed_evidence_line = LinePathSegment::new(p(200, 0), p(600, 0));
+    let mixed_evidence_line = strict_segment!(p(200, 0), p(600, 0));
     let mixed_evidence_cubic = CubicBezier::new(p(0, 0), p(100, 0), p(700, 0), p(800, 0));
     let mixed_evidence_conic =
-        RationalQuadraticBezier::new(p(1000, 0), p(1800, 0), p(1000, 0), r(1)).unwrap();
-    let mixed_evidence_conic_line = LinePathSegment::new(p(1100, 0), p(1300, 0));
+        strict_new!(RationalQuadraticBezier; p(1000, 0), p(1800, 0), p(1000, 0), r(1)).unwrap();
+    let mixed_evidence_conic_line = strict_segment!(p(1100, 0), p(1300, 0));
     c.bench_function("line_mixed_bezier_algebraic_evidence_retention", |b| {
         b.iter(|| {
             arrange_line_segments_with_mixed_beziers(
@@ -802,7 +853,7 @@ fn path_predicates(c: &mut Criterion) {
                 &[],
                 std::slice::from_ref(&mixed_evidence_cubic),
                 std::slice::from_ref(&mixed_evidence_conic),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| {
                 (
@@ -817,7 +868,7 @@ fn path_predicates(c: &mut Criterion) {
             })
         })
     });
-    let mixed_endpoint_contact_line = LinePathSegment::new(p(0, 0), p(800, 0));
+    let mixed_endpoint_contact_line = strict_segment!(p(0, 0), p(800, 0));
     let mixed_endpoint_contact_quadratic = QuadraticBezier::new(p(0, 0), p(200, 200), p(400, 0));
     let mixed_endpoint_contact_cubic =
         CubicBezier::new(p(400, 0), p(500, -100), p(700, -100), p(800, 0));
@@ -828,7 +879,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&mixed_endpoint_contact_quadratic),
                 std::slice::from_ref(&mixed_endpoint_contact_cubic),
                 &[],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.fragment_separations)
         })
@@ -839,16 +890,24 @@ fn path_predicates(c: &mut Criterion) {
         pq(2000, 3, 500, 1),
         p(1000, 0),
     );
-    let line_cubic_line = LinePathSegment::new(pq(0, 1, 375, 1), pq(1000, 1, 375, 1));
+    let line_cubic_line = strict_segment!(pq(0, 1, 375, 1), pq(1000, 1, 375, 1));
     c.bench_function("line_cubic_bezier_exact_events", |b| {
         b.iter(|| {
-            intersect_axis_aligned_line_cubic_bezier(&line_cubic_line, &line_cubic, PredicatePolicy)
+            intersect_axis_aligned_line_cubic_bezier(
+                &line_cubic_line,
+                &line_cubic,
+                PredicatePolicy::STRICT,
+            )
         })
     });
-    let line_cubic_diagonal_line = LinePathSegment::new(p(0, 100), p(400, 300));
+    let line_cubic_diagonal_line = strict_segment!(p(0, 100), p(400, 300));
     c.bench_function("line_cubic_bezier_general_line_exact_events", |b| {
         b.iter(|| {
-            intersect_line_cubic_bezier(&line_cubic_diagonal_line, &line_cubic, PredicatePolicy)
+            intersect_line_cubic_bezier(
+                &line_cubic_diagonal_line,
+                &line_cubic,
+                PredicatePolicy::STRICT,
+            )
         })
     });
     c.bench_function("line_cubic_bezier_arrangement_cleanup", |b| {
@@ -856,53 +915,53 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_line),
                 std::slice::from_ref(&line_cubic),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let line_cubic_cell = CubicBezier::new(p(0, 0), p(0, 500), p(1000, 500), p(1000, 0));
-    let line_cubic_cell_line = LinePathSegment::new(p(0, 0), p(1000, 0));
+    let line_cubic_cell_line = strict_segment!(p(0, 0), p(1000, 0));
     c.bench_function("line_cubic_bezier_exact_cell_graph", |b| {
         b.iter(|| {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_cell_line),
                 std::slice::from_ref(&line_cubic_cell),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let line_cubic_overlap =
         CubicBezier::new(p(0, 0), pq(1000, 3, 0, 1), pq(2000, 3, 0, 1), p(1000, 0));
-    let line_cubic_overlap_line = LinePathSegment::new(p(250, 0), p(750, 0));
+    let line_cubic_overlap_line = strict_segment!(p(250, 0), p(750, 0));
     c.bench_function("line_cubic_bezier_overlap_promotion", |b| {
         b.iter(|| {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_overlap_line),
                 std::slice::from_ref(&line_cubic_overlap),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let line_cubic_general_overlap =
         CubicBezier::new(p(0, 0), pq(8, 3, 8, 3), pq(16, 3, 16, 3), p(8, 8));
-    let line_cubic_general_overlap_line = LinePathSegment::new(p(2, 2), p(6, 6));
+    let line_cubic_general_overlap_line = strict_segment!(p(2, 2), p(6, 6));
     c.bench_function("line_cubic_bezier_general_overlap_promotion", |b| {
         b.iter(|| {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_general_overlap_line),
                 std::slice::from_ref(&line_cubic_general_overlap),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let line_cubic_exact_overlap = CubicBezier::new(p(0, 0), p(8, 0), p(8, 0), p(0, 0));
-    let line_cubic_exact_overlap_line = LinePathSegment::new(p(0, 0), pq(9, 2, 0, 1));
+    let line_cubic_exact_overlap_line = strict_segment!(p(0, 0), pq(9, 2, 0, 1));
     c.bench_function("line_cubic_bezier_exact_algebraic_overlap_promotion", |b| {
         b.iter(|| {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_exact_overlap_line),
                 std::slice::from_ref(&line_cubic_exact_overlap),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -913,19 +972,19 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_cubic_beziers(
                     std::slice::from_ref(&line_cubic_exact_overlap_line),
                     std::slice::from_ref(&line_cubic_exact_overlap),
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
     );
     let line_cubic_nonlinear_overlap = CubicBezier::new(p(0, 0), p(100, 0), p(700, 0), p(800, 0));
-    let line_cubic_nonlinear_overlap_line = LinePathSegment::new(p(200, 0), p(600, 0));
+    let line_cubic_nonlinear_overlap_line = strict_segment!(p(200, 0), p(600, 0));
     c.bench_function("line_cubic_bezier_nonlinear_overlap_evidence", |b| {
         b.iter(|| {
             intersect_axis_aligned_line_cubic_bezier(
                 &line_cubic_nonlinear_overlap_line,
                 &line_cubic_nonlinear_overlap,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -934,7 +993,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_nonlinear_overlap_line),
                 std::slice::from_ref(&line_cubic_nonlinear_overlap),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -943,7 +1002,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_nonlinear_overlap_line),
                 std::slice::from_ref(&line_cubic_nonlinear_overlap),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -952,19 +1011,19 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_nonlinear_overlap_line),
                 std::slice::from_ref(&line_cubic_nonlinear_overlap),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let line_cubic_algebraic = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
-    let line_cubic_algebraic_line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
-    let line_cubic_general_algebraic_line = LinePathSegment::new(pq(0, 1, -3, 8), pq(1, 1, 5, 8));
+    let line_cubic_algebraic_line = strict_segment!(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
+    let line_cubic_general_algebraic_line = strict_segment!(pq(0, 1, -3, 8), pq(1, 1, 5, 8));
     c.bench_function("line_cubic_bezier_algebraic_support_point_images", |b| {
         b.iter(|| {
             intersect_axis_aligned_line_cubic_bezier(
                 &line_cubic_algebraic_line,
                 &line_cubic_algebraic,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -975,7 +1034,7 @@ fn path_predicates(c: &mut Criterion) {
                 intersect_line_cubic_bezier(
                     &line_cubic_general_algebraic_line,
                     &line_cubic_algebraic,
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
@@ -985,7 +1044,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_algebraic_line),
                 std::slice::from_ref(&line_cubic_algebraic),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -996,7 +1055,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_cubic_beziers(
                     std::slice::from_ref(&line_cubic_algebraic_line),
                     std::slice::from_ref(&line_cubic_algebraic),
-                    PredicatePolicy,
+                    PredicatePolicy::STRICT,
                 )
             })
         },
@@ -1007,13 +1066,13 @@ fn path_predicates(c: &mut Criterion) {
         pq(2, 3, -7, 50),
         pq(1, 1, 2, 25),
     );
-    let line_cubic_three_root_line = LinePathSegment::new(p(0, 0), p(1, 0));
+    let line_cubic_three_root_line = strict_segment!(p(0, 0), p(1, 0));
     c.bench_function("line_cubic_bezier_algebraic_order_evidence", |b| {
         b.iter(|| {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_three_root_line),
                 std::slice::from_ref(&line_cubic_three_root),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1022,7 +1081,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_three_root_line),
                 std::slice::from_ref(&line_cubic_three_root),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1031,7 +1090,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_three_root_line),
                 std::slice::from_ref(&line_cubic_three_root),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1040,7 +1099,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_three_root_line),
                 std::slice::from_ref(&line_cubic_three_root),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1049,7 +1108,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_three_root_line),
                 std::slice::from_ref(&line_cubic_three_root),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1070,30 +1129,59 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("higher_order_bezier_exact_speed_squared", |b| {
         b.iter(|| quintic.speed_squared(half))
     });
-    let ph = CubicPythagoreanHodograph::new(p(0, 0), r(1), r(0), r(0), r(1)).unwrap();
+    let ph = strict_new!(CubicPythagoreanHodograph; p(0, 0), r(1), r(0), r(0), r(1)).unwrap();
     c.bench_function("cubic_ph_exact_length", |b| b.iter(|| ph.exact_length()));
     c.bench_function("cubic_ph_inverse_length_certification", |b| {
-        b.iter(|| certify_cubic_ph_inverse_length(&ph, rq(1, 3), half))
+        b.iter(|| certify_cubic_ph_inverse_length(&ph, rq(1, 3), half, PredicatePolicy::STRICT))
     });
     let quintic_ph =
-        QuinticPythagoreanHodograph::new(p(0, 0), r(1), r(1), r(0), r(0), r(0), r(0)).unwrap();
+        strict_new!(QuinticPythagoreanHodograph; p(0, 0), r(1), r(1), r(0), r(0), r(0), r(0))
+            .unwrap();
     c.bench_function("quintic_ph_exact_length", |b| {
         b.iter(|| quintic_ph.exact_length())
     });
     c.bench_function("quintic_ph_inverse_length_certification", |b| {
-        b.iter(|| certify_quintic_ph_inverse_length(&quintic_ph, rq(19, 24), half))
+        b.iter(|| {
+            certify_quintic_ph_inverse_length(
+                &quintic_ph,
+                rq(19, 24),
+                half,
+                PredicatePolicy::STRICT,
+            )
+        })
     });
     c.bench_function("quintic_ph_g1_smoothing_certification", |b| {
-        b.iter(|| certify_quintic_ph_g1_smoothing(&quintic_ph, p(0, 0), p(1, 0), p(7, 3), p(4, 0)))
+        b.iter(|| {
+            certify_quintic_ph_g1_smoothing(
+                &quintic_ph,
+                p(0, 0),
+                p(1, 0),
+                p(7, 3),
+                p(4, 0),
+                PredicatePolicy::STRICT,
+            )
+        })
     });
     c.bench_function("quadratic_bezier_offset_sample", |b| {
         b.iter(|| {
-            offset_quadratic_bezier_sample(&bezier, half, r(25), OffsetSide::Left, PredicatePolicy)
+            offset_quadratic_bezier_sample(
+                &bezier,
+                half,
+                r(25),
+                OffsetSide::Left,
+                PredicatePolicy::STRICT,
+            )
         })
     });
     c.bench_function("cubic_bezier_offset_sample", |b| {
         b.iter(|| {
-            offset_cubic_bezier_sample(&cubic, half, r(25), OffsetSide::Left, PredicatePolicy)
+            offset_cubic_bezier_sample(
+                &cubic,
+                half,
+                r(25),
+                OffsetSide::Left,
+                PredicatePolicy::STRICT,
+            )
         })
     });
     c.bench_function("higher_order_bezier_offset_sample", |b| {
@@ -1103,70 +1191,91 @@ fn path_predicates(c: &mut Criterion) {
                 half,
                 r(25),
                 OffsetSide::Left,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     c.bench_function("explicit_circular_arc_exact_construction", |b| {
-        b.iter(|| ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw))
+        b.iter(|| strict_new!(ExplicitCircularArc; p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw))
     });
     let explicit_arc =
-        ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw).unwrap();
+        strict_new!(ExplicitCircularArc; p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw)
+            .unwrap();
     c.bench_function("explicit_circular_arc_sweep_class_fact", |b| {
         b.iter(|| explicit_arc.facts().sweep_class)
     });
     c.bench_function("explicit_circular_arc_point_membership", |b| {
-        b.iter(|| explicit_arc.classify_point(&p(0, 5), PredicatePolicy))
+        b.iter(|| explicit_arc.classify_point(&p(0, 5), PredicatePolicy::STRICT))
     });
-    let explicit_arc_line = LinePathSegment::new(p(-10, 4), p(10, 4));
+    let explicit_arc_line = strict_segment!(p(-10, 4), p(10, 4));
     c.bench_function("explicit_circular_arc_axis_line_intersection", |b| {
-        b.iter(|| explicit_arc.intersect_axis_aligned_segment(&explicit_arc_line, PredicatePolicy))
+        b.iter(|| {
+            explicit_arc.intersect_axis_aligned_segment(&explicit_arc_line, PredicatePolicy::STRICT)
+        })
     });
-    let explicit_arc_general_line = LinePathSegment::new(p(-6, -8), p(6, 8));
+    let explicit_arc_general_line = strict_segment!(p(-6, -8), p(6, 8));
     c.bench_function("explicit_circular_arc_general_line_intersection", |b| {
-        b.iter(|| explicit_arc.intersect_segment(&explicit_arc_general_line, PredicatePolicy))
+        b.iter(|| {
+            explicit_arc.intersect_segment(&explicit_arc_general_line, PredicatePolicy::STRICT)
+        })
     });
     let explicit_arc_subset =
-        ExplicitCircularArc::new(p(0, 0), r(5), p(0, 5), p(-3, 4), ArcDirection::Ccw).unwrap();
+        strict_new!(ExplicitCircularArc; p(0, 0), r(5), p(0, 5), p(-3, 4), ArcDirection::Ccw)
+            .unwrap();
     c.bench_function("explicit_circular_arc_same_circle_overlap", |b| {
-        b.iter(|| explicit_arc.classify_same_circle_overlap(&explicit_arc_subset, PredicatePolicy))
+        b.iter(|| {
+            explicit_arc.classify_same_circle_overlap(&explicit_arc_subset, PredicatePolicy::STRICT)
+        })
     });
     let external_tangent_arc =
-        ExplicitCircularArc::new(p(10, 0), r(5), p(15, 0), p(10, 5), ArcDirection::Ccw).unwrap();
+        strict_new!(ExplicitCircularArc; p(10, 0), r(5), p(15, 0), p(10, 5), ArcDirection::Ccw)
+            .unwrap();
     c.bench_function("explicit_circular_arc_circle_relation", |b| {
-        b.iter(|| explicit_arc.classify_circle_relation(&external_tangent_arc, PredicatePolicy))
+        b.iter(|| {
+            explicit_arc.classify_circle_relation(&external_tangent_arc, PredicatePolicy::STRICT)
+        })
     });
     let tangent_membership_arc =
-        ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(0, 5), ArcDirection::Ccw).unwrap();
+        strict_new!(ExplicitCircularArc; p(0, 0), r(5), p(5, 0), p(0, 5), ArcDirection::Ccw)
+            .unwrap();
     let tangent_membership_other =
-        ExplicitCircularArc::new(p(10, 0), r(5), p(5, 0), p(10, 5), ArcDirection::Ccw).unwrap();
+        strict_new!(ExplicitCircularArc; p(10, 0), r(5), p(5, 0), p(10, 5), ArcDirection::Ccw)
+            .unwrap();
     c.bench_function("explicit_circular_arc_tangent_intersection", |b| {
         b.iter(|| {
             tangent_membership_arc
-                .classify_tangent_intersection(&tangent_membership_other, PredicatePolicy)
+                .classify_tangent_intersection(&tangent_membership_other, PredicatePolicy::STRICT)
         })
     });
     let secant_intersection_arc =
-        ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
+        strict_new!(ExplicitCircularArc; p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw)
+            .unwrap();
     let secant_intersection_other =
-        ExplicitCircularArc::new(p(6, 0), r(5), p(11, 0), p(11, 0), ArcDirection::Ccw).unwrap();
+        strict_new!(ExplicitCircularArc; p(6, 0), r(5), p(11, 0), p(11, 0), ArcDirection::Ccw)
+            .unwrap();
     c.bench_function("explicit_circular_arc_secant_intersection", |b| {
         b.iter(|| {
-            secant_intersection_arc.intersect_arc(&secant_intersection_other, PredicatePolicy)
+            secant_intersection_arc
+                .intersect_arc(&secant_intersection_other, PredicatePolicy::STRICT)
         })
     });
     c.bench_function("explicit_circular_arc_arrangement_dispatch", |b| {
-        b.iter(|| secant_intersection_arc.arrange_with(&secant_intersection_other, PredicatePolicy))
+        b.iter(|| {
+            secant_intersection_arc
+                .arrange_with(&secant_intersection_other, PredicatePolicy::STRICT)
+        })
     });
     let arc_loop_outer_upper =
-        ExplicitCircularArc::new(p(400, 0), r(400), p(0, 0), p(800, 0), ArcDirection::Cw).unwrap();
+        strict_new!(ExplicitCircularArc; p(400, 0), r(400), p(0, 0), p(800, 0), ArcDirection::Cw)
+            .unwrap();
     let arc_loop_outer_lower =
-        ExplicitCircularArc::new(p(400, 0), r(400), p(800, 0), p(0, 0), ArcDirection::Cw).unwrap();
+        strict_new!(ExplicitCircularArc; p(400, 0), r(400), p(800, 0), p(0, 0), ArcDirection::Cw)
+            .unwrap();
     let arc_loop_inner_upper =
-        ExplicitCircularArc::new(p(400, 0), r(200), p(200, 0), p(600, 0), ArcDirection::Cw)
+        strict_new!(ExplicitCircularArc; p(400, 0), r(200), p(200, 0), p(600, 0), ArcDirection::Cw)
             .unwrap();
     let arc_loop_inner_lower =
-        ExplicitCircularArc::new(p(400, 0), r(200), p(600, 0), p(200, 0), ArcDirection::Cw)
+        strict_new!(ExplicitCircularArc; p(400, 0), r(200), p(600, 0), p(200, 0), ArcDirection::Cw)
             .unwrap();
     c.bench_function("explicit_circular_arc_loop_role_replay", |b| {
         b.iter(|| {
@@ -1177,7 +1286,7 @@ fn path_predicates(c: &mut Criterion) {
                     arc_loop_inner_upper.clone(),
                     arc_loop_inner_lower.clone(),
                 ],
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
             .map(|report| report.cell_graph.loop_roles)
         })
@@ -1186,7 +1295,8 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| (explicit_arc.start_tangent(), explicit_arc.end_tangent()))
     });
     let explicit_half =
-        ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, -4), ArcDirection::Ccw).unwrap();
+        strict_new!(ExplicitCircularArc; p(0, 0), r(5), p(3, 4), p(-3, -4), ArcDirection::Ccw)
+            .unwrap();
     c.bench_function("explicit_circular_arc_certified_length", |b| {
         b.iter(|| explicit_half.certified_sweep_length())
     });
@@ -1194,38 +1304,46 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| explicit_arc.certified_sweep_length())
     });
     c.bench_function("explicit_circular_arc_offset_exact", |b| {
-        b.iter(|| offset_explicit_arc(&explicit_arc, r(5), OffsetSide::Left, PredicatePolicy))
+        b.iter(|| {
+            offset_explicit_arc(
+                &explicit_arc,
+                r(5),
+                OffsetSide::Left,
+                PredicatePolicy::STRICT,
+            )
+        })
     });
 
     let first = trace(1, p(0, 0), p(1000, 0));
     let second = trace(2, p(0, 6), p(1000, 6));
     c.bench_function("axis_aligned_trace_clearance_exact", |b| {
-        b.iter(|| check_trace_clearance(&first, &second, &r(3), PredicatePolicy))
+        b.iter(|| check_trace_clearance(&first, &second, &r(3), PredicatePolicy::STRICT))
     });
 
     let crossing = trace(2, p(500, -100), p(500, 100));
     c.bench_function("trace_no_short_exact_segment_predicate", |b| {
-        b.iter(|| check_trace_clearance(&first, &crossing, &r(1), PredicatePolicy))
+        b.iter(|| check_trace_clearance(&first, &crossing, &r(1), PredicatePolicy::STRICT))
     });
 
-    let pad = PcbCircularPad::new(NetId(2), TraceLayer(0), p(500, 6), r(2)).unwrap();
+    let pad = strict_new!(PcbCircularPad; NetId(2), TraceLayer(0), p(500, 6), r(2)).unwrap();
     c.bench_function("trace_pad_clearance_exact", |b| {
-        b.iter(|| check_trace_pad_clearance(&first, &pad, &r(3), PredicatePolicy))
+        b.iter(|| check_trace_pad_clearance(&first, &pad, &r(3), PredicatePolicy::STRICT))
     });
 
-    let via = PcbViaStack::new(NetId(2), TraceLayer(0), TraceLayer(2), p(500, 6), r(2)).unwrap();
+    let via =
+        strict_new!(PcbViaStack; NetId(2), TraceLayer(0), TraceLayer(2), p(500, 6), r(2)).unwrap();
     c.bench_function("trace_via_clearance_exact", |b| {
-        b.iter(|| check_trace_via_clearance(&first, &via, &r(3), PredicatePolicy))
+        b.iter(|| check_trace_via_clearance(&first, &via, &r(3), PredicatePolicy::STRICT))
     });
     c.bench_function("via_layer_transition_classification", |b| {
         b.iter(|| via.classify_layer_transition(4))
     });
     let overlapping_via =
-        PcbViaStack::new(NetId(3), TraceLayer(1), TraceLayer(3), p(520, 6), r(2)).unwrap();
+        strict_new!(PcbViaStack; NetId(3), TraceLayer(1), TraceLayer(3), p(520, 6), r(2)).unwrap();
     c.bench_function("via_layer_span_relation", |b| {
         b.iter(|| via.classify_layer_span_with(&overlapping_via))
     });
-    let drilled_via = PcbViaStack::with_drill(
+    let drilled_via = strict_drilled_via!(
         NetId(2),
         TraceLayer(0),
         TraceLayer(2),
@@ -1235,24 +1353,30 @@ fn path_predicates(c: &mut Criterion) {
     )
     .unwrap();
     c.bench_function("trace_via_drill_clearance_exact", |b| {
-        b.iter(|| check_trace_via_drill_clearance(&first, &drilled_via, &r(3), PredicatePolicy))
+        b.iter(|| {
+            check_trace_via_drill_clearance(&first, &drilled_via, &r(3), PredicatePolicy::STRICT)
+        })
     });
     c.bench_function("via_drill_policy_classification", |b| {
-        b.iter(|| drilled_via.classify_drill_policy(&r(3), PredicatePolicy))
+        b.iter(|| drilled_via.classify_drill_policy(&r(3), PredicatePolicy::STRICT))
     });
     let via_fabrication_policy = ViaFabricationPolicy::through_only(4, r(24), r(3), r(6));
     c.bench_function("via_fabrication_policy_certification", |b| {
         b.iter(|| {
-            certify_via_fabrication_policy(&drilled_via, &via_fabrication_policy, PredicatePolicy)
+            certify_via_fabrication_policy(
+                &drilled_via,
+                &via_fabrication_policy,
+                PredicatePolicy::STRICT,
+            )
         })
     });
 
-    let rect = PcbRectPad::new(NetId(2), TraceLayer(0), p(500, 6), r(10), r(2)).unwrap();
+    let rect = strict_new!(PcbRectPad; NetId(2), TraceLayer(0), p(500, 6), r(10), r(2)).unwrap();
     c.bench_function("trace_rect_pad_clearance_exact", |b| {
-        b.iter(|| check_trace_rect_pad_clearance(&first, &rect, &r(3), PredicatePolicy))
+        b.iter(|| check_trace_rect_pad_clearance(&first, &rect, &r(3), PredicatePolicy::STRICT))
     });
 
-    let cardinal_rect = PcbCardinalRectPad::new(
+    let cardinal_rect = strict_new!(PcbCardinalRectPad;
         NetId(2),
         TraceLayer(0),
         p(500, 6),
@@ -1263,14 +1387,25 @@ fn path_predicates(c: &mut Criterion) {
     .unwrap();
     c.bench_function("trace_cardinal_rect_pad_clearance_exact", |b| {
         b.iter(|| {
-            check_trace_cardinal_rect_pad_clearance(&first, &cardinal_rect, &r(3), PredicatePolicy)
+            check_trace_cardinal_rect_pad_clearance(
+                &first,
+                &cardinal_rect,
+                &r(3),
+                PredicatePolicy::STRICT,
+            )
         })
     });
     let rounded_rect =
-        PcbRoundedRectPad::new(NetId(2), TraceLayer(0), p(500, 8), r(10), r(4), r(2)).unwrap();
+        strict_new!(PcbRoundedRectPad; NetId(2), TraceLayer(0), p(500, 8), r(10), r(4), r(2))
+            .unwrap();
     c.bench_function("trace_rounded_rect_pad_clearance_exact", |b| {
         b.iter(|| {
-            check_trace_rounded_rect_pad_clearance(&first, &rounded_rect, &r(3), PredicatePolicy)
+            check_trace_rounded_rect_pad_clearance(
+                &first,
+                &rounded_rect,
+                &r(3),
+                PredicatePolicy::STRICT,
+            )
         })
     });
     let oriented_rect = PcbOrientedRectPad::new(
@@ -1280,14 +1415,14 @@ fn path_predicates(c: &mut Criterion) {
         r(10),
         r(4),
         Point2::new(rq(3, 5), rq(4, 5)),
-        PredicatePolicy,
+        PredicatePolicy::STRICT,
     )
     .unwrap();
-    let oriented_trace = PcbTrace::new(
+    let oriented_trace = strict_new!(PcbTrace;
         NetId(1),
         TraceLayer(0),
-        SweptLineSegment::new(
-            LinePathSegment::new(pq(2442, 5, 11, 5), pq(2502, 5, 91, 5)),
+        strict_new!(SweptLineSegment;
+            strict_segment!(pq(2442, 5, 11, 5), pq(2502, 5, 91, 5)),
             r(2),
         )
         .unwrap(),
@@ -1298,23 +1433,28 @@ fn path_predicates(c: &mut Criterion) {
                 &oriented_trace,
                 &oriented_rect,
                 &r(3),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let obround_pad = PcbObroundPad::new(
+    let obround_pad = strict_new!(PcbObroundPad;
         NetId(2),
         TraceLayer(0),
-        LinePathSegment::new(p(480, 0), p(520, 30)),
+        strict_segment!(p(480, 0), p(520, 30)),
         r(8),
     )
     .unwrap();
     c.bench_function("trace_obround_pad_clearance_exact", |b| {
         b.iter(|| {
-            check_trace_obround_pad_clearance(&oriented_trace, &obround_pad, &r(3), PredicatePolicy)
+            check_trace_obround_pad_clearance(
+                &oriented_trace,
+                &obround_pad,
+                &r(3),
+                PredicatePolicy::STRICT,
+            )
         })
     });
-    let convex_pad = PcbConvexPad::new(
+    let convex_pad = strict_new!(PcbConvexPad;
         NetId(2),
         TraceLayer(0),
         vec![p(500, 12), p(516, 0), p(500, -12), p(484, 0)],
@@ -1322,10 +1462,15 @@ fn path_predicates(c: &mut Criterion) {
     .unwrap();
     c.bench_function("trace_convex_pad_clearance_exact", |b| {
         b.iter(|| {
-            check_trace_convex_pad_clearance(&oriented_trace, &convex_pad, &r(3), PredicatePolicy)
+            check_trace_convex_pad_clearance(
+                &oriented_trace,
+                &convex_pad,
+                &r(3),
+                PredicatePolicy::STRICT,
+            )
         })
     });
-    let orthogonal_pad = PcbOrthogonalPad::new(
+    let orthogonal_pad = strict_new!(PcbOrthogonalPad;
         NetId(2),
         TraceLayer(0),
         vec![
@@ -1344,15 +1489,15 @@ fn path_predicates(c: &mut Criterion) {
                 &oriented_trace,
                 &orthogonal_pad,
                 &r(3),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let board = PcbBoardOutline::new(p(-100, -100), p(1100, 100)).unwrap();
+    let board = strict_new!(PcbBoardOutline; p(-100, -100), p(1100, 100)).unwrap();
     c.bench_function("trace_board_edge_clearance_exact", |b| {
-        b.iter(|| check_trace_board_clearance(&first, &board, &r(25), PredicatePolicy))
+        b.iter(|| check_trace_board_clearance(&first, &board, &r(25), PredicatePolicy::STRICT))
     });
-    let convex_board = PcbConvexBoardOutline::new(vec![
+    let convex_board = strict_new!(PcbConvexBoardOutline; vec![
         p(-100, -100),
         p(1100, -100),
         p(1200, 100),
@@ -1361,10 +1506,15 @@ fn path_predicates(c: &mut Criterion) {
     .unwrap();
     c.bench_function("trace_convex_board_edge_clearance_exact", |b| {
         b.iter(|| {
-            check_trace_convex_board_clearance(&first, &convex_board, &r(25), PredicatePolicy)
+            check_trace_convex_board_clearance(
+                &first,
+                &convex_board,
+                &r(25),
+                PredicatePolicy::STRICT,
+            )
         })
     });
-    let orthogonal_board = PcbOrthogonalBoardOutline::new(vec![
+    let orthogonal_board = strict_new!(PcbOrthogonalBoardOutline; vec![
         p(-100, -100),
         p(1100, -100),
         p(1100, 100),
@@ -1381,26 +1531,28 @@ fn path_predicates(c: &mut Criterion) {
                 &first,
                 &orthogonal_board,
                 &r(25),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let circular_board = PcbCircularBoardOutline::new(p(500, 0), r(600)).unwrap();
+    let circular_board = strict_new!(PcbCircularBoardOutline; p(500, 0), r(600)).unwrap();
     c.bench_function("trace_circular_board_edge_clearance_exact", |b| {
         b.iter(|| {
             check_trace_circular_board_clearance(
                 &oriented_trace,
                 &circular_board,
                 &r(25),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     c.bench_function("via_drill_board_edge_clearance_exact", |b| {
-        b.iter(|| check_via_drill_board_clearance(&drilled_via, &board, &r(25), PredicatePolicy))
+        b.iter(|| {
+            check_via_drill_board_clearance(&drilled_via, &board, &r(25), PredicatePolicy::STRICT)
+        })
     });
     c.bench_function("circular_pad_board_edge_clearance_exact", |b| {
-        b.iter(|| check_circular_pad_board_clearance(&pad, &board, &r(25), PredicatePolicy))
+        b.iter(|| check_circular_pad_board_clearance(&pad, &board, &r(25), PredicatePolicy::STRICT))
     });
     c.bench_function("circular_pad_circular_board_edge_clearance_exact", |b| {
         b.iter(|| {
@@ -1408,19 +1560,19 @@ fn path_predicates(c: &mut Criterion) {
                 &pad,
                 &circular_board,
                 &r(25),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let obround_board =
-        PcbObroundBoardOutline::new(LinePathSegment::new(p(0, 0), p(1000, 0)), r(600)).unwrap();
+        strict_new!(PcbObroundBoardOutline; strict_segment!(p(0, 0), p(1000, 0)), r(600)).unwrap();
     c.bench_function("trace_obround_board_edge_clearance_exact", |b| {
         b.iter(|| {
             check_trace_obround_board_clearance(
                 &oriented_trace,
                 &obround_board,
                 &r(25),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1430,37 +1582,61 @@ fn path_predicates(c: &mut Criterion) {
                 &pad,
                 &obround_board,
                 &r(25),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     c.bench_function("rect_pad_board_edge_clearance_exact", |b| {
-        b.iter(|| check_rect_pad_board_clearance(&rect, &board, &r(25), PredicatePolicy))
+        b.iter(|| check_rect_pad_board_clearance(&rect, &board, &r(25), PredicatePolicy::STRICT))
     });
     c.bench_function("cardinal_rect_pad_board_edge_clearance_exact", |b| {
         b.iter(|| {
-            check_cardinal_rect_pad_board_clearance(&cardinal_rect, &board, &r(25), PredicatePolicy)
+            check_cardinal_rect_pad_board_clearance(
+                &cardinal_rect,
+                &board,
+                &r(25),
+                PredicatePolicy::STRICT,
+            )
         })
     });
     c.bench_function("rounded_rect_pad_board_edge_clearance_exact", |b| {
         b.iter(|| {
-            check_rounded_rect_pad_board_clearance(&rounded_rect, &board, &r(25), PredicatePolicy)
+            check_rounded_rect_pad_board_clearance(
+                &rounded_rect,
+                &board,
+                &r(25),
+                PredicatePolicy::STRICT,
+            )
         })
     });
     c.bench_function("oriented_rect_pad_board_edge_clearance_exact", |b| {
         b.iter(|| {
-            check_oriented_rect_pad_board_clearance(&oriented_rect, &board, &r(25), PredicatePolicy)
+            check_oriented_rect_pad_board_clearance(
+                &oriented_rect,
+                &board,
+                &r(25),
+                PredicatePolicy::STRICT,
+            )
         })
     });
     c.bench_function("obround_pad_board_edge_clearance_exact", |b| {
-        b.iter(|| check_obround_pad_board_clearance(&obround_pad, &board, &r(25), PredicatePolicy))
+        b.iter(|| {
+            check_obround_pad_board_clearance(&obround_pad, &board, &r(25), PredicatePolicy::STRICT)
+        })
     });
     c.bench_function("convex_pad_board_edge_clearance_exact", |b| {
-        b.iter(|| check_convex_pad_board_clearance(&convex_pad, &board, &r(25), PredicatePolicy))
+        b.iter(|| {
+            check_convex_pad_board_clearance(&convex_pad, &board, &r(25), PredicatePolicy::STRICT)
+        })
     });
     c.bench_function("orthogonal_pad_board_edge_clearance_exact", |b| {
         b.iter(|| {
-            check_orthogonal_pad_board_clearance(&orthogonal_pad, &board, &r(25), PredicatePolicy)
+            check_orthogonal_pad_board_clearance(
+                &orthogonal_pad,
+                &board,
+                &r(25),
+                PredicatePolicy::STRICT,
+            )
         })
     });
 
@@ -1481,34 +1657,34 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| certify_length_extension(&model))
     });
 
-    let tune_source = LinePathSegment::new(p(0, 0), p(1000, 0));
+    let tune_source = strict_segment!(p(0, 0), p(1000, 0));
     let first_pair_route = vec![
-        LinePathSegment::new(p(0, 0), p(600, 0)),
-        LinePathSegment::new(p(600, 0), p(600, 120)),
+        strict_segment!(p(0, 0), p(600, 0)),
+        strict_segment!(p(600, 0), p(600, 120)),
     ];
-    let second_pair_route = vec![LinePathSegment::new(p(0, 20), p(700, 20))];
+    let second_pair_route = vec![strict_segment!(p(0, 20), p(700, 20))];
     c.bench_function("differential_pair_skew_certification", |b| {
         b.iter(|| {
             certify_differential_pair_skew(
                 &first_pair_route,
                 &second_pair_route,
                 r(20),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let feed_route = vec![
-        LinePathSegment::new(p(0, 0), p(500, 0)),
-        LinePathSegment::new(p(500, 0), p(500, 250)),
+        strict_segment!(p(0, 0), p(500, 0)),
+        strict_segment!(p(500, 0), p(500, 250)),
     ];
     c.bench_function("constant_feed_time_certification", |b| {
-        b.iter(|| certify_constant_feed_time(&feed_route, r(250), r(3), PredicatePolicy))
+        b.iter(|| certify_constant_feed_time(&feed_route, r(250), r(3), PredicatePolicy::STRICT))
     });
     let mixed_radius = (r(10) / Real::pi()).unwrap();
     let mixed_feed_route = vec![
-        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(740, 0))),
+        FeedPathElement::Line(strict_segment!(p(0, 0), p(740, 0))),
         FeedPathElement::ExplicitArc(
-            ExplicitCircularArc::new(
+            strict_new!(ExplicitCircularArc;
                 p(0, 0),
                 mixed_radius.clone(),
                 Point2::new(mixed_radius.clone(), r(0)),
@@ -1520,10 +1696,15 @@ fn path_predicates(c: &mut Criterion) {
     ];
     c.bench_function("mixed_path_constant_feed_time_certification", |b| {
         b.iter(|| {
-            certify_constant_feed_time_for_path(&mixed_feed_route, r(250), r(3), PredicatePolicy)
+            certify_constant_feed_time_for_path(
+                &mixed_feed_route,
+                r(250),
+                r(3),
+                PredicatePolicy::STRICT,
+            )
         })
     });
-    let acceleration_triangular_route = vec![LinePathSegment::new(p(0, 0), p(9, 0))];
+    let acceleration_triangular_route = vec![strict_segment!(p(0, 0), p(9, 0))];
     c.bench_function("acceleration_limited_feed_time_triangular", |b| {
         b.iter(|| {
             certify_acceleration_limited_feed_time(
@@ -1531,15 +1712,15 @@ fn path_predicates(c: &mut Criterion) {
                 r(10),
                 r(4),
                 r(3),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let mixed_accel_radius = (r(4) / Real::pi()).unwrap();
     let mixed_acceleration_route = vec![
-        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(5, 0))),
+        FeedPathElement::Line(strict_segment!(p(0, 0), p(5, 0))),
         FeedPathElement::ExplicitArc(
-            ExplicitCircularArc::new(
+            strict_new!(ExplicitCircularArc;
                 p(0, 0),
                 mixed_accel_radius.clone(),
                 Point2::new(mixed_accel_radius.clone(), r(0)),
@@ -1556,11 +1737,11 @@ fn path_predicates(c: &mut Criterion) {
                 r(10),
                 r(4),
                 r(3),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let acceleration_feed_route = vec![LinePathSegment::new(p(0, 0), p(1500, 0))];
+    let acceleration_feed_route = vec![strict_segment!(p(0, 0), p(1500, 0))];
     c.bench_function("acceleration_limited_feed_time_trapezoidal", |b| {
         b.iter(|| {
             certify_acceleration_limited_feed_time(
@@ -1568,11 +1749,11 @@ fn path_predicates(c: &mut Criterion) {
                 r(100),
                 r(10),
                 r(25),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let jerk_feed_route = vec![LinePathSegment::new(p(0, 0), p(4000, 0))];
+    let jerk_feed_route = vec![strict_segment!(p(0, 0), p(4000, 0))];
     c.bench_function("symmetric_jerk_limited_feed_time", |b| {
         b.iter(|| {
             certify_symmetric_jerk_limited_feed_time(
@@ -1581,15 +1762,15 @@ fn path_predicates(c: &mut Criterion) {
                 r(100),
                 r(16),
                 r(20),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let mixed_jerk_radius = (r(10) / Real::pi()).unwrap();
     let mixed_jerk_route = vec![
-        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(3990, 0))),
+        FeedPathElement::Line(strict_segment!(p(0, 0), p(3990, 0))),
         FeedPathElement::ExplicitArc(
-            ExplicitCircularArc::new(
+            strict_new!(ExplicitCircularArc;
                 p(0, 0),
                 mixed_jerk_radius.clone(),
                 Point2::new(mixed_jerk_radius.clone(), r(0)),
@@ -1607,14 +1788,14 @@ fn path_predicates(c: &mut Criterion) {
                 r(100),
                 r(16),
                 r(20),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let corner_lookahead_spans = vec![
-        TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(100, 0))),
-        TangentSpan::from_line_segment(&LinePathSegment::new(p(100, 0), p(100, 100))),
-        TangentSpan::from_line_segment(&LinePathSegment::new(p(100, 100), p(150, 100))),
+        TangentSpan::from_line_segment(&strict_segment!(p(0, 0), p(100, 0))),
+        TangentSpan::from_line_segment(&strict_segment!(p(100, 0), p(100, 100))),
+        TangentSpan::from_line_segment(&strict_segment!(p(100, 100), p(150, 100))),
     ];
     c.bench_function("corner_lookahead_feed_limit_certification", |b| {
         b.iter(|| {
@@ -1624,14 +1805,14 @@ fn path_predicates(c: &mut Criterion) {
                 r(20),
                 r(25),
                 r(4),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let lookahead_route = vec![
-        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(100, 0))),
-        FeedPathElement::Line(LinePathSegment::new(p(100, 0), p(100, 100))),
-        FeedPathElement::Line(LinePathSegment::new(p(100, 100), p(150, 100))),
+        FeedPathElement::Line(strict_segment!(p(0, 0), p(100, 0))),
+        FeedPathElement::Line(strict_segment!(p(100, 0), p(100, 100))),
+        FeedPathElement::Line(strict_segment!(p(100, 100), p(150, 100))),
     ];
     let lookahead_schedule = LookaheadFeedSchedule {
         entry_feed: r(0),
@@ -1647,14 +1828,11 @@ fn path_predicates(c: &mut Criterion) {
                 &lookahead_schedule,
                 r(20),
                 r(25),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let jerk_ramp_route = vec![FeedPathElement::Line(LinePathSegment::new(
-        p(0, 0),
-        p(5000, 0),
-    ))];
+    let jerk_ramp_route = vec![FeedPathElement::Line(strict_segment!(p(0, 0), p(5000, 0),))];
     let jerk_ramp = JerkRampSpanProposal {
         start_feed: r(0),
         end_feed: r(100),
@@ -1670,14 +1848,11 @@ fn path_predicates(c: &mut Criterion) {
                 r(100),
                 r(1),
                 r(1),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let multi_phase_jerk_route = vec![FeedPathElement::Line(LinePathSegment::new(
-        p(0, 0),
-        p(200, 0),
-    ))];
+    let multi_phase_jerk_route = vec![FeedPathElement::Line(strict_segment!(p(0, 0), p(200, 0),))];
     let multi_phase_jerk = vec![vec![
         JerkRampPhaseProposal {
             path_length: rq(100, 3),
@@ -1708,19 +1883,40 @@ fn path_predicates(c: &mut Criterion) {
                 r(20),
                 r(2),
                 r(1),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     c.bench_function("single_detour_meander_exact_build", |b| {
-        b.iter(|| single_detour_meander(&tune_source, r(250), OffsetSide::Left, PredicatePolicy))
+        b.iter(|| {
+            single_detour_meander(
+                &tune_source,
+                r(250),
+                OffsetSide::Left,
+                PredicatePolicy::STRICT,
+            )
+        })
     });
     c.bench_function("multi_detour_meander_exact_build", |b| {
-        b.iter(|| multi_detour_meander(&tune_source, r(250), 4, OffsetSide::Left, PredicatePolicy))
+        b.iter(|| {
+            multi_detour_meander(
+                &tune_source,
+                r(250),
+                4,
+                OffsetSide::Left,
+                PredicatePolicy::STRICT,
+            )
+        })
     });
     c.bench_function("alternating_detour_meander_exact_build", |b| {
         b.iter(|| {
-            alternating_detour_meander(&tune_source, r(250), 4, OffsetSide::Left, PredicatePolicy)
+            alternating_detour_meander(
+                &tune_source,
+                r(250),
+                4,
+                OffsetSide::Left,
+                PredicatePolicy::STRICT,
+            )
         })
     });
     c.bench_function("nonuniform_detour_meander_exact_build", |b| {
@@ -1729,7 +1925,7 @@ fn path_predicates(c: &mut Criterion) {
                 &tune_source,
                 vec![r(25), r(75), r(50)],
                 OffsetSide::Left,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1745,7 +1941,7 @@ fn path_predicates(c: &mut Criterion) {
                 4,
                 OffsetSide::Left,
                 meander_obstacles.clone(),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1757,7 +1953,7 @@ fn path_predicates(c: &mut Criterion) {
                 4,
                 OffsetSide::Left,
                 meander_obstacles.clone(),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1773,7 +1969,7 @@ fn path_predicates(c: &mut Criterion) {
                 4,
                 OffsetSide::Left,
                 meander_keepouts.clone(),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1785,21 +1981,21 @@ fn path_predicates(c: &mut Criterion) {
                 4,
                 OffsetSide::Left,
                 meander_keepouts.clone(),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let arbitrary_meander_candidates = vec![
         MeanderPlacementCandidate {
-            base: LinePathSegment::new(p(0, 0), p(150, 0)),
+            base: strict_segment!(p(0, 0), p(150, 0)),
             amplitude: r(10),
         },
         MeanderPlacementCandidate {
-            base: LinePathSegment::new(p(175, 0), p(450, 0)),
+            base: strict_segment!(p(175, 0), p(450, 0)),
             amplitude: r(35),
         },
         MeanderPlacementCandidate {
-            base: LinePathSegment::new(p(500, 0), p(1000, 0)),
+            base: strict_segment!(p(500, 0), p(1000, 0)),
             amplitude: r(20),
         },
     ];
@@ -1809,7 +2005,7 @@ fn path_predicates(c: &mut Criterion) {
                 arbitrary_meander_candidates.clone(),
                 OffsetSide::Left,
                 meander_obstacles.clone(),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -1826,7 +2022,7 @@ fn path_predicates(c: &mut Criterion) {
     })
     .unwrap();
     c.bench_function("specctra_trace_record_exact_import", |b| {
-        b.iter(|| import_specctra_trace_record(&route_record))
+        b.iter(|| import_specctra_trace_record(&route_record, PredicatePolicy::STRICT))
     });
     let via_record = specctra_grid_via_record(SpecctraGridViaRecord {
         net: NetId(3),
@@ -1841,7 +2037,7 @@ fn path_predicates(c: &mut Criterion) {
     })
     .unwrap();
     c.bench_function("specctra_via_record_exact_import", |b| {
-        b.iter(|| import_specctra_via_record(&via_record))
+        b.iter(|| import_specctra_via_record(&via_record, PredicatePolicy::STRICT))
     });
 
     let route_text = serialize_specctra_grid_trace_records(&[SpecctraGridTraceRecord {
@@ -1907,7 +2103,7 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| parse_specctra_grid_route_records(&arc_text))
     });
     c.bench_function("specctra_grid_arc_wire_exact_lift", |b| {
-        b.iter(|| specctra_grid_arc_wire_record(arc_record_text))
+        b.iter(|| specctra_grid_arc_wire_record(arc_record_text, PredicatePolicy::STRICT))
     });
     let mixed_text = serialize_specctra_grid_route_records(&hyperpath::SpecctraGridRouteRecords {
         net_aliases: vec![SpecctraNetAlias {
@@ -1978,7 +2174,7 @@ fn path_predicates(c: &mut Criterion) {
         grid_denominator: 10,
     };
     c.bench_function("specctra_grid_keepout_exact_lift", |b| {
-        b.iter(|| specctra_grid_keepout_record(exact_keepout.clone()))
+        b.iter(|| specctra_grid_keepout_record(exact_keepout.clone(), PredicatePolicy::STRICT))
     });
     let route_rule_text = hyperpath::serialize_specctra_grid_route_rule_records(&[
         hyperpath::SpecctraGridRouteRuleRecord {
@@ -2020,7 +2216,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&audited_trace),
                 &[],
                 std::slice::from_ref(&audited_rule),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -2049,7 +2245,7 @@ fn path_predicates(c: &mut Criterion) {
             hyperpath::audit_specctra_trace_rule_clearances(
                 &[audited_trace.clone(), audited_second_trace.clone()],
                 std::slice::from_ref(&audited_clearance_rule),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -2061,7 +2257,9 @@ fn path_predicates(c: &mut Criterion) {
         grid_denominator: 10,
     };
     c.bench_function("specctra_grid_polygon_keepout_exact_lift", |b| {
-        b.iter(|| specctra_grid_keepout_record(exact_polygon_keepout.clone()))
+        b.iter(|| {
+            specctra_grid_keepout_record(exact_polygon_keepout.clone(), PredicatePolicy::STRICT)
+        })
     });
     let envelope_path_text = concat!(
         "(session \"bench board\"",
@@ -2076,19 +2274,30 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| parse_specctra_grid_route_records(envelope_path_text))
     });
 
-    let offset_source = LinePathSegment::new(p(0, 0), p(1000, 0));
+    let offset_source = strict_segment!(p(0, 0), p(1000, 0));
     c.bench_function("axis_aligned_line_offset_exact", |b| {
         b.iter(|| {
-            offset_axis_aligned_segment(&offset_source, r(25), OffsetSide::Left, PredicatePolicy)
+            offset_axis_aligned_segment(
+                &offset_source,
+                r(25),
+                OffsetSide::Left,
+                PredicatePolicy::STRICT,
+            )
         })
     });
-    let pocket = RectangularPocket::new(p(0, 0), p(10_000, 6_000)).unwrap();
+    let pocket = strict_new!(RectangularPocket; p(0, 0), p(10_000, 6_000)).unwrap();
     c.bench_function("rectangular_pocket_offset_ring_schedule", |b| {
-        b.iter(|| rectangular_pocket_rings(&pocket, r(125), r(250), 128, PredicatePolicy))
+        b.iter(|| rectangular_pocket_rings(&pocket, r(125), r(250), 128, PredicatePolicy::STRICT))
     });
     c.bench_function("rectangular_pocket_link_graph_immediate", |b| {
         b.iter(|| {
-            rectangular_pocket_link_graph(pocket.clone(), r(125), r(250), 24, PredicatePolicy)
+            rectangular_pocket_link_graph(
+                pocket.clone(),
+                r(125),
+                r(250),
+                24,
+                PredicatePolicy::STRICT,
+            )
         })
     });
     c.bench_function("rectangular_additive_bead_schedule", |b| {
@@ -2099,7 +2308,7 @@ fn path_predicates(c: &mut Criterion) {
                 r(400),
                 r(350),
                 256,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -2111,19 +2320,20 @@ fn path_predicates(c: &mut Criterion) {
                 r(400),
                 r(350),
                 256,
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
-    let support_overhang = RectangularPocket::new(p(1_000, 1_000), p(3_000, 2_000)).unwrap();
-    let support_base = RectangularPocket::new(p(0, 0), p(10_000, 6_000)).unwrap();
+    let support_overhang =
+        strict_new!(RectangularPocket; p(1_000, 1_000), p(3_000, 2_000)).unwrap();
+    let support_base = strict_new!(RectangularPocket; p(0, 0), p(10_000, 6_000)).unwrap();
     c.bench_function("rectangular_support_footprint_plan", |b| {
         b.iter(|| {
             rectangular_support_footprint(
                 support_overhang.clone(),
                 support_base.clone(),
                 r(125),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -2132,7 +2342,7 @@ fn path_predicates(c: &mut Criterion) {
             intersect_rectangular_regions(
                 support_base.clone(),
                 support_overhang.clone(),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
@@ -2141,18 +2351,22 @@ fn path_predicates(c: &mut Criterion) {
             subtract_rectangular_region(
                 support_base.clone(),
                 support_overhang.clone(),
-                PredicatePolicy,
+                PredicatePolicy::STRICT,
             )
         })
     });
     let rest_cutters = vec![
-        RectangularPocket::new(p(1_000, 1_000), p(9_000, 5_000)).unwrap(),
-        RectangularPocket::new(p(2_000, -1_000), p(4_000, 7_000)).unwrap(),
-        RectangularPocket::new(p(6_000, 0), p(11_000, 6_000)).unwrap(),
+        strict_new!(RectangularPocket; p(1_000, 1_000), p(9_000, 5_000)).unwrap(),
+        strict_new!(RectangularPocket; p(2_000, -1_000), p(4_000, 7_000)).unwrap(),
+        strict_new!(RectangularPocket; p(6_000, 0), p(11_000, 6_000)).unwrap(),
     ];
     c.bench_function("rectangular_rest_material_graph", |b| {
         b.iter(|| {
-            rectangular_rest_material_graph(pocket.clone(), rest_cutters.clone(), PredicatePolicy)
+            rectangular_rest_material_graph(
+                pocket.clone(),
+                rest_cutters.clone(),
+                PredicatePolicy::STRICT,
+            )
         })
     });
 
@@ -2162,13 +2376,14 @@ fn path_predicates(c: &mut Criterion) {
         CardinalPoint::East,
         CardinalPoint::North,
         ArcDirection::Ccw,
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     c.bench_function("cardinal_arc_exact_tangents", |b| {
         b.iter(|| (arc.start_tangent(), arc.end_tangent()))
     });
     c.bench_function("cardinal_arc_offset_exact", |b| {
-        b.iter(|| offset_cardinal_arc(&arc, r(10), OffsetSide::Left, PredicatePolicy))
+        b.iter(|| offset_cardinal_arc(&arc, r(10), OffsetSide::Left, PredicatePolicy::STRICT))
     });
 }
 

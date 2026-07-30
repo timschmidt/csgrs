@@ -10,8 +10,8 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
-use hyperreal::{Real, RealSign};
+use hyperlimit::{PredicatePolicy, Sign, classify_real_sign, compare_reals};
+use hyperreal::Real;
 
 use crate::pcb::{
     PcbViaStack, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaDrillPolicyReport,
@@ -196,12 +196,12 @@ fn validate_policy(
     if policy.board_layer_count == 0 {
         return Err(ViaFabricationError::InvalidBoardLayerCount);
     }
-    if compare_reals_with_policy(&policy.board_thickness, &Real::zero(), predicate_policy).value()
+    if compare_reals(&policy.board_thickness, &Real::zero(), predicate_policy).value()
         != Some(Ordering::Greater)
     {
         return Err(ViaFabricationError::NonPositiveBoardThickness);
     }
-    if compare_reals_with_policy(
+    if compare_reals(
         &policy.maximum_aspect_ratio,
         &Real::zero(),
         predicate_policy,
@@ -211,7 +211,9 @@ fn validate_policy(
     {
         return Err(ViaFabricationError::NonPositiveAspectRatio);
     }
-    if policy.minimum_annular_ring.structural_facts().sign == Some(RealSign::Negative) {
+    if classify_real_sign(&policy.minimum_annular_ring, predicate_policy).value()
+        == Some(Sign::Negative)
+    {
         return Err(ViaFabricationError::NegativeAnnularRing);
     }
     Ok(())
@@ -226,7 +228,7 @@ fn certify_aspect_ratio(
         return ViaAspectRatioReport::UnknownNoDrill;
     };
     let allowed_thickness = drill.clone() * policy.maximum_aspect_ratio.clone();
-    match compare_reals_with_policy(
+    match compare_reals(
         &policy.board_thickness,
         &allowed_thickness,
         predicate_policy,

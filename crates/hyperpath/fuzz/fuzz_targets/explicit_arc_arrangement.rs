@@ -34,6 +34,7 @@ fuzz_target!(|data: &[u8]| {
         p(cx + 5 * scale, cy),
         p(cx - 5 * scale, cy),
         ArcDirection::Ccw,
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     let top_left = ExplicitCircularArc::new(
@@ -42,9 +43,10 @@ fuzz_target!(|data: &[u8]| {
         p(cx, cy + 5 * scale),
         p(cx - 5 * scale, cy),
         ArcDirection::Ccw,
+        PredicatePolicy::STRICT,
     )
     .unwrap();
-    let report = arrange_explicit_arcs(&[top_half, top_left], PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&[top_half, top_left], PredicatePolicy::STRICT).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -66,6 +68,7 @@ fuzz_target!(|data: &[u8]| {
         p(left_center_x, center_y - 5 * scale),
         p(left_center_x, center_y + 5 * scale),
         ArcDirection::Ccw,
+        PredicatePolicy::STRICT,
     )
     .unwrap();
     let right = ExplicitCircularArc::new(
@@ -74,9 +77,10 @@ fuzz_target!(|data: &[u8]| {
         p(right_center_x, center_y + 5 * scale),
         p(right_center_x, center_y - 5 * scale),
         ArcDirection::Ccw,
+        PredicatePolicy::STRICT,
     )
     .unwrap();
-    let report = arrange_explicit_arcs(&[left, right], PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&[left, right], PredicatePolicy::STRICT).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -102,9 +106,10 @@ fuzz_target!(|data: &[u8]| {
             signed(data[6]),
         ),
         ArcDirection::Ccw,
+        PredicatePolicy::STRICT,
     )
     .unwrap();
-    let report = arrange_explicit_arcs(&[full], PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&[full], PredicatePolicy::STRICT).unwrap();
     assert_eq!(report.breakpoints[0].len(), 1);
     assert_eq!(report.fragments.len(), 1);
     assert_eq!(report.cell_graph.vertices.len(), 1);
