@@ -125,9 +125,14 @@ axial cutter across all four periodic torus latitude cells per circle and
 partitions both torus and planar operands exactly. Parallel-to-axis planes
 retain the exact outer point tangency at `major_radius + minor_radius` and are
 certified disjoint when strictly farther away; interior offset and general
-oblique torus sections remain explicit unsupported quartic cases. A selected
-half-torus is not yet published because it requires a closed longitude-region
-solid certificate rather than the existing latitude-band certificate.
+oblique torus sections remain explicit unsupported quartic cases. An
+axis-containing cuboid cutter publishes either selected half-torus through
+standard intersection or torus-minus-cutter difference. The closed
+longitude-region certificate proves both meridian disks, exactly half of the
+periodic longitude cells, complete latitude coverage, exact `pi²*R*r²`
+volume, `2*pi²*R*r + 2*pi*r²` boundary area, halfspace-aware point
+classification, operand reversal, rigid/reflection transforms, untrusted
+replay, and exclusion from the whole-torus optimization profile.
 
 For a tensor iso-section, the two controls on the linear axis must have exactly
 equal weights and one exact common control translation; every profile control

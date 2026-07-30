@@ -116,6 +116,13 @@ by the adjacent face-local pcurves.
 Unknown predicate outcomes remain errors. Unsupported tuples are rejected
 during construction rather than published with an optimistic flag.
 
+All kernel quadrant construction uses one checked `certified_atan2` path. It
+decides both coordinate signs through the exact comparison policy, returns
+axis angles structurally, and applies the exact single-argument arctangent
+only after the quadrant is certified. Symbolic cancellation therefore becomes
+an exact axis result or a typed predicate/elementary-function error; it cannot
+panic through `Real::atan2`'s convenience refinement floor.
+
 ## Solid certificates
 
 Closed manifold topology alone does not prove a non-self-intersecting regular
@@ -340,8 +347,15 @@ strictly exterior parallel-to-axis planes as disjoint before graph
 construction. Oblique-through-axis graph fixtures prove
 that the two circles clip into eight patch-local fragments, partition every
 periodic torus cell, and author two closed planar loops while preserving both
-source volumes. Publishing the selected half-torus remains a separate closed
-longitude-region certificate rather than an inferred general-shell result.
+source volumes. `CertifiedTorusRegion` then closes the query state over whole,
+axial-band, and longitudinal-half regions. The longitudinal proof requires two
+complete minor-radius meridian disks, antipodal major-radius centers, one
+axis-containing cap plane with a consistent outward orientation, exactly
+`pi` of selected longitude, complete latitude coverage, and no partially
+covered parameter cell. Intersection and complementary torus difference
+therefore publish exact half-tori with volume `pi²*R*r²`, boundary area
+`2*pi²*R*r + 2*pi*r²`, halfspace-aware classification, transform replay, and
+no false whole-torus optimization profile.
 Closed face-local curves are split into two canonical edge records so the new
 interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented

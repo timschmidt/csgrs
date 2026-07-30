@@ -1149,7 +1149,7 @@ pub fn cone_frustum(
     let radial_drop = &base_radius - &top_radius;
     let apex_height =
         (&height * &base_radius / &radial_drop).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let semi_angle = radial_drop.clone().atan2(height.clone());
+    let semi_angle = crate::geometry::certified_atan2(radial_drop.clone(), height.clone())?;
     let sine = semi_angle.clone().sin();
     let v_bottom = (&base_radius / &sine).map_err(|_| GeometryError::ProjectiveDivision)?;
     let v_top = (&top_radius / sine).map_err(|_| GeometryError::ProjectiveDivision)?;

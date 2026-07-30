@@ -149,7 +149,10 @@ The clean-break implementation currently provides:
   meridian circles with one authoritative spatial parameter and exact pcurves
   on both carriers. Parallel-to-axis planes retain exact outer tangency and
   certify strict outer separation, while an oblique axial cutter partitions
-  all periodic torus cells plus both planar loops without tolerance sewing;
+  all periodic torus cells plus both planar loops without tolerance sewing.
+  Standard intersection and torus-minus-cutter difference publish the two
+  complementary half-tori through one closed longitude-region certificate,
+  with exact area, volume, classification, transforms, and persistence;
 - exact coaxial polygonal-revolution Booleans through Hypercurve radial/axial
   regions, including reversed axes, disconnected outputs, and retained
   toroidal-profile cavities;

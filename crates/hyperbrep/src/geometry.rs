@@ -3327,7 +3327,7 @@ fn intersect_ellipse_arc_scalar_equation(
     let amplitude = amplitude_squared
         .sqrt()
         .map_err(|_| GeometryError::ElementaryFunction)?;
-    let phase = sine_coefficient.atan2(cosine_coefficient);
+    let phase = certified_atan2(sine_coefficient, cosine_coefficient)?;
     let ratio = ((-center_value) / amplitude).map_err(|_| GeometryError::ProjectiveDivision)?;
     let offset = ratio
         .acos()
@@ -4740,12 +4740,10 @@ fn intersect_plane_torus(
             )
         };
         let section = |radial: Vector3| -> GeometryResult<SurfaceIntersectionCurve> {
-            let u = normalize_angle(
-                radial
-                    .dot(&torus.frame.y)
-                    .try_atan2(radial.dot(&torus.frame.x))
-                    .map_err(|_| GeometryError::ElementaryFunction)?,
-            )?;
+            let u = normalize_angle(certified_atan2(
+                radial.dot(&torus.frame.y),
+                radial.dot(&torus.frame.x),
+            )?)?;
             let curve = Curve3::circle_arc(
                 torus.center.clone() + radial.clone() * &torus.major_radius,
                 radial,
@@ -4809,14 +4807,17 @@ fn intersect_plane_torus(
                 ))
             };
             if decided_order(compare_reals(&radial_offset, &Real::zero()))? == Ordering::Equal {
-                let v = normalize_angle(axial_height.atan2(radial_offset))?;
+                let v = normalize_angle(certified_atan2(axial_height, radial_offset)?)?;
                 return Ok(SurfaceSurfaceIntersection::Curve(Box::new(section(
                     torus.major_radius.clone(),
                     v,
                 )?)));
             }
-            let outer_v = normalize_angle(axial_height.clone().atan2(radial_offset.clone()))?;
-            let inner_v = normalize_angle(axial_height.atan2(-radial_offset.clone()))?;
+            let outer_v = normalize_angle(certified_atan2(
+                axial_height.clone(),
+                radial_offset.clone(),
+            )?)?;
+            let inner_v = normalize_angle(certified_atan2(axial_height, -radial_offset.clone())?)?;
             Ok(SurfaceSurfaceIntersection::Curves(vec![
                 section(&torus.major_radius + &radial_offset, outer_v)?,
                 section(&torus.major_radius - radial_offset, inner_v)?,
@@ -5505,7 +5506,7 @@ fn locate_ellipse_arc_parameters(
     if arc.direction < 0 {
         sine_delta = -sine_delta;
     }
-    let mut delta = sine_delta.atan2(cosine_delta);
+    let mut delta = certified_atan2(sine_delta, cosine_delta)?;
     if decided_order(compare_reals(&delta, &Real::zero()))? == Ordering::Less {
         delta += Real::from(2) * Real::pi();
     }
@@ -5620,6 +5621,35 @@ fn decided_order(outcome: PredicateOutcome<Ordering>) -> GeometryResult<Ordering
         PredicateOutcome::Unknown { needed, stage } => {
             Err(GeometryError::PredicateUnresolved { needed, stage })
         }
+    }
+}
+
+pub(crate) fn certified_atan2(y: Real, x: Real) -> GeometryResult<Real> {
+    let y_order = decided_order(compare_reals(&y, &Real::zero()))?;
+    let x_order = decided_order(compare_reals(&x, &Real::zero()))?;
+    match (y_order, x_order) {
+        (Ordering::Equal, Ordering::Equal | Ordering::Greater) => Ok(Real::zero()),
+        (Ordering::Equal, Ordering::Less) => Ok(Real::pi()),
+        (Ordering::Greater, Ordering::Equal) => {
+            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+        }
+        (Ordering::Less, Ordering::Equal) => {
+            (-Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+        }
+        (_, Ordering::Greater) => (y / x)
+            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .atan()
+            .map_err(|_| GeometryError::ElementaryFunction),
+        (Ordering::Greater, Ordering::Less) => Ok((y / x)
+            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .atan()
+            .map_err(|_| GeometryError::ElementaryFunction)?
+            + Real::pi()),
+        (Ordering::Less, Ordering::Less) => Ok((y / x)
+            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .atan()
+            .map_err(|_| GeometryError::ElementaryFunction)?
+            - Real::pi()),
     }
 }
 
@@ -9085,6 +9115,39 @@ mod tests {
         assert_eq!(
             cone.intersect_surface(&axial_plane).unwrap_err(),
             GeometryError::UnsupportedIntersection
+        );
+    }
+
+    #[test]
+    fn certified_atan2_retains_exact_axes_quadrants_and_symbolic_cancellation() {
+        let quarter = (Real::pi() / r(4)).unwrap();
+        let half = (Real::pi() / r(2)).unwrap();
+        for (y, x, expected) in [
+            (Real::zero(), Real::zero(), Real::zero()),
+            (Real::zero(), Real::one(), Real::zero()),
+            (Real::zero(), -Real::one(), Real::pi()),
+            (Real::one(), Real::zero(), half.clone()),
+            (-Real::one(), Real::zero(), -half),
+            (Real::one(), Real::one(), quarter.clone()),
+            (Real::one(), -Real::one(), Real::pi() - &quarter),
+            (-Real::one(), -Real::one(), -Real::pi() + &quarter),
+            (-Real::one(), Real::one(), -quarter),
+        ] {
+            assert_eq!(
+                compare_reals(&certified_atan2(y, x).unwrap(), &expected).value(),
+                Some(Ordering::Equal)
+            );
+        }
+
+        let diagonal = (Real::one() / r(2).sqrt().unwrap()).unwrap();
+        let symbolic_zero = r(2) * &diagonal * diagonal - Real::one();
+        assert_eq!(
+            compare_reals(
+                &certified_atan2(Real::one(), symbolic_zero).unwrap(),
+                &(Real::pi() / r(2)).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
         );
     }
 

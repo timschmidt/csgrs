@@ -1298,9 +1298,14 @@ struct CertifiedTorusShell {
     axis: Vector3,
     major_radius: Real,
     minor_radius: Real,
-    axial_min: Real,
-    axial_max: Real,
-    full: bool,
+    region: CertifiedTorusRegion,
+}
+
+#[derive(Clone, Debug)]
+enum CertifiedTorusRegion {
+    Whole,
+    Axial { min: Real, max: Real },
+    LongitudinalHalf { interior_normal: Vector3 },
 }
 
 #[derive(Clone, Debug)]
@@ -3862,9 +3867,21 @@ impl Model {
                             axis: transform.transform_direction3(&certificate.axis),
                             major_radius: certificate.major_radius.clone(),
                             minor_radius: certificate.minor_radius.clone(),
-                            axial_min: certificate.axial_min.clone(),
-                            axial_max: certificate.axial_max.clone(),
-                            full: certificate.full,
+                            region: match &certificate.region {
+                                CertifiedTorusRegion::Whole => CertifiedTorusRegion::Whole,
+                                CertifiedTorusRegion::Axial { min, max } => {
+                                    CertifiedTorusRegion::Axial {
+                                        min: min.clone(),
+                                        max: max.clone(),
+                                    }
+                                }
+                                CertifiedTorusRegion::LongitudinalHalf { interior_normal } => {
+                                    CertifiedTorusRegion::LongitudinalHalf {
+                                        interior_normal: transform
+                                            .transform_direction3(interior_normal),
+                                    }
+                                }
+                            },
                         })
                     })
                     .transpose()
@@ -4405,20 +4422,35 @@ impl Model {
             });
         }
         if let Some(torus) = &self.data.certified_tori[id.index()] {
-            let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
-                let radial = (&torus.minor_radius * &torus.minor_radius - height * height)
-                    .sqrt()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
-                let angle = (height / &torus.minor_radius)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?
-                    .asin()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
-                Ok(Real::from(2)
+            return match &torus.region {
+                CertifiedTorusRegion::Whole => Ok(Real::from(2)
+                    * Real::pi()
                     * Real::pi()
                     * &torus.major_radius
-                    * (height * radial + &torus.minor_radius * &torus.minor_radius * angle))
+                    * &torus.minor_radius
+                    * &torus.minor_radius),
+                CertifiedTorusRegion::Axial { min, max } => {
+                    let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
+                        let radial = (&torus.minor_radius * &torus.minor_radius - height * height)
+                            .sqrt()
+                            .map_err(|_| GeometryError::ElementaryFunction)?;
+                        let angle = (height / &torus.minor_radius)
+                            .map_err(|_| GeometryError::ProjectiveDivision)?
+                            .asin()
+                            .map_err(|_| GeometryError::ElementaryFunction)?;
+                        Ok(Real::from(2)
+                            * Real::pi()
+                            * &torus.major_radius
+                            * (height * radial + &torus.minor_radius * &torus.minor_radius * angle))
+                    };
+                    Ok(antiderivative(max)? - antiderivative(min)?)
+                }
+                CertifiedTorusRegion::LongitudinalHalf { .. } => Ok(Real::pi()
+                    * Real::pi()
+                    * &torus.major_radius
+                    * &torus.minor_radius
+                    * &torus.minor_radius),
             };
-            return Ok(antiderivative(&torus.axial_max)? - antiderivative(&torus.axial_min)?);
         }
         if let Some(frustum) = &self.data.certified_cone_frustums[id.index()] {
             let sine = frustum.semi_angle.clone().sin();
@@ -5017,11 +5049,28 @@ impl Model {
     ) -> Result<SolidPointLocation, QueryError> {
         let offset = point - &torus.center;
         let axial = offset.dot(&torus.axis);
-        let min_order = decided_model_order(compare_reals(&axial, &torus.axial_min))?;
-        let max_order = decided_model_order(compare_reals(&axial, &torus.axial_max))?;
-        if min_order == std::cmp::Ordering::Less || max_order == std::cmp::Ordering::Greater {
-            return Ok(SolidPointLocation::Outside);
-        }
+        let region_boundary = match &torus.region {
+            CertifiedTorusRegion::Whole => false,
+            CertifiedTorusRegion::Axial { min, max } => {
+                let min_order = decided_model_order(compare_reals(&axial, min))?;
+                let max_order = decided_model_order(compare_reals(&axial, max))?;
+                if min_order == std::cmp::Ordering::Less || max_order == std::cmp::Ordering::Greater
+                {
+                    return Ok(SolidPointLocation::Outside);
+                }
+                min_order == std::cmp::Ordering::Equal || max_order == std::cmp::Ordering::Equal
+            }
+            CertifiedTorusRegion::LongitudinalHalf { interior_normal } => {
+                match decided_model_order(compare_reals(
+                    &offset.dot(interior_normal),
+                    &Real::zero(),
+                ))? {
+                    std::cmp::Ordering::Less => return Ok(SolidPointLocation::Outside),
+                    std::cmp::Ordering::Equal => true,
+                    std::cmp::Ordering::Greater => false,
+                }
+            }
+        };
         let radial = offset - torus.axis.clone() * &axial;
         let radial_squared = radial.norm_squared();
         let major_squared = &torus.major_radius * &torus.major_radius;
@@ -5030,12 +5079,7 @@ impl Model {
         let left = &implicit_base * &implicit_base;
         let right = Real::from(4) * major_squared * radial_squared;
         Ok(match decided_model_order(compare_reals(&left, &right))? {
-            std::cmp::Ordering::Less
-                if min_order == std::cmp::Ordering::Equal
-                    || max_order == std::cmp::Ordering::Equal =>
-            {
-                SolidPointLocation::Boundary
-            }
+            std::cmp::Ordering::Less if region_boundary => SolidPointLocation::Boundary,
             std::cmp::Ordering::Less => SolidPointLocation::Inside,
             std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
             std::cmp::Ordering::Greater => SolidPointLocation::Outside,
@@ -5777,7 +5821,7 @@ impl Model {
             .certified_tori
             .get(solid.index())
             .and_then(Option::as_ref)
-            .filter(|torus| torus.full)
+            .filter(|torus| matches!(torus.region, CertifiedTorusRegion::Whole))
             .map(|torus| CertifiedTorusProfile {
                 center: torus.center.clone(),
                 axis: torus.axis.clone(),
@@ -11154,14 +11198,6 @@ impl ModelBuilder {
             insert_sorted_real(&mut v_values, &v_max)?;
             face_coordinates.push((u_min, u_max, v_min, v_max));
         }
-        if u_values.len() < 5
-            || !real_values_equal(
-                &(u_values.last().expect("torus u grid") - &u_values[0]),
-                &Real::tau(),
-            )?
-        {
-            return Ok(None);
-        }
         let zero = Real::zero();
         let tau = Real::tau();
         for (_, _, v_min, v_max) in &face_coordinates {
@@ -11174,6 +11210,8 @@ impl ModelBuilder {
 
         let SurfaceExactData::Torus {
             center,
+            x,
+            y,
             axis,
             major_radius,
             minor_radius,
@@ -11184,6 +11222,61 @@ impl ModelBuilder {
         else {
             unreachable!("torus kind carries torus exact data");
         };
+        let mut cells = HashSet::new();
+        for (u_min, u_max, v_min, v_max) in &face_coordinates {
+            let u_start = exact_real_index(&u_values, u_min)?;
+            let u_end = exact_real_index(&u_values, u_max)?;
+            let v_start = exact_real_index(&v_values, v_min)?;
+            let v_end = exact_real_index(&v_values, v_max)?;
+            if u_start >= u_end || v_start >= v_end {
+                return Ok(None);
+            }
+            for u_cell in u_start..u_end {
+                for v_cell in v_start..v_end {
+                    if !cells.insert((u_cell, v_cell)) {
+                        return Ok(None);
+                    }
+                }
+            }
+        }
+
+        if let [group] = cap_groups.as_slice()
+            && let Some(interior_normal) = self.certified_torus_longitudinal_cap_group(
+                faces,
+                group,
+                &center,
+                &axis,
+                &major_radius,
+                &minor_radius,
+            )?
+        {
+            if !certified_torus_longitudinal_coverage(
+                &u_values,
+                &v_values,
+                &cells,
+                &x,
+                &y,
+                &interior_normal,
+            )? {
+                return Ok(None);
+            }
+            return Ok(Some(CertifiedTorusShell {
+                center,
+                axis,
+                major_radius,
+                minor_radius,
+                region: CertifiedTorusRegion::LongitudinalHalf { interior_normal },
+            }));
+        }
+
+        if u_values.len() < 5
+            || !real_values_equal(
+                &(u_values.last().expect("torus u grid") - &u_values[0]),
+                &Real::tau(),
+            )?
+        {
+            return Ok(None);
+        }
         let mut caps = Vec::with_capacity(cap_groups.len());
         for group in &cap_groups {
             let Some(cap) = self.certified_torus_cap_group(
@@ -11224,23 +11317,6 @@ impl ModelBuilder {
             _ => unreachable!("at most two torus cap groups"),
         };
 
-        let mut cells = HashSet::new();
-        for (u_min, u_max, v_min, v_max) in face_coordinates {
-            let u_start = exact_real_index(&u_values, &u_min)?;
-            let u_end = exact_real_index(&u_values, &u_max)?;
-            let v_start = exact_real_index(&v_values, &v_min)?;
-            let v_end = exact_real_index(&v_values, &v_max)?;
-            if u_start >= u_end || v_start >= v_end {
-                return Ok(None);
-            }
-            for u_cell in u_start..u_end {
-                for v_cell in v_start..v_end {
-                    if !cells.insert((u_cell, v_cell)) {
-                        return Ok(None);
-                    }
-                }
-            }
-        }
         for v_cell in 0..v_values.len() - 1 {
             let first_height = &minor_radius * v_values[v_cell].clone().sin();
             let second_height = &minor_radius * v_values[v_cell + 1].clone().sin();
@@ -11260,10 +11336,110 @@ impl ModelBuilder {
             axis,
             major_radius,
             minor_radius,
-            axial_min,
-            axial_max,
-            full: cap_groups.is_empty(),
+            region: if cap_groups.is_empty() {
+                CertifiedTorusRegion::Whole
+            } else {
+                CertifiedTorusRegion::Axial {
+                    min: axial_min,
+                    max: axial_max,
+                }
+            },
         }))
+    }
+
+    fn certified_torus_longitudinal_cap_group(
+        &self,
+        faces: &[FaceId],
+        group: &[usize],
+        center: &Point3,
+        axis: &Vector3,
+        major_radius: &Real,
+        minor_radius: &Real,
+    ) -> Result<Option<Vector3>, BuildError> {
+        let Some(boundaries) = self.cap_boundary_use_loops(faces, group)? else {
+            return Ok(None);
+        };
+        if boundaries.len() != 2 {
+            return Ok(None);
+        }
+
+        let mut circle_centers = Vec::with_capacity(2);
+        for boundary in &boundaries {
+            let mut boundary_center = None;
+            let mut sweep = Real::zero();
+            for edge_use_id in boundary {
+                let edge = self.edge_ref(self.edge_use_ref(*edge_use_id)?.edge)?;
+                let Curve3ExactData::EllipseArc(circle) = self.curve_ref(edge.curve)?.exact_data()
+                else {
+                    return Ok(None);
+                };
+                if !circle.circle
+                    || !real_values_equal(&circle.x_radius, minor_radius)?
+                    || !real_values_equal(&circle.y_radius, minor_radius)?
+                {
+                    return Ok(None);
+                }
+                if let Some(expected) = &boundary_center {
+                    if !points_equal(expected, &circle.center)? {
+                        return Ok(None);
+                    }
+                } else {
+                    boundary_center = Some(circle.center.clone());
+                }
+                sweep += edge.domain.end() - edge.domain.start();
+            }
+            if !real_values_equal(&sweep, &Real::tau())? {
+                return Ok(None);
+            }
+            let Some(boundary_center) = boundary_center else {
+                return Ok(None);
+            };
+            let offset = &boundary_center - center;
+            if !real_values_equal(&offset.dot(axis), &Real::zero())?
+                || !real_values_equal(&offset.norm_squared(), &(major_radius * major_radius))?
+            {
+                return Ok(None);
+            }
+            circle_centers.push(boundary_center);
+        }
+        let first_offset = &circle_centers[0] - center;
+        let second_offset = &circle_centers[1] - center;
+        if !real_values_equal(
+            &(first_offset + second_offset).norm_squared(),
+            &Real::zero(),
+        )? {
+            return Ok(None);
+        }
+
+        let mut outward = None::<Vector3>;
+        for index in group {
+            let face = self.face_ref(faces[*index])?;
+            let SurfaceExactData::Plane { origin, u, v } =
+                self.surface_ref(face.surface)?.exact_data()
+            else {
+                return Ok(None);
+            };
+            let normal = u.cross(&v);
+            if !real_values_equal(&normal.dot(axis), &Real::zero())?
+                || !real_values_equal(&normal.dot(&(center - &origin)), &Real::zero())?
+            {
+                return Ok(None);
+            }
+            let oriented = match face.orientation {
+                Orientation::Forward => normal,
+                Orientation::Reversed => -normal,
+            }
+            .normalize()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+            if let Some(expected) = &outward {
+                if !vectors_equal(expected, &oriented)? {
+                    return Ok(None);
+                }
+            } else {
+                outward = Some(oriented);
+            }
+        }
+        Ok(outward.map(|outward| -outward))
     }
 
     fn certified_torus_cap_group(
@@ -15217,6 +15393,106 @@ fn exact_real_index(values: &[Real], value: &Real) -> Result<usize, BuildError> 
         }
     }
     unreachable!("value was inserted into the exact grid")
+}
+
+fn certified_torus_longitudinal_coverage(
+    u_values: &[Real],
+    v_values: &[Real],
+    cells: &HashSet<(usize, usize)>,
+    x: &Vector3,
+    y: &Vector3,
+    interior_normal: &Vector3,
+) -> Result<bool, BuildError> {
+    if u_values.len() < 2
+        || v_values.len() < 2
+        || !real_values_equal(
+            &(v_values.last().expect("nonempty torus v grid") - &v_values[0]),
+            &Real::tau(),
+        )?
+    {
+        return Ok(false);
+    }
+    let angular_span = u_values.last().expect("nonempty torus u grid") - &u_values[0];
+    if decided_model_order(compare_reals(&angular_span, &Real::tau()))?
+        == std::cmp::Ordering::Greater
+    {
+        return Ok(false);
+    }
+
+    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let signed_radial = |angle: &Real| {
+        let radial = x.clone() * angle.clone().cos() + y.clone() * angle.clone().sin();
+        radial.dot(interior_normal)
+    };
+    let mut selected_span = Real::zero();
+    for u_cell in 0..u_values.len() - 1 {
+        let width = &u_values[u_cell + 1] - &u_values[u_cell];
+        if decided_model_order(compare_reals(&width, &Real::zero()))? != std::cmp::Ordering::Greater
+        {
+            return Ok(false);
+        }
+        let complete = (0..v_values.len() - 1).all(|v_cell| cells.contains(&(u_cell, v_cell)));
+        let partial = (0..v_values.len() - 1).any(|v_cell| cells.contains(&(u_cell, v_cell)));
+        if partial && !complete {
+            return Ok(false);
+        }
+        let midpoint = ((&u_values[u_cell] + &u_values[u_cell + 1]) / Real::from(2))
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let start_order = decided_model_order(compare_reals(
+            &signed_radial(&u_values[u_cell]),
+            &Real::zero(),
+        ))?;
+        let midpoint_order =
+            decided_model_order(compare_reals(&signed_radial(&midpoint), &Real::zero()))?;
+        let end_order = decided_model_order(compare_reals(
+            &signed_radial(&u_values[u_cell + 1]),
+            &Real::zero(),
+        ))?;
+        if complete {
+            if decided_model_order(compare_reals(&width, &quarter))? == std::cmp::Ordering::Greater
+                || start_order == std::cmp::Ordering::Less
+                || midpoint_order != std::cmp::Ordering::Greater
+                || end_order == std::cmp::Ordering::Less
+            {
+                return Ok(false);
+            }
+            selected_span += width;
+        } else {
+            if decided_model_order(compare_reals(&width, &Real::pi()))?
+                == std::cmp::Ordering::Greater
+                || start_order == std::cmp::Ordering::Greater
+                || midpoint_order != std::cmp::Ordering::Less
+                || end_order == std::cmp::Ordering::Greater
+            {
+                return Ok(false);
+            }
+        }
+    }
+    if !real_values_equal(&selected_span, &Real::pi())? {
+        return Ok(false);
+    }
+
+    if decided_model_order(compare_reals(&angular_span, &Real::tau()))? == std::cmp::Ordering::Less
+    {
+        let complement_start = u_values.last().expect("nonempty torus u grid");
+        let complement_end = &u_values[0] + Real::tau();
+        let midpoint = ((complement_start + &complement_end) / Real::from(2))
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        if decided_model_order(compare_reals(
+            &signed_radial(complement_start),
+            &Real::zero(),
+        ))? == std::cmp::Ordering::Greater
+            || decided_model_order(compare_reals(&signed_radial(&midpoint), &Real::zero()))?
+                != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &signed_radial(&complement_end),
+                &Real::zero(),
+            ))? == std::cmp::Ordering::Greater
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn require_real_equal(left: &Real, right: &Real, mismatch: BuildError) -> Result<(), BuildError> {

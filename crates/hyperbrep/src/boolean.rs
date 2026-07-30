@@ -15,7 +15,7 @@ use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 use crate::builder::{
     ConstructionError, SphereVoid, extrude_contour_regions, sphere_pair_boolean, sphere_with_voids,
 };
-use crate::geometry::{Curve3ExactData, EllipseArcExactData, SurfaceExactData};
+use crate::geometry::{Curve3ExactData, EllipseArcExactData, SurfaceExactData, certified_atan2};
 use crate::model::{
     CertifiedConeFrustumProfile, CertifiedCylinderProfile, CertifiedSpherePairKind,
     CertifiedSphereProfile, CertifiedTorusProfile, CertifiedZPrismProfile,
@@ -3083,7 +3083,10 @@ fn surface_parameters_of_point(
             origin, x, y, axis, ..
         } => {
             let offset = point - &origin;
-            periodic_parameters(offset.dot(&y).atan2(offset.dot(&x)), offset.dot(&axis))?
+            periodic_parameters(
+                certified_atan2(offset.dot(&y), offset.dot(&x))?,
+                offset.dot(&axis),
+            )?
         }
         SurfaceExactData::Sphere {
             center,
@@ -3097,7 +3100,7 @@ fn surface_parameters_of_point(
                 .map_err(|_| GeometryError::ProjectiveDivision)?
                 .asin()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
-            periodic_parameters(offset.dot(&y).atan2(offset.dot(&x)), latitude)?
+            periodic_parameters(certified_atan2(offset.dot(&y), offset.dot(&x))?, latitude)?
         }
         SurfaceExactData::Cone {
             apex,
@@ -3109,7 +3112,7 @@ fn surface_parameters_of_point(
             let offset = point - &apex;
             let parameter = (offset.dot(&axis) / semi_angle.cos())
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
-            periodic_parameters(offset.dot(&y).atan2(offset.dot(&x)), parameter)?
+            periodic_parameters(certified_atan2(offset.dot(&y), offset.dot(&x))?, parameter)?
         }
         SurfaceExactData::Torus {
             center,
@@ -3125,8 +3128,8 @@ fn surface_parameters_of_point(
             let radial = (&x_coordinate * &x_coordinate + &y_coordinate * &y_coordinate)
                 .sqrt()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
-            let longitude = y_coordinate.atan2(x_coordinate);
-            let latitude = offset.dot(&axis).atan2(radial - major_radius);
+            let longitude = certified_atan2(y_coordinate, x_coordinate)?;
+            let latitude = certified_atan2(offset.dot(&axis), radial - major_radius)?;
             periodic_parameter_pairs(longitude, latitude)?
         }
         SurfaceExactData::Extrusion { .. }
@@ -7937,7 +7940,7 @@ mod tests {
         let rotation = Matrix4::affine_orthonormal(
             [
                 [diagonal.clone(), -diagonal.clone(), Real::zero()],
-                [diagonal.clone(), diagonal, Real::zero()],
+                [diagonal.clone(), diagonal.clone(), Real::zero()],
                 [Real::zero(), Real::zero(), Real::one()],
             ],
             [Real::zero(), Real::zero(), Real::zero()],
@@ -7980,6 +7983,225 @@ mod tests {
             )
             .value(),
             Some(Ordering::Equal)
+        );
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("the selected axial half-torus must be one exact solid");
+        };
+        let expected_volume = Real::pi() * Real::pi() * Real::from(3);
+        let expected_area = Real::from(6) * Real::pi() * Real::pi() + Real::from(2) * Real::pi();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(Ordering::Equal)
+        );
+        let area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face_area| sum + face_area);
+        assert_eq!(
+            compare_reals(&area, &expected_area).value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            model
+                .faces()
+                .filter(|(_, face)| {
+                    model.surface(face.surface()).unwrap().kind() == crate::SurfaceKind::Torus
+                })
+                .count(),
+            12
+        );
+        assert_eq!(
+            model
+                .faces()
+                .filter(|(_, face)| {
+                    model.surface(face.surface()).unwrap().kind() == crate::SurfaceKind::Plane
+                })
+                .count(),
+            2
+        );
+        assert!(model.certified_torus_profile(solid).is_none());
+
+        let positive = crate::Vector3::from_xyz(diagonal.clone(), diagonal.clone(), Real::zero());
+        let boundary_radial =
+            crate::Vector3::from_xyz(-diagonal.clone(), diagonal.clone(), Real::zero());
+        let interior = Point3::origin() + positive.clone() * Real::from(3);
+        let excluded = Point3::origin() - positive.clone() * Real::from(3);
+        let cut_boundary = Point3::origin() + boundary_radial * Real::from(3);
+        let curved_boundary = Point3::origin() + positive * Real::from(4);
+        for (point, location) in [
+            (interior.clone(), SolidPointLocation::Inside),
+            (excluded.clone(), SolidPointLocation::Outside),
+            (cut_boundary, SolidPointLocation::Boundary),
+            (curved_boundary, SolidPointLocation::Boundary),
+            (Point3::origin(), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), location);
+        }
+
+        let json = model.to_json().unwrap();
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            decoded.classify_point(solid, &interior).unwrap(),
+            SolidPointLocation::Inside
+        );
+
+        for (index, result) in [
+            intersection(&torus, torus_solid, &cutter, cutter_solid).unwrap(),
+            intersection(&cutter, cutter_solid, &torus, torus_solid).unwrap(),
+            difference(&torus, torus_solid, &cutter, cutter_solid).unwrap(),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let BooleanResult::Solid {
+                model: standard,
+                solid: standard_solid,
+            } = result
+            else {
+                panic!("axial torus operation {index} must retain one exact half-torus");
+            };
+            assert_eq!(
+                compare_reals(
+                    &standard.solid_volume(standard_solid).unwrap(),
+                    &expected_volume,
+                )
+                .value(),
+                Some(Ordering::Equal),
+                "operation {index}"
+            );
+            assert!(
+                standard.certified_torus_profile(standard_solid).is_none(),
+                "operation {index}"
+            );
+            let standard_area = standard
+                .faces()
+                .map(|(face, _)| standard.face_area(face).unwrap())
+                .fold(Real::zero(), |sum, face_area| sum + face_area);
+            assert_eq!(
+                compare_reals(&standard_area, &expected_area).value(),
+                Some(Ordering::Equal),
+                "operation {index}"
+            );
+            let (retained, rejected) = if index == 2 {
+                (&excluded, &interior)
+            } else {
+                (&interior, &excluded)
+            };
+            assert_eq!(
+                standard.classify_point(standard_solid, retained).unwrap(),
+                SolidPointLocation::Inside,
+                "operation {index}"
+            );
+            assert_eq!(
+                standard.classify_point(standard_solid, rejected).unwrap(),
+                SolidPointLocation::Outside,
+                "operation {index}"
+            );
+            let standard_json = standard.to_json().unwrap();
+            let standard_decoded = crate::RawModel::from_json(&standard_json)
+                .unwrap()
+                .validate()
+                .unwrap();
+            assert_eq!(
+                standard_decoded.to_json().unwrap(),
+                standard_json,
+                "operation {index}"
+            );
+            assert_eq!(
+                compare_reals(
+                    &standard_decoded.solid_volume(standard_solid).unwrap(),
+                    &expected_volume,
+                )
+                .value(),
+                Some(Ordering::Equal),
+                "operation {index}"
+            );
+        }
+
+        let reflection = Matrix4::affine_nonuniform_scale([Real::one(), -Real::one(), Real::one()]);
+        let reflected = model.transformed(&reflection).unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(Ordering::Equal)
+        );
+        let reflected_interior = Point3::new(
+            Real::from(3) * diagonal.clone(),
+            -Real::from(3) * diagonal.clone(),
+            Real::zero(),
+        );
+        assert_eq!(
+            reflected
+                .classify_point(solid, &reflected_interior)
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+        let reflected_json = reflected.to_json().unwrap();
+        let reflected_decoded = crate::RawModel::from_json(&reflected_json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(reflected_decoded.to_json().unwrap(), reflected_json);
+        assert_eq!(
+            compare_reals(
+                &reflected_decoded.solid_volume(solid).unwrap(),
+                &expected_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            reflected_decoded
+                .classify_point(solid, &reflected_interior)
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_torus = torus.transformed(&cyclic).unwrap();
+        let oriented_cutter = cutter.transformed(&cyclic).unwrap();
+        let BooleanResult::Solid {
+            model: oriented,
+            solid: oriented_solid,
+        } = intersection(&oriented_torus, torus_solid, &oriented_cutter, cutter_solid).unwrap()
+        else {
+            panic!("rigidly oriented axial clipping must retain one exact half-torus");
+        };
+        assert_eq!(
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let oriented_interior = Point3::new(
+            -Real::from(3),
+            Real::from(6) + Real::from(3) * diagonal.clone(),
+            Real::from(2) + Real::from(3) * diagonal,
+        );
+        assert_eq!(
+            oriented
+                .classify_point(oriented_solid, &oriented_interior)
+                .unwrap(),
+            SolidPointLocation::Inside
         );
     }
 
