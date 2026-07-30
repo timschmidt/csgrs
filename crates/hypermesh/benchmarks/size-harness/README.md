@@ -18,6 +18,15 @@ cargo run --release -- symmetric-difference
 cargo run --release --bin immediate -- union strict
 ```
 
+`retention` repeatedly exercises the general polygon path with raw mesh views.
+It is excluded from `measure.sh` because it is a long-lived-process memory
+consumer rather than an artifact-size consumer:
+
+```sh
+cargo build --release --bin retention
+heaptrack --record-only target/release/retention 512
+```
+
 Measure the default or all-feature dependency graph:
 
 ```sh
