@@ -2,10 +2,65 @@
 
 use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
 use crate::{
-    BezierSplitFragment2, Classification, Curve2, CurveIntersectionPairBlockerKind2,
-    CurveOperation2, CurvePolicy, CurveSpanRange2, ExactCurveError, ExactCurveResult,
-    LineArcRegion2, Real, RegionPointLocation, Segment2, UncertaintyReason,
+    BezierParameter2, BezierSplitFragment2, Classification, Curve2,
+    CurveIntersectionPairBlockerKind2, CurveIntersectionParameter2, CurveOperation2, CurvePolicy,
+    CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcRegion2,
+    RationalBezierIntersectionPointEvidence2, Real, RegionPointLocation, Segment2,
+    UncertaintyReason,
 };
+
+/// Which authored region boundary owns one exact trim contact.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum CurveRegionBoundaryKind2 {
+    /// A material contour boundary.
+    Material,
+    /// A hole contour boundary.
+    Hole,
+}
+
+/// Exact evidence that one retained trim endpoint lies on an authored region segment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveRegionBoundaryContact2 {
+    kind: CurveRegionBoundaryKind2,
+    contour_index: usize,
+    segment_index: usize,
+    boundary_parameter: CurveIntersectionParameter2,
+    point: RationalBezierIntersectionPointEvidence2,
+}
+
+impl CurveRegionBoundaryContact2 {
+    /// Returns whether the contacted segment belongs to a material or hole contour.
+    pub const fn kind(&self) -> CurveRegionBoundaryKind2 {
+        self.kind
+    }
+
+    /// Returns the contour index within the selected boundary kind.
+    pub const fn contour_index(&self) -> usize {
+        self.contour_index
+    }
+
+    /// Returns the segment index in the authored contour.
+    pub const fn segment_index(&self) -> usize {
+        self.segment_index
+    }
+
+    /// Returns the exact parameter evidence on the contacted boundary segment.
+    pub const fn boundary_parameter(&self) -> &CurveIntersectionParameter2 {
+        &self.boundary_parameter
+    }
+
+    /// Returns retained exact point evidence for the contact.
+    pub const fn point(&self) -> &RationalBezierIntersectionPointEvidence2 {
+        &self.point
+    }
+}
+
+#[derive(Clone)]
+struct PendingBoundaryContact {
+    promoted_span_index: usize,
+    source_parameter: BezierParameter2,
+    contact: CurveRegionBoundaryContact2,
+}
 
 /// One retained region-clipped fragment with its source-curve parameter span.
 #[derive(Clone, Debug, PartialEq)]
@@ -13,6 +68,8 @@ pub struct CurveRegionTrimFragment2 {
     promoted_span_index: usize,
     span_range: CurveSpanRange2,
     fragment: BezierSplitFragment2,
+    start_boundary_contacts: Vec<CurveRegionBoundaryContact2>,
+    end_boundary_contacts: Vec<CurveRegionBoundaryContact2>,
 }
 
 impl CurveRegionTrimFragment2 {
@@ -34,6 +91,16 @@ impl CurveRegionTrimFragment2 {
     /// Consumes this record and returns the retained split fragment.
     pub fn into_fragment(self) -> BezierSplitFragment2 {
         self.fragment
+    }
+
+    /// Returns every authored region segment proved incident to the fragment start.
+    pub fn start_boundary_contacts(&self) -> &[CurveRegionBoundaryContact2] {
+        &self.start_boundary_contacts
+    }
+
+    /// Returns every authored region segment proved incident to the fragment end.
+    pub fn end_boundary_contacts(&self) -> &[CurveRegionBoundaryContact2] {
+        &self.end_boundary_contacts
     }
 
     /// Returns the retained boundaries in the top-level public parameter space
@@ -90,49 +157,66 @@ impl Curve2 {
             return Ok(Vec::new());
         }
 
-        let boundaries = region
-            .material_contours()
-            .iter()
-            .chain(region.hole_contours())
-            .flat_map(|contour| contour.segments())
-            .map(|segment| match segment {
-                Segment2::Line(line) => Curve2::from(line.clone()),
-                Segment2::Arc(arc) => Curve2::from(arc.clone()),
-            })
-            .collect::<Vec<_>>();
         let mut split_parameters = Vec::new();
-        for boundary in boundaries {
-            let context = CurveIntersectionContext::try_new(self, &boundary, policy)?;
-            let result = context.result_view()?;
-            if let Some(blocker) = result.blockers().first() {
-                let reason = match blocker.kind() {
-                    CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
-                    CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
-                        UncertaintyReason::Predicate
+        let mut boundary_contacts = Vec::new();
+        let boundaries = [
+            (
+                CurveRegionBoundaryKind2::Material,
+                region.material_contours(),
+            ),
+            (CurveRegionBoundaryKind2::Hole, region.hole_contours()),
+        ];
+        for (kind, contours) in boundaries {
+            for (contour_index, contour) in contours.iter().enumerate() {
+                for (segment_index, segment) in contour.segments().iter().enumerate() {
+                    let boundary = match segment {
+                        Segment2::Line(line) => Curve2::from(line.clone()),
+                        Segment2::Arc(arc) => Curve2::from(arc.clone()),
+                    };
+                    let context = CurveIntersectionContext::try_new(self, &boundary, policy)?;
+                    let result = context.result_view()?;
+                    if let Some(blocker) = result.blockers().first() {
+                        let reason = match blocker.kind() {
+                            CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
+                            CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
+                                UncertaintyReason::Predicate
+                            }
+                            CurveIntersectionPairBlockerKind2::SharedComponent => {
+                                UncertaintyReason::Boundary
+                            }
+                        };
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Arrangement,
+                            self.family(),
+                            reason,
+                        ));
                     }
-                    CurveIntersectionPairBlockerKind2::SharedComponent => {
-                        UncertaintyReason::Boundary
+                    if !result.overlaps().is_empty() {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Arrangement,
+                            self.family(),
+                            UncertaintyReason::Boundary,
+                        ));
                     }
-                };
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Arrangement,
-                    self.family(),
-                    reason,
-                ));
+                    for contact in result.contacts() {
+                        split_parameters.push((
+                            contact.first().promoted_span_index(),
+                            contact.first().local_parameter().clone(),
+                        ));
+                        boundary_contacts.push(PendingBoundaryContact {
+                            promoted_span_index: contact.first().promoted_span_index(),
+                            source_parameter: contact.first().local_parameter().clone(),
+                            contact: CurveRegionBoundaryContact2 {
+                                kind,
+                                contour_index,
+                                segment_index,
+                                boundary_parameter: contact.second().clone(),
+                                point: contact.point().clone(),
+                            },
+                        });
+                    }
+                }
             }
-            if !result.overlaps().is_empty() {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Arrangement,
-                    self.family(),
-                    UncertaintyReason::Boundary,
-                ));
-            }
-            split_parameters.extend(result.contacts().iter().map(|contact| {
-                (
-                    contact.first().promoted_span_index(),
-                    contact.first().local_parameter().clone(),
-                )
-            }));
         }
 
         let materializations = split_curve_spans(self, split_parameters.into_iter(), policy)?;
@@ -166,10 +250,25 @@ impl Curve2 {
                     };
                 match region.classify_point(&representative, policy) {
                     Classification::Decided(RegionPointLocation::Inside) => {
+                        let (start, end) = fragment.parameter_range();
                         retained.push(CurveRegionTrimFragment2 {
                             promoted_span_index,
                             span_range: native.span_range().clone(),
                             fragment: fragment.clone(),
+                            start_boundary_contacts: boundary_contacts_at(
+                                &boundary_contacts,
+                                promoted_span_index,
+                                start,
+                                self,
+                                policy,
+                            )?,
+                            end_boundary_contacts: boundary_contacts_at(
+                                &boundary_contacts,
+                                promoted_span_index,
+                                end,
+                                self,
+                                policy,
+                            )?,
                         });
                     }
                     Classification::Decided(RegionPointLocation::Outside) => {}
@@ -192,6 +291,40 @@ impl Curve2 {
         }
         Ok(retained)
     }
+}
+
+fn boundary_contacts_at(
+    contacts: &[PendingBoundaryContact],
+    promoted_span_index: usize,
+    parameter: &BezierParameter2,
+    source: &Curve2,
+    policy: &CurvePolicy,
+) -> ExactCurveResult<Vec<CurveRegionBoundaryContact2>> {
+    let mut matched = Vec::new();
+    for pending in contacts
+        .iter()
+        .filter(|pending| pending.promoted_span_index == promoted_span_index)
+    {
+        match pending
+            .source_parameter
+            .cmp_by_refinement(parameter, policy)
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Arrangement, source.family(), cause)
+            })? {
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                matched.push(pending.contact.clone());
+            }
+            Classification::Decided(_) => {}
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Arrangement,
+                    source.family(),
+                    reason,
+                ));
+            }
+        }
+    }
+    Ok(matched)
 }
 
 #[cfg(test)]
@@ -250,6 +383,44 @@ mod tests {
                 .unwrap(),
             Classification::Decided(p(5, 2))
         );
+    }
+
+    #[test]
+    fn parameter_retaining_trim_reports_authored_boundary_provenance() {
+        let region = LineArcRegion2::new(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
+        let line = Curve2::from(LineSeg2::try_new(p(-1, 2), p(7, 2)).unwrap());
+        let fragments = line
+            .trim_inside_region_with_parameters(&region, &CurvePolicy::STRICT)
+            .unwrap();
+
+        assert_eq!(fragments.len(), 2);
+        let expected = [
+            (CurveRegionBoundaryKind2::Material, 3, p(0, 2)),
+            (CurveRegionBoundaryKind2::Hole, 3, p(2, 2)),
+            (CurveRegionBoundaryKind2::Hole, 1, p(4, 2)),
+            (CurveRegionBoundaryKind2::Material, 1, p(6, 2)),
+        ];
+        let contacts = [
+            &fragments[0].start_boundary_contacts()[0],
+            &fragments[0].end_boundary_contacts()[0],
+            &fragments[1].start_boundary_contacts()[0],
+            &fragments[1].end_boundary_contacts()[0],
+        ];
+        for (contact, (kind, segment_index, point)) in contacts.into_iter().zip(expected) {
+            assert_eq!(contact.kind(), kind);
+            assert_eq!(contact.contour_index(), 0);
+            assert_eq!(contact.segment_index(), segment_index);
+            assert_eq!(
+                contact.point(),
+                &RationalBezierIntersectionPointEvidence2::Exact(point)
+            );
+            assert!(
+                contact
+                    .boundary_parameter()
+                    .exact_curve_parameter()
+                    .is_some()
+            );
+        }
     }
 
     #[test]
