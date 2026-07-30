@@ -45,6 +45,9 @@ branch/crossing sets are partitioned, and exact JSON is replayed
 byte-for-byte. The containment cohort also clips exact face regions across
 full coverage, partial overlap, and complete exclusion by a plane-face hole,
 and checks the exact complete-contained-face coverage bit.
+The solid round-trip selector additionally replaces one prism cap with its
+native affine rational-tensor image and replays the resulting shell
+certificate through transforms and untrusted persistence.
 Complete
 rational-Bézier and single- or multi-span NURBS graph sections in both tensor
 directions

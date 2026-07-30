@@ -9329,7 +9329,7 @@ impl ModelBuilder {
     fn certify_simple_prism_shell(&self, shell: ShellId) -> Result<bool, BuildError> {
         for face_id in &self.shell_ref(shell)?.faces {
             let face = self.face_ref(*face_id)?;
-            if self.surface_ref(face.surface)?.kind() != SurfaceKind::Plane {
+            if self.canonical_prism_plane(face.surface)?.is_none() {
                 return Ok(false);
             }
             for wire_id in face.boundary_wires() {
@@ -10039,7 +10039,7 @@ impl ModelBuilder {
         if faces.len() < 4 {
             return Ok(false);
         }
-        let groups = self.planar_face_groups(faces)?;
+        let groups = self.canonical_prism_face_groups(faces)?;
         for first_index in 0..groups.len() {
             for second_index in (first_index + 1)..groups.len() {
                 if self.certify_prism_cap_pair(
@@ -10065,7 +10065,7 @@ impl ModelBuilder {
             return Ok(None);
         }
         let faces = &self.shell_ref(shell)?.faces;
-        let groups = self.planar_face_groups(faces)?;
+        let groups = self.canonical_prism_face_groups(faces)?;
         for first_index in 0..groups.len() {
             for second_index in (first_index + 1)..groups.len() {
                 let first_group = &groups[first_index];
@@ -10074,10 +10074,11 @@ impl ModelBuilder {
                     continue;
                 }
                 let first_face = self.face_ref(faces[first_group[0]])?;
-                let SurfaceExactData::Plane { origin, u, v } =
-                    self.surface_ref(first_face.surface)?.exact_data()
-                else {
+                let Some(first_plane) = self.canonical_prism_plane(first_face.surface)? else {
                     continue;
+                };
+                let SurfaceExactData::Plane { origin, u, v } = first_plane.exact_data() else {
+                    unreachable!("canonical prism support is a plane");
                 };
                 let first_boundary = self
                     .cap_boundary_use_loops(faces, first_group)?
@@ -14858,7 +14859,7 @@ impl ModelBuilder {
             }
         }
 
-        for group in self.planar_face_groups(faces)? {
+        for group in self.canonical_prism_face_groups(faces)? {
             let Some(boundaries) = self.cap_boundary_use_loops(faces, &group)? else {
                 continue;
             };
@@ -14981,6 +14982,63 @@ impl ModelBuilder {
         Ok(groups)
     }
 
+    fn canonical_prism_plane(&self, surface: SurfaceId) -> Result<Option<Surface>, BuildError> {
+        let surface = self.surface_ref(surface)?;
+        match surface.kind() {
+            SurfaceKind::Plane => Ok(Some(surface.clone())),
+            SurfaceKind::RationalBezier | SurfaceKind::Nurbs => {
+                if affine_tensor_image(&surface.exact_data())?.is_none() {
+                    return Ok(None);
+                }
+                surface.canonical_plane().map_err(BuildError::from)
+            }
+            SurfaceKind::Cylinder
+            | SurfaceKind::Sphere
+            | SurfaceKind::Cone
+            | SurfaceKind::Torus
+            | SurfaceKind::Extrusion
+            | SurfaceKind::Revolution => Ok(None),
+        }
+    }
+
+    fn canonical_prism_face_groups(&self, faces: &[FaceId]) -> Result<Vec<Vec<usize>>, BuildError> {
+        let mut only_native_planes = true;
+        for face in faces {
+            if self.surface_ref(self.face_ref(*face)?.surface)?.kind() != SurfaceKind::Plane {
+                only_native_planes = false;
+                break;
+            }
+        }
+        if only_native_planes {
+            return self.planar_face_groups(faces);
+        }
+        let mut groups = Vec::<Vec<usize>>::new();
+        let mut group_planes = Vec::<Surface>::new();
+        for (index, face_id) in faces.iter().enumerate() {
+            let face = self.face_ref(*face_id)?;
+            let Some(plane) = self.canonical_prism_plane(face.surface)? else {
+                continue;
+            };
+            let mut position = None;
+            for (group_index, group_plane) in group_planes.iter().enumerate() {
+                if matches!(
+                    group_plane.intersect_surface(&plane)?,
+                    crate::SurfaceSurfaceIntersection::Coincident
+                ) {
+                    position = Some(group_index);
+                    break;
+                }
+            }
+            if let Some(position) = position {
+                groups[position].push(index);
+            } else {
+                group_planes.push(plane);
+                groups.push(vec![index]);
+            }
+        }
+        Ok(groups)
+    }
+
     fn cap_boundary_use_loops(
         &self,
         faces: &[FaceId],
@@ -15086,13 +15144,17 @@ impl ModelBuilder {
         }
         let first_face = self.face_ref(faces[first_group[0]])?;
         let second_face = self.face_ref(faces[second_group[0]])?;
-        let first_surface = self.surface_ref(first_face.surface)?;
-        let second_surface = self.surface_ref(second_face.surface)?;
-        let Some((first_u, first_v)) = first_surface.plane_directions() else {
+        let Some(first_surface) = self.canonical_prism_plane(first_face.surface)? else {
             return Ok(false);
         };
-        let Some((second_u, second_v)) = second_surface.plane_directions() else {
+        let Some(second_surface) = self.canonical_prism_plane(second_face.surface)? else {
             return Ok(false);
+        };
+        let Some((first_u, first_v)) = first_surface.plane_directions() else {
+            unreachable!("canonical prism support is a plane");
+        };
+        let Some((second_u, second_v)) = second_surface.plane_directions() else {
+            unreachable!("canonical prism support is a plane");
         };
         if decided_model_order(compare_reals(
             &first_u

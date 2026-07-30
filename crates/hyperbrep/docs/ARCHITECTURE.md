@@ -277,6 +277,12 @@ policies are not inferred.
 Exact face measurement integrates the actual carrier Jacobian. Planes,
 cylinders, extrusion surfaces, spheres and spherical caps, cones, and tori use
 family-specific exact routes; no curved boundary is replaced by chords.
+Line-bounded prism shells may retain an affine-image rational Bézier or NURBS
+tensor face. The complete Bernstein/Greville lattice certificate derives a
+canonical geometric plane for cap grouping, orientation, volume, and point
+classification while leaving the authoritative face carrier and pcurves
+unchanged. Merely coplanar control points are insufficient: a non-affine
+in-plane tensor remains explicit unsupported shell evidence.
 Extrusion measurement uses a constant Jacobian only for line profiles and
 circles swept normal to their plane. A four-edge rectangular trim of a
 certified planar rational Bézier/NURBS profile instead measures the exact

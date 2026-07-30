@@ -112,6 +112,8 @@ certificate deliberately rebases rational Bézier patch construction from
 - cuboid two-diagonal arrangement, including one exact shared-chord split,
   three face splits, and their current full revalidations:
   `947.797 us/iteration`;
+- unit prism cap replacement by an affine-image rational Bézier tensor,
+  full shell recertification, and exact volume: `242.584 us/iteration`;
 - rational Bézier patch build + validation: `74.365 us/iteration`;
 - NURBS patch build + validation: `323.509 us/iteration`;
 - native-domain NURBS extrusion-patch build, complete profile-image

@@ -4948,6 +4948,7 @@ mod tests {
     use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
     use super::*;
+    use crate::geometry::SurfaceExactData;
     use crate::{EdgeUseId, ModelCounts, SolidPointLocation};
 
     fn r(value: i32) -> Real {
@@ -8282,6 +8283,179 @@ mod tests {
         assert_eq!(
             point3_equal(&source.bounds().unwrap().unwrap().mins, &p(0, 0, 0)).value(),
             Some(true)
+        );
+    }
+
+    #[test]
+    fn planar_rational_tensor_cap_retains_exact_prism_certificate() {
+        let (source, solid) = cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
+        let (cap_face, cap_surface, origin, u, v) = source
+            .faces()
+            .find_map(|(face_id, face)| {
+                let surface = source.surface(face.surface()).unwrap();
+                let SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
+                    return None;
+                };
+                (compare_reals(&origin.z, &Real::one()).value() == Some(std::cmp::Ordering::Equal))
+                    .then(|| {
+                        (
+                            face_id,
+                            face.surface(),
+                            origin.clone(),
+                            u.clone(),
+                            v.clone(),
+                        )
+                    })
+            })
+            .expect("unit cuboid has an upper planar cap");
+        let tensor = Surface::rational_bezier(
+            vec![
+                vec![origin.clone(), origin.clone() + u.clone()],
+                vec![origin.clone() + v.clone(), origin + u + v],
+            ],
+            vec![vec![Real::one(), Real::one()]; 2],
+        )
+        .unwrap();
+        let mut edit = source.edit();
+        edit.replace_surface(cap_surface, tensor).unwrap();
+        let edited = edit.commit().unwrap();
+
+        assert_eq!(
+            edited.surface(cap_surface).unwrap().kind(),
+            crate::SurfaceKind::RationalBezier
+        );
+        assert_eq!(
+            compare_reals(&edited.face_area(cap_face).unwrap(), &Real::one()).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(&edited.solid_volume(solid).unwrap(), &Real::one()).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            edited
+                .classify_point(
+                    solid,
+                    &Point3::new(
+                        (Real::one() / r(2)).unwrap(),
+                        (Real::one() / r(2)).unwrap(),
+                        (Real::one() / r(2)).unwrap(),
+                    ),
+                )
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+        let json = edited.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
+    fn planar_nurbs_tensor_cap_retains_exact_prism_certificate() {
+        let (source, solid) = cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
+        let (cap_surface, origin, u, v) = source
+            .faces()
+            .find_map(|(_, face)| {
+                let surface = source.surface(face.surface()).unwrap();
+                let SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
+                    return None;
+                };
+                (compare_reals(&origin.z, &Real::one()).value() == Some(std::cmp::Ordering::Equal))
+                    .then(|| (face.surface(), origin.clone(), u.clone(), v.clone()))
+            })
+            .expect("unit cuboid has an upper planar cap");
+        let knots = vec![Real::zero(), Real::zero(), Real::one(), Real::one()];
+        let tensor = Surface::nurbs(
+            1,
+            1,
+            vec![
+                vec![origin.clone(), origin.clone() + u.clone()],
+                vec![origin.clone() + v.clone(), origin + u + v],
+            ],
+            vec![vec![Real::one(), Real::one()]; 2],
+            knots.clone(),
+            knots,
+        )
+        .unwrap();
+        let mut edit = source.edit();
+        edit.replace_surface(cap_surface, tensor).unwrap();
+        let edited = edit.commit().unwrap();
+
+        assert_eq!(
+            edited.surface(cap_surface).unwrap().kind(),
+            crate::SurfaceKind::Nurbs
+        );
+        assert_eq!(
+            compare_reals(&edited.solid_volume(solid).unwrap(), &Real::one()).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let json = edited.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
+    fn coplanar_non_affine_tensor_cap_remains_explicit() {
+        let (source, _) = cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
+        let cap_surface = source
+            .faces()
+            .find_map(|(_, face)| {
+                let surface = source.surface(face.surface()).unwrap();
+                let SurfaceExactData::Plane { origin, .. } = surface.exact_data() else {
+                    return None;
+                };
+                (compare_reals(&origin.z, &Real::one()).value() == Some(std::cmp::Ordering::Equal))
+                    .then_some(face.surface())
+            })
+            .expect("unit cuboid has an upper planar cap");
+        let half = (Real::one() / r(2)).unwrap();
+        let three_quarters = (r(3) / r(4)).unwrap();
+        let tensor = Surface::rational_bezier(
+            vec![
+                vec![
+                    Point3::new(Real::zero(), Real::zero(), Real::one()),
+                    Point3::new(half.clone(), Real::zero(), Real::one()),
+                    Point3::new(Real::one(), Real::zero(), Real::one()),
+                ],
+                vec![
+                    Point3::new(Real::zero(), half.clone(), Real::one()),
+                    Point3::new(three_quarters, half.clone(), Real::one()),
+                    Point3::new(Real::one(), half.clone(), Real::one()),
+                ],
+                vec![
+                    Point3::new(Real::zero(), Real::one(), Real::one()),
+                    Point3::new(half, Real::one(), Real::one()),
+                    Point3::new(Real::one(), Real::one(), Real::one()),
+                ],
+            ],
+            vec![vec![Real::one(); 3]; 3],
+        )
+        .unwrap();
+        let mut edit = source.edit();
+        edit.replace_surface(cap_surface, tensor).unwrap();
+        let crate::EditError::Validation(report) = edit.commit().unwrap_err() else {
+            panic!("non-affine coplanar tensor must remain explicit unsupported evidence");
+        };
+        assert!(
+            matches!(
+                report.errors(),
+                [BuildError::EdgeUseSupportMismatch | BuildError::UnsupportedSolidShell(_)]
+            ),
+            "{report:?}"
         );
     }
 

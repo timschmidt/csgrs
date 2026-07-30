@@ -703,6 +703,56 @@ fn main() {
         elapsed / EDIT_ITERATIONS as u32,
     );
 
+    let (tensor_cap_source, tensor_cap_solid) =
+        builder::cuboid(point(0, 0, 0), point(1, 1, 1)).expect("tensor-cap benchmark source");
+    let tensor_cap_surface = tensor_cap_source
+        .faces()
+        .find_map(|(_, face)| {
+            let surface = tensor_cap_source
+                .surface(face.surface())
+                .expect("validated benchmark surface");
+            let origin = surface
+                .point_at(&hyperbrep::Point2::new(Real::zero(), Real::zero()))
+                .ok()?;
+            (surface.kind() == hyperbrep::SurfaceKind::Plane
+                && compare_reals(&origin.z, &Real::one()).value()
+                    == Some(std::cmp::Ordering::Equal))
+            .then_some(face.surface())
+        })
+        .expect("unit cuboid has an upper plane");
+    let tensor_cap = Surface::rational_bezier(
+        vec![
+            vec![point(0, 0, 1), point(1, 0, 1)],
+            vec![point(0, 1, 1), point(1, 1, 1)],
+        ],
+        vec![vec![Real::one(), Real::one()]; 2],
+    )
+    .expect("benchmark affine tensor cap");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..EDIT_ITERATIONS {
+        let mut edit = tensor_cap_source.edit();
+        edit.replace_surface(tensor_cap_surface, black_box(tensor_cap.clone()))
+            .expect("benchmark cap replacement");
+        let edited = edit.commit().expect("benchmark tensor-cap certificate");
+        checksum += usize::from(
+            compare_reals(
+                &edited
+                    .solid_volume(tensor_cap_solid)
+                    .expect("tensor-cap volume"),
+                &Real::one(),
+            )
+            .value()
+                == Some(std::cmp::Ordering::Equal),
+        );
+        black_box(edited);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/affine_tensor_cap_revalidate_measure: {EDIT_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / EDIT_ITERATIONS as u32,
+    );
+
     const SPLINE_ITERATIONS: usize = 500;
     let controls = vec![
         vec![point(0, 0, 0), point(1, 0, 1), point(2, 0, 0)],

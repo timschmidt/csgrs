@@ -103,7 +103,10 @@ The clean-break implementation currently provides:
   certified from the complete Bernstein/Greville control lattice without
   tessellation; constant weights support arbitrary validated trims, while a
   rank-one positive weight matrix supports a complete patch through its two
-  independent exact rational axis reparameterizations;
+  independent exact rational axis reparameterizations. The same complete
+  affine-image certificate lets a line-bounded tensor face remain in its
+  authored family while serving as an exact prism cap; shell reasoning uses a
+  derived canonical plane, never a replacement carrier or sampled fit;
 - exact extrusion-face area for line profiles, circular profiles swept normal
   to their plane, and rectangular trims of certified planar rational
   Bézier/NURBS profiles whose positive-weight control projections are

@@ -35,6 +35,10 @@ Extrusion-face measurement is exact for line profiles, circles swept normal to
 their plane, and complete rectangular trims of planar rational Bézier/NURBS
 profiles with certified transverse-monotone positive-weight controls. Other
 variable-speed profile areas remain explicit unsupported measurements.
+Affine-image rational Bézier/NURBS tensor faces with exact line boundaries may
+also remain native inside a certified prism shell. A derived canonical plane
+is used only as shell evidence; coplanarity without the complete affine
+control-lattice proof is not accepted.
 
 ## Standard builders and solid queries
 

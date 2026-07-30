@@ -12,7 +12,7 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     }
     let positive = |index: usize| Real::from(i32::from(bytes[index]) + 1);
-    let built = match bytes[0] % 14 {
+    let built = match bytes[0] % 15 {
         0 => builder::cylinder(positive(1), positive(2)).ok(),
         1 => {
             let top = positive(1);
@@ -273,6 +273,46 @@ fuzz_target!(|bytes: &[u8]| {
                 frame,
             )
             .ok()
+        }
+        13 => {
+            let Ok((model, solid)) = builder::cuboid(
+                hyperbrep::Point3::origin(),
+                hyperbrep::Point3::new(Real::one(), Real::one(), Real::one()),
+            ) else {
+                return;
+            };
+            let Some(cap_surface) = model.faces().find_map(|(_, face)| {
+                let surface = model.surface(face.surface())?;
+                let origin = surface
+                    .point_at(&hyperbrep::Point2::new(Real::zero(), Real::zero()))
+                    .ok()?;
+                (surface.kind() == hyperbrep::SurfaceKind::Plane
+                    && hyperlimit::compare_reals(&origin.z, &Real::one()).value()
+                        == Some(std::cmp::Ordering::Equal))
+                .then_some(face.surface())
+            }) else {
+                panic!("validated unit cuboid has no upper plane");
+            };
+            let Ok(tensor) = Surface::rational_bezier(
+                vec![
+                    vec![
+                        hyperbrep::Point3::new(Real::zero(), Real::zero(), Real::one()),
+                        hyperbrep::Point3::new(Real::one(), Real::zero(), Real::one()),
+                    ],
+                    vec![
+                        hyperbrep::Point3::new(Real::zero(), Real::one(), Real::one()),
+                        hyperbrep::Point3::new(Real::one(), Real::one(), Real::one()),
+                    ],
+                ],
+                vec![vec![Real::one(), Real::one()]; 2],
+            ) else {
+                return;
+            };
+            let mut edit = model.edit();
+            let Ok(_) = edit.replace_surface(cap_surface, tensor) else {
+                return;
+            };
+            edit.commit().ok().map(|model| (model, solid))
         }
         _ => {
             let width = positive(1);
