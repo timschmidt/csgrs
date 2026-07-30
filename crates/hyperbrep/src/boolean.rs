@@ -2923,12 +2923,6 @@ fn contained_face_boundary_traces_from_plane(
     plane_model: &Model,
     plane_face: FaceId,
 ) -> Result<Option<Vec<SurfaceIntersectionCurve>>, BooleanError> {
-    let contained_face_record = contained_model
-        .face(contained_face)
-        .expect("validated contained face");
-    if !contained_face_record.inner().is_empty() {
-        return Ok(None);
-    }
     let plane = face_surface(plane_model, plane_face);
     if plane.kind() != crate::SurfaceKind::Plane {
         return Ok(None);
@@ -5981,6 +5975,149 @@ mod tests {
             .edit()
             .commit()
             .expect("graph partition result revalidates");
+    }
+
+    fn unit_holed_affine_tensor_cap() -> (Model, SolidId, FaceId) {
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let three_quarters = (Real::from(3) / Real::from(4)).unwrap();
+        let outer = [
+            crate::Point2::new(Real::zero(), Real::zero()),
+            crate::Point2::new(Real::one(), Real::zero()),
+            crate::Point2::new(Real::one(), Real::one()),
+            crate::Point2::new(Real::zero(), Real::one()),
+        ];
+        let hole = vec![
+            crate::Point2::new(quarter.clone(), quarter.clone()),
+            crate::Point2::new(three_quarters.clone(), quarter.clone()),
+            crate::Point2::new(three_quarters.clone(), three_quarters.clone()),
+            crate::Point2::new(quarter, three_quarters),
+        ];
+        let (source, solid) =
+            crate::builder::extrude_region(&outer, &[hole], Real::zero(), Real::one()).unwrap();
+        let (face, surface, origin, u, v) = source
+            .faces()
+            .find_map(|(face_id, face)| {
+                let surface = source.surface(face.surface()).expect("validated surface");
+                let SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
+                    return None;
+                };
+                (compare_reals(&origin.z, &Real::one()).value() == Some(Ordering::Equal)).then(
+                    || {
+                        (
+                            face_id,
+                            face.surface(),
+                            origin.clone(),
+                            u.clone(),
+                            v.clone(),
+                        )
+                    },
+                )
+            })
+            .expect("unit extrusion has an upper cap");
+        let tensor = Surface::rational_bezier(
+            vec![
+                vec![origin.clone(), origin.clone() + u.clone()],
+                vec![origin.clone() + v.clone(), origin + u + v],
+            ],
+            vec![vec![Real::one(), Real::one()]; 2],
+        )
+        .expect("affine tensor cap");
+        let mut edit = source.edit();
+        edit.replace_surface(surface, tensor)
+            .expect("replace holed cap surface");
+        (
+            edit.commit().expect("certified holed tensor cap"),
+            solid,
+            face,
+        )
+    }
+
+    #[test]
+    fn partial_surface_region_partitions_holed_affine_tensor_into_exact_fragments() {
+        let (tensor, solid, tensor_face) = unit_holed_affine_tensor_cap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let points = [
+            hypercurve::Point2::new(half.clone(), Real::from(-1)),
+            hypercurve::Point2::new(Real::from(2), Real::from(-1)),
+            hypercurve::Point2::new(Real::from(2), Real::from(2)),
+            hypercurve::Point2::new(half, Real::from(2)),
+        ];
+        let outer = CurvePath2::try_new(
+            (0..points.len())
+                .map(|index| {
+                    Curve2::from(
+                        LineSeg2::try_new(
+                            points[index].clone(),
+                            points[(index + 1) % points.len()].clone(),
+                        )
+                        .unwrap(),
+                    )
+                })
+                .collect(),
+        )
+        .unwrap();
+        let (plane, plane_face) = crate::builder::planar_face(
+            &outer,
+            &[],
+            p(0, 0, 1),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+        )
+        .unwrap();
+        let traces =
+            contained_face_boundary_traces_from_plane(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("holed tensor inverse pcurves are represented");
+        assert_eq!(traces.len(), 2);
+        assert!(traces.iter().all(|trace| {
+            trace.curve().kind() == crate::Curve3Kind::RationalBezier
+                && trace.curve().canonical_line().unwrap().is_some()
+        }));
+
+        let (first, first_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::First)
+            .unwrap();
+        let (second, second_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::Second)
+            .unwrap();
+        let reversed = traces
+            .iter()
+            .rev()
+            .map(SurfaceIntersectionCurve::reversed)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let (reordered, reordered_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &reversed, SurfaceIntersectionOperand::First)
+            .unwrap();
+        assert_eq!(first_partition.faces.len(), 2);
+        assert_eq!(second_partition.faces.len(), 2);
+        assert_eq!(reordered_partition.faces.len(), 2);
+        assert!(first_partition.traces.iter().all(|trace| {
+            matches!(
+                trace.splits.as_slice(),
+                [crate::SurfaceCurveFaceSplit::Bridge(_)]
+            )
+        }));
+        assert_eq!(first.to_json().unwrap(), second.to_json().unwrap());
+        assert_eq!(first.to_json().unwrap(), reordered.to_json().unwrap());
+        assert_eq!(
+            compare_reals(
+                &first.solid_volume(solid).unwrap(),
+                &(Real::from(3) / Real::from(4)).unwrap()
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let json = first.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
     }
 
     #[test]

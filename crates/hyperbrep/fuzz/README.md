@@ -79,7 +79,9 @@ without panicking or publishing an invalid model.
 edge midpoint, an existing-vertex planar cap diagonal, or a curve trace whose
 endpoints require exact canonical boundary-edge splits. It also partitions a
 cap with parallel, crossing, or three-way concurrent exact traces supplied in
-noncanonical geometric order.
+noncanonical geometric order. A holed affine-tensor cap cohort varies operand,
+trace order, and trace direction while two disjoint exact inverse-pcurve
+fragments author one paired outer/inner bridge partition.
 Certificate-backed volume and exact persistence must survive every complete
 edit/republication pipeline. The retained regression corpus includes the
 multi-trace cylinder case that previously exposed exponential serialization

@@ -1802,6 +1802,92 @@ fn main() {
         elapsed / TENSOR_SPLIT_ITERATIONS as u32,
     );
 
+    let quarter = (Real::one() / Real::from(4)).expect("four is nonzero");
+    let three_quarters = (Real::from(3) / Real::from(4)).expect("four is nonzero");
+    let outer = [
+        hyperbrep::Point2::new(Real::zero(), Real::zero()),
+        hyperbrep::Point2::new(Real::one(), Real::zero()),
+        hyperbrep::Point2::new(Real::one(), Real::one()),
+        hyperbrep::Point2::new(Real::zero(), Real::one()),
+    ];
+    let hole = vec![
+        hyperbrep::Point2::new(quarter.clone(), quarter.clone()),
+        hyperbrep::Point2::new(three_quarters.clone(), quarter.clone()),
+        hyperbrep::Point2::new(three_quarters.clone(), three_quarters.clone()),
+        hyperbrep::Point2::new(quarter.clone(), three_quarters.clone()),
+    ];
+    let (holed_source, holed_solid) =
+        builder::extrude_region(&outer, &[hole], Real::zero(), Real::one())
+            .expect("benchmark holed extrusion");
+    let holed_face = holed_source
+        .shell(
+            holed_source
+                .solid(holed_solid)
+                .expect("benchmark holed solid")
+                .outer(),
+        )
+        .expect("benchmark holed shell")
+        .faces()[1];
+    let holed_surface_id = holed_source
+        .face(holed_face)
+        .expect("benchmark holed cap")
+        .surface();
+    let holed_tensor_surface = Surface::rational_bezier(
+        vec![
+            vec![point(0, 0, 1), point(1, 0, 1)],
+            vec![point(0, 1, 1), point(1, 1, 1)],
+        ],
+        vec![vec![Real::one(), Real::one()]; 2],
+    )
+    .expect("benchmark holed tensor surface");
+    let mut edit = holed_source.edit();
+    edit.replace_surface(holed_surface_id, holed_tensor_surface.clone())
+        .expect("benchmark holed tensor replacement");
+    let holed_tensor = edit.commit().expect("benchmark certified holed tensor");
+    let SurfaceSurfaceIntersection::Curve(holed_trace) = holed_tensor_surface
+        .intersect_surface(&boundary_support)
+        .expect("benchmark holed inverse tensor pcurve")
+    else {
+        panic!("holed affine tensor boundary support must retain one exact trace");
+    };
+    let holed_traces = [
+        holed_trace
+            .subcurve(&Real::zero(), &quarter)
+            .expect("benchmark lower bridge"),
+        holed_trace
+            .subcurve(&three_quarters, &Real::one())
+            .expect("benchmark upper bridge"),
+    ];
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..TENSOR_SPLIT_ITERATIONS {
+        let (partitioned, partition) = holed_tensor
+            .split_face_by_surface_curves(
+                holed_face,
+                black_box(&holed_traces),
+                SurfaceIntersectionOperand::First,
+            )
+            .expect("benchmark paired tensor bridges");
+        assert_eq!(partition.faces.len(), 2);
+        assert_eq!(
+            compare_reals(
+                &partitioned
+                    .solid_volume(holed_solid)
+                    .expect("benchmark holed tensor volume"),
+                &(Real::from(3) / Real::from(4)).expect("four is nonzero"),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        checksum += partitioned.counts().faces;
+        black_box(partitioned);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/holed_affine_tensor_paired_bridge_partition: {TENSOR_SPLIT_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / TENSOR_SPLIT_ITERATIONS as u32,
+    );
+
     const BOOLEAN_ITERATIONS: usize = 250;
     let (first_box, first_box_solid) =
         builder::cuboid(point(0, 0, 0), point(2, 2, 2)).expect("first graph cuboid");

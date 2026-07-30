@@ -38,11 +38,11 @@ pub use geometry::{
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use model::{
-    BuildError, ClosedSurfaceCurveFaceSplit, Curve3Id, CurveFaceSplit, Direction, Edge, EdgeId,
-    EdgeSplit, EdgeUse, EdgeUseId, Edit, EditError, Endpoint, EntityKind, Face, FaceId,
-    FacePartition, FaceSplit, FaceTracePartition, Model, ModelBuilder, ModelCounts, Orientation,
-    ParameterCorrespondence, PcurveId, QueryError, Shell, ShellId, Solid, SolidId,
-    SolidPointLocation, SurfaceCurveFaceSplit, SurfaceId, TopologyEditError, ValidationReport,
-    Vertex, VertexId, Wire, WireId,
+    BridgeCurveFaceSplit, BridgePairFaceSplit, BuildError, ClosedSurfaceCurveFaceSplit, Curve3Id,
+    CurveFaceSplit, Direction, Edge, EdgeId, EdgeSplit, EdgeUse, EdgeUseId, Edit, EditError,
+    Endpoint, EntityKind, Face, FaceId, FacePartition, FaceSplit, FaceTracePartition, Model,
+    ModelBuilder, ModelCounts, Orientation, ParameterCorrespondence, PcurveId, QueryError, Shell,
+    ShellId, Solid, SolidId, SolidPointLocation, SurfaceCurveFaceSplit, SurfaceId,
+    TopologyEditError, ValidationReport, Vertex, VertexId, Wire, WireId,
 };
 pub use persistence::{PersistenceError, RawModel};

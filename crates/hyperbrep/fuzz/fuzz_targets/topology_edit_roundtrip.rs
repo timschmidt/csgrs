@@ -1,6 +1,9 @@
 #![no_main]
 
-use hyperbrep::{Curve3, Direction, Model, RawModel, Real, builder};
+use hyperbrep::{
+    Curve3, Direction, Model, RawModel, Real, Surface, SurfaceIntersectionOperand,
+    SurfaceSurfaceIntersection, Vector3, builder,
+};
 use libfuzzer_sys::fuzz_target;
 
 fn directed_start(model: &Model, edge_use: hyperbrep::EdgeUseId) -> hyperbrep::VertexId {
@@ -57,6 +60,115 @@ fuzz_target!(|bytes: &[u8]| {
                 &decoded
                     .solid_volume(box_solid)
                     .expect("decoded box keeps its certificate"),
+                &expected,
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        return;
+    }
+    if bytes[0] == 0xa6 {
+        let quarter = (Real::one() / Real::from(4)).expect("four is nonzero");
+        let three_quarters = (Real::from(3) / Real::from(4)).expect("four is nonzero");
+        let outer = [
+            hyperbrep::Point2::new(Real::zero(), Real::zero()),
+            hyperbrep::Point2::new(Real::one(), Real::zero()),
+            hyperbrep::Point2::new(Real::one(), Real::one()),
+            hyperbrep::Point2::new(Real::zero(), Real::one()),
+        ];
+        let hole = vec![
+            hyperbrep::Point2::new(quarter.clone(), quarter.clone()),
+            hyperbrep::Point2::new(three_quarters.clone(), quarter.clone()),
+            hyperbrep::Point2::new(three_quarters.clone(), three_quarters.clone()),
+            hyperbrep::Point2::new(quarter.clone(), three_quarters.clone()),
+        ];
+        let (source, solid) =
+            builder::extrude_region(&outer, &[hole], Real::zero(), Real::one())
+                .expect("unit holed extrusion is constructible");
+        let face = source
+            .shell(source.solid(solid).expect("validated solid").outer())
+            .expect("validated shell")
+            .faces()[1];
+        let surface_id = source.face(face).expect("validated cap").surface();
+        let tensor_surface = Surface::rational_bezier(
+            vec![
+                vec![
+                    hyperbrep::Point3::new(Real::zero(), Real::zero(), Real::one()),
+                    hyperbrep::Point3::new(Real::one(), Real::zero(), Real::one()),
+                ],
+                vec![
+                    hyperbrep::Point3::new(Real::zero(), Real::one(), Real::one()),
+                    hyperbrep::Point3::new(Real::one(), Real::one(), Real::one()),
+                ],
+            ],
+            vec![vec![Real::one(), Real::one()]; 2],
+        )
+        .expect("affine tensor surface is constructible");
+        let mut edit = source.edit();
+        edit.replace_surface(surface_id, tensor_surface.clone())
+            .expect("affine cap replacement is valid");
+        let tensor = edit.commit().expect("holed tensor cap certifies");
+        let support = Surface::plane(
+            hyperbrep::Point3::new(
+                (Real::one() / Real::from(2)).expect("two is nonzero"),
+                Real::zero(),
+                Real::one(),
+            ),
+            Vector3::y(),
+            Vector3::z(),
+        )
+        .expect("boundary support plane is constructible");
+        let SurfaceSurfaceIntersection::Curve(trace) = tensor_surface
+            .intersect_surface(&support)
+            .expect("affine tensor section is exact")
+        else {
+            panic!("affine tensor section retains one curve");
+        };
+        let mut traces = vec![
+            trace
+                .subcurve(&Real::zero(), &quarter)
+                .expect("lower material bridge"),
+            trace
+                .subcurve(&three_quarters, &Real::one())
+                .expect("upper material bridge"),
+        ];
+        if bytes[1] & 1 != 0 {
+            traces.reverse();
+            traces = traces
+                .into_iter()
+                .map(|trace| trace.reversed().expect("exact trace reversal"))
+                .collect();
+        }
+        let operand = if bytes[2] & 1 == 0 {
+            SurfaceIntersectionOperand::First
+        } else {
+            SurfaceIntersectionOperand::Second
+        };
+        let (edited, partition) = tensor
+            .split_face_by_surface_curves(face, &traces, operand)
+            .expect("paired bridges partition the holed tensor cap");
+        assert_eq!(partition.faces.len(), 2);
+        let expected = (Real::from(3) / Real::from(4)).expect("four is nonzero");
+        assert_eq!(
+            hyperlimit::compare_reals(
+                &edited
+                    .solid_volume(solid)
+                    .expect("paired bridge edit keeps its certificate"),
+                &expected,
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let json = edited.to_json().expect("paired bridge model serializes");
+        let decoded = RawModel::from_json(&json)
+            .expect("paired bridge JSON decodes")
+            .validate()
+            .expect("paired bridge JSON fully revalidates");
+        assert_eq!(
+            hyperlimit::compare_reals(
+                &decoded
+                    .solid_volume(solid)
+                    .expect("decoded paired bridge keeps its certificate"),
                 &expected,
             )
             .value(),

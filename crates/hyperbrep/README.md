@@ -255,7 +255,10 @@ The clean-break implementation currently provides:
   through exact auxiliary-plane sections. The tensor's native rational graph
   pcurves remain authoritative in either graph operand order; no inverse
   fitting or planar replacement is used, and non-straight or unrepresented
-  inverse images remain an explicit unsupported partition;
+  inverse images remain an explicit unsupported partition. When one boundary
+  support crosses a tensor-face hole, its disjoint material fragments author
+  one exact paired outer/inner bridge edit: the consumed inner wire becomes
+  the second descendant's outer wire and both new edges remain identity-shared;
 - perpendicular plane/cylinder graph cuts retain one authoritative spatial
   latitude circle plus exact pcurves on both carriers: native angular-sweep
   correspondence on the planar circle and an affine constant-height line in
