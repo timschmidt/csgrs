@@ -272,6 +272,12 @@ opposite heights, and matches each circle radius and axial parameter to that
 band. Only then does the query layer evaluate the intersection predicate
 `sphere ∩ radial cylinder`; its volume is
 `4*pi*(sphere_radius³-axial_half_height³)/3`.
+The complementary difference selects the native two-loop spherical band and
+the same four cylinder cells with inward orientation. The shared mixed-shell
+certificate records which side of the radial cylinder is material rather than
+inferring it from floating samples. For `sphere \ radial cylinder`, the exact
+volume is `4*pi*axial_half_height³/3`; point classification combines the same
+sphere predicate with the complementary radial inequality.
 Closed face-local curves are split into two canonical edge records so the new
 interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented
@@ -366,11 +372,16 @@ point contacts as `SelfIntersectingSolidShell`. Both certificates are
 recomputed during persistence import.
 
 Selected planar Boolean components are oriented by exact signed shell volume.
-Outward components become solids; inward components are assigned to exactly
-one containing outward shell by exact ray classification. Solid construction
-then rechecks every outer/void and void/void face pair, strict containment, and
-non-nesting. A boundary contact therefore produces `VoidShellOutside` or
-`IntersectingVoidShells` rather than a non-manifold cavity.
+For curved components, boundary-chord tetrahedra are not a volume or
+orientation certificate; stitching instead retains the exact outer/void
+material-side role of every selected source face through reversal. Any
+component containing transferred outer material boundary is an outer shell;
+components made only from retained or reversed void-side boundary are voids.
+Inward components are assigned to exactly one containing outward shell by
+exact classification. Solid construction then rechecks every outer/void and
+void/void face pair, strict containment, and non-nesting. A boundary contact
+therefore produces `VoidShellOutside` or `IntersectingVoidShells` rather than
+a non-manifold cavity.
 
 The optional tessellation adapter has separate exact and lossy types. Exact
 planar triangulation copies validated line-boundary parameters into HyperTRI

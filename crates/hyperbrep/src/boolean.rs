@@ -1526,21 +1526,30 @@ fn stitch_graph_faces(
         }
         component.sort_unstable();
         let shell = builder.shell(component).map_err(ConstructionError::from)?;
-        match exact_order(
-            &builder
-                .signed_shell_six_volume(shell)
-                .map_err(ConstructionError::from)?,
-            &Real::zero(),
-        )? {
-            Ordering::Greater => outer_shells.push(shell),
-            Ordering::Less => void_shells.push(shell),
-            Ordering::Equal => match source_outer_after_reversal {
-                Some(true) => outer_shells.push(shell),
-                Some(false) => void_shells.push(shell),
-                None => {
-                    return Err(BooleanError::SelectedShellOrientationUnsupported { shell });
-                }
-            },
+        let is_outer = if regularize_to_planar {
+            match exact_order(
+                &builder
+                    .signed_shell_six_volume(shell)
+                    .map_err(ConstructionError::from)?,
+                &Real::zero(),
+            )? {
+                Ordering::Greater => true,
+                Ordering::Less => false,
+                Ordering::Equal => source_outer_after_reversal
+                    .ok_or(BooleanError::SelectedShellOrientationUnsupported { shell })?,
+            }
+        } else {
+            // Boundary-chord tetrahedra are an exact orientation witness for
+            // planar shells only. Curved shell volume depends on the carrier
+            // patches between those chords, so retain the exact material-side
+            // role transferred from the source solids instead.
+            source_outer_after_reversal
+                .ok_or(BooleanError::SelectedShellOrientationUnsupported { shell })?
+        };
+        if is_outer {
+            outer_shells.push(shell);
+        } else {
+            void_shells.push(shell);
         }
     }
     let mut assigned_voids = vec![Vec::new(); outer_shells.len()];
@@ -5058,6 +5067,123 @@ mod tests {
             .unwrap();
         assert_eq!(
             compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn coaxial_sphere_minus_cylinder_stitches_an_exact_napkin_ring() {
+        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (cylinder, cylinder_solid) =
+            crate::builder::cylinder(Real::from(2), Real::from(6)).unwrap();
+        let cylinder = cylinder
+            .transformed(&Matrix4::affine_translation([
+                Real::zero(),
+                Real::zero(),
+                -Real::from(3),
+            ]))
+            .unwrap();
+        let graph = intersection_graph(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap();
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Difference)
+            .unwrap()
+        else {
+            panic!("the spherical and inward cylindrical bands must form one exact solid");
+        };
+        let sqrt_five = Real::from(5).sqrt().unwrap();
+        let expected = (Real::from(20) * Real::pi() * sqrt_five.clone() / Real::from(3)).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let expected_area = Real::from(20) * Real::pi() * sqrt_five.clone();
+        let area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face_area| sum + face_area);
+        assert_eq!(
+            compare_reals(&area, &expected_area).value(),
+            Some(Ordering::Equal)
+        );
+        for (point, location) in [
+            (p(0, 0, 0), SolidPointLocation::Outside),
+            (p(2, 0, 0), SolidPointLocation::Boundary),
+            (
+                Point3::new(
+                    (Real::from(5) / Real::from(2)).unwrap(),
+                    Real::zero(),
+                    Real::zero(),
+                ),
+                SolidPointLocation::Inside,
+            ),
+            (p(3, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 0, 3), SolidPointLocation::Outside),
+            (
+                Point3::new(Real::from(2), Real::zero(), sqrt_five),
+                SolidPointLocation::Boundary,
+            ),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), location);
+        }
+
+        let BooleanResult::Solid {
+            model: standard,
+            solid: standard_solid,
+        } = difference(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap()
+        else {
+            panic!("the standard API must retain one exact napkin-ring solid");
+        };
+        assert_eq!(
+            compare_reals(&standard.solid_volume(standard_solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let json = standard.to_json().unwrap();
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&decoded.solid_volume(standard_solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_sphere = sphere.transformed(&cyclic).unwrap();
+        let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
+        let BooleanResult::Solid {
+            model: oriented,
+            solid: oriented_solid,
+        } = difference(
+            &oriented_sphere,
+            sphere_solid,
+            &oriented_cylinder,
+            cylinder_solid,
+        )
+        .unwrap()
+        else {
+            panic!("rigid reorientation must retain one exact napkin-ring solid");
+        };
+        assert_eq!(
+            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let reflected = standard
+            .transformed(&Matrix4::affine_nonuniform_scale([
+                Real::one(),
+                -Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(standard_solid).unwrap(), &expected).value(),
             Some(Ordering::Equal)
         );
     }

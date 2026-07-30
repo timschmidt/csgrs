@@ -177,7 +177,10 @@ The clean-break implementation currently provides:
   coalesce those fragments back into one periodic sphere trace, and partition
   both complete carriers. Standard intersection stitches two spherical caps
   and the central cylindrical band with exact area, volume, classification,
-  transforms, operand reversal, and byte-identical replay;
+  transforms, operand reversal, and byte-identical replay. Complementary
+  difference stitches the periodic two-loop spherical band to the inward
+  cylinder band as one exact genus-one solid with native area, volume,
+  classification, transforms, and replay;
 - transverse plane/cone cuts use the same two-pcurve latitude abstraction,
   with cone slant parameter retained exactly. Frustum side descendants prove
   the same no-gap/no-overlap parameter grid, so slab clips remain native conic

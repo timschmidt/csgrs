@@ -1194,6 +1194,13 @@ struct CertifiedSphereAxialClip {
 struct CertifiedSphereRadialClip {
     axis: Vector3,
     radius: Real,
+    side: CertifiedSphereRadialSide,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CertifiedSphereRadialSide {
+    Inside,
+    Outside,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -3623,6 +3630,7 @@ impl Model {
                                     CertifiedSphereClip::Radial(CertifiedSphereRadialClip {
                                         axis: transform.transform_direction3(&clip.axis),
                                         radius: clip.radius.clone(),
+                                        side: clip.side,
                                     })
                                 }
                             }),
@@ -4146,8 +4154,13 @@ impl Model {
                     - &clip.radius * &clip.radius)
                     .sqrt()
                     .map_err(|_| GeometryError::ElementaryFunction)?;
-                let retained_cubic = &sphere.radius * &sphere.radius * &sphere.radius
-                    - &axial_half_height * &axial_half_height * axial_half_height;
+                let axial_cubic = &axial_half_height * &axial_half_height * axial_half_height;
+                let retained_cubic = match clip.side {
+                    CertifiedSphereRadialSide::Inside => {
+                        &sphere.radius * &sphere.radius * &sphere.radius - axial_cubic
+                    }
+                    CertifiedSphereRadialSide::Outside => axial_cubic,
+                };
                 return (Real::from(4) * Real::pi() * retained_cubic / Real::from(3))
                     .map_err(|_| GeometryError::ProjectiveDivision)
                     .map_err(QueryError::from);
@@ -4531,13 +4544,22 @@ impl Model {
             let offset = point - &sphere.center;
             let axial = offset.dot(&clip.axis);
             let radial = offset - clip.axis.clone() * axial;
-            match decided_model_order(compare_reals(
+            let radial_order = decided_model_order(compare_reals(
                 &radial.norm_squared(),
                 &(&clip.radius * &clip.radius),
-            ))? {
-                std::cmp::Ordering::Greater => return Ok(SolidPointLocation::Outside),
+            ))?;
+            if matches!(
+                (clip.side, radial_order),
+                (
+                    CertifiedSphereRadialSide::Inside,
+                    std::cmp::Ordering::Greater
+                ) | (CertifiedSphereRadialSide::Outside, std::cmp::Ordering::Less)
+            ) {
+                return Ok(SolidPointLocation::Outside);
+            }
+            match radial_order {
                 std::cmp::Ordering::Equal => true,
-                std::cmp::Ordering::Less => false,
+                std::cmp::Ordering::Less | std::cmp::Ordering::Greater => false,
             }
         } else {
             false
@@ -9865,39 +9887,92 @@ impl ModelBuilder {
         sphere_faces: &[FaceId],
         cylinder_faces: &[FaceId],
     ) -> Result<Option<CertifiedSphereShell>, BuildError> {
-        if sphere_faces.len() != 2 {
-            return Ok(None);
-        }
-        let Some(first) = self.certified_spherical_cap_face(sphere_faces[0])? else {
+        let (
+            center,
+            axis,
+            radius,
+            lower_latitude,
+            upper_latitude,
+            radial_side,
+            cylinder_orientation,
+        ) = match sphere_faces {
+            [first_id, second_id] => {
+                let Some(first) = self.certified_spherical_cap_face(*first_id)? else {
+                    return Ok(None);
+                };
+                let Some(second) = self.certified_spherical_cap_face(*second_id)? else {
+                    return Ok(None);
+                };
+                if first.orientation != Orientation::Forward
+                    || second.orientation != Orientation::Forward
+                    || first.upper == second.upper
+                    || !points_equal(&first.center, &second.center)?
+                    || !vectors_equal(&first.axis, &second.axis)?
+                    || !real_values_equal(&first.radius, &second.radius)?
+                {
+                    return Ok(None);
+                }
+                let (lower, upper) = if first.upper {
+                    (second, first)
+                } else {
+                    (first, second)
+                };
+                (
+                    lower.center,
+                    lower.axis,
+                    lower.radius,
+                    lower.latitude,
+                    upper.latitude,
+                    CertifiedSphereRadialSide::Inside,
+                    Orientation::Forward,
+                )
+            }
+            [band_id] => {
+                let face = self.face_ref(*band_id)?;
+                if face.orientation != Orientation::Forward {
+                    return Ok(None);
+                }
+                let Some(lower_wire) = face.outer() else {
+                    return Ok(None);
+                };
+                let [upper_wire] = face.inner() else {
+                    return Ok(None);
+                };
+                let (lower_latitude, _) = self.spherical_trim_coordinates(lower_wire)?;
+                let (upper_latitude, _) = self.spherical_trim_coordinates(*upper_wire)?;
+                let SurfaceExactData::Sphere {
+                    center,
+                    axis,
+                    radius,
+                    ..
+                } = self.surface_ref(face.surface)?.exact_data()
+                else {
+                    return Ok(None);
+                };
+                (
+                    center,
+                    axis,
+                    radius,
+                    lower_latitude,
+                    upper_latitude,
+                    CertifiedSphereRadialSide::Outside,
+                    Orientation::Reversed,
+                )
+            }
+            _ => return Ok(None),
+        };
+        let Some(cylinder) =
+            self.certified_cylinder_side_faces(shell, cylinder_faces, cylinder_orientation)?
+        else {
             return Ok(None);
         };
-        let Some(second) = self.certified_spherical_cap_face(sphere_faces[1])? else {
-            return Ok(None);
-        };
-        if first.orientation != Orientation::Forward
-            || second.orientation != Orientation::Forward
-            || first.upper == second.upper
-            || !points_equal(&first.center, &second.center)?
-            || !vectors_equal(&first.axis, &second.axis)?
-            || !real_values_equal(&first.radius, &second.radius)?
-        {
-            return Ok(None);
-        }
-        let (lower, upper) = if first.upper {
-            (second, first)
-        } else {
-            (first, second)
-        };
-        let Some(cylinder) = self.certified_cylinder_side_faces(shell, cylinder_faces)? else {
-            return Ok(None);
-        };
-        if !vectors_equal(&lower.axis, &cylinder.axis)?
-            || decided_model_order(compare_reals(&cylinder.radius, &lower.radius))?
+        if !vectors_equal(&axis, &cylinder.axis)?
+            || decided_model_order(compare_reals(&cylinder.radius, &radius))?
                 != std::cmp::Ordering::Less
         {
             return Ok(None);
         }
-        let center_offset = &lower.center - &cylinder.origin;
+        let center_offset = &center - &cylinder.origin;
         let center_parameter = center_offset.dot(&cylinder.axis);
         let radial_offset = center_offset - cylinder.axis.clone() * &center_parameter;
         if decided_model_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
@@ -9905,33 +9980,28 @@ impl ModelBuilder {
         {
             return Ok(None);
         }
-        let lower_height = &lower.radius * lower.latitude.clone().sin();
-        let upper_height = &upper.radius * upper.latitude.clone().sin();
+        let lower_height = &radius * lower_latitude.clone().sin();
+        let upper_height = &radius * upper_latitude.clone().sin();
         if decided_model_order(compare_reals(&lower_height, &Real::zero()))?
             != std::cmp::Ordering::Less
             || decided_model_order(compare_reals(&upper_height, &Real::zero()))?
                 != std::cmp::Ordering::Greater
             || !real_values_equal(&lower_height, &-upper_height.clone())?
-            || !real_values_equal(
-                &(&lower.radius * lower.latitude.clone().cos()),
-                &cylinder.radius,
-            )?
-            || !real_values_equal(
-                &(&upper.radius * upper.latitude.clone().cos()),
-                &cylinder.radius,
-            )?
+            || !real_values_equal(&(&radius * lower_latitude.clone().cos()), &cylinder.radius)?
+            || !real_values_equal(&(&radius * upper_latitude.clone().cos()), &cylinder.radius)?
             || !real_values_equal(&cylinder.v_min, &(&center_parameter + &lower_height))?
             || !real_values_equal(&cylinder.v_max, &(&center_parameter + &upper_height))?
         {
             return Ok(None);
         }
         Ok(Some(CertifiedSphereShell {
-            center: lower.center,
-            radius: lower.radius,
+            center,
+            radius,
             voids: Vec::new(),
             clip: Some(CertifiedSphereClip::Radial(CertifiedSphereRadialClip {
                 axis: cylinder.axis,
                 radius: cylinder.radius,
+                side: radial_side,
             })),
         }))
     }
@@ -12524,6 +12594,7 @@ impl ModelBuilder {
         &self,
         shell: ShellId,
         side_faces: &[FaceId],
+        orientation: Orientation,
     ) -> Result<Option<CertifiedCylinderShell>, BuildError> {
         if side_faces.len() < 3 {
             return Ok(None);
@@ -12550,7 +12621,7 @@ impl ModelBuilder {
         let mut face_coordinates = Vec::with_capacity(side_faces.len());
         for face_id in side_faces {
             let face = self.face_ref(*face_id)?;
-            if face.orientation != Orientation::Forward || !face.inner().is_empty() {
+            if face.orientation != orientation || !face.inner().is_empty() {
                 return Ok(None);
             }
             let Some(outer) = face.outer() else {
@@ -12659,7 +12730,9 @@ impl ModelBuilder {
         if cap_groups.len() != 2 || side_faces.len() < 3 {
             return Ok(None);
         }
-        let Some(cylinder) = self.certified_cylinder_side_faces(shell, &side_faces)? else {
+        let Some(cylinder) =
+            self.certified_cylinder_side_faces(shell, &side_faces, Orientation::Forward)?
+        else {
             return Ok(None);
         };
 
