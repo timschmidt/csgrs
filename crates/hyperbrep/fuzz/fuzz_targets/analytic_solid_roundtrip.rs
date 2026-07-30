@@ -987,6 +987,88 @@ fuzz_target!(|bytes: &[u8]| {
         Some(std::cmp::Ordering::Equal)
     );
 
+    let revolution_start_radius = positive(1);
+    let revolution_radial_step = positive(2);
+    let revolution_height_step = positive(3);
+    let revolution_middle_radius = &revolution_start_radius + &revolution_radial_step;
+    let revolution_end_radius = &revolution_middle_radius + &revolution_radial_step;
+    let revolution_controls = vec![
+        hyperbrep::Point3::new(revolution_start_radius, Real::zero(), Real::zero()),
+        hyperbrep::Point3::new(
+            revolution_middle_radius.clone(),
+            Real::zero(),
+            revolution_height_step.clone(),
+        ),
+        hyperbrep::Point3::new(
+            revolution_end_radius,
+            Real::zero(),
+            Real::from(2) * &revolution_height_step,
+        ),
+    ];
+    let revolution_weights = vec![Real::one(), positive(2), positive(3)];
+    let revolution_profile = if bytes[1] & 1 == 0 {
+        hyperbrep::Curve3::rational_bezier(revolution_controls, revolution_weights)
+    } else {
+        hyperbrep::Curve3::nurbs(
+            2,
+            revolution_controls,
+            revolution_weights,
+            vec![
+                Real::from(2),
+                Real::from(2),
+                Real::from(2),
+                Real::from(5),
+                Real::from(5),
+                Real::from(5),
+            ],
+        )
+    };
+    let Ok(revolution_profile) = revolution_profile else {
+        return;
+    };
+    let quarter = (Real::pi() / Real::from(2)).expect("two is nonzero");
+    let Ok((revolution_patch, revolution_face)) = builder::revolution_patch(
+        revolution_profile,
+        hyperbrep::Point3::origin(),
+        Vector3::z(),
+        Real::zero(),
+        quarter,
+    ) else {
+        return;
+    };
+    let meridian_step = (&revolution_radial_step * &revolution_radial_step
+        + &revolution_height_step * &revolution_height_step)
+        .sqrt()
+        .expect("positive fuzz steps have an exact square root expression");
+    let expected_revolution_area = Real::pi() * meridian_step * revolution_middle_radius;
+    assert_eq!(
+        hyperlimit::compare_reals(
+            &revolution_patch
+                .face_area(revolution_face)
+                .expect("rational line-image revolution has exact area"),
+            &expected_revolution_area,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+    let revolution_json = revolution_patch
+        .to_json()
+        .expect("spline revolution patch serializes");
+    let replayed_revolution = RawModel::from_json(&revolution_json)
+        .expect("spline revolution patch JSON parses")
+        .validate()
+        .expect("spline revolution patch JSON revalidates");
+    assert_eq!(
+        hyperlimit::compare_reals(
+            &replayed_revolution
+                .face_area(revolution_face)
+                .expect("replayed spline revolution has exact area"),
+            &expected_revolution_area,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+
     let Ok((crossing_patch, crossing_face)) = builder::rational_bezier_patch(
         vec![
             vec![

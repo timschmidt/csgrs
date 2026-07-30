@@ -795,6 +795,52 @@ fn main() {
         elapsed / SPLINE_ITERATIONS as u32,
     );
 
+    let revolution_profile = Curve3::nurbs(
+        2,
+        vec![point(2, 0, 0), point(3, 0, 1), point(4, 0, 2)],
+        vec![Real::one(), Real::from(2), Real::from(3)],
+        vec![
+            Real::from(2),
+            Real::from(2),
+            Real::from(2),
+            Real::from(5),
+            Real::from(5),
+            Real::from(5),
+        ],
+    )
+    .expect("benchmark NURBS revolution profile");
+    let quarter = (Real::pi() / Real::from(2)).expect("two is nonzero");
+    let expected_revolution_area = Real::from(3)
+        * Real::pi()
+        * Real::from(2)
+            .sqrt()
+            .expect("positive integer has an exact square root expression");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..SPLINE_ITERATIONS {
+        let (model, face) = builder::revolution_patch(
+            black_box(revolution_profile.clone()),
+            black_box(Point3::origin()),
+            black_box(Vector3::z()),
+            black_box(Real::zero()),
+            black_box(quarter.clone()),
+        )
+        .expect("benchmark exact revolution patch");
+        let area = model
+            .face_area(face)
+            .expect("benchmark exact rational line-image revolution area");
+        checksum += usize::from(
+            compare_reals(&area, &expected_revolution_area).value()
+                == Some(std::cmp::Ordering::Equal),
+        );
+        black_box(model);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/nurbs_revolution_patch_build_exact_area: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / SPLINE_ITERATIONS as u32,
+    );
+
     const TENSOR_AREA_ITERATIONS: usize = 1_000;
     let affine_controls = vec![
         vec![point(0, 0, 0), point(2, 0, 0), point(4, 0, 0)],

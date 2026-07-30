@@ -91,6 +91,10 @@ The clean-break implementation currently provides:
 - validated open-shell `builder::extrusion_patch` construction for any exact
   profile family, retaining the profile's native `u` domain and strictly
   ordered finite sweep-coefficient bounds without direct arena manipulation;
+- validated open-shell `builder::revolution_patch` construction with native
+  meridian domains, exact latitude circles, complete profile/axis-clearance
+  certification, and an explicit sub-period angular contract so complete
+  revolutions use periodic subdivision;
 - exact face area for affine-image rational Bézier and NURBS tensor patches,
   certified from the complete Bernstein/Greville control lattice without
   tessellation; constant weights support arbitrary validated trims, while a

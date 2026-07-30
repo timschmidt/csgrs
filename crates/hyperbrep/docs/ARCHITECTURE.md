@@ -281,6 +281,16 @@ and projectively parameterized line images independently of projective speed.
 Profiles outside that plane or with transverse backtracking return
 `UnsupportedMeasurement`.
 
+Finite revolution patches share one native latitude extractor between
+construction and validation. Latitude edges are compared against the complete
+expected circle parameterization, including frame, domain, and directed
+surface-parameter correspondence; a matching endpoint and one tangent are not
+treated as an interval proof. One patch spans strictly less than `tau` so a
+complete revolution remains explicit periodic topology. Construction also
+certifies the complete profile interval strictly off-axis through a
+control-hull separating plane or exact two-plane axis-contact reduction;
+unsupported higher-degree intersection cases remain explicit.
+
 Regularized z-prism Booleans delegate planar arrangement and role assignment to
 Hypercurve, then reconstruct line/arc material contours and holes as newly
 validated BREP solids. Empty, incompatible, unsupported, and unresolved

@@ -15,10 +15,11 @@ use hyperlimit::{PredicateOutcome, compare_point3_lexicographic, compare_reals, 
 
 use crate::error::GeometryError;
 use crate::geometry::{
-    Curve3, Curve3ExactData, Curve3Kind, CurveParameterLocation, ParameterDomain, Pcurve, Surface,
-    SurfaceExactData, SurfaceIntersectionCurve, SurfaceIntersectionOperand,
-    SurfaceIntersectionPcurve, SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain,
-    SurfacePcurveCorrespondence, affine_transform_orientation, materialize_nurbs_parameter_graph,
+    Curve3, Curve3ExactData, Curve3Kind, CurveParameterLocation, EllipseArcExactData,
+    ParameterDomain, Pcurve, Surface, SurfaceExactData, SurfaceIntersectionCurve,
+    SurfaceIntersectionOperand, SurfaceIntersectionPcurve, SurfaceIsoAxis, SurfaceKind,
+    SurfaceParameterDomain, SurfacePcurveCorrespondence, affine_transform_orientation,
+    materialize_nurbs_parameter_graph,
 };
 
 macro_rules! model_id {
@@ -8416,66 +8417,69 @@ impl ModelBuilder {
             line.end().y(),
             BuildError::EdgeUseSupportMismatch,
         )?;
-        let Curve3ExactData::EllipseArc(curve_data) = curve.exact_data() else {
-            unreachable!("circle kind carries ellipse-arc exact data");
-        };
-        if !curve_data.circle {
+        if real_values_equal(line.start().x(), line.end().x())? {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
-        let SurfaceExactData::Revolution {
-            profile,
-            axis_origin,
-            axis,
-        } = surface.exact_data()
-        else {
-            unreachable!("revolution kind carries revolution exact data");
-        };
-        let profile = Curve3::from_exact_data(*profile)?;
-        let profile_point = profile.point_at(line.start().y())?;
-        let relative = &profile_point - &axis_origin;
-        let axial = axis.clone() * axis.dot(&relative);
-        let expected_center = axis_origin + axial;
-        let expected_radius = (profile_point - &expected_center)
-            .norm_squared()
-            .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        require_point_equal(
-            &curve_data.center,
-            &expected_center,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-        require_real_equal(
-            &curve_data.x_radius,
-            &expected_radius,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-        require_real_equal(
-            &curve_data.y_radius,
-            &expected_radius,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-
-        let pcurve_span = pcurve.domain_end() - pcurve.domain_start();
-        let du_dt = ((line.end().x() - line.start().x()) / pcurve_span)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
-        let parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
-        let surface_tangent = surface.partials_at(&parameter)?.u().clone() * du_dt;
-        let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
+        let actual = curve.subcurve(edge.domain.start(), edge.domain.end())?;
+        let actual_span = actual.domain().end() - actual.domain().start();
+        let first_edge_parameter = edge_use.parameter_correspondence.edge_parameter(
             pcurve,
             &edge.domain,
             edge_use.direction,
             pcurve.domain_start(),
         )?;
-        let edge_rate = match &edge_use.parameter_correspondence {
-            ParameterCorrespondence::Affine { scale, .. } => scale,
-            ParameterCorrespondence::AngularSweep => unreachable!("matched affine relation"),
+        let second_edge_parameter = edge_use.parameter_correspondence.edge_parameter(
+            pcurve,
+            &edge.domain,
+            edge_use.direction,
+            pcurve.domain_end(),
+        )?;
+        let (angle_at_start, angle_at_end) =
+            if real_values_equal(&first_edge_parameter, actual.domain().start())? {
+                require_real_equal(
+                    &second_edge_parameter,
+                    actual.domain().end(),
+                    BuildError::EdgeUseSupportMismatch,
+                )?;
+                (line.start().x(), line.end().x())
+            } else {
+                require_real_equal(
+                    &first_edge_parameter,
+                    actual.domain().end(),
+                    BuildError::EdgeUseSupportMismatch,
+                )?;
+                require_real_equal(
+                    &second_edge_parameter,
+                    actual.domain().start(),
+                    BuildError::EdgeUseSupportMismatch,
+                )?;
+                (line.end().x(), line.start().x())
+            };
+        let angle_delta = angle_at_end - angle_at_start;
+        let expected_direction = if real_values_equal(&angle_delta, &actual_span)? {
+            1
+        } else if real_values_equal(&angle_delta, &(-actual_span.clone()))? {
+            -1
+        } else {
+            return Err(BuildError::EdgeUseSupportMismatch);
         };
-        let edge_tangent = curve.derivative_at(&edge_parameter, 1)?.vector().clone() * edge_rate;
-        require_vector_equal(
-            &surface_tangent,
-            &edge_tangent,
-            BuildError::EdgeUseSupportMismatch,
-        )
+        let support =
+            surface.revolution_latitude_curve(line.start().y(), Real::zero(), Real::one())?;
+        let Curve3ExactData::EllipseArc(support) = support.exact_data() else {
+            unreachable!("a nonsingular revolution latitude is a circle");
+        };
+        let expected =
+            Curve3::from_exact_data(Curve3ExactData::EllipseArc(Box::new(EllipseArcExactData {
+                domain_start: actual.domain().start().clone(),
+                domain_end: actual.domain().end().clone(),
+                angle_at_start: angle_at_start.clone(),
+                direction: expected_direction,
+                ..*support
+            })))?;
+        if !circle_parameterizations_equal(&actual, &expected)? {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        }
+        Ok(())
     }
 
     fn validate_wire_orientation(
@@ -16720,6 +16724,49 @@ fn curve_parameterizations_equal(actual: &Curve3, expected: &Curve3) -> Result<b
         }
         _ => Ok(false),
     }
+}
+
+fn circle_parameterizations_equal(actual: &Curve3, expected: &Curve3) -> Result<bool, BuildError> {
+    let Curve3ExactData::EllipseArc(actual) = actual.exact_data() else {
+        return Ok(false);
+    };
+    let Curve3ExactData::EllipseArc(expected) = expected.exact_data() else {
+        return Ok(false);
+    };
+    if !actual.circle
+        || !expected.circle
+        || !real_values_equal(&actual.domain_start, &expected.domain_start)?
+        || !real_values_equal(&actual.domain_end, &expected.domain_end)?
+        || !points_equal(&actual.center, &expected.center)?
+        || !real_values_equal(&actual.x_radius, &expected.x_radius)?
+        || !real_values_equal(&actual.y_radius, &expected.y_radius)?
+    {
+        return Ok(false);
+    }
+
+    // Put both arcs in the unique direct-domain form
+    // `center + radius * (x*cos(t) + y*sin(t))`. This compares the complete
+    // analytic parameterizations while allowing reflection to reverse the
+    // surface's angular chart without rewriting the spatial edge domain.
+    let direct_frame = |arc: &EllipseArcExactData| {
+        let phase = if arc.direction > 0 {
+            &arc.angle_at_start - &arc.domain_start
+        } else {
+            &arc.angle_at_start + &arc.domain_start
+        };
+        let sine = phase.clone().sin();
+        let cosine = phase.cos();
+        let x = arc.x.clone() * &cosine + arc.y.clone() * &sine;
+        let y = if arc.direction > 0 {
+            -arc.x.clone() * sine + arc.y.clone() * cosine
+        } else {
+            arc.x.clone() * sine - arc.y.clone() * cosine
+        };
+        (x, y)
+    };
+    let (actual_x, actual_y) = direct_frame(&actual);
+    let (expected_x, expected_y) = direct_frame(&expected);
+    Ok(vectors_equal(&actual_x, &expected_x)? && vectors_equal(&actual_y, &expected_y)?)
 }
 
 fn real_values_equal(left: &Real, right: &Real) -> Result<bool, BuildError> {

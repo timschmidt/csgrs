@@ -43,6 +43,8 @@ pub enum ConstructionError {
     ProfileCrossesRevolutionAxis,
     /// A curved revolution profile lacks a required exact topology or integral certificate.
     UnsupportedRevolutionProfile,
+    /// One finite revolution patch must span strictly less than a full period.
+    RevolutionPatchSweepTooLarge,
     /// Loft construction requires at least two ordered sections.
     LoftNeedsAtLeastTwoSections,
     /// Loft sections do not have a certifiable positive correspondence.
@@ -208,6 +210,9 @@ impl fmt::Display for ConstructionError {
             Self::UnsupportedRevolutionProfile => formatter.write_str(
                 "curved revolution profile lacks a required exact topology or integral certificate",
             ),
+            Self::RevolutionPatchSweepTooLarge => {
+                formatter.write_str("one revolution patch must span less than one full period")
+            }
             Self::LoftNeedsAtLeastTwoSections => {
                 formatter.write_str("loft requires at least two sections")
             }
@@ -322,6 +327,84 @@ pub fn extrusion_patch(
         v_domain.start().clone(),
         v_domain.end().clone(),
     )
+}
+
+/// Constructs one finite rectangular patch of an exact revolution surface.
+///
+/// `angle_start` and `angle_end` are strictly ordered and must span less than
+/// one full period; complete revolutions require explicit periodic
+/// subdivision. The profile's exact curve family and native parameter domain
+/// are retained on both meridians. Its complete interval must carry an exact
+/// strict axis-clearance certificate; unsupported higher-degree contact
+/// problems return [`ConstructionError::UnsupportedRevolutionProfile`]. The
+/// returned model contains one validated open shell and no solid.
+pub fn revolution_patch(
+    profile: Curve3,
+    axis_origin: Point3,
+    axis: Vector3,
+    angle_start: Real,
+    angle_end: Real,
+) -> Result<(Model, FaceId), ConstructionError> {
+    let angle_domain = ParameterDomain::new(angle_start, angle_end)?;
+    let angle_span = angle_domain.end() - angle_domain.start();
+    match compare_reals(&angle_span, &Real::tau()) {
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Less,
+            ..
+        } => {}
+        PredicateOutcome::Decided { .. } => {
+            return Err(ConstructionError::RevolutionPatchSweepTooLarge);
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            return Err(GeometryError::PredicateUnresolved { needed, stage }.into());
+        }
+    }
+    let profile_domain = profile.domain().clone();
+    let surface = Surface::revolution(profile, axis_origin, axis)?;
+    if !surface
+        .revolution_profile_is_strictly_off_axis()
+        .map_err(revolution_patch_geometry_error)?
+    {
+        return Err(ConstructionError::ProfileCrossesRevolutionAxis);
+    }
+    let lower_latitude = surface
+        .revolution_latitude_curve(
+            profile_domain.start(),
+            angle_domain.start().clone(),
+            angle_domain.end().clone(),
+        )
+        .map_err(revolution_patch_geometry_error)?;
+    let upper_latitude = surface
+        .revolution_latitude_curve(
+            profile_domain.end(),
+            angle_domain.start().clone(),
+            angle_domain.end().clone(),
+        )
+        .map_err(revolution_patch_geometry_error)?;
+    let boundaries = [
+        lower_latitude,
+        surface.revolution_meridian_curve(angle_domain.end())?,
+        upper_latitude,
+        surface.revolution_meridian_curve(angle_domain.start())?,
+    ];
+    build_rectangular_face_patch(
+        surface,
+        boundaries,
+        angle_domain.start().clone(),
+        angle_domain.end().clone(),
+        profile_domain.start().clone(),
+        profile_domain.end().clone(),
+    )
+}
+
+fn revolution_patch_geometry_error(error: GeometryError) -> ConstructionError {
+    match error {
+        GeometryError::SingularSurfaceParameter => {
+            ConstructionError::ProfileCrossesRevolutionAxis
+        }
+        GeometryError::UnsupportedIntersection => ConstructionError::UnsupportedRevolutionProfile,
+        error => error.into(),
+    }
 }
 
 /// Constructs one validated trimmed tensor-product rational Bézier patch.
@@ -7604,6 +7687,140 @@ mod tests {
                 GeometryError::DegenerateExtrusionDirection
             )))
         ));
+    }
+
+    #[test]
+    fn revolution_patch_retains_native_meridians_and_rejects_invalid_single_patches() {
+        let profile = Curve3::nurbs(
+            2,
+            vec![p(2, 0, 0), p(3, 0, 1), p(4, 0, 2)],
+            vec![Real::one(), r(2), r(3)],
+            vec![r(2), r(2), r(2), r(5), r(5), r(5)],
+        )
+        .unwrap();
+        let quarter = (Real::pi() / r(2)).unwrap();
+        let (model, face) = revolution_patch(
+            profile.clone(),
+            Point3::origin(),
+            Vector3::z(),
+            Real::zero(),
+            quarter,
+        )
+        .unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 4,
+                curves: 4,
+                pcurves: 4,
+                surfaces: 1,
+                edges: 4,
+                edge_uses: 4,
+                wires: 1,
+                faces: 1,
+                shells: 1,
+                solids: 0,
+            }
+        );
+        assert_eq!(
+            model
+                .curves()
+                .map(|(_, curve)| curve.kind())
+                .collect::<Vec<_>>(),
+            vec![
+                crate::Curve3Kind::CircleArc,
+                crate::Curve3Kind::Nurbs,
+                crate::Curve3Kind::CircleArc,
+                crate::Curve3Kind::Nurbs,
+            ]
+        );
+        let expected_area = r(3)
+            * Real::pi()
+            * r(2)
+                .sqrt()
+                .expect("positive integer has an exact square root expression");
+        assert_eq!(
+            compare_reals(&model.face_area(face).unwrap(), &expected_area).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let transformed = model
+            .transformed(&crate::Matrix4::affine_orthonormal(
+                [
+                    [Real::zero(), Real::zero(), Real::one()],
+                    [Real::one(), Real::zero(), Real::zero()],
+                    [Real::zero(), Real::one(), Real::zero()],
+                ],
+                [r(5), r(-2), r(7)],
+            ))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&transformed.face_area(face).unwrap(), &expected_area).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let replayed = crate::RawModel::from_json(&transformed.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&replayed.face_area(face).unwrap(), &expected_area).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        assert_eq!(
+            revolution_patch(
+                profile.clone(),
+                Point3::origin(),
+                Vector3::z(),
+                Real::zero(),
+                Real::tau(),
+            )
+            .unwrap_err(),
+            ConstructionError::RevolutionPatchSweepTooLarge
+        );
+        assert!(matches!(
+            revolution_patch(
+                profile,
+                Point3::origin(),
+                Vector3::from_xyz(Real::zero(), Real::zero(), r(2)),
+                Real::zero(),
+                Real::one(),
+            ),
+            Err(ConstructionError::Build(BuildError::Geometry(
+                GeometryError::InvalidRevolutionAxis
+            )))
+        ));
+        let axis_contact = Curve3::line(Point3::origin(), p(2, 0, 1)).unwrap();
+        assert_eq!(
+            revolution_patch(
+                axis_contact,
+                Point3::origin(),
+                Vector3::z(),
+                Real::zero(),
+                Real::one(),
+            )
+            .unwrap_err(),
+            ConstructionError::ProfileCrossesRevolutionAxis
+        );
+        for interior_axis_contact in [
+            Curve3::line(p(-1, 0, 0), p(1, 0, 2)).unwrap(),
+            Curve3::rational_bezier(
+                vec![p(1, 0, 0), p(-1, 0, 1), p(1, 0, 2)],
+                vec![Real::one(); 3],
+            )
+            .unwrap(),
+        ] {
+            assert_eq!(
+                revolution_patch(
+                    interior_axis_contact,
+                    Point3::origin(),
+                    Vector3::z(),
+                    Real::zero(),
+                    Real::one(),
+                )
+                .unwrap_err(),
+                ConstructionError::ProfileCrossesRevolutionAxis
+            );
+        }
     }
 
     #[test]

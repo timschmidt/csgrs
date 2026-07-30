@@ -523,6 +523,103 @@ impl Curve3 {
             .clone()
     }
 
+    fn is_strictly_off_axis(&self, axis_origin: &Point3, axis: &Vector3) -> GeometryResult<bool> {
+        let radial = |point: &Point3| {
+            let relative = point - axis_origin;
+            let axial = axis.clone() * axis.dot(&relative);
+            relative - axial
+        };
+        let start_radial = radial(&self.point_at(self.domain().start())?);
+        if decided_order(compare_reals(
+            &start_radial.norm_squared(),
+            &Real::zero(),
+        ))? != Ordering::Greater
+        {
+            return Ok(false);
+        }
+        let end_radial = radial(&self.point_at(self.domain().end())?);
+        if decided_order(compare_reals(&end_radial.norm_squared(), &Real::zero()))?
+            != Ordering::Greater
+        {
+            return Ok(false);
+        }
+        let witness_length = start_radial
+            .norm_squared()
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let witness =
+            (start_radial / witness_length).map_err(|_| GeometryError::ProjectiveDivision)?;
+
+        // Positive-weight rational bases stay in their affine control hull.
+        // A strict axis-containing separating plane is therefore a complete,
+        // affine-invariant clearance certificate for the common case.
+        let controls = match &self.data.geometry {
+            CurveGeometry3::Line(line) => Some(vec![&line.start, &line.end]),
+            CurveGeometry3::RationalBezier(curve) => {
+                Some(curve.control_points.iter().collect::<Vec<_>>())
+            }
+            CurveGeometry3::Nurbs(curve) => {
+                Some(curve.control_points.iter().collect::<Vec<_>>())
+            }
+            CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => None,
+        };
+        if let Some(controls) = controls {
+            let mut separated = true;
+            for point in controls {
+                let offset = point - axis_origin;
+                if decided_order(compare_reals(&witness.dot(&offset), &Real::zero()))?
+                    != Ordering::Greater
+                {
+                    separated = false;
+                    break;
+                }
+            }
+            if separated {
+                return Ok(true);
+            }
+        }
+
+        // When the convex-hull certificate is inconclusive, reduce exact axis
+        // contact to membership in two orthogonal planes through the axis.
+        // Supported curve/plane intersections enumerate the complete finite
+        // parameter interval; unsupported polynomial degrees remain explicit.
+        let transverse = axis.cross(&witness);
+        let first_plane = Surface::plane(
+            axis_origin.clone(),
+            axis.clone(),
+            witness.clone(),
+        )?;
+        let point_is_on_axis = |point: &Point3| -> GeometryResult<bool> {
+            Ok(decided_order(compare_reals(
+                &radial(point).norm_squared(),
+                &Real::zero(),
+            ))? == Ordering::Equal)
+        };
+        match first_plane.intersect_curve(self)? {
+            CurveSurfaceIntersection::None => Ok(true),
+            CurveSurfaceIntersection::Points(points) => {
+                for point in points {
+                    if point_is_on_axis(&point.point)? {
+                        return Ok(false);
+                    }
+                }
+                Ok(true)
+            }
+            CurveSurfaceIntersection::Contained => {
+                let second_plane =
+                    Surface::plane(axis_origin.clone(), axis.clone(), transverse)?;
+                match second_plane.intersect_curve(self)? {
+                    CurveSurfaceIntersection::None => Ok(true),
+                    CurveSurfaceIntersection::Points(_) => Ok(false),
+                    CurveSurfaceIntersection::Overlap(_) | CurveSurfaceIntersection::Contained => {
+                        Ok(false)
+                    }
+                }
+            }
+            CurveSurfaceIntersection::Overlap(_) => Err(GeometryError::UnsupportedIntersection),
+        }
+    }
+
     /// Evaluates an exact model-space point.
     pub fn point_at(&self, parameter: &Real) -> GeometryResult<Point3> {
         if !self.domain().contains(parameter)? {
@@ -2917,6 +3014,48 @@ impl Surface {
                 })),
             ),
         }
+    }
+
+    pub(crate) fn revolution_profile_is_strictly_off_axis(&self) -> GeometryResult<bool> {
+        let SurfaceGeometry::Revolution(surface) = &self.data.geometry else {
+            return Err(GeometryError::UnsupportedSubdivision);
+        };
+        surface
+            .profile
+            .is_strictly_off_axis(&surface.axis_origin, &surface.axis)
+    }
+
+    pub(crate) fn revolution_latitude_curve(
+        &self,
+        profile_parameter: &Real,
+        angle_start: Real,
+        angle_end: Real,
+    ) -> GeometryResult<Curve3> {
+        let SurfaceGeometry::Revolution(surface) = &self.data.geometry else {
+            return Err(GeometryError::UnsupportedSubdivision);
+        };
+        let profile_point = surface.profile.point_at(profile_parameter)?;
+        let relative = &profile_point - &surface.axis_origin;
+        let axial = surface.axis.clone() * surface.axis.dot(&relative);
+        let radial = relative - &axial;
+        if decided_order(compare_reals(&radial.norm_squared(), &Real::zero()))? != Ordering::Greater
+        {
+            return Err(GeometryError::SingularSurfaceParameter);
+        }
+        let radius = radial
+            .norm_squared()
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let x = (radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let y = surface.axis.cross(&x);
+        Curve3::circle_arc(
+            surface.axis_origin.clone() + axial,
+            x,
+            y,
+            radius,
+            angle_start,
+            angle_end,
+        )
     }
 
     pub(crate) fn from_exact_data(data: SurfaceExactData) -> GeometryResult<Self> {
