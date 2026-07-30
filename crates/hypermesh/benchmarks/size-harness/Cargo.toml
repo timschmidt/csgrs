@@ -3,6 +3,7 @@ name = "hypermesh-size-harness"
 version = "0.0.0"
 edition = "2024"
 publish = false
+default-run = "hypermesh-size-harness"
 
 [dependencies]
 hypermesh = { path = "../..", default-features = false }

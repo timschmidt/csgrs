@@ -58,30 +58,34 @@ printf 'feature_set=%s\n' "$size_feature_set"
 printf 'target_dir=%s\n' "$size_target_root"
 
 for size_profile in release size; do
-    cargo build \
-        --locked \
-        --manifest-path "$size_manifest" \
-        --profile "$size_profile" \
-        --target-dir "$size_target_root" \
-        "${size_feature_args[@]}"
+    for size_binary in hypermesh-size-harness immediate; do
+        cargo build \
+            --locked \
+            --manifest-path "$size_manifest" \
+            --profile "$size_profile" \
+            --bin "$size_binary" \
+            --target-dir "$size_target_root" \
+            "${size_feature_args[@]}"
 
-    size_native_artifact="$size_target_root/$size_profile/hypermesh-size-harness"
-    report_artifact \
-        "native/$size_profile/$size_feature_set" \
-        "$size_native_artifact" \
-        native
+        size_native_artifact="$size_target_root/$size_profile/$size_binary"
+        report_artifact \
+            "native/$size_profile/$size_feature_set/$size_binary" \
+            "$size_native_artifact" \
+            native
 
-    cargo build \
-        --locked \
-        --manifest-path "$size_manifest" \
-        --profile "$size_profile" \
-        --target "$size_wasm_target" \
-        --target-dir "$size_target_root" \
-        "${size_feature_args[@]}"
+        cargo build \
+            --locked \
+            --manifest-path "$size_manifest" \
+            --profile "$size_profile" \
+            --bin "$size_binary" \
+            --target "$size_wasm_target" \
+            --target-dir "$size_target_root" \
+            "${size_feature_args[@]}"
 
-    size_wasm_artifact="$size_target_root/$size_wasm_target/$size_profile/hypermesh-size-harness.wasm"
-    report_artifact \
-        "wasm/$size_profile/$size_feature_set" \
-        "$size_wasm_artifact" \
-        wasm
+        size_wasm_artifact="$size_target_root/$size_wasm_target/$size_profile/$size_binary.wasm"
+        report_artifact \
+            "wasm/$size_profile/$size_feature_set/$size_binary" \
+            "$size_wasm_artifact" \
+            wasm
+    done
 done
