@@ -43,6 +43,14 @@ pub enum LinePathSegmentError {
     PredicateUnresolved,
 }
 
+impl std::fmt::Display for LinePathSegmentError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("line-segment endpoint ordering is unresolved")
+    }
+}
+
+impl std::error::Error for LinePathSegmentError {}
+
 /// Cached structural facts for one line path segment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LinePathSegmentFacts {
