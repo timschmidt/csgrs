@@ -67,11 +67,12 @@ The clean-break implementation currently provides:
   area is integrated analytically;
 - native `builder::{revolve_path, revolve_path_region}` for exact closed
   `CurvePath2` profiles and cavities; authored Bézier, polynomial B-spline,
-  and finite NURBS meridians remain native, exact span injectivity and
-  pairwise intersections certify simplicity, polynomial-equivalent boundary
-  and nonuniform rational line-image moments drive exact volume, and genuinely
-  curved rational unimplemented moments remain explicit unsupported
-  measurements;
+  finite NURBS, and single-carrier periodic spline profiles remain native;
+  periodic inputs are partitioned into exact clamped knot-span meridians,
+  exact span injectivity and pairwise intersections certify simplicity,
+  polynomial-equivalent boundary and nonuniform rational line-image moments
+  drive exact volume, and genuinely curved rational unimplemented moments
+  remain explicit unsupported measurements;
 - exact `builder::revolve_region` cavities as inward periodic shells with
   first-moment subtraction and radial/profile material classification;
 - exact `builder::sphere_with_voids` construction with inward complete-sphere

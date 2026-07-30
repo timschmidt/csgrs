@@ -201,8 +201,12 @@ length analytically.
 Spline-profile revolution certificates instead reconstruct the represented
 meridian carriers as one exact `CurvePath2`; unit-weight NURBS spans remain
 polynomial B-splines and rational Bézier controls and weights are retained
-without flattening. Hypercurve classifies the radial/axial boundary directly
-and supplies exact Green-theorem area moments for polynomial and
+without flattening. A single periodic polynomial B-spline or NURBS profile is
+partitioned at its exact native knot intervals into finite clamped
+piecewise-Bézier spline carriers before topology publication. This retains the
+source parameter intervals and rational images while avoiding a degenerate
+one-vertex closed edge. Hypercurve classifies the radial/axial boundary
+directly and supplies exact Green-theorem area moments for polynomial and
 polynomial-equivalent Bézier fragments. A nonuniform rational span certified
 to have an exact finite line image uses that line's geometric moment,
 independent of its projective speed. HyperBREP applies the same exact Pappus

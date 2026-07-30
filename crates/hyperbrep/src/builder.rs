@@ -2851,8 +2851,50 @@ fn validate_simple_revolution_path(profile: &CurvePath2) -> Result<(), Construct
     Ok(())
 }
 
+fn partition_periodic_revolution_path(
+    profile: &CurvePath2,
+) -> Result<CurvePath2, ConstructionError> {
+    let periodic_curves = profile
+        .curves()
+        .iter()
+        .filter(|curve| curve.is_periodic())
+        .count();
+    if periodic_curves == 0 {
+        return Ok(profile.clone());
+    }
+    let [curve] = profile.curves() else {
+        return Err(ConstructionError::UnsupportedRevolutionProfile);
+    };
+    if !curve.is_periodic() {
+        return Err(ConstructionError::UnsupportedRevolutionProfile);
+    }
+    let fragments = curve
+        .native_bezier_fragments()
+        .map_err(GeometryError::from)?;
+    if fragments.len() < 2 {
+        return Err(ConstructionError::ProfileTooSmall);
+    }
+    let curves = fragments
+        .iter()
+        .map(|fragment| {
+            let (start, end) = fragment.parameter_range();
+            curve
+                .clamped_subcurve(start.clone(), end.clone())
+                .map_err(GeometryError::from)
+                .map_err(Into::into)
+        })
+        .collect::<Result<Vec<_>, ConstructionError>>()?;
+    if curves.iter().any(Curve2::is_periodic) {
+        return Err(ConstructionError::UnsupportedRevolutionProfile);
+    }
+    CurvePath2::try_new(curves)
+        .map_err(GeometryError::from)
+        .map_err(Into::into)
+}
+
 fn normalize_revolution_path(profile: &CurvePath2) -> Result<CurvePath2, ConstructionError> {
-    validate_simple_revolution_path(profile)?;
+    let profile = partition_periodic_revolution_path(profile)?;
+    validate_simple_revolution_path(&profile)?;
     let bounds = profile.bounds().map_err(GeometryError::from)?;
     match compare_reals(bounds.min_x(), &Real::zero()) {
         PredicateOutcome::Decided {
@@ -2879,7 +2921,7 @@ fn normalize_revolution_path(profile: &CurvePath2) -> Result<CurvePath2, Constru
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Greater,
             ..
-        } => Ok(profile.clone()),
+        } => Ok(profile),
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Less,
             ..
@@ -5803,6 +5845,68 @@ mod tests {
         assert_eq!(
             compare_reals(&rebuilt.solid_volume(solid).unwrap(), &(r(24) * Real::pi()),).value(),
             Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn revolution_path_partitions_periodic_spline_carriers_at_exact_native_spans() {
+        let cp = |x, y| CurvePoint2::new(r(x), r(y));
+        let controls = vec![cp(3, 0), cp(5, 0), cp(5, 2), cp(3, 2)];
+        let period_knots = (0..=4).map(r).collect::<Vec<_>>();
+        let polynomial_profile = CurvePath2::try_new(vec![
+            Curve2::try_periodic_polynomial_bspline(2, controls.clone(), period_knots.clone())
+                .unwrap(),
+        ])
+        .unwrap();
+        let (model, solid) = revolve_path(&polynomial_profile).unwrap();
+
+        assert_eq!(model.faces().count(), 16);
+        assert_eq!(
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &((r(80) * Real::pi() / r(3)).unwrap()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(4, 0, 1), SolidPointLocation::Inside),
+            (p(5, 0, 1), SolidPointLocation::Boundary),
+            (p(2, 0, 1), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let json = model.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+
+        let rational_profile = CurvePath2::try_new(vec![
+            Curve2::try_periodic_nurbs(2, controls, vec![r(1), r(2), r(3), r(4)], period_knots)
+                .unwrap(),
+        ])
+        .unwrap();
+        let (rational_model, rational_solid) = revolve_path(&rational_profile).unwrap();
+        assert_eq!(rational_model.faces().count(), 16);
+        assert_eq!(
+            rational_model.solid_volume(rational_solid).unwrap_err(),
+            crate::QueryError::Geometry(GeometryError::UnsupportedMeasurement)
+        );
+        let rational_json = rational_model.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&rational_json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            rational_json
         );
     }
 
