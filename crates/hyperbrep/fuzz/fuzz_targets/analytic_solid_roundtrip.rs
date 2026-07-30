@@ -316,6 +316,53 @@ fuzz_target!(|bytes: &[u8]| {
     let _ = decoded.solid_volume(solid);
     let _ = boolean::intersection_graph(&model, solid, &decoded, solid);
 
+    if bytes[0] % 13 == 1 {
+        let Ok((frustum, frustum_solid)) =
+            builder::cone_frustum(Real::from(4), Real::one(), Real::from(3))
+        else {
+            return;
+        };
+        let three_fifths = (Real::from(3) / Real::from(5)).unwrap();
+        let four_fifths = (Real::from(4) / Real::from(5)).unwrap();
+        let parameter_rotation = Matrix4::affine_orthonormal(
+            [
+                [three_fifths.clone(), -four_fifths.clone(), Real::zero()],
+                [four_fifths, three_fifths, Real::zero()],
+                [Real::zero(), Real::zero(), Real::one()],
+            ],
+            [Real::zero(), Real::zero(), Real::zero()],
+        );
+        let Ok(frustum) = frustum.transformed(&parameter_rotation) else {
+            return;
+        };
+        let Ok((cutter, cutter_solid)) = builder::cuboid(
+            hyperbrep::Point3::new(Real::zero(), Real::from(-5), Real::from(-1)),
+            hyperbrep::Point3::new(Real::from(5), Real::from(5), Real::from(4)),
+        ) else {
+            return;
+        };
+        let result = if bytes[1].is_multiple_of(2) {
+            boolean::intersection(&frustum, frustum_solid, &cutter, cutter_solid)
+        } else {
+            boolean::difference(&frustum, frustum_solid, &cutter, cutter_solid)
+        };
+        let Ok(boolean::BooleanResult::Solid { model, solid }) = result else {
+            panic!("certified axial frustum Boolean did not retain one solid");
+        };
+        let expected = (Real::from(21) * Real::pi() / Real::from(2)).unwrap();
+        assert_eq!(
+            hyperlimit::compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let json = model.to_json().unwrap();
+        assert!(
+            json.len() < 100_000,
+            "axial frustum result retained noncanonical pcurve expressions"
+        );
+        let replayed = RawModel::from_json(&json).unwrap().validate().unwrap();
+        assert_eq!(replayed.to_json().unwrap(), json);
+    }
+
     let radius = positive(1);
     let Ok((sphere, sphere_solid)) = builder::sphere(radius.clone()) else {
         return;

@@ -23,6 +23,7 @@ hypersolve = { version = "0.3.1", path = "../hypersolve" }
 hypertri = { version = "0.4.1", path = "../hypertri", optional = true, features = ["earcut"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.149", features = ["unbounded_depth"] }
+serde_stacker = "0.1.14"
 
 [dev-dependencies]
 proptest = "1.7.0"

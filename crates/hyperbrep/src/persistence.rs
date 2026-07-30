@@ -94,7 +94,8 @@ impl RawModel {
     pub fn from_json(json: &str) -> Result<Self, PersistenceError> {
         let mut deserializer = serde_json::Deserializer::from_str(json);
         deserializer.disable_recursion_limit();
-        let data = RawModelData::deserialize(&mut deserializer)
+        let deserializer = serde_stacker::Deserializer::new(&mut deserializer);
+        let data = RawModelData::deserialize(deserializer)
             .map_err(|error| PersistenceError::Json(error.to_string()))?;
         Ok(Self { data })
     }
@@ -1002,6 +1003,22 @@ mod tests {
             RawModel::from_json(&json).unwrap().validate(),
             Err(PersistenceError::Build(BuildError::InvalidReference { .. }))
         ));
+    }
+
+    #[test]
+    fn raw_import_handles_deep_untrusted_json_on_a_growing_stack() {
+        let mut json = String::from(
+            r#"{"version":5,"vertices":[],"curves":[],"pcurves":[],"surfaces":[],"edges":[],"edge_uses":[],"wires":[],"faces":[],"shells":[],"solids":[],"ignored":"#,
+        );
+        for _ in 0..512 {
+            json.push('[');
+        }
+        json.push('0');
+        for _ in 0..512 {
+            json.push(']');
+        }
+        json.push('}');
+        RawModel::from_json(&json).expect("deep untrusted JSON must use the growing stack adapter");
     }
 
     #[test]

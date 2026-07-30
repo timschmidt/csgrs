@@ -62,8 +62,9 @@ authoring a longitude seam.
 carrier through its validating constructor and then replays topology through
 `ModelBuilder`. Derived certificates and caches are never trusted serialized
 state. The decoder permits the full depth of authoritative `Real` expression
-trees rather than inheriting Serde JSON's generic recursion ceiling; geometry
-and topology validation remain the trust boundary.
+trees rather than inheriting Serde JSON's generic recursion ceiling, and wraps
+deserialization in a dynamically growing stack adapter before reconstruction;
+geometry and topology validation remain the trust boundary.
 
 `Model::split_edge` is a topology-changing exact edit. It splits every
 incident pcurve, updates forward and reversed wire traversal, and republishes

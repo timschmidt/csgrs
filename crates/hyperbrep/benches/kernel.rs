@@ -2,7 +2,7 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hyperbrep::{
-    Curve3, Direction, Model, Point3, Real, SolidPointLocation, Surface,
+    Curve3, Direction, Model, Point3, RawModel, Real, SolidPointLocation, Surface,
     SurfaceIntersectionOperand, SurfaceSurfaceIntersection, Vector3, boolean, builder,
 };
 use hyperlimit::compare_reals;
@@ -1605,6 +1605,62 @@ fn main() {
     println!(
         "boolean_kernel/cone_frustum_interval_cut_build_measure: {FRUSTUM_INTERVAL_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / FRUSTUM_INTERVAL_ITERATIONS as u32,
+    );
+
+    const AXIAL_FRUSTUM_ITERATIONS: usize = 10;
+    let diagonal =
+        (Real::one() / Real::from(2).sqrt().expect("sqrt two")).expect("inverse sqrt two");
+    let axial_frame = hyperbrep::Matrix4::affine_orthonormal(
+        [
+            [diagonal.clone(), -diagonal.clone(), Real::zero()],
+            [diagonal.clone(), diagonal, Real::zero()],
+            [Real::zero(), Real::zero(), Real::one()],
+        ],
+        [Real::zero(), Real::zero(), Real::zero()],
+    );
+    let axial_frustum = frustum
+        .transformed(&axial_frame)
+        .expect("rotate frustum parameter frame");
+    let (axial_cutter, axial_cutter_solid) =
+        builder::cuboid(point(0, -5, -1), point(5, 5, 4)).expect("axial frustum cutter");
+    let expected_axial_volume =
+        (Real::from(21) * Real::pi() / Real::from(2)).expect("half-frustum volume");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..AXIAL_FRUSTUM_ITERATIONS {
+        let boolean::BooleanResult::Solid { model, solid } = boolean::intersection(
+            black_box(&axial_frustum),
+            frustum_solid,
+            black_box(&axial_cutter),
+            axial_cutter_solid,
+        )
+        .expect("benchmark axial half-frustum intersection") else {
+            panic!("axial frustum cut must retain one solid");
+        };
+        assert_eq!(
+            compare_reals(
+                &model.solid_volume(solid).expect("half-frustum volume"),
+                &expected_axial_volume,
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let json = model.to_json().expect("half-frustum JSON");
+        assert!(
+            json.len() < 100_000,
+            "mixed-shell planar pcurves must remain canonical"
+        );
+        let decoded = RawModel::from_json(&json)
+            .expect("parse half-frustum JSON")
+            .validate()
+            .expect("revalidate half-frustum JSON");
+        checksum += decoded.counts().faces;
+        black_box(decoded);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "boolean_kernel/axial_half_frustum_build_measure_replay: {AXIAL_FRUSTUM_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / AXIAL_FRUSTUM_ITERATIONS as u32,
     );
 
     const REVOLUTION_BOOLEAN_ITERATIONS: usize = 25;

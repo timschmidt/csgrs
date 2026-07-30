@@ -169,6 +169,11 @@ certificate deliberately rebases rational Bézier patch construction from
   `1.537104 ms/iteration`;
 - coincident cone-frustum interior cut + two-solid rebuild + exact volume:
   `2.274817 ms/iteration`.
+- axial plane/cone ray clipping, longitudinal half-frustum standard
+  intersection, exact volume, compact JSON encoding, untrusted parse, and full
+  revalidation: `460.130112 ms/iteration`. The result JSON is required to stay
+  below 100 KB so planar arrangement-expression history cannot silently
+  re-enter mixed-shell pcurves.
 - coaxial revolution contained cut + inward-shell rebuild + exact volume:
   `2.415905 ms/iteration`.
 

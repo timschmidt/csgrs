@@ -19,7 +19,10 @@ arrangement, selected-face transfer, reversed pcurves, identity stitching,
 solid validation, and exact result publication. A rationally rotated cuboid
 also drives transverse support arrangements and convex/non-convex
 non-prismatic shell publication through all standard Boolean operations. A
-fixed rationally rotated contained cuboid alternates strict planar-void
+rotated frustum cohort drives axis-containing plane/cone rays, finite
+two-pcurve graph clipping, standard longitudinal-half intersection or
+difference, exact half-volume, compact mixed-shell JSON, and untrusted replay.
+A fixed rationally rotated contained cuboid alternates strict planar-void
 publication with exact point-contact rejection and persistence replay. The
 same target varies a parallel plane across a certified linear rational tensor
 patch, evaluates any retained native iso-curve, and clips that intersection
