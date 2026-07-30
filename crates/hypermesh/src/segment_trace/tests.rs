@@ -1239,7 +1239,13 @@ fn axis_box_surface_cut_collection_backtracks_after_uncertified_crossing() {
         &end,
         &[first, second],
         &mut |_edge_start, _edge_end, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Err(HypermeshError::UnknownClassification)
             } else {
                 Ok(Some(p(1, 0, 0)))
@@ -1267,7 +1273,13 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
         &end,
         &[first, second],
         |_edge_start, _edge_end, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Err(HypermeshError::UnknownClassification)
             } else {
                 Ok(Some(p(1, 0, 0)))
@@ -1308,7 +1320,13 @@ fn interior_box_detour_target_collection_reports_unknown_when_surface_cut_family
         &end,
         &[first, second],
         |_edge_start, _edge_end, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Err(HypermeshError::UnknownClassification)
             } else {
                 Ok(Some(p(1, 0, 0)))
@@ -1335,11 +1353,22 @@ fn axis_box_surface_cut_collection_treats_boundary_crossing_as_unknown_and_keeps
         &end,
         &[first, second],
         &mut |_edge_start, _edge_end, polygon, _axis| {
-            let x = polygon.vertices().unwrap()[0].x.clone();
+            let x = polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                .clone();
             Ok(Some(Point3::new(x, r(0), r(0))))
         },
         &mut |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -1366,7 +1395,12 @@ fn axis_box_surface_cut_collection_treats_endpoint_boundary_contact_as_unknown_a
         &end,
         &[first, second],
         &mut |_edge_start, edge_end, polygon, _axis| {
-            let x = polygon.vertices().unwrap()[0].x.clone();
+            let x = polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                .clone();
             if x == r(3) {
                 Ok(Some(edge_end.clone()))
             } else {
@@ -1374,7 +1408,13 @@ fn axis_box_surface_cut_collection_treats_endpoint_boundary_contact_as_unknown_a
             }
         },
         &mut |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(3) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(3)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -1400,7 +1440,12 @@ fn axis_box_surface_cut_collection_treats_start_boundary_contact_as_unknown_and_
         &end,
         &[first, second],
         &mut |edge_start, _edge_end, polygon, _axis| {
-            let x = polygon.vertices().unwrap()[0].x.clone();
+            let x = polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                .clone();
             if x == r(0) {
                 Ok(Some(edge_start.clone()))
             } else {
@@ -1408,7 +1453,13 @@ fn axis_box_surface_cut_collection_treats_start_boundary_contact_as_unknown_and_
             }
         },
         &mut |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(0) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(0)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -1435,11 +1486,22 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
         &end,
         &[first, second],
         |_edge_start, _edge_end, polygon, _axis| {
-            let x = polygon.vertices().unwrap()[0].x.clone();
+            let x = polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                .clone();
             Ok(Some(Point3::new(x, r(0), r(0))))
         },
         |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -1479,7 +1541,12 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
         &end,
         &[first, second],
         |_edge_start, edge_end, polygon, _axis| {
-            let x = polygon.vertices().unwrap()[0].x.clone();
+            let x = polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                .clone();
             if x == r(3) {
                 Ok(Some(edge_end.clone()))
             } else {
@@ -1487,7 +1554,13 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
             }
         },
         |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(3) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(3)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -1527,7 +1600,12 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
         &end,
         &[first, second],
         |edge_start, _edge_end, polygon, _axis| {
-            let x = polygon.vertices().unwrap()[0].x.clone();
+            let x = polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                .clone();
             if x == r(0) {
                 Ok(Some(edge_start.clone()))
             } else {
@@ -1535,7 +1613,13 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
             }
         },
         |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(0) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(0)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -2723,7 +2807,10 @@ fn shifted_halfspace_witnesses_mark_survivors_uncertain_after_boundary_seed_cand
 #[test]
 fn strict_leaf_witness_seeds_include_strict_halfspace_triangle_centroid() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
     let bounds = leaf_bounds(&crate::test_support::approximate_decisions(), &vertices).unwrap();
     let halfspaces = leaf_halfspaces(&leaf);
     let report =
@@ -2763,7 +2850,10 @@ fn strict_leaf_witness_seeds_include_strict_halfspace_triangle_centroid() {
 #[test]
 fn strict_leaf_witness_seeds_include_strict_halfspace_geometry_family() {
     let leaf = approximate_convex_quad(&p(0, 0, 0), &p(4, 0, 0), &p(4, 4, 0), &p(0, 4, 0), 0, 0);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
     let bounds = leaf_bounds(&crate::test_support::approximate_decisions(), &vertices).unwrap();
     let halfspaces = leaf_halfspaces(&leaf);
     let report =
@@ -2797,7 +2887,10 @@ fn strict_leaf_witness_seeds_include_strict_halfspace_geometry_family() {
 #[test]
 fn shifted_edge_interior_points_move_vertices_inside_by_certified_margins() {
     let leaf = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
     let center = centroid(&vertices).unwrap().unwrap();
     let points = shifted_edge_interior_points(
         &crate::test_support::approximate_decisions(),
@@ -2838,7 +2931,10 @@ fn shifted_edge_interior_points_move_vertices_inside_by_certified_margins() {
 fn bounded_probes_include_certified_normal_direction_probe() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
     let center = centroid(&vertices).unwrap().unwrap();
     let interior = shifted_edge_interior_points(
         &crate::test_support::approximate_decisions(),
@@ -5701,7 +5797,10 @@ fn normal_probe_is_clipped_before_intervening_surface() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let blocker = approximate_convex_triangle(&p(6, 0, 0), &p(0, 6, 0), &p(0, 0, 6), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
     let center = centroid(&vertices).unwrap().unwrap();
     let interior = shifted_edge_interior_points(
         &crate::test_support::approximate_decisions(),
@@ -5772,7 +5871,13 @@ fn adjacent_normal_probe_stop_values_backtrack_after_uncertified_crossing() {
         &[first, second],
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
         &mut |point, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Err(HypermeshError::UnknownClassification)
             } else {
                 Ok(if *point == p(3, 1, 1) {
@@ -5810,7 +5915,13 @@ fn adjacent_normal_probe_marks_later_corridor_uncertain_after_uncertified_crossi
         true,
         |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
         |point, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Err(HypermeshError::UnknownClassification)
             } else {
                 Ok(if *point == p(3, 1, 1) {
@@ -5862,7 +5973,13 @@ fn adjacent_normal_probe_reports_unknown_when_corridor_family_is_partially_uncer
         true,
         |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
         |point, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Err(HypermeshError::UnknownClassification)
             } else {
                 Ok(if *point == p(3, 1, 1) {
@@ -5897,7 +6014,13 @@ fn adjacent_normal_probe_stop_values_retain_boundary_crossing_as_stop() {
         &[first, second],
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
         &mut |_point, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -5929,7 +6052,13 @@ fn adjacent_normal_probe_stop_values_treat_boundary_start_contact_as_unknown_and
         &[first, second],
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
         &mut |_point, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -5961,7 +6090,13 @@ fn adjacent_normal_probe_stop_values_treat_endpoint_boundary_contact_as_unknown_
         &[first, second],
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
         &mut |point, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(4) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(4)
+            {
                 Ok(if *point == p(4, 1, 1) {
                     PolygonPointLocation::Boundary
                 } else {
@@ -6052,7 +6187,13 @@ fn adjacent_normal_probe_marks_later_corridor_uncertain_after_boundary_start_con
         true,
         |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
         |_point, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -6099,7 +6240,13 @@ fn adjacent_normal_probe_marks_later_corridor_uncertain_after_endpoint_boundary_
         true,
         |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
         |point, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(4) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(4)
+            {
                 Ok(if *point == p(4, 1, 1) {
                     PolygonPointLocation::Boundary
                 } else {
@@ -6713,7 +6860,13 @@ fn adjacent_axis_probe_stop_values_backtrack_after_uncertified_crossing() {
         0,
         true,
         &mut |_interior, _endpoint, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Err(HypermeshError::UnknownClassification)
             } else {
                 Ok(Some(p(3, 1, 1)))
@@ -6748,7 +6901,13 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_uncertified_crossing
         0,
         true,
         |_interior, _endpoint, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Err(HypermeshError::UnknownClassification)
             } else {
                 Ok(Some(p(3, 1, 1)))
@@ -6797,7 +6956,13 @@ fn adjacent_axis_probe_reports_unknown_when_corridor_family_is_partially_uncerti
         0,
         true,
         |_interior, _endpoint, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Err(HypermeshError::UnknownClassification)
             } else {
                 Ok(Some(p(3, 1, 1)))
@@ -6826,14 +6991,26 @@ fn adjacent_axis_probe_stop_values_retain_boundary_crossing_as_stop() {
         0,
         true,
         &mut |_interior, _endpoint, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Ok(Some(p(2, 1, 1)))
             } else {
                 Ok(Some(p(3, 1, 1)))
             }
         },
         &mut |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -6862,14 +7039,26 @@ fn adjacent_axis_probe_stop_values_treat_endpoint_boundary_contact_as_unknown_an
         0,
         true,
         &mut |_interior, endpoint, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(4) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(4)
+            {
                 Ok(Some(endpoint.clone()))
             } else {
                 Ok(Some(p(3, 1, 1)))
             }
         },
         &mut |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(4) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(4)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -6898,14 +7087,26 @@ fn adjacent_axis_probe_stop_values_treat_start_boundary_contact_as_unknown_and_k
         0,
         true,
         &mut |interior, _endpoint, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Ok(Some(interior.clone()))
             } else {
                 Ok(Some(p(3, 1, 1)))
             }
         },
         &mut |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -6987,14 +7188,26 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_boundary_crossing() 
         0,
         true,
         |_interior, _endpoint, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Ok(Some(p(2, 1, 1)))
             } else {
                 Ok(Some(p(3, 1, 1)))
             }
         },
         |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(2) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(2)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -7041,14 +7254,26 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_endpoint_boundary_co
         0,
         true,
         |_interior, endpoint, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(4) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(4)
+            {
                 Ok(Some(endpoint.clone()))
             } else {
                 Ok(Some(p(3, 1, 1)))
             }
         },
         |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(4) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(4)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -7095,14 +7320,26 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_boundary_start_conta
         0,
         true,
         |interior, _endpoint, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Ok(Some(interior.clone()))
             } else {
                 Ok(Some(p(3, 1, 1)))
             }
         },
         |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Ok(PolygonPointLocation::Boundary)
             } else {
                 Ok(PolygonPointLocation::Interior)
@@ -8189,7 +8426,10 @@ fn strict_leaf_cell_points_retain_replayable_planes() {
 fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let center = p(1, 1, 1);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
     let bounds = leaf_bounds(&crate::test_support::approximate_decisions(), &vertices).unwrap();
     let half = (Real::one() / Real::from(2)).unwrap();
     let mut halfspaces = vec![
@@ -8253,7 +8493,10 @@ fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
 fn strict_leaf_cell_points_merge_same_point_certified_shifted_replay_definitions() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let center = p(1, 1, 1);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
     let bounds = leaf_bounds(&crate::test_support::approximate_decisions(), &vertices).unwrap();
     let half = (Real::one() / Real::from(2)).unwrap();
     let mut halfspaces = vec![
@@ -8459,7 +8702,10 @@ fn strict_leaf_cell_points_return_only_strict_points() {
 #[test]
 fn strict_leaf_witness_points_include_shifted_leaf_vertices() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
 
     let interiors = strict_leaf_witness_points(
         &crate::test_support::approximate_decisions(),
@@ -8479,7 +8725,10 @@ fn strict_leaf_witness_points_include_shifted_leaf_vertices() {
 #[test]
 fn strict_leaf_witness_points_extend_direct_family_with_stricter_leaf_cells() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
     let bounds = leaf_bounds(&crate::test_support::approximate_decisions(), &vertices).unwrap();
     let halfspaces = leaf_halfspaces(&leaf);
     let report =
@@ -8545,7 +8794,10 @@ fn strict_leaf_witness_points_extend_direct_family_with_stricter_leaf_cells() {
 #[test]
 fn strict_leaf_witness_points_merge_stricter_replay_definitions_with_family_uncertainty() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
     let witness = p(1, 1, 1);
     let extra_definition = [
         leaf.support.clone(),
@@ -8591,7 +8843,10 @@ fn strict_leaf_witness_points_merge_stricter_replay_definitions_with_family_unce
 #[test]
 fn strict_leaf_witness_points_try_shifted_search_from_report_witness_seed() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
 
     let interiors = strict_leaf_witness_points_with_seed_families(
         &crate::test_support::approximate_decisions(),
@@ -8974,7 +9229,10 @@ fn strict_leaf_witness_reports_unknown_for_leaf_boundary_contact() {
 #[test]
 fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_seed_family_unknown() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
 
     let points = strict_leaf_witness_points_with_seed_families(
         &crate::test_support::approximate_decisions(),
@@ -9002,7 +9260,10 @@ fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_seed_family_
 #[test]
 fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_boundary_seed_candidate() {
     let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
-    let vertices = leaf.vertices().unwrap();
+    let vertices = leaf
+        .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value();
 
     let points = strict_leaf_witness_points_with_seed_families(
         &crate::test_support::approximate_decisions(),

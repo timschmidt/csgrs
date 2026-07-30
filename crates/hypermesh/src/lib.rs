@@ -128,19 +128,13 @@ pub use mesh::{
     OutputVertex, PolygonSoup, Triangle, TriangleMesh, TriangleMeshRef, certify_convex_mesh,
     polygon_soup,
 };
-pub use operations::{
-    EmberConfig, boolean_difference, boolean_intersection, boolean_mesh,
-    boolean_mesh_with_certified_convex_inputs,
-    boolean_mesh_with_certified_convex_inputs_and_planes, boolean_native_meshes, boolean_operation,
-    boolean_operation_with_certified_convex_inputs, boolean_symmetric_difference,
-    boolean_triangle_meshes, boolean_union,
-};
+pub use operations::{EmberConfig, boolean_mesh, boolean_operation, boolean_triangle_meshes};
 pub use output::{
     BooleanMesh, BooleanMeshClosureEvidence, BooleanResult, OutputPolygon, TriangleSource,
     boolean_mesh_closure_evidence, boolean_mesh_is_closed, certify_output_polygon_closure,
     extract_output, triangulate_and_resolve_certified,
 };
-pub use polygon::{ApproxBounds, ConvexPolygon, InputTrianglePlanes, convex_quad, convex_triangle};
+pub use polygon::{ApproxBounds, ConvexPolygon, convex_quad, convex_triangle};
 pub use segment_trace::{
     TraceAxisSegmentResult, classify_leaf_polygon, trace_axis_segment, trace_segment,
 };

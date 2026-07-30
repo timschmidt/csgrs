@@ -6,8 +6,8 @@ use std::time::Duration;
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use hypermesh::{
     BooleanOp, EmberConfig, ExactGpuMeshBuffers, MeshContext, Point3, PredicatePolicy, Real,
-    approximate_gpu_mesh_f32, approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
-    approximate_interleaved_gpu_mesh_f64, boolean_mesh, boolean_mesh_with_certified_convex_inputs,
+    TriangleMeshRef, approximate_gpu_mesh_f32, approximate_gpu_mesh_f64,
+    approximate_interleaved_gpu_mesh_f32, approximate_interleaved_gpu_mesh_f64, boolean_mesh,
     boolean_operation, convex_hull, convex_hull_with_coplanar_groups,
     convex_hull_with_retained_facts, convex_quad, convex_triangle, extract_output, polygon_soup,
     triangulate_and_resolve_certified,
@@ -134,7 +134,12 @@ fn bench_end_to_end(c: &mut Criterion) {
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ];
-    let cube_refs = [cubes[0].as_ref(), cubes[1].as_ref()];
+    let cube_refs = [
+        TriangleMeshRef::new(&cubes[0].positions, &cubes[0].triangles),
+        TriangleMeshRef::new(&cubes[1].positions, &cubes[1].triangles),
+    ];
+    let certified_cubes = cubes.clone().map(|mesh| mesh.with_certified_convexity());
+    let certified_cube_refs = [certified_cubes[0].as_ref(), certified_cubes[1].as_ref()];
     let mut output_group = c.benchmark_group("boolean_immediate_output/cubes");
     output_group.sample_size(20);
     output_group.warm_up_time(Duration::from_secs(1));
@@ -177,11 +182,10 @@ fn bench_end_to_end(c: &mut Criterion) {
             &operation,
             |b, operation| {
                 b.iter(|| {
-                    boolean_mesh_with_certified_convex_inputs(
+                    boolean_mesh(
                         &CONTEXT,
-                        black_box(&cube_refs),
+                        black_box(&certified_cube_refs),
                         *operation,
-                        &[true, true],
                         EmberConfig::default(),
                     )
                     .expect("certified-convex cube triangle soup is certified")
@@ -247,9 +251,13 @@ fn bench_end_to_end(c: &mut Criterion) {
     c.bench_function("output/cube_union_extract_public_views", |b| {
         b.iter(|| {
             let result = black_box(&cube_union);
-            let owned = extract_output(result).expect("benchmark output extraction is certified");
-            let borrowed = hypermesh::output::extract_output_polygons(&result.output().polygons)
-                .expect("benchmark borrowed output extraction is certified");
+            let owned = extract_output(&CONTEXT, result)
+                .expect("benchmark output extraction is certified")
+                .into_value();
+            let borrowed =
+                hypermesh::output::extract_output_polygons(&CONTEXT, &result.output().polygons)
+                    .expect("benchmark borrowed output extraction is certified")
+                    .into_value();
             (owned, borrowed)
         })
     });

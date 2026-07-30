@@ -1,6 +1,9 @@
+use std::num::NonZeroU32;
+
+use hyperlattice::Matrix4;
 use hypermesh::{
     Aabb, Classification, HypermeshError, MeshCertainty, MeshContext, Plane, Point3,
-    PredicatePolicy, Real, TriangleMesh, classify_point,
+    PredicatePolicy, Real, Triangle, TriangleMesh, classify_point,
 };
 
 const STRICT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
@@ -76,4 +79,107 @@ fn native_bounds_do_not_bypass_the_selected_policy() {
     let outcome = mesh.exact_bounds(&APPROXIMATE).unwrap();
     assert!(outcome.value.is_some());
     assert_eq!(outcome.certainty, MeshCertainty::Approximate512Consumed);
+}
+
+#[test]
+fn reflection_normal_domain_obeys_the_selected_policy() {
+    let (left, right) = terminal_equality();
+    let plane = Plane::from_coefficients(left - right, Real::zero(), Real::zero(), Real::zero());
+
+    assert!(matches!(
+        plane.reflection_matrix(&STRICT),
+        Err(HypermeshError::PredicateUndecided { .. })
+    ));
+    assert_eq!(
+        plane.reflection_matrix(&APPROXIMATE),
+        Err(HypermeshError::DegeneratePointSet)
+    );
+}
+
+#[test]
+fn projective_transform_finiteness_obeys_the_selected_policy() {
+    let (left, right) = terminal_equality();
+    let delta = left - right;
+    let zero = Real::zero();
+    let matrix = Matrix4::from_row_major([
+        Real::one(),
+        zero.clone(),
+        zero.clone(),
+        zero.clone(),
+        zero.clone(),
+        Real::one(),
+        zero.clone(),
+        zero.clone(),
+        zero.clone(),
+        zero.clone(),
+        Real::one(),
+        zero.clone(),
+        zero.clone(),
+        zero.clone(),
+        zero,
+        delta,
+    ]);
+    let mesh = TriangleMesh::new(vec![Point3::origin()], Vec::new());
+
+    assert!(matches!(
+        mesh.try_transformed(&STRICT, &matrix),
+        Err(HypermeshError::PredicateUndecided { .. })
+    ));
+    assert_eq!(
+        mesh.try_transformed(&APPROXIMATE, &matrix),
+        Err(HypermeshError::PointAtInfinity)
+    );
+}
+
+#[test]
+fn native_edit_operations_reject_invalid_indices() {
+    let mesh = TriangleMesh::new(vec![Point3::origin()], vec![Triangle::new(0, 1, 0)]);
+    let expected = HypermeshError::VertexIndexOutOfBounds {
+        index: 1,
+        vertex_count: 1,
+    };
+
+    assert_eq!(mesh.adjacency().unwrap_err(), expected);
+    assert_eq!(mesh.connectivity_counts().unwrap_err(), expected);
+    assert_eq!(
+        mesh.subdivide_triangles(NonZeroU32::MIN).unwrap_err(),
+        expected
+    );
+    assert_eq!(
+        mesh.laplacian_smooth(&Real::one(), 1).unwrap_err(),
+        expected
+    );
+    assert_eq!(
+        mesh.taubin_smooth(&Real::one(), &-Real::one(), 1)
+            .unwrap_err(),
+        expected
+    );
+    assert_eq!(
+        mesh.dihedral_angle(&STRICT, Triangle::new(0, 1, 0), Triangle::new(0, 0, 0))
+            .unwrap_err(),
+        expected
+    );
+}
+
+#[test]
+fn dihedral_normal_domain_obeys_the_selected_policy() {
+    let (left, right) = terminal_equality();
+    let mesh = TriangleMesh::new(
+        vec![
+            Point3::origin(),
+            Point3::new(left - right, Real::zero(), Real::zero()),
+            Point3::new(Real::zero(), Real::one(), Real::zero()),
+        ],
+        vec![Triangle::new(0, 1, 2)],
+    );
+    let triangle = mesh.triangles[0];
+
+    assert!(matches!(
+        mesh.dihedral_angle(&STRICT, triangle, triangle),
+        Err(HypermeshError::PredicateUndecided { .. })
+    ));
+    assert_eq!(
+        mesh.dihedral_angle(&APPROXIMATE, triangle, triangle),
+        Err(HypermeshError::DegeneratePointSet)
+    );
 }

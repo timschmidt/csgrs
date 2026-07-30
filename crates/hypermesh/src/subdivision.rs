@@ -435,7 +435,8 @@ fn process_leaf_into_inner_with_pairwise_cache(
     let leaf_classification_lookup_len = leaf_classification_cache.borrow().len();
     let leaf_point_classification_lookup_len = leaf_point_classification_cache.borrow().len();
     let intersections = pairwise_query(polygons)?;
-    let direct_polygon_components = direct_leaf_polygon_components(polygons, &intersections)?;
+    let direct_polygon_components =
+        direct_leaf_polygon_components(decisions, polygons, &intersections)?;
     let mut direct_component_winding: Vec<Option<WindingNumberVector>> = vec![None; polygons.len()];
     stats.intersection_count = intersections.iter().map(Vec::len).sum();
 
@@ -2611,7 +2612,7 @@ pub(crate) fn build_host_bsp_leaves(
     polygons: &[ConvexPolygon],
     intersections: &[PairwiseIntersection],
 ) -> HypermeshResult<Vec<BspLeaf>> {
-    let mut bsp = LocalBsp::new(polygon);
+    let mut bsp = LocalBsp::new(decisions, polygon)?;
     bsp.add_overlap_edges(decisions, &unique_overlap_edge_planes(intersections))?;
     for intersection in intersections {
         match intersection.kind {
@@ -2850,14 +2851,14 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
             )?;
         }
     } else {
-        let leaf_vertices = leaf_polygon.vertices()?;
+        let leaf_vertices = leaf_polygon.vertices_decision(decisions)?;
         for (other_index, other) in polygons.iter().enumerate() {
             if other.mesh_index == polygon.mesh_index
                 && other.polygon_index == polygon.polygon_index
             {
                 continue;
             }
-            let other_vertices = other.vertices()?;
+            let other_vertices = other.vertices_decision(decisions)?;
             let intersection = intersect_polygons_with_vertices(
                 decisions,
                 &leaf_polygon,
@@ -2885,7 +2886,7 @@ fn certified_convex_leaf_centroid(
     decisions: &DecisionContext,
     leaf: &ConvexPolygon,
 ) -> HypermeshResult<crate::segment_trace::InteriorLeafPoint> {
-    let vertices = leaf.vertices()?;
+    let vertices = leaf.vertices_decision(decisions)?;
     if vertices.len() < 3 {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
@@ -3211,6 +3212,7 @@ fn unique_overlap_edge_planes(intersections: &[PairwiseIntersection]) -> Vec<Pla
 }
 
 fn direct_leaf_polygon_components(
+    decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     intersections: &[Vec<PairwiseIntersection>],
 ) -> HypermeshResult<Vec<Option<usize>>> {
@@ -3220,7 +3222,7 @@ fn direct_leaf_polygon_components(
         .map(|(polygon, intersections)| {
             intersections
                 .is_empty()
-                .then(|| polygon.vertices())
+                .then(|| polygon.vertices_decision(decisions))
                 .transpose()
         })
         .collect::<HypermeshResult<Vec<_>>>()?;
@@ -3296,7 +3298,7 @@ fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
     let bvh = ExactBvh::build_decision(decisions, polygons)?;
     let vertices = polygons
         .iter()
-        .map(ConvexPolygon::vertices)
+        .map(|polygon| polygon.vertices_decision(decisions))
         .collect::<HypermeshResult<Vec<_>>>()?;
     let mut candidate_pairs = Vec::new();
     bvh.intersect_pairs_decision(decisions, &bvh, |left, right| {
@@ -3739,7 +3741,7 @@ fn polygon_family_is_closed_within_bounds(
         let Some(edges) = mesh_edges.get_mut(mesh_index) else {
             return Ok(false);
         };
-        let vertices = polygon.vertices()?;
+        let vertices = polygon.vertices_decision(decisions)?;
         if vertices.len() < 3 {
             return Ok(false);
         }

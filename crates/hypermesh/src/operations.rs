@@ -11,7 +11,10 @@ use hyperreal::RationalLinearForm4Query;
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Aabb, Classification, Plane, axis_mut, axis_ref, compare_real_decision};
+use crate::geometry::{
+    Aabb, Classification, Plane, affine_projective_point_decision, axis_mut, axis_ref,
+    compare_real_decision,
+};
 use crate::mesh::{
     Triangle, TriangleMesh, TriangleMeshRef, build_polygon_soup_with_certified_convex_inputs,
     build_polygon_soup_with_deferred_edges,
@@ -209,40 +212,13 @@ pub fn boolean_operation(
 ) -> HypermeshResult<MeshOutcome<BooleanResult>> {
     let decisions = DecisionContext::new(context);
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(
-        &decisions, meshes, operation, None, None, None, config, true,
-    )?;
-    crate::trace_dispatch!("boolean-operation", "certify-output-closure");
-    let result = computation.into_result(&decisions, operation)?;
-    crate::trace_dispatch!("boolean-operation", "complete");
-    Ok(decisions.finish(result))
-}
-
-/// Performs a Boolean operation using exact convex-input facts supplied by
-/// the mesh owner.
-///
-/// A `true` entry certifies that the corresponding input is one closed,
-/// non-self-intersecting, outward-oriented convex shell. Cross-input
-/// intersections and output closure remain exactly certified.
-pub fn boolean_operation_with_certified_convex_inputs(
-    context: &MeshContext,
-    meshes: &[TriangleMeshRef<'_>],
-    operation: BooleanOp,
-    certified_convex_inputs: &[bool],
-    config: EmberConfig,
-) -> HypermeshResult<MeshOutcome<BooleanResult>> {
-    let decisions = DecisionContext::new(context);
-    crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(
-        &decisions,
-        meshes,
-        operation,
-        Some(certified_convex_inputs),
-        None,
-        None,
-        config,
-        true,
-    )?;
+    let computation = if let Some(native) = native_meshes(meshes) {
+        compute_native_boolean(&decisions, &native, operation, config, true)?
+    } else {
+        compute_boolean(
+            &decisions, meshes, operation, None, None, None, config, true,
+        )?
+    };
     crate::trace_dispatch!("boolean-operation", "certify-output-closure");
     let result = computation.into_result(&decisions, operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
@@ -262,27 +238,17 @@ pub fn boolean_mesh(
 ) -> HypermeshResult<MeshOutcome<crate::output::BooleanMesh>> {
     let decisions = DecisionContext::new(context);
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(
-        &decisions, meshes, operation, None, None, None, config, false,
-    )?;
+    let computation = if let Some(native) = native_meshes(meshes) {
+        compute_native_boolean(&decisions, &native, operation, config, false)?
+    } else {
+        compute_boolean(
+            &decisions, meshes, operation, None, None, None, config, false,
+        )?
+    };
     crate::trace_dispatch!("boolean-operation", "triangulate-output");
     let soup = computation.into_boolean_mesh(&decisions, operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
     Ok(decisions.finish(soup))
-}
-
-/// Performs a Boolean directly on native meshes while consuming their retained
-/// convexity facts.
-pub fn boolean_native_meshes(
-    context: &MeshContext,
-    meshes: &[&TriangleMesh],
-    operation: BooleanOp,
-    config: EmberConfig,
-) -> HypermeshResult<MeshOutcome<crate::output::BooleanMesh>> {
-    let decisions = DecisionContext::new(context);
-    let mesh = compute_native_boolean(&decisions, meshes, operation, config)?
-        .into_boolean_mesh(&decisions, operation)?;
-    Ok(decisions.finish(mesh))
 }
 
 fn compute_native_boolean(
@@ -290,8 +256,16 @@ fn compute_native_boolean(
     meshes: &[&TriangleMesh],
     operation: BooleanOp,
     config: EmberConfig,
+    retain_winding: bool,
 ) -> HypermeshResult<BooleanComputation> {
-    match compute_native_boolean_with_polygon_reuse(decisions, meshes, operation, config, true) {
+    match compute_native_boolean_with_polygon_reuse(
+        decisions,
+        meshes,
+        operation,
+        config,
+        retain_winding,
+        true,
+    ) {
         Ok(computation) => Ok(computation),
         Err(error)
             if meshes
@@ -299,7 +273,14 @@ fn compute_native_boolean(
                 .any(|mesh| mesh.retained_input_polygons().is_some())
                 && is_retryable_boolean_path_error(&error) =>
         {
-            compute_native_boolean_with_polygon_reuse(decisions, meshes, operation, config, false)
+            compute_native_boolean_with_polygon_reuse(
+                decisions,
+                meshes,
+                operation,
+                config,
+                retain_winding,
+                false,
+            )
         }
         Err(error) => Err(error),
     }
@@ -310,6 +291,7 @@ fn compute_native_boolean_with_polygon_reuse(
     meshes: &[&TriangleMesh],
     operation: BooleanOp,
     config: EmberConfig,
+    retain_winding: bool,
     reuse_polygons: bool,
 ) -> HypermeshResult<BooleanComputation> {
     let views = meshes.iter().map(|mesh| mesh.as_ref()).collect::<Vec<_>>();
@@ -349,15 +331,19 @@ fn compute_native_boolean_with_polygon_reuse(
         plane_views.as_deref(),
         retained_polygons.as_deref(),
         config,
-        false,
+        retain_winding,
     )
+}
+
+fn native_meshes<'a>(meshes: &[TriangleMeshRef<'a>]) -> Option<Vec<&'a TriangleMesh>> {
+    meshes.iter().map(|mesh| mesh.native).collect()
 }
 
 /// Performs one exact regularized Boolean and returns reusable native geometry.
 ///
 /// This carrier-level entry point owns exact algebraic fast paths for empty,
-/// identical, disjoint, and axis-aligned-box inputs. Inputs outside those certified cases use
-/// the same general EMBER path as [`boolean_native_meshes`].
+/// identical, disjoint, and axis-aligned-box inputs. Inputs outside those
+/// certified cases use the same general EMBER path as [`boolean_operation`].
 pub fn boolean_triangle_meshes(
     context: &MeshContext,
     left: &TriangleMesh,
@@ -454,28 +440,29 @@ fn boolean_triangle_meshes_decision(
             return Ok(box_from_bounds(&bounds));
         }
     }
-    let computation = match compute_native_boolean(decisions, &[left, right], operation, config) {
-        Ok(computation) => computation,
-        Err(error) if is_retryable_boolean_path_error(&error) => {
-            // Retained construction identities are an optimization. If they
-            // cannot certify a sign, retry from the exact native triangles
-            // before reporting the Boolean itself as indeterminate.
-            let computation = compute_boolean(
-                decisions,
-                &[left.as_ref(), right.as_ref()],
-                operation,
-                None,
-                None,
-                None,
-                config,
-                false,
-            )?;
-            return Ok(computation
-                .into_boolean_mesh(decisions, operation)?
-                .into_triangle_mesh());
-        }
-        Err(error) => return Err(error),
-    };
+    let computation =
+        match compute_native_boolean(decisions, &[left, right], operation, config, false) {
+            Ok(computation) => computation,
+            Err(error) if is_retryable_boolean_path_error(&error) => {
+                // Retained construction identities are an optimization. If they
+                // cannot certify a sign, retry from the exact native triangles
+                // before reporting the Boolean itself as indeterminate.
+                let computation = compute_boolean(
+                    decisions,
+                    &[left.as_ref(), right.as_ref()],
+                    operation,
+                    None,
+                    None,
+                    None,
+                    config,
+                    false,
+                )?;
+                return Ok(computation
+                    .into_boolean_mesh(decisions, operation)?
+                    .into_triangle_mesh());
+            }
+            Err(error) => return Err(error),
+        };
     let (mesh, provenance) = computation.into_native_materialization(decisions, operation)?;
     materialize_boolean_mesh(mesh, provenance)
 }
@@ -500,7 +487,6 @@ fn is_retryable_boolean_path_error(error: &HypermeshError) -> bool {
             | HypermeshError::ReferencePropagationFailed
             | HypermeshError::SubdivisionDepthLimit { .. }
             | HypermeshError::OpenOutput { .. }
-            | HypermeshError::OutputResolutionLimit { .. }
             | HypermeshError::PointAtInfinity
     )
 }
@@ -754,69 +740,6 @@ fn box_from_bounds(bounds: &hyperlattice::Aabb) -> TriangleMesh {
     )
 }
 
-/// Performs a Boolean operation with exact convex-input facts and immediately
-/// returns a closure-certified triangle soup.
-///
-/// This is the direct triangle-output counterpart of
-/// [`boolean_operation_with_certified_convex_inputs`].
-pub fn boolean_mesh_with_certified_convex_inputs(
-    context: &MeshContext,
-    meshes: &[TriangleMeshRef<'_>],
-    operation: BooleanOp,
-    certified_convex_inputs: &[bool],
-    config: EmberConfig,
-) -> HypermeshResult<MeshOutcome<crate::output::BooleanMesh>> {
-    let decisions = DecisionContext::new(context);
-    crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(
-        &decisions,
-        meshes,
-        operation,
-        Some(certified_convex_inputs),
-        None,
-        None,
-        config,
-        false,
-    )?;
-    crate::trace_dispatch!("boolean-operation", "triangulate-output");
-    let soup = computation.into_boolean_mesh(&decisions, operation)?;
-    crate::trace_dispatch!("boolean-operation", "complete");
-    Ok(decisions.finish(soup))
-}
-
-/// Performs a Boolean operation with exact convex-input facts and exact
-/// per-triangle plane certificates.
-///
-/// Each plane slice must align with the corresponding mesh's triangle slice.
-/// The supplied oriented support and boundary planes are used instead of
-/// reconstructing the same objects from transformed vertex coordinates,
-/// preserving affine-transform identities at the geometric-object boundary.
-pub fn boolean_mesh_with_certified_convex_inputs_and_planes(
-    context: &MeshContext,
-    meshes: &[TriangleMeshRef<'_>],
-    operation: BooleanOp,
-    certified_convex_inputs: &[bool],
-    input_planes: &[&[InputTrianglePlanes]],
-    config: EmberConfig,
-) -> HypermeshResult<MeshOutcome<crate::output::BooleanMesh>> {
-    let decisions = DecisionContext::new(context);
-    crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(
-        &decisions,
-        meshes,
-        operation,
-        Some(certified_convex_inputs),
-        Some(input_planes),
-        None,
-        config,
-        false,
-    )?;
-    crate::trace_dispatch!("boolean-operation", "triangulate-output");
-    let soup = computation.into_boolean_mesh(&decisions, operation)?;
-    crate::trace_dispatch!("boolean-operation", "complete");
-    Ok(decisions.finish(soup))
-}
-
 fn compute_boolean(
     decisions: &DecisionContext,
     meshes: &[TriangleMeshRef<'_>],
@@ -957,7 +880,7 @@ fn polygon_with_geometric_edge_halfspaces(
     decisions: &DecisionContext,
     mut polygon: ConvexPolygon,
 ) -> HypermeshResult<ConvexPolygon> {
-    let vertices = polygon.vertices()?;
+    let vertices = polygon.vertices_decision(decisions)?;
     if vertices.is_empty() {
         return Err(HypermeshError::UnknownClassification);
     }
@@ -2661,7 +2584,7 @@ impl ProjectiveAffineCache {
             if let Some(entry) = self.points.get(&key) {
                 return Ok(entry.affine.clone());
             }
-            let affine = affine_projective_point(decisions, point)?;
+            let affine = affine_projective_point_decision(decisions, point)?;
             self.points.insert(
                 key,
                 ProjectiveAffineCacheEntry {
@@ -2674,31 +2597,12 @@ impl ProjectiveAffineCache {
             }
             return Ok(affine);
         }
-        let affine = affine_projective_point(decisions, point)?;
+        let affine = affine_projective_point_decision(decisions, point)?;
         if let Some(identity) = identity {
             self.identities.insert(identity.clone(), affine.clone());
         }
         Ok(affine)
     }
-}
-
-fn affine_projective_point(
-    decisions: &DecisionContext,
-    point: &HomogeneousPoint3,
-) -> HypermeshResult<Point3> {
-    let reciprocal = hyperlimit::reciprocal_real(&point.w, decisions.policy()).map_err(|_| {
-        if point.w.definitely_zero() {
-            crate::error::HypermeshError::PointAtInfinity
-        } else {
-            crate::error::HypermeshError::UnknownClassification
-        }
-    })?;
-    let reciprocal = decisions.decide(reciprocal, "projective reciprocal")?;
-    Ok(Point3::new(
-        &point.x * &reciprocal,
-        &point.y * &reciprocal,
-        &point.z * reciprocal,
-    ))
 }
 
 fn compute_two_convex_inputs_projectively(
@@ -4542,46 +4446,6 @@ fn projective_transition_is_emitted(host: usize, inside_other: bool, operation: 
         BooleanOp::Difference => (host == 0 && !inside_other) || (host == 1 && inside_other),
         BooleanOp::SymmetricDifference => true,
     }
-}
-
-/// Union convenience wrapper.
-pub fn boolean_union(
-    context: &MeshContext,
-    a: TriangleMeshRef<'_>,
-    b: TriangleMeshRef<'_>,
-    config: EmberConfig,
-) -> HypermeshResult<MeshOutcome<BooleanResult>> {
-    boolean_operation(context, &[a, b], BooleanOp::Union, config)
-}
-
-/// Intersection convenience wrapper.
-pub fn boolean_intersection(
-    context: &MeshContext,
-    a: TriangleMeshRef<'_>,
-    b: TriangleMeshRef<'_>,
-    config: EmberConfig,
-) -> HypermeshResult<MeshOutcome<BooleanResult>> {
-    boolean_operation(context, &[a, b], BooleanOp::Intersection, config)
-}
-
-/// Difference convenience wrapper.
-pub fn boolean_difference(
-    context: &MeshContext,
-    a: TriangleMeshRef<'_>,
-    b: TriangleMeshRef<'_>,
-    config: EmberConfig,
-) -> HypermeshResult<MeshOutcome<BooleanResult>> {
-    boolean_operation(context, &[a, b], BooleanOp::Difference, config)
-}
-
-/// Symmetric-difference convenience wrapper.
-pub fn boolean_symmetric_difference(
-    context: &MeshContext,
-    a: TriangleMeshRef<'_>,
-    b: TriangleMeshRef<'_>,
-    config: EmberConfig,
-) -> HypermeshResult<MeshOutcome<BooleanResult>> {
-    boolean_operation(context, &[a, b], BooleanOp::SymmetricDifference, config)
 }
 
 fn expanded_bounds(bounds: &Aabb) -> Aabb {

@@ -296,7 +296,7 @@ pub(super) fn interior_leaf_points(
     decisions: &DecisionContext,
     leaf: &ConvexPolygon,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
-    let vertices = leaf.vertices()?;
+    let vertices = leaf.vertices_decision(decisions)?;
     if vertices.is_empty() {
         return Ok(Vec::new());
     }
@@ -774,7 +774,7 @@ pub(super) fn strict_leaf_cell_points(
     leaf: &ConvexPolygon,
     strict_interior: &Point3,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
-    let vertices = leaf.vertices()?;
+    let vertices = leaf.vertices_decision(decisions)?;
     let bounds = leaf_bounds(decisions, &vertices)?;
     let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
     let mut halfspaces = Vec::with_capacity(leaf.edges.len() + 2);
@@ -872,7 +872,7 @@ pub(super) fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
     shifted_geometry_seeds: Vec<Point3>,
     mut build_shifted_witnesses: impl FnMut(&Point3) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>>,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
-    let vertices = leaf.vertices()?;
+    let vertices = leaf.vertices_decision(decisions)?;
     let _bounds = leaf_bounds(decisions, &vertices)?;
     let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
     let mut halfspaces = Vec::with_capacity(leaf.edges.len() + 2);

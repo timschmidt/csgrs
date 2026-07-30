@@ -781,7 +781,7 @@ fn polygon_bounds(
         return Ok(bounds.as_ref().clone());
     }
 
-    let vertices = polygon.vertices()?;
+    let vertices = polygon.vertices_decision(decisions)?;
     let refs = vertices.iter().collect::<Vec<_>>();
     ApproxBounds::for_points_decision(decisions, &refs)
 }

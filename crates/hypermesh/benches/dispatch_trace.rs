@@ -6,8 +6,7 @@ mod competitive_support;
 use hypermesh::clip::clip_polygon;
 use hypermesh::{
     BooleanOp, EmberConfig, ExactBvh, HypermeshResult, MeshContext, Plane, Point3, PredicatePolicy,
-    Real, boolean_mesh_with_certified_convex_inputs, boolean_operation,
-    boolean_operation_with_certified_convex_inputs, classify_polygon_output, convex_hull,
+    Real, TriangleMeshRef, boolean_mesh, boolean_operation, classify_polygon_output, convex_hull,
     convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, convex_triangle,
     extract_output, intersect_polygons, polygon_soup, propagate_wnv, trace_axis_segment,
     trace_segment,
@@ -199,7 +198,17 @@ fn main() {
     }
 
     let cube_pair = common::cube_pair();
-    let cube_refs = [cube_pair[0].as_ref(), cube_pair[1].as_ref()];
+    let cube_refs = [
+        TriangleMeshRef::new(&cube_pair[0].positions, &cube_pair[0].triangles),
+        TriangleMeshRef::new(&cube_pair[1].positions, &cube_pair[1].triangles),
+    ];
+    let certified_cube_pair = cube_pair
+        .clone()
+        .map(|mesh| mesh.with_certified_convexity());
+    let certified_cube_refs = [
+        certified_cube_pair[0].as_ref(),
+        certified_cube_pair[1].as_ref(),
+    ];
     let soup = trace_workload("mesh_build_polygon_soup", || {
         Ok(polygon_soup(&CONTEXT, &cube_refs)?.into_value())
     });
@@ -207,25 +216,25 @@ fn main() {
     assert!(!soup.polygons.is_empty());
 
     trace_workload("immediate_certified_convex_polygon", || {
-        let result = boolean_operation_with_certified_convex_inputs(
+        let result = boolean_operation(
             &CONTEXT,
-            &cube_refs,
+            &certified_cube_refs,
             BooleanOp::Union,
-            &[true, true],
             EmberConfig::default(),
         )?
         .into_value();
-        let owned = extract_output(&result)?;
-        let borrowed = hypermesh::output::extract_output_polygons(&result.output().polygons)?;
+        let owned = extract_output(&CONTEXT, &result)?.into_value();
+        let borrowed =
+            hypermesh::output::extract_output_polygons(&CONTEXT, &result.output().polygons)?
+                .into_value();
         assert_eq!(owned.len(), borrowed.len());
         Ok(owned.len())
     });
     trace_workload("immediate_certified_convex_boolean_mesh", || {
-        let boolean_mesh = boolean_mesh_with_certified_convex_inputs(
+        let boolean_mesh = boolean_mesh(
             &CONTEXT,
-            &cube_refs,
+            &certified_cube_refs,
             BooleanOp::Union,
-            &[true, true],
             EmberConfig::default(),
         )?
         .into_value();

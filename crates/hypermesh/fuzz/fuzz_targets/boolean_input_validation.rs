@@ -4,7 +4,7 @@ mod support;
 
 use hypermesh::{
     BooleanOp, EmberConfig, HypermeshError, Triangle, TriangleMesh, boolean_mesh,
-    boolean_operation, boolean_operation_with_certified_convex_inputs,
+    boolean_operation,
 };
 use libfuzzer_sys::fuzz_target;
 use support::{Bytes, CONTEXT, box_mesh, operation, value};
@@ -111,15 +111,17 @@ fuzz_target!(|data: [u8; 4]| {
             ));
         }
         _ => {
-            let error = value(boolean_operation_with_certified_convex_inputs(
-                &CONTEXT,
-                &[mesh.as_ref()],
-                op,
-                &[],
-                EmberConfig::default(),
-            ))
-            .unwrap_err();
-            assert_eq!(error, HypermeshError::UnknownClassification);
+            let mut triangles = mesh.triangles.to_vec();
+            triangles.pop();
+            let invalid_mesh = TriangleMesh::new(mesh.positions.to_vec(), triangles)
+                .with_certified_convexity();
+            assert!(matches!(
+                rejection(&invalid_mesh, op, immediate),
+                HypermeshError::OpenInput {
+                    mesh_index: 0,
+                    boundary_edges: 3,
+                }
+            ));
         }
     }
 });

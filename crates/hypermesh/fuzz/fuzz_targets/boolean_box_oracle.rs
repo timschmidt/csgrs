@@ -3,8 +3,7 @@
 mod support;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, boolean_mesh, boolean_mesh_with_certified_convex_inputs,
-    boolean_operation,
+    BooleanOp, EmberConfig, TriangleMeshRef, boolean_mesh, boolean_operation,
 };
 use libfuzzer_sys::fuzz_target;
 use support::{
@@ -67,20 +66,31 @@ fuzz_target!(|data: [u8; 32]| {
     }
     let meshes = bounds
         .iter()
-        .map(|(min, max)| box_mesh(*min, *max))
+        .map(|(min, max)| {
+            let mesh = box_mesh(*min, *max);
+            if api == 2 {
+                mesh.with_certified_convexity()
+            } else {
+                mesh
+            }
+        })
         .collect::<Vec<_>>();
     let refs = meshes.iter().map(|mesh| mesh.as_ref()).collect::<Vec<_>>();
+    let raw_refs = meshes
+        .iter()
+        .map(|mesh| TriangleMeshRef::new(&mesh.positions, &mesh.triangles))
+        .collect::<Vec<_>>();
 
     let soup = match api {
         0 => {
             let result = value(boolean_operation(
                 &CONTEXT,
-                &refs,
+                &raw_refs,
                 op,
                 EmberConfig::default(),
             ))
             .unwrap_or_else(|error| panic!("integer-box Boolean failed: {error:?}"));
-            validate_result(&result, op, refs.len())
+            validate_result(&result, op, raw_refs.len())
         }
         1 => {
             let soup = value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default()))
@@ -89,14 +99,7 @@ fuzz_target!(|data: [u8; 32]| {
             soup
         }
         _ => {
-            let certified = vec![true; refs.len()];
-            let soup = value(boolean_mesh_with_certified_convex_inputs(
-                &CONTEXT,
-                &refs,
-                op,
-                &certified,
-                EmberConfig::default(),
-            ))
+            let soup = value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default()))
             .unwrap_or_else(|error| {
                 panic!("certified integer-box immediate Boolean failed: {error:?}")
             });

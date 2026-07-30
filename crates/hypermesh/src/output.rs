@@ -15,8 +15,6 @@ use crate::winding::WindingPair;
 use hyperlattice::{Point3, Rational, Real};
 use hyperreal::{RationalLine2Filter, RationalPoint3Query, RealSign};
 
-const RESOLVE_TJUNCTION_MAX_PASSES: usize = 256;
-
 pub(crate) const ARRANGEMENT_CLASSIFICATION: i8 = 2;
 
 type SplitEdgeCache = StorageHashMap<[usize; 2], SplitEdgeChain>;
@@ -700,16 +698,31 @@ impl DirectedEdgeUses {
 }
 
 /// Extracts output polygons from a boolean result.
-pub fn extract_output(result: &BooleanResult) -> HypermeshResult<Vec<OutputPolygon>> {
-    extract_output_polygons(&result.output.polygons)
+pub fn extract_output(
+    context: &MeshContext,
+    result: &BooleanResult,
+) -> HypermeshResult<MeshOutcome<Vec<OutputPolygon>>> {
+    extract_output_polygons(context, &result.output.polygons)
 }
 
 /// Extracts output polygons from a borrowed polygon slice.
-pub fn extract_output_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<Vec<OutputPolygon>> {
+pub fn extract_output_polygons(
+    context: &MeshContext,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<MeshOutcome<Vec<OutputPolygon>>> {
+    let decisions = DecisionContext::new(context);
+    let output = extract_output_polygons_decision(&decisions, polygons)?;
+    Ok(decisions.finish(output))
+}
+
+fn extract_output_polygons_decision(
+    decisions: &DecisionContext,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<OutputPolygon>> {
     let mut out = Vec::with_capacity(polygons.len());
     for polygon in polygons {
         let mut vertices = Vec::with_capacity(polygon.vertex_count());
-        append_polygon_output_vertices(&mut vertices, polygon)?;
+        append_polygon_output_vertices(decisions, &mut vertices, polygon)?;
         out.push(OutputPolygon {
             vertices,
             source_mesh: polygon.mesh_index,
@@ -720,6 +733,7 @@ pub fn extract_output_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<Ve
 }
 
 fn append_polygon_output_vertices(
+    decisions: &DecisionContext,
     vertices: &mut Vec<OutputVertex>,
     polygon: &ConvexPolygon,
 ) -> HypermeshResult<()> {
@@ -730,17 +744,29 @@ fn append_polygon_output_vertices(
             z: point.z.clone(),
         }));
     } else {
-        vertices.extend(polygon.vertices()?.into_iter().map(|point| OutputVertex {
-            x: point.x,
-            y: point.y,
-            z: point.z,
-        }));
+        vertices.extend(
+            polygon
+                .vertices_decision(decisions)?
+                .into_iter()
+                .map(|point| OutputVertex {
+                    x: point.x,
+                    y: point.y,
+                    z: point.z,
+                }),
+        );
     }
     Ok(())
 }
 
-fn triangulate_output(result: &BooleanResult) -> HypermeshResult<BooleanMesh> {
-    triangulate_polygons(&result.output.polygons, Some(&result.classifications))
+fn triangulate_output(
+    decisions: &DecisionContext,
+    result: &BooleanResult,
+) -> HypermeshResult<BooleanMesh> {
+    triangulate_polygons(
+        decisions,
+        &result.output.polygons,
+        Some(&result.classifications),
+    )
 }
 
 /// Fan-triangulates and resolves exact duplicate/T-junction artifacts.
@@ -774,7 +800,7 @@ pub(crate) fn triangulate_and_resolve_polygon_certified(
     ) {
         Ok((soup, _)) => soup,
         Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
-            resolve_tjunctions(decisions, &triangulate_output(result)?)?
+            resolve_tjunctions(decisions, &triangulate_output(decisions, result)?)?
         }
         Err(err) => return Err(err),
     };
@@ -783,7 +809,7 @@ pub(crate) fn triangulate_and_resolve_polygon_certified(
     }
     let mut closure = boolean_mesh_closure_evidence(&soup);
     if !closure.has_no_boundary() {
-        soup = resolve_tjunctions(decisions, &triangulate_output(result)?)?;
+        soup = resolve_tjunctions(decisions, &triangulate_output(decisions, result)?)?;
         closure = boolean_mesh_closure_evidence(&soup);
     }
     if !closure.has_no_boundary() {
@@ -1601,7 +1627,11 @@ where
                 flat_index += 1;
             }
         } else {
-            for (vertex_index, point) in polygon.vertices()?.into_iter().enumerate() {
+            for (vertex_index, point) in polygon
+                .vertices_decision(decisions)?
+                .into_iter()
+                .enumerate()
+            {
                 positions.push((
                     polygon_index,
                     vertex_index,
@@ -2274,6 +2304,7 @@ fn upper_bound_vertex_axis(
 }
 
 fn triangulate_polygons(
+    decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     orientations: Option<&[i8]>,
 ) -> HypermeshResult<BooleanMesh> {
@@ -2289,7 +2320,7 @@ fn triangulate_polygons(
         }
 
         let base = soup.vertices.len();
-        append_polygon_output_vertices(&mut soup.vertices, polygon)?;
+        append_polygon_output_vertices(decisions, &mut soup.vertices, polygon)?;
 
         for index in 1..(vertex_count - 1) {
             soup.triangles.push([base, base + index, base + index + 1]);
@@ -2316,28 +2347,15 @@ pub(crate) fn resolve_tjunctions(
     decisions: &DecisionContext,
     input: &BooleanMesh,
 ) -> HypermeshResult<BooleanMesh> {
-    resolve_tjunctions_with_pass_limit(decisions, input, RESOLVE_TJUNCTION_MAX_PASSES)
-}
-
-fn resolve_tjunctions_with_pass_limit(
-    decisions: &DecisionContext,
-    input: &BooleanMesh,
-    pass_limit: usize,
-) -> HypermeshResult<BooleanMesh> {
     let mut soup = merge_duplicate_vertices(decisions, input)?;
     remove_degenerate_and_duplicate_triangles(decisions, &mut soup)?;
 
-    let mut passes = 0;
     loop {
-        if passes >= pass_limit {
-            return Err(HypermeshError::OutputResolutionLimit { pass_limit });
-        }
         let split_tjunction = split_one_tjunction_pass(decisions, &mut soup)?;
         let split_crossing = split_one_edge_crossing_pass(decisions, &mut soup)?;
         if !split_tjunction && !split_crossing {
             return Ok(soup);
         }
-        passes += 1;
         remove_degenerate_and_duplicate_triangles(decisions, &mut soup)?;
     }
 }
@@ -3523,37 +3541,15 @@ mod tests {
     }
 
     #[test]
-    fn internal_resolution_reports_pass_limit_exhaustion() {
+    fn internal_resolution_runs_until_the_finite_event_set_is_empty() {
         let soup = BooleanMesh {
             vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
             triangles: vec![[0, 1, 2]],
             sources: vec![TriangleSource::default()],
         };
 
-        let err = resolve_tjunctions_with_pass_limit(
-            &crate::test_support::approximate_decisions(),
-            &soup,
-            1,
-        )
-        .unwrap_err();
-
-        assert_eq!(err, HypermeshError::OutputResolutionLimit { pass_limit: 1 });
-    }
-
-    #[test]
-    fn internal_resolution_accepts_budget_covering_split_and_certification_passes() {
-        let soup = BooleanMesh {
-            vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
-            triangles: vec![[0, 1, 2]],
-            sources: vec![TriangleSource::default()],
-        };
-
-        let resolved = resolve_tjunctions_with_pass_limit(
-            &crate::test_support::approximate_decisions(),
-            &soup,
-            2,
-        )
-        .unwrap();
+        let resolved =
+            resolve_tjunctions(&crate::test_support::approximate_decisions(), &soup).unwrap();
 
         assert_eq!(resolved.triangles.len(), 2);
     }
@@ -3570,7 +3566,9 @@ mod tests {
             vec![1],
         );
 
-        let polygons = extract_output(&result).unwrap();
+        let polygons = extract_output(&crate::test_support::APPROXIMATE_CONTEXT, &result)
+            .unwrap()
+            .into_value();
         assert_eq!(polygons.len(), 1);
         assert_eq!(polygons[0].vertices.len(), 3);
         assert!(polygons[0].vertices.iter().any(|vertex| vertex.x == r(1)));
@@ -3929,7 +3927,10 @@ mod tests {
         let first = first
             .with_known_vertex_cycle_and_edges(
                 &crate::test_support::approximate_decisions(),
-                first.vertices().unwrap(),
+                first
+                    .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                    .unwrap()
+                    .into_value(),
                 vec![
                     ConstructionVertexIdentity::PlaneTriple { planes: [a, b, c] },
                     ConstructionVertexIdentity::Source { mesh: 0, vertex: 1 },
@@ -3947,7 +3948,10 @@ mod tests {
         let second = second
             .with_known_vertex_cycle_and_edges(
                 &crate::test_support::approximate_decisions(),
-                second.vertices().unwrap(),
+                second
+                    .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                    .unwrap()
+                    .into_value(),
                 vec![
                     ConstructionVertexIdentity::PlaneTriple { planes: [c, b, a] },
                     ConstructionVertexIdentity::Source { mesh: 0, vertex: 4 },

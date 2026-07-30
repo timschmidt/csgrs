@@ -175,8 +175,9 @@ fn axis_face_polygon(polygons: &[ConvexPolygon], axis: usize, value: i32) -> Con
             .unwrap()
             .is_gt()
                 && polygon
-                    .vertices()
+                    .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
                     .unwrap()
+                    .into_value()
                     .iter()
                     .all(|vertex| axis_ref(vertex, axis) == &r(value))
         })
@@ -7595,7 +7596,13 @@ fn escaped_reference_axis_stop_values_backtrack_after_uncertified_crossing() {
         0,
         true,
         |_projected, _endpoint, polygon, _axis| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Err(crate::error::HypermeshError::UnknownClassification)
             } else {
                 Ok(Some(p(2, 0, 0)))
@@ -7624,11 +7631,22 @@ fn escaped_reference_axis_stop_values_treat_boundary_crossing_as_unknown_and_kee
         0,
         true,
         |_projected, _endpoint, polygon, _axis| {
-            let x = polygon.vertices().unwrap()[0].x.clone();
+            let x = polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                .clone();
             Ok(Some(Point3::new(x, r(0), r(0))))
         },
         |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(1) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(1)
+            {
                 Ok(LocalPolygonPointLocation::Boundary)
             } else {
                 Ok(LocalPolygonPointLocation::Interior)
@@ -7657,7 +7675,12 @@ fn escaped_reference_axis_stop_values_treat_endpoint_boundary_contact_as_unknown
         0,
         true,
         |_projected, endpoint, polygon, _axis| {
-            let x = polygon.vertices().unwrap()[0].x.clone();
+            let x = polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                .clone();
             if x == r(3) {
                 Ok(Some(endpoint.clone()))
             } else {
@@ -7665,7 +7688,13 @@ fn escaped_reference_axis_stop_values_treat_endpoint_boundary_contact_as_unknown
             }
         },
         |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(3) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(3)
+            {
                 Ok(LocalPolygonPointLocation::Boundary)
             } else {
                 Ok(LocalPolygonPointLocation::Interior)
@@ -7694,7 +7723,12 @@ fn escaped_reference_axis_stop_values_treat_start_boundary_contact_as_unknown_an
         0,
         true,
         |projected, _endpoint, polygon, _axis| {
-            let x = polygon.vertices().unwrap()[0].x.clone();
+            let x = polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                .clone();
             if x == r(0) {
                 Ok(Some(projected.clone()))
             } else {
@@ -7702,7 +7736,13 @@ fn escaped_reference_axis_stop_values_treat_start_boundary_contact_as_unknown_an
             }
         },
         |_crossing, polygon| {
-            if polygon.vertices().unwrap()[0].x == r(0) {
+            if polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value()[0]
+                .x
+                == r(0)
+            {
                 Ok(LocalPolygonPointLocation::Boundary)
             } else {
                 Ok(LocalPolygonPointLocation::Interior)

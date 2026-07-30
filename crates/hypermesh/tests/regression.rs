@@ -405,7 +405,12 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     let cube_a = box_mesh([-1, -1, -1], [1, 1, 1]);
     let cube_b = rational_cube([ratio(1, 2), ratio(1, 2), ratio(1, 2)], r(1));
 
-    let union = approximate_boolean_union(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
+    let union = approximate_boolean_operation(
+        &[cube_a.as_ref(), cube_b.as_ref()],
+        BooleanOp::Union,
+        config(),
+    )
+    .unwrap();
     assert_output_polygons_closed(&union);
     let union_soup = approximate_triangulate_and_resolve_certified(&union).unwrap();
     assert_closed_boolean_mesh(&union_soup);
@@ -417,8 +422,12 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     .unwrap();
     assert_volume_numerator(&union_soup, ratio(303, 4));
 
-    let intersection =
-        approximate_boolean_intersection(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
+    let intersection = approximate_boolean_operation(
+        &[cube_a.as_ref(), cube_b.as_ref()],
+        BooleanOp::Intersection,
+        config(),
+    )
+    .unwrap();
     assert_output_polygons_closed(&intersection);
     let intersection_soup = approximate_triangulate_and_resolve_certified(&intersection).unwrap();
     assert_closed_boolean_mesh(&intersection_soup);
@@ -430,8 +439,12 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     .unwrap();
     assert_volume_numerator(&intersection_soup, ratio(81, 4));
 
-    let difference =
-        approximate_boolean_difference(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
+    let difference = approximate_boolean_operation(
+        &[cube_a.as_ref(), cube_b.as_ref()],
+        BooleanOp::Difference,
+        config(),
+    )
+    .unwrap();
     assert_output_polygons_closed(&difference);
     let difference_soup = approximate_triangulate_and_resolve_certified(&difference).unwrap();
     assert_closed_boolean_mesh(&difference_soup);
@@ -623,8 +636,9 @@ fn roundtrip_preserves_triangle_vertices_exactly() {
     assert_eq!(soup.polygons.len(), mesh.triangles.len());
     for (poly_index, polygon) in soup.polygons.iter().enumerate() {
         let mut actual = polygon
-            .vertices()
+            .vertices(&APPROXIMATE_CONTEXT)
             .unwrap()
+            .into_value()
             .into_iter()
             .map(|point| point_key(&point))
             .collect::<Vec<_>>();

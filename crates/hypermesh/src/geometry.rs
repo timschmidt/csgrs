@@ -2,14 +2,42 @@
 
 use std::cmp::Ordering;
 
-use hyperlattice::{Matrix4, Plane3Coefficients, Point3, ProjectivePlane3, Rational, Real};
+use hyperlattice::{
+    HomogeneousPoint3, Matrix4, Plane3Coefficients, Point3, ProjectivePlane3, Rational, Real,
+};
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
-use crate::error::HypermeshResult;
+use crate::error::{HypermeshError, HypermeshResult};
 pub use crate::predicate::{
     Classification, classify_point, classify_projective_point, compare_real,
 };
 pub(crate) use crate::predicate::{Point3PredicateEvidence, classify_real, compare_real_decision};
+
+pub(crate) fn affine_projective_point_decision(
+    decisions: &DecisionContext,
+    point: &HomogeneousPoint3,
+) -> HypermeshResult<Point3> {
+    if point.w.definitely_one() {
+        return Ok(Point3::new(
+            point.x.clone(),
+            point.y.clone(),
+            point.z.clone(),
+        ));
+    }
+    if point.w.exact_rational_ref().is_some() {
+        return point
+            .to_affine_point()
+            .map_err(|_| HypermeshError::PointAtInfinity);
+    }
+    let reciprocal = hyperlimit::reciprocal_real(&point.w, decisions.policy())
+        .map_err(|_| HypermeshError::PointAtInfinity)?;
+    let reciprocal = decisions.decide(reciprocal, "projective reciprocal")?;
+    Ok(Point3::new(
+        &point.x * &reciprocal,
+        &point.y * &reciprocal,
+        &point.z * reciprocal,
+    ))
+}
 
 /// Exact plane `normal . point + offset = 0`.
 #[derive(Clone, Debug, PartialEq)]
@@ -50,14 +78,27 @@ impl Plane {
     /// `x' = x - 2 (n · x + d) n / (n · n)`. Keeping this operation beside
     /// Hypermesh's native plane prevents modeling layers from introducing a
     /// second plane carrier solely to mirror triangle geometry.
-    pub fn reflection_matrix(&self) -> HypermeshResult<Matrix4> {
+    pub fn reflection_matrix(
+        &self,
+        context: &MeshContext,
+    ) -> HypermeshResult<MeshOutcome<Matrix4>> {
+        let decisions = DecisionContext::new(context);
+        let matrix = self.reflection_matrix_decision(&decisions)?;
+        Ok(decisions.finish(matrix))
+    }
+
+    pub(crate) fn reflection_matrix_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Matrix4> {
         let nx = self.normal.x.clone();
         let ny = self.normal.y.clone();
         let nz = self.normal.z.clone();
         let squared_norm =
             nx.clone() * nx.clone() + ny.clone() * ny.clone() + nz.clone() * nz.clone();
-        let factor = (Real::from(2_u8) / squared_norm)
-            .map_err(|_| crate::error::HypermeshError::DegeneratePointSet)?;
+        let reciprocal = hyperlimit::reciprocal_real(&squared_norm, decisions.policy())
+            .map_err(|_| HypermeshError::DegeneratePointSet)?;
+        let factor = Real::from(2_u8) * decisions.decide(reciprocal, "plane normal nonzero")?;
         let one = Real::one();
         let zero = Real::zero();
         Ok(Matrix4::from_row_major([

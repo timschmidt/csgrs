@@ -46,8 +46,8 @@ fuzz_target!(|data: [u8; 8]| {
     .unwrap();
     assert!(value(triangle.is_valid(&CONTEXT)).unwrap());
     assert!(value(quad.is_valid(&CONTEXT)).unwrap());
-    assert_eq!(triangle.vertices().unwrap().len(), 3);
-    assert_eq!(quad.vertices().unwrap().len(), 4);
+    assert_eq!(triangle.vertices(&CONTEXT).unwrap().into_value().len(), 3);
+    assert_eq!(quad.vertices(&CONTEXT).unwrap().into_value().len(), 4);
 
     let split = Plane::axis_aligned(split_axis, r(split_value));
     let expression = split.expression_at_point(&query);
@@ -92,7 +92,7 @@ fuzz_target!(|data: [u8; 8]| {
     let inverted = triangle.inverted();
     assert!(value(inverted.is_valid(&CONTEXT)).unwrap());
     assert_eq!(
-        inverted.inverted().vertices().unwrap(),
-        triangle.vertices().unwrap()
+        inverted.inverted().vertices(&CONTEXT).unwrap().into_value(),
+        triangle.vertices(&CONTEXT).unwrap().into_value()
     );
 });

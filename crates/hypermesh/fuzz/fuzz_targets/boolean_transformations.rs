@@ -5,8 +5,8 @@ mod support;
 use hyperlattice::{Matrix4, Matrix4TransformKind};
 use hypermesh::{
     BooleanMesh, BooleanOp, EmberConfig, HypermeshError, Real, Triangle, TriangleMesh,
-    boolean_mesh, boolean_mesh_with_certified_convex_inputs, boolean_operation,
-    certify_convex_mesh, classify_polygon_output,
+    TriangleMeshRef, boolean_mesh, boolean_operation, certify_convex_mesh,
+    classify_polygon_output,
 };
 use hyperreal::StructuralKind;
 use libfuzzer_sys::fuzz_target;
@@ -172,25 +172,22 @@ fn run_boolean(
     api: u8,
 ) -> Result<BooleanMesh, HypermeshError> {
     let refs = [meshes[0].as_ref(), meshes[1].as_ref()];
+    let raw_refs = [
+        TriangleMeshRef::new(&meshes[0].positions, &meshes[0].triangles),
+        TriangleMeshRef::new(&meshes[1].positions, &meshes[1].triangles),
+    ];
     match api % 3 {
         0 => value(boolean_operation(
             &CONTEXT,
-            &refs,
+            &raw_refs,
             op,
             EmberConfig::default(),
         ))
-        .map(|result| validate_result(&result, op, refs.len())),
+        .map(|result| validate_result(&result, op, raw_refs.len())),
         1 => value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default())).inspect(|soup| {
             validate_soup(soup);
         }),
-        _ => value(boolean_mesh_with_certified_convex_inputs(
-            &CONTEXT,
-            &refs,
-            op,
-            &[true, true],
-            EmberConfig::default(),
-        ))
-        .inspect(|soup| {
+        _ => value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default())).inspect(|soup| {
             validate_soup(soup);
         }),
     }
@@ -272,6 +269,7 @@ fuzz_target!(|data: [u8; 48]| {
         return;
     }
 
+    meshes = meshes.map(TriangleMesh::with_certified_convexity);
     let result = run_boolean(&meshes, op, api);
     match result {
         Ok(soup) => {

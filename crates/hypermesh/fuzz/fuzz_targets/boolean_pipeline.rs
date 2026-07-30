@@ -3,10 +3,7 @@
 mod support;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, HypermeshError, boolean_difference, boolean_intersection, boolean_mesh,
-    boolean_mesh_with_certified_convex_inputs, boolean_operation,
-    boolean_operation_with_certified_convex_inputs, boolean_symmetric_difference, boolean_union,
-    certify_convex_mesh,
+    BooleanOp, EmberConfig, HypermeshError, TriangleMeshRef, boolean_mesh, boolean_operation,
 };
 use libfuzzer_sys::fuzz_target;
 use support::{
@@ -77,26 +74,24 @@ fuzz_target!(|data: [u8; 48]| {
             );
         }
         3 => {
-            let pair = [convex_mesh(&mut bytes), convex_mesh(&mut bytes)];
-            for mesh in &pair {
-                value(certify_convex_mesh(&CONTEXT, mesh.as_ref())).unwrap();
-            }
+            let pair = [
+                convex_mesh(&mut bytes).with_certified_convexity(),
+                convex_mesh(&mut bytes).with_certified_convexity(),
+            ];
             let pair_refs = [pair[0].as_ref(), pair[1].as_ref()];
-            let generic = require_result(&pair_refs, op);
-            let certified = value(boolean_operation_with_certified_convex_inputs(
-                &CONTEXT,
-                &pair_refs,
-                op,
-                &[true, true],
-                EmberConfig::default(),
-            ))
+            let raw_refs = [
+                TriangleMeshRef::new(&pair[0].positions, &pair[0].triangles),
+                TriangleMeshRef::new(&pair[1].positions, &pair[1].triangles),
+            ];
+            let generic = require_result(&raw_refs, op);
+            let certified =
+                value(boolean_operation(&CONTEXT, &pair_refs, op, EmberConfig::default()))
             .unwrap_or_else(|error| panic!("certified-convex Boolean failed: {error:?}"));
             let certified_soup = validate_result(&certified, op, 2);
-            let immediate = value(boolean_mesh_with_certified_convex_inputs(
+            let immediate = value(boolean_mesh(
                 &CONTEXT,
                 &pair_refs,
                 op,
-                &[true, true],
                 EmberConfig::default(),
             ))
             .unwrap_or_else(|error| panic!("certified-convex immediate Boolean failed: {error:?}"));
@@ -110,30 +105,8 @@ fuzz_target!(|data: [u8; 48]| {
         4 => {
             let pair_refs = [refs[0], refs[1]];
             let generic = require_result(&pair_refs, op);
-            let wrapper = match op {
-                BooleanOp::Union => {
-                    boolean_union(&CONTEXT, pair_refs[0], pair_refs[1], EmberConfig::default())
-                }
-                BooleanOp::Intersection => boolean_intersection(
-                    &CONTEXT,
-                    pair_refs[0],
-                    pair_refs[1],
-                    EmberConfig::default(),
-                ),
-                BooleanOp::Difference => {
-                    boolean_difference(&CONTEXT, pair_refs[0], pair_refs[1], EmberConfig::default())
-                }
-                BooleanOp::SymmetricDifference => boolean_symmetric_difference(
-                    &CONTEXT,
-                    pair_refs[0],
-                    pair_refs[1],
-                    EmberConfig::default(),
-                ),
-            }
-            .map(hypermesh::MeshOutcome::into_value)
-            .unwrap_or_else(|error| panic!("Boolean convenience wrapper failed: {error:?}"));
-            let wrapper = validate_result(&wrapper, op, 2);
-            assert_eq!(volume_numerator(&generic), volume_numerator(&wrapper));
+            let immediate = require_soup(&pair_refs, op);
+            assert_eq!(volume_numerator(&generic), volume_numerator(&immediate));
         }
         5 => {
             let commutative = match bytes.next() % 3 {

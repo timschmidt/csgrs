@@ -4,7 +4,7 @@ mod support;
 
 use hypermesh::{
     BooleanMesh, EmberConfig, HypermeshError, Point3, Real, Triangle, TriangleMesh, boolean_mesh,
-    boolean_mesh_with_certified_convex_inputs, boolean_operation, certify_convex_mesh,
+    TriangleMeshRef, boolean_operation, certify_convex_mesh,
 };
 use hyperreal::{Rational, StructuralKind};
 use libfuzzer_sys::fuzz_target;
@@ -138,7 +138,7 @@ fuzz_target!(|data: [u8; 8]| {
             bytes.bounded_i64(4),
         ]
     };
-    let meshes = [
+    let mut meshes = [
         translated_box(base, [0, 0, 0], 3),
         translated_box(base, shift, 3),
     ];
@@ -148,27 +148,27 @@ fuzz_target!(|data: [u8; 8]| {
             return;
         }
     }
+    if api == 2 {
+        meshes = meshes.map(TriangleMesh::with_certified_convexity);
+    }
     let refs = [meshes[0].as_ref(), meshes[1].as_ref()];
+    let raw_refs = [
+        TriangleMeshRef::new(&meshes[0].positions, &meshes[0].triangles),
+        TriangleMeshRef::new(&meshes[1].positions, &meshes[1].triangles),
+    ];
 
     let soup: Result<BooleanMesh, HypermeshError> = match api {
         0 => value(boolean_operation(
             &CONTEXT,
-            &refs,
+            &raw_refs,
             op,
             EmberConfig::default(),
         ))
-        .map(|result| validate_result(&result, op, refs.len())),
+        .map(|result| validate_result(&result, op, raw_refs.len())),
         1 => value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default())).inspect(|soup| {
             validate_soup(soup);
         }),
-        _ => value(boolean_mesh_with_certified_convex_inputs(
-            &CONTEXT,
-            &refs,
-            op,
-            &[true, true],
-            EmberConfig::default(),
-        ))
-        .inspect(|soup| {
+        _ => value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default())).inspect(|soup| {
             validate_soup(soup);
         }),
     };

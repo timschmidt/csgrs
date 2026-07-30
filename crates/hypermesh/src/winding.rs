@@ -58,7 +58,10 @@ pub(crate) fn can_boolean_op_be_inside_with_component_ranges(
     upper: &[i32],
 ) -> HypermeshResult<bool> {
     if lower.len() != upper.len() {
-        return Err(HypermeshError::UnknownClassification);
+        return Err(HypermeshError::WindingDimensionMismatch {
+            expected: lower.len(),
+            actual: upper.len(),
+        });
     }
 
     let can_be_nonzero = |index: usize| !(lower[index] == 0 && upper[index] == 0);
@@ -98,7 +101,10 @@ pub(crate) fn can_boolean_op_be_inside_with_transition_reachability(
     let remaining_abs_spans = remaining_transition_abs_spans(transitions)?;
     for (index, transition) in transitions.iter().enumerate() {
         if transition.len() != ref_wnv.len() {
-            return Err(HypermeshError::UnknownClassification);
+            return Err(HypermeshError::WindingDimensionMismatch {
+                expected: ref_wnv.len(),
+                actual: transition.len(),
+            });
         }
 
         let mut next = HashSet::with_capacity(states.len().saturating_mul(3));
@@ -153,11 +159,19 @@ pub fn propagate_wnv(
 
 fn apply_transition(w: &[i32], sign: i32, delta_w: &[i32]) -> HypermeshResult<WindingNumberVector> {
     if w.len() != delta_w.len() {
-        return Err(HypermeshError::UnknownClassification);
+        return Err(HypermeshError::WindingDimensionMismatch {
+            expected: w.len(),
+            actual: delta_w.len(),
+        });
     }
     let mut result = w.to_vec();
     for (value, delta) in result.iter_mut().zip(delta_w) {
-        *value += sign * *delta;
+        *value = value
+            .checked_add(
+                sign.checked_mul(*delta)
+                    .ok_or(HypermeshError::WindingOverflow)?,
+            )
+            .ok_or(HypermeshError::WindingOverflow)?;
     }
     Ok(result)
 }
@@ -174,7 +188,14 @@ fn remaining_transition_abs_spans(
         .iter()
         .any(|transition| transition.len() != dims)
     {
-        return Err(HypermeshError::UnknownClassification);
+        let actual = transitions
+            .iter()
+            .find(|transition| transition.len() != dims)
+            .map_or(dims, Vec::len);
+        return Err(HypermeshError::WindingDimensionMismatch {
+            expected: dims,
+            actual,
+        });
     }
 
     let mut remaining = vec![vec![0i32; dims]; transitions.len() + 1];
@@ -182,12 +203,8 @@ fn remaining_transition_abs_spans(
         remaining[index] = remaining[index + 1].clone();
         for (component, delta) in transitions[index].iter().enumerate() {
             remaining[index][component] = remaining[index][component]
-                .checked_add(
-                    delta
-                        .checked_abs()
-                        .ok_or(HypermeshError::UnknownClassification)?,
-                )
-                .ok_or(HypermeshError::UnknownClassification)?;
+                .checked_add(delta.checked_abs().ok_or(HypermeshError::WindingOverflow)?)
+                .ok_or(HypermeshError::WindingOverflow)?;
         }
     }
 
@@ -200,7 +217,10 @@ fn state_can_still_satisfy_boolean_op(
     remaining_abs: &[i32],
 ) -> HypermeshResult<bool> {
     if state.len() != remaining_abs.len() {
-        return Err(HypermeshError::UnknownClassification);
+        return Err(HypermeshError::WindingDimensionMismatch {
+            expected: state.len(),
+            actual: remaining_abs.len(),
+        });
     }
 
     let mut lower = Vec::with_capacity(state.len());
@@ -209,12 +229,12 @@ fn state_can_still_satisfy_boolean_op(
         lower.push(
             value
                 .checked_sub(span)
-                .ok_or(HypermeshError::UnknownClassification)?,
+                .ok_or(HypermeshError::WindingOverflow)?,
         );
         upper.push(
             value
                 .checked_add(span)
-                .ok_or(HypermeshError::UnknownClassification)?,
+                .ok_or(HypermeshError::WindingOverflow)?,
         );
     }
     can_boolean_op_be_inside_with_component_ranges(op, &lower, &upper)
@@ -228,7 +248,22 @@ mod tests {
     fn propagate_wnv_rejects_dimension_mismatch() {
         assert_eq!(
             propagate_wnv(&[1, 0], 1, &[1]),
-            Err(HypermeshError::UnknownClassification)
+            Err(HypermeshError::WindingDimensionMismatch {
+                expected: 2,
+                actual: 1,
+            })
+        );
+    }
+
+    #[test]
+    fn propagate_wnv_reports_checked_overflow() {
+        assert_eq!(
+            propagate_wnv(&[i32::MAX], 1, &[1]),
+            Err(HypermeshError::WindingOverflow)
+        );
+        assert_eq!(
+            propagate_wnv(&[0], -1, &[i32::MIN]),
+            Err(HypermeshError::WindingOverflow)
         );
     }
 

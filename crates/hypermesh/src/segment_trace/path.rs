@@ -2630,7 +2630,7 @@ pub(super) fn interior_box_axis_intervals_with_surface_queries(
         push_unique_ordered_real(decisions, &mut cuts, start_value.clone())?;
         push_unique_ordered_real(decisions, &mut cuts, end_value.clone())?;
         for polygon in polygons {
-            for vertex in polygon.vertices()? {
+            for vertex in polygon.vertices_decision(decisions)? {
                 let value = axis_ref(&vertex, axis);
                 if value_strictly_between(decisions, value, start_value, end_value)? {
                     push_unique_ordered_real(decisions, &mut cuts, value.clone())?;

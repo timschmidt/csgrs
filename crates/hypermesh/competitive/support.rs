@@ -5,8 +5,7 @@ mod yeahright;
 use boolmesh::prelude::{Manifold as BoolmeshManifold, OpType as BoolmeshOp, compute_boolean};
 use hypermesh::{
     BooleanMesh, BooleanOp, BooleanResult, EmberConfig, MeshContext, Point3, PredicatePolicy, Real,
-    Triangle, TriangleMesh, boolean_mesh_with_certified_convex_inputs,
-    boolean_operation_with_certified_convex_inputs,
+    Triangle, TriangleMesh, boolean_mesh, boolean_operation,
 };
 use manifold_rust::{
     manifold::Manifold as ManifoldRs,
@@ -274,7 +273,10 @@ pub fn prepare(case: &Case) -> PreparedInputs {
 
 pub fn prepare_meshes(left: &RawMesh, right: &RawMesh) -> PreparedInputs {
     PreparedInputs {
-        hypermesh: [to_hypermesh(left), to_hypermesh(right)],
+        hypermesh: [
+            to_hypermesh(left).with_certified_convexity(),
+            to_hypermesh(right).with_certified_convexity(),
+        ],
         boolmesh: [to_boolmesh(left), to_boolmesh(right)],
         manifold: [to_manifold(left), to_manifold(right)],
     }
@@ -286,9 +288,12 @@ pub fn prepare_yeahright(case: &MeshPair) -> PreparedInputs {
 
 pub fn prepare_yeahright_with_subdivisions(case: &MeshPair, subdivisions: usize) -> PreparedInputs {
     assert!(subdivisions.is_power_of_two());
-    let exact_hull = to_hypermesh(&case.left);
+    let exact_hull = to_hypermesh(&case.left).with_certified_convexity();
     PreparedInputs {
-        hypermesh: [exact_hull, to_hypermesh(&case.right)],
+        hypermesh: [
+            exact_hull,
+            to_hypermesh(&case.right).with_certified_convexity(),
+        ],
         boolmesh: [to_boolmesh(&case.left), to_boolmesh(&case.right)],
         manifold: [to_manifold(&case.left), to_manifold(&case.right)],
     }
@@ -299,11 +304,10 @@ pub fn run_hypermesh(inputs: &[TriangleMesh; 2], operation: Operation) -> RawMes
 }
 
 pub fn run_hypermesh_exact(inputs: &[TriangleMesh; 2], operation: Operation) -> BooleanMesh {
-    boolean_mesh_with_certified_convex_inputs(
+    boolean_mesh(
         &APPROXIMATE_CONTEXT,
         &[inputs[0].as_ref(), inputs[1].as_ref()],
         operation.hypermesh(),
-        &[true, true],
         EmberConfig::default(),
     )
     .unwrap_or_else(|error| panic!("hypermesh {} failed: {error}", operation.name()))
@@ -311,11 +315,10 @@ pub fn run_hypermesh_exact(inputs: &[TriangleMesh; 2], operation: Operation) -> 
 }
 
 pub fn run_hypermesh_polygon(inputs: &[TriangleMesh; 2], operation: Operation) -> BooleanResult {
-    boolean_operation_with_certified_convex_inputs(
+    boolean_operation(
         &APPROXIMATE_CONTEXT,
         &[inputs[0].as_ref(), inputs[1].as_ref()],
         operation.hypermesh(),
-        &[true, true],
         EmberConfig::default(),
     )
     .unwrap_or_else(|error| panic!("hypermesh polygon {} failed: {error}", operation.name()))

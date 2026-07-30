@@ -162,9 +162,11 @@ boundary if a needed sign cannot be certified.
 | Construct a convex face | `convex_triangle`, `convex_quad`, `ConvexPolygon::from_points` |
 | Construct planes and bounds | `Plane::from_coefficients`, `from_points`, `axis_aligned`; `Aabb` helpers |
 
-`polygon_soup` is the public input-contract check. A higher owner may retain a
-successful convexity result and pass it through the certified-convex Boolean
-entry points.
+`polygon_soup` is the public input-contract check. Use
+`TriangleMesh::try_certify_convex` when the owner wants to retain a proven
+convexity fact. `TriangleMesh::as_ref` preserves access to immutable native
+facts, while `TriangleMeshRef::new` deliberately creates a fact-free borrowed
+view.
 
 ### Run Boolean operations
 
@@ -172,11 +174,13 @@ entry points.
 | --- | --- |
 | Multi-mesh polygon output | `boolean_operation` |
 | Immediate indexed output | `boolean_mesh` |
-| Two-input conveniences | `boolean_union`, `boolean_intersection`, `boolean_difference`, `boolean_symmetric_difference` |
-| Reuse convex-input facts | `boolean_operation_with_certified_convex_inputs`, `boolean_mesh_with_certified_convex_inputs` |
-| Reuse exact source planes | `boolean_mesh_with_certified_convex_inputs_and_planes` |
+| Reusable native two-input output | `boolean_triangle_meshes` |
 | Select the operation | `BooleanOp::{Union, Intersection, Difference, SymmetricDifference}` |
 | Set a certification budget | `EmberConfig { max_depth }` |
+
+The canonical Boolean functions automatically consume compatible immutable
+facts retained by native `TriangleMesh` inputs. There are no policyless or
+fact-forwarding Boolean variants.
 
 `EmberConfig::default()` uses `DEFAULT_MAX_DEPTH`, currently `usize::MAX`.
 A finite `max_depth` is a caller-selected certification budget, not a license

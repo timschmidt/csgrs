@@ -89,8 +89,8 @@ pub fn intersect_polygons(
     other_polygon_idx: usize,
 ) -> HypermeshResult<MeshOutcome<PairwiseIntersection>> {
     let decisions = DecisionContext::new(context);
-    let polygon_vertices = polygon.vertices()?;
-    let other_vertices = other.vertices()?;
+    let polygon_vertices = polygon.vertices_decision(&decisions)?;
+    let other_vertices = other.vertices_decision(&decisions)?;
     let intersection = intersect_polygons_with_vertices(
         &decisions,
         polygon,

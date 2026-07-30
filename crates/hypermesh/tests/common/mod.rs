@@ -72,21 +72,6 @@ pub fn approximate_boolean_operation(
     ))
 }
 
-pub fn approximate_boolean_operation_with_certified_convex_inputs(
-    meshes: &[TriangleMeshRef<'_>],
-    operation: BooleanOp,
-    certified_convex_inputs: &[bool],
-    config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
-    value(hypermesh::boolean_operation_with_certified_convex_inputs(
-        &APPROXIMATE_CONTEXT,
-        meshes,
-        operation,
-        certified_convex_inputs,
-        config,
-    ))
-}
-
 pub fn approximate_boolean_mesh(
     meshes: &[TriangleMeshRef<'_>],
     operation: BooleanOp,
@@ -98,40 +83,6 @@ pub fn approximate_boolean_mesh(
         operation,
         config,
     ))
-}
-
-pub fn approximate_boolean_mesh_with_certified_convex_inputs(
-    meshes: &[TriangleMeshRef<'_>],
-    operation: BooleanOp,
-    certified_convex_inputs: &[bool],
-    config: EmberConfig,
-) -> HypermeshResult<BooleanMesh> {
-    value(hypermesh::boolean_mesh_with_certified_convex_inputs(
-        &APPROXIMATE_CONTEXT,
-        meshes,
-        operation,
-        certified_convex_inputs,
-        config,
-    ))
-}
-
-pub fn approximate_boolean_mesh_with_certified_convex_inputs_and_planes(
-    meshes: &[TriangleMeshRef<'_>],
-    operation: BooleanOp,
-    certified_convex_inputs: &[bool],
-    input_planes: &[&[hypermesh::InputTrianglePlanes]],
-    config: EmberConfig,
-) -> HypermeshResult<BooleanMesh> {
-    value(
-        hypermesh::boolean_mesh_with_certified_convex_inputs_and_planes(
-            &APPROXIMATE_CONTEXT,
-            meshes,
-            operation,
-            certified_convex_inputs,
-            input_planes,
-            config,
-        ),
-    )
 }
 
 pub fn approximate_boolean_triangle_meshes(
@@ -148,32 +99,6 @@ pub fn approximate_boolean_triangle_meshes(
         config,
     ))
 }
-
-macro_rules! approximate_boolean_wrapper {
-    ($name:ident, $operation:path) => {
-        pub fn $name(
-            left: TriangleMeshRef<'_>,
-            right: TriangleMeshRef<'_>,
-            config: EmberConfig,
-        ) -> HypermeshResult<BooleanResult> {
-            value($operation(&APPROXIMATE_CONTEXT, left, right, config))
-        }
-    };
-}
-
-approximate_boolean_wrapper!(approximate_boolean_union, hypermesh::boolean_union);
-approximate_boolean_wrapper!(
-    approximate_boolean_intersection,
-    hypermesh::boolean_intersection
-);
-approximate_boolean_wrapper!(
-    approximate_boolean_difference,
-    hypermesh::boolean_difference
-);
-approximate_boolean_wrapper!(
-    approximate_boolean_symmetric_difference,
-    hypermesh::boolean_symmetric_difference
-);
 
 pub fn approximate_triangulate_and_resolve_certified(
     result: &BooleanResult,
@@ -241,19 +166,6 @@ pub fn approximate_aabb_contains_point(bounds: &Aabb, point: &Point3) -> Hyperme
 
 pub fn approximate_polygon_is_valid(polygon: &ConvexPolygon) -> HypermeshResult<bool> {
     value(polygon.is_valid(&APPROXIMATE_CONTEXT))
-}
-
-pub fn approximate_input_triangle_planes(
-    p0: &Point3,
-    p1: &Point3,
-    p2: &Point3,
-) -> HypermeshResult<hypermesh::InputTrianglePlanes> {
-    value(hypermesh::InputTrianglePlanes::from_points(
-        &APPROXIMATE_CONTEXT,
-        p0,
-        p1,
-        p2,
-    ))
 }
 
 pub fn approximate_certify_convex_mesh(mesh: TriangleMeshRef<'_>) -> HypermeshResult<()> {

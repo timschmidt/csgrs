@@ -69,7 +69,7 @@ fuzz_target!(|data: [u8; 33]| {
 
     let points = polygons
         .iter()
-        .map(|polygon| polygon.vertices().unwrap()[0].clone())
+        .map(|polygon| polygon.vertices(&CONTEXT).unwrap().into_value()[0].clone())
         .collect::<Vec<_>>();
     let point_bvh = value(ExactPointBvh::build(&CONTEXT, &points)).unwrap();
     assert_eq!(point_bvh.len(), points.len());

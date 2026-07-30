@@ -6,7 +6,9 @@ use std::sync::Arc;
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::HypermeshResult;
-use crate::geometry::{Classification, Plane, cross_arrays, dot_point, sub_points};
+use crate::geometry::{
+    Classification, Plane, affine_projective_point_decision, cross_arrays, dot_point, sub_points,
+};
 use crate::predicate::{classify_projective_point_decision, compare_real_decision};
 use crate::winding::WindingNumberTransitionVector;
 
@@ -43,32 +45,13 @@ pub(crate) enum ConstructionVertexIdentity {
     },
 }
 
-/// Exact oriented support and boundary planes for one input triangle.
-///
-/// Mesh owners that retain affine-transform provenance can transform these
-/// geometric objects directly instead of reconstructing them from expanded
-/// transformed coordinates.
 #[derive(Clone, Debug, PartialEq)]
-pub struct InputTrianglePlanes {
-    /// Oriented triangle support plane.
-    pub support: Plane,
-    /// Oriented edge planes in triangle winding order.
-    pub edges: [Plane; 3],
+pub(crate) struct InputTrianglePlanes {
+    pub(crate) support: Plane,
+    pub(crate) edges: [Plane; 3],
 }
 
 impl InputTrianglePlanes {
-    /// Constructs the support and three boundary planes from source points.
-    pub fn from_points(
-        context: &MeshContext,
-        p0: &Point3,
-        p1: &Point3,
-        p2: &Point3,
-    ) -> HypermeshResult<MeshOutcome<Self>> {
-        let decisions = DecisionContext::new(context);
-        let planes = Self::from_points_decision(&decisions, p0, p1, p2)?;
-        Ok(decisions.finish(planes))
-    }
-
     pub(crate) fn from_points_decision(
         decisions: &DecisionContext,
         p0: &Point3,
@@ -436,23 +419,40 @@ impl ConvexPolygon {
     }
 
     /// Computes an affine vertex.
-    pub fn vertex_point(&self, i: usize) -> HypermeshResult<Point3> {
-        self.vertex(i).to_affine_point().map_err(|_| {
-            if self.vertex(i).w.definitely_zero() {
-                crate::error::HypermeshError::PointAtInfinity
-            } else {
-                crate::error::HypermeshError::UnknownClassification
-            }
-        })
+    pub fn vertex_point(
+        &self,
+        context: &MeshContext,
+        i: usize,
+    ) -> HypermeshResult<MeshOutcome<Point3>> {
+        let decisions = DecisionContext::new(context);
+        let point = self.vertex_point_decision(&decisions, i)?;
+        Ok(decisions.finish(point))
+    }
+
+    pub(crate) fn vertex_point_decision(
+        &self,
+        decisions: &DecisionContext,
+        i: usize,
+    ) -> HypermeshResult<Point3> {
+        affine_projective_point_decision(decisions, &self.vertex(i))
     }
 
     /// Computes all affine vertices.
-    pub fn vertices(&self) -> HypermeshResult<Vec<Point3>> {
+    pub fn vertices(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<Vec<Point3>>> {
+        let decisions = DecisionContext::new(context);
+        let vertices = self.vertices_decision(&decisions)?;
+        Ok(decisions.finish(vertices))
+    }
+
+    pub(crate) fn vertices_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Vec<Point3>> {
         if let Some(vertices) = &self.known_vertices {
             return Ok(vertices.to_vec());
         }
         (0..self.vertex_count())
-            .map(|index| self.vertex_point(index))
+            .map(|index| self.vertex_point_decision(decisions, index))
             .collect()
     }
 
@@ -619,7 +619,7 @@ impl ConvexPolygon {
         &self,
         decisions: &DecisionContext,
     ) -> HypermeshResult<Self> {
-        let vertices = self.vertices()?;
+        let vertices = self.vertices_decision(decisions)?;
         if vertices.len() < 3 {
             return Ok(self.clone());
         }
@@ -1150,7 +1150,13 @@ mod tests {
         };
         assert!(Arc::ptr_eq(retained_positions, &positions));
         assert!(Arc::ptr_eq(vertex_positions, vertices));
-        assert_eq!(polygon.vertices().unwrap(), positions.as_ref());
+        assert_eq!(
+            polygon
+                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
+                .unwrap()
+                .into_value(),
+            positions.as_ref()
+        );
     }
 
     #[test]

@@ -194,7 +194,7 @@ pub(super) fn polygon_axis_values(
 ) -> HypermeshResult<[Vec<Real>; 3]> {
     let mut values = [Vec::new(), Vec::new(), Vec::new()];
     for polygon in polygons {
-        for vertex in polygon.vertices()? {
+        for vertex in polygon.vertices_decision(decisions)? {
             for (axis, axis_values) in values.iter_mut().enumerate() {
                 push_unique_ordered_axis_value(
                     decisions,
@@ -617,7 +617,7 @@ pub(super) fn polygon_family_bounds(
 ) -> HypermeshResult<Aabb> {
     let mut vertices = Vec::new();
     for polygon in polygons {
-        vertices.extend(polygon.vertices()?);
+        vertices.extend(polygon.vertices_decision(decisions)?);
     }
     let first = vertices
         .pop()
@@ -1094,8 +1094,8 @@ pub(super) fn split_intersection_segments(
 
     let mut segments = Vec::new();
     for (left, right) in candidate_pairs {
-        let left_vertices = polygons[left].vertices()?;
-        let right_vertices = polygons[right].vertices()?;
+        let left_vertices = polygons[left].vertices_decision(decisions)?;
+        let right_vertices = polygons[right].vertices_decision(decisions)?;
         let intersection = intersect_polygons_with_vertices(
             decisions,
             &polygons[left],

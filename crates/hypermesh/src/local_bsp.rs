@@ -59,12 +59,13 @@ pub(crate) struct LocalBsp {
 
 impl LocalBsp {
     /// Builds a local BSP with one initial leaf matching `polygon`.
-    pub(crate) fn new(polygon: &ConvexPolygon) -> Self {
-        let projective_interior_point = polygon
-            .vertices()
-            .ok()
-            .and_then(|vertices| convex_point_projective_centroid(&vertices));
-        Self {
+    pub(crate) fn new(
+        decisions: &DecisionContext,
+        polygon: &ConvexPolygon,
+    ) -> HypermeshResult<Self> {
+        let vertices = polygon.vertices_decision(decisions)?;
+        let projective_interior_point = convex_point_projective_centroid(&vertices);
+        Ok(Self {
             support: polygon.support.clone(),
             host_mesh_index: polygon.mesh_index,
             host_polygon_index: polygon.polygon_index,
@@ -73,7 +74,7 @@ impl LocalBsp {
                 projective_interior_point,
             )))],
             root: Some(0),
-        }
+        })
     }
 
     /// Adds an intersection segment and splits affected leaves by its plane.
@@ -581,7 +582,7 @@ mod tests {
             other_edges: other.edges.as_ref().clone(),
             other_support: other.support.clone(),
         };
-        let mut bsp = LocalBsp::new(&host);
+        let mut bsp = LocalBsp::new(&crate::test_support::approximate_decisions(), &host).unwrap();
 
         bsp.add_overlap(
             &crate::test_support::approximate_decisions(),
@@ -609,7 +610,7 @@ mod tests {
             .segment
             .unwrap();
 
-        let mut bsp = LocalBsp::new(&host);
+        let mut bsp = LocalBsp::new(&crate::test_support::approximate_decisions(), &host).unwrap();
         bsp.add_segment(&crate::test_support::approximate_decisions(), &segment)
             .unwrap();
         let leaves = bsp.collect_leaves();
@@ -626,7 +627,8 @@ mod tests {
         let intersection = approximate_intersect_polygons(&higher, &lower, 0).unwrap();
         let overlap = intersection.overlap.as_ref().unwrap();
 
-        let mut bsp = LocalBsp::new(&higher);
+        let mut bsp =
+            LocalBsp::new(&crate::test_support::approximate_decisions(), &higher).unwrap();
         bsp.add_overlap(
             &crate::test_support::approximate_decisions(),
             &lower,

@@ -316,7 +316,7 @@ pub fn validate_result(
             .has_no_boundary()
     );
     assert_eq!(
-        extract_output(result).unwrap().len(),
+        extract_output(&CONTEXT, result).unwrap().into_value().len(),
         result.output().polygons.len()
     );
     let soup = triangulate_and_resolve_certified(&CONTEXT, result)

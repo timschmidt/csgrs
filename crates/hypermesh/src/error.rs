@@ -26,6 +26,20 @@ pub enum HypermeshError {
         /// Point count supplied to the query.
         actual: usize,
     },
+    /// A collection size required by an operation cannot be represented.
+    CapacityOverflow {
+        /// Operation whose output size overflowed.
+        operation: &'static str,
+    },
+    /// Winding vectors with different dimensions were combined.
+    WindingDimensionMismatch {
+        /// Required component count.
+        expected: usize,
+        /// Supplied component count.
+        actual: usize,
+    },
+    /// Checked winding arithmetic exceeded the `i32` representation.
+    WindingOverflow,
     /// A convex hull requires a three-dimensional point set.
     DegeneratePointSet,
     /// A numeric predicate could not be decided under the selected policy.
@@ -100,11 +114,6 @@ pub enum HypermeshError {
         /// Number of undirected edges used by more than two triangles.
         non_manifold_edges: usize,
     },
-    /// Exact output T-junction/crossing resolution exhausted its pass budget.
-    OutputResolutionLimit {
-        /// Maximum number of resolution passes allowed.
-        pass_limit: usize,
-    },
     /// A homogeneous point had zero or unknown homogeneous scale.
     PointAtInfinity,
 }
@@ -124,6 +133,14 @@ impl fmt::Display for HypermeshError {
                 f,
                 "point acceleration structure contains {expected} points but query supplied {actual}"
             ),
+            Self::CapacityOverflow { operation } => {
+                write!(f, "{operation} output size exceeds addressable capacity")
+            }
+            Self::WindingDimensionMismatch { expected, actual } => write!(
+                f,
+                "winding vector has {actual} components; expected {expected}"
+            ),
+            Self::WindingOverflow => f.write_str("winding arithmetic overflow"),
             Self::DegeneratePointSet => {
                 f.write_str("convex hull input does not span three dimensions")
             }
@@ -177,12 +194,6 @@ impl fmt::Display for HypermeshError {
                 f,
                 "output has boundary: {boundary_edges} singleton edges, {unbalanced_edges} directed edge imbalances, {non_manifold_edges} non-manifold edges"
             ),
-            Self::OutputResolutionLimit { pass_limit } => {
-                write!(
-                    f,
-                    "output resolution did not converge within {pass_limit} passes"
-                )
-            }
             Self::PointAtInfinity => f.write_str("homogeneous point is at infinity"),
         }
     }

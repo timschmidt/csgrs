@@ -482,11 +482,10 @@ transition work, closure-certifies the result, and returns owned output without
 exposing or caching intermediate arrangement state.
 
 `boolean_operation` returns certified polygons. `boolean_mesh`
-continues directly through certified triangulation and output resolution, and
-the certified-convex variants use the projective two-input fast path without a
-public carrier. The selected classified fragments are moved into the result
-instead of cloned. `boolean_symmetric_difference` completes the two-input
-convenience API.
+continues directly through certified triangulation and output resolution.
+Both canonical APIs automatically consume immutable convexity and source-plane
+facts retained by native `TriangleMesh` inputs. The selected classified
+fragments are moved into the result instead of cloned.
 
 The former multi-result crossover measurements are intentionally retired:
 retaining classified arrangements is no longer an API or an optimization
