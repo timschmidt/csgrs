@@ -115,6 +115,7 @@ strict-convexity certificate.
 | Plane / degree-1-v linear-extrusion NURBS tensor patch | None or one native NURBS iso-curve |
 | Plane / one-axis-linear rational Bézier translation tensor | None or one complete native non-isoparametric rational Bézier curve |
 | Plane / degree-1 translation-axis NURBS tensor | None or one complete native non-isoparametric NURBS curve |
+| Plane / equal-weight bilinear rational Bézier tensor | None, one complete exact rational-quartic curve, one represented clipped fragment, or explicit unsupported pole/overlap evidence |
 
 Transverse plane/extrusion intersections apply the exact affine projection
 along the authored extrusion direction; named conics whose projection needs a
@@ -193,6 +194,18 @@ volume, `2*pi²*R*r + 2*pi*r²` boundary area, halfspace-aware point
 classification, operand reversal, rigid/reflection transforms, untrusted
 replay, and exclusion from the whole-torus optimization profile.
 
+For an equal-weight `2×2` rational Bézier tensor, the plane equation is a
+scalar bilinear Bernstein polynomial. HyperBREP solves it as `(u(v),v)` or
+`(u,v(u))` when one linear denominator has a certified strict sign over the
+unit interval. Degree elevation yields an exact positive-weight
+rational-quadratic pcurve. Homogeneous substitution into the polynomial
+bilinear tensor yields an exact rational-quartic spatial curve whose five
+controls and weights are derived without fitting. A strict one-sided
+plane-value control hull proves disjointness; a complete zero hull is a
+two-dimensional overlap and remains explicitly unsupported. Mixed sections
+are clipped through the same exact tensor rectangle path used by translation
+graphs.
+
 For a tensor iso-section, the two controls on the linear axis must have exactly
 equal weights and one exact common control translation; every profile control
 must have the same plane value. For a translation tensor linear in either
@@ -204,7 +217,8 @@ lies in the bounded translation-axis domain or that the complete carrier is
 outside it. Mixed graph hulls are clipped exactly against the tensor rectangle:
 represented roots retain one or more exact fragments, while algebraic roots
 that cannot enter `Real` remain explicit. Remaining unsupported work includes
-oblique cone sections, non-axial torus quartics, and the rest of the
+oblique cone sections, non-axial torus quartics, non-polynomial rational
+bilinear tensors, pole-crossing bilinear plane sections, and the rest of the
 analytic/spline pair matrix.
 
 ## Booleans
@@ -377,14 +391,16 @@ exact operation without constructing a placeholder solid.
 Exact rational Bézier and NURBS tensor iso-curves can split their owning
 trimmed face through `Model::split_face_by_surface_curve`; the validator
 certifies an interior homogeneous iso-curve or a boundary subrange rather than
-trusting endpoint agreement. A complete rational-Bézier or NURBS
-graph section on a translation tensor linear in either axis has the same topology path:
-validation reconstructs every spatial and pcurve homogeneous control, retains
-the NURBS degree, knots, and native parameter domain, proves curved-loop
-pairwise simplicity, derives orientation from its monotone graph and the
-selected translation-axis domain side, and persists the exact graph pcurve through
-untrusted format version 5 replay. Multi-span graphs retain one exact
-degree-elevated NURBS pcurve assembled from certified rational knot spans.
+trusting endpoint agreement. A complete rational-Bézier or NURBS graph section
+on a translation tensor linear in either axis has the same topology path.
+Equal-weight bilinear rational-Bézier sections extend it by recomposing the
+complete rational-quadratic pcurve into the expected rational-quartic spatial
+control net. Validation reconstructs every spatial and pcurve homogeneous
+control, retains the NURBS degree, knots, and native parameter domain, proves
+curved-loop pairwise simplicity, derives orientation from its monotone graph
+and the selected translation-axis domain side, and persists the exact graph
+pcurve through untrusted format version 5 replay. Multi-span graphs retain one
+exact degree-elevated NURBS pcurve assembled from certified rational knot spans.
 Partially trimmed graph sections with represented roots use the same path,
 including same-boundary two-edge descendant faces. All fragments can be
 applied in one call through `Model::split_face_by_surface_curves`; an explicit

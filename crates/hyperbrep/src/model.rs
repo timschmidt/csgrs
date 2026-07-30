@@ -19,7 +19,7 @@ use crate::geometry::{
     ParameterDomain, Pcurve, Surface, SurfaceExactData, SurfaceIntersectionCurve,
     SurfaceIntersectionOperand, SurfaceIntersectionPcurve, SurfaceIsoAxis, SurfaceKind,
     SurfaceParameterDomain, SurfacePcurveCorrespondence, affine_transform_orientation,
-    materialize_nurbs_parameter_graph,
+    materialize_nurbs_parameter_graph, polynomial_bilinear_parameter_curve,
 };
 
 macro_rules! model_id {
@@ -7385,6 +7385,18 @@ impl ModelBuilder {
         else {
             return Err(BuildError::EdgeUseSupportMismatch);
         };
+        let oriented_pcurve = match edge_use.direction {
+            Direction::Forward => pcurve.clone(),
+            Direction::Reversed => pcurve.reversed()?,
+        };
+        if let Some(expected) = polynomial_bilinear_parameter_curve(
+            &surface_points,
+            &surface_weights,
+            oriented_pcurve.curve(),
+        )? && curve_parameterizations_equal(curve, &expected)?
+        {
+            return Ok(());
+        }
         if surface_points
             .iter()
             .zip(&surface_weights)

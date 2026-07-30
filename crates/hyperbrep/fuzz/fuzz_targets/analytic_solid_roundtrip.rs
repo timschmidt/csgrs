@@ -644,6 +644,61 @@ fuzz_target!(|bytes: &[u8]| {
         let _ = curve.first_pcurve().materialize();
         let _ = curve.second_pcurve().materialize();
     }
+    let bilinear_controls = vec![
+        vec![
+            hyperbrep::Point3::origin(),
+            hyperbrep::Point3::new(Real::from(2), Real::zero(), Real::zero()),
+        ],
+        vec![
+            hyperbrep::Point3::new(Real::zero(), Real::from(2), Real::zero()),
+            hyperbrep::Point3::new(Real::from(2), Real::from(2), Real::one()),
+        ],
+    ];
+    let bilinear_weights = vec![
+        vec![Real::one(), Real::one()],
+        vec![Real::one(), Real::one()],
+    ];
+    let Ok(polynomial_bilinear_tensor) =
+        Surface::rational_bezier(bilinear_controls.clone(), bilinear_weights.clone())
+    else {
+        return;
+    };
+    let section_offset = i32::from(bytes[1] % 7);
+    let Ok(bilinear_plane) = Surface::plane(
+        hyperbrep::Point3::new(Real::from(section_offset), Real::zero(), Real::zero()),
+        Vector3::y(),
+        Vector3::from_xyz(Real::from(2), Real::zero(), -Real::one()),
+    ) else {
+        return;
+    };
+    if let Ok(SurfaceSurfaceIntersection::Curve(curve)) =
+        polynomial_bilinear_tensor.intersect_surface(&bilinear_plane)
+    {
+        let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
+        let _ = curve.curve().point_at(&parameter);
+        let _ = curve.first_pcurve().point_at(&parameter);
+        let _ = curve.second_pcurve().point_at(&parameter);
+        if matches!(section_offset, 1 | 3) {
+            let Ok((patch, face)) =
+                builder::rational_bezier_patch(bilinear_controls, bilinear_weights)
+            else {
+                return;
+            };
+            if let Ok((split, _)) =
+                patch.split_face_by_surface_curve(face, curve.curve(), curve.first_pcurve())
+            {
+                let Ok(json) = split.to_json() else {
+                    return;
+                };
+                let Ok(replayed) = RawModel::from_json(&json).and_then(RawModel::validate) else {
+                    panic!("validated polynomial bilinear split failed persistence replay");
+                };
+                if replayed.to_json().ok().as_deref() != Some(json.as_str()) {
+                    panic!("polynomial bilinear split replay changed exact persistence");
+                }
+            }
+        }
+    }
     if bytes[0] % 7 == 3 {
         let Ok((graph_patch, graph_face)) = builder::rational_bezier_patch(
             vec![

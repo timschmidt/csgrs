@@ -32,7 +32,12 @@ varies an oblique plane across curved u- and v-linear rational translation
 tensors,
 exercising certified disjoint, complete non-isoparametric, and explicitly
 represented or algebraically blocked partial-graph outcomes plus exact pcurve
-materialization. Complete
+materialization. Equal-weight bilinear rational tensors also vary their plane
+offset across complete, represented-clipped, boundary-only, and strictly
+disjoint outcomes;
+retained rational-quadratic parameter graphs compose to exact
+rational-quartic spatial curves, and complete or partial splits are replayed
+byte-for-byte. Complete
 rational-Bézier and single- or multi-span NURBS graph sections in both tensor
 directions
 also drive
