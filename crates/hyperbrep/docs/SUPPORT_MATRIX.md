@@ -51,9 +51,9 @@ General isolated algebraic parameters that cannot be represented as
 | `sweep_curve` / `sweep_curve_region` | Fixed-frame polygon or through-hole region swept along an affine-progress rational Bézier path / native tensor translation sides and inner cap wires | Caps only | Exact material-region area × signed plane progress | Exact progress inversion and outer-minus-hole profile test | Affine / exact |
 | `sweep_moving_frame` / `sweep_moving_frame_region` | Explicit shared-weight rational Bézier origin/axis frame / native tensor sides and inner cap wires | Caps only | Exact material-region area × signed plane progress × integrated frame-area law | Exact moving inverse-frame profile test | Affine / exact |
 | `loft` | Two or more corresponding sections; each span positive homothetic or exact convex interpolation / planar or bilinear tensor sides with explicit C⁰ rings | Homothetic sides only | Exact piecewise-integrated quadratic section area | Exact span/section test | Affine / exact |
-| `rational_bezier_patch` | One trimmed exact tensor patch / open shell | Not yet | N/A | N/A | Affine / exact |
-| `nurbs_patch` | One trimmed exact tensor patch / open shell | Not yet | N/A | N/A | Affine / exact |
-| `tensor_patch_shell` | Multiple exact rational Bézier/NURBS patches; projectively identical boundaries identity-stitched | Not yet | N/A | N/A | Affine / exact |
+| `rational_bezier_patch` | One trimmed exact tensor patch / open shell | Exact for a constant-weight affine Bernstein lattice; general curved patches unsupported | N/A | N/A | Affine / exact |
+| `nurbs_patch` | One trimmed exact tensor patch / open shell | Exact for a constant-weight affine Greville lattice on its native domain; general curved patches unsupported | N/A | N/A | Affine / exact |
+| `tensor_patch_shell` | Multiple exact rational Bézier/NURBS patches; projectively identical boundaries identity-stitched | Per-face exact for the same affine tensor families | N/A | N/A | Affine / exact |
 
 Full cones remain absent until the apex singularity has a topological
 representation rather than degenerate tolerance sewing.

@@ -85,6 +85,9 @@ The clean-break implementation currently provides:
   cavities, strict nesting, exact volume, and material classification;
 - validated open-shell `builder::{rational_bezier_patch, nurbs_patch}`
   constructors with native spline boundary curves and exact parameter maps;
+- exact face area for affine-image rational Bézier and NURBS tensor patches,
+  certified from constant projective weights and the complete
+  Bernstein/Greville control lattice without tessellation;
 - `builder::tensor_patch_shell` for mixed collections of exact rational
   Bézier/NURBS patch specifications; complete projectively identical
   boundaries are identity-stitched across faces, including reversed traversal

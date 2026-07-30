@@ -4390,6 +4390,11 @@ impl Model {
                     .sqrt()
                     .map_err(|_| GeometryError::ElementaryFunction)?
             }
+            data @ (SurfaceExactData::RationalBezier { .. } | SurfaceExactData::Nurbs { .. }) => {
+                affine_tensor_surface_scale(&data)
+                    .map_err(build_error_geometry)?
+                    .ok_or(GeometryError::UnsupportedMeasurement)?
+            }
             _ => return Err(GeometryError::UnsupportedMeasurement.into()),
         };
         let double_area = parameter_area * surface_scale;
@@ -15494,6 +15499,143 @@ fn rational_bezier_weights_proportional(
         }
     }
     Ok(true)
+}
+
+fn affine_tensor_surface_scale(data: &SurfaceExactData) -> Result<Option<Real>, BuildError> {
+    match data {
+        SurfaceExactData::RationalBezier {
+            control_points,
+            weights,
+        } => {
+            if !tensor_weights_are_constant(weights)? {
+                return Ok(None);
+            }
+            let u_count = control_points[0].len();
+            let v_count = control_points.len();
+            let u_denominator =
+                Real::from(u128::try_from(u_count - 1).expect("usize is representable as u128"));
+            let v_denominator =
+                Real::from(u128::try_from(v_count - 1).expect("usize is representable as u128"));
+            let u_coordinates = (0..u_count)
+                .map(|index| {
+                    (Real::from(u128::try_from(index).expect("usize is representable as u128"))
+                        / &u_denominator)
+                        .map_err(|_| GeometryError::ProjectiveDivision.into())
+                })
+                .collect::<Result<Vec<_>, BuildError>>()?;
+            let v_coordinates = (0..v_count)
+                .map(|index| {
+                    (Real::from(u128::try_from(index).expect("usize is representable as u128"))
+                        / &v_denominator)
+                        .map_err(|_| GeometryError::ProjectiveDivision.into())
+                })
+                .collect::<Result<Vec<_>, BuildError>>()?;
+            affine_control_net_scale(
+                control_points,
+                &u_coordinates,
+                &v_coordinates,
+                &Real::one(),
+                &Real::one(),
+            )
+        }
+        SurfaceExactData::Nurbs {
+            u_degree,
+            v_degree,
+            control_points,
+            weights,
+            u_knots,
+            v_knots,
+        } => {
+            if !tensor_weights_are_constant(weights)? {
+                return Ok(None);
+            }
+            let u_count = control_points[0].len();
+            let v_count = control_points.len();
+            let u_start = &u_knots[*u_degree];
+            let u_end = &u_knots[u_count];
+            let v_start = &v_knots[*v_degree];
+            let v_end = &v_knots[v_count];
+            let u_span = u_end - u_start;
+            let v_span = v_end - v_start;
+            let u_coordinates =
+                normalized_greville_coordinates(u_count, *u_degree, u_knots, u_start, &u_span)?;
+            let v_coordinates =
+                normalized_greville_coordinates(v_count, *v_degree, v_knots, v_start, &v_span)?;
+            affine_control_net_scale(
+                control_points,
+                &u_coordinates,
+                &v_coordinates,
+                &u_span,
+                &v_span,
+            )
+        }
+        _ => Ok(None),
+    }
+}
+
+fn tensor_weights_are_constant(weights: &[Vec<Real>]) -> Result<bool, BuildError> {
+    let Some(first) = weights.first().and_then(|row| row.first()) else {
+        return Ok(false);
+    };
+    for weight in weights.iter().flatten().skip(1) {
+        if !real_values_equal(weight, first)? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn normalized_greville_coordinates(
+    count: usize,
+    degree: usize,
+    knots: &[Real],
+    domain_start: &Real,
+    domain_span: &Real,
+) -> Result<Vec<Real>, BuildError> {
+    let degree_scalar = Real::from(u128::try_from(degree).expect("usize is representable as u128"));
+    (0..count)
+        .map(|index| {
+            let sum = knots[index + 1..=index + degree]
+                .iter()
+                .fold(Real::zero(), |sum, knot| sum + knot);
+            let greville = (sum / &degree_scalar).map_err(|_| GeometryError::ProjectiveDivision)?;
+            ((greville - domain_start) / domain_span)
+                .map_err(|_| GeometryError::ProjectiveDivision.into())
+        })
+        .collect()
+}
+
+fn affine_control_net_scale(
+    control_points: &[Vec<Point3>],
+    u_coordinates: &[Real],
+    v_coordinates: &[Real],
+    u_parameter_span: &Real,
+    v_parameter_span: &Real,
+) -> Result<Option<Real>, BuildError> {
+    let origin = &control_points[0][0];
+    let u = &control_points[0][control_points[0].len() - 1] - origin;
+    let v = &control_points[control_points.len() - 1][0] - origin;
+    let cross_squared = u.cross(&v).norm_squared();
+    if decided_model_order(compare_reals(&cross_squared, &Real::zero()))?
+        != std::cmp::Ordering::Greater
+    {
+        return Ok(None);
+    }
+    for (row, v_coordinate) in control_points.iter().zip(v_coordinates) {
+        for (point, u_coordinate) in row.iter().zip(u_coordinates) {
+            let expected = origin.clone() + u.clone() * u_coordinate + v.clone() * v_coordinate;
+            if !points_equal(point, &expected)? {
+                return Ok(None);
+            }
+        }
+    }
+    let parameter_area = u_parameter_span * v_parameter_span;
+    let spatial_area = cross_squared
+        .sqrt()
+        .map_err(|_| GeometryError::ElementaryFunction)?;
+    Ok(Some(
+        (spatial_area / parameter_area).map_err(|_| GeometryError::ProjectiveDivision)?,
+    ))
 }
 
 fn divide_vector_by_real(vector: Vector3, denominator: &Real) -> Result<Vector3, BuildError> {
