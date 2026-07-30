@@ -2932,9 +2932,11 @@ impl Surface {
             (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Plane(plane)) => {
                 intersect_plane_cylinder(plane, cylinder).map(swapped_curve_intersection)
             }
-            (SurfaceGeometry::Plane(plane), SurfaceGeometry::Cone(cone))
-            | (SurfaceGeometry::Cone(cone), SurfaceGeometry::Plane(plane)) => {
+            (SurfaceGeometry::Plane(plane), SurfaceGeometry::Cone(cone)) => {
                 intersect_plane_cone(plane, cone)
+            }
+            (SurfaceGeometry::Cone(cone), SurfaceGeometry::Plane(plane)) => {
+                intersect_plane_cone(plane, cone).map(swapped_curve_intersection)
             }
             (SurfaceGeometry::Plane(plane), SurfaceGeometry::Torus(torus))
             | (SurfaceGeometry::Torus(torus), SurfaceGeometry::Plane(plane)) => {
@@ -4616,15 +4618,25 @@ fn intersect_plane_cone(
                     .clone()
                     .tan()
                     .map_err(|_| GeometryError::ElementaryFunction)?;
-            let center = cone.apex.clone() + cone.frame.z.clone() * axial_height;
-            Ok(SurfaceSurfaceIntersection::Circle(Curve3::circle_arc(
+            let center = cone.apex.clone() + cone.frame.z.clone() * axial_height.clone();
+            let curve = Curve3::circle_arc(
                 center,
                 cone.frame.x.clone(),
                 cone.frame.y.clone(),
                 radius,
                 Real::zero(),
                 Real::from(2) * Real::pi(),
-            )?))
+            )?;
+            let v = (axial_height / cone.semi_angle.clone().cos())
+                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let domain = curve.domain().clone();
+            Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+                SurfaceIntersectionCurve::new(
+                    curve.clone(),
+                    SurfaceIntersectionPcurve::plane_projection(curve, plane),
+                    SurfaceIntersectionPcurve::tensor_iso_v(domain, v),
+                ),
+            )))
         }
     }
 }
@@ -8806,11 +8818,29 @@ mod tests {
         )
         .unwrap();
         let z_two = Surface::plane(p(0, 0, 2), Vector3::x(), Vector3::y()).unwrap();
-        let SurfaceSurfaceIntersection::Circle(circle) = cone.intersect_surface(&z_two).unwrap()
+        let SurfaceSurfaceIntersection::Curve(section) = cone.intersect_surface(&z_two).unwrap()
         else {
-            panic!("transverse upper-cone cut must retain a circle");
+            panic!("transverse upper-cone cut must retain a circle and both exact pcurves");
         };
-        assert_points_equal(&circle.start().unwrap(), &p(2, 0, 2));
+        assert_points_equal(&section.curve().start().unwrap(), &p(2, 0, 2));
+        assert_eq!(
+            section
+                .first_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            CurveFamily2::Line
+        );
+        assert_eq!(
+            section
+                .second_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            CurveFamily2::CircularArc
+        );
         let apex_plane = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
         let SurfaceSurfaceIntersection::Point(point) = cone.intersect_surface(&apex_plane).unwrap()
         else {

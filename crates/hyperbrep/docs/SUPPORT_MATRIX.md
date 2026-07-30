@@ -288,6 +288,14 @@ intersection is therefore supported through graph partition, all-face
 selection, native curved stitching, rigid orientation, reflection, operand
 reversal, and persistence.
 
+Transverse plane/cone cuts retain the corresponding conical slant parameter
+and use the same planar angular-sweep pcurve. Exact rectangular parameter-grid
+coverage recertifies subdivided frustum sides, enabling native frustum/slab
+intersection through both operand orders, rigid orientation, reflection, and
+persistence. The z-prism specialization now requires certified translation
+geometry before using a two-layer cap profile; cone frustums cannot enter that
+constant-profile kernel.
+
 Closed rational-Bézier curve sweeps and translated prism shells retain their
 exact solid certificate after
 cap-edge subdivision, coplanar cap-face partition, and rational-tensor

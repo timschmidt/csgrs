@@ -164,6 +164,12 @@ The clean-break implementation currently provides:
   loop, cylinder parameter rectangles tile exactly across axial subdivision,
   and axial slab clipping survives stitching, rigid orientation, reflection,
   operand reversal, and byte-identical persistence with exact `πr²h` volume;
+- transverse plane/cone cuts use the same two-pcurve latitude abstraction,
+  with cone slant parameter retained exactly. Frustum side descendants prove
+  the same no-gap/no-overlap parameter grid, so slab clips remain native conic
+  solids with exact frustum volume. The z-prism fast path now requires a real
+  translation-family certificate and cannot misclassify a two-layer frustum
+  from its vertices alone;
 - all-face retained-graph selection through `select_first_faces` and
   `select_second_faces`, with exact pcurve-region witnesses for trimmed planar,
   analytic, and tensor carriers plus canonical parameter-domain witnesses for

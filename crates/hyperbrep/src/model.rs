@@ -4562,9 +4562,9 @@ impl Model {
 
     pub(crate) fn certified_z_prism_profile(
         &self,
-        solid: SolidId,
+        solid_id: SolidId,
     ) -> Result<Option<CertifiedZPrismProfile>, GeometryError> {
-        let Some(solid) = self.solid(solid) else {
+        let Some(solid) = self.solid(solid_id) else {
             return Ok(None);
         };
         if !solid.voids.is_empty() {
@@ -4573,6 +4573,27 @@ impl Model {
         let shell = self
             .shell(solid.outer)
             .expect("validated solid shell reference");
+        let certified_translation_family = self
+            .data
+            .certified_prisms
+            .get(solid_id.index())
+            .is_some_and(Option::is_some)
+            || self
+                .data
+                .certified_cylinders
+                .get(solid_id.index())
+                .is_some_and(Option::is_some)
+            || shell.faces.iter().all(|face| {
+                matches!(
+                    self.surface(self.face(*face).expect("validated shell face").surface())
+                        .expect("validated face surface")
+                        .kind(),
+                    SurfaceKind::Plane | SurfaceKind::Extrusion
+                )
+            });
+        if !certified_translation_family {
+            return Ok(None);
+        }
         let mut vertex_ids = HashSet::new();
         for face_id in &shell.faces {
             let face = self.face(*face_id).expect("validated shell face");
@@ -8860,14 +8881,11 @@ impl ModelBuilder {
         shell: ShellId,
     ) -> Result<Option<CertifiedConeFrustumShell>, BuildError> {
         let faces = &self.shell_ref(shell)?.faces;
-        if faces.len() != 6 {
-            return Ok(None);
-        }
         let mut cap_count = 0_usize;
         let mut cone_surface = None;
         let mut u_values = Vec::new();
         let mut v_values = Vec::new();
-        let mut face_coordinates = Vec::with_capacity(4);
+        let mut face_coordinates = Vec::new();
         for face_id in faces {
             let face = self.face_ref(*face_id)?;
             if !face.inner().is_empty() {
@@ -8895,6 +8913,7 @@ impl ModelBuilder {
             }
             let mut face_u = Vec::with_capacity(8);
             let mut face_v = Vec::with_capacity(8);
+            let mut parameter_segments = Vec::with_capacity(wire.edge_uses.len());
             for edge_use_id in &wire.edge_uses {
                 let edge_use = self.edge_use_ref(*edge_use_id)?;
                 let pcurve = self.pcurve_ref(edge_use.pcurve)?;
@@ -8908,19 +8927,27 @@ impl ModelBuilder {
                 }
                 face_u.extend([line.start().x().clone(), line.end().x().clone()]);
                 face_v.extend([line.start().y().clone(), line.end().y().clone()]);
+                parameter_segments.push(Segment2::Line(line.clone()));
             }
             let (u_min, u_max) = exact_real_min_max(&face_u)?;
             let (v_min, v_max) = exact_real_min_max(&face_v)?;
+            let contour = Contour2::try_new(parameter_segments).map_err(GeometryError::from)?;
+            let represented_area = contour
+                .signed_area()
+                .map_err(GeometryError::from)?
+                .ok_or(BuildError::DegenerateShellVolume(shell))?
+                .abs();
+            let rectangle_area = (&u_max - &u_min) * (&v_max - &v_min);
+            if !real_values_equal(&represented_area, &rectangle_area)? {
+                return Ok(None);
+            }
             insert_sorted_real(&mut u_values, &u_min)?;
             insert_sorted_real(&mut u_values, &u_max)?;
             insert_sorted_real(&mut v_values, &v_min)?;
             insert_sorted_real(&mut v_values, &v_max)?;
-            face_coordinates.push((vec![u_min, u_max], vec![v_min, v_max]));
+            face_coordinates.push((u_min, u_max, v_min, v_max));
         }
-        if cap_count != 2
-            || face_coordinates.len() != 4
-            || u_values.len() != 5
-            || v_values.len() != 2
+        if cap_count != 2 || face_coordinates.len() < 4 || u_values.len() != 5 || v_values.len() < 2
         {
             return Ok(None);
         }
@@ -8931,33 +8958,28 @@ impl ModelBuilder {
                 return Ok(None);
             }
         }
-        if decided_model_order(compare_reals(&v_values[0], &Real::zero()))?
-            != std::cmp::Ordering::Greater
+        let v_min = v_values[0].clone();
+        let v_max = v_values.last().expect("frustum has axial values").clone();
+        if decided_model_order(compare_reals(&v_min, &Real::zero()))? != std::cmp::Ordering::Greater
         {
             return Ok(None);
         }
-        let mut cells = HashSet::with_capacity(4);
-        for (face_u, face_v) in face_coordinates {
-            let mut u_indices = face_u
-                .iter()
-                .map(|value| exact_real_index(&u_values, value))
-                .collect::<Result<HashSet<_>, _>>()?
-                .into_iter()
-                .collect::<Vec<_>>();
-            let v_indices = face_v
-                .iter()
-                .map(|value| exact_real_index(&v_values, value))
-                .collect::<Result<HashSet<_>, _>>()?;
-            u_indices.sort_unstable();
-            if u_indices.len() != 2
-                || u_indices[1] != u_indices[0] + 1
-                || v_indices.len() != 2
-                || !cells.insert(u_indices[0])
-            {
+        let mut cells = HashSet::new();
+        for (u_min, u_max, face_v_min, face_v_max) in face_coordinates {
+            let u_start = exact_real_index(&u_values, &u_min)?;
+            let u_end = exact_real_index(&u_values, &u_max)?;
+            let v_start = exact_real_index(&v_values, &face_v_min)?;
+            let v_end = exact_real_index(&v_values, &face_v_max)?;
+            if u_end != u_start + 1 || v_start >= v_end {
                 return Ok(None);
             }
+            for v_cell in v_start..v_end {
+                if !cells.insert((u_start, v_cell)) {
+                    return Ok(None);
+                }
+            }
         }
-        if cells.len() != 4 {
+        if cells.len() != (u_values.len() - 1) * (v_values.len() - 1) {
             return Ok(None);
         }
         let SurfaceExactData::Cone {
@@ -8975,8 +8997,8 @@ impl ModelBuilder {
             apex,
             axis,
             semi_angle,
-            v_min: v_values[0].clone(),
-            v_max: v_values[1].clone(),
+            v_min,
+            v_max,
         }))
     }
 

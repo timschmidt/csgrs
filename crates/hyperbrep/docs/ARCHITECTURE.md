@@ -77,12 +77,17 @@ the owning shell is updated by identity. Prism and cylinder certificates derive
 cap regions from stitched external boundaries, so internal face subdivision
 does not alter the represented solid.
 
-The native cylinder certificate also derives an exact parameter-space grid
-from every current side descendant. Each rectilinear pcurve loop must have the
-exact area of its bounding rectangle; those rectangles must cover every
-quarter-angle/axial grid cell exactly once. This admits latitude cuts and
-temporarily subdivided axial boundary edges without accepting overlaps, gaps,
-or a sampled approximation.
+The native cylinder and cone-frustum certificates also derive an exact
+parameter-space grid from every current side descendant. Each rectilinear
+pcurve loop must have the exact area of its bounding rectangle; those
+rectangles must cover every quarter-angle/axial grid cell exactly once. This
+admits latitude cuts and temporarily subdivided axial boundary edges without
+accepting overlaps, gaps, or a sampled approximation.
+
+The world-z prism optimization is separately gated by a certified translation
+family. Two vertex-height layers and a planar cap are not sufficient evidence:
+in particular, a cone frustum must fall through to retained curved stitching
+instead of being interpreted as a constant-profile extrusion.
 
 ## Exact image agreement
 

@@ -3246,8 +3246,19 @@ fn certified_face_bounds(model: &Model, face: FaceId) -> Result<Option<Aabb>, Ge
         .expect("validated face surface");
     match surface.bounds()? {
         SurfaceBounds::Bounded(bounds) => Ok(Some(*bounds)),
-        SurfaceBounds::Unbounded if surface.kind() != crate::SurfaceKind::Plane => Ok(None),
+        SurfaceBounds::Unbounded
+            if !matches!(
+                surface.kind(),
+                crate::SurfaceKind::Plane | crate::SurfaceKind::Cone
+            ) =>
+        {
+            Ok(None)
+        }
         SurfaceBounds::Unbounded => {
+            // A finite planar trim is the convex image of its boundary. On the
+            // supported positive cone nappe, every Cartesian coordinate has
+            // no strict two-parameter interior extremum, so its exact trimmed
+            // boundary bounds certify the complete face as well.
             let mut bounds: Option<Aabb> = None;
             for wire_id in face.outer().into_iter().chain(face.inner().iter().copied()) {
                 let wire = model.wire(wire_id).expect("validated face wire");
@@ -5506,6 +5517,123 @@ mod tests {
     }
 
     #[test]
+    fn transverse_cone_frustum_slab_intersection_retains_exact_latitude_pcurves() {
+        let (frustum, frustum_solid) =
+            crate::builder::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
+        let (slab, slab_solid) = crate::builder::cuboid(p(-5, -5, 1), p(5, 5, 2)).unwrap();
+        let graph = intersection_graph(&frustum, frustum_solid, &slab, slab_solid).unwrap();
+        let latitude_pairs = graph
+            .intersections()
+            .iter()
+            .filter(|pair| {
+                matches!(
+                    pair.relation(),
+                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(_))
+                ) && matches!(pair.trim(), FacePairTrim::SurfaceCurveFragments(_))
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(latitude_pairs.len(), 8);
+        for pair in latitude_pairs {
+            let FacePairTrim::SurfaceCurveFragments(fragments) = pair.trim() else {
+                unreachable!("filtered retained latitude pair");
+            };
+            assert_eq!(fragments.len(), 1);
+            for pcurve in [fragments[0].first_pcurve(), fragments[0].second_pcurve()] {
+                pcurve.materialize().unwrap();
+            }
+        }
+
+        let (partitioned_frustum, frustum_partitions) = graph.partition_first_faces().unwrap();
+        assert_eq!(frustum_partitions.len(), 4);
+        assert_eq!(
+            compare_reals(
+                &partitioned_frustum.solid_volume(frustum_solid).unwrap(),
+                &frustum.solid_volume(frustum_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let (_, slab_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(slab_partitions.len(), 2);
+
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("transverse frustum/slab clipping must retain one exact frustum");
+        };
+        let expected = (Real::from(19) * Real::pi() / Real::from(3)).unwrap();
+        assert!(model.faces().any(|(_, face)| {
+            model.surface(face.surface()).unwrap().kind() == crate::SurfaceKind::Cone
+        }));
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let json = model.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+
+        for (index, result) in [
+            intersection(&frustum, frustum_solid, &slab, slab_solid).unwrap(),
+            intersection(&slab, slab_solid, &frustum, frustum_solid).unwrap(),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let BooleanResult::Solid { model, solid } = result else {
+                panic!("the standard API must preserve the exact transverse frustum clip");
+            };
+            assert_eq!(
+                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                Some(Ordering::Equal),
+                "operand order {index}"
+            );
+        }
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_frustum = frustum.transformed(&cyclic).unwrap();
+        let oriented_slab = slab.transformed(&cyclic).unwrap();
+        let BooleanResult::Solid {
+            model: oriented,
+            solid: oriented_solid,
+        } = intersection(&oriented_frustum, frustum_solid, &oriented_slab, slab_solid).unwrap()
+        else {
+            panic!("rigidly oriented transverse clipping must retain one exact frustum");
+        };
+        assert_eq!(
+            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+
+        let reflected = model
+            .transformed(&Matrix4::affine_nonuniform_scale([
+                Real::one(),
+                -Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
     fn planar_graph_partitions_both_models_in_deterministic_face_order() {
         let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
         let (second, second_solid) = crate::builder::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
@@ -6210,7 +6338,7 @@ mod tests {
     }
 
     #[test]
-    fn intersection_graph_inverse_maps_analytic_face_point_carriers() {
+    fn intersection_graph_bounds_reject_unreachable_cone_apex_carriers() {
         let (frustum, frustum_solid) =
             crate::builder::cone_frustum(Real::from(2), Real::one(), Real::from(3)).unwrap();
         let (apex_plane, apex_solid) = crate::builder::cuboid(p(-1, -1, 6), p(1, 1, 7)).unwrap();
@@ -6226,12 +6354,8 @@ mod tests {
                 )
             })
             .collect::<Vec<_>>();
-        assert_eq!(apex_pairs.len(), 4);
-        assert!(
-            apex_pairs
-                .iter()
-                .all(|pair| matches!(pair.trim(), FacePairTrim::NoContact))
-        );
+        assert!(apex_pairs.is_empty());
+        assert!(graph.broad_phase_rejections() >= 4);
     }
 
     #[test]
