@@ -52,6 +52,15 @@ pub enum ConstructionError {
     /// A curve sweep path is not an exact positive affine graph through the
     /// fixed profile plane.
     NonMonotoneSweepPath,
+    /// A rational Bézier moving frame has inconsistent control counts or
+    /// invalid projective data.
+    InvalidSweepFrame,
+    /// A moving frame leaves the parallel section-plane family established
+    /// by its initial axes.
+    NonPlanarSweepFrame,
+    /// A moving frame does not preserve its exact oriented section-area
+    /// element over the complete parameter domain.
+    NonAreaPreservingSweepFrame,
     /// A tensor patch shell requires at least one face.
     EmptyPatchShell,
     /// A planar extrusion profile crosses or overlaps itself.
@@ -95,6 +104,59 @@ pub struct LoftSection {
     pub profile: Vec<Point2>,
     /// Exact section height; sections are ordered by increasing height.
     pub z: Real,
+}
+
+/// One explicitly authored rational Bézier frame for an exact curved sweep.
+///
+/// At parameter `t`, a profile point `(x, y)` maps to
+/// `origin(t) + u(t)*x + v(t)*y`. All three vector-valued paths use the same
+/// positive rational Bézier weights. The frame must remain in the initial
+/// section-plane family and preserve `u(t) × v(t)` exactly; this is a complete
+/// Bernstein identity, not a sampled condition.
+#[derive(Clone, Debug)]
+pub struct RationalBezierSweepFrame {
+    origins: Vec<Point3>,
+    u_axes: Vec<Vector3>,
+    v_axes: Vec<Vector3>,
+    weights: Vec<Real>,
+}
+
+impl RationalBezierSweepFrame {
+    /// Constructs and certifies one authored moving frame.
+    pub fn try_new(
+        origins: Vec<Point3>,
+        u_axes: Vec<Vector3>,
+        v_axes: Vec<Vector3>,
+        weights: Vec<Real>,
+    ) -> Result<Self, ConstructionError> {
+        certify_sweep_frame(&origins, &u_axes, &v_axes, &weights)?;
+        Ok(Self {
+            origins,
+            u_axes,
+            v_axes,
+            weights,
+        })
+    }
+
+    /// Returns the authored origin controls.
+    pub fn origins(&self) -> &[Point3] {
+        &self.origins
+    }
+
+    /// Returns the authored first-axis controls.
+    pub fn u_axes(&self) -> &[Vector3] {
+        &self.u_axes
+    }
+
+    /// Returns the authored second-axis controls.
+    pub fn v_axes(&self) -> &[Vector3] {
+        &self.v_axes
+    }
+
+    /// Returns the shared positive rational Bézier weights.
+    pub fn weights(&self) -> &[Real] {
+        &self.weights
+    }
 }
 
 /// One exact tensor patch supplied to [`tensor_patch_shell`].
@@ -153,6 +215,15 @@ impl fmt::Display for ConstructionError {
             }
             Self::NonMonotoneSweepPath => formatter.write_str(
                 "curve sweep path must advance affinely and positively through the profile plane",
+            ),
+            Self::InvalidSweepFrame => formatter.write_str(
+                "moving sweep frame requires matching valid rational Bezier control data",
+            ),
+            Self::NonPlanarSweepFrame => formatter.write_str(
+                "moving sweep frame axes must remain in the initial section-plane family",
+            ),
+            Self::NonAreaPreservingSweepFrame => formatter.write_str(
+                "moving sweep frame must preserve its exact oriented section-area element",
             ),
             Self::EmptyPatchShell => {
                 formatter.write_str("tensor patch shell requires at least one patch")
@@ -2131,6 +2202,61 @@ pub fn sweep_curve_region(
     v: Vector3,
     path: Curve3,
 ) -> Result<(Model, SolidId), ConstructionError> {
+    let Curve3ExactData::RationalBezier {
+        control_points: origins,
+        weights,
+    } = path.exact_data()
+    else {
+        return Err(ConstructionError::UnsupportedSweepPath);
+    };
+    let u_axes = vec![u; origins.len()];
+    let v_axes = vec![v; origins.len()];
+    sweep_rational_bezier_frame_region(outer, holes, origins, u_axes, v_axes, weights)
+}
+
+/// Sweeps one exact polygon through an explicitly authored rational Bézier
+/// moving frame.
+///
+/// The frame supplies the complete origin and profile-axis motion. HyperBREP
+/// infers no Frenet frame, corner transport, or sampling policy.
+pub fn sweep_moving_frame(
+    profile: &[Point2],
+    frame: RationalBezierSweepFrame,
+) -> Result<(Model, SolidId), ConstructionError> {
+    sweep_moving_frame_region(profile, &[], frame)
+}
+
+/// Sweeps one exact polygonal region with through-holes through an explicitly
+/// authored rational Bézier moving frame.
+///
+/// The authored frame is accepted only when its complete Bernstein form proves
+/// parallel section planes, positive affine plane progress, and an exactly
+/// constant oriented section-area element. Those restrictions make the
+/// resulting shell globally injective without sampling while still permitting
+/// exact shear and other non-rigid in-plane motion.
+pub fn sweep_moving_frame_region(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+    frame: RationalBezierSweepFrame,
+) -> Result<(Model, SolidId), ConstructionError> {
+    sweep_rational_bezier_frame_region(
+        outer,
+        holes,
+        frame.origins,
+        frame.u_axes,
+        frame.v_axes,
+        frame.weights,
+    )
+}
+
+fn sweep_rational_bezier_frame_region(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+    origins: Vec<Point3>,
+    u_axes: Vec<Vector3>,
+    v_axes: Vec<Vector3>,
+    weights: Vec<Real>,
+) -> Result<(Model, SolidId), ConstructionError> {
     let outer = normalize_profile(outer, true)?;
     let holes = holes
         .iter()
@@ -2140,20 +2266,8 @@ pub fn sweep_curve_region(
     let mut loops = Vec::with_capacity(holes.len() + 1);
     loops.push(outer);
     loops.extend(holes);
-    let normal = u.cross(&v);
-    if decided_construction_order(compare_reals(&normal.norm_squared(), &Real::zero()))?
-        != std::cmp::Ordering::Greater
-    {
-        return Err(BuildError::Geometry(GeometryError::DegeneratePlaneBasis).into());
-    }
-    let Curve3ExactData::RationalBezier {
-        control_points: path_controls,
-        weights: path_weights,
-    } = path.exact_data()
-    else {
-        return Err(ConstructionError::UnsupportedSweepPath);
-    };
-    certify_sweep_path_progress(&path_controls, &path_weights, &normal)?;
+    let normal = certify_sweep_frame(&origins, &u_axes, &v_axes, &weights)?;
+    certify_sweep_path_progress(&origins, &weights, &normal)?;
 
     let count = loops.iter().map(Vec::len).sum::<usize>();
     let mut loop_offsets = Vec::with_capacity(loops.len());
@@ -2162,18 +2276,23 @@ pub fn sweep_curve_region(
         loop_offsets.push(offset_index);
         offset_index += profile.len();
     }
-    let path_start = path_controls[0].clone();
-    let path_end = path_controls[path_controls.len() - 1].clone();
-    let offset = |point: &Point2| u.clone() * &point.x + v.clone() * &point.y;
+    let path_start = origins[0].clone();
+    let path_end = origins[origins.len() - 1].clone();
+    let lower_u = u_axes[0].clone();
+    let lower_v = v_axes[0].clone();
+    let upper_u = u_axes[u_axes.len() - 1].clone();
+    let upper_v = v_axes[v_axes.len() - 1].clone();
+    let lower_offset = |point: &Point2| lower_u.clone() * &point.x + lower_v.clone() * &point.y;
+    let upper_offset = |point: &Point2| upper_u.clone() * &point.x + upper_v.clone() * &point.y;
     let lower_points = loops
         .iter()
         .flatten()
-        .map(|point| path_start.clone() + offset(point))
+        .map(|point| path_start.clone() + lower_offset(point))
         .collect::<Vec<_>>();
     let upper_points = loops
         .iter()
         .flatten()
-        .map(|point| path_end.clone() + offset(point))
+        .map(|point| path_end.clone() + upper_offset(point))
         .collect::<Vec<_>>();
 
     let mut builder = ModelBuilder::new();
@@ -2214,13 +2333,16 @@ pub fn sweep_curve_region(
                 upper_curve,
                 ParameterDomain::unit(),
             )?);
-            let translated_controls = path_controls
+            let translated_controls = origins
                 .iter()
-                .map(|control| control.clone() + offset(&profile[local]))
+                .zip(u_axes.iter().zip(&v_axes))
+                .map(|(origin, (u, v))| {
+                    origin.clone() + u.clone() * &profile[local].x + v.clone() * &profile[local].y
+                })
                 .collect();
             let translated_path = builder.curve(Curve3::rational_bezier(
                 translated_controls,
-                path_weights.clone(),
+                weights.clone(),
             )?)?;
             path_edges.push(builder.edge(
                 lower_vertices[index],
@@ -2231,7 +2353,11 @@ pub fn sweep_curve_region(
         }
     }
 
-    let lower_surface = builder.surface(Surface::plane(path_start, u.clone(), v.clone())?)?;
+    let lower_surface = builder.surface(Surface::plane(
+        path_start,
+        lower_u.clone(),
+        lower_v.clone(),
+    )?)?;
     let mut lower_wires = Vec::with_capacity(loops.len());
     for (profile, profile_offset) in loops.iter().zip(&loop_offsets) {
         let mut lower_uses = Vec::with_capacity(profile.len());
@@ -2259,7 +2385,8 @@ pub fn sweep_curve_region(
         lower_wires,
     )?;
 
-    let upper_surface = builder.surface(Surface::plane(path_end, u.clone(), v.clone())?)?;
+    let upper_surface =
+        builder.surface(Surface::plane(path_end, upper_u.clone(), upper_v.clone())?)?;
     let mut upper_wires = Vec::with_capacity(loops.len());
     for (profile, profile_offset) in loops.iter().zip(&loop_offsets) {
         let mut upper_uses = Vec::with_capacity(profile.len());
@@ -2298,18 +2425,19 @@ pub fn sweep_curve_region(
         for local in 0..profile.len() {
             let index = profile_offset + local;
             let next = profile_offset + (local + 1) % profile.len();
-            let start_offset = offset(&profile[local]);
-            let end_offset = offset(&profile[(local + 1) % profile.len()]);
-            let surface_controls = path_controls
+            let start = &profile[local];
+            let end = &profile[(local + 1) % profile.len()];
+            let surface_controls = origins
                 .iter()
-                .map(|control| {
+                .zip(u_axes.iter().zip(&v_axes))
+                .map(|(origin, (u, v))| {
                     vec![
-                        control.clone() + &start_offset,
-                        control.clone() + &end_offset,
+                        origin.clone() + u.clone() * &start.x + v.clone() * &start.y,
+                        origin.clone() + u.clone() * &end.x + v.clone() * &end.y,
                     ]
                 })
                 .collect::<Vec<_>>();
-            let surface_weights = path_weights
+            let surface_weights = weights
                 .iter()
                 .map(|weight| vec![weight.clone(), weight.clone()])
                 .collect::<Vec<_>>();
@@ -2349,6 +2477,94 @@ pub fn sweep_curve_region(
     let shell = builder.shell(faces)?;
     let solid = builder.solid(shell, Vec::new())?;
     Ok((builder.finish()?, solid))
+}
+
+fn certify_sweep_frame(
+    origins: &[Point3],
+    u_axes: &[Vector3],
+    v_axes: &[Vector3],
+    weights: &[Real],
+) -> Result<Vector3, ConstructionError> {
+    if origins.len() < 2
+        || origins.len() != u_axes.len()
+        || origins.len() != v_axes.len()
+        || origins.len() != weights.len()
+    {
+        return Err(ConstructionError::InvalidSweepFrame);
+    }
+    Curve3::rational_bezier(origins.to_vec(), weights.to_vec())?;
+
+    let normal = u_axes[0].cross(&v_axes[0]);
+    if decided_construction_order(compare_reals(&normal.norm_squared(), &Real::zero()))?
+        != std::cmp::Ordering::Greater
+    {
+        return Err(BuildError::Geometry(GeometryError::DegeneratePlaneBasis).into());
+    }
+    for axis in u_axes.iter().chain(v_axes) {
+        if decided_construction_order(compare_reals(&axis.dot(&normal), &Real::zero()))?
+            != std::cmp::Ordering::Equal
+        {
+            return Err(ConstructionError::NonPlanarSweepFrame);
+        }
+    }
+
+    let degree = origins.len() - 1;
+    let product_degree = degree
+        .checked_mul(2)
+        .ok_or(ConstructionError::InvalidSweepFrame)?;
+    for product_index in 0..=product_degree {
+        let first_min = product_index.saturating_sub(degree);
+        let first_max = degree.min(product_index);
+        let mut cross_coefficient = Vector3::zero();
+        let mut weight_coefficient = Real::zero();
+        for first in first_min..=first_max {
+            let second = product_index - first;
+            let coefficient = bernstein_product_coefficient(degree, first, second)?;
+            let weighted_u = u_axes[first].clone() * &weights[first];
+            let weighted_v = v_axes[second].clone() * &weights[second];
+            cross_coefficient = cross_coefficient + weighted_u.cross(&weighted_v) * &coefficient;
+            weight_coefficient += &coefficient * &weights[first] * &weights[second];
+        }
+        let expected = normal.clone() * weight_coefficient;
+        for component in 0..3 {
+            if decided_construction_order(compare_reals(
+                &cross_coefficient.0[component],
+                &expected.0[component],
+            ))? != std::cmp::Ordering::Equal
+            {
+                return Err(ConstructionError::NonAreaPreservingSweepFrame);
+            }
+        }
+    }
+    Ok(normal)
+}
+
+fn bernstein_product_coefficient(
+    degree: usize,
+    first: usize,
+    second: usize,
+) -> Result<Real, ConstructionError> {
+    let numerator = binomial_real(degree, first)? * binomial_real(degree, second)?;
+    (numerator
+        / binomial_real(
+            degree
+                .checked_mul(2)
+                .ok_or(ConstructionError::InvalidSweepFrame)?,
+            first + second,
+        )?)
+    .map_err(|_| GeometryError::ProjectiveDivision.into())
+}
+
+fn binomial_real(n: usize, k: usize) -> Result<Real, ConstructionError> {
+    let k = k.min(n - k);
+    let mut result = Real::one();
+    for index in 1..=k {
+        result = (result
+            * Real::from(u128::try_from(n + 1 - index).expect("usize is representable as u128"))
+            / Real::from(u128::try_from(index).expect("usize is representable as u128")))
+        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    }
+    Ok(result)
 }
 
 fn certify_sweep_path_progress(
@@ -7333,6 +7549,147 @@ mod tests {
         assert_eq!(
             compare_reals(&scaled.solid_volume(solid).unwrap(), &r(1152)).value(),
             Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn moving_frame_sweep_retains_exact_authored_shear_and_region_certificate() {
+        let outer = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
+        let hole = vec![p2(1, 1), p2(3, 1), p2(3, 3), p2(1, 3)];
+        let frame = RationalBezierSweepFrame::try_new(
+            vec![p(0, 0, 0), p(1, 0, 1), p(0, 0, 4)],
+            vec![
+                Vector3::x(),
+                Vector3::from_xyz(Real::one(), Real::one(), Real::zero()),
+                Vector3::from_xyz(Real::one(), r(2), Real::zero()),
+            ],
+            vec![Vector3::y(), Vector3::y(), Vector3::y()],
+            vec![Real::one(), r(2), r(3)],
+        )
+        .unwrap();
+        assert_eq!(frame.origins().len(), 3);
+        assert_eq!(frame.u_axes().len(), 3);
+        assert_eq!(frame.v_axes().len(), 3);
+        assert_eq!(frame.weights().len(), 3);
+
+        let (without_hole, without_hole_solid) = sweep_moving_frame(&outer, frame.clone()).unwrap();
+        assert_eq!(
+            compare_reals(
+                &without_hole.solid_volume(without_hole_solid).unwrap(),
+                &r(64),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let (model, solid) = sweep_moving_frame_region(&outer, &[hole], frame).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 16,
+                curves: 24,
+                pcurves: 48,
+                surfaces: 10,
+                edges: 24,
+                edge_uses: 48,
+                wires: 12,
+                faces: 10,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &r(48)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let half = (Real::one() / r(2)).unwrap();
+        for (point, expected) in [
+            (
+                Point3::new(r(1), (r(9) / r(8)).unwrap(), r(2)),
+                SolidPointLocation::Inside,
+            ),
+            (
+                Point3::new((r(5) / r(2)).unwrap(), (r(9) / r(2)).unwrap(), r(2)),
+                SolidPointLocation::Outside,
+            ),
+            (
+                Point3::new((r(3) / r(2)).unwrap(), (r(13) / r(4)).unwrap(), r(2)),
+                SolidPointLocation::Boundary,
+            ),
+            (
+                Point3::new(half.clone(), r(2), r(2)),
+                SolidPointLocation::Boundary,
+            ),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+
+        let json = model.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            rebuilt
+                .classify_point(
+                    solid,
+                    &Point3::new((r(5) / r(2)).unwrap(), (r(9) / r(2)).unwrap(), r(2),),
+                )
+                .unwrap(),
+            SolidPointLocation::Outside
+        );
+        let scaled = rebuilt
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(1152)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            scaled
+                .classify_point(solid, &Point3::new(r(2), (r(27) / r(8)).unwrap(), r(8)),)
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+    }
+
+    #[test]
+    fn moving_frame_rejects_incomplete_nonplanar_and_area_changing_authorship() {
+        assert_eq!(
+            RationalBezierSweepFrame::try_new(
+                vec![p(0, 0, 0), p(0, 0, 4)],
+                vec![Vector3::x()],
+                vec![Vector3::y(), Vector3::y()],
+                vec![Real::one(), Real::one()],
+            )
+            .unwrap_err(),
+            ConstructionError::InvalidSweepFrame
+        );
+        assert_eq!(
+            RationalBezierSweepFrame::try_new(
+                vec![p(0, 0, 0), p(0, 0, 4)],
+                vec![
+                    Vector3::x(),
+                    Vector3::from_xyz(Real::one(), Real::zero(), Real::one()),
+                ],
+                vec![Vector3::y(), Vector3::y()],
+                vec![Real::one(), Real::one()],
+            )
+            .unwrap_err(),
+            ConstructionError::NonPlanarSweepFrame
+        );
+        assert_eq!(
+            RationalBezierSweepFrame::try_new(
+                vec![p(0, 0, 0), p(0, 0, 4)],
+                vec![
+                    Vector3::x(),
+                    Vector3::from_xyz(r(2), Real::zero(), Real::zero()),
+                ],
+                vec![Vector3::y(), Vector3::y()],
+                vec![Real::one(), Real::one()],
+            )
+            .unwrap_err(),
+            ConstructionError::NonAreaPreservingSweepFrame
         );
     }
 

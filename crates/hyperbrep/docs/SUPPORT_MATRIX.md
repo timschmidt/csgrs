@@ -49,6 +49,7 @@ General isolated algebraic parameters that cannot be represented as
 | `revolve_path` / `revolve_path_region` | Four periodic cells per exact `CurvePath2` carrier; retained Bézier/B-spline/NURBS meridians, exact clamped knot-span partition of single periodic spline carriers, and curved cavity shells | Line/arc faces exact; general spline faces explicitly unsupported | Exact for polynomial-equivalent, rational-quadratic, exact degree-elevated conic, arbitrary-degree at-most-quadratic-weight, and nonuniform rational line-image moments; cubic-or-higher weight-degree rational moments explicitly unsupported | Exact radial/curved-path test | Rigid / exact |
 | `sweep` / `sweep_region` | Exact affine image of a polygonal linear-path sweep | Yes | Exact determinant-scaled prism volume | Exact inverse-frame profile test | Affine / exact |
 | `sweep_curve` / `sweep_curve_region` | Fixed-frame polygon or through-hole region swept along an affine-progress rational Bézier path / native tensor translation sides and inner cap wires | Caps only | Exact material-region area × signed plane progress | Exact progress inversion and outer-minus-hole profile test | Affine / exact |
+| `sweep_moving_frame` / `sweep_moving_frame_region` | Explicit shared-weight rational Bézier origin/axis frame / native tensor sides and inner cap wires | Caps only | Exact material-region area × signed plane progress | Exact moving inverse-frame profile test | Affine / exact |
 | `loft` | Two or more corresponding sections; each span positive homothetic or exact convex interpolation / planar or bilinear tensor sides with explicit C⁰ rings | Homothetic sides only | Exact piecewise-integrated quadratic section area | Exact span/section test | Affine / exact |
 | `rational_bezier_patch` | One trimmed exact tensor patch / open shell | Not yet | N/A | N/A | Affine / exact |
 | `nurbs_patch` | One trimmed exact tensor patch / open shell | Not yet | N/A | N/A | Affine / exact |
@@ -57,12 +58,15 @@ General isolated algebraic parameters that cannot be represented as
 Full cones remain absent until the apex singularity has a topological
 representation rather than degenerate tolerance sewing.
 
-Moving-frame curved sweeps remain explicit unsupported work. `sweep_curve`
-and `sweep_curve_region` instead keep the profile frame fixed and accept only
-rational Bézier paths whose complete Bernstein representation proves affine,
-strictly positive progress through the profile plane; lateral curvature is
-unrestricted. Region holes are exact inner cap wires joined by reversed
-material-side tensor walls in one genus shell, not detached voids.
+Moving-frame curved sweeps are supported through explicitly authored
+`RationalBezierSweepFrame` data. Origin and both axes share one positive
+rational Bézier weight vector; complete Bernstein identities must prove
+parallel section planes, affine strictly positive plane progress, and constant
+oriented section area. This admits exact authored shear while rejecting folds,
+area changes, inferred Frenet transport, and sampled frame decisions.
+`sweep_curve` and `sweep_curve_region` remain the simpler fixed-frame special
+case. Region holes are exact inner cap wires joined by reversed material-side
+tensor walls in one genus shell, not detached voids.
 Multi-section lofts expose
 identity-shared C⁰ section rings and make no stronger continuity claim.
 Non-homothetic spans are accepted only when the corresponding endpoint

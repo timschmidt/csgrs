@@ -25,7 +25,7 @@ pub use boolean::{
     BooleanError, BooleanOperation, BooleanResult, ClassifiedFace, FacePairIntersection,
     FacePairRelation, FacePairTrim, FaceSelection, FaceSelectionAction, SolidIntersectionGraph,
 };
-pub use builder::{Axis, ConstructionError, LoftSection, TensorPatch};
+pub use builder::{Axis, ConstructionError, LoftSection, RationalBezierSweepFrame, TensorPatch};
 pub use error::{GeometryError, GeometryResult};
 pub use geometry::{
     Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceIntersection,

@@ -1438,9 +1438,9 @@ enum CertifiedLoftInterpolation {
 struct CertifiedCurveSweepShell {
     profile: Contour2,
     holes: Vec<Contour2>,
-    u: Vector3,
-    v: Vector3,
     path: Curve3,
+    u_path: Curve3,
+    v_path: Curve3,
 }
 
 struct TensorPathChain {
@@ -4029,9 +4029,9 @@ impl Model {
                         Ok(CertifiedCurveSweepShell {
                             profile: certificate.profile.clone(),
                             holes: certificate.holes.clone(),
-                            u: transform.transform_direction3(&certificate.u),
-                            v: transform.transform_direction3(&certificate.v),
                             path: certificate.path.transformed(transform)?,
+                            u_path: transform_vector_curve(&certificate.u_path, transform)?,
+                            v_path: transform_vector_curve(&certificate.v_path, transform)?,
                         })
                     })
                     .transpose()
@@ -4601,7 +4601,9 @@ impl Model {
             }
             let path_start = sweep.path.point_at(sweep.path.domain().start())?;
             let path_end = sweep.path.point_at(sweep.path.domain().end())?;
-            let progress = sweep.u.cross(&sweep.v).dot(&(path_end - path_start)).abs();
+            let u = Vector3::from(sweep.u_path.point_at(sweep.u_path.domain().start())?);
+            let v = Vector3::from(sweep.v_path.point_at(sweep.v_path.domain().start())?);
+            let progress = u.cross(&v).dot(&(path_end - path_start)).abs();
             return Ok(area * progress);
         }
         if let Some(prism) = &self.data.certified_prisms[id.index()] {
@@ -4877,7 +4879,9 @@ impl Model {
     ) -> Result<SolidPointLocation, QueryError> {
         let start = sweep.path.point_at(sweep.path.domain().start())?;
         let end = sweep.path.point_at(sweep.path.domain().end())?;
-        let normal = sweep.u.cross(&sweep.v);
+        let start_u = Vector3::from(sweep.u_path.point_at(sweep.u_path.domain().start())?);
+        let start_v = Vector3::from(sweep.v_path.point_at(sweep.v_path.domain().start())?);
+        let normal = start_u.cross(&start_v);
         let progress = normal.dot(&(end - &start));
         let parameter = (normal.dot(&(point - &start)) / &progress)
             .map_err(|_| QueryError::from(GeometryError::ProjectiveDivision))?;
@@ -4887,7 +4891,9 @@ impl Model {
             return Ok(SolidPointLocation::Outside);
         }
         let path_point = sweep.path.point_at(&parameter)?;
-        let profile_point = project_point_to_plane_frame(point, &path_point, &sweep.u, &sweep.v)
+        let u = Vector3::from(sweep.u_path.point_at(&parameter)?);
+        let v = Vector3::from(sweep.v_path.point_at(&parameter)?);
+        let profile_point = project_point_to_plane_frame(point, &path_point, &u, &v)
             .map_err(build_error_geometry)?;
         let location = match sweep
             .profile
@@ -12038,8 +12044,20 @@ impl ModelBuilder {
         else {
             unreachable!("connector kind was checked");
         };
-        for lower in correspondence.keys() {
-            let offset = self.vertex_ref(*lower)?.point() - &reference_point;
+        let mut lower_coordinates = HashMap::with_capacity(count);
+        let mut connector_controls = HashMap::with_capacity(count);
+        let mut sorted_lower = correspondence.keys().copied().collect::<Vec<_>>();
+        sorted_lower.sort();
+        for lower in &sorted_lower {
+            lower_coordinates.insert(
+                *lower,
+                project_point_to_plane_frame(
+                    self.vertex_ref(*lower)?.point(),
+                    &reference_point,
+                    &lower_u,
+                    &lower_v,
+                )?,
+            );
             let Curve3ExactData::RationalBezier {
                 control_points,
                 weights,
@@ -12047,14 +12065,71 @@ impl ModelBuilder {
             else {
                 unreachable!("connector kind was checked");
             };
-            if !translated_rational_bezier_data_equal(
-                &control_points,
-                &weights,
-                &path_controls,
-                &path_weights,
-                &offset,
-            )? {
+            if control_points.len() != path_controls.len()
+                || !rational_bezier_weights_proportional(&weights, &path_weights)?
+            {
                 return Ok(None);
+            }
+            connector_controls.insert(*lower, control_points);
+        }
+
+        let mut basis = None;
+        for first in &sorted_lower {
+            let first_coordinate = &lower_coordinates[first];
+            for second in &sorted_lower {
+                let second_coordinate = &lower_coordinates[second];
+                let determinant = first_coordinate.x() * second_coordinate.y()
+                    - first_coordinate.y() * second_coordinate.x();
+                if decided_model_order(compare_reals(&determinant, &Real::zero()))?
+                    != std::cmp::Ordering::Equal
+                {
+                    basis = Some((*first, *second, determinant));
+                    break;
+                }
+            }
+            if basis.is_some() {
+                break;
+            }
+        }
+        let Some((first_basis, second_basis, basis_determinant)) = basis else {
+            return Ok(None);
+        };
+        let first_coordinate = &lower_coordinates[&first_basis];
+        let second_coordinate = &lower_coordinates[&second_basis];
+        let first_controls = &connector_controls[&first_basis];
+        let second_controls = &connector_controls[&second_basis];
+        let mut u_controls = Vec::with_capacity(path_controls.len());
+        let mut v_controls = Vec::with_capacity(path_controls.len());
+        for index in 0..path_controls.len() {
+            let first_difference = &first_controls[index] - &path_controls[index];
+            let second_difference = &second_controls[index] - &path_controls[index];
+            u_controls.push(divide_vector_by_real(
+                first_difference.clone() * second_coordinate.y()
+                    - second_difference.clone() * first_coordinate.y(),
+                &basis_determinant,
+            )?);
+            v_controls.push(divide_vector_by_real(
+                second_difference * first_coordinate.x() - first_difference * second_coordinate.x(),
+                &basis_determinant,
+            )?);
+        }
+        if !certified_area_preserving_sweep_frame(
+            &u_controls,
+            &v_controls,
+            &path_weights,
+            &lower_u.cross(&lower_v),
+        )? {
+            return Ok(None);
+        }
+        for lower in &sorted_lower {
+            let coordinate = &lower_coordinates[lower];
+            for (index, actual) in connector_controls[lower].iter().enumerate() {
+                let expected = path_controls[index].clone()
+                    + u_controls[index].clone() * coordinate.x()
+                    + v_controls[index].clone() * coordinate.y();
+                if !points_equal(actual, &expected)? {
+                    return Ok(None);
+                }
             }
         }
 
@@ -12124,8 +12199,8 @@ impl ModelBuilder {
             for index in 0..ordered_corners.len() {
                 let start = ordered_corners[index];
                 let end = ordered_corners[(index + 1) % ordered_corners.len()];
-                let start_offset = self.vertex_ref(start)?.point() - &reference_point;
-                let end_offset = self.vertex_ref(end)?.point() - &reference_point;
+                let start_coordinate = &lower_coordinates[&start];
+                let end_coordinate = &lower_coordinates[&end];
                 let mut matching = None;
                 for (surface_id, group) in &side_groups {
                     let restricted_surface = self.restricted_curve_sweep_side_surface(
@@ -12140,13 +12215,17 @@ impl ModelBuilder {
                     else {
                         unreachable!("side surface kind was checked");
                     };
-                    if translated_rational_bezier_surface_equal(
+                    if framed_rational_bezier_surface_equal(
                         &control_points,
                         &weights,
-                        &path_controls,
-                        &path_weights,
-                        &start_offset,
-                        &end_offset,
+                        RationalBezierSweepControlView {
+                            path_points: &path_controls,
+                            path_weights: &path_weights,
+                            u_controls: &u_controls,
+                            v_controls: &v_controls,
+                        },
+                        start_coordinate,
+                        end_coordinate,
                     )? && matching.replace((*surface_id, group)).is_some()
                     {
                         return Ok(None);
@@ -12226,9 +12305,9 @@ impl ModelBuilder {
         Ok(Some(CertifiedCurveSweepShell {
             profile,
             holes,
-            u: lower_u,
-            v: lower_v,
             path,
+            u_path: vector_control_curve(u_controls, &path_weights)?,
+            v_path: vector_control_curve(v_controls, &path_weights)?,
         }))
     }
 
@@ -12823,9 +12902,9 @@ impl ModelBuilder {
         Ok(Some(CertifiedCurveSweepShell {
             profile,
             holes: Vec::new(),
-            u: lower_u,
-            v: lower_v,
             path,
+            u_path: constant_vector_curve(&lower_u, &path_weights)?,
+            v_path: constant_vector_curve(&lower_v, &path_weights)?,
         }))
     }
 
@@ -15396,6 +15475,128 @@ fn translated_rational_bezier_data_equal(
     Ok(true)
 }
 
+fn rational_bezier_weights_proportional(
+    actual: &[Real],
+    expected: &[Real],
+) -> Result<bool, BuildError> {
+    if actual.len() != expected.len() || actual.is_empty() {
+        return Ok(false);
+    }
+    let scale = (&actual[0] / &expected[0]).map_err(|_| GeometryError::ProjectiveDivision)?;
+    for (actual, expected) in actual.iter().zip(expected) {
+        if !real_values_equal(actual, &(expected * &scale))? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn divide_vector_by_real(vector: Vector3, denominator: &Real) -> Result<Vector3, BuildError> {
+    Ok(Vector3::from_xyz(
+        (vector.0[0].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
+        (vector.0[1].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
+        (vector.0[2].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
+    ))
+}
+
+fn certified_area_preserving_sweep_frame(
+    u_controls: &[Vector3],
+    v_controls: &[Vector3],
+    weights: &[Real],
+    normal: &Vector3,
+) -> Result<bool, BuildError> {
+    if u_controls.len() != v_controls.len()
+        || u_controls.len() != weights.len()
+        || u_controls.is_empty()
+    {
+        return Ok(false);
+    }
+    for axis in u_controls.iter().chain(v_controls) {
+        if !real_values_equal(&axis.dot(normal), &Real::zero())? {
+            return Ok(false);
+        }
+    }
+    let degree = u_controls.len() - 1;
+    let Some(product_degree) = degree.checked_mul(2) else {
+        return Ok(false);
+    };
+    for product_index in 0..=product_degree {
+        let first_min = product_index.saturating_sub(degree);
+        let first_max = degree.min(product_index);
+        let mut cross_coefficient = Vector3::zero();
+        let mut weight_coefficient = Real::zero();
+        for first in first_min..=first_max {
+            let second = product_index - first;
+            let coefficient = model_bernstein_product_coefficient(degree, first, second)?;
+            let weighted_u = u_controls[first].clone() * &weights[first];
+            let weighted_v = v_controls[second].clone() * &weights[second];
+            cross_coefficient = cross_coefficient + weighted_u.cross(&weighted_v) * &coefficient;
+            weight_coefficient += &coefficient * &weights[first] * &weights[second];
+        }
+        let expected = normal.clone() * weight_coefficient;
+        if !vectors_equal(&cross_coefficient, &expected)? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn model_bernstein_product_coefficient(
+    degree: usize,
+    first: usize,
+    second: usize,
+) -> Result<Real, BuildError> {
+    let numerator = model_binomial_real(degree, first)? * model_binomial_real(degree, second)?;
+    (numerator
+        / model_binomial_real(
+            degree
+                .checked_mul(2)
+                .ok_or(GeometryError::ProjectiveDivision)?,
+            first + second,
+        )?)
+    .map_err(|_| GeometryError::ProjectiveDivision.into())
+}
+
+fn model_binomial_real(n: usize, k: usize) -> Result<Real, BuildError> {
+    let k = k.min(n - k);
+    let mut result = Real::one();
+    for index in 1..=k {
+        result = (result
+            * Real::from(u128::try_from(n + 1 - index).expect("usize is representable as u128"))
+            / Real::from(u128::try_from(index).expect("usize is representable as u128")))
+        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    }
+    Ok(result)
+}
+
+fn vector_control_curve(controls: Vec<Vector3>, weights: &[Real]) -> Result<Curve3, GeometryError> {
+    Curve3::rational_bezier(
+        controls.into_iter().map(Point3::from).collect(),
+        weights.to_vec(),
+    )
+}
+
+fn constant_vector_curve(vector: &Vector3, weights: &[Real]) -> Result<Curve3, GeometryError> {
+    vector_control_curve(vec![vector.clone(); weights.len()], weights)
+}
+
+fn transform_vector_curve(curve: &Curve3, transform: &Matrix4) -> Result<Curve3, GeometryError> {
+    let Curve3ExactData::RationalBezier {
+        control_points,
+        weights,
+    } = curve.exact_data()
+    else {
+        return Err(GeometryError::UnsupportedTransform);
+    };
+    Curve3::rational_bezier(
+        control_points
+            .into_iter()
+            .map(|point| Point3::from(transform.transform_direction3(&Vector3::from(point))))
+            .collect(),
+        weights,
+    )
+}
+
 fn translated_rational_bezier_surface_equal(
     actual_points: &[Vec<Point3>],
     actual_weights: &[Vec<Real>],
@@ -15441,6 +15642,83 @@ fn translated_rational_bezier_surface_equal(
                         &actual_weights[row][column],
                         &(&path_weights[expected_row] * &weight_scale),
                     )? {
+                        equal = false;
+                        break;
+                    }
+                }
+                if !equal {
+                    break;
+                }
+            }
+            if equal {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+#[derive(Clone, Copy)]
+struct RationalBezierSweepControlView<'a> {
+    path_points: &'a [Point3],
+    path_weights: &'a [Real],
+    u_controls: &'a [Vector3],
+    v_controls: &'a [Vector3],
+}
+
+fn framed_rational_bezier_surface_equal(
+    actual_points: &[Vec<Point3>],
+    actual_weights: &[Vec<Real>],
+    frame: RationalBezierSweepControlView<'_>,
+    start: &CurvePoint2,
+    end: &CurvePoint2,
+) -> Result<bool, BuildError> {
+    let RationalBezierSweepControlView {
+        path_points,
+        path_weights,
+        u_controls,
+        v_controls,
+    } = frame;
+    if actual_points.len() != path_points.len()
+        || actual_weights.len() != path_weights.len()
+        || u_controls.len() != path_points.len()
+        || v_controls.len() != path_points.len()
+        || path_points.is_empty()
+        || actual_points.iter().any(|row| row.len() != 2)
+        || actual_weights.iter().any(|row| row.len() != 2)
+    {
+        return Ok(false);
+    }
+    for reverse_path in [false, true] {
+        for swap_profile in [false, true] {
+            let path_index = |row: usize| {
+                if reverse_path {
+                    path_points.len() - 1 - row
+                } else {
+                    row
+                }
+            };
+            let first_path_index = path_index(0);
+            let weight_scale = (&actual_weights[0][0] / &path_weights[first_path_index])
+                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let mut equal = true;
+            for row in 0..path_points.len() {
+                let expected_row = path_index(row);
+                for column in 0..2 {
+                    let coordinate = if (column == 0) ^ swap_profile {
+                        start
+                    } else {
+                        end
+                    };
+                    let expected = path_points[expected_row].clone()
+                        + u_controls[expected_row].clone() * coordinate.x()
+                        + v_controls[expected_row].clone() * coordinate.y();
+                    if !points_equal(&actual_points[row][column], &expected)?
+                        || !real_values_equal(
+                            &actual_weights[row][column],
+                            &(&path_weights[expected_row] * &weight_scale),
+                        )?
+                    {
                         equal = false;
                         break;
                     }
