@@ -1,10 +1,15 @@
 use super::*;
 use crate::geometry::Plane;
 use crate::intersection::OverlapInfo;
-use crate::mesh::{OutputVertex, PolygonSoup, polygon_soup};
-use crate::operations::{EmberConfig, boolean_operation};
-use crate::output::{BooleanMesh, BooleanResult, triangulate_and_resolve_certified};
-use crate::polygon::convex_triangle;
+use crate::mesh::{OutputVertex, PolygonSoup};
+use crate::operations::EmberConfig;
+use crate::output::{BooleanMesh, BooleanResult};
+use crate::predicate::compare_real_decision;
+use crate::test_support::{
+    APPROXIMATE_CONTEXT, approximate_boolean_operation, approximate_classify_point,
+    approximate_convex_quad, approximate_convex_triangle, approximate_polygon_soup,
+    approximate_subdivide, approximate_triangulate_and_resolve_certified,
+};
 use crate::winding::BooleanOp;
 use crate::{Triangle, TriangleMesh};
 
@@ -24,6 +29,13 @@ fn unlimited_depth_budget_never_preempts_the_finite_split_basis() {
     assert!(subdivision_depth_budget_reached(8, 7));
 }
 
+#[test]
+fn strict_predicate_exhaustion_is_backtrackable_during_split_search() {
+    assert!(is_backtrackable_split_error(
+        &crate::error::HypermeshError::PredicateUndecided { predicate: "test" }
+    ));
+}
+
 fn p(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
@@ -38,7 +50,7 @@ fn reference_target_clones_share_definition_families() {
 
 #[test]
 fn support_reference_context_clones_share_immutable_families() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let definitions = axis_defs(&p(0, 0, 1));
     let context = support_reference_cache_context_key(
         &p(0, 0, 1),
@@ -113,7 +125,11 @@ fn quadrilateral_reference_cell_fixture() -> (Aabb, Vec<LimitPlane3>, Point3) {
                 r(1),
             ),
         );
-        if classify_real(&edge_plane.expression_at_point(&interior)).unwrap()
+        if classify_real(
+            &crate::test_support::approximate_decisions(),
+            &edge_plane.expression_at_point(&interior),
+        )
+        .unwrap()
             == Classification::Positive
         {
             edge_plane = edge_plane.inverted();
@@ -151,9 +167,13 @@ fn axis_face_polygon(polygons: &[ConvexPolygon], axis: usize, value: i32) -> Con
     polygons
         .iter()
         .find(|polygon| {
-            compare_real(axis_ref(&polygon.support.normal, axis), &Real::zero())
-                .unwrap()
-                .is_gt()
+            compare_real_decision(
+                &crate::test_support::approximate_decisions(),
+                axis_ref(&polygon.support.normal, axis),
+                &Real::zero(),
+            )
+            .unwrap()
+            .is_gt()
                 && polygon
                     .vertices()
                     .unwrap()
@@ -166,7 +186,7 @@ fn axis_face_polygon(polygons: &[ConvexPolygon], axis: usize, value: i32) -> Con
 
 #[test]
 fn cached_leaf_classification_reuses_rotated_edge_cycles() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let mut rotated_edges = polygon.edges[1..].to_vec();
     rotated_edges.push(polygon.edges[0].clone());
     let mut cache = Vec::new();
@@ -204,7 +224,7 @@ fn cached_leaf_classification_reuses_rotated_edge_cycles() {
 
 #[test]
 fn leaf_classification_lookup_limit_skips_same_pass_entries() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let mut cache = Vec::new();
     let mut calls = 0;
 
@@ -244,7 +264,7 @@ fn leaf_classification_lookup_limit_skips_same_pass_entries() {
 
 #[test]
 fn cached_leaf_classification_distinguishes_leaf_context() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let left_context = Arc::new(LeafClassificationCacheContextKey {
         polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
         polygons: vec![polygon.clone()],
@@ -300,12 +320,16 @@ fn cached_leaf_classification_distinguishes_leaf_context() {
 
 #[test]
 fn cached_leaf_point_classification_reuses_identical_state() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let point = certified_leaf_interior_points(&polygon.support, &polygon.edges)
-        .unwrap()
-        .into_iter()
-        .next()
-        .unwrap();
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let point = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &polygon.support,
+        &polygon.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .next()
+    .unwrap();
     let mut cache = Vec::new();
     let mut calls = 0;
 
@@ -353,12 +377,16 @@ fn cached_leaf_point_classification_reuses_identical_state() {
 
 #[test]
 fn leaf_point_classification_lookup_limit_skips_same_pass_entries() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let point = certified_leaf_interior_points(&polygon.support, &polygon.edges)
-        .unwrap()
-        .into_iter()
-        .next()
-        .unwrap();
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let point = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &polygon.support,
+        &polygon.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .next()
+    .unwrap();
     let mut cache = Vec::new();
     let mut calls = 0;
 
@@ -404,12 +432,16 @@ fn leaf_point_classification_lookup_limit_skips_same_pass_entries() {
 
 #[test]
 fn cached_leaf_point_classification_distinguishes_context() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let point = certified_leaf_interior_points(&polygon.support, &polygon.edges)
-        .unwrap()
-        .into_iter()
-        .next()
-        .unwrap();
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let point = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &polygon.support,
+        &polygon.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .next()
+    .unwrap();
     let left_context = Arc::new(LeafClassificationCacheContextKey {
         polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
         polygons: vec![polygon.clone()],
@@ -467,15 +499,20 @@ fn cached_leaf_point_classification_distinguishes_context() {
 
 #[test]
 fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
-    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1, 0];
-    let mut cutter = convex_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(2, -1, 0), 1, 0);
+    let mut cutter = approximate_convex_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(2, -1, 0), 1, 0);
     cutter.delta_w = vec![0, 1];
     let cache = RefCell::new(Vec::new());
 
     let first_polygons = vec![host.clone(), cutter.clone()];
-    let first_intersections = pairwise_intersections_by_polygon(&first_polygons).unwrap();
+    let first_intersections = pairwise_intersections_by_polygon(
+        &crate::test_support::approximate_decisions(),
+        &first_polygons,
+    )
+    .unwrap();
     let first = cached_bsp_leaf_certification_with(
+        &crate::test_support::approximate_decisions(),
         &cache,
         true,
         &host,
@@ -488,8 +525,13 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
     .unwrap();
 
     let second_polygons = vec![cutter, host.clone()];
-    let second_intersections = pairwise_intersections_by_polygon(&second_polygons).unwrap();
+    let second_intersections = pairwise_intersections_by_polygon(
+        &crate::test_support::approximate_decisions(),
+        &second_polygons,
+    )
+    .unwrap();
     let second = cached_bsp_leaf_certification_with(
+        &crate::test_support::approximate_decisions(),
         &cache,
         true,
         &host,
@@ -507,6 +549,7 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
 
     let one_shot_cache = RefCell::new(Vec::new());
     let one_shot = cached_bsp_leaf_certification_with(
+        &crate::test_support::approximate_decisions(),
         &one_shot_cache,
         false,
         &host,
@@ -523,17 +566,19 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
 
 #[test]
 fn bsp_leaf_certification_candidate_indices_use_host_segment_and_overlap_only() {
-    let host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let segment_other = convex_triangle(&p(1, 0, -1), &p(1, 1, 1), &p(1, 2, -1), 1, 0);
-    let overlap_other = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 1, 0), 2, 0);
-    let skipped_other = convex_triangle(&p(0, 0, 1), &p(2, 0, 1), &p(0, 2, 1), 3, 0);
+    let host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let segment_other = approximate_convex_triangle(&p(1, 0, -1), &p(1, 1, 1), &p(1, 2, -1), 1, 0);
+    let overlap_other = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 1, 0), 2, 0);
+    let skipped_other = approximate_convex_triangle(&p(0, 0, 1), &p(2, 0, 1), &p(0, 2, 1), 3, 0);
     let polygons = vec![
         host.clone(),
         segment_other.clone(),
         overlap_other.clone(),
         skipped_other,
     ];
-    let intersections = pairwise_intersections_by_polygon(&polygons).unwrap();
+    let intersections =
+        pairwise_intersections_by_polygon(&crate::test_support::approximate_decisions(), &polygons)
+            .unwrap();
 
     let indices =
         bsp_leaf_certification_candidate_indices(&host, &polygons, Some(&intersections[0]))
@@ -544,15 +589,20 @@ fn bsp_leaf_certification_candidate_indices_use_host_segment_and_overlap_only() 
 
 #[test]
 fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
-    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1, 0];
-    let mut cutter = convex_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(2, -1, 0), 1, 0);
+    let mut cutter = approximate_convex_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(2, -1, 0), 1, 0);
     cutter.delta_w = vec![0, 1];
     let cache = RefCell::new(Vec::new());
 
     let first_polygons = vec![host.clone(), cutter.clone()];
-    let first_intersections = pairwise_intersections_by_polygon(&first_polygons).unwrap();
+    let first_intersections = pairwise_intersections_by_polygon(
+        &crate::test_support::approximate_decisions(),
+        &first_polygons,
+    )
+    .unwrap();
     let first = cached_host_bsp_leaves_with(
+        &crate::test_support::approximate_decisions(),
         &cache,
         true,
         &host,
@@ -562,8 +612,13 @@ fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
     .unwrap();
 
     let second_polygons = vec![cutter, host.clone()];
-    let second_intersections = pairwise_intersections_by_polygon(&second_polygons).unwrap();
+    let second_intersections = pairwise_intersections_by_polygon(
+        &crate::test_support::approximate_decisions(),
+        &second_polygons,
+    )
+    .unwrap();
     let second = cached_host_bsp_leaves_with(
+        &crate::test_support::approximate_decisions(),
         &cache,
         true,
         &host,
@@ -578,6 +633,7 @@ fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
 
     let one_shot_cache = RefCell::new(Vec::new());
     let one_shot = cached_host_bsp_leaves_with(
+        &crate::test_support::approximate_decisions(),
         &one_shot_cache,
         false,
         &host,
@@ -591,7 +647,7 @@ fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
 
 #[test]
 fn bsp_leaf_edge_cycle_dedupe_skips_rotated_duplicates() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let mut rotated_edges = polygon.edges[1..].to_vec();
     rotated_edges.push(polygon.edges[0].clone());
     let mut seen = Vec::new();
@@ -643,15 +699,15 @@ fn definition_uses_non_axis_plane(definition: &[Plane; 3]) -> bool {
 fn can_split_any_certified_positive_extent() {
     let bounds = Aabb::new(p(0, 0, 0), p(1, 0, 0));
 
-    assert!(can_split_bounds(&bounds).unwrap());
+    assert!(can_split_bounds(&crate::test_support::approximate_decisions(), &bounds).unwrap());
 }
 
 #[test]
 fn select_subdivision_split_prefers_interior_arrangement_gap() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
-        convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+        approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
     ];
 
     let (axis, value) = select_subdivision_split(&bounds, &polygons).unwrap();
@@ -663,7 +719,13 @@ fn select_subdivision_split_prefers_interior_arrangement_gap() {
 #[test]
 fn select_subdivision_split_prefers_nonempty_arrangement_gap() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
-    let polygons = vec![convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 0, 0)];
+    let polygons = vec![approximate_convex_triangle(
+        &p(2, 0, 0),
+        &p(2, 2, 0),
+        &p(2, 0, 2),
+        0,
+        0,
+    )];
 
     let (axis, value) = select_subdivision_split(&bounds, &polygons).unwrap();
 
@@ -675,42 +737,73 @@ fn select_subdivision_split_prefers_nonempty_arrangement_gap() {
 fn select_subdivision_split_can_use_intersection_segment_coordinates() {
     let bounds = Aabb::new(p(-3, 0, -1), p(3, 4, 1));
     let horizontal =
-        crate::polygon::convex_quad(&p(-3, 0, 0), &p(3, 0, 0), &p(3, 4, 0), &p(-3, 4, 0), 0, 0);
-    let vertical = convex_triangle(&p(-2, 2, -1), &p(2, 2, -1), &p(1, 2, 1), 1, 0);
+        approximate_convex_quad(&p(-3, 0, 0), &p(3, 0, 0), &p(3, 4, 0), &p(-3, 4, 0), 0, 0);
+    let vertical = approximate_convex_triangle(&p(-2, 2, -1), &p(2, 2, -1), &p(1, 2, 1), 1, 0);
 
-    let candidates =
-        intersection_split_candidates(&bounds, &[horizontal.clone(), vertical.clone()], 0).unwrap();
+    let candidates = intersection_split_candidates(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &[horizontal.clone(), vertical.clone()],
+        0,
+    )
+    .unwrap();
 
     assert_eq!(candidates, vec![q(-1, 2), q(3, 2)]);
-    let vertex_candidates =
-        arrangement_split_candidates(&bounds, &[horizontal, vertical], 0).unwrap();
+    let vertex_candidates = arrangement_split_candidates(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &[horizontal, vertical],
+        0,
+    )
+    .unwrap();
     assert!(!vertex_candidates.iter().any(|(_, value)| *value == q(1, 2)));
 }
 
 #[test]
 fn arrangement_split_candidates_from_axis_values_matches_direct_query() {
-    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = approximate_convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = approximate_convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![horizontal, vertical];
 
-    let direct = arrangement_split_candidates(&bounds, &polygons, 0).unwrap();
-    let axis_values = polygon_axis_values(&polygons).unwrap();
-    let cached =
-        arrangement_split_candidates_from_axis_values(&bounds, &axis_values[0], 0).unwrap();
+    let direct = arrangement_split_candidates(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &polygons,
+        0,
+    )
+    .unwrap();
+    let axis_values =
+        polygon_axis_values(&crate::test_support::approximate_decisions(), &polygons).unwrap();
+    let cached = arrangement_split_candidates_from_axis_values(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &axis_values[0],
+        0,
+    )
+    .unwrap();
 
     assert_eq!(direct, cached);
 }
 
 #[test]
 fn cached_polygon_axis_values_reuse_permuted_polygon_families() {
-    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let cache = RefCell::new(Vec::new());
 
-    let first =
-        cached_polygon_axis_values_with(&cache, &[polygon_a.clone(), polygon_b.clone()]).unwrap();
-    let second = cached_polygon_axis_values_with(&cache, &[polygon_b, polygon_a]).unwrap();
+    let first = cached_polygon_axis_values_with(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &[polygon_a.clone(), polygon_b.clone()],
+    )
+    .unwrap();
+    let second = cached_polygon_axis_values_with(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &[polygon_b, polygon_a],
+    )
+    .unwrap();
 
     assert_eq!(first, second);
     assert_eq!(cache.borrow().len(), 2);
@@ -718,12 +811,22 @@ fn cached_polygon_axis_values_reuse_permuted_polygon_families() {
 
 #[test]
 fn cached_polygon_axis_values_memoize_current_equivalent_state() {
-    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let cache = RefCell::new(Vec::new());
 
-    cached_polygon_axis_values_with(&cache, &[polygon_a.clone(), polygon_b.clone()]).unwrap();
-    cached_polygon_axis_values_with(&cache, &[polygon_b, polygon_a]).unwrap();
+    cached_polygon_axis_values_with(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &[polygon_a.clone(), polygon_b.clone()],
+    )
+    .unwrap();
+    cached_polygon_axis_values_with(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &[polygon_b, polygon_a],
+    )
+    .unwrap();
 
     assert_eq!(cache.borrow().len(), 2);
 }
@@ -732,11 +835,16 @@ fn cached_polygon_axis_values_memoize_current_equivalent_state() {
 fn subdivision_has_no_split_without_interior_arrangement_events() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
-        convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        approximate_convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+        approximate_convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
     ];
 
-    let splits = ordered_subdivision_splits(&bounds, &polygons).unwrap();
+    let splits = ordered_subdivision_splits(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &polygons,
+    )
+    .unwrap();
 
     assert!(splits.is_empty());
 }
@@ -745,12 +853,13 @@ fn subdivision_has_no_split_without_interior_arrangement_events() {
 fn cached_subdivision_has_no_split_without_interior_arrangement_events() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
-        convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        approximate_convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+        approximate_convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
     ];
     let caches = SubdivisionRuntimeCaches::default();
 
     let splits = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -769,11 +878,12 @@ fn cached_subdivision_has_no_split_without_interior_arrangement_events() {
 fn descendant_splits_only_use_the_cached_root_event_basis() {
     let root_bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let root_polygons = vec![
-        convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
-        convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+        approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
     ];
     let caches = SubdivisionRuntimeCaches::default();
     let root_basis = cached_root_split_basis_with(
+        &crate::test_support::approximate_decisions(),
         &caches.split_candidates,
         &caches.polygon_axis_values,
         &caches.pairwise_intersections,
@@ -783,9 +893,20 @@ fn descendant_splits_only_use_the_cached_root_event_basis() {
     .unwrap();
     let root_axis_value_cache_len = caches.polygon_axis_values.borrow().len();
     let descendant_bounds = root_bounds.right_half(0, q(3, 2));
-    let descendant_polygons = vec![convex_triangle(&p(3, 0, 0), &p(4, 2, 0), &p(3, 0, 2), 0, 0)];
-    let descendant_axis_values = polygon_axis_values(&descendant_polygons).unwrap();
+    let descendant_polygons = vec![approximate_convex_triangle(
+        &p(3, 0, 0),
+        &p(4, 2, 0),
+        &p(3, 0, 2),
+        0,
+        0,
+    )];
+    let descendant_axis_values = polygon_axis_values(
+        &crate::test_support::approximate_decisions(),
+        &descendant_polygons,
+    )
+    .unwrap();
     let descendant_local_splits = arrangement_split_candidates_from_axis_values(
+        &crate::test_support::approximate_decisions(),
         &descendant_bounds,
         &descendant_axis_values[0],
         0,
@@ -799,6 +920,7 @@ fn descendant_splits_only_use_the_cached_root_event_basis() {
     );
 
     let attempts = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -866,8 +988,13 @@ fn each_root_split_plane_is_removed_from_both_child_branches() {
             let remaining = root_basis
                 .iter()
                 .filter(|split| {
-                    split_value_is_strictly_inside_bounds(&child_bounds, split.axis, &split.value)
-                        .unwrap()
+                    split_value_is_strictly_inside_bounds(
+                        &crate::test_support::approximate_decisions(),
+                        &child_bounds,
+                        split.axis,
+                        &split.value,
+                    )
+                    .unwrap()
                 })
                 .collect::<Vec<_>>();
             assert!(remaining.len() < root_basis.len());
@@ -880,8 +1007,8 @@ fn each_root_split_plane_is_removed_from_both_child_branches() {
 fn subdivision_exhausts_arrangement_splits_before_depth_budget() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
-        convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        approximate_convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+        approximate_convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
     ];
     let operation = crate::winding::BooleanOp::Union;
     let caches = SubdivisionRuntimeCaches::default();
@@ -889,6 +1016,7 @@ fn subdivision_exhausts_arrangement_splits_before_depth_budget() {
     let mut leaf_calls = 0;
 
     let err = subdivide_into_inner_with(
+        &crate::test_support::approximate_decisions(),
         SubdivisionTask::new(polygons, bounds, p(-1, -1, -1), vec![0]),
         operation,
         SubdivisionConfig { max_depth: 0 },
@@ -912,8 +1040,8 @@ fn subdivision_exhausts_arrangement_splits_before_depth_budget() {
 fn certified_root_leaf_preempts_available_arrangement_splits() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
-        convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        approximate_convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+        approximate_convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
     ];
     let emitted = ClassifiedPolygon::new(polygons[0].clone(), 1);
     let operation = crate::winding::BooleanOp::Union;
@@ -922,6 +1050,7 @@ fn certified_root_leaf_preempts_available_arrangement_splits() {
     let mut leaf_calls = 0;
 
     subdivide_into_inner_with(
+        &crate::test_support::approximate_decisions(),
         SubdivisionTask::new(polygons, bounds, p(-1, -1, -1), vec![0]),
         operation,
         SubdivisionConfig::default(),
@@ -1021,7 +1150,13 @@ fn intersection_split_sources_win_arrangement_ties() {
 
 #[test]
 fn duplicate_arrangement_split_candidate_promotes_to_intersection_source() {
-    let polygons = vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)];
+    let polygons = vec![approximate_convex_triangle(
+        &p(0, 0, 0),
+        &p(1, 0, 0),
+        &p(0, 1, 0),
+        0,
+        0,
+    )];
     let mut candidates = vec![SplitCandidate {
         axis: 0,
         value: r(5),
@@ -1030,6 +1165,7 @@ fn duplicate_arrangement_split_candidate_promotes_to_intersection_source() {
     }];
 
     push_split_candidate(
+        &crate::test_support::approximate_decisions(),
         &mut candidates,
         &polygons,
         0,
@@ -1129,11 +1265,16 @@ fn split_ranking_prefers_candidates_without_unchanged_parent_children() {
 fn ordered_subdivision_splits_rank_best_candidate_first() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
-        convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+        approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
     ];
 
-    let ordered = ordered_subdivision_splits(&bounds, &polygons).unwrap();
+    let ordered = ordered_subdivision_splits(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &polygons,
+    )
+    .unwrap();
 
     assert!(!ordered.is_empty());
     assert_eq!(ordered[0], (0, q(3, 2)));
@@ -1141,27 +1282,48 @@ fn ordered_subdivision_splits_rank_best_candidate_first() {
 
 #[test]
 fn intersection_split_candidates_from_segments_matches_direct_query() {
-    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = approximate_convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = approximate_convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![horizontal, vertical];
 
-    let direct = intersection_split_candidates(&bounds, &polygons, 0).unwrap();
-    let segments = split_intersection_segments(&polygons).unwrap();
-    let cached = intersection_split_candidates_from_segments(&bounds, &segments, 0).unwrap();
+    let direct = intersection_split_candidates(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &polygons,
+        0,
+    )
+    .unwrap();
+    let segments =
+        split_intersection_segments(&crate::test_support::approximate_decisions(), &polygons)
+            .unwrap();
+    let cached = intersection_split_candidates_from_segments(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &segments,
+        0,
+    )
+    .unwrap();
 
     assert_eq!(direct, cached);
 }
 
 #[test]
 fn split_intersection_segments_with_pairwise_cache_matches_direct_query() {
-    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = approximate_convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = approximate_convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let polygons = vec![horizontal, vertical];
     let cache = RefCell::new(Vec::<PairwiseIntersectionsCacheEntry>::new());
 
-    let direct = split_intersection_segments(&polygons).unwrap();
-    let cached = split_intersection_segments_with_pairwise_cache(&cache, &polygons).unwrap();
+    let direct =
+        split_intersection_segments(&crate::test_support::approximate_decisions(), &polygons)
+            .unwrap();
+    let cached = split_intersection_segments_with_pairwise_cache(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &polygons,
+    )
+    .unwrap();
 
     assert_eq!(direct, cached);
 }
@@ -1169,8 +1331,8 @@ fn split_intersection_segments_with_pairwise_cache_matches_direct_query() {
 #[test]
 fn cached_ordered_subdivision_splits_reuse_permuted_polygon_families() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
-    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let axis_value_cache = RefCell::new(Vec::new());
     let cache = RefCell::new(SplitCandidatesCache::default());
     let fanout_cache = RefCell::new(Vec::new());
@@ -1178,6 +1340,7 @@ fn cached_ordered_subdivision_splits_reuse_permuted_polygon_families() {
     let pairwise_cache = RefCell::new(Vec::new());
 
     let first = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &axis_value_cache,
         &cache,
         &fanout_cache,
@@ -1189,6 +1352,7 @@ fn cached_ordered_subdivision_splits_reuse_permuted_polygon_families() {
     )
     .unwrap();
     let second = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &axis_value_cache,
         &cache,
         &fanout_cache,
@@ -1216,8 +1380,8 @@ fn cached_ordered_subdivision_splits_reuse_permuted_polygon_families() {
 #[test]
 fn cached_unique_subdivision_split_attempt_count_reuses_equivalent_child_state() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
-    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let mut cache = Vec::new();
     let calls = std::cell::Cell::new(0);
 
@@ -1251,8 +1415,8 @@ fn cached_unique_subdivision_split_attempt_count_reuses_equivalent_child_state()
 #[test]
 fn cached_ordered_subdivision_splits_memoize_current_equivalent_state() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
-    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let axis_value_cache = RefCell::new(Vec::new());
     let cache = RefCell::new(SplitCandidatesCache::default());
     let fanout_cache = RefCell::new(Vec::new());
@@ -1261,6 +1425,7 @@ fn cached_ordered_subdivision_splits_memoize_current_equivalent_state() {
     let polygon_bounds_cache = RefCell::new(Vec::new());
 
     cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &axis_value_cache,
         &cache,
         &fanout_cache,
@@ -1272,6 +1437,7 @@ fn cached_ordered_subdivision_splits_memoize_current_equivalent_state() {
     )
     .unwrap();
     cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &axis_value_cache,
         &cache,
         &fanout_cache,
@@ -1288,7 +1454,7 @@ fn cached_ordered_subdivision_splits_memoize_current_equivalent_state() {
 
 #[test]
 fn cached_ordered_subdivision_splits_cache_distinguishes_bounds_even_when_results_match() {
-    let polygon = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
     let axis_value_cache = RefCell::new(Vec::new());
     let cache = RefCell::new(SplitCandidatesCache::default());
     let fanout_cache = RefCell::new(Vec::new());
@@ -1298,6 +1464,7 @@ fn cached_ordered_subdivision_splits_cache_distinguishes_bounds_even_when_result
     let second_bounds = Aabb::new(p(0, 0, 0), p(8, 4, 4));
 
     let first = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &axis_value_cache,
         &cache,
         &fanout_cache,
@@ -1309,6 +1476,7 @@ fn cached_ordered_subdivision_splits_cache_distinguishes_bounds_even_when_result
     )
     .unwrap();
     let second = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &axis_value_cache,
         &cache,
         &fanout_cache,
@@ -1337,8 +1505,8 @@ fn cached_ordered_subdivision_splits_cache_distinguishes_bounds_even_when_result
 fn cached_ordered_subdivision_splits_populate_partition_cache() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
-        convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+        approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
     ];
     let axis_value_cache = RefCell::new(Vec::new());
     let split_cache = RefCell::new(SplitCandidatesCache::default());
@@ -1348,6 +1516,7 @@ fn cached_ordered_subdivision_splits_populate_partition_cache() {
     let pairwise_cache = RefCell::new(Vec::new());
 
     let ordered = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &axis_value_cache,
         &split_cache,
         &fanout_cache,
@@ -1365,8 +1534,14 @@ fn cached_ordered_subdivision_splits_populate_partition_cache() {
 
     let axis = ordered[0].axis;
     let value = &ordered[0].value;
-    let _partition =
-        cached_split_child_partition_with(&partition_cache, &polygons, axis, value).unwrap();
+    let _partition = cached_split_child_partition_with(
+        &crate::test_support::approximate_decisions(),
+        &partition_cache,
+        &polygons,
+        axis,
+        value,
+    )
+    .unwrap();
 
     assert_eq!(partition_cache.borrow().len(), cached_partition_count);
 }
@@ -1374,7 +1549,7 @@ fn cached_ordered_subdivision_splits_populate_partition_cache() {
 #[test]
 fn cached_ordered_subdivision_splits_dedupes_equivalent_child_partitions() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
-    let polygon = convex_triangle(&p(1, 1, 1), &p(2, 1, 1), &p(1, 2, 1), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 1, 1), &p(2, 1, 1), &p(1, 2, 1), 0, 0);
     let polygons = vec![polygon];
     let axis_value_cache = RefCell::new(Vec::new());
     let split_cache = RefCell::new(SplitCandidatesCache::default());
@@ -1383,8 +1558,14 @@ fn cached_ordered_subdivision_splits_dedupes_equivalent_child_partitions() {
     let polygon_bounds_cache = RefCell::new(Vec::new());
     let pairwise_cache = RefCell::new(Vec::new());
 
-    let raw = ordered_subdivision_splits(&bounds, &polygons).unwrap();
+    let raw = ordered_subdivision_splits(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &polygons,
+    )
+    .unwrap();
     let deduped = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &axis_value_cache,
         &split_cache,
         &fanout_cache,
@@ -1401,19 +1582,26 @@ fn cached_ordered_subdivision_splits_dedupes_equivalent_child_partitions() {
 
 #[test]
 fn cached_split_child_partition_reuses_permuted_polygon_families() {
-    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let cache = RefCell::new(Vec::new());
 
     let first = cached_split_child_partition_with(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &[polygon_a.clone(), polygon_b.clone()],
         0,
         &r(3),
     )
     .unwrap();
-    let second =
-        cached_split_child_partition_with(&cache, &[polygon_b, polygon_a], 0, &r(3)).unwrap();
+    let second = cached_split_child_partition_with(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &[polygon_b, polygon_a],
+        0,
+        &r(3),
+    )
+    .unwrap();
 
     assert_eq!(first, second);
     assert_eq!(cache.borrow().len(), 2);
@@ -1421,13 +1609,26 @@ fn cached_split_child_partition_reuses_permuted_polygon_families() {
 
 #[test]
 fn cached_split_child_partition_memoizes_current_equivalent_state() {
-    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let cache = RefCell::new(Vec::new());
 
-    cached_split_child_partition_with(&cache, &[polygon_a.clone(), polygon_b.clone()], 0, &r(3))
-        .unwrap();
-    cached_split_child_partition_with(&cache, &[polygon_b, polygon_a], 0, &r(3)).unwrap();
+    cached_split_child_partition_with(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &[polygon_a.clone(), polygon_b.clone()],
+        0,
+        &r(3),
+    )
+    .unwrap();
+    cached_split_child_partition_with(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &[polygon_b, polygon_a],
+        0,
+        &r(3),
+    )
+    .unwrap();
 
     assert_eq!(cache.borrow().len(), 2);
 }
@@ -1484,23 +1685,51 @@ fn ordered_subdivision_split_search_keeps_strongest_failure() {
 fn cannot_split_zero_extent_bounds() {
     let bounds = Aabb::new(p(0, 0, 0), p(0, 0, 0));
 
-    assert!(!can_split_bounds(&bounds).unwrap());
+    assert!(!can_split_bounds(&crate::test_support::approximate_decisions(), &bounds).unwrap());
 }
 
 #[test]
 fn point_strictly_inside_bounds_rejects_positive_extent_boundary() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
-    assert!(!point_strictly_inside_bounds(&p(0, 2, 2), &bounds).unwrap());
-    assert!(point_strictly_inside_bounds(&p(2, 2, 2), &bounds).unwrap());
+    assert!(
+        !point_strictly_inside_bounds(
+            &crate::test_support::approximate_decisions(),
+            &p(0, 2, 2),
+            &bounds
+        )
+        .unwrap()
+    );
+    assert!(
+        point_strictly_inside_bounds(
+            &crate::test_support::approximate_decisions(),
+            &p(2, 2, 2),
+            &bounds
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn point_strictly_inside_bounds_accepts_zero_extent_axis_on_plane() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 0, 4));
 
-    assert!(point_strictly_inside_bounds(&p(2, 0, 2), &bounds).unwrap());
-    assert!(!point_strictly_inside_bounds(&p(2, 1, 2), &bounds).unwrap());
+    assert!(
+        point_strictly_inside_bounds(
+            &crate::test_support::approximate_decisions(),
+            &p(2, 0, 2),
+            &bounds
+        )
+        .unwrap()
+    );
+    assert!(
+        !point_strictly_inside_bounds(
+            &crate::test_support::approximate_decisions(),
+            &p(2, 1, 2),
+            &bounds
+        )
+        .unwrap()
+    );
 }
 
 #[test]
@@ -1510,7 +1739,14 @@ fn projected_reference_targets_preserve_strict_inherited_axes() {
 
     assert!(!targets.is_empty());
     for target in &targets {
-        assert!(point_strictly_inside_bounds(&target.point, &bounds).unwrap());
+        assert!(
+            point_strictly_inside_bounds(
+                &crate::test_support::approximate_decisions(),
+                &target.point,
+                &bounds
+            )
+            .unwrap()
+        );
         assert_eq!(target.point.y, r(2));
     }
 }
@@ -1522,7 +1758,14 @@ fn compute_new_reference_uses_projected_target_family() {
     let (point, definitions, winding) =
         compute_new_reference(&p(0, 2, 5), &axis_defs(&p(0, 2, 5)), &[0], &bounds, &[]).unwrap();
 
-    assert!(point_strictly_inside_bounds(&point, &bounds).unwrap());
+    assert!(
+        point_strictly_inside_bounds(
+            &crate::test_support::approximate_decisions(),
+            &point,
+            &bounds
+        )
+        .unwrap()
+    );
     assert!(!definitions.is_empty());
     assert_eq!(winding, vec![0]);
 }
@@ -1579,7 +1822,8 @@ fn compute_new_reference_skips_projected_search_after_support_hit() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
 
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
@@ -1592,6 +1836,7 @@ fn compute_new_reference_skips_projected_search_after_support_hit() {
     let old_wnv = vec![0; soup.num_meshes];
 
     let support = support_plane_cell_reference_with_query_caches(
+        &crate::test_support::approximate_decisions(),
         &old_ref,
         &old_defs,
         &old_wnv,
@@ -1604,6 +1849,7 @@ fn compute_new_reference_skips_projected_search_after_support_hit() {
 
     let mut query_caches = SupportReferenceQueryCaches::default();
     let (point, definitions, winding) = compute_new_reference_with_query_caches(
+        &crate::test_support::approximate_decisions(),
         &old_ref,
         &old_defs,
         &old_wnv,
@@ -1625,7 +1871,8 @@ fn alternate_support_reference_matches_general_boolean_results() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let refs = [x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()];
     for op in [
         BooleanOp::Union,
@@ -1634,7 +1881,7 @@ fn alternate_support_reference_matches_general_boolean_results() {
         BooleanOp::SymmetricDifference,
     ] {
         let operation = op;
-        let classified = subdivide(
+        let classified = approximate_subdivide(
             SubdivisionTask::new(
                 soup.polygons.clone(),
                 Aabb::new(p(0, 0, 0), p(10, 10, 10)),
@@ -1654,12 +1901,12 @@ fn alternate_support_reference_matches_general_boolean_results() {
             },
             classified,
         );
-        let alternate_soup = triangulate_and_resolve_certified(&alternate_result)
+        let alternate_soup = approximate_triangulate_and_resolve_certified(&alternate_result)
             .unwrap_or_else(|err| panic!("alternate triangulation {op:?} failed: {err:?}"));
 
-        let general_result = boolean_operation(&refs, op, EmberConfig { max_depth: 4 })
+        let general_result = approximate_boolean_operation(&refs, op, EmberConfig { max_depth: 4 })
             .unwrap_or_else(|err| panic!("general {op:?} failed: {err:?}"));
-        let general_soup = triangulate_and_resolve_certified(&general_result)
+        let general_soup = approximate_triangulate_and_resolve_certified(&general_result)
             .unwrap_or_else(|err| panic!("general triangulation {op:?} failed: {err:?}"));
 
         assert_same_shape(&alternate_soup, &general_soup);
@@ -1671,9 +1918,11 @@ fn ordered_subdivision_splits_keep_lower_child_load_ahead_of_downstream_fanout()
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
+        &crate::test_support::approximate_decisions(),
         &SubdivisionTask::new(
             soup.polygons.clone(),
             Aabb::new(p(0, 0, 0), p(10, 10, 10)),
@@ -1693,6 +1942,7 @@ fn ordered_subdivision_splits_keep_lower_child_load_ahead_of_downstream_fanout()
     });
 
     let root_attempts = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -1721,9 +1971,14 @@ fn ordered_subdivision_splits_keep_lower_child_load_ahead_of_downstream_fanout()
     .into_iter()
     .find(|child| child.polygons.len() == 10)
     .unwrap();
-    let (hot_ref, hot_defs, hot_wnv) =
-        propagate_child_reference(&root_task, &hot_child.polygons, &hot_child.bounds, &caches)
-            .unwrap();
+    let (hot_ref, hot_defs, hot_wnv) = propagate_child_reference(
+        &crate::test_support::approximate_decisions(),
+        &root_task,
+        &hot_child.polygons,
+        &hot_child.bounds,
+        &caches,
+    )
+    .unwrap();
     let hot_task = SubdivisionTask {
         polygons: hot_child.polygons,
         bounds: hot_child.bounds,
@@ -1734,6 +1989,7 @@ fn ordered_subdivision_splits_keep_lower_child_load_ahead_of_downstream_fanout()
     };
 
     let hot_attempts = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -1756,9 +2012,11 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
+        &crate::test_support::approximate_decisions(),
         &SubdivisionTask::new(
             soup.polygons.clone(),
             Aabb::new(p(0, 0, 0), p(10, 10, 10)),
@@ -1778,6 +2036,7 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
     });
 
     let root_attempts = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -1808,9 +2067,14 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
         .find(|child| child.polygons.len() == 10)
         .unwrap();
 
-    let (hot_ref, hot_defs, hot_wnv) =
-        propagate_child_reference(&root_task, &hot_child.polygons, &hot_child.bounds, &caches)
-            .unwrap();
+    let (hot_ref, hot_defs, hot_wnv) = propagate_child_reference(
+        &crate::test_support::approximate_decisions(),
+        &root_task,
+        &hot_child.polygons,
+        &hot_child.bounds,
+        &caches,
+    )
+    .unwrap();
     let hot_task = SubdivisionTask {
         polygons: hot_child.polygons,
         bounds: hot_child.bounds,
@@ -1821,6 +2085,7 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
     };
 
     let hot_attempts = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -1847,8 +2112,14 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
         hot_attempt.right_bounds.clone(),
     );
     for child in hot_split_children {
-        let (child_ref, child_defs, child_wnv) =
-            propagate_child_reference(&hot_task, &child.polygons, &child.bounds, &caches).unwrap();
+        let (child_ref, child_defs, child_wnv) = propagate_child_reference(
+            &crate::test_support::approximate_decisions(),
+            &hot_task,
+            &child.polygons,
+            &child.bounds,
+            &caches,
+        )
+        .unwrap();
         let child_task = SubdivisionTask {
             polygons: child.polygons,
             bounds: child.bounds,
@@ -1858,7 +2129,11 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
             depth: hot_task.depth + 1,
         };
         if child_task.polygons.len() == 5 {
-            let intersections = pairwise_intersections_by_polygon(&child_task.polygons).unwrap();
+            let intersections = pairwise_intersections_by_polygon(
+                &crate::test_support::approximate_decisions(),
+                &child_task.polygons,
+            )
+            .unwrap();
             for index in ordered_leaf_polygon_indices_by_intersections(&intersections) {
                 let polygon = &child_task.polygons[index];
                 if polygon.mesh_index != 0
@@ -1867,15 +2142,20 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
                 {
                     continue;
                 }
-                let bsp_leaves =
-                    build_host_bsp_leaves(polygon, &child_task.polygons, &intersections[index])
-                        .unwrap();
+                let bsp_leaves = build_host_bsp_leaves(
+                    &crate::test_support::approximate_decisions(),
+                    polygon,
+                    &child_task.polygons,
+                    &intersections[index],
+                )
+                .unwrap();
                 for leaf in bsp_leaves {
                     if leaf.edges.len() != 4 {
                         continue;
                     }
                     let Ok((interior_points, effective_delta_w)) =
                         certify_bsp_leaf_and_delta_w_with_host_intersections(
+                            &crate::test_support::approximate_decisions(),
                             polygon,
                             &leaf.edges,
                             &child_task.polygons,
@@ -1890,7 +2170,7 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
                         continue;
                     }
 
-                    let winding = crate::segment_trace::classify_leaf_polygon_from_interior_points_with_probe_query_caches(
+                    let winding = crate::segment_trace::classify_leaf_polygon_from_interior_points_with_probe_query_caches(&crate::test_support::approximate_decisions(),
                         std::slice::from_ref(&interior_points[0]),
                         &polygon.support,
                         &child_task.ref_point,
@@ -1917,9 +2197,11 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
+        &crate::test_support::approximate_decisions(),
         &SubdivisionTask::new(
             soup.polygons.clone(),
             Aabb::new(p(0, 0, 0), p(10, 10, 10)),
@@ -1939,6 +2221,7 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
     });
 
     let root_attempts = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -1969,9 +2252,14 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
         .find(|child| child.polygons.len() == 10)
         .unwrap();
 
-    let (hot_ref, hot_defs, hot_wnv) =
-        propagate_child_reference(&root_task, &hot_child.polygons, &hot_child.bounds, &caches)
-            .unwrap();
+    let (hot_ref, hot_defs, hot_wnv) = propagate_child_reference(
+        &crate::test_support::approximate_decisions(),
+        &root_task,
+        &hot_child.polygons,
+        &hot_child.bounds,
+        &caches,
+    )
+    .unwrap();
     let hot_task = SubdivisionTask {
         polygons: hot_child.polygons,
         bounds: hot_child.bounds,
@@ -1982,6 +2270,7 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
     };
 
     let hot_attempts = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -2009,8 +2298,14 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
     );
 
     for child in hot_split_children {
-        let (child_ref, child_defs, child_wnv) =
-            propagate_child_reference(&hot_task, &child.polygons, &child.bounds, &caches).unwrap();
+        let (child_ref, child_defs, child_wnv) = propagate_child_reference(
+            &crate::test_support::approximate_decisions(),
+            &hot_task,
+            &child.polygons,
+            &child.bounds,
+            &caches,
+        )
+        .unwrap();
         let child_task = SubdivisionTask {
             polygons: child.polygons,
             bounds: child.bounds,
@@ -2023,7 +2318,11 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
             continue;
         }
 
-        let intersections = pairwise_intersections_by_polygon(&child_task.polygons).unwrap();
+        let intersections = pairwise_intersections_by_polygon(
+            &crate::test_support::approximate_decisions(),
+            &child_task.polygons,
+        )
+        .unwrap();
         for index in ordered_leaf_polygon_indices_by_intersections(&intersections) {
             let polygon = &child_task.polygons[index];
             if polygon.mesh_index != 2
@@ -2032,12 +2331,17 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
             {
                 continue;
             }
-            let bsp_leaves =
-                build_host_bsp_leaves(polygon, &child_task.polygons, &intersections[index])
-                    .unwrap();
+            let bsp_leaves = build_host_bsp_leaves(
+                &crate::test_support::approximate_decisions(),
+                polygon,
+                &child_task.polygons,
+                &intersections[index],
+            )
+            .unwrap();
             for (leaf_index, leaf) in bsp_leaves.iter().enumerate() {
                 let Ok((interior_points, effective_delta_w)) =
                     certify_bsp_leaf_and_delta_w_with_host_intersections(
+                        &crate::test_support::approximate_decisions(),
                         polygon,
                         &leaf.edges,
                         &child_task.polygons,
@@ -2055,7 +2359,7 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
                     continue;
                 }
 
-                let winding = crate::segment_trace::classify_leaf_polygon_from_interior_points_with_probe_query_caches(
+                let winding = crate::segment_trace::classify_leaf_polygon_from_interior_points_with_probe_query_caches(&crate::test_support::approximate_decisions(),
                     std::slice::from_ref(&interior_points[0]),
                     &polygon.support,
                     &child_task.ref_point,
@@ -2079,11 +2383,15 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
 
 #[test]
 fn ordered_reference_search_polygons_prefers_bounds_overlaps() {
-    let overlapping = convex_triangle(&p(1, 1, 1), &p(3, 1, 1), &p(1, 3, 1), 10, 0);
-    let disjoint = convex_triangle(&p(8, 8, 8), &p(9, 8, 8), &p(8, 9, 8), 20, 0);
+    let overlapping = approximate_convex_triangle(&p(1, 1, 1), &p(3, 1, 1), &p(1, 3, 1), 10, 0);
+    let disjoint = approximate_convex_triangle(&p(8, 8, 8), &p(9, 8, 8), &p(8, 9, 8), 20, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
-    let ordered = ordered_reference_search_polygons(&[disjoint, overlapping.clone()], &bounds);
+    let ordered = ordered_reference_search_polygons(
+        &crate::test_support::approximate_decisions(),
+        &[disjoint, overlapping.clone()],
+        &bounds,
+    );
 
     assert_eq!(ordered[0].mesh_index, overlapping.mesh_index);
     assert_eq!(ordered[0].polygon_index, overlapping.polygon_index);
@@ -2099,7 +2407,12 @@ fn projected_support_plane_cell_reference_certifies_interior_target_after_bounda
         &[0],
         &bounds,
         &[],
-        projected_reference_halfspaces(&p(0, 2, 5), &bounds).unwrap(),
+        projected_reference_halfspaces(
+            &crate::test_support::approximate_decisions(),
+            &p(0, 2, 5),
+            &bounds,
+        )
+        .unwrap(),
     )
     .unwrap();
 
@@ -2750,7 +3063,12 @@ fn projected_reference_search_or_none_tracking_sets_unknown_flag() {
 #[test]
 fn projected_reference_escape_targets_use_certified_projected_cell_family() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let halfspaces = projected_reference_halfspaces(&p(-2, 2, 7), &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &p(-2, 2, 7),
+        &bounds,
+    )
+    .unwrap();
 
     let targets = projected_reference_escape_targets(&bounds, &halfspaces, &[]).unwrap();
 
@@ -2764,14 +3082,26 @@ fn projected_reference_escape_targets_use_certified_projected_cell_family() {
     );
     for target in &targets {
         assert_eq!(axis_ref(&target.point, 1), &r(2));
-        assert!(point_satisfies_halfspaces(&target.point, &halfspaces).unwrap());
+        assert!(
+            point_satisfies_halfspaces(
+                &crate::test_support::approximate_decisions(),
+                &target.point,
+                &halfspaces
+            )
+            .unwrap()
+        );
     }
 }
 
 #[test]
 fn projected_reference_escape_targets_extend_direct_projected_targets() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let halfspaces = projected_reference_halfspaces(&p(-2, 2, 7), &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &p(-2, 2, 7),
+        &bounds,
+    )
+    .unwrap();
     let direct = ReferenceTarget::axis_defined(p(2, 2, 2));
 
     let targets =
@@ -3054,6 +3384,7 @@ fn reference_target_family_from_witness_reports_unknown_for_boundary_reference_w
         Some(&p(0, 2, 2)),
         |candidate| {
             point_strictly_inside_reference_halfspace_cell_or_unknown(
+                &crate::test_support::approximate_decisions(),
                 candidate,
                 &bounds,
                 &halfspaces,
@@ -3478,9 +3809,13 @@ fn deferred_projected_escape_direct_targets_backtrack_after_uncertified_seed() {
 fn deferred_projected_escape_direct_targets_mark_later_target_uncertain_after_boundary_seed() {
     let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
 
-    let targets =
-        deferred_projected_escape_direct_targets(&[p(0, 2, 2), p(1, 2, 2)], None, &halfspaces)
-            .unwrap();
+    let targets = deferred_projected_escape_direct_targets(
+        &crate::test_support::approximate_decisions(),
+        &[p(0, 2, 2), p(1, 2, 2)],
+        None,
+        &halfspaces,
+    )
+    .unwrap();
 
     assert_eq!(targets.len(), 1);
     assert_eq!(targets[0].point, p(1, 2, 2));
@@ -3491,8 +3826,13 @@ fn deferred_projected_escape_direct_targets_mark_later_target_uncertain_after_bo
 fn deferred_projected_escape_direct_targets_report_unknown_for_boundary_seed() {
     let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
 
-    let err =
-        deferred_projected_escape_direct_targets(&[p(0, 2, 2)], None, &halfspaces).unwrap_err();
+    let err = deferred_projected_escape_direct_targets(
+        &crate::test_support::approximate_decisions(),
+        &[p(0, 2, 2)],
+        None,
+        &halfspaces,
+    )
+    .unwrap_err();
 
     assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
 }
@@ -3722,7 +4062,12 @@ fn collect_point3_family_tracks_unknown_after_reference_boundary_candidate() {
 
     let candidates = [p(0, 2, 2), p(1, 1, 1)];
     let family = collect_point3_family(&candidates, |candidate| {
-        point_strictly_inside_reference_halfspace_cell_or_unknown(candidate, &bounds, &halfspaces)
+        point_strictly_inside_reference_halfspace_cell_or_unknown(
+            &crate::test_support::approximate_decisions(),
+            candidate,
+            &bounds,
+            &halfspaces,
+        )
     })
     .unwrap();
 
@@ -3864,7 +4209,13 @@ fn reference_result_or_error_reports_reference_failure_when_all_families_are_cer
 #[test]
 fn certified_leaf_output_helper_runs_leaf_attempt_once() {
     let task = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(1, 1, 1)),
         p(0, 0, 0),
         vec![0],
@@ -3886,7 +4237,13 @@ fn certified_leaf_output_helper_runs_leaf_attempt_once() {
 #[test]
 fn unsplittable_subdivision_runs_leaf_processor_once() {
     let task = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(0, 0, 0)),
         p(0, 0, 0),
         vec![0],
@@ -3897,6 +4254,7 @@ fn unsplittable_subdivision_runs_leaf_processor_once() {
     let caches = SubdivisionRuntimeCaches::default();
 
     let err = subdivide_into_inner_with(
+        &crate::test_support::approximate_decisions(),
         task,
         operation,
         SubdivisionConfig { max_depth: 0 },
@@ -3918,11 +4276,12 @@ fn unsplittable_subdivision_runs_leaf_processor_once() {
 
 #[test]
 fn recursive_child_bounds_contract_unchanged_polygon_family() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let child_bounds = parent_bounds.left_half(0, r(5));
 
     let tightened = recursive_child_bounds(
+        &crate::test_support::approximate_decisions(),
         std::slice::from_ref(&polygon),
         std::slice::from_ref(&polygon),
         &child_bounds,
@@ -3934,12 +4293,13 @@ fn recursive_child_bounds_contract_unchanged_polygon_family() {
 
 #[test]
 fn recursive_child_bounds_contracts_permuted_unchanged_polygon_family() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let child_bounds = parent_bounds.left_half(0, r(5));
 
     let tightened = recursive_child_bounds(
+        &crate::test_support::approximate_decisions(),
         &[polygon_a.clone(), polygon_b.clone()],
         &[polygon_b, polygon_a],
         &child_bounds,
@@ -3951,14 +4311,19 @@ fn recursive_child_bounds_contracts_permuted_unchanged_polygon_family() {
 
 #[test]
 fn recursive_child_bounds_contract_changed_polygon_family() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
-    let clipped = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 0, 1), 0, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let clipped = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 0, 1), 0, 0);
     let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let child_bounds = parent_bounds.left_half(0, r(5));
 
-    let tightened =
-        recursive_child_bounds(&[polygon_a, polygon_b], &[clipped], &child_bounds).unwrap();
+    let tightened = recursive_child_bounds(
+        &crate::test_support::approximate_decisions(),
+        &[polygon_a, polygon_b],
+        &[clipped],
+        &child_bounds,
+    )
+    .unwrap();
 
     assert_eq!(tightened, Aabb::new(p(0, 0, 0), p(1, 0, 1)));
 }
@@ -3968,7 +4333,8 @@ fn contract_task_to_polygon_family_bounds_if_tighter_returns_contracted_task() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -3982,9 +4348,13 @@ fn contract_task_to_polygon_family_bounds_if_tighter_returns_contracted_task() {
     );
     let caches = SubdivisionRuntimeCaches::default();
 
-    let contracted = contract_task_to_polygon_family_bounds_if_tighter(&task, &caches)
-        .unwrap()
-        .expect("expected tighter polygon-family bounds");
+    let contracted = contract_task_to_polygon_family_bounds_if_tighter(
+        &crate::test_support::approximate_decisions(),
+        &task,
+        &caches,
+    )
+    .unwrap()
+    .expect("expected tighter polygon-family bounds");
 
     assert_eq!(contracted.bounds, Aabb::new(p(1, 1, 1), p(9, 9, 9)));
     assert_eq!(contracted.polygons, polygons);
@@ -3997,7 +4367,8 @@ fn contract_task_to_polygon_family_bounds_if_tighter_skips_already_tight_task() 
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -4012,7 +4383,12 @@ fn contract_task_to_polygon_family_bounds_if_tighter_skips_already_tight_task() 
     let caches = SubdivisionRuntimeCaches::default();
 
     assert_eq!(
-        contract_task_to_polygon_family_bounds_if_tighter(&task, &caches).unwrap(),
+        contract_task_to_polygon_family_bounds_if_tighter(
+            &crate::test_support::approximate_decisions(),
+            &task,
+            &caches
+        )
+        .unwrap(),
         None
     );
 }
@@ -4020,7 +4396,13 @@ fn contract_task_to_polygon_family_bounds_if_tighter_skips_already_tight_task() 
 #[test]
 fn contract_task_to_polygon_family_bounds_if_tighter_never_expands_task() {
     let task = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(0, 0, 0)),
         p(0, 0, 0),
         vec![0],
@@ -4028,7 +4410,12 @@ fn contract_task_to_polygon_family_bounds_if_tighter_never_expands_task() {
     let caches = SubdivisionRuntimeCaches::default();
 
     assert_eq!(
-        contract_task_to_polygon_family_bounds_if_tighter(&task, &caches).unwrap(),
+        contract_task_to_polygon_family_bounds_if_tighter(
+            &crate::test_support::approximate_decisions(),
+            &task,
+            &caches
+        )
+        .unwrap(),
         None
     );
 }
@@ -4038,7 +4425,8 @@ fn contract_task_to_polygon_family_bounds_if_tighter_reuses_cached_subdivision_r
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -4067,9 +4455,13 @@ fn contract_task_to_polygon_family_bounds_if_tighter_reuses_cached_subdivision_r
             result: Ok(vec![]),
         });
 
-    let contracted = contract_task_to_polygon_family_bounds_if_tighter(&task, &caches)
-        .unwrap()
-        .expect("expected tighter polygon-family bounds");
+    let contracted = contract_task_to_polygon_family_bounds_if_tighter(
+        &crate::test_support::approximate_decisions(),
+        &task,
+        &caches,
+    )
+    .unwrap()
+    .expect("expected tighter polygon-family bounds");
 
     assert_eq!(contracted.bounds, contracted_bounds);
     assert_eq!(contracted.ref_point, cached_ref);
@@ -4082,7 +4474,8 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -4101,7 +4494,7 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
         vec![0; soup.num_meshes],
     );
     let cached_output = vec![ClassifiedPolygon::new(
-        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
         1,
     )];
     let operation = BooleanOp::Union;
@@ -4118,6 +4511,7 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
     let mut output = Vec::new();
 
     subdivide_into_inner_with(
+        &crate::test_support::approximate_decisions(),
         task,
         operation,
         SubdivisionConfig { max_depth: 0 },
@@ -4138,8 +4532,8 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
 
 #[test]
 fn ordered_split_attempt_children_prefers_changed_family_before_unchanged_parent_copy() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let parent = vec![polygon_a.clone(), polygon_b.clone()];
     let children = ordered_split_attempt_children(
         &parent,
@@ -4158,9 +4552,9 @@ fn ordered_split_attempt_children_prefers_changed_family_before_unchanged_parent
 
 #[test]
 fn ordered_split_attempt_children_prefers_smaller_changed_child_family() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
-    let polygon_c = convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 2, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_c = approximate_convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 2, 0);
     let parent = vec![polygon_a.clone(), polygon_b.clone(), polygon_c.clone()];
     let children = ordered_split_attempt_children(
         &parent,
@@ -4274,7 +4668,15 @@ fn split_attempt_recursive_room_key_prefers_lower_dimensional_children() {
         right_bounds: Some(volume_bounds),
     };
 
-    assert!(split_attempt_recursive_room_key(&flatter) < split_attempt_recursive_room_key(&deeper));
+    assert!(
+        split_attempt_recursive_room_key(&crate::test_support::approximate_decisions(), &flatter)
+            .unwrap()
+            < split_attempt_recursive_room_key(
+                &crate::test_support::approximate_decisions(),
+                &deeper
+            )
+            .unwrap()
+    );
 }
 
 #[test]
@@ -4297,8 +4699,18 @@ fn split_attempt_fanout_order_keeps_child_load_ahead_of_downstream_fanout() {
     };
 
     assert!(
-        split_attempt_fanout_order_key(&lower_child_load, (9, 18, 0))
-            < split_attempt_fanout_order_key(&lower_fanout, (1, 2, 0))
+        split_attempt_fanout_order_key(
+            &crate::test_support::approximate_decisions(),
+            &lower_child_load,
+            (9, 18, 0)
+        )
+        .unwrap()
+            < split_attempt_fanout_order_key(
+                &crate::test_support::approximate_decisions(),
+                &lower_fanout,
+                (1, 2, 0)
+            )
+            .unwrap()
     );
 
     let same_child_load = RankedSplitAttempt {
@@ -4307,8 +4719,18 @@ fn split_attempt_fanout_order_keeps_child_load_ahead_of_downstream_fanout() {
         ..lower_child_load.clone()
     };
     assert!(
-        split_attempt_fanout_order_key(&same_child_load, (1, 2, 0))
-            < split_attempt_fanout_order_key(&lower_child_load, (9, 18, 0))
+        split_attempt_fanout_order_key(
+            &crate::test_support::approximate_decisions(),
+            &same_child_load,
+            (1, 2, 0)
+        )
+        .unwrap()
+            < split_attempt_fanout_order_key(
+                &crate::test_support::approximate_decisions(),
+                &lower_child_load,
+                (9, 18, 0)
+            )
+            .unwrap()
     );
 }
 
@@ -4362,8 +4784,8 @@ fn preferred_split_partition_preserves_deferred_rank_order() {
 
 #[test]
 fn split_child_matches_parent_geometry_requires_same_bounds_and_family() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let parent = vec![polygon_a.clone(), polygon_b.clone()];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
@@ -4377,8 +4799,8 @@ fn split_child_matches_parent_geometry_requires_same_bounds_and_family() {
 
 #[test]
 fn split_child_matches_parent_geometry_rejects_tighter_bounds() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let parent = vec![polygon_a.clone(), polygon_b.clone()];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let tighter_bounds = Aabb::new(p(0, 0, 0), p(2, 4, 4));
@@ -4393,8 +4815,8 @@ fn split_child_matches_parent_geometry_rejects_tighter_bounds() {
 
 #[test]
 fn cached_polygon_family_bounds_reuses_permuted_polygon_families() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
 
@@ -4420,8 +4842,8 @@ fn cached_polygon_family_bounds_reuses_permuted_polygon_families() {
 
 #[test]
 fn cached_polygon_family_bounds_memoizes_current_equivalent_state() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let cache = RefCell::new(Vec::new());
 
     cached_polygon_family_bounds_with(&cache, &[polygon_a.clone(), polygon_b.clone()], |_p| {
@@ -4438,8 +4860,8 @@ fn cached_polygon_family_bounds_memoizes_current_equivalent_state() {
 
 #[test]
 fn cached_pairwise_intersections_reuse_identical_polygon_sequence() {
-    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = approximate_convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = approximate_convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let polygons = vec![horizontal, vertical];
     let cache = RefCell::new(Vec::new());
 
@@ -4453,15 +4875,19 @@ fn cached_pairwise_intersections_reuse_identical_polygon_sequence() {
 
 #[test]
 fn cached_pairwise_intersections_reuse_permuted_polygon_sequence() {
-    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = approximate_convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = approximate_convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let first_polygons = vec![horizontal.clone(), vertical.clone()];
     let second_polygons = vec![vertical, horizontal];
     let cache = RefCell::new(Vec::new());
 
     let first = cached_pairwise_intersections_by_polygon_with(&cache, &first_polygons).unwrap();
     let second = cached_pairwise_intersections_by_polygon_with(&cache, &second_polygons).unwrap();
-    let direct = pairwise_intersections_by_polygon(&second_polygons).unwrap();
+    let direct = pairwise_intersections_by_polygon(
+        &crate::test_support::approximate_decisions(),
+        &second_polygons,
+    )
+    .unwrap();
 
     assert_eq!(first.len(), 2);
     assert_eq!(second.as_ref(), &direct);
@@ -4470,8 +4896,8 @@ fn cached_pairwise_intersections_reuse_permuted_polygon_sequence() {
 
 #[test]
 fn cached_pairwise_intersections_memoize_current_equivalent_state() {
-    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = approximate_convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = approximate_convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let first_polygons = vec![horizontal.clone(), vertical.clone()];
     let second_polygons = vec![vertical, horizontal];
     let cache = RefCell::new(Vec::new());
@@ -4567,15 +4993,17 @@ fn cached_pure_halfspace_containment_reuses_permuted_halfspaces() {
 
 #[test]
 fn subdivision_child_partition_dedupe_skips_duplicate_contracted_unchanged_branch() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let left_x = recursive_child_bounds(
+        &crate::test_support::approximate_decisions(),
         std::slice::from_ref(&polygon),
         std::slice::from_ref(&polygon),
         &parent_bounds.left_half(0, r(5)),
     )
     .unwrap();
     let left_y = recursive_child_bounds(
+        &crate::test_support::approximate_decisions(),
         std::slice::from_ref(&polygon),
         std::slice::from_ref(&polygon),
         &parent_bounds.left_half(1, r(5)),
@@ -4601,7 +5029,7 @@ fn subdivision_child_partition_dedupe_skips_duplicate_contracted_unchanged_branc
 
 #[test]
 fn subdivision_child_partition_dedupe_keeps_distinct_nonempty_bounds() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let mut seen = Vec::new();
     let left_a = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let left_b = Aabb::new(p(0, 0, 0), p(2, 1, 0));
@@ -4624,7 +5052,7 @@ fn subdivision_child_partition_dedupe_keeps_distinct_nonempty_bounds() {
 
 #[test]
 fn cached_child_reference_reuses_identical_child_state() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
@@ -4665,7 +5093,7 @@ fn cached_child_reference_reuses_identical_child_state() {
 
 #[test]
 fn cached_child_reference_stores_only_certified_result_definitions() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let cache = RefCell::new(Vec::new());
     let old_ref = p(0, 0, 0);
@@ -4694,7 +5122,7 @@ fn cached_child_reference_stores_only_certified_result_definitions() {
 
 #[test]
 fn cached_child_reference_reuses_permuted_parent_definition_families() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
@@ -4740,8 +5168,8 @@ fn cached_child_reference_reuses_permuted_parent_definition_families() {
 
 #[test]
 fn cached_child_reference_memoizes_current_equivalent_state() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
     let cache = RefCell::new(Vec::new());
     let old_ref = p(0, 0, 0);
@@ -4774,8 +5202,8 @@ fn cached_child_reference_memoizes_current_equivalent_state() {
 
 #[test]
 fn cached_child_reference_prefers_newest_exact_alias_state() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
     let old_ref = p(0, 0, 0);
     let old_ref_definitions = axis_defs(&old_ref);
@@ -4817,7 +5245,7 @@ fn cached_child_reference_prefers_newest_exact_alias_state() {
 
 #[test]
 fn cached_child_reference_keeps_distinct_child_bounds_separate() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let bounds_a = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let bounds_b = Aabb::new(p(0, 0, 0), p(2, 1, 0));
     let cache = RefCell::new(Vec::new());
@@ -4858,7 +5286,7 @@ fn cached_child_reference_keeps_distinct_child_bounds_separate() {
 
 #[test]
 fn reusable_child_reference_if_certified_reuses_parent_reference() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(4, 4, 4)),
@@ -4870,6 +5298,7 @@ fn reusable_child_reference_if_certified_reuses_parent_reference() {
     let mut query_caches = SupportReferenceQueryCaches::default();
 
     let reused = reusable_child_reference_if_certified(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &task,
         std::slice::from_ref(&polygon),
@@ -4892,8 +5321,8 @@ fn reusable_child_reference_if_certified_reuses_parent_reference() {
 
 #[test]
 fn reusable_child_reference_if_certified_reuses_changed_child_family_when_point_stays_valid() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let other = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 1, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let other = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 1, 0);
     let task = SubdivisionTask::new(
         vec![polygon],
         Aabb::new(p(0, 0, 0), p(4, 4, 4)),
@@ -4905,6 +5334,7 @@ fn reusable_child_reference_if_certified_reuses_changed_child_family_when_point_
     let mut query_caches = SupportReferenceQueryCaches::default();
 
     let reused = reusable_child_reference_if_certified(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &task,
         std::slice::from_ref(&other),
@@ -4927,7 +5357,7 @@ fn reusable_child_reference_if_certified_reuses_changed_child_family_when_point_
 
 #[test]
 fn reusable_child_reference_if_certified_skips_invalid_point() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(4, 4, 4)),
@@ -4939,6 +5369,7 @@ fn reusable_child_reference_if_certified_skips_invalid_point() {
     let mut query_caches = SupportReferenceQueryCaches::default();
 
     let reused = reusable_child_reference_if_certified(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &task,
         std::slice::from_ref(&polygon),
@@ -4954,7 +5385,7 @@ fn reusable_child_reference_if_certified_skips_invalid_point() {
 
 #[test]
 fn reusable_child_reference_if_certified_memoizes_current_state() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(4, 4, 4)),
@@ -4967,6 +5398,7 @@ fn reusable_child_reference_if_certified_memoizes_current_state() {
     let calls = std::cell::Cell::new(0);
 
     let reused = reusable_child_reference_if_certified(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &task,
         std::slice::from_ref(&polygon),
@@ -4999,8 +5431,10 @@ fn propagate_child_reference_prefers_direct_result_before_equivalent_cached_reus
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
+        &crate::test_support::approximate_decisions(),
         &SubdivisionTask::new(
             soup.polygons.clone(),
             Aabb::new(p(0, 0, 0), p(10, 10, 10)),
@@ -5013,6 +5447,7 @@ fn propagate_child_reference_prefers_direct_result_before_equivalent_cached_reus
     .unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_attempt = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -5036,8 +5471,13 @@ fn propagate_child_reference_prefers_direct_result_before_equivalent_cached_reus
     .into_iter()
     .nth(1)
     .unwrap();
-    let source_polygons = ordered_reference_search_polygons(&root_task.polygons, &child.bounds);
+    let source_polygons = ordered_reference_search_polygons(
+        &crate::test_support::approximate_decisions(),
+        &root_task.polygons,
+        &child.bounds,
+    );
     let direct = compute_new_reference_with_query_caches(
+        &crate::test_support::approximate_decisions(),
         &root_task.ref_point,
         &root_task.ref_definitions,
         &root_task.ref_wnv,
@@ -5065,8 +5505,14 @@ fn propagate_child_reference_prefers_direct_result_before_equivalent_cached_reus
             )),
         });
 
-    let propagated =
-        propagate_child_reference(&root_task, &child.polygons, &child.bounds, &caches).unwrap();
+    let propagated = propagate_child_reference(
+        &crate::test_support::approximate_decisions(),
+        &root_task,
+        &child.polygons,
+        &child.bounds,
+        &caches,
+    )
+    .unwrap();
 
     assert_eq!(propagated, direct);
 }
@@ -5076,8 +5522,10 @@ fn propagate_child_reference_prefers_direct_result_before_exact_cached_hit() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
+        &crate::test_support::approximate_decisions(),
         &SubdivisionTask::new(
             soup.polygons.clone(),
             Aabb::new(p(0, 0, 0), p(10, 10, 10)),
@@ -5090,6 +5538,7 @@ fn propagate_child_reference_prefers_direct_result_before_exact_cached_hit() {
     .unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_attempt = cached_ordered_subdivision_splits_with(
+        &crate::test_support::approximate_decisions(),
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -5113,8 +5562,13 @@ fn propagate_child_reference_prefers_direct_result_before_exact_cached_hit() {
     .into_iter()
     .nth(1)
     .unwrap();
-    let source_polygons = ordered_reference_search_polygons(&root_task.polygons, &child.bounds);
+    let source_polygons = ordered_reference_search_polygons(
+        &crate::test_support::approximate_decisions(),
+        &root_task.polygons,
+        &child.bounds,
+    );
     let direct = compute_new_reference_with_query_caches(
+        &crate::test_support::approximate_decisions(),
         &root_task.ref_point,
         &root_task.ref_definitions,
         &root_task.ref_wnv,
@@ -5140,15 +5594,21 @@ fn propagate_child_reference_prefers_direct_result_before_exact_cached_hit() {
             )),
         });
 
-    let propagated =
-        propagate_child_reference(&root_task, &child.polygons, &child.bounds, &caches).unwrap();
+    let propagated = propagate_child_reference(
+        &crate::test_support::approximate_decisions(),
+        &root_task,
+        &child.polygons,
+        &child.bounds,
+        &caches,
+    )
+    .unwrap();
 
     assert_eq!(propagated, direct);
 }
 
 #[test]
 fn reusable_child_reference_from_cached_trace_if_certified_reuses_cached_target() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(2, 1, 1);
     let cache = RefCell::new(vec![ChildReferenceCacheEntry {
@@ -5183,7 +5643,7 @@ fn reusable_child_reference_from_cached_trace_if_certified_reuses_cached_target(
 #[test]
 fn reusable_child_reference_from_cached_trace_if_certified_reuses_cached_target_across_tighter_bounds()
  {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
     let cached_point = p(2, 1, 1);
@@ -5218,7 +5678,7 @@ fn reusable_child_reference_from_cached_trace_if_certified_reuses_cached_target_
 
 #[test]
 fn reusable_child_reference_from_cached_trace_reuses_cached_target_across_parent_winding() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(2, 1, 1);
     let query_wnv = vec![7];
@@ -5257,7 +5717,7 @@ fn reusable_child_reference_from_cached_trace_reuses_cached_target_across_parent
 
 #[test]
 fn reusable_child_reference_from_cached_result_if_certified_reuses_cached_target() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(2, 1, 1);
     let cache = RefCell::new(vec![ChildReferenceCacheEntry {
@@ -5293,7 +5753,7 @@ fn reusable_child_reference_from_cached_result_if_certified_reuses_cached_target
 #[test]
 fn reusable_child_reference_from_cached_result_if_certified_reuses_cached_target_across_tighter_bounds()
  {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
     let cached_point = p(2, 1, 1);
@@ -5329,7 +5789,7 @@ fn reusable_child_reference_from_cached_result_if_certified_reuses_cached_target
 
 #[test]
 fn reusable_child_reference_from_cached_result_if_certified_skips_invalid_cached_target() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(0, 0, 0);
     let query_point = p(1, 1, 1);
@@ -5362,7 +5822,7 @@ fn reusable_child_reference_from_cached_result_if_certified_skips_invalid_cached
 
 #[test]
 fn reusable_child_reference_from_cached_trace_if_certified_skips_invalid_cached_target() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(0, 0, 0);
     let query_point = p(1, 1, 1);
@@ -5393,7 +5853,7 @@ fn reusable_child_reference_from_cached_trace_if_certified_skips_invalid_cached_
 
 #[test]
 fn reusable_child_reference_from_cached_trace_if_certified_memoizes_current_state() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(2, 1, 1);
     let query_point = cached_point.clone();
@@ -5441,7 +5901,7 @@ fn reusable_child_reference_from_cached_trace_if_certified_memoizes_current_stat
 
 #[test]
 fn process_split_attempt_child_backtracks_on_identical_recursive_state() {
-    let polygon = convex_triangle(&p(1, 1, 0), &p(3, 1, 0), &p(1, 3, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 1, 0), &p(3, 1, 0), &p(1, 3, 0), 0, 0);
     let task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(4, 4, 4)),
@@ -5454,6 +5914,7 @@ fn process_split_attempt_child_backtracks_on_identical_recursive_state() {
     let mut candidate_buckets = ClassifiedPolygonBucketState::new();
 
     let err = process_split_attempt_child(
+        &crate::test_support::approximate_decisions(),
         &task,
         vec![polygon],
         task.bounds.clone(),
@@ -5479,8 +5940,8 @@ fn process_split_attempt_child_backtracks_on_identical_recursive_state() {
 
 #[test]
 fn subdivision_child_partition_dedupe_skips_permuted_polygon_order() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let left_bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
     let mut seen = Vec::new();
 
@@ -5502,8 +5963,8 @@ fn subdivision_child_partition_dedupe_skips_permuted_polygon_order() {
 
 #[test]
 fn subdivision_child_partition_dedupe_skips_swapped_equivalent_children() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let left_bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let right_bounds = Aabb::new(p(0, 0, 1), p(1, 1, 1));
     let mut seen = Vec::new();
@@ -5526,7 +5987,7 @@ fn subdivision_child_partition_dedupe_skips_swapped_equivalent_children() {
 
 #[test]
 fn cached_child_reference_keeps_distinct_parent_reference_states_separate() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
@@ -5569,8 +6030,8 @@ fn cached_child_reference_keeps_distinct_parent_reference_states_separate() {
 
 #[test]
 fn cached_child_reference_keeps_distinct_source_polygon_families_separate() {
-    let source_polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let source_polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let source_polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let source_polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
@@ -5610,8 +6071,8 @@ fn cached_child_reference_keeps_distinct_source_polygon_families_separate() {
 
 #[test]
 fn cached_child_reference_reuses_permuted_source_polygon_families() {
-    let source_polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let source_polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let source_polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let source_polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
@@ -5653,7 +6114,13 @@ fn cached_child_reference_reuses_permuted_source_polygon_families() {
 #[test]
 fn cached_child_subdivision_reuses_identical_child_task() {
     let task = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(0, 0, 0),
         vec![0],
@@ -5664,7 +6131,7 @@ fn cached_child_subdivision_reuses_identical_child_task() {
     let first = cached_child_subdivision_with(&cache, &task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -5672,7 +6139,7 @@ fn cached_child_subdivision_reuses_identical_child_task() {
     let second = cached_child_subdivision_with(&cache, &task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -5685,13 +6152,25 @@ fn cached_child_subdivision_reuses_identical_child_task() {
 #[test]
 fn cached_child_subdivision_keeps_distinct_child_tasks_separate() {
     let task_a = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(0, 0, 0),
         vec![0],
     );
     let task_b = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(2, 0, 0),
+            &p(0, 2, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(2, 2, 0)),
         p(0, 0, 0),
         vec![0],
@@ -5716,7 +6195,13 @@ fn cached_child_subdivision_keeps_distinct_child_tasks_separate() {
 #[test]
 fn cached_child_subdivision_reuses_permuted_parent_definition_families() {
     let mut task = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(1, 2, 3),
         vec![0],
@@ -5735,7 +6220,7 @@ fn cached_child_subdivision_reuses_permuted_parent_definition_families() {
     let first = cached_child_subdivision_with(&cache, &task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -5743,7 +6228,7 @@ fn cached_child_subdivision_reuses_permuted_parent_definition_families() {
     let second = cached_child_subdivision_with(&cache, &permuted_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -5755,8 +6240,8 @@ fn cached_child_subdivision_reuses_permuted_parent_definition_families() {
 
 #[test]
 fn cached_child_subdivision_reuses_permuted_polygon_families() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let task = SubdivisionTask::new(
         vec![polygon_a.clone(), polygon_b.clone()],
         Aabb::new(p(0, 0, 0), p(1, 1, 1)),
@@ -5771,7 +6256,7 @@ fn cached_child_subdivision_reuses_permuted_polygon_families() {
     let first = cached_child_subdivision_with(&cache, &task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -5779,7 +6264,7 @@ fn cached_child_subdivision_reuses_permuted_polygon_families() {
     let second = cached_child_subdivision_with(&cache, &permuted_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -5791,8 +6276,8 @@ fn cached_child_subdivision_reuses_permuted_polygon_families() {
 
 #[test]
 fn cached_child_subdivision_memoizes_current_equivalent_task_state() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let task = SubdivisionTask::new(
         vec![polygon_a.clone(), polygon_b.clone()],
         Aabb::new(p(0, 0, 0), p(1, 1, 1)),
@@ -5805,14 +6290,14 @@ fn cached_child_subdivision_memoizes_current_equivalent_task_state() {
 
     cached_child_subdivision_with(&cache, &task, || {
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
     .unwrap();
     cached_child_subdivision_with(&cache, &permuted_task, || {
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -5828,8 +6313,8 @@ fn cached_child_subdivision_memoizes_current_equivalent_task_state() {
 
 #[test]
 fn cached_child_subdivision_prefers_newest_exact_alias_state() {
-    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let task = SubdivisionTask::new(
         vec![polygon_b.clone(), polygon_a.clone()],
         Aabb::new(p(0, 0, 0), p(1, 1, 1)),
@@ -5843,11 +6328,11 @@ fn cached_child_subdivision_prefers_newest_exact_alias_state() {
         task.ref_wnv.clone(),
     );
     let older_result = vec![ClassifiedPolygon::new(
-        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
         1,
     )];
     let newer_result = vec![ClassifiedPolygon::new(
-        convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
         1,
     )];
     let cache = RefCell::new(vec![
@@ -5871,7 +6356,13 @@ fn cached_child_subdivision_prefers_newest_exact_alias_state() {
 #[test]
 fn cached_child_subdivision_reuses_deeper_success_for_shallower_equivalent_task() {
     let mut deeper_task = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(0, 0, 0),
         vec![0],
@@ -5885,7 +6376,7 @@ fn cached_child_subdivision_reuses_deeper_success_for_shallower_equivalent_task(
     let first = cached_child_subdivision_with(&cache, &deeper_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -5893,7 +6384,7 @@ fn cached_child_subdivision_reuses_deeper_success_for_shallower_equivalent_task(
     let second = cached_child_subdivision_with(&cache, &shallower_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -5905,7 +6396,7 @@ fn cached_child_subdivision_reuses_deeper_success_for_shallower_equivalent_task(
 
 #[test]
 fn reusable_child_subdivision_if_certified_reuses_changed_reference_state() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let existing_task =
         SubdivisionTask::new(vec![polygon.clone()], bounds.clone(), p(1, 1, 1), vec![0]);
@@ -5917,8 +6408,13 @@ fn reusable_child_subdivision_if_certified_reuses_changed_reference_state() {
     }]);
     let mut query_caches = SupportReferenceQueryCaches::default();
 
-    let reused =
-        reusable_child_subdivision_if_certified(&cache, &query_task, &mut query_caches).unwrap();
+    let reused = reusable_child_subdivision_if_certified(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &query_task,
+        &mut query_caches,
+    )
+    .unwrap();
 
     assert_eq!(reused, Some(vec![]));
     assert_eq!(cache.borrow().len(), 2);
@@ -5926,7 +6422,7 @@ fn reusable_child_subdivision_if_certified_reuses_changed_reference_state() {
 
 #[test]
 fn reusable_child_subdivision_if_certified_skips_invalid_reference_state() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let existing_task =
         SubdivisionTask::new(vec![polygon.clone()], bounds.clone(), p(1, 1, 1), vec![0]);
@@ -5938,15 +6434,20 @@ fn reusable_child_subdivision_if_certified_skips_invalid_reference_state() {
     }]);
     let mut query_caches = SupportReferenceQueryCaches::default();
 
-    let reused =
-        reusable_child_subdivision_if_certified(&cache, &query_task, &mut query_caches).unwrap();
+    let reused = reusable_child_subdivision_if_certified(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &query_task,
+        &mut query_caches,
+    )
+    .unwrap();
 
     assert_eq!(reused, None);
 }
 
 #[test]
 fn reusable_child_subdivision_if_certified_memoizes_current_task_state() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let existing_task =
         SubdivisionTask::new(vec![polygon.clone()], bounds.clone(), p(1, 1, 1), vec![0]);
@@ -5959,14 +6460,19 @@ fn reusable_child_subdivision_if_certified_memoizes_current_task_state() {
     let mut query_caches = SupportReferenceQueryCaches::default();
     let calls = std::cell::Cell::new(0);
 
-    let reused = reusable_child_subdivision_if_certified(&cache, &query_task, &mut query_caches)
-        .unwrap()
-        .unwrap();
+    let reused = reusable_child_subdivision_if_certified(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &query_task,
+        &mut query_caches,
+    )
+    .unwrap()
+    .unwrap();
 
     let cached = cached_child_subdivision_with(&cache, &query_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -5978,7 +6484,7 @@ fn reusable_child_subdivision_if_certified_memoizes_current_task_state() {
 
 #[test]
 fn reusable_child_subdivision_if_certified_reuses_result_across_tighter_bounds() {
-    let polygon = convex_triangle(&p(2, 2, 0), &p(4, 2, 0), &p(2, 4, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(2, 2, 0), &p(4, 2, 0), &p(2, 4, 0), 0, 0);
     let existing_task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(6, 6, 6)),
@@ -5998,8 +6504,13 @@ fn reusable_child_subdivision_if_certified_reuses_result_across_tighter_bounds()
     }]);
     let mut query_caches = SupportReferenceQueryCaches::default();
 
-    let reused =
-        reusable_child_subdivision_if_certified(&cache, &query_task, &mut query_caches).unwrap();
+    let reused = reusable_child_subdivision_if_certified(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &query_task,
+        &mut query_caches,
+    )
+    .unwrap();
 
     assert_eq!(reused, Some(vec![]));
     assert_eq!(cache.borrow().len(), 2);
@@ -6007,7 +6518,7 @@ fn reusable_child_subdivision_if_certified_reuses_result_across_tighter_bounds()
 
 #[test]
 fn reusable_child_subdivision_if_certified_skips_cached_result_invalid_for_tighter_bounds() {
-    let polygon = convex_triangle(&p(2, 2, 0), &p(4, 2, 0), &p(2, 4, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(2, 2, 0), &p(4, 2, 0), &p(2, 4, 0), 0, 0);
     let existing_task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(6, 6, 6)),
@@ -6027,8 +6538,13 @@ fn reusable_child_subdivision_if_certified_skips_cached_result_invalid_for_tight
     }]);
     let mut query_caches = SupportReferenceQueryCaches::default();
 
-    let reused =
-        reusable_child_subdivision_if_certified(&cache, &query_task, &mut query_caches).unwrap();
+    let reused = reusable_child_subdivision_if_certified(
+        &crate::test_support::approximate_decisions(),
+        &cache,
+        &query_task,
+        &mut query_caches,
+    )
+    .unwrap();
 
     assert_eq!(reused, None);
 }
@@ -6036,7 +6552,7 @@ fn reusable_child_subdivision_if_certified_skips_cached_result_invalid_for_tight
 #[test]
 fn reusable_child_subdivision_from_cached_trace_if_certified_reuses_cached_result_across_parent_winding()
  {
-    let mut polygon = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let mut polygon = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
     polygon.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, -2), p(4, 4, 2));
     let query_task =
@@ -6044,6 +6560,7 @@ fn reusable_child_subdivision_from_cached_trace_if_certified_reuses_cached_resul
     let existing_point = p(1, 1, -1);
     let existing_definitions = vec![axis_plane_definition(&existing_point)];
     let existing_wnv = trace_reference_target_from_validated_bounds(
+        &crate::test_support::approximate_decisions(),
         &query_task.ref_point,
         &query_task.ref_definitions,
         &query_task.ref_wnv,
@@ -6069,6 +6586,7 @@ fn reusable_child_subdivision_from_cached_trace_if_certified_reuses_cached_resul
     let mut query_caches = SupportReferenceQueryCaches::default();
 
     let reused = reusable_child_subdivision_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &query_task,
         &mut query_caches,
@@ -6081,7 +6599,7 @@ fn reusable_child_subdivision_from_cached_trace_if_certified_reuses_cached_resul
 
 #[test]
 fn reusable_child_subdivision_from_cached_trace_if_certified_skips_mismatched_cached_winding() {
-    let mut polygon = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let mut polygon = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
     polygon.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, -2), p(4, 4, 2));
     let query_task =
@@ -6103,6 +6621,7 @@ fn reusable_child_subdivision_from_cached_trace_if_certified_skips_mismatched_ca
     let mut query_caches = SupportReferenceQueryCaches::default();
 
     let reused = reusable_child_subdivision_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &query_task,
         &mut query_caches,
@@ -6116,7 +6635,13 @@ fn reusable_child_subdivision_from_cached_trace_if_certified_skips_mismatched_ca
 #[test]
 fn cached_child_subdivision_keeps_shallower_and_deeper_successes_separate() {
     let mut shallower_task = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(0, 0, 0),
         vec![0],
@@ -6130,7 +6655,7 @@ fn cached_child_subdivision_keeps_shallower_and_deeper_successes_separate() {
     let first = cached_child_subdivision_with(&cache, &shallower_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -6138,7 +6663,7 @@ fn cached_child_subdivision_keeps_shallower_and_deeper_successes_separate() {
     let second = cached_child_subdivision_with(&cache, &deeper_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -6151,13 +6676,25 @@ fn cached_child_subdivision_keeps_shallower_and_deeper_successes_separate() {
 #[test]
 fn cached_child_subdivision_allows_nested_shared_cache_queries() {
     let task_a = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(0, 0, 0),
         vec![0],
     );
     let task_b = SubdivisionTask::new(
-        vec![convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0)],
+        vec![approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(2, 0, 0),
+            &p(0, 2, 0),
+            0,
+            0,
+        )],
         Aabb::new(p(0, 0, 0), p(2, 2, 0)),
         p(0, 0, 0),
         vec![0],
@@ -6226,6 +6763,7 @@ fn shifted_support_target_family_marks_surviving_targets_uncertain_after_boundar
     let strict_contains_cache =
         std::cell::RefCell::new(Vec::<ReferenceHalfspaceContainmentCacheEntry>::new());
     let targets = shifted_support_cell_targets_from_families(
+        &crate::test_support::approximate_decisions(),
         &bounds,
         &halfspaces,
         &families,
@@ -6263,6 +6801,7 @@ fn shifted_support_target_family_prefers_certified_report_witness_duplicate() {
     let strict_contains_cache =
         std::cell::RefCell::new(Vec::<ReferenceHalfspaceContainmentCacheEntry>::new());
     let targets = shifted_support_cell_targets_from_families(
+        &crate::test_support::approximate_decisions(),
         &bounds,
         &halfspaces,
         &families,
@@ -6280,9 +6819,13 @@ fn shifted_support_target_family_prefers_certified_report_witness_duplicate() {
 fn reference_target_from_halfspace_witness_retains_axis_definition_when_active_definitions_fail() {
     let halfspaces = vec![axis_halfspace(0, false, r(1))];
 
-    let target =
-        reference_target_from_halfspace_witness(&p(1, 2, 3), &halfspaces, [Some(9), None, None])
-            .unwrap();
+    let target = reference_target_from_halfspace_witness(
+        &crate::test_support::approximate_decisions(),
+        &p(1, 2, 3),
+        &halfspaces,
+        [Some(9), None, None],
+    )
+    .unwrap();
 
     let target = target.expect("witness target should still be retained");
     assert_eq!(target.point, p(1, 2, 3));
@@ -6304,10 +6847,14 @@ fn reference_target_from_halfspace_witness_salvages_coincident_halfspaces_after_
         LimitPlane3::new(p(1, 1, 1), r(-6)),
     ];
 
-    let target =
-        reference_target_from_halfspace_witness(&witness, &halfspaces, [Some(9), None, None])
-            .unwrap()
-            .expect("witness target should still be retained");
+    let target = reference_target_from_halfspace_witness(
+        &crate::test_support::approximate_decisions(),
+        &witness,
+        &halfspaces,
+        [Some(9), None, None],
+    )
+    .unwrap()
+    .expect("witness target should still be retained");
 
     assert_eq!(target.point, witness);
     assert!(target.uncertified_definition_fallback);
@@ -6401,7 +6948,7 @@ fn cached_reference_target_from_halfspace_witness_distinguishes_active_state() {
 
 #[test]
 fn valid_reference_rejects_local_surface_points() {
-    let mut wall = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
@@ -6410,134 +6957,229 @@ fn valid_reference_rejects_local_surface_points() {
 
 #[test]
 fn surface_reference_normalization_departs_open_parallel_surface_family() {
-    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let polygons = vec![left, right];
     let bounds = Aabb::new(p(1, 1, 1), p(4, 5, 5));
 
-    let (point, definitions, winding) =
-        normalize_surface_reference(&p(1, 3, 3), &[0], &bounds, &polygons)
-            .unwrap()
-            .expect("parallel surface interior should have a certified normal departure");
+    let (point, definitions, winding) = normalize_surface_reference(
+        &crate::test_support::approximate_decisions(),
+        &p(1, 3, 3),
+        &[0],
+        &bounds,
+        &polygons,
+    )
+    .unwrap()
+    .expect("parallel surface interior should have a certified normal departure");
 
     assert_eq!(winding, vec![0]);
     assert_eq!(affine_from_planes(&definitions[0]).unwrap(), point);
-    assert!(is_certified_valid_reference_for_bounds(&point, &bounds, &polygons).unwrap());
+    assert!(
+        is_certified_valid_reference_for_bounds(
+            &crate::test_support::approximate_decisions(),
+            &point,
+            &bounds,
+            &polygons
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn surface_reference_normalization_selects_matching_positive_side_winding() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[mesh.as_ref()]).unwrap();
     let polygon = soup
         .polygons
         .iter()
         .find(|polygon| {
-            classify_point_in_local_polygon(&p(1, 3, 3), polygon).unwrap()
+            classify_point_in_local_polygon(
+                &crate::test_support::approximate_decisions(),
+                &p(1, 3, 3),
+                polygon,
+            )
+            .unwrap()
                 == LocalPolygonPointLocation::Interior
         })
         .unwrap()
         .clone();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-    let (point, definitions, winding) =
-        normalize_surface_reference(&p(1, 3, 3), &[-1], &bounds, &soup.polygons)
-            .unwrap()
-            .expect("surface interior should have a positive-side departure");
+    let (point, definitions, winding) = normalize_surface_reference(
+        &crate::test_support::approximate_decisions(),
+        &p(1, 3, 3),
+        &[-1],
+        &bounds,
+        &soup.polygons,
+    )
+    .unwrap()
+    .expect("surface interior should have a positive-side departure");
 
     assert_eq!(
-        crate::geometry::classify_point(&point, &polygon.support).unwrap(),
+        approximate_classify_point(&point, &polygon.support).unwrap(),
         Classification::Positive
     );
     assert_eq!(winding, vec![-1]);
     assert_eq!(affine_from_planes(&definitions[0]).unwrap(), point);
-    assert!(is_certified_valid_reference_for_bounds(&point, &bounds, &soup.polygons).unwrap());
+    assert!(
+        is_certified_valid_reference_for_bounds(
+            &crate::test_support::approximate_decisions(),
+            &point,
+            &bounds,
+            &soup.polygons
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn surface_reference_normalization_selects_matching_negative_side_winding() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[mesh.as_ref()]).unwrap();
     let polygon = soup
         .polygons
         .iter()
         .find(|polygon| {
-            classify_point_in_local_polygon(&p(1, 3, 3), polygon).unwrap()
+            classify_point_in_local_polygon(
+                &crate::test_support::approximate_decisions(),
+                &p(1, 3, 3),
+                polygon,
+            )
+            .unwrap()
                 == LocalPolygonPointLocation::Interior
         })
         .unwrap()
         .clone();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-    let (point, _definitions, winding) =
-        normalize_surface_reference(&p(1, 3, 3), &[0], &bounds, &soup.polygons)
-            .unwrap()
-            .expect("surface interior should depart on the side with room");
+    let (point, _definitions, winding) = normalize_surface_reference(
+        &crate::test_support::approximate_decisions(),
+        &p(1, 3, 3),
+        &[0],
+        &bounds,
+        &soup.polygons,
+    )
+    .unwrap()
+    .expect("surface interior should depart on the side with room");
 
     assert_eq!(
-        crate::geometry::classify_point(&point, &polygon.support).unwrap(),
+        approximate_classify_point(&point, &polygon.support).unwrap(),
         Classification::Negative
     );
     assert_eq!(winding, vec![0]);
-    assert!(is_certified_valid_reference_for_bounds(&point, &bounds, &soup.polygons).unwrap());
+    assert!(
+        is_certified_valid_reference_for_bounds(
+            &crate::test_support::approximate_decisions(),
+            &point,
+            &bounds,
+            &soup.polygons
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn surface_reference_normalization_finds_matching_vertex_cell() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[mesh.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-    let (point, definitions, winding) =
-        normalize_surface_reference(&p(1, 1, 1), &[0], &bounds, &soup.polygons)
-            .unwrap()
-            .expect("closed vertex contact should find the matching arrangement cell");
+    let (point, definitions, winding) = normalize_surface_reference(
+        &crate::test_support::approximate_decisions(),
+        &p(1, 1, 1),
+        &[0],
+        &bounds,
+        &soup.polygons,
+    )
+    .unwrap()
+    .expect("closed vertex contact should find the matching arrangement cell");
 
     assert_eq!(winding, vec![0]);
     assert_eq!(affine_from_planes(&definitions[0]).unwrap(), point);
-    assert!(is_certified_valid_reference_for_bounds(&point, &bounds, &soup.polygons).unwrap());
+    assert!(
+        is_certified_valid_reference_for_bounds(
+            &crate::test_support::approximate_decisions(),
+            &point,
+            &bounds,
+            &soup.polygons
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn surface_reference_normalization_finds_matching_edge_cell() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[mesh.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-    let (point, _definitions, winding) =
-        normalize_surface_reference(&p(1, 2, 1), &[-1], &bounds, &soup.polygons)
-            .unwrap()
-            .expect("closed edge contact should find the matching arrangement cell");
+    let (point, _definitions, winding) = normalize_surface_reference(
+        &crate::test_support::approximate_decisions(),
+        &p(1, 2, 1),
+        &[-1],
+        &bounds,
+        &soup.polygons,
+    )
+    .unwrap()
+    .expect("closed edge contact should find the matching arrangement cell");
 
     assert_eq!(winding, vec![-1]);
-    assert!(is_certified_valid_reference_for_bounds(&point, &bounds, &soup.polygons).unwrap());
+    assert!(
+        is_certified_valid_reference_for_bounds(
+            &crate::test_support::approximate_decisions(),
+            &point,
+            &bounds,
+            &soup.polygons
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn surface_reference_normalization_finds_matching_noncoplanar_surface_cell() {
     let left = tetra_from_face_and_apex(p(2, 0, 0), p(2, 6, 0), p(2, 3, 6), p(0, 3, 2));
     let right = tetra_from_face_and_apex(p(0, 3, 0), p(6, 3, 0), p(3, 3, 6), p(3, 5, 2));
-    let soup = polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-    let (point, _definitions, winding) =
-        normalize_surface_reference(&p(2, 3, 2), &[0, 0], &bounds, &soup.polygons)
-            .unwrap()
-            .expect("crossing surface contact should find the matching arrangement cell");
+    let (point, _definitions, winding) = normalize_surface_reference(
+        &crate::test_support::approximate_decisions(),
+        &p(2, 3, 2),
+        &[0, 0],
+        &bounds,
+        &soup.polygons,
+    )
+    .unwrap()
+    .expect("crossing surface contact should find the matching arrangement cell");
 
     assert_eq!(winding, vec![0, 0]);
-    assert!(is_certified_valid_reference_for_bounds(&point, &bounds, &soup.polygons).unwrap());
+    assert!(
+        is_certified_valid_reference_for_bounds(
+            &crate::test_support::approximate_decisions(),
+            &point,
+            &bounds,
+            &soup.polygons
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn surface_reference_normalization_exhausts_adjacent_cells_for_impossible_winding() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[mesh.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-    let err = normalize_surface_reference(&p(1, 1, 1), &[7], &bounds, &soup.polygons).unwrap_err();
+    let err = normalize_surface_reference(
+        &crate::test_support::approximate_decisions(),
+        &p(1, 1, 1),
+        &[7],
+        &bounds,
+        &soup.polygons,
+    )
+    .unwrap_err();
 
     assert_eq!(
         err,
@@ -6547,7 +7189,7 @@ fn surface_reference_normalization_exhausts_adjacent_cells_for_impossible_windin
 
 #[test]
 fn surface_reference_closure_allows_non_manifold_edge_valence() {
-    let polygon = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     let polygons = vec![
         polygon.clone(),
         polygon.clone(),
@@ -6556,50 +7198,87 @@ fn surface_reference_closure_allows_non_manifold_edge_valence() {
     ];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-    assert!(polygon_family_is_closed_within_bounds(&polygons, &bounds, 1).unwrap());
+    assert!(
+        polygon_family_is_closed_within_bounds(
+            &crate::test_support::approximate_decisions(),
+            &polygons,
+            &bounds,
+            1
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn surface_reference_closure_rejects_unbalanced_non_manifold_edge_valence() {
-    let polygon = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     let polygons = vec![polygon.clone(), polygon.clone(), polygon];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-    assert!(!polygon_family_is_closed_within_bounds(&polygons, &bounds, 1).unwrap());
+    assert!(
+        !polygon_family_is_closed_within_bounds(
+            &crate::test_support::approximate_decisions(),
+            &polygons,
+            &bounds,
+            1
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn surface_reference_closure_rejects_boundary_edges() {
-    let polygon = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-    assert!(!polygon_family_is_closed_within_bounds(&[polygon], &bounds, 1).unwrap());
+    assert!(
+        !polygon_family_is_closed_within_bounds(
+            &crate::test_support::approximate_decisions(),
+            &[polygon],
+            &bounds,
+            1
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn surface_reference_closure_rejects_missing_winding_component_mesh() {
-    let polygon = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     let polygons = vec![polygon.clone(), polygon];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-    assert!(!polygon_family_is_closed_within_bounds(&polygons, &bounds, 2).unwrap());
+    assert!(
+        !polygon_family_is_closed_within_bounds(
+            &crate::test_support::approximate_decisions(),
+            &polygons,
+            &bounds,
+            2
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn certified_reference_validity_reports_unknown_for_local_surface_boundary_point() {
-    let mut wall = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
     assert_eq!(
-        is_certified_valid_reference_for_bounds(&p(2, 1, 2), &bounds, &[wall]),
+        is_certified_valid_reference_for_bounds(
+            &crate::test_support::approximate_decisions(),
+            &p(2, 1, 2),
+            &bounds,
+            &[wall]
+        ),
         Err(crate::error::HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn compute_new_reference_reports_unknown_after_boundary_inherited_reference_if_search_exhausts() {
-    let mut wall = convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let old_ref = p(0, 0, 0);
     let bounds = Aabb::new(old_ref.clone(), old_ref.clone());
@@ -6612,7 +7291,7 @@ fn compute_new_reference_reports_unknown_after_boundary_inherited_reference_if_s
 
 #[test]
 fn trace_reference_target_rejects_invalid_targets() {
-    let mut wall = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
@@ -6646,9 +7325,20 @@ fn trace_reference_target_rejects_invalid_targets() {
 fn reference_trace_bounds_expand_only_to_inherited_reference() {
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
 
-    let expanded = reference_trace_bounds(&p(-2, 1, 3), &bounds).unwrap();
-    let exterior = exterior_reference_point(&bounds).unwrap();
-    let exterior_expanded = reference_trace_bounds(&exterior, &bounds).unwrap();
+    let expanded = reference_trace_bounds(
+        &crate::test_support::approximate_decisions(),
+        &p(-2, 1, 3),
+        &bounds,
+    )
+    .unwrap();
+    let exterior =
+        exterior_reference_point(&crate::test_support::approximate_decisions(), &bounds).unwrap();
+    let exterior_expanded = reference_trace_bounds(
+        &crate::test_support::approximate_decisions(),
+        &exterior,
+        &bounds,
+    )
+    .unwrap();
 
     assert_eq!(expanded, Aabb::new(p(-2, 0, 0), p(1, 1, 3)));
     assert_eq!(exterior_expanded, Aabb::new(p(0, 0, 0), p(2, 2, 2)));
@@ -6658,12 +7348,13 @@ fn reference_trace_bounds_expand_only_to_inherited_reference() {
 fn trace_reference_target_uses_bounded_detour_for_valid_target() {
     let ref_point = p(0, 0, 0);
     let target_point = p(2, 1, 0);
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
     assert_eq!(
         crate::segment_trace::trace_segment_without_detours(
+            &crate::test_support::approximate_decisions(),
             &ref_point,
             &target_point,
             &[0],
@@ -6699,12 +7390,13 @@ fn trace_reference_target_retries_axis_plane_replacement_definitions() {
         Plane::axis_aligned(0, r(1)),
         Plane::axis_aligned(0, r(0)),
     ];
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
     assert_eq!(
         crate::segment_trace::trace_segment_without_detours(
+            &crate::test_support::approximate_decisions(),
             &ref_point,
             &target_point,
             &[0],
@@ -6740,12 +7432,13 @@ fn trace_reference_target_retries_axis_start_after_retained_definitions_fail() {
         Plane::axis_aligned(1, r(1)),
         Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
     ];
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
     assert_eq!(
         crate::segment_trace::trace_segment_without_detours(
+            &crate::test_support::approximate_decisions(),
             &ref_point,
             &target_point,
             &[0],
@@ -6782,12 +7475,12 @@ fn trace_reference_target_uses_detour_on_plane_replacement_step() {
         Plane::axis_aligned(2, r(0)),
     ];
     let mut blockers = vec![
-        convex_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
-        convex_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
-        convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+        approximate_convex_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
     ];
     for (index, x) in [q(2, 3), r(1), q(4, 3)].into_iter().enumerate() {
-        blockers.push(convex_triangle(
+        blockers.push(approximate_convex_triangle(
             &px(x.clone(), -1, -1),
             &px(x.clone(), 3, -1),
             &px(x, 1, 3),
@@ -6799,6 +7492,7 @@ fn trace_reference_target_uses_detour_on_plane_replacement_step() {
 
     assert_eq!(
         crate::segment_trace::trace_segment_without_detours(
+            &crate::test_support::approximate_decisions(),
             &ref_point,
             &target_point,
             &[0],
@@ -6822,9 +7516,9 @@ fn trace_reference_target_uses_detour_on_plane_replacement_step() {
 
 #[test]
 fn projection_escape_bounds_stop_at_nearest_axis_surfaces() {
-    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -6842,9 +7536,9 @@ fn projection_escape_bounds_stop_at_nearest_axis_surfaces() {
 
 #[test]
 fn projection_escape_bounds_family_includes_later_exact_boxes() {
-    let mut x_wall = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+    let mut x_wall = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
     x_wall.delta_w = vec![1];
-    let mut y_wall = convex_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
+    let mut y_wall = approximate_convex_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
     y_wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -6890,10 +7584,11 @@ fn projection_escape_bounds_family_backtracks_after_uncertified_candidate_box() 
 fn escaped_reference_axis_stop_values_backtrack_after_uncertified_crossing() {
     let projected = p(0, 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &projected,
         &bounds,
         &[first, second],
@@ -6918,10 +7613,11 @@ fn escaped_reference_axis_stop_values_backtrack_after_uncertified_crossing() {
 fn escaped_reference_axis_stop_values_treat_boundary_crossing_as_unknown_and_keep_later_corridor() {
     let projected = p(0, 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &projected,
         &bounds,
         &[first, second],
@@ -6950,10 +7646,11 @@ fn escaped_reference_axis_stop_values_treat_endpoint_boundary_contact_as_unknown
  {
     let projected = p(0, 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
-    let first = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &projected,
         &bounds,
         &[first, second],
@@ -6986,10 +7683,11 @@ fn escaped_reference_axis_stop_values_treat_start_boundary_contact_as_unknown_an
  {
     let projected = p(0, 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
-    let first = convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &projected,
         &bounds,
         &[first, second],
@@ -7023,6 +7721,7 @@ fn escaped_reference_axis_stop_values_treat_bound_start_contact_as_unknown() {
     let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
 
     let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &projected,
         &bounds,
         &[],
@@ -7039,9 +7738,9 @@ fn escaped_reference_axis_stop_values_treat_bound_start_contact_as_unknown() {
 
 #[test]
 fn projection_axis_escape_reference_certifies_fallback_corridor_witness_after_trace() {
-    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -7221,7 +7920,12 @@ fn support_reference_query_caches_prime_report_from_feasibility() {
 fn support_reference_query_caches_prime_projected_root_report_for_later_support_queries() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let old_ref = p(-1, 2, 2);
-    let halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &old_ref,
+        &bounds,
+    )
+    .unwrap();
     let projected_root =
         projected_root_reference_families(&bounds, &halfspaces, &mut Vec::new()).unwrap();
     let mut query_caches = SupportReferenceQueryCaches::default();
@@ -7266,15 +7970,30 @@ fn support_reference_query_caches_prime_projected_root_report_for_later_support_
 fn cached_projected_root_reference_families_reuse_permuted_halfspace_state() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let old_ref = p(-1, 2, 2);
-    let halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &old_ref,
+        &bounds,
+    )
+    .unwrap();
     let mut permuted = halfspaces.clone();
     permuted.rotate_left(2);
     let mut caches = SupportReferenceQueryCaches::default();
 
-    let first =
-        cached_projected_root_reference_families_with(&bounds, &halfspaces, &mut caches).unwrap();
-    let second =
-        cached_projected_root_reference_families_with(&bounds, &permuted, &mut caches).unwrap();
+    let first = cached_projected_root_reference_families_with(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &mut caches,
+    )
+    .unwrap();
+    let second = cached_projected_root_reference_families_with(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &permuted,
+        &mut caches,
+    )
+    .unwrap();
 
     assert_eq!(first.report, second.report);
     assert_eq!(first.projected_targets, second.projected_targets);
@@ -7289,14 +8008,23 @@ fn cached_projected_root_reference_families_reuse_permuted_halfspace_state() {
 #[test]
 fn cached_support_cell_seed_geometry_reuses_identical_halfspaces() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let halfspaces = projected_reference_halfspaces(&p(-1, 2, 2), &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &p(-1, 2, 2),
+        &bounds,
+    )
+    .unwrap();
     let mut cache = Vec::new();
     let mut centroid_subset_seed_cache = Vec::new();
     let mut calls = 0;
 
     let first = cached_support_cell_seed_geometry_with(&mut cache, &halfspaces, || {
         calls += 1;
-        support_cell_seed_geometry_state(&halfspaces, &mut centroid_subset_seed_cache)
+        support_cell_seed_geometry_state(
+            &crate::test_support::approximate_decisions(),
+            &halfspaces,
+            &mut centroid_subset_seed_cache,
+        )
     })
     .unwrap();
     let second = cached_support_cell_seed_geometry_with(&mut cache, &halfspaces, || {
@@ -7316,7 +8044,12 @@ fn cached_support_cell_seed_geometry_reuses_identical_halfspaces() {
 #[test]
 fn cached_support_cell_seed_geometry_reuses_permuted_halfspaces() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let halfspaces = projected_reference_halfspaces(&p(-1, 2, 2), &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &p(-1, 2, 2),
+        &bounds,
+    )
+    .unwrap();
     let mut permuted = halfspaces.clone();
     permuted.rotate_left(1);
     let mut cache = Vec::new();
@@ -7325,7 +8058,11 @@ fn cached_support_cell_seed_geometry_reuses_permuted_halfspaces() {
 
     let first = cached_support_cell_seed_geometry_with(&mut cache, &halfspaces, || {
         calls += 1;
-        support_cell_seed_geometry_state(&halfspaces, &mut centroid_subset_seed_cache)
+        support_cell_seed_geometry_state(
+            &crate::test_support::approximate_decisions(),
+            &halfspaces,
+            &mut centroid_subset_seed_cache,
+        )
     })
     .unwrap();
     let second = cached_support_cell_seed_geometry_with(&mut cache, &permuted, || {
@@ -8183,6 +8920,7 @@ fn push_verified_definition_merges_permuted_definitions() {
 
     let mut saw_unknown = false;
     push_verified_definition(
+        &crate::test_support::approximate_decisions(),
         &mut definitions,
         permuted.clone(),
         &witness,
@@ -8286,6 +9024,7 @@ fn support_reference_target_trace_shortcut_skips_full_target_build_after_certifi
     let build_calls = Cell::new(0);
 
     let found = trace_support_reference_targets_with_report_shortcut(
+        &crate::test_support::approximate_decisions(),
         &bounds,
         &halfspaces,
         Some(&report),
@@ -8328,6 +9067,7 @@ fn support_reference_target_trace_shortcut_falls_through_after_uncertified_repor
     let build_calls = Cell::new(0);
 
     let found = trace_support_reference_targets_with_report_shortcut(
+        &crate::test_support::approximate_decisions(),
         &bounds,
         &halfspaces,
         Some(&report),
@@ -8372,6 +9112,7 @@ fn support_reference_target_trace_shortcut_skips_full_target_build_after_certifi
     let build_calls = Cell::new(0);
 
     let found = trace_support_reference_targets_with_report_shortcut(
+        &crate::test_support::approximate_decisions(),
         &bounds,
         &halfspaces,
         None,
@@ -9036,6 +9777,7 @@ fn reusable_support_reference_accept_if_certified_reuses_cached_target() {
     let mut validity_cache = Vec::new();
 
     let reused = reusable_support_reference_accept_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_context,
         &bounds,
@@ -9095,6 +9837,7 @@ fn reusable_support_reference_accept_if_certified_reuses_cached_target_across_ti
     let mut validity_cache = Vec::new();
 
     let reused = reusable_support_reference_accept_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_context,
         &query_bounds,
@@ -9141,6 +9884,7 @@ fn reusable_support_reference_accept_if_certified_skips_invalid_cached_target() 
     let mut validity_cache = Vec::new();
 
     let reused = reusable_support_reference_accept_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_context,
         &bounds,
@@ -9183,6 +9927,7 @@ fn reusable_support_reference_accept_from_cached_trace_if_certified_reuses_cache
     let mut trace_cache = Vec::new();
 
     let reused = reusable_support_reference_accept_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_context,
         &bounds,
@@ -9241,6 +9986,7 @@ fn reusable_support_reference_accept_from_cached_trace_if_certified_skips_invali
     let mut trace_cache = Vec::new();
 
     let reused = reusable_support_reference_accept_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_context,
         &bounds,
@@ -9411,7 +10157,12 @@ fn cached_support_reference_result_distinguishes_reference_context() {
 fn cached_projected_reference_result_reuses_identical_state() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let old_ref = p(0, 2, 5);
-    let halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &old_ref,
+        &bounds,
+    )
+    .unwrap();
     let polygons = Vec::new();
     let context = support_reference_cache_context_key(
         &old_ref,
@@ -9443,7 +10194,12 @@ fn cached_projected_reference_result_reuses_identical_state() {
 fn reusable_projected_reference_result_if_certified_reuses_cached_target() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_old_ref = p(0, 2, 5);
-    let halfspaces = projected_reference_halfspaces(&cached_old_ref, &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &cached_old_ref,
+        &bounds,
+    )
+    .unwrap();
     let polygons = Vec::new();
     let cached_context = support_reference_cache_context_key(
         &cached_old_ref,
@@ -9462,6 +10218,7 @@ fn reusable_projected_reference_result_if_certified_reuses_cached_target() {
     let mut validity_cache = Vec::new();
 
     let reused = reusable_projected_reference_result_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_old_ref,
         &query_definitions,
@@ -9485,7 +10242,12 @@ fn reusable_projected_reference_result_if_certified_reuses_cached_target_across_
     let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
     let cached_old_ref = p(0, 2, 5);
-    let halfspaces = projected_reference_halfspaces(&cached_old_ref, &cached_bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &cached_old_ref,
+        &cached_bounds,
+    )
+    .unwrap();
     let polygons = Vec::new();
     let cached_context = support_reference_cache_context_key(
         &cached_old_ref,
@@ -9504,6 +10266,7 @@ fn reusable_projected_reference_result_if_certified_reuses_cached_target_across_
     let mut validity_cache = Vec::new();
 
     let reused = reusable_projected_reference_result_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_old_ref,
         &query_definitions,
@@ -9526,7 +10289,12 @@ fn reusable_projected_reference_result_if_certified_reuses_cached_target_across_
 fn reusable_projected_reference_result_if_certified_skips_invalid_cached_target() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_old_ref = p(0, 2, 5);
-    let halfspaces = projected_reference_halfspaces(&cached_old_ref, &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &cached_old_ref,
+        &bounds,
+    )
+    .unwrap();
     let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
     let cached_context = support_reference_cache_context_key(
         &cached_old_ref,
@@ -9545,6 +10313,7 @@ fn reusable_projected_reference_result_if_certified_skips_invalid_cached_target(
     let mut validity_cache = Vec::new();
 
     let reused = reusable_projected_reference_result_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_old_ref,
         &query_definitions,
@@ -9566,7 +10335,12 @@ fn reusable_projected_reference_result_from_cached_trace_if_certified_reuses_cac
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let old_ref = p(0, 2, 5);
     let query_definitions = vec![axis_plane_definition(&old_ref)];
-    let halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &old_ref,
+        &bounds,
+    )
+    .unwrap();
     let polygons = Vec::new();
     let cached_context =
         support_reference_cache_context_key(&old_ref, &query_definitions, &[0], &polygons);
@@ -9580,6 +10354,7 @@ fn reusable_projected_reference_result_from_cached_trace_if_certified_reuses_cac
     let mut trace_cache = Vec::new();
 
     let reused = reusable_projected_reference_result_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &old_ref,
         &query_definitions,
@@ -9606,7 +10381,12 @@ fn reusable_projected_reference_result_from_cached_trace_if_certified_reuses_cac
     let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
     let old_ref = p(0, 2, 5);
     let query_definitions = vec![axis_plane_definition(&old_ref)];
-    let halfspaces = projected_reference_halfspaces(&old_ref, &cached_bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &old_ref,
+        &cached_bounds,
+    )
+    .unwrap();
     let polygons = Vec::new();
     let cached_context =
         support_reference_cache_context_key(&old_ref, &query_definitions, &[0], &polygons);
@@ -9620,6 +10400,7 @@ fn reusable_projected_reference_result_from_cached_trace_if_certified_reuses_cac
     let mut trace_cache = Vec::new();
 
     let reused = reusable_projected_reference_result_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &old_ref,
         &query_definitions,
@@ -9645,7 +10426,12 @@ fn reusable_projected_reference_result_from_cached_trace_if_certified_skips_inva
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let old_ref = p(0, 2, 5);
     let query_definitions = vec![axis_plane_definition(&old_ref)];
-    let halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        &old_ref,
+        &bounds,
+    )
+    .unwrap();
     let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
     let cached_context =
         support_reference_cache_context_key(&old_ref, &query_definitions, &[0], &polygons);
@@ -9659,6 +10445,7 @@ fn reusable_projected_reference_result_from_cached_trace_if_certified_skips_inva
     let mut trace_cache = Vec::new();
 
     let reused = reusable_projected_reference_result_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &old_ref,
         &query_definitions,
@@ -9698,6 +10485,7 @@ fn reusable_support_reference_result_if_certified_reuses_cached_target() {
     let mut validity_cache = Vec::new();
 
     let reused = reusable_support_reference_result_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_old_ref,
         &query_definitions,
@@ -9749,6 +10537,7 @@ fn reusable_support_reference_result_if_certified_reuses_cached_target_across_ti
     let mut validity_cache = Vec::new();
 
     let reused = reusable_support_reference_result_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_old_ref,
         &query_definitions,
@@ -9790,6 +10579,7 @@ fn reusable_support_reference_result_if_certified_skips_invalid_cached_target() 
     let mut validity_cache = Vec::new();
 
     let reused = reusable_support_reference_result_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_old_ref,
         &query_definitions,
@@ -9830,6 +10620,7 @@ fn reusable_support_reference_result_from_cached_trace_if_certified_reuses_cache
     let mut trace_cache = Vec::new();
 
     let reused = reusable_support_reference_result_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_old_ref,
         &query_definitions,
@@ -9883,6 +10674,7 @@ fn reusable_support_reference_result_from_cached_trace_if_certified_skips_invali
     let mut trace_cache = Vec::new();
 
     let reused = reusable_support_reference_result_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &query_old_ref,
         &query_definitions,
@@ -9944,8 +10736,16 @@ fn cached_support_plane_cell_search_reuses_same_preferred_order() {
     let cache = std::cell::RefCell::new(Vec::new());
     let mut calls = 0;
     let support = Plane::axis_aligned(0, r(2));
-    let first_order = support_side_search_order(Some(&p(1, 1, 1)), &support);
-    let second_order = support_side_search_order(Some(&p(1, 3, 3)), &support);
+    let first_order = support_side_search_order(
+        &crate::test_support::approximate_decisions(),
+        Some(&p(1, 1, 1)),
+        &support,
+    );
+    let second_order = support_side_search_order(
+        &crate::test_support::approximate_decisions(),
+        Some(&p(1, 3, 3)),
+        &support,
+    );
 
     assert_eq!(first_order, [false, true]);
     assert_eq!(first_order, second_order);
@@ -10186,6 +10986,7 @@ fn support_plane_cell_search_cache_reuses_same_normalized_polygon_index() {
     let mut accept_calls = 0;
 
     let first = support_plane_cell_search_with_queries_cached(
+        &crate::test_support::approximate_decisions(),
         None,
         Some(&p(0, 0, 0)),
         &bounds,
@@ -10205,6 +11006,7 @@ fn support_plane_cell_search_cache_reuses_same_normalized_polygon_index() {
     )
     .unwrap();
     let second = support_plane_cell_search_with_queries_cached(
+        &crate::test_support::approximate_decisions(),
         None,
         Some(&p(9, 9, 9)),
         &bounds,
@@ -10308,6 +11110,7 @@ fn reusable_support_plane_cell_search_result_if_certified_reuses_cached_target_a
     let mut validity_cache = Vec::new();
 
     let reused = reusable_support_plane_cell_search_result_if_certified(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &context,
         &query_bounds,
@@ -10346,6 +11149,7 @@ fn reusable_support_plane_cell_search_result_if_certified_skips_invalid_cached_t
     let mut validity_cache = Vec::new();
 
     let reused = reusable_support_plane_cell_search_result_if_certified(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &context,
         &bounds,
@@ -10387,6 +11191,7 @@ fn reusable_support_plane_cell_search_result_from_cached_trace_if_certified_reus
     let mut trace_cache = Vec::new();
 
     let reused = reusable_support_plane_cell_search_result_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &query_context,
         &bounds,
@@ -10435,6 +11240,7 @@ fn reusable_support_plane_cell_search_result_from_cached_trace_if_certified_skip
     let mut trace_cache = Vec::new();
 
     let reused = reusable_support_plane_cell_search_result_from_cached_trace_if_certified(
+        &crate::test_support::approximate_decisions(),
         &cache,
         &query_context,
         &bounds,
@@ -10791,6 +11597,7 @@ fn cached_reference_escape_search_in_query_caches_reuses_cached_target_across_ti
     let mut calls = 0;
 
     let reused = cached_reference_escape_search_in_query_caches(
+        &crate::test_support::approximate_decisions(),
         &mut query_caches,
         &context,
         &query_bounds,
@@ -10836,6 +11643,7 @@ fn cached_reference_escape_search_in_query_caches_skips_invalid_cached_target() 
     let mut calls = 0;
 
     let reused = cached_reference_escape_search_in_query_caches(
+        &crate::test_support::approximate_decisions(),
         &mut query_caches,
         &context,
         &query_bounds,
@@ -10883,6 +11691,7 @@ fn cached_reference_escape_search_in_query_caches_reuses_cached_target_across_pa
     let mut calls = 0;
 
     let reused = cached_reference_escape_search_in_query_caches(
+        &crate::test_support::approximate_decisions(),
         &mut query_caches,
         &query_context,
         &bounds,
@@ -10934,6 +11743,7 @@ fn cached_reference_escape_search_in_query_caches_skips_retrace_for_invalid_cach
     let mut calls = 0;
 
     let reused = cached_reference_escape_search_in_query_caches(
+        &crate::test_support::approximate_decisions(),
         &mut query_caches,
         &query_context,
         &bounds,
@@ -10953,7 +11763,7 @@ fn cached_reference_escape_search_in_query_caches_skips_retrace_for_invalid_cach
 
 #[test]
 fn projection_axis_escape_stop_values_include_later_bound_corridor() {
-    let mut wall = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -10973,7 +11783,7 @@ fn projection_axis_escape_stop_values_report_unknown_for_bound_start_contact() {
 
 #[test]
 fn projection_axis_escape_reference_backtracks_after_empty_nearer_corridor() {
-    let mut wall = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let mut searched_corridors = Vec::new();
@@ -11009,9 +11819,9 @@ fn projection_axis_escape_reference_backtracks_after_empty_nearer_corridor() {
 
 #[test]
 fn projection_axis_escape_reference_backtracks_after_uncertified_corridor() {
-    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let mut attempts = 0;
@@ -11040,9 +11850,9 @@ fn projection_axis_escape_reference_backtracks_after_uncertified_corridor() {
 
 #[test]
 fn projection_axis_escape_reference_accepts_later_corridor_after_endpoint_boundary_contact() {
-    let mut boundary = convex_triangle(&p(6, 3, 3), &p(6, 5, 3), &p(6, 3, 5), 0, 0);
+    let mut boundary = approximate_convex_triangle(&p(6, 3, 3), &p(6, 5, 3), &p(6, 3, 5), 0, 0);
     boundary.delta_w = vec![1];
-    let mut interior = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut interior = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     interior.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let mut searched_corridors = Vec::new();
@@ -11075,9 +11885,9 @@ fn projection_axis_escape_reference_accepts_later_corridor_after_endpoint_bounda
 
 #[test]
 fn projection_axis_escape_reference_accepts_later_corridor_after_boundary_start_contact() {
-    let mut boundary = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut boundary = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     boundary.delta_w = vec![1];
-    let mut interior = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut interior = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     interior.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let mut searched_corridors = Vec::new();
@@ -11119,6 +11929,7 @@ fn projection_axis_escape_reference_reports_unknown_when_corridor_family_is_part
     ];
 
     let err = projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &projected,
         &axis_options,
         true,
@@ -11139,6 +11950,7 @@ fn projection_axis_escape_reference_accepts_later_corridor_after_uncertified_fam
     ];
 
     let found = projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &projected,
         &axis_options,
         true,
@@ -11168,6 +11980,7 @@ fn projection_axis_escape_reference_certifies_fallback_corridor_success() {
     ];
 
     let found = projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &projected,
         &axis_options,
         false,
@@ -11199,6 +12012,7 @@ fn projection_axis_escape_reference_certifies_only_fallback_corridor_success() {
     ];
 
     let found = projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &projected,
         &axis_options,
         false,
@@ -11220,9 +12034,9 @@ fn projection_axis_escape_reference_certifies_only_fallback_corridor_success() {
 
 #[test]
 fn projection_axis_escape_reference_reports_unknown_if_all_corridors_are_uncertified() {
-    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -11239,9 +12053,9 @@ fn projection_axis_escape_reference_reports_unknown_if_all_corridors_are_uncerti
 
 #[test]
 fn projection_escape_reference_backtracks_after_uncertified_tight_box() {
-    let mut x_wall = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+    let mut x_wall = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
     x_wall.delta_w = vec![1];
-    let mut y_wall = convex_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
+    let mut y_wall = approximate_convex_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
     y_wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -11432,6 +12246,7 @@ fn projection_escape_reference_reports_unknown_when_axis_option_family_is_partia
     let bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
 
     let err = projection_escape_reference_with_search_and_axis_options_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &axis_options,
         &bounds,
         true,
@@ -11452,6 +12267,7 @@ fn projection_escape_reference_accepts_later_box_after_uncertified_axis_option_f
     let bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
 
     let found = projection_escape_reference_with_search_and_axis_options_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &axis_options,
         &bounds,
         true,
@@ -11473,9 +12289,9 @@ fn projection_escape_reference_accepts_later_box_after_uncertified_axis_option_f
 
 #[test]
 fn projection_escape_reference_reports_unknown_if_all_boxes_are_uncertified() {
-    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -11492,9 +12308,9 @@ fn projection_escape_reference_reports_unknown_if_all_boxes_are_uncertified() {
 
 #[test]
 fn projection_escape_reference_backtracks_after_empty_tighter_box() {
-    let mut x_wall = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+    let mut x_wall = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
     x_wall.delta_w = vec![1];
-    let mut y_wall = convex_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
+    let mut y_wall = approximate_convex_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
     y_wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let mut searched_boxes = Vec::new();
@@ -11534,14 +12350,35 @@ fn support_plane_cell_finds_target_when_midpoint_is_blocked() {
         support_only_polygon(Plane::from_coefficients(r(1), r(1), r(1), r(-15))),
     ];
 
-    assert!(point_lies_on_any_support_plane(&p(5, 5, 5), &polygons).unwrap());
+    assert!(
+        point_lies_on_any_support_plane(
+            &crate::test_support::approximate_decisions(),
+            &p(5, 5, 5),
+            &polygons
+        )
+        .unwrap()
+    );
 
     let target = support_plane_cell_target(&bounds, &polygons)
         .unwrap()
         .expect("strict support cell should have a feasible witness");
 
-    assert!(point_strictly_inside_bounds(&target.point, &bounds).unwrap());
-    assert!(!point_lies_on_any_support_plane(&target.point, &polygons).unwrap());
+    assert!(
+        point_strictly_inside_bounds(
+            &crate::test_support::approximate_decisions(),
+            &target.point,
+            &bounds
+        )
+        .unwrap()
+    );
+    assert!(
+        !point_lies_on_any_support_plane(
+            &crate::test_support::approximate_decisions(),
+            &target.point,
+            &polygons
+        )
+        .unwrap()
+    );
     assert!(
         target
             .definitions
@@ -11552,18 +12389,30 @@ fn support_plane_cell_finds_target_when_midpoint_is_blocked() {
 
 #[test]
 fn point_lies_on_any_support_plane_reports_unknown_for_boundary_contact() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
 
-    let err = point_lies_on_any_support_plane(&p(2, 0, 0), &[polygon]).unwrap_err();
+    let err = point_lies_on_any_support_plane(
+        &crate::test_support::approximate_decisions(),
+        &p(2, 0, 0),
+        &[polygon],
+    )
+    .unwrap_err();
 
     assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
 }
 
 #[test]
 fn point_lies_on_any_support_plane_ignores_coplanar_points_outside_polygon() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
 
-    assert!(!point_lies_on_any_support_plane(&p(5, 5, 0), &[polygon]).unwrap());
+    assert!(
+        !point_lies_on_any_support_plane(
+            &crate::test_support::approximate_decisions(),
+            &p(5, 5, 0),
+            &[polygon]
+        )
+        .unwrap()
+    );
 }
 
 #[test]
@@ -11661,10 +12510,12 @@ fn support_plane_cell_search_backtracks_after_uncertified_current_report() {
             if halfspaces.len() == root_halfspace_count {
                 Err(crate::error::HypermeshError::UnknownClassification)
             } else {
-                halfspace_system_report(halfspaces)
+                halfspace_system_report(&crate::test_support::approximate_decisions(), halfspaces)
             }
         },
-        &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+        &mut |halfspaces| {
+            halfspace_system_is_feasible(&crate::test_support::approximate_decisions(), halfspaces)
+        },
         &mut |halfspaces, report| {
             assert!(report.is_none());
             accept_counts.push(halfspaces.len());
@@ -11691,12 +12542,17 @@ fn support_plane_cell_search_backtracks_after_uncertified_branch_feasibility() {
         &polygons,
         0,
         &mut halfspaces,
-        &mut |halfspaces| halfspace_system_report(halfspaces),
+        &mut |halfspaces| {
+            halfspace_system_report(&crate::test_support::approximate_decisions(), halfspaces)
+        },
         &mut |halfspaces| {
             if halfspaces.len() == root_halfspace_count + 1 {
                 Err(crate::error::HypermeshError::UnknownClassification)
             } else {
-                halfspace_system_is_feasible(halfspaces)
+                halfspace_system_is_feasible(
+                    &crate::test_support::approximate_decisions(),
+                    halfspaces,
+                )
             }
         },
         &mut |halfspaces, _report| {
@@ -11735,10 +12591,12 @@ fn support_plane_cell_search_accepts_current_cell_without_certified_report() {
             if halfspaces.len() == root_halfspace_count {
                 Err(crate::error::HypermeshError::UnknownClassification)
             } else {
-                halfspace_system_report(halfspaces)
+                halfspace_system_report(&crate::test_support::approximate_decisions(), halfspaces)
             }
         },
-        &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+        &mut |halfspaces| {
+            halfspace_system_is_feasible(&crate::test_support::approximate_decisions(), halfspaces)
+        },
         &mut |halfspaces, report| {
             accepted_counts.push((halfspaces.len(), report.is_some()));
             if halfspaces.len() == root_halfspace_count {
@@ -11779,9 +12637,11 @@ fn support_plane_cell_search_skips_current_report_after_direct_accept() {
             if halfspaces.len() == root_halfspace_count {
                 panic!("root report query should be skipped after direct support accept");
             }
-            halfspace_system_report(halfspaces)
+            halfspace_system_report(&crate::test_support::approximate_decisions(), halfspaces)
         },
-        &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+        &mut |halfspaces| {
+            halfspace_system_is_feasible(&crate::test_support::approximate_decisions(), halfspaces)
+        },
         &mut |halfspaces, report| {
             accepted_counts.push((halfspaces.len(), report.is_some()));
             if halfspaces.len() == root_halfspace_count && report.is_none() {
@@ -11834,8 +12694,12 @@ fn support_plane_cell_search_prefers_reference_side_first() {
         &polygons,
         0,
         &mut halfspaces,
-        &mut |halfspaces| halfspace_system_report(halfspaces),
-        &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+        &mut |halfspaces| {
+            halfspace_system_report(&crate::test_support::approximate_decisions(), halfspaces)
+        },
+        &mut |halfspaces| {
+            halfspace_system_is_feasible(&crate::test_support::approximate_decisions(), halfspaces)
+        },
         &mut |halfspaces, _report| {
             if halfspaces.len() == root_halfspace_count + 1 {
                 accepted_branch = Some(
@@ -11870,7 +12734,9 @@ fn support_plane_cell_search_skips_duplicate_support_halfspace_branches() {
         &polygons,
         0,
         &mut halfspaces,
-        &mut |halfspaces| halfspace_system_report(halfspaces),
+        &mut |halfspaces| {
+            halfspace_system_report(&crate::test_support::approximate_decisions(), halfspaces)
+        },
         &mut |halfspaces| {
             let repeated_count = halfspaces
                 .iter()
@@ -11879,7 +12745,7 @@ fn support_plane_cell_search_skips_duplicate_support_halfspace_branches() {
             if repeated_count > 1 {
                 duplicate_branch_count_seen = true;
             }
-            halfspace_system_is_feasible(halfspaces)
+            halfspace_system_is_feasible(&crate::test_support::approximate_decisions(), halfspaces)
         },
         &mut |_halfspaces, _report| Ok(None::<ReferenceTarget>),
     )
@@ -11939,7 +12805,9 @@ fn support_plane_cell_search_skips_opposite_support_halfspace_branches() {
         &[polygon],
         0,
         &mut halfspaces,
-        &mut |halfspaces| halfspace_system_report(halfspaces),
+        &mut |halfspaces| {
+            halfspace_system_report(&crate::test_support::approximate_decisions(), halfspaces)
+        },
         &mut |halfspaces| {
             let opposite_count = halfspaces
                 .iter()
@@ -11948,7 +12816,7 @@ fn support_plane_cell_search_skips_opposite_support_halfspace_branches() {
             if opposite_count > 0 {
                 opposite_branch_count_seen = true;
             }
-            halfspace_system_is_feasible(halfspaces)
+            halfspace_system_is_feasible(&crate::test_support::approximate_decisions(), halfspaces)
         },
         &mut |_halfspaces, _report| Ok(None::<ReferenceTarget>),
     )
@@ -12013,16 +12881,32 @@ fn support_plane_cell_reference_accepts_current_cell_without_certified_report() 
             if halfspaces.len() == root_halfspace_count {
                 Err(crate::error::HypermeshError::UnknownClassification)
             } else {
-                halfspace_system_report(halfspaces)
+                halfspace_system_report(&crate::test_support::approximate_decisions(), halfspaces)
             }
         },
-        &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+        &mut |halfspaces| {
+            halfspace_system_is_feasible(&crate::test_support::approximate_decisions(), halfspaces)
+        },
     )
     .unwrap()
     .expect("current support cell should be usable without a certified report");
 
-    assert!(point_strictly_inside_bounds(&found.0.point, &bounds).unwrap());
-    assert!(!point_lies_on_any_support_plane(&found.0.point, &polygons).unwrap());
+    assert!(
+        point_strictly_inside_bounds(
+            &crate::test_support::approximate_decisions(),
+            &found.0.point,
+            &bounds
+        )
+        .unwrap()
+    );
+    assert!(
+        !point_lies_on_any_support_plane(
+            &crate::test_support::approximate_decisions(),
+            &found.0.point,
+            &polygons
+        )
+        .unwrap()
+    );
 }
 
 #[test]
@@ -12046,14 +12930,17 @@ fn support_plane_cell_reference_backtracks_after_uncertified_initial_feasibility
             if halfspaces.len() == root_halfspace_count {
                 Err(crate::error::HypermeshError::UnknownClassification)
             } else {
-                halfspace_system_report(halfspaces)
+                halfspace_system_report(&crate::test_support::approximate_decisions(), halfspaces)
             }
         },
         &mut |halfspaces| {
             if halfspaces.len() == root_halfspace_count {
                 Err(crate::error::HypermeshError::UnknownClassification)
             } else {
-                halfspace_system_is_feasible(halfspaces)
+                halfspace_system_is_feasible(
+                    &crate::test_support::approximate_decisions(),
+                    halfspaces,
+                )
             }
         },
     )
@@ -12453,9 +13340,9 @@ fn shifted_projected_escape_target_family_search_backtracks_after_uncertified_ea
 
 #[test]
 fn winding_reachability_prunes_difference_when_other_mesh_cannot_reach_zero() {
-    let mut first = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut first = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     first.delta_w = vec![0, 1];
-    let mut second = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let mut second = approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     second.delta_w = vec![0, 1];
 
     assert!(
@@ -12466,7 +13353,7 @@ fn winding_reachability_prunes_difference_when_other_mesh_cannot_reach_zero() {
 
 #[test]
 fn winding_reachability_keeps_difference_when_other_mesh_can_reach_zero() {
-    let mut first = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut first = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     first.delta_w = vec![0, 1];
 
     assert!(
@@ -12476,7 +13363,7 @@ fn winding_reachability_keeps_difference_when_other_mesh_can_reach_zero() {
 
 #[test]
 fn winding_reachability_prunes_correlated_difference_when_zero_is_not_jointly_reachable() {
-    let mut correlated = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut correlated = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     correlated.delta_w = vec![1, 1];
 
     assert!(
@@ -12489,15 +13376,15 @@ fn cached_winding_reachability_reuses_transition_multiset_across_polygon_geometr
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
 
-    let mut first = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut first = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     first.delta_w = vec![1, 1];
-    let mut second = convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 1, 0);
+    let mut second = approximate_convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 1, 0);
     second.delta_w = vec![0, -1];
     let first_polygons = vec![first.clone(), second.clone()];
 
-    let mut third = convex_triangle(&p(3, 0, 0), &p(4, 0, 0), &p(3, 1, 0), 2, 0);
+    let mut third = approximate_convex_triangle(&p(3, 0, 0), &p(4, 0, 0), &p(3, 1, 0), 2, 0);
     third.delta_w = vec![0, -1];
-    let mut fourth = convex_triangle(&p(3, 0, 2), &p(4, 0, 2), &p(3, 1, 2), 3, 0);
+    let mut fourth = approximate_convex_triangle(&p(3, 0, 2), &p(4, 0, 2), &p(3, 1, 2), 3, 0);
     fourth.delta_w = vec![1, 1];
     let second_polygons = vec![third, fourth];
 
@@ -12533,7 +13420,8 @@ fn cached_winding_reachability_distinguishes_reference_winding_context() {
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
 
-    let mut first_polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut first_polygon =
+        approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     first_polygon.delta_w = vec![0, 1];
     let mut second_polygon = first_polygon.clone();
     second_polygon.mesh_index = 1;
@@ -12585,10 +13473,40 @@ fn support_plane_cell_target_finds_strict_point_in_closed_feasible_cell() {
         .unwrap()
         .expect("closed feasible support cell should produce a strict interior point");
 
-    assert!(point_strictly_inside_bounds(&target.point, &bounds).unwrap());
-    assert!(!point_lies_on_any_support_plane(&target.point, &polygons).unwrap());
-    assert!(compare_real(&target.point.x, &q(7, 2)).unwrap().is_gt());
-    assert!(compare_real(&target.point.x, &q(13, 2)).unwrap().is_lt());
+    assert!(
+        point_strictly_inside_bounds(
+            &crate::test_support::approximate_decisions(),
+            &target.point,
+            &bounds
+        )
+        .unwrap()
+    );
+    assert!(
+        !point_lies_on_any_support_plane(
+            &crate::test_support::approximate_decisions(),
+            &target.point,
+            &polygons
+        )
+        .unwrap()
+    );
+    assert!(
+        compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &target.point.x,
+            &q(7, 2)
+        )
+        .unwrap()
+        .is_gt()
+    );
+    assert!(
+        compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &target.point.x,
+            &q(13, 2)
+        )
+        .unwrap()
+        .is_lt()
+    );
     assert!(
         target
             .definitions
@@ -12612,7 +13530,13 @@ fn support_plane_cell_search_backtracks_after_leaf_rejection() {
         let Some(witness) = report.witness else {
             return Ok(None);
         };
-        if compare_real(&witness.x, &r(5))?.is_lt() {
+        if compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &witness.x,
+            &r(5),
+        )?
+        .is_lt()
+        {
             rejected_first_leaf = true;
             return Ok(None);
         }
@@ -12625,7 +13549,15 @@ fn support_plane_cell_search_backtracks_after_leaf_rejection() {
             .expect("search should continue after the first accepted leaf rejects");
 
     assert!(rejected_first_leaf);
-    assert!(compare_real(&target.x, &r(5)).unwrap().is_gt());
+    assert!(
+        compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &target.x,
+            &r(5)
+        )
+        .unwrap()
+        .is_gt()
+    );
 }
 
 #[test]
@@ -12643,7 +13575,13 @@ fn support_plane_cell_search_backtracks_after_uncertified_leaf() {
         let Some(witness) = report.witness else {
             return Ok(None);
         };
-        if compare_real(&witness.x, &r(5))?.is_lt() {
+        if compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &witness.x,
+            &r(5),
+        )?
+        .is_lt()
+        {
             rejected_first_leaf = true;
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
@@ -12656,7 +13594,15 @@ fn support_plane_cell_search_backtracks_after_uncertified_leaf() {
             .expect("search should continue after an uncertified leaf branch");
 
     assert!(rejected_first_leaf);
-    assert!(compare_real(&target.x, &r(5)).unwrap().is_gt());
+    assert!(
+        compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &target.x,
+            &r(5)
+        )
+        .unwrap()
+        .is_gt()
+    );
 }
 
 #[test]
@@ -12696,8 +13642,22 @@ fn support_plane_cell_reference_traces_certified_winding() {
     .expect("strict support cell target should trace from old reference");
 
     assert_eq!(winding, vec![7]);
-    assert!(point_strictly_inside_bounds(&target.point, &bounds).unwrap());
-    assert!(!point_lies_on_any_support_plane(&target.point, &polygons).unwrap());
+    assert!(
+        point_strictly_inside_bounds(
+            &crate::test_support::approximate_decisions(),
+            &target.point,
+            &bounds
+        )
+        .unwrap()
+    );
+    assert!(
+        !point_lies_on_any_support_plane(
+            &crate::test_support::approximate_decisions(),
+            &target.point,
+            &polygons
+        )
+        .unwrap()
+    );
     assert!(!target.definitions.is_empty());
 }
 
@@ -12824,7 +13784,7 @@ fn reference_target_trace_search_skips_support_surface_targets_before_trace() {
 
 #[test]
 fn reference_target_trace_search_tries_later_target_after_boundary_support_surface_contact() {
-    let polygon = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 0, 4), 0, 0);
+    let polygon = approximate_convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 0, 4), 0, 0);
     let boundary = ReferenceTarget::axis_defined(p(2, 0, 2));
     let interior = ReferenceTarget::axis_defined(p(1, 1, 1));
     let mut trace_calls = 0;
@@ -12847,7 +13807,7 @@ fn reference_target_trace_search_tries_later_target_after_boundary_support_surfa
 #[test]
 fn reference_target_trace_search_reports_unknown_when_boundary_support_surface_contact_blocks_only_target()
  {
-    let polygon = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 0, 4), 0, 0);
+    let polygon = approximate_convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 0, 4), 0, 0);
     let boundary = ReferenceTarget::axis_defined(p(2, 0, 2));
 
     let err = trace_reference_targets_backtracking_unknown(vec![boundary], &[polygon], |_target| {
@@ -13149,7 +14109,7 @@ fn reference_target_trace_search_tries_later_target_after_uncertified_reference_
 fn reference_target_trace_search_tries_later_target_after_boundary_local_surface_validity_query() {
     let first = ReferenceTarget::axis_defined(p(2, 1, 2));
     let second = ReferenceTarget::axis_defined(p(1, 1, 1));
-    let mut wall = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let mut surface_cache = Vec::new();
@@ -13162,7 +14122,14 @@ fn reference_target_trace_search_tries_later_target_after_boundary_local_surface
         None,
         &bounds,
         &mut |_point| Ok(false),
-        &mut |point| is_certified_valid_reference_for_bounds(point, &bounds, &[wall.clone()]),
+        &mut |point| {
+            is_certified_valid_reference_for_bounds(
+                &crate::test_support::approximate_decisions(),
+                point,
+                &bounds,
+                &[wall.clone()],
+            )
+        },
         |target| {
             assert_eq!(target, &second);
             Ok(Some(vec![31]))
@@ -13277,6 +14244,7 @@ fn projected_cell_seed_families_track_unknown_after_boundary_vertex_candidate() 
 
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         projected_cell_seed_families_from_optional_report(
+            &crate::test_support::approximate_decisions(),
             &bounds,
             &halfspaces,
             None,
@@ -13570,8 +14538,24 @@ fn strict_support_cell_seeds_include_strict_geometry_seeds() {
 
     let seeds = strict_support_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
 
-    assert!(point_strictly_inside_support_cell(&triangle_center, &bounds, &halfspaces).unwrap());
-    assert!(point_strictly_inside_support_cell(&tetra_center, &bounds, &halfspaces).unwrap());
+    assert!(
+        point_strictly_inside_support_cell(
+            &crate::test_support::approximate_decisions(),
+            &triangle_center,
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
+    );
+    assert!(
+        point_strictly_inside_support_cell(
+            &crate::test_support::approximate_decisions(),
+            &tetra_center,
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
+    );
     assert!(seeds.iter().any(|seed| seed == &triangle_center));
     assert!(seeds.iter().any(|seed| seed == &tetra_center));
 }
@@ -13606,8 +14590,24 @@ fn strict_support_cell_seeds_include_strict_geometry_seeds_without_report() {
 
     let seeds = strict_support_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
 
-    assert!(point_strictly_inside_support_cell(&triangle_center, &bounds, &halfspaces).unwrap());
-    assert!(point_strictly_inside_support_cell(&tetra_center, &bounds, &halfspaces).unwrap());
+    assert!(
+        point_strictly_inside_support_cell(
+            &crate::test_support::approximate_decisions(),
+            &triangle_center,
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
+    );
+    assert!(
+        point_strictly_inside_support_cell(
+            &crate::test_support::approximate_decisions(),
+            &tetra_center,
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
+    );
     assert!(seeds.iter().any(|seed| seed == &triangle_center));
     assert!(seeds.iter().any(|seed| seed == &tetra_center));
 }
@@ -13618,7 +14618,15 @@ fn strict_support_cell_seeds_include_strict_edge_midpoints() {
 
     let seeds = strict_support_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
 
-    assert!(point_strictly_inside_support_cell(&midpoint, &bounds, &halfspaces).unwrap());
+    assert!(
+        point_strictly_inside_support_cell(
+            &crate::test_support::approximate_decisions(),
+            &midpoint,
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
+    );
     assert!(seeds.iter().any(|seed| seed == &midpoint));
 }
 
@@ -13630,7 +14638,15 @@ fn strict_support_cell_seeds_include_strict_five_vertex_centroids() {
 
     let seeds = strict_support_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
 
-    assert!(point_strictly_inside_support_cell(&five_vertex_center, &bounds, &halfspaces).unwrap());
+    assert!(
+        point_strictly_inside_support_cell(
+            &crate::test_support::approximate_decisions(),
+            &five_vertex_center,
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
+    );
     assert!(seeds.iter().any(|seed| seed == &five_vertex_center));
 }
 
@@ -13642,7 +14658,15 @@ fn report_free_support_cell_prefers_canonical_all_vertex_centroid() {
     let seeds = strict_support_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
 
     assert_eq!(seeds.first(), Some(&p(2, 2, 2)));
-    assert!(point_strictly_inside_support_cell(&seeds[0], &bounds, &halfspaces).unwrap());
+    assert!(
+        point_strictly_inside_support_cell(
+            &crate::test_support::approximate_decisions(),
+            &seeds[0],
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
+    );
 }
 
 #[test]
@@ -13755,7 +14779,13 @@ fn shifted_support_cell_targets_from_geometry_seed_return_targets() {
 
     assert!(!targets.is_empty());
     assert!(targets.iter().all(|target| {
-        point_strictly_inside_support_cell(&target.point, &bounds, &halfspaces).unwrap()
+        point_strictly_inside_support_cell(
+            &crate::test_support::approximate_decisions(),
+            &target.point,
+            &bounds,
+            &halfspaces,
+        )
+        .unwrap()
     }));
 }
 
@@ -13786,6 +14816,7 @@ fn support_reference_definitions_include_non_basis_active_halfspaces() {
     ];
 
     let definitions = reference_definitions_from_active_halfspaces(
+        &crate::test_support::approximate_decisions(),
         &witness,
         &halfspaces,
         [Some(0), Some(1), Some(2)],
@@ -13822,17 +14853,18 @@ fn reference_propagation_reports_unknown_for_uncertain_exhausted_construction() 
 
 #[test]
 fn subdivide_into_keeps_output_unchanged_on_uncertified_failure() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
     let operation = crate::winding::BooleanOp::Union;
     let sentinel = ClassifiedPolygon::new(
-        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
+        approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
         1,
     );
     let mut output = vec![sentinel.clone()];
 
     let err = subdivide_into(
+        &APPROXIMATE_CONTEXT,
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
         operation,
         SubdivisionConfig { max_depth: 0 },
@@ -13852,7 +14884,7 @@ fn subdivide_into_keeps_output_unchanged_on_uncertified_failure() {
 
 #[test]
 fn unsplittable_task_requires_certified_leaf_completion() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, 0, 0), p(1, 0, 0));
     let operation = crate::winding::BooleanOp::Union;
@@ -13861,6 +14893,7 @@ fn unsplittable_task_requires_certified_leaf_completion() {
     let caches = SubdivisionRuntimeCaches::default();
 
     let err = subdivide_into_inner_with(
+        &crate::test_support::approximate_decisions(),
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
         operation,
         SubdivisionConfig { max_depth: 4 },
@@ -13885,7 +14918,7 @@ fn unsplittable_task_requires_certified_leaf_completion() {
 
 #[test]
 fn unsplittable_task_accepts_certified_leaf_completion() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, 0, 0), p(1, 0, 0));
     let operation = crate::winding::BooleanOp::Union;
@@ -13894,6 +14927,7 @@ fn unsplittable_task_accepts_certified_leaf_completion() {
     let caches = SubdivisionRuntimeCaches::default();
 
     subdivide_into_inner_with(
+        &crate::test_support::approximate_decisions(),
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
         operation,
         SubdivisionConfig { max_depth: 4 },
@@ -13917,7 +14951,7 @@ fn unsplittable_task_accepts_certified_leaf_completion() {
 
 #[test]
 fn subdivision_normalizes_reference_definitions_before_leaf_processing() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, 0, 0), p(1, 0, 0));
     let ref_point = p(0, 0, 0);
@@ -13928,6 +14962,7 @@ fn subdivision_normalizes_reference_definitions_before_leaf_processing() {
     let mut output = Vec::new();
 
     subdivide_into_inner_with(
+        &crate::test_support::approximate_decisions(),
         task,
         operation,
         SubdivisionConfig { max_depth: 4 },
@@ -13949,17 +14984,18 @@ fn subdivision_normalizes_reference_definitions_before_leaf_processing() {
 
 #[test]
 fn subdivision_keeps_splitting_after_uncertified_leaf_failure() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
     let operation = crate::winding::BooleanOp::Union;
     let sentinel = ClassifiedPolygon::new(
-        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
+        approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
         1,
     );
     let mut output = vec![sentinel.clone()];
 
     let err = subdivide_into(
+        &APPROXIMATE_CONTEXT,
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
         operation,
         SubdivisionConfig { max_depth: 0 },
@@ -13979,10 +15015,11 @@ fn subdivision_keeps_splitting_after_uncertified_leaf_failure() {
 
 #[test]
 fn operation_subdivision_discards_fixed_difference_outside_region() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 1, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 1, 0);
     wall.delta_w = vec![0, 1];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
     let output = subdivide_boolean(
+        &crate::test_support::approximate_decisions(),
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0, 0]),
         BooleanOp::Difference,
         SubdivisionConfig { max_depth: 0 },
@@ -13994,10 +15031,11 @@ fn operation_subdivision_discards_fixed_difference_outside_region() {
 
 #[test]
 fn operation_subdivision_keeps_potential_difference_region() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1, 0];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
     let err = subdivide_boolean(
+        &crate::test_support::approximate_decisions(),
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0, 0]),
         BooleanOp::Difference,
         SubdivisionConfig { max_depth: 0 },
@@ -14015,17 +15053,18 @@ fn operation_subdivision_keeps_potential_difference_region() {
 
 #[test]
 fn process_leaf_into_keeps_output_unchanged_on_uncertified_failure() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
     let operation = crate::winding::BooleanOp::Union;
     let sentinel = ClassifiedPolygon::new(
-        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
+        approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
         1,
     );
     let mut output = vec![sentinel.clone()];
 
     let err = process_leaf_into(
+        &APPROXIMATE_CONTEXT,
         &[wall],
         &bounds,
         &p(0, 0, 0),
@@ -14042,9 +15081,9 @@ fn process_leaf_into_keeps_output_unchanged_on_uncertified_failure() {
 
 #[test]
 fn bsp_leaf_certification_rejects_unsplit_interior_segment() {
-    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1, 0];
-    let mut cutter = convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
+    let mut cutter = approximate_convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
     cutter.delta_w = vec![0, 1];
     let polygons = vec![host.clone(), cutter];
 
@@ -14055,9 +15094,9 @@ fn bsp_leaf_certification_rejects_unsplit_interior_segment() {
 
 #[test]
 fn bsp_leaf_certification_rejects_boundary_ambiguous_overlap() {
-    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 1, 0);
+    let mut host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 1, 0);
     host.delta_w = vec![0, 1];
-    let mut overlap = convex_triangle(
+    let mut overlap = approximate_convex_triangle(
         &p(0, 0, 0),
         &Point3::new(q(4, 3), r(0), r(0)),
         &Point3::new(r(0), q(4, 3), r(0)),
@@ -14074,11 +15113,18 @@ fn bsp_leaf_certification_rejects_boundary_ambiguous_overlap() {
 
 #[test]
 fn segment_interval_witness_finds_strict_overlap_when_midpoint_is_on_boundary() {
-    let left = convex_triangle(&p(1, -1, 0), &p(3, -1, 0), &p(1, 1, 0), 0, 0);
-    let right = convex_triangle(&p(0, -2, 0), &p(4, -2, 0), &p(0, 2, 0), 1, 0);
+    let left = approximate_convex_triangle(&p(1, -1, 0), &p(3, -1, 0), &p(1, 1, 0), 0, 0);
+    let right = approximate_convex_triangle(&p(0, -2, 0), &p(4, -2, 0), &p(0, 2, 0), 1, 0);
 
     assert!(
-        segment_has_strict_interior_point_in_both(&p(0, 0, 0), &p(2, 0, 0), &left, &right).unwrap()
+        segment_has_strict_interior_point_in_both(
+            &crate::test_support::approximate_decisions(),
+            &p(0, 0, 0),
+            &p(2, 0, 0),
+            &left,
+            &right
+        )
+        .unwrap()
     );
 }
 

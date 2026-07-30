@@ -23,20 +23,19 @@ use super::{
     shifted_halfspace_cell_witnesses_from_seed, shifted_halfspace_seed_families_with_report_seed,
     shifted_halfspace_witness_family_or_empty, sort_crossing_events,
 };
-use crate::bvh::bounds_overlap;
+use crate::bvh::bounds_overlap_decision;
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
-    Aabb, Classification, Plane, Point3PredicateEvidence, axis_mut, axis_ref, classify_point,
-    classify_real, compare_real,
+    Aabb, Classification, Plane, Point3PredicateEvidence, axis_mut, axis_ref, classify_real,
+    compare_real_decision,
 };
 use crate::halfspace::aabb_core_halfspaces;
 use crate::polygon::{ApproxBounds, ConvexPolygon};
+use crate::predicate::classify_point_decision;
 use crate::winding::WindingNumberVector;
 use hyperlattice::{Point3, Real, intersect_three_planes};
-use hyperlimit::{
-    HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, Sign,
-    classify_plane_aabb3_report,
-};
+use hyperlimit::{HalfspaceFeasibility, Plane3 as LimitPlane3, Sign, classify_plane_aabb3_report};
 use hyperreal::Rational;
 
 pub(super) fn detour_arrangement_planes(polygons: &[ConvexPolygon]) -> Vec<Plane> {
@@ -85,37 +84,47 @@ fn approximate_plane_key(plane: &Plane) -> Option<[u64; 4]> {
 }
 
 pub(super) fn detour_arrangement_cell(
+    decisions: &DecisionContext,
     point: &Point3,
     arrangement_planes: &[Plane],
 ) -> HypermeshResult<Vec<Classification>> {
     let point = Point3PredicateEvidence::new(point);
     arrangement_planes
         .iter()
-        .map(|plane| point.classify(plane))
+        .map(|plane| point.classify(decisions, plane))
         .collect()
 }
 
 fn optional_detour_arrangement_cell(
+    decisions: &DecisionContext,
     point: &Point3,
     arrangement_planes: &[Plane],
 ) -> HypermeshResult<Option<Vec<Classification>>> {
-    match detour_arrangement_cell(point, arrangement_planes) {
+    match detour_arrangement_cell(decisions, point, arrangement_planes) {
         Ok(cell) => Ok(Some(cell)),
-        Err(HypermeshError::UnknownClassification) => Ok(None),
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
+            Ok(None)
+        }
         Err(err) => Err(err),
     }
 }
 
 pub(super) fn strict_aabb_arrangement_cell(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     arrangement_planes: &[Plane],
 ) -> HypermeshResult<Option<Vec<Classification>>> {
     let mut cell = Vec::with_capacity(arrangement_planes.len());
     for plane in arrangement_planes {
         let limit_plane = LimitPlane3::new(plane.normal.clone(), plane.offset.clone());
-        let report = match classify_plane_aabb3_report(&limit_plane, &bounds.min, &bounds.max) {
-            PredicateOutcome::Decided { value, .. } => value,
-            PredicateOutcome::Unknown { .. } => return Ok(None),
+        let report = match decisions.probe(classify_plane_aabb3_report(
+            &limit_plane,
+            &bounds.min,
+            &bounds.max,
+            decisions.policy(),
+        )) {
+            Some(value) => value,
+            None => return Ok(None),
         };
         let side = match (report.lower_sign, report.upper_sign) {
             (Sign::Negative, Sign::Negative | Sign::Zero) => Classification::Negative,
@@ -255,16 +264,21 @@ pub(super) fn finalize_shifted_halfspace_witness_family(
 
 /// Traces an axis-aligned segment, accumulating polygon winding transitions.
 pub fn trace_axis_segment(
+    context: &MeshContext,
     start: &Point3,
     end: &Point3,
     axis: usize,
     start_wnv: &[i32],
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<TraceAxisSegmentResult> {
-    trace_axis_segment_ignoring_mesh(start, end, axis, start_wnv, polygons, None)
+) -> HypermeshResult<MeshOutcome<TraceAxisSegmentResult>> {
+    let decisions = DecisionContext::new(context);
+    let traced =
+        trace_axis_segment_ignoring_mesh(&decisions, start, end, axis, start_wnv, polygons, None)?;
+    Ok(decisions.finish(traced))
 }
 
 pub(super) fn trace_axis_segment_ignoring_mesh(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     axis: usize,
@@ -273,11 +287,14 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
     ignored_mesh: Option<isize>,
 ) -> HypermeshResult<TraceAxisSegmentResult> {
     let mut winding = start_wnv.to_vec();
-    let direction = compare_real(axis_ref(end, axis), axis_ref(start, axis))?;
+    let direction = compare_real_decision(decisions, axis_ref(end, axis), axis_ref(start, axis))?;
     if direction.is_eq() {
-        match point_lies_on_traced_surface(start, polygons) {
+        match point_lies_on_traced_surface(decisions, start, polygons) {
             Ok(false) => {}
-            Ok(true) | Err(HypermeshError::UnknownClassification) => {
+            Ok(true)
+            | Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 return Err(HypermeshError::UnknownClassification);
             }
             Err(err) => return Err(err),
@@ -298,25 +315,25 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
         }
 
         if let Some(bounds) = &polygon.approx_bounds
-            && !axis_segment_overlaps_bounds(start, end, axis, bounds)?
+            && !axis_segment_overlaps_bounds(decisions, start, end, axis, bounds)?
         {
             continue;
         }
 
         let normal_axis = axis_ref(&polygon.support.normal, axis);
         if normal_axis.definitely_zero() {
-            if start_evidence.classify(&polygon.support)? == Classification::On
-                && segment_has_coplanar_polygon_contact_before_end(start, end, polygon)?
+            if start_evidence.classify(decisions, &polygon.support)? == Classification::On
+                && segment_has_coplanar_polygon_contact_before_end(decisions, start, end, polygon)?
             {
                 return Err(HypermeshError::UnknownClassification);
             }
             continue;
         }
 
-        let start_class = start_evidence.classify(&polygon.support)?;
-        let end_class = end_evidence.classify(&polygon.support)?;
+        let start_class = start_evidence.classify(decisions, &polygon.support)?;
+        let end_class = end_evidence.classify(decisions, &polygon.support)?;
         if start_class == Classification::On {
-            match classify_point_in_polygon(start, polygon)? {
+            match classify_point_in_polygon(decisions, start, polygon)? {
                 PolygonPointLocation::Outside => {}
                 PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
                     return Err(HypermeshError::UnknownClassification);
@@ -325,7 +342,7 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
             continue;
         }
         if end_class == Classification::On {
-            match classify_point_in_polygon(end, polygon)? {
+            match classify_point_in_polygon(decisions, end, polygon)? {
                 PolygonPointLocation::Outside => {}
                 PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
                     return Err(HypermeshError::UnknownClassification);
@@ -342,14 +359,14 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
         let crossing =
             segment_plane_crossing_from_opposite_values(start, end, start_value, end_value)?;
 
-        if !point_strictly_between_axis(&crossing, start, end, axis)? {
+        if !point_strictly_between_axis(decisions, &crossing, start, end, axis)? {
             continue;
         }
 
         let mut inside = true;
         let mut boundary_edge_count = 0;
         for edge in polygon.edges.iter() {
-            match classify_point(&crossing, edge)? {
+            match classify_point_decision(decisions, &crossing, edge)? {
                 Classification::Positive => {
                     inside = false;
                     break;
@@ -362,7 +379,7 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
             continue;
         }
 
-        let normal_sign = match crate::geometry::classify_real(normal_axis)? {
+        let normal_sign = match classify_real(decisions, normal_axis)? {
             Classification::Positive => 1,
             Classification::Negative => -1,
             Classification::On => continue,
@@ -380,7 +397,7 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
 
     let mut accepted = accepted_crossing_events(&events)?;
 
-    sort_crossing_events(&mut accepted, axis, dir_sign)?;
+    sort_crossing_events(decisions, &mut accepted, axis, dir_sign)?;
 
     for event in accepted {
         apply_winding_transition_in_place(&mut winding, event.cross_sign, &event.delta_w)?;
@@ -393,6 +410,7 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
 }
 
 fn segment_has_coplanar_polygon_contact_before_end(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygon: &ConvexPolygon,
@@ -403,8 +421,8 @@ fn segment_has_coplanar_polygon_contact_before_end(
     for edge in polygon.edges.iter() {
         let start_value = edge.expression_at_point(start);
         let end_value = edge.expression_at_point(end);
-        let start_class = classify_real(&start_value)?;
-        let end_class = classify_real(&end_value)?;
+        let start_class = classify_real(decisions, &start_value)?;
+        let end_class = classify_real(decisions, &end_value)?;
 
         match (start_class, end_class) {
             (Classification::Negative, Classification::Negative)
@@ -416,7 +434,7 @@ fn segment_has_coplanar_polygon_contact_before_end(
             | (Classification::Positive, Classification::On) => {
                 let cut = (start_value.clone() / (&start_value - &end_value))
                     .map_err(|_| HypermeshError::UnknownClassification)?;
-                if compare_real(&cut, &lower)?.is_gt() {
+                if compare_real_decision(decisions, &cut, &lower)?.is_gt() {
                     lower = cut;
                 }
             }
@@ -424,21 +442,22 @@ fn segment_has_coplanar_polygon_contact_before_end(
             | (Classification::On, Classification::Positive) => {
                 let cut = (start_value.clone() / (&start_value - &end_value))
                     .map_err(|_| HypermeshError::UnknownClassification)?;
-                if compare_real(&cut, &upper)?.is_lt() {
+                if compare_real_decision(decisions, &cut, &upper)?.is_lt() {
                     upper = cut;
                 }
             }
         }
 
-        if compare_real(&lower, &upper)?.is_gt() {
+        if compare_real_decision(decisions, &lower, &upper)?.is_gt() {
             return Ok(false);
         }
     }
 
-    Ok(compare_real(&lower, &Real::one())?.is_lt())
+    Ok(compare_real_decision(decisions, &lower, &Real::one())?.is_lt())
 }
 
 fn axis_segment_overlaps_bounds(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     axis: usize,
@@ -446,22 +465,23 @@ fn axis_segment_overlaps_bounds(
 ) -> HypermeshResult<bool> {
     for fixed_axis in other_axes(axis) {
         let coordinate = axis_ref(start, fixed_axis);
-        if compare_real(coordinate, axis_ref(&bounds.min, fixed_axis))?.is_lt()
-            || compare_real(coordinate, axis_ref(&bounds.max, fixed_axis))?.is_gt()
+        if compare_real_decision(decisions, coordinate, axis_ref(&bounds.min, fixed_axis))?.is_lt()
+            || compare_real_decision(decisions, coordinate, axis_ref(&bounds.max, fixed_axis))?
+                .is_gt()
         {
             return Ok(false);
         }
     }
 
     let (segment_min, segment_max) =
-        if compare_real(axis_ref(start, axis), axis_ref(end, axis))?.is_le() {
+        if compare_real_decision(decisions, axis_ref(start, axis), axis_ref(end, axis))?.is_le() {
             (axis_ref(start, axis), axis_ref(end, axis))
         } else {
             (axis_ref(end, axis), axis_ref(start, axis))
         };
     Ok(
-        !compare_real(segment_max, axis_ref(&bounds.min, axis))?.is_lt()
-            && !compare_real(segment_min, axis_ref(&bounds.max, axis))?.is_gt(),
+        !compare_real_decision(decisions, segment_max, axis_ref(&bounds.min, axis))?.is_lt()
+            && !compare_real_decision(decisions, segment_min, axis_ref(&bounds.max, axis))?.is_gt(),
     )
 }
 
@@ -483,12 +503,26 @@ const MIN_PLANE_REPLACEMENT_STEP_DETOUR_LIMIT: usize = 1;
 /// exact surface hits, retries through arrangement-coordinate endpoint-box
 /// detours.
 pub fn trace_segment(
+    context: &MeshContext,
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<MeshOutcome<WindingNumberVector>> {
+    let decisions = DecisionContext::new(context);
+    let winding = trace_segment_decision(&decisions, start, end, winding, polygons)?;
+    Ok(decisions.finish(winding))
+}
+
+pub(crate) fn trace_segment_decision(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
     trace_segment_from_definitions(
+        decisions,
         start,
         end,
         winding,
@@ -499,6 +533,7 @@ pub fn trace_segment(
 }
 
 pub(crate) fn trace_segment_from_definitions(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -509,6 +544,7 @@ pub(crate) fn trace_segment_from_definitions(
     let mut no_detour_cache = Vec::new();
     let mut detour_target_cache = DetourTargetFamilyCache::default();
     trace_segment_from_definitions_with_caches(
+        decisions,
         start,
         end,
         winding,
@@ -522,6 +558,7 @@ pub(crate) fn trace_segment_from_definitions(
 }
 
 pub(super) fn trace_segment_from_definitions_with_caches(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -537,6 +574,7 @@ pub(super) fn trace_segment_from_definitions_with_caches(
     let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
     let mut plane_replacement_trace_steps = Vec::new();
     trace_segment_from_definitions_with_caches_and_surface_query(
+        decisions,
         start,
         end,
         winding,
@@ -554,6 +592,7 @@ pub(super) fn trace_segment_from_definitions_with_caches(
 }
 
 fn trace_segment_from_definitions_with_caches_and_surface_query(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -576,7 +615,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
          winding: &[i32],
          start_definitions: &[[Plane; 3]],
          end_definitions: &[[Plane; 3]]| {
-            if points_share_open_traced_cell(start, end, polygons)? {
+            if points_share_open_traced_cell(decisions, start, end, polygons)? {
                 return Ok(Some(winding.to_vec()));
             }
             cached_definition_no_detour_trace_with(
@@ -588,6 +627,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
                 end_definitions,
                 || {
                     trace_segment_with_definitions_no_detours_with_caches(
+                        decisions,
                         start,
                         end,
                         winding,
@@ -605,6 +645,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
         };
     let mut detour_batches = InteriorBoxDetourTargetBatchCache::default();
     trace_segment_with_detour_batches_breadth_first_with_surface_query(
+        decisions,
         start,
         end,
         winding,
@@ -613,10 +654,10 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
         &arrangement_planes,
         surface_cache,
         &mut |point| {
-            if !point_is_inside_optional_trace_bounds(point, trace_bounds)? {
+            if !point_is_inside_optional_trace_bounds(decisions, point, trace_bounds)? {
                 return Ok(true);
             }
-            point_lies_on_traced_surface(point, polygons)
+            point_lies_on_traced_surface(decisions, point, polygons)
         },
         &mut trace_without_detours,
         &mut |batch_start, batch_end, batch_index| {
@@ -633,6 +674,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
                 }
             } else {
                 detour_batches.batch_for(
+                    decisions,
                     batch_start,
                     batch_end,
                     batch_index,
@@ -646,20 +688,27 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
 }
 
 pub(super) fn point_is_inside_optional_trace_bounds(
+    decisions: &DecisionContext,
     point: &Point3,
     trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
-    trace_bounds.map_or(Ok(true), |bounds| bounds.contains_point(point))
+    trace_bounds.map_or(Ok(true), |bounds| {
+        bounds.contains_point_decision(decisions, point)
+    })
 }
 
-pub(super) fn trace_bounds_including_point(bounds: &Aabb, point: &Point3) -> HypermeshResult<Aabb> {
+pub(super) fn trace_bounds_including_point(
+    decisions: &DecisionContext,
+    bounds: &Aabb,
+    point: &Point3,
+) -> HypermeshResult<Aabb> {
     let mut min = bounds.min.clone();
     let mut max = bounds.max.clone();
     for axis in 0..3 {
-        if compare_real(axis_ref(point, axis), axis_ref(&min, axis))?.is_lt() {
+        if compare_real_decision(decisions, axis_ref(point, axis), axis_ref(&min, axis))?.is_lt() {
             *axis_mut(&mut min, axis) = axis_ref(point, axis).clone();
         }
-        if compare_real(axis_ref(point, axis), axis_ref(&max, axis))?.is_gt() {
+        if compare_real_decision(decisions, axis_ref(point, axis), axis_ref(&max, axis))?.is_gt() {
             *axis_mut(&mut max, axis) = axis_ref(point, axis).clone();
         }
     }
@@ -667,6 +716,7 @@ pub(super) fn trace_bounds_including_point(bounds: &Aabb, point: &Point3) -> Hyp
 }
 
 pub(super) fn adapt_plane_replacement_vertex_to_trace_bounds(
+    decisions: &DecisionContext,
     point: Point3,
     planes: [Plane; 3],
     trace_bounds: Option<&Aabb>,
@@ -674,7 +724,7 @@ pub(super) fn adapt_plane_replacement_vertex_to_trace_bounds(
     let Some(bounds) = trace_bounds else {
         return Ok((point, planes));
     };
-    if bounds.contains_point(&point)? {
+    if bounds.contains_point_decision(decisions, &point)? {
         return Ok((point, planes));
     }
 
@@ -682,9 +732,21 @@ pub(super) fn adapt_plane_replacement_vertex_to_trace_bounds(
     // exact AABB planes. The resulting legs are still certified by the tracer.
     let mut adapted = point;
     for axis in 0..3 {
-        if compare_real(axis_ref(&adapted, axis), axis_ref(&bounds.min, axis))?.is_lt() {
+        if compare_real_decision(
+            decisions,
+            axis_ref(&adapted, axis),
+            axis_ref(&bounds.min, axis),
+        )?
+        .is_lt()
+        {
             *axis_mut(&mut adapted, axis) = axis_ref(&bounds.min, axis).clone();
-        } else if compare_real(axis_ref(&adapted, axis), axis_ref(&bounds.max, axis))?.is_gt() {
+        } else if compare_real_decision(
+            decisions,
+            axis_ref(&adapted, axis),
+            axis_ref(&bounds.max, axis),
+        )?
+        .is_gt()
+        {
             *axis_mut(&mut adapted, axis) = axis_ref(&bounds.max, axis).clone();
         }
     }
@@ -694,20 +756,24 @@ pub(super) fn adapt_plane_replacement_vertex_to_trace_bounds(
 
 #[cfg(test)]
 pub(super) fn points_share_open_arrangement_cell(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     arrangement_planes: &[Plane],
 ) -> HypermeshResult<bool> {
-    let Some(start_cell) = optional_detour_arrangement_cell(start, arrangement_planes)? else {
+    let Some(start_cell) = optional_detour_arrangement_cell(decisions, start, arrangement_planes)?
+    else {
         return Ok(false);
     };
-    let Some(end_cell) = optional_detour_arrangement_cell(end, arrangement_planes)? else {
+    let Some(end_cell) = optional_detour_arrangement_cell(decisions, end, arrangement_planes)?
+    else {
         return Ok(false);
     };
     Ok(start_cell == end_cell && start_cell.iter().all(|side| *side != Classification::On))
 }
 
 pub(super) fn points_share_open_traced_cell(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -715,7 +781,13 @@ pub(super) fn points_share_open_traced_cell(
     let mut min = Point3::origin();
     let mut max = Point3::origin();
     for axis in 0..3 {
-        let (lower, upper) = if compare_real(axis_ref(start, axis), axis_ref(end, axis))?.is_le() {
+        let (lower, upper) = if compare_real_decision(
+            decisions,
+            axis_ref(start, axis),
+            axis_ref(end, axis),
+        )?
+        .is_le()
+        {
             (axis_ref(start, axis), axis_ref(end, axis))
         } else {
             (axis_ref(end, axis), axis_ref(start, axis))
@@ -732,19 +804,23 @@ pub(super) fn points_share_open_traced_cell(
             continue;
         }
         if let Some(polygon_bounds) = &polygon.approx_bounds
-            && !bounds_overlap(&segment_bounds, polygon_bounds)?
+            && !bounds_overlap_decision(decisions, &segment_bounds, polygon_bounds)?
         {
             continue;
         }
 
-        let start_side = match start.classify(&polygon.support) {
+        let start_side = match start.classify(decisions, &polygon.support) {
             Ok(side) => side,
-            Err(HypermeshError::UnknownClassification) => return Ok(false),
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => return Ok(false),
             Err(error) => return Err(error),
         };
-        let end_side = match end.classify(&polygon.support) {
+        let end_side = match end.classify(decisions, &polygon.support) {
             Ok(side) => side,
-            Err(HypermeshError::UnknownClassification) => return Ok(false),
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => return Ok(false),
             Err(error) => return Err(error),
         };
         if start_side == Classification::On
@@ -759,6 +835,7 @@ pub(super) fn points_share_open_traced_cell(
 
 #[cfg(test)]
 pub(super) fn trace_segment_from_definitions_with_cycle_guard_impl(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -777,6 +854,7 @@ pub(super) fn trace_segment_from_definitions_with_cycle_guard_impl(
 ) -> HypermeshResult<WindingNumberVector> {
     let mut surface_cache = Vec::new();
     trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+        decisions,
         start,
         end,
         winding,
@@ -785,7 +863,7 @@ pub(super) fn trace_segment_from_definitions_with_cycle_guard_impl(
         end_definitions,
         visited_points,
         &mut surface_cache,
-        &mut |point| point_lies_on_traced_surface(point, polygons),
+        &mut |point| point_lies_on_traced_surface(decisions, point, polygons),
         trace_without_detours,
         detours_for,
     )
@@ -793,6 +871,7 @@ pub(super) fn trace_segment_from_definitions_with_cycle_guard_impl(
 
 #[cfg(test)]
 pub(super) fn trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -814,11 +893,12 @@ pub(super) fn trace_segment_from_definitions_with_cycle_guard_impl_with_surface_
     match trace_without_detours(start, end, winding, start_definitions, end_definitions) {
         Ok(Some(winding)) => return Ok(winding),
         Ok(None) => {}
-        Err(HypermeshError::UnknownClassification) => {}
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {}
         Err(err) => return Err(err),
     }
 
     if let Some(winding) = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+        decisions,
         start,
         end,
         winding,
@@ -840,6 +920,7 @@ pub(super) fn trace_segment_from_definitions_with_cycle_guard_impl_with_surface_
 
 #[cfg(test)]
 pub(super) fn trace_segment_from_definitions_with_budget_impl(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -859,7 +940,7 @@ pub(super) fn trace_segment_from_definitions_with_budget_impl(
     match trace_without_detours(start, end, winding, start_definitions, end_definitions) {
         Ok(Some(winding)) => return Ok(winding),
         Ok(None) => {}
-        Err(HypermeshError::UnknownClassification) => {}
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {}
         Err(err) => return Err(err),
     }
 
@@ -868,6 +949,7 @@ pub(super) fn trace_segment_from_definitions_with_budget_impl(
     }
 
     if let Some(winding) = trace_segment_via_detours_with_definitions_budget(
+        decisions,
         start,
         end,
         winding,
@@ -887,6 +969,7 @@ pub(super) fn trace_segment_from_definitions_with_budget_impl(
 
 #[cfg(test)]
 pub(super) fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -923,7 +1006,10 @@ pub(super) fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
                 surface_query(&detour.point)
             }) {
                 Ok(on_surface) => on_surface,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     continue;
                 }
@@ -963,6 +1049,7 @@ pub(super) fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
             }
         } else {
             trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+                decisions,
                 start,
                 &detour.point,
                 winding,
@@ -977,7 +1064,9 @@ pub(super) fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
             )
         } {
             Ok(first_leg) => first_leg,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -997,6 +1086,7 @@ pub(super) fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
             }
         } else {
             trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+                decisions,
                 &detour.point,
                 end,
                 &first_leg,
@@ -1011,7 +1101,9 @@ pub(super) fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
             )
         } {
             Ok(second_leg) => second_leg,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -1028,6 +1120,7 @@ pub(super) fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
 }
 
 pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -1079,7 +1172,11 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
                 &path[index + 1].definitions,
             ) {
                 Ok(Some(next_winding)) => attempt = next_winding,
-                Ok(None) | Err(HypermeshError::UnknownClassification) => {
+                Ok(None)
+                | Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     unresolved_edge = Some((index, attempt.clone()));
                     break;
                 }
@@ -1094,7 +1191,10 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
         let edge_end = &path[edge_index + 1];
         let mut detours = match detour_batch_for(&edge_start.point, &edge_end.point, batch_index) {
             Ok(Some(detours)) => detours,
-            Ok(None) | Err(HypermeshError::UnknownClassification) => continue,
+            Ok(None)
+            | Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => continue,
             Err(err) => return Err(err),
         };
         detours.sort_by_key(|detour| detour.uncertified_definition_fallback);
@@ -1120,9 +1220,12 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
             let detour_cell = if arrangement_planes.is_empty() {
                 None
             } else {
-                match detour_arrangement_cell(&detour.point, arrangement_planes) {
+                match detour_arrangement_cell(decisions, &detour.point, arrangement_planes) {
                     Ok(cell) => Some(cell),
-                    Err(HypermeshError::UnknownClassification) => continue,
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => continue,
                     Err(err) => return Err(err),
                 }
             };
@@ -1134,12 +1237,17 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
                 );
                 if !revisits_cell {
                     for visited in &path {
-                        match detour_arrangement_cell(&visited.point, arrangement_planes) {
+                        match detour_arrangement_cell(decisions, &visited.point, arrangement_planes)
+                        {
                             Ok(cell) if cell == *detour_cell => {
                                 revisits_cell = true;
                                 break;
                             }
-                            Ok(_) | Err(HypermeshError::UnknownClassification) => {}
+                            Ok(_)
+                            | Err(
+                                HypermeshError::PredicateUndecided { .. }
+                                | HypermeshError::UnknownClassification,
+                            ) => {}
                             Err(err) => return Err(err),
                         }
                     }
@@ -1152,7 +1260,11 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
                 match cached_surface_query_with(surface_cache, &detour.point, || {
                     surface_query(&detour.point)
                 }) {
-                    Ok(true) | Err(HypermeshError::UnknownClassification) => continue,
+                    Ok(true)
+                    | Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => continue,
                     Ok(false) => {}
                     Err(err) => return Err(err),
                 }
@@ -1176,7 +1288,11 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
                     &next_path[index + 1].definitions,
                 ) {
                     Ok(Some(next_winding)) => next_attempt = next_winding,
-                    Ok(None) | Err(HypermeshError::UnknownClassification) => {
+                    Ok(None)
+                    | Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         complete = false;
                         break;
                     }
@@ -1314,6 +1430,7 @@ pub(super) fn cached_detour_target_family<'a>(
 
 #[cfg(test)]
 pub(crate) fn trace_segment_without_detours(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -1322,6 +1439,7 @@ pub(crate) fn trace_segment_without_detours(
     let mut surface_cache = Vec::new();
     let mut axis_ordered_segment_traces = Vec::new();
     trace_segment_without_detours_with_caches(
+        decisions,
         start,
         end,
         winding,
@@ -1332,6 +1450,7 @@ pub(crate) fn trace_segment_without_detours(
 }
 
 fn trace_segment_without_detours_with_caches(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -1340,6 +1459,7 @@ fn trace_segment_without_detours_with_caches(
     axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let axis_unknown = match trace_axis_ordered_paths_with_caches(
+        decisions,
         start,
         end,
         winding,
@@ -1348,14 +1468,18 @@ fn trace_segment_without_detours_with_caches(
         axis_ordered_segment_traces,
     ) {
         Ok(winding) => return Ok(Some(winding)),
-        Err(HypermeshError::UnknownClassification) => true,
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
+            true
+        }
         Err(err) => return Err(err),
     };
 
-    let direct_unknown = match trace_direct_segment(start, end, winding, polygons) {
+    let direct_unknown = match trace_direct_segment(decisions, start, end, winding, polygons) {
         Ok(traced) if traced.valid => return Ok(Some(traced.winding)),
         Ok(_) => false,
-        Err(HypermeshError::UnknownClassification) => true,
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
+            true
+        }
         Err(err) => return Err(err),
     };
 
@@ -1368,6 +1492,7 @@ fn trace_segment_without_detours_with_caches(
 
 #[cfg(test)]
 pub(super) fn trace_segment_via_detours_with_definitions_budget(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -1391,7 +1516,7 @@ pub(super) fn trace_segment_via_detours_with_definitions_budget(
         if detour.point == *start
             || detour.point == *end
             || cached_surface_query_with(&mut surface_cache, &detour.point, || {
-                point_lies_on_traced_surface(&detour.point, polygons)
+                point_lies_on_traced_surface(decisions, &detour.point, polygons)
             })?
         {
             if detour.uncertified_definition_fallback {
@@ -1400,6 +1525,7 @@ pub(super) fn trace_segment_via_detours_with_definitions_budget(
             continue;
         }
         let first_leg = match trace_segment_from_definitions_with_budget_impl(
+            decisions,
             start,
             &detour.point,
             winding,
@@ -1411,13 +1537,16 @@ pub(super) fn trace_segment_via_detours_with_definitions_budget(
             detours_for,
         ) {
             Ok(first_leg) => first_leg,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
             Err(err) => return Err(err),
         };
         let second_leg = match trace_segment_from_definitions_with_budget_impl(
+            decisions,
             &detour.point,
             end,
             &first_leg,
@@ -1429,7 +1558,9 @@ pub(super) fn trace_segment_via_detours_with_definitions_budget(
             detours_for,
         ) {
             Ok(second_leg) => second_leg,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -1447,6 +1578,7 @@ pub(super) fn trace_segment_via_detours_with_definitions_budget(
 
 #[cfg(test)]
 pub(super) fn trace_segment_with_definitions_no_detours(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -1459,6 +1591,7 @@ pub(super) fn trace_segment_with_definitions_no_detours(
     let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut step_cache = Vec::new();
     trace_segment_with_definitions_no_detours_with_caches(
+        decisions,
         start,
         end,
         winding,
@@ -1474,6 +1607,7 @@ pub(super) fn trace_segment_with_definitions_no_detours(
 }
 
 fn trace_segment_with_definitions_no_detours_with_caches(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -1486,13 +1620,14 @@ fn trace_segment_with_definitions_no_detours_with_caches(
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
     trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
-    if !point_is_inside_optional_trace_bounds(start, trace_bounds)?
-        || !point_is_inside_optional_trace_bounds(end, trace_bounds)?
+    if !point_is_inside_optional_trace_bounds(decisions, start, trace_bounds)?
+        || !point_is_inside_optional_trace_bounds(decisions, end, trace_bounds)?
     {
         return Err(HypermeshError::UnknownClassification);
     }
 
     match trace_segment_without_detours_with_caches(
+        decisions,
         start,
         end,
         winding,
@@ -1502,7 +1637,7 @@ fn trace_segment_with_definitions_no_detours_with_caches(
     ) {
         Ok(Some(winding)) => return Ok(Some(winding)),
         Ok(None) => {}
-        Err(HypermeshError::UnknownClassification) => {}
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {}
         Err(err) => return Err(err),
     }
 
@@ -1515,6 +1650,7 @@ fn trace_segment_with_definitions_no_detours_with_caches(
         &end_family.definitions,
         |start_definition, end_definition| {
             trace_plane_replacement_path_without_detours_with_shared_caches(
+                decisions,
                 start_definition,
                 end_definition,
                 winding,
@@ -1546,7 +1682,10 @@ pub(super) fn definition_pair_trace_backtracking_unknown(
         for end_definition in &end_definitions {
             match trace(start_definition, end_definition) {
                 Ok(winding) => return Ok(Some(winding)),
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                 }
                 Err(err) => return Err(err),
@@ -1563,6 +1702,7 @@ pub(super) fn definition_pair_trace_backtracking_unknown(
 
 #[cfg(test)]
 pub(super) fn trace_segment_with_detours_without_plane_replacement_impl(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -1578,7 +1718,7 @@ pub(super) fn trace_segment_with_detours_without_plane_replacement_impl(
     match trace_without_detours(start, end, winding) {
         Ok(Some(winding)) => return Ok(Some(winding)),
         Ok(None) => {}
-        Err(HypermeshError::UnknownClassification) => {}
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {}
         Err(err) => return Err(err),
     }
 
@@ -1589,11 +1729,12 @@ pub(super) fn trace_segment_with_detours_without_plane_replacement_impl(
     for detour in detours_for(start, end)? {
         if detour.point == *start
             || detour.point == *end
-            || point_lies_on_traced_surface(&detour.point, polygons)?
+            || point_lies_on_traced_surface(decisions, &detour.point, polygons)?
         {
             continue;
         }
         let Some(first_leg) = trace_segment_with_detours_without_plane_replacement_impl(
+            decisions,
             start,
             &detour.point,
             winding,
@@ -1606,6 +1747,7 @@ pub(super) fn trace_segment_with_detours_without_plane_replacement_impl(
             continue;
         };
         let Some(second_leg) = trace_segment_with_detours_without_plane_replacement_impl(
+            decisions,
             &detour.point,
             end,
             &first_leg,
@@ -1625,6 +1767,7 @@ pub(super) fn trace_segment_with_detours_without_plane_replacement_impl(
 
 #[cfg(test)]
 pub(crate) fn trace_plane_replacement_path(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     winding: &[i32],
@@ -1633,12 +1776,15 @@ pub(crate) fn trace_plane_replacement_path(
     let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut step_cache = Vec::new();
     trace_plane_replacement_path_with_tracer(
+        decisions,
         start_planes,
         end_planes,
         winding,
         polygons,
         |current, next, _current_planes, _next_planes, attempt, polygons| {
-            retryable_trace(trace_segment(current, next, attempt, polygons))
+            retryable_trace(trace_segment_decision(
+                decisions, current, next, attempt, polygons,
+            ))
         },
         &mut affine_cache,
         &mut step_cache,
@@ -1647,6 +1793,7 @@ pub(crate) fn trace_plane_replacement_path(
 
 #[cfg(test)]
 pub(super) fn trace_plane_replacement_path_without_detours_with_caches(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     winding: &[i32],
@@ -1657,6 +1804,7 @@ pub(super) fn trace_plane_replacement_path_without_detours_with_caches(
     let mut surface_cache = Vec::new();
     let mut axis_ordered_segment_traces = Vec::new();
     trace_plane_replacement_path_without_detours_with_shared_caches(
+        decisions,
         start_planes,
         end_planes,
         winding,
@@ -1670,6 +1818,7 @@ pub(super) fn trace_plane_replacement_path_without_detours_with_caches(
 }
 
 fn trace_plane_replacement_path_without_detours_with_shared_caches(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     winding: &[i32],
@@ -1681,6 +1830,7 @@ fn trace_plane_replacement_path_without_detours_with_shared_caches(
     trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_plane_replacement_path_with_tracer_and_caches(
+        decisions,
         start_planes,
         end_planes,
         winding,
@@ -1690,6 +1840,7 @@ fn trace_plane_replacement_path_without_detours_with_shared_caches(
         trace_bounds,
         |current, next, _current_planes, _next_planes, attempt, polygons| {
             trace_segment_without_detours_with_caches(
+                decisions,
                 current,
                 next,
                 attempt,
@@ -1703,6 +1854,7 @@ fn trace_plane_replacement_path_without_detours_with_shared_caches(
 
 #[cfg(test)]
 pub(super) fn trace_plane_replacement_path_with_tracer(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     winding: &[i32],
@@ -1719,6 +1871,7 @@ pub(super) fn trace_plane_replacement_path_with_tracer(
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_plane_replacement_path_with_tracer_and_caches(
+        decisions,
         start_planes,
         end_planes,
         winding,
@@ -1731,6 +1884,7 @@ pub(super) fn trace_plane_replacement_path_with_tracer(
 }
 
 pub(super) fn trace_plane_replacement_path_with_tracer_and_caches(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     winding: &[i32],
@@ -1753,9 +1907,16 @@ pub(super) fn trace_plane_replacement_path_with_tracer_and_caches(
             match cached_affine_from_planes_with(affine_cache, &current_planes, || {
                 affine_from_planes(&current_planes)
             }) {
-                Ok(point) if point_is_inside_optional_trace_bounds(&point, trace_bounds)? => point,
+                Ok(point)
+                    if point_is_inside_optional_trace_bounds(decisions, &point, trace_bounds)? =>
+                {
+                    point
+                }
                 Ok(_) => continue,
-                Err(HypermeshError::UnknownClassification) => continue,
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => continue,
                 Err(err) => return Err(err),
             };
         let mut current_trace_planes = current_planes.clone();
@@ -1774,18 +1935,26 @@ pub(super) fn trace_plane_replacement_path_with_tracer_and_caches(
                 }) {
                     Ok(point) => {
                         if next_planes == *end_planes
-                            && !point_is_inside_optional_trace_bounds(&point, trace_bounds)?
+                            && !point_is_inside_optional_trace_bounds(
+                                decisions,
+                                &point,
+                                trace_bounds,
+                            )?
                         {
                             valid = false;
                             break;
                         }
                         adapt_plane_replacement_vertex_to_trace_bounds(
+                            decisions,
                             point,
                             next_planes.clone(),
                             trace_bounds,
                         )?
                     }
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         valid = false;
                         break;
                     }
@@ -1810,7 +1979,11 @@ pub(super) fn trace_plane_replacement_path_with_tracer_and_caches(
                 },
             ) {
                 Ok(Some(next_winding)) => next_winding,
-                Ok(None) | Err(HypermeshError::UnknownClassification) => {
+                Ok(None)
+                | Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     valid = false;
                     break;
                 }
@@ -1940,7 +2113,9 @@ pub(super) fn axis_plane_defined_point(point: &Point3) -> PlaneDefinedPoint {
 pub(super) fn retryable_trace<T>(result: HypermeshResult<T>) -> HypermeshResult<Option<T>> {
     match result {
         Ok(value) => Ok(Some(value)),
-        Err(HypermeshError::UnknownClassification) => Ok(None),
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
+            Ok(None)
+        }
         Err(err) => Err(err),
     }
 }
@@ -1960,16 +2135,20 @@ pub(super) fn apply_winding_transition_in_place(
 }
 
 pub(super) fn trace_direct_segment(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     start_wnv: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<TraceAxisSegmentResult> {
     let mut winding = start_wnv.to_vec();
-    let Some(sort_axis) = first_changed_axis(start, end)? else {
-        match point_lies_on_traced_surface(start, polygons) {
+    let Some(sort_axis) = first_changed_axis(decisions, start, end)? else {
+        match point_lies_on_traced_surface(decisions, start, polygons) {
             Ok(false) => {}
-            Ok(true) | Err(HypermeshError::UnknownClassification) => {
+            Ok(true)
+            | Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 return Err(HypermeshError::UnknownClassification);
             }
             Err(err) => return Err(err),
@@ -1979,7 +2158,13 @@ pub(super) fn trace_direct_segment(
             valid: true,
         });
     };
-    let dir_sign = if compare_real(axis_ref(end, sort_axis), axis_ref(start, sort_axis))?.is_gt() {
+    let dir_sign = if compare_real_decision(
+        decisions,
+        axis_ref(end, sort_axis),
+        axis_ref(start, sort_axis),
+    )?
+    .is_gt()
+    {
         1
     } else {
         -1
@@ -1987,7 +2172,13 @@ pub(super) fn trace_direct_segment(
     let mut segment_min = Point3::origin();
     let mut segment_max = Point3::origin();
     for axis in 0..3 {
-        let (lower, upper) = if compare_real(axis_ref(start, axis), axis_ref(end, axis))?.is_le() {
+        let (lower, upper) = if compare_real_decision(
+            decisions,
+            axis_ref(start, axis),
+            axis_ref(end, axis),
+        )?
+        .is_le()
+        {
             (axis_ref(start, axis), axis_ref(end, axis))
         } else {
             (axis_ref(end, axis), axis_ref(start, axis))
@@ -2003,17 +2194,17 @@ pub(super) fn trace_direct_segment(
             continue;
         }
         if let Some(polygon_bounds) = &polygon.approx_bounds
-            && !bounds_overlap(&segment_bounds, polygon_bounds)?
+            && !bounds_overlap_decision(decisions, &segment_bounds, polygon_bounds)?
         {
             continue;
         }
 
         let start_value = polygon.support.expression_at_point(start);
         let end_value = polygon.support.expression_at_point(end);
-        let start_class = classify_real(&start_value)?;
-        let end_class = classify_real(&end_value)?;
+        let start_class = classify_real(decisions, &start_value)?;
+        let end_class = classify_real(decisions, &end_value)?;
         if start_class == Classification::On {
-            match classify_point_in_polygon(start, polygon)? {
+            match classify_point_in_polygon(decisions, start, polygon)? {
                 PolygonPointLocation::Outside => {}
                 PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
                     return Err(HypermeshError::UnknownClassification);
@@ -2022,7 +2213,7 @@ pub(super) fn trace_direct_segment(
             continue;
         }
         if end_class == Classification::On {
-            match classify_point_in_polygon(end, polygon)? {
+            match classify_point_in_polygon(decisions, end, polygon)? {
                 PolygonPointLocation::Outside => {}
                 PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
                     return Err(HypermeshError::UnknownClassification);
@@ -2034,14 +2225,15 @@ pub(super) fn trace_direct_segment(
             continue;
         }
 
-        let Some(crossing) = segment_plane_crossing(start, end, &polygon.support)? else {
+        let Some(crossing) = segment_plane_crossing(decisions, start, end, &polygon.support)?
+        else {
             continue;
         };
 
         let mut inside = true;
         let mut boundary_edge_count = 0;
         for edge in polygon.edges.iter() {
-            match classify_point(&crossing, edge)? {
+            match classify_point_decision(decisions, &crossing, edge)? {
                 Classification::Positive => {
                     inside = false;
                     break;
@@ -2054,13 +2246,14 @@ pub(super) fn trace_direct_segment(
             continue;
         }
 
-        let normal_axis = dominant_normal_axis(&polygon.support)?;
-        let normal_sign = match classify_real(axis_ref(&polygon.support.normal, normal_axis))? {
-            Classification::Positive => 1,
-            Classification::Negative => -1,
-            Classification::On => continue,
-        };
-        let cross_sign = match classify_real(&(&start_value - &end_value))? {
+        let normal_axis = dominant_normal_axis(decisions, &polygon.support)?;
+        let normal_sign =
+            match classify_real(decisions, axis_ref(&polygon.support.normal, normal_axis))? {
+                Classification::Positive => 1,
+                Classification::Negative => -1,
+                Classification::On => continue,
+            };
+        let cross_sign = match classify_real(decisions, &(&start_value - &end_value))? {
             Classification::Positive => 1,
             Classification::Negative => -1,
             Classification::On => continue,
@@ -2076,7 +2269,7 @@ pub(super) fn trace_direct_segment(
     }
 
     let mut accepted = accepted_crossing_events(&events)?;
-    sort_crossing_events(&mut accepted, sort_axis, dir_sign)?;
+    sort_crossing_events(decisions, &mut accepted, sort_axis, dir_sign)?;
 
     for event in accepted {
         apply_winding_transition_in_place(&mut winding, event.cross_sign, &event.delta_w)?;
@@ -2130,9 +2323,13 @@ fn crossing_events_share_transition(left: &CrossingEvent, right: &CrossingEvent)
         && left.delta_w == right.delta_w
 }
 
-pub(super) fn first_changed_axis(start: &Point3, end: &Point3) -> HypermeshResult<Option<usize>> {
+pub(super) fn first_changed_axis(
+    decisions: &DecisionContext,
+    start: &Point3,
+    end: &Point3,
+) -> HypermeshResult<Option<usize>> {
     for axis in 0..3 {
-        if compare_real(axis_ref(start, axis), axis_ref(end, axis))?.is_ne() {
+        if compare_real_decision(decisions, axis_ref(start, axis), axis_ref(end, axis))?.is_ne() {
             return Ok(Some(axis));
         }
     }
@@ -2141,6 +2338,7 @@ pub(super) fn first_changed_axis(start: &Point3, end: &Point3) -> HypermeshResul
 
 #[cfg(test)]
 pub(super) fn trace_axis_ordered_paths(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -2149,6 +2347,7 @@ pub(super) fn trace_axis_ordered_paths(
     let mut surface_cache = Vec::new();
     let mut axis_ordered_segment_traces = Vec::new();
     trace_axis_ordered_paths_with_caches(
+        decisions,
         start,
         end,
         winding,
@@ -2159,6 +2358,7 @@ pub(super) fn trace_axis_ordered_paths(
 }
 
 fn trace_axis_ordered_paths_with_caches(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -2167,13 +2367,14 @@ fn trace_axis_ordered_paths_with_caches(
     axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_axis_ordered_paths_with_queries(
+        decisions,
         start,
         end,
         winding,
         polygons,
         |point| {
             cached_surface_query_with(surface_cache, point, || {
-                point_lies_on_traced_surface(point, polygons)
+                point_lies_on_traced_surface(decisions, point, polygons)
             })
         },
         |current, next, axis, attempt, polygons| {
@@ -2183,7 +2384,11 @@ fn trace_axis_ordered_paths_with_caches(
                 next,
                 axis,
                 attempt,
-                || trace_axis_segment(current, next, axis, attempt, polygons),
+                || {
+                    trace_axis_segment_ignoring_mesh(
+                        decisions, current, next, axis, attempt, polygons, None,
+                    )
+                },
             )
         },
     )
@@ -2191,6 +2396,7 @@ fn trace_axis_ordered_paths_with_caches(
 
 #[cfg(test)]
 pub(super) fn trace_axis_ordered_paths_with_surface_query(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -2198,18 +2404,22 @@ pub(super) fn trace_axis_ordered_paths_with_surface_query(
     point_lies_on_surface: impl FnMut(&Point3) -> HypermeshResult<bool>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_axis_ordered_paths_with_queries(
+        decisions,
         start,
         end,
         winding,
         polygons,
         point_lies_on_surface,
         |current, next, axis, attempt, polygons| {
-            trace_axis_segment(current, next, axis, attempt, polygons)
+            trace_axis_segment_ignoring_mesh(
+                decisions, current, next, axis, attempt, polygons, None,
+            )
         },
     )
 }
 
 pub(super) fn trace_axis_ordered_paths_with_queries(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -2226,7 +2436,10 @@ pub(super) fn trace_axis_ordered_paths_with_queries(
     if start == end {
         match point_lies_on_surface(start) {
             Ok(false) => return Ok(winding.to_vec()),
-            Ok(true) | Err(HypermeshError::UnknownClassification) => {
+            Ok(true)
+            | Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 return Err(HypermeshError::UnknownClassification);
             }
             Err(err) => return Err(err),
@@ -2239,7 +2452,9 @@ pub(super) fn trace_axis_ordered_paths_with_queries(
         let mut valid = true;
 
         for axis in ordering {
-            if compare_real(axis_ref(&current, axis), axis_ref(end, axis))?.is_ne() {
+            if compare_real_decision(decisions, axis_ref(&current, axis), axis_ref(end, axis))?
+                .is_ne()
+            {
                 let mut next = current.clone();
                 *axis_mut(&mut next, axis) = axis_ref(end, axis).clone();
                 if next != *end {
@@ -2249,7 +2464,10 @@ pub(super) fn trace_axis_ordered_paths_with_queries(
                             break;
                         }
                         Ok(false) => {}
-                        Err(HypermeshError::UnknownClassification) => {
+                        Err(
+                            HypermeshError::PredicateUndecided { .. }
+                            | HypermeshError::UnknownClassification,
+                        ) => {
                             valid = false;
                             break;
                         }
@@ -2258,7 +2476,10 @@ pub(super) fn trace_axis_ordered_paths_with_queries(
                 }
                 let traced = match trace_segment_step(&current, &next, axis, &attempt, polygons) {
                     Ok(traced) => traced,
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         valid = false;
                         break;
                     }
@@ -2310,40 +2531,47 @@ pub(super) fn cached_axis_ordered_segment_trace_with(
 }
 
 pub(super) fn interior_box_detour_targets(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<DetourTarget>> {
     interior_box_detour_targets_with_queries(
+        decisions,
         start,
         end,
         polygons,
         |edge_start, edge_end, polygon, axis| {
-            let start_class = classify_point(edge_start, &polygon.support)?;
-            let end_class = classify_point(edge_end, &polygon.support)?;
+            let start_class = classify_point_decision(decisions, edge_start, &polygon.support)?;
+            let end_class = classify_point_decision(decisions, edge_end, &polygon.support)?;
             if start_class == Classification::On {
                 return Ok(Some(edge_start.clone()));
             }
             if end_class == Classification::On {
                 return Ok(Some(edge_end.clone()));
             }
-            segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(|crossing| {
-                if let Some(crossing) = crossing {
-                    if !point_strictly_between_axis(&crossing, edge_start, edge_end, axis)? {
-                        return Ok(None);
+            segment_plane_crossing(decisions, edge_start, edge_end, &polygon.support).and_then(
+                |crossing| {
+                    if let Some(crossing) = crossing {
+                        if !point_strictly_between_axis(
+                            decisions, &crossing, edge_start, edge_end, axis,
+                        )? {
+                            return Ok(None);
+                        }
+                        Ok(Some(crossing))
+                    } else {
+                        Ok(None)
                     }
-                    Ok(Some(crossing))
-                } else {
-                    Ok(None)
-                }
-            })
+                },
+            )
         },
-        classify_point_in_polygon,
-        strict_aabb_targets,
+        |point, polygon| classify_point_in_polygon(decisions, point, polygon),
+        |bounds| strict_aabb_targets(decisions, bounds),
     )
 }
 
 pub(super) fn interior_box_detour_targets_with_queries(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -2360,17 +2588,20 @@ pub(super) fn interior_box_detour_targets_with_queries(
     mut build: impl FnMut(&Aabb) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<Vec<DetourTarget>> {
     let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+        decisions,
         start,
         end,
         polygons,
         &mut crossing_for,
         &mut classify_point_on_polygon,
     )?;
-    let targets = collect_detour_targets_from_axis_intervals(&intervals, |bounds| build(bounds))?;
+    let targets =
+        collect_detour_targets_from_axis_intervals(decisions, &intervals, |bounds| build(bounds))?;
     detour_target_family_result_from_targets(targets, saw_unknown)
 }
 
 pub(super) fn interior_box_axis_intervals_with_surface_queries(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -2390,22 +2621,23 @@ pub(super) fn interior_box_axis_intervals_with_surface_queries(
     for (axis, axis_intervals) in intervals.iter_mut().enumerate() {
         let start_value = axis_ref(start, axis);
         let end_value = axis_ref(end, axis);
-        if compare_real(start_value, end_value)?.is_eq() {
+        if compare_real_decision(decisions, start_value, end_value)?.is_eq() {
             axis_intervals.push((start_value.clone(), end_value.clone()));
             continue;
         }
 
         let mut cuts = Vec::new();
-        push_unique_ordered_real(&mut cuts, start_value.clone())?;
-        push_unique_ordered_real(&mut cuts, end_value.clone())?;
+        push_unique_ordered_real(decisions, &mut cuts, start_value.clone())?;
+        push_unique_ordered_real(decisions, &mut cuts, end_value.clone())?;
         for polygon in polygons {
             for vertex in polygon.vertices()? {
                 let value = axis_ref(&vertex, axis);
-                if value_strictly_between(value, start_value, end_value)? {
-                    push_unique_ordered_real(&mut cuts, value.clone())?;
+                if value_strictly_between(decisions, value, start_value, end_value)? {
+                    push_unique_ordered_real(decisions, &mut cuts, value.clone())?;
                 }
             }
             saw_unknown |= add_axis_box_surface_cuts_with_queries(
+                decisions,
                 &mut cuts,
                 start,
                 end,
@@ -2492,11 +2724,14 @@ pub(super) fn cached_interior_box_axis_intervals_with_surface_queries(
     Ok((intervals, saw_unknown))
 }
 
-pub(super) fn aabb_from_axis_intervals(intervals: [&(Real, Real); 3]) -> HypermeshResult<Aabb> {
+pub(super) fn aabb_from_axis_intervals(
+    decisions: &DecisionContext,
+    intervals: [&(Real, Real); 3],
+) -> HypermeshResult<Aabb> {
     let mut min = Point3::origin();
     let mut max = Point3::origin();
     for (axis, (start, end)) in intervals.into_iter().enumerate() {
-        if compare_real(start, end)?.is_le() {
+        if compare_real_decision(decisions, start, end)?.is_le() {
             *axis_mut(&mut min, axis) = start.clone();
             *axis_mut(&mut max, axis) = end.clone();
         } else {
@@ -2507,10 +2742,13 @@ pub(super) fn aabb_from_axis_intervals(intervals: [&(Real, Real); 3]) -> Hyperme
     Ok(Aabb::new(min, max))
 }
 
-pub(super) fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
-    let mut cursor = StrictAabbTargetCursor::new(bounds)?;
+pub(super) fn strict_aabb_targets(
+    decisions: &DecisionContext,
+    bounds: &Aabb,
+) -> HypermeshResult<Vec<DetourTarget>> {
+    let mut cursor = StrictAabbTargetCursor::new(decisions, bounds)?;
     let mut targets = Vec::new();
-    while let Some(batch) = cursor.next_batch()? {
+    while let Some(batch) = cursor.next_batch(decisions)? {
         for target in batch {
             push_unique_detour_target(&mut targets, target);
         }
@@ -2548,15 +2786,17 @@ pub(super) struct StrictAabbTargetCursor {
 }
 
 impl StrictAabbTargetCursor {
-    pub(super) fn new(bounds: &Aabb) -> HypermeshResult<Self> {
+    pub(super) fn new(decisions: &DecisionContext, bounds: &Aabb) -> HypermeshResult<Self> {
         crate::trace_dispatch!("strict-aabb-target-cursor", "new");
         let halfspaces = aabb_core_halfspaces(bounds)?;
-        let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+        let (report, mut saw_unknown) =
+            optional_halfspace_feasibility_report(decisions, &halfspaces)?;
         let feasible = report
             .as_ref()
             .is_none_or(|report| report.status == HalfspaceFeasibility::Feasible);
         let (seeds, shifted_vertices, shifted_geometry_seeds) = if feasible {
             halfspace_cell_seed_families_from_optional_report(
+                decisions,
                 bounds,
                 &halfspaces,
                 report.as_ref(),
@@ -2588,18 +2828,22 @@ impl StrictAabbTargetCursor {
         })
     }
 
-    pub(super) fn next_batch(&mut self) -> HypermeshResult<Option<Vec<DetourTarget>>> {
+    pub(super) fn next_batch(
+        &mut self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Option<Vec<DetourTarget>>> {
         loop {
             let batch = match self.stage {
                 StrictAabbTargetCursorStage::FrontDirect => {
                     self.stage = StrictAabbTargetCursorStage::DeferredDirect;
                     self.build_direct_batch(
+                        decisions,
                         0,
                         self.seeds.len().min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT),
                     )?
                 }
                 StrictAabbTargetCursorStage::Shifted => {
-                    let (batch, exhausted) = self.build_shifted_batch()?;
+                    let (batch, exhausted) = self.build_shifted_batch(decisions)?;
                     if exhausted {
                         self.stage = StrictAabbTargetCursorStage::Done;
                     }
@@ -2608,6 +2852,7 @@ impl StrictAabbTargetCursor {
                 StrictAabbTargetCursorStage::DeferredDirect => {
                     self.stage = StrictAabbTargetCursorStage::Shifted;
                     self.build_direct_batch(
+                        decisions,
                         self.seeds.len().min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT),
                         self.seeds.len(),
                     )?
@@ -2622,6 +2867,7 @@ impl StrictAabbTargetCursor {
 
     fn build_direct_batch(
         &mut self,
+        decisions: &DecisionContext,
         start_index: usize,
         end_index: usize,
     ) -> HypermeshResult<Vec<DetourTarget>> {
@@ -2630,13 +2876,17 @@ impl StrictAabbTargetCursor {
         for seed in &seeds {
             crate::trace_dispatch!("strict-aabb-target-cursor", "direct-seed");
             let target = match build_detour_target(
+                decisions,
                 seed,
                 &self.halfspaces,
                 active_planes_from_optional_report(self.report.as_ref(), seed),
                 false,
             ) {
                 Ok(target) => target,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     self.saw_unknown = true;
                     continue;
                 }
@@ -2653,7 +2903,10 @@ impl StrictAabbTargetCursor {
         Ok(batch)
     }
 
-    fn build_shifted_batch(&mut self) -> HypermeshResult<(Vec<DetourTarget>, bool)> {
+    fn build_shifted_batch(
+        &mut self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<(Vec<DetourTarget>, bool)> {
         if self.shifted_seeds.is_none() {
             let report_witness = self
                 .report
@@ -2685,12 +2938,16 @@ impl StrictAabbTargetCursor {
             self.next_shifted_seed += 1;
             crate::trace_dispatch!("strict-aabb-target-cursor", "shifted-seed");
             let shifted_witnesses = match shifted_halfspace_cell_witnesses_from_seed(
+                decisions,
                 &self.bounds,
                 &self.halfspaces,
                 &seed,
             ) {
                 Ok(witnesses) => witnesses,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     self.saw_unknown = true;
                     continue;
                 }
@@ -2699,9 +2956,12 @@ impl StrictAabbTargetCursor {
             let mut batch = Vec::new();
             for witness in &shifted_witnesses {
                 crate::trace_dispatch!("strict-aabb-target-cursor", "shifted-witness");
-                let target = match build_detour_target_from_shifted_witness(witness) {
+                let target = match build_detour_target_from_shifted_witness(decisions, witness) {
                     Ok(target) => target,
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         self.saw_unknown = true;
                         continue;
                     }
@@ -2843,6 +3103,7 @@ pub(super) struct InteriorBoxDetourTargetCursor {
 
 impl InteriorBoxDetourTargetCursor {
     pub(super) fn new(
+        decisions: &DecisionContext,
         start: &Point3,
         end: &Point3,
         polygons: &[ConvexPolygon],
@@ -2854,11 +3115,12 @@ impl InteriorBoxDetourTargetCursor {
             (None, None)
         } else {
             (
-                optional_detour_arrangement_cell(start, arrangement_planes)?,
-                optional_detour_arrangement_cell(end, arrangement_planes)?,
+                optional_detour_arrangement_cell(decisions, start, arrangement_planes)?,
+                optional_detour_arrangement_cell(decisions, end, arrangement_planes)?,
             )
         };
         let (mut bounds, mut saw_unknown) = interior_detour_candidate_bounds(
+            decisions,
             start,
             end,
             polygons,
@@ -2868,12 +3130,14 @@ impl InteriorBoxDetourTargetCursor {
         )?;
         if let Some(trace_bounds) = trace_bounds {
             if bounds.is_empty()
-                && strict_aabb_arrangement_cell(trace_bounds, arrangement_planes)?.is_none()
+                && strict_aabb_arrangement_cell(decisions, trace_bounds, arrangement_planes)?
+                    .is_none()
                 && !bounds.iter().any(|existing| existing == trace_bounds)
             {
                 bounds.push(trace_bounds.clone());
             }
             let (trace_candidates, trace_unknown) = interior_detour_candidate_bounds(
+                decisions,
                 &trace_bounds.min,
                 &trace_bounds.max,
                 polygons,
@@ -2898,10 +3162,13 @@ impl InteriorBoxDetourTargetCursor {
         })
     }
 
-    pub(super) fn next_batch(&mut self) -> HypermeshResult<Option<Vec<DetourTarget>>> {
+    pub(super) fn next_batch(
+        &mut self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Option<Vec<DetourTarget>>> {
         loop {
             if let Some(current) = self.current.as_mut() {
-                match current.next_batch() {
+                match current.next_batch(decisions) {
                     Ok(Some(batch)) => {
                         crate::trace_dispatch!("interior-box-detour-cursor", "source-batch");
                         let mut unique = Vec::new();
@@ -2938,7 +3205,10 @@ impl InteriorBoxDetourTargetCursor {
                         self.saw_unknown |= current.saw_unknown;
                         self.current = None;
                     }
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         self.saw_unknown = true;
                         self.current = None;
                     }
@@ -2951,9 +3221,12 @@ impl InteriorBoxDetourTargetCursor {
             };
             self.next_bounds += 1;
             crate::trace_dispatch!("interior-box-detour-cursor", "candidate-bounds");
-            match StrictAabbTargetCursor::new(bounds) {
+            match StrictAabbTargetCursor::new(decisions, bounds) {
                 Ok(cursor) => self.current = Some(cursor),
-                Err(HypermeshError::UnknownClassification) => self.saw_unknown = true,
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => self.saw_unknown = true,
                 Err(err) => return Err(err),
             }
         }
@@ -2961,6 +3234,7 @@ impl InteriorBoxDetourTargetCursor {
 }
 
 fn interior_detour_candidate_bounds(
+    decisions: &DecisionContext,
     domain_start: &Point3,
     domain_end: &Point3,
     polygons: &[ConvexPolygon],
@@ -2969,37 +3243,43 @@ fn interior_detour_candidate_bounds(
     end_cell: Option<&[Classification]>,
 ) -> HypermeshResult<(Vec<Aabb>, bool)> {
     let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+        decisions,
         domain_start,
         domain_end,
         polygons,
         &mut |edge_start, edge_end, polygon, axis| {
-            let start_class = classify_point(edge_start, &polygon.support)?;
-            let end_class = classify_point(edge_end, &polygon.support)?;
+            let start_class = classify_point_decision(decisions, edge_start, &polygon.support)?;
+            let end_class = classify_point_decision(decisions, edge_end, &polygon.support)?;
             if start_class == Classification::On {
                 return Ok(Some(edge_start.clone()));
             }
             if end_class == Classification::On {
                 return Ok(Some(edge_end.clone()));
             }
-            segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(|crossing| {
-                if let Some(crossing) = crossing {
-                    if !point_strictly_between_axis(&crossing, edge_start, edge_end, axis)? {
-                        return Ok(None);
+            segment_plane_crossing(decisions, edge_start, edge_end, &polygon.support).and_then(
+                |crossing| {
+                    if let Some(crossing) = crossing {
+                        if !point_strictly_between_axis(
+                            decisions, &crossing, edge_start, edge_end, axis,
+                        )? {
+                            return Ok(None);
+                        }
+                        Ok(Some(crossing))
+                    } else {
+                        Ok(None)
                     }
-                    Ok(Some(crossing))
-                } else {
-                    Ok(None)
-                }
-            })
+                },
+            )
         },
-        &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+        &mut |crossing, polygon| classify_point_in_polygon(decisions, crossing, polygon),
     )?;
     let mut bounds = Vec::new();
     for x in &intervals[0] {
         for y in &intervals[1] {
             for z in &intervals[2] {
-                let candidate = aabb_from_axis_intervals([x, y, z])?;
-                let single_cell = strict_aabb_arrangement_cell(&candidate, arrangement_planes)?;
+                let candidate = aabb_from_axis_intervals(decisions, [x, y, z])?;
+                let single_cell =
+                    strict_aabb_arrangement_cell(decisions, &candidate, arrangement_planes)?;
                 if single_cell.as_ref().is_some_and(|cell| {
                     start_cell == Some(cell.as_slice()) || end_cell == Some(cell.as_slice())
                 }) {
@@ -3029,6 +3309,7 @@ pub(super) struct InteriorBoxDetourTargetBatchCache {
 impl InteriorBoxDetourTargetBatchCache {
     pub(super) fn batch_for(
         &mut self,
+        decisions: &DecisionContext,
         start: &Point3,
         end: &Point3,
         batch_index: usize,
@@ -3048,6 +3329,7 @@ impl InteriorBoxDetourTargetBatchCache {
                 end: end.clone(),
                 trace_bounds: trace_bounds.cloned(),
                 cursor: InteriorBoxDetourTargetCursor::new(
+                    decisions,
                     start,
                     end,
                     polygons,
@@ -3061,7 +3343,7 @@ impl InteriorBoxDetourTargetBatchCache {
         };
         let entry = &mut self.entries[entry_index];
         while entry.batches.len() <= batch_index && !entry.exhausted {
-            match entry.cursor.next_batch()? {
+            match entry.cursor.next_batch(decisions)? {
                 Some(batch) => entry.batches.push(batch),
                 None => entry.exhausted = true,
             }
@@ -3078,6 +3360,7 @@ impl InteriorBoxDetourTargetBatchCache {
 
 #[cfg(test)]
 pub(super) fn search_strict_aabb_targets_progressively_with_seed_families(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
         &Aabb,
@@ -3088,6 +3371,7 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families(
     evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking(
+        decisions,
         bounds,
         &mut seed_families_for,
         &mut |_| Ok(()),
@@ -3097,6 +3381,7 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families(
 
 #[cfg(test)]
 fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking<K: Ord>(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
         &Aabb,
@@ -3108,6 +3393,7 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
     evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome(
+        decisions,
         bounds,
         &mut seed_families_for,
         rank_direct,
@@ -3119,6 +3405,7 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
 pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome<
     K: Ord,
 >(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
         &Aabb,
@@ -3138,15 +3425,16 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
             };
         }
     };
-    let (report, mut saw_unknown) = match optional_halfspace_feasibility_report(&halfspaces) {
-        Ok(report) => report,
-        Err(err) => {
-            return ProgressiveStrictAabbSearchOutcome {
-                result: Err(err),
-                exhausted_families: None,
-            };
-        }
-    };
+    let (report, mut saw_unknown) =
+        match optional_halfspace_feasibility_report(decisions, &halfspaces) {
+            Ok(report) => report,
+            Err(err) => {
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Err(err),
+                    exhausted_families: None,
+                };
+            }
+        };
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -3187,13 +3475,16 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
     let mut front_direct_targets = Vec::with_capacity(refinement_len);
     for seed in seeds.iter().take(refinement_len) {
         let target = match build_detour_target(
+            decisions,
             seed,
             &halfspaces,
             active_planes_from_optional_report(report.as_ref(), seed),
             false,
         ) {
             Ok(target) => target,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -3216,7 +3507,9 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
     for (index, target) in front_direct_targets.into_iter().enumerate() {
         let (rank_missing, rank) = match rank_direct(&target) {
             Ok(rank) => (0u8, Some(rank)),
-            Err(HypermeshError::UnknownClassification) => (1u8, None),
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => (1u8, None),
             Err(err) => {
                 return ProgressiveStrictAabbSearchOutcome {
                     result: Err(err),
@@ -3245,7 +3538,9 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
                     saw_unknown = true;
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => {
@@ -3271,7 +3566,9 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
             let shifted_result = extend_shifted_halfspace_seed_families_backtracking_unknown(
                 &mut shifted_witnesses,
                 [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
-                |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
+                |seed| {
+                    shifted_halfspace_cell_witnesses_from_seed(decisions, bounds, &halfspaces, seed)
+                },
             );
             match shifted_result {
                 Ok(()) => Ok(shifted_witnesses),
@@ -3290,9 +3587,11 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
     };
     let mut unique_shifted_targets = Vec::new();
     for witness in &shifted_witnesses {
-        let target = match build_detour_target_from_shifted_witness(witness) {
+        let target = match build_detour_target_from_shifted_witness(decisions, witness) {
             Ok(target) => target,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -3319,7 +3618,9 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
                     saw_unknown = true;
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => {
@@ -3334,13 +3635,16 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
     let mut deferred_direct_targets = Vec::new();
     for seed in seeds.iter().skip(refinement_len) {
         let target = match build_detour_target(
+            decisions,
             seed,
             &halfspaces,
             active_planes_from_optional_report(report.as_ref(), seed),
             false,
         ) {
             Ok(target) => target,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -3367,7 +3671,9 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
                     saw_unknown = true;
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => {
@@ -3415,7 +3721,10 @@ pub(super) fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
         if index < refinement_len {
             let (rank_missing, rank) = match rank_direct(&target) {
                 Ok(rank) => (0u8, Some(rank)),
-                Err(HypermeshError::UnknownClassification) => (1u8, None),
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => (1u8, None),
                 Err(err) => return Err(err),
             };
             ranked_direct_targets.push((rank_missing, rank, index, target));
@@ -3437,7 +3746,9 @@ pub(super) fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
                     saw_unknown = true;
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -3451,7 +3762,9 @@ pub(super) fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
                     saw_unknown = true;
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -3466,7 +3779,9 @@ pub(super) fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
                     saw_unknown = true;
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -3482,6 +3797,7 @@ pub(super) fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
 
 #[cfg(test)]
 fn strict_aabb_target_families_with_seed_families(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
         &Aabb,
@@ -3491,7 +3807,7 @@ fn strict_aabb_target_families_with_seed_families(
     ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
 ) -> HypermeshResult<StrictAabbTargetFamilies> {
     let halfspaces = aabb_core_halfspaces(bounds)?;
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(decisions, &halfspaces)?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -3513,13 +3829,16 @@ fn strict_aabb_target_families_with_seed_families(
     let mut direct_targets = Vec::new();
     for seed in &seeds {
         let target = match build_detour_target(
+            decisions,
             seed,
             &halfspaces,
             active_planes_from_optional_report(report.as_ref(), seed),
             false,
         ) {
             Ok(target) => target,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -3547,7 +3866,9 @@ fn strict_aabb_target_families_with_seed_families(
             extend_shifted_halfspace_seed_families_backtracking_unknown(
                 &mut shifted_witnesses,
                 [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
-                |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
+                |seed| {
+                    shifted_halfspace_cell_witnesses_from_seed(decisions, bounds, &halfspaces, seed)
+                },
             )?;
             Ok(shifted_witnesses)
         },
@@ -3556,11 +3877,13 @@ fn strict_aabb_target_families_with_seed_families(
 
     let mut shifted_targets = Vec::new();
     for witness in &shifted_witnesses {
-        match build_detour_target_from_shifted_witness(witness) {
+        match build_detour_target_from_shifted_witness(decisions, witness) {
             Ok(target) => {
                 push_unique_detour_target(&mut shifted_targets, target);
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -3576,6 +3899,7 @@ fn strict_aabb_target_families_with_seed_families(
 
 #[cfg(test)]
 pub(super) fn cached_strict_aabb_target_families_with_seed_families(
+    decisions: &DecisionContext,
     cache: &mut StrictAabbTargetFamilyCache,
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
@@ -3588,7 +3912,8 @@ pub(super) fn cached_strict_aabb_target_families_with_seed_families(
     if let Some(families) = cached_strict_aabb_target_families(cache, bounds) {
         return families;
     }
-    let families = strict_aabb_target_families_with_seed_families(bounds, &mut seed_families_for);
+    let families =
+        strict_aabb_target_families_with_seed_families(decisions, bounds, &mut seed_families_for);
     cache.entries.push(StrictAabbTargetFamilyCacheEntry {
         bounds: bounds.clone(),
         families: families.clone(),
@@ -3659,6 +3984,7 @@ pub(super) fn detour_shifted_seed_families(
 
 #[cfg(test)]
 pub(super) fn strict_aabb_targets_with_seed_families(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
         &Aabb,
@@ -3667,7 +3993,8 @@ pub(super) fn strict_aabb_targets_with_seed_families(
         &mut bool,
     ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
 ) -> HypermeshResult<Vec<DetourTarget>> {
-    let families = strict_aabb_target_families_with_seed_families(bounds, &mut seed_families_for)?;
+    let families =
+        strict_aabb_target_families_with_seed_families(decisions, bounds, &mut seed_families_for)?;
     let mut targets = families.direct_targets;
     targets.extend(families.shifted_targets);
     finalize_detour_target_family(&mut targets, families.saw_unknown)?;
@@ -3675,14 +4002,16 @@ pub(super) fn strict_aabb_targets_with_seed_families(
 }
 
 pub(super) fn build_detour_target(
+    decisions: &DecisionContext,
     point: &Point3,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
     inherited_uncertified_definition_fallback: bool,
 ) -> HypermeshResult<DetourTarget> {
     let (definitions, uncertified_definition_fallback) = probe_definitions_or_axis(
+        decisions,
         point,
-        probe_definitions_from_active_halfspaces(point, halfspaces, active_planes, &[]),
+        probe_definitions_from_active_halfspaces(decisions, point, halfspaces, active_planes, &[]),
     )?;
     Ok(DetourTarget {
         point: point.clone(),
@@ -3693,6 +4022,7 @@ pub(super) fn build_detour_target(
 }
 
 pub(super) fn build_detour_target_from_shifted_witness(
+    decisions: &DecisionContext,
     witness: &ShiftedHalfspaceWitness,
 ) -> HypermeshResult<DetourTarget> {
     let mut definitions = Vec::new();
@@ -3700,6 +4030,7 @@ pub(super) fn build_detour_target_from_shifted_witness(
 
     for family in &witness.families {
         match probe_definitions_from_active_halfspaces(
+            decisions,
             &witness.point,
             &family.halfspaces,
             family.active_planes,
@@ -3709,7 +4040,9 @@ pub(super) fn build_detour_target_from_shifted_witness(
                 saw_unknown |= found.saw_unknown;
                 extend_unique_definition_families(&mut definitions, found.definitions);
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -3809,7 +4142,9 @@ pub(super) fn extend_detour_target_builds_backtracking_unknown<'a, T: 'a>(
             Ok(target) => {
                 push_unique_detour_target(targets, target);
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -3831,7 +4166,9 @@ pub(super) fn extend_detour_target_families_backtracking_unknown(
                     push_unique_detour_target(targets, target);
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -3848,7 +4185,9 @@ fn extend_disjoint_detour_target_families_backtracking_unknown(
     for family in families {
         match family {
             Ok(found) => targets.extend(found),
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -3858,6 +4197,7 @@ fn extend_disjoint_detour_target_families_backtracking_unknown(
 }
 
 pub(super) fn collect_detour_targets_from_axis_intervals(
+    decisions: &DecisionContext,
     intervals: &[Vec<(Real, Real)>],
     mut build: impl FnMut(&Aabb) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<Vec<DetourTarget>> {
@@ -3868,7 +4208,7 @@ pub(super) fn collect_detour_targets_from_axis_intervals(
     for x in &intervals[0] {
         for y in &intervals[1] {
             for z in &intervals[2] {
-                let bounds = aabb_from_axis_intervals([x, y, z])?;
+                let bounds = aabb_from_axis_intervals(decisions, [x, y, z])?;
                 families.push(build(&bounds));
             }
         }
@@ -3880,6 +4220,7 @@ pub(super) fn collect_detour_targets_from_axis_intervals(
 }
 
 fn add_axis_box_surface_cuts_with_queries(
+    decisions: &DecisionContext,
     cuts: &mut Vec<Real>,
     start: &Point3,
     end: &Point3,
@@ -3913,7 +4254,10 @@ fn add_axis_box_surface_cuts_with_queries(
 
             let Some(crossing) = (match crossing_for(&edge_start, &edge_end, polygon, axis) {
                 Ok(crossing) => crossing,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     continue;
                 }
@@ -3923,13 +4267,16 @@ fn add_axis_box_surface_cuts_with_queries(
             };
             let point_location = match classify_point_on_polygon(&crossing, polygon) {
                 Ok(point_location) => point_location,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     continue;
                 }
                 Err(err) => return Err(err),
             };
-            if !point_strictly_between_axis(&crossing, &edge_start, &edge_end, axis)? {
+            if !point_strictly_between_axis(decisions, &crossing, &edge_start, &edge_end, axis)? {
                 if crossing == edge_start
                     && matches!(
                         point_location,
@@ -3955,8 +4302,8 @@ fn add_axis_box_surface_cuts_with_queries(
                 }
                 PolygonPointLocation::Interior => {
                     let value = axis_ref(&crossing, axis);
-                    if value_strictly_between(value, start_value, end_value)? {
-                        push_unique_ordered_real(cuts, value.clone())?;
+                    if value_strictly_between(decisions, value, start_value, end_value)? {
+                        push_unique_ordered_real(decisions, cuts, value.clone())?;
                     }
                 }
             }
@@ -3974,15 +4321,24 @@ pub(super) fn other_axes(axis: usize) -> [usize; 2] {
     }
 }
 
-fn value_strictly_between(value: &Real, a: &Real, b: &Real) -> HypermeshResult<bool> {
-    let value_to_a = compare_real(value, a)?;
-    let value_to_b = compare_real(value, b)?;
+fn value_strictly_between(
+    decisions: &DecisionContext,
+    value: &Real,
+    a: &Real,
+    b: &Real,
+) -> HypermeshResult<bool> {
+    let value_to_a = compare_real_decision(decisions, value, a)?;
+    let value_to_b = compare_real_decision(decisions, value, b)?;
     Ok((value_to_a.is_gt() && value_to_b.is_lt()) || (value_to_a.is_lt() && value_to_b.is_gt()))
 }
 
-fn push_unique_ordered_real(values: &mut Vec<Real>, value: Real) -> HypermeshResult<()> {
+fn push_unique_ordered_real(
+    decisions: &DecisionContext,
+    values: &mut Vec<Real>,
+    value: Real,
+) -> HypermeshResult<()> {
     for (index, existing) in values.iter().enumerate() {
-        match compare_real(&value, existing)? {
+        match compare_real_decision(decisions, &value, existing)? {
             std::cmp::Ordering::Equal => return Ok(()),
             std::cmp::Ordering::Less => {
                 values.insert(index, value);
@@ -3996,6 +4352,7 @@ fn push_unique_ordered_real(values: &mut Vec<Real>, value: Real) -> HypermeshRes
 }
 
 pub(super) fn point_lies_on_traced_surface(
+    decisions: &DecisionContext,
     point: &Point3,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
@@ -4006,19 +4363,19 @@ pub(super) fn point_lies_on_traced_surface(
         }
 
         if let Some(bounds) = &polygon.approx_bounds
-            && !point_lies_in_bounds(point, bounds)?
+            && !point_lies_in_bounds(decisions, point, bounds)?
         {
             continue;
         }
 
-        if point_evidence.classify(&polygon.support)? != Classification::On {
+        if point_evidence.classify(decisions, &polygon.support)? != Classification::On {
             continue;
         }
 
         let mut inside_polygon = true;
         let mut on_edge = false;
         for edge in polygon.edges.iter() {
-            match point_evidence.classify(edge)? {
+            match point_evidence.classify(decisions, edge)? {
                 Classification::Positive => {
                     inside_polygon = false;
                     break;
@@ -4038,12 +4395,23 @@ pub(super) fn point_lies_on_traced_surface(
 }
 
 fn point_lies_in_bounds(
+    decisions: &DecisionContext,
     point: &Point3,
     bounds: &crate::polygon::ApproxBounds,
 ) -> HypermeshResult<bool> {
     for axis in 0..3 {
-        if compare_real(axis_ref(point, axis), axis_ref(&bounds.min, axis))?.is_lt()
-            || compare_real(axis_ref(point, axis), axis_ref(&bounds.max, axis))?.is_gt()
+        if compare_real_decision(
+            decisions,
+            axis_ref(point, axis),
+            axis_ref(&bounds.min, axis),
+        )?
+        .is_lt()
+            || compare_real_decision(
+                decisions,
+                axis_ref(point, axis),
+                axis_ref(&bounds.max, axis),
+            )?
+            .is_gt()
         {
             return Ok(false);
         }
@@ -4053,6 +4421,7 @@ fn point_lies_in_bounds(
 
 #[cfg(test)]
 pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacement(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -4067,6 +4436,7 @@ pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
     let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
     let mut plane_replacement_trace_steps = Vec::new();
     trace_segment_from_definitions_with_step_detoured_plane_replacement_with_caches(
+        decisions,
         start,
         end,
         winding,
@@ -4084,6 +4454,7 @@ pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
 }
 
 pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -4099,6 +4470,7 @@ pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
     let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
     let mut plane_replacement_trace_steps = Vec::new();
     trace_segment_from_definitions_with_step_detoured_plane_replacement_with_caches(
+        decisions,
         start,
         end,
         winding,
@@ -4116,6 +4488,7 @@ pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
 }
 
 pub(super) fn trace_segment_from_definitions_with_step_detoured_plane_replacement_with_caches(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -4130,13 +4503,14 @@ pub(super) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
     detour_target_cache: &mut DetourTargetFamilyCache,
     trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
-    if !point_is_inside_optional_trace_bounds(start, trace_bounds)?
-        || !point_is_inside_optional_trace_bounds(end, trace_bounds)?
+    if !point_is_inside_optional_trace_bounds(decisions, start, trace_bounds)?
+        || !point_is_inside_optional_trace_bounds(decisions, end, trace_bounds)?
     {
         return Err(HypermeshError::UnknownClassification);
     }
 
     match trace_segment_from_definitions_with_caches_and_surface_query(
+        decisions,
         start,
         end,
         winding,
@@ -4152,11 +4526,12 @@ pub(super) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
         trace_bounds,
     ) {
         Ok(winding) => return Ok(winding),
-        Err(HypermeshError::UnknownClassification) => {}
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {}
         Err(err) => return Err(err),
     }
 
     trace_from_definition_sets_with_step_detoured_plane_replacement(
+        decisions,
         start,
         start_definitions,
         end,
@@ -4171,6 +4546,7 @@ pub(super) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
 
 #[cfg(test)]
 pub(super) fn trace_probe_from_reference_definitions(
+    decisions: &DecisionContext,
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
     probe_point: &Point3,
@@ -4181,6 +4557,7 @@ pub(super) fn trace_probe_from_reference_definitions(
     let mut no_detour_cache = Vec::new();
     let mut detour_target_cache = DetourTargetFamilyCache::default();
     trace_from_definition_sets_with_step_detoured_plane_replacement(
+        decisions,
         ref_point,
         ref_definitions,
         probe_point,
@@ -4194,6 +4571,7 @@ pub(super) fn trace_probe_from_reference_definitions(
 }
 
 pub(super) fn trace_from_definition_sets_with_step_detoured_plane_replacement(
+    decisions: &DecisionContext,
     start: &Point3,
     start_definitions: &[[Plane; 3]],
     end: &Point3,
@@ -4205,6 +4583,7 @@ pub(super) fn trace_from_definition_sets_with_step_detoured_plane_replacement(
     trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_caches(
+        decisions,
         start,
         start_definitions,
         end,
@@ -4218,6 +4597,7 @@ pub(super) fn trace_from_definition_sets_with_step_detoured_plane_replacement(
 }
 
 fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_caches(
+    decisions: &DecisionContext,
     start: &Point3,
     start_definitions: &[[Plane; 3]],
     end: &Point3,
@@ -4236,6 +4616,7 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_ca
     for start_definition in &start_definitions {
         for end_definition in &end_definitions {
             match trace_plane_replacement_path_with_step_detours_with_query_caches(
+                decisions,
                 start_definition,
                 end_definition,
                 winding,
@@ -4247,7 +4628,10 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_ca
                 trace_bounds,
             ) {
                 Ok(winding) => return Ok(winding),
-                Err(HypermeshError::UnknownClassification) => continue,
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => continue,
                 Err(err) => return Err(err),
             }
         }
@@ -4257,6 +4641,7 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_ca
 }
 
 fn trace_plane_replacement_path_with_step_detours_with_query_caches(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     winding: &[i32],
@@ -4268,6 +4653,7 @@ fn trace_plane_replacement_path_with_step_detours_with_query_caches(
     trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_plane_replacement_path_with_step_detours_impl(
+        decisions,
         start_planes,
         end_planes,
         winding,
@@ -4277,6 +4663,7 @@ fn trace_plane_replacement_path_with_step_detours_with_query_caches(
         trace_bounds,
         |current, next, attempt, polygons, current_definitions, next_definitions| {
             match trace_segment_from_definitions_with_caches(
+                decisions,
                 current,
                 next,
                 attempt,
@@ -4288,9 +4675,10 @@ fn trace_plane_replacement_path_with_step_detours_with_query_caches(
                 trace_bounds,
             ) {
                 Ok(winding) => Ok(Some(winding)),
-                Err(HypermeshError::UnknownClassification) => {
-                    Err(HypermeshError::UnknownClassification)
-                }
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => Err(HypermeshError::UnknownClassification),
                 Err(err) => Err(err),
             }
         },
@@ -4298,6 +4686,7 @@ fn trace_plane_replacement_path_with_step_detours_with_query_caches(
 }
 
 pub(super) fn trace_plane_replacement_path_with_step_detours_impl(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     winding: &[i32],
@@ -4315,6 +4704,7 @@ pub(super) fn trace_plane_replacement_path_with_step_detours_impl(
     ) -> HypermeshResult<Option<WindingNumberVector>>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_plane_replacement_path_with_tracer_and_caches(
+        decisions,
         start_planes,
         end_planes,
         winding,
@@ -4361,7 +4751,9 @@ pub(super) fn endpoint_definition_family(
                 append_definition_if_missing(&mut matching, definition.clone());
             }
             Ok(_) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),

@@ -41,10 +41,12 @@ use super::{
     visited_definition_family_contains, visited_definition_points_match_as_sets,
     visited_definition_points_subset_of,
 };
-use crate::bvh::bounds_overlap;
+use crate::bvh::bounds_overlap_decision;
+use crate::context::DecisionContext;
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Aabb, Classification, Plane, Point3PredicateEvidence, classify_point};
+use crate::geometry::{Aabb, Classification, Plane, Point3PredicateEvidence};
 use crate::polygon::{ApproxBounds, ConvexPolygon};
+use crate::predicate::classify_point_decision;
 use hyperlattice::Point3;
 
 fn definition_reachability_bucket_matches(
@@ -453,22 +455,23 @@ fn begin_definition_no_plane_replacement_reachability_result(
 }
 
 pub(super) fn probe_reaches_adjacent_cell(
+    decisions: &DecisionContext,
     start: &Point3,
     probe: &Point3,
     host_support: &Plane,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    let Some(sort_axis) = first_changed_axis(start, probe)? else {
+    let Some(sort_axis) = first_changed_axis(decisions, start, probe)? else {
         for polygon in polygons {
             if polygon.mesh_index < 0 {
                 continue;
             }
 
-            if planes_are_coplanar(&polygon.support, host_support)? {
+            if planes_are_coplanar(decisions, &polygon.support, host_support)? {
                 continue;
             }
 
-            match classify_point_in_polygon(start, polygon)? {
+            match classify_point_in_polygon(decisions, start, polygon)? {
                 PolygonPointLocation::Outside => {}
                 PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
                     return Err(HypermeshError::UnknownClassification);
@@ -478,7 +481,7 @@ pub(super) fn probe_reaches_adjacent_cell(
         return Ok(true);
     };
 
-    let segment_bounds = bounds_between_points(start, probe)?;
+    let segment_bounds = bounds_between_points(decisions, start, probe)?;
     let segment_bounds = ApproxBounds::new(segment_bounds.min, segment_bounds.max);
     let start_evidence = Point3PredicateEvidence::new(start);
     let probe_evidence = Point3PredicateEvidence::new(probe);
@@ -488,19 +491,19 @@ pub(super) fn probe_reaches_adjacent_cell(
         }
 
         if let Some(polygon_bounds) = &polygon.approx_bounds
-            && !bounds_overlap(&segment_bounds, polygon_bounds)?
+            && !bounds_overlap_decision(decisions, &segment_bounds, polygon_bounds)?
         {
             continue;
         }
 
-        let start_class = start_evidence.classify(&polygon.support)?;
-        let probe_class = probe_evidence.classify(&polygon.support)?;
+        let start_class = start_evidence.classify(decisions, &polygon.support)?;
+        let probe_class = probe_evidence.classify(decisions, &polygon.support)?;
 
         if start_class == Classification::On {
-            if planes_are_coplanar(&polygon.support, host_support)? {
+            if planes_are_coplanar(decisions, &polygon.support, host_support)? {
                 continue;
             }
-            match classify_point_in_polygon(start, polygon)? {
+            match classify_point_in_polygon(decisions, start, polygon)? {
                 PolygonPointLocation::Outside => {}
                 PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
                     return Err(HypermeshError::UnknownClassification);
@@ -510,7 +513,7 @@ pub(super) fn probe_reaches_adjacent_cell(
         }
 
         if probe_class == Classification::On {
-            match classify_point_in_polygon(probe, polygon)? {
+            match classify_point_in_polygon(decisions, probe, polygon)? {
                 PolygonPointLocation::Outside => {}
                 PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
                     return Err(HypermeshError::UnknownClassification);
@@ -527,8 +530,8 @@ pub(super) fn probe_reaches_adjacent_cell(
         let probe_value = polygon.support.expression_at_point(probe);
         let crossing =
             segment_plane_crossing_from_opposite_values(start, probe, start_value, probe_value)?;
-        if point_strictly_between_axis(&crossing, start, probe, sort_axis)? {
-            match classify_point_in_polygon(&crossing, polygon)? {
+        if point_strictly_between_axis(decisions, &crossing, start, probe, sort_axis)? {
+            match classify_point_in_polygon(decisions, &crossing, polygon)? {
                 PolygonPointLocation::Outside => {}
                 PolygonPointLocation::Boundary => {
                     return Err(HypermeshError::UnknownClassification);
@@ -544,6 +547,7 @@ pub(super) fn probe_reaches_adjacent_cell(
 }
 
 pub(super) fn probe_polyline_reaches_adjacent_cell(
+    decisions: &DecisionContext,
     points: &[Point3],
     host_support: &Plane,
     polygons: &[ConvexPolygon],
@@ -559,14 +563,16 @@ pub(super) fn probe_polyline_reaches_adjacent_cell(
 
         let classifications = points
             .iter()
-            .map(|point| classify_point(point, &polygon.support))
+            .map(|point| classify_point_decision(decisions, point, &polygon.support))
             .collect::<HypermeshResult<Vec<_>>>()?;
 
         if classifications[0] == Classification::On {
-            if planes_are_coplanar(&polygon.support, host_support)? {
+            if planes_are_coplanar(decisions, &polygon.support, host_support)? {
                 continue;
             }
-            if classify_point_in_polygon(&points[0], polygon)? != PolygonPointLocation::Outside {
+            if classify_point_in_polygon(decisions, &points[0], polygon)?
+                != PolygonPointLocation::Outside
+            {
                 return Err(HypermeshError::UnknownClassification);
             }
         }
@@ -574,7 +580,8 @@ pub(super) fn probe_polyline_reaches_adjacent_cell(
         let last = points.len() - 1;
         if last > 0
             && classifications[last] == Classification::On
-            && classify_point_in_polygon(&points[last], polygon)? != PolygonPointLocation::Outside
+            && classify_point_in_polygon(decisions, &points[last], polygon)?
+                != PolygonPointLocation::Outside
         {
             return Err(HypermeshError::UnknownClassification);
         }
@@ -589,15 +596,22 @@ pub(super) fn probe_polyline_reaches_adjacent_cell(
                 continue;
             }
 
-            let Some(sort_axis) = first_changed_axis(&points[index], &points[index + 1])? else {
+            let Some(sort_axis) =
+                first_changed_axis(decisions, &points[index], &points[index + 1])?
+            else {
                 continue;
             };
-            let Some(crossing) =
-                segment_plane_crossing(&points[index], &points[index + 1], &polygon.support)?
+            let Some(crossing) = segment_plane_crossing(
+                decisions,
+                &points[index],
+                &points[index + 1],
+                &polygon.support,
+            )?
             else {
                 continue;
             };
             if !point_strictly_between_axis(
+                decisions,
                 &crossing,
                 &points[index],
                 &points[index + 1],
@@ -605,7 +619,7 @@ pub(super) fn probe_polyline_reaches_adjacent_cell(
             )? {
                 continue;
             }
-            match classify_point_in_polygon(&crossing, polygon)? {
+            match classify_point_in_polygon(decisions, &crossing, polygon)? {
                 PolygonPointLocation::Outside => {}
                 PolygonPointLocation::Boundary => {
                     return Err(HypermeshError::UnknownClassification);
@@ -627,7 +641,7 @@ pub(super) fn probe_polyline_reaches_adjacent_cell(
             let run_end = index;
             let mut touches_interior = false;
             for point in &points[run_start..=run_end] {
-                match classify_point_in_polygon(point, polygon)? {
+                match classify_point_in_polygon(decisions, point, polygon)? {
                     PolygonPointLocation::Outside => {}
                     PolygonPointLocation::Boundary => {
                         return Err(HypermeshError::UnknownClassification);
@@ -650,6 +664,7 @@ pub(super) fn probe_polyline_reaches_adjacent_cell(
 
 #[cfg(test)]
 pub(super) fn probe_reaches_adjacent_cell_from_interior(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     probe: &ProbePoint,
     host_support: &Plane,
@@ -676,6 +691,7 @@ pub(super) fn probe_reaches_adjacent_cell_from_interior(
     let mut direct_probe_reachability = Vec::new();
     let mut detour_target_families = DetourTargetFamilyCache::default();
     probe_reaches_adjacent_cell_from_interior_with_caches(
+        decisions,
         interior,
         probe,
         host_support,
@@ -702,6 +718,7 @@ pub(super) fn probe_reaches_adjacent_cell_from_interior(
 }
 
 pub(super) fn probe_reaches_adjacent_cell_from_interior_with_caches(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     probe: &ProbePoint,
     host_support: &Plane,
@@ -726,8 +743,8 @@ pub(super) fn probe_reaches_adjacent_cell_from_interior_with_caches(
     detour_target_families: &mut DetourTargetFamilyCache,
     trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
-    if !point_is_inside_optional_trace_bounds(&interior.point, trace_bounds)?
-        || !point_is_inside_optional_trace_bounds(&probe.point, trace_bounds)?
+    if !point_is_inside_optional_trace_bounds(decisions, &interior.point, trace_bounds)?
+        || !point_is_inside_optional_trace_bounds(decisions, &probe.point, trace_bounds)?
     {
         return Err(HypermeshError::UnknownClassification);
     }
@@ -736,6 +753,7 @@ pub(super) fn probe_reaches_adjacent_cell_from_interior_with_caches(
     let saw_unknown = start_family.saw_unknown || end_family.saw_unknown;
 
     let result = probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
+        decisions,
         &interior.point,
         &probe.point,
         host_support,
@@ -768,6 +786,7 @@ pub(super) fn probe_reaches_adjacent_cell_from_interior_with_caches(
 }
 
 fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     host_support: &Plane,
@@ -819,6 +838,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
          start_definitions: &[[Plane; 3]],
          end_definitions: &[[Plane; 3]]| {
             probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
+                decisions,
                 start,
                 end,
                 host_support,
@@ -845,6 +865,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     let arrangement_planes = detour_arrangement_planes(polygons);
     let mut detour_batches = InteriorBoxDetourTargetBatchCache::default();
     let result = probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+        decisions,
         start,
         end,
         start_definitions,
@@ -852,10 +873,10 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
         &arrangement_planes,
         surface_cache,
         &mut |point| {
-            if !point_is_inside_optional_trace_bounds(point, trace_bounds)? {
+            if !point_is_inside_optional_trace_bounds(decisions, point, trace_bounds)? {
                 return Ok(true);
             }
-            point_lies_on_traced_surface(point, polygons)
+            point_lies_on_traced_surface(decisions, point, polygons)
         },
         &mut trace_without_detours,
         &mut |batch_start, batch_end, batch_index| {
@@ -872,6 +893,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
                 }
             } else {
                 detour_batches.batch_for(
+                    decisions,
                     batch_start,
                     batch_end,
                     batch_index,
@@ -972,7 +994,13 @@ pub(super) fn probe_reaches_adjacent_cell_with_cycle_guard_impl(
         end_definitions,
         visited_points,
         &mut surface_cache,
-        &mut |point| point_lies_on_traced_surface(point, polygons),
+        &mut |point| {
+            point_lies_on_traced_surface(
+                &crate::test_support::approximate_decisions(),
+                point,
+                polygons,
+            )
+        },
         trace_without_detours,
         detours_for,
     )
@@ -1000,7 +1028,9 @@ pub(super) fn probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_que
         match trace_without_detours(start, end, start_definitions, end_definitions) {
             Ok(true) => return Ok(true),
             Ok(false) => false,
-            Err(HypermeshError::UnknownClassification) => true,
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => true,
             Err(err) => return Err(err),
         };
 
@@ -1047,7 +1077,9 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_budget_impl(
         match trace_without_detours(start, end, start_definitions, end_definitions) {
             Ok(true) => return Ok(true),
             Ok(false) => false,
-            Err(HypermeshError::UnknownClassification) => true,
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => true,
             Err(err) => return Err(err),
         };
 
@@ -1104,7 +1136,13 @@ pub(super) fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard(
         end_definitions,
         visited_points,
         &mut surface_cache,
-        &mut |point| point_lies_on_traced_surface(point, polygons),
+        &mut |point| {
+            point_lies_on_traced_surface(
+                &crate::test_support::approximate_decisions(),
+                point,
+                polygons,
+            )
+        },
         trace_without_detours,
         detours_for,
     )
@@ -1190,7 +1228,9 @@ fn evaluate_probe_detour_target_with_cycle_guard_with_surface_query(
             surface_query(&detour.point)
         }) {
             Ok(on_surface) => on_surface,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 *saw_unknown = true;
                 return Ok(false);
             }
@@ -1230,7 +1270,7 @@ fn evaluate_probe_detour_target_with_cycle_guard_with_surface_query(
         )
     } {
         Ok(result) => result,
-        Err(HypermeshError::UnknownClassification) => {
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
             *saw_unknown = true;
             return Ok(false);
         }
@@ -1266,7 +1306,7 @@ fn evaluate_probe_detour_target_with_cycle_guard_with_surface_query(
             }
             Ok(false)
         }
-        Err(HypermeshError::UnknownClassification) => {
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
             *saw_unknown = true;
             Ok(false)
         }
@@ -1292,7 +1332,7 @@ pub(super) fn probe_reaches_adjacent_cell_via_progressive_detours(
     let mut strict_aabb_target_families = StrictAabbTargetFamilyCache::default();
     let mut detour_target_cache = DetourTargetFamilyCache::default();
     let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
-    probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replacement_from_definitions_with(
+    probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replacement_from_definitions_with(&crate::test_support::approximate_decisions(),
         start,
         end,
         polygons,
@@ -1311,7 +1351,7 @@ pub(super) fn probe_reaches_adjacent_cell_via_progressive_detours(
          end: &Point3,
          start_definitions: &[[Plane; 3]],
          end_definitions: &[[Plane; 3]]| {
-            probe_reaches_adjacent_cell_with_definitions_no_detours(
+            probe_reaches_adjacent_cell_with_definitions_no_detours(&crate::test_support::approximate_decisions(),
                 start,
                 end,
                 host_support,
@@ -1320,7 +1360,7 @@ pub(super) fn probe_reaches_adjacent_cell_via_progressive_detours(
                 end_definitions,
             )
         },
-        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons),
+        |start: &Point3, end: &Point3| interior_box_detour_targets(&crate::test_support::approximate_decisions(), start, end, polygons),
     )
 }
 
@@ -1346,7 +1386,11 @@ pub(super) fn probe_reaches_adjacent_cell_via_detours_with_budget(
         if detour.point == *start
             || detour.point == *end
             || cached_surface_query_with(&mut surface_cache, &detour.point, || {
-                point_lies_on_traced_surface(&detour.point, polygons)
+                point_lies_on_traced_surface(
+                    &crate::test_support::approximate_decisions(),
+                    &detour.point,
+                    polygons,
+                )
             })?
         {
             if detour.uncertified_definition_fallback {
@@ -1365,7 +1409,9 @@ pub(super) fn probe_reaches_adjacent_cell_via_detours_with_budget(
             detours_for,
         ) {
             Ok(result) => result,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -1393,7 +1439,9 @@ pub(super) fn probe_reaches_adjacent_cell_via_detours_with_budget(
                     saw_unknown = true;
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -1409,6 +1457,7 @@ pub(super) fn probe_reaches_adjacent_cell_via_detours_with_budget(
 
 #[cfg(test)]
 fn probe_reaches_adjacent_cell_with_definitions_no_detours(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     host_support: &Plane,
@@ -1433,6 +1482,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut direct_probe_reachability_cache = Vec::new();
     probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
+        decisions,
         start,
         end,
         host_support,
@@ -1458,6 +1508,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
 }
 
 pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     host_support: &Plane,
@@ -1494,11 +1545,14 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_cache
                 end,
                 host_support,
                 polygons,
-                || probe_reaches_adjacent_cell(start, end, host_support, polygons),
+                || probe_reaches_adjacent_cell(decisions, start, end, host_support, polygons),
             ) {
                 Ok(true) => return Ok(true),
                 Ok(false) => false,
-                Err(HypermeshError::UnknownClassification) => true,
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => true,
                 Err(err) => return Err(err),
             };
 
@@ -1510,6 +1564,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_cache
                 direct_unknown,
                 |start_definition, end_definition| {
                     probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+                        decisions,
                         start,
                         end,
                         host_support,
@@ -1530,6 +1585,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_cache
                     let mut saw_unknown = plan.unknown_if_no_match;
                     for (start_index, end_index) in plan.ordered_pairs {
                         let pair_result = plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
+                            decisions,
                             &plan.start_definitions[start_index],
                             &plan.end_definitions[end_index],
                             host_support,
@@ -1553,7 +1609,10 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_cache
                         match pair_result {
                             Ok(true) => return Ok(true),
                             Ok(false) => {}
-                            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+                            Err(
+                                HypermeshError::PredicateUndecided { .. }
+                                | HypermeshError::UnknownClassification,
+                            ) => saw_unknown = true,
                             Err(err) => return Err(err),
                         }
                     }
@@ -1571,6 +1630,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_cache
 
 #[cfg(test)]
 fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     host_support: &Plane,
@@ -1584,6 +1644,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
     let mut no_step_cache = DefinitionNoDetourReachabilityCache::default();
     let mut direct_probe_reachability_cache = Vec::new();
     probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+        decisions,
         start,
         end,
         host_support,
@@ -1600,6 +1661,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
 }
 
 pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     host_support: &Plane,
@@ -1629,15 +1691,19 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_
                 end,
                 host_support,
                 polygons,
-                || probe_reaches_adjacent_cell(start, end, host_support, polygons),
+                || probe_reaches_adjacent_cell(decisions, start, end, host_support, polygons),
             ) {
                 Ok(true) => return Ok(true),
                 Ok(false) => false,
-                Err(HypermeshError::UnknownClassification) => true,
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => true,
                 Err(err) => return Err(err),
             };
 
             let ordered_pairs = ordered_definition_pairs_by_no_step_precheck_with(
+                decisions,
                 &start_family.definitions,
                 &end_family.definitions,
                 host_support,
@@ -1648,6 +1714,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_
             let mut saw_unknown = direct_unknown;
             for (start_index, end_index) in ordered_pairs {
                 match plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
+                    decisions,
                     &start_family.definitions[start_index],
                     &end_family.definitions[end_index],
                     host_support,
@@ -1659,7 +1726,10 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_
                 ) {
                     Ok(true) => return Ok(true),
                     Ok(false) => {}
-                    Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => saw_unknown = true,
                     Err(err) => return Err(err),
                 }
             }
@@ -1678,6 +1748,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_
 }
 
 fn ordered_definition_pairs_by_no_step_precheck_with(
+    decisions: &DecisionContext,
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
     host_support: &Plane,
@@ -1690,6 +1761,7 @@ fn ordered_definition_pairs_by_no_step_precheck_with(
         for (end_index, end_definition) in end_definitions.iter().enumerate() {
             scored.push((
                 best_plane_replacement_no_step_precheck_key(
+                    decisions,
                     start_definition,
                     end_definition,
                     host_support,
@@ -1710,6 +1782,7 @@ fn ordered_definition_pairs_by_no_step_precheck_with(
 }
 
 fn best_plane_replacement_no_step_precheck_key(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     host_support: &Plane,
@@ -1731,7 +1804,15 @@ fn best_plane_replacement_no_step_precheck_key(
                     next,
                     host_support,
                     polygons,
-                    || probe_reaches_adjacent_cell(current, next, host_support, polygons),
+                    || {
+                        probe_reaches_adjacent_cell(
+                            decisions,
+                            current,
+                            next,
+                            host_support,
+                            polygons,
+                        )
+                    },
                 )
             },
         )?;
@@ -1753,7 +1834,9 @@ pub(super) fn probe_reaches_adjacent_cell_with_definition_search(
     let direct_unknown = match direct_reaches() {
         Ok(true) => return Ok(true),
         Ok(false) => false,
-        Err(HypermeshError::UnknownClassification) => true,
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
+            true
+        }
         Err(err) => return Err(err),
     };
 
@@ -1773,7 +1856,9 @@ pub(super) fn probe_reaches_adjacent_cell_with_definition_search(
                 Ok(false)
             }
         }
-        Err(HypermeshError::UnknownClassification) => Err(HypermeshError::UnknownClassification),
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
+            Err(HypermeshError::UnknownClassification)
+        }
         Err(err) => Err(err),
     }
 }
@@ -1809,7 +1894,10 @@ fn definition_search_precheck_plan(
             match precheck_reaches(start_definition, end_definition) {
                 Ok(true) => return Ok(DefinitionSearchPrecheckOutcome::Reaches),
                 Ok(false) => ordered_pairs.push((1usize, start_index, end_index)),
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     ordered_pairs.push((0usize, start_index, end_index));
                 }
@@ -1846,7 +1934,9 @@ pub(super) fn probe_reaches_adjacent_cell_with_definition_search_preferring_prec
     let direct_unknown = match direct_reaches() {
         Ok(true) => return Ok(true),
         Ok(false) => false,
-        Err(HypermeshError::UnknownClassification) => true,
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
+            true
+        }
         Err(err) => return Err(err),
     };
 
@@ -1868,7 +1958,10 @@ pub(super) fn probe_reaches_adjacent_cell_with_definition_search_preferring_prec
                 ) {
                     Ok(true) => return Ok(true),
                     Ok(false) => {}
-                    Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => saw_unknown = true,
                     Err(err) => return Err(err),
                 }
             }
@@ -1896,7 +1989,10 @@ pub(super) fn definition_pair_reachability_backtracking_unknown(
             match reaches(start_definition, end_definition) {
                 Ok(true) => return Ok(true),
                 Ok(false) => {}
-                Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => saw_unknown = true,
                 Err(err) => return Err(err),
             }
         }
@@ -1911,6 +2007,7 @@ pub(super) fn definition_pair_reachability_backtracking_unknown(
 
 #[cfg(test)]
 pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     host_support: &Plane,
@@ -1927,6 +2024,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
     let mut detour_target_cache = DetourTargetFamilyCache::default();
     let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
+        decisions,
         start,
         end,
         polygons,
@@ -1944,6 +2042,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
          start_definitions: &[[Plane; 3]],
          end_definitions: &[[Plane; 3]]| {
             probe_reaches_adjacent_cell_with_definitions_no_step_detours(
+                decisions,
                 start,
                 end,
                 host_support,
@@ -1952,12 +2051,13 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
                 end_definitions,
             )
         },
-        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons),
+        |start: &Point3, end: &Point3| interior_box_detour_targets(decisions, start, end, polygons),
     )
 }
 
 #[cfg(test)]
 pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -1980,6 +2080,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
 ) -> HypermeshResult<bool> {
     let mut strict_aabb_target_families = StrictAabbTargetFamilyCache::default();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with_mode(
+        decisions,
         start,
         end,
         polygons,
@@ -2001,6 +2102,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
 }
 
 fn probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replacement_from_definitions_with(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -2024,6 +2126,7 @@ fn probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replaceme
     detours_for_query: impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with_mode(
+        decisions,
         start,
         end,
         polygons,
@@ -2045,6 +2148,7 @@ fn probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replaceme
 }
 
 fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with_mode(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -2097,6 +2201,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
         let arrangement_planes = detour_arrangement_planes(polygons);
         let mut detour_batches = InteriorBoxDetourTargetBatchCache::default();
         probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+            decisions,
             start,
             end,
             start_definitions,
@@ -2104,14 +2209,15 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
             &arrangement_planes,
             &mut surface_cache,
             &mut |point| {
-                if !point_is_inside_optional_trace_bounds(point, trace_bounds)? {
+                if !point_is_inside_optional_trace_bounds(decisions, point, trace_bounds)? {
                     return Ok(true);
                 }
-                point_lies_on_traced_surface(point, polygons)
+                point_lies_on_traced_surface(decisions, point, polygons)
             },
             &mut trace_without_detours,
             &mut |batch_start, batch_end, batch_index| {
                 detour_batches.batch_for(
+                    decisions,
                     batch_start,
                     batch_end,
                     batch_index,
@@ -2126,6 +2232,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
         // UnknownClassification placeholder as if it were a completed exact-state result.
         let known_false_cache = &*no_plane_replacement_cache;
         probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
+            decisions,
             start,
             end,
             polygons,
@@ -2157,6 +2264,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
 
 #[cfg(test)]
 pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -2180,6 +2288,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
     let mut detour_target_cache = DetourTargetFamilyCache::default();
     let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
+        decisions,
         start,
         end,
         polygons,
@@ -2200,6 +2309,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
 }
 
 fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -2224,6 +2334,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
 ) -> HypermeshResult<bool> {
     let mut surface_cache = Vec::new();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+        decisions,
         start,
         end,
         polygons,
@@ -2238,7 +2349,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         strict_aabb_target_families,
         interior_box_axis_intervals,
         &mut surface_cache,
-        &mut |point| point_lies_on_traced_surface(point, polygons),
+        &mut |point| point_lies_on_traced_surface(decisions, point, polygons),
         trace_without_detours,
         detour_target_cache,
         detours_for_query,
@@ -2247,6 +2358,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
 
 #[cfg(test)]
 pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -2272,6 +2384,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
     let mut detour_target_cache = DetourTargetFamilyCache::default();
     let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+        decisions,
         start,
         end,
         polygons,
@@ -2294,6 +2407,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
 }
 
 pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -2373,8 +2487,13 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
     let direct_result = trace_without_detours(start, end, start_definitions, end_definitions);
     let result = match direct_result {
         Ok(true) => Ok(true),
-        Ok(false) | Err(HypermeshError::UnknownClassification) => {
-            if matches!(direct_result, Err(HypermeshError::UnknownClassification)) {
+        Ok(false)
+        | Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
+            if matches!(
+                direct_result,
+                Err(HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification)
+            ) {
                 saw_unknown = true;
             }
             if progressive_interior_box_detours
@@ -2382,6 +2501,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
             {
                 let outcome =
                     probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query_outcome(
+                    decisions,
                     start,
                     end,
                     polygons,
@@ -2427,9 +2547,10 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
                             Ok(false)
                         }
                     }
-                    Err(HypermeshError::UnknownClassification) => {
-                        Err(HypermeshError::UnknownClassification)
-                    }
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => Err(HypermeshError::UnknownClassification),
                     Err(err) => return Err(err),
                 }
             } else {
@@ -2440,6 +2561,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
                     })?
                 {
                     if evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+                        decisions,
                         &detour,
                         start,
                         end,
@@ -2481,6 +2603,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
 }
 
 pub(super) fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+    decisions: &DecisionContext,
     detour: &DetourTarget,
     start: &Point3,
     end: &Point3,
@@ -2522,7 +2645,9 @@ pub(super) fn evaluate_probe_detour_target_without_plane_replacement_with_surfac
             surface_query(&detour.point)
         }) {
             Ok(on_surface) => on_surface,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 *saw_unknown = true;
                 return Ok(false);
             }
@@ -2577,6 +2702,7 @@ pub(super) fn evaluate_probe_detour_target_without_plane_replacement_with_surfac
         }
 
         match probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+            decisions,
             leg_start,
             leg_end,
             polygons,
@@ -2597,7 +2723,7 @@ pub(super) fn evaluate_probe_detour_target_without_plane_replacement_with_surfac
             detours_for_query,
         ) {
             Ok(result) => Ok(Some(result)),
-            Err(HypermeshError::UnknownClassification) => {
+            Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
                 *saw_unknown = true;
                 Ok(None)
             }
@@ -2667,6 +2793,7 @@ struct ProgressiveNoPlaneDetourSearchOutcome {
 }
 
 fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query_outcome(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -2697,23 +2824,25 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
         end,
         || {
             interior_box_axis_intervals_with_surface_queries(
+                decisions,
                 start,
                 end,
                 polygons,
                 &mut |edge_start, edge_end, polygon, axis| {
-                    let start_class = classify_point(edge_start, &polygon.support)?;
-                    let end_class = classify_point(edge_end, &polygon.support)?;
+                    let start_class =
+                        classify_point_decision(decisions, edge_start, &polygon.support)?;
+                    let end_class = classify_point_decision(decisions, edge_end, &polygon.support)?;
                     if start_class == Classification::On {
                         return Ok(Some(edge_start.clone()));
                     }
                     if end_class == Classification::On {
                         return Ok(Some(edge_end.clone()));
                     }
-                    segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(
-                        |crossing| {
+                    segment_plane_crossing(decisions, edge_start, edge_end, &polygon.support)
+                        .and_then(|crossing| {
                             if let Some(crossing) = crossing {
                                 if !point_strictly_between_axis(
-                                    &crossing, edge_start, edge_end, axis,
+                                    decisions, &crossing, edge_start, edge_end, axis,
                                 )? {
                                     return Ok(None);
                                 }
@@ -2721,10 +2850,9 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                             } else {
                                 Ok(None)
                             }
-                        },
-                    )
+                        })
                 },
-                &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+                &mut |crossing, polygon| classify_point_in_polygon(decisions, crossing, polygon),
             )
         },
     ) {
@@ -2741,7 +2869,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
     for x in &intervals[0] {
         for y in &intervals[1] {
             for z in &intervals[2] {
-                let bounds = match aabb_from_axis_intervals([x, y, z]) {
+                let bounds = match aabb_from_axis_intervals(decisions, [x, y, z]) {
                     Ok(bounds) => bounds,
                     Err(err) => {
                         return ProgressiveNoPlaneDetourSearchOutcome {
@@ -2782,35 +2910,49 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                         families,
                         &mut |detour| {
                             detour_target_no_plane_refined_rank_with_surface_queries(
+                                decisions,
                                 detour,
                                 start,
                                 end,
                                 polygons,
                                 &mut |edge_start, edge_end, polygon, axis| {
-                                    let start_class = classify_point(edge_start, &polygon.support)?;
-                                    let end_class = classify_point(edge_end, &polygon.support)?;
+                                    let start_class = classify_point_decision(
+                                        decisions,
+                                        edge_start,
+                                        &polygon.support,
+                                    )?;
+                                    let end_class = classify_point_decision(
+                                        decisions,
+                                        edge_end,
+                                        &polygon.support,
+                                    )?;
                                     if start_class == Classification::On {
                                         return Ok(Some(edge_start.clone()));
                                     }
                                     if end_class == Classification::On {
                                         return Ok(Some(edge_end.clone()));
                                     }
-                                    segment_plane_crossing(edge_start, edge_end, &polygon.support)
-                                        .and_then(|crossing| {
-                                            if let Some(crossing) = crossing {
-                                                if !point_strictly_between_axis(
-                                                    &crossing, edge_start, edge_end, axis,
-                                                )? {
-                                                    return Ok(None);
-                                                }
-                                                Ok(Some(crossing))
-                                            } else {
-                                                Ok(None)
+                                    segment_plane_crossing(
+                                        decisions,
+                                        edge_start,
+                                        edge_end,
+                                        &polygon.support,
+                                    )
+                                    .and_then(|crossing| {
+                                        if let Some(crossing) = crossing {
+                                            if !point_strictly_between_axis(
+                                                decisions, &crossing, edge_start, edge_end, axis,
+                                            )? {
+                                                return Ok(None);
                                             }
-                                        })
+                                            Ok(Some(crossing))
+                                        } else {
+                                            Ok(None)
+                                        }
+                                    })
                                 },
                                 &mut |crossing, polygon| {
-                                    classify_point_in_polygon(crossing, polygon)
+                                    classify_point_in_polygon(decisions, crossing, polygon)
                                 },
                                 start_definitions,
                                 end_definitions,
@@ -2820,6 +2962,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                         },
                         &mut |detour| {
                             evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+                                decisions,
                                 &detour,
                                 start,
                                 end,
@@ -2846,17 +2989,20 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                 } else {
                     let outcome =
                         search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome(
+                        decisions,
                         &bounds,
                         |bounds, halfspaces, report, local_unknown| {
                             let report = match report {
                                 Some(report) => Some(report.clone()),
                                 None => cached_optional_halfspace_feasibility_report_with(
+                                    decisions,
                                     &mut halfspace_report_cache_cell.borrow_mut(),
                                     halfspaces,
                                     local_unknown,
                                 )?,
                             };
                             cached_halfspace_cell_seed_families_from_optional_report_with(
+                                decisions,
                                 &mut halfspace_seed_family_cache_cell.borrow_mut(),
                                 bounds,
                                 halfspaces,
@@ -2866,23 +3012,38 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                         },
                         &mut |detour| {
                             detour_target_no_plane_refined_rank_with_surface_queries(
+                                decisions,
                                 detour,
                                 start,
                                 end,
                                 polygons,
                                 &mut |edge_start, edge_end, polygon, axis| {
-                                    let start_class = classify_point(edge_start, &polygon.support)?;
-                                    let end_class = classify_point(edge_end, &polygon.support)?;
+                                    let start_class = classify_point_decision(
+                                        decisions,
+                                        edge_start,
+                                        &polygon.support,
+                                    )?;
+                                    let end_class = classify_point_decision(
+                                        decisions,
+                                        edge_end,
+                                        &polygon.support,
+                                    )?;
                                     if start_class == Classification::On {
                                         return Ok(Some(edge_start.clone()));
                                     }
                                     if end_class == Classification::On {
                                         return Ok(Some(edge_end.clone()));
                                     }
-                                    segment_plane_crossing(edge_start, edge_end, &polygon.support)
-                                        .and_then(|crossing| {
+                                    segment_plane_crossing(
+                                        decisions,
+                                        edge_start,
+                                        edge_end,
+                                        &polygon.support,
+                                    )
+                                    .and_then(|crossing| {
                                             if let Some(crossing) = crossing {
                                                 if !point_strictly_between_axis(
+                                                    decisions,
                                                     &crossing, edge_start, edge_end, axis,
                                                 )? {
                                                     return Ok(None);
@@ -2894,7 +3055,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                                         })
                                 },
                                 &mut |crossing, polygon| {
-                                    classify_point_in_polygon(crossing, polygon)
+                                    classify_point_in_polygon(decisions, crossing, polygon)
                                 },
                                 start_definitions,
                                 end_definitions,
@@ -2904,6 +3065,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                         },
                         &mut |detour| {
                             evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+                                decisions,
                                 &detour,
                                 start,
                                 end,
@@ -2959,7 +3121,10 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                         };
                     }
                     Ok(false) => {}
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                         continue;
                     }
@@ -2988,6 +3153,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
 }
 
 fn detour_target_no_plane_refined_rank_with_surface_queries(
+    decisions: &DecisionContext,
     detour: &DetourTarget,
     start: &Point3,
     end: &Point3,
@@ -3025,6 +3191,7 @@ fn detour_target_no_plane_refined_rank_with_surface_queries(
         (0, 0, 0)
     } else {
         interior_box_axis_interval_counts_with_surface_queries(
+            decisions,
             interior_box_axis_intervals,
             start,
             &detour.point,
@@ -3037,6 +3204,7 @@ fn detour_target_no_plane_refined_rank_with_surface_queries(
         (0, 0, 0)
     } else {
         interior_box_axis_interval_counts_with_surface_queries(
+            decisions,
             interior_box_axis_intervals,
             &detour.point,
             end,
@@ -3058,6 +3226,7 @@ fn detour_target_no_plane_refined_rank_with_surface_queries(
 }
 
 fn interior_box_axis_interval_counts_with_surface_queries(
+    decisions: &DecisionContext,
     cache: &mut InteriorBoxAxisIntervalsCache,
     start: &Point3,
     end: &Point3,
@@ -3073,6 +3242,7 @@ fn interior_box_axis_interval_counts_with_surface_queries(
     let (intervals, _) =
         cached_interior_box_axis_intervals_with_surface_queries(cache, start, end, || {
             interior_box_axis_intervals_with_surface_queries(
+                decisions,
                 start,
                 end,
                 polygons,
@@ -3086,7 +3256,9 @@ fn interior_box_axis_interval_counts_with_surface_queries(
 fn direct_precheck_rank(result: HypermeshResult<bool>) -> HypermeshResult<u8> {
     match result {
         Ok(true) => Ok(0),
-        Err(HypermeshError::UnknownClassification) => Ok(1),
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
+            Ok(1)
+        }
         Ok(false) => Ok(2),
         Err(err) => Err(err),
     }
@@ -3094,6 +3266,7 @@ fn direct_precheck_rank(result: HypermeshResult<bool>) -> HypermeshResult<u8> {
 
 #[cfg(test)]
 pub(super) fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     start_definitions: &[[Plane; 3]],
@@ -3110,6 +3283,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surfac
     detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
     probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+        decisions,
         start,
         end,
         start_definitions,
@@ -3129,6 +3303,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surfac
 }
 
 pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     start_definitions: &[[Plane; 3]],
@@ -3181,7 +3356,10 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
                     unresolved_edge = Some(index);
                     break;
                 }
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     unresolved_edge = Some(index);
                     break;
@@ -3198,7 +3376,9 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
         let mut detours = match detour_batch_for(&edge_start.point, &edge_end.point, batch_index) {
             Ok(Some(detours)) => detours,
             Ok(None) => continue,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -3227,9 +3407,12 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
             let detour_cell = if arrangement_planes.is_empty() {
                 None
             } else {
-                match detour_arrangement_cell(&detour.point, arrangement_planes) {
+                match detour_arrangement_cell(decisions, &detour.point, arrangement_planes) {
                     Ok(cell) => Some(cell),
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                         continue;
                     }
@@ -3244,13 +3427,17 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
                 );
                 if !revisits_cell {
                     for visited in &path {
-                        match detour_arrangement_cell(&visited.point, arrangement_planes) {
+                        match detour_arrangement_cell(decisions, &visited.point, arrangement_planes)
+                        {
                             Ok(cell) if cell == *detour_cell => {
                                 revisits_cell = true;
                                 break;
                             }
                             Ok(_) => {}
-                            Err(HypermeshError::UnknownClassification) => {
+                            Err(
+                                HypermeshError::PredicateUndecided { .. }
+                                | HypermeshError::UnknownClassification,
+                            ) => {
                                 saw_unknown = true;
                             }
                             Err(err) => return Err(err),
@@ -3267,7 +3454,10 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
                 }) {
                     Ok(true) => continue,
                     Ok(false) => {}
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                         continue;
                     }
@@ -3294,7 +3484,10 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
                         complete = false;
                         break;
                     }
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                         complete = false;
                         break;
@@ -3332,6 +3525,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
 }
 
 fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     host_support: &Plane,
@@ -3375,6 +3569,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                         affine_cache,
                         |current, next, current_definitions, next_definitions| {
                             probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+                                decisions,
                                 current,
                                 next,
                                 host_support,
@@ -3393,6 +3588,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                 },
             )?;
             plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+                decisions,
                 &ordered,
                 start_planes,
                 end_planes,
@@ -3402,6 +3598,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                 trace_bounds,
                 |current, next, current_definitions, next_definitions| {
                     probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replacement_from_definitions_with(
+                        decisions,
                         current,
                         next,
                         polygons,
@@ -3421,6 +3618,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                          start_definitions: &[[Plane; 3]],
                          end_definitions: &[[Plane; 3]]| {
                             probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+                                decisions,
                                 start,
                                 end,
                                 host_support,
@@ -3436,7 +3634,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                             )
                         },
                         |start: &Point3, end: &Point3| {
-                            interior_box_detour_targets(start, end, polygons)
+                            interior_box_detour_targets(decisions, start, end, polygons)
                         },
                     )
                 },
@@ -3447,6 +3645,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
 
 #[cfg(test)]
 pub(super) fn plane_replacement_path_reaches_adjacent_cell_without_step_detours(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     host_support: &Plane,
@@ -3456,6 +3655,7 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_without_step_detours(
     let mut path_cache = PlaneReplacementReachabilityPathCache::default();
     let mut step_cache = PlaneReplacementReachabilityStepCache::default();
     plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
+        decisions,
         start_planes,
         end_planes,
         host_support,
@@ -3468,6 +3668,7 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_without_step_detours(
 }
 
 pub(super) fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     host_support: &Plane,
@@ -3488,11 +3689,12 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_
                 end_planes,
                 affine_cache,
                 |current, next, _current_definitions, _next_definitions| {
-                    probe_reaches_adjacent_cell(current, next, host_support, polygons)
+                    probe_reaches_adjacent_cell(decisions, current, next, host_support, polygons)
                 },
             )?;
             let result =
                 plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+                    decisions,
                     &ordered,
                     start_planes,
                     end_planes,
@@ -3501,14 +3703,24 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_
                     step_cache,
                     trace_bounds,
                     |current, next, _current_definitions, _next_definitions| {
-                        probe_reaches_adjacent_cell(current, next, host_support, polygons)
+                        probe_reaches_adjacent_cell(
+                            decisions,
+                            current,
+                            next,
+                            host_support,
+                            polygons,
+                        )
                     },
                 );
             match result {
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     // A shared polyline vertex supplies the incident sides that
                     // independent step checks lack at an endpoint contact.
                     plane_replacement_orderings_reach_adjacent_cell_as_polylines(
+                        decisions,
                         &ordered,
                         start_planes,
                         end_planes,
@@ -3525,6 +3737,7 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_
 }
 
 fn plane_replacement_orderings_reach_adjacent_cell_as_polylines(
+    decisions: &DecisionContext,
     orderings: &[[usize; 3]],
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
@@ -3540,12 +3753,19 @@ fn plane_replacement_orderings_reach_adjacent_cell_as_polylines(
             match cached_affine_from_planes_with(&mut *affine_cache, &current_planes, || {
                 affine_from_planes(&current_planes)
             }) {
-                Ok(point) if point_is_inside_optional_trace_bounds(&point, trace_bounds)? => point,
+                Ok(point)
+                    if point_is_inside_optional_trace_bounds(decisions, &point, trace_bounds)? =>
+                {
+                    point
+                }
                 Ok(_) => {
                     saw_unknown = true;
                     continue;
                 }
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     continue;
                 }
@@ -3566,20 +3786,28 @@ fn plane_replacement_orderings_reach_adjacent_cell_as_polylines(
                 }) {
                     Ok(point) => {
                         if next_planes == *end_planes
-                            && !point_is_inside_optional_trace_bounds(&point, trace_bounds)?
+                            && !point_is_inside_optional_trace_bounds(
+                                decisions,
+                                &point,
+                                trace_bounds,
+                            )?
                         {
                             saw_unknown = true;
                             valid = false;
                             break;
                         }
                         adapt_plane_replacement_vertex_to_trace_bounds(
+                            decisions,
                             point,
                             next_planes.clone(),
                             trace_bounds,
                         )?
                         .0
                     }
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                         valid = false;
                         break;
@@ -3595,10 +3823,12 @@ fn plane_replacement_orderings_reach_adjacent_cell_as_polylines(
             continue;
         }
 
-        match probe_polyline_reaches_adjacent_cell(&points, host_support, polygons) {
+        match probe_polyline_reaches_adjacent_cell(decisions, &points, host_support, polygons) {
             Ok(true) => return Ok(true),
             Ok(false) => {}
-            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => saw_unknown = true,
             Err(err) => return Err(err),
         }
     }
@@ -3612,6 +3842,7 @@ fn plane_replacement_orderings_reach_adjacent_cell_as_polylines(
 
 #[cfg(test)]
 pub(super) fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+    decisions: &DecisionContext,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     mode: PlaneReplacementReachabilityStepMode,
@@ -3620,6 +3851,7 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_imp
     trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+        decisions,
         &AXIS_ORDERINGS,
         start_planes,
         end_planes,
@@ -3632,6 +3864,7 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_imp
 }
 
 pub(super) fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+    decisions: &DecisionContext,
     orderings: &[[usize; 3]],
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
@@ -3648,12 +3881,19 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for
             match cached_affine_from_planes_with(&mut *affine_cache, &current_planes, || {
                 affine_from_planes(&current_planes)
             }) {
-                Ok(point) if point_is_inside_optional_trace_bounds(&point, trace_bounds)? => point,
+                Ok(point)
+                    if point_is_inside_optional_trace_bounds(decisions, &point, trace_bounds)? =>
+                {
+                    point
+                }
                 Ok(_) => {
                     saw_unknown = true;
                     continue;
                 }
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     continue;
                 }
@@ -3674,19 +3914,27 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for
                 }) {
                     Ok(point) => {
                         if next_planes == *end_planes
-                            && !point_is_inside_optional_trace_bounds(&point, trace_bounds)?
+                            && !point_is_inside_optional_trace_bounds(
+                                decisions,
+                                &point,
+                                trace_bounds,
+                            )?
                         {
                             saw_unknown = true;
                             valid = false;
                             break;
                         }
                         adapt_plane_replacement_vertex_to_trace_bounds(
+                            decisions,
                             point,
                             next_planes.clone(),
                             trace_bounds,
                         )?
                     }
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                         valid = false;
                         break;
@@ -3710,7 +3958,10 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for
                 },
             ) {
                 Ok(reachable) => reachable,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     valid = false;
                     break;
@@ -3782,7 +4033,9 @@ fn ordering_no_step_precheck_key(
             affine_from_planes(&current_planes)
         }) {
             Ok(point) => point,
-            Err(HypermeshError::UnknownClassification) => return Ok([3, 3, 3]),
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => return Ok([3, 3, 3]),
             Err(err) => return Err(err),
         };
 
@@ -3798,7 +4051,10 @@ fn ordering_no_step_precheck_key(
                 affine_from_planes(&next_planes)
             }) {
                 Ok(point) => point,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     key[step_index] = 3;
                     break;
                 }
@@ -3807,7 +4063,9 @@ fn ordering_no_step_precheck_key(
         key[step_index] = match precheck(&current_point, &next_point, &current_planes, &next_planes)
         {
             Ok(true) => 0,
-            Err(HypermeshError::UnknownClassification) => 1,
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => 1,
             Ok(false) => 2,
             Err(err) => return Err(err),
         };

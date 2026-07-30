@@ -5,13 +5,15 @@ use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use hypermesh::{
-    BooleanOp, EmberConfig, ExactGpuMeshBuffers, Point3, Real, approximate_gpu_mesh_f32,
-    approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
+    BooleanOp, EmberConfig, ExactGpuMeshBuffers, MeshContext, Point3, PredicatePolicy, Real,
+    approximate_gpu_mesh_f32, approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
     approximate_interleaved_gpu_mesh_f64, boolean_mesh, boolean_mesh_with_certified_convex_inputs,
     boolean_operation, convex_hull, convex_hull_with_coplanar_groups,
     convex_hull_with_retained_facts, convex_quad, convex_triangle, extract_output, polygon_soup,
     triangulate_and_resolve_certified,
 };
+
+const CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn curved_shell(segments: usize, stacks: usize) -> Vec<Point3> {
     let mut unique = Vec::with_capacity(segments * (stacks - 1) + 2);
@@ -51,17 +53,21 @@ fn bench_end_to_end(c: &mut Criterion) {
     c.bench_function("convex_polygon/triangle_construction", |b| {
         b.iter(|| {
             convex_triangle(
+                &CONTEXT,
                 black_box(&p0),
                 black_box(&p1),
                 black_box(&p3),
                 black_box(0),
                 black_box(0),
             )
+            .expect("benchmark triangle is valid")
+            .into_value()
         })
     });
     c.bench_function("convex_polygon/quad_construction", |b| {
         b.iter(|| {
             convex_quad(
+                &CONTEXT,
                 black_box(&p0),
                 black_box(&p1),
                 black_box(&p2),
@@ -69,21 +75,25 @@ fn bench_end_to_end(c: &mut Criterion) {
                 black_box(0),
                 black_box(0),
             )
+            .expect("benchmark quad is valid")
+            .into_value()
         })
     });
     c.bench_function("build_polygon_soup/cube_pair", |b| {
         b.iter(|| {
-            polygon_soup(black_box(&[cubes[0].as_ref(), cubes[1].as_ref()]))
+            polygon_soup(&CONTEXT, black_box(&[cubes[0].as_ref(), cubes[1].as_ref()]))
                 .expect("benchmark mesh is valid")
+                .into_value()
         })
     });
     c.bench_function("build_polygon_soup/subdivided_cube_pair_3072_each", |b| {
         b.iter(|| {
-            polygon_soup(black_box(&[
-                subdivided_cubes[0].as_ref(),
-                subdivided_cubes[1].as_ref(),
-            ]))
+            polygon_soup(
+                &CONTEXT,
+                black_box(&[subdivided_cubes[0].as_ref(), subdivided_cubes[1].as_ref()]),
+            )
             .expect("benchmark mesh is valid")
+            .into_value()
         })
     });
 
@@ -105,11 +115,13 @@ fn bench_end_to_end(c: &mut Criterion) {
             group.bench_with_input(BenchmarkId::new(name, format!("{op:?}")), &op, |b, op| {
                 b.iter(|| {
                     boolean_operation(
+                        &CONTEXT,
                         black_box(&[meshes[0].as_ref(), meshes[1].as_ref()]),
                         *op,
                         EmberConfig::default(),
                     )
                     .expect("benchmark boolean is certified")
+                    .into_value()
                 })
             });
         }
@@ -133,8 +145,14 @@ fn bench_end_to_end(c: &mut Criterion) {
             &operation,
             |b, operation| {
                 b.iter(|| {
-                    boolean_operation(black_box(&cube_refs), *operation, EmberConfig::default())
-                        .expect("cube Boolean is certified")
+                    boolean_operation(
+                        &CONTEXT,
+                        black_box(&cube_refs),
+                        *operation,
+                        EmberConfig::default(),
+                    )
+                    .expect("cube Boolean is certified")
+                    .into_value()
                 })
             },
         );
@@ -143,8 +161,14 @@ fn bench_end_to_end(c: &mut Criterion) {
             &operation,
             |b, operation| {
                 b.iter(|| {
-                    boolean_mesh(black_box(&cube_refs), *operation, EmberConfig::default())
-                        .expect("cube triangle soup is certified")
+                    boolean_mesh(
+                        &CONTEXT,
+                        black_box(&cube_refs),
+                        *operation,
+                        EmberConfig::default(),
+                    )
+                    .expect("cube triangle soup is certified")
+                    .into_value()
                 })
             },
         );
@@ -154,12 +178,14 @@ fn bench_end_to_end(c: &mut Criterion) {
             |b, operation| {
                 b.iter(|| {
                     boolean_mesh_with_certified_convex_inputs(
+                        &CONTEXT,
                         black_box(&cube_refs),
                         *operation,
                         &[true, true],
                         EmberConfig::default(),
                     )
                     .expect("certified-convex cube triangle soup is certified")
+                    .into_value()
                 })
             },
         );
@@ -174,11 +200,13 @@ fn bench_end_to_end(c: &mut Criterion) {
     c.bench_function("boolean_operation/nested_tools_5/Difference", |b| {
         b.iter(|| {
             boolean_operation(
+                &CONTEXT,
                 black_box(&nested_tool_refs),
                 BooleanOp::Difference,
                 EmberConfig::default(),
             )
             .expect("benchmark variadic difference is certified")
+            .into_value()
         })
     });
 
@@ -190,25 +218,30 @@ fn bench_end_to_end(c: &mut Criterion) {
     large_group.bench_function("Union", |b| {
         b.iter(|| {
             boolean_operation(
+                &CONTEXT,
                 black_box(&[subdivided_cubes[0].as_ref(), subdivided_cubes[1].as_ref()]),
                 BooleanOp::Union,
                 EmberConfig::default(),
             )
             .expect("subdivided cube benchmark is certified")
+            .into_value()
         })
     });
     large_group.finish();
 
     let cube_union = boolean_operation(
+        &CONTEXT,
         &[cubes[0].as_ref(), cubes[1].as_ref()],
         BooleanOp::Union,
         EmberConfig::default(),
     )
-    .expect("benchmark boolean is certified");
+    .expect("benchmark boolean is certified")
+    .into_value();
     c.bench_function("output/cube_union_triangulate_certified", |b| {
         b.iter(|| {
-            triangulate_and_resolve_certified(black_box(&cube_union))
+            triangulate_and_resolve_certified(&CONTEXT, black_box(&cube_union))
                 .expect("benchmark output is certified")
+                .into_value()
         })
     });
     c.bench_function("output/cube_union_extract_public_views", |b| {
@@ -283,19 +316,31 @@ fn bench_end_to_end(c: &mut Criterion) {
         })
         .collect::<Vec<_>>();
     c.bench_function("convex_hull/grid_4913", |b| {
-        b.iter(|| convex_hull(black_box(&hull_points)).expect("point set spans 3D"))
+        b.iter(|| {
+            convex_hull(&CONTEXT, black_box(&hull_points))
+                .expect("point set spans 3D")
+                .into_value()
+        })
     });
 
     let moment_curve = (-32_i64..32)
         .map(|t| Point3::new(Real::from(t), Real::from(t * t), Real::from(t * t * t)))
         .collect::<Vec<_>>();
     c.bench_function("convex_hull/moment_curve_64", |b| {
-        b.iter(|| convex_hull(black_box(&moment_curve)).expect("point set spans 3D"))
+        b.iter(|| {
+            convex_hull(&CONTEXT, black_box(&moment_curve))
+                .expect("point set spans 3D")
+                .into_value()
+        })
     });
 
     let curved_shell = curved_shell(16, 8);
     c.bench_function("convex_hull/curved_shell_684", |b| {
-        b.iter(|| convex_hull(black_box(&curved_shell)).expect("point set spans 3D"))
+        b.iter(|| {
+            convex_hull(&CONTEXT, black_box(&curved_shell))
+                .expect("point set spans 3D")
+                .into_value()
+        })
     });
 
     let retained_points = vec![
@@ -312,18 +357,21 @@ fn bench_end_to_end(c: &mut Criterion) {
     ];
     c.bench_function("convex_hull/tetra_coplanar_group_api", |b| {
         b.iter(|| {
-            convex_hull_with_coplanar_groups(black_box(&retained_points), black_box(&[]))
+            convex_hull_with_coplanar_groups(&CONTEXT, black_box(&retained_points), black_box(&[]))
                 .expect("tetrahedron spans 3D")
+                .into_value()
         })
     });
     c.bench_function("convex_hull/tetra_retained_facts_api", |b| {
         b.iter(|| {
             convex_hull_with_retained_facts(
+                &CONTEXT,
                 black_box(&retained_points),
                 black_box(&[]),
                 black_box(&retained_coordinate_ids),
             )
             .expect("retained tetrahedron spans 3D")
+            .into_value()
         })
     });
 }

@@ -6,16 +6,17 @@ use std::sync::{Arc, Mutex, OnceLock};
 
 use hyperlattice::{Aabb as ExactAabb, Matrix4, Point3, Rational, Real, RealSign, Vector3};
 
+use crate::context::{DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Aabb, Classification, Plane, axis_ref, classify_point, compare_real};
+use crate::geometry::{Aabb, Classification, Plane, axis_ref, compare_real_decision};
 use crate::output::TriangleSource;
 use crate::polygon::{
-    ConvexPolygon, InputTrianglePlanes, convex_triangle, edge_plane,
+    ConvexPolygon, InputTrianglePlanes, convex_triangle_decision, edge_plane,
     exact_axis_aligned_triangle_support, make_indexed_triangle_with_deferred_edges,
     make_indexed_triangle_with_deferred_edges_and_input_planes, make_triangle_with_input_planes,
 };
+use crate::predicate::{classify_point_decision, points_equal};
 use crate::storage_hash::StorageHashMap;
-use crate::winding::BooleanOp;
 
 /// Triangle: three indices into a [`TriangleMesh`]'s position buffer.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -42,7 +43,6 @@ impl Triangle {
 
 #[derive(Debug, Default)]
 pub(crate) struct TriangleMeshFacts {
-    input_planes: OnceLock<Option<Arc<[InputTrianglePlanes]>>>,
     input_plane_sources: Option<Arc<[TriangleSource]>>,
     input_polygons: OnceLock<Option<Arc<[ConvexPolygon]>>>,
     exact_bounds: OnceLock<Option<ExactAabb>>,
@@ -55,18 +55,13 @@ pub(crate) struct TriangleMeshFacts {
         OnceLock<Result<crate::gpu::ExactGpuMeshBuffers, crate::gpu::GpuMeshError>>,
     pub(crate) gpu_f32: OnceLock<Result<crate::gpu::GpuMeshBuffersF32, crate::gpu::GpuMeshError>>,
     pub(crate) gpu_f64: OnceLock<Result<crate::gpu::GpuMeshBuffersF64, crate::gpu::GpuMeshError>>,
-    certified_convex: OnceLock<bool>,
+    certified_convex: OnceLock<MeshCertainty>,
     axis_aligned_box: OnceLock<Option<ExactAabb>>,
-    convex_hull: OnceLock<Result<TriangleMesh, HypermeshError>>,
     transforms: Mutex<Vec<(Matrix4, TriangleMesh)>>,
     rotations: Mutex<Vec<([Real; 3], TriangleMesh)>>,
     reversed_winding: OnceLock<TriangleMesh>,
     subdivisions: Mutex<Vec<(NonZeroU32, TriangleMesh)>>,
-    boolean_results: Mutex<Vec<(Arc<[Point3]>, Arc<[Triangle]>, BooleanOp, TriangleMesh)>>,
-    ray_queries: Mutex<Vec<(Point3, Vector3, Arc<[(Point3, Real)]>)>>,
-    containment_queries: Mutex<Vec<(Point3, bool)>>,
     laplacian_smoothings: Mutex<Vec<(Real, usize, TriangleMesh)>>,
-    unique_nondegenerate_triangles: OnceLock<bool>,
 }
 
 /// Canonical owned triangle mesh.
@@ -117,62 +112,77 @@ impl TriangleMesh {
         self
     }
 
-    pub(crate) fn retained_input_planes(&self) -> Option<&[InputTrianglePlanes]> {
-        self.facts
-            .input_planes
-            .get_or_init(|| self.build_retained_input_planes().map(Arc::from))
-            .as_deref()
+    pub(crate) fn retained_input_planes(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Option<Vec<InputTrianglePlanes>>> {
+        self.build_retained_input_planes(decisions)
     }
 
     pub(crate) fn retained_input_polygons(&self) -> Option<&[ConvexPolygon]> {
         self.facts.input_polygons.get()?.as_deref()
     }
 
-    fn build_retained_input_planes(&self) -> Option<Vec<InputTrianglePlanes>> {
-        let sources = self.facts.input_plane_sources.as_deref()?;
-        let polygons = self.retained_input_polygons()?;
+    pub(crate) fn has_retained_input_plane_sources(&self) -> bool {
+        self.facts.input_plane_sources.is_some()
+    }
+
+    fn build_retained_input_planes(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Option<Vec<InputTrianglePlanes>>> {
+        let Some(sources) = self.facts.input_plane_sources.as_deref() else {
+            return Ok(None);
+        };
+        let Some(polygons) = self.retained_input_polygons() else {
+            return Ok(None);
+        };
         if sources.len() != self.triangles.len() {
-            return None;
+            return Ok(None);
         }
         let polygon_by_source = polygons
             .iter()
             .map(|polygon| (polygon.polygon_index, polygon))
             .collect::<HashMap<_, _>>();
-        self.triangles
-            .iter()
-            .zip(sources)
-            .map(|(triangle, source)| {
-                let [a, b, c] = triangle.indices();
-                let [p0, p1, p2] = [
-                    self.positions.get(a)?,
-                    self.positions.get(b)?,
-                    self.positions.get(c)?,
-                ];
-                let source_polygon = polygon_by_source.get(&source.triangle).copied();
-                let support = source_polygon
-                    .map(|polygon| polygon.support.clone())
-                    .unwrap_or_else(|| Plane::from_points(p0, p1, p2));
-                let source_edges = source_polygon
-                    .map(|polygon| polygon.edges.as_slice())
-                    .unwrap_or(&[]);
-                let retained_edge = |a: &Point3, b: &Point3, opposite: &Point3| {
-                    source_edges
-                        .iter()
-                        .find_map(|plane| oriented_retained_edge_plane(a, b, opposite, plane))
-                        .unwrap_or_else(|| {
-                            edge_plane(a, b, opposite, &support).normalized_projective_scale()
-                        })
+        let mut planes = Vec::with_capacity(self.triangles.len());
+        for (triangle, source) in self.triangles.iter().zip(sources) {
+            let [a, b, c] = triangle.indices();
+            let [Some(p0), Some(p1), Some(p2)] = [
+                self.positions.get(a),
+                self.positions.get(b),
+                self.positions.get(c),
+            ] else {
+                return Ok(None);
+            };
+            let source_polygon = polygon_by_source.get(&source.triangle).copied();
+            let support = source_polygon
+                .map(|polygon| polygon.support.clone())
+                .unwrap_or_else(|| Plane::from_points(p0, p1, p2));
+            let source_edges = source_polygon
+                .map(|polygon| polygon.edges.as_slice())
+                .unwrap_or(&[]);
+            let retained_edge =
+                |a: &Point3, b: &Point3, opposite: &Point3| -> HypermeshResult<Plane> {
+                    for plane in source_edges {
+                        if let Some(oriented) =
+                            oriented_retained_edge_plane(decisions, a, b, opposite, plane)?
+                        {
+                            return Ok(oriented);
+                        }
+                    }
+                    Ok(edge_plane(decisions, a, b, opposite, &support)?
+                        .normalized_projective_scale())
                 };
-                Some(InputTrianglePlanes {
-                    edges: [
-                        retained_edge(p0, p1, p2),
-                        retained_edge(p1, p2, p0),
-                        retained_edge(p2, p0, p1),
-                    ],
-                    support,
-                })
-            })
-            .collect()
+            planes.push(InputTrianglePlanes {
+                edges: [
+                    retained_edge(p0, p1, p2)?,
+                    retained_edge(p1, p2, p0)?,
+                    retained_edge(p2, p0, p1)?,
+                ],
+                support,
+            });
+        }
+        Ok(Some(planes))
     }
 
     /// Returns a borrowed mesh view.
@@ -254,33 +264,40 @@ impl TriangleMesh {
     /// Position rows are canonicalized by exact coordinate equality before
     /// triangle keys are compared, so independently indexed duplicate faces
     /// are rejected as well.
-    pub fn has_unique_nondegenerate_triangles(&self) -> bool {
-        *self.facts.unique_nondegenerate_triangles.get_or_init(|| {
-            let Ok(canonical_indices) = canonical_position_indices(&self.positions) else {
-                return false;
+    pub fn has_unique_nondegenerate_triangles(
+        &self,
+        context: &MeshContext,
+    ) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let unique = self.has_unique_nondegenerate_triangles_decision(&decisions)?;
+        Ok(decisions.finish(unique))
+    }
+
+    pub(crate) fn has_unique_nondegenerate_triangles_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<bool> {
+        let canonical_indices = canonical_position_indices(decisions, &self.positions)?;
+        let mut seen = BTreeSet::new();
+        for triangle in self.triangles.iter() {
+            let indices = triangle.indices();
+            let [Some(a), Some(b), Some(c)] = indices.map(|index| self.positions.get(index)) else {
+                return Ok(false);
             };
-            let mut seen = BTreeSet::new();
-            for triangle in self.triangles.iter() {
-                let indices = triangle.indices();
-                let [Some(a), Some(b), Some(c)] = indices.map(|index| self.positions.get(index))
-                else {
-                    return false;
-                };
-                let mut key = indices.map(|index| canonical_indices[index]);
-                if key[0] == key[1]
-                    || key[1] == key[2]
-                    || key[0] == key[2]
-                    || !Plane::points_are_nondegenerate(a, b, c)
-                {
-                    return false;
-                }
-                key.sort_unstable();
-                if !seen.insert(key) {
-                    return false;
-                }
+            let mut key = indices.map(|index| canonical_indices[index]);
+            if key[0] == key[1]
+                || key[1] == key[2]
+                || key[0] == key[2]
+                || !Plane::decide_points_are_nondegenerate(decisions, a, b, c)?
+            {
+                return Ok(false);
             }
-            true
-        })
+            key.sort_unstable();
+            if !seen.insert(key) {
+                return Ok(false);
+            }
+        }
+        Ok(true)
     }
 
     /// Checks exact geometric edge pairing for a closed, consistently
@@ -290,13 +307,25 @@ impl TriangleMesh {
     /// indexed position rows by exact coordinate equality. Duplicate faces,
     /// degenerate faces, and geometrically non-manifold edge valence are
     /// rejected.
-    pub fn is_closed_manifold_geometry(&self) -> bool {
-        if self.triangles.is_empty() || !self.has_unique_nondegenerate_triangles() {
-            return false;
+    pub fn is_closed_manifold_geometry(
+        &self,
+        context: &MeshContext,
+    ) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let closed = self.is_closed_manifold_geometry_decision(&decisions)?;
+        Ok(decisions.finish(closed))
+    }
+
+    pub(crate) fn is_closed_manifold_geometry_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<bool> {
+        if self.triangles.is_empty()
+            || !self.has_unique_nondegenerate_triangles_decision(decisions)?
+        {
+            return Ok(false);
         }
-        let Ok(canonical_indices) = canonical_position_indices(&self.positions) else {
-            return false;
-        };
+        let canonical_indices = canonical_position_indices(decisions, &self.positions)?;
         let mut edges = HashMap::<[usize; 2], [usize; 2]>::new();
         for triangle in self.triangles.iter() {
             let [a, b, c] = triangle.indices().map(|index| canonical_indices[index]);
@@ -309,27 +338,60 @@ impl TriangleMesh {
                 edges.entry(key).or_default()[direction] += 1;
             }
         }
-        edges.values().all(|uses| *uses == [1, 1])
+        Ok(edges.values().all(|uses| *uses == [1, 1]))
     }
 
-    /// Returns retained exact bounds, or `None` for empty geometry.
-    pub fn exact_bounds(&self) -> Option<&ExactAabb> {
-        self.facts
-            .exact_bounds
-            .get_or_init(|| {
-                let first = self.positions.first()?.clone();
-                let mut bounds = ExactAabb::new(first.clone(), first);
-                for point in &self.positions[1..] {
-                    bounds.mins.x = bounds.mins.x.min(&point.x).clone();
-                    bounds.mins.y = bounds.mins.y.min(&point.y).clone();
-                    bounds.mins.z = bounds.mins.z.min(&point.z).clone();
-                    bounds.maxs.x = bounds.maxs.x.max(&point.x).clone();
-                    bounds.maxs.y = bounds.maxs.y.max(&point.y).clone();
-                    bounds.maxs.z = bounds.maxs.z.max(&point.z).clone();
+    /// Returns policy-certified exact bounds, or `None` for empty geometry.
+    pub fn exact_bounds(
+        &self,
+        context: &MeshContext,
+    ) -> HypermeshResult<MeshOutcome<Option<ExactAabb>>> {
+        let decisions = DecisionContext::new(context);
+        let bounds = self.exact_bounds_decision(&decisions)?;
+        Ok(decisions.finish(bounds))
+    }
+
+    pub(crate) fn exact_bounds_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Option<ExactAabb>> {
+        if let Some(bounds) = self.facts.exact_bounds.get() {
+            return Ok(bounds.clone());
+        }
+
+        let local = decisions.isolated();
+        let bounds = self.compute_exact_bounds_decision(&local);
+        decisions.absorb(local.certainty());
+        let bounds = bounds?;
+        if local.certainty() == crate::MeshCertainty::Certified {
+            let _ = self.facts.exact_bounds.set(bounds.clone());
+            return Ok(self.facts.exact_bounds.get().cloned().unwrap_or(bounds));
+        }
+        Ok(bounds)
+    }
+
+    fn compute_exact_bounds_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Option<ExactAabb>> {
+        let Some(first) = self.positions.first().cloned() else {
+            return Ok(None);
+        };
+        let mut bounds = ExactAabb::new(first.clone(), first);
+        for point in &self.positions[1..] {
+            for axis in 0..3 {
+                let value = axis_ref(point, axis);
+                let minimum = axis_ref(&bounds.mins, axis);
+                if compare_real_decision(decisions, value, minimum)?.is_lt() {
+                    *crate::geometry::axis_mut(&mut bounds.mins, axis) = value.clone();
                 }
-                Some(bounds)
-            })
-            .as_ref()
+                let maximum = axis_ref(&bounds.maxs, axis);
+                if compare_real_decision(decisions, value, maximum)?.is_gt() {
+                    *crate::geometry::axis_mut(&mut bounds.maxs, axis) = value.clone();
+                }
+            }
+        }
+        Ok(Some(bounds))
     }
 
     /// Returns a retained finite projection of every exact position.
@@ -384,157 +446,152 @@ impl TriangleMesh {
     /// remains responsible for all per-operation support geometry.
     #[doc(hidden)]
     pub fn with_certified_convexity(self) -> Self {
-        let _ = self.facts.certified_convex.set(true);
+        self.with_convexity_certainty(MeshCertainty::Certified)
+    }
+
+    pub(crate) fn with_convexity_certainty(self, certainty: MeshCertainty) -> Self {
+        let _ = self.facts.certified_convex.set(certainty);
         self
     }
 
     /// Certifies this mesh as a closed, outward-oriented convex PWN and
     /// retains that fact for subsequent native Boolean operations.
-    pub fn try_certify_convex(self) -> HypermeshResult<Self> {
-        certify_convex_mesh(self.as_ref())?;
-        Ok(self.with_certified_convexity())
+    pub fn try_certify_convex(self, context: &MeshContext) -> HypermeshResult<MeshOutcome<Self>> {
+        let decisions = DecisionContext::new(context);
+        certify_convex_mesh_decision(&decisions, self.as_ref())?;
+        let mesh = self.with_convexity_certainty(decisions.certainty());
+        Ok(decisions.finish(mesh))
     }
 
     /// Returns the retained exact convex hull of this mesh's native positions.
-    pub fn convex_hull(&self) -> HypermeshResult<Self> {
-        self.facts
-            .convex_hull
-            .get_or_init(|| crate::convex_hull(&self.positions))
-            .clone()
+    pub fn convex_hull(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<Self>> {
+        crate::convex_hull(context, &self.positions)
     }
 
-    pub(crate) fn has_certified_convex_fact(&self) -> bool {
-        self.facts.certified_convex.get().copied().unwrap_or(false)
-    }
-
-    /// Returns a retained Boolean result for the same immutable operand pair.
-    #[doc(hidden)]
-    pub fn retained_boolean_result(&self, other: &Self, operation: BooleanOp) -> Option<Self> {
-        self.facts
-            .boolean_results
-            .lock()
-            .ok()?
-            .iter()
-            .find(|(positions, triangles, cached_operation, _)| {
-                Arc::ptr_eq(positions, &other.positions)
-                    && Arc::ptr_eq(triangles, &other.triangles)
-                    && *cached_operation == operation
-            })
-            .map(|(_, _, _, result)| result.clone())
-    }
-
-    /// Retains a reusable Boolean result for this immutable operand pair.
-    #[doc(hidden)]
-    pub fn retain_boolean_result(&self, other: &Self, operation: BooleanOp, result: &Self) {
-        if Arc::ptr_eq(&self.facts, &result.facts) || Arc::ptr_eq(&other.facts, &result.facts) {
-            return;
-        }
-        if let Ok(mut results) = self.facts.boolean_results.lock() {
-            if let Some((_, _, _, cached)) =
-                results
-                    .iter_mut()
-                    .find(|(positions, triangles, cached_operation, _)| {
-                        Arc::ptr_eq(positions, &other.positions)
-                            && Arc::ptr_eq(triangles, &other.triangles)
-                            && *cached_operation == operation
-                    })
+    pub(crate) fn has_certified_convex_fact(&self, decisions: &DecisionContext) -> bool {
+        match self.facts.certified_convex.get().copied() {
+            Some(MeshCertainty::Certified) => true,
+            Some(MeshCertainty::Approximate512Consumed)
+                if decisions.policy() == hyperlimit::PredicatePolicy::APPROXIMATE_512 =>
             {
-                *cached = result.clone();
-                return;
+                decisions.absorb(MeshCertainty::Approximate512Consumed);
+                true
             }
-            const CAPACITY: usize = 8;
-            if results.len() == CAPACITY {
-                results.remove(0);
-            }
-            results.push((
-                Arc::clone(&other.positions),
-                Arc::clone(&other.triangles),
-                operation,
-                result.clone(),
-            ));
+            _ => false,
         }
     }
 
-    /// Returns retained exact bounds when the native rows form a complete
+    /// Returns policy-certified bounds when the native rows form one complete
     /// axis-aligned box surface.
-    pub fn axis_aligned_box_bounds(&self) -> Option<&ExactAabb> {
-        self.facts
-            .axis_aligned_box
-            .get_or_init(|| {
-                if self.positions.len() != 8 || self.triangles.len() != 12 {
-                    return None;
-                }
-                let bounds = self.exact_bounds()?.clone();
-                if bounds.mins.x == bounds.maxs.x
-                    || bounds.mins.y == bounds.maxs.y
-                    || bounds.mins.z == bounds.maxs.z
+    pub fn axis_aligned_box_bounds(
+        &self,
+        context: &MeshContext,
+    ) -> HypermeshResult<MeshOutcome<Option<ExactAabb>>> {
+        let decisions = DecisionContext::new(context);
+        let bounds = self.axis_aligned_box_bounds_decision(&decisions)?;
+        Ok(decisions.finish(bounds))
+    }
+
+    pub(crate) fn axis_aligned_box_bounds_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Option<ExactAabb>> {
+        if let Some(bounds) = self.facts.axis_aligned_box.get() {
+            return Ok(bounds.clone());
+        }
+
+        let local = decisions.isolated();
+        let bounds = self.compute_axis_aligned_box_bounds_decision(&local);
+        decisions.absorb(local.certainty());
+        let bounds = bounds?;
+        if local.certainty() == crate::MeshCertainty::Certified {
+            let _ = self.facts.axis_aligned_box.set(bounds.clone());
+            return Ok(self.facts.axis_aligned_box.get().cloned().unwrap_or(bounds));
+        }
+        Ok(bounds)
+    }
+
+    fn compute_axis_aligned_box_bounds_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Option<ExactAabb>> {
+        if self.positions.len() != 8 || self.triangles.len() != 12 {
+            return Ok(None);
+        }
+        let Some(bounds) = self.exact_bounds_decision(decisions)? else {
+            return Ok(None);
+        };
+        for axis in 0..3 {
+            if compare_real_decision(
+                decisions,
+                axis_ref(&bounds.mins, axis),
+                axis_ref(&bounds.maxs, axis),
+            )?
+            .is_eq()
+            {
+                return Ok(None);
+            }
+        }
+
+        let mut corners = [false; 8];
+        for point in self.positions.iter() {
+            let mut corner = 0;
+            for axis in 0..3 {
+                let value = axis_ref(point, axis);
+                if compare_real_decision(decisions, value, axis_ref(&bounds.maxs, axis))?.is_eq() {
+                    corner |= 1 << axis;
+                } else if !compare_real_decision(decisions, value, axis_ref(&bounds.mins, axis))?
+                    .is_eq()
                 {
-                    return None;
+                    return Ok(None);
                 }
-                let mut corners = [false; 8];
-                for point in self.positions.iter() {
-                    let mut corner = 0;
-                    for (axis, (value, minimum, maximum)) in [
-                        (&point.x, &bounds.mins.x, &bounds.maxs.x),
-                        (&point.y, &bounds.mins.y, &bounds.maxs.y),
-                        (&point.z, &bounds.mins.z, &bounds.maxs.z),
-                    ]
-                    .into_iter()
-                    .enumerate()
-                    {
-                        if value == maximum {
-                            corner |= 1 << axis;
-                        } else if value != minimum {
-                            return None;
+            }
+            if std::mem::replace(&mut corners[corner], true) {
+                return Ok(None);
+            }
+        }
+        if corners.iter().any(|present| !present) {
+            return Ok(None);
+        }
+
+        let mut face_triangles = [0_u8; 6];
+        for triangle in self.triangles.iter() {
+            let [a, b, c] = triangle.indices();
+            let Some(points) = Option::zip(
+                Option::zip(self.positions.get(a), self.positions.get(b)),
+                self.positions.get(c),
+            )
+            .map(|((a, b), c)| [a, b, c]) else {
+                return Ok(None);
+            };
+            let mut face = None;
+            for axis in 0..3 {
+                let minimum = axis_ref(&bounds.mins, axis);
+                let points_match = |value: &Real| -> HypermeshResult<bool> {
+                    for point in points {
+                        if !compare_real_decision(decisions, axis_ref(point, axis), value)?.is_eq()
+                        {
+                            return Ok(false);
                         }
                     }
-                    if std::mem::replace(&mut corners[corner], true) {
-                        return None;
-                    }
+                    Ok(true)
+                };
+                if points_match(minimum)? {
+                    face = Some(axis * 2);
+                    break;
                 }
-                if corners.iter().any(|present| !present) {
-                    return None;
+                let maximum = axis_ref(&bounds.maxs, axis);
+                if points_match(maximum)? {
+                    face = Some(axis * 2 + 1);
+                    break;
                 }
-                let mut face_triangles = [0_u8; 6];
-                for triangle in self.triangles.iter() {
-                    let [a, b, c] = triangle.indices();
-                    let points = [
-                        self.positions.get(a)?,
-                        self.positions.get(b)?,
-                        self.positions.get(c)?,
-                    ];
-                    let face = [
-                        (&bounds.mins.x, &bounds.maxs.x),
-                        (&bounds.mins.y, &bounds.maxs.y),
-                        (&bounds.mins.z, &bounds.maxs.z),
-                    ]
-                    .into_iter()
-                    .enumerate()
-                    .find_map(|(axis, (minimum, maximum))| {
-                        let coordinate_matches = |point: &&Point3, value: &Real| match axis {
-                            0 => &point.x == value,
-                            1 => &point.y == value,
-                            _ => &point.z == value,
-                        };
-                        if points
-                            .iter()
-                            .all(|point| coordinate_matches(point, minimum))
-                        {
-                            Some(axis * 2)
-                        } else if points
-                            .iter()
-                            .all(|point| coordinate_matches(point, maximum))
-                        {
-                            Some(axis * 2 + 1)
-                        } else {
-                            None
-                        }
-                    })?;
-                    face_triangles[face] = face_triangles[face].saturating_add(1);
-                }
-                (face_triangles == [2; 6]).then_some(bounds)
-            })
-            .as_ref()
+            }
+            let Some(face) = face else {
+                return Ok(None);
+            };
+            face_triangles[face] = face_triangles[face].saturating_add(1);
+        }
+        Ok((face_triangles == [2; 6]).then_some(bounds))
     }
 
     /// Applies and retains an exact homogeneous transform.
@@ -549,8 +606,17 @@ impl TriangleMesh {
         }
         let positions = matrix.transform_point3_batch(&self.positions).ok()?;
         let mut transformed = Self::new(positions, self.triangles.to_vec());
-        if self.has_certified_convex_fact() {
-            transformed = transformed.with_certified_convexity();
+        let matrix_facts = matrix.structural_facts();
+        let preserves_closed_convexity = matches!(
+            matrix_facts.transform_kind,
+            hyperlattice::Matrix4TransformKind::Identity
+                | hyperlattice::Matrix4TransformKind::AffineTranslation
+        ) || matrix_facts.is_affine
+            && matrix_facts.transform_kind == hyperlattice::Matrix4TransformKind::SignedPermutation;
+        if preserves_closed_convexity
+            && let Some(certainty) = self.facts.certified_convex.get().copied()
+        {
+            transformed = transformed.with_convexity_certainty(certainty);
         }
         if let Ok(mut transforms) = self.facts.transforms.lock() {
             const CAPACITY: usize = 32;
@@ -621,7 +687,10 @@ impl TriangleMesh {
             zero,
             one,
         ]);
-        let transformed = self.try_transformed(&matrix)?;
+        let mut transformed = self.try_transformed(&matrix)?;
+        if let Some(certainty) = self.facts.certified_convex.get().copied() {
+            transformed = transformed.with_convexity_certainty(certainty);
+        }
         if let Ok(mut rotations) = self.facts.rotations.lock() {
             const CAPACITY: usize = 8;
             if rotations.len() == CAPACITY {
@@ -702,8 +771,8 @@ impl TriangleMesh {
         if self.is_closed_manifold() {
             let _ = mesh.facts.closed_manifold.set(true);
         }
-        if self.has_certified_convex_fact() {
-            let _ = mesh.facts.certified_convex.set(true);
+        if let Some(certainty) = self.facts.certified_convex.get().copied() {
+            let _ = mesh.facts.certified_convex.set(certainty);
         }
         if let Ok(mut subdivisions) = self.facts.subdivisions.lock() {
             const CAPACITY: usize = 4;
@@ -722,17 +791,21 @@ impl TriangleMesh {
     /// identity after all triangle reports have been collected.
     pub fn ray_intersections(
         &self,
+        context: &MeshContext,
+        origin: &Point3,
+        direction: &Vector3,
+    ) -> HypermeshResult<MeshOutcome<Vec<(Point3, Real)>>> {
+        let decisions = DecisionContext::new(context);
+        let hits = self.ray_intersections_decision(&decisions, origin, direction)?;
+        Ok(decisions.finish(hits))
+    }
+
+    pub(crate) fn ray_intersections_decision(
+        &self,
+        decisions: &DecisionContext,
         origin: &Point3,
         direction: &Vector3,
     ) -> HypermeshResult<Vec<(Point3, Real)>> {
-        if let Ok(queries) = self.facts.ray_queries.lock()
-            && let Some((_, _, hits)) =
-                queries.iter().find(|(cached_origin, cached_direction, _)| {
-                    cached_origin == origin && cached_direction == direction
-                })
-        {
-            return Ok(hits.to_vec());
-        }
         let origin_limit =
             hyperlimit::Point3::new(origin.x.clone(), origin.y.clone(), origin.z.clone());
         let direction_limit = hyperlimit::Point3::new(
@@ -755,15 +828,17 @@ impl TriangleMesh {
             let vertices = [a, b, c].map(|point| {
                 hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone())
             });
-            let report = hyperlimit::classify_ray_triangle3_intersection_report(
-                &origin_limit,
-                &direction_limit,
-                &vertices[0],
-                &vertices[1],
-                &vertices[2],
-            )
-            .value()
-            .ok_or(HypermeshError::UnknownClassification)?;
+            let report = decisions.decide(
+                hyperlimit::classify_ray_triangle3_intersection_report(
+                    &origin_limit,
+                    &direction_limit,
+                    &vertices[0],
+                    &vertices[1],
+                    &vertices[2],
+                    decisions.policy(),
+                ),
+                "ray-triangle intersection",
+            )?;
             if !matches!(
                 report.relation,
                 hyperlimit::RayTriangleIntersection::Proper
@@ -780,7 +855,9 @@ impl TriangleMesh {
         }
         for index in 1..hits.len() {
             let mut current = index;
-            while current > 0 && compare_real(&hits[current - 1].1, &hits[current].1)?.is_gt() {
+            while current > 0
+                && compare_real_decision(decisions, &hits[current - 1].1, &hits[current].1)?.is_gt()
+            {
                 hits.swap(current - 1, current);
                 current -= 1;
             }
@@ -791,9 +868,10 @@ impl TriangleMesh {
                 let left = hyperlimit::Point3::new(last.x.clone(), last.y.clone(), last.z.clone());
                 let right =
                     hyperlimit::Point3::new(hit.0.x.clone(), hit.0.y.clone(), hit.0.z.clone());
-                hyperlimit::point3_equal(&left, &right)
-                    .value()
-                    .ok_or(HypermeshError::UnknownClassification)?
+                decisions.decide(
+                    hyperlimit::point3_equal(&left, &right, decisions.policy()),
+                    "ray-hit point equality",
+                )?
             } else {
                 false
             };
@@ -801,53 +879,42 @@ impl TriangleMesh {
                 unique_hits.push(hit);
             }
         }
-        if let Ok(mut queries) = self.facts.ray_queries.lock() {
-            const CAPACITY: usize = 8;
-            if queries.len() == CAPACITY {
-                queries.remove(0);
-            }
-            queries.push((
-                origin.clone(),
-                direction.clone(),
-                Arc::from(unique_hits.as_slice()),
-            ));
-        }
         Ok(unique_hits)
     }
 
     /// Tests strict solid containment using exact boundary predicates and ray
     /// parity. Points on a triangle, edge, or vertex are not inside.
-    pub fn contains_point(&self, point: &Point3) -> HypermeshResult<bool> {
-        if let Ok(queries) = self.facts.containment_queries.lock()
-            && let Some((_, contains)) = queries
-                .iter()
-                .find(|(cached_point, _)| cached_point == point)
-        {
-            return Ok(*contains);
-        }
-        let contains = self.contains_point_uncached(point)?;
-        if let Ok(mut queries) = self.facts.containment_queries.lock() {
-            const CAPACITY: usize = 8;
-            if queries.len() == CAPACITY {
-                queries.remove(0);
-            }
-            queries.push((point.clone(), contains));
-        }
-        Ok(contains)
+    pub fn contains_point(
+        &self,
+        context: &MeshContext,
+        point: &Point3,
+    ) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let contains = self.contains_point_decision(&decisions, point)?;
+        Ok(decisions.finish(contains))
     }
 
-    fn contains_point_uncached(&self, point: &Point3) -> HypermeshResult<bool> {
+    pub(crate) fn contains_point_decision(
+        &self,
+        decisions: &DecisionContext,
+        point: &Point3,
+    ) -> HypermeshResult<bool> {
         if self.triangles.is_empty() {
             return Ok(false);
         }
-        if let Some(bounds) = self.exact_bounds() {
+        let bounds = match self.exact_bounds_decision(decisions) {
+            Ok(bounds) => bounds,
+            Err(HypermeshError::PredicateUndecided { .. }) => None,
+            Err(error) => return Err(error),
+        };
+        if let Some(bounds) = bounds {
             for (coordinate, minimum, maximum) in [
                 (&point.x, &bounds.mins.x, &bounds.maxs.x),
                 (&point.y, &bounds.mins.y, &bounds.maxs.y),
                 (&point.z, &bounds.mins.z, &bounds.maxs.z),
             ] {
-                if compare_real(coordinate, minimum)?.is_lt()
-                    || compare_real(coordinate, maximum)?.is_gt()
+                if compare_real_decision(decisions, coordinate, minimum)?.is_lt()
+                    || compare_real_decision(decisions, coordinate, maximum)?.is_gt()
                 {
                     return Ok(false);
                 }
@@ -868,14 +935,16 @@ impl TriangleMesh {
             let vertices = [a, b, c].map(|vertex| {
                 hyperlimit::Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
             });
-            let location = hyperlimit::classify_point_triangle3(
-                &vertices[0],
-                &vertices[1],
-                &vertices[2],
-                &query,
-            )
-            .value()
-            .ok_or(HypermeshError::UnknownClassification)?;
+            let location = decisions.decide(
+                hyperlimit::classify_point_triangle3(
+                    &vertices[0],
+                    &vertices[1],
+                    &vertices[2],
+                    &query,
+                    decisions.policy(),
+                ),
+                "point-triangle classification",
+            )?;
             if matches!(
                 location,
                 hyperlimit::Triangle3Location::Inside
@@ -890,18 +959,38 @@ impl TriangleMesh {
             (Real::from(3_u8) / Real::from(8_u8)).expect("eight is nonzero"),
             (Real::from(5_u8) / Real::from(16_u8)).expect("sixteen is nonzero"),
         );
-        Ok(self.ray_intersections(point, &direction)?.len() % 2 == 1)
+        Ok(self
+            .ray_intersections_decision(decisions, point, &direction)?
+            .len()
+            % 2
+            == 1)
     }
 
     /// Intersects consecutive polyline segments with native triangles and
     /// returns exact points in polyline order.
-    pub fn polyline_intersections(&self, polyline: &[Point3]) -> HypermeshResult<Vec<Point3>> {
+    pub fn polyline_intersections(
+        &self,
+        context: &MeshContext,
+        polyline: &[Point3],
+    ) -> HypermeshResult<MeshOutcome<Vec<Point3>>> {
+        let decisions = DecisionContext::new(context);
+        let intersections = self.polyline_intersections_decision(&decisions, polyline)?;
+        Ok(decisions.finish(intersections))
+    }
+
+    pub(crate) fn polyline_intersections_decision(
+        &self,
+        decisions: &DecisionContext,
+        polyline: &[Point3],
+    ) -> HypermeshResult<Vec<Point3>> {
         let mut output: Vec<Point3> = Vec::new();
         for segment in polyline.windows(2) {
             let direction = &segment[1] - &segment[0];
-            for (point, parameter) in self.ray_intersections(&segment[0], &direction)? {
-                if compare_real(&parameter, &Real::zero())?.is_lt()
-                    || compare_real(&parameter, &Real::one())?.is_gt()
+            for (point, parameter) in
+                self.ray_intersections_decision(decisions, &segment[0], &direction)?
+            {
+                if compare_real_decision(decisions, &parameter, &Real::zero())?.is_lt()
+                    || compare_real_decision(decisions, &parameter, &Real::one())?.is_gt()
                 {
                     continue;
                 }
@@ -910,9 +999,10 @@ impl TriangleMesh {
                         hyperlimit::Point3::new(last.x.clone(), last.y.clone(), last.z.clone());
                     let right =
                         hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
-                    hyperlimit::point3_equal(&left, &right)
-                        .value()
-                        .ok_or(HypermeshError::UnknownClassification)?
+                    decisions.decide(
+                        hyperlimit::point3_equal(&left, &right, decisions.policy()),
+                        "polyline-hit point equality",
+                    )?
                 } else {
                     false
                 };
@@ -999,21 +1089,22 @@ impl TriangleMesh {
 }
 
 fn oriented_retained_edge_plane(
+    decisions: &DecisionContext,
     a: &Point3,
     b: &Point3,
     opposite: &Point3,
     plane: &Plane,
-) -> Option<Plane> {
-    if classify_point(a, plane).ok()? != Classification::On
-        || classify_point(b, plane).ok()? != Classification::On
+) -> HypermeshResult<Option<Plane>> {
+    if classify_point_decision(decisions, a, plane)? != Classification::On
+        || classify_point_decision(decisions, b, plane)? != Classification::On
     {
-        return None;
+        return Ok(None);
     }
-    match classify_point(opposite, plane).ok()? {
+    Ok(match classify_point_decision(decisions, opposite, plane)? {
         Classification::Negative => Some(plane.clone()),
         Classification::Positive => Some(plane.inverted()),
         Classification::On => None,
-    }
+    })
 }
 
 /// Borrowed triangle mesh view.
@@ -1049,12 +1140,24 @@ pub struct PolygonSoup {
 
 impl PolygonSoup {
     /// Recomputes exact bounds from polygon vertices.
-    pub fn compute_bounds_from_vertices(&mut self) -> HypermeshResult<()> {
+    pub fn compute_bounds_from_vertices(
+        &mut self,
+        context: &MeshContext,
+    ) -> HypermeshResult<MeshOutcome<()>> {
+        let decisions = DecisionContext::new(context);
+        self.compute_bounds_from_vertices_decision(&decisions)?;
+        Ok(decisions.finish(()))
+    }
+
+    pub(crate) fn compute_bounds_from_vertices_decision(
+        &mut self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<()> {
         let mut vertices = Vec::new();
         for polygon in &self.polygons {
             vertices.extend(polygon.vertices()?);
         }
-        self.bounds = bounds_for_positions(vertices.iter())?;
+        self.bounds = bounds_for_positions(decisions, vertices.iter())?;
         Ok(())
     }
 }
@@ -1109,8 +1212,13 @@ impl AdjacentSupportEdges {
 }
 
 /// Validates borrowed mesh views and returns their combined polygon soup.
-pub fn polygon_soup(meshes: &[TriangleMeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
-    build_polygon_soup_with_edge_mode(meshes, None, None, false)
+pub fn polygon_soup(
+    context: &MeshContext,
+    meshes: &[TriangleMeshRef<'_>],
+) -> HypermeshResult<MeshOutcome<PolygonSoup>> {
+    let decisions = DecisionContext::new(context);
+    let soup = build_polygon_soup_with_edge_mode(&decisions, meshes, None, None, false)?;
+    Ok(decisions.finish(soup))
 }
 
 /// Validates a closed PWN mesh and certifies that every vertex lies in every
@@ -1118,12 +1226,24 @@ pub fn polygon_soup(meshes: &[TriangleMeshRef<'_>]) -> HypermeshResult<PolygonSo
 ///
 /// A successful result may be retained by mesh owners as a reusable convexity
 /// fact for subsequent Boolean operations.
-pub fn certify_convex_mesh(mesh: TriangleMeshRef<'_>) -> HypermeshResult<()> {
-    let soup = polygon_soup(&[mesh])?;
+pub fn certify_convex_mesh(
+    context: &MeshContext,
+    mesh: TriangleMeshRef<'_>,
+) -> HypermeshResult<MeshOutcome<()>> {
+    let decisions = DecisionContext::new(context);
+    certify_convex_mesh_decision(&decisions, mesh)?;
+    Ok(decisions.finish(()))
+}
+
+fn certify_convex_mesh_decision(
+    decisions: &DecisionContext,
+    mesh: TriangleMeshRef<'_>,
+) -> HypermeshResult<()> {
+    let soup = build_polygon_soup_with_edge_mode(decisions, &[mesh], None, None, false)?;
     for polygon in &soup.polygons {
         for point in mesh.positions {
-            if crate::predicate::classify_point(point, &polygon.support)?
-                == crate::geometry::Classification::Positive
+            if classify_point_decision(decisions, point, &polygon.support)?
+                == Classification::Positive
             {
                 return Err(HypermeshError::NonConvexInput);
             }
@@ -1133,22 +1253,37 @@ pub fn certify_convex_mesh(mesh: TriangleMeshRef<'_>) -> HypermeshResult<()> {
 }
 
 pub(crate) fn build_polygon_soup_with_certified_convex_inputs(
+    decisions: &DecisionContext,
     meshes: &[TriangleMeshRef<'_>],
     certified_convex_inputs: &[bool],
     input_planes: Option<&[&[InputTrianglePlanes]]>,
 ) -> HypermeshResult<PolygonSoup> {
-    build_polygon_soup_with_edge_mode(meshes, Some(certified_convex_inputs), input_planes, false)
+    build_polygon_soup_with_edge_mode(
+        decisions,
+        meshes,
+        Some(certified_convex_inputs),
+        input_planes,
+        false,
+    )
 }
 
 pub(crate) fn build_polygon_soup_with_deferred_edges(
+    decisions: &DecisionContext,
     meshes: &[TriangleMeshRef<'_>],
     certified_convex_inputs: &[bool],
     input_planes: Option<&[&[InputTrianglePlanes]]>,
 ) -> HypermeshResult<PolygonSoup> {
-    build_polygon_soup_with_edge_mode(meshes, Some(certified_convex_inputs), input_planes, true)
+    build_polygon_soup_with_edge_mode(
+        decisions,
+        meshes,
+        Some(certified_convex_inputs),
+        input_planes,
+        true,
+    )
 }
 
-fn build_polygon_soup_with_edge_mode(
+pub(crate) fn build_polygon_soup_with_edge_mode(
+    decisions: &DecisionContext,
     meshes: &[TriangleMeshRef<'_>],
     certified_convex_inputs: Option<&[bool]>,
     input_planes: Option<&[&[InputTrianglePlanes]]>,
@@ -1169,7 +1304,10 @@ fn build_polygon_soup_with_edge_mode(
     }
     validate_non_empty_mesh_views(meshes)?;
 
-    let bounds = bounds_for_positions(meshes.iter().flat_map(|mesh| mesh.positions.iter()))?;
+    let bounds = bounds_for_positions(
+        decisions,
+        meshes.iter().flat_map(|mesh| mesh.positions.iter()),
+    )?;
     crate::trace_dispatch!("build-polygon-soup", "bounds-computed");
 
     let polygon_capacity = meshes
@@ -1271,13 +1409,13 @@ fn build_polygon_soup_with_edge_mode(
                 .cloned();
             let mut polygon = match (retained_positions.as_ref(), supplied_planes) {
                 (Some(positions), Some(planes)) => {
-                    make_indexed_triangle_with_deferred_edges_and_input_planes(
+                    Ok(make_indexed_triangle_with_deferred_edges_and_input_planes(
                         Arc::clone(positions),
                         [i0, i1, i2],
                         planes,
                         mesh_index as isize,
                         polygon_index,
-                    )
+                    ))
                 }
                 (Some(positions), None) => {
                     let axis_hint = approximate_positions.as_ref().and_then(|points| {
@@ -1326,17 +1464,20 @@ fn build_polygon_soup_with_edge_mode(
                             axis_support_planes.push((key, support.clone()));
                             Some(support)
                         });
-                    let support_hint = axis_support_hint.or_else(|| {
-                        adjacent_support_planes.as_ref().and_then(|adjacent| {
-                            adjacent_coplanar_support_hint(
+                    let support_hint = match axis_support_hint {
+                        Some(support) => Some(support),
+                        None => match adjacent_support_planes.as_ref() {
+                            Some(adjacent) => adjacent_coplanar_support_hint(
+                                decisions,
                                 mesh.positions,
                                 [i0, i1, i2],
                                 &polygons,
                                 adjacent,
-                            )
-                        })
-                    });
-                    make_indexed_triangle_with_deferred_edges(
+                            )?,
+                            None => None,
+                        },
+                    };
+                    Ok(make_indexed_triangle_with_deferred_edges(
                         Arc::clone(positions),
                         [i0, i1, i2],
                         support_hint,
@@ -1347,9 +1488,10 @@ fn build_polygon_soup_with_edge_mode(
                         ),
                         mesh_index as isize,
                         polygon_index,
-                    )
+                    ))
                 }
                 (None, Some(planes)) => make_triangle_with_input_planes(
+                    decisions,
                     p0,
                     p1,
                     p2,
@@ -1357,10 +1499,17 @@ fn build_polygon_soup_with_edge_mode(
                     mesh_index as isize,
                     polygon_index,
                 ),
-                (None, None) => convex_triangle(p0, p1, p2, mesh_index as isize, polygon_index),
-            }
+                (None, None) => convex_triangle_decision(
+                    decisions,
+                    p0,
+                    p1,
+                    p2,
+                    mesh_index as isize,
+                    polygon_index,
+                ),
+            }?
             .with_source_triangle_edge_identities(mesh_index, [i0, i1, i2]);
-            if !polygon.support.decide_is_valid()? {
+            if !polygon.support.decide_is_valid(decisions)? {
                 return Err(HypermeshError::DegenerateTriangle {
                     mesh_index,
                     triangle_index,
@@ -1380,7 +1529,7 @@ fn build_polygon_soup_with_edge_mode(
             polygon_index += 1;
         }
         if !input_is_certified_convex {
-            let edge_balance = classify_indexed_edge_balance(mesh)?;
+            let edge_balance = classify_indexed_edge_balance(decisions, mesh)?;
             if edge_balance.boundary_edges != 0 {
                 return Err(HypermeshError::OpenInput {
                     mesh_index,
@@ -1405,13 +1554,14 @@ fn build_polygon_soup_with_edge_mode(
 }
 
 fn adjacent_coplanar_support_hint(
+    decisions: &DecisionContext,
     positions: &[Point3],
     triangle: [usize; 3],
     polygons: &[ConvexPolygon],
     adjacent: &AdjacentSupportEdges,
-) -> Option<Plane> {
+) -> HypermeshResult<Option<Plane>> {
     let [Some(p0), Some(p1), Some(p2)] = triangle.map(|index| positions.get(index)) else {
-        return None;
+        return Ok(None);
     };
     let points = [p0, p1, p2];
     for edge in 0..3 {
@@ -1423,20 +1573,19 @@ fn adjacent_coplanar_support_hint(
         let Some(candidate) = polygons.get(polygon_index).map(|polygon| &polygon.support) else {
             continue;
         };
-        if !matches!(
-            classify_point(points[(edge + 2) % 3], candidate),
-            Ok(Classification::On)
-        ) {
+        if classify_point_decision(decisions, points[(edge + 2) % 3], candidate)?
+            != Classification::On
+        {
             continue;
         }
         if stored_start == end && stored_end == start {
-            return Some(candidate.clone());
+            return Ok(Some(candidate.clone()));
         }
         if stored_start == start && stored_end == end {
-            return Some(candidate.inverted());
+            return Ok(Some(candidate.inverted()));
         }
     }
-    None
+    Ok(None)
 }
 
 fn approximate_triangle_axis(positions: &[Point3], indices: [usize; 3]) -> Option<usize> {
@@ -1572,7 +1721,10 @@ fn canonical_exact_rational_position_indices(positions: &[Point3]) -> Option<Vec
     Some(canonical_indices)
 }
 
-fn canonical_position_indices(positions: &[Point3]) -> HypermeshResult<Vec<usize>> {
+fn canonical_position_indices(
+    decisions: &DecisionContext,
+    positions: &[Point3],
+) -> HypermeshResult<Vec<usize>> {
     if let Some(indices) = canonical_exact_rational_position_indices(positions) {
         return Ok(indices);
     }
@@ -1628,7 +1780,7 @@ fn canonical_position_indices(positions: &[Point3]) -> HypermeshResult<Vec<usize
                 ) {
                     continue;
                 }
-                if crate::predicate::points_equal(canonical_positions[index], position)? {
+                if points_equal(decisions, canonical_positions[index], position)? {
                     canonical = Some(index);
                     break;
                 }
@@ -1662,8 +1814,11 @@ fn canonical_position_indices(positions: &[Point3]) -> HypermeshResult<Vec<usize
     Ok(canonical_indices)
 }
 
-fn classify_indexed_edge_balance(mesh: &TriangleMeshRef<'_>) -> HypermeshResult<EdgeBalance> {
-    let canonical_indices = canonical_position_indices(mesh.positions)?;
+fn classify_indexed_edge_balance(
+    decisions: &DecisionContext,
+    mesh: &TriangleMeshRef<'_>,
+) -> HypermeshResult<EdgeBalance> {
+    let canonical_indices = canonical_position_indices(decisions, mesh.positions)?;
     let mut edge_uses: StorageHashMap<[usize; 2], [usize; 2]> = StorageHashMap::default();
     for triangle in mesh.triangles {
         let [a, b, c] = triangle.indices().map(|index| canonical_indices[index]);
@@ -1708,7 +1863,10 @@ pub(crate) struct EdgeBalance {
     pub(crate) unbalanced_edges: usize,
 }
 
-pub(crate) fn classify_edge_balance(edges: &[[Point3; 2]]) -> HypermeshResult<EdgeBalance> {
+pub(crate) fn classify_edge_balance(
+    decisions: &DecisionContext,
+    edges: &[[Point3; 2]],
+) -> HypermeshResult<EdgeBalance> {
     let mut balance = EdgeBalance::default();
     let mut visited = vec![false; edges.len()];
     for (index, edge) in edges.iter().enumerate() {
@@ -1719,7 +1877,7 @@ pub(crate) fn classify_edge_balance(edges: &[[Point3; 2]]) -> HypermeshResult<Ed
         let mut forward_uses = 0usize;
         let mut reverse_uses = 0usize;
         for (other_index, other) in edges.iter().enumerate() {
-            match edge_match_direction(edge, other)? {
+            match edge_match_direction(decisions, edge, other)? {
                 Some(false) => {
                     visited[other_index] = true;
                     forward_uses += 1;
@@ -1743,42 +1901,56 @@ pub(crate) fn classify_edge_balance(edges: &[[Point3; 2]]) -> HypermeshResult<Ed
 }
 
 fn ordered_edge_matches(
+    decisions: &DecisionContext,
     left_start: &Point3,
     left_end: &Point3,
     right_start: &Point3,
     right_end: &Point3,
 ) -> HypermeshResult<bool> {
-    let start = crate::predicate::points_equal(left_start, right_start);
-    let end = crate::predicate::points_equal(left_end, right_end);
+    let start = points_equal(decisions, left_start, right_start);
+    let end = points_equal(decisions, left_end, right_end);
     match (start, end) {
         (Ok(false), _) | (_, Ok(false)) => Ok(false),
         (Ok(true), Ok(true)) => Ok(true),
-        (Err(HypermeshError::UnknownClassification), _)
-        | (_, Err(HypermeshError::UnknownClassification)) => {
-            Err(HypermeshError::UnknownClassification)
-        }
+        (
+            Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification),
+            _,
+        )
+        | (
+            _,
+            Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification),
+        ) => Err(HypermeshError::UnknownClassification),
         (Err(error), _) | (_, Err(error)) => Err(error),
     }
 }
 
 /// Returns `Some(false)` for the same direction, `Some(true)` for the reverse
 /// direction, or `None` for distinct undirected edges.
-fn edge_match_direction(left: &[Point3; 2], right: &[Point3; 2]) -> HypermeshResult<Option<bool>> {
-    let forward = ordered_edge_matches(&left[0], &left[1], &right[0], &right[1]);
-    let reverse = ordered_edge_matches(&left[0], &left[1], &right[1], &right[0]);
+fn edge_match_direction(
+    decisions: &DecisionContext,
+    left: &[Point3; 2],
+    right: &[Point3; 2],
+) -> HypermeshResult<Option<bool>> {
+    let forward = ordered_edge_matches(decisions, &left[0], &left[1], &right[0], &right[1]);
+    let reverse = ordered_edge_matches(decisions, &left[0], &left[1], &right[1], &right[0]);
     match (forward, reverse) {
         (Ok(true), _) => Ok(Some(false)),
         (_, Ok(true)) => Ok(Some(true)),
         (Ok(false), Ok(false)) => Ok(None),
-        (Err(HypermeshError::UnknownClassification), _)
-        | (_, Err(HypermeshError::UnknownClassification)) => {
-            Err(HypermeshError::UnknownClassification)
-        }
+        (
+            Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification),
+            _,
+        )
+        | (
+            _,
+            Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification),
+        ) => Err(HypermeshError::UnknownClassification),
         (Err(error), _) | (_, Err(error)) => Err(error),
     }
 }
 
 fn bounds_for_positions<'a>(
+    decisions: &DecisionContext,
     positions: impl IntoIterator<Item = &'a Point3>,
 ) -> HypermeshResult<Aabb> {
     let mut positions = positions.into_iter();
@@ -1812,10 +1984,14 @@ fn bounds_for_positions<'a>(
             exact_dyadic_bounds = None;
         }
         for axis in 0..3 {
-            if compare_real(axis_ref(position, axis), axis_ref(&min, axis))?.is_lt() {
+            if compare_real_decision(decisions, axis_ref(position, axis), axis_ref(&min, axis))?
+                .is_lt()
+            {
                 *crate::geometry::axis_mut(&mut min, axis) = axis_ref(position, axis).clone();
             }
-            if compare_real(axis_ref(position, axis), axis_ref(&max, axis))?.is_gt() {
+            if compare_real_decision(decisions, axis_ref(position, axis), axis_ref(&max, axis))?
+                .is_gt()
+            {
                 *crate::geometry::axis_mut(&mut max, axis) = axis_ref(position, axis).clone();
             }
         }
@@ -1828,6 +2004,25 @@ fn bounds_for_positions<'a>(
 mod tests {
     use super::*;
     use crate::polygon::RetainedVertexCycle;
+
+    #[test]
+    fn approximate_convexity_facts_obey_later_operation_policy() {
+        let mesh = TriangleMesh::new(Vec::new(), Vec::new())
+            .with_convexity_certainty(MeshCertainty::Approximate512Consumed);
+
+        let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let strict = DecisionContext::new(&strict_context);
+        assert!(!mesh.has_certified_convex_fact(&strict));
+        assert_eq!(strict.certainty(), MeshCertainty::Certified);
+
+        let approximate_context = MeshContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
+        let approximate = DecisionContext::new(&approximate_context);
+        assert!(mesh.has_certified_convex_fact(&approximate));
+        assert_eq!(
+            approximate.certainty(),
+            MeshCertainty::Approximate512Consumed
+        );
+    }
 
     fn tetrahedron_with_independent_face_indices() -> TriangleMesh {
         let points = [
@@ -1850,15 +2045,35 @@ mod tests {
     #[test]
     fn exact_triangle_quality_canonicalizes_positions_and_rejects_duplicate_faces() {
         let mesh = tetrahedron_with_independent_face_indices();
-        assert!(mesh.has_unique_nondegenerate_triangles());
-        assert!(mesh.is_closed_manifold_geometry());
+        assert!(
+            mesh.has_unique_nondegenerate_triangles_decision(
+                &crate::test_support::approximate_decisions()
+            )
+            .unwrap()
+        );
+        assert!(
+            mesh.is_closed_manifold_geometry_decision(
+                &crate::test_support::approximate_decisions()
+            )
+            .unwrap()
+        );
         assert!(!mesh.is_closed_manifold());
 
         let mut triangles = mesh.triangles.to_vec();
         triangles.push(triangles[0]);
         let duplicate = TriangleMesh::new(mesh.positions.to_vec(), triangles);
-        assert!(!duplicate.has_unique_nondegenerate_triangles());
-        assert!(!duplicate.is_closed_manifold_geometry());
+        assert!(
+            !duplicate
+                .has_unique_nondegenerate_triangles_decision(
+                    &crate::test_support::approximate_decisions()
+                )
+                .unwrap()
+        );
+        assert!(
+            !duplicate
+                .is_closed_manifold_geometry_decision(&crate::test_support::approximate_decisions())
+                .unwrap()
+        );
     }
 
     #[test]
@@ -1882,8 +2097,18 @@ mod tests {
             .collect();
         let mesh = TriangleMesh::new(positions, mesh.triangles.to_vec());
 
-        assert!(mesh.has_unique_nondegenerate_triangles());
-        assert!(mesh.is_closed_manifold_geometry());
+        assert!(
+            mesh.has_unique_nondegenerate_triangles_decision(
+                &crate::test_support::approximate_decisions()
+            )
+            .unwrap()
+        );
+        assert!(
+            mesh.is_closed_manifold_geometry_decision(
+                &crate::test_support::approximate_decisions()
+            )
+            .unwrap()
+        );
     }
 
     #[test]
@@ -1921,7 +2146,10 @@ mod tests {
             ],
         ];
 
-        assert_eq!(classify_edge_balance(&edges), Ok(EdgeBalance::default()));
+        assert_eq!(
+            classify_edge_balance(&crate::test_support::approximate_decisions(), &edges),
+            Ok(EdgeBalance::default())
+        );
     }
 
     #[test]
@@ -1954,7 +2182,7 @@ mod tests {
         ];
 
         assert_eq!(
-            bounds_for_positions(&points).unwrap(),
+            bounds_for_positions(&crate::test_support::approximate_decisions(), &points).unwrap(),
             Aabb::new(
                 Point3::new(Real::from(-3), Real::from(-7), Real::from(1)),
                 Point3::new(Real::from(4), Real::from(5), Real::from(9)),
@@ -1974,7 +2202,13 @@ mod tests {
             positions.clone(),
             vec![Triangle::new(0, 1, 2), Triangle::new(0, 3, 1)],
         );
-        let soup = build_polygon_soup_with_deferred_edges(&[mesh.as_ref()], &[true], None).unwrap();
+        let soup = build_polygon_soup_with_deferred_edges(
+            &crate::test_support::approximate_decisions(),
+            &[mesh.as_ref()],
+            &[true],
+            None,
+        )
+        .unwrap();
 
         let (
             Some(RetainedVertexCycle::IndexedTriangle {
@@ -2016,7 +2250,13 @@ mod tests {
             vec![Triangle::new(0, 1, 2), Triangle::new(1, 0, 3)],
         );
 
-        let soup = build_polygon_soup_with_deferred_edges(&[mesh.as_ref()], &[true], None).unwrap();
+        let soup = build_polygon_soup_with_deferred_edges(
+            &crate::test_support::approximate_decisions(),
+            &[mesh.as_ref()],
+            &[true],
+            None,
+        )
+        .unwrap();
 
         assert_eq!(soup.polygons[0].support, soup.polygons[1].support);
     }
@@ -2053,10 +2293,14 @@ mod tests {
         let mesh = TriangleMesh::new(positions, triangles);
 
         assert_eq!(
-            classify_indexed_edge_balance(&mesh.as_ref()),
+            classify_indexed_edge_balance(
+                &crate::test_support::approximate_decisions(),
+                &mesh.as_ref()
+            ),
             Ok(EdgeBalance::default())
         );
-        polygon_soup(&[mesh.as_ref()]).expect("closed coincident-index tetrahedron");
+        crate::test_support::approximate_polygon_soup(&[mesh.as_ref()])
+            .expect("closed coincident-index tetrahedron");
     }
 
     #[test]
@@ -2075,18 +2319,22 @@ mod tests {
         };
 
         assert_eq!(
-            mesh.ray_intersections(
+            mesh.ray_intersections_decision(
+                &crate::test_support::approximate_decisions(),
                 &Point3::new(Real::zero(), Real::zero(), Real::one()),
                 &Vector3::from_xyz(Real::zero(), Real::zero(), -Real::one()),
             ),
             Err(expected.clone()),
         );
         assert_eq!(
-            mesh.contains_point(&Point3::new(
-                Real::from(Rational::fraction(1, 4).unwrap()),
-                Real::from(Rational::fraction(1, 4).unwrap()),
-                Real::zero(),
-            )),
+            mesh.contains_point_decision(
+                &crate::test_support::approximate_decisions(),
+                &Point3::new(
+                    Real::from(Rational::fraction(1, 4).unwrap()),
+                    Real::from(Rational::fraction(1, 4).unwrap()),
+                    Real::zero(),
+                )
+            ),
             Err(expected),
         );
     }

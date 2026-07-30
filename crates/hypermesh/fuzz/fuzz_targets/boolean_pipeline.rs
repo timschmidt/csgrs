@@ -3,23 +3,28 @@
 mod support;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, HypermeshError, boolean_difference, boolean_intersection,
-    boolean_operation, boolean_operation_with_certified_convex_inputs,
-    boolean_symmetric_difference, boolean_mesh,
-    boolean_mesh_with_certified_convex_inputs, boolean_union, certify_convex_mesh,
+    BooleanOp, EmberConfig, HypermeshError, boolean_difference, boolean_intersection, boolean_mesh,
+    boolean_mesh_with_certified_convex_inputs, boolean_operation,
+    boolean_operation_with_certified_convex_inputs, boolean_symmetric_difference, boolean_union,
+    certify_convex_mesh,
 };
 use libfuzzer_sys::fuzz_target;
 use support::{
-    Bytes, combine_meshes, convex_mesh, operation, subdivide_once, validate_result, validate_soup,
-    volume_numerator,
+    Bytes, CONTEXT, combine_meshes, convex_mesh, operation, subdivide_once, validate_result,
+    validate_soup, value, volume_numerator,
 };
 
 fn require_result(
     meshes: &[hypermesh::TriangleMeshRef<'_>],
     operation: BooleanOp,
 ) -> hypermesh::BooleanMesh {
-    let result = boolean_operation(meshes, operation, EmberConfig::default())
-        .unwrap_or_else(|error| panic!("supported exact Boolean input failed: {error:?}"));
+    let result = value(boolean_operation(
+        &CONTEXT,
+        meshes,
+        operation,
+        EmberConfig::default(),
+    ))
+    .unwrap_or_else(|error| panic!("supported exact Boolean input failed: {error:?}"));
     validate_result(&result, operation, meshes.len())
 }
 
@@ -27,10 +32,13 @@ fn require_soup(
     meshes: &[hypermesh::TriangleMeshRef<'_>],
     operation: BooleanOp,
 ) -> hypermesh::BooleanMesh {
-    let soup =
-        boolean_mesh(meshes, operation, EmberConfig::default()).unwrap_or_else(|error| {
-            panic!("supported exact immediate Boolean input failed: {error:?}")
-        });
+    let soup = value(boolean_mesh(
+        &CONTEXT,
+        meshes,
+        operation,
+        EmberConfig::default(),
+    ))
+    .unwrap_or_else(|error| panic!("supported exact immediate Boolean input failed: {error:?}"));
     validate_soup(&soup);
     soup
 }
@@ -71,24 +79,26 @@ fuzz_target!(|data: [u8; 48]| {
         3 => {
             let pair = [convex_mesh(&mut bytes), convex_mesh(&mut bytes)];
             for mesh in &pair {
-                certify_convex_mesh(mesh.as_ref()).unwrap();
+                value(certify_convex_mesh(&CONTEXT, mesh.as_ref())).unwrap();
             }
             let pair_refs = [pair[0].as_ref(), pair[1].as_ref()];
             let generic = require_result(&pair_refs, op);
-            let certified = boolean_operation_with_certified_convex_inputs(
+            let certified = value(boolean_operation_with_certified_convex_inputs(
+                &CONTEXT,
                 &pair_refs,
                 op,
                 &[true, true],
                 EmberConfig::default(),
-            )
+            ))
             .unwrap_or_else(|error| panic!("certified-convex Boolean failed: {error:?}"));
             let certified_soup = validate_result(&certified, op, 2);
-            let immediate = boolean_mesh_with_certified_convex_inputs(
+            let immediate = value(boolean_mesh_with_certified_convex_inputs(
+                &CONTEXT,
                 &pair_refs,
                 op,
                 &[true, true],
                 EmberConfig::default(),
-            )
+            ))
             .unwrap_or_else(|error| panic!("certified-convex immediate Boolean failed: {error:?}"));
             validate_soup(&immediate);
             assert_eq!(
@@ -102,18 +112,25 @@ fuzz_target!(|data: [u8; 48]| {
             let generic = require_result(&pair_refs, op);
             let wrapper = match op {
                 BooleanOp::Union => {
-                    boolean_union(pair_refs[0], pair_refs[1], EmberConfig::default())
+                    boolean_union(&CONTEXT, pair_refs[0], pair_refs[1], EmberConfig::default())
                 }
-                BooleanOp::Intersection => {
-                    boolean_intersection(pair_refs[0], pair_refs[1], EmberConfig::default())
-                }
+                BooleanOp::Intersection => boolean_intersection(
+                    &CONTEXT,
+                    pair_refs[0],
+                    pair_refs[1],
+                    EmberConfig::default(),
+                ),
                 BooleanOp::Difference => {
-                    boolean_difference(pair_refs[0], pair_refs[1], EmberConfig::default())
+                    boolean_difference(&CONTEXT, pair_refs[0], pair_refs[1], EmberConfig::default())
                 }
-                BooleanOp::SymmetricDifference => {
-                    boolean_symmetric_difference(pair_refs[0], pair_refs[1], EmberConfig::default())
-                }
+                BooleanOp::SymmetricDifference => boolean_symmetric_difference(
+                    &CONTEXT,
+                    pair_refs[0],
+                    pair_refs[1],
+                    EmberConfig::default(),
+                ),
             }
+            .map(hypermesh::MeshOutcome::into_value)
             .unwrap_or_else(|error| panic!("Boolean convenience wrapper failed: {error:?}"));
             let wrapper = validate_result(&wrapper, op, 2);
             assert_eq!(volume_numerator(&generic), volume_numerator(&wrapper));
@@ -143,7 +160,7 @@ fuzz_target!(|data: [u8; 48]| {
             let config = EmberConfig {
                 max_depth: usize::from(bytes.next() % 3),
             };
-            match boolean_operation(&refs, op, config) {
+            match value(boolean_operation(&CONTEXT, &refs, op, config)) {
                 Ok(result) => {
                     validate_result(&result, op, refs.len());
                 }

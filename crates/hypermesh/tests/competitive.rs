@@ -7,11 +7,11 @@ use hypermesh::{
     polygon_soup, triangulate_and_resolve_certified,
 };
 use support::{
-    LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_CONTROL_TRIANGLES, YEAHRIGHT_CONTROL_VERTICES,
-    YEAHRIGHT_STRESS_SUBDIVISIONS, assert_close, assert_summary, corpus, large_boolean_case,
-    prepare, prepare_yeahright, prepare_yeahright_with_subdivisions, raw_from_hypermesh,
-    run_boolmesh, run_hypermesh, run_hypermesh_exact, run_hypermesh_polygon, run_manifold,
-    summarize, to_hypermesh, validate_with_tri_mesh, yeahright_boolean_case,
+    APPROXIMATE_CONTEXT, LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_CONTROL_TRIANGLES,
+    YEAHRIGHT_CONTROL_VERTICES, YEAHRIGHT_STRESS_SUBDIVISIONS, assert_close, assert_summary,
+    corpus, large_boolean_case, prepare, prepare_yeahright, prepare_yeahright_with_subdivisions,
+    raw_from_hypermesh, run_boolmesh, run_hypermesh, run_hypermesh_exact, run_hypermesh_polygon,
+    run_manifold, summarize, to_hypermesh, validate_with_tri_mesh, yeahright_boolean_case,
     yeahright_boolean_case_with_subdivisions, yeahright_control_mesh,
 };
 
@@ -206,7 +206,9 @@ fn yeahright_exact_hypermesh_outputs_remain_boundaryless_for_every_operation() {
                     let vertex = &exact.vertices[index];
                     Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
                 });
-                !Plane::points_are_nondegenerate(&a, &b, &c)
+                !Plane::points_are_nondegenerate(&APPROXIMATE_CONTEXT, &a, &b, &c)
+                    .expect("YeahRight output triangle predicate must decide")
+                    .into_value()
             })
             .count();
         assert_eq!(
@@ -237,8 +239,9 @@ fn yeahright_polygon_and_triangle_immediate_apis_remain_consistent() {
     let prepared = prepare_yeahright(&case);
     for operation in Operation::ALL {
         let polygon_result = run_hypermesh_polygon(&prepared.hypermesh, operation);
-        let polygon_soup = triangulate_and_resolve_certified(&polygon_result)
-            .expect("YeahRight polygon output must triangulate exactly");
+        let polygon_soup = triangulate_and_resolve_certified(&APPROXIMATE_CONTEXT, &polygon_result)
+            .expect("YeahRight polygon output must triangulate exactly")
+            .into_value();
         let direct_soup = run_hypermesh_exact(&prepared.hypermesh, operation);
         assert!(
             boolean_mesh_closure_evidence(&polygon_soup).has_no_boundary(),
@@ -253,7 +256,9 @@ fn yeahright_polygon_and_triangle_immediate_apis_remain_consistent() {
                     let vertex = &polygon_soup.vertices[index];
                     Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
                 });
-                !Plane::points_are_nondegenerate(&a, &b, &c)
+                !Plane::points_are_nondegenerate(&APPROXIMATE_CONTEXT, &a, &b, &c)
+                    .expect("YeahRight output triangle predicate must decide")
+                    .into_value()
             })
             .count();
         assert_eq!(
@@ -293,7 +298,7 @@ fn full_resolution_yeahright_reaches_and_validates_in_hypermesh() {
     let exact = to_hypermesh(&raw);
     assert_eq!(exact.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
     assert_eq!(exact.triangles.len(), YEAHRIGHT_CONTROL_TRIANGLES);
-    polygon_soup(&[exact.as_ref()])
+    polygon_soup(&APPROXIMATE_CONTEXT, &[exact.as_ref()])
         .expect("full-resolution YeahRight must satisfy Hypermesh's closed-PWN input contract");
 }
 
@@ -312,11 +317,13 @@ fn full_resolution_yeahright_rotated_intersection_remains_a_hard_test() {
     let left = to_hypermesh(&source);
     let right = to_hypermesh(&rotated);
     let output = boolean_mesh(
+        &APPROXIMATE_CONTEXT,
         &[left.as_ref(), right.as_ref()],
         BooleanOp::Intersection,
         EmberConfig::default(),
     )
-    .expect("full-resolution YeahRight intersection must remain valid");
+    .expect("full-resolution YeahRight intersection must remain valid")
+    .into_value();
     assert!(!output.triangles.is_empty());
 }
 

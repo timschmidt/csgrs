@@ -2,15 +2,21 @@
 
 use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 
+use crate::context::DecisionContext;
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Classification, Plane, classify_point, classify_projective_point};
-use crate::intersection::{IntersectionSegment, OverlapInfo};
+use crate::geometry::{Classification, Plane};
+use crate::intersection::IntersectionSegment;
+#[cfg(test)]
+use crate::intersection::OverlapInfo;
 use crate::polygon::ConvexPolygon;
+use crate::predicate::{
+    classify_point_decision, classify_projective_point_decision, classify_real,
+};
 use crate::segment_trace::certified_leaf_test_points;
 
 /// Convex sub-polygon leaf in a face-local BSP.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BspLeaf {
+pub(crate) struct BspLeaf {
     /// Leaf edge planes. Interior is on each edge's non-positive side.
     pub edges: Vec<Plane>,
     /// Whether this leaf is still active for output.
@@ -43,7 +49,7 @@ enum BspNode {
 
 /// Face-local BSP for one host polygon.
 #[derive(Clone, Debug, PartialEq)]
-pub struct LocalBsp {
+pub(crate) struct LocalBsp {
     support: Plane,
     host_mesh_index: isize,
     host_polygon_index: isize,
@@ -53,7 +59,7 @@ pub struct LocalBsp {
 
 impl LocalBsp {
     /// Builds a local BSP with one initial leaf matching `polygon`.
-    pub fn new(polygon: &ConvexPolygon) -> Self {
+    pub(crate) fn new(polygon: &ConvexPolygon) -> Self {
         let projective_interior_point = polygon
             .vertices()
             .ok()
@@ -70,21 +76,16 @@ impl LocalBsp {
         }
     }
 
-    /// Returns the host support plane.
-    pub fn support(&self) -> &Plane {
-        &self.support
-    }
-
-    /// Returns the source polygon index for the host polygon.
-    pub fn host_polygon_index(&self) -> isize {
-        self.host_polygon_index
-    }
-
     /// Adds an intersection segment and splits affected leaves by its plane.
-    pub fn add_segment(&mut self, segment: &IntersectionSegment) -> HypermeshResult<()> {
+    pub(crate) fn add_segment(
+        &mut self,
+        decisions: &DecisionContext,
+        segment: &IntersectionSegment,
+    ) -> HypermeshResult<()> {
         if let Some(root) = self.root {
             let inverted = segment.split_plane.inverted();
             self.add_segment_recursive(
+                decisions,
                 root,
                 &segment.v0,
                 &segment.v1,
@@ -97,39 +98,49 @@ impl LocalBsp {
 
     /// Adds coplanar overlap boundaries and disables duplicate overlap leaves
     /// when this host polygon has the higher source mesh/polygon key.
-    pub fn add_overlap(
+    #[cfg(test)]
+    pub(crate) fn add_overlap(
         &mut self,
+        decisions: &DecisionContext,
         other: &ConvexPolygon,
         overlap: &OverlapInfo,
     ) -> HypermeshResult<()> {
-        self.add_overlap_edges(&overlap.other_edges)?;
-        self.mark_overlap(other)
+        self.add_overlap_edges(decisions, &overlap.other_edges)?;
+        self.mark_overlap(decisions, other)
     }
 
     /// Adds coplanar overlap boundary planes.
-    pub fn add_overlap_edges(&mut self, edges: &[Plane]) -> HypermeshResult<()> {
+    pub(crate) fn add_overlap_edges(
+        &mut self,
+        decisions: &DecisionContext,
+        edges: &[Plane],
+    ) -> HypermeshResult<()> {
         if let Some(root) = self.root {
             for edge in edges {
                 let inverted = edge.inverted();
-                self.add_plane_split_recursive(root, edge, &inverted)?;
+                self.add_plane_split_recursive(decisions, root, edge, &inverted)?;
             }
         }
         Ok(())
     }
 
     /// Disables overlap leaves when this host polygon loses the source key tie.
-    pub fn mark_overlap(&mut self, other: &ConvexPolygon) -> HypermeshResult<()> {
+    pub(crate) fn mark_overlap(
+        &mut self,
+        decisions: &DecisionContext,
+        other: &ConvexPolygon,
+    ) -> HypermeshResult<()> {
         if let Some(root) = self.root
             && (self.host_mesh_index, self.host_polygon_index)
                 > (other.mesh_index, other.polygon_index)
         {
-            self.mark_overlapping_leaves(root, other)?;
+            self.mark_overlapping_leaves(decisions, root, other)?;
         }
         Ok(())
     }
 
     /// Collects enabled leaves as borrowed references into this BSP.
-    pub fn collect_leaves(&self) -> Vec<&BspLeaf> {
+    pub(crate) fn collect_leaves(&self) -> Vec<&BspLeaf> {
         let mut leaves = Vec::new();
         if let Some(root) = self.root {
             self.collect_leaves_recursive(root, &mut leaves);
@@ -138,12 +149,14 @@ impl LocalBsp {
     }
 
     /// Returns the number of nodes in the local pool.
-    pub fn node_count(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) fn node_count(&self) -> usize {
         self.nodes.len()
     }
 
     fn add_segment_recursive(
         &mut self,
+        decisions: &DecisionContext,
         node_index: usize,
         v0: &Point3,
         v1: &Point3,
@@ -152,7 +165,7 @@ impl LocalBsp {
     ) -> HypermeshResult<()> {
         let branch = match &self.nodes[node_index] {
             BspNode::Leaf(_) => {
-                self.split_leaf(node_index, split, split_inverted)?;
+                self.split_leaf(decisions, node_index, split, split_inverted)?;
                 return Ok(());
             }
             BspNode::Branch {
@@ -163,32 +176,33 @@ impl LocalBsp {
         };
 
         let (node_split, negative, positive) = branch;
-        let c0 = classify_point(v0, &node_split)?;
-        let c1 = classify_point(v1, &node_split)?;
+        let c0 = classify_point_decision(decisions, v0, &node_split)?;
+        let c1 = classify_point_decision(decisions, v1, &node_split)?;
 
         if c0 == Classification::On && c1 == Classification::On {
             return Ok(());
         }
         if c0.is_non_positive() && c1.is_non_positive() {
-            self.add_segment_recursive(negative, v0, v1, split, split_inverted)
+            self.add_segment_recursive(decisions, negative, v0, v1, split, split_inverted)
         } else if c0.is_non_negative() && c1.is_non_negative() {
-            self.add_segment_recursive(positive, v0, v1, split, split_inverted)
+            self.add_segment_recursive(decisions, positive, v0, v1, split, split_inverted)
         } else {
             let v_mid = intersect_three_planes(&self.support, split, &node_split)
                 .to_affine_point()
                 .map_err(|_| HypermeshError::PointAtInfinity)?;
             if c0 == Classification::Negative {
-                self.add_segment_recursive(negative, v0, &v_mid, split, split_inverted)?;
-                self.add_segment_recursive(positive, &v_mid, v1, split, split_inverted)
+                self.add_segment_recursive(decisions, negative, v0, &v_mid, split, split_inverted)?;
+                self.add_segment_recursive(decisions, positive, &v_mid, v1, split, split_inverted)
             } else {
-                self.add_segment_recursive(positive, v0, &v_mid, split, split_inverted)?;
-                self.add_segment_recursive(negative, &v_mid, v1, split, split_inverted)
+                self.add_segment_recursive(decisions, positive, v0, &v_mid, split, split_inverted)?;
+                self.add_segment_recursive(decisions, negative, &v_mid, v1, split, split_inverted)
             }
         }
     }
 
     fn split_leaf(
         &mut self,
+        decisions: &DecisionContext,
         node_index: usize,
         split: &Plane,
         split_inverted: &Plane,
@@ -218,7 +232,7 @@ impl LocalBsp {
                 &old_edges[index],
                 &old_edges[(index + 1) % n],
             );
-            let classification = classify_projective_point(&vertex, split)?;
+            let classification = classify_projective_point_decision(decisions, &vertex, split)?;
             vertices.push(vertex);
             has_pos |= classification == Classification::Positive;
             has_neg |= classification == Classification::Negative;
@@ -255,6 +269,7 @@ impl LocalBsp {
         }
 
         let negative_interior = split_child_projective_interior_point(
+            decisions,
             old_projective_interior_point.as_ref(),
             split,
             &vertices,
@@ -262,6 +277,7 @@ impl LocalBsp {
             Classification::Negative,
         )?;
         let positive_interior = split_child_projective_interior_point(
+            decisions,
             old_projective_interior_point.as_ref(),
             split,
             &vertices,
@@ -293,13 +309,14 @@ impl LocalBsp {
 
     fn add_plane_split_recursive(
         &mut self,
+        decisions: &DecisionContext,
         node_index: usize,
         split: &Plane,
         split_inverted: &Plane,
     ) -> HypermeshResult<()> {
         let children = match &self.nodes[node_index] {
             BspNode::Leaf(_) => {
-                self.split_leaf(node_index, split, split_inverted)?;
+                self.split_leaf(decisions, node_index, split, split_inverted)?;
                 return Ok(());
             }
             BspNode::Branch {
@@ -313,12 +330,13 @@ impl LocalBsp {
                 (*negative, *positive)
             }
         };
-        self.add_plane_split_recursive(children.0, split, split_inverted)?;
-        self.add_plane_split_recursive(children.1, split, split_inverted)
+        self.add_plane_split_recursive(decisions, children.0, split, split_inverted)?;
+        self.add_plane_split_recursive(decisions, children.1, split, split_inverted)
     }
 
     fn mark_overlapping_leaves(
         &mut self,
+        decisions: &DecisionContext,
         node_index: usize,
         other: &ConvexPolygon,
     ) -> HypermeshResult<()> {
@@ -328,9 +346,11 @@ impl LocalBsp {
                     return Ok(());
                 }
                 let Some(strictly_inside) =
-                    classify_leaf_overlap_relation(&self.support, &leaf.edges, other)?
+                    classify_leaf_overlap_relation(decisions, &self.support, &leaf.edges, other)?
                 else {
-                    return Err(HypermeshError::UnknownClassification);
+                    return Err(HypermeshError::PredicateUndecided {
+                        predicate: "local BSP overlap relation",
+                    });
                 };
                 if strictly_inside && let BspNode::Leaf(leaf) = &mut self.nodes[node_index] {
                     leaf.enabled = false;
@@ -341,8 +361,8 @@ impl LocalBsp {
                 negative, positive, ..
             } => (*negative, *positive),
         };
-        self.mark_overlapping_leaves(children.0, other)?;
-        self.mark_overlapping_leaves(children.1, other)
+        self.mark_overlapping_leaves(decisions, children.0, other)?;
+        self.mark_overlapping_leaves(decisions, children.1, other)
     }
 
     fn collect_leaves_recursive<'a>(&'a self, node_index: usize, out: &mut Vec<&'a BspLeaf>) {
@@ -363,15 +383,16 @@ impl LocalBsp {
 }
 
 fn classify_leaf_overlap_relation(
+    decisions: &DecisionContext,
     support: &Plane,
     edges: &[Plane],
     other: &ConvexPolygon,
 ) -> HypermeshResult<Option<bool>> {
-    let test_points = certified_leaf_test_points(support, edges)?;
+    let test_points = certified_leaf_test_points(decisions, support, edges)?;
     if test_points.is_empty() {
         return Ok(None);
     }
-    classify_overlap_test_relation(&test_points, other)
+    classify_overlap_test_relation(decisions, &test_points, other)
 }
 
 fn convex_point_projective_centroid(points: &[Point3]) -> Option<HomogeneousPoint3> {
@@ -393,6 +414,7 @@ fn convex_point_projective_centroid(points: &[Point3]) -> Option<HomogeneousPoin
 }
 
 fn split_child_projective_interior_point(
+    decisions: &DecisionContext,
     parent: Option<&HomogeneousPoint3>,
     split: &Plane,
     vertices: &[HomogeneousPoint3],
@@ -402,7 +424,7 @@ fn split_child_projective_interior_point(
     let Some(parent) = parent else {
         return Ok(None);
     };
-    let parent_classification = classify_projective_point(parent, split)?;
+    let parent_classification = classify_projective_point_decision(decisions, parent, split)?;
     if parent_classification == target {
         return Ok(Some(parent.clone()));
     }
@@ -412,12 +434,12 @@ fn split_child_projective_interior_point(
     else {
         return Ok(None);
     };
-    let vertex = positive_weight_projective_point(&vertices[vertex_index])?;
-    let parent = positive_weight_projective_point(parent)?;
+    let vertex = positive_weight_projective_point(decisions, &vertices[vertex_index])?;
+    let parent = positive_weight_projective_point(decisions, parent)?;
     let mut scaled_vertex = vertex.clone();
     for _ in 0..32 {
         let witness = add_projective_points(&parent, &scaled_vertex);
-        match classify_projective_point(&witness, split)? {
+        match classify_projective_point_decision(decisions, &witness, split)? {
             classification if classification == target => {
                 return Ok(Some(witness));
             }
@@ -450,7 +472,7 @@ fn split_child_projective_interior_point(
         &crossing.z + &vertex.z,
         &crossing.w + &vertex.w,
     );
-    if classify_projective_point(&witness, split)? != target {
+    if classify_projective_point_decision(decisions, &witness, split)? != target {
         return Ok(None);
     }
     Ok(Some(witness))
@@ -466,9 +488,10 @@ fn add_projective_points(left: &HomogeneousPoint3, right: &HomogeneousPoint3) ->
 }
 
 fn positive_weight_projective_point(
+    decisions: &DecisionContext,
     point: &HomogeneousPoint3,
 ) -> HypermeshResult<HomogeneousPoint3> {
-    match crate::geometry::classify_real(&point.w)? {
+    match classify_real(decisions, &point.w)? {
         Classification::Positive => Ok(point.clone()),
         Classification::Negative => Ok(HomogeneousPoint3::new(
             -point.x.clone(),
@@ -481,14 +504,15 @@ fn positive_weight_projective_point(
 }
 
 fn classify_overlap_test_relation(
+    decisions: &DecisionContext,
     test_points: &[hyperlattice::HomogeneousPoint3],
     other: &ConvexPolygon,
 ) -> HypermeshResult<Option<bool>> {
     let mut any_inside = false;
     let mut any_outside = false;
     for test_point in test_points {
-        let inside_or_on = other.contains_point(test_point)?;
-        let strictly_inside = other.contains_point_strictly(test_point)?;
+        let inside_or_on = other.contains_point_decision(decisions, test_point)?;
+        let strictly_inside = other.contains_point_strictly_decision(decisions, test_point)?;
         if strictly_inside {
             any_inside = true;
         } else if !inside_or_on {
@@ -510,7 +534,7 @@ fn classify_overlap_test_relation(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::polygon::convex_triangle;
+    use crate::test_support::{approximate_convex_triangle, approximate_intersect_polygons};
     use hyperlattice::{HomogeneousPoint3, Point3, Real};
 
     fn r(value: i32) -> Real {
@@ -527,7 +551,7 @@ mod tests {
 
     #[test]
     fn overlap_test_relation_prefers_strict_inside_over_boundary_only_points() {
-        let other = convex_triangle(
+        let other = approximate_convex_triangle(
             &p(0, 0, 0),
             &Point3::new(q(4, 3), r(0), r(0)),
             &Point3::new(r(0), q(4, 3), r(0)),
@@ -538,15 +562,20 @@ mod tests {
         let boundary_only = HomogeneousPoint3::new(q(2, 3), q(2, 3), r(0), Real::one());
 
         assert_eq!(
-            classify_overlap_test_relation(&[strict_inside, boundary_only], &other).unwrap(),
+            classify_overlap_test_relation(
+                &crate::test_support::approximate_decisions(),
+                &[strict_inside, boundary_only],
+                &other,
+            )
+            .unwrap(),
             Some(true)
         );
     }
 
     #[test]
     fn repeated_overlap_plane_splits_do_not_grow_bsp_again() {
-        let host = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
-        let other = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 1, 0);
+        let host = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+        let other = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 1, 0);
         let overlap = OverlapInfo {
             other_polygon_idx: 0,
             other_edges: other.edges.as_ref().clone(),
@@ -554,10 +583,57 @@ mod tests {
         };
         let mut bsp = LocalBsp::new(&host);
 
-        bsp.add_overlap(&other, &overlap).unwrap();
+        bsp.add_overlap(
+            &crate::test_support::approximate_decisions(),
+            &other,
+            &overlap,
+        )
+        .unwrap();
         let first_node_count = bsp.node_count();
-        bsp.add_overlap(&other, &overlap).unwrap();
+        bsp.add_overlap(
+            &crate::test_support::approximate_decisions(),
+            &other,
+            &overlap,
+        )
+        .unwrap();
 
         assert_eq!(bsp.node_count(), first_node_count);
+    }
+
+    #[test]
+    fn intersection_segment_splits_host_leaf() {
+        let host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let cutter = approximate_convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
+        let segment = approximate_intersect_polygons(&host, &cutter, 1)
+            .unwrap()
+            .segment
+            .unwrap();
+
+        let mut bsp = LocalBsp::new(&host);
+        bsp.add_segment(&crate::test_support::approximate_decisions(), &segment)
+            .unwrap();
+        let leaves = bsp.collect_leaves();
+
+        assert_eq!(leaves.len(), 2);
+        assert_eq!(bsp.node_count(), 3);
+        assert!(leaves.iter().all(|leaf| leaf.edges.len() >= 3));
+    }
+
+    #[test]
+    fn higher_source_key_disables_duplicate_overlap_leaf() {
+        let lower = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+        let higher = approximate_convex_triangle(&p(1, 1, 0), &p(2, 1, 0), &p(1, 2, 0), 1, 2);
+        let intersection = approximate_intersect_polygons(&higher, &lower, 0).unwrap();
+        let overlap = intersection.overlap.as_ref().unwrap();
+
+        let mut bsp = LocalBsp::new(&higher);
+        bsp.add_overlap(
+            &crate::test_support::approximate_decisions(),
+            &lower,
+            overlap,
+        )
+        .unwrap();
+
+        assert!(bsp.collect_leaves().is_empty());
     }
 }

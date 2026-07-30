@@ -4,9 +4,10 @@ use std::cell::RefCell;
 use std::cmp::Ordering;
 
 use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression};
-use hyperlimit::{PredicateOutcome, Sign, classify_real_sign};
+use hyperlimit::{Sign, classify_real_sign};
 use hyperreal::{RationalLinearForm4Filter, RationalLinearForm4Query, RealSign};
 
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Plane;
 
@@ -176,8 +177,22 @@ impl Classification {
 }
 
 /// Classifies an affine point against a plane.
-pub fn classify_point(point: &Point3, plane: &Plane) -> HypermeshResult<Classification> {
-    Point3PredicateEvidence::new(point).classify(plane)
+pub fn classify_point(
+    context: &MeshContext,
+    point: &Point3,
+    plane: &Plane,
+) -> HypermeshResult<MeshOutcome<Classification>> {
+    let decisions = DecisionContext::new(context);
+    let classification = classify_point_decision(&decisions, point, plane)?;
+    Ok(decisions.finish(classification))
+}
+
+pub(crate) fn classify_point_decision(
+    decisions: &DecisionContext,
+    point: &Point3,
+    plane: &Plane,
+) -> HypermeshResult<Classification> {
+    Point3PredicateEvidence::new(point).classify(decisions, plane)
 }
 
 /// Borrowed point coordinates cached for repeated plane predicates.
@@ -220,7 +235,11 @@ impl<'a> Point3PredicateEvidence<'a> {
     }
 
     /// Classifies the retained point against one plane.
-    pub(crate) fn classify(&self, plane: &Plane) -> HypermeshResult<Classification> {
+    pub(crate) fn classify(
+        &self,
+        decisions: &DecisionContext,
+        plane: &Plane,
+    ) -> HypermeshResult<Classification> {
         if let Some(coordinates) = self.exact_coordinates
             && let Some(classification) = classify_exact_rational_coordinates(
                 plane,
@@ -234,11 +253,12 @@ impl<'a> Point3PredicateEvidence<'a> {
         }
 
         crate::trace_dispatch!("classify-point", "affine-real-fallback");
-        classify_real(&plane.expression_at_point(self.point))
+        classify_real(decisions, &plane.expression_at_point(self.point))
     }
 }
 
 pub(crate) fn classify_point_with_rational_query(
+    decisions: &DecisionContext,
     point: &Point3,
     plane: &Plane,
     rational_filter_query: Option<&RationalLinearForm4Query>,
@@ -256,11 +276,22 @@ pub(crate) fn classify_point_with_rational_query(
         exact_coordinates,
         rational_filter_query: rational_filter_query.copied(),
     }
-    .classify(plane)
+    .classify(decisions, plane)
 }
 
 /// Classifies a homogeneous point against a plane.
 pub fn classify_projective_point(
+    context: &MeshContext,
+    point: &HomogeneousPoint3,
+    plane: &Plane,
+) -> HypermeshResult<MeshOutcome<Classification>> {
+    let decisions = DecisionContext::new(context);
+    let classification = classify_projective_point_decision(&decisions, point, plane)?;
+    Ok(decisions.finish(classification))
+}
+
+pub(crate) fn classify_projective_point_decision(
+    decisions: &DecisionContext,
     point: &HomogeneousPoint3,
     plane: &Plane,
 ) -> HypermeshResult<Classification> {
@@ -272,7 +303,7 @@ pub fn classify_projective_point(
         return Ok(classification);
     }
     crate::trace_dispatch!("classify-point", "projective-real-fallback");
-    classify_real(&homogeneous_point_plane_expression(point, plane))
+    classify_real(decisions, &homogeneous_point_plane_expression(point, plane))
 }
 
 /// Borrowed homogeneous coordinates cached for repeated plane predicates.
@@ -341,7 +372,11 @@ impl<'a> ProjectivePoint3PredicateEvidence<'a> {
         self.rational_filter_query
     }
 
-    pub(crate) fn classify(&self, plane: &Plane) -> HypermeshResult<Classification> {
+    pub(crate) fn classify(
+        &self,
+        decisions: &DecisionContext,
+        plane: &Plane,
+    ) -> HypermeshResult<Classification> {
         if let Some([x, y, z, weight]) = self.exact_coordinates
             && let Some(classification) = classify_exact_rational_coordinates(
                 plane,
@@ -354,7 +389,10 @@ impl<'a> ProjectivePoint3PredicateEvidence<'a> {
             return Ok(classification);
         }
         crate::trace_dispatch!("classify-point", "projective-real-fallback");
-        classify_real(&homogeneous_point_plane_expression(self.point, plane))
+        classify_real(
+            decisions,
+            &homogeneous_point_plane_expression(self.point, plane),
+        )
     }
 
     #[inline]
@@ -476,7 +514,21 @@ fn classify_exact_rational_coordinates_with_filter(
 }
 
 /// Returns an ordering resolved by Hyperlimit's active predicate policy.
-pub fn compare_real(left: &Real, right: &Real) -> HypermeshResult<Ordering> {
+pub fn compare_real(
+    context: &MeshContext,
+    left: &Real,
+    right: &Real,
+) -> HypermeshResult<MeshOutcome<Ordering>> {
+    let decisions = DecisionContext::new(context);
+    let ordering = compare_real_decision(&decisions, left, right)?;
+    Ok(decisions.finish(ordering))
+}
+
+pub(crate) fn compare_real_decision(
+    decisions: &DecisionContext,
+    left: &Real,
+    right: &Real,
+) -> HypermeshResult<Ordering> {
     if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
         crate::trace_dispatch!("compare-real", "exact-rational");
         return Ok(left
@@ -484,10 +536,10 @@ pub fn compare_real(left: &Real, right: &Real) -> HypermeshResult<Ordering> {
             .expect("exact rationals are totally ordered"));
     }
     crate::trace_dispatch!("compare-real", "hyperlimit");
-    match hyperlimit::compare_reals(left, right) {
-        PredicateOutcome::Decided { value, .. } => Ok(value),
-        PredicateOutcome::Unknown { .. } => Err(HypermeshError::UnknownClassification),
-    }
+    decisions.decide(
+        hyperlimit::compare_reals(left, right, decisions.policy()),
+        "Real ordering",
+    )
 }
 
 /// Decides equality of three exact coordinates.
@@ -496,7 +548,11 @@ pub fn compare_real(left: &Real, right: &Real) -> HypermeshResult<Ordering> {
 /// certificates. Every remaining coordinate is decided by Hyperlimit's active
 /// policy, and exhausted certainty is preserved as `UnknownClassification`.
 #[inline]
-pub(crate) fn coordinates3_equal(left: [&Real; 3], right: [&Real; 3]) -> HypermeshResult<bool> {
+pub(crate) fn coordinates3_equal(
+    decisions: &DecisionContext,
+    left: [&Real; 3],
+    right: [&Real; 3],
+) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
     for (left, right) in left.into_iter().zip(right) {
         if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
@@ -508,17 +564,16 @@ pub(crate) fn coordinates3_equal(left: [&Real; 3], right: [&Real; 3]) -> Hyperme
         if left == right {
             continue;
         }
-        match hyperlimit::compare_reals(left, right) {
-            PredicateOutcome::Decided {
-                value: Ordering::Equal,
-                ..
-            } => {}
-            PredicateOutcome::Decided { .. } => return Ok(false),
-            PredicateOutcome::Unknown { .. } => saw_unknown = true,
+        match decisions.probe(hyperlimit::compare_reals(left, right, decisions.policy())) {
+            Some(Ordering::Equal) => {}
+            Some(_) => return Ok(false),
+            None => saw_unknown = true,
         }
     }
     if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
+        Err(HypermeshError::PredicateUndecided {
+            predicate: "3D coordinate equality",
+        })
     } else {
         Ok(true)
     }
@@ -526,11 +581,22 @@ pub(crate) fn coordinates3_equal(left: [&Real; 3], right: [&Real; 3]) -> Hyperme
 
 /// Decides exact affine-point equality through the shared coordinate cascade.
 #[inline]
-pub(crate) fn points_equal(left: &Point3, right: &Point3) -> HypermeshResult<bool> {
-    coordinates3_equal([&left.x, &left.y, &left.z], [&right.x, &right.y, &right.z])
+pub(crate) fn points_equal(
+    decisions: &DecisionContext,
+    left: &Point3,
+    right: &Point3,
+) -> HypermeshResult<bool> {
+    coordinates3_equal(
+        decisions,
+        [&left.x, &left.y, &left.z],
+        [&right.x, &right.y, &right.z],
+    )
 }
 
-pub(crate) fn classify_real(value: &Real) -> HypermeshResult<Classification> {
+pub(crate) fn classify_real(
+    decisions: &DecisionContext,
+    value: &Real,
+) -> HypermeshResult<Classification> {
     if let Some(value) = value.exact_rational_ref() {
         crate::trace_dispatch!("classify-real", "exact-rational");
         return Ok(
@@ -545,20 +611,16 @@ pub(crate) fn classify_real(value: &Real) -> HypermeshResult<Classification> {
         );
     }
     crate::trace_dispatch!("classify-real", "hyperlimit");
-    match classify_real_sign(value) {
-        PredicateOutcome::Decided {
-            value: Sign::Negative,
-            ..
-        } => Ok(Classification::Negative),
-        PredicateOutcome::Decided {
-            value: Sign::Zero, ..
-        } => Ok(Classification::On),
-        PredicateOutcome::Decided {
-            value: Sign::Positive,
-            ..
-        } => Ok(Classification::Positive),
-        PredicateOutcome::Unknown { .. } => Err(HypermeshError::UnknownClassification),
-    }
+    decisions
+        .decide(
+            classify_real_sign(value, decisions.policy()),
+            "Real sign classification",
+        )
+        .map(|sign| match sign {
+            Sign::Negative => Classification::Negative,
+            Sign::Zero => Classification::On,
+            Sign::Positive => Classification::Positive,
+        })
 }
 
 #[cfg(test)]
@@ -633,13 +695,27 @@ mod tests {
             Plane::from_coefficients(Real::zero(), Real::one(), Real::zero(), Real::from(-4)),
         ];
 
-        assert_eq!(evidence.classify(&planes[0]).unwrap(), Classification::On);
         assert_eq!(
-            evidence.classify(&planes[1]).unwrap(),
+            evidence
+                .classify(&crate::test_support::approximate_decisions(), &planes[0])
+                .unwrap(),
+            Classification::On
+        );
+        assert_eq!(
+            evidence
+                .classify(&crate::test_support::approximate_decisions(), &planes[1])
+                .unwrap(),
             Classification::Negative
         );
         for plane in &planes {
-            assert_eq!(evidence.classify(plane), classify_point(&point, plane));
+            assert_eq!(
+                evidence.classify(&crate::test_support::approximate_decisions(), plane),
+                classify_point_decision(
+                    &crate::test_support::approximate_decisions(),
+                    &point,
+                    plane,
+                )
+            );
         }
     }
 
@@ -650,12 +726,17 @@ mod tests {
             Plane::from_coefficients(Real::pi(), Real::zero(), Real::zero(), Real::from(-3));
 
         assert_eq!(
-            classify_point(&point, &plane).unwrap(),
+            classify_point_decision(
+                &crate::test_support::approximate_decisions(),
+                &point,
+                &plane,
+            )
+            .unwrap(),
             Classification::Positive
         );
         assert_eq!(
             Point3PredicateEvidence::new(&point)
-                .classify(&plane)
+                .classify(&crate::test_support::approximate_decisions(), &plane)
                 .unwrap(),
             Classification::Positive
         );
@@ -668,7 +749,12 @@ mod tests {
         let point =
             HomogeneousPoint3::new(Real::from(6), Real::zero(), Real::zero(), Real::from(3));
         assert_eq!(
-            classify_projective_point(&point, &plane).unwrap(),
+            classify_projective_point_decision(
+                &crate::test_support::approximate_decisions(),
+                &point,
+                &plane,
+            )
+            .unwrap(),
             Classification::On
         );
     }
@@ -684,19 +770,32 @@ mod tests {
             Plane::from_coefficients(Real::pi(), Real::zero(), Real::zero(), Real::from(-3)),
         ];
 
-        assert_eq!(evidence.classify(&planes[0]).unwrap(), Classification::On);
         assert_eq!(
-            evidence.classify(&planes[1]).unwrap(),
+            evidence
+                .classify(&crate::test_support::approximate_decisions(), &planes[0])
+                .unwrap(),
+            Classification::On
+        );
+        assert_eq!(
+            evidence
+                .classify(&crate::test_support::approximate_decisions(), &planes[1])
+                .unwrap(),
             Classification::Negative
         );
         assert_eq!(
-            evidence.classify(&planes[2]).unwrap(),
+            evidence
+                .classify(&crate::test_support::approximate_decisions(), &planes[2])
+                .unwrap(),
             Classification::Positive
         );
         for plane in &planes {
             assert_eq!(
-                evidence.classify(plane),
-                classify_projective_point(&point, plane)
+                evidence.classify(&crate::test_support::approximate_decisions(), plane),
+                classify_projective_point_decision(
+                    &crate::test_support::approximate_decisions(),
+                    &point,
+                    plane,
+                )
             );
         }
         for plane in &planes[..2] {
@@ -706,7 +805,11 @@ mod tests {
                 evidence
                     .classify_rational_plane_filter(&plane_evidence)
                     .or_else(|| evidence.classify_rational_plane_exact(&plane_evidence)),
-                Some(evidence.classify(plane).unwrap()),
+                Some(
+                    evidence
+                        .classify(&crate::test_support::approximate_decisions(), plane)
+                        .unwrap()
+                ),
             );
         }
         assert!(RationalPlane4PredicateEvidence::new(&planes[2]).is_none());
@@ -715,11 +818,21 @@ mod tests {
     #[test]
     fn exact_real_comparison_matches_rational_ordering() {
         assert_eq!(
-            compare_real(&Real::from(-3), &Real::from(2)).unwrap(),
+            compare_real_decision(
+                &crate::test_support::approximate_decisions(),
+                &Real::from(-3),
+                &Real::from(2),
+            )
+            .unwrap(),
             Ordering::Less,
         );
         assert_eq!(
-            compare_real(&Real::from(5), &Real::from(5)).unwrap(),
+            compare_real_decision(
+                &crate::test_support::approximate_decisions(),
+                &Real::from(5),
+                &Real::from(5),
+            )
+            .unwrap(),
             Ordering::Equal,
         );
     }
@@ -728,21 +841,34 @@ mod tests {
     #[test]
     fn fuzz_campaign_uses_central_symbolic_comparison_and_zero_classification() {
         assert_eq!(
-            compare_real(&Real::e(), &Real::pi()).unwrap(),
+            compare_real_decision(
+                &crate::test_support::approximate_decisions(),
+                &Real::e(),
+                &Real::pi(),
+            )
+            .unwrap(),
             Ordering::Less,
         );
         assert_eq!(
-            compare_real(&Real::pi(), &Real::pi()).unwrap(),
+            compare_real_decision(
+                &crate::test_support::approximate_decisions(),
+                &Real::pi(),
+                &Real::pi(),
+            )
+            .unwrap(),
             Ordering::Equal,
         );
         assert_eq!(
-            classify_real(&Real::pi()).unwrap(),
+            classify_real(&crate::test_support::approximate_decisions(), &Real::pi()).unwrap(),
             Classification::Positive,
         );
         assert_eq!(
-            classify_real(&-Real::pi()).unwrap(),
+            classify_real(&crate::test_support::approximate_decisions(), &-Real::pi()).unwrap(),
             Classification::Negative,
         );
-        assert_eq!(classify_real(&Real::zero()).unwrap(), Classification::On,);
+        assert_eq!(
+            classify_real(&crate::test_support::approximate_decisions(), &Real::zero()).unwrap(),
+            Classification::On,
+        );
     }
 }

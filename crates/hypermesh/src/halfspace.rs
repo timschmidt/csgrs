@@ -1,7 +1,9 @@
 //! Shared exact halfspace primitives for tracing and subdivision.
 
+use crate::context::DecisionContext;
 use crate::error::HypermeshResult;
-use crate::geometry::{Aabb, Classification, Plane, axis_ref, classify_point, compare_real};
+use crate::geometry::{Aabb, Classification, Plane, axis_ref};
+use crate::predicate::{classify_point_decision, compare_real_decision};
 use hyperlattice::{Point3, Real};
 use hyperlimit::Plane3 as LimitPlane3;
 
@@ -68,13 +70,14 @@ pub(crate) fn halfspace_has_opposite_pair(
 }
 
 pub(crate) fn halfspace_is_degenerate_bound(
+    decisions: &DecisionContext,
     halfspace: &LimitPlane3,
     bounds: &Aabb,
 ) -> HypermeshResult<bool> {
     for axis in 0..3 {
         let min = axis_ref(&bounds.min, axis);
         let max = axis_ref(&bounds.max, axis);
-        if compare_real(min, max)?.is_ne() {
+        if compare_real_decision(decisions, min, max)?.is_ne() {
             continue;
         }
         if *halfspace == axis_halfspace(axis, true, min.clone())
@@ -87,12 +90,13 @@ pub(crate) fn halfspace_is_degenerate_bound(
 }
 
 pub(crate) fn point_satisfies_halfspaces(
+    decisions: &DecisionContext,
     point: &Point3,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
     for halfspace in halfspaces {
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
-        if classify_point(point, &plane)? == Classification::Positive {
+        if classify_point_decision(decisions, point, &plane)? == Classification::Positive {
             return Ok(false);
         }
     }

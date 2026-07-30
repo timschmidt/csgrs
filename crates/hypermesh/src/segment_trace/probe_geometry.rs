@@ -31,18 +31,21 @@ use super::witness::{
     point_strictly_between_axis, segment_plane_crossing,
 };
 use super::{InteriorLeafPoint, LeafProbeQueryCaches, ProbePoint};
-use crate::bvh::bounds_overlap;
+use crate::bvh::bounds_overlap_decision;
+use crate::context::DecisionContext;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
-    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_real, compare_real,
+    Aabb, Classification, Plane, axis_mut, axis_ref, classify_real, compare_real_decision,
 };
 use crate::halfspace::{aabb_core_halfspaces, negated_halfspace, support_side_halfspace};
 use crate::polygon::{ApproxBounds, ConvexPolygon};
+use crate::predicate::classify_point_decision;
 use hyperlattice::{Point3, Real, intersect_three_planes};
 use hyperlimit::{HalfspaceFeasibility, Plane3 as LimitPlane3};
 
 #[cfg(test)]
 pub(super) fn bounded_probes_from_interior(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     support: &Plane,
     bounds: &Aabb,
@@ -54,12 +57,19 @@ pub(super) fn bounded_probes_from_interior(
 
     extend_probe_families_backtracking_unknown(
         &mut probes,
-        adjacent_normal_probes(interior, support, bounds, polygons, positive_side),
+        adjacent_normal_probes(
+            decisions,
+            interior,
+            support,
+            bounds,
+            polygons,
+            positive_side,
+        ),
         &mut saw_unknown,
     )?;
 
-    for axis in probe_axes(support)? {
-        let normal_sign = crate::geometry::classify_real(axis_ref(&support.normal, axis))?;
+    for axis in probe_axes(decisions, support)? {
+        let normal_sign = classify_real(decisions, axis_ref(&support.normal, axis))?;
         if normal_sign == Classification::On {
             continue;
         }
@@ -71,13 +81,14 @@ pub(super) fn bounded_probes_from_interior(
         } else {
             axis_value - axis_ref(&bounds.min, axis)
         };
-        if !compare_real(&room, &Real::zero())?.is_gt() {
+        if !compare_real_decision(decisions, &room, &Real::zero())?.is_gt() {
             continue;
         }
 
         extend_probe_families_backtracking_unknown(
             &mut probes,
             adjacent_axis_probes(
+                decisions,
                 interior,
                 support,
                 bounds,
@@ -106,7 +117,7 @@ pub(super) fn extend_probe_families_backtracking_unknown(
             }
             Ok(())
         }
-        Err(HypermeshError::UnknownClassification) => {
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
             *saw_unknown = true;
             Ok(())
         }
@@ -115,6 +126,7 @@ pub(super) fn extend_probe_families_backtracking_unknown(
 }
 
 pub(super) fn probe_definitions_from_active_halfspaces(
+    decisions: &DecisionContext,
     witness: &Point3,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
@@ -143,7 +155,13 @@ pub(super) fn probe_definitions_from_active_halfspaces(
 
     for halfspace in halfspaces {
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
-        if !compare_real(&plane.expression_at_point(witness), &Real::zero())?.is_eq() {
+        if !compare_real_decision(
+            decisions,
+            &plane.expression_at_point(witness),
+            &Real::zero(),
+        )?
+        .is_eq()
+        {
             continue;
         }
         if !active.iter().any(|existing| existing == &plane) {
@@ -155,6 +173,7 @@ pub(super) fn probe_definitions_from_active_halfspaces(
         for second in (first + 1)..active.len() {
             for third in (second + 1)..active.len() {
                 push_verified_probe_definition(
+                    decisions,
                     &mut definitions,
                     [
                         active[first].clone(),
@@ -172,6 +191,7 @@ pub(super) fn probe_definitions_from_active_halfspaces(
         for second in (first + 1)..active.len() {
             for axis_plane in &axis_definition {
                 push_verified_probe_definition(
+                    decisions,
                     &mut definitions,
                     [
                         active[first].clone(),
@@ -189,6 +209,7 @@ pub(super) fn probe_definitions_from_active_halfspaces(
         for first_axis in 0..3 {
             for second_axis in (first_axis + 1)..3 {
                 push_verified_probe_definition(
+                    decisions,
                     &mut definitions,
                     [
                         plane.clone(),
@@ -202,7 +223,13 @@ pub(super) fn probe_definitions_from_active_halfspaces(
         }
     }
 
-    push_verified_probe_definition(&mut definitions, axis_definition, witness, &mut saw_unknown)?;
+    push_verified_probe_definition(
+        decisions,
+        &mut definitions,
+        axis_definition,
+        witness,
+        &mut saw_unknown,
+    )?;
     Ok(DefinitionFamilyState {
         definitions,
         saw_unknown,
@@ -210,12 +237,13 @@ pub(super) fn probe_definitions_from_active_halfspaces(
 }
 
 pub(super) fn probe_definitions_or_axis(
+    _decisions: &DecisionContext,
     witness: &Point3,
     result: HypermeshResult<DefinitionFamilyState>,
 ) -> HypermeshResult<(Vec<[Plane; 3]>, bool)> {
     match result {
         Ok(found) => Ok((found.definitions, false)),
-        Err(HypermeshError::UnknownClassification) => {
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
             Ok((vec![axis_plane_definition(witness)], true))
         }
         Err(err) => Err(err),
@@ -223,18 +251,19 @@ pub(super) fn probe_definitions_or_axis(
 }
 
 fn push_verified_probe_definition(
+    decisions: &DecisionContext,
     definitions: &mut Vec<[Plane; 3]>,
     definition: [Plane; 3],
     witness: &Point3,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<()> {
-    if definition_has_coplanar_pair(&definition)? {
+    if definition_has_coplanar_pair(decisions, &definition)? {
         return Ok(());
     }
     let homogeneous = intersect_three_planes(&definition[0], &definition[1], &definition[2]);
-    let w_class = match classify_real(&homogeneous.w) {
+    let w_class = match classify_real(decisions, &homogeneous.w) {
         Ok(classification) => classification,
-        Err(HypermeshError::UnknownClassification) => {
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
             *saw_unknown = true;
             return Ok(());
         }
@@ -260,10 +289,13 @@ fn push_verified_probe_definition(
     Ok(())
 }
 
-fn definition_has_coplanar_pair(definition: &[Plane; 3]) -> HypermeshResult<bool> {
+fn definition_has_coplanar_pair(
+    decisions: &DecisionContext,
+    definition: &[Plane; 3],
+) -> HypermeshResult<bool> {
     for first in 0..3 {
         for second in (first + 1)..3 {
-            if planes_are_coplanar(&definition[first], &definition[second])? {
+            if planes_are_coplanar(decisions, &definition[first], &definition[second])? {
                 return Ok(true);
             }
         }
@@ -273,24 +305,28 @@ fn definition_has_coplanar_pair(definition: &[Plane; 3]) -> HypermeshResult<bool
 
 #[cfg(test)]
 pub(super) fn adjacent_normal_probes(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     support: &Plane,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     positive_side: bool,
 ) -> HypermeshResult<Vec<ProbePoint>> {
-    let retained_definitions = unique_normal_probe_search_definitions(&interior.planes, support)?;
+    let retained_definitions =
+        unique_normal_probe_search_definitions(decisions, &interior.planes, support)?;
     adjacent_normal_probes_with_queries(
+        decisions,
         interior,
         support,
         bounds,
         polygons,
         positive_side,
         |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
-        classify_point_in_polygon,
+        |point, polygon| classify_point_in_polygon(decisions, point, polygon),
         |corridor, stop_point| {
             collect_normal_probe_targets(&retained_definitions, |definition| {
                 strict_normal_probe_targets(
+                    decisions,
                     interior,
                     support,
                     corridor,
@@ -305,6 +341,7 @@ pub(super) fn adjacent_normal_probes(
 
 #[cfg(test)]
 pub(super) fn adjacent_normal_probes_with_queries(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     support: &Plane,
     bounds: &Aabb,
@@ -328,6 +365,7 @@ pub(super) fn adjacent_normal_probes_with_queries(
     };
 
     let (stop_values, mut saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        decisions,
         &interior.point,
         &direction,
         support,
@@ -339,11 +377,11 @@ pub(super) fn adjacent_normal_probes_with_queries(
     let mut probes = Vec::new();
 
     for stop_t in stop_values {
-        if !compare_real(&stop_t, &Real::zero())?.is_gt() {
+        if !compare_real_decision(decisions, &stop_t, &Real::zero())?.is_gt() {
             continue;
         }
         let stop_point = offset_point(&interior.point, &direction, &stop_t);
-        let corridor = bounds_between_points(&interior.point, &stop_point)?;
+        let corridor = bounds_between_points(decisions, &interior.point, &stop_point)?;
         extend_probe_families_backtracking_unknown(
             &mut probes,
             build(&corridor, &stop_point),
@@ -356,6 +394,7 @@ pub(super) fn adjacent_normal_probes_with_queries(
 }
 
 pub(super) fn adjacent_normal_probe_stop_values_with_queries(
+    decisions: &DecisionContext,
     interior: &Point3,
     direction: &Point3,
     support: &Plane,
@@ -367,13 +406,14 @@ pub(super) fn adjacent_normal_probe_stop_values_with_queries(
         &ConvexPolygon,
     ) -> HypermeshResult<PolygonPointLocation>,
 ) -> HypermeshResult<(Vec<Real>, bool)> {
-    let (bound_stop, mut saw_unknown) = normal_probe_bounds_stop(interior, direction, bounds)?;
+    let (bound_stop, mut saw_unknown) =
+        normal_probe_bounds_stop(decisions, interior, direction, bounds)?;
     let Some(bound_stop) = bound_stop else {
         return Ok((Vec::new(), saw_unknown));
     };
 
     let bound_point = offset_point(interior, direction, &bound_stop);
-    let segment_bounds = bounds_between_points(interior, &bound_point)?;
+    let segment_bounds = bounds_between_points(decisions, interior, &bound_point)?;
     let segment_bounds = ApproxBounds::new(segment_bounds.min, segment_bounds.max);
     let mut stop_values = vec![bound_stop.clone()];
 
@@ -382,18 +422,20 @@ pub(super) fn adjacent_normal_probe_stop_values_with_queries(
             continue;
         }
         if let Some(polygon_bounds) = &polygon.approx_bounds
-            && !bounds_overlap(&segment_bounds, polygon_bounds)?
+            && !bounds_overlap_decision(decisions, &segment_bounds, polygon_bounds)?
         {
             continue;
         }
-        if planes_are_coplanar(&polygon.support, support)? {
+        if planes_are_coplanar(decisions, &polygon.support, support)? {
             continue;
         }
 
         let start_value = polygon.support.expression_at_point(interior);
-        let start_class = match classify_real(&start_value) {
+        let start_class = match classify_real(decisions, &start_value) {
             Ok(classification) => classification,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -402,7 +444,10 @@ pub(super) fn adjacent_normal_probe_stop_values_with_queries(
         if start_class == Classification::On {
             let point_location = match classify_point_on_polygon(interior, polygon) {
                 Ok(point_location) => point_location,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     continue;
                 }
@@ -422,15 +467,19 @@ pub(super) fn adjacent_normal_probe_stop_values_with_queries(
 
         let denom = match denom_for(interior, direction, polygon) {
             Ok(denom) => denom,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
             Err(err) => return Err(err),
         };
-        let denom_class = match classify_real(&denom) {
+        let denom_class = match classify_real(decisions, &denom) {
             Ok(classification) => classification,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -439,21 +488,27 @@ pub(super) fn adjacent_normal_probe_stop_values_with_queries(
         if denom_class == Classification::On {
             continue;
         }
-        let crossing_t =
-            match ((-start_value) / denom).map_err(|_| HypermeshError::UnknownClassification) {
-                Ok(crossing_t) => crossing_t,
-                Err(HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
-                    continue;
-                }
-                Err(err) => return Err(err),
-            };
+        let crossing_t = match ((-start_value) / denom)
+            .map_err(|_| HypermeshError::UnknownClassification)
+        {
+            Ok(crossing_t) => crossing_t,
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
         let crossing = offset_point(interior, direction, &crossing_t);
-        if !positive_real_strictly_before(&crossing_t, &bound_stop)? {
-            if compare_real(&crossing_t, &bound_stop)?.is_eq() {
+        if !positive_real_strictly_before(decisions, &crossing_t, &bound_stop)? {
+            if compare_real_decision(decisions, &crossing_t, &bound_stop)?.is_eq() {
                 let point_location = match classify_point_on_polygon(&crossing, polygon) {
                     Ok(point_location) => point_location,
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                         continue;
                     }
@@ -471,7 +526,9 @@ pub(super) fn adjacent_normal_probe_stop_values_with_queries(
 
         let point_location = match classify_point_on_polygon(&crossing, polygon) {
             Ok(point_location) => point_location,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -488,7 +545,7 @@ pub(super) fn adjacent_normal_probe_stop_values_with_queries(
         let mut insert_at = stop_values.len();
         let mut duplicate = false;
         for (index, existing) in stop_values.iter().enumerate() {
-            let order = compare_real(&crossing_t, existing)?;
+            let order = compare_real_decision(decisions, &crossing_t, existing)?;
             if order.is_eq() {
                 duplicate = true;
                 break;
@@ -564,7 +621,9 @@ pub(super) fn collect_normal_probe_targets(
                     push_unique_probe_point(&mut probes, probe);
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -576,7 +635,7 @@ pub(super) fn collect_normal_probe_targets(
                 push_unique_probe_point(&mut probes, probe);
             }
         }
-        Err(HypermeshError::UnknownClassification) => {
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
             saw_unknown = true;
         }
         Err(err) => return Err(err),
@@ -636,15 +695,18 @@ pub(super) fn normal_probe_shifted_seed_families(
 }
 
 fn normal_probe_definition_preserves_support_direction(
+    decisions: &DecisionContext,
     definition: &[Plane; 3],
     support: &Plane,
 ) -> HypermeshResult<bool> {
-    Ok(
-        classify_real(&dot_direction(&definition[1].normal, &support.normal))?
-            == Classification::On
-            && classify_real(&dot_direction(&definition[2].normal, &support.normal))?
-                == Classification::On,
-    )
+    Ok(classify_real(
+        decisions,
+        &dot_direction(&definition[1].normal, &support.normal),
+    )? == Classification::On
+        && classify_real(
+            decisions,
+            &dot_direction(&definition[2].normal, &support.normal),
+        )? == Classification::On)
 }
 
 pub(super) fn retained_plane_pairs_match_as_sets(left: &[Plane; 3], right: &[Plane; 3]) -> bool {
@@ -652,12 +714,13 @@ pub(super) fn retained_plane_pairs_match_as_sets(left: &[Plane; 3], right: &[Pla
 }
 
 pub(super) fn unique_normal_probe_search_definitions(
+    decisions: &DecisionContext,
     definitions: &[[Plane; 3]],
     support: &Plane,
 ) -> HypermeshResult<Vec<[Plane; 3]>> {
     let mut unique = Vec::new();
     for definition in unique_definition_family(definitions) {
-        if !normal_probe_definition_preserves_support_direction(&definition, support)? {
+        if !normal_probe_definition_preserves_support_direction(decisions, &definition, support)? {
             continue;
         }
         if unique
@@ -672,6 +735,7 @@ pub(super) fn unique_normal_probe_search_definitions(
 
 #[cfg(test)]
 pub(super) fn strict_normal_probe_targets(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     support: &Plane,
     corridor: &Aabb,
@@ -687,7 +751,7 @@ pub(super) fn strict_normal_probe_targets(
     halfspaces.push(support_side_halfspace(support, positive_side));
     halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
 
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(decisions, &halfspaces)?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -697,7 +761,7 @@ pub(super) fn strict_normal_probe_targets(
     let mut probes = Vec::new();
     let extra_planes = normal_probe_extra_planes(interior, definition);
     let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
-    let shifted_vertex_family = feasible_halfspace_cell_vertex_family(&halfspaces)?;
+    let shifted_vertex_family = feasible_halfspace_cell_vertex_family(decisions, &halfspaces)?;
     saw_unknown |= shifted_vertex_family.saw_unknown;
     let shifted_vertices = shifted_vertex_family.seeds;
     let mut shifted_geometry_seeds = Vec::new();
@@ -713,6 +777,7 @@ pub(super) fn strict_normal_probe_targets(
             {
                 collect_strict_halfspace_seed_family(Ok(vec![witness.clone()]), |candidate| {
                     point_strictly_inside_halfspace_cell_or_unknown(
+                        decisions,
                         candidate,
                         corridor,
                         &halfspaces,
@@ -725,7 +790,12 @@ pub(super) fn strict_normal_probe_targets(
                 })
             },
             collect_strict_halfspace_seed_family(Ok(shifted_vertices.clone()), |candidate| {
-                point_strictly_inside_halfspace_cell_or_unknown(candidate, corridor, &halfspaces)
+                point_strictly_inside_halfspace_cell_or_unknown(
+                    decisions,
+                    candidate,
+                    corridor,
+                    &halfspaces,
+                )
             }),
         ],
     )?;
@@ -735,6 +805,7 @@ pub(super) fn strict_normal_probe_targets(
 
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_probe_point(
+            decisions,
             witness,
             corridor,
             support,
@@ -764,6 +835,7 @@ pub(super) fn strict_normal_probe_targets(
                 Ok(shifted_geometry_seeds.clone()),
                 |candidate| {
                     point_strictly_inside_halfspace_cell_or_unknown(
+                        decisions,
                         candidate,
                         corridor,
                         &halfspaces,
@@ -779,6 +851,7 @@ pub(super) fn strict_normal_probe_targets(
             geometry_strict_seeds.iter(),
             |witness| {
                 build_probe_point(
+                    decisions,
                     witness,
                     corridor,
                     support,
@@ -823,19 +896,34 @@ pub(super) fn strict_normal_probe_targets(
             extend_shifted_halfspace_seed_families_backtracking_unknown(
                 &mut shifted_witnesses,
                 [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
-                |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
+                |seed| {
+                    shifted_halfspace_cell_witnesses_from_seed(
+                        decisions,
+                        corridor,
+                        &halfspaces,
+                        seed,
+                    )
+                },
             )?;
             Ok(shifted_witnesses)
         },
         &mut saw_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        match build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes) {
+        match build_probe_point_from_shifted_witness(
+            decisions,
+            shifted,
+            corridor,
+            support,
+            &extra_planes,
+        ) {
             Ok(Some(probe)) => {
                 push_unique_probe_point(&mut probes, probe);
             }
             Ok(None) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -846,6 +934,7 @@ pub(super) fn strict_normal_probe_targets(
 }
 
 pub(super) fn strict_normal_probe_targets_with_query_caches(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     support: &Plane,
     corridor: &Aabb,
@@ -864,6 +953,7 @@ pub(super) fn strict_normal_probe_targets_with_query_caches(
 
     let mut local_unknown = false;
     let report = cached_optional_halfspace_feasibility_report_with(
+        decisions,
         &mut probe_query_caches.halfspace_reports,
         &halfspaces,
         &mut local_unknown,
@@ -879,6 +969,7 @@ pub(super) fn strict_normal_probe_targets_with_query_caches(
     let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         cached_halfspace_cell_seed_families_from_optional_report_with(
+            decisions,
             &mut probe_query_caches.halfspace_seed_families,
             corridor,
             &halfspaces,
@@ -890,6 +981,7 @@ pub(super) fn strict_normal_probe_targets_with_query_caches(
 
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_probe_point(
+            decisions,
             witness,
             corridor,
             support,
@@ -914,6 +1006,7 @@ pub(super) fn strict_normal_probe_targets_with_query_caches(
                 Ok(shifted_geometry_seeds.clone()),
                 |candidate| {
                     point_strictly_inside_halfspace_cell_or_unknown(
+                        decisions,
                         candidate,
                         corridor,
                         &halfspaces,
@@ -929,6 +1022,7 @@ pub(super) fn strict_normal_probe_targets_with_query_caches(
             geometry_strict_seeds.iter(),
             |witness| {
                 build_probe_point(
+                    decisions,
                     witness,
                     corridor,
                     support,
@@ -973,19 +1067,34 @@ pub(super) fn strict_normal_probe_targets_with_query_caches(
             extend_shifted_halfspace_seed_families_backtracking_unknown(
                 &mut shifted_witnesses,
                 [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
-                |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
+                |seed| {
+                    shifted_halfspace_cell_witnesses_from_seed(
+                        decisions,
+                        corridor,
+                        &halfspaces,
+                        seed,
+                    )
+                },
             )?;
             Ok(shifted_witnesses)
         },
         &mut local_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        match build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes) {
+        match build_probe_point_from_shifted_witness(
+            decisions,
+            shifted,
+            corridor,
+            support,
+            &extra_planes,
+        ) {
             Ok(Some(probe)) => {
                 push_unique_probe_point(&mut probes, probe);
             }
             Ok(None) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 local_unknown = true;
             }
             Err(err) => return Err(err),
@@ -997,6 +1106,7 @@ pub(super) fn strict_normal_probe_targets_with_query_caches(
 
 #[cfg(test)]
 pub(super) fn strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     support: &Plane,
     corridor: &Aabb,
@@ -1026,6 +1136,7 @@ pub(super) fn strict_normal_probe_targets_from_seed_families_with_tracking_unkno
 
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_probe_point(
+            decisions,
             witness,
             corridor,
             support,
@@ -1064,12 +1175,20 @@ pub(super) fn strict_normal_probe_targets_from_seed_families_with_tracking_unkno
         &mut saw_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        match build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes) {
+        match build_probe_point_from_shifted_witness(
+            decisions,
+            shifted,
+            corridor,
+            support,
+            &extra_planes,
+        ) {
             Ok(Some(probe)) => {
                 push_unique_probe_point(&mut probes, probe);
             }
             Ok(None) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -1079,13 +1198,17 @@ pub(super) fn strict_normal_probe_targets_from_seed_families_with_tracking_unkno
     Ok(probes)
 }
 
-pub(super) fn bounds_between_points(start: &Point3, end: &Point3) -> HypermeshResult<Aabb> {
+pub(super) fn bounds_between_points(
+    decisions: &DecisionContext,
+    start: &Point3,
+    end: &Point3,
+) -> HypermeshResult<Aabb> {
     let mut min = Point3::origin();
     let mut max = Point3::origin();
     for axis in 0..3 {
         let start_value = axis_ref(start, axis);
         let end_value = axis_ref(end, axis);
-        if compare_real(start_value, end_value)?.is_le() {
+        if compare_real_decision(decisions, start_value, end_value)?.is_le() {
             *axis_mut(&mut min, axis) = start_value.clone();
             *axis_mut(&mut max, axis) = end_value.clone();
         } else {
@@ -1097,6 +1220,7 @@ pub(super) fn bounds_between_points(start: &Point3, end: &Point3) -> HypermeshRe
 }
 
 fn normal_probe_bounds_stop(
+    decisions: &DecisionContext,
     interior: &Point3,
     direction: &Point3,
     bounds: &Aabb,
@@ -1105,15 +1229,16 @@ fn normal_probe_bounds_stop(
     let mut saw_unknown = false;
     for axis in 0..3 {
         let component = axis_ref(direction, axis);
-        match classify_real(component)? {
+        match classify_real(decisions, component)? {
             Classification::Positive => {
                 let room = axis_ref(&bounds.max, axis) - axis_ref(interior, axis);
-                let room_order = compare_real(&room, &Real::zero())?;
+                let room_order = compare_real_decision(decisions, &room, &Real::zero())?;
                 if !room_order.is_gt() {
                     saw_unknown = room_order.is_eq();
                     return Ok((None, saw_unknown));
                 }
                 update_positive_stop(
+                    decisions,
                     &mut stop_t,
                     (room / component.clone())
                         .map_err(|_| HypermeshError::UnknownClassification)?,
@@ -1121,12 +1246,13 @@ fn normal_probe_bounds_stop(
             }
             Classification::Negative => {
                 let room = axis_ref(interior, axis) - axis_ref(&bounds.min, axis);
-                let room_order = compare_real(&room, &Real::zero())?;
+                let room_order = compare_real_decision(decisions, &room, &Real::zero())?;
                 if !room_order.is_gt() {
                     saw_unknown = room_order.is_eq();
                     return Ok((None, saw_unknown));
                 }
                 update_positive_stop(
+                    decisions,
                     &mut stop_t,
                     (room / (-component.clone()))
                         .map_err(|_| HypermeshError::UnknownClassification)?,
@@ -1138,13 +1264,17 @@ fn normal_probe_bounds_stop(
     Ok((stop_t, saw_unknown))
 }
 
-fn update_positive_stop(stop_t: &mut Option<Real>, candidate: Real) -> HypermeshResult<()> {
-    if !compare_real(&candidate, &Real::zero())?.is_gt() {
+fn update_positive_stop(
+    decisions: &DecisionContext,
+    stop_t: &mut Option<Real>,
+    candidate: Real,
+) -> HypermeshResult<()> {
+    if !compare_real_decision(decisions, &candidate, &Real::zero())?.is_gt() {
         return Ok(());
     }
     let replace = match stop_t.as_ref() {
         None => true,
-        Some(current) => compare_real(&candidate, current)?.is_lt(),
+        Some(current) => compare_real_decision(decisions, &candidate, current)?.is_lt(),
     };
     if replace {
         *stop_t = Some(candidate);
@@ -1152,8 +1282,15 @@ fn update_positive_stop(stop_t: &mut Option<Real>, candidate: Real) -> Hypermesh
     Ok(())
 }
 
-fn positive_real_strictly_before(value: &Real, stop: &Real) -> HypermeshResult<bool> {
-    Ok(compare_real(value, &Real::zero())?.is_gt() && compare_real(value, stop)?.is_lt())
+fn positive_real_strictly_before(
+    decisions: &DecisionContext,
+    value: &Real,
+    stop: &Real,
+) -> HypermeshResult<bool> {
+    Ok(
+        compare_real_decision(decisions, value, &Real::zero())?.is_gt()
+            && compare_real_decision(decisions, value, stop)?.is_lt(),
+    )
 }
 
 pub(super) fn dot_direction(left: &Point3, right: &Point3) -> Real {
@@ -1177,6 +1314,7 @@ pub(super) fn offset_point(point: &Point3, direction: &Point3, amount: &Real) ->
 
 #[cfg_attr(not(test), allow(dead_code))]
 pub(super) fn adjacent_axis_probes(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     support: &Plane,
     bounds: &Aabb,
@@ -1185,6 +1323,7 @@ pub(super) fn adjacent_axis_probes(
     direction_positive: bool,
 ) -> HypermeshResult<Vec<ProbePoint>> {
     adjacent_axis_probes_with_queries(
+        decisions,
         interior,
         support,
         bounds,
@@ -1192,25 +1331,26 @@ pub(super) fn adjacent_axis_probes(
         axis,
         direction_positive,
         |interior, endpoint, polygon, _axis| {
-            let start_class = classify_point(interior, &polygon.support)?;
-            let endpoint_class = classify_point(endpoint, &polygon.support)?;
+            let start_class = classify_point_decision(decisions, interior, &polygon.support)?;
+            let endpoint_class = classify_point_decision(decisions, endpoint, &polygon.support)?;
             if start_class == Classification::On {
                 return Ok(Some(interior.clone()));
             }
             if endpoint_class == Classification::On {
                 return Ok(Some(endpoint.clone()));
             }
-            segment_plane_crossing(interior, endpoint, &polygon.support)
+            segment_plane_crossing(decisions, interior, endpoint, &polygon.support)
         },
-        classify_point_in_polygon,
+        |point, polygon| classify_point_in_polygon(decisions, point, polygon),
         |corridor| {
             collect_axis_probe_targets(&interior.planes, |definition| {
                 if let Some(definition) = definition
-                    && !axis_probe_definition_preserves_axis_direction(definition, axis)?
+                    && !axis_probe_definition_preserves_axis_direction(decisions, definition, axis)?
                 {
                     return Ok(Vec::new());
                 }
                 strict_axis_probe_targets(
+                    decisions,
                     interior,
                     support,
                     corridor,
@@ -1225,6 +1365,7 @@ pub(super) fn adjacent_axis_probes(
 
 #[cfg_attr(not(test), allow(dead_code))]
 pub(super) fn adjacent_axis_probes_with_queries(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     _support: &Plane,
     bounds: &Aabb,
@@ -1244,6 +1385,7 @@ pub(super) fn adjacent_axis_probes_with_queries(
     mut build: impl FnMut(&Aabb) -> HypermeshResult<Vec<ProbePoint>>,
 ) -> HypermeshResult<Vec<ProbePoint>> {
     let (stop_values, mut saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
+        decisions,
         &interior.point,
         bounds,
         polygons,
@@ -1256,10 +1398,10 @@ pub(super) fn adjacent_axis_probes_with_queries(
     let mut probes = Vec::new();
 
     for stop_value in stop_values {
-        if !axis_value_after_start(start_value, &stop_value, direction_positive)? {
+        if !axis_value_after_start(decisions, start_value, &stop_value, direction_positive)? {
             continue;
         }
-        let corridor = axis_probe_bounds(&interior.point, axis, &stop_value)?;
+        let corridor = axis_probe_bounds(decisions, &interior.point, axis, &stop_value)?;
         extend_probe_families_backtracking_unknown(
             &mut probes,
             build(&corridor),
@@ -1272,6 +1414,7 @@ pub(super) fn adjacent_axis_probes_with_queries(
 }
 
 pub(super) fn adjacent_axis_probe_stop_values_with_queries(
+    decisions: &DecisionContext,
     interior: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
@@ -1294,8 +1437,11 @@ pub(super) fn adjacent_axis_probe_stop_values_with_queries(
     } else {
         axis_ref(&bounds.min, axis)
     };
-    if !axis_value_after_start(start_value, bound_value, direction_positive)? {
-        return Ok((Vec::new(), compare_real(start_value, bound_value)?.is_eq()));
+    if !axis_value_after_start(decisions, start_value, bound_value, direction_positive)? {
+        return Ok((
+            Vec::new(),
+            compare_real_decision(decisions, start_value, bound_value)?.is_eq(),
+        ));
     }
 
     let mut endpoint = interior.clone();
@@ -1310,7 +1456,9 @@ pub(super) fn adjacent_axis_probe_stop_values_with_queries(
 
         let Some(crossing) = (match crossing_for(interior, &endpoint, polygon, axis) {
             Ok(crossing) => crossing,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -1320,13 +1468,15 @@ pub(super) fn adjacent_axis_probe_stop_values_with_queries(
         };
         let point_location = match classify_point_on_polygon(&crossing, polygon) {
             Ok(point_location) => point_location,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
             Err(err) => return Err(err),
         };
-        if !point_strictly_between_axis(&crossing, interior, &endpoint, axis)? {
+        if !point_strictly_between_axis(decisions, &crossing, interior, &endpoint, axis)? {
             if crossing == *interior
                 && matches!(
                     point_location,
@@ -1354,18 +1504,18 @@ pub(super) fn adjacent_axis_probe_stop_values_with_queries(
         }
 
         let crossing_value = axis_ref(&crossing, axis);
-        if !axis_value_after_start(start_value, crossing_value, direction_positive)? {
+        if !axis_value_after_start(decisions, start_value, crossing_value, direction_positive)? {
             continue;
         }
 
         let mut insert_at = stop_values.len();
         let mut duplicate = false;
         for (index, existing) in stop_values.iter().enumerate() {
-            if compare_real(crossing_value, existing)?.is_eq() {
+            if compare_real_decision(decisions, crossing_value, existing)?.is_eq() {
                 duplicate = true;
                 break;
             }
-            if axis_value_before_stop(crossing_value, existing, direction_positive)? {
+            if axis_value_before_stop(decisions, crossing_value, existing, direction_positive)? {
                 insert_at = index;
                 break;
             }
@@ -1379,6 +1529,7 @@ pub(super) fn adjacent_axis_probe_stop_values_with_queries(
 }
 
 pub(super) fn axis_probe_bounds(
+    decisions: &DecisionContext,
     interior: &Point3,
     axis: usize,
     stop_value: &Real,
@@ -1386,7 +1537,7 @@ pub(super) fn axis_probe_bounds(
     let mut min = interior.clone();
     let mut max = interior.clone();
     let start_value = axis_ref(interior, axis);
-    if compare_real(start_value, stop_value)?.is_lt() {
+    if compare_real_decision(decisions, start_value, stop_value)?.is_lt() {
         *axis_mut(&mut max, axis) = stop_value.clone();
     } else {
         *axis_mut(&mut min, axis) = stop_value.clone();
@@ -1409,7 +1560,9 @@ pub(super) fn collect_axis_probe_targets(
                     push_unique_probe_point(&mut probes, probe);
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -1421,7 +1574,7 @@ pub(super) fn collect_axis_probe_targets(
                 push_unique_probe_point(&mut probes, probe);
             }
         }
-        Err(HypermeshError::UnknownClassification) => {
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
             saw_unknown = true;
         }
         Err(err) => return Err(err),
@@ -1442,7 +1595,9 @@ pub(super) fn extend_probe_point_builds_backtracking_unknown<'a, T: 'a>(
                 push_unique_probe_point(probes, probe);
             }
             Ok(None) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -1452,16 +1607,19 @@ pub(super) fn extend_probe_point_builds_backtracking_unknown<'a, T: 'a>(
 }
 
 pub(super) fn axis_probe_definition_preserves_axis_direction(
+    decisions: &DecisionContext,
     definition: &[Plane; 3],
     axis: usize,
 ) -> HypermeshResult<bool> {
     Ok(
-        classify_real(axis_ref(&definition[1].normal, axis))? == Classification::On
-            && classify_real(axis_ref(&definition[2].normal, axis))? == Classification::On,
+        classify_real(decisions, axis_ref(&definition[1].normal, axis))? == Classification::On
+            && classify_real(decisions, axis_ref(&definition[2].normal, axis))?
+                == Classification::On,
     )
 }
 
 pub(super) fn strict_axis_probe_targets(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     support: &Plane,
     corridor: &Aabb,
@@ -1475,7 +1633,7 @@ pub(super) fn strict_axis_probe_targets(
         push_plane_equality_halfspaces(&mut halfspaces, &definition[2]);
     }
     halfspaces.push(support_side_halfspace(support, positive_side));
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(decisions, &halfspaces)?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -1485,6 +1643,7 @@ pub(super) fn strict_axis_probe_targets(
     let mut probes = Vec::new();
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
+            decisions,
             corridor,
             &halfspaces,
             report.as_ref(),
@@ -1496,6 +1655,7 @@ pub(super) fn strict_axis_probe_targets(
 
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_axis_probe_point(
+            decisions,
             witness,
             interior,
             corridor,
@@ -1522,7 +1682,14 @@ pub(super) fn strict_axis_probe_targets(
             extend_shifted_halfspace_seed_families_backtracking_unknown(
                 &mut shifted_witnesses,
                 [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
-                |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
+                |seed| {
+                    shifted_halfspace_cell_witnesses_from_seed(
+                        decisions,
+                        corridor,
+                        &halfspaces,
+                        seed,
+                    )
+                },
             )?;
             Ok(shifted_witnesses)
         },
@@ -1530,13 +1697,15 @@ pub(super) fn strict_axis_probe_targets(
     )?;
     for shifted in &shifted_witnesses {
         match build_axis_probe_point_from_shifted_witness(
-            shifted, interior, corridor, support, axis, definition,
+            decisions, shifted, interior, corridor, support, axis, definition,
         ) {
             Ok(Some(probe)) => {
                 push_unique_probe_point(&mut probes, probe);
             }
             Ok(None) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -1548,6 +1717,7 @@ pub(super) fn strict_axis_probe_targets(
 
 #[cfg(test)]
 pub(super) fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     support: &Plane,
     corridor: &Aabb,
@@ -1575,6 +1745,7 @@ pub(super) fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown
 
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_axis_probe_point(
+            decisions,
             witness,
             interior,
             corridor,
@@ -1609,13 +1780,15 @@ pub(super) fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown
     )?;
     for shifted in &shifted_witnesses {
         match build_axis_probe_point_from_shifted_witness(
-            shifted, interior, corridor, support, axis, definition,
+            decisions, shifted, interior, corridor, support, axis, definition,
         ) {
             Ok(Some(probe)) => {
                 push_unique_probe_point(&mut probes, probe);
             }
             Ok(None) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -1626,6 +1799,7 @@ pub(super) fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown
 }
 
 pub(super) fn build_probe_point(
+    decisions: &DecisionContext,
     witness: &Point3,
     corridor: &Aabb,
     support: &Plane,
@@ -1634,10 +1808,10 @@ pub(super) fn build_probe_point(
     extra_planes: &[Plane],
     inherited_uncertified_definition_fallback: bool,
 ) -> HypermeshResult<Option<ProbePoint>> {
-    if !point_strictly_inside_halfspace_cell_or_unknown(witness, corridor, halfspaces)? {
+    if !point_strictly_inside_halfspace_cell_or_unknown(decisions, witness, corridor, halfspaces)? {
         return Ok(None);
     }
-    let side = classify_point(witness, support)?;
+    let side = classify_point_decision(decisions, witness, support)?;
     if side == Classification::On {
         return Err(HypermeshError::UnknownClassification);
     }
@@ -1654,8 +1828,10 @@ pub(super) fn build_probe_point(
     }
 
     let (planes, uncertified_definition_fallback) = probe_definitions_or_axis(
+        decisions,
         witness,
         probe_definitions_from_active_halfspaces(
+            decisions,
             witness,
             halfspaces,
             active_planes,
@@ -1672,12 +1848,13 @@ pub(super) fn build_probe_point(
 }
 
 pub(super) fn build_probe_point_from_shifted_witness(
+    decisions: &DecisionContext,
     witness: &ShiftedHalfspaceWitness,
     corridor: &Aabb,
     support: &Plane,
     extra_planes: &[Plane],
 ) -> HypermeshResult<Option<ProbePoint>> {
-    let side = classify_point(&witness.point, support)?;
+    let side = classify_point_decision(decisions, &witness.point, support)?;
     if side == Classification::On {
         return Err(HypermeshError::UnknownClassification);
     }
@@ -1697,6 +1874,7 @@ pub(super) fn build_probe_point_from_shifted_witness(
     let mut saw_unknown = false;
     for family in &witness.families {
         match point_strictly_inside_halfspace_cell_or_unknown(
+            decisions,
             &witness.point,
             corridor,
             &family.halfspaces,
@@ -1705,6 +1883,7 @@ pub(super) fn build_probe_point_from_shifted_witness(
             false => continue,
         }
         match probe_definitions_from_active_halfspaces(
+            decisions,
             &witness.point,
             &family.halfspaces,
             family.active_planes,
@@ -1714,7 +1893,9 @@ pub(super) fn build_probe_point_from_shifted_witness(
                 saw_unknown |= found.saw_unknown;
                 extend_unique_definition_families(&mut planes, found.definitions);
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -1740,6 +1921,7 @@ pub(super) fn build_probe_point_from_shifted_witness(
 }
 
 pub(super) fn build_axis_probe_point(
+    decisions: &DecisionContext,
     witness: &Point3,
     interior: &InteriorLeafPoint,
     corridor: &Aabb,
@@ -1750,17 +1932,19 @@ pub(super) fn build_axis_probe_point(
     active_planes: [Option<usize>; 3],
     inherited_uncertified_definition_fallback: bool,
 ) -> HypermeshResult<Option<ProbePoint>> {
-    if !point_strictly_inside_halfspace_cell_or_unknown(witness, corridor, halfspaces)? {
+    if !point_strictly_inside_halfspace_cell_or_unknown(decisions, witness, corridor, halfspaces)? {
         return Ok(None);
     }
-    let side = classify_point(witness, support)?;
+    let side = classify_point_decision(decisions, witness, support)?;
     if side == Classification::On {
         return Err(HypermeshError::UnknownClassification);
     }
 
     let (planes, uncertified_definition_fallback) = probe_definitions_or_axis(
+        decisions,
         witness,
         axis_probe_definitions(
+            decisions,
             interior,
             support,
             axis,
@@ -1780,6 +1964,7 @@ pub(super) fn build_axis_probe_point(
 }
 
 pub(super) fn build_axis_probe_point_from_shifted_witness(
+    decisions: &DecisionContext,
     witness: &ShiftedHalfspaceWitness,
     interior: &InteriorLeafPoint,
     corridor: &Aabb,
@@ -1787,7 +1972,7 @@ pub(super) fn build_axis_probe_point_from_shifted_witness(
     axis: usize,
     definition: Option<&[Plane; 3]>,
 ) -> HypermeshResult<Option<ProbePoint>> {
-    let side = classify_point(&witness.point, support)?;
+    let side = classify_point_decision(decisions, &witness.point, support)?;
     if side == Classification::On {
         return Err(HypermeshError::UnknownClassification);
     }
@@ -1796,6 +1981,7 @@ pub(super) fn build_axis_probe_point_from_shifted_witness(
     let mut saw_unknown = false;
     for family in &witness.families {
         match point_strictly_inside_halfspace_cell_or_unknown(
+            decisions,
             &witness.point,
             corridor,
             &family.halfspaces,
@@ -1804,6 +1990,7 @@ pub(super) fn build_axis_probe_point_from_shifted_witness(
             false => continue,
         }
         match axis_probe_definitions(
+            decisions,
             interior,
             support,
             axis,
@@ -1816,7 +2003,9 @@ pub(super) fn build_axis_probe_point_from_shifted_witness(
                 saw_unknown |= found.saw_unknown;
                 extend_unique_definition_families(&mut planes, found.definitions);
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -1842,6 +2031,7 @@ pub(super) fn build_axis_probe_point_from_shifted_witness(
 }
 
 fn axis_probe_definitions(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     support: &Plane,
     axis: usize,
@@ -1867,7 +2057,13 @@ fn axis_probe_definitions(
             }
         }
     }
-    probe_definitions_from_active_halfspaces(witness, halfspaces, active_planes, &extra_planes)
+    probe_definitions_from_active_halfspaces(
+        decisions,
+        witness,
+        halfspaces,
+        active_planes,
+        &extra_planes,
+    )
 }
 
 fn plane_halfspace(plane: &Plane) -> LimitPlane3 {
@@ -1899,6 +2095,7 @@ pub(super) fn normal_stop_halfspace(
 
 #[cfg(test)]
 pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
@@ -1917,11 +2114,12 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
     for detour in detours_for(start, end)? {
         if detour.point == *start
             || detour.point == *end
-            || point_lies_on_traced_surface(&detour.point, polygons)?
+            || point_lies_on_traced_surface(decisions, &detour.point, polygons)?
         {
             continue;
         }
         if !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+            decisions,
             start,
             &detour.point,
             polygons,
@@ -1932,6 +2130,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
             continue;
         }
         if probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+            decisions,
             &detour.point,
             end,
             polygons,
@@ -1947,25 +2146,30 @@ pub(super) fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement
 }
 
 pub(super) fn axis_value_after_start(
+    decisions: &DecisionContext,
     start: &Real,
     value: &Real,
     direction_positive: bool,
 ) -> HypermeshResult<bool> {
-    let order = compare_real(value, start)?;
+    let order = compare_real_decision(decisions, value, start)?;
     Ok((direction_positive && order.is_gt()) || (!direction_positive && order.is_lt()))
 }
 
 fn axis_value_before_stop(
+    decisions: &DecisionContext,
     value: &Real,
     stop: &Real,
     direction_positive: bool,
 ) -> HypermeshResult<bool> {
-    let order = compare_real(value, stop)?;
+    let order = compare_real_decision(decisions, value, stop)?;
     Ok((direction_positive && order.is_lt()) || (!direction_positive && order.is_gt()))
 }
 
-pub(super) fn probe_axes(support: &Plane) -> HypermeshResult<Vec<usize>> {
-    let dominant = dominant_normal_axis(support)?;
+pub(super) fn probe_axes(
+    decisions: &DecisionContext,
+    support: &Plane,
+) -> HypermeshResult<Vec<usize>> {
+    let dominant = dominant_normal_axis(decisions, support)?;
     let mut axes = vec![dominant];
     for axis in 0..3 {
         if axis != dominant && !axis_ref(&support.normal, axis).definitely_zero() {

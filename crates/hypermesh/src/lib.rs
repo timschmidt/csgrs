@@ -14,9 +14,16 @@
 //! indices, and arbitrary non-PWN surface collections are outside the
 //! supported model and are rejected before the general boolean path runs.
 //!
-//! Completeness is claimed for that finite closed-PWN model when every strict
-//! exact predicate required by the operation is decidable under the strict
-//! bounded refinement policy:
+//! Every predicate-bearing API receives an immutable [`MeshContext`]. The
+//! context selects either [`PredicatePolicy::STRICT`], which consumes only
+//! certified decisions, or [`PredicatePolicy::APPROXIMATE_512`], which permits
+//! Hyperlimit's deterministic 512-bit terminal equality/sign interpretation
+//! after certification is exhausted. Successful operations return a
+//! [`MeshOutcome`] whose aggregate [`MeshCertainty`] reports whether that
+//! terminal was consumed.
+//!
+//! Completeness is claimed for the finite closed-PWN model under the selected
+//! predicate policy:
 //!
 //! - If a general arrangement operation returns [`BooleanResult`], the classified
 //!   arrangement and its winding data were certified by the general EMBER
@@ -35,14 +42,13 @@
 //!   plane-replacement orderings, and bounded detour cells. They do not rely on
 //!   random or finite candidate sampling for completeness.
 //!
-//! Predicate decisions are routed through the strict `hyperlimit` /
-//! `hyperlattice` exact-predicate stack. Unsupported or uncertifiable
-//! configurations are reported as explicit [`HypermeshError`] values rather
-//! than being guessed with approximate topology. In particular, arbitrary
-//! undecidable computable [`Real`] values are outside this completeness boundary
-//! when strict bounded refinement cannot certify the sign, incidence, or
-//! ordering fact needed by subdivision, reference propagation, or leaf
-//! classification. An explicitly configured finite subdivision depth remains a
+//! Predicate decisions are routed through one operation-local adapter into
+//! `hyperlimit`; no global or hidden default selects topology semantics.
+//! Under `STRICT`, unsupported or uncertifiable configurations are reported as
+//! explicit [`HypermeshError`] values. Under `APPROXIMATE_512`, a result that
+//! consumes the policy-authorized terminal remains `Real`-backed and is marked
+//! [`MeshCertainty::Approximate512Consumed`] rather than relabeled as strictly
+//! certified. An explicitly configured finite subdivision depth remains a
 //! caller-selected certification budget, not part of the completeness claim.
 //!
 //! By default, boolean operations run the general EMBER
@@ -75,7 +81,10 @@
 
 mod trace;
 pub(crate) use trace::trace_dispatch;
+pub mod context;
 mod storage_hash;
+#[cfg(test)]
+mod test_support;
 
 pub mod bvh;
 pub mod clip;
@@ -85,7 +94,7 @@ pub mod geometry;
 pub mod gpu;
 mod halfspace;
 pub mod intersection;
-pub mod local_bsp;
+mod local_bsp;
 pub mod mesh;
 pub mod operations;
 pub mod output;
@@ -96,6 +105,7 @@ pub mod subdivision;
 pub mod winding;
 
 pub use bvh::{ExactBvh, ExactPointBvh, PolygonBounds};
+pub use context::{MeshCertainty, MeshContext, MeshOutcome};
 pub use convex_hull::{
     convex_hull, convex_hull_with_coplanar_groups, convex_hull_with_retained_facts,
 };
@@ -109,11 +119,11 @@ pub use gpu::{
     approximate_interleaved_gpu_mesh_f64,
 };
 pub use hyperlattice::{Point3, Real, Vector3};
+pub use hyperlimit::PredicatePolicy;
 pub use intersection::{
     IntersectionSegment, OverlapInfo, PairwiseIntersection, PairwiseIntersectionType,
     intersect_polygons,
 };
-pub use local_bsp::{BspLeaf, LocalBsp};
 pub use mesh::{
     OutputVertex, PolygonSoup, Triangle, TriangleMesh, TriangleMeshRef, certify_convex_mesh,
     polygon_soup,

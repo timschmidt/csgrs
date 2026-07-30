@@ -1,5 +1,7 @@
 #![no_main]
 
+mod support;
+
 use std::collections::BTreeSet;
 
 use hypermesh::bvh::bounds_overlap;
@@ -8,6 +10,7 @@ use hypermesh::{
     convex_triangle,
 };
 use libfuzzer_sys::fuzz_target;
+use support::{CONTEXT, value};
 
 fn r(value: i64) -> Real {
     Real::from(value)
@@ -23,16 +26,18 @@ fuzz_target!(|data: [u8; 33]| {
         .map(|index| {
             let x = i64::from(data[index * 2 + 1] % 17) - 8;
             let y = i64::from(data[index * 2 + 2] % 17) - 8;
-            convex_triangle(
+            value(convex_triangle(
+                &CONTEXT,
                 &p(x, y, 0),
                 &p(x + 2, y, 0),
                 &p(x, y + 2, 0),
                 0,
                 index as isize,
-            )
+            ))
+            .unwrap()
         })
         .collect::<Vec<_>>();
-    let bvh = ExactBvh::build(&polygons).unwrap();
+    let bvh = value(ExactBvh::build(&CONTEXT, &polygons)).unwrap();
     assert_eq!(bvh.len(), polygons.len());
     assert_eq!(bvh.is_empty(), polygons.is_empty());
     assert!(bvh.node_count() > 0);
@@ -42,20 +47,19 @@ fuzz_target!(|data: [u8; 33]| {
     let query_max = p(2, 2, 1);
     let query = ApproxBounds::new(query_min, query_max);
     let mut actual = Vec::new();
-    bvh.query_bounds(&query, |index| actual.push(index))
-        .unwrap();
+    value(bvh.query_bounds(&CONTEXT, &query, |index| actual.push(index))).unwrap();
     let expected = bvh
         .primitives()
         .iter()
-        .filter(|primitive| bounds_overlap(&primitive.bounds, &query).unwrap())
+        .filter(|primitive| value(bounds_overlap(&CONTEXT, &primitive.bounds, &query)).unwrap())
         .map(|primitive| primitive.polygon_index)
         .collect::<Vec<_>>();
     assert_eq!(actual, expected);
 
     let mut pairs = BTreeSet::new();
-    bvh.intersect_pairs(&bvh, |left, right| {
+    value(bvh.intersect_pairs(&CONTEXT, &bvh, |left, right| {
         pairs.insert((left, right));
-    })
+    }))
     .unwrap();
     assert!(
         pairs
@@ -67,21 +71,23 @@ fuzz_target!(|data: [u8; 33]| {
         .iter()
         .map(|polygon| polygon.vertices().unwrap()[0].clone())
         .collect::<Vec<_>>();
-    let point_bvh = ExactPointBvh::build(&points).unwrap();
+    let point_bvh = value(ExactPointBvh::build(&CONTEXT, &points)).unwrap();
     assert_eq!(point_bvh.len(), points.len());
     assert_eq!(point_bvh.is_empty(), points.is_empty());
     assert!(point_bvh.node_count() > 0);
 
     let plane = Plane::axis_aligned(0, r(0));
     let mut positive = Vec::new();
-    point_bvh
-        .query_positive_halfspace(&points, &plane, |index| positive.push(index))
-        .unwrap();
+    let positive_query =
+        point_bvh.query_positive_halfspace(&CONTEXT, &points, &plane, |index| positive.push(index));
+    value(positive_query).unwrap();
     positive.sort_unstable();
     let expected_positive = points
         .iter()
         .enumerate()
-        .filter(|(_, point)| classify_point(point, &plane).unwrap() == Classification::Positive)
+        .filter(|(_, point)| {
+            value(classify_point(&CONTEXT, point, &plane)).unwrap() == Classification::Positive
+        })
         .map(|(index, _)| index)
         .collect::<Vec<_>>();
     assert_eq!(positive, expected_positive);
@@ -90,16 +96,18 @@ fuzz_target!(|data: [u8; 33]| {
     let b = p(1, 0, 0);
     let c = p(0, 1, 0);
     let mut oriented_positive = BTreeSet::new();
-    point_bvh
-        .query_positive_oriented_plane(&points, &a, &b, &c, |index| {
+    value(
+        point_bvh.query_positive_oriented_plane(&CONTEXT, &points, &a, &b, &c, |index| {
             assert!(oriented_positive.insert(index));
-        })
-        .unwrap();
+        }),
+    )
+    .unwrap();
     let mut oriented_negative = BTreeSet::new();
-    point_bvh
-        .query_negative_oriented_plane(&points, &a, &b, &c, |index| {
+    value(
+        point_bvh.query_negative_oriented_plane(&CONTEXT, &points, &a, &b, &c, |index| {
             assert!(oriented_negative.insert(index));
-        })
-        .unwrap();
+        }),
+    )
+    .unwrap();
     assert!(oriented_positive.is_disjoint(&oriented_negative));
 });

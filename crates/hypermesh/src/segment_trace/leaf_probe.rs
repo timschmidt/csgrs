@@ -40,11 +40,15 @@ use super::{
 };
 #[cfg(test)]
 use super::{AxisProbeFamilyCacheEntry, NormalProbeFamilyCacheEntry, ProbePointFamilyCacheEntry};
-use crate::clip::clip_polygon_to_aabb;
+use crate::clip::clip_polygon_to_aabb_decision;
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Aabb, Classification, Plane, axis_ref, classify_point, compare_real};
+use crate::geometry::{
+    Aabb, Classification, Plane, axis_ref, classify_real, compare_real_decision,
+};
 use crate::halfspace::{aabb_core_halfspaces, support_side_halfspace};
 use crate::polygon::ConvexPolygon;
+use crate::predicate::classify_point_decision;
 use crate::winding::{WindingNumberTransitionVector, WindingNumberVector};
 use hyperlattice::{Point3, Real};
 use hyperlimit::HalfspaceFeasibility;
@@ -53,6 +57,7 @@ use std::sync::Arc;
 /// Classifies a leaf polygon by tracing from a reference point to an off-face
 /// probe and applying the host transition correction.
 pub fn classify_leaf_polygon(
+    context: &MeshContext,
     support: &Plane,
     leaf_edges: &[Plane],
     ref_point: &Point3,
@@ -61,9 +66,11 @@ pub fn classify_leaf_polygon(
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
     host_delta_w: &[i32],
-) -> HypermeshResult<WindingNumberVector> {
+) -> HypermeshResult<MeshOutcome<WindingNumberVector>> {
+    let decisions = DecisionContext::new(context);
     let mut probe_query_caches = LeafProbeQueryCaches::default();
-    classify_leaf_polygon_with_probe_query_caches(
+    let winding = classify_leaf_polygon_with_probe_query_caches(
+        &decisions,
         support,
         leaf_edges,
         ref_point,
@@ -73,10 +80,12 @@ pub fn classify_leaf_polygon(
         bounds,
         host_delta_w,
         &mut probe_query_caches,
-    )
+    )?;
+    Ok(decisions.finish(winding))
 }
 
 pub(crate) fn classify_leaf_polygon_with_probe_query_caches(
+    decisions: &DecisionContext,
     support: &Plane,
     leaf_edges: &[Plane],
     ref_point: &Point3,
@@ -97,9 +106,10 @@ pub(crate) fn classify_leaf_polygon_with_probe_query_caches(
         known_vertices: None,
         known_identities: None,
     };
-    let clipped_leaf = clip_polygon_to_aabb(&leaf, bounds)?;
-    let interior_points = interior_leaf_points(&clipped_leaf)?;
+    let clipped_leaf = clip_polygon_to_aabb_decision(decisions, &leaf, bounds)?;
+    let interior_points = interior_leaf_points(decisions, &clipped_leaf)?;
     classify_leaf_polygon_from_interior_points_with_probe_query_caches(
+        decisions,
         &interior_points,
         support,
         ref_point,
@@ -114,6 +124,7 @@ pub(crate) fn classify_leaf_polygon_with_probe_query_caches(
 
 #[cfg(test)]
 pub(crate) fn classify_leaf_polygon_from_interior_points(
+    decisions: &DecisionContext,
     interior_points: &[InteriorLeafPoint],
     support: &Plane,
     ref_point: &Point3,
@@ -125,6 +136,7 @@ pub(crate) fn classify_leaf_polygon_from_interior_points(
 ) -> HypermeshResult<WindingNumberVector> {
     let mut probe_query_caches = LeafProbeQueryCaches::default();
     classify_leaf_polygon_from_interior_points_with_probe_query_caches(
+        decisions,
         interior_points,
         support,
         ref_point,
@@ -138,6 +150,7 @@ pub(crate) fn classify_leaf_polygon_from_interior_points(
 }
 
 pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches(
+    decisions: &DecisionContext,
     interior_points: &[InteriorLeafPoint],
     support: &Plane,
     ref_point: &Point3,
@@ -151,8 +164,11 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
     probe_query_caches.prepare_for_trace_bounds(bounds);
     let mut saw_unknown = false;
 
-    for point in ordered_interior_points_for_probe_search_with_support(interior_points, support)? {
+    for point in
+        ordered_interior_points_for_probe_search_with_support(decisions, interior_points, support)?
+    {
         if let Some(winding) = classify_leaf_polygon_interior_point_with_probe_query_caches(
+            decisions,
             point,
             support,
             ref_point,
@@ -175,34 +191,44 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
 }
 
 #[cfg(test)]
-pub(crate) fn ordered_interior_points_for_probe_search(
-    interior_points: &[InteriorLeafPoint],
-) -> Vec<&InteriorLeafPoint> {
-    let mut ordered = interior_points.iter().enumerate().collect::<Vec<_>>();
-    ordered.sort_by_key(|(index, point)| {
-        (
-            std::cmp::Reverse(max_axis_aligned_planes_in_definition_family(point)),
-            *index,
-        )
+pub(crate) fn ordered_interior_points_for_probe_search<'a>(
+    decisions: &DecisionContext,
+    interior_points: &'a [InteriorLeafPoint],
+) -> HypermeshResult<Vec<&'a InteriorLeafPoint>> {
+    let mut ordered = interior_points
+        .iter()
+        .enumerate()
+        .map(|(index, point)| {
+            Ok((
+                index,
+                point,
+                max_axis_aligned_planes_in_definition_family(decisions, point)?,
+            ))
+        })
+        .collect::<HypermeshResult<Vec<_>>>()?;
+    ordered.sort_by_key(|(index, _, axis_aligned_count)| {
+        (std::cmp::Reverse(*axis_aligned_count), *index)
     });
-    ordered.into_iter().map(|(_, point)| point).collect()
+    Ok(ordered.into_iter().map(|(_, point, _)| point).collect())
 }
 
-fn max_axis_aligned_planes_in_definition_family(point: &InteriorLeafPoint) -> usize {
-    point
-        .planes
-        .iter()
-        .map(|definition| {
-            definition
-                .iter()
-                .filter(|plane| plane.axis_split_value().is_some())
-                .count()
-        })
-        .max()
-        .unwrap_or(0)
+fn max_axis_aligned_planes_in_definition_family(
+    decisions: &DecisionContext,
+    point: &InteriorLeafPoint,
+) -> HypermeshResult<usize> {
+    let mut maximum = 0;
+    for definition in &point.planes {
+        let mut count = 0;
+        for plane in definition {
+            count += usize::from(plane.axis_split_value_decision(decisions)?.is_some());
+        }
+        maximum = maximum.max(count);
+    }
+    Ok(maximum)
 }
 
 pub(crate) fn classify_leaf_polygon_interior_point_with_probe_query_caches(
+    decisions: &DecisionContext,
     point: &InteriorLeafPoint,
     support: &Plane,
     ref_point: &Point3,
@@ -220,6 +246,7 @@ pub(crate) fn classify_leaf_polygon_interior_point_with_probe_query_caches(
     if let Some(host_mesh) = certified_convex_host_mesh
         && ref_wnv.iter().all(|winding| *winding == 0)
         && let Some(winding) = classify_point_against_certified_convex_inputs_with_cache(
+            decisions,
             &point.point,
             ref_wnv.len(),
             polygons,
@@ -232,6 +259,7 @@ pub(crate) fn classify_leaf_polygon_interior_point_with_probe_query_caches(
     }
     for positive_side in [true, false] {
         if let Some(winding) = search_adjacent_normal_probe_winding_with_queries(
+            decisions,
             point,
             positive_side,
             support,
@@ -248,8 +276,8 @@ pub(crate) fn classify_leaf_polygon_interior_point_with_probe_query_caches(
             return Ok(Some(winding));
         }
 
-        for axis in probe_axes(support)? {
-            let normal_sign = crate::geometry::classify_real(axis_ref(&support.normal, axis))?;
+        for axis in probe_axes(decisions, support)? {
+            let normal_sign = classify_real(decisions, axis_ref(&support.normal, axis))?;
             if normal_sign == Classification::On {
                 continue;
             }
@@ -261,11 +289,12 @@ pub(crate) fn classify_leaf_polygon_interior_point_with_probe_query_caches(
             } else {
                 axis_value - axis_ref(&bounds.min, axis)
             };
-            if !compare_real(&room, &Real::zero())?.is_gt() {
+            if !compare_real_decision(decisions, &room, &Real::zero())?.is_gt() {
                 continue;
             }
 
             if let Some(winding) = search_adjacent_axis_probe_winding_with_queries(
+                decisions,
                 point,
                 positive_side,
                 axis,
@@ -289,6 +318,7 @@ pub(crate) fn classify_leaf_polygon_interior_point_with_probe_query_caches(
 }
 
 pub(crate) fn ordered_interior_points_for_probe_search_with_support<'a>(
+    decisions: &DecisionContext,
     interior_points: &'a [InteriorLeafPoint],
     support: &Plane,
 ) -> HypermeshResult<Vec<&'a InteriorLeafPoint>> {
@@ -299,21 +329,25 @@ pub(crate) fn ordered_interior_points_for_probe_search_with_support<'a>(
             Ok((
                 index,
                 point,
-                unique_normal_probe_search_definitions(&point.planes, support)?.len(),
+                unique_normal_probe_search_definitions(decisions, &point.planes, support)?.len(),
+                max_axis_aligned_planes_in_definition_family(decisions, point)?,
             ))
         })
         .collect::<HypermeshResult<Vec<_>>>()?;
-    scored.sort_by_key(|(index, point, retained_definition_count)| {
-        (
-            std::cmp::Reverse(*retained_definition_count),
-            std::cmp::Reverse(max_axis_aligned_planes_in_definition_family(point)),
-            *index,
-        )
-    });
-    Ok(scored.into_iter().map(|(_, point, _)| point).collect())
+    scored.sort_by_key(
+        |(index, _point, retained_definition_count, axis_aligned_count)| {
+            (
+                std::cmp::Reverse(*retained_definition_count),
+                std::cmp::Reverse(*axis_aligned_count),
+                *index,
+            )
+        },
+    );
+    Ok(scored.into_iter().map(|(_, point, _, _)| point).collect())
 }
 
 fn search_adjacent_normal_probe_winding_with_queries(
+    decisions: &DecisionContext,
     point: &InteriorLeafPoint,
     positive_side: bool,
     support: &Plane,
@@ -327,7 +361,8 @@ fn search_adjacent_normal_probe_winding_with_queries(
     saw_unknown: &mut bool,
     certified_convex_host_mesh: Option<usize>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
-    let retained_definitions = unique_normal_probe_search_definitions(&point.planes, support)?;
+    let retained_definitions =
+        unique_normal_probe_search_definitions(decisions, &point.planes, support)?;
     let direction = if positive_side {
         support.normal.clone()
     } else {
@@ -345,6 +380,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
         bounds,
         || {
             adjacent_normal_probe_stop_values_with_queries(
+                decisions,
                 &point.point,
                 &direction,
                 support,
@@ -353,22 +389,22 @@ fn search_adjacent_normal_probe_winding_with_queries(
                 &mut |_interior, direction, polygon| {
                     Ok(dot_direction(&polygon.support.normal, direction))
                 },
-                &mut |candidate, polygon| classify_point_in_polygon(candidate, polygon),
+                &mut |candidate, polygon| classify_point_in_polygon(decisions, candidate, polygon),
             )
         },
     )?;
     *saw_unknown |= local_unknown;
 
     for stop_t in stop_values {
-        if !compare_real(&stop_t, &Real::zero())?.is_gt() {
+        if !compare_real_decision(decisions, &stop_t, &Real::zero())?.is_gt() {
             continue;
         }
         let stop_point = offset_point(&point.point, &direction, &stop_t);
-        let corridor = bounds_between_points(&point.point, &stop_point)?;
+        let corridor = bounds_between_points(decisions, &point.point, &stop_point)?;
         let half =
             (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
         let direct_point = offset_point(&point.point, &direction, &(stop_t.clone() * half));
-        let direct_side = classify_point(&direct_point, support)?;
+        let direct_side = classify_point_decision(decisions, &direct_point, support)?;
         if direct_side != Classification::On {
             let direct_probe = ProbePoint {
                 planes: vec![axis_plane_definition(&direct_point)],
@@ -380,6 +416,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
                 if let Some(host_mesh) = certified_convex_host_mesh
                     && ref_wnv.iter().all(|winding| *winding == 0)
                     && let Some(winding) = trace_certified_simple_outward_host_probe_winding(
+                        decisions,
                         &direct_probe,
                         bounds,
                         ref_wnv.len(),
@@ -390,6 +427,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
                     return Ok(Some(winding));
                 }
                 match trace_certified_adjacent_probe_winding(
+                    decisions,
                     &direct_probe,
                     ref_point,
                     ref_definitions,
@@ -399,13 +437,17 @@ fn search_adjacent_normal_probe_winding_with_queries(
                     probe_query_caches,
                 ) {
                     Ok(winding) => return Ok(Some(winding)),
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         *saw_unknown = true;
                     }
                     Err(err) => return Err(err),
                 }
             }
             if let Some(winding) = try_leaf_probe_family_with_queries(
+                decisions,
                 point,
                 positive_side,
                 Ok(vec![direct_probe]),
@@ -424,6 +466,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
 
         for definition in &retained_definitions {
             if let Some(winding) = try_strict_normal_probe_report_witness_winding_with_queries(
+                decisions,
                 point,
                 positive_side,
                 support,
@@ -441,6 +484,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
                 return Ok(Some(winding));
             }
             if let Some(winding) = try_strict_normal_seed_winding_with_queries(
+                decisions,
                 point,
                 positive_side,
                 support,
@@ -458,6 +502,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
                 return Ok(Some(winding));
             }
             let probes = strict_normal_probe_targets_with_query_caches(
+                decisions,
                 point,
                 support,
                 &corridor,
@@ -467,6 +512,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
                 probe_query_caches,
             );
             if let Some(winding) = try_leaf_probe_family_with_queries(
+                decisions,
                 point,
                 positive_side,
                 probes,
@@ -484,6 +530,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
         }
 
         let unrestricted_report = try_strict_normal_probe_report_witness_winding_with_queries(
+            decisions,
             point,
             positive_side,
             support,
@@ -503,6 +550,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
         }
         let unrestricted_progressive =
             try_strict_normal_probe_targets_progressively_with_query_caches(
+                decisions,
                 point,
                 positive_side,
                 support,
@@ -521,6 +569,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
             return Ok(Some(winding));
         }
         let probes = strict_normal_probe_targets_with_query_caches(
+            decisions,
             point,
             support,
             &corridor,
@@ -530,6 +579,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
             probe_query_caches,
         );
         if let Some(winding) = try_leaf_probe_family_with_queries(
+            decisions,
             point,
             positive_side,
             probes,
@@ -556,6 +606,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
 /// axis-aligned trace recover every non-host component directly; the host
 /// component remains zero without tracing the host's own triangulation.
 fn trace_certified_simple_outward_host_probe_winding(
+    decisions: &DecisionContext,
     probe: &ProbePoint,
     bounds: &Aabb,
     winding_len: usize,
@@ -579,6 +630,7 @@ fn trace_certified_simple_outward_host_probe_winding(
                 axis_ref(&bounds.max, axis) + one.clone()
             };
             match trace_axis_segment_ignoring_mesh(
+                decisions,
                 &start,
                 &probe.point,
                 axis,
@@ -587,7 +639,11 @@ fn trace_certified_simple_outward_host_probe_winding(
                 Some(host_mesh),
             ) {
                 Ok(trace) if trace.valid => return Ok(Some(trace.winding)),
-                Ok(_) | Err(HypermeshError::UnknownClassification) => {}
+                Ok(_)
+                | Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {}
                 Err(err) => return Err(err),
             }
         }
@@ -597,6 +653,7 @@ fn trace_certified_simple_outward_host_probe_winding(
 }
 
 fn classify_point_against_certified_convex_inputs_with_cache(
+    decisions: &DecisionContext,
     point: &Point3,
     winding_len: usize,
     polygons: &[ConvexPolygon],
@@ -621,6 +678,7 @@ fn classify_point_against_certified_convex_inputs_with_cache(
         .as_ref()
         .ok_or(HypermeshError::UnknownClassification)?;
     classify_point_against_certified_convex_inputs(
+        decisions,
         point,
         winding_len,
         isize::try_from(host_mesh).map_err(|_| HypermeshError::UnknownClassification)?,
@@ -631,6 +689,7 @@ fn classify_point_against_certified_convex_inputs_with_cache(
 }
 
 fn classify_point_against_certified_convex_inputs(
+    decisions: &DecisionContext,
     point: &Point3,
     winding_len: usize,
     host_mesh: isize,
@@ -665,7 +724,7 @@ fn classify_point_against_certified_convex_inputs(
         if let Some(index) = last_outside_support[mesh]
             && let Some(support) = mesh_supports.get(index)
         {
-            match classify_point(point, support)? {
+            match classify_point_decision(decisions, point, support)? {
                 Classification::Positive => outside = true,
                 Classification::On => on_boundary = true,
                 Classification::Negative => {}
@@ -678,7 +737,7 @@ fn classify_point_against_certified_convex_inputs(
             if last_outside_support[mesh] == Some(index) {
                 continue;
             }
-            match classify_point(point, support)? {
+            match classify_point_decision(decisions, point, support)? {
                 Classification::Positive => {
                     outside = true;
                     last_outside_support[mesh] = Some(index);
@@ -700,6 +759,7 @@ fn classify_point_against_certified_convex_inputs(
 }
 
 fn trace_certified_adjacent_probe_winding(
+    decisions: &DecisionContext,
     probe: &ProbePoint,
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
@@ -722,9 +782,10 @@ fn trace_certified_adjacent_probe_winding(
     let trace_bounds = trace_bounds
         .as_ref()
         .ok_or(HypermeshError::UnknownClassification)?;
-    let winding_trace_bounds = trace_bounds_including_point(trace_bounds, ref_point)?;
+    let winding_trace_bounds = trace_bounds_including_point(decisions, trace_bounds, ref_point)?;
     let mut winding = cached_probe_winding_with(probe_winding, probe, || {
         trace_probe_winding_with_caches(
+            decisions,
             ref_point,
             ref_definitions,
             probe,
@@ -746,6 +807,7 @@ fn trace_certified_adjacent_probe_winding(
 }
 
 fn try_strict_normal_probe_targets_progressively_with_query_caches(
+    decisions: &DecisionContext,
     point: &InteriorLeafPoint,
     positive_side: bool,
     support: &Plane,
@@ -770,6 +832,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
 
     let mut local_unknown = false;
     let report = cached_optional_halfspace_feasibility_report_with(
+        decisions,
         &mut probe_query_caches.halfspace_reports,
         &halfspaces,
         &mut local_unknown,
@@ -786,6 +849,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
     let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         cached_halfspace_cell_seed_families_from_optional_report_with(
+            decisions,
             &mut probe_query_caches.halfspace_seed_families,
             corridor,
             &halfspaces,
@@ -834,7 +898,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
             .ok_or(HypermeshError::UnknownClassification)?;
 
         if cached_surface_query_with(probe_surface, &probe.point, || {
-            point_lies_on_traced_surface(&probe.point, polygons)
+            point_lies_on_traced_surface(decisions, &probe.point, polygons)
         })? {
             if point.uncertified_definition_fallback || probe_fallback {
                 *local_unknown = true;
@@ -844,6 +908,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
 
         let no_step_result =
             probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
+                decisions,
                 point,
                 &probe,
                 support,
@@ -859,6 +924,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
             Ok(true) => {
                 for deferred in deferred_probes.drain(..) {
                     if let Some(winding) = evaluate_leaf_probe_with_query_caches(
+                        decisions,
                         point,
                         positive_side,
                         deferred,
@@ -898,6 +964,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                 }
                 if prioritized_probes.is_empty() {
                     if let Some(winding) = evaluate_leaf_probe_with_query_caches(
+                        decisions,
                         point,
                         positive_side,
                         probe,
@@ -939,7 +1006,9 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                 }
             }
             Ok(false) => deferred_probes.push(probe),
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 *local_unknown = true;
                 deferred_probes.push(probe);
             }
@@ -950,6 +1019,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
 
     for witness in &seeds {
         let probe = match build_probe_point(
+            decisions,
             witness,
             corridor,
             support,
@@ -960,7 +1030,9 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
         ) {
             Ok(Some(probe)) => probe,
             Ok(None) => continue,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 local_unknown = true;
                 continue;
             }
@@ -983,6 +1055,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                 Ok(shifted_geometry_seeds.clone()),
                 |candidate| {
                     point_strictly_inside_halfspace_cell_or_unknown(
+                        decisions,
                         candidate,
                         corridor,
                         &halfspaces,
@@ -995,6 +1068,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
             take_new_halfspace_seed_family(geometry_strict_seeds, &mut seen_all_direct_seeds);
         for witness in &geometry_strict_seeds {
             let probe = match build_probe_point(
+                decisions,
                 witness,
                 corridor,
                 support,
@@ -1005,7 +1079,10 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
             ) {
                 Ok(Some(probe)) => probe,
                 Ok(None) => continue,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     local_unknown = true;
                     continue;
                 }
@@ -1053,17 +1130,25 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
     for family in [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds] {
         let fresh = take_new_halfspace_seed_family(family, &mut seen_shifted_roots);
         for seed in fresh {
-            let shifted_witnesses =
-                match shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, &seed) {
-                    Ok(witnesses) => witnesses,
-                    Err(HypermeshError::UnknownClassification) => {
-                        local_unknown = true;
-                        continue;
-                    }
-                    Err(err) => return Err(err),
-                };
+            let shifted_witnesses = match shifted_halfspace_cell_witnesses_from_seed(
+                decisions,
+                corridor,
+                &halfspaces,
+                &seed,
+            ) {
+                Ok(witnesses) => witnesses,
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
+                    local_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
             for shifted in &shifted_witnesses {
                 let probe = match build_probe_point_from_shifted_witness(
+                    decisions,
                     shifted,
                     corridor,
                     support,
@@ -1071,7 +1156,10 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                 ) {
                     Ok(Some(probe)) => probe,
                     Ok(None) => continue,
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         local_unknown = true;
                         continue;
                     }
@@ -1091,6 +1179,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
     let mut probes = prioritized_probes;
     probes.extend(deferred_probes);
     try_leaf_probe_family_with_queries(
+        decisions,
         point,
         positive_side,
         Ok(probes),
@@ -1105,6 +1194,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
     )
 }
 fn try_strict_normal_probe_report_witness_winding_with_queries(
+    decisions: &DecisionContext,
     point: &InteriorLeafPoint,
     positive_side: bool,
     support: &Plane,
@@ -1128,6 +1218,7 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
     halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
 
     let report = cached_optional_halfspace_feasibility_report_with(
+        decisions,
         &mut probe_query_caches.halfspace_reports,
         &halfspaces,
         saw_unknown,
@@ -1143,6 +1234,7 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
     };
     let extra_planes = normal_probe_extra_planes(point, definition);
     let probe_result = match build_probe_point(
+        decisions,
         witness,
         corridor,
         support,
@@ -1157,6 +1249,7 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
     };
 
     try_leaf_probe_family_with_queries(
+        decisions,
         point,
         positive_side,
         probe_result,
@@ -1172,6 +1265,7 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
 }
 
 fn try_strict_normal_seed_winding_with_queries(
+    decisions: &DecisionContext,
     point: &InteriorLeafPoint,
     positive_side: bool,
     support: &Plane,
@@ -1195,6 +1289,7 @@ fn try_strict_normal_seed_winding_with_queries(
     halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
 
     let report = cached_optional_halfspace_feasibility_report_with(
+        decisions,
         &mut probe_query_caches.halfspace_reports,
         &halfspaces,
         saw_unknown,
@@ -1210,6 +1305,7 @@ fn try_strict_normal_seed_winding_with_queries(
     let extra_planes = normal_probe_extra_planes(point, definition);
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         cached_halfspace_cell_seed_families_from_optional_report_with(
+            decisions,
             &mut probe_query_caches.halfspace_seed_families,
             corridor,
             &halfspaces,
@@ -1225,6 +1321,7 @@ fn try_strict_normal_seed_winding_with_queries(
 
     for witness in &strict_seeds {
         let probe = match build_probe_point(
+            decisions,
             witness,
             corridor,
             support,
@@ -1235,7 +1332,9 @@ fn try_strict_normal_seed_winding_with_queries(
         ) {
             Ok(Some(probe)) => probe,
             Ok(None) => continue,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 *saw_unknown = true;
                 continue;
             }
@@ -1246,6 +1345,7 @@ fn try_strict_normal_seed_winding_with_queries(
             certified_probe_points.push(probe.point.clone());
         }
         if let Some(winding) = try_leaf_probe_family_with_queries(
+            decisions,
             point,
             positive_side,
             Ok(vec![probe]),
@@ -1271,6 +1371,7 @@ fn try_strict_normal_seed_winding_with_queries(
                 Ok(shifted_geometry_seeds.clone()),
                 |candidate| {
                     point_strictly_inside_halfspace_cell_or_unknown(
+                        decisions,
                         candidate,
                         corridor,
                         &halfspaces,
@@ -1283,6 +1384,7 @@ fn try_strict_normal_seed_winding_with_queries(
             take_new_halfspace_seed_family(geometry_strict_seeds, &mut seen_all_direct_seeds);
         for witness in &geometry_strict_seeds {
             let probe = match build_probe_point(
+                decisions,
                 witness,
                 corridor,
                 support,
@@ -1293,7 +1395,10 @@ fn try_strict_normal_seed_winding_with_queries(
             ) {
                 Ok(Some(probe)) => probe,
                 Ok(None) => continue,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     *saw_unknown = true;
                     continue;
                 }
@@ -1305,6 +1410,7 @@ fn try_strict_normal_seed_winding_with_queries(
                 certified_probe_points.push(probe.point.clone());
             }
             if let Some(winding) = try_leaf_probe_family_with_queries(
+                decisions,
                 point,
                 positive_side,
                 Ok(vec![probe]),
@@ -1355,17 +1461,25 @@ fn try_strict_normal_seed_winding_with_queries(
     for family in [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds] {
         let fresh = take_new_halfspace_seed_family(family, &mut seen_shifted_roots);
         for seed in fresh {
-            let shifted_witnesses =
-                match shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, &seed) {
-                    Ok(witnesses) => witnesses,
-                    Err(HypermeshError::UnknownClassification) => {
-                        *saw_unknown = true;
-                        continue;
-                    }
-                    Err(err) => return Err(err),
-                };
+            let shifted_witnesses = match shifted_halfspace_cell_witnesses_from_seed(
+                decisions,
+                corridor,
+                &halfspaces,
+                &seed,
+            ) {
+                Ok(witnesses) => witnesses,
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
+                    *saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
             for shifted in &shifted_witnesses {
                 let probe = match build_probe_point_from_shifted_witness(
+                    decisions,
                     shifted,
                     corridor,
                     support,
@@ -1373,13 +1487,17 @@ fn try_strict_normal_seed_winding_with_queries(
                 ) {
                     Ok(Some(probe)) => probe,
                     Ok(None) => continue,
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         *saw_unknown = true;
                         continue;
                     }
                     Err(err) => return Err(err),
                 };
                 if let Some(winding) = try_leaf_probe_family_with_queries(
+                    decisions,
                     point,
                     positive_side,
                     Ok(vec![probe]),
@@ -1402,6 +1520,7 @@ fn try_strict_normal_seed_winding_with_queries(
 }
 
 fn search_adjacent_axis_probe_winding_with_queries(
+    decisions: &DecisionContext,
     point: &InteriorLeafPoint,
     positive_side: bool,
     axis: usize,
@@ -1424,23 +1543,26 @@ fn search_adjacent_axis_probe_winding_with_queries(
         direction_positive,
         || {
             adjacent_axis_probe_stop_values_with_queries(
+                decisions,
                 &point.point,
                 bounds,
                 polygons,
                 axis,
                 direction_positive,
                 &mut |interior, endpoint, polygon, _axis| {
-                    let start_class = classify_point(interior, &polygon.support)?;
-                    let endpoint_class = classify_point(endpoint, &polygon.support)?;
+                    let start_class =
+                        classify_point_decision(decisions, interior, &polygon.support)?;
+                    let endpoint_class =
+                        classify_point_decision(decisions, endpoint, &polygon.support)?;
                     if start_class == Classification::On {
                         return Ok(Some(interior.clone()));
                     }
                     if endpoint_class == Classification::On {
                         return Ok(Some(endpoint.clone()));
                     }
-                    segment_plane_crossing(interior, endpoint, &polygon.support)
+                    segment_plane_crossing(decisions, interior, endpoint, &polygon.support)
                 },
-                &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+                &mut |crossing, polygon| classify_point_in_polygon(decisions, crossing, polygon),
             )
         },
     )?;
@@ -1449,16 +1571,17 @@ fn search_adjacent_axis_probe_winding_with_queries(
     let definitions = unique_definition_family(&point.planes);
     let start_value = axis_ref(&point.point, axis);
     for stop_value in stop_values {
-        if !axis_value_after_start(start_value, &stop_value, direction_positive)? {
+        if !axis_value_after_start(decisions, start_value, &stop_value, direction_positive)? {
             continue;
         }
-        let corridor = axis_probe_bounds(&point.point, axis, &stop_value)?;
+        let corridor = axis_probe_bounds(decisions, &point.point, axis, &stop_value)?;
 
         for definition in &definitions {
-            if !axis_probe_definition_preserves_axis_direction(definition, axis)? {
+            if !axis_probe_definition_preserves_axis_direction(decisions, definition, axis)? {
                 continue;
             }
             if let Some(winding) = try_strict_axis_seed_winding_with_queries(
+                decisions,
                 point,
                 positive_side,
                 axis,
@@ -1476,9 +1599,11 @@ fn search_adjacent_axis_probe_winding_with_queries(
                 return Ok(Some(winding));
             }
             if let Some(winding) = try_leaf_probe_family_with_queries(
+                decisions,
                 point,
                 positive_side,
                 strict_axis_probe_targets(
+                    decisions,
                     point,
                     support,
                     &corridor,
@@ -1500,6 +1625,7 @@ fn search_adjacent_axis_probe_winding_with_queries(
         }
 
         if let Some(winding) = try_strict_axis_seed_winding_with_queries(
+            decisions,
             point,
             positive_side,
             axis,
@@ -1517,9 +1643,18 @@ fn search_adjacent_axis_probe_winding_with_queries(
             return Ok(Some(winding));
         }
         if let Some(winding) = try_leaf_probe_family_with_queries(
+            decisions,
             point,
             positive_side,
-            strict_axis_probe_targets(point, support, &corridor, axis, direction_positive, None),
+            strict_axis_probe_targets(
+                decisions,
+                point,
+                support,
+                &corridor,
+                axis,
+                direction_positive,
+                None,
+            ),
             support,
             ref_point,
             ref_definitions,
@@ -1537,6 +1672,7 @@ fn search_adjacent_axis_probe_winding_with_queries(
 }
 
 fn try_strict_axis_seed_winding_with_queries(
+    decisions: &DecisionContext,
     point: &InteriorLeafPoint,
     positive_side: bool,
     axis: usize,
@@ -1559,6 +1695,7 @@ fn try_strict_axis_seed_winding_with_queries(
     halfspaces.push(support_side_halfspace(support, positive_side));
 
     let report = cached_optional_halfspace_feasibility_report_with(
+        decisions,
         &mut probe_query_caches.halfspace_reports,
         &halfspaces,
         saw_unknown,
@@ -1572,6 +1709,7 @@ fn try_strict_axis_seed_winding_with_queries(
 
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         cached_halfspace_cell_seed_families_from_optional_report_with(
+            decisions,
             &mut probe_query_caches.halfspace_seed_families,
             corridor,
             &halfspaces,
@@ -1585,6 +1723,7 @@ fn try_strict_axis_seed_winding_with_queries(
     let mut certified_probe_points = Vec::new();
     for witness in &seeds {
         let probe = match build_axis_probe_point(
+            decisions,
             witness,
             point,
             corridor,
@@ -1597,7 +1736,9 @@ fn try_strict_axis_seed_winding_with_queries(
         ) {
             Ok(Some(probe)) => probe,
             Ok(None) => continue,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 *saw_unknown = true;
                 continue;
             }
@@ -1608,6 +1749,7 @@ fn try_strict_axis_seed_winding_with_queries(
             certified_probe_points.push(probe.point.clone());
         }
         if let Some(winding) = try_leaf_probe_family_with_queries(
+            decisions,
             point,
             positive_side,
             Ok(vec![probe]),
@@ -1636,28 +1778,39 @@ fn try_strict_axis_seed_winding_with_queries(
     for family in [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds] {
         let fresh = take_new_halfspace_seed_family(family, &mut seen_shifted_roots);
         for seed in fresh {
-            let shifted_witnesses =
-                match shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, &seed) {
-                    Ok(witnesses) => witnesses,
-                    Err(HypermeshError::UnknownClassification) => {
-                        *saw_unknown = true;
-                        continue;
-                    }
-                    Err(err) => return Err(err),
-                };
+            let shifted_witnesses = match shifted_halfspace_cell_witnesses_from_seed(
+                decisions,
+                corridor,
+                &halfspaces,
+                &seed,
+            ) {
+                Ok(witnesses) => witnesses,
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
+                    *saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
             for shifted in &shifted_witnesses {
                 let probe = match build_axis_probe_point_from_shifted_witness(
-                    shifted, point, corridor, support, axis, definition,
+                    decisions, shifted, point, corridor, support, axis, definition,
                 ) {
                     Ok(Some(probe)) => probe,
                     Ok(None) => continue,
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         *saw_unknown = true;
                         continue;
                     }
                     Err(err) => return Err(err),
                 };
                 if let Some(winding) = try_leaf_probe_family_with_queries(
+                    decisions,
                     point,
                     positive_side,
                     Ok(vec![probe]),
@@ -1680,6 +1833,7 @@ fn try_strict_axis_seed_winding_with_queries(
 }
 
 fn try_leaf_probe_family_with_queries(
+    decisions: &DecisionContext,
     point: &InteriorLeafPoint,
     positive_side: bool,
     probes: HypermeshResult<Vec<ProbePoint>>,
@@ -1723,7 +1877,7 @@ fn try_leaf_probe_family_with_queries(
         .ok_or(HypermeshError::UnknownClassification)?;
     let probes = match probes {
         Ok(probes) => probes,
-        Err(HypermeshError::UnknownClassification) => {
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
             *saw_unknown = true;
             return Ok(None);
         }
@@ -1737,7 +1891,7 @@ fn try_leaf_probe_family_with_queries(
     for probe in probes {
         let probe_fallback = probe.uncertified_definition_fallback;
         if cached_surface_query_with(probe_surface, &probe.point, || {
-            point_lies_on_traced_surface(&probe.point, polygons)
+            point_lies_on_traced_surface(decisions, &probe.point, polygons)
         })? {
             if point.uncertified_definition_fallback || probe_fallback {
                 *saw_unknown = true;
@@ -1746,6 +1900,7 @@ fn try_leaf_probe_family_with_queries(
         }
 
         match probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
+            decisions,
             point,
             &probe,
             support,
@@ -1760,6 +1915,7 @@ fn try_leaf_probe_family_with_queries(
             Ok(true) => {
                 for deferred in deferred_probes.drain(..) {
                     if let Some(winding) = evaluate_leaf_probe_with_query_caches(
+                        decisions,
                         point,
                         positive_side,
                         deferred,
@@ -1800,7 +1956,9 @@ fn try_leaf_probe_family_with_queries(
                 prioritized_probes.push(probe);
             }
             Ok(false) => deferred_probes.push(probe),
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 *saw_unknown = true;
                 deferred_probes.push(probe);
             }
@@ -1810,6 +1968,7 @@ fn try_leaf_probe_family_with_queries(
 
     for probe in prioritized_probes.into_iter().chain(deferred_probes) {
         if let Some(winding) = evaluate_leaf_probe_with_query_caches(
+            decisions,
             point,
             positive_side,
             probe,
@@ -1852,6 +2011,7 @@ fn try_leaf_probe_family_with_queries(
 }
 
 fn evaluate_leaf_probe_with_query_caches(
+    decisions: &DecisionContext,
     point: &InteriorLeafPoint,
     _positive_side: bool,
     probe: ProbePoint,
@@ -1889,12 +2049,13 @@ fn evaluate_leaf_probe_with_query_caches(
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let probe_fallback = probe.uncertified_definition_fallback;
     let winding = if cached_surface_query_with(probe_surface, &probe.point, || {
-        point_lies_on_traced_surface(&probe.point, polygons)
+        point_lies_on_traced_surface(decisions, &probe.point, polygons)
     })? {
         None
     } else {
         let reaches = cached_probe_reachability_with(probe_reachability, point, &probe, || {
             probe_reaches_adjacent_cell_from_interior_with_caches(
+                decisions,
                 point,
                 &probe,
                 support,
@@ -1922,9 +2083,11 @@ fn evaluate_leaf_probe_with_query_caches(
         if !reaches {
             None
         } else {
-            let winding_trace_bounds = trace_bounds_including_point(trace_bounds, ref_point)?;
+            let winding_trace_bounds =
+                trace_bounds_including_point(decisions, trace_bounds, ref_point)?;
             let mut winding = cached_probe_winding_with(probe_winding, &probe, || {
                 trace_probe_winding_with_caches(
+                    decisions,
                     ref_point,
                     ref_definitions,
                     &probe,
@@ -1962,6 +2125,7 @@ fn evaluate_leaf_probe_with_query_caches(
 }
 
 fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
+    decisions: &DecisionContext,
     interior: &InteriorLeafPoint,
     probe: &ProbePoint,
     host_support: &Plane,
@@ -1973,8 +2137,8 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
     direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
     trace_bounds: &Aabb,
 ) -> HypermeshResult<bool> {
-    if !trace_bounds.contains_point(&interior.point)?
-        || !trace_bounds.contains_point(&probe.point)?
+    if !trace_bounds.contains_point_decision(decisions, &interior.point)?
+        || !trace_bounds.contains_point_decision(decisions, &probe.point)?
     {
         return Err(HypermeshError::UnknownClassification);
     }
@@ -2003,6 +2167,7 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
                         polygons,
                         || {
                             probe_reaches_adjacent_cell(
+                                decisions,
                                 &interior.point,
                                 &probe.point,
                                 host_support,
@@ -2013,6 +2178,7 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
                 },
                 |start_definition, end_definition| {
                     plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
+                        decisions,
                         start_definition,
                         end_definition,
                         host_support,
@@ -2269,7 +2435,10 @@ pub(super) fn search_leaf_probe_families<'a>(
         for positive_side in [true, false] {
             let probes = match probes_for(point, positive_side) {
                 Ok(probes) => probes,
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     continue;
                 }
@@ -2288,7 +2457,10 @@ pub(super) fn search_leaf_probe_families<'a>(
                             saw_unknown = true;
                         }
                     }
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                     }
                     Err(err) => return Err(err),
@@ -2306,6 +2478,7 @@ pub(super) fn search_leaf_probe_families<'a>(
 
 #[cfg(test)]
 pub(super) fn trace_probe_winding(
+    decisions: &DecisionContext,
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
     probe: &ProbePoint,
@@ -2319,6 +2492,7 @@ pub(super) fn trace_probe_winding(
     let mut definition_no_detour_trace = Vec::new();
     let mut detour_target_families = DetourTargetFamilyCache::default();
     trace_probe_winding_with_caches(
+        decisions,
         ref_point,
         ref_definitions,
         probe,
@@ -2335,6 +2509,7 @@ pub(super) fn trace_probe_winding(
 }
 
 pub(super) fn trace_probe_winding_with_caches(
+    decisions: &DecisionContext,
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
     probe: &ProbePoint,
@@ -2359,6 +2534,7 @@ pub(super) fn trace_probe_winding_with_caches(
     probe_definitions = unique_definition_family(&probe_definitions);
 
     trace_segment_from_definitions_with_step_detoured_plane_replacement_with_caches(
+        decisions,
         ref_point,
         &probe.point,
         ref_wnv,

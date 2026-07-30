@@ -1,16 +1,11 @@
 use hyperlattice::{Point3, Real};
-use hypermesh::bvh::bounds_overlap;
-use hypermesh::clip::{ClipSide, clip_polygon};
+mod common;
+
+use common::*;
+use hypermesh::clip::ClipSide;
 use hypermesh::{
-    BooleanOp, Classification, EmberConfig, HypermeshError, InputTrianglePlanes, Plane,
-    SubdivisionConfig, SubdivisionTask, Triangle, TriangleMeshRef, boolean_mesh,
-    boolean_mesh_with_certified_convex_inputs,
-    boolean_mesh_with_certified_convex_inputs_and_planes, boolean_operation,
-    boolean_operation_with_certified_convex_inputs, boolean_symmetric_difference,
-    boolean_triangle_meshes, certify_output_polygon_closure, classify_leaf_polygon, classify_point,
-    classify_polygon_output, convex_quad, convex_triangle, intersect_polygons, polygon_soup,
-    process_leaf_into, subdivide, trace_axis_segment, trace_segment,
-    triangulate_and_resolve_certified,
+    BooleanOp, Classification, EmberConfig, HypermeshError, Plane, SubdivisionConfig,
+    SubdivisionTask, Triangle, TriangleMeshRef, classify_polygon_output,
 };
 use std::sync::Arc;
 
@@ -28,7 +23,7 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
 
 #[test]
 fn convex_polygon_clones_share_edge_planes() {
-    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let cloned = polygon.clone();
 
     assert!(std::sync::Arc::ptr_eq(&polygon.edges, &cloned.edges));
@@ -93,8 +88,9 @@ fn tetra_mesh() -> hypermesh::TriangleMesh {
 fn public_polygon_soup_build_emits_correlated_dispatch_trace() {
     let mesh = tetra_mesh();
     hyperreal::dispatch_trace::reset();
-    let soup = hyperreal::dispatch_trace::with_recording(|| polygon_soup(&[mesh.as_ref()]))
-        .expect("tetrahedron polygon soup remains certified");
+    let soup =
+        hyperreal::dispatch_trace::with_recording(|| approximate_polygon_soup(&[mesh.as_ref()]))
+            .expect("tetrahedron polygon soup remains certified");
     assert!(!soup.polygons.is_empty());
 
     let correlation = hyperreal::dispatch_trace::take_trace().correlation_summary();
@@ -207,11 +203,10 @@ fn assert_boolean_mesh_within_bounds(
     let bounds = hypermesh::Aabb::new(p(min, min, min), p(max, max, max));
     for vertex in &soup.vertices {
         assert!(
-            bounds.contains_point(&Point3::new(
-                vertex.x.clone(),
-                vertex.y.clone(),
-                vertex.z.clone(),
-            ))?,
+            approximate_aabb_contains_point(
+                &bounds,
+                &Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone(),)
+            )?,
             "vertex ({}, {}, {}) is outside [{}, {}]^3",
             vertex.x,
             vertex.y,
@@ -295,11 +290,11 @@ fn winding_indicators_match_boolean_semantics() {
 
 #[test]
 fn triangle_plane_and_vertices_are_exact_reals() {
-    let tri = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    assert!(tri.is_valid());
+    let tri = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    assert!(approximate_polygon_is_valid(&tri).unwrap());
     assert_eq!(tri.vertex_count(), 3);
     assert_eq!(
-        classify_point(&p(0, 0, 1), &tri.support).unwrap(),
+        approximate_classify_point(&p(0, 0, 1), &tri.support).unwrap(),
         Classification::Positive
     );
 
@@ -313,7 +308,7 @@ fn triangle_plane_and_vertices_are_exact_reals() {
 fn borrowed_polygon_soup_returns_combined_soup() {
     let mesh = tetra_mesh();
 
-    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[mesh.as_ref()]).unwrap();
     assert_eq!(soup.num_meshes, 1);
     assert_eq!(soup.polygons.len(), 4);
     assert!(
@@ -326,7 +321,7 @@ fn borrowed_polygon_soup_returns_combined_soup() {
 #[test]
 fn polygon_soup_rejects_empty_mesh_views() {
     assert!(matches!(
-        polygon_soup(&[]),
+        approximate_polygon_soup(&[]),
         Err(hypermesh::HypermeshError::EmptyInput)
     ));
 
@@ -336,7 +331,7 @@ fn polygon_soup_rejects_empty_mesh_views() {
         triangles: &[],
     };
     assert_eq!(
-        polygon_soup(&[empty]),
+        approximate_polygon_soup(&[empty]),
         Err(hypermesh::HypermeshError::EmptyMesh { mesh_index: 0 })
     );
 }
@@ -347,7 +342,7 @@ fn polygon_soup_rejects_open_source_meshes() {
     let triangles = [Triangle::new(0, 1, 2)];
 
     assert_eq!(
-        polygon_soup(&[TriangleMeshRef {
+        approximate_polygon_soup(&[TriangleMeshRef {
             positions: &positions,
             triangles: &triangles,
         }]),
@@ -364,7 +359,7 @@ fn polygon_soup_rejects_closed_valence_non_pwn_source_meshes() {
     Arc::make_mut(&mut mesh.triangles)[0] = Triangle::new(0, 1, 2);
 
     assert_eq!(
-        polygon_soup(&[mesh.as_ref()]),
+        approximate_polygon_soup(&[mesh.as_ref()]),
         Err(HypermeshError::NonPwnInput {
             mesh_index: 0,
             unbalanced_edges: 3,
@@ -380,7 +375,7 @@ fn polygon_soup_accepts_balanced_non_manifold_edge_multiplicity() {
     triangles.extend(duplicate);
     mesh = hypermesh::TriangleMesh::new(mesh.positions.to_vec(), triangles);
 
-    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[mesh.as_ref()]).unwrap();
 
     assert_eq!(soup.polygons.len(), 8);
     assert!(soup.polygons.iter().all(|polygon| polygon.delta_w == [1]));
@@ -394,13 +389,14 @@ fn balanced_non_manifold_pwn_union_uses_general_path() {
     triangles.extend(duplicate);
     mesh = hypermesh::TriangleMesh::new(mesh.positions.to_vec(), triangles);
 
-    let result = boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default())
-        .expect("balanced non-manifold PWN union should certify");
-    let closure = certify_output_polygon_closure(&result).unwrap();
+    let result =
+        approximate_boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default())
+            .expect("balanced non-manifold PWN union should certify");
+    let closure = approximate_certify_output_polygon_closure(&result).unwrap();
     assert_eq!(closure.boundary_edges, 0);
     assert_eq!(closure.unbalanced_edges, 0);
 
-    let soup = triangulate_and_resolve_certified(&result).unwrap();
+    let soup = approximate_triangulate_and_resolve_certified(&result).unwrap();
     assert!(!soup.triangles.is_empty());
     assert_eq!(boolean_mesh_volume_numerator(&soup), r(1));
 }
@@ -417,14 +413,15 @@ fn canceling_non_manifold_pwn_union_uses_general_path() {
     triangles.extend(reversed);
     mesh = hypermesh::TriangleMesh::new(mesh.positions.to_vec(), triangles);
 
-    let result = boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default())
-        .expect("canceling non-manifold PWN union should certify");
-    let closure = certify_output_polygon_closure(&result).unwrap();
+    let result =
+        approximate_boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default())
+            .expect("canceling non-manifold PWN union should certify");
+    let closure = approximate_certify_output_polygon_closure(&result).unwrap();
     assert_eq!(closure.boundary_edges, 0);
     assert_eq!(closure.unbalanced_edges, 0);
     assert!(result.output().polygons.is_empty());
 
-    let soup = triangulate_and_resolve_certified(&result).unwrap();
+    let soup = approximate_triangulate_and_resolve_certified(&result).unwrap();
     assert!(soup.triangles.is_empty());
 }
 
@@ -433,7 +430,7 @@ fn polygon_soup_rejects_degenerate_source_triangles() {
     let repeated_positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
     let repeated = [Triangle::new(0, 0, 2)];
     assert_eq!(
-        polygon_soup(&[TriangleMeshRef {
+        approximate_polygon_soup(&[TriangleMeshRef {
             positions: &repeated_positions,
             triangles: &repeated,
         }]),
@@ -446,7 +443,7 @@ fn polygon_soup_rejects_degenerate_source_triangles() {
     let collinear_positions = vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)];
     let collinear = [Triangle::new(0, 1, 2)];
     assert_eq!(
-        polygon_soup(&[TriangleMeshRef {
+        approximate_polygon_soup(&[TriangleMeshRef {
             positions: &collinear_positions,
             triangles: &collinear,
         }]),
@@ -461,7 +458,7 @@ fn polygon_soup_rejects_degenerate_source_triangles() {
 fn polygon_soup_accepts_owned_mesh_views() {
     let mesh = tetra_mesh();
 
-    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[mesh.as_ref()]).unwrap();
     assert_eq!(soup.num_meshes, 1);
     assert_eq!(soup.polygons.len(), 4);
     assert!(
@@ -473,9 +470,9 @@ fn polygon_soup_accepts_owned_mesh_views() {
 
 #[test]
 fn clipping_triangle_against_axis_plane_splits_both_sides() {
-    let tri = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let tri = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let split = Plane::axis_aligned(0, r(1));
-    let clipped = clip_polygon(&tri, &split).unwrap();
+    let clipped = approximate_clip_polygon(&tri, &split).unwrap();
 
     assert_eq!(clipped.side, ClipSide::Both);
     assert!(clipped.left.vertex_count() >= 3);
@@ -484,10 +481,10 @@ fn clipping_triangle_against_axis_plane_splits_both_sides() {
 
 #[test]
 fn intersecting_non_coplanar_triangles_produce_segment() {
-    let xy = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let yz = convex_triangle(&p(0, 0, -1), &p(0, 0, 1), &p(0, 2, 0), 1, 0);
+    let xy = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let yz = approximate_convex_triangle(&p(0, 0, -1), &p(0, 0, 1), &p(0, 2, 0), 1, 0);
 
-    let intersection = intersect_polygons(&xy, &yz, 1).unwrap();
+    let intersection = approximate_intersect_polygons(&xy, &yz, 1).unwrap();
     assert_eq!(
         intersection.kind,
         hypermesh::PairwiseIntersectionType::Segment
@@ -503,10 +500,10 @@ fn intersecting_non_coplanar_triangles_produce_segment() {
 
 #[test]
 fn coplanar_overlapping_triangles_report_overlap() {
-    let a = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let b = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 1, 0);
+    let a = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let b = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 1, 0);
 
-    let intersection = intersect_polygons(&a, &b, 3).unwrap();
+    let intersection = approximate_intersect_polygons(&a, &b, 3).unwrap();
     assert_eq!(
         intersection.kind,
         hypermesh::PairwiseIntersectionType::Overlap
@@ -516,10 +513,12 @@ fn coplanar_overlapping_triangles_report_overlap() {
 
 #[test]
 fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
-    let horizontal = convex_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
-    let vertical = convex_quad(&p(-1, -2, 0), &p(1, -2, 0), &p(1, 2, 0), &p(-1, 2, 0), 1, 0);
+    let horizontal =
+        approximate_convex_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
+    let vertical =
+        approximate_convex_quad(&p(-1, -2, 0), &p(1, -2, 0), &p(1, 2, 0), &p(-1, 2, 0), 1, 0);
 
-    let intersection = intersect_polygons(&horizontal, &vertical, 7).unwrap();
+    let intersection = approximate_intersect_polygons(&horizontal, &vertical, 7).unwrap();
 
     assert_eq!(
         intersection.kind,
@@ -530,10 +529,12 @@ fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
 
 #[test]
 fn coplanar_identical_quads_report_overlap_from_interior_witness() {
-    let left = convex_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
-    let right = convex_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 1, 0);
+    let left =
+        approximate_convex_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
+    let right =
+        approximate_convex_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 1, 0);
 
-    let intersection = intersect_polygons(&left, &right, 11).unwrap();
+    let intersection = approximate_intersect_polygons(&left, &right, 11).unwrap();
 
     assert_eq!(
         intersection.kind,
@@ -545,7 +546,7 @@ fn coplanar_identical_quads_report_overlap_from_interior_witness() {
 #[test]
 fn boolean_operation_validates_before_general_path() {
     assert!(matches!(
-        boolean_operation(&[], BooleanOp::Union, EmberConfig::default()),
+        approximate_boolean_operation(&[], BooleanOp::Union, EmberConfig::default()),
         Err(hypermesh::HypermeshError::EmptyInput)
     ));
 
@@ -554,7 +555,7 @@ fn boolean_operation_validates_before_general_path() {
         triangles: &[],
     };
     assert_eq!(
-        boolean_operation(&[empty], BooleanOp::Union, EmberConfig::default()),
+        approximate_boolean_operation(&[empty], BooleanOp::Union, EmberConfig::default()),
         Err(hypermesh::HypermeshError::EmptyMesh { mesh_index: 0 })
     );
 
@@ -564,7 +565,7 @@ fn boolean_operation_validates_before_general_path() {
         triangles: &[],
     };
     assert_eq!(
-        boolean_operation(&[no_triangles], BooleanOp::Union, EmberConfig::default()),
+        approximate_boolean_operation(&[no_triangles], BooleanOp::Union, EmberConfig::default()),
         Err(hypermesh::HypermeshError::EmptyMesh { mesh_index: 0 })
     );
 
@@ -575,7 +576,7 @@ fn boolean_operation_validates_before_general_path() {
         triangles: &degenerate_triangles,
     };
     assert_eq!(
-        boolean_operation(&[degenerate], BooleanOp::Union, EmberConfig::default()),
+        approximate_boolean_operation(&[degenerate], BooleanOp::Union, EmberConfig::default()),
         Err(hypermesh::HypermeshError::DegenerateTriangle {
             mesh_index: 0,
             triangle_index: 0
@@ -589,7 +590,7 @@ fn boolean_operation_validates_before_general_path() {
         triangles: &triangles,
     };
     assert!(matches!(
-        boolean_operation(&[invalid], BooleanOp::Union, EmberConfig::default()),
+        approximate_boolean_operation(&[invalid], BooleanOp::Union, EmberConfig::default()),
         Err(hypermesh::HypermeshError::VertexIndexOutOfBounds {
             index: 2,
             vertex_count: 2
@@ -598,54 +599,30 @@ fn boolean_operation_validates_before_general_path() {
 }
 
 #[test]
-fn local_bsp_splits_leaf_with_intersection_segment() {
-    let host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let cutter = convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
-    let segment = intersect_polygons(&host, &cutter, 1)
-        .unwrap()
-        .segment
-        .unwrap();
-
-    let mut bsp = hypermesh::LocalBsp::new(&host);
-    bsp.add_segment(&segment).unwrap();
-    let leaves = bsp.collect_leaves();
-
-    assert_eq!(leaves.len(), 2);
-    assert_eq!(bsp.node_count(), 3);
-    assert!(leaves.iter().all(|leaf| leaf.edges.len() >= 3));
-}
-
-#[test]
-fn local_bsp_overlap_can_disable_higher_index_duplicate_leaf() {
-    let lower = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
-    let higher = convex_triangle(&p(1, 1, 0), &p(2, 1, 0), &p(1, 2, 0), 1, 2);
-    let intersection = intersect_polygons(&higher, &lower, 0).unwrap();
-    let overlap = intersection.overlap.as_ref().unwrap();
-
-    let mut bsp = hypermesh::LocalBsp::new(&higher);
-    bsp.add_overlap(&lower, overlap).unwrap();
-
-    assert!(bsp.collect_leaves().is_empty());
-}
-
-#[test]
 fn exact_bvh_reports_overlapping_polygon_bounds() {
     let left = vec![
-        convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
-        convex_triangle(&p(10, 0, 0), &p(11, 0, 0), &p(10, 1, 0), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
+        approximate_convex_triangle(&p(10, 0, 0), &p(11, 0, 0), &p(10, 1, 0), 0, 1),
     ];
-    let right = vec![convex_triangle(&p(1, 0, 0), &p(3, 0, 0), &p(1, 2, 0), 1, 0)];
+    let right = vec![approximate_convex_triangle(
+        &p(1, 0, 0),
+        &p(3, 0, 0),
+        &p(1, 2, 0),
+        1,
+        0,
+    )];
 
-    let left_bvh = hypermesh::ExactBvh::build(&left).unwrap();
-    let right_bvh = hypermesh::ExactBvh::build(&right).unwrap();
+    let left_bvh = approximate_exact_bvh_build(&left).unwrap();
+    let right_bvh = approximate_exact_bvh_build(&right).unwrap();
     let mut pairs = Vec::new();
-    left_bvh
-        .intersect_pairs(&right_bvh, |left, right| pairs.push((left, right)))
-        .unwrap();
+    approximate_exact_bvh_intersect_pairs(&left_bvh, &right_bvh, |left, right| {
+        pairs.push((left, right));
+    })
+    .unwrap();
 
     assert_eq!(pairs, vec![(0, 0)]);
     assert!(
-        bounds_overlap(
+        approximate_bounds_overlap(
             left[0].approx_bounds.as_ref().unwrap(),
             right[0].approx_bounds.as_ref().unwrap()
         )
@@ -657,7 +634,7 @@ fn exact_bvh_reports_overlapping_polygon_bounds() {
 fn exact_bvh_builds_a_hierarchy_for_nontrivial_inputs() {
     let polygons = (0..32)
         .map(|x| {
-            convex_triangle(
+            approximate_convex_triangle(
                 &p(x * 3, 0, 0),
                 &p(x * 3 + 1, 0, 0),
                 &p(x * 3, 1, 0),
@@ -666,7 +643,7 @@ fn exact_bvh_builds_a_hierarchy_for_nontrivial_inputs() {
             )
         })
         .collect::<Vec<_>>();
-    let bvh = hypermesh::ExactBvh::build(&polygons).unwrap();
+    let bvh = approximate_exact_bvh_build(&polygons).unwrap();
 
     assert!(bvh.node_count() > 1);
     assert!(bvh.node_count() < polygons.len());
@@ -677,7 +654,7 @@ fn point_bvh_halfspace_candidates_match_bruteforce() {
     let points = (-16..=16)
         .flat_map(|x| (-2..=2).map(move |y| p(x, y, x - y)))
         .collect::<Vec<_>>();
-    let bvh = hypermesh::ExactPointBvh::build(&points).unwrap();
+    let bvh = approximate_exact_point_bvh_build(&points).unwrap();
     let plane = hypermesh::Plane::from_coefficients(
         hypermesh::Real::from(2),
         hypermesh::Real::from(-1),
@@ -685,14 +662,16 @@ fn point_bvh_halfspace_candidates_match_bruteforce() {
         hypermesh::Real::from(-3),
     );
     let mut accelerated = Vec::new();
-    bvh.query_positive_halfspace(&points, &plane, |index| accelerated.push(index))
-        .unwrap();
+    approximate_query_positive_halfspace(&bvh, &points, &plane, |index| {
+        accelerated.push(index);
+    })
+    .unwrap();
     accelerated.sort_unstable();
     let brute = points
         .iter()
         .enumerate()
         .filter_map(|(index, point)| {
-            (hypermesh::classify_point(point, &plane).unwrap()
+            (approximate_classify_point(point, &plane).unwrap()
                 == hypermesh::Classification::Positive)
                 .then_some(index)
         })
@@ -710,15 +689,19 @@ fn point_bvh_oriented_plane_candidates_match_orient3() {
     let a = p(0, 0, 0);
     let b = p(3, 0, 1);
     let c = p(0, 4, 1);
-    let bvh = hypermesh::ExactPointBvh::build(&points).unwrap();
+    let bvh = approximate_exact_point_bvh_build(&points).unwrap();
 
     let mut positive = Vec::new();
-    bvh.query_positive_oriented_plane(&points, &a, &b, &c, |index| positive.push(index))
-        .unwrap();
+    approximate_query_positive_oriented_plane(&bvh, &points, &a, &b, &c, |index| {
+        positive.push(index);
+    })
+    .unwrap();
     positive.sort_unstable();
     let mut negative = Vec::new();
-    bvh.query_negative_oriented_plane(&points, &a, &b, &c, |index| negative.push(index))
-        .unwrap();
+    approximate_query_negative_oriented_plane(&bvh, &points, &a, &b, &c, |index| {
+        negative.push(index);
+    })
+    .unwrap();
     negative.sort_unstable();
 
     let expected = |sign| {
@@ -726,7 +709,16 @@ fn point_bvh_oriented_plane_candidates_match_orient3() {
             .iter()
             .enumerate()
             .filter_map(|(index, point)| {
-                (hyperlimit::orient3(&a, &b, &c, point).value() == Some(sign)).then_some(index)
+                (hyperlimit::orient3(
+                    &a,
+                    &b,
+                    &c,
+                    point,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+                .value()
+                    == Some(sign))
+                .then_some(index)
             })
             .collect::<Vec<_>>()
     };
@@ -736,10 +728,11 @@ fn point_bvh_oriented_plane_candidates_match_orient3() {
 
 #[test]
 fn trace_axis_segment_accumulates_exact_winding_crossing() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
-    let traced = trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]).unwrap();
+    let traced =
+        approximate_trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]).unwrap();
 
     assert!(traced.valid);
     assert_eq!(traced.winding, vec![-1]);
@@ -747,50 +740,51 @@ fn trace_axis_segment_accumulates_exact_winding_crossing() {
 
 #[test]
 fn trace_segment_uses_axis_orderings_for_l_path() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
-    let winding = trace_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall]).unwrap();
+    let winding = approximate_trace_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall]).unwrap();
     assert_eq!(winding, vec![-1]);
 }
 
 #[test]
 fn trace_segment_uses_detour_when_axis_order_corners_hit_surfaces() {
     let blockers = vec![
-        convex_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
-        convex_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
-        convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+        approximate_convex_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
     ];
 
-    let winding = trace_segment(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers).unwrap();
+    let winding = approximate_trace_segment(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers).unwrap();
     assert_eq!(winding, vec![0]);
 }
 
 #[test]
 fn trace_segment_uses_direct_path_when_axis_order_corners_hit_surfaces() {
     let mut blockers = vec![
-        convex_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
-        convex_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
-        convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+        approximate_convex_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
     ];
-    let mut diagonal_wall = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 1, 0);
+    let mut diagonal_wall =
+        approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 1, 0);
     diagonal_wall.delta_w = vec![1];
     blockers.push(diagonal_wall);
 
-    let winding = trace_segment(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers).unwrap();
+    let winding = approximate_trace_segment(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers).unwrap();
     assert_eq!(winding, vec![-1]);
 }
 
 #[test]
 fn trace_segment_uses_arrangement_detour_when_fixed_fraction_box_is_blocked() {
     let mut blockers = vec![
-        convex_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
-        convex_triangle(&p(0, 4, 0), &p(1, 4, 0), &p(0, 5, 0), 0, 1),
-        convex_triangle(&p(0, 0, 4), &p(1, 0, 4), &p(0, 1, 4), 0, 2),
+        approximate_convex_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 4, 0), &p(1, 4, 0), &p(0, 5, 0), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 4), &p(1, 0, 4), &p(0, 1, 4), 0, 2),
     ];
 
     for (index, x) in [q(4, 3), r(2), q(8, 3)].into_iter().enumerate() {
-        blockers.push(convex_triangle(
+        blockers.push(approximate_convex_triangle(
             &px(x.clone(), -1, -1),
             &px(x.clone(), 5, -1),
             &px(x, 2, 5),
@@ -799,17 +793,17 @@ fn trace_segment_uses_arrangement_detour_when_fixed_fraction_box_is_blocked() {
         ));
     }
 
-    let winding = trace_segment(&p(0, 0, 0), &p(4, 4, 4), &[0], &blockers).unwrap();
+    let winding = approximate_trace_segment(&p(0, 0, 0), &p(4, 4, 4), &[0], &blockers).unwrap();
     assert_eq!(winding, vec![0]);
 }
 
 #[test]
 fn leaf_classification_traces_to_probe_and_returns_winding_vector() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(-2, -2, -2), p(3, 3, 3));
 
-    let winding = classify_leaf_polygon(
+    let winding = approximate_classify_leaf_polygon(
         &wall.support,
         &wall.edges,
         &p(0, 0, 0),
@@ -825,11 +819,11 @@ fn leaf_classification_traces_to_probe_and_returns_winding_vector() {
 
 #[test]
 fn leaf_classification_reports_unknown_when_no_valid_probe_path_exists() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(1, -1, -1), p(1, 1, 1));
 
-    let err = classify_leaf_polygon(
+    let err = approximate_classify_leaf_polygon(
         &wall.support,
         &wall.edges,
         &p(0, 0, 0),
@@ -845,13 +839,14 @@ fn leaf_classification_reports_unknown_when_no_valid_probe_path_exists() {
 
 #[test]
 fn leaf_classification_places_probe_before_intervening_surface() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
-    let mut blocker = convex_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
+    let mut blocker =
+        approximate_convex_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
     blocker.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(1, -2, -2), p(5, 2, 2));
 
-    let winding = classify_leaf_polygon(
+    let winding = approximate_classify_leaf_polygon(
         &wall.support,
         &wall.edges,
         &p(0, 0, 0),
@@ -867,13 +862,13 @@ fn leaf_classification_places_probe_before_intervening_surface() {
 
 #[test]
 fn process_leaf_classifies_direct_polygon_slice() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let union = BooleanOp::Union;
 
     let mut output = Vec::new();
-    let stats = process_leaf_into(
+    let stats = approximate_process_leaf_into(
         &[wall],
         &bounds,
         &p(0, 0, 0),
@@ -896,13 +891,13 @@ fn process_leaf_classifies_direct_polygon_slice() {
 
 #[test]
 fn process_leaf_reports_unknown_when_no_valid_probe_path_exists() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(1, -1, -1), p(1, 1, 1));
     let union = BooleanOp::Union;
 
     let mut output = Vec::new();
-    let err = process_leaf_into(
+    let err = approximate_process_leaf_into(
         &[wall],
         &bounds,
         &p(0, 0, 0),
@@ -919,15 +914,16 @@ fn process_leaf_reports_unknown_when_no_valid_probe_path_exists() {
 
 #[test]
 fn process_leaf_uses_alternate_probe_when_first_probe_path_is_blocked() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
-    let mut blocker = convex_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
+    let mut blocker =
+        approximate_convex_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
     blocker.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(1, -2, -2), p(5, 2, 2));
     let union = BooleanOp::Union;
 
     let mut output = Vec::new();
-    let stats = process_leaf_into(
+    let stats = approximate_process_leaf_into(
         &[wall.clone(), blocker],
         &bounds,
         &p(0, 0, 0),
@@ -947,16 +943,16 @@ fn process_leaf_uses_alternate_probe_when_first_probe_path_is_blocked() {
 
 #[test]
 fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
-    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1, 0];
-    let mut cutter = convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 1);
+    let mut cutter = approximate_convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 1);
     cutter.delta_w = vec![0, 1];
     let polygons = vec![host, cutter];
     let bounds = hypermesh::Aabb::new(p(-1, -1, -2), p(3, 3, 2));
     let union = BooleanOp::Union;
     let mut output = Vec::new();
 
-    let stats = process_leaf_into(
+    let stats = approximate_process_leaf_into(
         &polygons,
         &bounds,
         &p(-1, -1, -1),
@@ -977,16 +973,16 @@ fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
 
 #[test]
 fn process_leaf_uses_bsp_for_same_mesh_self_intersections() {
-    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1];
-    let mut cutter = convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 0, 1);
+    let mut cutter = approximate_convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 0, 1);
     cutter.delta_w = vec![1];
     let polygons = vec![host, cutter];
     let bounds = hypermesh::Aabb::new(p(-1, -1, -2), p(3, 3, 2));
     let union = BooleanOp::Union;
     let mut output = Vec::new();
 
-    let stats = process_leaf_into(
+    let stats = approximate_process_leaf_into(
         &polygons,
         &bounds,
         &p(-1, -1, -1),
@@ -1014,7 +1010,8 @@ fn boolean_operation_runs_leaf_pipeline_from_borrowed_meshes() {
         triangles: mesh_ref.triangles,
     };
 
-    let result = boolean_operation(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap();
+    let result =
+        approximate_boolean_operation(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap();
 
     assert_eq!(
         result.classifications().len(),
@@ -1033,7 +1030,8 @@ fn boolean_operation_rejects_open_input_before_general_path() {
         triangles: &triangles,
     };
 
-    let err = boolean_operation(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap_err();
+    let err = approximate_boolean_operation(&[mesh], BooleanOp::Union, EmberConfig::default())
+        .unwrap_err();
 
     assert_eq!(
         err,
@@ -1050,7 +1048,8 @@ fn boolean_operation_rejects_non_pwn_input_before_general_path() {
     Arc::make_mut(&mut mesh.triangles)[0] = Triangle::new(0, 1, 2);
 
     let err =
-        boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default()).unwrap_err();
+        approximate_boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default())
+            .unwrap_err();
 
     assert_eq!(
         err,
@@ -1066,7 +1065,8 @@ fn boolean_operation_accepts_input_mesh_refs() {
     let mesh = cube_mesh(0, 2);
 
     let result =
-        boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default()).unwrap();
+        approximate_boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default())
+            .unwrap();
 
     assert!(!result.output().polygons.is_empty());
     assert!(
@@ -1089,18 +1089,23 @@ fn immediate_boolean_mesh_matches_each_polygon_boolean_operation() {
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ] {
-        let result = boolean_operation(&meshes, operation, EmberConfig::default()).unwrap();
+        let result =
+            approximate_boolean_operation(&meshes, operation, EmberConfig::default()).unwrap();
         assert_eq!(
-            boolean_mesh(&meshes, operation, EmberConfig::default()).unwrap(),
-            triangulate_and_resolve_certified(&result).unwrap(),
+            approximate_boolean_mesh(&meshes, operation, EmberConfig::default()).unwrap(),
+            approximate_triangulate_and_resolve_certified(&result).unwrap(),
             "{operation:?} triangle soup"
         );
     }
 
     assert_eq!(
-        boolean_symmetric_difference(left.as_ref(), right.as_ref(), EmberConfig::default())
-            .unwrap(),
-        boolean_operation(
+        approximate_boolean_symmetric_difference(
+            left.as_ref(),
+            right.as_ref(),
+            EmberConfig::default()
+        )
+        .unwrap(),
+        approximate_boolean_operation(
             &meshes,
             BooleanOp::SymmetricDifference,
             EmberConfig::default()
@@ -1120,23 +1125,24 @@ fn certified_convex_immediate_paths_match_general_volume_and_direct_output() {
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ] {
-        let general = boolean_operation(&meshes, operation, EmberConfig::default()).unwrap();
-        let certified = boolean_operation_with_certified_convex_inputs(
+        let general =
+            approximate_boolean_operation(&meshes, operation, EmberConfig::default()).unwrap();
+        let certified = approximate_boolean_operation_with_certified_convex_inputs(
             &meshes,
             operation,
             &[true, true],
             EmberConfig::default(),
         )
         .unwrap();
-        certify_output_polygon_closure(&certified).unwrap();
-        let general_soup = triangulate_and_resolve_certified(&general).unwrap();
-        let certified_soup = triangulate_and_resolve_certified(&certified).unwrap();
+        approximate_certify_output_polygon_closure(&certified).unwrap();
+        let general_soup = approximate_triangulate_and_resolve_certified(&general).unwrap();
+        let certified_soup = approximate_triangulate_and_resolve_certified(&certified).unwrap();
         assert_eq!(
             boolean_mesh_volume_numerator(&certified_soup),
             boolean_mesh_volume_numerator(&general_soup),
             "{operation:?} exact volume"
         );
-        let immediate_soup = boolean_mesh_with_certified_convex_inputs(
+        let immediate_soup = approximate_boolean_mesh_with_certified_convex_inputs(
             &meshes,
             operation,
             &[true, true],
@@ -1170,11 +1176,12 @@ fn certified_convex_supplied_planes_match_reconstructed_planes() {
             .iter()
             .map(|triangle| {
                 let [a, b, c] = triangle.indices();
-                InputTrianglePlanes::from_points(
+                approximate_input_triangle_planes(
                     &mesh.positions[a],
                     &mesh.positions[b],
                     &mesh.positions[c],
                 )
+                .unwrap()
             })
             .collect::<Vec<_>>()
     });
@@ -1186,14 +1193,14 @@ fn certified_convex_supplied_planes_match_reconstructed_planes() {
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ] {
-        let reconstructed = boolean_mesh_with_certified_convex_inputs(
+        let reconstructed = approximate_boolean_mesh_with_certified_convex_inputs(
             &meshes,
             operation,
             &[true, true],
             EmberConfig::default(),
         )
         .unwrap();
-        let supplied = boolean_mesh_with_certified_convex_inputs_and_planes(
+        let supplied = approximate_boolean_mesh_with_certified_convex_inputs_and_planes(
             &meshes,
             operation,
             &[true, true],
@@ -1231,10 +1238,11 @@ fn immediate_operations_preserve_coincident_mesh_winding_evidence() {
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ] {
-        let result = boolean_operation(&meshes, operation, EmberConfig::default()).unwrap();
+        let result =
+            approximate_boolean_operation(&meshes, operation, EmberConfig::default()).unwrap();
         assert_eq!(
-            boolean_mesh(&meshes, operation, EmberConfig::default()).unwrap(),
-            triangulate_and_resolve_certified(&result).unwrap(),
+            approximate_boolean_mesh(&meshes, operation, EmberConfig::default()).unwrap(),
+            approximate_triangulate_and_resolve_certified(&result).unwrap(),
             "{operation:?} coincident triangle soup"
         );
     }
@@ -1252,7 +1260,7 @@ fn certified_convex_booleans_own_cooriented_coplanar_overlaps_once() {
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ] {
-        let soup = boolean_mesh_with_certified_convex_inputs(
+        let soup = approximate_boolean_mesh_with_certified_convex_inputs(
             &meshes,
             operation,
             &[true, true],
@@ -1274,7 +1282,7 @@ fn certified_convex_booleans_own_cooriented_coplanar_overlaps_once() {
 #[test]
 fn convex_certification_accepts_a_box_and_rejects_disconnected_shells() {
     let convex = cube_mesh(0, 2);
-    hypermesh::certify_convex_mesh(convex.as_ref()).unwrap();
+    approximate_certify_convex_mesh(convex.as_ref()).unwrap();
 
     let left = cube_mesh(0, 1);
     let right = cube_mesh(3, 4);
@@ -1289,7 +1297,7 @@ fn convex_certification_accepts_a_box_and_rejects_disconnected_shells() {
     let disconnected = hypermesh::TriangleMesh::new(positions, triangles);
 
     assert_eq!(
-        hypermesh::certify_convex_mesh(disconnected.as_ref()),
+        approximate_certify_convex_mesh(disconnected.as_ref()),
         Err(hypermesh::HypermeshError::NonConvexInput)
     );
 }
@@ -1297,12 +1305,12 @@ fn convex_certification_accepts_a_box_and_rejects_disconnected_shells() {
 #[test]
 fn subdivision_processes_certified_leaf_at_max_depth() {
     let mesh = cube_mesh(0, 2);
-    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[mesh.as_ref()]).unwrap();
     let operation = BooleanOp::Union;
     let num_meshes = soup.num_meshes;
     let config = SubdivisionConfig { max_depth: 0 };
 
-    let output = subdivide(
+    let output = approximate_subdivide(
         SubdivisionTask::new(
             soup.polygons,
             hypermesh::Aabb::new(p(-1, -1, -1), p(3, 3, 3)),
@@ -1321,12 +1329,12 @@ fn subdivision_processes_certified_leaf_at_max_depth() {
 #[test]
 fn subdivision_with_split_room_returns_certified_fragments() {
     let mesh = cube_mesh(0, 2);
-    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[mesh.as_ref()]).unwrap();
     let operation = BooleanOp::Union;
     let num_meshes = soup.num_meshes;
     let config = SubdivisionConfig { max_depth: 1 };
 
-    let output = subdivide(
+    let output = approximate_subdivide(
         SubdivisionTask::new(
             soup.polygons,
             hypermesh::Aabb::new(p(-1, -1, -1), p(3, 3, 3)),
@@ -1344,14 +1352,14 @@ fn subdivision_with_split_room_returns_certified_fragments() {
 
 #[test]
 fn subdivision_escapes_projected_reference_on_surface() {
-    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = approximate_convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = approximate_convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let operation = BooleanOp::Union;
     let config = SubdivisionConfig { max_depth: 4 };
 
-    let result = subdivide(
+    let result = approximate_subdivide(
         SubdivisionTask::new(
             vec![left, right],
             hypermesh::Aabb::new(p(0, 0, 0), p(6, 6, 6)),
@@ -1368,11 +1376,11 @@ fn subdivision_escapes_projected_reference_on_surface() {
 fn subdivision_escapes_projected_reference_on_surface_for_closed_meshes() {
     let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
     let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));
-    let soup = polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
     let operation = BooleanOp::Union;
     let config = SubdivisionConfig { max_depth: 4 };
 
-    let result = subdivide(
+    let result = approximate_subdivide(
         SubdivisionTask::new(
             soup.polygons,
             hypermesh::Aabb::new(p(0, 0, 0), p(6, 6, 6)),
@@ -1390,12 +1398,12 @@ fn subdivision_escapes_projected_reference_on_surface_for_closed_meshes() {
 fn subdivision_normalizes_closed_edge_and_vertex_references() {
     let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
     let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));
-    let soup = polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
     let operation = BooleanOp::Union;
     let bounds = hypermesh::Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     for ref_point in [p(1, 2, 1), p(1, 1, 1)] {
-        let output = subdivide(
+        let output = approximate_subdivide(
             SubdivisionTask::new(
                 soup.polygons.clone(),
                 bounds.clone(),
@@ -1416,7 +1424,7 @@ fn subdivision_normalizes_closed_edge_and_vertex_references() {
 fn subdivision_projected_reference_surface_case_preserves_boolean_semantics_for_closed_meshes() {
     let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
     let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));
-    let soup = polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
+    let soup = approximate_polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
     let bounds = hypermesh::Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let ref_point = p(1, 3, 3);
     let ref_wnv = vec![0; soup.num_meshes];
@@ -1429,7 +1437,7 @@ fn subdivision_projected_reference_surface_case_preserves_boolean_semantics_for_
 
     for (op, expected_volume_numerator) in cases {
         let operation = op;
-        let output = subdivide(
+        let output = approximate_subdivide(
             SubdivisionTask::new(
                 soup.polygons.clone(),
                 bounds.clone(),
@@ -1455,7 +1463,8 @@ fn subdivision_support_reference_fallback_classifies_each_axis_face() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face(&soup.polygons, 0, 5),
         axis_face(&soup.polygons, 1, 5),
@@ -1469,7 +1478,7 @@ fn subdivision_support_reference_fallback_classifies_each_axis_face() {
     let ref_point = p(0, 5, 5);
     let ref_wnv = vec![0; soup.num_meshes];
     let operation = BooleanOp::Union;
-    let classified = subdivide(
+    let classified = approximate_subdivide(
         SubdivisionTask::new(polygons, bounds, ref_point, ref_wnv),
         operation,
         SubdivisionConfig { max_depth: 4 },
@@ -1493,9 +1502,9 @@ fn disjoint_cube_union_produces_both_closed_boundaries() {
     let cube_b = cube_mesh(4, 6);
     let config = EmberConfig::default();
 
-    let union = hypermesh::boolean_union(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
+    let union = approximate_boolean_union(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
     assert!(!union.output().polygons.is_empty());
-    let union_soup = triangulate_and_resolve_certified(&union).unwrap();
+    let union_soup = approximate_triangulate_and_resolve_certified(&union).unwrap();
     assert!(hypermesh::boolean_mesh_is_closed(&union_soup));
     assert!(union_soup.triangles.iter().all(|triangle| {
         triangle_lies_on_cube_boundary(&union_soup, triangle, 0, 2)
@@ -1510,7 +1519,7 @@ fn disjoint_cube_intersection_is_empty() {
     let config = EmberConfig::default();
 
     let intersection =
-        hypermesh::boolean_intersection(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
+        approximate_boolean_intersection(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
     assert!(intersection.output().polygons.is_empty());
 }
 
@@ -1521,9 +1530,9 @@ fn disjoint_cube_difference_keeps_left_cube() {
     let config = EmberConfig::default();
 
     let difference =
-        hypermesh::boolean_difference(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
+        approximate_boolean_difference(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
     assert!(!difference.output().polygons.is_empty());
-    let difference_soup = triangulate_and_resolve_certified(&difference).unwrap();
+    let difference_soup = approximate_triangulate_and_resolve_certified(&difference).unwrap();
     assert!(hypermesh::boolean_mesh_is_closed(&difference_soup));
     assert_boolean_mesh_on_cube_boundary(&difference_soup, 0, 2);
 }
@@ -1534,22 +1543,22 @@ fn overlapping_cube_booleans_use_general_path() {
     let cube_b = cube_mesh(1, 3);
     let config = EmberConfig { max_depth: 6 };
 
-    let union = hypermesh::boolean_union(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
-    let union_soup = triangulate_and_resolve_certified(&union).unwrap();
+    let union = approximate_boolean_union(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
+    let union_soup = approximate_triangulate_and_resolve_certified(&union).unwrap();
     assert!(!union.output().polygons.is_empty());
     assert!(!union_soup.triangles.is_empty());
     assert_boolean_mesh_within_bounds(&union_soup, 0, 3).unwrap();
 
     let intersection =
-        hypermesh::boolean_intersection(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
-    let intersection_soup = triangulate_and_resolve_certified(&intersection).unwrap();
+        approximate_boolean_intersection(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
+    let intersection_soup = approximate_triangulate_and_resolve_certified(&intersection).unwrap();
     assert!(intersection.output().polygons.len() >= 12);
     assert_boolean_mesh_within_bounds(&intersection_soup, 1, 2).unwrap();
     assert_boolean_mesh_on_cube_boundary(&intersection_soup, 1, 2);
 
     let difference =
-        hypermesh::boolean_difference(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
-    let difference_soup = triangulate_and_resolve_certified(&difference).unwrap();
+        approximate_boolean_difference(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
+    let difference_soup = approximate_triangulate_and_resolve_certified(&difference).unwrap();
     assert!(!difference.output().polygons.is_empty());
     assert!(!difference_soup.triangles.is_empty());
     assert_boolean_mesh_within_bounds(&difference_soup, 0, 2).unwrap();
@@ -1570,26 +1579,30 @@ fn reusable_triangle_mesh_boolean_owns_exact_algebraic_fast_paths() {
 
     let empty = hypermesh::TriangleMesh::new(Vec::new(), Vec::new());
     assert_eq!(
-        boolean_triangle_meshes(&left, &empty, BooleanOp::Union, config).unwrap(),
+        approximate_boolean_triangle_meshes(&left, &empty, BooleanOp::Union, config).unwrap(),
         left
     );
     assert!(
-        boolean_triangle_meshes(&left, &left, BooleanOp::Difference, config)
+        approximate_boolean_triangle_meshes(&left, &left, BooleanOp::Difference, config)
             .unwrap()
             .triangles
             .is_empty()
     );
 
-    let merged = boolean_triangle_meshes(&left, &disjoint, BooleanOp::Union, config)
+    let merged = approximate_boolean_triangle_meshes(&left, &disjoint, BooleanOp::Union, config)
         .expect("disjoint union");
     assert_eq!(merged.triangles.len(), 24);
     assert!(merged.is_closed_manifold());
 
-    let joined = boolean_triangle_meshes(&left, &adjacent, BooleanOp::Union, config)
+    let joined = approximate_boolean_triangle_meshes(&left, &adjacent, BooleanOp::Union, config)
         .expect("adjacent union");
     assert_eq!(joined.triangles.len(), 12);
     assert!(joined.is_closed_manifold());
-    let bounds = joined.exact_bounds().expect("joined box bounds");
+    let bounds = joined
+        .exact_bounds(&APPROXIMATE_CONTEXT)
+        .unwrap()
+        .into_value()
+        .expect("joined box bounds");
     assert_eq!(bounds.mins, p(0, 0, 0));
     assert_eq!(bounds.maxs, p(4, 2, 2));
 }

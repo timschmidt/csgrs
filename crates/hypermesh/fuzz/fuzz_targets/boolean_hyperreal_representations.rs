@@ -3,15 +3,14 @@
 mod support;
 
 use hypermesh::{
-    EmberConfig, HypermeshError, TriangleMesh, Point3, Real, Triangle, BooleanMesh,
-    boolean_operation, boolean_mesh, boolean_mesh_with_certified_convex_inputs,
-    certify_convex_mesh,
+    BooleanMesh, EmberConfig, HypermeshError, Point3, Real, Triangle, TriangleMesh, boolean_mesh,
+    boolean_mesh_with_certified_convex_inputs, boolean_operation, certify_convex_mesh,
 };
 use hyperreal::{Rational, StructuralKind};
 use libfuzzer_sys::fuzz_target;
 use support::{
-    Bytes, operation, r, representative_hyperreal_values, validate_result, validate_soup,
-    volume_numerator,
+    Bytes, CONTEXT, operation, r, representative_hyperreal_values, validate_result, validate_soup,
+    value, volume_numerator,
 };
 
 fn translated_box(base: &Real, offset: [i64; 3], extent: i64) -> TriangleMesh {
@@ -94,7 +93,8 @@ fn accept_certification_boundary(error: HypermeshError) {
     assert!(
         matches!(
             error,
-            HypermeshError::UnknownClassification
+            HypermeshError::PredicateUndecided { .. }
+                | HypermeshError::UnknownClassification
                 | HypermeshError::ReferencePropagationFailed
                 | HypermeshError::PointAtInfinity
                 | HypermeshError::SubdivisionDepthLimit { .. }
@@ -143,7 +143,7 @@ fuzz_target!(|data: [u8; 8]| {
         translated_box(base, shift, 3),
     ];
     for mesh in &meshes {
-        if let Err(error) = certify_convex_mesh(mesh.as_ref()) {
+        if let Err(error) = value(certify_convex_mesh(&CONTEXT, mesh.as_ref())) {
             accept_certification_boundary(error);
             return;
         }
@@ -151,17 +151,23 @@ fuzz_target!(|data: [u8; 8]| {
     let refs = [meshes[0].as_ref(), meshes[1].as_ref()];
 
     let soup: Result<BooleanMesh, HypermeshError> = match api {
-        0 => boolean_operation(&refs, op, EmberConfig::default())
-            .map(|result| validate_result(&result, op, refs.len())),
-        1 => boolean_mesh(&refs, op, EmberConfig::default()).inspect(|soup| {
+        0 => value(boolean_operation(
+            &CONTEXT,
+            &refs,
+            op,
+            EmberConfig::default(),
+        ))
+        .map(|result| validate_result(&result, op, refs.len())),
+        1 => value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default())).inspect(|soup| {
             validate_soup(soup);
         }),
-        _ => boolean_mesh_with_certified_convex_inputs(
+        _ => value(boolean_mesh_with_certified_convex_inputs(
+            &CONTEXT,
             &refs,
             op,
             &[true, true],
             EmberConfig::default(),
-        )
+        ))
         .inspect(|soup| {
             validate_soup(soup);
         }),

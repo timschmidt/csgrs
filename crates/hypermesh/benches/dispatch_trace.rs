@@ -5,13 +5,15 @@ mod competitive_support;
 
 use hypermesh::clip::clip_polygon;
 use hypermesh::{
-    BooleanOp, EmberConfig, ExactBvh, HypermeshResult, LocalBsp, Plane, Point3, Real,
-    boolean_mesh_with_certified_convex_inputs, boolean_operation,
+    BooleanOp, EmberConfig, ExactBvh, HypermeshResult, MeshContext, Plane, Point3, PredicatePolicy,
+    Real, boolean_mesh_with_certified_convex_inputs, boolean_operation,
     boolean_operation_with_certified_convex_inputs, classify_polygon_output, convex_hull,
     convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, convex_triangle,
     extract_output, intersect_polygons, polygon_soup, propagate_wnv, trace_axis_segment,
     trace_segment,
 };
+
+const CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn trace_workload<T>(name: &str, workload: impl FnOnce() -> HypermeshResult<T>) -> T {
     hyperreal::dispatch_trace::reset();
@@ -73,12 +75,15 @@ fn main() {
             hyperreal::dispatch_trace::reset();
             let result = hyperreal::dispatch_trace::with_recording(|| {
                 boolean_operation(
+                    &CONTEXT,
                     &[meshes[0].as_ref(), meshes[1].as_ref()],
                     op,
                     EmberConfig::default(),
                 )
             });
-            let output = result.expect("trace workload must remain certified");
+            let output = result
+                .expect("trace workload must remain certified")
+                .into_value();
             let trace = hyperreal::dispatch_trace::take_trace();
             let correlation = trace.correlation_summary();
             assert!(
@@ -107,12 +112,14 @@ fn main() {
     hyperreal::dispatch_trace::reset();
     let nested_tool_result = hyperreal::dispatch_trace::with_recording(|| {
         boolean_operation(
+            &CONTEXT,
             &nested_tool_refs,
             BooleanOp::Difference,
             EmberConfig::default(),
         )
     })
-    .expect("trace variadic difference must remain certified");
+    .expect("trace variadic difference must remain certified")
+    .into_value();
     let trace = hyperreal::dispatch_trace::take_trace();
     let correlation = trace.correlation_summary();
     assert!(
@@ -135,12 +142,14 @@ fn main() {
     hyperreal::dispatch_trace::reset();
     let subdivided_result = hyperreal::dispatch_trace::with_recording(|| {
         boolean_operation(
+            &CONTEXT,
             &[subdivided_cubes[0].as_ref(), subdivided_cubes[1].as_ref()],
             BooleanOp::Union,
             EmberConfig::default(),
         )
     })
-    .expect("subdivided cube union must remain certified");
+    .expect("subdivided cube union must remain certified")
+    .into_value();
     let trace = hyperreal::dispatch_trace::take_trace();
     let correlation = trace.correlation_summary();
     assert!(
@@ -167,8 +176,9 @@ fn main() {
         })
         .collect::<Vec<_>>();
     hyperreal::dispatch_trace::reset();
-    let hull = hyperreal::dispatch_trace::with_recording(|| convex_hull(&hull_points))
-        .expect("trace point set must span 3D");
+    let hull = hyperreal::dispatch_trace::with_recording(|| convex_hull(&CONTEXT, &hull_points))
+        .expect("trace point set must span 3D")
+        .into_value();
     let trace = hyperreal::dispatch_trace::take_trace();
     let correlation = trace.correlation_summary();
     assert!(
@@ -190,17 +200,21 @@ fn main() {
 
     let cube_pair = common::cube_pair();
     let cube_refs = [cube_pair[0].as_ref(), cube_pair[1].as_ref()];
-    let soup = trace_workload("mesh_build_polygon_soup", || polygon_soup(&cube_refs));
+    let soup = trace_workload("mesh_build_polygon_soup", || {
+        Ok(polygon_soup(&CONTEXT, &cube_refs)?.into_value())
+    });
     assert_eq!(soup.num_meshes, 2);
     assert!(!soup.polygons.is_empty());
 
     trace_workload("immediate_certified_convex_polygon", || {
         let result = boolean_operation_with_certified_convex_inputs(
+            &CONTEXT,
             &cube_refs,
             BooleanOp::Union,
             &[true, true],
             EmberConfig::default(),
-        )?;
+        )?
+        .into_value();
         let owned = extract_output(&result)?;
         let borrowed = hypermesh::output::extract_output_polygons(&result.output().polygons)?;
         assert_eq!(owned.len(), borrowed.len());
@@ -208,40 +222,51 @@ fn main() {
     });
     trace_workload("immediate_certified_convex_boolean_mesh", || {
         let boolean_mesh = boolean_mesh_with_certified_convex_inputs(
+            &CONTEXT,
             &cube_refs,
             BooleanOp::Union,
             &[true, true],
             EmberConfig::default(),
-        )?;
+        )?
+        .into_value();
         Ok(boolean_mesh.triangles.len())
     });
 
     let p = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));
-    let host = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
-    let cutter = convex_triangle(&p(2, -1, -1), &p(2, 5, -1), &p(2, 2, 1), 1, 0);
-    trace_workload("polygon_clip_intersection_bvh_bsp", || {
-        let clipped = clip_polygon(&host, &Plane::axis_aligned(0, Real::from(1)))?;
-        assert!(clipped.left.is_valid() || clipped.right.is_valid());
+    let host = convex_triangle(&CONTEXT, &p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0)
+        .expect("host triangle must be valid")
+        .into_value();
+    let cutter = convex_triangle(&CONTEXT, &p(2, -1, -1), &p(2, 5, -1), &p(2, 2, 1), 1, 0)
+        .expect("cutter triangle must be valid")
+        .into_value();
+    trace_workload("polygon_clip_intersection_bvh", || {
+        let clipped =
+            clip_polygon(&CONTEXT, &host, &Plane::axis_aligned(0, Real::from(1)))?.into_value();
+        assert!(
+            clipped.left.is_valid(&CONTEXT)?.into_value()
+                || clipped.right.is_valid(&CONTEXT)?.into_value()
+        );
 
-        let intersection = intersect_polygons(&host, &cutter, 1)?;
-        let mut bsp = LocalBsp::new(&host);
-        if let Some(segment) = &intersection.segment {
-            bsp.add_segment(segment)?;
-        }
+        let intersection = intersect_polygons(&CONTEXT, &host, &cutter, 1)?.into_value();
 
-        let left = ExactBvh::build(std::slice::from_ref(&host))?;
-        let right = ExactBvh::build(std::slice::from_ref(&cutter))?;
+        let left = ExactBvh::build(&CONTEXT, std::slice::from_ref(&host))?.into_value();
+        let right = ExactBvh::build(&CONTEXT, std::slice::from_ref(&cutter))?.into_value();
         let mut pair_count = 0;
-        left.intersect_pairs(&right, |_, _| pair_count += 1)?;
+        left.intersect_pairs(&CONTEXT, &right, |_, _| pair_count += 1)?;
         assert_eq!(pair_count, 1);
-        Ok((bsp.node_count(), pair_count))
+        Ok((intersection.segment.is_some(), pair_count))
     });
 
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&CONTEXT, &p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0)
+        .expect("wall triangle must be valid")
+        .into_value();
     wall.delta_w = vec![1];
     trace_workload("segment_and_winding", || {
-        let axis = trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall.clone()])?;
-        let winding = trace_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall.clone()])?;
+        let axis =
+            trace_axis_segment(&CONTEXT, &p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall.clone()])?
+                .into_value();
+        let winding =
+            trace_segment(&CONTEXT, &p(0, 0, 0), &p(2, 0, 0), &[0], &[wall.clone()])?.into_value();
         assert!(axis.valid);
         assert_eq!(axis.winding, winding);
 
@@ -259,8 +284,11 @@ fn main() {
         [9, 10, 11, 10, 23],
     ];
     trace_workload("convex_hull_public_variants", || {
-        let grouped = convex_hull_with_coplanar_groups(&retained_points, &[])?;
-        let retained = convex_hull_with_retained_facts(&retained_points, &[], &coordinate_ids)?;
+        let grouped =
+            convex_hull_with_coplanar_groups(&CONTEXT, &retained_points, &[])?.into_value();
+        let retained =
+            convex_hull_with_retained_facts(&CONTEXT, &retained_points, &[], &coordinate_ids)?
+                .into_value();
         Ok((grouped.triangles.len(), retained.triangles.len()))
     });
 }

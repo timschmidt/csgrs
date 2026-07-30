@@ -6,9 +6,11 @@
 use std::cmp::Ordering;
 
 use crate::Point3;
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Classification, Plane, axis_ref, classify_point, compare_real};
+use crate::geometry::{Classification, Plane, axis_ref};
 use crate::polygon::{ApproxBounds, ConvexPolygon};
+use crate::predicate::{classify_point_decision, compare_real_decision};
 
 const LEAF_SIZE: usize = 8;
 
@@ -35,7 +37,7 @@ struct BoundsBvh {
 }
 
 impl BoundsBvh {
-    fn build(bounds: &[ApproxBounds]) -> HypermeshResult<Self> {
+    fn build(decisions: &DecisionContext, bounds: &[ApproxBounds]) -> HypermeshResult<Self> {
         if bounds.is_empty() {
             return Ok(Self::default());
         }
@@ -47,19 +49,20 @@ impl BoundsBvh {
             order: (0..bounds.len()).collect(),
             nodes: Vec::with_capacity(bvh_node_capacity(bounds.len())),
         };
-        tree.build_node(bounds, &approximate_centers, 0, bounds.len())?;
+        tree.build_node(decisions, bounds, &approximate_centers, 0, bounds.len())?;
         Ok(tree)
     }
 
-    fn build_points(points: &[Point3]) -> HypermeshResult<Self> {
+    fn build_points(decisions: &DecisionContext, points: &[Point3]) -> HypermeshResult<Self> {
         let approximate_points = points
             .iter()
             .map(|point| std::array::from_fn(|axis| approximate_coordinate(point, axis)))
             .collect::<Vec<_>>();
-        Self::build_points_with_approximate(points, &approximate_points)
+        Self::build_points_with_approximate(decisions, points, &approximate_points)
     }
 
     fn build_points_with_approximate(
+        decisions: &DecisionContext,
         points: &[Point3],
         approximate_points: &[[f64; 3]],
     ) -> HypermeshResult<Self> {
@@ -76,24 +79,26 @@ impl BoundsBvh {
             order: (0..points.len()).collect(),
             nodes: Vec::with_capacity(bvh_node_capacity(points.len())),
         };
-        tree.build_point_node(points, approximate_points, 0, points.len())?;
+        tree.build_point_node(decisions, points, approximate_points, 0, points.len())?;
         Ok(tree)
     }
 
     fn build_node(
         &mut self,
+        decisions: &DecisionContext,
         item_bounds: &[ApproxBounds],
         approximate_centers: &[[f64; 3]],
         start: usize,
         end: usize,
     ) -> HypermeshResult<usize> {
         let bounds = union_bounds(
+            decisions,
             self.order[start..end]
                 .iter()
                 .map(|&index| &item_bounds[index]),
         )?;
         let children_axis = (end - start > LEAF_SIZE)
-            .then(|| longest_axis(&bounds))
+            .then(|| longest_axis(decisions, &bounds))
             .transpose()?;
         let node_index = self.nodes.len();
         self.nodes.push(BvhNode {
@@ -111,22 +116,23 @@ impl BoundsBvh {
                 .total_cmp(&approximate_centers[right][axis])
                 .then_with(|| left.cmp(&right))
         });
-        let left = self.build_node(item_bounds, approximate_centers, start, middle)?;
-        let right = self.build_node(item_bounds, approximate_centers, middle, end)?;
+        let left = self.build_node(decisions, item_bounds, approximate_centers, start, middle)?;
+        let right = self.build_node(decisions, item_bounds, approximate_centers, middle, end)?;
         self.nodes[node_index].children = Some([left, right]);
         Ok(node_index)
     }
 
     fn build_point_node(
         &mut self,
+        decisions: &DecisionContext,
         points: &[Point3],
         approximate_points: &[[f64; 3]],
         start: usize,
         end: usize,
     ) -> HypermeshResult<usize> {
-        let bounds = bounds_for_ordered_points(points, &self.order[start..end])?;
+        let bounds = bounds_for_ordered_points(decisions, points, &self.order[start..end])?;
         let children_axis = (end - start > LEAF_SIZE)
-            .then(|| longest_axis(&bounds))
+            .then(|| longest_axis(decisions, &bounds))
             .transpose()?;
         let node_index = self.nodes.len();
         self.nodes.push(BvhNode {
@@ -144,14 +150,15 @@ impl BoundsBvh {
                 .total_cmp(&approximate_points[right][axis])
                 .then_with(|| left.cmp(&right))
         });
-        let left = self.build_point_node(points, approximate_points, start, middle)?;
-        let right = self.build_point_node(points, approximate_points, middle, end)?;
+        let left = self.build_point_node(decisions, points, approximate_points, start, middle)?;
+        let right = self.build_point_node(decisions, points, approximate_points, middle, end)?;
         self.nodes[node_index].children = Some([left, right]);
         Ok(node_index)
     }
 
     fn query<F>(
         &self,
+        decisions: &DecisionContext,
         query_bounds: &ApproxBounds,
         item_bounds: &[ApproxBounds],
         mut callback: F,
@@ -165,7 +172,7 @@ impl BoundsBvh {
         let mut stack = vec![0];
         while let Some(node_index) = stack.pop() {
             let node = &self.nodes[node_index];
-            if !bounds_overlap(&node.bounds, query_bounds)? {
+            if !bounds_overlap_decision(decisions, &node.bounds, query_bounds)? {
                 continue;
             }
             if let Some([left, right]) = node.children {
@@ -173,7 +180,7 @@ impl BoundsBvh {
                 stack.push(left);
             } else {
                 for &item_index in &self.order[node.range.clone()] {
-                    if bounds_overlap(&item_bounds[item_index], query_bounds)? {
+                    if bounds_overlap_decision(decisions, &item_bounds[item_index], query_bounds)? {
                         callback(item_index);
                     }
                 }
@@ -201,18 +208,30 @@ pub struct ExactBvh {
 
 impl ExactBvh {
     /// Builds an exact broad-phase from borrowed polygons.
-    pub fn build(polygons: &[ConvexPolygon]) -> HypermeshResult<Self> {
+    pub fn build(
+        context: &MeshContext,
+        polygons: &[ConvexPolygon],
+    ) -> HypermeshResult<MeshOutcome<Self>> {
+        let decisions = DecisionContext::new(context);
+        let tree = Self::build_decision(&decisions, polygons)?;
+        Ok(decisions.finish(tree))
+    }
+
+    pub(crate) fn build_decision(
+        decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+    ) -> HypermeshResult<Self> {
         let mut primitives = Vec::with_capacity(polygons.len());
         let mut bounds = Vec::with_capacity(polygons.len());
         for (polygon_index, polygon) in polygons.iter().enumerate() {
-            let polygon_bounds = polygon_bounds(polygon)?;
+            let polygon_bounds = polygon_bounds(decisions, polygon)?;
             bounds.push(polygon_bounds.clone());
             primitives.push(PolygonBounds {
                 polygon_index,
                 bounds: polygon_bounds,
             });
         }
-        let tree = BoundsBvh::build(&bounds)?;
+        let tree = BoundsBvh::build(decisions, &bounds)?;
         Ok(Self {
             primitives,
             bounds,
@@ -241,13 +260,34 @@ impl ExactBvh {
     }
 
     /// Calls `callback` for every primitive whose bounds overlap `bounds`.
-    pub fn query_bounds<F>(&self, bounds: &ApproxBounds, mut callback: F) -> HypermeshResult<()>
+    pub fn query_bounds<F>(
+        &self,
+        context: &MeshContext,
+        bounds: &ApproxBounds,
+        callback: F,
+    ) -> HypermeshResult<MeshOutcome<()>>
+    where
+        F: FnMut(usize),
+    {
+        let decisions = DecisionContext::new(context);
+        self.query_bounds_decision(&decisions, bounds, callback)?;
+        Ok(decisions.finish(()))
+    }
+
+    pub(crate) fn query_bounds_decision<F>(
+        &self,
+        decisions: &DecisionContext,
+        bounds: &ApproxBounds,
+        mut callback: F,
+    ) -> HypermeshResult<()>
     where
         F: FnMut(usize),
     {
         let mut matches = Vec::new();
         self.tree
-            .query(bounds, &self.bounds, |item_index| matches.push(item_index))?;
+            .query(decisions, bounds, &self.bounds, |item_index| {
+                matches.push(item_index);
+            })?;
         matches.sort_unstable_by_key(|&item_index| self.primitives[item_index].polygon_index);
         for item_index in matches {
             callback(self.primitives[item_index].polygon_index);
@@ -257,12 +297,31 @@ impl ExactBvh {
 
     /// Calls `callback` for every overlapping primitive pair between two
     /// broad-phase structures.
-    pub fn intersect_pairs<F>(&self, other: &Self, mut callback: F) -> HypermeshResult<()>
+    pub fn intersect_pairs<F>(
+        &self,
+        context: &MeshContext,
+        other: &Self,
+        callback: F,
+    ) -> HypermeshResult<MeshOutcome<()>>
+    where
+        F: FnMut(usize, usize),
+    {
+        let decisions = DecisionContext::new(context);
+        self.intersect_pairs_decision(&decisions, other, callback)?;
+        Ok(decisions.finish(()))
+    }
+
+    pub(crate) fn intersect_pairs_decision<F>(
+        &self,
+        decisions: &DecisionContext,
+        other: &Self,
+        mut callback: F,
+    ) -> HypermeshResult<()>
     where
         F: FnMut(usize, usize),
     {
         for primitive in &self.primitives {
-            other.query_bounds(&primitive.bounds, |right| {
+            other.query_bounds_decision(decisions, &primitive.bounds, |right| {
                 callback(primitive.polygon_index, right);
             })?;
         }
@@ -279,8 +338,17 @@ pub struct ExactPointBvh {
 
 impl ExactPointBvh {
     /// Builds a hierarchy over borrowed exact points.
-    pub fn build(points: &[Point3]) -> HypermeshResult<Self> {
-        let tree = BoundsBvh::build_points(points)?;
+    pub fn build(context: &MeshContext, points: &[Point3]) -> HypermeshResult<MeshOutcome<Self>> {
+        let decisions = DecisionContext::new(context);
+        let tree = Self::build_decision(&decisions, points)?;
+        Ok(decisions.finish(tree))
+    }
+
+    pub(crate) fn build_decision(
+        decisions: &DecisionContext,
+        points: &[Point3],
+    ) -> HypermeshResult<Self> {
+        let tree = BoundsBvh::build_points(decisions, points)?;
         Ok(Self {
             point_count: points.len(),
             tree,
@@ -288,10 +356,11 @@ impl ExactPointBvh {
     }
 
     pub(crate) fn build_with_approximate(
+        decisions: &DecisionContext,
         points: &[Point3],
         approximate_points: &[[f64; 3]],
     ) -> HypermeshResult<Self> {
-        let tree = BoundsBvh::build_points_with_approximate(points, approximate_points)?;
+        let tree = BoundsBvh::build_points_with_approximate(decisions, points, approximate_points)?;
         Ok(Self {
             point_count: points.len(),
             tree,
@@ -320,6 +389,22 @@ impl ExactPointBvh {
     /// exact AABB extrema for the plane expression.
     pub fn query_positive_halfspace<F>(
         &self,
+        context: &MeshContext,
+        points: &[Point3],
+        plane: &Plane,
+        callback: F,
+    ) -> HypermeshResult<MeshOutcome<()>>
+    where
+        F: FnMut(usize),
+    {
+        let decisions = DecisionContext::new(context);
+        self.query_positive_halfspace_decision(&decisions, points, plane, callback)?;
+        Ok(decisions.finish(()))
+    }
+
+    pub(crate) fn query_positive_halfspace_decision<F>(
+        &self,
+        decisions: &DecisionContext,
         points: &[Point3],
         plane: &Plane,
         callback: F,
@@ -328,9 +413,10 @@ impl ExactPointBvh {
         F: FnMut(usize),
     {
         self.query_positive_with(
+            decisions,
             points,
             plane,
-            |point| classify_point(point, plane),
+            |point| classify_point_decision(decisions, point, plane),
             callback,
         )
     }
@@ -344,6 +430,24 @@ impl ExactPointBvh {
     /// `orient3` instead.
     pub fn query_positive_oriented_plane<F>(
         &self,
+        context: &MeshContext,
+        points: &[Point3],
+        a: &Point3,
+        b: &Point3,
+        c: &Point3,
+        callback: F,
+    ) -> HypermeshResult<MeshOutcome<()>>
+    where
+        F: FnMut(usize),
+    {
+        let decisions = DecisionContext::new(context);
+        self.query_positive_oriented_plane_decision(&decisions, points, a, b, c, callback)?;
+        Ok(decisions.finish(()))
+    }
+
+    pub(crate) fn query_positive_oriented_plane_decision<F>(
+        &self,
+        decisions: &DecisionContext,
         points: &[Point3],
         a: &Point3,
         b: &Point3,
@@ -357,11 +461,14 @@ impl ExactPointBvh {
         // cross-product expression returned by Plane::from_points.
         let plane = Plane::from_points(a, b, c).inverted();
         self.query_positive_with(
+            decisions,
             points,
             &plane,
-            |point| match classify_point(point, &plane) {
+            |point| match classify_point_decision(decisions, point, &plane) {
                 Ok(classification) => Ok(classification),
-                Err(HypermeshError::UnknownClassification) => orient3(a, b, c, point),
+                Err(HypermeshError::PredicateUndecided { .. }) => {
+                    orient3(decisions, a, b, c, point)
+                }
                 Err(error) => Err(error),
             },
             callback,
@@ -376,6 +483,24 @@ impl ExactPointBvh {
     /// semantics.
     pub fn query_negative_oriented_plane<F>(
         &self,
+        context: &MeshContext,
+        points: &[Point3],
+        a: &Point3,
+        b: &Point3,
+        c: &Point3,
+        callback: F,
+    ) -> HypermeshResult<MeshOutcome<()>>
+    where
+        F: FnMut(usize),
+    {
+        let decisions = DecisionContext::new(context);
+        self.query_negative_oriented_plane_decision(&decisions, points, a, b, c, callback)?;
+        Ok(decisions.finish(()))
+    }
+
+    pub(crate) fn query_negative_oriented_plane_decision<F>(
+        &self,
+        decisions: &DecisionContext,
         points: &[Point3],
         a: &Point3,
         b: &Point3,
@@ -387,15 +512,18 @@ impl ExactPointBvh {
     {
         let plane = Plane::from_points(a, b, c);
         self.query_positive_with(
+            decisions,
             points,
             &plane,
-            |point| match classify_point(point, &plane) {
+            |point| match classify_point_decision(decisions, point, &plane) {
                 Ok(classification) => Ok(classification),
-                Err(HypermeshError::UnknownClassification) => Ok(match orient3(a, b, c, point)? {
-                    Classification::Negative => Classification::Positive,
-                    Classification::On => Classification::On,
-                    Classification::Positive => Classification::Negative,
-                }),
+                Err(HypermeshError::PredicateUndecided { .. }) => {
+                    Ok(match orient3(decisions, a, b, c, point)? {
+                        Classification::Negative => Classification::Positive,
+                        Classification::On => Classification::On,
+                        Classification::Positive => Classification::Negative,
+                    })
+                }
                 Err(error) => Err(error),
             },
             callback,
@@ -404,6 +532,7 @@ impl ExactPointBvh {
 
     fn query_positive_with<F, C>(
         &self,
+        decisions: &DecisionContext,
         points: &[Point3],
         plane: &Plane,
         mut classify: C,
@@ -429,11 +558,14 @@ impl ExactPointBvh {
             stack_len -= 1;
             let node_index = stack[stack_len];
             let node = &self.tree.nodes[node_index];
-            let bounds_classification = match classify_bounds_against_plane(&node.bounds, plane) {
-                Ok(classification) => classification,
-                Err(HypermeshError::UnknownClassification) => BoundsPlaneClassification::Crossing,
-                Err(error) => return Err(error),
-            };
+            let bounds_classification =
+                match classify_bounds_against_plane(decisions, &node.bounds, plane) {
+                    Ok(classification) => classification,
+                    Err(HypermeshError::PredicateUndecided { .. }) => {
+                        BoundsPlaneClassification::Crossing
+                    }
+                    Err(error) => return Err(error),
+                };
             match bounds_classification {
                 BoundsPlaneClassification::NonPositive => continue,
                 BoundsPlaneClassification::Positive => {
@@ -460,13 +592,23 @@ impl ExactPointBvh {
     }
 }
 
-fn orient3(a: &Point3, b: &Point3, c: &Point3, point: &Point3) -> HypermeshResult<Classification> {
-    match hyperlimit::orient3(a, b, c, point).value() {
-        Some(hyperlimit::Sign::Negative) => Ok(Classification::Negative),
-        Some(hyperlimit::Sign::Zero) => Ok(Classification::On),
-        Some(hyperlimit::Sign::Positive) => Ok(Classification::Positive),
-        None => Err(HypermeshError::UnknownClassification),
-    }
+fn orient3(
+    decisions: &DecisionContext,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    point: &Point3,
+) -> HypermeshResult<Classification> {
+    decisions
+        .decide(
+            hyperlimit::orient3(a, b, c, point, decisions.policy()),
+            "oriented-plane point classification",
+        )
+        .map(|sign| match sign {
+            hyperlimit::Sign::Negative => Classification::Negative,
+            hyperlimit::Sign::Zero => Classification::On,
+            hyperlimit::Sign::Positive => Classification::Positive,
+        })
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -477,13 +619,18 @@ enum BoundsPlaneClassification {
 }
 
 fn classify_bounds_against_plane(
+    decisions: &DecisionContext,
     bounds: &ApproxBounds,
     plane: &Plane,
 ) -> HypermeshResult<BoundsPlaneClassification> {
     let mut minimum = bounds.min.clone();
     let mut maximum = bounds.max.clone();
     for axis in 0..3 {
-        match compare_real(axis_ref(&plane.normal, axis), &crate::Real::zero())? {
+        match compare_real_decision(
+            decisions,
+            axis_ref(&plane.normal, axis),
+            &crate::Real::zero(),
+        )? {
             Ordering::Less => {
                 *axis_mut(&mut minimum, axis) = axis_ref(&bounds.max, axis).clone();
                 *axis_mut(&mut maximum, axis) = axis_ref(&bounds.min, axis).clone();
@@ -491,9 +638,9 @@ fn classify_bounds_against_plane(
             Ordering::Equal | Ordering::Greater => {}
         }
     }
-    if classify_point(&maximum, plane)? != Classification::Positive {
+    if classify_point_decision(decisions, &maximum, plane)? != Classification::Positive {
         Ok(BoundsPlaneClassification::NonPositive)
-    } else if classify_point(&minimum, plane)? == Classification::Positive {
+    } else if classify_point_decision(decisions, &minimum, plane)? == Classification::Positive {
         Ok(BoundsPlaneClassification::Positive)
     } else {
         Ok(BoundsPlaneClassification::Crossing)
@@ -501,23 +648,57 @@ fn classify_bounds_against_plane(
 }
 
 /// Returns true when two exact AABBs overlap.
-pub fn bounds_overlap(left: &ApproxBounds, right: &ApproxBounds) -> HypermeshResult<bool> {
-    hyperlimit::ordered_aabb3s_intersect(&left.min, &left.max, &right.min, &right.max)
-        .value()
-        .ok_or(HypermeshError::UnknownClassification)
+pub fn bounds_overlap(
+    context: &MeshContext,
+    left: &ApproxBounds,
+    right: &ApproxBounds,
+) -> HypermeshResult<MeshOutcome<bool>> {
+    let decisions = DecisionContext::new(context);
+    let overlaps = bounds_overlap_decision(&decisions, left, right)?;
+    Ok(decisions.finish(overlaps))
+}
+
+pub(crate) fn bounds_overlap_decision(
+    decisions: &DecisionContext,
+    left: &ApproxBounds,
+    right: &ApproxBounds,
+) -> HypermeshResult<bool> {
+    decisions.decide(
+        hyperlimit::ordered_aabb3s_intersect(
+            &left.min,
+            &left.max,
+            &right.min,
+            &right.max,
+            decisions.policy(),
+        ),
+        "ordered AABB overlap",
+    )
 }
 
 fn union_bounds<'a>(
+    decisions: &DecisionContext,
     mut bounds: impl Iterator<Item = &'a ApproxBounds>,
 ) -> HypermeshResult<ApproxBounds> {
     let first = bounds.next().ok_or(HypermeshError::EmptyInput)?;
     let mut result = first.clone();
     for current in bounds {
         for axis in 0..3 {
-            if compare_real(axis_ref(&current.min, axis), axis_ref(&result.min, axis))?.is_lt() {
+            if compare_real_decision(
+                decisions,
+                axis_ref(&current.min, axis),
+                axis_ref(&result.min, axis),
+            )?
+            .is_lt()
+            {
                 *axis_mut(&mut result.min, axis) = axis_ref(&current.min, axis).clone();
             }
-            if compare_real(axis_ref(&current.max, axis), axis_ref(&result.max, axis))?.is_gt() {
+            if compare_real_decision(
+                decisions,
+                axis_ref(&current.max, axis),
+                axis_ref(&result.max, axis),
+            )?
+            .is_gt()
+            {
                 *axis_mut(&mut result.max, axis) = axis_ref(&current.max, axis).clone();
             }
         }
@@ -525,16 +706,32 @@ fn union_bounds<'a>(
     Ok(result)
 }
 
-fn bounds_for_ordered_points(points: &[Point3], order: &[usize]) -> HypermeshResult<ApproxBounds> {
+fn bounds_for_ordered_points(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    order: &[usize],
+) -> HypermeshResult<ApproxBounds> {
     let (&first, rest) = order.split_first().ok_or(HypermeshError::EmptyInput)?;
     let mut result = ApproxBounds::new(points[first].clone(), points[first].clone());
     for &point_index in rest {
         let point = &points[point_index];
         for axis in 0..3 {
-            if compare_real(axis_ref(point, axis), axis_ref(&result.min, axis))?.is_lt() {
+            if compare_real_decision(
+                decisions,
+                axis_ref(point, axis),
+                axis_ref(&result.min, axis),
+            )?
+            .is_lt()
+            {
                 *axis_mut(&mut result.min, axis) = axis_ref(point, axis).clone();
             }
-            if compare_real(axis_ref(point, axis), axis_ref(&result.max, axis))?.is_gt() {
+            if compare_real_decision(
+                decisions,
+                axis_ref(point, axis),
+                axis_ref(&result.max, axis),
+            )?
+            .is_gt()
+            {
                 *axis_mut(&mut result.max, axis) = axis_ref(point, axis).clone();
             }
         }
@@ -542,7 +739,7 @@ fn bounds_for_ordered_points(points: &[Point3], order: &[usize]) -> HypermeshRes
     Ok(result)
 }
 
-fn longest_axis(bounds: &ApproxBounds) -> HypermeshResult<usize> {
+fn longest_axis(decisions: &DecisionContext, bounds: &ApproxBounds) -> HypermeshResult<usize> {
     let extents = [
         &bounds.max.x - &bounds.min.x,
         &bounds.max.y - &bounds.min.y,
@@ -550,7 +747,7 @@ fn longest_axis(bounds: &ApproxBounds) -> HypermeshResult<usize> {
     ];
     let mut axis = 0;
     for candidate in 1..3 {
-        if compare_real(&extents[candidate], &extents[axis])?.is_gt() {
+        if compare_real_decision(decisions, &extents[candidate], &extents[axis])?.is_gt() {
             axis = candidate;
         }
     }
@@ -576,12 +773,15 @@ fn axis_mut(point: &mut Point3, axis: usize) -> &mut crate::Real {
     }
 }
 
-fn polygon_bounds(polygon: &ConvexPolygon) -> HypermeshResult<ApproxBounds> {
+fn polygon_bounds(
+    decisions: &DecisionContext,
+    polygon: &ConvexPolygon,
+) -> HypermeshResult<ApproxBounds> {
     if let Some(bounds) = &polygon.approx_bounds {
         return Ok(bounds.as_ref().clone());
     }
 
     let vertices = polygon.vertices()?;
     let refs = vertices.iter().collect::<Vec<_>>();
-    Ok(ApproxBounds::for_points(&refs))
+    ApproxBounds::for_points_decision(decisions, &refs)
 }

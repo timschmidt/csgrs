@@ -6,6 +6,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Classification;
 use crate::predicate::points_equal;
@@ -41,8 +42,13 @@ struct HullFace {
 /// returned mesh contains only hull vertices and outward-wound triangles.
 /// Inputs with fewer than four unique non-coplanar points return
 /// [`HypermeshError::DegeneratePointSet`].
-pub fn convex_hull(input: &[Point3]) -> HypermeshResult<TriangleMesh> {
-    convex_hull_impl(input, &[], None)
+pub fn convex_hull(
+    context: &MeshContext,
+    input: &[Point3],
+) -> HypermeshResult<MeshOutcome<TriangleMesh>> {
+    let decisions = DecisionContext::new(context);
+    let hull = convex_hull_impl(&decisions, input, &[], None)?;
+    Ok(decisions.finish(hull))
 }
 
 /// Computes an exact convex hull while retaining certified source coplanarity.
@@ -51,10 +57,13 @@ pub fn convex_hull(input: &[Point3]) -> HypermeshResult<TriangleMesh> {
 /// These facts are consulted only when the general `orient3` predicate is
 /// undecidable, preserving transformed polygon structure without sampling.
 pub fn convex_hull_with_coplanar_groups(
+    context: &MeshContext,
     input: &[Point3],
     coplanar_groups: &[Vec<usize>],
-) -> HypermeshResult<TriangleMesh> {
-    convex_hull_impl(input, coplanar_groups, None)
+) -> HypermeshResult<MeshOutcome<TriangleMesh>> {
+    let decisions = DecisionContext::new(context);
+    let hull = convex_hull_impl(&decisions, input, coplanar_groups, None)?;
+    Ok(decisions.finish(hull))
 }
 
 /// Computes an exact convex hull with retained construction identities.
@@ -63,30 +72,34 @@ pub fn convex_hull_with_coplanar_groups(
 /// identities certify coordinate equality. Equal surface and generator pairs
 /// certify points on one generator of the same conical or cylindrical surface.
 pub fn convex_hull_with_retained_facts(
+    context: &MeshContext,
     input: &[Point3],
     coplanar_groups: &[Vec<usize>],
     coordinate_ids: &[[u64; 5]],
-) -> HypermeshResult<TriangleMesh> {
+) -> HypermeshResult<MeshOutcome<TriangleMesh>> {
     if input.len() != coordinate_ids.len() {
         return Err(HypermeshError::PointCountMismatch {
             expected: input.len(),
             actual: coordinate_ids.len(),
         });
     }
-    convex_hull_impl(input, coplanar_groups, Some(coordinate_ids))
+    let decisions = DecisionContext::new(context);
+    let hull = convex_hull_impl(&decisions, input, coplanar_groups, Some(coordinate_ids))?;
+    Ok(decisions.finish(hull))
 }
 
 fn convex_hull_impl(
+    decisions: &DecisionContext,
     input: &[Point3],
     coplanar_groups: &[Vec<usize>],
     input_coordinate_ids: Option<&[[u64; 5]]>,
 ) -> HypermeshResult<TriangleMesh> {
     let (points, memberships, coordinate_ids) =
-        deduplicate_points(input, coplanar_groups, input_coordinate_ids)?;
+        deduplicate_points(decisions, input, coplanar_groups, input_coordinate_ids)?;
     let memberships = memberships.as_deref();
     let coordinate_ids = coordinate_ids.as_deref();
     let seed = hull_stage(
-        seed_tetrahedron(&points, memberships, coordinate_ids),
+        seed_tetrahedron(decisions, &points, memberships, coordinate_ids),
         "seed selection",
     )?;
     let interior = hull_stage(tetrahedron_centroid(&points, seed), "seed centroid")?;
@@ -100,11 +113,12 @@ fn convex_hull_impl(
             ]
         })
         .collect::<Vec<_>>();
-    let point_bvh = match ExactPointBvh::build_with_approximate(&points, &approximate_points) {
-        Ok(point_bvh) => Some(point_bvh),
-        Err(HypermeshError::UnknownClassification) => None,
-        Err(error) => return Err(error),
-    };
+    let point_bvh =
+        match ExactPointBvh::build_with_approximate(decisions, &points, &approximate_points) {
+            Ok(point_bvh) => Some(point_bvh),
+            Err(HypermeshError::PredicateUndecided { .. }) => None,
+            Err(error) => return Err(error),
+        };
     let mut processed = vec![false; points.len()];
     for index in seed {
         processed[index] = true;
@@ -118,6 +132,7 @@ fn convex_hull_impl(
     ] {
         faces.push(hull_stage(
             make_face(
+                decisions,
                 vertices,
                 &points,
                 memberships,
@@ -141,7 +156,14 @@ fn convex_hull_impl(
         for (index, face) in faces.iter().enumerate() {
             if face.active
                 && hull_stage(
-                    orientation_index(&points, memberships, coordinate_ids, face.vertices, eye),
+                    orientation_index(
+                        decisions,
+                        &points,
+                        memberships,
+                        coordinate_ids,
+                        face.vertices,
+                        eye,
+                    ),
                     "visible face classification",
                 )? == Classification::Negative
             {
@@ -168,6 +190,7 @@ fn convex_hull_impl(
         for (a, b) in horizon {
             faces.push(hull_stage(
                 make_face(
+                    decisions,
                     [a, b, eye],
                     &points,
                     memberships,
@@ -181,7 +204,7 @@ fn convex_hull_impl(
         }
     }
 
-    compact_hull(points, faces)
+    compact_hull(points, faces, decisions.certainty())
 }
 
 fn pop_farthest_outside(
@@ -222,12 +245,13 @@ fn approximate_face_distance(points: &[[f64; 3]], face: [usize; 3], point: usize
 
 fn hull_stage<T>(result: HypermeshResult<T>, stage: &'static str) -> HypermeshResult<T> {
     result.map_err(|error| match error {
-        HypermeshError::UnknownClassification => HypermeshError::ConvexHullPredicate { stage },
+        HypermeshError::PredicateUndecided { .. } => HypermeshError::ConvexHullPredicate { stage },
         other => other,
     })
 }
 
 fn deduplicate_points(
+    decisions: &DecisionContext,
     input: &[Point3],
     coplanar_groups: &[Vec<usize>],
     input_coordinate_ids: Option<&[[u64; 5]]>,
@@ -273,7 +297,7 @@ fn deduplicate_points(
         let mut duplicate = None;
         let mut candidate = buckets.get(&bucket).copied();
         while let Some(candidate_index) = candidate {
-            if points_equal(&points[candidate_index], point)? {
+            if points_equal(decisions, &points[candidate_index], point)? {
                 duplicate = Some(candidate_index);
                 break;
             }
@@ -282,7 +306,7 @@ fn deduplicate_points(
         if duplicate.is_none() {
             if exact_rational {
                 for &candidate_index in &general_points {
-                    if points_equal(&points[candidate_index], point)? {
+                    if points_equal(decisions, &points[candidate_index], point)? {
                         duplicate = Some(candidate_index);
                         break;
                     }
@@ -292,7 +316,7 @@ fn deduplicate_points(
                     if PositionBucket::new(candidate) == bucket {
                         continue;
                     }
-                    if points_equal(candidate, point)? {
+                    if points_equal(decisions, candidate, point)? {
                         duplicate = Some(candidate_index);
                         break;
                     }
@@ -328,6 +352,7 @@ fn deduplicate_points(
 }
 
 fn seed_tetrahedron(
+    decisions: &DecisionContext,
     points: &[Point3],
     memberships: Option<&[BTreeSet<usize>]>,
     coordinate_ids: Option<&[[u64; 5]]>,
@@ -340,25 +365,40 @@ fn seed_tetrahedron(
     let mut p2 = None;
     let mut p2_unknown = false;
     for (candidate, point) in points.iter().enumerate().skip(2) {
-        match hyperlimit::classify_triangle3_degeneracy(&points[p0], &points[p1], point) {
-            hyperlimit::TriangleDegeneracy::NonDegenerate => {
+        match decisions.probe(hyperlimit::classify_triangle3_degeneracy(
+            &points[p0],
+            &points[p1],
+            point,
+            decisions.policy(),
+        )) {
+            Some(hyperlimit::TriangleDegeneracy::NonDegenerate) => {
                 p2 = Some(candidate);
                 break;
             }
-            hyperlimit::TriangleDegeneracy::Degenerate => {}
-            hyperlimit::TriangleDegeneracy::Unknown => p2_unknown = true,
+            Some(hyperlimit::TriangleDegeneracy::Degenerate) => {}
+            None => p2_unknown = true,
         }
     }
     let p2 = match p2 {
         Some(p2) => p2,
-        None if p2_unknown => return Err(HypermeshError::UnknownClassification),
+        None if p2_unknown => {
+            return Err(HypermeshError::PredicateUndecided {
+                predicate: "convex hull seed triangle degeneracy",
+            });
+        }
         None => return Err(HypermeshError::DegeneratePointSet),
     };
     let mut p3 = None;
     for (candidate, _) in points.iter().enumerate().skip(2) {
         if candidate != p2
-            && orientation_index(points, memberships, coordinate_ids, [p0, p1, p2], candidate)?
-                != Classification::On
+            && orientation_index(
+                decisions,
+                points,
+                memberships,
+                coordinate_ids,
+                [p0, p1, p2],
+                candidate,
+            )? != Classification::On
         {
             p3 = Some(candidate);
             break;
@@ -384,6 +424,7 @@ fn tetrahedron_centroid(points: &[Point3], seed: [usize; 4]) -> HypermeshResult<
 }
 
 fn make_face(
+    decisions: &DecisionContext,
     mut vertices: [usize; 3],
     points: &[Point3],
     memberships: Option<&[BTreeSet<usize>]>,
@@ -393,7 +434,7 @@ fn make_face(
     processed: &[bool],
 ) -> HypermeshResult<HullFace> {
     if hull_stage(
-        orientation(points, vertices, interior),
+        orientation(decisions, points, vertices, interior),
         "face interior orientation",
     )? == Classification::Negative
     {
@@ -401,7 +442,8 @@ fn make_face(
     }
     let mut outside = Vec::new();
     if let Some(point_bvh) = point_bvh {
-        let query = point_bvh.query_negative_oriented_plane(
+        let query = point_bvh.query_negative_oriented_plane_decision(
+            decisions,
             points,
             &points[vertices[0]],
             &points[vertices[1]],
@@ -414,9 +456,10 @@ fn make_face(
         );
         match query {
             Ok(()) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(HypermeshError::PredicateUndecided { .. }) => {
                 outside.clear();
                 linear_outside_query(
+                    decisions,
                     points,
                     memberships,
                     coordinate_ids,
@@ -429,6 +472,7 @@ fn make_face(
         }
     } else {
         linear_outside_query(
+            decisions,
             points,
             memberships,
             coordinate_ids,
@@ -445,6 +489,7 @@ fn make_face(
 }
 
 fn linear_outside_query(
+    decisions: &DecisionContext,
     points: &[Point3],
     memberships: Option<&[BTreeSet<usize>]>,
     coordinate_ids: Option<&[[u64; 5]]>,
@@ -457,7 +502,14 @@ fn linear_outside_query(
             continue;
         }
         if hull_stage(
-            orientation_index(points, memberships, coordinate_ids, vertices, point_index),
+            orientation_index(
+                decisions,
+                points,
+                memberships,
+                coordinate_ids,
+                vertices,
+                point_index,
+            ),
             "face outside linear query",
         )? == Classification::Negative
         {
@@ -468,19 +520,31 @@ fn linear_outside_query(
 }
 
 fn orientation(
+    decisions: &DecisionContext,
     points: &[Point3],
     face: [usize; 3],
     point: &Point3,
 ) -> HypermeshResult<Classification> {
-    match hyperlimit::orient3(&points[face[0]], &points[face[1]], &points[face[2]], point).value() {
-        Some(hyperlimit::Sign::Negative) => Ok(Classification::Negative),
-        Some(hyperlimit::Sign::Zero) => Ok(Classification::On),
-        Some(hyperlimit::Sign::Positive) => Ok(Classification::Positive),
-        None => Err(HypermeshError::UnknownClassification),
-    }
+    decisions
+        .decide(
+            hyperlimit::orient3(
+                &points[face[0]],
+                &points[face[1]],
+                &points[face[2]],
+                point,
+                decisions.policy(),
+            ),
+            "convex hull orientation",
+        )
+        .map(|sign| match sign {
+            hyperlimit::Sign::Negative => Classification::Negative,
+            hyperlimit::Sign::Zero => Classification::On,
+            hyperlimit::Sign::Positive => Classification::Positive,
+        })
 }
 
 fn orientation_index(
+    decisions: &DecisionContext,
     points: &[Point3],
     memberships: Option<&[BTreeSet<usize>]>,
     coordinate_ids: Option<&[[u64; 5]]>,
@@ -501,7 +565,7 @@ fn orientation_index(
     {
         return Ok(Classification::On);
     }
-    orientation(points, face, &points[point_index])
+    orientation(decisions, points, face, &points[point_index])
 }
 
 fn opposite_edges_share_axis_coordinates(
@@ -548,7 +612,11 @@ fn share_coplanar_group(
     })
 }
 
-fn compact_hull(points: Vec<Point3>, faces: Vec<HullFace>) -> HypermeshResult<TriangleMesh> {
+fn compact_hull(
+    points: Vec<Point3>,
+    faces: Vec<HullFace>,
+    certainty: crate::MeshCertainty,
+) -> HypermeshResult<TriangleMesh> {
     let active_faces = faces
         .into_iter()
         .filter(|face| face.active)
@@ -577,13 +645,16 @@ fn compact_hull(points: Vec<Point3>, faces: Vec<HullFace>) -> HypermeshResult<Tr
             )
         })
         .collect();
-    Ok(TriangleMesh::new(positions, triangles).with_certified_convexity())
+    Ok(TriangleMesh::new(positions, triangles).with_convexity_certainty(certainty))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::geometry::{Plane, classify_point};
+    use crate::geometry::Plane;
+    use crate::test_support::{
+        approximate_classify_point, approximate_convex_hull, approximate_polygon_soup,
+    };
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
@@ -592,10 +663,10 @@ mod tests {
     #[test]
     fn tetrahedron_hull_is_closed_and_outward() {
         let input = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0), p(0, 0, 2)];
-        let hull = convex_hull(&input).unwrap();
+        let hull = approximate_convex_hull(&input).unwrap();
         assert_eq!(hull.positions.len(), 4);
         assert_eq!(hull.triangles.len(), 4);
-        crate::polygon_soup(&[hull.as_ref()]).unwrap();
+        approximate_polygon_soup(&[hull.as_ref()]).unwrap();
     }
 
     #[test]
@@ -603,11 +674,17 @@ mod tests {
         let points = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0), p(0, 0, 2)];
         let plane = Plane::from_points(&points[0], &points[1], &points[2]);
         assert_eq!(
-            orientation(&points, [0, 1, 2], &points[3]).unwrap(),
+            orientation(
+                &crate::test_support::approximate_decisions(),
+                &points,
+                [0, 1, 2],
+                &points[3]
+            )
+            .unwrap(),
             Classification::Negative
         );
         assert_eq!(
-            classify_point(&points[3], &plane).unwrap(),
+            approximate_classify_point(&points[3], &plane).unwrap(),
             Classification::Positive
         );
     }
@@ -623,10 +700,10 @@ mod tests {
             }
         }
         input.extend([p(0, 0, 0), p(1, 1, 1)]);
-        let hull = convex_hull(&input).unwrap();
+        let hull = approximate_convex_hull(&input).unwrap();
         assert_eq!(hull.positions.len(), 8);
         assert_eq!(hull.triangles.len(), 12);
-        crate::polygon_soup(&[hull.as_ref()]).unwrap();
+        approximate_polygon_soup(&[hull.as_ref()]).unwrap();
     }
 
     #[test]
@@ -642,7 +719,7 @@ mod tests {
             Point3::new(equivalent_left, Real::zero(), Real::zero()),
         ];
 
-        let hull = convex_hull(&input).unwrap();
+        let hull = approximate_convex_hull(&input).unwrap();
 
         assert_eq!(hull.positions.len(), 4);
         assert_eq!(hull.triangles.len(), 4);
@@ -654,7 +731,7 @@ mod tests {
             .flat_map(|x| (-4..=4).flat_map(move |y| (-4..=4).map(move |z| p(x, y, z))))
             .collect::<Vec<_>>();
 
-        let hull = convex_hull(&input).unwrap();
+        let hull = approximate_convex_hull(&input).unwrap();
         let boundary = Real::from(4);
         assert!(hull.positions.iter().all(|point| {
             point.x == boundary
@@ -664,7 +741,7 @@ mod tests {
                 || point.z == boundary
                 || point.z == -boundary.clone()
         }));
-        crate::polygon_soup(&[hull.as_ref()]).unwrap();
+        approximate_polygon_soup(&[hull.as_ref()]).unwrap();
     }
 
     #[test]
@@ -673,10 +750,10 @@ mod tests {
             .map(|t| p(t, t * t, t * t * t))
             .collect::<Vec<_>>();
 
-        let hull = convex_hull(&input).unwrap();
+        let hull = approximate_convex_hull(&input).unwrap();
         assert_eq!(hull.positions.len(), input.len());
         assert_eq!(hull.triangles.len(), input.len() * 2 - 4);
-        crate::polygon_soup(&[hull.as_ref()]).unwrap();
+        approximate_polygon_soup(&[hull.as_ref()]).unwrap();
     }
 
     #[test]
@@ -688,7 +765,7 @@ mod tests {
             Point3::new(base.clone(), Real::one(), Real::zero()),
             Point3::new(base.clone(), Real::zero(), Real::one()),
         ];
-        let hull = convex_hull(&input).unwrap();
+        let hull = approximate_convex_hull(&input).unwrap();
         assert!(
             hull.positions
                 .iter()
@@ -699,7 +776,10 @@ mod tests {
     #[test]
     fn coplanar_input_is_rejected() {
         let input = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0), p(1, 1, 0)];
-        assert_eq!(convex_hull(&input), Err(HypermeshError::DegeneratePointSet));
+        assert_eq!(
+            approximate_convex_hull(&input),
+            Err(HypermeshError::DegeneratePointSet)
+        );
     }
 
     #[test]
@@ -720,14 +800,14 @@ mod tests {
             )
         }));
 
-        let hull = convex_hull(&input).unwrap();
-        crate::polygon_soup(&[hull.as_ref()]).unwrap();
+        let hull = approximate_convex_hull(&input).unwrap();
+        approximate_polygon_soup(&[hull.as_ref()]).unwrap();
         for triangle in hull.triangles.iter() {
             let [a, b, c] = triangle.indices();
             let plane =
                 Plane::from_points(&hull.positions[a], &hull.positions[b], &hull.positions[c]);
             assert!(input.iter().all(|point| {
-                classify_point(point, &plane).unwrap() != Classification::Positive
+                approximate_classify_point(point, &plane).unwrap() != Classification::Positive
             }));
         }
     }
@@ -743,7 +823,15 @@ mod tests {
         assert!(opposite_edges_share_ruled_surface(&retained, [0, 1, 2], 3));
         let points = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0), p(0, 0, 1)];
         assert_eq!(
-            orientation_index(&points, None, Some(&retained), [0, 1, 2], 3).unwrap(),
+            orientation_index(
+                &crate::test_support::approximate_decisions(),
+                &points,
+                None,
+                Some(&retained),
+                [0, 1, 2],
+                3
+            )
+            .unwrap(),
             Classification::On
         );
     }

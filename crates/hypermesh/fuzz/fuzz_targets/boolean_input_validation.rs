@@ -3,17 +3,29 @@
 mod support;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, HypermeshError, TriangleMesh, Triangle, boolean_operation,
-    boolean_operation_with_certified_convex_inputs, boolean_mesh,
+    BooleanOp, EmberConfig, HypermeshError, Triangle, TriangleMesh, boolean_mesh,
+    boolean_operation, boolean_operation_with_certified_convex_inputs,
 };
 use libfuzzer_sys::fuzz_target;
-use support::{Bytes, box_mesh, operation};
+use support::{Bytes, CONTEXT, box_mesh, operation, value};
 
 fn rejection(mesh: &TriangleMesh, operation: BooleanOp, immediate: bool) -> HypermeshError {
     if immediate {
-        boolean_mesh(&[mesh.as_ref()], operation, EmberConfig::default()).unwrap_err()
+        value(boolean_mesh(
+            &CONTEXT,
+            &[mesh.as_ref()],
+            operation,
+            EmberConfig::default(),
+        ))
+        .unwrap_err()
     } else {
-        boolean_operation(&[mesh.as_ref()], operation, EmberConfig::default()).unwrap_err()
+        value(boolean_operation(
+            &CONTEXT,
+            &[mesh.as_ref()],
+            operation,
+            EmberConfig::default(),
+        ))
+        .unwrap_err()
     }
 }
 
@@ -27,9 +39,9 @@ fuzz_target!(|data: [u8; 4]| {
     match mutation {
         0 => {
             let error = if immediate {
-                boolean_mesh(&[], op, EmberConfig::default()).unwrap_err()
+                value(boolean_mesh(&CONTEXT, &[], op, EmberConfig::default())).unwrap_err()
             } else {
-                boolean_operation(&[], op, EmberConfig::default()).unwrap_err()
+                value(boolean_operation(&CONTEXT, &[], op, EmberConfig::default())).unwrap_err()
             };
             assert_eq!(error, HypermeshError::EmptyInput);
         }
@@ -99,12 +111,13 @@ fuzz_target!(|data: [u8; 4]| {
             ));
         }
         _ => {
-            let error = boolean_operation_with_certified_convex_inputs(
+            let error = value(boolean_operation_with_certified_convex_inputs(
+                &CONTEXT,
                 &[mesh.as_ref()],
                 op,
                 &[],
                 EmberConfig::default(),
-            )
+            ))
             .unwrap_err();
             assert_eq!(error, HypermeshError::UnknownClassification);
         }

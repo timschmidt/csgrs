@@ -51,7 +51,9 @@ The crate does not repair an unresolved result into apparent success.
 | `PolygonSoup` | Validated combined exact polygon input for one or more meshes. |
 | `Point3`, `Vector3`, `Real` | Re-exported exact coordinate carriers. |
 | `Plane`, `Aabb`, `Classification` | Exact plane, bounds, and sidedness primitives. |
-| `ConvexPolygon`, `ExactBvh`, `LocalBsp` | Principal arrangement and acceleration structures. |
+| `ConvexPolygon`, `ExactBvh` | Principal arrangement and acceleration structures. |
+| `MeshContext`, `PredicatePolicy` | Immutable per-operation choice of `STRICT` or `APPROXIMATE_512`. |
+| `MeshOutcome<T>`, `MeshCertainty` | Result and aggregate predicate certainty consumed to produce it. |
 | `BooleanOp`, `EmberConfig` | Operation selection and optional subdivision-depth budget. |
 | `BooleanResult` | Certified polygon arrangement with classifications and winding evidence. |
 | `OutputPolygon`, `BooleanMesh` | Exact polygon and indexed triangle output. |
@@ -73,9 +75,11 @@ Replace `src/main.rs` with:
 <!-- quickstart:start -->
 ```rust
 use hypermesh::{
-    BooleanOp, EmberConfig, Point3, Real, Triangle, TriangleMesh, boolean_operation,
-    triangulate_and_resolve_certified,
+    BooleanOp, EmberConfig, MeshContext, Point3, PredicatePolicy, Real, Triangle, TriangleMesh,
+    boolean_operation, triangulate_and_resolve_certified,
 };
+
+const CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn tetrahedron(offset: i64) -> TriangleMesh {
     let p = |x, y, z| Point3::new(Real::from(x + offset), Real::from(y), Real::from(z));
@@ -94,11 +98,13 @@ fn main() -> hypermesh::HypermeshResult<()> {
     let first = tetrahedron(0);
     let second = tetrahedron(3);
     let result = boolean_operation(
+        &CONTEXT,
         &[first.as_ref(), second.as_ref()],
         BooleanOp::Union,
         EmberConfig::default(),
-    )?;
-    let triangles = triangulate_and_resolve_certified(&result)?;
+    )?
+    .into_value();
+    let triangles = triangulate_and_resolve_certified(&CONTEXT, &result)?.into_value();
     println!("{} exact output triangles", triangles.triangles.len());
     Ok(())
 }
@@ -126,12 +132,21 @@ The following are rejected before or during the certified Boolean path:
 - degenerate source triangles;
 - open triangle soups or directed edge imbalance;
 - arbitrary non-PWN surface collections;
-- a predicate that strict bounded refinement cannot decide;
+- a predicate that the selected policy cannot decide;
 - a caller-selected subdivision limit reached before certification.
 
-Completeness is scoped to the finite closed-PWN model when every required exact
-predicate is decidable. Arbitrary computable `Real` coordinates can fall
-outside that boundary if their needed signs cannot be certified.
+Every predicate-bearing API requires a `MeshContext`; there is no implicit
+policy. `STRICT` consumes only certified decisions and returns
+`PredicateUndecided` when bounded certification is exhausted.
+`APPROXIMATE_512` uses the same certified cascade, then permits Hyperlimit's
+deterministic 512-bit terminal equality/sign interpretation. A successful
+`MeshOutcome` reports `Approximate512Consumed` if any required decision used
+that terminal. Coordinates and constructions remain `Real` under both
+policies.
+
+Completeness is scoped to the finite closed-PWN model under the selected
+policy. Arbitrary computable `Real` coordinates can fall outside the strict
+boundary if a needed sign cannot be certified.
 
 ## API guide
 
@@ -139,6 +154,7 @@ outside that boundary if their needed signs cannot be certified.
 
 | Task | API |
 | --- | --- |
+| Select predicate semantics | `MeshContext::new(PredicatePolicy::{STRICT, APPROXIMATE_512})` |
 | Construct triangles and meshes | `Triangle::new`, `TriangleMesh::new` |
 | Borrow without copying | `TriangleMesh::as_ref`, `TriangleMeshRef` |
 | Validate and combine | `polygon_soup` |
@@ -223,8 +239,9 @@ The Boolean path follows the EMBER architecture:
 6. Triangulate, resolve junctions, and certify indexed output closure.
 
 Bounds, BVHs, cached plane/edge profiles, retained source identities, and
-certified-convex facts reduce exact work. They are scheduling evidence; the
-final topology still comes from exact predicates and closure checks.
+certified-convex facts reduce predicate work. Lossy scheduling evidence never
+certifies topology. Every required decision uses the operation's immutable
+policy, and output closure remains a success condition.
 
 ## Features
 

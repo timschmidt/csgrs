@@ -5,6 +5,7 @@ use std::sync::Arc;
 use super::{
     halfspace_cell_seed_families_from_optional_report, optional_halfspace_feasibility_report,
 };
+use crate::context::DecisionContext;
 use crate::error::HypermeshResult;
 use crate::geometry::{Aabb, Plane};
 use crate::halfspace::limit_plane_families_match_as_sets;
@@ -43,6 +44,7 @@ pub(super) struct HalfspaceReportCacheEntry {
 }
 
 pub(super) fn cached_optional_halfspace_feasibility_report_with(
+    decisions: &DecisionContext,
     cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspaces: &[LimitPlane3],
     saw_unknown: &mut bool,
@@ -56,7 +58,7 @@ pub(super) fn cached_optional_halfspace_feasibility_report_with(
         return Ok(existing.report.clone());
     }
 
-    let (report, local_unknown) = optional_halfspace_feasibility_report(halfspaces)?;
+    let (report, local_unknown) = optional_halfspace_feasibility_report(decisions, halfspaces)?;
     cache.push(HalfspaceReportCacheEntry {
         halfspaces: halfspaces.to_vec(),
         saw_unknown: local_unknown,
@@ -67,6 +69,7 @@ pub(super) fn cached_optional_halfspace_feasibility_report_with(
 }
 
 pub(super) fn cached_halfspace_cell_seed_families_from_optional_report_with(
+    decisions: &DecisionContext,
     cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -83,6 +86,7 @@ pub(super) fn cached_halfspace_cell_seed_families_from_optional_report_with(
 
     let mut local_unknown = false;
     let result = halfspace_cell_seed_families_from_optional_report(
+        decisions,
         bounds,
         halfspaces,
         report,

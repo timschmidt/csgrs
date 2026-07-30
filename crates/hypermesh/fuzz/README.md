@@ -2,6 +2,8 @@
 
 The targets construct bounded exact-real geometry across rational and symbolic
 Hyperreal representations. Primitive floats are not used to choose topology.
+Every target supplies an explicit `APPROXIMATE_512` `MeshContext`, and every
+successful operation exposes whether its 512-bit terminal was consumed.
 
 The Boolean suite is split by purpose:
 
@@ -49,12 +51,13 @@ The Boolean suite is split by purpose:
   They accept explicit certification errors, including `OpenOutput` when the
   approximate campaign policy cannot certify a closed surface. Exact
   transformed cases exercise every triangulated API and require full closure.
-  Default Hypermesh builds do not enable the approximate campaign policy.
+  The optional feature changes campaign bounds only; it does not select the
+  predicate policy.
 
 Every successful Boolean result is replayed through the public polygon-closure,
 certified-triangulation, and exact triangle-quality checks. Errors from
-supported default-config exact inputs are treated as fuzz failures rather than
-discarded.
+supported inputs whose selected policy can decide every required predicate are
+treated as fuzz failures rather than discarded.
 
 Compile every target:
 

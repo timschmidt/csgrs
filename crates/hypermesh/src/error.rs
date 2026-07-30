@@ -28,6 +28,11 @@ pub enum HypermeshError {
     },
     /// A convex hull requires a three-dimensional point set.
     DegeneratePointSet,
+    /// A numeric predicate could not be decided under the selected policy.
+    PredicateUndecided {
+        /// Predicate or construction decision that failed.
+        predicate: &'static str,
+    },
     /// Convex hull construction could not certify a required predicate.
     ConvexHullPredicate {
         /// Hull stage that required the undecidable predicate.
@@ -121,6 +126,9 @@ impl fmt::Display for HypermeshError {
             ),
             Self::DegeneratePointSet => {
                 f.write_str("convex hull input does not span three dimensions")
+            }
+            Self::PredicateUndecided { predicate } => {
+                write!(f, "predicate could not be decided: {predicate}")
             }
             Self::ConvexHullPredicate { stage } => {
                 write!(f, "convex hull could not certify predicate during {stage}")

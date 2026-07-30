@@ -4,9 +4,15 @@ use super::probe_cache::{
 };
 use super::*;
 use crate::error::HypermeshError;
-use crate::geometry::{axis_ref, classify_point, classify_real, compare_real};
+use crate::geometry::{axis_ref, classify_real};
 use crate::halfspace::{aabb_core_halfspaces, axis_halfspace, support_side_halfspace};
-use crate::polygon::{ConvexPolygon, convex_quad, convex_triangle};
+use crate::polygon::ConvexPolygon;
+use crate::predicate::compare_real_decision;
+use crate::test_support::{
+    approximate_classify_leaf_polygon, approximate_classify_point, approximate_convex_quad,
+    approximate_convex_triangle, approximate_intersect_polygons, approximate_polygon_soup,
+    approximate_trace_axis_segment,
+};
 use hyperlimit::Plane3 as LimitPlane3;
 
 fn r(value: i32) -> Real {
@@ -42,7 +48,11 @@ fn quadrilateral_halfspace_cell_fixture() -> (Aabb, Vec<LimitPlane3>, Point3) {
                 r(1),
             ),
         );
-        if classify_real(&edge_plane.expression_at_point(&interior)).unwrap()
+        if classify_real(
+            &crate::test_support::approximate_decisions(),
+            &edge_plane.expression_at_point(&interior),
+        )
+        .unwrap()
             == Classification::Positive
         {
             edge_plane = edge_plane.inverted();
@@ -58,9 +68,16 @@ fn px(x: Real, y: i32, z: i32) -> Point3 {
 }
 
 #[test]
-fn trace_retry_only_suppresses_unknown_classification() {
+fn trace_retry_suppresses_both_indeterminate_predicate_errors() {
     assert_eq!(
         retryable_trace::<Vec<i32>>(Err(HypermeshError::UnknownClassification)).unwrap(),
+        None
+    );
+    assert_eq!(
+        retryable_trace::<Vec<i32>>(Err(HypermeshError::PredicateUndecided {
+            predicate: "test",
+        }))
+        .unwrap(),
         None
     );
     assert_eq!(
@@ -71,44 +88,45 @@ fn trace_retry_only_suppresses_unknown_classification() {
 
 #[test]
 fn trace_axis_segment_rejects_transition_dimension_mismatch() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
-        trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0, 0], &[wall]),
+        approximate_trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0, 0], &[wall]),
         Err(HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn trace_axis_segment_reports_unknown_for_unmatched_edge_crossing() {
-    let wall = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let wall = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
 
     assert_eq!(
-        trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]),
+        approximate_trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]),
         Err(HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn trace_axis_segment_preserves_duplicate_strict_crossing_multiplicity() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
     let traced =
-        trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall.clone(), wall]).unwrap();
+        approximate_trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall.clone(), wall])
+            .unwrap();
 
     assert_eq!(traced.winding, vec![-2]);
 }
 
 #[test]
 fn trace_axis_segment_pairs_each_coplanar_shared_edge_incidence() {
-    let mut lower = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), 0, 0);
-    let mut upper = convex_triangle(&p(1, -1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 1);
+    let mut lower = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), 0, 0);
+    let mut upper = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 1);
     lower.delta_w = vec![1];
     upper.delta_w = vec![1];
 
-    let traced = trace_axis_segment(
+    let traced = approximate_trace_axis_segment(
         &p(0, 0, 0),
         &p(2, 0, 0),
         0,
@@ -122,97 +140,123 @@ fn trace_axis_segment_pairs_each_coplanar_shared_edge_incidence() {
 
 #[test]
 fn trace_axis_segment_combines_strict_and_paired_edge_layers() {
-    let mut full = convex_quad(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 0);
-    let mut lower = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), 0, 1);
-    let mut upper = convex_triangle(&p(1, -1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 2);
+    let mut full =
+        approximate_convex_quad(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 0);
+    let mut lower = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), 0, 1);
+    let mut upper = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 2);
     full.delta_w = vec![1];
     lower.delta_w = vec![1];
     upper.delta_w = vec![1];
 
     let traced =
-        trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[full, lower, upper]).unwrap();
+        approximate_trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[full, lower, upper])
+            .unwrap();
 
     assert_eq!(traced.winding, vec![-2]);
 }
 
 #[test]
 fn trace_axis_segment_rejects_duplicated_vertex_crossing() {
-    let mut wall = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
-        trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall.clone(), wall],),
+        approximate_trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall.clone(), wall],),
         Err(HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn trace_axis_segment_reports_unknown_for_endpoint_surface_contact() {
-    let wall = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let wall = approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     assert_eq!(
-        trace_axis_segment(&p(1, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]),
+        approximate_trace_axis_segment(&p(1, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]),
         Err(HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn trace_axis_segment_reports_unknown_for_zero_length_surface_contact() {
-    let wall = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let wall = approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     assert_eq!(
-        trace_axis_segment(&p(1, 0, 0), &p(1, 0, 0), 0, &[0], &[wall]),
+        approximate_trace_axis_segment(&p(1, 0, 0), &p(1, 0, 0), 0, &[0], &[wall]),
         Err(HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn trace_axis_segment_reports_unknown_when_ray_lies_in_parallel_support_plane() {
-    let wall = convex_triangle(&p(0, -1, 0), &p(2, -1, 0), &p(1, 1, 0), 0, 0);
+    let wall = approximate_convex_triangle(&p(0, -1, 0), &p(2, -1, 0), &p(1, 1, 0), 0, 0);
 
     assert_eq!(
-        trace_axis_segment(&p(-1, 0, 0), &p(3, 0, 0), 0, &[0], &[wall]),
+        approximate_trace_axis_segment(&p(-1, 0, 0), &p(3, 0, 0), 0, &[0], &[wall]),
         Err(HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn trace_direct_segment_reports_unknown_for_unmatched_edge_crossing() {
-    let wall = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let wall = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
 
     assert_eq!(
-        trace_direct_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall]),
+        trace_direct_segment(
+            &crate::test_support::approximate_decisions(),
+            &p(0, 0, 0),
+            &p(2, 0, 0),
+            &[0],
+            &[wall]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn trace_direct_segment_preserves_duplicate_strict_crossing_multiplicity() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
-    let traced =
-        trace_direct_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall.clone(), wall]).unwrap();
+    let traced = trace_direct_segment(
+        &crate::test_support::approximate_decisions(),
+        &p(0, 0, 0),
+        &p(2, 0, 0),
+        &[0],
+        &[wall.clone(), wall],
+    )
+    .unwrap();
 
     assert_eq!(traced.winding, vec![-2]);
 }
 
 #[test]
 fn trace_direct_segment_reports_unknown_for_endpoint_surface_contact() {
-    let wall = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let wall = approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     assert_eq!(
-        trace_direct_segment(&p(1, 0, 0), &p(2, 0, 0), &[0], &[wall]),
+        trace_direct_segment(
+            &crate::test_support::approximate_decisions(),
+            &p(1, 0, 0),
+            &p(2, 0, 0),
+            &[0],
+            &[wall]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn trace_direct_segment_reports_unknown_for_zero_length_surface_contact() {
-    let wall = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let wall = approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     assert_eq!(
-        trace_direct_segment(&p(1, 0, 0), &p(1, 0, 0), &[0], &[wall]),
+        trace_direct_segment(
+            &crate::test_support::approximate_decisions(),
+            &p(1, 0, 0),
+            &p(1, 0, 0),
+            &[0],
+            &[wall]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 }
@@ -228,11 +272,17 @@ fn centroid_is_fallible_and_reports_empty_input() {
 
 #[test]
 fn endpoint_box_detours_are_cut_by_surface_crossings() {
-    let slanted = convex_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
+    let slanted = approximate_convex_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
 
-    let cursor =
-        InteriorBoxDetourTargetCursor::new(&p(0, 0, 0), &p(4, 4, 4), &[slanted], &[], None)
-            .unwrap();
+    let cursor = InteriorBoxDetourTargetCursor::new(
+        &crate::test_support::approximate_decisions(),
+        &p(0, 0, 0),
+        &p(4, 4, 4),
+        &[slanted],
+        &[],
+        None,
+    )
+    .unwrap();
 
     assert!(
         cursor
@@ -254,7 +304,12 @@ fn strict_aabb_arrangement_cell_uses_strict_side_after_boundary_touch() {
     let planes = [Plane::axis_aligned(0, r(1))];
 
     assert_eq!(
-        strict_aabb_arrangement_cell(&bounds, &planes).unwrap(),
+        strict_aabb_arrangement_cell(
+            &crate::test_support::approximate_decisions(),
+            &bounds,
+            &planes
+        )
+        .unwrap(),
         Some(vec![Classification::Positive])
     );
 }
@@ -265,10 +320,23 @@ fn endpoint_box_cursor_skips_boxes_confined_to_endpoint_arrangement_cell() {
     let end = p(2, 1, 1);
     let planes = [Plane::axis_aligned(0, r(1))];
 
-    let mut cursor = InteriorBoxDetourTargetCursor::new(&start, &end, &[], &planes, None).unwrap();
+    let mut cursor = InteriorBoxDetourTargetCursor::new(
+        &crate::test_support::approximate_decisions(),
+        &start,
+        &end,
+        &[],
+        &planes,
+        None,
+    )
+    .unwrap();
 
     assert!(cursor.bounds.is_empty());
-    assert!(cursor.next_batch().unwrap().is_none());
+    assert!(
+        cursor
+            .next_batch(&crate::test_support::approximate_decisions(),)
+            .unwrap()
+            .is_none()
+    );
 }
 
 #[test]
@@ -277,7 +345,15 @@ fn endpoint_box_cursor_keeps_boxes_crossing_arrangement_plane() {
     let end = p(1, 1, 1);
     let planes = [Plane::axis_aligned(0, r(0))];
 
-    let cursor = InteriorBoxDetourTargetCursor::new(&start, &end, &[], &planes, None).unwrap();
+    let cursor = InteriorBoxDetourTargetCursor::new(
+        &crate::test_support::approximate_decisions(),
+        &start,
+        &end,
+        &[],
+        &planes,
+        None,
+    )
+    .unwrap();
 
     assert_eq!(cursor.bounds.len(), 1);
 }
@@ -286,21 +362,27 @@ fn endpoint_box_cursor_keeps_boxes_crossing_arrangement_plane() {
 fn bounded_cursor_keeps_unsplit_domain_crossing_surface_plane() {
     let start = p(0, 0, 0);
     let end = p(2, 1, 0);
-    let wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     let planes = detour_arrangement_planes(std::slice::from_ref(&wall));
     let trace_bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
-    let cursor =
-        InteriorBoxDetourTargetCursor::new(&start, &end, &[wall], &planes, Some(&trace_bounds))
-            .unwrap();
+    let cursor = InteriorBoxDetourTargetCursor::new(
+        &crate::test_support::approximate_decisions(),
+        &start,
+        &end,
+        &[wall],
+        &planes,
+        Some(&trace_bounds),
+    )
+    .unwrap();
 
     assert!(cursor.bounds.contains(&trace_bounds));
 }
 
 #[test]
 fn detour_arrangement_uses_unique_polygon_support_planes() {
-    let first = convex_triangle(&p(0, 0, 0), &p(0, 2, 0), &p(0, 0, 2), 0, 0);
-    let second = convex_triangle(&p(0, 1, 1), &p(0, 3, 1), &p(0, 1, 3), 0, 1);
+    let first = approximate_convex_triangle(&p(0, 0, 0), &p(0, 2, 0), &p(0, 0, 2), 0, 0);
+    let second = approximate_convex_triangle(&p(0, 1, 1), &p(0, 3, 1), &p(0, 1, 3), 0, 1);
 
     let planes = detour_arrangement_planes(&[first.clone(), second]);
 
@@ -311,22 +393,54 @@ fn detour_arrangement_uses_unique_polygon_support_planes() {
 fn open_arrangement_cell_certifies_unchanged_winding_path() {
     let planes = [Plane::axis_aligned(0, r(0)), Plane::axis_aligned(1, r(0))];
 
-    assert!(points_share_open_arrangement_cell(&p(1, 1, 0), &p(2, 3, 4), &planes).unwrap());
-    assert!(!points_share_open_arrangement_cell(&p(1, 1, 0), &p(-1, 1, 0), &planes).unwrap());
+    assert!(
+        points_share_open_arrangement_cell(
+            &crate::test_support::approximate_decisions(),
+            &p(1, 1, 0),
+            &p(2, 3, 4),
+            &planes
+        )
+        .unwrap()
+    );
+    assert!(
+        !points_share_open_arrangement_cell(
+            &crate::test_support::approximate_decisions(),
+            &p(1, 1, 0),
+            &p(-1, 1, 0),
+            &planes
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn arrangement_cell_shortcut_rejects_support_plane_boundary() {
     let planes = [Plane::axis_aligned(0, r(0))];
 
-    assert!(!points_share_open_arrangement_cell(&p(0, 1, 0), &p(0, 2, 0), &planes).unwrap());
+    assert!(
+        !points_share_open_arrangement_cell(
+            &crate::test_support::approximate_decisions(),
+            &p(0, 1, 0),
+            &p(0, 2, 0),
+            &planes
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn traced_cell_shortcut_ignores_spatially_disjoint_support_plane() {
-    let polygon = convex_triangle(&p(0, 10, 0), &p(0, 12, 0), &p(0, 10, 2), 0, 0);
+    let polygon = approximate_convex_triangle(&p(0, 10, 0), &p(0, 12, 0), &p(0, 10, 2), 0, 0);
 
-    assert!(points_share_open_traced_cell(&p(-1, 0, 0), &p(1, 0, 0), &[polygon],).unwrap());
+    assert!(
+        points_share_open_traced_cell(
+            &crate::test_support::approximate_decisions(),
+            &p(-1, 0, 0),
+            &p(1, 0, 0),
+            &[polygon],
+        )
+        .unwrap()
+    );
 }
 
 #[test]
@@ -354,15 +468,48 @@ fn detour_arrangement_cell_state_prefers_later_certified_target() {
 #[test]
 fn strict_aabb_targets_handle_degenerate_axis_boxes() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 6, 0));
-    let targets = strict_aabb_targets(&bounds).unwrap();
+    let targets =
+        strict_aabb_targets(&crate::test_support::approximate_decisions(), &bounds).unwrap();
 
     assert!(!targets.is_empty());
     for target in targets {
         assert_eq!(target.point.z, r(0));
-        assert!(compare_real(&target.point.x, &r(0)).unwrap().is_gt());
-        assert!(compare_real(&target.point.x, &r(4)).unwrap().is_lt());
-        assert!(compare_real(&target.point.y, &r(0)).unwrap().is_gt());
-        assert!(compare_real(&target.point.y, &r(6)).unwrap().is_lt());
+        assert!(
+            compare_real_decision(
+                &crate::test_support::approximate_decisions(),
+                &target.point.x,
+                &r(0)
+            )
+            .unwrap()
+            .is_gt()
+        );
+        assert!(
+            compare_real_decision(
+                &crate::test_support::approximate_decisions(),
+                &target.point.x,
+                &r(4)
+            )
+            .unwrap()
+            .is_lt()
+        );
+        assert!(
+            compare_real_decision(
+                &crate::test_support::approximate_decisions(),
+                &target.point.y,
+                &r(0)
+            )
+            .unwrap()
+            .is_gt()
+        );
+        assert!(
+            compare_real_decision(
+                &crate::test_support::approximate_decisions(),
+                &target.point.y,
+                &r(6)
+            )
+            .unwrap()
+            .is_lt()
+        );
         assert!(!target.definitions.is_empty());
     }
 }
@@ -371,9 +518,11 @@ fn strict_aabb_targets_handle_degenerate_axis_boxes() {
 fn strict_aabb_target_cursor_exhausts_legacy_target_set() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 6, 0));
     let expected = strict_aabb_targets_with_seed_families(
+        &crate::test_support::approximate_decisions(),
         &bounds,
         |bounds, halfspaces, report, saw_unknown| {
             halfspace_cell_seed_families_from_optional_report(
+                &crate::test_support::approximate_decisions(),
                 bounds,
                 halfspaces,
                 report,
@@ -386,10 +535,15 @@ fn strict_aabb_target_cursor_exhausts_legacy_target_set() {
     for target in expected {
         push_unique_detour_target(&mut normalized_expected, target);
     }
-    let mut cursor = StrictAabbTargetCursor::new(&bounds).unwrap();
+    let mut cursor =
+        StrictAabbTargetCursor::new(&crate::test_support::approximate_decisions(), &bounds)
+            .unwrap();
     let mut actual = Vec::new();
     let mut batches = 0;
-    while let Some(batch) = cursor.next_batch().unwrap() {
+    while let Some(batch) = cursor
+        .next_batch(&crate::test_support::approximate_decisions())
+        .unwrap()
+    {
         batches += 1;
         actual.extend(batch);
     }
@@ -422,12 +576,26 @@ fn strict_aabb_target_cursor_exhausts_legacy_target_set() {
 #[test]
 fn strict_aabb_target_cursor_exhausts_direct_targets_before_shifted_families() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 6, 8));
-    let mut cursor = StrictAabbTargetCursor::new(&bounds).unwrap();
+    let mut cursor =
+        StrictAabbTargetCursor::new(&crate::test_support::approximate_decisions(), &bounds)
+            .unwrap();
 
     assert_eq!(cursor.stage, StrictAabbTargetCursorStage::FrontDirect);
-    assert!(!cursor.next_batch().unwrap().unwrap().is_empty());
+    assert!(
+        !cursor
+            .next_batch(&crate::test_support::approximate_decisions(),)
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
     assert_eq!(cursor.stage, StrictAabbTargetCursorStage::DeferredDirect);
-    assert!(!cursor.next_batch().unwrap().unwrap().is_empty());
+    assert!(
+        !cursor
+            .next_batch(&crate::test_support::approximate_decisions(),)
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
     assert_eq!(cursor.stage, StrictAabbTargetCursorStage::Shifted);
 }
 
@@ -435,25 +603,49 @@ fn strict_aabb_target_cursor_exhausts_direct_targets_before_shifted_families() {
 fn interior_box_target_batches_preserve_legacy_target_set_and_cursor_unknown() {
     let start = p(0, 0, 0);
     let end = p(4, 4, 0);
-    let slanted = convex_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
+    let slanted = approximate_convex_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
     let polygons = [slanted];
-    let expected = interior_box_detour_targets(&start, &end, &polygons).unwrap();
+    let expected = interior_box_detour_targets(
+        &crate::test_support::approximate_decisions(),
+        &start,
+        &end,
+        &polygons,
+    )
+    .unwrap();
     let mut cache = InteriorBoxDetourTargetBatchCache::default();
     let mut actual = Vec::new();
     let mut batch_index = 0;
     loop {
-        match cache.batch_for(&start, &end, batch_index, &polygons, &[], None) {
+        match cache.batch_for(
+            &crate::test_support::approximate_decisions(),
+            &start,
+            &end,
+            batch_index,
+            &polygons,
+            &[],
+            None,
+        ) {
             Ok(Some(batch)) => {
                 assert_eq!(
                     cache
-                        .batch_for(&start, &end, batch_index, &polygons, &[], None)
+                        .batch_for(
+                            &crate::test_support::approximate_decisions(),
+                            &start,
+                            &end,
+                            batch_index,
+                            &polygons,
+                            &[],
+                            None
+                        )
                         .unwrap(),
                     Some(batch.clone())
                 );
                 actual.extend(batch);
                 batch_index += 1;
             }
-            Err(HypermeshError::UnknownClassification) => break,
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => break,
             other => panic!("expected uncertainty at cursor exhaustion, got {other:?}"),
         }
     }
@@ -507,12 +699,20 @@ fn detour_target_family_marks_surviving_targets_uncertain_after_unknown() {
 fn interior_box_target_batches_preserve_unknown_after_emitting_targets() {
     let start = p(0, 0, 0);
     let end = p(4, 4, 0);
-    let slanted = convex_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
+    let slanted = approximate_convex_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
     let polygons = [slanted];
     let mut cache = InteriorBoxDetourTargetBatchCache::default();
 
     let first = cache
-        .batch_for(&start, &end, 0, &polygons, &[], None)
+        .batch_for(
+            &crate::test_support::approximate_decisions(),
+            &start,
+            &end,
+            0,
+            &polygons,
+            &[],
+            None,
+        )
         .unwrap()
         .expect("detour cursor should emit an initial target batch");
     assert!(!first.is_empty());
@@ -520,9 +720,19 @@ fn interior_box_target_batches_preserve_unknown_after_emitting_targets() {
 
     let mut batch_index = 1;
     loop {
-        match cache.batch_for(&start, &end, batch_index, &polygons, &[], None) {
+        match cache.batch_for(
+            &crate::test_support::approximate_decisions(),
+            &start,
+            &end,
+            batch_index,
+            &polygons,
+            &[],
+            None,
+        ) {
             Ok(Some(_)) => batch_index += 1,
-            Err(HypermeshError::UnknownClassification) => break,
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => break,
             other => panic!("expected uncertainty at cursor exhaustion, got {other:?}"),
         }
     }
@@ -533,6 +743,7 @@ fn strict_aabb_targets_try_shifted_search_from_report_witness_seed() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
     let targets = strict_aabb_targets_with_seed_families(
+        &crate::test_support::approximate_decisions(),
         &bounds,
         |_bounds, _halfspaces, _report, _saw_unknown| Ok((Vec::new(), Vec::new(), Vec::new())),
     )
@@ -548,6 +759,7 @@ fn search_strict_aabb_targets_progressively_stops_after_first_certified_direct_t
     let mut evaluated = 0usize;
 
     let found = search_strict_aabb_targets_progressively_with_seed_families(
+        &crate::test_support::approximate_decisions(),
         &bounds,
         |_bounds, _halfspaces, _report, _saw_unknown| {
             Ok((vec![p(1, 1, 1)], vec![p(2, 2, 2)], vec![p(3, 3, 3)]))
@@ -687,6 +899,7 @@ fn strict_aabb_target_evaluation_preserves_unproven_fallback_unknown() {
 fn search_strict_aabb_targets_progressively_preserves_unknown_in_exhausted_families() {
     let outcome =
         search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome(
+            &crate::test_support::approximate_decisions(),
             &Aabb::new(p(0, 0, 0), p(3, 3, 3)),
             |_bounds, _halfspaces, _report, _saw_unknown| {
                 Ok((vec![p(1, 1, 1), p(2, 2, 2)], vec![p(4, 4, 4)], vec![]))
@@ -710,6 +923,7 @@ fn search_strict_aabb_targets_progressively_dedupes_duplicate_direct_targets() {
 
     let found =
         search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome(
+            &crate::test_support::approximate_decisions(),
             &Aabb::new(p(0, 0, 0), p(3, 3, 3)),
             |_bounds, _halfspaces, _report, _saw_unknown| {
                 Ok((vec![p(1, 1, 1), p(1, 1, 1)], vec![], vec![]))
@@ -742,6 +956,7 @@ fn no_plane_detour_target_evaluation_prefers_lower_ranked_leg_first() {
     let mut saw_unknown = false;
 
     let result = evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &detour,
         &point,
         &point,
@@ -901,7 +1116,11 @@ fn detour_target_from_shifted_witness_stays_certified_when_one_family_is_singula
         uncertified_definition_fallback: false,
     };
 
-    let target = build_detour_target_from_shifted_witness(&witness).unwrap();
+    let target = build_detour_target_from_shifted_witness(
+        &crate::test_support::approximate_decisions(),
+        &witness,
+    )
+    .unwrap();
 
     assert_eq!(target.point, witness.point);
     assert!(!target.uncertified_definition_fallback);
@@ -984,18 +1203,22 @@ fn interior_box_detour_target_collection_backtracks_after_uncertified_box_family
         vec![(r(0), r(1))],
     ];
 
-    let targets = collect_detour_targets_from_axis_intervals(&intervals, |bounds| {
-        if bounds.min == p(0, 0, 0) && bounds.max == p(1, 1, 1) {
-            Err(HypermeshError::UnknownClassification)
-        } else {
-            let point = Point3::new(r(1), q(1, 2), q(1, 2));
-            Ok(vec![DetourTarget {
-                point: point.clone(),
-                definitions: vec![axis_plane_definition(&point)],
-                uncertified_definition_fallback: false,
-            }])
-        }
-    })
+    let targets = collect_detour_targets_from_axis_intervals(
+        &crate::test_support::approximate_decisions(),
+        &intervals,
+        |bounds| {
+            if bounds.min == p(0, 0, 0) && bounds.max == p(1, 1, 1) {
+                Err(HypermeshError::UnknownClassification)
+            } else {
+                let point = Point3::new(r(1), q(1, 2), q(1, 2));
+                Ok(vec![DetourTarget {
+                    point: point.clone(),
+                    definitions: vec![axis_plane_definition(&point)],
+                    uncertified_definition_fallback: false,
+                }])
+            }
+        },
+    )
     .unwrap();
 
     assert_eq!(targets.len(), 1);
@@ -1007,10 +1230,11 @@ fn interior_box_detour_target_collection_backtracks_after_uncertified_box_family
 fn axis_box_surface_cut_collection_backtracks_after_uncertified_crossing() {
     let start = p(0, 0, 0);
     let end = p(2, 0, 0);
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[first, second],
@@ -1034,10 +1258,11 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
  {
     let start = p(0, 0, 0);
     let end = p(2, 0, 0);
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let targets = interior_box_detour_targets_with_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[first, second],
@@ -1074,10 +1299,11 @@ fn interior_box_detour_target_collection_reports_unknown_when_surface_cut_family
  {
     let start = p(0, 0, 0);
     let end = p(2, 0, 0);
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let err = interior_box_detour_targets_with_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[first, second],
@@ -1100,10 +1326,11 @@ fn interior_box_detour_target_collection_reports_unknown_when_surface_cut_family
 fn axis_box_surface_cut_collection_treats_boundary_crossing_as_unknown_and_keeps_later_cut() {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[first, second],
@@ -1130,10 +1357,11 @@ fn axis_box_surface_cut_collection_treats_endpoint_boundary_contact_as_unknown_a
 {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[first, second],
@@ -1163,10 +1391,11 @@ fn axis_box_surface_cut_collection_treats_endpoint_boundary_contact_as_unknown_a
 fn axis_box_surface_cut_collection_treats_start_boundary_contact_as_unknown_and_keeps_later_cut() {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[first, second],
@@ -1197,10 +1426,11 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
  {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let targets = interior_box_detour_targets_with_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[first, second],
@@ -1240,10 +1470,11 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
  {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let targets = interior_box_detour_targets_with_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[first, second],
@@ -1287,10 +1518,11 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
  {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
-    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let targets = interior_box_detour_targets_with_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[first, second],
@@ -1334,7 +1566,14 @@ fn detour_target_build_preserves_inherited_uncertified_definition_fallback() {
     let point = p(1, 1, 1);
     let halfspaces = vec![axis_halfspace(2, false, r(1))];
 
-    let target = build_detour_target(&point, &halfspaces, [None, None, None], true).unwrap();
+    let target = build_detour_target(
+        &crate::test_support::approximate_decisions(),
+        &point,
+        &halfspaces,
+        [None, None, None],
+        true,
+    )
+    .unwrap();
 
     assert!(target.uncertified_definition_fallback);
 }
@@ -1399,12 +1638,23 @@ fn shifted_halfspace_cell_vertex_witnesses_return_strict_points() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
-    let witnesses = shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces).unwrap();
+    let witnesses = shifted_halfspace_cell_vertex_witnesses(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+    )
+    .unwrap();
 
     assert!(!witnesses.is_empty());
     for witness in &witnesses {
         assert!(
-            point_strictly_inside_halfspace_cell(&witness.point, &bounds, &halfspaces).unwrap()
+            point_strictly_inside_halfspace_cell(
+                &crate::test_support::approximate_decisions(),
+                &witness.point,
+                &bounds,
+                &halfspaces
+            )
+            .unwrap()
         );
     }
 }
@@ -1419,12 +1669,23 @@ fn shifted_halfspace_cell_geometry_witnesses_return_strict_points() {
         LimitPlane3::new(p(1, 1, 1), r(-4)),
     ];
 
-    let witnesses = shifted_halfspace_cell_geometry_witnesses(&bounds, &halfspaces).unwrap();
+    let witnesses = shifted_halfspace_cell_geometry_witnesses(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+    )
+    .unwrap();
 
     assert!(!witnesses.is_empty());
     for witness in &witnesses {
         assert!(
-            point_strictly_inside_halfspace_cell(&witness.point, &bounds, &halfspaces).unwrap()
+            point_strictly_inside_halfspace_cell(
+                &crate::test_support::approximate_decisions(),
+                &witness.point,
+                &bounds,
+                &halfspaces
+            )
+            .unwrap()
         );
     }
 }
@@ -1434,13 +1695,24 @@ fn shifted_halfspace_cell_witnesses_from_seed_returns_only_strict_points() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
-    let witnesses =
-        shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, &p(2, 1, 3)).unwrap();
+    let witnesses = shifted_halfspace_cell_witnesses_from_seed(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &p(2, 1, 3),
+    )
+    .unwrap();
 
     assert!(!witnesses.is_empty());
     for witness in &witnesses {
         assert!(
-            point_strictly_inside_halfspace_cell(&witness.point, &bounds, &halfspaces).unwrap()
+            point_strictly_inside_halfspace_cell(
+                &crate::test_support::approximate_decisions(),
+                &witness.point,
+                &bounds,
+                &halfspaces
+            )
+            .unwrap()
         );
     }
 }
@@ -1518,10 +1790,18 @@ fn feasible_halfspace_cell_vertices_report_unknown_if_all_candidates_are_uncerti
 #[test]
 fn halfspace_cell_geometry_seed_candidates_from_vertices_matches_direct_query() {
     let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
-    let vertices = feasible_halfspace_cell_vertices(&halfspaces).unwrap();
+    let vertices = feasible_halfspace_cell_vertices(
+        &crate::test_support::approximate_decisions(),
+        &halfspaces,
+    )
+    .unwrap();
 
     let from_vertices = halfspace_cell_geometry_seed_candidates_from_vertices(&vertices).unwrap();
-    let from_query = halfspace_cell_geometry_seed_candidates(&halfspaces).unwrap();
+    let from_query = halfspace_cell_geometry_seed_candidates(
+        &crate::test_support::approximate_decisions(),
+        &halfspaces,
+    )
+    .unwrap();
 
     assert_eq!(from_vertices, from_query);
 }
@@ -1549,8 +1829,13 @@ fn shifted_halfspace_cell_witnesses_from_seed_include_shifted_vertex_targets() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
-    let witnesses =
-        shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, &p(2, 1, 3)).unwrap();
+    let witnesses = shifted_halfspace_cell_witnesses_from_seed(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &p(2, 1, 3),
+    )
+    .unwrap();
 
     assert!(
         witnesses
@@ -1573,8 +1858,13 @@ fn shifted_halfspace_cell_witnesses_from_seed_include_shifted_geometry_targets()
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
-    let witnesses =
-        shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, &p(2, 1, 3)).unwrap();
+    let witnesses = shifted_halfspace_cell_witnesses_from_seed(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &p(2, 1, 3),
+    )
+    .unwrap();
 
     assert!(
         witnesses
@@ -1836,7 +2126,13 @@ fn strict_halfspace_cell_seeds_include_direct_strict_feasibility_witness() {
     let report =
         hyperlimit::HalfspaceFeasibilityReport::feasible(direct.clone(), [None, None, None]);
 
-    let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+    let seeds = strict_halfspace_cell_seeds_from_report(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &report,
+    )
+    .unwrap();
 
     assert!(seeds.iter().any(|seed| seed == &direct));
 }
@@ -1857,7 +2153,13 @@ fn strict_halfspace_cell_seeds_include_strict_feasible_vertices() {
         [None, None, None],
     );
 
-    let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+    let seeds = strict_halfspace_cell_seeds_from_report(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &report,
+    )
+    .unwrap();
 
     assert_eq!(seeds, vec![Point3::new(r(1), r(2), r(3))]);
 }
@@ -1872,7 +2174,13 @@ fn strict_halfspace_cell_seeds_include_strict_geometry_seeds() {
     );
     let tetra_center = p(1, 1, 1);
 
-    let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+    let seeds = strict_halfspace_cell_seeds_from_report(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &report,
+    )
+    .unwrap();
 
     assert!(seeds.iter().any(|seed| seed == &p(2, 2, 2)));
     assert!(seeds.iter().any(|seed| seed == &tetra_center));
@@ -1997,7 +2305,12 @@ fn collect_strict_halfspace_seed_family_tracks_unknown_after_halfspace_boundary_
 
     let family =
         collect_strict_halfspace_seed_family(Ok(vec![p(0, 2, 2), p(1, 1, 1)]), |candidate| {
-            point_strictly_inside_halfspace_cell_or_unknown(candidate, &bounds, &halfspaces)
+            point_strictly_inside_halfspace_cell_or_unknown(
+                &crate::test_support::approximate_decisions(),
+                candidate,
+                &bounds,
+                &halfspaces,
+            )
         })
         .unwrap();
 
@@ -2007,11 +2320,15 @@ fn collect_strict_halfspace_seed_family_tracks_unknown_after_halfspace_boundary_
 
 #[test]
 fn collect_strict_halfspace_seed_family_tracks_unknown_after_leaf_boundary_candidate() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
 
     let family =
         collect_strict_halfspace_seed_family(Ok(vec![p(3, 0, 0), p(1, 1, 1)]), |candidate| {
-            point_strictly_inside_leaf_or_unknown(candidate, &leaf)
+            point_strictly_inside_leaf_or_unknown(
+                &crate::test_support::approximate_decisions(),
+                candidate,
+                &leaf,
+            )
         })
         .unwrap();
 
@@ -2280,11 +2597,32 @@ fn strict_halfspace_cell_seeds_include_strict_geometry_seeds_without_report() {
         .unwrap();
     let tetra_center = p(1, 1, 1);
 
-    let seeds =
-        strict_halfspace_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+    let seeds = strict_halfspace_cell_seeds_from_optional_report(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        None,
+    )
+    .unwrap();
 
-    assert!(point_strictly_inside_halfspace_cell(&triangle_center, &bounds, &halfspaces).unwrap());
-    assert!(point_strictly_inside_halfspace_cell(&tetra_center, &bounds, &halfspaces).unwrap());
+    assert!(
+        point_strictly_inside_halfspace_cell(
+            &crate::test_support::approximate_decisions(),
+            &triangle_center,
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
+    );
+    assert!(
+        point_strictly_inside_halfspace_cell(
+            &crate::test_support::approximate_decisions(),
+            &tetra_center,
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
+    );
     assert!(seeds.iter().any(|seed| seed == &triangle_center));
     assert!(seeds.iter().any(|seed| seed == &tetra_center));
 }
@@ -2297,6 +2635,7 @@ fn halfspace_cell_seed_families_track_unknown_after_boundary_vertex_candidate() 
 
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
+            &crate::test_support::approximate_decisions(),
             &bounds,
             &halfspaces,
             None,
@@ -2314,10 +2653,23 @@ fn halfspace_cell_seed_families_track_unknown_after_boundary_vertex_candidate() 
 fn strict_halfspace_cell_seeds_include_strict_edge_midpoints() {
     let (bounds, halfspaces, midpoint) = quadrilateral_halfspace_cell_fixture();
 
-    let seeds =
-        strict_halfspace_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+    let seeds = strict_halfspace_cell_seeds_from_optional_report(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        None,
+    )
+    .unwrap();
 
-    assert!(point_strictly_inside_halfspace_cell(&midpoint, &bounds, &halfspaces).unwrap());
+    assert!(
+        point_strictly_inside_halfspace_cell(
+            &crate::test_support::approximate_decisions(),
+            &midpoint,
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
+    );
     assert!(seeds.iter().any(|seed| seed == &midpoint));
 }
 
@@ -2327,11 +2679,22 @@ fn strict_halfspace_cell_seeds_include_strict_five_vertex_centroids() {
     let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
     let five_vertex_center = Point3::new(q(8, 5), q(8, 5), q(8, 5));
 
-    let seeds =
-        strict_halfspace_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+    let seeds = strict_halfspace_cell_seeds_from_optional_report(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        None,
+    )
+    .unwrap();
 
     assert!(
-        point_strictly_inside_halfspace_cell(&five_vertex_center, &bounds, &halfspaces).unwrap()
+        point_strictly_inside_halfspace_cell(
+            &crate::test_support::approximate_decisions(),
+            &five_vertex_center,
+            &bounds,
+            &halfspaces
+        )
+        .unwrap()
     );
     assert!(seeds.iter().any(|seed| seed == &five_vertex_center));
 }
@@ -2341,8 +2704,13 @@ fn shifted_halfspace_witnesses_mark_survivors_uncertain_after_boundary_seed_cand
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
-    let witnesses =
-        shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, &p(1, 1, 1)).unwrap();
+    let witnesses = shifted_halfspace_cell_witnesses_from_seed(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &p(1, 1, 1),
+    )
+    .unwrap();
 
     assert!(!witnesses.is_empty());
     assert!(
@@ -2354,50 +2722,100 @@ fn shifted_halfspace_witnesses_mark_survivors_uncertain_after_boundary_seed_cand
 
 #[test]
 fn strict_leaf_witness_seeds_include_strict_halfspace_triangle_centroid() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
-    let bounds = leaf_bounds(&vertices).unwrap();
+    let bounds = leaf_bounds(&crate::test_support::approximate_decisions(), &vertices).unwrap();
     let halfspaces = leaf_halfspaces(&leaf);
-    let report = halfspace_feasibility_report(&halfspaces).unwrap();
-    let center = centroid(&feasible_halfspace_cell_vertices(&halfspaces).unwrap())
+    let report =
+        halfspace_feasibility_report(&crate::test_support::approximate_decisions(), &halfspaces)
+            .unwrap();
+    let center = centroid(
+        &feasible_halfspace_cell_vertices(
+            &crate::test_support::approximate_decisions(),
+            &halfspaces,
+        )
+        .unwrap(),
+    )
+    .unwrap()
+    .unwrap();
+
+    let seeds = strict_leaf_witness_seeds(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &vertices,
+        &bounds,
+        &halfspaces,
+        Some(&report),
+    )
+    .unwrap();
+
+    assert!(
+        point_strictly_inside_leaf(
+            &crate::test_support::approximate_decisions(),
+            &center,
+            &leaf
+        )
         .unwrap()
-        .unwrap();
-
-    let seeds =
-        strict_leaf_witness_seeds(&leaf, &vertices, &bounds, &halfspaces, Some(&report)).unwrap();
-
-    assert!(point_strictly_inside_leaf(&center, &leaf).unwrap());
+    );
     assert!(seeds.iter().any(|seed| seed == &center));
 }
 
 #[test]
 fn strict_leaf_witness_seeds_include_strict_halfspace_geometry_family() {
-    let leaf = convex_quad(&p(0, 0, 0), &p(4, 0, 0), &p(4, 4, 0), &p(0, 4, 0), 0, 0);
+    let leaf = approximate_convex_quad(&p(0, 0, 0), &p(4, 0, 0), &p(4, 4, 0), &p(0, 4, 0), 0, 0);
     let vertices = leaf.vertices().unwrap();
-    let bounds = leaf_bounds(&vertices).unwrap();
+    let bounds = leaf_bounds(&crate::test_support::approximate_decisions(), &vertices).unwrap();
     let halfspaces = leaf_halfspaces(&leaf);
-    let report = halfspace_feasibility_report(&halfspaces).unwrap();
+    let report =
+        halfspace_feasibility_report(&crate::test_support::approximate_decisions(), &halfspaces)
+            .unwrap();
     let triangle_center = centroid(&[p(0, 0, 0), p(4, 0, 0), p(4, 4, 0)])
         .unwrap()
         .unwrap();
 
-    let seeds =
-        strict_leaf_witness_seeds(&leaf, &vertices, &bounds, &halfspaces, Some(&report)).unwrap();
+    let seeds = strict_leaf_witness_seeds(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &vertices,
+        &bounds,
+        &halfspaces,
+        Some(&report),
+    )
+    .unwrap();
 
-    assert!(point_strictly_inside_leaf(&triangle_center, &leaf).unwrap());
+    assert!(
+        point_strictly_inside_leaf(
+            &crate::test_support::approximate_decisions(),
+            &triangle_center,
+            &leaf
+        )
+        .unwrap()
+    );
     assert!(seeds.iter().any(|seed| seed == &triangle_center));
 }
 
 #[test]
 fn shifted_edge_interior_points_move_vertices_inside_by_certified_margins() {
-    let leaf = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let leaf = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
     let vertices = leaf.vertices().unwrap();
     let center = centroid(&vertices).unwrap().unwrap();
-    let points = shifted_edge_interior_points(&leaf, &center).unwrap();
+    let points = shifted_edge_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &center,
+    )
+    .unwrap();
 
     assert_eq!(points.len(), 3);
     for point in &points {
-        assert!(point_strictly_inside_leaf(&point.point, &leaf).unwrap());
+        assert!(
+            point_strictly_inside_leaf(
+                &crate::test_support::approximate_decisions(),
+                &point.point,
+                &leaf
+            )
+            .unwrap()
+        );
     }
 
     let first = &points[0].point;
@@ -2418,18 +2836,29 @@ fn shifted_edge_interior_points_move_vertices_inside_by_certified_margins() {
 
 #[test]
 fn bounded_probes_include_certified_normal_direction_probe() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let vertices = leaf.vertices().unwrap();
     let center = centroid(&vertices).unwrap().unwrap();
-    let interior = shifted_edge_interior_points(&leaf, &center)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("shifted edge construction should retain defining planes");
+    let interior = shifted_edge_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &center,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("shifted edge construction should retain defining planes");
 
-    let probes =
-        bounded_probes_from_interior(&interior, &leaf.support, &bounds, true, &[]).unwrap();
+    let probes = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &leaf.support,
+        &bounds,
+        true,
+        &[],
+    )
+    .unwrap();
 
     let probe = probes
         .iter()
@@ -2441,15 +2870,21 @@ fn bounded_probes_include_certified_normal_direction_probe() {
 
 #[test]
 fn bounded_probes_find_positive_probe_for_core_leaf_wall_case() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
-    let interior_points = certified_leaf_interior_points(&wall.support, &wall.edges).unwrap();
+    let interior_points = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap();
 
     assert!(!interior_points.is_empty());
     assert!(interior_points.iter().any(|point| !point.planes.is_empty()));
 
     let probes = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
         &interior_points[0],
         &wall.support,
         &bounds,
@@ -2467,14 +2902,21 @@ fn bounded_probes_find_positive_probe_for_core_leaf_wall_case() {
 
 #[test]
 fn bounded_probes_keep_positive_probe_before_intervening_surface() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
-    let mut blocker = convex_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
+    let mut blocker =
+        approximate_convex_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
     blocker.delta_w = vec![1];
     let bounds = Aabb::new(p(1, -2, -2), p(5, 2, 2));
-    let interior_points = certified_leaf_interior_points(&wall.support, &wall.edges).unwrap();
+    let interior_points = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap();
 
     let probes = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
         &interior_points[0],
         &wall.support,
         &bounds,
@@ -2492,28 +2934,46 @@ fn bounded_probes_keep_positive_probe_before_intervening_surface() {
 
 #[test]
 fn positive_probe_traces_for_core_leaf_wall_case() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let ref_point = p(0, 0, 0);
     let ref_definitions = vec![axis_plane_definition(&ref_point)];
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
     assert!(!interior.uncertified_definition_fallback);
-    let probe =
-        bounded_probes_from_interior(&interior, &wall.support, &bounds, true, &[wall.clone()])
-            .unwrap()
-            .into_iter()
-            .find(|probe| probe.side == Classification::Positive)
-            .expect("leaf should have a positive-side probe");
+    let probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &wall.support,
+        &bounds,
+        true,
+        &[wall.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("leaf should have a positive-side probe");
     assert!(probe.uncertified_definition_fallback);
 
-    assert!(!point_lies_on_traced_surface(&probe.point, &[wall.clone()]).unwrap());
+    assert!(
+        !point_lies_on_traced_surface(
+            &crate::test_support::approximate_decisions(),
+            &probe.point,
+            &[wall.clone()]
+        )
+        .unwrap()
+    );
     assert!(
         probe_reaches_adjacent_cell_from_interior(
+            &crate::test_support::approximate_decisions(),
             &interior,
             &probe,
             &wall.support,
@@ -2522,30 +2982,47 @@ fn positive_probe_traces_for_core_leaf_wall_case() {
         .unwrap()
     );
 
-    let winding =
-        trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall.clone()]).unwrap();
+    let winding = trace_probe_winding(
+        &crate::test_support::approximate_decisions(),
+        &ref_point,
+        &ref_definitions,
+        &probe,
+        &[0],
+        &[wall.clone()],
+    )
+    .unwrap();
 
     assert_eq!(winding.len(), 1);
 }
 
 #[test]
 fn trace_probe_winding_with_query_caches_reuses_lower_trace_state_for_core_leaf_wall_case() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let ref_point = p(0, 0, 0);
     let ref_definitions = vec![axis_plane_definition(&ref_point)];
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
-    let probe =
-        bounded_probes_from_interior(&interior, &wall.support, &bounds, true, &[wall.clone()])
-            .unwrap()
-            .into_iter()
-            .find(|probe| probe.side == Classification::Positive)
-            .expect("leaf should have a positive-side probe");
+    let probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &wall.support,
+        &bounds,
+        true,
+        &[wall.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("leaf should have a positive-side probe");
     let mut query_caches = LeafProbeQueryCaches::default();
     let LeafProbeQueryCaches {
         probe_surface,
@@ -2558,6 +3035,7 @@ fn trace_probe_winding_with_query_caches_reuses_lower_trace_state_for_core_leaf_
     } = &mut query_caches;
 
     let first = trace_probe_winding_with_caches(
+        &crate::test_support::approximate_decisions(),
         &ref_point,
         &ref_definitions,
         &probe,
@@ -2582,6 +3060,7 @@ fn trace_probe_winding_with_query_caches_reuses_lower_trace_state_for_core_leaf_
     );
 
     let second = trace_probe_winding_with_caches(
+        &crate::test_support::approximate_decisions(),
         &ref_point,
         &ref_definitions,
         &probe,
@@ -2611,20 +3090,31 @@ fn trace_probe_winding_with_query_caches_reuses_lower_trace_state_for_core_leaf_
 
 #[test]
 fn probe_reachability_with_query_caches_reuses_lower_trace_state_for_core_leaf_wall_case() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
-    let probe = bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
-        .unwrap()
-        .into_iter()
-        .find(|probe| probe.side == Classification::Positive)
-        .expect("leaf should have a positive-side probe");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
+    let probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &support,
+        &bounds,
+        true,
+        &[wall.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("leaf should have a positive-side probe");
     let mut query_caches = LeafProbeQueryCaches::default();
     let LeafProbeQueryCaches {
         probe_surface,
@@ -2648,6 +3138,7 @@ fn probe_reachability_with_query_caches_reuses_lower_trace_state_for_core_leaf_w
     } = &mut query_caches;
 
     let first = probe_reaches_adjacent_cell_from_interior_with_caches(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &probe,
         &support,
@@ -2689,6 +3180,7 @@ fn probe_reachability_with_query_caches_reuses_lower_trace_state_for_core_leaf_w
     ];
 
     let second = probe_reaches_adjacent_cell_from_interior_with_caches(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &probe,
         &support,
@@ -2735,20 +3227,31 @@ fn probe_reachability_with_query_caches_reuses_lower_trace_state_for_core_leaf_w
 
 #[test]
 fn no_step_definition_search_caches_whole_query_for_core_leaf_wall_case() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
-    let probe = bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
-        .unwrap()
-        .into_iter()
-        .find(|probe| probe.side == Classification::Positive)
-        .expect("leaf should have a positive-side probe");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
+    let probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &support,
+        &bounds,
+        true,
+        &[wall.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("leaf should have a positive-side probe");
     let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut path_cache = PlaneReplacementReachabilityPathCache::default();
     let mut step_cache = PlaneReplacementReachabilityStepCache::default();
@@ -2756,6 +3259,7 @@ fn no_step_definition_search_caches_whole_query_for_core_leaf_wall_case() {
     let mut direct_probe_reachability_cache = Vec::new();
 
     let first = probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+        &crate::test_support::approximate_decisions(),
         &interior.point,
         &probe.point,
         &support,
@@ -2779,6 +3283,7 @@ fn no_step_definition_search_caches_whole_query_for_core_leaf_wall_case() {
     );
 
     let second = probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+        &crate::test_support::approximate_decisions(),
         &interior.point,
         &probe.point,
         &support,
@@ -2808,20 +3313,31 @@ fn no_step_definition_search_caches_whole_query_for_core_leaf_wall_case() {
 
 #[test]
 fn full_no_detour_definition_search_caches_whole_query_for_core_leaf_wall_case() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
-    let probe = bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
-        .unwrap()
-        .into_iter()
-        .find(|probe| probe.side == Classification::Positive)
-        .expect("leaf should have a positive-side probe");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
+    let probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &support,
+        &bounds,
+        true,
+        &[wall.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("leaf should have a positive-side probe");
     let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut path_cache = PlaneReplacementReachabilityPathCache::default();
     let mut step_cache = PlaneReplacementReachabilityStepCache::default();
@@ -2840,6 +3356,7 @@ fn full_no_detour_definition_search_caches_whole_query_for_core_leaf_wall_case()
     let mut direct_probe_reachability_cache = Vec::new();
 
     let first = probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
+        &crate::test_support::approximate_decisions(),
         &interior.point,
         &probe.point,
         &support,
@@ -2881,6 +3398,7 @@ fn full_no_detour_definition_search_caches_whole_query_for_core_leaf_wall_case()
     ];
 
     let second = probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
+        &crate::test_support::approximate_decisions(),
         &interior.point,
         &probe.point,
         &support,
@@ -2928,20 +3446,31 @@ fn full_no_detour_definition_search_caches_whole_query_for_core_leaf_wall_case()
 
 #[test]
 fn interior_box_axis_intervals_cache_reuses_core_leaf_wall_case_query() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
-    let probe = bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
-        .unwrap()
-        .into_iter()
-        .find(|probe| probe.side == Classification::Positive)
-        .expect("leaf should have a positive-side probe");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
+    let probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &support,
+        &bounds,
+        true,
+        &[wall.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("leaf should have a positive-side probe");
     let mut interval_cache = InteriorBoxAxisIntervalsCache::default();
 
     let first = cached_interior_box_axis_intervals_with_surface_queries(
@@ -2950,34 +3479,49 @@ fn interior_box_axis_intervals_cache_reuses_core_leaf_wall_case_query() {
         &probe.point,
         || {
             interior_box_axis_intervals_with_surface_queries(
+                &crate::test_support::approximate_decisions(),
                 &interior.point,
                 &probe.point,
                 &[wall.clone()],
                 &mut |edge_start, edge_end, polygon, axis| {
-                    let start_class = classify_point(edge_start, &polygon.support)?;
-                    let end_class = classify_point(edge_end, &polygon.support)?;
+                    let start_class = approximate_classify_point(edge_start, &polygon.support)?;
+                    let end_class = approximate_classify_point(edge_end, &polygon.support)?;
                     if start_class == Classification::On {
                         return Ok(Some(edge_start.clone()));
                     }
                     if end_class == Classification::On {
                         return Ok(Some(edge_end.clone()));
                     }
-                    segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(
-                        |crossing| {
-                            if let Some(crossing) = crossing {
-                                if !point_strictly_between_axis(
-                                    &crossing, edge_start, edge_end, axis,
-                                )? {
-                                    return Ok(None);
-                                }
-                                Ok(Some(crossing))
-                            } else {
-                                Ok(None)
+                    segment_plane_crossing(
+                        &crate::test_support::approximate_decisions(),
+                        edge_start,
+                        edge_end,
+                        &polygon.support,
+                    )
+                    .and_then(|crossing| {
+                        if let Some(crossing) = crossing {
+                            if !point_strictly_between_axis(
+                                &crate::test_support::approximate_decisions(),
+                                &crossing,
+                                edge_start,
+                                edge_end,
+                                axis,
+                            )? {
+                                return Ok(None);
                             }
-                        },
+                            Ok(Some(crossing))
+                        } else {
+                            Ok(None)
+                        }
+                    })
+                },
+                &mut |crossing, polygon| {
+                    classify_point_in_polygon(
+                        &crate::test_support::approximate_decisions(),
+                        crossing,
+                        polygon,
                     )
                 },
-                &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
             )
         },
     )
@@ -2990,34 +3534,49 @@ fn interior_box_axis_intervals_cache_reuses_core_leaf_wall_case_query() {
         &probe.point,
         || {
             interior_box_axis_intervals_with_surface_queries(
+                &crate::test_support::approximate_decisions(),
                 &interior.point,
                 &probe.point,
                 &[wall],
                 &mut |edge_start, edge_end, polygon, axis| {
-                    let start_class = classify_point(edge_start, &polygon.support)?;
-                    let end_class = classify_point(edge_end, &polygon.support)?;
+                    let start_class = approximate_classify_point(edge_start, &polygon.support)?;
+                    let end_class = approximate_classify_point(edge_end, &polygon.support)?;
                     if start_class == Classification::On {
                         return Ok(Some(edge_start.clone()));
                     }
                     if end_class == Classification::On {
                         return Ok(Some(edge_end.clone()));
                     }
-                    segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(
-                        |crossing| {
-                            if let Some(crossing) = crossing {
-                                if !point_strictly_between_axis(
-                                    &crossing, edge_start, edge_end, axis,
-                                )? {
-                                    return Ok(None);
-                                }
-                                Ok(Some(crossing))
-                            } else {
-                                Ok(None)
+                    segment_plane_crossing(
+                        &crate::test_support::approximate_decisions(),
+                        edge_start,
+                        edge_end,
+                        &polygon.support,
+                    )
+                    .and_then(|crossing| {
+                        if let Some(crossing) = crossing {
+                            if !point_strictly_between_axis(
+                                &crate::test_support::approximate_decisions(),
+                                &crossing,
+                                edge_start,
+                                edge_end,
+                                axis,
+                            )? {
+                                return Ok(None);
                             }
-                        },
+                            Ok(Some(crossing))
+                        } else {
+                            Ok(None)
+                        }
+                    })
+                },
+                &mut |crossing, polygon| {
+                    classify_point_in_polygon(
+                        &crate::test_support::approximate_decisions(),
+                        crossing,
+                        polygon,
                     )
                 },
-                &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
             )
         },
     )
@@ -3031,38 +3590,57 @@ fn interior_box_axis_intervals_cache_reuses_core_leaf_wall_case_query() {
 
 #[test]
 fn strict_aabb_target_family_cache_reuses_core_leaf_wall_case_query() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
-    let probe = bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
-        .unwrap()
-        .into_iter()
-        .find(|probe| probe.side == Classification::Positive)
-        .expect("leaf should have a positive-side probe");
-    let strict_bounds = bounds_between_points(&interior.point, &probe.point).unwrap();
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
+    let probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &support,
+        &bounds,
+        true,
+        &[wall.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("leaf should have a positive-side probe");
+    let strict_bounds = bounds_between_points(
+        &crate::test_support::approximate_decisions(),
+        &interior.point,
+        &probe.point,
+    )
+    .unwrap();
     let mut target_family_cache = StrictAabbTargetFamilyCache::default();
     let mut halfspace_report_cache = Vec::new();
     let mut halfspace_seed_family_cache = Vec::new();
 
     let first = cached_strict_aabb_target_families_with_seed_families(
+        &crate::test_support::approximate_decisions(),
         &mut target_family_cache,
         &strict_bounds,
         |bounds, halfspaces, report, local_unknown| {
             let report = match report {
                 Some(report) => Some(report.clone()),
                 None => cached_optional_halfspace_feasibility_report_with(
+                    &crate::test_support::approximate_decisions(),
                     &mut halfspace_report_cache,
                     halfspaces,
                     local_unknown,
                 )?,
             };
             cached_halfspace_cell_seed_families_from_optional_report_with(
+                &crate::test_support::approximate_decisions(),
                 &mut halfspace_seed_family_cache,
                 bounds,
                 halfspaces,
@@ -3075,18 +3653,21 @@ fn strict_aabb_target_family_cache_reuses_core_leaf_wall_case_query() {
     let after_first = target_family_cache.len();
 
     let second = cached_strict_aabb_target_families_with_seed_families(
+        &crate::test_support::approximate_decisions(),
         &mut target_family_cache,
         &strict_bounds,
         |bounds, halfspaces, report, local_unknown| {
             let report = match report {
                 Some(report) => Some(report.clone()),
                 None => cached_optional_halfspace_feasibility_report_with(
+                    &crate::test_support::approximate_decisions(),
                     &mut halfspace_report_cache,
                     halfspaces,
                     local_unknown,
                 )?,
             };
             cached_halfspace_cell_seed_families_from_optional_report_with(
+                &crate::test_support::approximate_decisions(),
                 &mut halfspace_seed_family_cache,
                 bounds,
                 halfspaces,
@@ -3105,17 +3686,29 @@ fn strict_aabb_target_family_cache_reuses_core_leaf_wall_case_query() {
 
 #[test]
 fn adjacent_normal_probes_preserve_family_uncertainty_for_core_leaf_wall_case() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
 
-    let probes = adjacent_normal_probes(&interior, &support, &bounds, &[wall], true).unwrap();
+    let probes = adjacent_normal_probes(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &support,
+        &bounds,
+        &[wall],
+        true,
+    )
+    .unwrap();
 
     assert!(
         probes
@@ -3126,24 +3719,40 @@ fn adjacent_normal_probes_preserve_family_uncertainty_for_core_leaf_wall_case() 
 
 #[test]
 fn strict_normal_probe_targets_preserve_family_uncertainty_for_core_leaf_wall_case() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
-    let existing_probe =
-        bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
-            .unwrap()
-            .into_iter()
-            .find(|probe| probe.side == Classification::Positive)
-            .expect("leaf should have a positive-side probe");
-    let corridor = bounds_between_points(&interior.point, &existing_probe.point).unwrap();
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
+    let existing_probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &support,
+        &bounds,
+        true,
+        &[wall.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("leaf should have a positive-side probe");
+    let corridor = bounds_between_points(
+        &crate::test_support::approximate_decisions(),
+        &interior.point,
+        &existing_probe.point,
+    )
+    .unwrap();
 
     let probes = strict_normal_probe_targets(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &corridor,
@@ -3162,30 +3771,50 @@ fn strict_normal_probe_targets_preserve_family_uncertainty_for_core_leaf_wall_ca
 
 #[test]
 fn strict_normal_probe_direct_seed_phase_stays_certified_for_core_leaf_wall_case() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
-    let existing_probe =
-        bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
-            .unwrap()
-            .into_iter()
-            .find(|probe| probe.side == Classification::Positive)
-            .expect("leaf should have a positive-side probe");
-    let corridor = bounds_between_points(&interior.point, &existing_probe.point).unwrap();
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
+    let existing_probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &support,
+        &bounds,
+        true,
+        &[wall.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("leaf should have a positive-side probe");
+    let corridor = bounds_between_points(
+        &crate::test_support::approximate_decisions(),
+        &interior.point,
+        &existing_probe.point,
+    )
+    .unwrap();
 
     let mut halfspaces = aabb_core_halfspaces(&corridor).unwrap();
     halfspaces.push(support_side_halfspace(&support, true));
     halfspaces.push(normal_stop_halfspace(&support, &existing_probe.point, true));
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces).unwrap();
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(
+        &crate::test_support::approximate_decisions(),
+        &halfspaces,
+    )
+    .unwrap();
     assert!(!saw_unknown);
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
+            &crate::test_support::approximate_decisions(),
             &corridor,
             &halfspaces,
             report.as_ref(),
@@ -3194,6 +3823,7 @@ fn strict_normal_probe_direct_seed_phase_stays_certified_for_core_leaf_wall_case
         .unwrap();
 
     let probes = strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &corridor,
@@ -3217,30 +3847,50 @@ fn strict_normal_probe_direct_seed_phase_stays_certified_for_core_leaf_wall_case
 
 #[test]
 fn direct_normal_probe_seed_build_stays_certified_for_core_leaf_wall_case() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
-    let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("leaf should have a replayable interior witness");
-    let existing_probe =
-        bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
-            .unwrap()
-            .into_iter()
-            .find(|probe| probe.side == Classification::Positive)
-            .expect("leaf should have a positive-side probe");
-    let corridor = bounds_between_points(&interior.point, &existing_probe.point).unwrap();
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &wall.support,
+        &wall.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("leaf should have a replayable interior witness");
+    let existing_probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &support,
+        &bounds,
+        true,
+        &[wall.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("leaf should have a positive-side probe");
+    let corridor = bounds_between_points(
+        &crate::test_support::approximate_decisions(),
+        &interior.point,
+        &existing_probe.point,
+    )
+    .unwrap();
 
     let mut halfspaces = aabb_core_halfspaces(&corridor).unwrap();
     halfspaces.push(support_side_halfspace(&support, true));
     halfspaces.push(normal_stop_halfspace(&support, &existing_probe.point, true));
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces).unwrap();
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(
+        &crate::test_support::approximate_decisions(),
+        &halfspaces,
+    )
+    .unwrap();
     assert!(!saw_unknown);
     let (seeds, _shifted_vertices, _shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
+            &crate::test_support::approximate_decisions(),
             &corridor,
             &halfspaces,
             report.as_ref(),
@@ -3261,6 +3911,7 @@ fn direct_normal_probe_seed_build_stays_certified_for_core_leaf_wall_case() {
         .iter()
         .filter_map(|seed| {
             build_probe_point(
+                &crate::test_support::approximate_decisions(),
                 seed,
                 &corridor,
                 &support,
@@ -3915,10 +4566,15 @@ fn cached_adjacent_axis_probes_reuse_equivalent_queries() {
 fn cached_halfspace_cell_seed_families_reuse_permuted_halfspaces() {
     let bounds = Aabb::new(p(-1, -1, -1), p(1, 1, 1));
     let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
-    let (report, mut first_unknown) = optional_halfspace_feasibility_report(&halfspaces).unwrap();
+    let (report, mut first_unknown) = optional_halfspace_feasibility_report(
+        &crate::test_support::approximate_decisions(),
+        &halfspaces,
+    )
+    .unwrap();
     let mut cache = Vec::new();
 
     let first = cached_halfspace_cell_seed_families_from_optional_report_with(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &bounds,
         &halfspaces,
@@ -3929,9 +4585,13 @@ fn cached_halfspace_cell_seed_families_reuse_permuted_halfspaces() {
 
     let mut permuted_halfspaces = halfspaces.clone();
     permuted_halfspaces.rotate_left(2);
-    let (permuted_report, mut second_unknown) =
-        optional_halfspace_feasibility_report(&permuted_halfspaces).unwrap();
+    let (permuted_report, mut second_unknown) = optional_halfspace_feasibility_report(
+        &crate::test_support::approximate_decisions(),
+        &permuted_halfspaces,
+    )
+    .unwrap();
     let second = cached_halfspace_cell_seed_families_from_optional_report_with(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &bounds,
         &permuted_halfspaces,
@@ -3953,6 +4613,7 @@ fn cached_optional_halfspace_feasibility_report_reuses_permuted_halfspaces() {
     let mut first_unknown = false;
 
     let first = cached_optional_halfspace_feasibility_report_with(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &halfspaces,
         &mut first_unknown,
@@ -3963,6 +4624,7 @@ fn cached_optional_halfspace_feasibility_report_reuses_permuted_halfspaces() {
     permuted_halfspaces.rotate_left(2);
     let mut second_unknown = false;
     let second = cached_optional_halfspace_feasibility_report_with(
+        &crate::test_support::approximate_decisions(),
         &mut cache,
         &permuted_halfspaces,
         &mut second_unknown,
@@ -4146,7 +4808,7 @@ fn cached_direct_probe_reachability_reuses_identical_query() {
     let start = p(0, 0, 0);
     let end = p(1, 0, 0);
     let host_support = Plane::axis_aligned(2, r(0));
-    let polygons = vec![convex_triangle(
+    let polygons = vec![approximate_convex_triangle(
         &p(2, -1, -1),
         &p(2, 1, -1),
         &p(2, 0, 1),
@@ -4192,7 +4854,7 @@ fn cached_direct_probe_reachability_reuses_reversed_query() {
     let start = p(0, 0, 0);
     let end = p(1, 0, 0);
     let host_support = Plane::axis_aligned(2, r(0));
-    let polygons = vec![convex_triangle(
+    let polygons = vec![approximate_convex_triangle(
         &p(2, -1, -1),
         &p(2, 1, -1),
         &p(2, 0, 1),
@@ -4236,7 +4898,7 @@ fn cached_direct_probe_reachability_reuses_reversed_query() {
 fn cached_direct_probe_reachability_shares_identical_polygon_families() {
     let mut cache = Vec::new();
     let host_support = Plane::axis_aligned(2, r(0));
-    let polygons = vec![convex_triangle(
+    let polygons = vec![approximate_convex_triangle(
         &p(2, -1, -1),
         &p(2, 1, -1),
         &p(2, 0, 1),
@@ -4277,12 +4939,19 @@ fn trace_axis_ordered_paths_reuse_equivalent_intermediate_surface_queries() {
     let mut surface_cache = Vec::new();
     let mut query_calls = 0;
 
-    let err = trace_axis_ordered_paths_with_surface_query(&start, &end, &[0], &[], |point| {
-        cached_surface_query_with(&mut surface_cache, point, || {
-            query_calls += 1;
-            Ok(*point == p(1, 0, 0) || *point == p(0, 1, 0))
-        })
-    })
+    let err = trace_axis_ordered_paths_with_surface_query(
+        &crate::test_support::approximate_decisions(),
+        &start,
+        &end,
+        &[0],
+        &[],
+        |point| {
+            cached_surface_query_with(&mut surface_cache, point, || {
+                query_calls += 1;
+                Ok(*point == p(1, 0, 0) || *point == p(0, 1, 0))
+            })
+        },
+    )
     .unwrap_err();
 
     assert_eq!(err, HypermeshError::UnknownClassification);
@@ -4297,6 +4966,7 @@ fn trace_axis_ordered_paths_reuse_equivalent_segment_traces() {
     let mut trace_calls = 0;
 
     let err = trace_axis_ordered_paths_with_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -4331,6 +5001,7 @@ fn trace_axis_ordered_paths_try_later_ordering_after_uncertified_surface_query()
     let end = p(1, 1, 0);
 
     let winding = trace_axis_ordered_paths_with_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[7],
@@ -4358,14 +5029,21 @@ fn trace_axis_ordered_paths_try_later_ordering_after_uncertified_surface_query()
 fn trace_axis_ordered_paths_try_later_ordering_after_boundary_surface_query() {
     let start = p(0, 0, 0);
     let end = p(1, 1, 0);
-    let polygon = convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
 
     let winding = trace_axis_ordered_paths_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[7],
         std::slice::from_ref(&polygon),
-        |point| point_lies_on_traced_surface(point, std::slice::from_ref(&polygon)),
+        |point| {
+            point_lies_on_traced_surface(
+                &crate::test_support::approximate_decisions(),
+                point,
+                std::slice::from_ref(&polygon),
+            )
+        },
     )
     .unwrap();
 
@@ -4378,6 +5056,7 @@ fn trace_axis_ordered_paths_try_later_ordering_after_uncertified_segment_step() 
     let end = p(1, 1, 0);
 
     let winding = trace_axis_ordered_paths_with_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[7],
@@ -4404,6 +5083,7 @@ fn trace_axis_ordered_paths_reports_unknown_for_zero_length_surface_contact() {
     let start = p(0, 0, 0);
 
     let err = trace_axis_ordered_paths_with_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &start,
         &[7],
@@ -4422,16 +5102,17 @@ fn trace_axis_ordered_paths_reports_unknown_for_zero_length_surface_contact() {
 fn trace_axis_ordered_paths_try_later_ordering_after_endpoint_surface_contact() {
     let start = p(0, 0, 0);
     let end = p(1, 1, 0);
-    let polygon = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     let winding = trace_axis_ordered_paths_with_queries(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[7],
         std::slice::from_ref(&polygon),
         |_point| Ok(false),
         |current, next, axis, attempt, polygons| {
-            trace_axis_segment(current, next, axis, attempt, polygons)
+            approximate_trace_axis_segment(current, next, axis, attempt, polygons)
         },
     )
     .unwrap();
@@ -4533,6 +5214,7 @@ fn trace_segment_from_definitions_shared_query_caches_reuse_equivalent_calls() {
     let mut detour_target_cache = DetourTargetFamilyCache::default();
 
     let first = trace_segment_from_definitions_with_caches(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[7],
@@ -4547,6 +5229,7 @@ fn trace_segment_from_definitions_shared_query_caches_reuse_equivalent_calls() {
     let no_detour_len = no_detour_cache.len();
     let detour_len = detour_target_cache.len();
     let second = trace_segment_from_definitions_with_caches(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[7],
@@ -4978,6 +5661,7 @@ fn detour_trace_cycle_guard_reuses_surface_queries_across_failed_branches() {
     let mut query_calls = 0;
 
     let err = trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -5014,18 +5698,23 @@ fn detour_trace_cycle_guard_reuses_surface_queries_across_failed_branches() {
 
 #[test]
 fn normal_probe_is_clipped_before_intervening_surface() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
-    let blocker = convex_triangle(&p(6, 0, 0), &p(0, 6, 0), &p(0, 0, 6), 1, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let blocker = approximate_convex_triangle(&p(6, 0, 0), &p(0, 6, 0), &p(0, 0, 6), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let vertices = leaf.vertices().unwrap();
     let center = centroid(&vertices).unwrap().unwrap();
-    let interior = shifted_edge_interior_points(&leaf, &center)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("shifted edge construction should retain defining planes");
+    let interior = shifted_edge_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &center,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("shifted edge construction should retain defining planes");
 
     let probes = adjacent_normal_probes(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &leaf.support,
         &bounds,
@@ -5045,8 +5734,24 @@ fn normal_probe_is_clipped_before_intervening_surface() {
     let start_value = leaf.support.expression_at_point(&interior.point);
     let probe_value = leaf.support.expression_at_point(&probe.point);
     let blocker_value = blocker.support.expression_at_point(&probe.point);
-    assert!(compare_real(&probe_value, &start_value).unwrap().is_gt());
-    assert!(compare_real(&blocker_value, &Real::zero()).unwrap().is_lt());
+    assert!(
+        compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &probe_value,
+            &start_value
+        )
+        .unwrap()
+        .is_gt()
+    );
+    assert!(
+        compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &blocker_value,
+            &Real::zero()
+        )
+        .unwrap()
+        .is_lt()
+    );
 }
 
 #[test]
@@ -5055,10 +5760,11 @@ fn adjacent_normal_probe_stop_values_backtrack_after_uncertified_crossing() {
     let interior = p(1, 1, 1);
     let direction = support.normal.clone();
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &direction,
         &support,
@@ -5092,10 +5798,11 @@ fn adjacent_normal_probe_marks_later_corridor_uncertain_after_uncertified_crossi
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_normal_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -5143,10 +5850,11 @@ fn adjacent_normal_probe_reports_unknown_when_corridor_family_is_partially_uncer
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let err = adjacent_normal_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -5177,10 +5885,11 @@ fn adjacent_normal_probe_stop_values_retain_boundary_crossing_as_stop() {
     let interior = p(1, 1, 1);
     let direction = support.normal.clone();
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &direction,
         &support,
@@ -5208,10 +5917,11 @@ fn adjacent_normal_probe_stop_values_treat_boundary_start_contact_as_unknown_and
     let interior = p(1, 1, 1);
     let direction = support.normal.clone();
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &direction,
         &support,
@@ -5239,10 +5949,11 @@ fn adjacent_normal_probe_stop_values_treat_endpoint_boundary_contact_as_unknown_
     let interior = p(1, 1, 1);
     let direction = support.normal.clone();
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &direction,
         &support,
@@ -5279,6 +5990,7 @@ fn adjacent_normal_probe_stop_values_treat_bound_start_contact_as_unknown() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &direction,
         &support,
@@ -5304,6 +6016,7 @@ fn adjacent_normal_probe_reports_unknown_for_bound_start_contact() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
     let err = adjacent_normal_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -5327,10 +6040,11 @@ fn adjacent_normal_probe_marks_later_corridor_uncertain_after_boundary_start_con
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_normal_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -5373,10 +6087,11 @@ fn adjacent_normal_probe_marks_later_corridor_uncertain_after_endpoint_boundary_
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_normal_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -5432,6 +6147,7 @@ fn strict_normal_probe_targets_try_shifted_search_from_report_witness_seed() {
     let visited = std::cell::RefCell::new(Vec::new());
 
     let probes = strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &corridor,
@@ -5481,6 +6197,7 @@ fn strict_normal_probe_targets_merge_same_point_certified_shifted_replay_definit
     let visited = std::cell::RefCell::new(Vec::new());
 
     let probes = strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &corridor,
@@ -5577,6 +6294,7 @@ fn unique_normal_probe_search_definitions_skip_duplicate_retained_pairs() {
     ];
 
     let unique = unique_normal_probe_search_definitions(
+        &crate::test_support::approximate_decisions(),
         &[axis_definition.clone(), duplicate_first, swapped_pair],
         &support,
     )
@@ -5931,7 +6649,7 @@ fn probe_point_build_collection_reports_unknown_if_all_candidates_are_uncertifie
 
 #[test]
 fn adjacent_axis_probe_uses_corridor_witness_and_retains_definition() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = InteriorLeafPoint {
         point: p(1, 1, 1),
@@ -5939,19 +6657,43 @@ fn adjacent_axis_probe_uses_corridor_witness_and_retains_definition() {
         uncertified_definition_fallback: false,
     };
 
-    let probe = adjacent_axis_probes(&interior, &leaf.support, &bounds, &[], 0, true)
-        .unwrap()
-        .into_iter()
-        .find(|probe| probe.side == Classification::Positive)
-        .expect("axis corridor should contain a certified probe witness");
+    let probe = adjacent_axis_probes(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &leaf.support,
+        &bounds,
+        &[],
+        0,
+        true,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("axis corridor should contain a certified probe witness");
 
     assert_eq!(probe.side, Classification::Positive);
     assert!(!probe.planes.is_empty());
     for definition in &probe.planes {
         assert_eq!(affine_from_planes(definition).unwrap(), probe.point);
     }
-    assert!(compare_real(&probe.point.x, &r(1)).unwrap().is_gt());
-    assert!(compare_real(&probe.point.x, &r(4)).unwrap().is_lt());
+    assert!(
+        compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &probe.point.x,
+            &r(1)
+        )
+        .unwrap()
+        .is_gt()
+    );
+    assert!(
+        compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &probe.point.x,
+            &r(4)
+        )
+        .unwrap()
+        .is_lt()
+    );
     assert_eq!(probe.point.y, r(1));
     assert_eq!(probe.point.z, r(1));
 }
@@ -5960,10 +6702,11 @@ fn adjacent_axis_probe_uses_corridor_witness_and_retains_definition() {
 fn adjacent_axis_probe_stop_values_backtrack_after_uncertified_crossing() {
     let interior = p(1, 1, 1);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &bounds,
         &[first, second],
@@ -5993,10 +6736,11 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_uncertified_crossing
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_axis_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -6041,10 +6785,11 @@ fn adjacent_axis_probe_reports_unknown_when_corridor_family_is_partially_uncerti
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let err = adjacent_axis_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -6070,10 +6815,11 @@ fn adjacent_axis_probe_reports_unknown_when_corridor_family_is_partially_uncerti
 fn adjacent_axis_probe_stop_values_retain_boundary_crossing_as_stop() {
     let interior = p(1, 1, 1);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &bounds,
         &[first, second],
@@ -6105,10 +6851,11 @@ fn adjacent_axis_probe_stop_values_treat_endpoint_boundary_contact_as_unknown_an
  {
     let interior = p(1, 1, 1);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &bounds,
         &[first, second],
@@ -6140,10 +6887,11 @@ fn adjacent_axis_probe_stop_values_treat_start_boundary_contact_as_unknown_and_k
 {
     let interior = p(1, 1, 1);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &bounds,
         &[first, second],
@@ -6176,6 +6924,7 @@ fn adjacent_axis_probe_stop_values_treat_bound_start_contact_as_unknown() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
     let (stop_values, saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &bounds,
         &[],
@@ -6201,6 +6950,7 @@ fn adjacent_axis_probe_reports_unknown_for_bound_start_contact() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
     let err = adjacent_axis_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -6225,10 +6975,11 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_boundary_crossing() 
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_axis_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -6278,10 +7029,11 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_endpoint_boundary_co
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_axis_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -6331,10 +7083,11 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_boundary_start_conta
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = approximate_convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_axis_probes_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &bounds,
@@ -6388,6 +7141,7 @@ fn strict_axis_probe_targets_try_shifted_search_from_report_witness_seed() {
     let visited = std::cell::RefCell::new(Vec::new());
 
     let probes = strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &corridor,
@@ -6436,6 +7190,7 @@ fn strict_axis_probe_targets_merge_same_point_certified_shifted_replay_definitio
     let visited = std::cell::RefCell::new(Vec::new());
 
     let probes = strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &support,
         &corridor,
@@ -6669,31 +7424,47 @@ fn adjacent_axis_probe_preserves_retained_definition_when_axis_direction_allows(
         uncertified_definition_fallback: false,
     };
 
-    let probe = adjacent_axis_probes(&interior, &support, &bounds, &[], 2, true)
-        .unwrap()
-        .into_iter()
-        .find(|probe| {
-            probe.side == Classification::Positive
-                && probe
-                    .planes
-                    .iter()
-                    .any(|planes| planes[1] == retained[1] && planes[2] == retained[2])
-        })
-        .expect("axis-direction probe should preserve retained axis-stable planes");
+    let probe = adjacent_axis_probes(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &support,
+        &bounds,
+        &[],
+        2,
+        true,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| {
+        probe.side == Classification::Positive
+            && probe
+                .planes
+                .iter()
+                .any(|planes| planes[1] == retained[1] && planes[2] == retained[2])
+    })
+    .expect("axis-direction probe should preserve retained axis-stable planes");
 
     assert_eq!(probe.point.x, r(1));
     assert_eq!(probe.point.y, r(1));
-    assert!(compare_real(&probe.point.z, &r(0)).unwrap().is_gt());
+    assert!(
+        compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            &probe.point.z,
+            &r(0)
+        )
+        .unwrap()
+        .is_gt()
+    );
 }
 
 #[test]
 fn leaf_classification_uses_certified_slanted_normal_probe() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let ref_definitions = [axis_plane_definition(&p(0, 0, 0))];
 
-    let winding = classify_leaf_polygon(
+    let winding = approximate_classify_leaf_polygon(
         &leaf.support,
         &leaf.edges,
         &p(0, 0, 0),
@@ -6710,12 +7481,13 @@ fn leaf_classification_uses_certified_slanted_normal_probe() {
 
 #[test]
 fn leaf_classification_keeps_certified_direct_leaf_witness_after_invalid_active_replay() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let ref_point = p(0, 0, 0);
     let ref_definitions = [axis_plane_definition(&ref_point)];
     let interior = build_strict_leaf_point(
+        &crate::test_support::approximate_decisions(),
         &leaf,
         &p(1, 1, 1),
         &[
@@ -6731,6 +7503,7 @@ fn leaf_classification_keeps_certified_direct_leaf_witness_after_invalid_active_
     assert!(!interior.uncertified_definition_fallback);
 
     let winding = classify_leaf_polygon_from_interior_points(
+        &crate::test_support::approximate_decisions(),
         std::slice::from_ref(&interior),
         &leaf.support,
         &ref_point,
@@ -6747,19 +7520,24 @@ fn leaf_classification_keeps_certified_direct_leaf_witness_after_invalid_active_
 
 #[test]
 fn leaf_classification_certifies_fallback_marked_interior_after_complete_probe_proof() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let ref_point = p(0, 0, 0);
     let ref_definitions = [axis_plane_definition(&ref_point)];
-    let mut interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .next()
-        .expect("slanted leaf should have an interior witness");
+    let mut interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .next()
+    .expect("slanted leaf should have an interior witness");
     interior.uncertified_definition_fallback = true;
 
     let winding = classify_leaf_polygon_from_interior_points(
+        &crate::test_support::approximate_decisions(),
         std::slice::from_ref(&interior),
         &leaf.support,
         &ref_point,
@@ -6776,26 +7554,37 @@ fn leaf_classification_certifies_fallback_marked_interior_after_complete_probe_p
 
 #[test]
 fn positive_probe_traces_for_slanted_leaf_case() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let ref_point = p(0, 0, 0);
     let ref_definitions = [axis_plane_definition(&ref_point)];
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
-    let probe =
-        bounded_probes_from_interior(&interior, &leaf.support, &bounds, true, &[leaf.clone()])
-            .unwrap()
-            .into_iter()
-            .find(|probe| probe.side == Classification::Positive)
-            .expect("slanted leaf should have a positive-side probe");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
+    let probe = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &leaf.support,
+        &bounds,
+        true,
+        &[leaf.clone()],
+    )
+    .unwrap()
+    .into_iter()
+    .find(|probe| probe.side == Classification::Positive)
+    .expect("slanted leaf should have a positive-side probe");
     assert!(probe.uncertified_definition_fallback);
 
     assert!(
         probe_reaches_adjacent_cell_from_interior(
+            &crate::test_support::approximate_decisions(),
             &interior,
             &probe,
             &leaf.support,
@@ -6804,17 +7593,29 @@ fn positive_probe_traces_for_slanted_leaf_case() {
         .unwrap()
     );
 
-    let winding =
-        trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[leaf.clone()]).unwrap();
+    let winding = trace_probe_winding(
+        &crate::test_support::approximate_decisions(),
+        &ref_point,
+        &ref_definitions,
+        &probe,
+        &[0],
+        &[leaf.clone()],
+    )
+    .unwrap();
 
     assert_eq!(winding, vec![-1]);
 }
 
 #[test]
 fn certified_leaf_interior_points_exist_for_slanted_leaf_case() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
 
-    let interior_points = certified_leaf_interior_points(&leaf.support, &leaf.edges).unwrap();
+    let interior_points = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap();
 
     assert!(!interior_points.is_empty());
     assert!(interior_points.iter().any(|point| !point.planes.is_empty()));
@@ -6822,18 +7623,28 @@ fn certified_leaf_interior_points_exist_for_slanted_leaf_case() {
 
 #[test]
 fn bounded_probes_find_positive_probe_for_slanted_leaf_case() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
 
-    let probes =
-        bounded_probes_from_interior(&interior, &leaf.support, &bounds, true, &[leaf.clone()])
-            .unwrap();
+    let probes = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &leaf.support,
+        &bounds,
+        true,
+        &[leaf.clone()],
+    )
+    .unwrap();
 
     assert!(
         probes
@@ -6844,18 +7655,28 @@ fn bounded_probes_find_positive_probe_for_slanted_leaf_case() {
 
 #[test]
 fn bounded_probes_preserve_family_uncertainty_for_slanted_leaf_case() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
 
-    let probes =
-        bounded_probes_from_interior(&interior, &leaf.support, &bounds, true, &[leaf.clone()])
-            .unwrap();
+    let probes = bounded_probes_from_interior(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &leaf.support,
+        &bounds,
+        true,
+        &[leaf.clone()],
+    )
+    .unwrap();
 
     assert!(
         probes
@@ -6871,61 +7692,93 @@ fn bounded_probes_preserve_family_uncertainty_for_slanted_leaf_case() {
 
 #[test]
 fn adjacent_normal_probe_stop_values_exist_for_slanted_leaf_case() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
 
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior.point,
         &leaf.support.normal,
         &leaf.support,
         &bounds,
         std::slice::from_ref(&leaf),
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
-        &mut |point, polygon| classify_point_in_polygon(point, polygon),
+        &mut |point, polygon| {
+            classify_point_in_polygon(
+                &crate::test_support::approximate_decisions(),
+                point,
+                polygon,
+            )
+        },
     )
     .unwrap();
 
     assert!(!saw_unknown);
     assert!(!stop_values.is_empty());
-    assert!(
-        stop_values
-            .iter()
-            .all(|stop| { compare_real(stop, &Real::zero()).unwrap().is_gt() })
-    );
+    assert!(stop_values.iter().all(|stop| {
+        compare_real_decision(
+            &crate::test_support::approximate_decisions(),
+            stop,
+            &Real::zero(),
+        )
+        .unwrap()
+        .is_gt()
+    }));
 }
 
 #[test]
 fn strict_normal_probe_targets_find_positive_probe_for_slanted_leaf_case() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior.point,
         &leaf.support.normal,
         &leaf.support,
         &bounds,
         &[leaf.clone()],
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
-        &mut |point, polygon| classify_point_in_polygon(point, polygon),
+        &mut |point, polygon| {
+            classify_point_in_polygon(
+                &crate::test_support::approximate_decisions(),
+                point,
+                polygon,
+            )
+        },
     )
     .unwrap();
 
     assert!(!saw_unknown);
     let stop_t = stop_values[0].clone();
     let stop_point = offset_point(&interior.point, &leaf.support.normal, &stop_t);
-    let corridor = bounds_between_points(&interior.point, &stop_point).unwrap();
+    let corridor = bounds_between_points(
+        &crate::test_support::approximate_decisions(),
+        &interior.point,
+        &stop_point,
+    )
+    .unwrap();
 
     let probes = strict_normal_probe_targets(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &leaf.support,
         &corridor,
@@ -6944,31 +7797,48 @@ fn strict_normal_probe_targets_find_positive_probe_for_slanted_leaf_case() {
 
 #[test]
 fn strict_normal_probe_targets_preserve_family_uncertainty_for_slanted_leaf_case() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior.point,
         &leaf.support.normal,
         &leaf.support,
         &bounds,
         &[leaf.clone()],
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
-        &mut |point, polygon| classify_point_in_polygon(point, polygon),
+        &mut |point, polygon| {
+            classify_point_in_polygon(
+                &crate::test_support::approximate_decisions(),
+                point,
+                polygon,
+            )
+        },
     )
     .unwrap();
 
     assert!(!saw_unknown);
     let stop_t = stop_values[0].clone();
     let stop_point = offset_point(&interior.point, &leaf.support.normal, &stop_t);
-    let corridor = bounds_between_points(&interior.point, &stop_point).unwrap();
+    let corridor = bounds_between_points(
+        &crate::test_support::approximate_decisions(),
+        &interior.point,
+        &stop_point,
+    )
+    .unwrap();
 
     let probes = strict_normal_probe_targets(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &leaf.support,
         &corridor,
@@ -6992,17 +7862,28 @@ fn strict_normal_probe_targets_preserve_family_uncertainty_for_slanted_leaf_case
 
 #[test]
 fn adjacent_normal_probes_find_positive_probe_for_slanted_leaf_case() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
 
-    let probes =
-        adjacent_normal_probes(&interior, &leaf.support, &bounds, &[leaf.clone()], true).unwrap();
+    let probes = adjacent_normal_probes(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &leaf.support,
+        &bounds,
+        &[leaf.clone()],
+        true,
+    )
+    .unwrap();
 
     assert!(
         probes
@@ -7013,17 +7894,28 @@ fn adjacent_normal_probes_find_positive_probe_for_slanted_leaf_case() {
 
 #[test]
 fn adjacent_normal_probes_preserve_family_uncertainty_for_slanted_leaf_case() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
 
-    let probes =
-        adjacent_normal_probes(&interior, &leaf.support, &bounds, &[leaf.clone()], true).unwrap();
+    let probes = adjacent_normal_probes(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &leaf.support,
+        &bounds,
+        &[leaf.clone()],
+        true,
+    )
+    .unwrap();
 
     assert!(
         probes
@@ -7039,33 +7931,56 @@ fn adjacent_normal_probes_preserve_family_uncertainty_for_slanted_leaf_case() {
 
 #[test]
 fn strict_normal_probe_targets_find_positive_probe_for_slanted_leaf_case_unrestricted() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior.point,
         &leaf.support.normal,
         &leaf.support,
         &bounds,
         &[leaf.clone()],
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
-        &mut |point, polygon| classify_point_in_polygon(point, polygon),
+        &mut |point, polygon| {
+            classify_point_in_polygon(
+                &crate::test_support::approximate_decisions(),
+                point,
+                polygon,
+            )
+        },
     )
     .unwrap();
 
     assert!(!saw_unknown);
     let stop_t = stop_values[0].clone();
     let stop_point = offset_point(&interior.point, &leaf.support.normal, &stop_t);
-    let corridor = bounds_between_points(&interior.point, &stop_point).unwrap();
+    let corridor = bounds_between_points(
+        &crate::test_support::approximate_decisions(),
+        &interior.point,
+        &stop_point,
+    )
+    .unwrap();
 
-    let probes =
-        strict_normal_probe_targets(&interior, &leaf.support, &corridor, None, &stop_point, true)
-            .unwrap();
+    let probes = strict_normal_probe_targets(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &leaf.support,
+        &corridor,
+        None,
+        &stop_point,
+        true,
+    )
+    .unwrap();
 
     assert!(
         probes
@@ -7076,37 +7991,58 @@ fn strict_normal_probe_targets_find_positive_probe_for_slanted_leaf_case_unrestr
 
 #[test]
 fn strict_normal_probe_direct_seed_phase_finds_positive_probe_for_slanted_leaf_case_unrestricted() {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior.point,
         &leaf.support.normal,
         &leaf.support,
         &bounds,
         &[leaf.clone()],
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
-        &mut |point, polygon| classify_point_in_polygon(point, polygon),
+        &mut |point, polygon| {
+            classify_point_in_polygon(
+                &crate::test_support::approximate_decisions(),
+                point,
+                polygon,
+            )
+        },
     )
     .unwrap();
 
     assert!(!saw_unknown);
     let stop_t = stop_values[0].clone();
     let stop_point = offset_point(&interior.point, &leaf.support.normal, &stop_t);
-    let corridor = bounds_between_points(&interior.point, &stop_point).unwrap();
+    let corridor = bounds_between_points(
+        &crate::test_support::approximate_decisions(),
+        &interior.point,
+        &stop_point,
+    )
+    .unwrap();
 
     let mut halfspaces = aabb_core_halfspaces(&corridor).unwrap();
     halfspaces.push(support_side_halfspace(&leaf.support, true));
     halfspaces.push(normal_stop_halfspace(&leaf.support, &stop_point, true));
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces).unwrap();
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(
+        &crate::test_support::approximate_decisions(),
+        &halfspaces,
+    )
+    .unwrap();
     assert!(!saw_unknown);
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
+            &crate::test_support::approximate_decisions(),
             &corridor,
             &halfspaces,
             report.as_ref(),
@@ -7115,6 +8051,7 @@ fn strict_normal_probe_direct_seed_phase_finds_positive_probe_for_slanted_leaf_c
         .unwrap();
 
     let probes = strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &leaf.support,
         &corridor,
@@ -7139,37 +8076,58 @@ fn strict_normal_probe_direct_seed_phase_finds_positive_probe_for_slanted_leaf_c
 #[test]
 fn strict_normal_probe_direct_seed_phase_keeps_certified_probe_for_slanted_leaf_case_unrestricted()
 {
-    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("slanted leaf should have a replayable interior witness");
+    let interior = certified_leaf_interior_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("slanted leaf should have a replayable interior witness");
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &crate::test_support::approximate_decisions(),
         &interior.point,
         &leaf.support.normal,
         &leaf.support,
         &bounds,
         &[leaf.clone()],
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
-        &mut |point, polygon| classify_point_in_polygon(point, polygon),
+        &mut |point, polygon| {
+            classify_point_in_polygon(
+                &crate::test_support::approximate_decisions(),
+                point,
+                polygon,
+            )
+        },
     )
     .unwrap();
 
     assert!(!saw_unknown);
     let stop_t = stop_values[0].clone();
     let stop_point = offset_point(&interior.point, &leaf.support.normal, &stop_t);
-    let corridor = bounds_between_points(&interior.point, &stop_point).unwrap();
+    let corridor = bounds_between_points(
+        &crate::test_support::approximate_decisions(),
+        &interior.point,
+        &stop_point,
+    )
+    .unwrap();
 
     let mut halfspaces = aabb_core_halfspaces(&corridor).unwrap();
     halfspaces.push(support_side_halfspace(&leaf.support, true));
     halfspaces.push(normal_stop_halfspace(&leaf.support, &stop_point, true));
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces).unwrap();
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(
+        &crate::test_support::approximate_decisions(),
+        &halfspaces,
+    )
+    .unwrap();
     assert!(!saw_unknown);
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
+            &crate::test_support::approximate_decisions(),
             &corridor,
             &halfspaces,
             report.as_ref(),
@@ -7178,6 +8136,7 @@ fn strict_normal_probe_direct_seed_phase_keeps_certified_probe_for_slanted_leaf_
         .unwrap();
 
     let probes = strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &interior,
         &leaf.support,
         &corridor,
@@ -7199,16 +8158,27 @@ fn strict_normal_probe_direct_seed_phase_keeps_certified_probe_for_slanted_leaf_
 
 #[test]
 fn strict_leaf_cell_points_retain_replayable_planes() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let center = p(1, 1, 1);
 
-    let interior = strict_leaf_cell_points(&leaf, &center)
-        .unwrap()
-        .into_iter()
-        .find(|point| !point.planes.is_empty())
-        .expect("strict leaf halfspaces should have a feasible witness");
+    let interior = strict_leaf_cell_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &center,
+    )
+    .unwrap()
+    .into_iter()
+    .find(|point| !point.planes.is_empty())
+    .expect("strict leaf halfspaces should have a feasible witness");
 
-    assert!(point_strictly_inside_leaf(&interior.point, &leaf).unwrap());
+    assert!(
+        point_strictly_inside_leaf(
+            &crate::test_support::approximate_decisions(),
+            &interior.point,
+            &leaf
+        )
+        .unwrap()
+    );
     assert!(!interior.planes.is_empty());
     let planes = &interior.planes[0];
     assert_eq!(affine_from_planes(planes).unwrap(), interior.point);
@@ -7217,10 +8187,10 @@ fn strict_leaf_cell_points_retain_replayable_planes() {
 
 #[test]
 fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let center = p(1, 1, 1);
     let vertices = leaf.vertices().unwrap();
-    let bounds = leaf_bounds(&vertices).unwrap();
+    let bounds = leaf_bounds(&crate::test_support::approximate_decisions(), &vertices).unwrap();
     let half = (Real::one() / Real::from(2)).unwrap();
     let mut halfspaces = vec![
         limit_plane_from_plane(&leaf.support),
@@ -7233,9 +8203,17 @@ fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
         )));
     }
 
-    let report = halfspace_feasibility_report(&halfspaces).unwrap();
+    let report =
+        halfspace_feasibility_report(&crate::test_support::approximate_decisions(), &halfspaces)
+            .unwrap();
     let report_witness = report.witness.clone();
-    let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+    let seeds = strict_halfspace_cell_seeds_from_report(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &report,
+    )
+    .unwrap();
     let mut direct_points = Vec::new();
     for seed in seeds {
         let active_planes = if report_witness.as_ref().is_some_and(|point| point == &seed) {
@@ -7243,14 +8221,26 @@ fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
         } else {
             [None, None, None]
         };
-        if let Some(point) =
-            build_strict_leaf_point(&leaf, &seed, &halfspaces, active_planes, false).unwrap()
+        if let Some(point) = build_strict_leaf_point(
+            &crate::test_support::approximate_decisions(),
+            &leaf,
+            &seed,
+            &halfspaces,
+            active_planes,
+            false,
+        )
+        .unwrap()
         {
             direct_points.push(point.point);
         }
     }
 
-    let interiors = strict_leaf_cell_points(&leaf, &center).unwrap();
+    let interiors = strict_leaf_cell_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &center,
+    )
+    .unwrap();
     let shifted = interiors
         .iter()
         .find(|point| !direct_points.iter().any(|direct| direct == &point.point))
@@ -7261,10 +8251,10 @@ fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
 
 #[test]
 fn strict_leaf_cell_points_merge_same_point_certified_shifted_replay_definitions() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let center = p(1, 1, 1);
     let vertices = leaf.vertices().unwrap();
-    let bounds = leaf_bounds(&vertices).unwrap();
+    let bounds = leaf_bounds(&crate::test_support::approximate_decisions(), &vertices).unwrap();
     let half = (Real::one() / Real::from(2)).unwrap();
     let mut halfspaces = vec![
         limit_plane_from_plane(&leaf.support),
@@ -7277,8 +8267,16 @@ fn strict_leaf_cell_points_merge_same_point_certified_shifted_replay_definitions
         )));
     }
 
-    let report = halfspace_feasibility_report(&halfspaces).unwrap();
-    let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+    let report =
+        halfspace_feasibility_report(&crate::test_support::approximate_decisions(), &halfspaces)
+            .unwrap();
+    let seeds = strict_halfspace_cell_seeds_from_report(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &report,
+    )
+    .unwrap();
     let witness = seeds[0].clone();
     let extra_definition = [
         leaf.support.clone(),
@@ -7288,6 +8286,7 @@ fn strict_leaf_cell_points_merge_same_point_certified_shifted_replay_definitions
     let visited = std::cell::RefCell::new(Vec::new());
 
     let interiors = strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         &leaf,
         &center,
         Some(&report),
@@ -7434,23 +8433,40 @@ fn normal_probe_shifted_seed_families_keep_raw_roots_without_certified_direct_pr
 
 #[test]
 fn strict_leaf_cell_points_return_only_strict_points() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let center = p(1, 1, 1);
 
-    let interiors = strict_leaf_cell_points(&leaf, &center).unwrap();
+    let interiors = strict_leaf_cell_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &center,
+    )
+    .unwrap();
 
     assert!(!interiors.is_empty());
     for interior in &interiors {
-        assert!(point_strictly_inside_leaf(&interior.point, &leaf).unwrap());
+        assert!(
+            point_strictly_inside_leaf(
+                &crate::test_support::approximate_decisions(),
+                &interior.point,
+                &leaf
+            )
+            .unwrap()
+        );
     }
 }
 
 #[test]
 fn strict_leaf_witness_points_include_shifted_leaf_vertices() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
 
-    let interiors = strict_leaf_witness_points(&leaf, &vertices).unwrap();
+    let interiors = strict_leaf_witness_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &vertices,
+    )
+    .unwrap();
 
     assert!(
         interiors
@@ -7462,13 +8478,21 @@ fn strict_leaf_witness_points_include_shifted_leaf_vertices() {
 
 #[test]
 fn strict_leaf_witness_points_extend_direct_family_with_stricter_leaf_cells() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
-    let bounds = leaf_bounds(&vertices).unwrap();
+    let bounds = leaf_bounds(&crate::test_support::approximate_decisions(), &vertices).unwrap();
     let halfspaces = leaf_halfspaces(&leaf);
-    let report = halfspace_feasibility_report(&halfspaces).unwrap();
+    let report =
+        halfspace_feasibility_report(&crate::test_support::approximate_decisions(), &halfspaces)
+            .unwrap();
     let report_witness = report.witness.clone();
-    let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+    let seeds = strict_halfspace_cell_seeds_from_report(
+        &crate::test_support::approximate_decisions(),
+        &bounds,
+        &halfspaces,
+        &report,
+    )
+    .unwrap();
 
     let mut direct_points = Vec::new();
     for seed in &seeds {
@@ -7477,8 +8501,15 @@ fn strict_leaf_witness_points_extend_direct_family_with_stricter_leaf_cells() {
         } else {
             [None, None, None]
         };
-        if let Some(point) =
-            build_strict_leaf_point(&leaf, seed, &halfspaces, active_planes, false).unwrap()
+        if let Some(point) = build_strict_leaf_point(
+            &crate::test_support::approximate_decisions(),
+            &leaf,
+            seed,
+            &halfspaces,
+            active_planes,
+            false,
+        )
+        .unwrap()
         {
             direct_points.push(point.point);
         }
@@ -7486,14 +8517,22 @@ fn strict_leaf_witness_points_extend_direct_family_with_stricter_leaf_cells() {
 
     let mut stricter_points = Vec::new();
     for point in &direct_points {
-        for stricter in strict_leaf_cell_points(&leaf, point).unwrap() {
+        for stricter in
+            strict_leaf_cell_points(&crate::test_support::approximate_decisions(), &leaf, point)
+                .unwrap()
+        {
             if !direct_points.iter().any(|direct| direct == &stricter.point) {
                 stricter_points.push(stricter.point);
             }
         }
     }
 
-    let interiors = strict_leaf_witness_points(&leaf, &vertices).unwrap();
+    let interiors = strict_leaf_witness_points(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &vertices,
+    )
+    .unwrap();
 
     assert!(!stricter_points.is_empty());
     assert!(
@@ -7505,7 +8544,7 @@ fn strict_leaf_witness_points_extend_direct_family_with_stricter_leaf_cells() {
 
 #[test]
 fn strict_leaf_witness_points_merge_stricter_replay_definitions_with_family_uncertainty() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
     let witness = p(1, 1, 1);
     let extra_definition = [
@@ -7515,6 +8554,7 @@ fn strict_leaf_witness_points_merge_stricter_replay_definitions_with_family_unce
     ];
 
     let interiors = strict_leaf_witness_points_with_seed_families_and_stricter_replay(
+        &crate::test_support::approximate_decisions(),
         &leaf,
         &vertices,
         &mut |_leaf, _vertices, _bounds, _halfspaces, _report| {
@@ -7550,10 +8590,11 @@ fn strict_leaf_witness_points_merge_stricter_replay_definitions_with_family_unce
 
 #[test]
 fn strict_leaf_witness_points_try_shifted_search_from_report_witness_seed() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
 
     let interiors = strict_leaf_witness_points_with_seed_families(
+        &crate::test_support::approximate_decisions(),
         &leaf,
         &vertices,
         |_leaf, _vertices, _bounds, _halfspaces, _report| {
@@ -7792,19 +8833,24 @@ fn leaf_point_build_collection_reports_unknown_if_all_candidates_are_uncertified
 
 #[test]
 fn certified_leaf_test_point_prefers_replayable_interior_witness() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
-    let expected_points = interior_leaf_points(&leaf)
-        .unwrap()
-        .into_iter()
-        .filter(|point| !point.planes.is_empty())
-        .map(|point| point.point)
-        .collect::<Vec<_>>();
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let expected_points =
+        interior_leaf_points(&crate::test_support::approximate_decisions(), &leaf)
+            .unwrap()
+            .into_iter()
+            .filter(|point| !point.planes.is_empty())
+            .map(|point| point.point)
+            .collect::<Vec<_>>();
 
-    let point = certified_leaf_test_point(&leaf.support, &leaf.edges)
-        .unwrap()
-        .expect("triangle leaf should have a certified strict interior point")
-        .to_affine_point()
-        .unwrap();
+    let point = certified_leaf_test_point(
+        &crate::test_support::approximate_decisions(),
+        &leaf.support,
+        &leaf.edges,
+    )
+    .unwrap()
+    .expect("triangle leaf should have a certified strict interior point")
+    .to_affine_point()
+    .unwrap();
 
     assert!(!expected_points.is_empty());
     assert!(expected_points.iter().any(|expected| expected == &point));
@@ -7812,9 +8858,10 @@ fn certified_leaf_test_point_prefers_replayable_interior_witness() {
 
 #[test]
 fn interior_leaf_points_drop_naked_centroid_when_replayable_points_exist() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
 
-    let points = interior_leaf_points(&leaf).unwrap();
+    let points =
+        interior_leaf_points(&crate::test_support::approximate_decisions(), &leaf).unwrap();
 
     assert!(!points.is_empty());
     assert!(points.iter().all(|point| !point.planes.is_empty()));
@@ -7833,6 +8880,7 @@ fn leaf_interior_definitions_include_non_basis_active_halfspaces() {
     ];
 
     let definitions = leaf_interior_definitions_from_active_halfspaces(
+        &crate::test_support::approximate_decisions(),
         &witness,
         &support,
         &halfspaces,
@@ -7853,13 +8901,20 @@ fn leaf_interior_definitions_include_non_basis_active_halfspaces() {
 
 #[test]
 fn strict_leaf_witness_retains_axis_definition_when_active_replay_fails() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = p(1, 1, 1);
     let halfspaces = vec![limit_plane_from_plane(&leaf.support)];
 
-    let point = build_strict_leaf_point(&leaf, &witness, &halfspaces, [Some(9), None, None], false)
-        .unwrap()
-        .expect("strict witness should still be retained");
+    let point = build_strict_leaf_point(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &witness,
+        &halfspaces,
+        [Some(9), None, None],
+        false,
+    )
+    .unwrap()
+    .expect("strict witness should still be retained");
 
     assert_eq!(point.point, witness);
     assert!(!point.uncertified_definition_fallback);
@@ -7879,35 +8934,50 @@ fn strict_leaf_witness_retains_axis_definition_when_active_replay_fails() {
 
 #[test]
 fn strict_leaf_witness_preserves_inherited_uncertified_definition_fallback() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = p(1, 1, 1);
     let halfspaces = vec![limit_plane_from_plane(&leaf.support)];
 
-    let point = build_strict_leaf_point(&leaf, &witness, &halfspaces, [None, None, None], true)
-        .unwrap()
-        .expect("strict witness should still be retained");
+    let point = build_strict_leaf_point(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &witness,
+        &halfspaces,
+        [None, None, None],
+        true,
+    )
+    .unwrap()
+    .expect("strict witness should still be retained");
 
     assert!(point.uncertified_definition_fallback);
 }
 
 #[test]
 fn strict_leaf_witness_reports_unknown_for_leaf_boundary_contact() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = p(3, 0, 0);
     let halfspaces = vec![limit_plane_from_plane(&leaf.support)];
 
     assert_eq!(
-        build_strict_leaf_point(&leaf, &witness, &halfspaces, [None, None, None], false),
+        build_strict_leaf_point(
+            &crate::test_support::approximate_decisions(),
+            &leaf,
+            &witness,
+            &halfspaces,
+            [None, None, None],
+            false
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_seed_family_unknown() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
 
     let points = strict_leaf_witness_points_with_seed_families(
+        &crate::test_support::approximate_decisions(),
         &leaf,
         &vertices,
         |_leaf, _vertices, _bounds, _halfspaces, _report| {
@@ -7931,16 +9001,23 @@ fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_seed_family_
 
 #[test]
 fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_boundary_seed_candidate() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
 
     let points = strict_leaf_witness_points_with_seed_families(
+        &crate::test_support::approximate_decisions(),
         &leaf,
         &vertices,
         |leaf, _vertices, _bounds, _halfspaces, _report| {
             let boundary_family = collect_strict_halfspace_seed_family(
                 Ok(vec![p(3, 0, 0), p(1, 1, 1)]),
-                |candidate| point_strictly_inside_leaf_or_unknown(candidate, leaf),
+                |candidate| {
+                    point_strictly_inside_leaf_or_unknown(
+                        &crate::test_support::approximate_decisions(),
+                        candidate,
+                        leaf,
+                    )
+                },
             )?;
             Ok(LeafWitnessSeedFamilies {
                 seeds: boundary_family.seeds,
@@ -7978,7 +9055,7 @@ fn leaf_witness_seed_family_gate_allows_shifted_seed_sources_after_unknown_direc
 
 #[test]
 fn strict_leaf_witness_from_shifted_witness_merges_definition_families() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = ShiftedHalfspaceWitness {
         point: p(1, 1, 1),
         families: vec![
@@ -7994,9 +9071,13 @@ fn strict_leaf_witness_from_shifted_witness_merges_definition_families() {
         uncertified_definition_fallback: false,
     };
 
-    let point = build_strict_leaf_point_from_shifted_witness(&leaf, &witness)
-        .unwrap()
-        .expect("shifted witness should still certify a strict leaf point");
+    let point = build_strict_leaf_point_from_shifted_witness(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &witness,
+    )
+    .unwrap()
+    .expect("shifted witness should still certify a strict leaf point");
 
     assert!(point.planes.iter().any(|definition| {
         definition
@@ -8012,7 +9093,7 @@ fn strict_leaf_witness_from_shifted_witness_merges_definition_families() {
 
 #[test]
 fn strict_leaf_witness_from_shifted_witness_reports_unknown_for_leaf_boundary_contact() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = ShiftedHalfspaceWitness {
         point: p(3, 0, 0),
         families: vec![ShiftedHalfspaceWitnessFamily {
@@ -8023,14 +9104,18 @@ fn strict_leaf_witness_from_shifted_witness_reports_unknown_for_leaf_boundary_co
     };
 
     assert_eq!(
-        build_strict_leaf_point_from_shifted_witness(&leaf, &witness),
+        build_strict_leaf_point_from_shifted_witness(
+            &crate::test_support::approximate_decisions(),
+            &leaf,
+            &witness
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 }
 
 #[test]
 fn strict_leaf_witness_from_shifted_witness_stays_certified_when_one_family_is_singular() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = ShiftedHalfspaceWitness {
         point: p(1, 1, 1),
         families: vec![
@@ -8049,9 +9134,13 @@ fn strict_leaf_witness_from_shifted_witness_stays_certified_when_one_family_is_s
         uncertified_definition_fallback: false,
     };
 
-    let point = build_strict_leaf_point_from_shifted_witness(&leaf, &witness)
-        .unwrap()
-        .expect("shifted witness should still certify a strict leaf point");
+    let point = build_strict_leaf_point_from_shifted_witness(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &witness,
+    )
+    .unwrap()
+    .expect("shifted witness should still certify a strict leaf point");
 
     assert_eq!(point.point, witness.point);
     assert!(!point.uncertified_definition_fallback);
@@ -8060,16 +9149,23 @@ fn strict_leaf_witness_from_shifted_witness_stays_certified_when_one_family_is_s
 
 #[test]
 fn strict_leaf_witness_keeps_certified_replay_after_invalid_active_index() {
-    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = approximate_convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = p(1, 1, 1);
     let halfspaces = vec![
         limit_plane_from_plane(&leaf.support),
         axis_halfspace(0, false, r(1)),
     ];
 
-    let point = build_strict_leaf_point(&leaf, &witness, &halfspaces, [Some(9), None, None], false)
-        .unwrap()
-        .expect("strict witness should still be retained");
+    let point = build_strict_leaf_point(
+        &crate::test_support::approximate_decisions(),
+        &leaf,
+        &witness,
+        &halfspaces,
+        [Some(9), None, None],
+        false,
+    )
+    .unwrap()
+    .expect("strict witness should still be retained");
 
     assert_eq!(point.point, witness);
     assert!(!point.uncertified_definition_fallback);
@@ -8106,6 +9202,7 @@ fn probe_definitions_include_non_basis_active_halfspaces() {
     ];
 
     let definitions = probe_definitions_from_active_halfspaces(
+        &crate::test_support::approximate_decisions(),
         &witness,
         &halfspaces,
         [Some(0), Some(1), None],
@@ -8129,8 +9226,12 @@ fn probe_definitions_include_non_basis_active_halfspaces() {
 fn probe_definitions_or_axis_falls_back_to_axis_definition() {
     let witness = p(1, 2, 3);
 
-    let (definitions, used_fallback) =
-        probe_definitions_or_axis(&witness, Err(HypermeshError::UnknownClassification)).unwrap();
+    let (definitions, used_fallback) = probe_definitions_or_axis(
+        &crate::test_support::approximate_decisions(),
+        &witness,
+        Err(HypermeshError::UnknownClassification),
+    )
+    .unwrap();
 
     assert_eq!(definitions, vec![axis_plane_definition(&witness)]);
     assert!(used_fallback);
@@ -8144,6 +9245,7 @@ fn strict_probe_witness_stays_certified_when_active_replay_is_singular() {
     let halfspaces = vec![axis_halfspace(2, false, r(2))];
 
     let probe = build_probe_point(
+        &crate::test_support::approximate_decisions(),
         &witness,
         &corridor,
         &support,
@@ -8170,6 +9272,7 @@ fn strict_probe_witness_preserves_inherited_uncertified_definition_fallback() {
     let halfspaces = vec![axis_halfspace(2, false, r(2))];
 
     let probe = build_probe_point(
+        &crate::test_support::approximate_decisions(),
         &witness,
         &corridor,
         &support,
@@ -8193,6 +9296,7 @@ fn strict_probe_witness_reports_unknown_for_support_boundary_contact() {
 
     assert_eq!(
         build_probe_point(
+            &crate::test_support::approximate_decisions(),
             &witness,
             &corridor,
             &support,
@@ -8224,9 +9328,15 @@ fn strict_probe_witness_from_shifted_witness_merges_definition_families() {
         uncertified_definition_fallback: false,
     };
 
-    let probe = build_probe_point_from_shifted_witness(&witness, &corridor, &support, &[])
-        .unwrap()
-        .expect("shifted witness should still certify a strict probe");
+    let probe = build_probe_point_from_shifted_witness(
+        &crate::test_support::approximate_decisions(),
+        &witness,
+        &corridor,
+        &support,
+        &[],
+    )
+    .unwrap()
+    .expect("shifted witness should still certify a strict probe");
 
     assert!(probe.planes.iter().any(|definition| {
         definition
@@ -8254,7 +9364,13 @@ fn strict_probe_witness_from_shifted_witness_reports_unknown_for_support_boundar
     };
 
     assert_eq!(
-        build_probe_point_from_shifted_witness(&witness, &corridor, &support, &[]),
+        build_probe_point_from_shifted_witness(
+            &crate::test_support::approximate_decisions(),
+            &witness,
+            &corridor,
+            &support,
+            &[]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 }
@@ -8278,9 +9394,15 @@ fn strict_probe_witness_from_shifted_witness_stays_certified_when_one_family_is_
         uncertified_definition_fallback: false,
     };
 
-    let probe = build_probe_point_from_shifted_witness(&witness, &corridor, &support, &[])
-        .unwrap()
-        .expect("shifted witness should still certify a strict probe");
+    let probe = build_probe_point_from_shifted_witness(
+        &crate::test_support::approximate_decisions(),
+        &witness,
+        &corridor,
+        &support,
+        &[],
+    )
+    .unwrap()
+    .expect("shifted witness should still certify a strict probe");
 
     assert_eq!(probe.point, witness.point);
     assert!(!probe.uncertified_definition_fallback);
@@ -8296,6 +9418,7 @@ fn strict_probe_witness_reports_unknown_for_halfspace_boundary_contact() {
 
     assert_eq!(
         build_probe_point(
+            &crate::test_support::approximate_decisions(),
             &witness,
             &corridor,
             &support,
@@ -8321,6 +9444,7 @@ fn strict_axis_probe_witness_stays_certified_when_active_replay_is_singular() {
     let halfspaces = vec![axis_halfspace(0, false, r(3))];
 
     let probe = build_axis_probe_point(
+        &crate::test_support::approximate_decisions(),
         &witness,
         &interior,
         &corridor,
@@ -8354,6 +9478,7 @@ fn strict_axis_probe_witness_preserves_inherited_uncertified_definition_fallback
     let halfspaces = vec![axis_halfspace(0, false, r(3))];
 
     let probe = build_axis_probe_point(
+        &crate::test_support::approximate_decisions(),
         &witness,
         &interior,
         &corridor,
@@ -8384,6 +9509,7 @@ fn strict_axis_probe_witness_reports_unknown_for_support_boundary_contact() {
 
     assert_eq!(
         build_axis_probe_point(
+            &crate::test_support::approximate_decisions(),
             &witness,
             &interior,
             &corridor,
@@ -8418,7 +9544,13 @@ fn strict_axis_probe_witness_from_shifted_witness_reports_unknown_for_support_bo
 
     assert_eq!(
         build_axis_probe_point_from_shifted_witness(
-            &witness, &interior, &corridor, &support, 0, None
+            &crate::test_support::approximate_decisions(),
+            &witness,
+            &interior,
+            &corridor,
+            &support,
+            0,
+            None
         ),
         Err(HypermeshError::UnknownClassification)
     );
@@ -8449,7 +9581,13 @@ fn strict_axis_probe_witness_from_shifted_witness_stays_certified_when_one_famil
     };
 
     let probe = build_axis_probe_point_from_shifted_witness(
-        &witness, &interior, &corridor, &support, 0, None,
+        &crate::test_support::approximate_decisions(),
+        &witness,
+        &interior,
+        &corridor,
+        &support,
+        0,
+        None,
     )
     .unwrap()
     .expect("shifted witness should still certify a strict axis probe");
@@ -8473,7 +9611,13 @@ fn strict_probe_witness_from_shifted_witness_reports_unknown_for_halfspace_bound
     };
 
     assert_eq!(
-        build_probe_point_from_shifted_witness(&witness, &corridor, &support, &[]),
+        build_probe_point_from_shifted_witness(
+            &crate::test_support::approximate_decisions(),
+            &witness,
+            &corridor,
+            &support,
+            &[]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 }
@@ -8492,6 +9636,7 @@ fn strict_axis_probe_witness_reports_unknown_for_halfspace_boundary_contact() {
 
     assert_eq!(
         build_axis_probe_point(
+            &crate::test_support::approximate_decisions(),
             &witness,
             &interior,
             &corridor,
@@ -8705,19 +9850,26 @@ fn duplicate_interior_points_prefer_certified_duplicate_definitions() {
 
 #[test]
 fn plane_replacement_path_traces_certified_winding_steps() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let start = axis_plane_defined_point(&p(0, 0, 0));
     let end = axis_plane_defined_point(&p(2, 0, 0));
 
-    let winding = trace_plane_replacement_path(&start.planes, &end.planes, &[0], &[wall]).unwrap();
+    let winding = trace_plane_replacement_path(
+        &crate::test_support::approximate_decisions(),
+        &start.planes,
+        &end.planes,
+        &[0],
+        &[wall],
+    )
+    .unwrap();
 
     assert_eq!(winding, vec![-1]);
 }
 
 #[test]
 fn retained_reference_definitions_try_later_plane_replacement_paths() {
-    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let invalid_start = [
         Plane::axis_aligned(0, r(0)),
@@ -8728,6 +9880,7 @@ fn retained_reference_definitions_try_later_plane_replacement_paths() {
     let end = axis_plane_defined_point(&p(2, 0, 0));
 
     let winding = trace_probe_from_reference_definitions(
+        &crate::test_support::approximate_decisions(),
         &p(0, 0, 0),
         &[invalid_start, valid_start.planes],
         &p(2, 0, 0),
@@ -8759,15 +9912,29 @@ fn retained_probe_definitions_try_later_plane_replacement_paths() {
         planes: vec![invalid_probe_definition, axis_plane_definition(&p(2, 1, 0))],
         uncertified_definition_fallback: false,
     };
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
-        trace_segment_without_detours(&ref_point, &probe.point, &[0], &[wall.clone()]),
+        trace_segment_without_detours(
+            &crate::test_support::approximate_decisions(),
+            &ref_point,
+            &probe.point,
+            &[0],
+            &[wall.clone()]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 
-    let winding = trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall]).unwrap();
+    let winding = trace_probe_winding(
+        &crate::test_support::approximate_decisions(),
+        &ref_point,
+        &ref_definitions,
+        &probe,
+        &[0],
+        &[wall],
+    )
+    .unwrap();
 
     assert_eq!(winding, vec![0]);
 }
@@ -8786,15 +9953,22 @@ fn retained_definition_segment_search_continues_after_uncertified_direct_family(
         Plane::axis_aligned(0, r(0)),
     ];
     let probe_point = p(2, 1, 0);
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
-        trace_segment_without_detours(&ref_point, &probe_point, &[0], &[wall.clone()]),
+        trace_segment_without_detours(
+            &crate::test_support::approximate_decisions(),
+            &ref_point,
+            &probe_point,
+            &[0],
+            &[wall.clone()]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 
     let winding = trace_segment_from_definitions_with_step_detoured_plane_replacement(
+        &crate::test_support::approximate_decisions(),
         &ref_point,
         &probe_point,
         &[0],
@@ -8816,12 +9990,13 @@ fn retained_plane_replacement_skips_mismatched_start_definition() {
     let end = p(0, 1, 0);
     let mismatched_start = axis_plane_definition(&p(2, 0, 0));
     let end_definition = axis_plane_definition(&end);
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, 2, -2), &p(1, 0, 2), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, 2, -2), &p(1, 0, 2), 0, 0);
     wall.delta_w = vec![1];
     let mut no_detour_cache = Vec::new();
     let mut detour_target_cache = DetourTargetFamilyCache::default();
 
     let winding = trace_from_definition_sets_with_step_detoured_plane_replacement(
+        &crate::test_support::approximate_decisions(),
         &start,
         &[mismatched_start],
         &end,
@@ -8931,23 +10106,36 @@ fn definition_pair_trace_search_skips_permuted_definition_pairs() {
 #[test]
 fn detour_legs_retry_direct_paths_when_axis_order_fails() {
     let blockers = vec![
-        convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0),
-        convex_triangle(&p(0, 1, 0), &p(1, 1, 0), &p(0, 2, 0), 0, 1),
-        convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 2),
+        approximate_convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 1, 0), &p(1, 1, 0), &p(0, 2, 0), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 2),
     ];
 
     assert_eq!(
-        trace_axis_ordered_paths(&p(0, 0, 0), &p(1, 1, 1), &[0], &blockers),
+        trace_axis_ordered_paths(
+            &crate::test_support::approximate_decisions(),
+            &p(0, 0, 0),
+            &p(1, 1, 1),
+            &[0],
+            &blockers
+        ),
         Err(HypermeshError::UnknownClassification)
     );
     assert_eq!(
-        trace_direct_segment(&p(0, 0, 0), &p(1, 1, 1), &[0], &blockers)
-            .unwrap()
-            .winding,
+        trace_direct_segment(
+            &crate::test_support::approximate_decisions(),
+            &p(0, 0, 0),
+            &p(1, 1, 1),
+            &[0],
+            &blockers
+        )
+        .unwrap()
+        .winding,
         vec![0]
     );
 
     let traced = trace_segment_via_detours_with_definitions_budget(
+        &crate::test_support::approximate_decisions(),
         &p(0, 0, 0),
         &p(2, 2, 2),
         &[0],
@@ -8962,6 +10150,7 @@ fn detour_legs_retry_direct_paths_when_axis_order_fails() {
         1,
         &mut |start, end, winding, start_definitions, end_definitions| {
             trace_segment_with_definitions_no_detours(
+                &crate::test_support::approximate_decisions(),
                 start,
                 end,
                 winding,
@@ -8979,7 +10168,7 @@ fn detour_legs_retry_direct_paths_when_axis_order_fails() {
 
 #[test]
 fn detour_legs_retry_plane_replacement_from_detour_definitions() {
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let detour = DetourTarget {
         point: p(2, 1, 0),
@@ -8992,12 +10181,19 @@ fn detour_legs_retry_plane_replacement_from_detour_definitions() {
     };
 
     assert_eq!(
-        trace_segment_without_detours(&p(0, 0, 0), &detour.point, &[0], &[wall.clone()])
-            .unwrap_err(),
+        trace_segment_without_detours(
+            &crate::test_support::approximate_decisions(),
+            &p(0, 0, 0),
+            &detour.point,
+            &[0],
+            &[wall.clone()]
+        )
+        .unwrap_err(),
         HypermeshError::UnknownClassification
     );
 
     let traced = trace_segment_via_detours_with_definitions_budget(
+        &crate::test_support::approximate_decisions(),
         &p(0, 0, 0),
         &p(2, 2, 0),
         &[0],
@@ -9008,6 +10204,7 @@ fn detour_legs_retry_plane_replacement_from_detour_definitions() {
         1,
         &mut |start, end, winding, start_definitions, end_definitions| {
             trace_segment_with_definitions_no_detours(
+                &crate::test_support::approximate_decisions(),
                 start,
                 end,
                 winding,
@@ -9025,7 +10222,7 @@ fn detour_legs_retry_plane_replacement_from_detour_definitions() {
 
 #[test]
 fn detour_legs_can_use_retained_start_definitions() {
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let start = p(0, 0, 0);
     let end = p(2, 2, 0);
@@ -9041,6 +10238,7 @@ fn detour_legs_can_use_retained_start_definitions() {
     };
 
     let without_retained_start = trace_segment_via_detours_with_definitions_budget(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9051,6 +10249,7 @@ fn detour_legs_can_use_retained_start_definitions() {
         1,
         &mut |start, end, winding, start_definitions, end_definitions| {
             trace_segment_with_definitions_no_detours(
+                &crate::test_support::approximate_decisions(),
                 start,
                 end,
                 winding,
@@ -9067,6 +10266,7 @@ fn detour_legs_can_use_retained_start_definitions() {
     );
 
     let with_retained_start = trace_segment_via_detours_with_definitions_budget(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9077,6 +10277,7 @@ fn detour_legs_can_use_retained_start_definitions() {
         1,
         &mut |start, end, winding, start_definitions, end_definitions| {
             trace_segment_with_definitions_no_detours(
+                &crate::test_support::approximate_decisions(),
                 start,
                 end,
                 winding,
@@ -9104,6 +10305,7 @@ fn detour_search_continues_after_uncertified_no_detour_family() {
     };
 
     let traced = trace_segment_from_definitions_with_budget_impl(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9147,6 +10349,7 @@ fn detour_search_reports_unknown_if_all_detours_are_uncertified() {
     };
 
     let err = trace_segment_via_detours_with_definitions_budget(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9187,6 +10390,7 @@ fn detour_trace_reports_unknown_when_fallback_surface_detour_is_skipped() {
     }];
 
     let err = trace_segment_via_detours_with_definitions_budget(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9214,6 +10418,7 @@ fn detour_trace_reports_unknown_when_fallback_revisited_detour_is_skipped() {
     };
 
     let err = trace_segment_from_definitions_with_cycle_guard_impl(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9243,6 +10448,7 @@ fn detour_trace_cycle_guard_tries_later_detour_after_uncertified_surface_query()
     let mut surface_cache = Vec::new();
 
     let winding = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9295,6 +10501,7 @@ fn detour_trace_cycle_guard_allows_same_point_definition_transition_at_start() {
         Plane::new(Point3::new(r(1), r(1), r(1)), r(0)),
     ];
     let winding = trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[5],
@@ -9362,6 +10569,7 @@ fn detour_trace_cycle_guard_allows_same_point_definition_transition_on_surface()
     ];
 
     let winding = trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[5],
@@ -9433,6 +10641,7 @@ fn detour_trace_cycle_guard_allows_revisiting_point_with_new_definitions() {
     ];
 
     let winding = trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[5],
@@ -9532,6 +10741,7 @@ fn detour_trace_cycle_guard_accepts_fallback_detour_after_both_legs_succeed() {
     let mut surface_cache = Vec::new();
 
     let winding = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9580,6 +10790,7 @@ fn detour_trace_cycle_guard_accepts_only_fallback_detour_after_both_legs_succeed
     let mut surface_cache = Vec::new();
 
     let winding = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9613,10 +10824,11 @@ fn detour_trace_cycle_guard_tries_later_detour_after_boundary_surface_query() {
     let first_detour = p(1, 0, 0);
     let second_detour = p(2, 0, 1);
     let end = p(3, 0, 0);
-    let polygon = convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
     let mut surface_cache = Vec::new();
 
     let winding = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9642,7 +10854,13 @@ fn detour_trace_cycle_guard_tries_later_detour_after_boundary_surface_query() {
             &[axis_plane_definition(&end)],
         ),
         &mut surface_cache,
-        &mut |point| point_lies_on_traced_surface(point, std::slice::from_ref(&polygon)),
+        &mut |point| {
+            point_lies_on_traced_surface(
+                &crate::test_support::approximate_decisions(),
+                point,
+                std::slice::from_ref(&polygon),
+            )
+        },
         &mut |_from, _to, winding, _start_definitions, _end_definitions| Ok(Some(winding.to_vec())),
         &mut |_from, _to| Ok(Vec::new()),
     )
@@ -9653,13 +10871,24 @@ fn detour_trace_cycle_guard_tries_later_detour_after_boundary_surface_query() {
 
 #[test]
 fn point_lies_on_traced_surface_reports_unknown_for_boundary_contact() {
-    let polygon = convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
+    let polygon = approximate_convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
 
     assert_eq!(
-        point_lies_on_traced_surface(&p(1, 0, 0), std::slice::from_ref(&polygon)),
+        point_lies_on_traced_surface(
+            &crate::test_support::approximate_decisions(),
+            &p(1, 0, 0),
+            std::slice::from_ref(&polygon)
+        ),
         Err(HypermeshError::UnknownClassification)
     );
-    assert!(!point_lies_on_traced_surface(&p(3, 3, 0), &[polygon]).unwrap());
+    assert!(
+        !point_lies_on_traced_surface(
+            &crate::test_support::approximate_decisions(),
+            &p(3, 3, 0),
+            &[polygon]
+        )
+        .unwrap()
+    );
 }
 
 #[test]
@@ -9672,6 +10901,7 @@ fn detour_trace_cycle_guard_reports_unknown_when_surface_query_is_uncertified_an
     let mut surface_cache = Vec::new();
 
     let err = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -9726,15 +10956,29 @@ fn axis_defined_probes_retry_plane_replacement_from_reference_definitions() {
         planes: Vec::new(),
         uncertified_definition_fallback: false,
     };
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
-        trace_segment_without_detours(&ref_point, &probe.point, &[0], &[wall.clone()]),
+        trace_segment_without_detours(
+            &crate::test_support::approximate_decisions(),
+            &ref_point,
+            &probe.point,
+            &[0],
+            &[wall.clone()]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 
-    let winding = trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall]).unwrap();
+    let winding = trace_probe_winding(
+        &crate::test_support::approximate_decisions(),
+        &ref_point,
+        &ref_definitions,
+        &probe,
+        &[0],
+        &[wall],
+    )
+    .unwrap();
 
     assert_eq!(winding, vec![0]);
 }
@@ -9742,7 +10986,7 @@ fn axis_defined_probes_retry_plane_replacement_from_reference_definitions() {
 #[test]
 fn probe_reachability_retries_plane_replacement_from_retained_definitions() {
     let host_support = Plane::axis_aligned(2, r(0));
-    let blocker = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let blocker = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
     let interior = InteriorLeafPoint {
         point: p(0, 0, 0),
         planes: vec![[
@@ -9765,6 +11009,7 @@ fn probe_reachability_retries_plane_replacement_from_retained_definitions() {
 
     assert_eq!(
         probe_reaches_adjacent_cell(
+            &crate::test_support::approximate_decisions(),
             &interior.point,
             &probe.point,
             &host_support,
@@ -9773,18 +11018,30 @@ fn probe_reachability_retries_plane_replacement_from_retained_definitions() {
         Err(HypermeshError::UnknownClassification)
     );
     assert!(
-        probe_reaches_adjacent_cell_from_interior(&interior, &probe, &host_support, &[blocker],)
-            .unwrap()
+        probe_reaches_adjacent_cell_from_interior(
+            &crate::test_support::approximate_decisions(),
+            &interior,
+            &probe,
+            &host_support,
+            &[blocker],
+        )
+        .unwrap()
     );
 }
 
 #[test]
 fn probe_reaches_adjacent_cell_reports_unknown_for_boundary_crossing() {
     let host_support = Plane::axis_aligned(2, r(0));
-    let blocker = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let blocker = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
 
     assert_eq!(
-        probe_reaches_adjacent_cell(&p(0, 0, 0), &p(2, 0, 0), &host_support, &[blocker]),
+        probe_reaches_adjacent_cell(
+            &crate::test_support::approximate_decisions(),
+            &p(0, 0, 0),
+            &p(2, 0, 0),
+            &host_support,
+            &[blocker]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 }
@@ -9792,10 +11049,11 @@ fn probe_reaches_adjacent_cell_reports_unknown_for_boundary_crossing() {
 #[test]
 fn probe_polyline_classifies_internal_surface_vertex_from_incident_sides() {
     let host_support = Plane::axis_aligned(2, r(-10));
-    let wall = convex_triangle(&p(-4, 4, -4), &p(4, -4, -4), &p(0, 0, 4), 0, 0);
+    let wall = approximate_convex_triangle(&p(-4, 4, -4), &p(4, -4, -4), &p(0, 0, 4), 0, 0);
 
     assert!(
         !probe_polyline_reaches_adjacent_cell(
+            &crate::test_support::approximate_decisions(),
             &[p(-1, 0, 0), p(0, 0, 0), p(0, 1, 0)],
             &host_support,
             std::slice::from_ref(&wall),
@@ -9804,6 +11062,7 @@ fn probe_polyline_classifies_internal_surface_vertex_from_incident_sides() {
     );
     assert!(
         probe_polyline_reaches_adjacent_cell(
+            &crate::test_support::approximate_decisions(),
             &[p(-1, 0, 0), p(0, 0, 0), p(-1, 0, 1)],
             &host_support,
             &[wall],
@@ -9815,12 +11074,13 @@ fn probe_polyline_classifies_internal_surface_vertex_from_incident_sides() {
 #[test]
 fn no_step_plane_replacement_classifies_axis_path_vertex_crossings_as_blocked() {
     let host_support = Plane::axis_aligned(2, r(5));
-    let wall = convex_triangle(&p(5, 1, 1), &p(5, 5, 9), &p(4, 5, 4), 0, 1);
+    let wall = approximate_convex_triangle(&p(5, 1, 1), &p(5, 5, 9), &p(4, 5, 4), 0, 1);
     let start = Point3::new(q(5983, 1350), q(1787, 450), q(2431, 675));
     let end = Point3::new(q(6523, 1500), q(21217, 5400), q(271, 75));
 
     assert!(
         !plane_replacement_path_reaches_adjacent_cell_without_step_detours(
+            &crate::test_support::approximate_decisions(),
             &axis_plane_definition(&start),
             &axis_plane_definition(&end),
             &host_support,
@@ -9834,16 +11094,31 @@ fn no_step_plane_replacement_classifies_axis_path_vertex_crossings_as_blocked() 
 fn probe_reaches_adjacent_cell_accepts_zero_length_clear_point() {
     let host_support = Plane::axis_aligned(2, r(0));
 
-    assert!(probe_reaches_adjacent_cell(&p(1, 1, 1), &p(1, 1, 1), &host_support, &[]).unwrap());
+    assert!(
+        probe_reaches_adjacent_cell(
+            &crate::test_support::approximate_decisions(),
+            &p(1, 1, 1),
+            &p(1, 1, 1),
+            &host_support,
+            &[]
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn probe_reaches_adjacent_cell_reports_unknown_for_zero_length_surface_contact() {
     let host_support = Plane::axis_aligned(2, r(0));
-    let blocker = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let blocker = approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     assert_eq!(
-        probe_reaches_adjacent_cell(&p(1, 0, 0), &p(1, 0, 0), &host_support, &[blocker]),
+        probe_reaches_adjacent_cell(
+            &crate::test_support::approximate_decisions(),
+            &p(1, 0, 0),
+            &p(1, 0, 0),
+            &host_support,
+            &[blocker]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 }
@@ -9895,7 +11170,7 @@ fn probe_reachability_definition_search_skips_mismatched_endpoint_definitions() 
 #[test]
 fn probe_reachability_definition_search_continues_after_boundary_direct_check() {
     let host_support = Plane::axis_aligned(2, r(0));
-    let blocker = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let blocker = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
     let start = p(0, 0, 0);
     let end = p(2, 0, 0);
 
@@ -9907,6 +11182,7 @@ fn probe_reachability_definition_search_continues_after_boundary_direct_check() 
             &[axis_plane_definition(&end)],
             || {
                 probe_reaches_adjacent_cell(
+                    &crate::test_support::approximate_decisions(),
                     &start,
                     &end,
                     &host_support,
@@ -10047,7 +11323,7 @@ fn probe_reachability_definition_search_preferring_precheck_prioritizes_unknown_
 #[test]
 fn probe_step_detour_helper_retries_lower_definition_trace() {
     let host_support = Plane::axis_aligned(2, r(0));
-    let blocker = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let blocker = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
     let interior = InteriorLeafPoint {
         point: p(0, 0, 0),
         planes: vec![[
@@ -10070,6 +11346,7 @@ fn probe_step_detour_helper_retries_lower_definition_trace() {
 
     assert!(
         probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions(
+            &crate::test_support::approximate_decisions(),
             &interior.point,
             &probe.point,
             &host_support,
@@ -10141,6 +11418,7 @@ fn probe_step_detour_runtime_allows_three_nested_detours() {
 
     assert!(
         probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -10157,6 +11435,7 @@ fn probe_step_detour_runtime_allows_three_nested_detours() {
     let mut surface_cache = Vec::new();
     assert!(
         probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &start_definitions,
@@ -10221,6 +11500,7 @@ fn breadth_first_probe_detours_try_shallow_sibling_before_deeper_branch() {
 
     assert!(
         probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &definitions(&start),
@@ -10245,6 +11525,7 @@ fn breadth_first_probe_detours_accept_fallback_only_complete_path() {
     let mut surface_cache = Vec::new();
 
     let reaches = probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &definitions(&start),
@@ -10281,6 +11562,7 @@ fn breadth_first_probe_detours_preserve_unknown_after_failed_earlier_batch() {
     let mut surface_cache = Vec::new();
 
     let err = probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &definitions(&start),
@@ -10320,6 +11602,7 @@ fn breadth_first_probe_detours_prune_repeated_arrangement_cell() {
     let mut surface_cache = Vec::new();
 
     let reaches = probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &definitions(&start),
@@ -10355,6 +11638,7 @@ fn breadth_first_probe_detours_do_not_reenqueue_cell_from_later_batch() {
     let mut surface_cache = Vec::new();
 
     let reaches = probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &definitions(&start),
@@ -10411,6 +11695,7 @@ fn breadth_first_probe_detours_resume_later_batch_before_deeper_path() {
 
     assert!(
         probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &definitions(&start),
@@ -10472,6 +11757,7 @@ fn breadth_first_trace_detours_propagate_winding_and_resume_later_batch() {
     let mut surface_cache = Vec::new();
 
     let winding = trace_segment_with_detour_batches_breadth_first_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -10538,6 +11824,7 @@ fn breadth_first_trace_detours_keep_later_distinct_arrangement_cell_path() {
     let mut surface_cache = Vec::new();
 
     let winding = trace_segment_with_detour_batches_breadth_first_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -10588,6 +11875,7 @@ fn breadth_first_trace_detours_do_not_reenqueue_cell_from_later_batch() {
     let mut surface_cache = Vec::new();
 
     let err = trace_segment_with_detour_batches_breadth_first_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -10635,6 +11923,7 @@ fn breadth_first_trace_detours_accept_fallback_only_complete_path() {
     let mut surface_cache = Vec::new();
 
     let winding = trace_segment_with_detour_batches_breadth_first_with_surface_query(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -10673,13 +11962,13 @@ fn probe_reachability_uses_geometry_seeded_arrangement_detour_replacement_leg() 
     let start = p(0, 0, 0);
     let end = p(4, 4, 4);
     let mut blockers = vec![
-        convex_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
-        convex_triangle(&p(0, 4, 0), &p(1, 4, 0), &p(0, 5, 0), 0, 1),
-        convex_triangle(&p(0, 0, 4), &p(1, 0, 4), &p(0, 1, 4), 0, 2),
+        approximate_convex_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 4, 0), &p(1, 4, 0), &p(0, 5, 0), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 4), &p(1, 0, 4), &p(0, 1, 4), 0, 2),
     ];
 
     for (index, x) in [q(4, 3), r(2), q(8, 3)].into_iter().enumerate() {
-        blockers.push(convex_triangle(
+        blockers.push(approximate_convex_triangle(
             &px(x.clone(), -1, -1),
             &px(x.clone(), 5, -1),
             &px(x, 2, 5),
@@ -10688,7 +11977,16 @@ fn probe_reachability_uses_geometry_seeded_arrangement_detour_replacement_leg() 
         ));
     }
 
-    assert!(!probe_reaches_adjacent_cell(&start, &end, &host_support, &blockers).unwrap());
+    assert!(
+        !probe_reaches_adjacent_cell(
+            &crate::test_support::approximate_decisions(),
+            &start,
+            &end,
+            &host_support,
+            &blockers
+        )
+        .unwrap()
+    );
     assert!(
         probe_reaches_adjacent_cell_via_progressive_detours(
             &start,
@@ -10851,6 +12149,7 @@ fn probe_step_detour_cycle_guard_reports_unknown_when_fallback_detour_has_no_pat
     };
 
     let err = probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[],
@@ -10905,6 +12204,7 @@ fn probe_step_detour_cycle_guard_reports_unknown_when_fallback_surface_detour_is
     };
 
     let err = probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &polygons,
@@ -10948,6 +12248,7 @@ fn probe_step_detour_cycle_guard_reports_unknown_when_fallback_revisited_detour_
     };
 
     let err = probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[],
@@ -10977,7 +12278,7 @@ fn probe_step_detour_cycle_guard_tries_later_detour_after_uncertified_surface_qu
     let mut surface_cache = Vec::new();
 
     assert!(
-        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11035,7 +12336,7 @@ fn probe_step_detour_cycle_guard_allows_same_point_definition_transition_at_star
     ];
 
     assert!(
-        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11092,7 +12393,7 @@ fn probe_step_detour_cycle_guard_allows_same_point_definition_transition_on_surf
     ];
 
     assert!(
-        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11153,7 +12454,7 @@ fn probe_step_detour_cycle_guard_allows_revisiting_point_with_new_definitions() 
     ];
 
     assert!(
-        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11227,7 +12528,7 @@ fn probe_step_detour_cycle_guard_accepts_first_fallback_detour_after_path_succee
     let end = p(3, 0, 0);
 
     assert!(
-        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11279,7 +12580,7 @@ fn probe_step_detour_cycle_guard_accepts_only_fallback_detour_after_path_succeed
     let end = p(2, 0, 0);
 
     let reaches =
-        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11346,7 +12647,7 @@ fn probe_step_detour_cycle_guard_reuses_surface_queries_across_failed_branches()
     let mut query_calls = 0;
 
     assert!(
-        !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11417,6 +12718,7 @@ fn probe_step_detour_entry_reuses_no_detour_and_detour_family_queries() {
 
     assert!(
         !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11472,6 +12774,7 @@ fn probe_reachability_from_definitions_shared_query_caches_reuse_equivalent_call
 
     let first =
         probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11498,6 +12801,7 @@ fn probe_reachability_from_definitions_shared_query_caches_reuse_equivalent_call
     let detour_len = detour_target_cache.len();
     let second =
         probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11559,7 +12863,7 @@ fn no_plane_cycle_guard_reuses_cached_whole_query_false_across_visited_points() 
     let mut detour_calls = 0;
 
     let result =
-        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -11620,7 +12924,7 @@ fn no_plane_cycle_guard_reuses_cached_whole_query_true_for_initial_visited_point
     let mut detour_calls = 0;
 
     let result =
-        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -12143,7 +13447,11 @@ fn ordered_interior_points_for_probe_search_prefers_axis_aligned_definition_plan
         partly_axis_aligned.clone(),
         most_axis_aligned.clone(),
     ];
-    let ordered = ordered_interior_points_for_probe_search(&points);
+    let ordered = ordered_interior_points_for_probe_search(
+        &crate::test_support::approximate_decisions(),
+        &points,
+    )
+    .unwrap();
 
     assert_eq!(ordered[0].point, most_axis_aligned.point);
     assert_eq!(ordered[1].point, partly_axis_aligned.point);
@@ -12153,7 +13461,6 @@ fn ordered_interior_points_for_probe_search_prefers_axis_aligned_definition_plan
 #[test]
 fn ordered_interior_points_for_probe_search_with_support_prefers_retained_definition_points_in_root_host_fixture()
  {
-    use crate::mesh::polygon_soup;
     use crate::polygon::ConvexPolygon;
 
     fn tetra_from_face_and_apex(
@@ -12190,7 +13497,8 @@ fn ordered_interior_points_for_probe_search_with_support_prefers_retained_defini
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = soup.polygons.clone();
     let host = face_at(&polygons, 0, 1);
     let intersections = polygons
@@ -12201,13 +13509,17 @@ fn ordered_interior_points_for_probe_search_with_support_prefers_retained_defini
             {
                 return None;
             }
-            let intersection =
-                crate::intersection::intersect_polygons(&host, polygon, index).ok()?;
+            let intersection = approximate_intersect_polygons(&host, polygon, index).ok()?;
             Some(intersection)
         })
         .collect::<Vec<_>>();
-    let bsp_leaves =
-        crate::subdivision::build_host_bsp_leaves(&host, &polygons, &intersections).unwrap();
+    let bsp_leaves = crate::subdivision::build_host_bsp_leaves(
+        &crate::test_support::approximate_decisions(),
+        &host,
+        &polygons,
+        &intersections,
+    )
+    .unwrap();
 
     let mut checked = 0;
     for (leaf_index, leaf) in bsp_leaves.iter().enumerate() {
@@ -12219,9 +13531,12 @@ fn ordered_interior_points_for_probe_search_with_support_prefers_retained_defini
         else {
             continue;
         };
-        let ordered =
-            ordered_interior_points_for_probe_search_with_support(&interior_points, &host.support)
-                .unwrap();
+        let ordered = ordered_interior_points_for_probe_search_with_support(
+            &crate::test_support::approximate_decisions(),
+            &interior_points,
+            &host.support,
+        )
+        .unwrap();
         let ordered_indices = ordered
             .iter()
             .map(|ordered_point| {
@@ -12582,7 +13897,7 @@ fn probe_reachability_cycle_guard_tries_detours_after_uncertified_direct_check()
     };
 
     assert!(
-        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -12617,7 +13932,7 @@ fn probe_reachability_cycle_guard_reports_unknown_when_direct_check_is_uncertifi
     let mut detours_for = |_from: &Point3, _to: &Point3| Ok(Vec::new());
 
     let err =
-        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(&crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -12960,6 +14275,7 @@ fn probe_plane_replacement_step_detour_budget_uses_single_detour() {
 
     assert!(
         !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -12972,6 +14288,7 @@ fn probe_plane_replacement_step_detour_budget_uses_single_detour() {
 
     assert!(
         probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[],
@@ -13010,6 +14327,7 @@ fn probe_winding_plane_replacement_step_detour_budget_uses_single_detour() {
 
     assert_eq!(
         trace_segment_with_detours_without_plane_replacement_impl(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[0],
@@ -13024,6 +14342,7 @@ fn probe_winding_plane_replacement_step_detour_budget_uses_single_detour() {
 
     assert_eq!(
         trace_segment_with_detours_without_plane_replacement_impl(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[0],
@@ -13066,6 +14385,7 @@ fn no_detour_segment_search_backtracks_after_uncertified_direct_family() {
 
     assert_eq!(
         trace_segment_with_detours_without_plane_replacement_impl(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[0],
@@ -13126,6 +14446,7 @@ fn probe_plane_replacement_step_detours_preserve_intermediate_definitions() {
 
     assert!(
         plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+            &crate::test_support::approximate_decisions(),
             &start_definition,
             &end_definition,
             PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
@@ -13160,6 +14481,7 @@ fn probe_plane_replacement_reachability_surfaces_uncertified_intermediate_orderi
     let mut step_cache = PlaneReplacementReachabilityStepCache::default();
 
     let err = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
@@ -13182,6 +14504,7 @@ fn plane_replacement_reachability_step_reuses_equivalent_steps_across_orderings(
 
     assert!(
         !plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+            &crate::test_support::approximate_decisions(),
             &start_definition,
             &end_definition,
             PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
@@ -13207,6 +14530,7 @@ fn plane_replacement_reachability_tries_later_ordering_after_uncertified_step() 
 
     assert!(
         plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+            &crate::test_support::approximate_decisions(),
             &start_definition,
             &end_definition,
             PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
@@ -13657,7 +14981,6 @@ fn plane_replacement_no_nested_ordering_warmup_reuses_cached_local_warm_state() 
 
 #[test]
 fn probe_hot_leaf_probe_family_breakdown() {
-    use crate::mesh::polygon_soup;
     use crate::polygon::ConvexPolygon;
 
     fn tetra_from_face_and_apex(
@@ -13694,7 +15017,8 @@ fn probe_hot_leaf_probe_family_breakdown() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup =
+        approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         face_at(&soup.polygons, 1, 4),
         face_at(&soup.polygons, 1, 5),
@@ -13715,13 +15039,17 @@ fn probe_hot_leaf_probe_family_breakdown() {
             if index == 0 {
                 return None;
             }
-            let intersection =
-                crate::intersection::intersect_polygons(host, polygon, index).ok()?;
+            let intersection = approximate_intersect_polygons(host, polygon, index).ok()?;
             Some(intersection)
         })
         .collect::<Vec<_>>();
-    let bsp_leaves =
-        crate::subdivision::build_host_bsp_leaves(host, &polygons, &intersections).unwrap();
+    let bsp_leaves = crate::subdivision::build_host_bsp_leaves(
+        &crate::test_support::approximate_decisions(),
+        host,
+        &polygons,
+        &intersections,
+    )
+    .unwrap();
     let (leaf, interior_points, effective_delta_w) = bsp_leaves
         .iter()
         .filter_map(|leaf| {
@@ -13735,18 +15063,29 @@ fn probe_hot_leaf_probe_family_breakdown() {
         .unwrap();
     let interior = interior_points[0].clone();
 
-    let normal_probes =
-        adjacent_normal_probes(&interior, &host.support, &bounds, &polygons, true).unwrap();
+    let normal_probes = adjacent_normal_probes(
+        &crate::test_support::approximate_decisions(),
+        &interior,
+        &host.support,
+        &bounds,
+        &polygons,
+        true,
+    )
+    .unwrap();
 
     let mut axis_probe_counts = Vec::new();
-    for axis in probe_axes(&host.support).unwrap() {
-        let normal_sign =
-            crate::geometry::classify_real(axis_ref(&host.support.normal, axis)).unwrap();
+    for axis in probe_axes(&crate::test_support::approximate_decisions(), &host.support).unwrap() {
+        let normal_sign = crate::geometry::classify_real(
+            &crate::test_support::approximate_decisions(),
+            axis_ref(&host.support.normal, axis),
+        )
+        .unwrap();
         if normal_sign == Classification::On {
             continue;
         }
         let direction_positive = normal_sign == Classification::Positive;
         let probes = adjacent_axis_probes(
+            &crate::test_support::approximate_decisions(),
             &interior,
             &host.support,
             &bounds,
@@ -13759,6 +15098,7 @@ fn probe_hot_leaf_probe_family_breakdown() {
     }
 
     let winding = classify_leaf_polygon_from_interior_points(
+        &crate::test_support::approximate_decisions(),
         &interior_points,
         &host.support,
         &ref_point,
@@ -13785,6 +15125,7 @@ fn plane_replacement_reachability_shared_caches_reuse_equivalent_path_across_cal
     let mut step_calls = 0;
 
     let first = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
@@ -13797,6 +15138,7 @@ fn plane_replacement_reachability_shared_caches_reuse_equivalent_path_across_cal
     )
     .unwrap();
     let second = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
@@ -13831,7 +15173,10 @@ fn bounded_plane_replacement_reachability_adapts_when_every_raw_order_leaves_bou
         first_step[plane_index] = end_definition[plane_index].clone();
         assert!(
             !bounds
-                .contains_point(&affine_from_planes(&first_step).unwrap())
+                .contains_point_decision(
+                    &crate::test_support::approximate_decisions(),
+                    &affine_from_planes(&first_step).unwrap()
+                )
                 .unwrap()
         );
     }
@@ -13841,6 +15186,7 @@ fn bounded_plane_replacement_reachability_adapts_when_every_raw_order_leaves_bou
 
     let reaches =
         plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+            &crate::test_support::approximate_decisions(),
             &AXIS_ORDERINGS,
             &start_definition,
             &end_definition,
@@ -13849,8 +15195,22 @@ fn bounded_plane_replacement_reachability_adapts_when_every_raw_order_leaves_bou
             &mut step_cache,
             Some(&bounds),
             |current, next, current_definitions, next_definitions| {
-                assert!(bounds.contains_point(current).unwrap());
-                assert!(bounds.contains_point(next).unwrap());
+                assert!(
+                    bounds
+                        .contains_point_decision(
+                            &crate::test_support::approximate_decisions(),
+                            current
+                        )
+                        .unwrap()
+                );
+                assert!(
+                    bounds
+                        .contains_point_decision(
+                            &crate::test_support::approximate_decisions(),
+                            next
+                        )
+                        .unwrap()
+                );
                 assert_eq!(current_definitions.len(), 1);
                 assert_eq!(next_definitions.len(), 1);
                 assert_eq!(
@@ -13880,6 +15240,7 @@ fn bounded_plane_replacement_reachability_does_not_adapt_outside_endpoint() {
     let mut traced_steps = 0;
 
     let err = plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+        &crate::test_support::approximate_decisions(),
         &AXIS_ORDERINGS,
         &start_definition,
         &end_definition,
@@ -13915,6 +15276,7 @@ fn no_step_ordering_precheck_warms_shared_affine_cache_for_step_trace() {
 
     let reaches =
         plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+            &crate::test_support::approximate_decisions(),
             &ordered,
             &start_definition,
             &end_definition,
@@ -13961,6 +15323,7 @@ fn no_nested_ordering_precheck_warms_shared_affine_cache_for_step_trace() {
 
     let reaches =
         plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+            &crate::test_support::approximate_decisions(),
             &ordered,
             &start_definition,
             &end_definition,
@@ -13988,6 +15351,7 @@ fn plane_replacement_reachability_reports_unknown_for_same_point_uncertified_ste
     let mut step_cache = PlaneReplacementReachabilityStepCache::default();
 
     let err = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
@@ -14118,6 +15482,7 @@ fn plane_replacement_step_detours_preserve_intermediate_definitions() {
     let mut step_cache = Vec::new();
 
     let winding = trace_plane_replacement_path_with_step_detours_impl(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14157,6 +15522,7 @@ fn bounded_plane_replacement_adapts_outside_intermediate_orderings() {
     let mut traced_steps = Vec::new();
 
     let winding = trace_plane_replacement_path_with_tracer_and_caches(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14165,8 +15531,16 @@ fn bounded_plane_replacement_adapts_outside_intermediate_orderings() {
         &mut step_cache,
         Some(&bounds),
         |current, next, _current_planes, _next_planes, attempt, _polygons| {
-            assert!(bounds.contains_point(current).unwrap());
-            assert!(bounds.contains_point(next).unwrap());
+            assert!(
+                bounds
+                    .contains_point_decision(&crate::test_support::approximate_decisions(), current)
+                    .unwrap()
+            );
+            assert!(
+                bounds
+                    .contains_point_decision(&crate::test_support::approximate_decisions(), next)
+                    .unwrap()
+            );
             traced_steps.push((current.clone(), next.clone()));
             Ok(Some(attempt.to_vec()))
         },
@@ -14195,7 +15569,10 @@ fn bounded_plane_replacement_adapts_when_every_raw_order_leaves_bounds() {
         first_step[plane_index] = end_definition[plane_index].clone();
         assert!(
             !bounds
-                .contains_point(&affine_from_planes(&first_step).unwrap())
+                .contains_point_decision(
+                    &crate::test_support::approximate_decisions(),
+                    &affine_from_planes(&first_step).unwrap()
+                )
                 .unwrap()
         );
     }
@@ -14204,6 +15581,7 @@ fn bounded_plane_replacement_adapts_when_every_raw_order_leaves_bounds() {
     let mut traced_steps = Vec::new();
 
     let winding = trace_plane_replacement_path_with_tracer_and_caches(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14212,8 +15590,16 @@ fn bounded_plane_replacement_adapts_when_every_raw_order_leaves_bounds() {
         &mut step_cache,
         Some(&bounds),
         |current, next, current_planes, next_planes, attempt, _polygons| {
-            assert!(bounds.contains_point(current).unwrap());
-            assert!(bounds.contains_point(next).unwrap());
+            assert!(
+                bounds
+                    .contains_point_decision(&crate::test_support::approximate_decisions(), current)
+                    .unwrap()
+            );
+            assert!(
+                bounds
+                    .contains_point_decision(&crate::test_support::approximate_decisions(), next)
+                    .unwrap()
+            );
             assert_eq!(affine_from_planes(current_planes).unwrap(), *current);
             assert_eq!(affine_from_planes(next_planes).unwrap(), *next);
             traced_steps.push((current.clone(), next.clone()));
@@ -14238,6 +15624,7 @@ fn bounded_plane_replacement_does_not_adapt_outside_endpoint() {
     let mut traced_steps = 0;
 
     let err = trace_plane_replacement_path_with_tracer_and_caches(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14265,6 +15652,7 @@ fn plane_replacement_tracer_shared_caches_reuse_equivalent_path_across_calls() {
     let mut step_calls = 0;
 
     let first = trace_plane_replacement_path_with_tracer_and_caches(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14279,6 +15667,7 @@ fn plane_replacement_tracer_shared_caches_reuse_equivalent_path_across_calls() {
     )
     .unwrap();
     let second = trace_plane_replacement_path_with_tracer_and_caches(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14310,6 +15699,7 @@ fn plane_replacement_tracer_reports_unknown_for_same_point_uncertified_step() {
     let mut step_cache = Vec::new();
 
     let err = trace_plane_replacement_path_with_tracer_and_caches(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14342,6 +15732,7 @@ fn plane_replacement_no_detour_shared_caches_reuse_equivalent_path_across_calls(
     let mut step_cache = Vec::new();
 
     let first = trace_plane_replacement_path_without_detours_with_caches(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14353,6 +15744,7 @@ fn plane_replacement_no_detour_shared_caches_reuse_equivalent_path_across_calls(
     let affine_len = affine_cache.len();
     let step_len = step_cache.len();
     let second = trace_plane_replacement_path_without_detours_with_caches(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14377,6 +15769,7 @@ fn plane_replacement_step_tracer_backtracks_after_uncertified_step() {
     let mut first_call = true;
 
     let winding = trace_plane_replacement_path_with_tracer(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14406,6 +15799,7 @@ fn plane_replacement_step_tracer_reuses_equivalent_steps_across_orderings() {
     let mut step_calls = 0;
 
     let err = trace_plane_replacement_path_with_tracer(
+        &crate::test_support::approximate_decisions(),
         &start_definition,
         &end_definition,
         &[7],
@@ -14583,6 +15977,7 @@ fn recursive_detour_budget_retries_detour_legs() {
 
     assert_eq!(
         trace_segment_from_definitions_with_budget_impl(
+            &crate::test_support::approximate_decisions(),
             &start,
             &end,
             &[0],
@@ -14597,6 +15992,7 @@ fn recursive_detour_budget_retries_detour_legs() {
     );
 
     let with_nested = trace_segment_from_definitions_with_budget_impl(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -14659,6 +16055,7 @@ fn trace_segment_from_definitions_runtime_allows_three_nested_detours() {
     };
 
     let traced = trace_segment_from_definitions_with_cycle_guard_impl(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -14715,6 +16112,7 @@ fn trace_segment_from_definitions_cycle_guard_skips_revisited_path_points() {
     };
 
     let err = trace_segment_from_definitions_with_cycle_guard_impl(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -14738,9 +16136,9 @@ fn trace_segment_from_definitions_cycle_guard_skips_revisited_path_points() {
 #[test]
 fn detour_recursion_limit_scales_with_local_polygon_count() {
     let polygons = vec![
-        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
-        convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 1),
-        convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+        approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
     ];
 
     assert_eq!(detour_recursion_limit(&[]), 2);
@@ -14750,8 +16148,8 @@ fn detour_recursion_limit_scales_with_local_polygon_count() {
 #[test]
 fn plane_replacement_step_detour_limit_scales_with_local_polygon_count() {
     let polygons = vec![
-        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
-        convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 1),
+        approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 1),
     ];
 
     assert_eq!(plane_replacement_step_detour_limit(&[]), 1);
@@ -14765,9 +16163,9 @@ fn polygon_scaled_detour_budget_allows_two_nested_detours() {
     let outer = p(2, 0, 0);
     let end = p(3, 0, 0);
     let polygons = vec![
-        convex_triangle(&p(0, 10, 0), &p(1, 10, 0), &p(0, 11, 0), 0, 0),
-        convex_triangle(&p(0, 10, 1), &p(1, 10, 1), &p(0, 11, 1), 0, 1),
-        convex_triangle(&p(0, 10, 2), &p(1, 10, 2), &p(0, 11, 2), 0, 2),
+        approximate_convex_triangle(&p(0, 10, 0), &p(1, 10, 0), &p(0, 11, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 10, 1), &p(1, 10, 1), &p(0, 11, 1), 0, 1),
+        approximate_convex_triangle(&p(0, 10, 2), &p(1, 10, 2), &p(0, 11, 2), 0, 2),
     ];
     let outer_target = DetourTarget {
         point: outer.clone(),
@@ -14805,6 +16203,7 @@ fn polygon_scaled_detour_budget_allows_two_nested_detours() {
     };
 
     let traced = trace_segment_from_definitions_with_budget_impl(
+        &crate::test_support::approximate_decisions(),
         &start,
         &end,
         &[0],
@@ -14827,8 +16226,8 @@ fn polygon_scaled_probe_step_detour_budget_allows_two_nested_detours() {
     let outer = p(2, 0, 0);
     let end = p(3, 0, 0);
     let polygons = vec![
-        convex_triangle(&p(0, 10, 0), &p(1, 10, 0), &p(0, 11, 0), 0, 0),
-        convex_triangle(&p(0, 10, 1), &p(1, 10, 1), &p(0, 11, 1), 0, 1),
+        approximate_convex_triangle(&p(0, 10, 0), &p(1, 10, 0), &p(0, 11, 0), 0, 0),
+        approximate_convex_triangle(&p(0, 10, 1), &p(1, 10, 1), &p(0, 11, 1), 0, 1),
     ];
     let outer_target = DetourTarget {
         point: outer.clone(),
@@ -14893,16 +16292,29 @@ fn probe_fallback_retries_axis_start_after_retained_definitions_fail() {
         planes: vec![valid_probe_definition],
         uncertified_definition_fallback: false,
     };
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
-        trace_segment_without_detours(&ref_point, &probe.point, &[0], &[wall.clone()]),
+        trace_segment_without_detours(
+            &crate::test_support::approximate_decisions(),
+            &ref_point,
+            &probe.point,
+            &[0],
+            &[wall.clone()]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 
-    let winding =
-        trace_probe_winding(&ref_point, &[invalid_ref_definition], &probe, &[0], &[wall]).unwrap();
+    let winding = trace_probe_winding(
+        &crate::test_support::approximate_decisions(),
+        &ref_point,
+        &[invalid_ref_definition],
+        &probe,
+        &[0],
+        &[wall],
+    )
+    .unwrap();
 
     assert_eq!(winding, vec![0]);
 }
@@ -14915,7 +16327,7 @@ fn probe_winding_reports_unknown_if_all_definition_paths_are_uncertified() {
         Plane::axis_aligned(0, r(1)),
         Plane::axis_aligned(0, r(2)),
     ]];
-    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = approximate_convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let probe = ProbePoint {
         point: p(2, 1, 0),
@@ -14925,11 +16337,25 @@ fn probe_winding_reports_unknown_if_all_definition_paths_are_uncertified() {
     };
 
     assert_eq!(
-        trace_segment_without_detours(&ref_point, &probe.point, &[0], &[wall.clone()]),
+        trace_segment_without_detours(
+            &crate::test_support::approximate_decisions(),
+            &ref_point,
+            &probe.point,
+            &[0],
+            &[wall.clone()]
+        ),
         Err(HypermeshError::UnknownClassification)
     );
 
-    let err = trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall]).unwrap_err();
+    let err = trace_probe_winding(
+        &crate::test_support::approximate_decisions(),
+        &ref_point,
+        &ref_definitions,
+        &probe,
+        &[0],
+        &[wall],
+    )
+    .unwrap_err();
 
     assert_eq!(err, HypermeshError::UnknownClassification);
 }

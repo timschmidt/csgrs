@@ -4,35 +4,42 @@ use super::path::finalize_shifted_halfspace_witness_family;
 #[cfg(test)]
 use super::witness::halfspace_cell_geometry_seed_candidates;
 use super::witness::{halfspace_centroid_subset_seed_family_from_vertices, witness_active_planes};
+use crate::context::DecisionContext;
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Aabb, Plane, axis_ref, compare_real};
+use crate::geometry::{Aabb, Plane, axis_ref, compare_real_decision};
 use crate::halfspace::{
     halfspace_has_opposite_pair, halfspace_is_degenerate_bound, limit_plane_families_match_as_sets,
     point_satisfies_halfspaces,
 };
 use hyperlattice::{Point3, Real, intersect_three_planes};
-use hyperlimit::{
-    HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, classify_halfspace_feasibility3,
-};
+use hyperlimit::{HalfspaceFeasibility, Plane3 as LimitPlane3, classify_halfspace_feasibility3};
 
 #[cfg(test)]
 pub(super) fn strict_halfspace_cell_seeds_from_report(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: &hyperlimit::HalfspaceFeasibilityReport,
 ) -> HypermeshResult<Vec<Point3>> {
-    strict_halfspace_cell_seeds_from_optional_report(bounds, halfspaces, Some(report))
+    strict_halfspace_cell_seeds_from_optional_report(decisions, bounds, halfspaces, Some(report))
 }
 
 #[cfg(test)]
 pub(super) fn strict_halfspace_cell_seeds_from_optional_report(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
 ) -> HypermeshResult<Vec<Point3>> {
     let mut saw_unknown = false;
-    halfspace_cell_seed_families_from_optional_report(bounds, halfspaces, report, &mut saw_unknown)
-        .map(|(strict_seeds, _shifted_vertices, _shifted_geometry_seeds)| strict_seeds)
+    halfspace_cell_seed_families_from_optional_report(
+        decisions,
+        bounds,
+        halfspaces,
+        report,
+        &mut saw_unknown,
+    )
+    .map(|(strict_seeds, _shifted_vertices, _shifted_geometry_seeds)| strict_seeds)
 }
 
 pub(super) fn push_unique_halfspace_seed(seeds: &mut Vec<Point3>, seed: Point3) {
@@ -64,7 +71,9 @@ pub(super) fn extend_strict_halfspace_seeds_backtracking_unknown(
         match is_strict_seed(&candidate) {
             Ok(true) => push_unique_halfspace_seed(seeds, candidate),
             Ok(false) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -87,7 +96,9 @@ pub(super) fn collect_strict_halfspace_seed_family(
         match is_strict_seed(&candidate) {
             Ok(true) => push_unique_halfspace_seed(&mut seeds, candidate),
             Ok(false) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -125,7 +136,9 @@ pub(super) fn extend_strict_halfspace_seed_families_collect_unknown(
                     push_unique_halfspace_seed(seeds, seed);
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -166,12 +179,14 @@ impl ShiftedHalfspaceWitness {
 }
 
 pub(super) fn shifted_halfspace_cell_witnesses_from_seed(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     seed: &Point3,
 ) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
-    let shifted = shifted_halfspace_cell(bounds, halfspaces, seed)?;
-    let (shifted_report, mut saw_unknown) = optional_halfspace_feasibility_report(&shifted)?;
+    let shifted = shifted_halfspace_cell(decisions, bounds, halfspaces, seed)?;
+    let (shifted_report, mut saw_unknown) =
+        optional_halfspace_feasibility_report(decisions, &shifted)?;
     if shifted_report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -182,6 +197,7 @@ pub(super) fn shifted_halfspace_cell_witnesses_from_seed(
     let mut witnesses = Vec::new();
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
+            decisions,
             bounds,
             &shifted,
             shifted_report.as_ref(),
@@ -219,7 +235,9 @@ pub(super) fn shifted_halfspace_cell_witnesses_from_seed(
         &mut witnesses,
         strict_shift_seeds,
         |witness| {
-            if !point_strictly_inside_halfspace_cell_or_unknown(witness, bounds, halfspaces)? {
+            if !point_strictly_inside_halfspace_cell_or_unknown(
+                decisions, witness, bounds, halfspaces,
+            )? {
                 return Ok(Vec::new());
             }
             Ok(vec![ShiftedHalfspaceWitness::with_family(
@@ -234,7 +252,9 @@ pub(super) fn shifted_halfspace_cell_witnesses_from_seed(
         &mut witnesses,
         shifted_vertices,
         |witness| {
-            if !point_strictly_inside_halfspace_cell_or_unknown(witness, bounds, halfspaces)? {
+            if !point_strictly_inside_halfspace_cell_or_unknown(
+                decisions, witness, bounds, halfspaces,
+            )? {
                 return Ok(Vec::new());
             }
             Ok(vec![ShiftedHalfspaceWitness::with_family(
@@ -249,7 +269,9 @@ pub(super) fn shifted_halfspace_cell_witnesses_from_seed(
         &mut witnesses,
         shifted_geometry_seeds,
         |witness| {
-            if !point_strictly_inside_halfspace_cell_or_unknown(witness, bounds, halfspaces)? {
+            if !point_strictly_inside_halfspace_cell_or_unknown(
+                decisions, witness, bounds, halfspaces,
+            )? {
                 return Ok(Vec::new());
             }
             Ok(vec![ShiftedHalfspaceWitness::with_family(
@@ -266,12 +288,13 @@ pub(super) fn shifted_halfspace_cell_witnesses_from_seed(
 }
 
 pub(super) fn halfspace_cell_seed_families_from_optional_report(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
-    let shifted_vertex_family = feasible_halfspace_cell_vertex_family(halfspaces)?;
+    let shifted_vertex_family = feasible_halfspace_cell_vertex_family(decisions, halfspaces)?;
     *saw_unknown |= shifted_vertex_family.saw_unknown;
     let shifted_vertices = shifted_vertex_family.seeds;
     let shifted_geometry_seed_family =
@@ -287,7 +310,9 @@ pub(super) fn halfspace_cell_seed_families_from_optional_report(
                 && let Some(witness) = report.and_then(|report| report.witness.as_ref())
             {
                 collect_strict_halfspace_seed_family(Ok(vec![witness.clone()]), |candidate| {
-                    point_strictly_inside_halfspace_cell_or_unknown(candidate, bounds, halfspaces)
+                    point_strictly_inside_halfspace_cell_or_unknown(
+                        decisions, candidate, bounds, halfspaces,
+                    )
                 })
             } else {
                 Ok(HalfspaceSeedFamilyState {
@@ -296,10 +321,14 @@ pub(super) fn halfspace_cell_seed_families_from_optional_report(
                 })
             },
             collect_strict_halfspace_seed_family(Ok(shifted_vertices.clone()), |candidate| {
-                point_strictly_inside_halfspace_cell_or_unknown(candidate, bounds, halfspaces)
+                point_strictly_inside_halfspace_cell_or_unknown(
+                    decisions, candidate, bounds, halfspaces,
+                )
             }),
             collect_strict_halfspace_seed_family(Ok(shifted_geometry_seeds.clone()), |candidate| {
-                point_strictly_inside_halfspace_cell_or_unknown(candidate, bounds, halfspaces)
+                point_strictly_inside_halfspace_cell_or_unknown(
+                    decisions, candidate, bounds, halfspaces,
+                )
             }),
         ],
     )?;
@@ -330,28 +359,30 @@ pub(super) fn seed_family_search_failed_without_any_seed(
 
 #[cfg(test)]
 pub(super) fn shifted_halfspace_cell_vertex_witnesses(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
     let mut witnesses: Vec<ShiftedHalfspaceWitness> = Vec::new();
     extend_shifted_halfspace_witnesses_backtracking_unknown(
         &mut witnesses,
-        feasible_halfspace_cell_vertices(halfspaces)?,
-        |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, halfspaces, seed),
+        feasible_halfspace_cell_vertices(decisions, halfspaces)?,
+        |seed| shifted_halfspace_cell_witnesses_from_seed(decisions, bounds, halfspaces, seed),
     )?;
     Ok(witnesses)
 }
 
 #[cfg(test)]
 pub(super) fn shifted_halfspace_cell_geometry_witnesses(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
     let mut witnesses: Vec<ShiftedHalfspaceWitness> = Vec::new();
     extend_shifted_halfspace_witnesses_backtracking_unknown(
         &mut witnesses,
-        halfspace_cell_geometry_seed_candidates(halfspaces)?,
-        |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, halfspaces, seed),
+        halfspace_cell_geometry_seed_candidates(decisions, halfspaces)?,
+        |seed| shifted_halfspace_cell_witnesses_from_seed(decisions, bounds, halfspaces, seed),
     )?;
     Ok(witnesses)
 }
@@ -518,7 +549,9 @@ pub(super) fn extend_shifted_halfspace_seed_families_backtracking_unknown(
                     push_unique_shifted_halfspace_witness(witnesses, witness);
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -540,7 +573,9 @@ pub(super) fn extend_shifted_halfspace_witnesses_backtracking_unknown(
                     push_unique_shifted_halfspace_witness(witnesses, witness);
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -555,7 +590,7 @@ pub(super) fn shifted_halfspace_witness_family_or_empty(
 ) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
     match result {
         Ok(witnesses) => Ok(witnesses),
-        Err(HypermeshError::UnknownClassification) => {
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
             *saw_unknown = true;
             Ok(Vec::new())
         }
@@ -565,20 +600,25 @@ pub(super) fn shifted_halfspace_witness_family_or_empty(
 
 #[cfg(test)]
 pub(super) fn halfspace_feasibility_report(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<hyperlimit::HalfspaceFeasibilityReport> {
-    match classify_halfspace_feasibility3(halfspaces) {
-        PredicateOutcome::Decided { value, .. } => Ok(value),
-        PredicateOutcome::Unknown { .. } => Err(HypermeshError::UnknownClassification),
-    }
+    decisions.decide(
+        classify_halfspace_feasibility3(halfspaces, decisions.policy()),
+        "3D halfspace feasibility",
+    )
 }
 
 pub(super) fn optional_halfspace_feasibility_report(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<(Option<hyperlimit::HalfspaceFeasibilityReport>, bool)> {
-    match classify_halfspace_feasibility3(halfspaces) {
-        PredicateOutcome::Decided { value, .. } => Ok((Some(value), false)),
-        PredicateOutcome::Unknown { .. } => Ok((None, true)),
+    match decisions.probe(classify_halfspace_feasibility3(
+        halfspaces,
+        decisions.policy(),
+    )) {
+        Some(value) => Ok((Some(value), false)),
+        None => Ok((None, true)),
     }
 }
 
@@ -593,16 +633,18 @@ pub(super) fn active_planes_from_optional_report(
 
 #[cfg(test)]
 pub(super) fn feasible_halfspace_cell_vertices(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<Point3>> {
-    Ok(feasible_halfspace_cell_vertex_family(halfspaces)?.seeds)
+    Ok(feasible_halfspace_cell_vertex_family(decisions, halfspaces)?.seeds)
 }
 
 pub(super) fn feasible_halfspace_cell_vertex_family(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<HalfspaceSeedFamilyState> {
     feasible_halfspace_cell_vertex_family_with_contains(halfspaces, |point, halfspaces| {
-        point_satisfies_halfspaces(point, halfspaces)
+        point_satisfies_halfspaces(decisions, point, halfspaces)
     })
 }
 
@@ -630,7 +672,10 @@ pub(super) fn feasible_halfspace_cell_vertex_family_with_contains(
                         }
                     }
                     Ok(false) => {}
-                    Err(HypermeshError::UnknownClassification) => {
+                    Err(
+                        HypermeshError::PredicateUndecided { .. }
+                        | HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                     }
                     Err(err) => return Err(err),
@@ -658,21 +703,24 @@ pub(super) fn feasible_halfspace_cell_vertices_with_contains(
 
 #[cfg(test)]
 pub(super) fn point_strictly_inside_halfspace_cell(
+    decisions: &DecisionContext,
     point: &Point3,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
-    if !point_strictly_inside_probe_bounds(point, bounds)? {
+    if !point_strictly_inside_probe_bounds(decisions, point, bounds)? {
         return Ok(false);
     }
     for halfspace in halfspaces {
-        if halfspace_is_degenerate_bound(halfspace, bounds)?
+        if halfspace_is_degenerate_bound(decisions, halfspace, bounds)?
             || halfspace_has_opposite_pair(halfspace, halfspaces)
         {
             continue;
         }
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
-        if compare_real(&plane.expression_at_point(point), &Real::zero())?.is_eq() {
+        if compare_real_decision(decisions, &plane.expression_at_point(point), &Real::zero())?
+            .is_eq()
+        {
             return Ok(false);
         }
     }
@@ -680,45 +728,61 @@ pub(super) fn point_strictly_inside_halfspace_cell(
 }
 
 pub(super) fn point_strictly_inside_halfspace_cell_or_unknown(
+    decisions: &DecisionContext,
     point: &Point3,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
-    if !point_strictly_inside_probe_bounds(point, bounds)? {
+    if !point_strictly_inside_probe_bounds(decisions, point, bounds)? {
         for axis in 0..3 {
             let min = axis_ref(&bounds.min, axis);
             let max = axis_ref(&bounds.max, axis);
-            if compare_real(min, max)?.is_eq() {
+            if compare_real_decision(decisions, min, max)?.is_eq() {
                 continue;
             }
             let point_value = axis_ref(point, axis);
-            if compare_real(point_value, min)?.is_eq() || compare_real(point_value, max)?.is_eq() {
+            if compare_real_decision(decisions, point_value, min)?.is_eq()
+                || compare_real_decision(decisions, point_value, max)?.is_eq()
+            {
                 return Err(HypermeshError::UnknownClassification);
             }
         }
         return Ok(false);
     }
     for halfspace in halfspaces {
-        if halfspace_is_degenerate_bound(halfspace, bounds)?
+        if halfspace_is_degenerate_bound(decisions, halfspace, bounds)?
             || halfspace_has_opposite_pair(halfspace, halfspaces)
         {
             continue;
         }
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
-        if compare_real(&plane.expression_at_point(point), &Real::zero())?.is_eq() {
+        if compare_real_decision(decisions, &plane.expression_at_point(point), &Real::zero())?
+            .is_eq()
+        {
             return Err(HypermeshError::UnknownClassification);
         }
     }
     Ok(true)
 }
 
-fn point_strictly_inside_probe_bounds(point: &Point3, bounds: &Aabb) -> HypermeshResult<bool> {
-    hyperlimit::point_in_ordered_aabb3_relative_interior(&bounds.min, &bounds.max, point)
-        .value()
-        .ok_or(HypermeshError::UnknownClassification)
+fn point_strictly_inside_probe_bounds(
+    decisions: &DecisionContext,
+    point: &Point3,
+    bounds: &Aabb,
+) -> HypermeshResult<bool> {
+    decisions.decide(
+        hyperlimit::point_in_ordered_aabb3_relative_interior(
+            &bounds.min,
+            &bounds.max,
+            point,
+            decisions.policy(),
+        ),
+        "point in AABB relative interior",
+    )
 }
 
 fn shifted_halfspace_cell(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     strict_interior: &Point3,
@@ -728,8 +792,8 @@ fn shifted_halfspace_cell(
     for halfspace in halfspaces {
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
         let value = plane.expression_at_point(strict_interior);
-        let keep_closed = compare_real(&value, &Real::zero())?.is_eq()
-            || halfspace_is_degenerate_bound(halfspace, bounds)?;
+        let keep_closed = compare_real_decision(decisions, &value, &Real::zero())?.is_eq()
+            || halfspace_is_degenerate_bound(decisions, halfspace, bounds)?;
         let offset = if keep_closed {
             halfspace.offset.clone()
         } else {

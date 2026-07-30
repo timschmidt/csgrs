@@ -4,11 +4,12 @@ use std::cmp::Ordering;
 
 use hyperlattice::{Matrix4, Plane3Coefficients, Point3, ProjectivePlane3, Rational, Real};
 
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::HypermeshResult;
 pub use crate::predicate::{
     Classification, classify_point, classify_projective_point, compare_real,
 };
-pub(crate) use crate::predicate::{Point3PredicateEvidence, classify_real};
+pub(crate) use crate::predicate::{Point3PredicateEvidence, classify_real, compare_real_decision};
 
 /// Exact plane `normal . point + offset = 0`.
 #[derive(Clone, Debug, PartialEq)]
@@ -154,29 +155,37 @@ impl Plane {
     /// components only until one is not structurally zero and does not build
     /// the unused plane offset.
     #[inline]
-    pub fn points_are_nondegenerate(p0: &Point3, p1: &Point3, p2: &Point3) -> bool {
-        Self::decide_points_are_nondegenerate(p0, p1, p2).unwrap_or(false)
+    pub fn points_are_nondegenerate(
+        context: &MeshContext,
+        p0: &Point3,
+        p1: &Point3,
+        p2: &Point3,
+    ) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let nondegenerate = Self::decide_points_are_nondegenerate(&decisions, p0, p1, p2)?;
+        Ok(decisions.finish(nondegenerate))
     }
 
     /// Decides whether three affine points define a valid plane, preserving
     /// predicate uncertainty for geometry-producing callers.
     #[inline]
     pub(crate) fn decide_points_are_nondegenerate(
+        decisions: &DecisionContext,
         p0: &Point3,
         p1: &Point3,
         p2: &Point3,
     ) -> crate::error::HypermeshResult<bool> {
-        match hyperlimit::classify_triangle3_degeneracy(p0, p1, p2) {
-            hyperlimit::TriangleDegeneracy::NonDegenerate => Ok(true),
-            hyperlimit::TriangleDegeneracy::Degenerate => Ok(false),
-            hyperlimit::TriangleDegeneracy::Unknown => {
-                Err(crate::error::HypermeshError::UnknownClassification)
-            }
-        }
+        decisions
+            .decide(
+                hyperlimit::classify_triangle3_degeneracy(p0, p1, p2, decisions.policy()),
+                "3D triangle degeneracy",
+            )
+            .map(|degeneracy| matches!(degeneracy, hyperlimit::TriangleDegeneracy::NonDegenerate))
     }
 
     pub(crate) fn points_are_collinear_on_support(
         &self,
+        decisions: &DecisionContext,
         a: &Point3,
         b: &Point3,
         c: &Point3,
@@ -210,7 +219,7 @@ impl Plane {
                 [[au, bv], [bu, cv], [cu, av], [au, cv], [bu, av], [cu, bv]],
             ) == std::cmp::Ordering::Equal);
         }
-        Ok(!Self::decide_points_are_nondegenerate(a, b, c)?)
+        Ok(!Self::decide_points_are_nondegenerate(decisions, a, b, c)?)
     }
 
     /// Returns this plane with all coefficients negated.
@@ -271,25 +280,34 @@ impl Plane {
 
     /// Returns true when the configured exact predicate policy certifies a
     /// non-zero normal component.
-    pub fn is_valid(&self) -> bool {
-        self.decide_is_valid().unwrap_or(false)
+    pub fn is_valid(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let valid = self.decide_is_valid(&decisions)?;
+        Ok(decisions.finish(valid))
     }
 
     /// Decides whether the normal is non-zero, preserving exhausted predicate
     /// certainty for geometry-producing callers.
     #[inline]
-    pub(crate) fn decide_is_valid(&self) -> crate::error::HypermeshResult<bool> {
+    pub(crate) fn decide_is_valid(
+        &self,
+        decisions: &DecisionContext,
+    ) -> crate::error::HypermeshResult<bool> {
         let mut saw_unknown = false;
         for component in [&self.normal.x, &self.normal.y, &self.normal.z] {
-            match crate::predicate::classify_real(component) {
+            match crate::predicate::classify_real(decisions, component) {
                 Ok(Classification::Negative | Classification::Positive) => return Ok(true),
                 Ok(Classification::On) => {}
-                Err(crate::error::HypermeshError::UnknownClassification) => saw_unknown = true,
+                Err(crate::error::HypermeshError::PredicateUndecided { .. }) => {
+                    saw_unknown = true;
+                }
                 Err(error) => return Err(error),
             }
         }
         if saw_unknown {
-            Err(crate::error::HypermeshError::UnknownClassification)
+            Err(crate::error::HypermeshError::PredicateUndecided {
+                predicate: "plane normal nonzero",
+            })
         } else {
             Ok(false)
         }
@@ -301,7 +319,19 @@ impl Plane {
     }
 
     /// Returns `(axis, value)` for planes of form `normal[axis] * x + d = 0`.
-    pub fn axis_split_value(&self) -> Option<(usize, Real)> {
+    pub fn axis_split_value(
+        &self,
+        context: &MeshContext,
+    ) -> HypermeshResult<MeshOutcome<Option<(usize, Real)>>> {
+        let decisions = DecisionContext::new(context);
+        let split = self.axis_split_value_decision(&decisions)?;
+        Ok(decisions.finish(split))
+    }
+
+    pub(crate) fn axis_split_value_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Option<(usize, Real)>> {
         for axis in 0..3 {
             let components = [&self.normal.x, &self.normal.y, &self.normal.z];
             if components
@@ -309,15 +339,17 @@ impl Plane {
                 .enumerate()
                 .all(|(i, value)| i == axis || value.definitely_zero())
                 && matches!(
-                    crate::predicate::classify_real(components[axis]),
+                    crate::predicate::classify_real(decisions, components[axis]),
                     Ok(Classification::Negative | Classification::Positive)
                 )
             {
-                let value = -((&self.offset / components[axis]).ok()?);
-                return Some((axis, value));
+                let Some(value) = (&self.offset / components[axis]).ok() else {
+                    return Ok(None);
+                };
+                return Ok(Some((axis, -value)));
             }
         }
-        None
+        Ok(None)
     }
 }
 
@@ -352,13 +384,24 @@ impl Aabb {
     }
 
     /// Returns the longest axis when exact comparisons can certify an order.
-    pub fn longest_axis(&self) -> HypermeshResult<usize> {
+    pub fn longest_axis(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<usize>> {
+        let decisions = DecisionContext::new(context);
+        let axis = self.longest_axis_decision(&decisions)?;
+        Ok(decisions.finish(axis))
+    }
+
+    pub(crate) fn longest_axis_decision(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<usize> {
         let ex = self.extent(0);
         let ey = self.extent(1);
         let ez = self.extent(2);
-        if compare_real(&ex, &ey)? != Ordering::Less && compare_real(&ex, &ez)? != Ordering::Less {
+        if compare_real_decision(decisions, &ex, &ey)? != Ordering::Less
+            && compare_real_decision(decisions, &ex, &ez)? != Ordering::Less
+        {
             Ok(0)
-        } else if compare_real(&ey, &ez)? != Ordering::Less {
+        } else if compare_real_decision(decisions, &ey, &ez)? != Ordering::Less {
             Ok(1)
         } else {
             Ok(2)
@@ -377,10 +420,30 @@ impl Aabb {
     }
 
     /// Returns true when `point` lies inside the closed AABB.
-    pub fn contains_point(&self, point: &Point3) -> HypermeshResult<bool> {
+    pub fn contains_point(
+        &self,
+        context: &MeshContext,
+        point: &Point3,
+    ) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let contains = self.contains_point_decision(&decisions, point)?;
+        Ok(decisions.finish(contains))
+    }
+
+    pub(crate) fn contains_point_decision(
+        &self,
+        decisions: &DecisionContext,
+        point: &Point3,
+    ) -> HypermeshResult<bool> {
         for axis in 0..3 {
-            if compare_real(axis_ref(point, axis), axis_ref(&self.min, axis))?.is_lt()
-                || compare_real(axis_ref(point, axis), axis_ref(&self.max, axis))?.is_gt()
+            if compare_real_decision(decisions, axis_ref(point, axis), axis_ref(&self.min, axis))?
+                .is_lt()
+                || compare_real_decision(
+                    decisions,
+                    axis_ref(point, axis),
+                    axis_ref(&self.max, axis),
+                )?
+                .is_gt()
             {
                 return Ok(false);
             }
@@ -464,7 +527,12 @@ mod tests {
         let plane =
             Plane::from_coefficients(Real::from(0), Real::from(2), Real::from(0), Real::from(-6));
 
-        assert_eq!(plane.axis_split_value(), Some((1, Real::from(3))));
+        assert_eq!(
+            plane
+                .axis_split_value_decision(&crate::test_support::approximate_decisions())
+                .unwrap(),
+            Some((1, Real::from(3)))
+        );
     }
 
     #[test]
@@ -477,8 +545,16 @@ mod tests {
 
         for [a, b, c] in cases {
             assert_eq!(
-                Plane::points_are_nondegenerate(&a, &b, &c),
-                Plane::from_points(&a, &b, &c).is_valid()
+                Plane::decide_points_are_nondegenerate(
+                    &crate::test_support::approximate_decisions(),
+                    &a,
+                    &b,
+                    &c,
+                )
+                .unwrap(),
+                Plane::from_points(&a, &b, &c)
+                    .decide_is_valid(&crate::test_support::approximate_decisions())
+                    .unwrap()
             );
         }
     }
@@ -498,7 +574,13 @@ mod tests {
             let p2 = Point3::new(x2, y2, z2);
 
             prop_assert_eq!(
-                Plane::points_are_nondegenerate(&p0, &p1, &p2),
+                Plane::decide_points_are_nondegenerate(
+                    &crate::test_support::approximate_decisions(),
+                    &p0,
+                    &p1,
+                    &p2,
+                )
+                .unwrap(),
                 previous_points_are_nondegenerate(&p0, &p1, &p2)
             );
         }

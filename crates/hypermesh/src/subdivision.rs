@@ -5,19 +5,15 @@ mod split;
 use split::*;
 
 use crate::bvh::ExactBvh;
-use crate::clip::{ClipSide, clip_polygon};
+use crate::clip::ClipSide;
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{
-    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_projective_point,
-    classify_real, compare_real,
-};
+use crate::geometry::{Aabb, Classification, Plane, axis_mut, axis_ref};
 use crate::halfspace::{
     aabb_core_halfspaces, axis_halfspace, halfspace_has_opposite_pair,
     halfspace_is_degenerate_bound, limit_plane_families_match_as_sets, point_satisfies_halfspaces,
     support_side_halfspace,
 };
-#[cfg(test)]
-use crate::intersection::intersect_polygons;
 use crate::intersection::{
     IntersectionSegment, OverlapInfo, PairwiseIntersection, PairwiseIntersectionType,
     intersect_polygons_with_vertices,
@@ -30,6 +26,10 @@ use crate::output::{
     push_unique_classified_polygon_with_bucket_state,
 };
 use crate::polygon::ConvexPolygon;
+use crate::predicate::{
+    classify_point_decision, classify_projective_point_decision, classify_real,
+    compare_real_decision, points_equal,
+};
 use crate::segment_trace::{
     LeafProbeQueryCaches, affine_from_planes, axis_plane_definition,
     certified_leaf_interior_points, classify_leaf_polygon_interior_point_with_probe_query_caches,
@@ -282,15 +282,18 @@ impl Default for SubdivisionRuntimeCaches {
 
 /// Processes one leaf and returns classified output polygons.
 pub fn process_leaf(
+    context: &MeshContext,
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
     operation: BooleanOp,
-) -> HypermeshResult<Vec<ClassifiedPolygon>> {
+) -> HypermeshResult<MeshOutcome<Vec<ClassifiedPolygon>>> {
+    let decisions = DecisionContext::new(context);
     let mut output = Vec::new();
-    process_leaf_into(
+    process_leaf_into_inner(
+        &decisions,
         polygons,
         bounds,
         ref_point,
@@ -299,11 +302,12 @@ pub fn process_leaf(
         operation,
         &mut output,
     )?;
-    Ok(output)
+    Ok(decisions.finish(output))
 }
 
 /// Processes one leaf into an existing output buffer.
 pub fn process_leaf_into(
+    context: &MeshContext,
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
     ref_point: &Point3,
@@ -311,9 +315,11 @@ pub fn process_leaf_into(
     ref_wnv: &[i32],
     operation: BooleanOp,
     output: &mut Vec<ClassifiedPolygon>,
-) -> HypermeshResult<LeafProcessingStats> {
+) -> HypermeshResult<MeshOutcome<LeafProcessingStats>> {
+    let decisions = DecisionContext::new(context);
     let mut certified_output = Vec::new();
     let stats = process_leaf_into_inner(
+        &decisions,
         polygons,
         bounds,
         ref_point,
@@ -323,10 +329,11 @@ pub fn process_leaf_into(
         &mut certified_output,
     )?;
     merge_unique_classified_polygons(output, certified_output);
-    Ok(stats)
+    Ok(decisions.finish(stats))
 }
 
 fn process_leaf_into_inner(
+    decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
     ref_point: &Point3,
@@ -338,6 +345,7 @@ fn process_leaf_into_inner(
     let leaf_classification_cache = RefCell::new(Vec::new());
     let leaf_point_classification_cache = RefCell::new(Vec::new());
     process_leaf_into_inner_with_pairwise_cache(
+        decisions,
         polygons,
         bounds,
         ref_point,
@@ -350,9 +358,9 @@ fn process_leaf_into_inner(
         output,
         &leaf_classification_cache,
         &leaf_point_classification_cache,
-        |polygons| pairwise_intersections_by_polygon(polygons).map(Arc::new),
+        |polygons| pairwise_intersections_by_polygon(decisions, polygons).map(Arc::new),
         |polygon, polygons, intersections| {
-            build_host_bsp_leaves(polygon, polygons, intersections).map(Arc::new)
+            build_host_bsp_leaves(decisions, polygon, polygons, intersections).map(Arc::new)
         },
         |polygon,
          leaf_edges,
@@ -361,6 +369,7 @@ fn process_leaf_into_inner(
          _single_convex_interior_point,
          interior_point| {
             certify_bsp_leaf_and_delta_w_with_host_intersections(
+                decisions,
                 polygon,
                 leaf_edges,
                 polygons,
@@ -374,6 +383,7 @@ fn process_leaf_into_inner(
 }
 
 fn process_leaf_into_inner_with_pairwise_cache(
+    decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
     ref_point: &Point3,
@@ -445,6 +455,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
             } else {
                 let mut leaf_probe_query_caches = LeafProbeQueryCaches::default();
                 let (emitted, w_front) = emit_one_direct(
+                    decisions,
                     polygon,
                     bounds,
                     ref_point,
@@ -491,6 +502,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 .zip(leaf.projective_interior_point.as_ref())
                 .map(|(host_mesh, point)| {
                     classify_projective_point_against_certified_convex_inputs(
+                        decisions,
                         point,
                         host_mesh,
                         polygons,
@@ -545,6 +557,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 effective_delta_w,
                 || {
                     classify_leaf_polygon_from_interior_points_with_point_cache(
+                        decisions,
                         interior_points,
                         &polygon.support,
                         ref_point,
@@ -590,6 +603,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
 }
 
 fn classify_projective_point_against_certified_convex_inputs(
+    decisions: &DecisionContext,
     point: &HomogeneousPoint3,
     host_mesh: usize,
     polygons: &[ConvexPolygon],
@@ -618,7 +632,7 @@ fn classify_projective_point_against_certified_convex_inputs(
             .filter(|polygon| polygon.mesh_index == mesh_index)
         {
             saw_support = true;
-            match classify_projective_point(point, &polygon.support)? {
+            match classify_projective_point_decision(decisions, point, &polygon.support)? {
                 Classification::Positive => {
                     outside = true;
                     break;
@@ -659,10 +673,12 @@ fn ordered_bsp_leaf_indices_by_complexity(leaves: &[BspLeaf]) -> Vec<usize> {
 
 /// Recursively subdivides a task and returns classified output polygons.
 pub fn subdivide(
+    context: &MeshContext,
     task: SubdivisionTask,
     operation: BooleanOp,
     config: SubdivisionConfig,
-) -> HypermeshResult<Vec<ClassifiedPolygon>> {
+) -> HypermeshResult<MeshOutcome<Vec<ClassifiedPolygon>>> {
+    let decisions = DecisionContext::new(context);
     let mut output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
     let pairwise_cache = &caches.pairwise_intersections;
@@ -671,8 +687,9 @@ pub fn subdivide(
     let leaf_classification_cache = &caches.leaf_classification;
     let leaf_point_classification_cache = &caches.leaf_point_classification;
     let mut process_leaf =
-        move |task: &SubdivisionTask, operation: BooleanOp, output: &mut Vec<ClassifiedPolygon>| {
+        |task: &SubdivisionTask, operation: BooleanOp, output: &mut Vec<ClassifiedPolygon>| {
             process_leaf_task_into_with_caches(
+                &decisions,
                 task,
                 operation,
                 false,
@@ -686,6 +703,7 @@ pub fn subdivide(
             )
         };
     subdivide_into_inner_with(
+        &decisions,
         task,
         operation,
         config,
@@ -695,19 +713,21 @@ pub fn subdivide(
         &caches,
         &caches.winding_reachability,
     )?;
-    Ok(output)
+    Ok(decisions.finish(output))
 }
 
 #[cfg(test)]
 pub(crate) fn subdivide_boolean(
+    decisions: &DecisionContext,
     task: SubdivisionTask,
     operation: BooleanOp,
     config: SubdivisionConfig,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
-    subdivide_boolean_with_certified_convex_inputs(task, operation, &[], config)
+    subdivide_boolean_with_certified_convex_inputs(decisions, task, operation, &[], config)
 }
 
 pub(crate) fn subdivide_boolean_with_certified_convex_inputs(
+    decisions: &DecisionContext,
     task: SubdivisionTask,
     operation: BooleanOp,
     certified_convex_inputs: &[bool],
@@ -724,8 +744,9 @@ pub(crate) fn subdivide_boolean_with_certified_convex_inputs(
     let leaf_classification_cache = &caches.leaf_classification;
     let leaf_point_classification_cache = &caches.leaf_point_classification;
     let mut process_leaf =
-        move |task: &SubdivisionTask, operation: BooleanOp, output: &mut Vec<ClassifiedPolygon>| {
+        |task: &SubdivisionTask, operation: BooleanOp, output: &mut Vec<ClassifiedPolygon>| {
             process_leaf_task_into_with_caches(
+                decisions,
                 task,
                 operation,
                 false,
@@ -739,6 +760,7 @@ pub(crate) fn subdivide_boolean_with_certified_convex_inputs(
             )
         };
     subdivide_into_inner_with(
+        decisions,
         task,
         operation,
         config,
@@ -757,11 +779,13 @@ pub(crate) fn subdivide_boolean_with_certified_convex_inputs(
 /// If subdivision or leaf classification returns an error, no partial output
 /// from that task is retained.
 pub fn subdivide_into(
+    context: &MeshContext,
     task: SubdivisionTask,
     operation: BooleanOp,
     config: SubdivisionConfig,
     output: &mut Vec<ClassifiedPolygon>,
-) -> HypermeshResult<()> {
+) -> HypermeshResult<MeshOutcome<()>> {
+    let decisions = DecisionContext::new(context);
     let mut certified_output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
     let pairwise_cache = &caches.pairwise_intersections;
@@ -770,8 +794,9 @@ pub fn subdivide_into(
     let leaf_classification_cache = &caches.leaf_classification;
     let leaf_point_classification_cache = &caches.leaf_point_classification;
     let mut process_leaf =
-        move |task: &SubdivisionTask, operation: BooleanOp, output: &mut Vec<ClassifiedPolygon>| {
+        |task: &SubdivisionTask, operation: BooleanOp, output: &mut Vec<ClassifiedPolygon>| {
             process_leaf_task_into_with_caches(
+                &decisions,
                 task,
                 operation,
                 false,
@@ -785,6 +810,7 @@ pub fn subdivide_into(
             )
         };
     subdivide_into_inner_with(
+        &decisions,
         task,
         operation,
         config,
@@ -795,10 +821,11 @@ pub fn subdivide_into(
         &caches.winding_reachability,
     )?;
     merge_unique_classified_polygons(output, certified_output);
-    Ok(())
+    Ok(decisions.finish(()))
 }
 
 fn subdivide_into_inner_with(
+    decisions: &DecisionContext,
     mut task: SubdivisionTask,
     operation: BooleanOp,
     config: SubdivisionConfig,
@@ -819,9 +846,12 @@ fn subdivide_into_inner_with(
     task.ref_definitions = certified_reference_definitions(&task.ref_point, &task.ref_definitions);
     let mut root_leaf_attempted = false;
     let root_reference_is_on_surface = if task.depth == 0 {
-        match point_lies_on_local_surface(&task.ref_point, &task.polygons) {
+        match point_lies_on_local_surface(decisions, &task.ref_point, &task.polygons) {
             Ok(on_surface) => on_surface,
-            Err(crate::error::HypermeshError::UnknownClassification) => true,
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => true,
             Err(err) => return Err(err),
         }
     } else {
@@ -854,19 +884,24 @@ fn subdivide_into_inner_with(
         }
     }
 
-    let contracted_task = match contract_task_to_polygon_family_bounds_if_tighter(&task, caches) {
-        Ok(contracted_task) => contracted_task,
-        Err(crate::error::HypermeshError::UnknownClassification) => {
-            crate::trace_dispatch!("subdivision", "contract-skipped-unknown-reference");
-            None
-        }
-        Err(err) => return Err(err),
-    };
+    let contracted_task =
+        match contract_task_to_polygon_family_bounds_if_tighter(decisions, &task, caches) {
+            Ok(contracted_task) => contracted_task,
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
+                crate::trace_dispatch!("subdivision", "contract-skipped-unknown-reference");
+                None
+            }
+            Err(err) => return Err(err),
+        };
     if let Some(contracted_task) = contracted_task {
         crate::trace_dispatch!("subdivision", "contract-bounds");
         let contracted_output = if let Some(reused) = {
             let mut query_caches = caches.support_reference_query.borrow_mut();
             if let Some(reused) = reusable_child_subdivision_if_certified(
+                decisions,
                 &caches.child_subdivision,
                 &contracted_task,
                 &mut query_caches,
@@ -874,6 +909,7 @@ fn subdivide_into_inner_with(
                 Some(reused)
             } else {
                 reusable_child_subdivision_from_cached_trace_if_certified(
+                    decisions,
                     &caches.child_subdivision,
                     &contracted_task,
                     &mut query_caches,
@@ -885,6 +921,7 @@ fn subdivide_into_inner_with(
             cached_child_subdivision_with(&caches.child_subdivision, &contracted_task, || {
                 let mut contracted_output = Vec::new();
                 subdivide_into_inner_with(
+                    decisions,
                     contracted_task.clone(),
                     operation,
                     config,
@@ -932,7 +969,7 @@ fn subdivide_into_inner_with(
     }
 
     crate::trace_dispatch!("subdivision", "can-split-bounds");
-    let can_split = match can_split_bounds(&task.bounds) {
+    let can_split = match can_split_bounds(decisions, &task.bounds) {
         Ok(can_split) => can_split,
         Err(error) => {
             crate::trace_dispatch!("subdivision", "can-split-bounds-unknown");
@@ -984,6 +1021,7 @@ fn subdivide_into_inner_with(
 
     crate::trace_dispatch!("subdivision", "root-split-basis");
     if let Err(error) = cached_root_split_basis_with_certified_embedded_inputs(
+        decisions,
         &caches.split_candidates,
         &caches.polygon_axis_values,
         &caches.pairwise_intersections,
@@ -1002,6 +1040,7 @@ fn subdivide_into_inner_with(
     }
     crate::trace_dispatch!("subdivision", "ordered-splits");
     let split_candidates = match cached_ordered_subdivision_splits_with_certified_embedded_inputs(
+        decisions,
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
@@ -1041,6 +1080,7 @@ fn subdivide_into_inner_with(
     let mut best_failure = None;
 
     if let Some(candidate_output) = try_ranked_subdivision_attempts(
+        decisions,
         &task,
         preferred_split,
         operation,
@@ -1060,6 +1100,7 @@ fn subdivide_into_inner_with(
     }
 
     if let Some(candidate_output) = try_ranked_subdivision_attempts(
+        decisions,
         &task,
         deferred_splits,
         operation,
@@ -1111,6 +1152,7 @@ fn partition_preferred_subdivision_split(
 }
 
 fn try_ranked_subdivision_attempts(
+    decisions: &DecisionContext,
     task: &SubdivisionTask,
     split_attempts: impl IntoIterator<Item = RankedSplitAttempt>,
     operation: BooleanOp,
@@ -1138,6 +1180,7 @@ fn try_ranked_subdivision_attempts(
         let attempt = (|| -> HypermeshResult<()> {
             for split_child in split_children {
                 process_split_attempt_child(
+                    decisions,
                     task,
                     split_child.polygons,
                     split_child.bounds,
@@ -1167,18 +1210,19 @@ fn try_ranked_subdivision_attempts(
 }
 
 fn contract_task_to_polygon_family_bounds_if_tighter(
+    decisions: &DecisionContext,
     task: &SubdivisionTask,
     caches: &SubdivisionRuntimeCaches,
 ) -> HypermeshResult<Option<SubdivisionTask>> {
     let contracted_bounds = cached_polygon_family_bounds_with(
         &caches.polygon_family_bounds,
         &task.polygons,
-        polygon_family_bounds,
+        |polygons| polygon_family_bounds(decisions, polygons),
     )?;
     if contracted_bounds == task.bounds {
         return Ok(None);
     }
-    if !bounds_contains_bounds(&task.bounds, &contracted_bounds)? {
+    if !bounds_contains_bounds(decisions, &task.bounds, &contracted_bounds)? {
         return Ok(None);
     }
 
@@ -1186,6 +1230,7 @@ fn contract_task_to_polygon_family_bounds_if_tighter(
         let mut query_caches = caches.support_reference_query.borrow_mut();
         if let Some(reused) =
             reusable_contracted_task_reference_from_cached_subdivision_if_certified(
+                decisions,
                 &caches.child_subdivision,
                 task,
                 &contracted_bounds,
@@ -1195,7 +1240,7 @@ fn contract_task_to_polygon_family_bounds_if_tighter(
             reused
         } else {
             drop(query_caches);
-            propagate_child_reference(task, &task.polygons, &contracted_bounds, caches)?
+            propagate_child_reference(decisions, task, &task.polygons, &contracted_bounds, caches)?
         }
     };
     let contracted_task = SubdivisionTask {
@@ -1263,6 +1308,7 @@ fn split_child_matches_parent_geometry(
 }
 
 fn process_split_attempt_child(
+    decisions: &DecisionContext,
     task: &SubdivisionTask,
     child_polygons: Vec<ConvexPolygon>,
     child_bounds: Aabb,
@@ -1280,8 +1326,8 @@ fn process_split_attempt_child(
     winding_reachability_cache: &RefCell<Vec<WindingReachabilityCacheEntry>>,
 ) -> HypermeshResult<()> {
     let (child_ref, child_ref_definitions, child_wnv) =
-        propagate_child_reference(task, &child_polygons, &child_bounds, caches).map_err(
-            |error| {
+        propagate_child_reference(decisions, task, &child_polygons, &child_bounds, caches)
+            .map_err(|error| {
                 if cfg!(debug_assertions) {
                     eprintln!(
                         "[DEBUG] child reference failed from depth {} for {} polygons: {error}",
@@ -1290,8 +1336,7 @@ fn process_split_attempt_child(
                     );
                 }
                 error
-            },
-        )?;
+            })?;
     let child_task = SubdivisionTask {
         polygons: child_polygons,
         bounds: child_bounds,
@@ -1309,6 +1354,7 @@ fn process_split_attempt_child(
     let reusable = (|| {
         let mut query_caches = caches.support_reference_query.borrow_mut();
         if let Some(reused) = reusable_child_subdivision_if_certified(
+            decisions,
             &caches.child_subdivision,
             &child_task,
             &mut query_caches,
@@ -1316,6 +1362,7 @@ fn process_split_attempt_child(
             Ok(Some(reused))
         } else {
             reusable_child_subdivision_from_cached_trace_if_certified(
+                decisions,
                 &caches.child_subdivision,
                 &child_task,
                 &mut query_caches,
@@ -1337,6 +1384,7 @@ fn process_split_attempt_child(
         cached_child_subdivision_with(&caches.child_subdivision, &child_task, || {
             let mut child_output = Vec::new();
             subdivide_into_inner_with(
+                decisions,
                 child_task.clone(),
                 operation,
                 config,
@@ -1362,12 +1410,14 @@ fn subdivision_depth_budget_reached(depth: usize, max_depth: usize) -> bool {
 }
 
 fn propagate_child_reference(
+    decisions: &DecisionContext,
     task: &SubdivisionTask,
     child_polygons: &[ConvexPolygon],
     child_bounds: &Aabb,
     caches: &SubdivisionRuntimeCaches,
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
-    let source_polygons = ordered_reference_search_polygons(&task.polygons, child_bounds);
+    let source_polygons =
+        ordered_reference_search_polygons(decisions, &task.polygons, child_bounds);
     caches
         .support_reference_query
         .borrow_mut()
@@ -1375,6 +1425,7 @@ fn propagate_child_reference(
     let reused_reference = {
         let mut query_caches = caches.support_reference_query.borrow_mut();
         reusable_child_reference_if_certified(
+            decisions,
             &caches.child_reference,
             task,
             child_polygons,
@@ -1387,6 +1438,7 @@ fn propagate_child_reference(
     }
 
     let direct_result = compute_new_reference_with_query_caches(
+        decisions,
         &task.ref_point,
         &task.ref_definitions,
         &task.ref_wnv,
@@ -1408,7 +1460,10 @@ fn propagate_child_reference(
             );
             Ok(result)
         }
-        Err(crate::error::HypermeshError::UnknownClassification) => cached_child_reference_with(
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => cached_child_reference_with(
             &caches.child_reference,
             &task.ref_point,
             &task.ref_definitions,
@@ -1422,6 +1477,7 @@ fn propagate_child_reference(
 }
 
 fn ordered_reference_search_polygons(
+    decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
 ) -> Vec<ConvexPolygon> {
@@ -1432,7 +1488,8 @@ fn ordered_reference_search_polygons(
         .enumerate()
         .map(|(index, polygon)| {
             let overlaps_bounds = polygon.approx_bounds.as_ref().is_none_or(|polygon_bounds| {
-                crate::bvh::bounds_overlap(polygon_bounds, &bounds_approx).unwrap_or(true)
+                crate::bvh::bounds_overlap_decision(decisions, polygon_bounds, &bounds_approx)
+                    .unwrap_or(true)
             });
             (index, overlaps_bounds, polygon)
         })
@@ -1579,6 +1636,7 @@ fn child_reference_cache_entry_matches_exact_state(
 }
 
 fn reusable_child_reference_if_certified(
+    decisions: &DecisionContext,
     cache: &RefCell<Vec<ChildReferenceCacheEntry>>,
     task: &SubdivisionTask,
     child_polygons: &[ConvexPolygon],
@@ -1596,7 +1654,9 @@ fn reusable_child_reference_if_certified(
         Some(&context),
         child_bounds,
         &task.ref_point,
-        |point| is_certified_valid_reference_for_bounds(point, child_bounds, child_polygons),
+        |point| {
+            is_certified_valid_reference_for_bounds(decisions, point, child_bounds, child_polygons)
+        },
     ) {
         Ok(true) => {
             let reused = certified_reference_result((
@@ -1615,7 +1675,11 @@ fn reusable_child_reference_if_certified(
             );
             Ok(Some(reused))
         }
-        Ok(false) | Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
+        Ok(false)
+        | Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => Ok(None),
         Err(err) => Err(err),
     }
 }
@@ -1650,7 +1714,14 @@ fn reusable_child_reference_from_cached_trace_if_certified(
                 Some(&context),
                 bounds,
                 point,
-                |point| is_certified_valid_reference_for_bounds(point, bounds, source_polygons),
+                |point| {
+                    is_certified_valid_reference_for_bounds(
+                        &crate::test_support::approximate_decisions(),
+                        point,
+                        bounds,
+                        source_polygons,
+                    )
+                },
             )?;
             if !valid_for_bounds {
                 continue;
@@ -1662,6 +1733,7 @@ fn reusable_child_reference_from_cached_trace_if_certified(
                 &target,
                 |target| {
                     trace_reference_target_from_validated_bounds(
+                        &crate::test_support::approximate_decisions(),
                         old_ref,
                         old_ref_definitions,
                         old_wnv,
@@ -1722,7 +1794,14 @@ fn reusable_child_reference_from_cached_result_if_certified(
                 Some(&context),
                 bounds,
                 point,
-                |point| is_certified_valid_reference_for_bounds(point, bounds, source_polygons),
+                |point| {
+                    is_certified_valid_reference_for_bounds(
+                        &crate::test_support::approximate_decisions(),
+                        point,
+                        bounds,
+                        source_polygons,
+                    )
+                },
             )?;
             if !valid_for_bounds {
                 continue;
@@ -1747,10 +1826,12 @@ fn reusable_child_reference_from_cached_result_if_certified(
 }
 
 fn child_task_reference_is_certified_valid(
+    decisions: &DecisionContext,
     task: &SubdivisionTask,
     query_caches: &mut SupportReferenceQueryCaches,
 ) -> HypermeshResult<bool> {
     reference_is_certified_valid_for_task_bounds(
+        decisions,
         &task.ref_point,
         &task.ref_definitions,
         &task.ref_wnv,
@@ -1761,6 +1842,7 @@ fn child_task_reference_is_certified_valid(
 }
 
 fn reference_is_certified_valid_for_task_bounds(
+    decisions: &DecisionContext,
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
@@ -1775,16 +1857,17 @@ fn reference_is_certified_valid_for_task_bounds(
         Some(&context),
         bounds,
         ref_point,
-        |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
+        |point| is_certified_valid_reference_for_bounds(decisions, point, bounds, polygons),
     )
 }
 
 fn reusable_child_subdivision_if_certified(
+    decisions: &DecisionContext,
     cache: &RefCell<Vec<ChildSubdivisionCacheEntry>>,
     task: &SubdivisionTask,
     query_caches: &mut SupportReferenceQueryCaches,
 ) -> HypermeshResult<Option<Vec<ClassifiedPolygon>>> {
-    if !child_task_reference_is_certified_valid(task, query_caches)? {
+    if !child_task_reference_is_certified_valid(decisions, task, query_caches)? {
         return Ok(None);
     }
 
@@ -1802,11 +1885,12 @@ fn reusable_child_subdivision_if_certified(
                 continue;
             }
 
-            if !bounds_contains_bounds(&existing.task.bounds, &task.bounds)? {
+            if !bounds_contains_bounds(decisions, &existing.task.bounds, &task.bounds)? {
                 continue;
             }
 
             if reference_is_certified_valid_for_task_bounds(
+                decisions,
                 &existing.task.ref_point,
                 &existing.task.ref_definitions,
                 &existing.task.ref_wnv,
@@ -1828,11 +1912,12 @@ fn reusable_child_subdivision_if_certified(
 }
 
 fn reusable_child_subdivision_from_cached_trace_if_certified(
+    decisions: &DecisionContext,
     cache: &RefCell<Vec<ChildSubdivisionCacheEntry>>,
     task: &SubdivisionTask,
     query_caches: &mut SupportReferenceQueryCaches,
 ) -> HypermeshResult<Option<Vec<ClassifiedPolygon>>> {
-    if !child_task_reference_is_certified_valid(task, query_caches)? {
+    if !child_task_reference_is_certified_valid(decisions, task, query_caches)? {
         return Ok(None);
     }
 
@@ -1855,11 +1940,12 @@ fn reusable_child_subdivision_from_cached_trace_if_certified(
                 continue;
             }
 
-            if !bounds_contains_bounds(&existing.task.bounds, &task.bounds)? {
+            if !bounds_contains_bounds(decisions, &existing.task.bounds, &task.bounds)? {
                 continue;
             }
 
             if !reference_is_certified_valid_for_task_bounds(
+                decisions,
                 &existing.task.ref_point,
                 &existing.task.ref_definitions,
                 &existing.task.ref_wnv,
@@ -1880,6 +1966,7 @@ fn reusable_child_subdivision_from_cached_trace_if_certified(
                 &target,
                 |target| {
                     trace_reference_target_from_validated_bounds(
+                        decisions,
                         &task.ref_point,
                         &task.ref_definitions,
                         &task.ref_wnv,
@@ -1910,6 +1997,7 @@ fn reusable_child_subdivision_from_cached_trace_if_certified(
 }
 
 fn reusable_contracted_task_reference_from_cached_subdivision_if_certified(
+    decisions: &DecisionContext,
     cache: &RefCell<Vec<ChildSubdivisionCacheEntry>>,
     task: &SubdivisionTask,
     contracted_bounds: &Aabb,
@@ -1928,11 +2016,12 @@ fn reusable_contracted_task_reference_from_cached_subdivision_if_certified(
                 continue;
             }
 
-            if !bounds_contains_bounds(&existing.task.bounds, contracted_bounds)? {
+            if !bounds_contains_bounds(decisions, &existing.task.bounds, contracted_bounds)? {
                 continue;
             }
 
             if reference_is_certified_valid_for_task_bounds(
+                decisions,
                 &existing.task.ref_point,
                 &existing.task.ref_definitions,
                 &existing.task.ref_wnv,
@@ -1952,10 +2041,21 @@ fn reusable_contracted_task_reference_from_cached_subdivision_if_certified(
     Ok(reused)
 }
 
-fn bounds_contains_bounds(outer: &Aabb, inner: &Aabb) -> HypermeshResult<bool> {
-    hyperlimit::ordered_aabb3_contains(&outer.min, &outer.max, &inner.min, &inner.max)
-        .value()
-        .ok_or(HypermeshError::UnknownClassification)
+fn bounds_contains_bounds(
+    decisions: &DecisionContext,
+    outer: &Aabb,
+    inner: &Aabb,
+) -> HypermeshResult<bool> {
+    decisions.decide(
+        hyperlimit::ordered_aabb3_contains(
+            &outer.min,
+            &outer.max,
+            &inner.min,
+            &inner.max,
+            decisions.policy(),
+        ),
+        "ordered AABB containment",
+    )
 }
 
 fn cache_child_subdivision_result(
@@ -2127,6 +2227,7 @@ fn leaf_classification_cache_context_matches(
 }
 
 fn process_leaf_task_into_with_caches(
+    decisions: &DecisionContext,
     task: &SubdivisionTask,
     operation: BooleanOp,
     emit_all_transitions: bool,
@@ -2144,6 +2245,7 @@ fn process_leaf_task_into_with_caches(
     let retain_leaf_cache_misses = task.depth != 0;
     let pairwise_query = |polygons: &[ConvexPolygon]| {
         cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
+            decisions,
             pairwise_cache,
             polygons,
             certified_embedded_inputs,
@@ -2153,6 +2255,7 @@ fn process_leaf_task_into_with_caches(
                             polygons: &[ConvexPolygon],
                             intersections: &[PairwiseIntersection]| {
         cached_host_bsp_leaves_with(
+            decisions,
             host_bsp_cache,
             retain_leaf_cache_misses,
             polygon,
@@ -2167,6 +2270,7 @@ fn process_leaf_task_into_with_caches(
                           single_convex_interior_point: bool,
                           interior_point: Option<&Point3>| {
         cached_bsp_leaf_certification_with(
+            decisions,
             bsp_leaf_cache,
             retain_leaf_cache_misses,
             polygon,
@@ -2178,6 +2282,7 @@ fn process_leaf_task_into_with_caches(
         )
     };
     process_leaf_into_inner_with_pairwise_cache(
+        decisions,
         &task.polygons,
         &task.bounds,
         &task.ref_point,
@@ -2208,7 +2313,10 @@ fn certified_leaf_output_if_complete_with(
     let mut certified_output = Vec::new();
     let stats = match process_leaf(task, operation, &mut certified_output) {
         Ok(stats) => stats,
-        Err(crate::error::HypermeshError::UnknownClassification) => return Ok(None),
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => return Ok(None),
         Err(err) => return Err(err),
     };
     if stats.certified_complete {
@@ -2258,6 +2366,7 @@ fn can_discard_by_winding_reachability(
 }
 
 fn emit_one_direct(
+    decisions: &DecisionContext,
     polygon: &ConvexPolygon,
     bounds: &Aabb,
     ref_point: &Point3,
@@ -2283,6 +2392,7 @@ fn emit_one_direct(
         &polygon.delta_w,
         || {
             classify_leaf_polygon_with_probe_query_caches(
+                decisions,
                 &polygon.support,
                 &polygon.edges,
                 ref_point,
@@ -2434,6 +2544,7 @@ fn cached_leaf_point_classification_with_lookup_limit(
 }
 
 fn classify_leaf_polygon_from_interior_points_with_point_cache(
+    decisions: &DecisionContext,
     interior_points: &[crate::segment_trace::InteriorLeafPoint],
     support: &Plane,
     ref_point: &Point3,
@@ -2451,7 +2562,9 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
     let mut saw_unknown = false;
     let mut probe_query_caches = LeafProbeQueryCaches::default();
 
-    for point in ordered_interior_points_for_probe_search_with_support(interior_points, support)? {
+    for point in
+        ordered_interior_points_for_probe_search_with_support(decisions, interior_points, support)?
+    {
         let state = cached_leaf_point_classification_with_lookup_limit(
             point_cache,
             point_cache_lookup_len,
@@ -2462,6 +2575,7 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
             || {
                 let mut local_unknown = false;
                 let winding = classify_leaf_polygon_interior_point_with_probe_query_caches(
+                    decisions,
                     point,
                     support,
                     ref_point,
@@ -2492,22 +2606,23 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
 }
 
 pub(crate) fn build_host_bsp_leaves(
+    decisions: &DecisionContext,
     polygon: &ConvexPolygon,
     polygons: &[ConvexPolygon],
     intersections: &[PairwiseIntersection],
 ) -> HypermeshResult<Vec<BspLeaf>> {
     let mut bsp = LocalBsp::new(polygon);
-    bsp.add_overlap_edges(&unique_overlap_edge_planes(intersections))?;
+    bsp.add_overlap_edges(decisions, &unique_overlap_edge_planes(intersections))?;
     for intersection in intersections {
         match intersection.kind {
             PairwiseIntersectionType::Segment => {
                 if let Some(segment) = &intersection.segment {
-                    bsp.add_segment(segment)?;
+                    bsp.add_segment(decisions, segment)?;
                 }
             }
             PairwiseIntersectionType::Overlap => {
                 if let Some(overlap) = &intersection.overlap {
-                    bsp.mark_overlap(&polygons[overlap.other_polygon_idx])?;
+                    bsp.mark_overlap(decisions, &polygons[overlap.other_polygon_idx])?;
                 }
             }
             PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {}
@@ -2517,6 +2632,7 @@ pub(crate) fn build_host_bsp_leaves(
 }
 
 fn cached_host_bsp_leaves_with(
+    decisions: &DecisionContext,
     cache: &RefCell<Vec<HostBspLeavesCacheEntry>>,
     retain_cache_miss: bool,
     polygon: &ConvexPolygon,
@@ -2525,7 +2641,7 @@ fn cached_host_bsp_leaves_with(
 ) -> HypermeshResult<Arc<Vec<BspLeaf>>> {
     if !retain_cache_miss {
         crate::trace_dispatch!("host-bsp-cache", "one-shot-bypass");
-        return build_host_bsp_leaves(polygon, polygons, intersections).map(Arc::new);
+        return build_host_bsp_leaves(decisions, polygon, polygons, intersections).map(Arc::new);
     }
     let polygon_profile = polygon_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
@@ -2536,7 +2652,7 @@ fn cached_host_bsp_leaves_with(
         return existing.leaves.clone();
     }
 
-    let leaves = build_host_bsp_leaves(polygon, polygons, intersections).map(Arc::new);
+    let leaves = build_host_bsp_leaves(decisions, polygon, polygons, intersections).map(Arc::new);
     cache.borrow_mut().push(HostBspLeavesCacheEntry {
         host: polygon.clone(),
         polygon_profile,
@@ -2547,6 +2663,7 @@ fn cached_host_bsp_leaves_with(
 }
 
 fn cached_bsp_leaf_certification_with(
+    decisions: &DecisionContext,
     cache: &RefCell<Vec<BspLeafCertificationCacheEntry>>,
     retain_cache_miss: bool,
     host: &ConvexPolygon,
@@ -2559,6 +2676,7 @@ fn cached_bsp_leaf_certification_with(
     if !retain_cache_miss {
         crate::trace_dispatch!("bsp-leaf-certification-cache", "one-shot-bypass");
         return certify_bsp_leaf_and_delta_w_with_host_intersections(
+            decisions,
             host,
             leaf_edges,
             polygons,
@@ -2580,6 +2698,7 @@ fn cached_bsp_leaf_certification_with(
     }
 
     let result = certify_bsp_leaf_and_delta_w_with_host_intersections(
+        decisions,
         host,
         leaf_edges,
         polygons,
@@ -2641,11 +2760,18 @@ pub(crate) fn certify_bsp_leaf_and_delta_w(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
     certify_bsp_leaf_and_delta_w_with_host_intersections(
-        polygon, leaf_edges, polygons, None, false, None,
+        &crate::test_support::approximate_decisions(),
+        polygon,
+        leaf_edges,
+        polygons,
+        None,
+        false,
+        None,
     )
 }
 
 fn certify_bsp_leaf_and_delta_w_with_host_intersections(
+    decisions: &DecisionContext,
     polygon: &ConvexPolygon,
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
@@ -2671,14 +2797,14 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
         });
     let interior_points = if may_use_single_point {
         vec![if let Some(point) = interior_point
-            && point_is_strictly_inside_convex_leaf(point, &leaf_polygon)?
+            && point_is_strictly_inside_convex_leaf(decisions, point, &leaf_polygon)?
         {
             crate::segment_trace::InteriorLeafPoint::certified(point.clone(), Vec::new())
         } else {
-            certified_convex_leaf_centroid(&leaf_polygon)?
+            certified_convex_leaf_centroid(decisions, &leaf_polygon)?
         }]
     } else {
-        certified_leaf_interior_points(&leaf_polygon.support, &leaf_polygon.edges)?
+        certified_leaf_interior_points(decisions, &leaf_polygon.support, &leaf_polygon.edges)?
     };
     if interior_points.is_empty() {
         return Err(crate::error::HypermeshError::UnknownClassification);
@@ -2714,6 +2840,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
                 continue;
             }
             certify_bsp_leaf_against_candidate(
+                decisions,
                 polygon,
                 &leaf_polygon,
                 &leaf_test_points,
@@ -2732,6 +2859,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
             }
             let other_vertices = other.vertices()?;
             let intersection = intersect_polygons_with_vertices(
+                decisions,
                 &leaf_polygon,
                 &leaf_vertices,
                 other,
@@ -2739,6 +2867,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
                 other_index,
             )?;
             certify_bsp_leaf_against_candidate(
+                decisions,
                 polygon,
                 &leaf_polygon,
                 &leaf_test_points,
@@ -2753,6 +2882,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
 }
 
 fn certified_convex_leaf_centroid(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
 ) -> HypermeshResult<crate::segment_trace::InteriorLeafPoint> {
     let vertices = leaf.vertices()?;
@@ -2774,7 +2904,7 @@ fn certified_convex_leaf_centroid(
     point.z =
         (point.z / denominator).map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
 
-    if !point_is_strictly_inside_convex_leaf(&point, leaf)? {
+    if !point_is_strictly_inside_convex_leaf(decisions, &point, leaf)? {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
@@ -2785,14 +2915,15 @@ fn certified_convex_leaf_centroid(
 }
 
 fn point_is_strictly_inside_convex_leaf(
+    decisions: &DecisionContext,
     point: &Point3,
     leaf: &ConvexPolygon,
 ) -> HypermeshResult<bool> {
-    if classify_point(point, &leaf.support)? != Classification::On {
+    if classify_point_decision(decisions, point, &leaf.support)? != Classification::On {
         return Ok(false);
     }
     for edge in leaf.edges.iter() {
-        if classify_point(point, edge)? != Classification::Negative {
+        if classify_point_decision(decisions, point, edge)? != Classification::Negative {
             return Ok(false);
         }
     }
@@ -2800,6 +2931,7 @@ fn point_is_strictly_inside_convex_leaf(
 }
 
 fn certify_bsp_leaf_against_candidate(
+    decisions: &DecisionContext,
     host: &ConvexPolygon,
     leaf: &ConvexPolygon,
     leaf_test_points: &[HomogeneousPoint3],
@@ -2816,13 +2948,19 @@ fn certify_bsp_leaf_against_candidate(
             let Some(segment) = intersection.segment.as_ref() else {
                 return Err(crate::error::HypermeshError::UnknownClassification);
             };
-            if segment_has_strict_interior_point_in_both(&segment.v0, &segment.v1, leaf, other)? {
+            if segment_has_strict_interior_point_in_both(
+                decisions,
+                &segment.v0,
+                &segment.v1,
+                leaf,
+                other,
+            )? {
                 return Err(crate::error::HypermeshError::UnknownClassification);
             }
             return Ok(());
         }
         PairwiseIntersectionType::Overlap => {
-            let relation = classify_leaf_test_relation(leaf_test_points, other)?;
+            let relation = classify_leaf_test_relation(decisions, leaf_test_points, other)?;
             let Some(strictly_inside) = relation else {
                 return Err(crate::error::HypermeshError::UnknownClassification);
             };
@@ -2830,11 +2968,12 @@ fn certify_bsp_leaf_against_candidate(
                 return Err(crate::error::HypermeshError::UnknownClassification);
             }
             if strictly_inside {
-                let sign = if supports_have_same_direction(&host.support, &other.support)? {
-                    1
-                } else {
-                    -1
-                };
+                let sign =
+                    if supports_have_same_direction(decisions, &host.support, &other.support)? {
+                        1
+                    } else {
+                        -1
+                    };
                 for (value, delta) in delta_w.iter_mut().zip(&other.delta_w) {
                     *value += sign * *delta;
                 }
@@ -2899,6 +3038,7 @@ fn pairwise_intersection_other_polygon_idx(
 }
 
 fn classify_leaf_test_relation(
+    decisions: &DecisionContext,
     test_points: &[HomogeneousPoint3],
     polygon: &ConvexPolygon,
 ) -> HypermeshResult<Option<bool>> {
@@ -2906,8 +3046,8 @@ fn classify_leaf_test_relation(
     let mut any_outside = false;
 
     for test_point in test_points {
-        let inside_or_on = polygon.contains_point(test_point)?;
-        let strictly_inside = polygon.contains_point_strictly(test_point)?;
+        let inside_or_on = polygon.contains_point_decision(decisions, test_point)?;
+        let strictly_inside = polygon.contains_point_strictly_decision(decisions, test_point)?;
         if strictly_inside {
             any_inside = true;
         } else if !inside_or_on {
@@ -2927,13 +3067,14 @@ fn classify_leaf_test_relation(
 }
 
 fn supports_have_same_direction(
+    decisions: &DecisionContext,
     left: &crate::geometry::Plane,
     right: &crate::geometry::Plane,
 ) -> HypermeshResult<bool> {
     let dot = (&left.normal.x * &right.normal.x)
         + (&left.normal.y * &right.normal.y)
         + (&left.normal.z * &right.normal.z);
-    Ok(crate::geometry::classify_real(&dot)? != Classification::Negative)
+    Ok(classify_real(decisions, &dot)? != Classification::Negative)
 }
 
 #[cfg(test)]
@@ -2944,12 +3085,16 @@ fn certify_bsp_leaf_has_no_interior_intersections(
 ) -> HypermeshResult<bool> {
     match certify_bsp_leaf_and_delta_w(host, leaf_edges, polygons) {
         Ok((_interior_points, _delta_w)) => Ok(true),
-        Err(crate::error::HypermeshError::UnknownClassification) => Ok(false),
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => Ok(false),
         Err(err) => Err(err),
     }
 }
 
 fn segment_has_strict_interior_point_in_both(
+    decisions: &DecisionContext,
     a: &Point3,
     b: &Point3,
     left: &ConvexPolygon,
@@ -2958,13 +3103,16 @@ fn segment_has_strict_interior_point_in_both(
     let mut lower = Real::zero();
     let mut upper = Real::one();
     Ok(
-        constrain_open_segment_interval_to_polygon(a, b, left, &mut lower, &mut upper)?
-            && constrain_open_segment_interval_to_polygon(a, b, right, &mut lower, &mut upper)?
-            && compare_real(&lower, &upper)?.is_lt(),
+        constrain_open_segment_interval_to_polygon(decisions, a, b, left, &mut lower, &mut upper)?
+            && constrain_open_segment_interval_to_polygon(
+                decisions, a, b, right, &mut lower, &mut upper,
+            )?
+            && compare_real_decision(decisions, &lower, &upper)?.is_lt(),
     )
 }
 
 fn constrain_open_segment_interval_to_polygon(
+    decisions: &DecisionContext,
     a: &Point3,
     b: &Point3,
     polygon: &ConvexPolygon,
@@ -2972,7 +3120,8 @@ fn constrain_open_segment_interval_to_polygon(
     upper: &mut Real,
 ) -> HypermeshResult<bool> {
     for edge in polygon.edges.iter() {
-        if !constrain_open_segment_interval_to_plane_negative(a, b, edge, lower, upper)? {
+        if !constrain_open_segment_interval_to_plane_negative(decisions, a, b, edge, lower, upper)?
+        {
             return Ok(false);
         }
     }
@@ -2980,6 +3129,7 @@ fn constrain_open_segment_interval_to_polygon(
 }
 
 fn constrain_open_segment_interval_to_plane_negative(
+    decisions: &DecisionContext,
     a: &Point3,
     b: &Point3,
     plane: &Plane,
@@ -2988,8 +3138,8 @@ fn constrain_open_segment_interval_to_plane_negative(
 ) -> HypermeshResult<bool> {
     let start = plane.expression_at_point(a);
     let end = plane.expression_at_point(b);
-    let start_class = classify_real(&start)?;
-    let end_class = classify_real(&end)?;
+    let start_class = classify_real(decisions, &start)?;
+    let end_class = classify_real(decisions, &end)?;
 
     match (start_class, end_class) {
         (Classification::Negative, Classification::Negative) => Ok(true),
@@ -2998,12 +3148,12 @@ fn constrain_open_segment_interval_to_plane_negative(
         (Classification::Positive, Classification::Negative) => {
             let cut = (start.clone() / (&start - &end))
                 .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
-            update_open_segment_lower(lower, &cut)
+            update_open_segment_lower(decisions, lower, &cut)
         }
         (Classification::Negative, Classification::Positive) => {
             let cut = (start.clone() / (&start - &end))
                 .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
-            update_open_segment_upper(upper, &cut)
+            update_open_segment_upper(decisions, upper, &cut)
         }
         (Classification::On, Classification::On)
         | (Classification::Positive, Classification::Positive)
@@ -3012,18 +3162,26 @@ fn constrain_open_segment_interval_to_plane_negative(
     }
 }
 
-fn update_open_segment_lower(lower: &mut Real, candidate: &Real) -> HypermeshResult<bool> {
-    if compare_real(candidate, lower)?.is_gt() {
+fn update_open_segment_lower(
+    decisions: &DecisionContext,
+    lower: &mut Real,
+    candidate: &Real,
+) -> HypermeshResult<bool> {
+    if compare_real_decision(decisions, candidate, lower)?.is_gt() {
         *lower = candidate.clone();
     }
-    Ok(compare_real(lower, &Real::one())?.is_lt())
+    Ok(compare_real_decision(decisions, lower, &Real::one())?.is_lt())
 }
 
-fn update_open_segment_upper(upper: &mut Real, candidate: &Real) -> HypermeshResult<bool> {
-    if compare_real(candidate, upper)?.is_lt() {
+fn update_open_segment_upper(
+    decisions: &DecisionContext,
+    upper: &mut Real,
+    candidate: &Real,
+) -> HypermeshResult<bool> {
+    if compare_real_decision(decisions, candidate, upper)?.is_lt() {
         *upper = candidate.clone();
     }
-    Ok(compare_real(&Real::zero(), upper)?.is_lt())
+    Ok(compare_real_decision(decisions, &Real::zero(), upper)?.is_lt())
 }
 
 fn leaf_polygon_key(polygon: &ConvexPolygon) -> (isize, isize) {
@@ -3123,23 +3281,25 @@ fn union_component_roots(parents: &mut [usize], left: usize, right: usize) {
 }
 
 fn pairwise_intersections_by_polygon(
+    decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
-    pairwise_intersections_by_polygon_with_certified_embedded_inputs(polygons, &[])
+    pairwise_intersections_by_polygon_with_certified_embedded_inputs(decisions, polygons, &[])
 }
 
 fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
+    decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     certified_embedded_inputs: &[bool],
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
     let mut by_polygon = vec![Vec::new(); polygons.len()];
-    let bvh = ExactBvh::build(polygons)?;
+    let bvh = ExactBvh::build_decision(decisions, polygons)?;
     let vertices = polygons
         .iter()
         .map(ConvexPolygon::vertices)
         .collect::<HypermeshResult<Vec<_>>>()?;
     let mut candidate_pairs = Vec::new();
-    bvh.intersect_pairs(&bvh, |left, right| {
+    bvh.intersect_pairs_decision(decisions, &bvh, |left, right| {
         if left < right {
             candidate_pairs.push((left, right));
         }
@@ -3160,6 +3320,7 @@ fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
         let same_mesh = polygons[global_i].mesh_index == polygons[global_j].mesh_index;
         let shares_manifold_edge = if same_mesh {
             polygon_cycles_share_reversed_noncoplanar_triangle_edge(
+                decisions,
                 &vertices[global_i],
                 &polygons[global_i].support,
                 &vertices[global_j],
@@ -3181,6 +3342,7 @@ fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
             }
         );
         let intersection = intersect_polygons_with_vertices(
+            decisions,
             &polygons[global_i],
             &vertices[global_i],
             &polygons[global_j],
@@ -3204,6 +3366,7 @@ fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
                 && intersection.kind == PairwiseIntersectionType::Segment
                 && let Some(segment) = intersection.segment.as_ref()
                 && !segment_has_strict_interior_point_in_both(
+                    decisions,
                     &segment.v0,
                     &segment.v1,
                     &polygons[global_i],
@@ -3225,6 +3388,7 @@ fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
 }
 
 fn polygon_cycles_share_reversed_noncoplanar_triangle_edge(
+    decisions: &DecisionContext,
     left: &[Point3],
     left_support: &Plane,
     right: &[Point3],
@@ -3243,9 +3407,9 @@ fn polygon_cycles_share_reversed_noncoplanar_triangle_edge(
             let left_opposite = &left[(left_index + 2) % 3];
             let right_opposite = &right[(right_index + 2) % 3];
             return Ok(
-                crate::geometry::classify_point(right_opposite, left_support)?
+                classify_point_decision(decisions, right_opposite, left_support)?
                     != Classification::On
-                    || crate::geometry::classify_point(left_opposite, right_support)?
+                    || classify_point_decision(decisions, left_opposite, right_support)?
                         != Classification::On,
             );
         }
@@ -3282,10 +3446,16 @@ fn cached_pairwise_intersections_by_polygon_with(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>> {
-    cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(cache, polygons, &[])
+    cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
+        &crate::test_support::approximate_decisions(),
+        cache,
+        polygons,
+        &[],
+    )
 }
 
 fn cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
+    decisions: &DecisionContext,
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
     certified_embedded_inputs: &[bool],
@@ -3333,6 +3503,7 @@ fn cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
 
     crate::trace_dispatch!("pairwise-intersection-cache", "miss");
     let result = pairwise_intersections_by_polygon_with_certified_embedded_inputs(
+        decisions,
         polygons,
         certified_embedded_inputs,
     )
@@ -3434,12 +3605,13 @@ fn remap_pairwise_intersections_for_polygon_order(
 }
 
 fn normalize_surface_reference(
+    decisions: &DecisionContext,
     old_ref: &Point3,
     old_wnv: &[i32],
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<(Point3, Vec<[Plane; 3]>, Vec<i32>)>> {
-    if !bounds.contains_point(old_ref)? {
+    if !bounds.contains_point_decision(decisions, old_ref)? {
         return Ok(None);
     }
 
@@ -3447,10 +3619,10 @@ fn normalize_surface_reference(
     let mut supports_through_reference = Vec::new();
     let mut has_boundary_contact = false;
     for polygon in polygons {
-        if crate::geometry::classify_point(old_ref, &polygon.support)? == Classification::On {
+        if classify_point_decision(decisions, old_ref, &polygon.support)? == Classification::On {
             supports_through_reference.push(polygon);
         }
-        match classify_point_in_local_polygon(old_ref, polygon)? {
+        match classify_point_in_local_polygon(decisions, old_ref, polygon)? {
             LocalPolygonPointLocation::Outside => {}
             LocalPolygonPointLocation::Boundary => {
                 has_boundary_contact = true;
@@ -3467,9 +3639,13 @@ fn normalize_surface_reference(
         let base = incident[0];
         let mut parallel = true;
         for polygon in incident.iter().skip(1) {
-            match supports_have_parallel_normals(&base.support, &polygon.support) {
+            match supports_have_parallel_normals(decisions, &base.support, &polygon.support) {
                 Ok(true) => {}
-                Ok(false) | Err(crate::error::HypermeshError::UnknownClassification) => {
+                Ok(false)
+                | Err(
+                    crate::error::HypermeshError::PredicateUndecided { .. }
+                    | crate::error::HypermeshError::UnknownClassification,
+                ) => {
                     parallel = false;
                     break;
                 }
@@ -3478,10 +3654,10 @@ fn normalize_surface_reference(
         }
 
         if parallel {
-            let exterior = exterior_reference_point(bounds)?;
+            let exterior = exterior_reference_point(decisions, bounds)?;
             let exterior_definitions = vec![axis_plane_definition(&exterior)];
             let exterior_winding = vec![0; old_wnv.len()];
-            let trace_bounds = reference_trace_bounds(&exterior, bounds)?;
+            let trace_bounds = reference_trace_bounds(decisions, &exterior, bounds)?;
             for positive_side in [true, false] {
                 let direction = if positive_side {
                     base.support.normal.clone()
@@ -3492,14 +3668,19 @@ fn normalize_surface_reference(
                         -base.support.normal.z.clone(),
                     )
                 };
-                let Some(point) =
-                    surface_reference_departure_point(old_ref, &direction, bounds, polygons)?
+                let Some(point) = surface_reference_departure_point(
+                    decisions, old_ref, &direction, bounds, polygons,
+                )?
                 else {
                     continue;
                 };
-                match is_certified_valid_reference_for_bounds(&point, bounds, polygons) {
+                match is_certified_valid_reference_for_bounds(decisions, &point, bounds, polygons) {
                     Ok(true) => {}
-                    Ok(false) | Err(crate::error::HypermeshError::UnknownClassification) => {
+                    Ok(false)
+                    | Err(
+                        crate::error::HypermeshError::PredicateUndecided { .. }
+                        | crate::error::HypermeshError::UnknownClassification,
+                    ) => {
                         continue;
                     }
                     Err(err) => return Err(err),
@@ -3507,6 +3688,7 @@ fn normalize_surface_reference(
 
                 let definitions = vec![axis_plane_definition(&point)];
                 let winding = match trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds(
+                        decisions,
                         &exterior,
                         &point,
                         &exterior_winding,
@@ -3516,7 +3698,7 @@ fn normalize_surface_reference(
                         &trace_bounds,
                     ) {
                         Ok(winding) => winding,
-                        Err(crate::error::HypermeshError::UnknownClassification) => continue,
+                        Err(crate::error::HypermeshError::PredicateUndecided { .. } | crate::error::HypermeshError::UnknownClassification) => continue,
                         Err(err) => return Err(err),
                     };
                 if winding == old_wnv {
@@ -3526,11 +3708,12 @@ fn normalize_surface_reference(
         }
     }
 
-    if !polygon_family_is_closed_within_bounds(polygons, bounds, old_wnv.len())? {
+    if !polygon_family_is_closed_within_bounds(decisions, polygons, bounds, old_wnv.len())? {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
     match closed_family_adjacent_reference_with_winding(
+        decisions,
         old_ref,
         old_wnv,
         bounds,
@@ -3543,6 +3726,7 @@ fn normalize_surface_reference(
 }
 
 fn polygon_family_is_closed_within_bounds(
+    decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
     expected_mesh_count: usize,
@@ -3560,7 +3744,7 @@ fn polygon_family_is_closed_within_bounds(
             return Ok(false);
         }
         for vertex in &vertices {
-            if !bounds.contains_point(vertex)? {
+            if !bounds.contains_point_decision(decisions, vertex)? {
                 return Ok(false);
             }
         }
@@ -3576,7 +3760,7 @@ fn polygon_family_is_closed_within_bounds(
     }
 
     for edges in &mesh_edges {
-        let balance = classify_edge_balance(edges)?;
+        let balance = classify_edge_balance(decisions, edges)?;
         if balance.boundary_edges != 0 || balance.unbalanced_edges != 0 {
             return Ok(false);
         }
@@ -3585,16 +3769,17 @@ fn polygon_family_is_closed_within_bounds(
 }
 
 fn closed_family_adjacent_reference_with_winding(
+    decisions: &DecisionContext,
     surface_point: &Point3,
     required_winding: &[i32],
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     supports_through_reference: &[&ConvexPolygon],
 ) -> HypermeshResult<Option<(Point3, Vec<[Plane; 3]>, Vec<i32>)>> {
-    let exterior = exterior_reference_point(bounds)?;
+    let exterior = exterior_reference_point(decisions, bounds)?;
     let exterior_definitions = vec![axis_plane_definition(&exterior)];
     let exterior_winding = vec![0; required_winding.len()];
-    let trace_bounds = reference_trace_bounds(&exterior, bounds)?;
+    let trace_bounds = reference_trace_bounds(decisions, &exterior, bounds)?;
     let direction_bounds = Aabb::new(
         Point3::new(-Real::one(), -Real::one(), -Real::one()),
         Point3::new(Real::one(), Real::one(), Real::one()),
@@ -3628,10 +3813,18 @@ fn closed_family_adjacent_reference_with_winding(
         let mut directions = Vec::new();
         let mut saw_unknown = false;
         if let Some(witness) = report.witness {
-            match point_strictly_inside_support_cell(&witness, &direction_bounds, cell_halfspaces) {
+            match point_strictly_inside_support_cell(
+                decisions,
+                &witness,
+                &direction_bounds,
+                cell_halfspaces,
+            ) {
                 Ok(true) => push_unique_point3(&mut directions, witness),
                 Ok(false) => {}
-                Err(crate::error::HypermeshError::UnknownClassification) => {
+                Err(
+                    crate::error::HypermeshError::PredicateUndecided { .. }
+                    | crate::error::HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                 }
                 Err(err) => return Err(err),
@@ -3639,9 +3832,12 @@ fn closed_family_adjacent_reference_with_winding(
         }
         // The all-vertex centroid is strict for a full-dimensional bounded
         // convex cell; replay below certifies that condition before use.
-        let vertex_family = match feasible_support_cell_vertex_family(cell_halfspaces) {
+        let vertex_family = match feasible_support_cell_vertex_family(decisions, cell_halfspaces) {
             Ok(family) => family,
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 Point3FamilyState {
                     points: Vec::new(),
@@ -3654,20 +3850,27 @@ fn closed_family_adjacent_reference_with_winding(
         match point3_centroid(&vertex_family.points) {
             Ok(Some(center)) => {
                 match point_strictly_inside_support_cell(
+                    decisions,
                     &center,
                     &direction_bounds,
                     cell_halfspaces,
                 ) {
                     Ok(true) => push_unique_point3(&mut directions, center),
                     Ok(false) => {}
-                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                    Err(
+                        crate::error::HypermeshError::PredicateUndecided { .. }
+                        | crate::error::HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                     }
                     Err(err) => return Err(err),
                 }
             }
             Ok(None) => {}
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -3675,15 +3878,23 @@ fn closed_family_adjacent_reference_with_winding(
 
         let mut certified_cell = false;
         for direction in directions {
-            let Some(point) =
-                surface_reference_departure_point(surface_point, &direction, bounds, polygons)?
+            let Some(point) = surface_reference_departure_point(
+                decisions,
+                surface_point,
+                &direction,
+                bounds,
+                polygons,
+            )?
             else {
                 continue;
             };
-            match is_certified_valid_reference_for_bounds(&point, bounds, polygons) {
+            match is_certified_valid_reference_for_bounds(decisions, &point, bounds, polygons) {
                 Ok(true) => {}
                 Ok(false) => continue,
-                Err(crate::error::HypermeshError::UnknownClassification) => {
+                Err(
+                    crate::error::HypermeshError::PredicateUndecided { .. }
+                    | crate::error::HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     continue;
                 }
@@ -3692,6 +3903,7 @@ fn closed_family_adjacent_reference_with_winding(
             let definitions = vec![axis_plane_definition(&point)];
             let winding =
                 match trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds(
+                    decisions,
                     &exterior,
                     &point,
                     &exterior_winding,
@@ -3701,7 +3913,10 @@ fn closed_family_adjacent_reference_with_winding(
                     &trace_bounds,
                 ) {
                     Ok(winding) => winding,
-                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                    Err(
+                        crate::error::HypermeshError::PredicateUndecided { .. }
+                        | crate::error::HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                         continue;
                     }
@@ -3722,24 +3937,25 @@ fn closed_family_adjacent_reference_with_winding(
     };
 
     support_plane_cell_search_with_queries_cached(
+        decisions,
         None,
         None,
         &direction_bounds,
         &direction_supports,
         0,
         &mut halfspaces,
-        &mut |halfspaces| halfspace_system_report(halfspaces),
-        &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+        &mut |halfspaces| halfspace_system_report(decisions, halfspaces),
+        &mut |halfspaces| halfspace_system_is_feasible(decisions, halfspaces),
         &mut accept,
         &search_cache,
     )
 }
 
-fn exterior_reference_point(bounds: &Aabb) -> HypermeshResult<Point3> {
+fn exterior_reference_point(decisions: &DecisionContext, bounds: &Aabb) -> HypermeshResult<Point3> {
     let mut point = bounds.max.clone();
     for axis in 0..3 {
         let span = axis_ref(&bounds.max, axis) - axis_ref(&bounds.min, axis);
-        let margin = if compare_real(&span, &Real::zero())?.is_gt() {
+        let margin = if compare_real_decision(decisions, &span, &Real::zero())?.is_gt() {
             span
         } else {
             Real::one()
@@ -3749,14 +3965,18 @@ fn exterior_reference_point(bounds: &Aabb) -> HypermeshResult<Point3> {
     Ok(point)
 }
 
-fn supports_have_parallel_normals(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
+fn supports_have_parallel_normals(
+    decisions: &DecisionContext,
+    left: &Plane,
+    right: &Plane,
+) -> HypermeshResult<bool> {
     let cross = [
         (&left.normal.y * &right.normal.z) - (&left.normal.z * &right.normal.y),
         (&left.normal.z * &right.normal.x) - (&left.normal.x * &right.normal.z),
         (&left.normal.x * &right.normal.y) - (&left.normal.y * &right.normal.x),
     ];
     for component in &cross {
-        if classify_real(component)? != Classification::On {
+        if classify_real(decisions, component)? != Classification::On {
             return Ok(false);
         }
     }
@@ -3764,12 +3984,13 @@ fn supports_have_parallel_normals(left: &Plane, right: &Plane) -> HypermeshResul
 }
 
 fn surface_reference_departure_point(
+    decisions: &DecisionContext,
     start: &Point3,
     direction: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<Point3>> {
-    let Some(mut stop) = ray_bounds_stop(start, direction, bounds)? else {
+    let Some(mut stop) = ray_bounds_stop(decisions, start, direction, bounds)? else {
         return Ok(None);
     };
 
@@ -3778,18 +3999,18 @@ fn surface_reference_departure_point(
         let denom = (&polygon.support.normal.x * &direction.x)
             + (&polygon.support.normal.y * &direction.y)
             + (&polygon.support.normal.z * &direction.z);
-        if classify_real(&denom)? == Classification::On {
+        if classify_real(decisions, &denom)? == Classification::On {
             continue;
         }
         let crossing_t = ((-start_value) / denom)
             .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
-        if !compare_real(&crossing_t, &Real::zero())?.is_gt()
-            || !compare_real(&crossing_t, &stop)?.is_lt()
+        if !compare_real_decision(decisions, &crossing_t, &Real::zero())?.is_gt()
+            || !compare_real_decision(decisions, &crossing_t, &stop)?.is_lt()
         {
             continue;
         }
         let crossing = offset_reference_point(start, direction, &crossing_t);
-        match classify_point_in_local_polygon(&crossing, polygon)? {
+        match classify_point_in_local_polygon(decisions, &crossing, polygon)? {
             LocalPolygonPointLocation::Outside => {}
             LocalPolygonPointLocation::Boundary | LocalPolygonPointLocation::Interior => {
                 stop = crossing_t;
@@ -3807,6 +4028,7 @@ fn surface_reference_departure_point(
 }
 
 fn ray_bounds_stop(
+    decisions: &DecisionContext,
     start: &Point3,
     direction: &Point3,
     bounds: &Aabb,
@@ -3814,18 +4036,18 @@ fn ray_bounds_stop(
     let mut stop: Option<Real> = None;
     for axis in 0..3 {
         let direction_value = axis_ref(direction, axis);
-        let boundary = match classify_real(direction_value)? {
+        let boundary = match classify_real(decisions, direction_value)? {
             Classification::Positive => axis_ref(&bounds.max, axis),
             Classification::Negative => axis_ref(&bounds.min, axis),
             Classification::On => continue,
         };
         let candidate = ((boundary - axis_ref(start, axis)) / direction_value)
             .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
-        if !compare_real(&candidate, &Real::zero())?.is_gt() {
+        if !compare_real_decision(decisions, &candidate, &Real::zero())?.is_gt() {
             return Ok(None);
         }
         let replace = match &stop {
-            Some(current) => compare_real(&candidate, current)?.is_lt(),
+            Some(current) => compare_real_decision(decisions, &candidate, current)?.is_lt(),
             None => true,
         };
         if replace {
@@ -3853,6 +4075,7 @@ fn compute_new_reference(
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
     let mut query_caches = SupportReferenceQueryCaches::default();
     compute_new_reference_with_query_caches(
+        &crate::test_support::approximate_decisions(),
         old_ref,
         old_ref_definitions,
         old_wnv,
@@ -3863,6 +4086,7 @@ fn compute_new_reference(
 }
 
 fn compute_new_reference_with_query_caches(
+    decisions: &DecisionContext,
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
@@ -3873,28 +4097,36 @@ fn compute_new_reference_with_query_caches(
     query_caches.reset_per_reference_call_caches();
     let query_caches = std::cell::RefCell::new(query_caches);
 
-    let old_ref_unknown = match is_certified_valid_reference_for_bounds(old_ref, bounds, polygons) {
-        Ok(true) => {
-            return Ok(certified_reference_result((
-                old_ref.clone(),
-                old_ref_definitions.to_vec(),
-                old_wnv.to_vec(),
-            )));
-        }
-        Ok(false) => false,
-        Err(crate::error::HypermeshError::UnknownClassification) => true,
-        Err(err) => return Err(err),
-    };
+    let old_ref_unknown =
+        match is_certified_valid_reference_for_bounds(decisions, old_ref, bounds, polygons) {
+            Ok(true) => {
+                return Ok(certified_reference_result((
+                    old_ref.clone(),
+                    old_ref_definitions.to_vec(),
+                    old_wnv.to_vec(),
+                )));
+            }
+            Ok(false) => false,
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => true,
+            Err(err) => return Err(err),
+        };
 
     let surface_departure_unknown =
-        match normalize_surface_reference(old_ref, old_wnv, bounds, polygons) {
+        match normalize_surface_reference(decisions, old_ref, old_wnv, bounds, polygons) {
             Ok(Some(reference)) => return Ok(reference),
             Ok(None) => false,
-            Err(crate::error::HypermeshError::UnknownClassification) => true,
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => true,
             Err(err) => return Err(err),
         };
 
     let support_unknown = match support_plane_cell_reference_with_query_caches(
+        decisions,
         old_ref,
         old_ref_definitions,
         old_wnv,
@@ -3910,14 +4142,18 @@ fn compute_new_reference_with_query_caches(
             )));
         }
         Ok(None) => false,
-        Err(crate::error::HypermeshError::UnknownClassification) => true,
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => true,
         Err(err) => return Err(err),
     };
 
-    let projected_halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
+    let projected_halfspaces = projected_reference_halfspaces(decisions, old_ref, bounds)?;
     let projected_root = {
         let mut query_caches = query_caches.borrow_mut();
         cached_projected_root_reference_families_with(
+            decisions,
             bounds,
             &projected_halfspaces,
             &mut query_caches,
@@ -3946,6 +4182,7 @@ fn compute_new_reference_with_query_caches(
                 ..
             } = &mut *query_caches;
             if let Some(reused) = reusable_projected_reference_result_if_certified(
+                decisions,
                 projected_reference_result_cache,
                 old_ref,
                 old_ref_definitions,
@@ -3958,6 +4195,7 @@ fn compute_new_reference_with_query_caches(
                 Some(reused)
             } else {
                 reusable_projected_reference_result_from_cached_trace_if_certified(
+                    decisions,
                     projected_reference_result_cache,
                     old_ref,
                     old_ref_definitions,
@@ -3986,6 +4224,7 @@ fn compute_new_reference_with_query_caches(
                         &projected_root.projected_targets,
                         || {
                             projected_support_plane_cell_reference_with_query_caches(
+                                decisions,
                                 old_ref,
                                 old_ref_definitions,
                                 old_wnv,
@@ -4010,10 +4249,13 @@ fn compute_new_reference_with_query_caches(
                                 bounds,
                                 projected_target,
                                 |point| {
-                                    is_certified_valid_reference_for_bounds(point, bounds, polygons)
+                                    is_certified_valid_reference_for_bounds(
+                                        decisions, point, bounds, polygons,
+                                    )
                                 },
                                 |target| {
                                     trace_reference_target_from_validated_bounds(
+                                        decisions,
                                         old_ref,
                                         old_ref_definitions,
                                         old_wnv,
@@ -4034,6 +4276,7 @@ fn compute_new_reference_with_query_caches(
                                 ..
                             } = query_caches;
                             projected_reference_escape_targets_from_seed_family_state_with_tracking_unknown_and_witness_cache(
+                                decisions,
                                 bounds,
                                 &projected_halfspaces,
                                 &projected_root.projected_targets,
@@ -4057,6 +4300,7 @@ fn compute_new_reference_with_query_caches(
                                     polygons,
                                     || {
                                         projection_escape_axis_options_family_tracking_unknown(
+                                            decisions,
                                             &projected_target.point,
                                             bounds,
                                             polygons,
@@ -4065,17 +4309,20 @@ fn compute_new_reference_with_query_caches(
                                 )?
                             };
                             projection_axis_escape_reference_with_axis_options_tracking_unknown(
+                                decisions,
                                 &projected_target.point,
                                 &axis_options.axis_options,
                                 axis_options.saw_unknown,
                                 |corridor| {
                                     let mut query_caches = query_caches.borrow_mut();
                                     cached_reference_escape_search_in_query_caches(
+                                        decisions,
                                         &mut query_caches,
                                         &cache_context,
                                         corridor,
                                         |corridor, query_caches| {
                                             support_plane_cell_reference_with_query_caches(
+                                                decisions,
                                                 old_ref,
                                                 old_ref_definitions,
                                                 old_wnv,
@@ -4100,6 +4347,7 @@ fn compute_new_reference_with_query_caches(
                                     polygons,
                                     || {
                                         projection_escape_axis_options_family_tracking_unknown(
+                                            decisions,
                                             &projected_target.point,
                                             bounds,
                                             polygons,
@@ -4108,17 +4356,20 @@ fn compute_new_reference_with_query_caches(
                                 )?
                             };
                             projection_escape_reference_with_axis_options_tracking_unknown(
+                                decisions,
                                 &axis_options.axis_options,
                                 bounds,
                                 axis_options.saw_unknown,
                                 |escape_bounds| {
                                     let mut query_caches = query_caches.borrow_mut();
                                     cached_reference_escape_search_in_query_caches(
+                                        decisions,
                                         &mut query_caches,
                                         &cache_context,
                                         escape_bounds,
                                         |escape_bounds, query_caches| {
                                             support_plane_cell_reference_with_query_caches(
+                                                decisions,
                                                 old_ref,
                                                 old_ref_definitions,
                                                 old_wnv,
@@ -4181,6 +4432,7 @@ fn projected_root_reference_families(
     let pure_halfspace_contains_cache = std::cell::RefCell::new(Vec::new());
     let mut shifted_projected_family_cache = Vec::new();
     projected_root_reference_families_with_witness_cache(
+        &crate::test_support::approximate_decisions(),
         bounds,
         halfspaces,
         seed_geometry_cache,
@@ -4193,6 +4445,7 @@ fn projected_root_reference_families(
 }
 
 fn projected_root_reference_families_with_witness_cache(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
@@ -4204,7 +4457,7 @@ fn projected_root_reference_families_with_witness_cache(
         Vec<ReferencePureHalfspaceContainmentCacheEntry>,
     >,
 ) -> HypermeshResult<ProjectedRootReferenceFamilies> {
-    let (report, saw_report_unknown) = optional_halfspace_system_report(halfspaces)?;
+    let (report, saw_report_unknown) = optional_halfspace_system_report(decisions, halfspaces)?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -4224,6 +4477,7 @@ fn projected_root_reference_families_with_witness_cache(
     let mut saw_unknown = saw_report_unknown;
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
+            decisions,
             bounds,
             halfspaces,
             report.as_ref(),
@@ -4233,6 +4487,7 @@ fn projected_root_reference_families_with_witness_cache(
         )?;
     let projected_targets =
         strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
+            decisions,
             bounds,
             halfspaces,
             report.as_ref(),
@@ -4244,6 +4499,7 @@ fn projected_root_reference_families_with_witness_cache(
             strict_contains_cache,
             |seed| {
                 shifted_projected_cell_targets_from_seed_with_cache(
+                    decisions,
                     bounds,
                     halfspaces,
                     seed,
@@ -4266,6 +4522,7 @@ fn projected_root_reference_families_with_witness_cache(
 }
 
 fn cached_projected_root_reference_families_with(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     query_caches: &mut SupportReferenceQueryCaches,
@@ -4277,6 +4534,7 @@ fn cached_projected_root_reference_families_with(
     }
 
     let result = projected_root_reference_families_with_witness_cache(
+        decisions,
         bounds,
         halfspaces,
         &mut query_caches.seed_geometry_cache,
@@ -4320,7 +4578,10 @@ fn reference_target_family_or_empty(
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     match result {
         Ok(targets) => Ok(targets),
-        Err(crate::error::HypermeshError::UnknownClassification) => Ok(Vec::new()),
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => Ok(Vec::new()),
         Err(err) => Err(err),
     }
 }
@@ -4332,7 +4593,10 @@ fn reference_target_family_or_empty_tracking_unknown(
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     match result {
         Ok(targets) => Ok(targets),
-        Err(crate::error::HypermeshError::UnknownClassification) => {
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => {
             *saw_unknown = true;
             Ok(Vec::new())
         }
@@ -4346,7 +4610,10 @@ fn projected_reference_search_or_none(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     match result {
         Ok(found) => Ok(found),
-        Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => Ok(None),
         Err(err) => Err(err),
     }
 }
@@ -4357,7 +4624,10 @@ fn projected_reference_search_or_none_tracking_unknown(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     match result {
         Ok(found) => Ok(found),
-        Err(crate::error::HypermeshError::UnknownClassification) => {
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => {
             *saw_unknown = true;
             Ok(None)
         }
@@ -4438,7 +4708,10 @@ fn search_projected_reference_families_lazy_escape(
                     saw_unknown = true;
                 }
             }
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -4453,7 +4726,10 @@ fn search_projected_reference_families_lazy_escape(
             )));
         }
         Ok(None) => {}
-        Err(crate::error::HypermeshError::UnknownClassification) => {
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => {
             saw_unknown = true;
         }
         Err(err) => return Err(err),
@@ -4461,7 +4737,10 @@ fn search_projected_reference_families_lazy_escape(
 
     let projected_escape_targets = match load_projected_escape_targets() {
         Ok(targets) => targets,
-        Err(crate::error::HypermeshError::UnknownClassification) => {
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => {
             saw_unknown = true;
             Vec::new()
         }
@@ -4485,7 +4764,10 @@ fn search_projected_reference_families_lazy_escape(
                         saw_unknown = true;
                     }
                 }
-                Err(crate::error::HypermeshError::UnknownClassification) => {
+                Err(
+                    crate::error::HypermeshError::PredicateUndecided { .. }
+                    | crate::error::HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                 }
                 Err(err) => return Err(err),
@@ -4504,7 +4786,10 @@ fn search_projected_reference_families_lazy_escape(
                     saw_unknown = true;
                 }
             }
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -4522,7 +4807,10 @@ fn search_projected_reference_families_lazy_escape(
                     saw_unknown = true;
                 }
             }
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -4565,7 +4853,10 @@ fn projected_reference_escape_targets(
     halfspaces: &[LimitPlane3],
     projected_targets: &[ReferenceTarget],
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    let (report, saw_unknown) = optional_halfspace_system_report(halfspaces)?;
+    let (report, saw_unknown) = optional_halfspace_system_report(
+        &crate::test_support::approximate_decisions(),
+        halfspaces,
+    )?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -4610,6 +4901,7 @@ fn projected_reference_escape_targets_from_optional_report(
     let mut saw_unknown = false;
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         projected_cell_seed_families_from_optional_report(
+            &crate::test_support::approximate_decisions(),
             bounds,
             halfspaces,
             report,
@@ -4701,6 +4993,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     let pure_halfspace_contains_cache = std::cell::RefCell::new(Vec::new());
     projected_reference_escape_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
+        &crate::test_support::approximate_decisions(),
         halfspaces,
         projected_targets,
         report,
@@ -4715,6 +5008,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
 }
 
 fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
     projected_targets: &[ReferenceTarget],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
@@ -4744,6 +5038,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown_a
                 report.and_then(|report| report.witness.as_ref()),
                 |witness| {
                     cached_point_strictly_inside_halfspaces_or_unknown_with(
+                        decisions,
                         &mut pure_halfspace_contains_cache.borrow_mut(),
                         witness,
                         halfspaces,
@@ -4757,6 +5052,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown_a
                         active_planes_from_optional_halfspace_report(report, witness),
                         || {
                             reference_target_from_halfspace_witness(
+                                decisions,
                                 witness,
                                 halfspaces,
                                 active_planes_from_optional_halfspace_report(report, witness),
@@ -4771,6 +5067,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown_a
                 halfspaces,
                 |seed, halfspaces| {
                     cached_point_strictly_inside_halfspaces_or_unknown_with(
+                        decisions,
                         &mut pure_halfspace_contains_cache.borrow_mut(),
                         seed,
                         halfspaces,
@@ -4784,6 +5081,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown_a
                         [None, None, None],
                         || {
                             reference_target_from_halfspace_witness(
+                                decisions,
                                 seed,
                                 halfspaces,
                                 [None, None, None],
@@ -4811,6 +5109,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown_a
 }
 
 fn projected_reference_escape_targets_from_seed_family_state_with_tracking_unknown_and_witness_cache(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     projected_targets: &[ReferenceTarget],
@@ -4824,6 +5123,7 @@ fn projected_reference_escape_targets_from_seed_family_state_with_tracking_unkno
     >,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     projected_reference_escape_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
+        decisions,
         halfspaces,
         projected_targets,
         report,
@@ -4835,6 +5135,7 @@ fn projected_reference_escape_targets_from_seed_family_state_with_tracking_unkno
         pure_halfspace_contains_cache,
         |seed| {
             projected_escape_targets_from_seed_with_cache(
+                decisions,
                 bounds,
                 halfspaces,
                 seed,
@@ -4847,6 +5148,7 @@ fn projected_reference_escape_targets_from_seed_family_state_with_tracking_unkno
 }
 
 fn projected_support_plane_cell_reference_with_query_caches(
+    decisions: &DecisionContext,
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
@@ -4856,6 +5158,7 @@ fn projected_support_plane_cell_reference_with_query_caches(
     query_caches: &mut SupportReferenceQueryCaches,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     support_plane_cell_reference_with_halfspaces_and_query_caches(
+        decisions,
         old_ref,
         old_ref_definitions,
         old_wnv,
@@ -4867,12 +5170,14 @@ fn projected_support_plane_cell_reference_with_query_caches(
 }
 
 fn projection_escape_reference_with_axis_options_tracking_unknown(
+    decisions: &DecisionContext,
     axis_options: &ProjectionEscapeAxisOptions,
     bounds: &Aabb,
     saw_unknown: bool,
     search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     projection_escape_reference_with_search_and_axis_options_tracking_unknown(
+        decisions,
         axis_options,
         bounds,
         saw_unknown,
@@ -4898,6 +5203,7 @@ fn projection_escape_reference_with_search_and_axis_options(
     mut search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     projection_escape_reference_with_search_and_axis_options_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         axis_options,
         bounds,
         false,
@@ -4906,6 +5212,7 @@ fn projection_escape_reference_with_search_and_axis_options(
 }
 
 fn projection_escape_reference_with_search_and_axis_options_tracking_unknown(
+    decisions: &DecisionContext,
     axis_options: &ProjectionEscapeAxisOptions,
     bounds: &Aabb,
     saw_unknown: bool,
@@ -4918,6 +5225,7 @@ fn projection_escape_reference_with_search_and_axis_options_tracking_unknown(
         &mut search,
         |axis_options, saw_unknown| {
             projection_escape_bounds_family_from_axis_options_tracking_unknown(
+                decisions,
                 axis_options,
                 saw_unknown,
             )
@@ -4949,7 +5257,10 @@ fn projection_escape_reference_with_search_and_axis_options_and_bounds_family(
                 )));
             }
             Ok(None) => {}
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -4992,6 +5303,7 @@ fn projection_escape_bounds_family_from_axis_options(
 ) -> HypermeshResult<Vec<Aabb>> {
     let mut saw_unknown = false;
     let family = projection_escape_bounds_family_from_axis_options_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         axis_options,
         &mut saw_unknown,
     )?;
@@ -5003,12 +5315,13 @@ fn projection_escape_bounds_family_from_axis_options(
 }
 
 fn projection_escape_bounds_family_from_axis_options_tracking_unknown(
+    decisions: &DecisionContext,
     axis_options: &ProjectionEscapeAxisOptions,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<Vec<Aabb>> {
     let (family, family_unknown) =
         projection_escape_bounds_family_from_axis_options_with_extents(axis_options, |bounds| {
-            aabb_has_positive_or_zero_extents(bounds)
+            aabb_has_positive_or_zero_extents(decisions, bounds)
         })?;
     *saw_unknown |= family_unknown;
     Ok(family)
@@ -5043,7 +5356,10 @@ fn projection_escape_bounds_family_from_axis_options_with_extents(
                             match extents_ok(&escape_bounds) {
                                 Ok(true) => {}
                                 Ok(false) => continue,
-                                Err(crate::error::HypermeshError::UnknownClassification) => {
+                                Err(
+                                    crate::error::HypermeshError::PredicateUndecided { .. }
+                                    | crate::error::HypermeshError::UnknownClassification,
+                                ) => {
                                     saw_unknown = true;
                                     continue;
                                 }
@@ -5086,13 +5402,17 @@ fn projection_escape_axis_options_family(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<ProjectionEscapeAxisOptions> {
-    Ok(
-        projection_escape_axis_options_family_tracking_unknown(projected, bounds, polygons)?
-            .axis_options,
-    )
+    Ok(projection_escape_axis_options_family_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
+        projected,
+        bounds,
+        polygons,
+    )?
+    .axis_options)
 }
 
 fn projection_escape_axis_options_family_tracking_unknown(
+    decisions: &DecisionContext,
     projected: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
@@ -5101,6 +5421,7 @@ fn projection_escape_axis_options_family_tracking_unknown(
     let axis_options = (0..3)
         .map(|axis| {
             projection_escape_axis_options_tracking_unknown(
+                decisions,
                 projected,
                 bounds,
                 polygons,
@@ -5116,6 +5437,7 @@ fn projection_escape_axis_options_family_tracking_unknown(
 }
 
 fn projection_escape_axis_options_tracking_unknown(
+    decisions: &DecisionContext,
     projected: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
@@ -5124,11 +5446,12 @@ fn projection_escape_axis_options_tracking_unknown(
 ) -> HypermeshResult<(Vec<Real>, Vec<Real>)> {
     let bound_min = axis_ref(&bounds.min, axis);
     let bound_max = axis_ref(&bounds.max, axis);
-    if compare_real(bound_min, bound_max)?.is_eq() {
+    if compare_real_decision(decisions, bound_min, bound_max)?.is_eq() {
         return Ok((vec![bound_min.clone()], vec![bound_max.clone()]));
     }
 
     let lower = escaped_reference_axis_stop_values_tracking_unknown(
+        decisions,
         projected,
         bounds,
         polygons,
@@ -5137,6 +5460,7 @@ fn projection_escape_axis_options_tracking_unknown(
         saw_unknown,
     )?;
     let upper = escaped_reference_axis_stop_values_tracking_unknown(
+        decisions,
         projected,
         bounds,
         polygons,
@@ -5151,9 +5475,18 @@ fn projection_escape_axis_options_tracking_unknown(
     Ok((lower, upper))
 }
 
-fn aabb_has_positive_or_zero_extents(bounds: &Aabb) -> HypermeshResult<bool> {
+fn aabb_has_positive_or_zero_extents(
+    decisions: &DecisionContext,
+    bounds: &Aabb,
+) -> HypermeshResult<bool> {
     for axis in 0..3 {
-        if compare_real(axis_ref(&bounds.min, axis), axis_ref(&bounds.max, axis))?.is_gt() {
+        if compare_real_decision(
+            decisions,
+            axis_ref(&bounds.min, axis),
+            axis_ref(&bounds.max, axis),
+        )?
+        .is_gt()
+        {
             return Ok(false);
         }
     }
@@ -5170,6 +5503,7 @@ fn escaped_reference_axis_stop_values(
 ) -> HypermeshResult<Vec<Real>> {
     let mut saw_unknown = false;
     let stop_values = escaped_reference_axis_stop_values_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         projected,
         bounds,
         polygons,
@@ -5185,6 +5519,7 @@ fn escaped_reference_axis_stop_values(
 }
 
 fn escaped_reference_axis_stop_values_tracking_unknown(
+    decisions: &DecisionContext,
     projected: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
@@ -5193,21 +5528,23 @@ fn escaped_reference_axis_stop_values_tracking_unknown(
     saw_unknown: &mut bool,
 ) -> HypermeshResult<Vec<Real>> {
     let (stop_values, family_unknown) = escaped_reference_axis_stop_values_with_queries(
+        decisions,
         projected,
         bounds,
         polygons,
         axis,
         direction_positive,
         |projected, endpoint, polygon, axis| {
-            reference_axis_surface_crossing(projected, endpoint, polygon, axis)
+            reference_axis_surface_crossing(decisions, projected, endpoint, polygon, axis)
         },
-        classify_point_in_local_polygon,
+        |point, polygon| classify_point_in_local_polygon(decisions, point, polygon),
     )?;
     *saw_unknown |= family_unknown;
     Ok(stop_values)
 }
 
 fn escaped_reference_axis_stop_values_with_queries(
+    decisions: &DecisionContext,
     projected: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
@@ -5235,7 +5572,7 @@ fn escaped_reference_axis_stop_values_with_queries(
     } else {
         start_value - bound_value
     };
-    let room_order = compare_real(&room, &Real::zero())?;
+    let room_order = compare_real_decision(decisions, &room, &Real::zero())?;
     if !room_order.is_gt() {
         return Ok((Vec::new(), room_order.is_eq()));
     }
@@ -5248,7 +5585,10 @@ fn escaped_reference_axis_stop_values_with_queries(
     for polygon in polygons {
         let Some(crossing) = (match crossing_for(projected, &endpoint, polygon, axis) {
             Ok(crossing) => crossing,
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -5258,7 +5598,10 @@ fn escaped_reference_axis_stop_values_with_queries(
         };
         let point_location = match classify_point_on_polygon(&crossing, polygon) {
             Ok(point_location) => point_location,
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -5274,7 +5617,7 @@ fn escaped_reference_axis_stop_values_with_queries(
         }
 
         let crossing_value = axis_ref(&crossing, axis);
-        let from_start = compare_real(crossing_value, start_value)?;
+        let from_start = compare_real_decision(decisions, crossing_value, start_value)?;
         if (direction_positive && !from_start.is_gt())
             || (!direction_positive && !from_start.is_lt())
         {
@@ -5286,7 +5629,7 @@ fn escaped_reference_axis_stop_values_with_queries(
             {
                 saw_unknown = true;
             }
-            if compare_real(crossing_value, bound_value)?.is_eq()
+            if compare_real_decision(decisions, crossing_value, bound_value)?.is_eq()
                 && matches!(
                     point_location,
                     LocalPolygonPointLocation::Boundary | LocalPolygonPointLocation::Interior
@@ -5300,7 +5643,7 @@ fn escaped_reference_axis_stop_values_with_queries(
         let mut insert_at = stop_values.len();
         let mut duplicate = false;
         for (index, existing) in stop_values.iter().enumerate() {
-            let order = compare_real(crossing_value, existing)?;
+            let order = compare_real_decision(decisions, crossing_value, existing)?;
             if order.is_eq() {
                 duplicate = true;
                 break;
@@ -5420,7 +5763,10 @@ fn extend_reference_targets_backtracking_unknown<T>(
                     push_unique_reference_target(targets, target);
                 }
             }
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -5476,7 +5822,14 @@ fn deferred_direct_reference_targets_from_strict_seeds(
         strict_seeds,
         report_witness,
         saw_unknown,
-        |seed| reference_target_from_halfspace_witness(seed, halfspaces, [None, None, None]),
+        |seed| {
+            reference_target_from_halfspace_witness(
+                &crate::test_support::approximate_decisions(),
+                seed,
+                halfspaces,
+                [None, None, None],
+            )
+        },
     )
 }
 
@@ -5502,6 +5855,7 @@ fn deferred_direct_reference_targets_from_strict_seeds_with(
 
 #[cfg(test)]
 fn deferred_projected_escape_direct_targets(
+    decisions: &DecisionContext,
     strict_seeds: &[Point3],
     report_witness: Option<&Point3>,
     halfspaces: &[LimitPlane3],
@@ -5510,8 +5864,12 @@ fn deferred_projected_escape_direct_targets(
         strict_seeds,
         report_witness,
         halfspaces,
-        point_strictly_inside_halfspaces_or_unknown,
-        |seed| reference_target_from_halfspace_witness(seed, halfspaces, [None, None, None]),
+        |point, halfspaces| {
+            point_strictly_inside_halfspaces_or_unknown(decisions, point, halfspaces)
+        },
+        |seed| {
+            reference_target_from_halfspace_witness(decisions, seed, halfspaces, [None, None, None])
+        },
     )
 }
 
@@ -5527,7 +5885,14 @@ fn deferred_projected_escape_direct_targets_with_contains(
         None,
         halfspaces,
         |seed, halfspaces| contains(seed, halfspaces),
-        |seed| reference_target_from_halfspace_witness(seed, halfspaces, [None, None, None]),
+        |seed| {
+            reference_target_from_halfspace_witness(
+                &crate::test_support::approximate_decisions(),
+                seed,
+                halfspaces,
+                [None, None, None],
+            )
+        },
     )
 }
 
@@ -5575,7 +5940,10 @@ fn extend_reference_target_families_collect_unknown(
                     push_unique_reference_target(targets, target);
                 }
             }
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -5599,7 +5967,10 @@ fn extend_reference_target_families_collect_hard_unknown(
                     push_unique_reference_target(targets, target);
                 }
             }
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -6383,6 +6754,7 @@ fn cached_support_reference_accept_with(
 }
 
 fn reusable_support_reference_accept_if_certified(
+    decisions: &DecisionContext,
     cache: &mut Vec<SupportReferenceAcceptCacheEntry>,
     context: &SupportReferenceCacheContextKey,
     bounds: &Aabb,
@@ -6415,7 +6787,9 @@ fn reusable_support_reference_accept_if_certified(
             Some(context),
             bounds,
             &target.point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+            |point| {
+                is_certified_valid_reference_for_bounds(decisions, point, bounds, &context.polygons)
+            },
         )?;
         if !valid_for_bounds {
             continue;
@@ -6450,6 +6824,7 @@ fn reusable_support_reference_accept_if_certified(
 }
 
 fn reusable_support_reference_accept_from_cached_trace_if_certified(
+    decisions: &DecisionContext,
     cache: &mut Vec<SupportReferenceAcceptCacheEntry>,
     context: &SupportReferenceCacheContextKey,
     bounds: &Aabb,
@@ -6482,7 +6857,9 @@ fn reusable_support_reference_accept_from_cached_trace_if_certified(
             Some(context),
             bounds,
             &target.point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+            |point| {
+                is_certified_valid_reference_for_bounds(decisions, point, bounds, &context.polygons)
+            },
         )?;
         if !valid_for_bounds {
             continue;
@@ -6494,6 +6871,7 @@ fn reusable_support_reference_accept_from_cached_trace_if_certified(
             target,
             |target| {
                 trace_reference_target_from_validated_bounds(
+                    decisions,
                     old_ref,
                     old_ref_definitions,
                     old_wnv,
@@ -6589,6 +6967,7 @@ fn cached_support_reference_result_with(
 }
 
 fn reusable_support_reference_result_if_certified(
+    decisions: &DecisionContext,
     cache: &mut Vec<SupportReferenceResultCacheEntry>,
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -6617,7 +6996,7 @@ fn reusable_support_reference_result_if_certified(
             Some(&context),
             bounds,
             &target.point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
+            |point| is_certified_valid_reference_for_bounds(decisions, point, bounds, polygons),
         )?;
         if !valid_for_bounds {
             continue;
@@ -6645,6 +7024,7 @@ fn reusable_support_reference_result_if_certified(
 }
 
 fn reusable_support_reference_result_from_cached_trace_if_certified(
+    decisions: &DecisionContext,
     cache: &mut Vec<SupportReferenceResultCacheEntry>,
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -6673,7 +7053,7 @@ fn reusable_support_reference_result_from_cached_trace_if_certified(
             Some(&context),
             bounds,
             &target.point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
+            |point| is_certified_valid_reference_for_bounds(decisions, point, bounds, polygons),
         )?;
         if !valid_for_bounds {
             continue;
@@ -6685,6 +7065,7 @@ fn reusable_support_reference_result_from_cached_trace_if_certified(
             target,
             |target| {
                 trace_reference_target_from_validated_bounds(
+                    decisions,
                     old_ref,
                     old_ref_definitions,
                     old_wnv,
@@ -6773,6 +7154,7 @@ fn cached_projected_reference_result_with(
 }
 
 fn reusable_projected_reference_result_if_certified(
+    decisions: &DecisionContext,
     cache: &mut Vec<ProjectedReferenceResultCacheEntry>,
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -6801,7 +7183,7 @@ fn reusable_projected_reference_result_if_certified(
             Some(&context),
             bounds,
             &target.point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
+            |point| is_certified_valid_reference_for_bounds(decisions, point, bounds, polygons),
         )?;
         if !valid_for_bounds {
             continue;
@@ -6829,6 +7211,7 @@ fn reusable_projected_reference_result_if_certified(
 }
 
 fn reusable_projected_reference_result_from_cached_trace_if_certified(
+    decisions: &DecisionContext,
     cache: &mut Vec<ProjectedReferenceResultCacheEntry>,
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -6857,7 +7240,7 @@ fn reusable_projected_reference_result_from_cached_trace_if_certified(
             Some(&context),
             bounds,
             &target.point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
+            |point| is_certified_valid_reference_for_bounds(decisions, point, bounds, polygons),
         )?;
         if !valid_for_bounds {
             continue;
@@ -6869,6 +7252,7 @@ fn reusable_projected_reference_result_from_cached_trace_if_certified(
             target,
             |target| {
                 trace_reference_target_from_validated_bounds(
+                    decisions,
                     old_ref,
                     old_ref_definitions,
                     old_wnv,
@@ -6986,6 +7370,7 @@ fn cached_support_plane_cell_search_with<T: Clone>(
 }
 
 fn reusable_support_plane_cell_search_result_if_certified(
+    decisions: &DecisionContext,
     cache: &std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<(ReferenceTarget, Vec<i32>)>>>,
     context: &SupportReferenceCacheContextKey,
     bounds: &Aabb,
@@ -7006,7 +7391,7 @@ fn reusable_support_plane_cell_search_result_if_certified(
             let Ok(Some((target, winding))) = &existing.result else {
                 continue;
             };
-            if !bounds_contains_bounds(&existing.bounds, bounds)? {
+            if !bounds_contains_bounds(decisions, &existing.bounds, bounds)? {
                 continue;
             }
 
@@ -7015,7 +7400,14 @@ fn reusable_support_plane_cell_search_result_if_certified(
                 Some(context),
                 bounds,
                 &target.point,
-                |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+                |point| {
+                    is_certified_valid_reference_for_bounds(
+                        decisions,
+                        point,
+                        bounds,
+                        &context.polygons,
+                    )
+                },
             )?;
             if !valid_for_bounds {
                 continue;
@@ -7047,6 +7439,7 @@ fn reusable_support_plane_cell_search_result_if_certified(
 }
 
 fn reusable_support_plane_cell_search_result_from_cached_trace_if_certified(
+    decisions: &DecisionContext,
     cache: &std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<(ReferenceTarget, Vec<i32>)>>>,
     context: &SupportReferenceCacheContextKey,
     bounds: &Aabb,
@@ -7071,7 +7464,7 @@ fn reusable_support_plane_cell_search_result_from_cached_trace_if_certified(
             let Ok(Some((target, _))) = &existing.result else {
                 continue;
             };
-            if !bounds_contains_bounds(&existing.bounds, bounds)? {
+            if !bounds_contains_bounds(decisions, &existing.bounds, bounds)? {
                 continue;
             }
 
@@ -7080,7 +7473,14 @@ fn reusable_support_plane_cell_search_result_from_cached_trace_if_certified(
                 Some(context),
                 bounds,
                 &target.point,
-                |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+                |point| {
+                    is_certified_valid_reference_for_bounds(
+                        decisions,
+                        point,
+                        bounds,
+                        &context.polygons,
+                    )
+                },
             )?;
             if !valid_for_bounds {
                 continue;
@@ -7092,6 +7492,7 @@ fn reusable_support_plane_cell_search_result_from_cached_trace_if_certified(
                 target,
                 |target| {
                     trace_reference_target_from_validated_bounds(
+                        decisions,
                         old_ref,
                         old_ref_definitions,
                         old_wnv,
@@ -7517,6 +7918,7 @@ fn cached_reference_escape_search_with(
 }
 
 fn cached_reference_escape_search_in_query_caches(
+    decisions: &DecisionContext,
     query_caches: &mut SupportReferenceQueryCaches,
     context: &SupportReferenceCacheContextKey,
     bounds: &Aabb,
@@ -7551,7 +7953,7 @@ fn cached_reference_escape_search_in_query_caches(
             let Ok(Some((target, _))) = &existing.result else {
                 continue;
             };
-            if !bounds_contains_bounds(&existing.bounds, bounds)? {
+            if !bounds_contains_bounds(decisions, &existing.bounds, bounds)? {
                 continue;
             }
             let valid_for_bounds = cached_reference_bounds_validity_with_context(
@@ -7559,7 +7961,14 @@ fn cached_reference_escape_search_in_query_caches(
                 Some(context),
                 bounds,
                 &target.point,
-                |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+                |point| {
+                    is_certified_valid_reference_for_bounds(
+                        decisions,
+                        point,
+                        bounds,
+                        &context.polygons,
+                    )
+                },
             )?;
             if !valid_for_bounds {
                 continue;
@@ -7570,6 +7979,7 @@ fn cached_reference_escape_search_in_query_caches(
                 target,
                 |target| {
                     trace_reference_target_from_validated_bounds(
+                        decisions,
                         &context.old_ref,
                         &context.old_ref_definitions,
                         &context.old_wnv,
@@ -7620,7 +8030,7 @@ fn cached_reference_escape_search_in_query_caches(
             let Ok(Some((target, winding))) = &existing.result else {
                 continue;
             };
-            if !bounds_contains_bounds(&existing.bounds, bounds)? {
+            if !bounds_contains_bounds(decisions, &existing.bounds, bounds)? {
                 continue;
             }
             let valid_for_bounds = cached_reference_bounds_validity_with_context(
@@ -7628,7 +8038,14 @@ fn cached_reference_escape_search_in_query_caches(
                 Some(context),
                 bounds,
                 &target.point,
-                |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+                |point| {
+                    is_certified_valid_reference_for_bounds(
+                        decisions,
+                        point,
+                        bounds,
+                        &context.polygons,
+                    )
+                },
             )?;
             if !valid_for_bounds {
                 continue;
@@ -7705,11 +8122,13 @@ fn cached_reference_escape_search_in_query_caches(
 }
 
 fn reference_target_from_halfspace_witness(
+    decisions: &DecisionContext,
     point: &Point3,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
 ) -> HypermeshResult<Option<ReferenceTarget>> {
-    match reference_definitions_from_active_halfspaces(point, halfspaces, active_planes) {
+    match reference_definitions_from_active_halfspaces(decisions, point, halfspaces, active_planes)
+    {
         Ok(found) => {
             let mut target = ReferenceTarget::with_definitions(point.clone(), found.definitions);
             if found.saw_unknown {
@@ -7717,9 +8136,10 @@ fn reference_target_from_halfspace_witness(
             }
             Ok(Some(target))
         }
-        Err(crate::error::HypermeshError::UnknownClassification) => {
-            Ok(Some(ReferenceTarget::axis_defined_fallback(point.clone())))
-        }
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => Ok(Some(ReferenceTarget::axis_defined_fallback(point.clone()))),
         Err(err) => Err(err),
     }
 }
@@ -7746,6 +8166,7 @@ fn projection_axis_escape_reference_with_axis_options(
     search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     projection_axis_escape_reference_with_axis_options_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         projected,
         axis_options,
         false,
@@ -7754,12 +8175,14 @@ fn projection_axis_escape_reference_with_axis_options(
 }
 
 fn projection_axis_escape_reference_with_axis_options_tracking_unknown(
+    decisions: &DecisionContext,
     projected: &Point3,
     axis_options: &ProjectionEscapeAxisOptions,
     saw_unknown: bool,
     search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
+        decisions,
         projected,
         axis_options,
         saw_unknown,
@@ -7789,6 +8212,7 @@ fn projection_axis_escape_reference_with_search_and_axis_options(
     mut search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
+        &crate::test_support::approximate_decisions(),
         projected,
         axis_options,
         false,
@@ -7797,6 +8221,7 @@ fn projection_axis_escape_reference_with_search_and_axis_options(
 }
 
 fn projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
+    decisions: &DecisionContext,
     projected: &Point3,
     axis_options: &ProjectionEscapeAxisOptions,
     initial_saw_unknown: bool,
@@ -7807,7 +8232,7 @@ fn projection_axis_escape_reference_with_search_and_axis_options_tracking_unknow
     for (axis, (lower, upper)) in axis_options.iter().enumerate() {
         for stop_values in [upper, lower] {
             for stop_value in stop_values {
-                let corridor = axis_escape_bounds(projected, axis, stop_value.clone())?;
+                let corridor = axis_escape_bounds(decisions, projected, axis, stop_value.clone())?;
                 match search(&corridor) {
                     Ok(Some((target, winding))) => {
                         return Ok(Some((
@@ -7816,7 +8241,10 @@ fn projection_axis_escape_reference_with_search_and_axis_options_tracking_unknow
                         )));
                     }
                     Ok(None) => {}
-                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                    Err(
+                        crate::error::HypermeshError::PredicateUndecided { .. }
+                        | crate::error::HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                     }
                     Err(err) => return Err(err),
@@ -7832,11 +8260,16 @@ fn projection_axis_escape_reference_with_search_and_axis_options_tracking_unknow
     }
 }
 
-fn axis_escape_bounds(projected: &Point3, axis: usize, stop_value: Real) -> HypermeshResult<Aabb> {
+fn axis_escape_bounds(
+    decisions: &DecisionContext,
+    projected: &Point3,
+    axis: usize,
+    stop_value: Real,
+) -> HypermeshResult<Aabb> {
     let mut min = projected.clone();
     let mut max = projected.clone();
     let start_value = axis_ref(projected, axis);
-    if compare_real(start_value, &stop_value)?.is_lt() {
+    if compare_real_decision(decisions, start_value, &stop_value)?.is_lt() {
         *axis_mut(&mut max, axis) = stop_value;
     } else {
         *axis_mut(&mut min, axis) = stop_value;
@@ -7892,11 +8325,17 @@ fn trace_reference_target(
     polygons: &[ConvexPolygon],
     target: &ReferenceTarget,
 ) -> HypermeshResult<Option<Vec<i32>>> {
-    if !is_certified_valid_reference_for_bounds(&target.point, bounds, polygons)? {
+    if !is_certified_valid_reference_for_bounds(
+        &crate::test_support::approximate_decisions(),
+        &target.point,
+        bounds,
+        polygons,
+    )? {
         return Ok(None);
     }
 
     trace_reference_target_from_validated_bounds(
+        &crate::test_support::approximate_decisions(),
         old_ref,
         old_ref_definitions,
         old_wnv,
@@ -7929,6 +8368,7 @@ fn trace_projected_reference_target_with_queries(
 }
 
 fn trace_reference_target_from_validated_bounds(
+    decisions: &DecisionContext,
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
@@ -7936,8 +8376,9 @@ fn trace_reference_target_from_validated_bounds(
     polygons: &[ConvexPolygon],
     target: &ReferenceTarget,
 ) -> HypermeshResult<Option<Vec<i32>>> {
-    let trace_bounds = reference_trace_bounds(old_ref, bounds)?;
+    let trace_bounds = reference_trace_bounds(decisions, old_ref, bounds)?;
     match trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds(
+        decisions,
         old_ref,
         &target.point,
         old_wnv,
@@ -7947,22 +8388,27 @@ fn trace_reference_target_from_validated_bounds(
         &trace_bounds,
     ) {
         Ok(winding) => Ok(Some(winding)),
-        Err(crate::error::HypermeshError::UnknownClassification) => {
-            Err(crate::error::HypermeshError::UnknownClassification)
-        }
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => Err(crate::error::HypermeshError::UnknownClassification),
         Err(err) => Err(err),
     }
 }
 
-fn reference_trace_bounds(start: &Point3, bounds: &Aabb) -> HypermeshResult<Aabb> {
+fn reference_trace_bounds(
+    decisions: &DecisionContext,
+    start: &Point3,
+    bounds: &Aabb,
+) -> HypermeshResult<Aabb> {
     let mut min = bounds.min.clone();
     let mut max = bounds.max.clone();
     for axis in 0..3 {
         let start_value = axis_ref(start, axis);
-        if compare_real(start_value, axis_ref(&min, axis))?.is_lt() {
+        if compare_real_decision(decisions, start_value, axis_ref(&min, axis))?.is_lt() {
             *axis_mut(&mut min, axis) = start_value.clone();
         }
-        if compare_real(start_value, axis_ref(&max, axis))?.is_gt() {
+        if compare_real_decision(decisions, start_value, axis_ref(&max, axis))?.is_gt() {
             *axis_mut(&mut max, axis) = start_value.clone();
         }
     }
@@ -7975,20 +8421,27 @@ fn is_valid_reference_for_bounds(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    Ok(point_strictly_inside_bounds(point, bounds)?
-        && !point_lies_on_local_surface(point, polygons)?)
+    Ok(
+        point_strictly_inside_bounds(&crate::test_support::approximate_decisions(), point, bounds)?
+            && !point_lies_on_local_surface(
+                &crate::test_support::approximate_decisions(),
+                point,
+                polygons,
+            )?,
+    )
 }
 
 fn is_certified_valid_reference_for_bounds(
+    decisions: &DecisionContext,
     point: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    if !point_strictly_inside_bounds(point, bounds)? {
+    if !point_strictly_inside_bounds(decisions, point, bounds)? {
         return Ok(false);
     }
     for polygon in polygons {
-        match classify_point_in_local_polygon(point, polygon)? {
+        match classify_point_in_local_polygon(decisions, point, polygon)? {
             LocalPolygonPointLocation::Outside => {}
             LocalPolygonPointLocation::Interior => return Ok(false),
             LocalPolygonPointLocation::Boundary => {
@@ -8009,6 +8462,7 @@ fn support_plane_cell_reference(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut query_caches = SupportReferenceQueryCaches::default();
     support_plane_cell_reference_with_query_caches(
+        &crate::test_support::approximate_decisions(),
         old_ref,
         old_ref_definitions,
         old_wnv,
@@ -8019,6 +8473,7 @@ fn support_plane_cell_reference(
 }
 
 fn support_plane_cell_reference_with_query_caches(
+    decisions: &DecisionContext,
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
@@ -8027,6 +8482,7 @@ fn support_plane_cell_reference_with_query_caches(
     query_caches: &mut SupportReferenceQueryCaches,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     support_plane_cell_reference_with_halfspaces_and_query_caches(
+        decisions,
         old_ref,
         old_ref_definitions,
         old_wnv,
@@ -8048,6 +8504,7 @@ fn support_plane_cell_reference_with_halfspaces(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut query_caches = SupportReferenceQueryCaches::default();
     support_plane_cell_reference_with_halfspaces_and_query_caches(
+        &crate::test_support::approximate_decisions(),
         old_ref,
         old_ref_definitions,
         old_wnv,
@@ -8059,6 +8516,7 @@ fn support_plane_cell_reference_with_halfspaces(
 }
 
 fn support_plane_cell_reference_with_halfspaces_and_query_caches(
+    decisions: &DecisionContext,
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
@@ -8068,6 +8526,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
     query_caches: &mut SupportReferenceQueryCaches,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     if let Some(reused) = reusable_support_reference_result_if_certified(
+        decisions,
         &mut query_caches.support_reference_result_cache,
         old_ref,
         old_ref_definitions,
@@ -8080,6 +8539,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
         return Ok(Some(reused));
     }
     if let Some(reused) = reusable_support_reference_result_from_cached_trace_if_certified(
+        decisions,
         &mut query_caches.support_reference_result_cache,
         old_ref,
         old_ref_definitions,
@@ -8119,6 +8579,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
             let search_cache = &query_caches.search_cache;
             let shared_halfspace_caches = std::cell::RefCell::new((report_cache, feasible_cache));
             support_plane_cell_reference_with_queries_and_trace_surface_caches(
+                decisions,
                 old_ref,
                 old_ref_definitions,
                 old_wnv,
@@ -8128,7 +8589,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
                 &mut |halfspaces| {
                     let mut caches = shared_halfspace_caches.borrow_mut();
                     cached_halfspace_report_with(caches.0, halfspaces, |halfspaces| {
-                        halfspace_system_report(halfspaces)
+                        halfspace_system_report(decisions, halfspaces)
                     })
                 },
                 &mut |halfspaces| {
@@ -8138,8 +8599,8 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
                         report_cache,
                         feasible_cache,
                         halfspaces,
-                        halfspace_system_report,
-                        halfspace_system_is_feasible,
+                        |halfspaces| halfspace_system_report(decisions, halfspaces),
+                        |halfspaces| halfspace_system_is_feasible(decisions, halfspaces),
                     )
                 },
                 trace_cache,
@@ -8178,6 +8639,7 @@ fn support_plane_cell_reference_with_queries(
     let mut support_surface_cache = Vec::new();
     let mut query_caches = SupportReferenceQueryCaches::default();
     support_plane_cell_reference_with_queries_and_trace_surface_caches(
+        &crate::test_support::approximate_decisions(),
         old_ref,
         old_ref_definitions,
         old_wnv,
@@ -8203,6 +8665,7 @@ fn support_plane_cell_reference_with_queries(
 }
 
 fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
+    decisions: &DecisionContext,
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
@@ -8236,7 +8699,10 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     let initial_feasible_unknown = match feasible_for(halfspaces) {
         Ok(true) => false,
         Ok(false) => return Ok(None),
-        Err(crate::error::HypermeshError::UnknownClassification) => true,
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => true,
         Err(err) => return Err(err),
     };
     let cache_context =
@@ -8244,6 +8710,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     let normalized_polygon_index =
         advance_fixed_support_search_index(polygons, 0, halfspaces.as_slice());
     if let Some(reused) = reusable_support_plane_cell_search_result_if_certified(
+        decisions,
         search_cache,
         &cache_context,
         bounds,
@@ -8254,6 +8721,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
         return Ok(Some(reused));
     }
     if let Some(reused) = reusable_support_plane_cell_search_result_from_cached_trace_if_certified(
+        decisions,
         search_cache,
         &cache_context,
         bounds,
@@ -8272,6 +8740,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                       report: Option<hyperlimit::HalfspaceFeasibilityReport>|
      -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
         if let Some(reused) = reusable_support_reference_accept_if_certified(
+            decisions,
             &mut accept_cache.borrow_mut(),
             &cache_context,
             bounds,
@@ -8282,6 +8751,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
             return Ok(Some(reused));
         }
         if let Some(reused) = reusable_support_reference_accept_from_cached_trace_if_certified(
+            decisions,
             &mut accept_cache.borrow_mut(),
             &cache_context,
             bounds,
@@ -8315,6 +8785,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                             report,
                             || {
                                 support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
+                                    decisions,
                                     bounds,
                                     halfspaces,
                                     report,
@@ -8343,6 +8814,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                                         [None, None, None],
                                         || {
                                             reference_target_from_halfspace_witness(
+                                                decisions,
                                                 seed,
                                                 halfspaces,
                                                 [None, None, None],
@@ -8355,6 +8827,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                     },
                 );
                 trace_support_reference_targets_with_report_shortcut(
+                    decisions,
                     bounds,
                     halfspaces,
                     report,
@@ -8363,8 +8836,10 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                     support_surface_cache,
                     validity_cache,
                     Some(&cache_context),
-                    &mut |point| point_lies_on_any_support_plane(point, polygons),
-                    &mut |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
+                    &mut |point| point_lies_on_any_support_plane(decisions, point, polygons),
+                    &mut |point| {
+                        is_certified_valid_reference_for_bounds(decisions, point, bounds, polygons)
+                    },
                     || direct_targets.clone(),
                     || {
                         cached_support_target_family_with(
@@ -8374,6 +8849,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                             report,
                             |halfspaces, report| {
                                 strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
+                                    decisions,
                                     bounds,
                                     halfspaces,
                                     report,
@@ -8395,6 +8871,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                             target,
                             |target| {
                                 trace_reference_target_from_validated_bounds(
+                                    decisions,
                                     old_ref,
                                     old_ref_definitions,
                                     old_wnv,
@@ -8411,6 +8888,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     };
 
     match support_plane_cell_search_with_queries_cached(
+        decisions,
         Some(&cache_context),
         Some(old_ref),
         bounds,
@@ -8441,7 +8919,13 @@ fn trace_reference_targets_backtracking_unknown(
     trace_reference_targets_backtracking_unknown_with_surface_cache(
         targets,
         &mut surface_cache,
-        &mut |point| point_lies_on_any_support_plane(point, polygons),
+        &mut |point| {
+            point_lies_on_any_support_plane(
+                &crate::test_support::approximate_decisions(),
+                point,
+                polygons,
+            )
+        },
         trace,
     )
 }
@@ -8491,7 +8975,10 @@ fn trace_reference_targets_backtracking_unknown_with_query_caches(
             |point| surface_query(point),
         ) {
             Ok(on_support_surface) => on_support_surface,
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -8511,7 +8998,10 @@ fn trace_reference_targets_backtracking_unknown_with_query_caches(
             |point| validity_query(point),
         ) {
             Ok(valid_for_bounds) => valid_for_bounds,
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
                 continue;
             }
@@ -8535,7 +9025,10 @@ fn trace_reference_targets_backtracking_unknown_with_query_caches(
                     saw_unknown = true;
                 }
             }
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -8550,6 +9043,7 @@ fn trace_reference_targets_backtracking_unknown_with_query_caches(
 }
 
 fn trace_support_report_witness_target_with_query_caches(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
@@ -8566,6 +9060,7 @@ fn trace_support_report_witness_target_with_query_caches(
         return Ok(None);
     };
     if !cached_point_strictly_inside_support_cell_or_unknown_with(
+        decisions,
         &mut strict_contains_cache.borrow_mut(),
         witness,
         bounds,
@@ -8580,6 +9075,7 @@ fn trace_support_report_witness_target_with_query_caches(
         active_planes_from_optional_halfspace_report(report, witness),
         || {
             reference_target_from_halfspace_witness(
+                decisions,
                 witness,
                 halfspaces,
                 active_planes_from_optional_halfspace_report(report, witness),
@@ -8603,6 +9099,7 @@ fn trace_support_report_witness_target_with_query_caches(
 }
 
 fn trace_support_reference_targets_with_report_shortcut(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
@@ -8619,6 +9116,7 @@ fn trace_support_reference_targets_with_report_shortcut(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut saw_unknown = false;
     match trace_support_report_witness_target_with_query_caches(
+        decisions,
         bounds,
         halfspaces,
         report,
@@ -8633,7 +9131,10 @@ fn trace_support_reference_targets_with_report_shortcut(
     ) {
         Ok(Some(found)) => return Ok(Some(found)),
         Ok(None) => {}
-        Err(crate::error::HypermeshError::UnknownClassification) => {
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => {
             saw_unknown = true;
         }
         Err(err) => return Err(err),
@@ -8654,7 +9155,10 @@ fn trace_support_reference_targets_with_report_shortcut(
                 ) {
                     Ok(Some(found)) => return Ok(Some(found)),
                     Ok(None) => {}
-                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                    Err(
+                        crate::error::HypermeshError::PredicateUndecided { .. }
+                        | crate::error::HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                     }
                     Err(err) => return Err(err),
@@ -8664,7 +9168,10 @@ fn trace_support_reference_targets_with_report_shortcut(
                 saw_unknown = true;
             }
         }
-        Err(crate::error::HypermeshError::UnknownClassification) => {
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => {
             saw_unknown = true;
         }
         Err(err) => return Err(err),
@@ -8695,7 +9202,7 @@ fn support_plane_cell_target(
     if halfspaces.is_empty() {
         return Ok(None);
     }
-    if !halfspace_system_is_feasible(&halfspaces)? {
+    if !halfspace_system_is_feasible(&crate::test_support::approximate_decisions(), &halfspaces)? {
         return Ok(None);
     }
 
@@ -8726,7 +9233,11 @@ fn support_plane_cell_target_from(
             &mut saw_unknown,
         )?;
         for target in targets {
-            if !point_lies_on_any_support_plane(&target.point, polygons)? {
+            if !point_lies_on_any_support_plane(
+                &crate::test_support::approximate_decisions(),
+                &target.point,
+                polygons,
+            )? {
                 return Ok(Some(target));
             }
         }
@@ -8759,8 +9270,12 @@ where
         polygons,
         polygon_index,
         halfspaces,
-        &mut |halfspaces| halfspace_system_report(halfspaces),
-        &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+        &mut |halfspaces| {
+            halfspace_system_report(&crate::test_support::approximate_decisions(), halfspaces)
+        },
+        &mut |halfspaces| {
+            halfspace_system_is_feasible(&crate::test_support::approximate_decisions(), halfspaces)
+        },
         accept,
     )
 }
@@ -8786,6 +9301,7 @@ where
 {
     let cache = std::cell::RefCell::new(Vec::new());
     support_plane_cell_search_with_queries_cached(
+        &crate::test_support::approximate_decisions(),
         None,
         preferred_point,
         bounds,
@@ -8800,6 +9316,7 @@ where
 }
 
 fn support_plane_cell_search_with_queries_cached<T>(
+    decisions: &DecisionContext,
     context: Option<&SupportReferenceCacheContextKey>,
     preferred_point: Option<&Point3>,
     bounds: &Aabb,
@@ -8821,7 +9338,7 @@ where
 {
     let polygon_index = advance_fixed_support_search_index(polygons, polygon_index, halfspaces);
     let preferred_order = if polygon_index < polygons.len() {
-        support_side_search_order(preferred_point, &polygons[polygon_index].support)
+        support_side_search_order(decisions, preferred_point, &polygons[polygon_index].support)
     } else {
         [false, true]
     };
@@ -8842,7 +9359,10 @@ where
             match accept(halfspaces, None) {
                 Ok(Some(target)) => return Ok(Some(target)),
                 Ok(None) => {}
-                Err(crate::error::HypermeshError::UnknownClassification) => {
+                Err(
+                    crate::error::HypermeshError::PredicateUndecided { .. }
+                    | crate::error::HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                 }
                 Err(err) => return Err(err),
@@ -8850,7 +9370,10 @@ where
 
             let current_report = match report_for(halfspaces) {
                 Ok(report) => report,
-                Err(crate::error::HypermeshError::UnknownClassification) => {
+                Err(
+                    crate::error::HypermeshError::PredicateUndecided { .. }
+                    | crate::error::HypermeshError::UnknownClassification,
+                ) => {
                     saw_unknown = true;
                     None
                 }
@@ -8860,7 +9383,10 @@ where
                 match accept(halfspaces, current_report) {
                     Ok(Some(target)) => return Ok(Some(target)),
                     Ok(None) => {}
-                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                    Err(
+                        crate::error::HypermeshError::PredicateUndecided { .. }
+                        | crate::error::HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                     }
                     Err(err) => return Err(err),
@@ -8869,9 +9395,11 @@ where
 
             if polygon_index < polygons.len() {
                 let mut tried_unchanged_branch = false;
-                for positive in
-                    support_side_search_order(preferred_point, &polygons[polygon_index].support)
-                {
+                for positive in support_side_search_order(
+                    decisions,
+                    preferred_point,
+                    &polygons[polygon_index].support,
+                ) {
                     let branch_halfspace =
                         support_side_halfspace(&polygons[polygon_index].support, positive);
                     if halfspaces
@@ -8883,6 +9411,7 @@ where
                         }
                         tried_unchanged_branch = true;
                         match support_plane_cell_search_with_queries_cached(
+                            decisions,
                             context,
                             preferred_point,
                             bounds,
@@ -8896,7 +9425,10 @@ where
                         ) {
                             Ok(Some(target)) => return Ok(Some(target)),
                             Ok(None) => {}
-                            Err(crate::error::HypermeshError::UnknownClassification) => {
+                            Err(
+                                crate::error::HypermeshError::PredicateUndecided { .. }
+                                | crate::error::HypermeshError::UnknownClassification,
+                            ) => {
                                 saw_unknown = true;
                             }
                             Err(err) => return Err(err),
@@ -8911,7 +9443,10 @@ where
                     let mut feasibility_unknown = false;
                     let feasible = match feasible_for(halfspaces) {
                         Ok(feasible) => feasible,
-                        Err(crate::error::HypermeshError::UnknownClassification) => {
+                        Err(
+                            crate::error::HypermeshError::PredicateUndecided { .. }
+                            | crate::error::HypermeshError::UnknownClassification,
+                        ) => {
                             saw_unknown = true;
                             feasibility_unknown = true;
                             true
@@ -8923,6 +9458,7 @@ where
                     };
                     if feasible || feasibility_unknown {
                         match support_plane_cell_search_with_queries_cached(
+                            decisions,
                             context,
                             preferred_point,
                             bounds,
@@ -8939,7 +9475,10 @@ where
                                 return Ok(Some(target));
                             }
                             Ok(None) => {}
-                            Err(crate::error::HypermeshError::UnknownClassification) => {
+                            Err(
+                                crate::error::HypermeshError::PredicateUndecided { .. }
+                                | crate::error::HypermeshError::UnknownClassification,
+                            ) => {
                                 saw_unknown = true;
                             }
                             Err(err) => {
@@ -8997,31 +9536,45 @@ fn halfspaces_force_support_plane_contact(
 }
 
 fn support_side_search_order(
+    decisions: &DecisionContext,
     preferred_point: Option<&Point3>,
     plane: &crate::geometry::Plane,
 ) -> [bool; 2] {
     let Some(point) = preferred_point else {
         return [false, true];
     };
-    match classify_real(&plane.expression_at_point(point)) {
+    match classify_real(decisions, &plane.expression_at_point(point)) {
         Ok(Classification::Negative) => [false, true],
         Ok(Classification::Positive) => [true, false],
         Ok(Classification::On) | Err(_) => [false, true],
     }
 }
 
-fn halfspace_system_is_feasible(halfspaces: &[LimitPlane3]) -> HypermeshResult<bool> {
+fn halfspace_system_is_feasible(
+    decisions: &DecisionContext,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
     Ok(matches!(
-        halfspace_system_report(halfspaces)?,
+        halfspace_system_report(decisions, halfspaces)?,
         Some(report) if report.status == HalfspaceFeasibility::Feasible
     ))
 }
 
 fn halfspace_system_report(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>> {
-    match classify_halfspace_feasibility3(halfspaces) {
-        PredicateOutcome::Decided { value, .. } => Ok(Some(value)),
+    match classify_halfspace_feasibility3(halfspaces, decisions.policy()) {
+        PredicateOutcome::Decided {
+            value, certainty, ..
+        } => {
+            decisions.absorb(if certainty == hyperlimit::Certainty::Approximate {
+                crate::context::MeshCertainty::Approximate512Consumed
+            } else {
+                crate::context::MeshCertainty::Certified
+            });
+            Ok(Some(value))
+        }
         PredicateOutcome::Unknown { .. } => {
             Err(crate::error::HypermeshError::UnknownClassification)
         }
@@ -9029,10 +9582,20 @@ fn halfspace_system_report(
 }
 
 fn optional_halfspace_system_report(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<(Option<hyperlimit::HalfspaceFeasibilityReport>, bool)> {
-    match classify_halfspace_feasibility3(halfspaces) {
-        PredicateOutcome::Decided { value, .. } => Ok((Some(value), false)),
+    match classify_halfspace_feasibility3(halfspaces, decisions.policy()) {
+        PredicateOutcome::Decided {
+            value, certainty, ..
+        } => {
+            decisions.absorb(if certainty == hyperlimit::Certainty::Approximate {
+                crate::context::MeshCertainty::Approximate512Consumed
+            } else {
+                crate::context::MeshCertainty::Certified
+            });
+            Ok((Some(value), false))
+        }
         PredicateOutcome::Unknown { .. } => Ok((None, true)),
     }
 }
@@ -9051,6 +9614,7 @@ fn active_planes_from_optional_halfspace_report(
 }
 
 fn reference_definitions_from_active_halfspaces(
+    decisions: &DecisionContext,
     witness: &Point3,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
@@ -9071,7 +9635,13 @@ fn reference_definitions_from_active_halfspaces(
 
     for halfspace in halfspaces {
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
-        if !compare_real(&plane.expression_at_point(witness), &Real::zero())?.is_eq() {
+        if !compare_real_decision(
+            decisions,
+            &plane.expression_at_point(witness),
+            &Real::zero(),
+        )?
+        .is_eq()
+        {
             continue;
         }
         if !active.iter().any(|existing| existing == &plane) {
@@ -9083,6 +9653,7 @@ fn reference_definitions_from_active_halfspaces(
         for second in (first + 1)..active.len() {
             for third in (second + 1)..active.len() {
                 push_verified_definition(
+                    decisions,
                     &mut definitions,
                     [
                         active[first].clone(),
@@ -9100,6 +9671,7 @@ fn reference_definitions_from_active_halfspaces(
         for second in (first + 1)..active.len() {
             for axis_plane in &axis_definition {
                 push_verified_definition(
+                    decisions,
                     &mut definitions,
                     [
                         active[first].clone(),
@@ -9117,6 +9689,7 @@ fn reference_definitions_from_active_halfspaces(
         for first_axis in 0..3 {
             for second_axis in (first_axis + 1)..3 {
                 push_verified_definition(
+                    decisions,
                     &mut definitions,
                     [
                         plane.clone(),
@@ -9130,7 +9703,13 @@ fn reference_definitions_from_active_halfspaces(
         }
     }
 
-    push_verified_definition(&mut definitions, axis_definition, witness, &mut saw_unknown)?;
+    push_verified_definition(
+        decisions,
+        &mut definitions,
+        axis_definition,
+        witness,
+        &mut saw_unknown,
+    )?;
     Ok(ReferenceDefinitionFamilyState {
         definitions,
         saw_unknown,
@@ -9142,8 +9721,15 @@ fn projected_reference_targets(
     old_ref: &Point3,
     bounds: &Aabb,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    let halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
-    let (report, saw_unknown) = optional_halfspace_system_report(&halfspaces)?;
+    let halfspaces = projected_reference_halfspaces(
+        &crate::test_support::approximate_decisions(),
+        old_ref,
+        bounds,
+    )?;
+    let (report, saw_unknown) = optional_halfspace_system_report(
+        &crate::test_support::approximate_decisions(),
+        &halfspaces,
+    )?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -9153,6 +9739,7 @@ fn projected_reference_targets(
     let mut seed_unknown = saw_unknown;
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         projected_cell_seed_families_from_optional_report(
+            &crate::test_support::approximate_decisions(),
             bounds,
             &halfspaces,
             report.as_ref(),
@@ -9174,6 +9761,7 @@ fn projected_reference_targets(
 }
 
 fn projected_reference_halfspaces(
+    decisions: &DecisionContext,
     old_ref: &Point3,
     bounds: &Aabb,
 ) -> HypermeshResult<Vec<LimitPlane3>> {
@@ -9182,7 +9770,9 @@ fn projected_reference_halfspaces(
         let value = axis_ref(old_ref, axis);
         let min = axis_ref(&bounds.min, axis);
         let max = axis_ref(&bounds.max, axis);
-        if compare_real(value, min)?.is_gt() && compare_real(value, max)?.is_lt() {
+        if compare_real_decision(decisions, value, min)?.is_gt()
+            && compare_real_decision(decisions, value, max)?.is_lt()
+        {
             halfspaces.push(axis_halfspace(axis, true, value.clone()));
             halfspaces.push(axis_halfspace(axis, false, value.clone()));
         }
@@ -9208,6 +9798,7 @@ fn strict_projected_cell_targets_from_optional_report(
     let mut saw_unknown = false;
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         projected_cell_seed_families_from_optional_report(
+            &crate::test_support::approximate_decisions(),
             bounds,
             halfspaces,
             report,
@@ -9295,6 +9886,7 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     let strict_contains_cache = std::cell::RefCell::new(Vec::new());
     strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
+        &crate::test_support::approximate_decisions(),
         bounds,
         halfspaces,
         report,
@@ -9309,6 +9901,7 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
 }
 
 fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
@@ -9342,7 +9935,14 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_wi
                 seed,
                 halfspaces,
                 [None, None, None],
-                || reference_target_from_halfspace_witness(seed, halfspaces, [None, None, None]),
+                || {
+                    reference_target_from_halfspace_witness(
+                        decisions,
+                        seed,
+                        halfspaces,
+                        [None, None, None],
+                    )
+                },
             )
         },
     )?;
@@ -9353,6 +9953,7 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_wi
                 report.and_then(|report| report.witness.as_ref()),
                 |witness| {
                     cached_point_strictly_inside_projected_cell_or_unknown_with(
+                        decisions,
                         &mut strict_contains_cache.borrow_mut(),
                         witness,
                         bounds,
@@ -9367,6 +9968,7 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_wi
                         active_planes_from_optional_halfspace_report(report, witness),
                         || {
                             reference_target_from_halfspace_witness(
+                                decisions,
                                 witness,
                                 halfspaces,
                                 active_planes_from_optional_halfspace_report(report, witness),
@@ -9415,8 +10017,14 @@ fn strict_projected_cell_seeds_from_optional_report(
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
 ) -> HypermeshResult<Vec<Point3>> {
     let mut saw_unknown = false;
-    projected_cell_seed_families_from_optional_report(bounds, halfspaces, report, &mut saw_unknown)
-        .map(|(strict_seeds, _shifted_vertices, _shifted_geometry_seeds)| strict_seeds)
+    projected_cell_seed_families_from_optional_report(
+        &crate::test_support::approximate_decisions(),
+        bounds,
+        halfspaces,
+        report,
+        &mut saw_unknown,
+    )
+    .map(|(strict_seeds, _shifted_vertices, _shifted_geometry_seeds)| strict_seeds)
 }
 
 #[cfg(test)]
@@ -9425,7 +10033,12 @@ fn shifted_projected_cell_targets_from_seed(
     halfspaces: &[LimitPlane3],
     seed: &Point3,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    match shifted_projected_cell_families_from_seed(bounds, halfspaces, seed)? {
+    match shifted_projected_cell_families_from_seed(
+        &crate::test_support::approximate_decisions(),
+        bounds,
+        halfspaces,
+        seed,
+    )? {
         Some(families) => {
             shifted_projected_cell_targets_from_families(bounds, halfspaces, &families)
         }
@@ -9434,6 +10047,7 @@ fn shifted_projected_cell_targets_from_seed(
 }
 
 fn shifted_projected_cell_targets_from_seed_with_cache(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     seed: &Point3,
@@ -9442,9 +10056,10 @@ fn shifted_projected_cell_targets_from_seed_with_cache(
     strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     match cached_shifted_projected_cell_families_with(cache, bounds, halfspaces, seed, || {
-        shifted_projected_cell_families_from_seed(bounds, halfspaces, seed)
+        shifted_projected_cell_families_from_seed(decisions, bounds, halfspaces, seed)
     })? {
         Some(families) => shifted_projected_cell_targets_from_families_with_witness_cache(
+            decisions,
             bounds,
             halfspaces,
             &families,
@@ -9464,6 +10079,7 @@ fn shifted_projected_cell_targets_from_families(
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     let strict_contains_cache = std::cell::RefCell::new(Vec::new());
     shifted_projected_cell_targets_from_families_with_witness_cache(
+        &crate::test_support::approximate_decisions(),
         bounds,
         halfspaces,
         families,
@@ -9473,6 +10089,7 @@ fn shifted_projected_cell_targets_from_families(
 }
 
 fn shifted_projected_cell_targets_from_families_with_witness_cache(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     families: &ShiftedProjectedCellFamilies,
@@ -9497,6 +10114,7 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
                 report_witness.as_ref(),
                 |witness| {
                     cached_point_strictly_inside_projected_cell_or_unknown_with(
+                        decisions,
                         &mut strict_contains_cache.borrow_mut(),
                         witness,
                         bounds,
@@ -9511,6 +10129,7 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
                         active_planes_from_optional_halfspace_report(report, witness),
                         || {
                             reference_target_from_halfspace_witness(
+                                decisions,
                                 witness,
                                 shifted,
                                 active_planes_from_optional_halfspace_report(report, witness),
@@ -9521,6 +10140,7 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
             ),
             collect_reference_target_family(strict_shift_seeds, |witness| {
                 if !cached_point_strictly_inside_projected_cell_or_unknown_with(
+                    decisions,
                     &mut strict_contains_cache.borrow_mut(),
                     &witness,
                     bounds,
@@ -9535,6 +10155,7 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
                     [None, None, None],
                     || {
                         reference_target_from_halfspace_witness(
+                            decisions,
                             &witness,
                             shifted,
                             [None, None, None],
@@ -9546,6 +10167,7 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
             }),
             collect_reference_target_family(shifted_vertices, |witness| {
                 if !cached_point_strictly_inside_projected_cell_or_unknown_with(
+                    decisions,
                     &mut strict_contains_cache.borrow_mut(),
                     &witness,
                     bounds,
@@ -9560,6 +10182,7 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
                     [None, None, None],
                     || {
                         reference_target_from_halfspace_witness(
+                            decisions,
                             &witness,
                             shifted,
                             [None, None, None],
@@ -9571,6 +10194,7 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
             }),
             collect_reference_target_family(shifted_geometry_seeds, |witness| {
                 if !cached_point_strictly_inside_projected_cell_or_unknown_with(
+                    decisions,
                     &mut strict_contains_cache.borrow_mut(),
                     &witness,
                     bounds,
@@ -9585,6 +10209,7 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
                     [None, None, None],
                     || {
                         reference_target_from_halfspace_witness(
+                            decisions,
                             &witness,
                             shifted,
                             [None, None, None],
@@ -9608,12 +10233,13 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
 }
 
 fn shifted_projected_cell_families_from_seed(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     seed: &Point3,
 ) -> HypermeshResult<Option<ShiftedProjectedCellFamilies>> {
-    let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, seed)?;
-    let (report, saw_report_unknown) = optional_halfspace_system_report(&shifted)?;
+    let shifted = shifted_support_cell_halfspaces(decisions, bounds, halfspaces, seed)?;
+    let (report, saw_report_unknown) = optional_halfspace_system_report(decisions, &shifted)?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -9625,6 +10251,7 @@ fn shifted_projected_cell_families_from_seed(
 
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         projected_cell_seed_families_from_optional_report(
+            decisions,
             bounds,
             &shifted,
             report.as_ref(),
@@ -9646,13 +10273,19 @@ fn projected_escape_targets_from_seed(
     halfspaces: &[LimitPlane3],
     seed: &Point3,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    match shifted_projected_cell_families_from_seed(bounds, halfspaces, seed)? {
+    match shifted_projected_cell_families_from_seed(
+        &crate::test_support::approximate_decisions(),
+        bounds,
+        halfspaces,
+        seed,
+    )? {
         Some(families) => projected_escape_targets_from_families(halfspaces, &families),
         None => Ok(Vec::new()),
     }
 }
 
 fn projected_escape_targets_from_seed_with_cache(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     seed: &Point3,
@@ -9663,9 +10296,10 @@ fn projected_escape_targets_from_seed_with_cache(
     >,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     match cached_shifted_projected_cell_families_with(cache, bounds, halfspaces, seed, || {
-        shifted_projected_cell_families_from_seed(bounds, halfspaces, seed)
+        shifted_projected_cell_families_from_seed(decisions, bounds, halfspaces, seed)
     })? {
         Some(families) => projected_escape_targets_from_families_with_witness_cache(
+            decisions,
             halfspaces,
             &families,
             reference_witness_cache,
@@ -9683,6 +10317,7 @@ fn projected_escape_targets_from_families(
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     let pure_halfspace_contains_cache = std::cell::RefCell::new(Vec::new());
     projected_escape_targets_from_families_with_witness_cache(
+        &crate::test_support::approximate_decisions(),
         halfspaces,
         families,
         &reference_witness_cache,
@@ -9691,6 +10326,7 @@ fn projected_escape_targets_from_families(
 }
 
 fn projected_escape_targets_from_families_with_witness_cache(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
     families: &ShiftedProjectedCellFamilies,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
@@ -9710,6 +10346,7 @@ fn projected_escape_targets_from_families_with_witness_cache(
         families.shifted_geometry_seeds.clone(),
         |witness| {
             cached_point_strictly_inside_halfspaces_or_unknown_with(
+                decisions,
                 &mut pure_halfspace_contains_cache.borrow_mut(),
                 witness,
                 halfspaces,
@@ -9723,6 +10360,7 @@ fn projected_escape_targets_from_families_with_witness_cache(
                 active_planes_from_optional_halfspace_report(report, witness),
                 || {
                     reference_target_from_halfspace_witness(
+                        decisions,
                         witness,
                         shifted,
                         active_planes_from_optional_halfspace_report(report, witness),
@@ -9736,7 +10374,14 @@ fn projected_escape_targets_from_families_with_witness_cache(
                 witness,
                 shifted,
                 [None, None, None],
-                || reference_target_from_halfspace_witness(witness, shifted, [None, None, None]),
+                || {
+                    reference_target_from_halfspace_witness(
+                        decisions,
+                        witness,
+                        shifted,
+                        [None, None, None],
+                    )
+                },
             )
         },
     )?;
@@ -9752,6 +10397,7 @@ fn projected_escape_targets_from_families_with_witness_cache(
 }
 
 fn projected_cell_seed_families_from_optional_report(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
@@ -9760,6 +10406,7 @@ fn projected_cell_seed_families_from_optional_report(
     let mut seed_geometry_cache = Vec::new();
     let mut centroid_subset_seed_cache = Vec::new();
     projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
+        decisions,
         bounds,
         halfspaces,
         report,
@@ -9770,6 +10417,7 @@ fn projected_cell_seed_families_from_optional_report(
 }
 
 fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
@@ -9779,7 +10427,7 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
 ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
     let seed_geometry =
         cached_support_cell_seed_geometry_with(seed_geometry_cache, halfspaces, || {
-            support_cell_seed_geometry_state(halfspaces, centroid_subset_seed_cache)
+            support_cell_seed_geometry_state(decisions, halfspaces, centroid_subset_seed_cache)
         })?;
     *saw_unknown |= seed_geometry.saw_unknown;
     let shifted_vertices = seed_geometry.shifted_vertices;
@@ -9793,7 +10441,9 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
                 && let Some(witness) = report.and_then(|report| report.witness.as_ref())
             {
                 collect_point3_family(std::slice::from_ref(witness), |candidate| {
-                    point_strictly_inside_projected_cell_or_unknown(candidate, bounds, halfspaces)
+                    point_strictly_inside_projected_cell_or_unknown(
+                        decisions, candidate, bounds, halfspaces,
+                    )
                 })
             } else {
                 Ok(Point3FamilyState {
@@ -9802,10 +10452,14 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
                 })
             },
             collect_point3_family(&shifted_vertices, |candidate| {
-                point_strictly_inside_projected_cell_or_unknown(candidate, bounds, halfspaces)
+                point_strictly_inside_projected_cell_or_unknown(
+                    decisions, candidate, bounds, halfspaces,
+                )
             }),
             collect_point3_family(&shifted_geometry_seeds, |candidate| {
-                point_strictly_inside_projected_cell_or_unknown(candidate, bounds, halfspaces)
+                point_strictly_inside_projected_cell_or_unknown(
+                    decisions, candidate, bounds, halfspaces,
+                )
             }),
         ],
     )?;
@@ -9948,13 +10602,14 @@ fn support_shifted_target_seed_families(
 }
 
 fn push_verified_definition(
+    decisions: &DecisionContext,
     definitions: &mut Vec<[Plane; 3]>,
     definition: [Plane; 3],
     witness: &Point3,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<()> {
     match affine_from_planes(&definition) {
-        Ok(point) if point == *witness => {
+        Ok(point) if points_equal(decisions, &point, witness)? => {
             if !definitions
                 .iter()
                 .any(|existing| reference_definition_planes_match_as_sets(existing, &definition))
@@ -9963,7 +10618,10 @@ fn push_verified_definition(
             }
         }
         Ok(_) => {}
-        Err(crate::error::HypermeshError::UnknownClassification) => {
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => {
             *saw_unknown = true;
         }
         Err(err) => return Err(err),
@@ -10009,6 +10667,7 @@ fn certified_reference_result(
 }
 
 fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
@@ -10028,6 +10687,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
         report,
         || {
             support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
+                decisions,
                 bounds,
                 halfspaces,
                 report,
@@ -10064,6 +10724,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                         [None, None, None],
                         || {
                             reference_target_from_halfspace_witness(
+                                decisions,
                                 seed,
                                 halfspaces,
                                 [None, None, None],
@@ -10091,6 +10752,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                 report.and_then(|report| report.witness.as_ref()),
                 |witness| {
                     cached_point_strictly_inside_support_cell_or_unknown_with(
+                        decisions,
                         &mut strict_contains_cache.borrow_mut(),
                         witness,
                         bounds,
@@ -10105,6 +10767,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                         active_planes_from_optional_halfspace_report(report, witness),
                         || {
                             reference_target_from_halfspace_witness(
+                                decisions,
                                 witness,
                                 halfspaces,
                                 active_planes_from_optional_halfspace_report(report, witness),
@@ -10115,6 +10778,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
             ),
             collect_reference_target_family(strict_shift_seeds, |seed| {
                 shifted_support_cell_targets_from_seed_with_caches(
+                    decisions,
                     bounds,
                     halfspaces,
                     &seed,
@@ -10127,6 +10791,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
             }),
             collect_reference_target_family(shifted_vertices, |vertex| {
                 shifted_support_cell_targets_from_seed_with_caches(
+                    decisions,
                     bounds,
                     halfspaces,
                     &vertex,
@@ -10139,6 +10804,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
             }),
             collect_reference_target_family(shifted_geometry_seeds, |seed| {
                 shifted_support_cell_targets_from_seed_with_caches(
+                    decisions,
                     bounds,
                     halfspaces,
                     &seed,
@@ -10203,10 +10869,16 @@ fn strict_support_cell_targets_from_seed_families_with_tracking_unknown(
             reference_target_family_from_witness(
                 report.and_then(|report| report.witness.as_ref()),
                 |witness| {
-                    point_strictly_inside_support_cell_or_unknown(witness, bounds, halfspaces)
+                    point_strictly_inside_support_cell_or_unknown(
+                        &crate::test_support::approximate_decisions(),
+                        witness,
+                        bounds,
+                        halfspaces,
+                    )
                 },
                 |witness| {
                     reference_target_from_halfspace_witness(
+                        &crate::test_support::approximate_decisions(),
                         witness,
                         halfspaces,
                         active_planes_from_optional_halfspace_report(report, witness),
@@ -10316,7 +10988,10 @@ fn collect_point3_centroid_subset_candidates(
             match center_of(subset) {
                 Ok(Some(center)) => push_unique_point3(candidates, center),
                 Ok(None) => {}
-                Err(crate::error::HypermeshError::UnknownClassification) => {
+                Err(
+                    crate::error::HypermeshError::PredicateUndecided { .. }
+                    | crate::error::HypermeshError::UnknownClassification,
+                ) => {
                     *saw_unknown = true;
                 }
                 Err(err) => return Err(err),
@@ -10416,7 +11091,10 @@ fn extend_point3_backtracking_unknown(
         match keep(&candidate) {
             Ok(true) => push_unique_point3(points, candidate),
             Ok(false) => {}
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -10439,7 +11117,10 @@ fn collect_point3_family(
         match keep(candidate) {
             Ok(true) => push_unique_point3(&mut points, candidate.clone()),
             Ok(false) => {}
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -10481,7 +11162,10 @@ fn extend_point3_families_collect_unknown(
                     push_unique_point3(points, point);
                 }
             }
-            Err(crate::error::HypermeshError::UnknownClassification) => {
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -10502,6 +11186,7 @@ fn shifted_support_cell_targets_from_seed(
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     let strict_contains_cache = std::cell::RefCell::new(Vec::new());
     shifted_support_cell_targets_from_seed_with_caches(
+        &crate::test_support::approximate_decisions(),
         bounds,
         halfspaces,
         seed,
@@ -10514,6 +11199,7 @@ fn shifted_support_cell_targets_from_seed(
 }
 
 fn shifted_support_cell_targets_from_seed_with_caches(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     seed: &Point3,
@@ -10530,6 +11216,7 @@ fn shifted_support_cell_targets_from_seed_with_caches(
         seed,
         || {
             shifted_support_cell_families_from_seed(
+                decisions,
                 bounds,
                 halfspaces,
                 seed,
@@ -10539,6 +11226,7 @@ fn shifted_support_cell_targets_from_seed_with_caches(
         },
     )? {
         Some(families) => shifted_support_cell_targets_from_families(
+            decisions,
             bounds,
             halfspaces,
             &families,
@@ -10559,6 +11247,7 @@ fn support_cell_seed_families_from_optional_report(
     let mut seed_geometry_cache = Vec::new();
     let mut centroid_subset_seed_cache = Vec::new();
     support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
+        &crate::test_support::approximate_decisions(),
         bounds,
         halfspaces,
         report,
@@ -10569,6 +11258,7 @@ fn support_cell_seed_families_from_optional_report(
 }
 
 fn support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
@@ -10577,6 +11267,7 @@ fn support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
     centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
 ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
     let state = support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
+        decisions,
         bounds,
         halfspaces,
         report,
@@ -10592,6 +11283,7 @@ fn support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
 }
 
 fn support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
@@ -10600,7 +11292,7 @@ fn support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
 ) -> HypermeshResult<SupportCellSeedFamiliesState> {
     let seed_geometry =
         cached_support_cell_seed_geometry_with(seed_geometry_cache, halfspaces, || {
-            support_cell_seed_geometry_state(halfspaces, centroid_subset_seed_cache)
+            support_cell_seed_geometry_state(decisions, halfspaces, centroid_subset_seed_cache)
         })?;
     let mut saw_unknown = seed_geometry.saw_unknown;
     let shifted_vertices = seed_geometry.shifted_vertices;
@@ -10614,7 +11306,9 @@ fn support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
                 && let Some(witness) = report.and_then(|report| report.witness.as_ref())
             {
                 collect_point3_family(std::slice::from_ref(witness), |candidate| {
-                    point_strictly_inside_support_cell_or_unknown(candidate, bounds, halfspaces)
+                    point_strictly_inside_support_cell_or_unknown(
+                        decisions, candidate, bounds, halfspaces,
+                    )
                 })
             } else {
                 Ok(Point3FamilyState {
@@ -10623,10 +11317,14 @@ fn support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
                 })
             },
             collect_point3_family(&shifted_vertices, |candidate| {
-                point_strictly_inside_support_cell_or_unknown(candidate, bounds, halfspaces)
+                point_strictly_inside_support_cell_or_unknown(
+                    decisions, candidate, bounds, halfspaces,
+                )
             }),
             collect_point3_family(&shifted_geometry_seeds, |candidate| {
-                point_strictly_inside_support_cell_or_unknown(candidate, bounds, halfspaces)
+                point_strictly_inside_support_cell_or_unknown(
+                    decisions, candidate, bounds, halfspaces,
+                )
             }),
         ],
     )?;
@@ -10661,14 +11359,15 @@ fn point_seed_family_search_failed_without_any_seed(
 }
 
 fn shifted_support_cell_families_from_seed(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     seed: &Point3,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
 ) -> HypermeshResult<Option<ShiftedSupportCellFamilies>> {
-    let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, seed)?;
-    let (report, saw_report_unknown) = optional_halfspace_system_report(&shifted)?;
+    let shifted = shifted_support_cell_halfspaces(decisions, bounds, halfspaces, seed)?;
+    let (report, saw_report_unknown) = optional_halfspace_system_report(decisions, &shifted)?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -10679,6 +11378,7 @@ fn shifted_support_cell_families_from_seed(
     let mut saw_unknown = saw_report_unknown;
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
+            decisions,
             bounds,
             &shifted,
             report.as_ref(),
@@ -10697,6 +11397,7 @@ fn shifted_support_cell_families_from_seed(
 }
 
 fn shifted_support_cell_targets_from_families(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     families: &ShiftedSupportCellFamilies,
@@ -10721,6 +11422,7 @@ fn shifted_support_cell_targets_from_families(
                 report_witness.as_ref(),
                 |witness| {
                     cached_point_strictly_inside_support_cell_or_unknown_with(
+                        decisions,
                         &mut strict_contains_cache.borrow_mut(),
                         witness,
                         bounds,
@@ -10735,6 +11437,7 @@ fn shifted_support_cell_targets_from_families(
                         active_planes_from_optional_halfspace_report(report, witness),
                         || {
                             reference_target_from_halfspace_witness(
+                                decisions,
                                 witness,
                                 shifted,
                                 active_planes_from_optional_halfspace_report(report, witness),
@@ -10745,6 +11448,7 @@ fn shifted_support_cell_targets_from_families(
             ),
             collect_reference_target_family(strict_shift_seeds, |witness| {
                 if !cached_point_strictly_inside_support_cell_or_unknown_with(
+                    decisions,
                     &mut strict_contains_cache.borrow_mut(),
                     &witness,
                     bounds,
@@ -10759,6 +11463,7 @@ fn shifted_support_cell_targets_from_families(
                     [None, None, None],
                     || {
                         reference_target_from_halfspace_witness(
+                            decisions,
                             &witness,
                             shifted,
                             [None, None, None],
@@ -10770,6 +11475,7 @@ fn shifted_support_cell_targets_from_families(
             }),
             collect_reference_target_family(shifted_vertices, |witness| {
                 if !cached_point_strictly_inside_support_cell_or_unknown_with(
+                    decisions,
                     &mut strict_contains_cache.borrow_mut(),
                     &witness,
                     bounds,
@@ -10784,6 +11490,7 @@ fn shifted_support_cell_targets_from_families(
                     [None, None, None],
                     || {
                         reference_target_from_halfspace_witness(
+                            decisions,
                             &witness,
                             shifted,
                             [None, None, None],
@@ -10795,6 +11502,7 @@ fn shifted_support_cell_targets_from_families(
             }),
             collect_reference_target_family(shifted_geometry_seeds, |witness| {
                 if !cached_point_strictly_inside_support_cell_or_unknown_with(
+                    decisions,
                     &mut strict_contains_cache.borrow_mut(),
                     &witness,
                     bounds,
@@ -10809,6 +11517,7 @@ fn shifted_support_cell_targets_from_families(
                     [None, None, None],
                     || {
                         reference_target_from_halfspace_witness(
+                            decisions,
                             &witness,
                             shifted,
                             [None, None, None],
@@ -10832,10 +11541,11 @@ fn shifted_support_cell_targets_from_families(
 }
 
 fn support_cell_seed_geometry_state(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
     centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
 ) -> HypermeshResult<SupportCellSeedGeometryState> {
-    let shifted_vertex_family = feasible_support_cell_vertex_family(halfspaces)?;
+    let shifted_vertex_family = feasible_support_cell_vertex_family(decisions, halfspaces)?;
     let mut saw_unknown = shifted_vertex_family.saw_unknown;
     let shifted_vertices = shifted_vertex_family.points;
     let subset_seed_family = cached_point3_centroid_subset_family_from_vertices_with(
@@ -10852,7 +11562,10 @@ fn support_cell_seed_geometry_state(
     match point3_centroid(&shifted_vertices) {
         Ok(Some(center)) => push_unique_point3(&mut shifted_geometry_seeds, center),
         Ok(None) => {}
-        Err(crate::error::HypermeshError::UnknownClassification) => saw_unknown = true,
+        Err(
+            crate::error::HypermeshError::PredicateUndecided { .. }
+            | crate::error::HypermeshError::UnknownClassification,
+        ) => saw_unknown = true,
         Err(err) => return Err(err),
     }
     for seed in subset_seed_family.points {
@@ -10867,14 +11580,19 @@ fn support_cell_seed_geometry_state(
 
 #[cfg(test)]
 fn feasible_support_cell_vertices(halfspaces: &[LimitPlane3]) -> HypermeshResult<Vec<Point3>> {
-    Ok(feasible_support_cell_vertex_family(halfspaces)?.points)
+    Ok(feasible_support_cell_vertex_family(
+        &crate::test_support::approximate_decisions(),
+        halfspaces,
+    )?
+    .points)
 }
 
 fn feasible_support_cell_vertex_family(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Point3FamilyState> {
     feasible_support_cell_vertex_family_with_contains(halfspaces, |point, halfspaces| {
-        point_satisfies_halfspaces(point, halfspaces)
+        point_satisfies_halfspaces(decisions, point, halfspaces)
     })
 }
 
@@ -10902,7 +11620,10 @@ fn feasible_support_cell_vertex_family_with_contains(
                         }
                     }
                     Ok(false) => {}
-                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                    Err(
+                        crate::error::HypermeshError::PredicateUndecided { .. }
+                        | crate::error::HypermeshError::UnknownClassification,
+                    ) => {
                         saw_unknown = true;
                     }
                     Err(err) => return Err(err),
@@ -10929,12 +11650,13 @@ fn feasible_support_cell_vertices_with_contains(
 }
 
 fn point_strictly_inside_halfspaces_or_unknown(
+    decisions: &DecisionContext,
     point: &Point3,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
     for halfspace in halfspaces {
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
-        match crate::geometry::classify_point(point, &plane)? {
+        match classify_point_decision(decisions, point, &plane)? {
             Classification::Positive => return Ok(false),
             Classification::On => {
                 if !halfspace_has_opposite_pair(halfspace, halfspaces) {
@@ -10953,18 +11675,25 @@ fn point_strictly_inside_projected_cell(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
-    point_strictly_inside_reference_halfspace_cell(point, bounds, halfspaces)
+    point_strictly_inside_reference_halfspace_cell(
+        &crate::test_support::approximate_decisions(),
+        point,
+        bounds,
+        halfspaces,
+    )
 }
 
 fn point_strictly_inside_projected_cell_or_unknown(
+    decisions: &DecisionContext,
     point: &Point3,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
-    point_strictly_inside_reference_halfspace_cell_or_unknown(point, bounds, halfspaces)
+    point_strictly_inside_reference_halfspace_cell_or_unknown(decisions, point, bounds, halfspaces)
 }
 
 fn cached_point_strictly_inside_projected_cell_or_unknown_with(
+    decisions: &DecisionContext,
     cache: &mut Vec<ReferenceHalfspaceContainmentCacheEntry>,
     point: &Point3,
     bounds: &Aabb,
@@ -10976,28 +11705,31 @@ fn cached_point_strictly_inside_projected_cell_or_unknown_with(
         point,
         halfspaces,
         |point, bounds, halfspaces| {
-            point_strictly_inside_projected_cell_or_unknown(point, bounds, halfspaces)
+            point_strictly_inside_projected_cell_or_unknown(decisions, point, bounds, halfspaces)
         },
     )
 }
 
 fn point_strictly_inside_support_cell(
+    decisions: &DecisionContext,
     point: &Point3,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
-    point_strictly_inside_reference_halfspace_cell(point, bounds, halfspaces)
+    point_strictly_inside_reference_halfspace_cell(decisions, point, bounds, halfspaces)
 }
 
 fn point_strictly_inside_support_cell_or_unknown(
+    decisions: &DecisionContext,
     point: &Point3,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
-    point_strictly_inside_reference_halfspace_cell_or_unknown(point, bounds, halfspaces)
+    point_strictly_inside_reference_halfspace_cell_or_unknown(decisions, point, bounds, halfspaces)
 }
 
 fn cached_point_strictly_inside_support_cell_or_unknown_with(
+    decisions: &DecisionContext,
     cache: &mut Vec<ReferenceHalfspaceContainmentCacheEntry>,
     point: &Point3,
     bounds: &Aabb,
@@ -11009,40 +11741,42 @@ fn cached_point_strictly_inside_support_cell_or_unknown_with(
         point,
         halfspaces,
         |point, bounds, halfspaces| {
-            point_strictly_inside_support_cell_or_unknown(point, bounds, halfspaces)
+            point_strictly_inside_support_cell_or_unknown(decisions, point, bounds, halfspaces)
         },
     )
 }
 
 fn cached_point_strictly_inside_halfspaces_or_unknown_with(
+    decisions: &DecisionContext,
     cache: &mut Vec<ReferencePureHalfspaceContainmentCacheEntry>,
     point: &Point3,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
     cached_pure_halfspace_containment_with(cache, point, halfspaces, |point, halfspaces| {
-        point_strictly_inside_halfspaces_or_unknown(point, halfspaces)
+        point_strictly_inside_halfspaces_or_unknown(decisions, point, halfspaces)
     })
 }
 
 fn point_strictly_inside_reference_halfspace_cell(
+    decisions: &DecisionContext,
     point: &Point3,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
-    if !point_strictly_inside_bounds(point, bounds)? {
+    if !point_strictly_inside_bounds(decisions, point, bounds)? {
         return Ok(false);
     }
     for halfspace in halfspaces {
-        if halfspace_is_degenerate_bound(halfspace, bounds)? {
+        if halfspace_is_degenerate_bound(decisions, halfspace, bounds)? {
             continue;
         }
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
         let value = plane.expression_at_point(point);
         if halfspace_has_opposite_pair(halfspace, halfspaces) {
-            if compare_real(&value, &Real::zero())?.is_ne() {
+            if compare_real_decision(decisions, &value, &Real::zero())?.is_ne() {
                 return Ok(false);
             }
-        } else if compare_real(&value, &Real::zero())?.is_eq() {
+        } else if compare_real_decision(decisions, &value, &Real::zero())?.is_eq() {
             return Ok(false);
         }
     }
@@ -11050,35 +11784,38 @@ fn point_strictly_inside_reference_halfspace_cell(
 }
 
 fn point_strictly_inside_reference_halfspace_cell_or_unknown(
+    decisions: &DecisionContext,
     point: &Point3,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
-    if !point_strictly_inside_bounds(point, bounds)? {
+    if !point_strictly_inside_bounds(decisions, point, bounds)? {
         for axis in 0..3 {
             let min = axis_ref(&bounds.min, axis);
             let max = axis_ref(&bounds.max, axis);
-            if compare_real(min, max)?.is_eq() {
+            if compare_real_decision(decisions, min, max)?.is_eq() {
                 continue;
             }
             let point_value = axis_ref(point, axis);
-            if compare_real(point_value, min)?.is_eq() || compare_real(point_value, max)?.is_eq() {
+            if compare_real_decision(decisions, point_value, min)?.is_eq()
+                || compare_real_decision(decisions, point_value, max)?.is_eq()
+            {
                 return Err(crate::error::HypermeshError::UnknownClassification);
             }
         }
         return Ok(false);
     }
     for halfspace in halfspaces {
-        if halfspace_is_degenerate_bound(halfspace, bounds)? {
+        if halfspace_is_degenerate_bound(decisions, halfspace, bounds)? {
             continue;
         }
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
         let value = plane.expression_at_point(point);
         if halfspace_has_opposite_pair(halfspace, halfspaces) {
-            if compare_real(&value, &Real::zero())?.is_ne() {
+            if compare_real_decision(decisions, &value, &Real::zero())?.is_ne() {
                 return Ok(false);
             }
-        } else if compare_real(&value, &Real::zero())?.is_eq() {
+        } else if compare_real_decision(decisions, &value, &Real::zero())?.is_eq() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
     }
@@ -11086,6 +11823,7 @@ fn point_strictly_inside_reference_halfspace_cell_or_unknown(
 }
 
 fn shifted_support_cell_halfspaces(
+    decisions: &DecisionContext,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     strict_interior: &Point3,
@@ -11096,8 +11834,8 @@ fn shifted_support_cell_halfspaces(
     for halfspace in halfspaces {
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
         let value = plane.expression_at_point(strict_interior);
-        let keep_closed = compare_real(&value, &Real::zero())?.is_eq()
-            || halfspace_is_degenerate_bound(halfspace, bounds)?;
+        let keep_closed = compare_real_decision(decisions, &value, &Real::zero())?.is_eq()
+            || halfspace_is_degenerate_bound(decisions, halfspace, bounds)?;
         let offset = if keep_closed {
             halfspace.offset.clone()
         } else {
@@ -11109,11 +11847,12 @@ fn shifted_support_cell_halfspaces(
 }
 
 fn point_lies_on_any_support_plane(
+    decisions: &DecisionContext,
     point: &Point3,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
     for polygon in polygons {
-        match classify_point_in_local_polygon(point, polygon)? {
+        match classify_point_in_local_polygon(decisions, point, polygon)? {
             LocalPolygonPointLocation::Outside => {}
             LocalPolygonPointLocation::Interior => return Ok(true),
             LocalPolygonPointLocation::Boundary => {
@@ -11125,13 +11864,14 @@ fn point_lies_on_any_support_plane(
 }
 
 fn reference_axis_surface_crossing(
+    decisions: &DecisionContext,
     start: &Point3,
     endpoint: &Point3,
     polygon: &ConvexPolygon,
     axis: usize,
 ) -> HypermeshResult<Option<Point3>> {
-    let start_class = crate::geometry::classify_point(start, &polygon.support)?;
-    let endpoint_class = crate::geometry::classify_point(endpoint, &polygon.support)?;
+    let start_class = classify_point_decision(decisions, start, &polygon.support)?;
+    let endpoint_class = classify_point_decision(decisions, endpoint, &polygon.support)?;
     if start_class == crate::geometry::Classification::On {
         return Ok(Some(start.clone()));
     }
@@ -11154,32 +11894,45 @@ fn reference_axis_surface_crossing(
     Ok(Some(crossing))
 }
 
-fn point_strictly_inside_bounds(point: &Point3, bounds: &Aabb) -> HypermeshResult<bool> {
-    hyperlimit::point_in_ordered_aabb3_relative_interior(&bounds.min, &bounds.max, point)
-        .value()
-        .ok_or(HypermeshError::UnknownClassification)
+fn point_strictly_inside_bounds(
+    decisions: &DecisionContext,
+    point: &Point3,
+    bounds: &Aabb,
+) -> HypermeshResult<bool> {
+    decisions.decide(
+        hyperlimit::point_in_ordered_aabb3_relative_interior(
+            &bounds.min,
+            &bounds.max,
+            point,
+            decisions.policy(),
+        ),
+        "relative AABB interior",
+    )
 }
 
 fn point_lies_on_local_surface(
+    decisions: &DecisionContext,
     point: &Point3,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
     for polygon in polygons {
-        if point_lies_on_local_polygon(point, polygon)? {
+        if point_lies_on_local_polygon(decisions, point, polygon)? {
             return Ok(true);
         }
     }
     Ok(false)
 }
 
-fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> HypermeshResult<bool> {
-    if crate::geometry::classify_point(point, &polygon.support)?
-        != crate::geometry::Classification::On
-    {
+fn point_lies_on_local_polygon(
+    decisions: &DecisionContext,
+    point: &Point3,
+    polygon: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    if classify_point_decision(decisions, point, &polygon.support)? != Classification::On {
         return Ok(false);
     }
     for edge in polygon.edges.iter() {
-        if crate::geometry::classify_point(point, edge)?.is_positive() {
+        if classify_point_decision(decisions, point, edge)?.is_positive() {
             return Ok(false);
         }
     }
@@ -11194,22 +11947,21 @@ enum LocalPolygonPointLocation {
 }
 
 fn classify_point_in_local_polygon(
+    decisions: &DecisionContext,
     point: &Point3,
     polygon: &ConvexPolygon,
 ) -> HypermeshResult<LocalPolygonPointLocation> {
-    if crate::geometry::classify_point(point, &polygon.support)?
-        != crate::geometry::Classification::On
-    {
+    if classify_point_decision(decisions, point, &polygon.support)? != Classification::On {
         return Ok(LocalPolygonPointLocation::Outside);
     }
     let mut on_edge = false;
     for edge in polygon.edges.iter() {
-        match crate::geometry::classify_point(point, edge)? {
-            crate::geometry::Classification::Positive => {
+        match classify_point_decision(decisions, point, edge)? {
+            Classification::Positive => {
                 return Ok(LocalPolygonPointLocation::Outside);
             }
-            crate::geometry::Classification::On => on_edge = true,
-            crate::geometry::Classification::Negative => {}
+            Classification::On => on_edge = true,
+            Classification::Negative => {}
         }
     }
     if on_edge {

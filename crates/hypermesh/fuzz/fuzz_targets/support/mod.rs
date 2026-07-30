@@ -3,11 +3,18 @@
 use std::collections::BTreeMap;
 
 use hypermesh::{
-    BooleanOp, BooleanResult, TriangleMesh, Point3, Real, Triangle, BooleanMesh,
+    BooleanMesh, BooleanOp, BooleanResult, HypermeshResult, MeshContext, MeshOutcome, Point3,
+    PredicatePolicy, Real, Triangle, TriangleMesh, boolean_mesh_closure_evidence,
     certify_output_polygon_closure, classify_polygon_output, extract_output,
-    boolean_mesh_closure_evidence, triangulate_and_resolve_certified,
+    triangulate_and_resolve_certified,
 };
 use hyperreal::{Rational, StructuralKind};
+
+pub const CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
+
+pub fn value<T>(result: HypermeshResult<MeshOutcome<T>>) -> HypermeshResult<T> {
+    result.map(MeshOutcome::into_value)
+}
 
 pub struct Bytes<'a> {
     data: &'a [u8],
@@ -262,7 +269,11 @@ pub fn validate_soup(soup: &BooleanMesh) {
             .iter()
             .all(|triangle| { triangle.iter().all(|vertex| *vertex < soup.vertices.len()) })
     );
-    assert!(soup.has_unique_nondegenerate_triangles());
+    assert!(
+        soup.has_unique_nondegenerate_triangles(&CONTEXT)
+            .unwrap()
+            .into_value()
+    );
     assert!(boolean_mesh_closure_evidence(soup).has_no_boundary());
 }
 
@@ -277,13 +288,11 @@ pub fn validate_result(
         result.classifications().len()
     );
     assert_eq!(result.output().polygons.len(), result.winding_pairs().len());
-    assert!(
-        result
-            .output()
-            .polygons
-            .iter()
-            .all(|polygon| polygon.is_valid())
-    );
+    assert!(result.output().polygons.iter().all(|polygon| {
+        polygon
+            .is_valid(&CONTEXT)
+            .is_ok_and(MeshOutcome::into_value)
+    }));
     assert!(
         result
             .classifications()
@@ -301,15 +310,18 @@ pub fn validate_result(
         }
     }
     assert!(
-        certify_output_polygon_closure(result)
+        certify_output_polygon_closure(&CONTEXT, result)
             .unwrap()
+            .into_value()
             .has_no_boundary()
     );
     assert_eq!(
         extract_output(result).unwrap().len(),
         result.output().polygons.len()
     );
-    let soup = triangulate_and_resolve_certified(result).unwrap();
+    let soup = triangulate_and_resolve_certified(&CONTEXT, result)
+        .unwrap()
+        .into_value();
     validate_soup(&soup);
     soup
 }

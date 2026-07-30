@@ -1,12 +1,15 @@
 #![no_main]
 
+mod support;
+
 use hypermesh::{
-    ExactGpuVertex, TriangleMesh, Point3, Real, Triangle, approximate_gpu_mesh_f32,
+    ExactGpuVertex, Point3, Real, Triangle, TriangleMesh, approximate_gpu_mesh_f32,
     approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
     approximate_interleaved_gpu_mesh_f64, convex_hull, convex_hull_with_coplanar_groups,
     polygon_soup,
 };
 use libfuzzer_sys::fuzz_target;
+use support::{CONTEXT, value};
 
 fn r(value: i64) -> Real {
     Real::from(value)
@@ -47,10 +50,14 @@ fuzz_target!(|data: [u8; 24]| {
         ));
     }
     let mesh = TriangleMesh::new(positions, triangles);
-    if let Ok(mut soup) = polygon_soup(&[mesh.as_ref()]) {
+    if let Ok(mut soup) = value(polygon_soup(&CONTEXT, &[mesh.as_ref()])) {
         assert_eq!(soup.num_meshes, 1);
-        assert!(soup.polygons.iter().all(|polygon| polygon.is_valid()));
-        soup.compute_bounds_from_vertices().unwrap();
+        assert!(soup.polygons.iter().all(|polygon| {
+            polygon
+                .is_valid(&CONTEXT)
+                .is_ok_and(hypermesh::MeshOutcome::into_value)
+        }));
+        value(soup.compute_bounds_from_vertices(&CONTEXT)).unwrap();
     }
 
     let mut points = vec![p(0, 0, 0), p(4, 0, 0), p(0, 4, 0), p(0, 0, 4)];
@@ -65,8 +72,8 @@ fuzz_target!(|data: [u8; 24]| {
     }
 
     for hull in [
-        convex_hull(&points),
-        convex_hull_with_coplanar_groups(&points, &[]),
+        value(convex_hull(&CONTEXT, &points)),
+        value(convex_hull_with_coplanar_groups(&CONTEXT, &points, &[])),
     ]
     .into_iter()
     .flatten()
@@ -78,8 +85,12 @@ fuzz_target!(|data: [u8; 24]| {
                 .into_iter()
                 .all(|index| index < hull.positions.len())
         }));
-        let soup = polygon_soup(&[hull.as_ref()]).unwrap();
-        assert!(soup.polygons.iter().all(|polygon| polygon.is_valid()));
+        let soup = value(polygon_soup(&CONTEXT, &[hull.as_ref()])).unwrap();
+        assert!(soup.polygons.iter().all(|polygon| {
+            polygon
+                .is_valid(&CONTEXT)
+                .is_ok_and(hypermesh::MeshOutcome::into_value)
+        }));
     }
 
     let render_vertices = points

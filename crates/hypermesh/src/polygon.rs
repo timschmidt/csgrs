@@ -4,10 +4,10 @@ use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, intersect_three_pl
 use hyperreal::RealSign;
 use std::sync::Arc;
 
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::HypermeshResult;
-use crate::geometry::{
-    Classification, Plane, classify_projective_point, cross_arrays, dot_point, sub_points,
-};
+use crate::geometry::{Classification, Plane, cross_arrays, dot_point, sub_points};
+use crate::predicate::{classify_projective_point_decision, compare_real_decision};
 use crate::winding::WindingNumberTransitionVector;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -58,18 +58,30 @@ pub struct InputTrianglePlanes {
 
 impl InputTrianglePlanes {
     /// Constructs the support and three boundary planes from source points.
-    pub fn from_points(p0: &Point3, p1: &Point3, p2: &Point3) -> Self {
+    pub fn from_points(
+        context: &MeshContext,
+        p0: &Point3,
+        p1: &Point3,
+        p2: &Point3,
+    ) -> HypermeshResult<MeshOutcome<Self>> {
+        let decisions = DecisionContext::new(context);
+        let planes = Self::from_points_decision(&decisions, p0, p1, p2)?;
+        Ok(decisions.finish(planes))
+    }
+
+    pub(crate) fn from_points_decision(
+        decisions: &DecisionContext,
+        p0: &Point3,
+        p1: &Point3,
+        p2: &Point3,
+    ) -> HypermeshResult<Self> {
         let support = Plane::from_points(p0, p1, p2);
-        let points = [p0, p1, p2];
-        let edges = std::array::from_fn(|i| {
-            edge_plane(
-                points[i],
-                points[(i + 1) % 3],
-                points[(i + 2) % 3],
-                &support,
-            )
-        });
-        Self { support, edges }
+        let edges = [
+            edge_plane(decisions, p0, p1, p2, &support)?,
+            edge_plane(decisions, p1, p2, p0, &support)?,
+            edge_plane(decisions, p2, p0, p1, &support)?,
+        ];
+        Ok(Self { support, edges })
     }
 }
 
@@ -312,8 +324,20 @@ impl ApproxBounds {
     }
 
     /// Computes bounds for a non-empty borrowed point slice.
-    pub fn for_points(points: &[&Point3]) -> Self {
-        bounds_for_points(points)
+    pub fn for_points(
+        context: &MeshContext,
+        points: &[&Point3],
+    ) -> HypermeshResult<MeshOutcome<Self>> {
+        let decisions = DecisionContext::new(context);
+        let bounds = Self::for_points_decision(&decisions, points)?;
+        Ok(decisions.finish(bounds))
+    }
+
+    pub(crate) fn for_points_decision(
+        decisions: &DecisionContext,
+        points: &[&Point3],
+    ) -> HypermeshResult<Self> {
+        bounds_for_points(decisions, points)
     }
 }
 
@@ -398,8 +422,10 @@ impl ConvexPolygon {
 
     /// Returns true when this polygon has at least three vertices and a
     /// non-zero support normal.
-    pub fn is_valid(&self) -> bool {
-        self.vertex_count() >= 3 && self.support.is_valid()
+    pub fn is_valid(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let valid = self.vertex_count() >= 3 && self.support.decide_is_valid(&decisions)?;
+        Ok(decisions.finish(valid))
     }
 
     /// Computes vertex `i` as a homogeneous intersection of support and two
@@ -466,16 +492,23 @@ impl ConvexPolygon {
 
     pub(crate) fn with_known_vertex_cycle_and_edges(
         &self,
+        decisions: &DecisionContext,
         vertices: Vec<Point3>,
         vertex_identities: Vec<ConstructionVertexIdentity>,
         edges: Vec<Plane>,
         edge_identities: Vec<ConstructionEdgeIdentity>,
-    ) -> Self {
+    ) -> HypermeshResult<Self> {
         debug_assert_eq!(vertices.len(), edges.len());
         debug_assert_eq!(vertices.len(), vertex_identities.len());
         debug_assert_eq!(vertices.len(), edge_identities.len());
-        let approx_bounds =
-            (!vertices.is_empty()).then(|| Box::new(bounds_for_owned_points(vertices.as_slice())));
+        let approx_bounds = if vertices.is_empty() {
+            None
+        } else {
+            Some(Box::new(bounds_for_owned_points(
+                decisions,
+                vertices.as_slice(),
+            )?))
+        };
         let mut result = self.clone();
         result.edges = Arc::new(edges);
         result.approx_bounds = approx_bounds;
@@ -484,21 +517,28 @@ impl ConvexPolygon {
             vertices: Arc::from(vertex_identities),
             edges: Arc::from(edge_identities),
         });
-        result
+        Ok(result)
     }
 
     pub(crate) fn with_known_vertex_cycle_and_identities(
         &self,
+        decisions: &DecisionContext,
         vertices: Vec<Point3>,
         vertex_identities: Vec<ConstructionVertexIdentity>,
-    ) -> Self {
+    ) -> HypermeshResult<Self> {
         let edge_identities = self
             .known_edge_identities()
             .expect("known vertex identities have an aligned edge cycle");
         debug_assert_eq!(vertices.len(), vertex_identities.len());
         debug_assert_eq!(vertices.len(), edge_identities.len());
-        let approx_bounds =
-            (!vertices.is_empty()).then(|| Box::new(bounds_for_owned_points(vertices.as_slice())));
+        let approx_bounds = if vertices.is_empty() {
+            None
+        } else {
+            Some(Box::new(bounds_for_owned_points(
+                decisions,
+                vertices.as_slice(),
+            )?))
+        };
         let mut result = self.clone();
         result.approx_bounds = approx_bounds;
         result.known_vertices = Some(RetainedVertexCycle::Owned(Arc::from(vertices)));
@@ -506,7 +546,7 @@ impl ConvexPolygon {
             vertices: Arc::from(vertex_identities),
             edges: Arc::from(edge_identities.iter().collect::<Vec<_>>()),
         });
-        result
+        Ok(result)
     }
 
     pub(crate) fn with_source_triangle_edge_identities(
@@ -575,7 +615,10 @@ impl ConvexPolygon {
         }
     }
 
-    pub(crate) fn with_rebuilt_edge_planes(&self) -> HypermeshResult<Self> {
+    pub(crate) fn with_rebuilt_edge_planes(
+        &self,
+        decisions: &DecisionContext,
+    ) -> HypermeshResult<Self> {
         let vertices = self.vertices()?;
         if vertices.len() < 3 {
             return Ok(self.clone());
@@ -583,25 +626,42 @@ impl ConvexPolygon {
         let edges = (0..vertices.len())
             .map(|index| {
                 edge_plane(
+                    decisions,
                     &vertices[index],
                     &vertices[(index + 1) % vertices.len()],
                     &vertices[(index + 2) % vertices.len()],
                     &self.support,
                 )
             })
-            .collect();
+            .collect::<HypermeshResult<Vec<_>>>()?;
         let mut result = self.clone();
         result.edges = Arc::new(edges);
         Ok(result)
     }
 
     /// Returns true if a homogeneous point lies on or inside the polygon.
-    pub fn contains_point(&self, point: &HomogeneousPoint3) -> HypermeshResult<bool> {
-        if classify_projective_point(point, &self.support)? != Classification::On {
+    pub fn contains_point(
+        &self,
+        context: &MeshContext,
+        point: &HomogeneousPoint3,
+    ) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let contains = self.contains_point_decision(&decisions, point)?;
+        Ok(decisions.finish(contains))
+    }
+
+    pub(crate) fn contains_point_decision(
+        &self,
+        decisions: &DecisionContext,
+        point: &HomogeneousPoint3,
+    ) -> HypermeshResult<bool> {
+        if classify_projective_point_decision(decisions, point, &self.support)?
+            != Classification::On
+        {
             return Ok(false);
         }
         for edge in self.edges.iter() {
-            if classify_projective_point(point, edge)?.is_positive() {
+            if classify_projective_point_decision(decisions, point, edge)?.is_positive() {
                 return Ok(false);
             }
         }
@@ -609,12 +669,28 @@ impl ConvexPolygon {
     }
 
     /// Returns true if a homogeneous point lies strictly inside the polygon.
-    pub fn contains_point_strictly(&self, point: &HomogeneousPoint3) -> HypermeshResult<bool> {
-        if classify_projective_point(point, &self.support)? != Classification::On {
+    pub fn contains_point_strictly(
+        &self,
+        context: &MeshContext,
+        point: &HomogeneousPoint3,
+    ) -> HypermeshResult<MeshOutcome<bool>> {
+        let decisions = DecisionContext::new(context);
+        let contains = self.contains_point_strictly_decision(&decisions, point)?;
+        Ok(decisions.finish(contains))
+    }
+
+    pub(crate) fn contains_point_strictly_decision(
+        &self,
+        decisions: &DecisionContext,
+        point: &HomogeneousPoint3,
+    ) -> HypermeshResult<bool> {
+        if classify_projective_point_decision(decisions, point, &self.support)?
+            != Classification::On
+        {
             return Ok(false);
         }
         for edge in self.edges.iter() {
-            if classify_projective_point(point, edge)?.is_non_negative() {
+            if classify_projective_point_decision(decisions, point, edge)?.is_non_negative() {
                 return Ok(false);
             }
         }
@@ -624,69 +700,85 @@ impl ConvexPolygon {
 
 /// Returns a convex triangle from three exact positions.
 pub fn convex_triangle(
+    context: &MeshContext,
     p0: &Point3,
     p1: &Point3,
     p2: &Point3,
     mesh_index: isize,
     polygon_index: isize,
-) -> ConvexPolygon {
+) -> HypermeshResult<MeshOutcome<ConvexPolygon>> {
+    let decisions = DecisionContext::new(context);
+    let polygon = convex_triangle_decision(&decisions, p0, p1, p2, mesh_index, polygon_index)?;
+    Ok(decisions.finish(polygon))
+}
+
+pub(crate) fn convex_triangle_decision(
+    decisions: &DecisionContext,
+    p0: &Point3,
+    p1: &Point3,
+    p2: &Point3,
+    mesh_index: isize,
+    polygon_index: isize,
+) -> HypermeshResult<ConvexPolygon> {
     let support = Plane::from_points(p0, p1, p2);
     let edges = Vec::from([
-        edge_plane(p0, p1, p2, &support),
-        edge_plane(p1, p2, p0, &support),
-        edge_plane(p2, p0, p1, &support),
+        edge_plane(decisions, p0, p1, p2, &support)?,
+        edge_plane(decisions, p1, p2, p0, &support)?,
+        edge_plane(decisions, p2, p0, p1, &support)?,
     ]);
 
-    ConvexPolygon {
+    Ok(ConvexPolygon {
         support,
         edges: Arc::new(edges),
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
-        approx_bounds: Some(Box::new(bounds_for_points(&[p0, p1, p2]))),
+        approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2])?)),
         known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
             p0.clone(),
             p1.clone(),
             p2.clone(),
         ]))),
         known_identities: None,
-    }
+    })
 }
 
 pub(crate) fn make_triangle_with_input_planes(
+    decisions: &DecisionContext,
     p0: &Point3,
     p1: &Point3,
     p2: &Point3,
     planes: InputTrianglePlanes,
     mesh_index: isize,
     polygon_index: isize,
-) -> ConvexPolygon {
-    ConvexPolygon {
+) -> HypermeshResult<ConvexPolygon> {
+    Ok(ConvexPolygon {
         support: planes.support,
         edges: Arc::new(Vec::from(planes.edges)),
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
-        approx_bounds: Some(Box::new(bounds_for_points(&[p0, p1, p2]))),
+        approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2])?)),
         known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
             p0.clone(),
             p1.clone(),
             p2.clone(),
         ]))),
         known_identities: None,
-    }
+    })
 }
 
 #[cfg(test)]
 pub(crate) fn make_triangle_with_deferred_edges(
+    decisions: &DecisionContext,
     p0: &Point3,
     p1: &Point3,
     p2: &Point3,
     mesh_index: isize,
     polygon_index: isize,
-) -> ConvexPolygon {
+) -> HypermeshResult<ConvexPolygon> {
     let support = Plane::from_points(p0, p1, p2);
-    ConvexPolygon {
+    Ok(ConvexPolygon {
         // Certified two-convex preparation needs only aligned placeholders
         // for source edges that actually reach projective clipping. The
         // support already carries that deferred plane, so keep this empty and
@@ -696,14 +788,14 @@ pub(crate) fn make_triangle_with_deferred_edges(
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
-        approx_bounds: Some(Box::new(bounds_for_points(&[p0, p1, p2]))),
+        approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2])?)),
         known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
             p0.clone(),
             p1.clone(),
             p2.clone(),
         ]))),
         known_identities: None,
-    }
+    })
 }
 
 pub(crate) fn make_indexed_triangle_with_deferred_edges(
@@ -825,28 +917,40 @@ pub(crate) fn make_indexed_triangle_with_deferred_edges_and_input_planes(
 
 /// Returns a convex quad from four coplanar exact positions in winding order.
 pub fn convex_quad(
+    context: &MeshContext,
     p0: &Point3,
     p1: &Point3,
     p2: &Point3,
     p3: &Point3,
     mesh_index: isize,
     polygon_index: isize,
-) -> ConvexPolygon {
+) -> HypermeshResult<MeshOutcome<ConvexPolygon>> {
+    let decisions = DecisionContext::new(context);
+    let polygon = convex_quad_decision(&decisions, [p0, p1, p2, p3], mesh_index, polygon_index)?;
+    Ok(decisions.finish(polygon))
+}
+
+pub(crate) fn convex_quad_decision(
+    decisions: &DecisionContext,
+    [p0, p1, p2, p3]: [&Point3; 4],
+    mesh_index: isize,
+    polygon_index: isize,
+) -> HypermeshResult<ConvexPolygon> {
     let support = Plane::from_points(p0, p1, p2);
     let edges = Vec::from([
-        edge_plane(p0, p1, p2, &support),
-        edge_plane(p1, p2, p3, &support),
-        edge_plane(p2, p3, p0, &support),
-        edge_plane(p3, p0, p1, &support),
+        edge_plane(decisions, p0, p1, p2, &support)?,
+        edge_plane(decisions, p1, p2, p3, &support)?,
+        edge_plane(decisions, p2, p3, p0, &support)?,
+        edge_plane(decisions, p3, p0, p1, &support)?,
     ]);
 
-    ConvexPolygon {
+    Ok(ConvexPolygon {
         support,
         edges: Arc::new(edges),
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
-        approx_bounds: Some(Box::new(bounds_for_points(&[p0, p1, p2, p3]))),
+        approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2, p3])?)),
         known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
             p0.clone(),
             p1.clone(),
@@ -854,18 +958,23 @@ pub fn convex_quad(
             p3.clone(),
         ]))),
         known_identities: None,
-    }
+    })
 }
 
-pub(crate) fn edge_plane(a: &Point3, b: &Point3, opposite: &Point3, support: &Plane) -> Plane {
+pub(crate) fn edge_plane(
+    decisions: &DecisionContext,
+    a: &Point3,
+    b: &Point3,
+    opposite: &Point3,
+    support: &Plane,
+) -> HypermeshResult<Plane> {
     let mut plane = oriented_edge_plane(a, b, support);
-    if matches!(
-        crate::geometry::classify_point(opposite, &plane),
-        Ok(Classification::Positive)
-    ) {
+    if crate::predicate::classify_point_decision(decisions, opposite, &plane)?
+        == Classification::Positive
+    {
         plane = plane.inverted();
     }
-    plane
+    Ok(plane)
 }
 
 fn oriented_edge_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
@@ -880,87 +989,96 @@ fn oriented_edge_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
     Plane::new(normal, offset)
 }
 
-fn bounds_for_points(points: &[&Point3]) -> ApproxBounds {
-    let (min_x, max_x) = min_max_real(points.iter().map(|point| &point.x));
-    let (min_y, max_y) = min_max_real(points.iter().map(|point| &point.y));
-    let (min_z, max_z) = min_max_real(points.iter().map(|point| &point.z));
+fn bounds_for_points(
+    decisions: &DecisionContext,
+    points: &[&Point3],
+) -> HypermeshResult<ApproxBounds> {
+    let (min_x, max_x) = min_max_real(decisions, points.iter().map(|point| &point.x))?;
+    let (min_y, max_y) = min_max_real(decisions, points.iter().map(|point| &point.y))?;
+    let (min_z, max_z) = min_max_real(decisions, points.iter().map(|point| &point.z))?;
     let min = Point3::new(min_x, min_y, min_z);
     let max = Point3::new(max_x, max_y, max_z);
-    ApproxBounds::new(min, max)
+    Ok(ApproxBounds::new(min, max))
 }
 
-fn bounds_for_owned_points(points: &[Point3]) -> ApproxBounds {
-    let (min_x, max_x) = min_max_real(points.iter().map(|point| &point.x));
-    let (min_y, max_y) = min_max_real(points.iter().map(|point| &point.y));
-    let (min_z, max_z) = min_max_real(points.iter().map(|point| &point.z));
+fn bounds_for_owned_points(
+    decisions: &DecisionContext,
+    points: &[Point3],
+) -> HypermeshResult<ApproxBounds> {
+    let (min_x, max_x) = min_max_real(decisions, points.iter().map(|point| &point.x))?;
+    let (min_y, max_y) = min_max_real(decisions, points.iter().map(|point| &point.y))?;
+    let (min_z, max_z) = min_max_real(decisions, points.iter().map(|point| &point.z))?;
     let min = Point3::new(min_x, min_y, min_z);
     let max = Point3::new(max_x, max_y, max_z);
-    ApproxBounds::new(min, max)
+    Ok(ApproxBounds::new(min, max))
 }
 
-fn min_max_real<'a>(mut values: impl Iterator<Item = &'a Real>) -> (Real, Real) {
+fn min_max_real<'a>(
+    decisions: &DecisionContext,
+    mut values: impl Iterator<Item = &'a Real>,
+) -> HypermeshResult<(Real, Real)> {
     let first = values
         .next()
         .expect("bounds need at least one point")
         .clone();
     let Some(second) = values.next() else {
-        return (first.clone(), first);
+        return Ok((first.clone(), first));
     };
-    let (mut min, mut max) = match crate::geometry::compare_real(second, &first) {
-        Ok(std::cmp::Ordering::Less) => (second.clone(), first),
-        Ok(std::cmp::Ordering::Greater) => (first, second.clone()),
-        Ok(std::cmp::Ordering::Equal) | Err(_) => (first.clone(), first),
+    let (mut min, mut max) = match compare_real_decision(decisions, second, &first)? {
+        std::cmp::Ordering::Less => (second.clone(), first),
+        std::cmp::Ordering::Greater => (first, second.clone()),
+        std::cmp::Ordering::Equal => (first.clone(), first),
     };
     while let Some(left) = values.next() {
         let Some(right) = values.next() else {
-            update_min_max(left, &mut min, &mut max);
+            update_min_max(decisions, left, &mut min, &mut max)?;
             break;
         };
-        match crate::geometry::compare_real(right, left) {
-            Ok(std::cmp::Ordering::Less) => {
-                update_min(right, &mut min);
-                update_max(left, &mut max);
+        match compare_real_decision(decisions, right, left)? {
+            std::cmp::Ordering::Less => {
+                update_min(decisions, right, &mut min)?;
+                update_max(decisions, left, &mut max)?;
             }
-            Ok(std::cmp::Ordering::Greater) => {
-                update_min(left, &mut min);
-                update_max(right, &mut max);
+            std::cmp::Ordering::Greater => {
+                update_min(decisions, left, &mut min)?;
+                update_max(decisions, right, &mut max)?;
             }
-            Ok(std::cmp::Ordering::Equal) => update_min_max(left, &mut min, &mut max),
-            Err(_) => {
-                update_min_max(left, &mut min, &mut max);
-                update_min_max(right, &mut min, &mut max);
+            std::cmp::Ordering::Equal => {
+                update_min_max(decisions, left, &mut min, &mut max)?;
             }
         }
     }
-    (min, max)
+    Ok((min, max))
 }
 
-fn update_min(value: &Real, min: &mut Real) {
-    if matches!(
-        crate::geometry::compare_real(value, min),
-        Ok(std::cmp::Ordering::Less)
-    ) {
+fn update_min(decisions: &DecisionContext, value: &Real, min: &mut Real) -> HypermeshResult<()> {
+    if compare_real_decision(decisions, value, min)?.is_lt() {
         *min = value.clone();
     }
+    Ok(())
 }
 
-fn update_max(value: &Real, max: &mut Real) {
-    if matches!(
-        crate::geometry::compare_real(value, max),
-        Ok(std::cmp::Ordering::Greater)
-    ) {
+fn update_max(decisions: &DecisionContext, value: &Real, max: &mut Real) -> HypermeshResult<()> {
+    if compare_real_decision(decisions, value, max)?.is_gt() {
         *max = value.clone();
     }
+    Ok(())
 }
 
-fn update_min_max(value: &Real, min: &mut Real, max: &mut Real) {
-    update_min(value, min);
-    update_max(value, max);
+fn update_min_max(
+    decisions: &DecisionContext,
+    value: &Real,
+    min: &mut Real,
+    max: &mut Real,
+) -> HypermeshResult<()> {
+    update_min(decisions, value, min)?;
+    update_max(decisions, value, max)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::approximate_convex_triangle;
 
     fn point(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
@@ -968,8 +1086,9 @@ mod tests {
 
     #[test]
     fn source_triangle_identities_expand_from_compact_descriptor() {
-        let polygon = convex_triangle(&point(0, 0, 0), &point(1, 0, 0), &point(0, 1, 0), 3, 7)
-            .with_source_triangle_edge_identities(3, [9, 2, 5]);
+        let polygon =
+            approximate_convex_triangle(&point(0, 0, 0), &point(1, 0, 0), &point(0, 1, 0), 3, 7)
+                .with_source_triangle_edge_identities(3, [9, 2, 5]);
 
         assert!(std::mem::size_of::<RetainedIdentityCycles>() <= 5 * std::mem::size_of::<usize>());
         assert_eq!(
@@ -1051,7 +1170,9 @@ mod tests {
                 point(0, -2, 4),
             ],
         ] {
-            let bounds = bounds_for_owned_points(&points);
+            let bounds =
+                bounds_for_owned_points(&crate::test_support::approximate_decisions(), &points)
+                    .unwrap();
             assert_eq!(bounds.min, point(-4, -2, -5));
             assert_eq!(bounds.max, point(8, 9, 7));
         }

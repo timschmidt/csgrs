@@ -18,10 +18,11 @@ use super::path::{
     finalize_interior_point_family,
 };
 use super::{CrossingEvent, InteriorLeafPoint, LeafWitnessSeedFamilies};
+use crate::context::DecisionContext;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
     Aabb, Classification, Plane, Point3PredicateEvidence, axis_mut, axis_ref, classify_real,
-    compare_real,
+    compare_real_decision,
 };
 use crate::polygon::ConvexPolygon;
 use crate::winding::WindingNumberTransitionVector;
@@ -29,7 +30,11 @@ use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 use hyperlimit::{HalfspaceFeasibility, Plane3 as LimitPlane3};
 use std::sync::Arc;
 
-pub(super) fn planes_are_coplanar(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
+pub(super) fn planes_are_coplanar(
+    decisions: &DecisionContext,
+    left: &Plane,
+    right: &Plane,
+) -> HypermeshResult<bool> {
     let left_coefficients = [&left.normal.x, &left.normal.y, &left.normal.z, &left.offset];
     let right_coefficients = [
         &right.normal.x,
@@ -47,7 +52,7 @@ pub(super) fn planes_are_coplanar(left: &Plane, right: &Plane) -> HypermeshResul
                     [left_coefficients[j], right_coefficients[i]],
                 ],
             );
-            if classify_real(&determinant)? != Classification::On {
+            if classify_real(decisions, &determinant)? != Classification::On {
                 return Ok(false);
             }
         }
@@ -63,16 +68,17 @@ pub(super) enum PolygonPointLocation {
 }
 
 pub(super) fn classify_point_in_polygon(
+    decisions: &DecisionContext,
     point: &Point3,
     polygon: &ConvexPolygon,
 ) -> HypermeshResult<PolygonPointLocation> {
     let point = Point3PredicateEvidence::new(point);
-    if point.classify(&polygon.support)? != Classification::On {
+    if point.classify(decisions, &polygon.support)? != Classification::On {
         return Ok(PolygonPointLocation::Outside);
     }
     let mut on_edge = false;
     for edge in polygon.edges.iter() {
-        match point.classify(edge)? {
+        match point.classify(decisions, edge)? {
             Classification::Positive => return Ok(PolygonPointLocation::Outside),
             Classification::On => on_edge = true,
             Classification::Negative => {}
@@ -86,14 +92,15 @@ pub(super) fn classify_point_in_polygon(
 }
 
 pub(super) fn segment_plane_crossing(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     plane: &Plane,
 ) -> HypermeshResult<Option<Point3>> {
     let start_value = plane.expression_at_point(start);
     let end_value = plane.expression_at_point(end);
-    let start_class = crate::geometry::classify_real(&start_value)?;
-    let end_class = crate::geometry::classify_real(&end_value)?;
+    let start_class = classify_real(decisions, &start_value)?;
+    let end_class = classify_real(decisions, &end_value)?;
 
     if start_class == Classification::On || end_class == Classification::On {
         return Ok(None);
@@ -126,18 +133,22 @@ pub(super) fn segment_plane_crossing_from_opposite_values(
 }
 
 pub(super) fn point_strictly_between_axis(
+    decisions: &DecisionContext,
     point: &Point3,
     start: &Point3,
     end: &Point3,
     axis: usize,
 ) -> HypermeshResult<bool> {
-    let start_to_point = compare_real(axis_ref(point, axis), axis_ref(start, axis))?;
-    let point_to_end = compare_real(axis_ref(point, axis), axis_ref(end, axis))?;
+    let start_to_point =
+        compare_real_decision(decisions, axis_ref(point, axis), axis_ref(start, axis))?;
+    let point_to_end =
+        compare_real_decision(decisions, axis_ref(point, axis), axis_ref(end, axis))?;
     Ok((start_to_point.is_gt() && point_to_end.is_lt())
         || (start_to_point.is_lt() && point_to_end.is_gt()))
 }
 
 pub(super) fn sort_crossing_events(
+    decisions: &DecisionContext,
     events: &mut Vec<CrossingEvent>,
     axis: usize,
     dir_sign: i32,
@@ -146,7 +157,8 @@ pub(super) fn sort_crossing_events(
     for event in events.drain(..) {
         let mut insert_at = sorted.len();
         for (index, existing) in sorted.iter().enumerate() {
-            let order = compare_real(
+            let order = compare_real_decision(
+                decisions,
                 axis_ref(&event.point, axis),
                 axis_ref(&existing.point, axis),
             )?;
@@ -161,7 +173,10 @@ pub(super) fn sort_crossing_events(
     Ok(())
 }
 
-pub(super) fn dominant_normal_axis(plane: &Plane) -> HypermeshResult<usize> {
+pub(super) fn dominant_normal_axis(
+    decisions: &DecisionContext,
+    plane: &Plane,
+) -> HypermeshResult<usize> {
     let abs = [
         plane.normal.x.clone().abs(),
         plane.normal.y.clone().abs(),
@@ -169,7 +184,7 @@ pub(super) fn dominant_normal_axis(plane: &Plane) -> HypermeshResult<usize> {
     ];
     let mut best = 0;
     for axis in 1..3 {
-        if compare_real(&abs[axis], &abs[best])?.is_gt() {
+        if compare_real_decision(decisions, &abs[axis], &abs[best])?.is_gt() {
             best = axis;
         }
     }
@@ -196,9 +211,10 @@ pub(super) fn centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
 
 #[cfg(test)]
 pub(super) fn halfspace_cell_geometry_seed_candidates(
+    decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<Point3>> {
-    let vertices = feasible_halfspace_cell_vertices(halfspaces)?;
+    let vertices = feasible_halfspace_cell_vertices(decisions, halfspaces)?;
     halfspace_cell_geometry_seed_candidates_from_vertices(&vertices)
 }
 
@@ -254,7 +270,10 @@ fn collect_halfspace_centroid_subset_candidates(
             match center_of(subset) {
                 Ok(Some(center)) => push_unique_halfspace_seed(candidates, center),
                 Ok(None) => {}
-                Err(HypermeshError::UnknownClassification) => {
+                Err(
+                    HypermeshError::PredicateUndecided { .. }
+                    | HypermeshError::UnknownClassification,
+                ) => {
                     *saw_unknown = true;
                 }
                 Err(err) => return Err(err),
@@ -274,6 +293,7 @@ fn collect_halfspace_centroid_subset_candidates(
 }
 
 pub(super) fn interior_leaf_points(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let vertices = leaf.vertices()?;
@@ -282,7 +302,7 @@ pub(super) fn interior_leaf_points(
     }
 
     if let Some(center) = centroid(&vertices)? {
-        match point_strictly_inside_leaf_or_unknown(&center, leaf) {
+        match point_strictly_inside_leaf_or_unknown(decisions, &center, leaf) {
             Ok(true) => {
                 let mut points = vec![InteriorLeafPoint {
                     point: center.clone(),
@@ -292,7 +312,7 @@ pub(super) fn interior_leaf_points(
                 extend_interior_leaf_points_backtracking_unknown(
                     &mut points,
                     std::iter::once(&center),
-                    |witness| shifted_edge_interior_points(leaf, witness),
+                    |witness| shifted_edge_interior_points(decisions, leaf, witness),
                 )?;
                 if points.iter().any(|point| !point.planes.is_empty()) {
                     points.retain(|point| !point.planes.is_empty());
@@ -302,12 +322,14 @@ pub(super) fn interior_leaf_points(
                 }
             }
             Ok(false) => {}
-            Err(HypermeshError::UnknownClassification) => {}
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {}
             Err(err) => return Err(err),
         }
     }
 
-    let mut points = strict_leaf_witness_points(leaf, &vertices)?;
+    let mut points = strict_leaf_witness_points(decisions, leaf, &vertices)?;
     let witness_points = points
         .iter()
         .map(|point| point.point.clone())
@@ -315,26 +337,29 @@ pub(super) fn interior_leaf_points(
     extend_interior_leaf_points_backtracking_unknown(
         &mut points,
         witness_points.iter(),
-        |witness| shifted_edge_interior_points(leaf, witness),
+        |witness| shifted_edge_interior_points(decisions, leaf, witness),
     )?;
 
     Ok(points)
 }
 
 pub(super) fn strict_leaf_witness_points(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
     vertices: &[Point3],
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     strict_leaf_witness_points_with_seed_families(
+        decisions,
         leaf,
         vertices,
         |leaf, vertices, bounds, halfspaces, report| {
-            leaf_witness_seed_families(leaf, vertices, bounds, halfspaces, report)
+            leaf_witness_seed_families(decisions, leaf, vertices, bounds, halfspaces, report)
         },
     )
 }
 
 pub(super) fn strict_leaf_witness_points_with_seed_families(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
     vertices: &[Point3],
     mut seed_families_for: impl FnMut(
@@ -346,14 +371,16 @@ pub(super) fn strict_leaf_witness_points_with_seed_families(
     ) -> HypermeshResult<LeafWitnessSeedFamilies>,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     strict_leaf_witness_points_with_seed_families_and_stricter_replay(
+        decisions,
         leaf,
         vertices,
         &mut seed_families_for,
-        strict_leaf_cell_points,
+        |leaf, point| strict_leaf_cell_points(decisions, leaf, point),
     )
 }
 
 pub(super) fn strict_leaf_witness_points_with_seed_families_and_stricter_replay(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
     vertices: &[Point3],
     seed_families_for: &mut impl FnMut(
@@ -368,9 +395,9 @@ pub(super) fn strict_leaf_witness_points_with_seed_families_and_stricter_replay(
         &Point3,
     ) -> HypermeshResult<Vec<InteriorLeafPoint>>,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
-    let bounds = leaf_bounds(vertices)?;
+    let bounds = leaf_bounds(decisions, vertices)?;
     let halfspaces = leaf_halfspaces(leaf);
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(decisions, &halfspaces)?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -392,7 +419,7 @@ pub(super) fn strict_leaf_witness_points_with_seed_families_and_stricter_replay(
 
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |seed| {
         let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
-        build_strict_leaf_point(leaf, seed, &halfspaces, active_planes, false)
+        build_strict_leaf_point(decisions, leaf, seed, &halfspaces, active_planes, false)
     })?;
 
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
@@ -409,7 +436,14 @@ pub(super) fn strict_leaf_witness_points_with_seed_families_and_stricter_replay(
             extend_shifted_halfspace_seed_families_backtracking_unknown(
                 &mut shifted_witnesses,
                 [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
-                |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
+                |seed| {
+                    shifted_halfspace_cell_witnesses_from_seed(
+                        decisions,
+                        &bounds,
+                        &halfspaces,
+                        seed,
+                    )
+                },
             )?;
             Ok(shifted_witnesses)
         },
@@ -418,7 +452,7 @@ pub(super) fn strict_leaf_witness_points_with_seed_families_and_stricter_replay(
     extend_leaf_point_builds_backtracking_unknown(
         &mut points,
         shifted_witnesses.iter(),
-        |shifted| build_strict_leaf_point_from_shifted_witness(leaf, shifted),
+        |shifted| build_strict_leaf_point_from_shifted_witness(decisions, leaf, shifted),
     )?;
     let direct_witnesses = points
         .iter()
@@ -431,7 +465,7 @@ pub(super) fn strict_leaf_witness_points_with_seed_families_and_stricter_replay(
         |witness| stricter_points_for(leaf, witness),
     ) {
         Ok(()) => {}
-        Err(HypermeshError::UnknownClassification) => {
+        Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
             saw_unknown = true;
         }
         Err(err) => return Err(err),
@@ -445,6 +479,7 @@ pub(super) fn strict_leaf_witness_points_with_seed_families_and_stricter_replay(
 }
 
 fn leaf_witness_seed_families(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
     _vertices: &[Point3],
     bounds: &Aabb,
@@ -454,6 +489,7 @@ fn leaf_witness_seed_families(
     let mut saw_unknown = false;
     let (generic_seeds, shifted_vertices, shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
+            decisions,
             bounds,
             halfspaces,
             report,
@@ -465,7 +501,7 @@ fn leaf_witness_seed_families(
         &mut seeds,
         [collect_strict_halfspace_seed_family(
             Ok(shifted_geometry_seeds.clone()),
-            |candidate| point_strictly_inside_leaf_or_unknown(candidate, leaf),
+            |candidate| point_strictly_inside_leaf_or_unknown(decisions, candidate, leaf),
         )],
     )?;
 
@@ -488,17 +524,21 @@ fn leaf_witness_seed_families(
 
 #[cfg(test)]
 pub(super) fn strict_leaf_witness_seeds(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
     vertices: &[Point3],
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
 ) -> HypermeshResult<Vec<Point3>> {
-    leaf_witness_seed_families(leaf, vertices, bounds, halfspaces, report)
+    leaf_witness_seed_families(decisions, leaf, vertices, bounds, halfspaces, report)
         .map(|families| families.seeds)
 }
 
-pub(super) fn leaf_bounds(vertices: &[Point3]) -> HypermeshResult<Aabb> {
+pub(super) fn leaf_bounds(
+    decisions: &DecisionContext,
+    vertices: &[Point3],
+) -> HypermeshResult<Aabb> {
     let Some(first) = vertices.first() else {
         return Err(HypermeshError::UnknownClassification);
     };
@@ -507,10 +547,14 @@ pub(super) fn leaf_bounds(vertices: &[Point3]) -> HypermeshResult<Aabb> {
     let mut max = first.clone();
     for vertex in &vertices[1..] {
         for axis in 0..3 {
-            if compare_real(axis_ref(vertex, axis), axis_ref(&min, axis))?.is_lt() {
+            if compare_real_decision(decisions, axis_ref(vertex, axis), axis_ref(&min, axis))?
+                .is_lt()
+            {
                 *axis_mut(&mut min, axis) = axis_ref(vertex, axis).clone();
             }
-            if compare_real(axis_ref(vertex, axis), axis_ref(&max, axis))?.is_gt() {
+            if compare_real_decision(decisions, axis_ref(vertex, axis), axis_ref(&max, axis))?
+                .is_gt()
+            {
                 *axis_mut(&mut max, axis) = axis_ref(vertex, axis).clone();
             }
         }
@@ -531,10 +575,11 @@ pub(super) fn leaf_halfspaces(leaf: &ConvexPolygon) -> Vec<LimitPlane3> {
 
 #[cfg(test)]
 pub(crate) fn certified_leaf_test_point(
+    decisions: &DecisionContext,
     support: &Plane,
     edges: &[Plane],
 ) -> HypermeshResult<Option<HomogeneousPoint3>> {
-    let points = certified_leaf_interior_points(support, edges)?;
+    let points = certified_leaf_interior_points(decisions, support, edges)?;
     let Some(point) = points
         .iter()
         .find(|point| !point.planes.is_empty())
@@ -551,10 +596,11 @@ pub(crate) fn certified_leaf_test_point(
 }
 
 pub(crate) fn certified_leaf_test_points(
+    decisions: &DecisionContext,
     support: &Plane,
     edges: &[Plane],
 ) -> HypermeshResult<Vec<HomogeneousPoint3>> {
-    Ok(certified_leaf_interior_points(support, edges)?
+    Ok(certified_leaf_interior_points(decisions, support, edges)?
         .into_iter()
         .map(|point| {
             HomogeneousPoint3::new(point.point.x, point.point.y, point.point.z, Real::one())
@@ -563,6 +609,7 @@ pub(crate) fn certified_leaf_test_points(
 }
 
 pub(crate) fn certified_leaf_interior_points(
+    decisions: &DecisionContext,
     support: &Plane,
     edges: &[Plane],
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
@@ -576,10 +623,11 @@ pub(crate) fn certified_leaf_interior_points(
         known_vertices: None,
         known_identities: None,
     };
-    interior_leaf_points(&leaf)
+    interior_leaf_points(decisions, &leaf)
 }
 
 pub(super) fn shifted_edge_interior_points(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
     strict_interior: &Point3,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
@@ -590,8 +638,8 @@ pub(super) fn shifted_edge_interior_points(
         let second_edge = (first_edge + 1) % leaf.vertex_count();
         let first_margin = leaf.edges[first_edge].expression_at_point(strict_interior);
         let second_margin = leaf.edges[second_edge].expression_at_point(strict_interior);
-        if classify_real(&first_margin)? != Classification::Negative
-            || classify_real(&second_margin)? != Classification::Negative
+        if classify_real(decisions, &first_margin)? != Classification::Negative
+            || classify_real(decisions, &second_margin)? != Classification::Negative
         {
             continue;
         }
@@ -604,7 +652,7 @@ pub(super) fn shifted_edge_interior_points(
             .to_affine_point()
             .map_err(|_| HypermeshError::UnknownClassification)?;
 
-        if point_strictly_inside_leaf_or_unknown(&candidate, leaf)? {
+        if point_strictly_inside_leaf_or_unknown(decisions, &candidate, leaf)? {
             push_unique_interior_point(
                 &mut points,
                 InteriorLeafPoint {
@@ -687,7 +735,9 @@ pub(super) fn extend_interior_leaf_points_backtracking_unknown<'a, T: 'a>(
                     push_unique_interior_point(points, point);
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -708,7 +758,9 @@ pub(super) fn extend_leaf_point_builds_backtracking_unknown<'a, T: 'a>(
                 push_unique_interior_point(points, point);
             }
             Ok(None) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
@@ -718,11 +770,12 @@ pub(super) fn extend_leaf_point_builds_backtracking_unknown<'a, T: 'a>(
 }
 
 pub(super) fn strict_leaf_cell_points(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
     strict_interior: &Point3,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let vertices = leaf.vertices()?;
-    let bounds = leaf_bounds(&vertices)?;
+    let bounds = leaf_bounds(decisions, &vertices)?;
     let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
     let mut halfspaces = Vec::with_capacity(leaf.edges.len() + 2);
     halfspaces.push(limit_plane_from_plane(&leaf.support));
@@ -730,7 +783,7 @@ pub(super) fn strict_leaf_cell_points(
 
     for edge in leaf.edges.iter() {
         let margin = edge.expression_at_point(strict_interior);
-        if classify_real(&margin)? != Classification::Negative {
+        if classify_real(decisions, &margin)? != Classification::Negative {
             return Ok(Vec::new());
         }
         halfspaces.push(limit_plane_from_plane(&inward_shifted_edge_plane(
@@ -738,7 +791,7 @@ pub(super) fn strict_leaf_cell_points(
         )));
     }
 
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(decisions, &halfspaces)?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -749,6 +802,7 @@ pub(super) fn strict_leaf_cell_points(
     let mut points = Vec::new();
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
+            decisions,
             &bounds,
             &halfspaces,
             report.as_ref(),
@@ -759,7 +813,7 @@ pub(super) fn strict_leaf_cell_points(
         dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |witness| {
         let active_planes = active_planes_from_optional_report(report.as_ref(), witness);
-        build_strict_leaf_point(leaf, witness, &halfspaces, active_planes, false)
+        build_strict_leaf_point(decisions, leaf, witness, &halfspaces, active_planes, false)
     })?;
 
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
@@ -776,19 +830,28 @@ pub(super) fn strict_leaf_cell_points(
             extend_shifted_halfspace_seed_families_backtracking_unknown(
                 &mut shifted_witnesses,
                 [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
-                |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
+                |seed| {
+                    shifted_halfspace_cell_witnesses_from_seed(
+                        decisions,
+                        &bounds,
+                        &halfspaces,
+                        seed,
+                    )
+                },
             )?;
             Ok(shifted_witnesses)
         },
         &mut saw_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        match build_strict_leaf_point_from_shifted_witness(leaf, shifted) {
+        match build_strict_leaf_point_from_shifted_witness(decisions, leaf, shifted) {
             Ok(Some(point)) => {
                 push_unique_interior_point(&mut points, point);
             }
             Ok(None) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -800,6 +863,7 @@ pub(super) fn strict_leaf_cell_points(
 
 #[cfg(test)]
 pub(super) fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
     strict_interior: &Point3,
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
@@ -809,7 +873,7 @@ pub(super) fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
     mut build_shifted_witnesses: impl FnMut(&Point3) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>>,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let vertices = leaf.vertices()?;
-    let _bounds = leaf_bounds(&vertices)?;
+    let _bounds = leaf_bounds(decisions, &vertices)?;
     let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
     let mut halfspaces = Vec::with_capacity(leaf.edges.len() + 2);
     halfspaces.push(limit_plane_from_plane(&leaf.support));
@@ -817,7 +881,7 @@ pub(super) fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
 
     for edge in leaf.edges.iter() {
         let margin = edge.expression_at_point(strict_interior);
-        if classify_real(&margin)? != Classification::Negative {
+        if classify_real(decisions, &margin)? != Classification::Negative {
             return Ok(Vec::new());
         }
         halfspaces.push(limit_plane_from_plane(&inward_shifted_edge_plane(
@@ -832,7 +896,7 @@ pub(super) fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
         dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |witness| {
         let active_planes = active_planes_from_optional_report(report, witness);
-        build_strict_leaf_point(leaf, witness, &halfspaces, active_planes, false)
+        build_strict_leaf_point(decisions, leaf, witness, &halfspaces, active_planes, false)
     })?;
 
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
@@ -856,12 +920,14 @@ pub(super) fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
         &mut saw_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        match build_strict_leaf_point_from_shifted_witness(leaf, shifted) {
+        match build_strict_leaf_point_from_shifted_witness(decisions, leaf, shifted) {
             Ok(Some(point)) => {
                 push_unique_interior_point(&mut points, point);
             }
             Ok(None) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -872,13 +938,14 @@ pub(super) fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
 }
 
 pub(super) fn build_strict_leaf_point(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
     witness: &Point3,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
     inherited_uncertified_definition_fallback: bool,
 ) -> HypermeshResult<Option<InteriorLeafPoint>> {
-    match classify_point_in_polygon(witness, leaf)? {
+    match classify_point_in_polygon(decisions, witness, leaf)? {
         PolygonPointLocation::Outside => return Ok(None),
         PolygonPointLocation::Boundary => {
             return Err(HypermeshError::UnknownClassification);
@@ -888,15 +955,16 @@ pub(super) fn build_strict_leaf_point(
 
     let (planes, uncertified_definition_fallback) =
         match leaf_interior_definitions_from_active_halfspaces(
+            decisions,
             witness,
             &leaf.support,
             halfspaces,
             active_planes,
         ) {
             Ok(found) => (found.definitions, false),
-            Err(HypermeshError::UnknownClassification) => {
-                (vec![axis_plane_definition(witness)], true)
-            }
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => (vec![axis_plane_definition(witness)], true),
             Err(err) => return Err(err),
         };
     Ok(Some(InteriorLeafPoint {
@@ -908,10 +976,11 @@ pub(super) fn build_strict_leaf_point(
 }
 
 pub(super) fn build_strict_leaf_point_from_shifted_witness(
+    decisions: &DecisionContext,
     leaf: &ConvexPolygon,
     witness: &ShiftedHalfspaceWitness,
 ) -> HypermeshResult<Option<InteriorLeafPoint>> {
-    match classify_point_in_polygon(&witness.point, leaf)? {
+    match classify_point_in_polygon(decisions, &witness.point, leaf)? {
         PolygonPointLocation::Outside => return Ok(None),
         PolygonPointLocation::Boundary => {
             return Err(HypermeshError::UnknownClassification);
@@ -923,6 +992,7 @@ pub(super) fn build_strict_leaf_point_from_shifted_witness(
     let mut saw_unknown = false;
     for family in &witness.families {
         match leaf_interior_definitions_from_active_halfspaces(
+            decisions,
             &witness.point,
             &leaf.support,
             &family.halfspaces,
@@ -932,7 +1002,9 @@ pub(super) fn build_strict_leaf_point_from_shifted_witness(
                 saw_unknown |= found.saw_unknown;
                 extend_unique_definition_families(&mut planes, found.definitions);
             }
-            Err(HypermeshError::UnknownClassification) => {
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => {
                 saw_unknown = true;
             }
             Err(err) => return Err(err),
@@ -973,6 +1045,7 @@ pub(super) fn limit_plane_from_plane(plane: &Plane) -> LimitPlane3 {
 }
 
 pub(super) fn leaf_interior_definitions_from_active_halfspaces(
+    decisions: &DecisionContext,
     witness: &Point3,
     support: &Plane,
     halfspaces: &[LimitPlane3],
@@ -1000,7 +1073,13 @@ pub(super) fn leaf_interior_definitions_from_active_halfspaces(
         if plane == *support || plane == support.inverted() {
             continue;
         }
-        if !compare_real(&plane.expression_at_point(witness), &Real::zero())?.is_eq() {
+        if !compare_real_decision(
+            decisions,
+            &plane.expression_at_point(witness),
+            &Real::zero(),
+        )?
+        .is_eq()
+        {
             continue;
         }
         if !active.iter().any(|existing| existing == &plane) {
@@ -1085,6 +1164,7 @@ fn push_verified_leaf_definition(
 
 #[cfg(test)]
 pub(super) fn point_strictly_inside_leaf(
+    decisions: &DecisionContext,
     point: &Point3,
     leaf: &ConvexPolygon,
 ) -> HypermeshResult<bool> {
@@ -1094,14 +1174,15 @@ pub(super) fn point_strictly_inside_leaf(
         point.z.clone(),
         Real::one(),
     );
-    leaf.contains_point_strictly(&homogeneous)
+    leaf.contains_point_strictly_decision(decisions, &homogeneous)
 }
 
 pub(super) fn point_strictly_inside_leaf_or_unknown(
+    decisions: &DecisionContext,
     point: &Point3,
     leaf: &ConvexPolygon,
 ) -> HypermeshResult<bool> {
-    match classify_point_in_polygon(point, leaf)? {
+    match classify_point_in_polygon(decisions, point, leaf)? {
         PolygonPointLocation::Outside => Ok(false),
         PolygonPointLocation::Boundary => Err(HypermeshError::UnknownClassification),
         PolygonPointLocation::Interior => Ok(true),

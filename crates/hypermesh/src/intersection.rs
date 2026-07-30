@@ -4,12 +4,13 @@ use hyperlattice::{
     HomogeneousPoint3, Point3, intersect_homogeneous_line_plane, intersect_two_planes,
 };
 
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{
-    Classification, Plane, classify_point, classify_projective_point, classify_real, cross_arrays,
-    dot_point, sub_points,
-};
+use crate::geometry::{Classification, Plane, cross_arrays, dot_point, sub_points};
 use crate::polygon::ConvexPolygon;
+use crate::predicate::{
+    classify_point_decision, classify_projective_point_decision, classify_real,
+};
 use crate::segment_trace::certified_leaf_test_points;
 
 /// Intersection segment between two polygons.
@@ -82,19 +83,23 @@ impl PairwiseIntersection {
 
 /// Computes the pairwise intersection between two convex polygons.
 pub fn intersect_polygons(
+    context: &MeshContext,
     polygon: &ConvexPolygon,
     other: &ConvexPolygon,
     other_polygon_idx: usize,
-) -> HypermeshResult<PairwiseIntersection> {
+) -> HypermeshResult<MeshOutcome<PairwiseIntersection>> {
+    let decisions = DecisionContext::new(context);
     let polygon_vertices = polygon.vertices()?;
     let other_vertices = other.vertices()?;
-    intersect_polygons_with_vertices(
+    let intersection = intersect_polygons_with_vertices(
+        &decisions,
         polygon,
         &polygon_vertices,
         other,
         &other_vertices,
         other_polygon_idx,
-    )
+    )?;
+    Ok(decisions.finish(intersection))
 }
 
 /// Computes a pairwise intersection from affine vertices already materialized
@@ -102,6 +107,7 @@ pub fn intersect_polygons(
 /// so retaining these exact points at that boundary avoids repeatedly solving
 /// the same adjacent plane triples.
 pub(crate) fn intersect_polygons_with_vertices(
+    decisions: &DecisionContext,
     polygon: &ConvexPolygon,
     polygon_vertices: &[Point3],
     other: &ConvexPolygon,
@@ -112,14 +118,17 @@ pub(crate) fn intersect_polygons_with_vertices(
         return Ok(PairwiseIntersection::none());
     }
 
-    let supports_parallel = supports_are_parallel(&polygon.support, &other.support)?;
+    let supports_parallel = supports_are_parallel(decisions, &polygon.support, &other.support)?;
     if supports_parallel {
         crate::trace_dispatch!("intersect-polygons", "parallel-supports");
         let other_vertex = other_vertices
             .first()
             .ok_or(HypermeshError::UnknownClassification)?;
-        return if classify_point(other_vertex, &polygon.support)? == Classification::On {
+        return if classify_point_decision(decisions, other_vertex, &polygon.support)?
+            == Classification::On
+        {
             intersect_coplanar(
+                decisions,
                 polygon,
                 polygon_vertices,
                 other,
@@ -133,9 +142,9 @@ pub(crate) fn intersect_polygons_with_vertices(
 
     let mut points = Vec::new();
     crate::trace_dispatch!("intersect-polygons", "edge-crossings-forward");
-    collect_edge_plane_crossings(polygon, polygon_vertices, other, &mut points)?;
+    collect_edge_plane_crossings(decisions, polygon, polygon_vertices, other, &mut points)?;
     crate::trace_dispatch!("intersect-polygons", "edge-crossings-reverse");
-    collect_edge_plane_crossings(other, other_vertices, polygon, &mut points)?;
+    collect_edge_plane_crossings(decisions, other, other_vertices, polygon, &mut points)?;
     dedup_points(&mut points);
 
     match points.len() {
@@ -155,13 +164,14 @@ pub(crate) fn intersect_polygons_with_vertices(
 }
 
 fn intersect_coplanar(
+    decisions: &DecisionContext,
     polygon: &ConvexPolygon,
     polygon_vertices: &[Point3],
     other: &ConvexPolygon,
     other_vertices: &[Point3],
     other_polygon_idx: usize,
 ) -> HypermeshResult<PairwiseIntersection> {
-    if polygons_share_area(polygon, polygon_vertices, other, other_vertices)? {
+    if polygons_share_area(decisions, polygon, polygon_vertices, other, other_vertices)? {
         Ok(PairwiseIntersection {
             kind: PairwiseIntersectionType::Overlap,
             segment: None,
@@ -177,6 +187,7 @@ fn intersect_coplanar(
 }
 
 fn polygons_share_area(
+    decisions: &DecisionContext,
     polygon: &ConvexPolygon,
     polygon_vertices: &[Point3],
     other: &ConvexPolygon,
@@ -184,10 +195,10 @@ fn polygons_share_area(
 ) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
     for (candidate, container) in [(polygon, other), (other, polygon)] {
-        match polygon_has_certified_interior_witness_in_other(candidate, container) {
+        match polygon_has_certified_interior_witness_in_other(decisions, candidate, container) {
             Ok(true) => return Ok(true),
             Ok(false) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(HypermeshError::PredicateUndecided { .. }) => {
                 crate::trace_dispatch!("coplanar-overlap", "witness-unknown");
                 saw_unknown = true;
             }
@@ -196,10 +207,10 @@ fn polygons_share_area(
     }
 
     for point in polygon_vertices {
-        match affine_point_strictly_in_polygon(point, other) {
+        match affine_point_strictly_in_polygon(decisions, point, other) {
             Ok(true) => return Ok(true),
             Ok(false) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(HypermeshError::PredicateUndecided { .. }) => {
                 crate::trace_dispatch!("coplanar-overlap", "left-vertex-unknown");
                 saw_unknown = true;
             }
@@ -207,10 +218,10 @@ fn polygons_share_area(
         }
     }
     for point in other_vertices {
-        match affine_point_strictly_in_polygon(point, polygon) {
+        match affine_point_strictly_in_polygon(decisions, point, polygon) {
             Ok(true) => return Ok(true),
             Ok(false) => {}
-            Err(HypermeshError::UnknownClassification) => {
+            Err(HypermeshError::PredicateUndecided { .. }) => {
                 crate::trace_dispatch!("coplanar-overlap", "right-vertex-unknown");
                 saw_unknown = true;
             }
@@ -221,6 +232,7 @@ fn polygons_share_area(
     for edge in segment_edges(polygon_vertices) {
         for other_edge in segment_edges(other_vertices) {
             match segments_properly_cross(
+                decisions,
                 edge.0,
                 edge.1,
                 other_edge.0,
@@ -229,7 +241,7 @@ fn polygons_share_area(
             ) {
                 Ok(true) => return Ok(true),
                 Ok(false) => {}
-                Err(HypermeshError::UnknownClassification) => {
+                Err(HypermeshError::PredicateUndecided { .. }) => {
                     crate::trace_dispatch!("coplanar-overlap", "edge-crossing-unknown");
                     saw_unknown = true;
                 }
@@ -239,54 +251,91 @@ fn polygons_share_area(
     }
 
     if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
+        Err(HypermeshError::PredicateUndecided {
+            predicate: "coplanar polygon positive-area overlap",
+        })
     } else {
         Ok(false)
     }
 }
 
 fn polygon_has_certified_interior_witness_in_other(
+    decisions: &DecisionContext,
     polygon: &ConvexPolygon,
     other: &ConvexPolygon,
 ) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
-    for point in certified_leaf_test_points(&polygon.support, &polygon.edges)? {
-        match other.contains_point(&point) {
+    for point in certified_leaf_test_points(decisions, &polygon.support, &polygon.edges)? {
+        match other.contains_point_decision(decisions, &point) {
             Ok(true) => return Ok(true),
             Ok(false) => {}
-            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+            Err(HypermeshError::PredicateUndecided { .. }) => saw_unknown = true,
             Err(error) => return Err(error),
         }
     }
     if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
+        Err(HypermeshError::PredicateUndecided {
+            predicate: "coplanar polygon interior witness",
+        })
     } else {
         Ok(false)
     }
 }
 
 fn collect_edge_plane_crossings(
+    decisions: &DecisionContext,
     edge_polygon: &ConvexPolygon,
     vertices: &[Point3],
     plane_polygon: &ConvexPolygon,
     points: &mut Vec<Point3>,
 ) -> HypermeshResult<()> {
     if let [v0, v1, v2] = vertices {
-        let c0 = classify_point(v0, &plane_polygon.support)?;
-        let c1 = classify_point(v1, &plane_polygon.support)?;
-        let c2 = classify_point(v2, &plane_polygon.support)?;
-        collect_edge_plane_crossing(edge_polygon, 0, v0, v1, c0, c1, plane_polygon, points)?;
-        collect_edge_plane_crossing(edge_polygon, 1, v1, v2, c1, c2, plane_polygon, points)?;
-        collect_edge_plane_crossing(edge_polygon, 2, v2, v0, c2, c0, plane_polygon, points)?;
+        let c0 = classify_point_decision(decisions, v0, &plane_polygon.support)?;
+        let c1 = classify_point_decision(decisions, v1, &plane_polygon.support)?;
+        let c2 = classify_point_decision(decisions, v2, &plane_polygon.support)?;
+        collect_edge_plane_crossing(
+            decisions,
+            edge_polygon,
+            0,
+            v0,
+            v1,
+            c0,
+            c1,
+            plane_polygon,
+            points,
+        )?;
+        collect_edge_plane_crossing(
+            decisions,
+            edge_polygon,
+            1,
+            v1,
+            v2,
+            c1,
+            c2,
+            plane_polygon,
+            points,
+        )?;
+        collect_edge_plane_crossing(
+            decisions,
+            edge_polygon,
+            2,
+            v2,
+            v0,
+            c2,
+            c0,
+            plane_polygon,
+            points,
+        )?;
         return Ok(());
     }
 
     for index in 0..vertices.len() {
         let start = &vertices[index];
         let end = &vertices[(index + 1) % vertices.len()];
-        let start_class = classify_point(start, &plane_polygon.support)?;
-        let end_class = classify_point(end, &plane_polygon.support)?;
+        let start_class = classify_point_decision(decisions, start, &plane_polygon.support)?;
+        let end_class = classify_point_decision(decisions, end, &plane_polygon.support)?;
         collect_edge_plane_crossing(
+            decisions,
             edge_polygon,
             index,
             start,
@@ -302,6 +351,7 @@ fn collect_edge_plane_crossings(
 
 #[inline]
 fn collect_edge_plane_crossing(
+    decisions: &DecisionContext,
     edge_polygon: &ConvexPolygon,
     edge_index: usize,
     start: &Point3,
@@ -313,36 +363,40 @@ fn collect_edge_plane_crossing(
 ) -> HypermeshResult<()> {
     let candidate = match (start_class, end_class) {
         (Classification::On, _) => {
-            affine_point_in_polygon_on_support(start, plane_polygon)?.then(|| start.clone())
+            affine_point_in_polygon_on_support(decisions, start, plane_polygon)?
+                .then(|| start.clone())
         }
         (_, Classification::On) => {
-            affine_point_in_polygon_on_support(end, plane_polygon)?.then(|| end.clone())
+            affine_point_in_polygon_on_support(decisions, end, plane_polygon)?.then(|| end.clone())
         }
         (Classification::Negative, Classification::Positive)
         | (Classification::Positive, Classification::Negative) => {
             let point = intersect_segment_plane(start, end, &plane_polygon.support)?;
-            let contained = match affine_point_in_polygon_on_support(&point, plane_polygon) {
-                Ok(contained) => contained,
-                Err(HypermeshError::UnknownClassification) => {
-                    match projective_edge_plane_intersection_in_polygon(
-                        edge_polygon,
-                        edge_index,
-                        plane_polygon,
-                    ) {
-                        Ok(contained) => contained,
-                        Err(HypermeshError::UnknownClassification) => {
-                            segment_plane_intersection_in_polygon(
-                                start,
-                                end,
-                                start_class,
-                                plane_polygon,
-                            )?
+            let contained =
+                match affine_point_in_polygon_on_support(decisions, &point, plane_polygon) {
+                    Ok(contained) => contained,
+                    Err(HypermeshError::PredicateUndecided { .. }) => {
+                        match projective_edge_plane_intersection_in_polygon(
+                            decisions,
+                            edge_polygon,
+                            edge_index,
+                            plane_polygon,
+                        ) {
+                            Ok(contained) => contained,
+                            Err(HypermeshError::PredicateUndecided { .. }) => {
+                                segment_plane_intersection_in_polygon(
+                                    decisions,
+                                    start,
+                                    end,
+                                    start_class,
+                                    plane_polygon,
+                                )?
+                            }
+                            Err(error) => return Err(error),
                         }
-                        Err(error) => return Err(error),
                     }
-                }
-                Err(error) => return Err(error),
-            };
+                    Err(error) => return Err(error),
+                };
             contained.then_some(point)
         }
         _ => None,
@@ -355,6 +409,7 @@ fn collect_edge_plane_crossing(
 }
 
 fn projective_edge_plane_intersection_in_polygon(
+    decisions: &DecisionContext,
     edge_polygon: &ConvexPolygon,
     edge_index: usize,
     plane_polygon: &ConvexPolygon,
@@ -367,17 +422,20 @@ fn projective_edge_plane_intersection_in_polygon(
     let point = intersect_homogeneous_line_plane(&line, &plane_polygon.support);
     let mut saw_unknown = false;
     for edge in plane_polygon.edges.iter() {
-        match classify_projective_point(&point, edge) {
+        match classify_projective_point_decision(decisions, &point, edge) {
             Ok(Classification::Positive) => return Ok(false),
             Ok(Classification::Negative | Classification::On) => {}
-            Err(HypermeshError::UnknownClassification) => {
-                if homogeneous_point_certifiably_nonzero(&point)
-                    && crate::predicate::classify_real(&four_plane_determinant(
-                        &edge_polygon.support,
-                        edge_plane,
-                        &plane_polygon.support,
-                        edge,
-                    )) == Ok(Classification::On)
+            Err(HypermeshError::PredicateUndecided { .. }) => {
+                if homogeneous_point_certifiably_nonzero(decisions, &point)
+                    && crate::predicate::classify_real(
+                        decisions,
+                        &four_plane_determinant(
+                            &edge_polygon.support,
+                            edge_plane,
+                            &plane_polygon.support,
+                            edge,
+                        ),
+                    ) == Ok(Classification::On)
                 {
                     continue;
                 }
@@ -387,18 +445,23 @@ fn projective_edge_plane_intersection_in_polygon(
         }
     }
     if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
+        Err(HypermeshError::PredicateUndecided {
+            predicate: "projective edge/polygon containment",
+        })
     } else {
         Ok(true)
     }
 }
 
-fn homogeneous_point_certifiably_nonzero(point: &HomogeneousPoint3) -> bool {
+fn homogeneous_point_certifiably_nonzero(
+    decisions: &DecisionContext,
+    point: &HomogeneousPoint3,
+) -> bool {
     [&point.x, &point.y, &point.z, &point.w]
         .into_iter()
         .any(|coordinate| {
             matches!(
-                crate::predicate::classify_real(coordinate),
+                crate::predicate::classify_real(decisions, coordinate),
                 Ok(Classification::Negative | Classification::Positive)
             )
         })
@@ -461,6 +524,7 @@ pub(crate) fn four_plane_determinant(
 /// predicate as a two-term determinant preserves cancellations that can become
 /// opaque after all three affine coordinates are materialized.
 fn segment_plane_intersection_in_polygon(
+    decisions: &DecisionContext,
     start: &Point3,
     end: &Point3,
     start_class: Classification,
@@ -483,12 +547,12 @@ fn segment_plane_intersection_in_polygon(
             [true, false],
             [[&start_support, &end_edge], [&end_support, &start_edge]],
         );
-        let candidate_class = match classify_real(&numerator) {
+        let candidate_class = match classify_real(decisions, &numerator) {
             Ok(classification) if denominator_is_positive => classification,
             Ok(Classification::Negative) => Classification::Positive,
             Ok(Classification::Positive) => Classification::Negative,
             Ok(Classification::On) => Classification::On,
-            Err(HypermeshError::UnknownClassification) => {
+            Err(HypermeshError::PredicateUndecided { .. }) => {
                 saw_unknown = true;
                 continue;
             }
@@ -500,7 +564,9 @@ fn segment_plane_intersection_in_polygon(
     }
 
     if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
+        Err(HypermeshError::PredicateUndecided {
+            predicate: "segment-plane intersection containment",
+        })
     } else {
         Ok(true)
     }
@@ -520,6 +586,7 @@ fn intersect_segment_plane(start: &Point3, end: &Point3, plane: &Plane) -> Hyper
 }
 
 fn affine_point_in_polygon_on_support(
+    decisions: &DecisionContext,
     point: &Point3,
     polygon: &ConvexPolygon,
 ) -> HypermeshResult<bool> {
@@ -528,41 +595,46 @@ fn affine_point_in_polygon_on_support(
     }
     let mut saw_unknown = false;
     for edge in polygon.edges.iter() {
-        match classify_point(point, edge) {
+        match classify_point_decision(decisions, point, edge) {
             Ok(Classification::Positive) => return Ok(false),
             Ok(Classification::Negative | Classification::On) => {}
-            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+            Err(HypermeshError::PredicateUndecided { .. }) => saw_unknown = true,
             Err(error) => return Err(error),
         }
     }
     if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
+        Err(HypermeshError::PredicateUndecided {
+            predicate: "affine point/polygon containment",
+        })
     } else {
         Ok(true)
     }
 }
 
 fn affine_point_strictly_in_polygon(
+    decisions: &DecisionContext,
     point: &Point3,
     polygon: &ConvexPolygon,
 ) -> HypermeshResult<bool> {
     if polygon.has_retained_vertex(point) {
         return Ok(false);
     }
-    if classify_point(point, &polygon.support)? != Classification::On {
+    if classify_point_decision(decisions, point, &polygon.support)? != Classification::On {
         return Ok(false);
     }
     let mut saw_unknown = false;
     for edge in polygon.edges.iter() {
-        match classify_point(point, edge) {
+        match classify_point_decision(decisions, point, edge) {
             Ok(Classification::Negative) => {}
             Ok(Classification::On | Classification::Positive) => return Ok(false),
-            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+            Err(HypermeshError::PredicateUndecided { .. }) => saw_unknown = true,
             Err(error) => return Err(error),
         }
     }
     if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
+        Err(HypermeshError::PredicateUndecided {
+            predicate: "strict affine point/polygon containment",
+        })
     } else {
         Ok(true)
     }
@@ -576,6 +648,7 @@ fn segment_edges(vertices: &[Point3]) -> impl Iterator<Item = (&Point3, &Point3)
 }
 
 fn segments_properly_cross(
+    decisions: &DecisionContext,
     a0: &Point3,
     a1: &Point3,
     b0: &Point3,
@@ -585,10 +658,10 @@ fn segments_properly_cross(
     let a_line = segment_split_plane(a0, a1, support);
     let b_line = segment_split_plane(b0, b1, support);
 
-    let b0_side = classify_point(b0, &a_line)?;
-    let b1_side = classify_point(b1, &a_line)?;
-    let a0_side = classify_point(a0, &b_line)?;
-    let a1_side = classify_point(a1, &b_line)?;
+    let b0_side = classify_point_decision(decisions, b0, &a_line)?;
+    let b1_side = classify_point_decision(decisions, b1, &a_line)?;
+    let a0_side = classify_point_decision(decisions, a0, &b_line)?;
+    let a1_side = classify_point_decision(decisions, a1, &b_line)?;
 
     Ok(((b0_side.is_negative() && b1_side.is_positive())
         || (b0_side.is_positive() && b1_side.is_negative()))
@@ -608,7 +681,11 @@ fn segment_split_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
     Plane::new(normal, offset)
 }
 
-fn supports_are_parallel(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
+fn supports_are_parallel(
+    decisions: &DecisionContext,
+    left: &Plane,
+    right: &Plane,
+) -> HypermeshResult<bool> {
     let cross = Point3::new(
         hyperlattice::Real::signed_product_sum(
             [true, false],
@@ -634,15 +711,17 @@ fn supports_are_parallel(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
     );
     let mut saw_unknown = false;
     for component in [&cross.x, &cross.y, &cross.z] {
-        match classify_real(component) {
+        match classify_real(decisions, component) {
             Ok(Classification::On) => {}
             Ok(Classification::Negative | Classification::Positive) => return Ok(false),
-            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+            Err(HypermeshError::PredicateUndecided { .. }) => saw_unknown = true,
             Err(error) => return Err(error),
         }
     }
     if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
+        Err(HypermeshError::PredicateUndecided {
+            predicate: "polygon support-plane parallelism",
+        })
     } else {
         Ok(true)
     }

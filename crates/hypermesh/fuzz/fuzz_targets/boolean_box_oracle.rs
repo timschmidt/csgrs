@@ -3,11 +3,13 @@
 mod support;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, boolean_operation, boolean_mesh,
-    boolean_mesh_with_certified_convex_inputs,
+    BooleanOp, EmberConfig, boolean_mesh, boolean_mesh_with_certified_convex_inputs,
+    boolean_operation,
 };
 use libfuzzer_sys::fuzz_target;
-use support::{Bytes, box_mesh, operation, r, validate_result, validate_soup, volume_numerator};
+use support::{
+    Bytes, CONTEXT, box_mesh, operation, r, validate_result, validate_soup, value, volume_numerator,
+};
 
 fn oracle_volume(boxes: &[([i64; 3], [i64; 3])], operation: BooleanOp) -> i64 {
     let mut axes = [Vec::new(), Vec::new(), Vec::new()];
@@ -71,24 +73,30 @@ fuzz_target!(|data: [u8; 32]| {
 
     let soup = match api {
         0 => {
-            let result = boolean_operation(&refs, op, EmberConfig::default())
-                .unwrap_or_else(|error| panic!("integer-box Boolean failed: {error:?}"));
+            let result = value(boolean_operation(
+                &CONTEXT,
+                &refs,
+                op,
+                EmberConfig::default(),
+            ))
+            .unwrap_or_else(|error| panic!("integer-box Boolean failed: {error:?}"));
             validate_result(&result, op, refs.len())
         }
         1 => {
-            let soup = boolean_mesh(&refs, op, EmberConfig::default())
+            let soup = value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default()))
                 .unwrap_or_else(|error| panic!("integer-box immediate Boolean failed: {error:?}"));
             validate_soup(&soup);
             soup
         }
         _ => {
             let certified = vec![true; refs.len()];
-            let soup = boolean_mesh_with_certified_convex_inputs(
+            let soup = value(boolean_mesh_with_certified_convex_inputs(
+                &CONTEXT,
                 &refs,
                 op,
                 &certified,
                 EmberConfig::default(),
-            )
+            ))
             .unwrap_or_else(|error| {
                 panic!("certified integer-box immediate Boolean failed: {error:?}")
             });

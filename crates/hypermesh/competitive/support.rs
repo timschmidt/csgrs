@@ -4,8 +4,9 @@ mod yeahright;
 
 use boolmesh::prelude::{Manifold as BoolmeshManifold, OpType as BoolmeshOp, compute_boolean};
 use hypermesh::{
-    BooleanMesh, BooleanOp, BooleanResult, EmberConfig, Point3, Real, Triangle, TriangleMesh,
-    boolean_mesh_with_certified_convex_inputs, boolean_operation_with_certified_convex_inputs,
+    BooleanMesh, BooleanOp, BooleanResult, EmberConfig, MeshContext, Point3, PredicatePolicy, Real,
+    Triangle, TriangleMesh, boolean_mesh_with_certified_convex_inputs,
+    boolean_operation_with_certified_convex_inputs,
 };
 use manifold_rust::{
     manifold::Manifold as ManifoldRs,
@@ -16,6 +17,7 @@ use tri_mesh::Mesh as TriMeshHalfEdge;
 
 const METRIC_TOLERANCE: f64 = 1.0e-8;
 const KEY_SCALE: f64 = 1.0e9;
+pub const APPROXIMATE_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
 pub const LARGE_SUBDIVISIONS: usize = 16;
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
@@ -229,8 +231,9 @@ pub fn yeahright_boolean_case_with_subdivisions(subdivisions: usize) -> MeshPair
     assert!(subdivisions.is_power_of_two());
     assert!(subdivisions >= YEAHRIGHT_SUBDIVISIONS);
     let control = yeahright_control_mesh();
-    let hull = hypermesh::convex_hull(&to_hypermesh(&control).positions)
-        .expect("YeahRight control points span a three-dimensional hull");
+    let hull = hypermesh::convex_hull(&APPROXIMATE_CONTEXT, &to_hypermesh(&control).positions)
+        .expect("YeahRight control points span a three-dimensional hull")
+        .into_value();
     let base = RawMesh {
         positions: hull
             .positions
@@ -297,22 +300,26 @@ pub fn run_hypermesh(inputs: &[TriangleMesh; 2], operation: Operation) -> RawMes
 
 pub fn run_hypermesh_exact(inputs: &[TriangleMesh; 2], operation: Operation) -> BooleanMesh {
     boolean_mesh_with_certified_convex_inputs(
+        &APPROXIMATE_CONTEXT,
         &[inputs[0].as_ref(), inputs[1].as_ref()],
         operation.hypermesh(),
         &[true, true],
         EmberConfig::default(),
     )
     .unwrap_or_else(|error| panic!("hypermesh {} failed: {error}", operation.name()))
+    .into_value()
 }
 
 pub fn run_hypermesh_polygon(inputs: &[TriangleMesh; 2], operation: Operation) -> BooleanResult {
     boolean_operation_with_certified_convex_inputs(
+        &APPROXIMATE_CONTEXT,
         &[inputs[0].as_ref(), inputs[1].as_ref()],
         operation.hypermesh(),
         &[true, true],
         EmberConfig::default(),
     )
     .unwrap_or_else(|error| panic!("hypermesh polygon {} failed: {error}", operation.name()))
+    .into_value()
 }
 
 pub fn run_boolmesh(inputs: &[BoolmeshManifold; 2], operation: Operation) -> RawMesh {

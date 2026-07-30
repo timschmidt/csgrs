@@ -1,6 +1,6 @@
 //! Public boolean operation entry points.
 
-use std::borrow::{Borrow, Cow};
+use std::borrow::Borrow;
 use std::sync::Arc;
 
 use hyperlattice::{
@@ -9,22 +9,25 @@ use hyperlattice::{
 };
 use hyperreal::RationalLinearForm4Query;
 
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{
-    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_projective_point,
-};
+use crate::geometry::{Aabb, Classification, Plane, axis_mut, axis_ref, compare_real_decision};
 use crate::mesh::{
     Triangle, TriangleMesh, TriangleMeshRef, build_polygon_soup_with_certified_convex_inputs,
     build_polygon_soup_with_deferred_edges,
 };
 use crate::output::{
-    ARRANGEMENT_CLASSIFICATION, BooleanResult, ClassifiedPolygon, certify_output_polygon_closure,
+    ARRANGEMENT_CLASSIFICATION, BooleanResult, ClassifiedPolygon,
+    certify_output_polygon_closure_decision,
 };
 use crate::polygon::{
     ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
     InputTrianglePlanes, KnownEdgeIdentityCycle, edge_plane,
 };
-use crate::predicate::{ProjectivePoint3PredicateEvidence, RationalPlane4PredicateEvidence};
+use crate::predicate::{
+    ProjectivePoint3PredicateEvidence, RationalPlane4PredicateEvidence, classify_point_decision,
+    classify_projective_point_decision,
+};
 use crate::storage_hash::StorageHashMap;
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask};
 use crate::winding::{BooleanOp, WindingPair};
@@ -42,17 +45,25 @@ struct ConvexCandidate {
 }
 
 impl BooleanComputation {
-    fn into_result(self, operation: BooleanOp) -> HypermeshResult<BooleanResult> {
+    fn into_result(
+        self,
+        decisions: &DecisionContext,
+        operation: BooleanOp,
+    ) -> HypermeshResult<BooleanResult> {
         let has_certified_triangle_arrangement = self.boolean_mesh.is_some();
         let (result, finalization_preserved_polygon_count) =
-            self.into_selected_result(operation)?;
+            self.into_selected_result(decisions, operation)?;
         if !has_certified_triangle_arrangement || !finalization_preserved_polygon_count {
-            certify_output_polygon_closure(&result)?;
+            certify_output_polygon_closure_decision(decisions, &result)?;
         }
         Ok(result)
     }
 
-    fn into_selected_result(self, operation: BooleanOp) -> HypermeshResult<(BooleanResult, bool)> {
+    fn into_selected_result(
+        self,
+        decisions: &DecisionContext,
+        operation: BooleanOp,
+    ) -> HypermeshResult<(BooleanResult, bool)> {
         let mut selected = Vec::with_capacity(self.classified.len());
         for mut polygon in self.classified {
             let winding = polygon
@@ -66,7 +77,7 @@ impl BooleanComputation {
             if classification != 0 {
                 polygon.classification = classification;
                 if self.input_edges_deferred && polygon.polygon.edges.is_empty() {
-                    polygon.polygon = polygon.polygon.with_rebuilt_edge_planes()?;
+                    polygon.polygon = polygon.polygon.with_rebuilt_edge_planes(decisions)?;
                 }
                 selected.push(polygon);
             }
@@ -83,30 +94,33 @@ impl BooleanComputation {
 
     fn into_boolean_mesh(
         self,
+        decisions: &DecisionContext,
         operation: BooleanOp,
     ) -> HypermeshResult<crate::output::BooleanMesh> {
         if let Some(soup) = self.boolean_mesh {
             return Ok(soup);
         }
-        let (result, _) = self.into_selected_result(operation)?;
-        crate::output::triangulate_and_resolve_polygon_certified(&result)
+        let (result, _) = self.into_selected_result(decisions, operation)?;
+        crate::output::triangulate_and_resolve_polygon_certified(decisions, &result)
     }
 
     fn into_native_materialization(
         self,
+        decisions: &DecisionContext,
         operation: BooleanOp,
     ) -> HypermeshResult<(crate::output::BooleanMesh, Vec<ConvexPolygon>)> {
         if let Some(mesh) = self.boolean_mesh {
             let result = BooleanResult::from_classified(self.soup, self.classified);
             return Ok((mesh, result.into_output().polygons));
         }
-        let (result, _) = self.into_selected_result(operation)?;
-        let mesh = crate::output::triangulate_and_resolve_polygon_certified(&result)?;
+        let (result, _) = self.into_selected_result(decisions, operation)?;
+        let mesh = crate::output::triangulate_and_resolve_polygon_certified(decisions, &result)?;
         Ok((mesh, result.into_output().polygons))
     }
 }
 
 fn select_triangle_arrangement(
+    decisions: &DecisionContext,
     arrangement: &crate::output::ClassifiedTriangleArrangement,
     op: BooleanOp,
 ) -> HypermeshResult<crate::output::BooleanMesh> {
@@ -143,14 +157,15 @@ fn select_triangle_arrangement(
         triangles,
         sources,
     };
-    certify_boolean_mesh_closure(soup)
+    certify_boolean_mesh_closure(decisions, soup)
 }
 
 fn certify_boolean_mesh_closure(
+    decisions: &DecisionContext,
     soup: crate::output::BooleanMesh,
 ) -> HypermeshResult<crate::output::BooleanMesh> {
-    let soup = crate::output::resolve_tjunctions(&soup)?;
-    if !soup.has_unique_nondegenerate_triangles() {
+    let soup = crate::output::resolve_tjunctions(decisions, &soup)?;
+    if !soup.has_unique_nondegenerate_triangles_decision(decisions)? {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
     let closure = crate::output::boolean_mesh_closure_evidence(&soup);
@@ -187,16 +202,20 @@ impl Default for EmberConfig {
 
 /// Performs a boolean operation on borrowed mesh views.
 pub fn boolean_operation(
+    context: &MeshContext,
     meshes: &[TriangleMeshRef<'_>],
     operation: BooleanOp,
     config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
+) -> HypermeshResult<MeshOutcome<BooleanResult>> {
+    let decisions = DecisionContext::new(context);
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(meshes, operation, None, None, None, config, true)?;
+    let computation = compute_boolean(
+        &decisions, meshes, operation, None, None, None, config, true,
+    )?;
     crate::trace_dispatch!("boolean-operation", "certify-output-closure");
-    let result = computation.into_result(operation)?;
+    let result = computation.into_result(&decisions, operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
-    Ok(result)
+    Ok(decisions.finish(result))
 }
 
 /// Performs a Boolean operation using exact convex-input facts supplied by
@@ -206,13 +225,16 @@ pub fn boolean_operation(
 /// non-self-intersecting, outward-oriented convex shell. Cross-input
 /// intersections and output closure remain exactly certified.
 pub fn boolean_operation_with_certified_convex_inputs(
+    context: &MeshContext,
     meshes: &[TriangleMeshRef<'_>],
     operation: BooleanOp,
     certified_convex_inputs: &[bool],
     config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
+) -> HypermeshResult<MeshOutcome<BooleanResult>> {
+    let decisions = DecisionContext::new(context);
     crate::trace_dispatch!("boolean-operation", "start");
     let computation = compute_boolean(
+        &decisions,
         meshes,
         operation,
         Some(certified_convex_inputs),
@@ -222,9 +244,9 @@ pub fn boolean_operation_with_certified_convex_inputs(
         true,
     )?;
     crate::trace_dispatch!("boolean-operation", "certify-output-closure");
-    let result = computation.into_result(operation)?;
+    let result = computation.into_result(&decisions, operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
-    Ok(result)
+    Ok(decisions.finish(result))
 }
 
 /// Performs a Boolean operation and immediately returns a closure-certified
@@ -233,47 +255,58 @@ pub fn boolean_operation_with_certified_convex_inputs(
 /// This avoids materializing an intermediate polygon result when the caller
 /// needs indexed triangles.
 pub fn boolean_mesh(
+    context: &MeshContext,
     meshes: &[TriangleMeshRef<'_>],
     operation: BooleanOp,
     config: EmberConfig,
-) -> HypermeshResult<crate::output::BooleanMesh> {
+) -> HypermeshResult<MeshOutcome<crate::output::BooleanMesh>> {
+    let decisions = DecisionContext::new(context);
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(meshes, operation, None, None, None, config, false)?;
+    let computation = compute_boolean(
+        &decisions, meshes, operation, None, None, None, config, false,
+    )?;
     crate::trace_dispatch!("boolean-operation", "triangulate-output");
-    let soup = computation.into_boolean_mesh(operation)?;
+    let soup = computation.into_boolean_mesh(&decisions, operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
-    Ok(soup)
+    Ok(decisions.finish(soup))
 }
 
 /// Performs a Boolean directly on native meshes while consuming their retained
 /// convexity facts.
 pub fn boolean_native_meshes(
+    context: &MeshContext,
     meshes: &[&TriangleMesh],
     operation: BooleanOp,
     config: EmberConfig,
-) -> HypermeshResult<crate::output::BooleanMesh> {
-    compute_native_boolean(meshes, operation, config)?.into_boolean_mesh(operation)
+) -> HypermeshResult<MeshOutcome<crate::output::BooleanMesh>> {
+    let decisions = DecisionContext::new(context);
+    let mesh = compute_native_boolean(&decisions, meshes, operation, config)?
+        .into_boolean_mesh(&decisions, operation)?;
+    Ok(decisions.finish(mesh))
 }
 
 fn compute_native_boolean(
+    decisions: &DecisionContext,
     meshes: &[&TriangleMesh],
     operation: BooleanOp,
     config: EmberConfig,
 ) -> HypermeshResult<BooleanComputation> {
-    match compute_native_boolean_with_polygon_reuse(meshes, operation, config, true) {
+    match compute_native_boolean_with_polygon_reuse(decisions, meshes, operation, config, true) {
         Ok(computation) => Ok(computation),
-        Err(_)
+        Err(error)
             if meshes
                 .iter()
-                .any(|mesh| mesh.retained_input_polygons().is_some()) =>
+                .any(|mesh| mesh.retained_input_polygons().is_some())
+                && is_retryable_boolean_path_error(&error) =>
         {
-            compute_native_boolean_with_polygon_reuse(meshes, operation, config, false)
+            compute_native_boolean_with_polygon_reuse(decisions, meshes, operation, config, false)
         }
         Err(error) => Err(error),
     }
 }
 
 fn compute_native_boolean_with_polygon_reuse(
+    decisions: &DecisionContext,
     meshes: &[&TriangleMesh],
     operation: BooleanOp,
     config: EmberConfig,
@@ -282,17 +315,18 @@ fn compute_native_boolean_with_polygon_reuse(
     let views = meshes.iter().map(|mesh| mesh.as_ref()).collect::<Vec<_>>();
     let convex = meshes
         .iter()
-        .map(|mesh| mesh.has_certified_convex_fact())
+        .map(|mesh| mesh.has_certified_convex_fact(decisions))
         .collect::<Vec<_>>();
     let planes = meshes
         .iter()
-        .any(|mesh| mesh.retained_input_planes().is_some())
+        .any(|mesh| mesh.has_retained_input_plane_sources())
         .then(|| {
             meshes
                 .iter()
-                .map(|mesh| input_triangle_planes(mesh))
-                .collect::<Vec<_>>()
-        });
+                .map(|mesh| input_triangle_planes(decisions, mesh))
+                .collect::<HypermeshResult<Vec<_>>>()
+        })
+        .transpose()?;
     let plane_views = planes.as_ref().map(|planes| {
         planes
             .iter()
@@ -308,6 +342,7 @@ fn compute_native_boolean_with_polygon_reuse(
         })
         .filter(|polygons| polygons.iter().any(Option::is_some));
     compute_boolean(
+        decisions,
         &views,
         operation,
         Some(&convex),
@@ -321,18 +356,27 @@ fn compute_native_boolean_with_polygon_reuse(
 /// Performs one exact regularized Boolean and returns reusable native geometry.
 ///
 /// This carrier-level entry point owns exact algebraic fast paths for empty,
-/// identical, disjoint, and axis-aligned-box inputs, along with the retained
-/// immutable-operand result cache. Inputs outside those certified cases use
+/// identical, disjoint, and axis-aligned-box inputs. Inputs outside those certified cases use
 /// the same general EMBER path as [`boolean_native_meshes`].
 pub fn boolean_triangle_meshes(
+    context: &MeshContext,
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    operation: BooleanOp,
+    config: EmberConfig,
+) -> HypermeshResult<MeshOutcome<TriangleMesh>> {
+    let decisions = DecisionContext::new(context);
+    let result = boolean_triangle_meshes_decision(&decisions, left, right, operation, config)?;
+    Ok(decisions.finish(result))
+}
+
+fn boolean_triangle_meshes_decision(
+    decisions: &DecisionContext,
     left: &TriangleMesh,
     right: &TriangleMesh,
     operation: BooleanOp,
     config: EmberConfig,
 ) -> HypermeshResult<TriangleMesh> {
-    if let Some(result) = left.retained_boolean_result(right, operation) {
-        return Ok(result);
-    }
     if left.triangles.is_empty() || right.triangles.is_empty() {
         return Ok(match operation {
             BooleanOp::Union | BooleanOp::SymmetricDifference => {
@@ -354,18 +398,19 @@ pub fn boolean_triangle_meshes(
             BooleanOp::Difference | BooleanOp::SymmetricDifference => empty_triangle_mesh(),
         });
     }
-    if let (Some(left_bounds), Some(right_bounds)) = (left.exact_bounds(), right.exact_bounds())
-        && matches!(
-            hyperlimit::ordered_aabb3s_intersect(
-                &left_bounds.mins,
-                &left_bounds.maxs,
-                &right_bounds.mins,
-                &right_bounds.maxs,
-            )
-            .value(),
-            Some(false)
-        )
-    {
+    if let (Some(left_bounds), Some(right_bounds)) = (
+        optional_predicate_fact(left.exact_bounds_decision(decisions))?,
+        optional_predicate_fact(right.exact_bounds_decision(decisions))?,
+    ) && matches!(
+        decisions.probe(hyperlimit::ordered_aabb3s_intersect(
+            &left_bounds.mins,
+            &left_bounds.maxs,
+            &right_bounds.mins,
+            &right_bounds.maxs,
+            decisions.policy(),
+        )),
+        Some(false)
+    ) {
         return Ok(match operation {
             BooleanOp::Union | BooleanOp::SymmetricDifference => {
                 merge_triangle_meshes(&[left, right])
@@ -375,16 +420,20 @@ pub fn boolean_triangle_meshes(
         });
     }
     if let (Some(left_box), Some(right_box)) = (
-        left.axis_aligned_box_bounds(),
-        right.axis_aligned_box_bounds(),
+        optional_predicate_fact(left.axis_aligned_box_bounds_decision(decisions))?,
+        optional_predicate_fact(right.axis_aligned_box_bounds_decision(decisions))?,
     ) {
-        if aabb_contains(left_box, right_box) {
+        if optional_predicate_decision(aabb_contains(decisions, &left_box, &right_box))?
+            == Some(true)
+        {
             match operation {
                 BooleanOp::Union => return Ok(left.clone()),
                 BooleanOp::Intersection => return Ok(right.clone()),
                 BooleanOp::Difference | BooleanOp::SymmetricDifference => {}
             }
-        } else if aabb_contains(right_box, left_box) {
+        } else if optional_predicate_decision(aabb_contains(decisions, &right_box, &left_box))?
+            == Some(true)
+        {
             match operation {
                 BooleanOp::Union => return Ok(right.clone()),
                 BooleanOp::Intersection => return Ok(left.clone()),
@@ -393,54 +442,98 @@ pub fn boolean_triangle_meshes(
             }
         }
         if operation == BooleanOp::Union
-            && let Some(bounds) = adjacent_box_union(left_box, right_box)
+            && let Some(bounds) =
+                optional_predicate_fact(adjacent_box_union(decisions, &left_box, &right_box))?
         {
-            let result = box_from_bounds(&bounds);
-            left.retain_boolean_result(right, operation, &result);
-            return Ok(result);
+            return Ok(box_from_bounds(&bounds));
         }
         if operation == BooleanOp::Intersection
-            && let Some(bounds) = box_intersection(left_box, right_box)
+            && let Some(bounds) =
+                optional_predicate_fact(box_intersection(decisions, &left_box, &right_box))?
         {
-            let result = box_from_bounds(&bounds);
-            left.retain_boolean_result(right, operation, &result);
-            return Ok(result);
+            return Ok(box_from_bounds(&bounds));
         }
     }
-    let computation = match compute_native_boolean(&[left, right], operation, config) {
+    let computation = match compute_native_boolean(decisions, &[left, right], operation, config) {
         Ok(computation) => computation,
-        Err(_) => {
+        Err(error) if is_retryable_boolean_path_error(&error) => {
             // Retained construction identities are an optimization. If they
             // cannot certify a sign, retry from the exact native triangles
             // before reporting the Boolean itself as indeterminate.
-            let mesh = boolean_mesh(&[left.as_ref(), right.as_ref()], operation, config)?;
-            let result = mesh.into_triangle_mesh();
-            left.retain_boolean_result(right, operation, &result);
-            return Ok(result);
+            let computation = compute_boolean(
+                decisions,
+                &[left.as_ref(), right.as_ref()],
+                operation,
+                None,
+                None,
+                None,
+                config,
+                false,
+            )?;
+            return Ok(computation
+                .into_boolean_mesh(decisions, operation)?
+                .into_triangle_mesh());
         }
+        Err(error) => return Err(error),
     };
-    let (mesh, provenance) = computation.into_native_materialization(operation)?;
+    let (mesh, provenance) = computation.into_native_materialization(decisions, operation)?;
     materialize_boolean_mesh(mesh, provenance)
-        .inspect(|result| left.retain_boolean_result(right, operation, result))
 }
 
-fn input_triangle_planes(mesh: &TriangleMesh) -> Cow<'_, [InputTrianglePlanes]> {
-    if let Some(planes) = mesh.retained_input_planes() {
-        return Cow::Borrowed(planes);
+fn optional_predicate_fact<T>(result: HypermeshResult<Option<T>>) -> HypermeshResult<Option<T>> {
+    Ok(optional_predicate_decision(result)?.flatten())
+}
+
+fn optional_predicate_decision<T>(result: HypermeshResult<T>) -> HypermeshResult<Option<T>> {
+    match result {
+        Ok(value) => Ok(Some(value)),
+        Err(crate::error::HypermeshError::PredicateUndecided { .. }) => Ok(None),
+        Err(error) => Err(error),
     }
-    Cow::Owned(
-        mesh.triangles
-            .iter()
-            .map(|triangle| {
-                let [a, b, c] = triangle.indices();
-                InputTrianglePlanes::from_points(
-                    &mesh.positions[a],
-                    &mesh.positions[b],
-                    &mesh.positions[c],
-                )
-            })
-            .collect(),
+}
+
+fn is_retryable_boolean_path_error(error: &HypermeshError) -> bool {
+    matches!(
+        error,
+        HypermeshError::PredicateUndecided { .. }
+            | HypermeshError::UnknownClassification
+            | HypermeshError::ReferencePropagationFailed
+            | HypermeshError::SubdivisionDepthLimit { .. }
+            | HypermeshError::OpenOutput { .. }
+            | HypermeshError::OutputResolutionLimit { .. }
+            | HypermeshError::PointAtInfinity
     )
+}
+
+fn retry_boolean_path<T>(
+    result: HypermeshResult<T>,
+    fallback: impl FnOnce() -> HypermeshResult<T>,
+) -> HypermeshResult<T> {
+    match result {
+        Err(error) if is_retryable_boolean_path_error(&error) => fallback(),
+        result => result,
+    }
+}
+
+fn input_triangle_planes(
+    decisions: &DecisionContext,
+    mesh: &TriangleMesh,
+) -> HypermeshResult<Vec<InputTrianglePlanes>> {
+    if let Some(planes) = mesh.retained_input_planes(decisions)? {
+        return Ok(planes);
+    }
+    mesh.triangles
+        .iter()
+        .map(|triangle| {
+            let [a, b, c] = triangle.indices();
+            InputTrianglePlanes::from_points_decision(
+                decisions,
+                &mesh.positions[a],
+                &mesh.positions[b],
+                &mesh.positions[c],
+            )
+        })
+        .collect()
 }
 
 fn materialize_boolean_mesh(
@@ -475,19 +568,36 @@ fn merge_triangle_meshes(meshes: &[&TriangleMesh]) -> TriangleMesh {
     TriangleMesh::new(positions, triangles)
 }
 
-fn aabb_contains(outer: &hyperlattice::Aabb, inner: &hyperlattice::Aabb) -> bool {
-    outer.mins.x <= inner.mins.x
-        && outer.mins.y <= inner.mins.y
-        && outer.mins.z <= inner.mins.z
-        && outer.maxs.x >= inner.maxs.x
-        && outer.maxs.y >= inner.maxs.y
-        && outer.maxs.z >= inner.maxs.z
+fn aabb_contains(
+    decisions: &DecisionContext,
+    outer: &hyperlattice::Aabb,
+    inner: &hyperlattice::Aabb,
+) -> HypermeshResult<bool> {
+    for axis in 0..3 {
+        if compare_real_decision(
+            decisions,
+            axis_ref(&outer.mins, axis),
+            axis_ref(&inner.mins, axis),
+        )?
+        .is_gt()
+            || compare_real_decision(
+                decisions,
+                axis_ref(&outer.maxs, axis),
+                axis_ref(&inner.maxs, axis),
+            )?
+            .is_lt()
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn adjacent_box_union(
+    decisions: &DecisionContext,
     left: &hyperlattice::Aabb,
     right: &hyperlattice::Aabb,
-) -> Option<hyperlattice::Aabb> {
+) -> HypermeshResult<Option<hyperlattice::Aabb>> {
     const fn coordinate(point: &Point3, axis: usize) -> &Real {
         match axis {
             0 => &point.x,
@@ -505,43 +615,104 @@ fn adjacent_box_union(
     }
 
     for axis in 0..3 {
-        let identical_other_axes = (0..3).filter(|other| *other != axis).all(|other| {
-            coordinate(&left.mins, other) == coordinate(&right.mins, other)
-                && coordinate(&left.maxs, other) == coordinate(&right.maxs, other)
-        });
+        let mut identical_other_axes = true;
+        for other in (0..3).filter(|other| *other != axis) {
+            if !compare_real_decision(
+                decisions,
+                coordinate(&left.mins, other),
+                coordinate(&right.mins, other),
+            )?
+            .is_eq()
+                || !compare_real_decision(
+                    decisions,
+                    coordinate(&left.maxs, other),
+                    coordinate(&right.maxs, other),
+                )?
+                .is_eq()
+            {
+                identical_other_axes = false;
+                break;
+            }
+        }
         if identical_other_axes
-            && coordinate(&left.mins, axis) <= coordinate(&right.maxs, axis)
-            && coordinate(&right.mins, axis) <= coordinate(&left.maxs, axis)
+            && compare_real_decision(
+                decisions,
+                coordinate(&left.mins, axis),
+                coordinate(&right.maxs, axis),
+            )?
+            .is_le()
+            && compare_real_decision(
+                decisions,
+                coordinate(&right.mins, axis),
+                coordinate(&left.maxs, axis),
+            )?
+            .is_le()
         {
             let mut bounds = left.clone();
-            *coordinate_mut(&mut bounds.mins, axis) = coordinate(&left.mins, axis)
-                .min(coordinate(&right.mins, axis))
-                .clone();
-            *coordinate_mut(&mut bounds.maxs, axis) = coordinate(&left.maxs, axis)
-                .max(coordinate(&right.maxs, axis))
-                .clone();
-            return Some(bounds);
+            *coordinate_mut(&mut bounds.mins, axis) = if compare_real_decision(
+                decisions,
+                coordinate(&left.mins, axis),
+                coordinate(&right.mins, axis),
+            )?
+            .is_le()
+            {
+                coordinate(&left.mins, axis).clone()
+            } else {
+                coordinate(&right.mins, axis).clone()
+            };
+            *coordinate_mut(&mut bounds.maxs, axis) = if compare_real_decision(
+                decisions,
+                coordinate(&left.maxs, axis),
+                coordinate(&right.maxs, axis),
+            )?
+            .is_ge()
+            {
+                coordinate(&left.maxs, axis).clone()
+            } else {
+                coordinate(&right.maxs, axis).clone()
+            };
+            return Ok(Some(bounds));
         }
     }
-    None
+    Ok(None)
 }
 
 fn box_intersection(
+    decisions: &DecisionContext,
     left: &hyperlattice::Aabb,
     right: &hyperlattice::Aabb,
-) -> Option<hyperlattice::Aabb> {
-    let mins = Point3::new(
-        left.mins.x.max(&right.mins.x).clone(),
-        left.mins.y.max(&right.mins.y).clone(),
-        left.mins.z.max(&right.mins.z).clone(),
-    );
-    let maxs = Point3::new(
-        left.maxs.x.min(&right.maxs.x).clone(),
-        left.maxs.y.min(&right.maxs.y).clone(),
-        left.maxs.z.min(&right.maxs.z).clone(),
-    );
-    (mins.x < maxs.x && mins.y < maxs.y && mins.z < maxs.z)
-        .then(|| hyperlattice::Aabb::new(mins, maxs))
+) -> HypermeshResult<Option<hyperlattice::Aabb>> {
+    let mut mins = Point3::origin();
+    let mut maxs = Point3::origin();
+    for axis in 0..3 {
+        *axis_mut(&mut mins, axis) = if compare_real_decision(
+            decisions,
+            axis_ref(&left.mins, axis),
+            axis_ref(&right.mins, axis),
+        )?
+        .is_ge()
+        {
+            axis_ref(&left.mins, axis).clone()
+        } else {
+            axis_ref(&right.mins, axis).clone()
+        };
+        *axis_mut(&mut maxs, axis) = if compare_real_decision(
+            decisions,
+            axis_ref(&left.maxs, axis),
+            axis_ref(&right.maxs, axis),
+        )?
+        .is_le()
+        {
+            axis_ref(&left.maxs, axis).clone()
+        } else {
+            axis_ref(&right.maxs, axis).clone()
+        };
+        if !compare_real_decision(decisions, axis_ref(&mins, axis), axis_ref(&maxs, axis))?.is_lt()
+        {
+            return Ok(None);
+        }
+    }
+    Ok(Some(hyperlattice::Aabb::new(mins, maxs)))
 }
 
 fn box_from_bounds(bounds: &hyperlattice::Aabb) -> TriangleMesh {
@@ -589,13 +760,16 @@ fn box_from_bounds(bounds: &hyperlattice::Aabb) -> TriangleMesh {
 /// This is the direct triangle-output counterpart of
 /// [`boolean_operation_with_certified_convex_inputs`].
 pub fn boolean_mesh_with_certified_convex_inputs(
+    context: &MeshContext,
     meshes: &[TriangleMeshRef<'_>],
     operation: BooleanOp,
     certified_convex_inputs: &[bool],
     config: EmberConfig,
-) -> HypermeshResult<crate::output::BooleanMesh> {
+) -> HypermeshResult<MeshOutcome<crate::output::BooleanMesh>> {
+    let decisions = DecisionContext::new(context);
     crate::trace_dispatch!("boolean-operation", "start");
     let computation = compute_boolean(
+        &decisions,
         meshes,
         operation,
         Some(certified_convex_inputs),
@@ -605,9 +779,9 @@ pub fn boolean_mesh_with_certified_convex_inputs(
         false,
     )?;
     crate::trace_dispatch!("boolean-operation", "triangulate-output");
-    let soup = computation.into_boolean_mesh(operation)?;
+    let soup = computation.into_boolean_mesh(&decisions, operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
-    Ok(soup)
+    Ok(decisions.finish(soup))
 }
 
 /// Performs a Boolean operation with exact convex-input facts and exact
@@ -618,14 +792,17 @@ pub fn boolean_mesh_with_certified_convex_inputs(
 /// reconstructing the same objects from transformed vertex coordinates,
 /// preserving affine-transform identities at the geometric-object boundary.
 pub fn boolean_mesh_with_certified_convex_inputs_and_planes(
+    context: &MeshContext,
     meshes: &[TriangleMeshRef<'_>],
     operation: BooleanOp,
     certified_convex_inputs: &[bool],
     input_planes: &[&[InputTrianglePlanes]],
     config: EmberConfig,
-) -> HypermeshResult<crate::output::BooleanMesh> {
+) -> HypermeshResult<MeshOutcome<crate::output::BooleanMesh>> {
+    let decisions = DecisionContext::new(context);
     crate::trace_dispatch!("boolean-operation", "start");
     let computation = compute_boolean(
+        &decisions,
         meshes,
         operation,
         Some(certified_convex_inputs),
@@ -635,12 +812,13 @@ pub fn boolean_mesh_with_certified_convex_inputs_and_planes(
         false,
     )?;
     crate::trace_dispatch!("boolean-operation", "triangulate-output");
-    let soup = computation.into_boolean_mesh(operation)?;
+    let soup = computation.into_boolean_mesh(&decisions, operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
-    Ok(soup)
+    Ok(decisions.finish(soup))
 }
 
 fn compute_boolean(
+    decisions: &DecisionContext,
     meshes: &[TriangleMeshRef<'_>],
     operation: BooleanOp,
     certified_convex_inputs: Option<&[bool]>,
@@ -655,32 +833,46 @@ fn compute_boolean(
     let certified_convex_inputs = certified_convex_inputs.unwrap_or(&[]);
     let use_two_convex_candidate = meshes.len() == 2 && certified_convex_inputs == [true, true];
     let mut soup = if use_two_convex_candidate {
-        build_polygon_soup_with_deferred_edges(meshes, certified_convex_inputs, input_planes)?
+        build_polygon_soup_with_deferred_edges(
+            decisions,
+            meshes,
+            certified_convex_inputs,
+            input_planes,
+        )?
     } else if certified_convex_inputs.is_empty() {
-        crate::mesh::polygon_soup(meshes)?
+        crate::mesh::build_polygon_soup_with_edge_mode(
+            decisions,
+            meshes,
+            None,
+            input_planes,
+            false,
+        )?
     } else {
         build_polygon_soup_with_certified_convex_inputs(
+            decisions,
             meshes,
             certified_convex_inputs,
             input_planes,
         )?
     };
     if let Some(retained_polygons) = retained_polygons {
-        replace_retained_input_polygons(&mut soup, retained_polygons)?;
+        replace_retained_input_polygons(decisions, &mut soup, retained_polygons)?;
     }
     let convex_candidate = if use_two_convex_candidate {
         match compute_two_convex_inputs_projectively(
+            decisions,
             &soup.polygons,
             operation,
             retain_winding || operation == BooleanOp::SymmetricDifference,
         ) {
             Ok(candidate) => candidate,
-            Err(error) => {
+            Err(error) if is_retryable_boolean_path_error(&error) => {
                 if cfg!(debug_assertions) {
                     eprintln!("[DEBUG] projective convex candidate failed: {error}");
                 }
                 None
             }
+            Err(error) => return Err(error),
         }
     } else {
         None
@@ -691,12 +883,13 @@ fn compute_boolean(
     } else {
         if use_two_convex_candidate {
             soup = build_polygon_soup_with_certified_convex_inputs(
+                decisions,
                 meshes,
                 certified_convex_inputs,
                 input_planes,
             )?;
             if let Some(retained_polygons) = retained_polygons {
-                replace_retained_input_polygons(&mut soup, retained_polygons)?;
+                replace_retained_input_polygons(decisions, &mut soup, retained_polygons)?;
             }
         }
         let process_bounds = expanded_bounds(&soup.bounds);
@@ -704,6 +897,7 @@ fn compute_boolean(
         let ref_wnv = vec![0; soup.num_meshes];
         (
             crate::subdivision::subdivide_boolean_with_certified_convex_inputs(
+                decisions,
                 SubdivisionTask::new(
                     std::mem::take(&mut soup.polygons),
                     process_bounds,
@@ -729,6 +923,7 @@ fn compute_boolean(
 }
 
 fn replace_retained_input_polygons(
+    decisions: &DecisionContext,
     soup: &mut crate::mesh::PolygonSoup,
     retained: &[Option<&[ConvexPolygon]>],
 ) -> HypermeshResult<()> {
@@ -742,7 +937,7 @@ fn replace_retained_input_polygons(
         soup.polygons
             .retain(|polygon| polygon.mesh_index != mesh_index as isize);
         for polygon in retained.iter().cloned() {
-            let mut polygon = polygon_with_geometric_edge_halfspaces(polygon)?;
+            let mut polygon = polygon_with_geometric_edge_halfspaces(decisions, polygon)?;
             polygon.mesh_index = mesh_index as isize;
             polygon.delta_w = vec![0; soup.num_meshes];
             polygon.delta_w[mesh_index] = 1;
@@ -759,6 +954,7 @@ fn replace_retained_input_polygons(
 }
 
 fn polygon_with_geometric_edge_halfspaces(
+    decisions: &DecisionContext,
     mut polygon: ConvexPolygon,
 ) -> HypermeshResult<ConvexPolygon> {
     let vertices = polygon.vertices()?;
@@ -784,7 +980,7 @@ fn polygon_with_geometric_edge_halfspaces(
             .edges
             .iter()
             .map(
-                |edge| match crate::geometry::classify_point(&interior, edge)? {
+                |edge| match classify_point_decision(decisions, &interior, edge)? {
                     Classification::Negative => Ok(edge.clone()),
                     Classification::Positive => Ok(edge.inverted()),
                     Classification::On => Err(HypermeshError::UnknownClassification),
@@ -1245,18 +1441,19 @@ impl ProjectivePointCache {
     /// to that cascade.
     fn classify_definition_against_plane(
         &self,
+        decisions: &DecisionContext,
         identity: &ConstructionVertexIdentity,
         plane: &Plane,
     ) -> Option<HypermeshResult<Classification>> {
         let definitions = self.definition_planes(identity)?;
         let defined = intersect_three_planes(definitions[0], definitions[1], definitions[2]);
-        let weight = match crate::predicate::classify_real(&defined.w) {
+        let weight = match crate::predicate::classify_real(decisions, &defined.w) {
             Ok(Classification::Negative) => -1_i8,
             Ok(Classification::Positive) => 1_i8,
             Ok(Classification::On) | Err(_) => return None,
         };
         Some(
-            classify_projective_point(&defined, plane).map(|classification| {
+            classify_projective_point_decision(decisions, &defined, plane).map(|classification| {
                 if weight > 0 {
                     classification
                 } else {
@@ -1272,6 +1469,7 @@ impl ProjectivePointCache {
 
     fn identities_certifiably_equal(
         &self,
+        decisions: &DecisionContext,
         left_identity: &ConstructionVertexIdentity,
         left: &HomogeneousPoint3,
         right_identity: &ConstructionVertexIdentity,
@@ -1298,7 +1496,7 @@ impl ProjectivePointCache {
             };
         if (identity_on_triple(left_identity, right_identity)
             || identity_on_triple(right_identity, left_identity))
-            && projective_points_certifiably_equal(left_for_equality, right_for_equality)
+            && projective_points_certifiably_equal(decisions, left_for_equality, right_for_equality)
         {
             return true;
         }
@@ -1308,27 +1506,30 @@ impl ProjectivePointCache {
                 .into_iter()
                 .any(|coordinate| {
                     matches!(
-                        crate::predicate::classify_real(coordinate),
+                        crate::predicate::classify_real(decisions, coordinate),
                         Ok(Classification::Negative | Classification::Positive)
                     )
                 })
                 && definition.iter().all(|plane| {
-                    crate::predicate::classify_real(&homogeneous_point_plane_expression(
-                        point, *plane,
-                    )) == Ok(Classification::On)
+                    crate::predicate::classify_real(
+                        decisions,
+                        &homogeneous_point_plane_expression(point, *plane),
+                    ) == Ok(Classification::On)
                 })
         };
         match (left_definition.as_ref(), right_definition.as_ref()) {
             (Some(definition), None) => point_satisfies(right, definition),
             (None, Some(definition)) => point_satisfies(left, definition),
-            (None, None) => projective_points_certifiably_equal(left, right),
-            (Some(_), Some(_)) => {
-                projective_points_certifiably_equal(left_for_equality, right_for_equality)
-            }
+            (None, None) => projective_points_certifiably_equal(decisions, left, right),
+            (Some(_), Some(_)) => projective_points_certifiably_equal(
+                decisions,
+                left_for_equality,
+                right_for_equality,
+            ),
         }
     }
 
-    fn resolve_vertex_coincidences(&mut self) {
+    fn resolve_vertex_coincidences(&mut self, decisions: &DecisionContext) {
         let mut entries = self
             .points
             .drain()
@@ -1340,6 +1541,7 @@ impl ProjectivePointCache {
         for right in 0..entries.len() {
             for left in 0..right {
                 if self.identities_certifiably_equal(
+                    decisions,
                     &entries[left].0,
                     self.point(entries[left].1),
                     &entries[right].0,
@@ -1507,6 +1709,7 @@ fn bounded_f64_hint(value: &Real) -> Option<f64> {
 }
 
 fn projective_points_certifiably_equal(
+    decisions: &DecisionContext,
     left: &HomogeneousPoint3,
     right: &HomogeneousPoint3,
 ) -> bool {
@@ -1518,7 +1721,7 @@ fn projective_points_certifiably_equal(
                 [true, false],
                 [[left[first], right[second]], [left[second], right[first]]],
             );
-            if crate::predicate::classify_real(&minor) != Ok(Classification::On) {
+            if crate::predicate::classify_real(decisions, &minor) != Ok(Classification::On) {
                 return false;
             }
         }
@@ -1559,6 +1762,7 @@ struct CachedPointPlaneClassifications {
 impl PointPlaneClassificationCache {
     fn source_relation(
         &mut self,
+        decisions: &DecisionContext,
         polygon: &ConvexPolygon,
         plane: &Plane,
         plane_index: usize,
@@ -1566,7 +1770,7 @@ impl PointPlaneClassificationCache {
         on_source_vertices: &mut Vec<usize>,
     ) -> HypermeshResult<SourcePlaneRelation> {
         on_source_vertices.clear();
-        if certifiably_same_unoriented_plane(&polygon.support, plane) {
+        if certifiably_same_unoriented_plane(decisions, &polygon.support, plane) {
             on_source_vertices.extend(
                 polygon
                     .known_vertex_identities()
@@ -1591,7 +1795,14 @@ impl PointPlaneClassificationCache {
         {
             let source_vertex =
                 edge_identities.and_then(|identities| source_vertex_index(identities, point_index));
-            match self.classify(point, source_vertex, plane, plane_index, plane_count)? {
+            match self.classify(
+                decisions,
+                point,
+                source_vertex,
+                plane,
+                plane_index,
+                plane_count,
+            )? {
                 Classification::Negative => has_negative = true,
                 Classification::Positive => has_positive = true,
                 Classification::On => {
@@ -1613,6 +1824,7 @@ impl PointPlaneClassificationCache {
 
     fn classify(
         &mut self,
+        decisions: &DecisionContext,
         point: &Point3,
         source_vertex: Option<usize>,
         plane: &Plane,
@@ -1624,7 +1836,7 @@ impl PointPlaneClassificationCache {
             point.y.exact_rational_ref(),
             point.z.exact_rational_ref(),
         ] else {
-            return classify_point(point, plane);
+            return classify_point_decision(decisions, point, plane);
         };
         let make_cached = || CachedPointPlaneClassifications {
             rational_query: RationalLinearForm4Query::from_affine_point3([x, y, z]),
@@ -1658,6 +1870,7 @@ impl PointPlaneClassificationCache {
             let rational_query = *self.source_queries[source_vertex]
                 .get_or_insert_with(|| RationalLinearForm4Query::from_affine_point3([x, y, z]));
             let classification = crate::predicate::classify_point_with_rational_query(
+                decisions,
                 point,
                 plane,
                 rational_query.as_ref(),
@@ -1672,6 +1885,7 @@ impl PointPlaneClassificationCache {
             return Ok(classification);
         }
         let classification = crate::predicate::classify_point_with_rational_query(
+            decisions,
             point,
             plane,
             cached.rational_query.as_ref(),
@@ -1865,6 +2079,7 @@ impl ProjectiveCycle {
 
     fn clip(
         self,
+        decisions: &DecisionContext,
         plane: &Plane,
         plane_identity: ConstructionPlaneIdentity,
         point_cache: &mut ProjectivePointCache,
@@ -1884,7 +2099,7 @@ impl ProjectiveCycle {
                 ) {
                     Ok(Classification::On)
                 } else if let Some(classification) = point_cache
-                    .classify_definition_against_plane(&entry.point_identity, plane)
+                    .classify_definition_against_plane(decisions, &entry.point_identity, plane)
                 {
                     classification
                 } else if let Some(plane_filter) = &plane_evidence {
@@ -1898,10 +2113,11 @@ impl ProjectiveCycle {
                         .or_else(|| point_evidence.classify_rational_plane_exact(plane_filter))
                     {
                         Some(classification) => Ok(classification),
-                        None => point_evidence.classify(plane),
+                        None => point_evidence.classify(decisions, plane),
                     }
                 } else {
-                    classify_projective_point(point, plane).inspect_err(|_error| {
+                    classify_projective_point_decision(decisions, point, plane).inspect_err(
+                        |_error| {
                         if cfg!(debug_assertions) {
                             eprintln!(
                                 "[DEBUG] projective clip point failed: source={:?} target={:?} point={point_index} value={:?}",
@@ -1912,7 +2128,8 @@ impl ProjectiveCycle {
                                 ),
                             );
                         }
-                    })
+                        },
+                    )
                 }
             })
             .collect::<HypermeshResult<Vec<_>>>()?;
@@ -2132,6 +2349,7 @@ impl ProjectiveCycle {
 
     fn clip_negative(
         self,
+        decisions: &DecisionContext,
         plane: &Plane,
         plane_identity: ConstructionPlaneIdentity,
         point_cache: &mut ProjectivePointCache,
@@ -2151,7 +2369,7 @@ impl ProjectiveCycle {
                 ) {
                     Ok(Classification::On)
                 } else if let Some(classification) = point_cache
-                    .classify_definition_against_plane(&entry.point_identity, plane)
+                    .classify_definition_against_plane(decisions, &entry.point_identity, plane)
                 {
                     classification
                 } else if let Some(plane_filter) = &plane_evidence {
@@ -2165,10 +2383,11 @@ impl ProjectiveCycle {
                         .or_else(|| point_evidence.classify_rational_plane_exact(plane_filter))
                     {
                         Some(classification) => Ok(classification),
-                        None => point_evidence.classify(plane),
+                        None => point_evidence.classify(decisions, plane),
                     }
                 } else {
-                    classify_projective_point(point, plane).inspect_err(|_error| {
+                    classify_projective_point_decision(decisions, point, plane).inspect_err(
+                        |_error| {
                         if cfg!(debug_assertions) {
                             eprintln!(
                                 "[DEBUG] projective negative clip point failed: source={:?} target={:?} point={point_index} identity={:?} adjacent={:?} point_xyz={:?} plane={:?} exact={:?} value={:?}",
@@ -2201,7 +2420,8 @@ impl ProjectiveCycle {
                                     .to_f64_lossy(),
                             );
                         }
-                    })
+                        },
+                    )
                 }
             })
             .collect::<HypermeshResult<Vec<_>>>()?;
@@ -2372,6 +2592,7 @@ impl ProjectiveCycle {
 
     fn materialize(
         self,
+        decisions: &DecisionContext,
         source: &ConvexPolygon,
         affine_cache: &mut ProjectiveAffineCache,
         point_cache: &ProjectivePointCache,
@@ -2390,17 +2611,18 @@ impl ProjectiveCycle {
             let point = compact
                 .as_ref()
                 .unwrap_or_else(|| point_cache.point(entry.point_index));
-            vertices.push(affine_cache.resolve(point, Some(&entry.point_identity))?);
+            vertices.push(affine_cache.resolve(decisions, point, Some(&entry.point_identity))?);
             point_identities.push(entry.point_identity);
             edges.push(point_cache.plane(entry.edge_index).clone());
             edge_identities.push(entry.edge_identity);
         }
-        Ok(source.with_known_vertex_cycle_and_edges(
+        source.with_known_vertex_cycle_and_edges(
+            decisions,
             vertices,
             point_identities,
             edges,
             edge_identities,
-        ))
+        )
     }
 
     fn empty() -> Self {
@@ -2419,6 +2641,7 @@ impl ProjectiveCycle {
 impl ProjectiveAffineCache {
     fn resolve(
         &mut self,
+        decisions: &DecisionContext,
         point: &HomogeneousPoint3,
         identity: Option<&ConstructionVertexIdentity>,
     ) -> HypermeshResult<Point3> {
@@ -2438,7 +2661,7 @@ impl ProjectiveAffineCache {
             if let Some(entry) = self.points.get(&key) {
                 return Ok(entry.affine.clone());
             }
-            let affine = affine_projective_point(point)?;
+            let affine = affine_projective_point(decisions, point)?;
             self.points.insert(
                 key,
                 ProjectiveAffineCacheEntry {
@@ -2451,7 +2674,7 @@ impl ProjectiveAffineCache {
             }
             return Ok(affine);
         }
-        let affine = affine_projective_point(point)?;
+        let affine = affine_projective_point(decisions, point)?;
         if let Some(identity) = identity {
             self.identities.insert(identity.clone(), affine.clone());
         }
@@ -2459,20 +2682,18 @@ impl ProjectiveAffineCache {
     }
 }
 
-fn affine_projective_point(point: &HomogeneousPoint3) -> HypermeshResult<Point3> {
-    let reciprocal = hyperlimit::reciprocal_real(&point.w).map_err(|_| {
+fn affine_projective_point(
+    decisions: &DecisionContext,
+    point: &HomogeneousPoint3,
+) -> HypermeshResult<Point3> {
+    let reciprocal = hyperlimit::reciprocal_real(&point.w, decisions.policy()).map_err(|_| {
         if point.w.definitely_zero() {
             crate::error::HypermeshError::PointAtInfinity
         } else {
             crate::error::HypermeshError::UnknownClassification
         }
     })?;
-    let hyperlimit::PredicateOutcome::Decided {
-        value: reciprocal, ..
-    } = reciprocal
-    else {
-        return Err(crate::error::HypermeshError::UnknownClassification);
-    };
+    let reciprocal = decisions.decide(reciprocal, "projective reciprocal")?;
     Ok(Point3::new(
         &point.x * &reciprocal,
         &point.y * &reciprocal,
@@ -2481,6 +2702,7 @@ fn affine_projective_point(point: &HomogeneousPoint3) -> HypermeshResult<Point3>
 }
 
 fn compute_two_convex_inputs_projectively(
+    decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     operation: BooleanOp,
     retain_winding: bool,
@@ -2529,7 +2751,7 @@ fn compute_two_convex_inputs_projectively(
                 index
             }
         } else if let Some(index) = support_planes[mesh].iter().position(|existing| {
-            certifiably_same_oriented_plane(existing, &polygon.support).unwrap_or(false)
+            certifiably_same_oriented_plane(decisions, existing, &polygon.support).unwrap_or(false)
         }) {
             index
         } else if let Some(index) = support_planes[mesh]
@@ -2554,14 +2776,23 @@ fn compute_two_convex_inputs_projectively(
     }
     let support_planes_f64 =
         support_plane_f64_values.map(|planes| planes.into_iter().collect::<Option<Vec<_>>>());
-    let canonical_plane_identities =
-        canonical_plane_identities(&support_planes, &normalized_support_plane_f64_values);
+    let canonical_plane_identities = canonical_plane_identities(
+        decisions,
+        &support_planes,
+        &normalized_support_plane_f64_values,
+    );
     let (projective_polygons, mut projective_polygon_support_planes) =
-        match collapse_certified_convex_faces(polygons, &polygon_support_planes, &support_planes) {
+        match collapse_certified_convex_faces(
+            decisions,
+            polygons,
+            &polygon_support_planes,
+            &support_planes,
+        ) {
             Ok(collapsed) => collapsed,
-            Err(crate::error::HypermeshError::UnknownClassification) => {
-                (polygons.to_vec(), polygon_support_planes)
-            }
+            Err(
+                crate::error::HypermeshError::PredicateUndecided { .. }
+                | crate::error::HypermeshError::UnknownClassification,
+            ) => (polygons.to_vec(), polygon_support_planes),
             Err(error) => return Err(error),
         };
     for identity in &mut projective_polygon_support_planes {
@@ -2645,7 +2876,7 @@ fn compute_two_convex_inputs_projectively(
         };
         let other = 1 - *mesh;
         for (plane, value) in support_planes[other].iter().enumerate() {
-            if classify_point(point, value)? == Classification::On {
+            if classify_point_decision(decisions, point, value)? == Classification::On {
                 let plane_identity = projective_point_cache
                     .canonical_plane_identity(ConstructionPlaneIdentity { mesh: other, plane });
                 let incidences = projective_point_cache
@@ -2678,12 +2909,14 @@ fn compute_two_convex_inputs_projectively(
                         mesh: other,
                         plane: plane_index,
                     })
-                && certifiably_same_oriented_plane(&polygon.support, plane).unwrap_or(false)
+                && certifiably_same_oriented_plane(decisions, &polygon.support, plane)
+                    .unwrap_or(false)
             {
                 has_cooriented_coincident_support = true;
             }
             let relation = point_plane_caches[host]
                 .source_relation(
+                decisions,
                 polygon,
                 plane,
                 plane_index,
@@ -2773,6 +3006,7 @@ fn compute_two_convex_inputs_projectively(
                 })?;
 
         let clipped_result = exact_inside_and_outside_cycles(
+            decisions,
             source,
             polygon,
             source_plane,
@@ -2801,6 +3035,7 @@ fn compute_two_convex_inputs_projectively(
                     &mut projective_point_cache,
                 )?;
                 push_projective_transition(
+                    decisions,
                     &mut classified,
                     source,
                     polygon,
@@ -2820,6 +3055,7 @@ fn compute_two_convex_inputs_projectively(
                 outside_cycles.expect("outside cycles are retained when outside is emitted");
             for outside in outside_cycles {
                 push_projective_transition(
+                    decisions,
                     &mut classified,
                     outside,
                     polygon,
@@ -2834,6 +3070,7 @@ fn compute_two_convex_inputs_projectively(
             }
             if emit_inside {
                 push_projective_transition(
+                    decisions,
                     &mut classified,
                     inside,
                     polygon,
@@ -2850,6 +3087,7 @@ fn compute_two_convex_inputs_projectively(
         }
         if emit_inside {
             push_projective_transition(
+                decisions,
                 &mut classified,
                 inside,
                 polygon,
@@ -2863,7 +3101,7 @@ fn compute_two_convex_inputs_projectively(
             )?;
         }
     }
-    projective_point_cache.resolve_vertex_coincidences();
+    projective_point_cache.resolve_vertex_coincidences(decisions);
     if !projective_point_cache.canonical_identities.is_empty() {
         affine_cache.identities.clear();
         // Hash-probing each cycle amortizes only for a substantial fragment
@@ -2910,12 +3148,14 @@ fn compute_two_convex_inputs_projectively(
                         let point = compact
                             .as_ref()
                             .unwrap_or_else(|| projective_point_cache.point(point.point_index));
-                        affine_cache.resolve(point, Some(identity))
+                        affine_cache.resolve(decisions, point, Some(identity))
                     })
                     .collect::<HypermeshResult<Vec<_>>>()?;
-                fragment.polygon = fragment
-                    .polygon
-                    .with_known_vertex_cycle_and_identities(vertices, canonical_identities);
+                fragment.polygon = fragment.polygon.with_known_vertex_cycle_and_identities(
+                    decisions,
+                    vertices,
+                    canonical_identities,
+                )?;
             }
         }
     }
@@ -2935,13 +3175,17 @@ fn compute_two_convex_inputs_projectively(
         }
         let triangulate_fallback = || {
             if retain_winding {
-                crate::output::triangulate_classified_arrangement_precomputed_f64_scan(&classified)
-                    .and_then(|triangles| select_triangle_arrangement(&triangles, operation))
-            } else {
-                crate::output::triangulate_preclassified_arrangement_precomputed_f64_scan(
+                crate::output::triangulate_classified_arrangement_precomputed_f64_scan(
+                    decisions,
                     &classified,
                 )
-                .and_then(certify_boolean_mesh_closure)
+                .and_then(|triangles| select_triangle_arrangement(decisions, &triangles, operation))
+            } else {
+                crate::output::triangulate_preclassified_arrangement_precomputed_f64_scan(
+                    decisions,
+                    &classified,
+                )
+                .and_then(|mesh| certify_boolean_mesh_closure(decisions, mesh))
             }
         };
         let soup = if matches!(operation, BooleanOp::Difference | BooleanOp::Intersection) {
@@ -2953,38 +3197,38 @@ fn compute_two_convex_inputs_projectively(
             }
             let triangulate = |recover| {
                 crate::output::triangulate_preclassified_arrangement_construction_candidates(
+                    decisions,
                     &classified,
                     recover,
                 )
-                .and_then(certify_boolean_mesh_closure)
+                .and_then(|mesh| certify_boolean_mesh_closure(decisions, mesh))
             };
-            triangulate(false)
-                .or_else(|_| triangulate_fallback())
-                .or_else(|_| triangulate(true))
+            let soup = retry_boolean_path(triangulate(false), triangulate_fallback);
+            retry_boolean_path(soup, || triangulate(true))
         } else if operation == BooleanOp::Union {
             let triangulate = |recover| {
                 crate::output::triangulate_selected_preclassified_arrangement_construction_candidates(
+                    decisions,
                     &classified,
                     recover,
                 )
-                .and_then(certify_boolean_mesh_closure)
+                .and_then(|mesh| certify_boolean_mesh_closure(decisions, mesh))
             };
-            triangulate(false)
-                .or_else(|_| triangulate_fallback())
-                .or_else(|_| triangulate(true))
+            let soup = retry_boolean_path(triangulate(false), triangulate_fallback);
+            retry_boolean_path(soup, || triangulate(true))
         } else {
             let triangulate = |recover| {
                 crate::output::triangulate_classified_arrangement_construction_candidates(
+                    decisions,
                     &classified,
                     recover,
                 )
                 .and_then(|triangles| {
-                        select_triangle_arrangement(&triangles, operation)
-                    })
+                    select_triangle_arrangement(decisions, &triangles, operation)
+                })
             };
-            triangulate(false)
-                .or_else(|_| triangulate_fallback())
-                .or_else(|_| triangulate(true))
+            let soup = retry_boolean_path(triangulate(false), triangulate_fallback);
+            retry_boolean_path(soup, || triangulate(true))
         }
         .inspect_err(|error| {
             if cfg!(debug_assertions) {
@@ -2993,7 +3237,7 @@ fn compute_two_convex_inputs_projectively(
         });
         match soup {
             Ok(soup) => soup,
-            Err(_) => return Ok(None),
+            Err(error) => return Err(error),
         }
     };
     Ok(Some(ConvexCandidate {
@@ -3022,7 +3266,11 @@ fn exact_rational_product_sum_classification<const TERMS: usize, const FACTORS: 
     )
 }
 
-fn certifiably_proportional_plane(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
+fn certifiably_proportional_plane(
+    decisions: &DecisionContext,
+    left: &Plane,
+    right: &Plane,
+) -> HypermeshResult<bool> {
     let left_coefficients = [&left.normal.x, &left.normal.y, &left.normal.z, &left.offset];
     let right_coefficients = [
         &right.normal.x,
@@ -3041,12 +3289,15 @@ fn certifiably_proportional_plane(left: &Plane, right: &Plane) -> HypermeshResul
                 .map(Ok)
                 .unwrap_or_else(|| {
                     let minor = Real::signed_product_sum([true, false], terms);
-                    crate::predicate::classify_real(&minor)
+                    crate::predicate::classify_real(decisions, &minor)
                 });
             match classification {
                 Ok(Classification::On) => {}
                 Ok(Classification::Negative | Classification::Positive) => return Ok(false),
-                Err(crate::error::HypermeshError::UnknownClassification) => unknown_minor = true,
+                Err(
+                    crate::error::HypermeshError::UnknownClassification
+                    | crate::error::HypermeshError::PredicateUndecided { .. },
+                ) => unknown_minor = true,
                 Err(error) => return Err(error),
             }
         }
@@ -3057,8 +3308,12 @@ fn certifiably_proportional_plane(left: &Plane, right: &Plane) -> HypermeshResul
     Ok(true)
 }
 
-fn certifiably_same_oriented_plane(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
-    if !certifiably_proportional_plane(left, right)? {
+fn certifiably_same_oriented_plane(
+    decisions: &DecisionContext,
+    left: &Plane,
+    right: &Plane,
+) -> HypermeshResult<bool> {
+    if !certifiably_proportional_plane(decisions, left, right)? {
         return Ok(false);
     }
     let terms = [
@@ -3070,13 +3325,17 @@ fn certifiably_same_oriented_plane(left: &Plane, right: &Plane) -> HypermeshResu
         .map(Ok)
         .unwrap_or_else(|| {
             let orientation = Real::signed_product_sum([true, true, true], terms);
-            crate::predicate::classify_real(&orientation)
+            crate::predicate::classify_real(decisions, &orientation)
         });
     Ok(classification? == Classification::Positive)
 }
 
-fn certifiably_same_unoriented_plane(left: &Plane, right: &Plane) -> bool {
-    certifiably_proportional_plane(left, right).unwrap_or(false)
+fn certifiably_same_unoriented_plane(
+    decisions: &DecisionContext,
+    left: &Plane,
+    right: &Plane,
+) -> bool {
+    certifiably_proportional_plane(decisions, left, right).unwrap_or(false)
 }
 
 fn plane_f64(plane: &Plane) -> Option<[f64; 4]> {
@@ -3117,6 +3376,7 @@ fn normalize_plane_f64(mut values: [f64; 4]) -> Option<[f64; 4]> {
 }
 
 fn canonical_plane_identities(
+    decisions: &DecisionContext,
     support_planes: &[Vec<&Plane>; 2],
     _normalized_support_plane_f64_values: &[Vec<Option<[f64; 4]>>; 2],
 ) -> [Vec<ConstructionPlaneIdentity>; 2] {
@@ -3131,7 +3391,8 @@ fn canonical_plane_identities(
                 .iter()
                 .enumerate()
                 .find_map(|(candidate, candidate_value)| {
-                    let exact_match = certifiably_same_unoriented_plane(candidate_value, value);
+                    let exact_match =
+                        certifiably_same_unoriented_plane(decisions, candidate_value, value);
                     exact_match.then_some(ConstructionPlaneIdentity {
                         mesh: 0,
                         plane: candidate,
@@ -3144,6 +3405,7 @@ fn canonical_plane_identities(
 }
 
 fn collapse_certified_convex_faces(
+    decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     polygon_support_planes: &[ConstructionPlaneIdentity],
     support_planes: &[Vec<&Plane>; 2],
@@ -3391,6 +3653,7 @@ fn collapse_certified_convex_faces(
         let certified_noncollinear_source_vertices = (single_use_vertex_count != 0)
             .then_some(&single_use_vertices[..single_use_vertex_count]);
         collapse_certified_collinear_face_vertices(
+            decisions,
             support_identity.mesh,
             support_planes[support_identity.mesh][support_identity.plane],
             &mut face_vertices,
@@ -3598,6 +3861,7 @@ fn retain_indices<T>(values: &mut Vec<T>, retained: &[usize]) {
 }
 
 fn collapse_certified_collinear_face_vertices<P: Borrow<Point3>>(
+    decisions: &DecisionContext,
     mesh: usize,
     support: &Plane,
     vertices: &mut Vec<P>,
@@ -3640,6 +3904,7 @@ fn collapse_certified_collinear_face_vertices<P: Borrow<Point3>>(
                 true
             } else {
                 !support.points_are_collinear_on_support(
+                    decisions,
                     vertices[(index + len - 1) % len].borrow(),
                     vertices[index].borrow(),
                     vertices[(index + 1) % len].borrow(),
@@ -3684,11 +3949,12 @@ fn collapse_certified_collinear_face_vertices<P: Borrow<Point3>>(
         if rebuild_edge_planes {
             let after_next = (index + 2) % vertices.len();
             edges.push(edge_plane(
+                decisions,
                 vertices[index].borrow(),
                 vertices[next].borrow(),
                 vertices[after_next].borrow(),
                 support,
-            ));
+            )?);
         }
         let ConstructionVertexIdentity::Source {
             mesh: start_mesh,
@@ -3747,6 +4013,7 @@ fn exact_plane_f64(plane: &Plane) -> Option<[f64; 4]> {
 }
 
 fn exact_inside_and_outside_cycles<'a>(
+    decisions: &DecisionContext,
     source: ProjectiveCycle,
     source_polygon: &ConvexPolygon,
     source_plane: ConstructionPlaneIdentity,
@@ -3772,6 +4039,7 @@ fn exact_inside_and_outside_cycles<'a>(
     }) {
         crate::trace_dispatch!("projective-active-planes", "proposed");
         let (inside, outside) = clip_inside_cycle_for_output(
+            decisions,
             source
                 .take()
                 .expect("projective source is available for proposal"),
@@ -3790,6 +4058,7 @@ fn exact_inside_and_outside_cycles<'a>(
             crate::trace_dispatch!("projective-active-planes", "proposed-empty");
         } else {
             if cycle_satisfies_planes(
+                decisions,
                 &inside,
                 support_planes,
                 candidate_planes,
@@ -3817,6 +4086,7 @@ fn exact_inside_and_outside_cycles<'a>(
 
     crate::trace_dispatch!("projective-active-planes", "full");
     let (inside, outside) = clip_inside_cycle_for_output(
+        decisions,
         source
             .take()
             .expect("projective source is available for full clipping"),
@@ -3840,6 +4110,7 @@ fn exact_inside_and_outside_cycles<'a>(
 }
 
 fn clip_inside_cycle_for_output(
+    decisions: &DecisionContext,
     source: ProjectiveCycle,
     support_planes: &[&Plane],
     plane_indices: &[usize],
@@ -3849,6 +4120,7 @@ fn clip_inside_cycle_for_output(
 ) -> HypermeshResult<(ProjectiveCycle, Option<Vec<ProjectiveCycle>>)> {
     if retain_outside {
         let (inside, outside) = partition_inside_cycle(
+            decisions,
             source,
             support_planes,
             plane_indices,
@@ -3859,6 +4131,7 @@ fn clip_inside_cycle_for_output(
     } else {
         Ok((
             clip_inside_cycle(
+                decisions,
                 source,
                 support_planes,
                 plane_indices,
@@ -3871,6 +4144,7 @@ fn clip_inside_cycle_for_output(
 }
 
 fn clip_inside_cycle(
+    decisions: &DecisionContext,
     source: ProjectiveCycle,
     support_planes: &[&Plane],
     plane_indices: &[usize],
@@ -3880,6 +4154,7 @@ fn clip_inside_cycle(
     let mut inside = source;
     for &plane_index in plane_indices {
         inside = inside.clip_negative(
+            decisions,
             support_planes[plane_index],
             ConstructionPlaneIdentity {
                 mesh: support_plane_mesh,
@@ -3895,6 +4170,7 @@ fn clip_inside_cycle(
 }
 
 fn partition_inside_cycle(
+    decisions: &DecisionContext,
     source: ProjectiveCycle,
     support_planes: &[&Plane],
     plane_indices: &[usize],
@@ -3905,6 +4181,7 @@ fn partition_inside_cycle(
     let mut outside = Vec::new();
     for &plane_index in plane_indices {
         let clipped = inside.clip(
+            decisions,
             support_planes[plane_index],
             ConstructionPlaneIdentity {
                 mesh: support_plane_mesh,
@@ -3931,6 +4208,7 @@ fn partition_inside_cycle(
 }
 
 fn cycle_satisfies_planes<'a>(
+    decisions: &DecisionContext,
     cycle: &ProjectiveCycle,
     support_planes: &[&'a Plane],
     plane_indices: &[usize],
@@ -3980,10 +4258,10 @@ fn cycle_satisfies_planes<'a>(
                     }
                     None => match point_evidence.classify_rational_plane_exact(plane) {
                         Some(classification) => classification,
-                        None => point_evidence.classify(support_planes[*plane_index])?,
+                        None => point_evidence.classify(decisions, support_planes[*plane_index])?,
                     },
                 },
-                None => point_evidence.classify(support_planes[*plane_index])?,
+                None => point_evidence.classify(decisions, support_planes[*plane_index])?,
             };
             if classification.is_positive() {
                 return Ok(false);
@@ -4167,6 +4445,7 @@ fn projective_crossing_point(
 }
 
 fn push_projective_transition(
+    decisions: &DecisionContext,
     classified: &mut Vec<ClassifiedPolygon>,
     cycle: ProjectiveCycle,
     source: &ConvexPolygon,
@@ -4184,7 +4463,7 @@ fn push_projective_transition(
     if !projective_transition_is_emitted(host, inside_other, operation) {
         return Ok(());
     }
-    let polygon = cycle.materialize(source, affine_cache, point_cache)?;
+    let polygon = cycle.materialize(decisions, source, affine_cache, point_cache)?;
     let classification = if retain_winding {
         ARRANGEMENT_CLASSIFICATION
     } else {
@@ -4267,38 +4546,42 @@ fn projective_transition_is_emitted(host: usize, inside_other: bool, operation: 
 
 /// Union convenience wrapper.
 pub fn boolean_union(
+    context: &MeshContext,
     a: TriangleMeshRef<'_>,
     b: TriangleMeshRef<'_>,
     config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
-    boolean_operation(&[a, b], BooleanOp::Union, config)
+) -> HypermeshResult<MeshOutcome<BooleanResult>> {
+    boolean_operation(context, &[a, b], BooleanOp::Union, config)
 }
 
 /// Intersection convenience wrapper.
 pub fn boolean_intersection(
+    context: &MeshContext,
     a: TriangleMeshRef<'_>,
     b: TriangleMeshRef<'_>,
     config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
-    boolean_operation(&[a, b], BooleanOp::Intersection, config)
+) -> HypermeshResult<MeshOutcome<BooleanResult>> {
+    boolean_operation(context, &[a, b], BooleanOp::Intersection, config)
 }
 
 /// Difference convenience wrapper.
 pub fn boolean_difference(
+    context: &MeshContext,
     a: TriangleMeshRef<'_>,
     b: TriangleMeshRef<'_>,
     config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
-    boolean_operation(&[a, b], BooleanOp::Difference, config)
+) -> HypermeshResult<MeshOutcome<BooleanResult>> {
+    boolean_operation(context, &[a, b], BooleanOp::Difference, config)
 }
 
 /// Symmetric-difference convenience wrapper.
 pub fn boolean_symmetric_difference(
+    context: &MeshContext,
     a: TriangleMeshRef<'_>,
     b: TriangleMeshRef<'_>,
     config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
-    boolean_operation(&[a, b], BooleanOp::SymmetricDifference, config)
+) -> HypermeshResult<MeshOutcome<BooleanResult>> {
+    boolean_operation(context, &[a, b], BooleanOp::SymmetricDifference, config)
 }
 
 fn expanded_bounds(bounds: &Aabb) -> Aabb {
@@ -4327,6 +4610,7 @@ fn outside_reference_point(bounds: &Aabb) -> Point3 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::approximate_convex_triangle;
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
@@ -4363,10 +4647,18 @@ mod tests {
         soup.triangles.extend(soup.triangles.clone());
         soup.sources.extend(soup.sources.clone());
 
-        let certified = certify_boolean_mesh_closure(soup).unwrap();
+        let certified =
+            certify_boolean_mesh_closure(&crate::test_support::approximate_decisions(), soup)
+                .unwrap();
 
         assert_eq!(certified.triangles.len(), 4);
-        assert!(certified.has_unique_nondegenerate_triangles());
+        assert!(
+            certified
+                .has_unique_nondegenerate_triangles_decision(
+                    &crate::test_support::approximate_decisions()
+                )
+                .unwrap()
+        );
         assert!(crate::output::boolean_mesh_closure_evidence(&certified).is_closed());
     }
 
@@ -4377,7 +4669,8 @@ mod tests {
         let first_tool = box_from_bounds(&bounds(2, 4));
         let second_tool = box_from_bounds(&hyperlattice::Aabb::new(p(1, 1, 1), p(5, 3, 3)));
 
-        let first = boolean_triangle_meshes(
+        let first = boolean_triangle_meshes_decision(
+            &crate::test_support::approximate_decisions(),
             &block,
             &first_tool,
             BooleanOp::Difference,
@@ -4386,7 +4679,10 @@ mod tests {
         .unwrap();
         assert!(first.is_closed_manifold());
         assert_eq!(
-            first.retained_input_planes().map(<[_]>::len),
+            first
+                .retained_input_planes(&crate::test_support::approximate_decisions(),)
+                .unwrap()
+                .map(|planes| planes.len()),
             Some(first.triangles.len())
         );
         assert!(
@@ -4395,7 +4691,8 @@ mod tests {
                 .is_some_and(|polygons| !polygons.is_empty())
         );
 
-        let second = boolean_triangle_meshes(
+        let second = boolean_triangle_meshes_decision(
+            &crate::test_support::approximate_decisions(),
             &first,
             &second_tool,
             BooleanOp::Difference,
@@ -4415,12 +4712,25 @@ mod tests {
         let left = hyperlattice::Aabb::new(p(0, 0, 0), p(2, 2, 2));
         let right = hyperlattice::Aabb::new(p(1, 0, 0), p(3, 2, 2));
 
-        let union = adjacent_box_union(&left, &right).unwrap();
+        let union =
+            adjacent_box_union(&crate::test_support::approximate_decisions(), &right, &left)
+                .unwrap()
+                .expect("the overlapping boxes share a certifiable full face");
 
         assert_eq!(union, hyperlattice::Aabb::new(p(0, 0, 0), p(3, 2, 2)));
         let mesh = box_from_bounds(&union);
-        assert!(mesh.has_unique_nondegenerate_triangles());
-        assert!(mesh.is_closed_manifold_geometry());
+        assert!(
+            mesh.has_unique_nondegenerate_triangles_decision(
+                &crate::test_support::approximate_decisions()
+            )
+            .unwrap()
+        );
+        assert!(
+            mesh.is_closed_manifold_geometry_decision(
+                &crate::test_support::approximate_decisions()
+            )
+            .unwrap()
+        );
     }
 
     #[test]
@@ -4565,25 +4875,56 @@ mod tests {
         let distinct =
             Plane::from_coefficients(Real::from(3), Real::from(6), Real::from(9), Real::from(13));
 
-        assert!(certifiably_same_oriented_plane(&plane, &same).unwrap());
-        assert!(!certifiably_same_oriented_plane(&plane, &opposite).unwrap());
-        assert!(certifiably_same_unoriented_plane(&plane, &opposite));
-        assert!(!certifiably_same_unoriented_plane(&plane, &distinct));
+        assert!(
+            certifiably_same_oriented_plane(
+                &crate::test_support::approximate_decisions(),
+                &same,
+                &plane
+            )
+            .unwrap()
+        );
+        assert!(
+            !certifiably_same_oriented_plane(
+                &crate::test_support::approximate_decisions(),
+                &opposite,
+                &plane
+            )
+            .unwrap()
+        );
+        assert!(certifiably_same_unoriented_plane(
+            &crate::test_support::approximate_decisions(),
+            &opposite,
+            &plane
+        ));
+        assert!(!certifiably_same_unoriented_plane(
+            &crate::test_support::approximate_decisions(),
+            &distinct,
+            &plane
+        ));
 
         let symbolic =
             Plane::from_coefficients(Real::pi(), Real::one(), Real::zero(), Real::from(2));
-        assert!(certifiably_same_oriented_plane(&symbolic, &symbolic).unwrap());
+        assert!(
+            certifiably_same_oriented_plane(
+                &crate::test_support::approximate_decisions(),
+                &symbolic,
+                &symbolic
+            )
+            .unwrap()
+        );
     }
 
     #[test]
     fn projective_cycle_expands_deferred_source_edges_on_demand() {
         let polygon = crate::polygon::make_triangle_with_deferred_edges(
-            &p(0, 0, 0),
+            &crate::test_support::approximate_decisions(),
             &p(1, 0, 0),
             &p(0, 1, 0),
+            &p(0, 0, 0),
             0,
             0,
         )
+        .unwrap()
         .with_source_triangle_edge_identities(0, [0, 1, 2]);
         assert!(polygon.edges.is_empty());
         assert_eq!(polygon.vertex_count(), 3);
@@ -4606,7 +4947,7 @@ mod tests {
 
     #[test]
     fn consuming_projective_split_preserves_shared_boundary_identities() {
-        let polygon = crate::polygon::convex_triangle(&p(0, 0, -1), &p(2, 0, 1), &p(0, 2, 0), 0, 0)
+        let polygon = approximate_convex_triangle(&p(0, 0, -1), &p(2, 0, 1), &p(0, 2, 0), 0, 0)
             .with_source_triangle_edge_identities(0, [0, 1, 2]);
         let mut point_cache = ProjectivePointCache::default();
         let cycle = ProjectiveCycle::from_polygon(
@@ -4619,6 +4960,7 @@ mod tests {
         let negative_only = cycle
             .clone()
             .clip_negative(
+                &crate::test_support::approximate_decisions(),
                 &plane,
                 ConstructionPlaneIdentity { mesh: 1, plane: 0 },
                 &mut point_cache,
@@ -4626,6 +4968,7 @@ mod tests {
             .unwrap();
         let split = cycle
             .clip(
+                &crate::test_support::approximate_decisions(),
                 &plane,
                 ConstructionPlaneIdentity { mesh: 1, plane: 0 },
                 &mut point_cache,
@@ -4697,7 +5040,7 @@ mod tests {
 
     #[test]
     fn rank_deficient_boundary_planes_do_not_prove_unrecorded_incidence() {
-        let polygon = crate::polygon::convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0)
+        let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0)
             .with_source_triangle_edge_identities(0, [0, 1, 2]);
         let source_identity = ConstructionPlaneIdentity { mesh: 0, plane: 0 };
         let target_identity = ConstructionPlaneIdentity { mesh: 1, plane: 0 };
@@ -4716,8 +5059,11 @@ mod tests {
         );
         let point = point_cache.point(cycle.boundary[0].point_index);
         assert_ne!(
-            crate::predicate::classify_real(&homogeneous_point_plane_expression(point, &target))
-                .unwrap(),
+            crate::predicate::classify_real(
+                &crate::test_support::approximate_decisions(),
+                &homogeneous_point_plane_expression(point, &target)
+            )
+            .unwrap(),
             Classification::On
         );
         assert!(!cycle.point_has_plane_incidence(0, target_identity, &point_cache,));
@@ -4745,6 +5091,7 @@ mod tests {
         let right = HomogeneousPoint3::new(Real::zero(), Real::zero(), Real::one(), Real::one());
 
         assert!(!point_cache.identities_certifiably_equal(
+            &crate::test_support::approximate_decisions(),
             &defined_identity,
             &left,
             &source_identity,
@@ -4755,19 +5102,26 @@ mod tests {
     #[test]
     fn singleton_certified_face_preserves_deferred_edges() {
         let polygon = crate::polygon::make_triangle_with_deferred_edges(
-            &p(0, 0, 0),
+            &crate::test_support::approximate_decisions(),
             &p(1, 0, 0),
             &p(0, 1, 0),
+            &p(0, 0, 0),
             0,
             0,
         )
+        .unwrap()
         .with_source_triangle_edge_identities(0, [0, 1, 2]);
         let support_identity = ConstructionPlaneIdentity { mesh: 0, plane: 0 };
         let polygons = [polygon];
         let supports = [vec![&polygons[0].support], Vec::new()];
 
-        let (faces, face_supports) =
-            collapse_certified_convex_faces(&polygons, &[support_identity], &supports).unwrap();
+        let (faces, face_supports) = collapse_certified_convex_faces(
+            &crate::test_support::approximate_decisions(),
+            &polygons,
+            &[support_identity],
+            &supports,
+        )
+        .unwrap();
 
         assert_eq!(faces.len(), 1);
         assert!(faces[0].edges.is_empty());
@@ -4779,19 +5133,30 @@ mod tests {
     #[test]
     fn certified_face_grouping_rejects_unaligned_or_out_of_range_supports() {
         let polygon = crate::polygon::make_triangle_with_deferred_edges(
-            &p(0, 0, 0),
+            &crate::test_support::approximate_decisions(),
             &p(1, 0, 0),
             &p(0, 1, 0),
+            &p(0, 0, 0),
             0,
             0,
         )
+        .unwrap()
         .with_source_triangle_edge_identities(0, [0, 1, 2]);
         let polygons = [polygon];
         let supports = [vec![&polygons[0].support], Vec::new()];
 
-        assert!(collapse_certified_convex_faces(&polygons, &[], &supports).is_err());
         assert!(
             collapse_certified_convex_faces(
+                &crate::test_support::approximate_decisions(),
+                &polygons,
+                &[],
+                &supports,
+            )
+            .is_err()
+        );
+        assert!(
+            collapse_certified_convex_faces(
+                &crate::test_support::approximate_decisions(),
                 &polygons,
                 &[ConstructionPlaneIdentity { mesh: 0, plane: 1 }],
                 &supports,
@@ -4800,6 +5165,7 @@ mod tests {
         );
         assert!(
             collapse_certified_convex_faces(
+                &crate::test_support::approximate_decisions(),
                 &polygons,
                 &[ConstructionPlaneIdentity { mesh: 2, plane: 0 }],
                 &supports,
@@ -4835,6 +5201,7 @@ mod tests {
         let collapse = |polygons: &[ConvexPolygon]| {
             let supports = [vec![&polygons[0].support], Vec::new()];
             collapse_certified_convex_faces(
+                &crate::test_support::approximate_decisions(),
                 polygons,
                 &[support_identity, support_identity],
                 &supports,
@@ -4892,13 +5259,15 @@ mod tests {
         let mut edges = (0..vertices.len())
             .map(|index| {
                 edge_plane(
-                    &vertices[index],
+                    &crate::test_support::approximate_decisions(),
                     &vertices[(index + 1) % vertices.len()],
                     &vertices[(index + 2) % vertices.len()],
+                    &vertices[index],
                     &support,
                 )
             })
-            .collect::<Vec<_>>();
+            .collect::<HypermeshResult<Vec<_>>>()
+            .unwrap();
         let mut edge_identities = (0..vertices.len())
             .map(|start| ConstructionEdgeIdentity::Source {
                 mesh: 0,
@@ -4907,6 +5276,7 @@ mod tests {
             .collect::<Vec<_>>();
 
         collapse_certified_collinear_face_vertices(
+            &crate::test_support::approximate_decisions(),
             0,
             &support,
             &mut vertices,
@@ -4956,6 +5326,7 @@ mod tests {
             .collect::<Vec<_>>();
 
         collapse_certified_collinear_face_vertices(
+            &crate::test_support::approximate_decisions(),
             0,
             &support,
             &mut vertices,
@@ -5001,6 +5372,7 @@ mod tests {
         let expected_edge_identities = edge_identities.clone();
 
         collapse_certified_collinear_face_vertices(
+            &crate::test_support::approximate_decisions(),
             0,
             &support,
             &mut vertices,
@@ -5031,6 +5403,7 @@ mod tests {
         let expected_edge_identities = edge_identities.clone();
 
         collapse_certified_collinear_face_vertices(
+            &crate::test_support::approximate_decisions(),
             0,
             &support,
             &mut vertices,
@@ -5051,12 +5424,22 @@ mod tests {
 
         assert!(
             support
-                .points_are_collinear_on_support(&p(0, 0, 0), &p(1, 1, 2), &p(2, 2, 4),)
+                .points_are_collinear_on_support(
+                    &crate::test_support::approximate_decisions(),
+                    &p(1, 1, 2),
+                    &p(2, 2, 4),
+                    &p(0, 0, 0)
+                )
                 .unwrap()
         );
         assert!(
             !support
-                .points_are_collinear_on_support(&p(0, 0, 0), &p(1, 0, 1), &p(0, 1, 1),)
+                .points_are_collinear_on_support(
+                    &crate::test_support::approximate_decisions(),
+                    &p(1, 0, 1),
+                    &p(0, 1, 1),
+                    &p(0, 0, 0)
+                )
                 .unwrap()
         );
     }
@@ -5064,12 +5447,14 @@ mod tests {
     #[test]
     fn projective_cycle_verification_reuses_exact_plane_incidences() {
         let polygon = crate::polygon::make_triangle_with_deferred_edges(
-            &p(0, 0, 0),
+            &crate::test_support::approximate_decisions(),
             &p(1, 0, 0),
             &p(0, 1, 0),
+            &p(0, 0, 0),
             0,
             0,
         )
+        .unwrap()
         .with_source_triangle_edge_identities(0, [0, 1, 2]);
         let mut point_cache = ProjectivePointCache::default();
         let cycle = ProjectiveCycle::from_polygon(
@@ -5088,6 +5473,7 @@ mod tests {
         let mut rational_plane_evidence = Vec::new();
         assert!(
             cycle_satisfies_planes(
+                &crate::test_support::approximate_decisions(),
                 &cycle,
                 &[&polygon.support],
                 &[0],
@@ -5102,14 +5488,21 @@ mod tests {
 
     #[test]
     fn source_relation_stops_after_exact_crossing_is_certified() {
-        let polygon = crate::polygon::convex_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0);
+        let polygon = approximate_convex_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0);
         let plane = Plane::axis_aligned(2, Real::zero());
         let mut cache = PointPlaneClassificationCache::default();
         let mut on_source_vertices = Vec::new();
 
         assert!(matches!(
             cache
-                .source_relation(&polygon, &plane, 0, 1, &mut on_source_vertices)
+                .source_relation(
+                    &crate::test_support::approximate_decisions(),
+                    &polygon,
+                    &plane,
+                    0,
+                    1,
+                    &mut on_source_vertices,
+                )
                 .unwrap(),
             SourcePlaneRelation::Crossing
         ));
@@ -5118,7 +5511,7 @@ mod tests {
 
     #[test]
     fn source_relation_indexes_certified_source_vertices_without_coordinate_hashing() {
-        let polygon = crate::polygon::convex_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0)
+        let polygon = approximate_convex_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0)
             .with_source_triangle_edge_identities(0, [7, 9, 11]);
         let plane = Plane::axis_aligned(2, Real::zero());
         let mut cache = PointPlaneClassificationCache::default();
@@ -5126,7 +5519,14 @@ mod tests {
 
         assert!(matches!(
             cache
-                .source_relation(&polygon, &plane, 0, 1, &mut on_source_vertices)
+                .source_relation(
+                    &crate::test_support::approximate_decisions(),
+                    &polygon,
+                    &plane,
+                    0,
+                    1,
+                    &mut on_source_vertices
+                )
                 .unwrap(),
             SourcePlaneRelation::Crossing
         ));
@@ -5160,7 +5560,11 @@ mod tests {
             .each_ref()
             .map(|planes| planes.iter().map(|plane| plane_f64(plane)).collect());
 
-        let identities = canonical_plane_identities(&support_planes, &normalized);
+        let identities = canonical_plane_identities(
+            &crate::test_support::approximate_decisions(),
+            &support_planes,
+            &normalized,
+        );
         assert_eq!(identities[0][0], identities[1][0]);
         assert_eq!(identities[0][0], identities[1][1]);
         assert_ne!(identities[0][0], identities[0][1]);
@@ -5235,7 +5639,7 @@ mod tests {
                 assert_eq!(interned, identities[index]);
             }
 
-            cache.resolve_vertex_coincidences();
+            cache.resolve_vertex_coincidences(&crate::test_support::approximate_decisions());
             let canonical = identities
                 .each_ref()
                 .map(|identity| cache.canonical_vertex_identity(identity));

@@ -1,8 +1,10 @@
 //! Convex polygon clipping.
 
+use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::HypermeshResult;
-use crate::geometry::{Aabb, Classification, Plane, classify_projective_point};
+use crate::geometry::{Aabb, Classification, Plane};
 use crate::polygon::ConvexPolygon;
+use crate::predicate::classify_projective_point_decision;
 use std::sync::Arc;
 
 /// Result side from clipping a polygon against a plane.
@@ -28,7 +30,21 @@ pub struct ClipResult {
 }
 
 /// Clips a convex polygon against a plane.
-pub fn clip_polygon(poly: &ConvexPolygon, split_plane: &Plane) -> HypermeshResult<ClipResult> {
+pub fn clip_polygon(
+    context: &MeshContext,
+    poly: &ConvexPolygon,
+    split_plane: &Plane,
+) -> HypermeshResult<MeshOutcome<ClipResult>> {
+    let decisions = DecisionContext::new(context);
+    let result = clip_polygon_decision(&decisions, poly, split_plane)?;
+    Ok(decisions.finish(result))
+}
+
+pub(crate) fn clip_polygon_decision(
+    decisions: &DecisionContext,
+    poly: &ConvexPolygon,
+    split_plane: &Plane,
+) -> HypermeshResult<ClipResult> {
     let n = poly.vertex_count();
     if n < 3 {
         return Ok(ClipResult {
@@ -42,7 +58,8 @@ pub fn clip_polygon(poly: &ConvexPolygon, split_plane: &Plane) -> HypermeshResul
     let mut has_pos = false;
     let mut has_neg = false;
     for index in 0..n {
-        let classification = classify_projective_point(&poly.vertex(index), split_plane)?;
+        let classification =
+            classify_projective_point_decision(decisions, &poly.vertex(index), split_plane)?;
         has_pos |= classification == Classification::Positive;
         has_neg |= classification == Classification::Negative;
         classifications.push(classification);
@@ -104,7 +121,21 @@ pub fn clip_polygon(poly: &ConvexPolygon, split_plane: &Plane) -> HypermeshResul
 }
 
 /// Clips a polygon to an AABB, returning an empty polygon if outside.
-pub fn clip_polygon_to_aabb(poly: &ConvexPolygon, aabb: &Aabb) -> HypermeshResult<ConvexPolygon> {
+pub fn clip_polygon_to_aabb(
+    context: &MeshContext,
+    poly: &ConvexPolygon,
+    aabb: &Aabb,
+) -> HypermeshResult<MeshOutcome<ConvexPolygon>> {
+    let decisions = DecisionContext::new(context);
+    let polygon = clip_polygon_to_aabb_decision(&decisions, poly, aabb)?;
+    Ok(decisions.finish(polygon))
+}
+
+pub(crate) fn clip_polygon_to_aabb_decision(
+    decisions: &DecisionContext,
+    poly: &ConvexPolygon,
+    aabb: &Aabb,
+) -> HypermeshResult<ConvexPolygon> {
     let mut current = poly.clone();
 
     for axis in 0..3 {
@@ -114,8 +145,8 @@ pub fn clip_polygon_to_aabb(poly: &ConvexPolygon, aabb: &Aabb) -> HypermeshResul
 
         let min_plane =
             Plane::axis_aligned(axis, crate::geometry::axis_ref(&aabb.min, axis).clone());
-        if !polygon_lies_on_plane(&current, &min_plane)? {
-            let min_clip = clip_polygon(&current, &min_plane)?;
+        if !polygon_lies_on_plane(decisions, &current, &min_plane)? {
+            let min_clip = clip_polygon_decision(decisions, &current, &min_plane)?;
             current = match min_clip.side {
                 ClipSide::Left => {
                     let mut empty = current;
@@ -133,8 +164,8 @@ pub fn clip_polygon_to_aabb(poly: &ConvexPolygon, aabb: &Aabb) -> HypermeshResul
 
         let max_plane =
             Plane::axis_aligned(axis, crate::geometry::axis_ref(&aabb.max, axis).clone());
-        if !polygon_lies_on_plane(&current, &max_plane)? {
-            let max_clip = clip_polygon(&current, &max_plane)?;
+        if !polygon_lies_on_plane(decisions, &current, &max_plane)? {
+            let max_clip = clip_polygon_decision(decisions, &current, &max_plane)?;
             current = match max_clip.side {
                 ClipSide::Right => {
                     let mut empty = current;
@@ -150,9 +181,15 @@ pub fn clip_polygon_to_aabb(poly: &ConvexPolygon, aabb: &Aabb) -> HypermeshResul
     Ok(current)
 }
 
-fn polygon_lies_on_plane(poly: &ConvexPolygon, plane: &Plane) -> HypermeshResult<bool> {
+fn polygon_lies_on_plane(
+    decisions: &DecisionContext,
+    poly: &ConvexPolygon,
+    plane: &Plane,
+) -> HypermeshResult<bool> {
     for index in 0..poly.vertex_count() {
-        if classify_projective_point(&poly.vertex(index), plane)? != Classification::On {
+        if classify_projective_point_decision(decisions, &poly.vertex(index), plane)?
+            != Classification::On
+        {
             return Ok(false);
         }
     }
@@ -163,9 +200,9 @@ fn polygon_lies_on_plane(poly: &ConvexPolygon, plane: &Plane) -> HypermeshResult
 mod tests {
     use hyperlattice::{Point3, Real};
 
-    use super::clip_polygon_to_aabb;
+    use super::clip_polygon_to_aabb_decision;
     use crate::geometry::Aabb;
-    use crate::polygon::convex_triangle;
+    use crate::test_support::{approximate_convex_triangle, approximate_decisions};
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
@@ -175,9 +212,11 @@ mod tests {
     fn clip_polygon_to_aabb_preserves_closed_boundary_faces() {
         let bounds = Aabb::new(p(0, -2, -2), p(2, 2, 2));
         for x in [0, 2] {
-            let polygon = convex_triangle(&p(x, -1, -1), &p(x, 1, -1), &p(x, 0, 1), 0, 0);
+            let polygon =
+                approximate_convex_triangle(&p(x, -1, -1), &p(x, 1, -1), &p(x, 0, 1), 0, 0);
 
-            let clipped = clip_polygon_to_aabb(&polygon, &bounds).unwrap();
+            let clipped =
+                clip_polygon_to_aabb_decision(&approximate_decisions(), &polygon, &bounds).unwrap();
 
             assert_eq!(clipped, polygon);
         }
