@@ -17,10 +17,11 @@
 //! to degree two or less use polynomial division followed by the same Hermite
 //! kernel. Cubic weights extend that reduction with exact rational-root,
 //! Cardano, trigonometric, and repeated-factor partial-fraction branches.
-//! Higher-degree rational weight polynomials through degree eight use the same
-//! partial-fraction kernel when exact rational-root deflation leaves an exact
-//! power of one certified irreducible quadratic or a quartic product of two
-//! certified irreducible quadratics.
+//! Arbitrary-degree rational weight polynomials use the same partial-fraction
+//! kernel when exact rational-root deflation leaves an exact power of one
+//! certified irreducible quadratic or a quartic product of two certified
+//! irreducible quadratics. Work remains bounded by the authored polynomial
+//! degree; unsupported residual factors stay explicit rather than sampled.
 //! This preserves the exact object structure required by exact-computation discipline, and supplies
 //! the area facts needed by fitting/simplification pipelines discussed by Raph
 //! Bezier approximation analysis. The polynomial and rational
@@ -527,11 +528,10 @@ impl RationalBezier2 {
     /// specialize to the retained conic kernel. Other arbitrary-degree
     /// carriers are integrated when exact Bernstein conversion certifies that
     /// their weight polynomial has degree at most two, is a cubic with an
-    /// exactly classified discriminant, or has degree at most eight and exact
-    /// rational-root deflation leaves an exact power of one irreducible
-    /// quadratic or a quartic product of two irreducible quadratics. `None`
-    /// means another genuinely rational integral is not implemented; it does
-    /// not approximate one.
+    /// exactly classified discriminant, or exact rational-root deflation
+    /// leaves an exact power of one irreducible quadratic or a quartic product
+    /// of two irreducible quadratics. `None` means another genuinely rational
+    /// integral is not implemented; it does not approximate one.
     pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -550,11 +550,11 @@ impl RationalBezier2 {
     /// or supported low-degree-weight rational Béziers.
     ///
     /// Cubic weight polynomials use exact Cardano or repeated-factor reduction.
-    /// Higher weight polynomials through degree eight use exact
-    /// multiplicity-aware partial fractions when rational-root deflation leaves
-    /// an exact power of one irreducible quadratic or a quartic product of two.
-    /// `None` is an explicit unsupported symbolic integral for any remaining
-    /// weight polynomial, never a finite approximation.
+    /// Higher weight polynomials use exact multiplicity-aware partial
+    /// fractions when rational-root deflation leaves an exact power of one
+    /// irreducible quadratic or a quartic product of two. `None` is an explicit
+    /// unsupported symbolic integral for any remaining weight polynomial,
+    /// never a finite approximation.
     pub fn area_moments_contribution(&self) -> CurveResult<Option<BezierAreaMoments2>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -665,8 +665,6 @@ fn rational_bezier_supported_weight_power_coordinates(
     curve: &RationalBezier2,
     policy: &CurvePolicy,
 ) -> CurveResult<Option<(Vec<Real>, Vec<Real>, Vec<Real>)>> {
-    const MAX_SYMBOLIC_WEIGHT_DEGREE: usize = 8;
-
     let Some(first_sign) = compare_reals(&curve.weights()[0], &Real::zero(), policy) else {
         return Ok(None);
     };
@@ -709,9 +707,6 @@ fn rational_bezier_supported_weight_power_coordinates(
             Some(_) => break,
             None => return Ok(None),
         }
-    }
-    if weight_power.len() > MAX_SYMBOLIC_WEIGHT_DEGREE + 1 {
-        return Ok(None);
     }
     Ok(Some((nx, ny, weight_power)))
 }
@@ -1052,7 +1047,7 @@ fn integrate_polynomial_over_low_degree_weight_power(
             }
         }
         4 => integrate_polynomial_over_cubic_power(numerator, denominator, power, policy, cache),
-        5..=9 => {
+        5.. => {
             let Some(factors) = exact_rational_polynomial_factors(denominator, policy)? else {
                 return Ok(None);
             };
@@ -1065,7 +1060,6 @@ fn integrate_polynomial_over_low_degree_weight_power(
                 cache,
             )
         }
-        _ => Ok(None),
     }
 }
 
@@ -2935,6 +2929,39 @@ mod tests {
                 Real::from(4_i8),
                 Real::from(8_i8),
                 Real::from(16_i8),
+            ],
+        )
+        .unwrap();
+
+        assert_rational_moments_are_exactly_additive(&curve);
+    }
+
+    #[test]
+    fn arbitrary_degree_split_weight_moments_are_exactly_additive() {
+        let curve = RationalBezier2::try_new(
+            vec![
+                point(4, 0),
+                point(5, 0),
+                point(6, 0),
+                point(6, 1),
+                point(6, 2),
+                point(5, 3),
+                point(4, 3),
+                point(3, 2),
+                point(3, 1),
+                point(4, 0),
+            ],
+            vec![
+                Real::one(),
+                Real::from(2_i16),
+                Real::from(4_i16),
+                Real::from(8_i16),
+                Real::from(16_i16),
+                Real::from(32_i16),
+                Real::from(64_i16),
+                Real::from(128_i16),
+                Real::from(256_i16),
+                Real::from(512_i16),
             ],
         )
         .unwrap();

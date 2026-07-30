@@ -1058,10 +1058,10 @@ impl BezierBoundaryLoop2 {
     /// Polynomial Béziers, polynomial-equivalent rational Béziers, finite
     /// rational quadratics, their exact homogeneous degree elevations,
     /// arbitrary-degree rational carriers with at-most-quadratic weight
-    /// polynomials, certified cubic-weight carriers, and weight carriers
-    /// through degree eight that rational-root deflation reduces to linear
-    /// factors plus either an exact power of one irreducible quadratic or a
-    /// quartic product of two are integrated directly. `None` preserves another
+    /// polynomials, certified cubic-weight carriers, and arbitrary-degree
+    /// weight carriers that rational-root deflation reduces to linear factors
+    /// plus either an exact power of one irreducible quadratic or a quartic
+    /// product of two are integrated directly. `None` preserves another
     /// genuinely rational boundary whose first-moment integral is not yet
     /// implemented; it never requests a flattening tolerance.
     pub fn area_moments(&self) -> CurveResult<Option<BezierAreaMoments2>> {
