@@ -4,7 +4,8 @@ use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use hyperreal::{
-    AffineDet3ExactWordFilter, AffineDet3Filter, LinearForm3Filter, Real, RealExactSetFacts,
+    AffineDet3ExactWordFilter, AffineDet3Filter, LinearForm3Filter, Rational,
+    RationalLinearForm4Filter, RationalLinearForm4Query, Real, RealExactSetFacts, RealSign,
     ZeroKnowledge,
 };
 
@@ -15,7 +16,9 @@ use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, 
 use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient::orient3d_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
-use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
+use crate::resolve::{
+    map_outcome, resolve_real_sign, resolve_real_sign_direct, signed_term_filter,
+};
 
 /// Plane represented by `normal . point + offset = 0`.
 #[derive(Clone, Debug, PartialEq)]
@@ -286,13 +289,14 @@ impl Plane3 {
 
 /// Reusable exact-predicate evidence for a fixed explicit plane.
 ///
-/// This value owns coefficient facts and the certified dyadic filter, but not
-/// the plane. Retain it alongside the source plane when classifying many
-/// points against the same plane.
+/// This value owns coefficient facts plus certified dyadic and rational
+/// linear-form filters, but not the plane. Retain it alongside the source
+/// plane when classifying many points against the same plane.
 #[derive(Clone, Copy, Debug)]
 pub struct Plane3Evidence {
     facts: Plane3Facts,
     filter: Option<LinearForm3Filter>,
+    rational_filter: Option<RationalLinearForm4Filter>,
 }
 
 impl Plane3Evidence {
@@ -305,15 +309,18 @@ impl Plane3Evidence {
 /// Derive reusable exact-predicate evidence for an explicit plane.
 pub fn plane3_evidence(plane: &Plane3) -> Plane3Evidence {
     crate::trace_dispatch!("hyperlimit", "plane3_evidence", "derive");
-    let filter = LinearForm3Filter::from_reals([
+    let coefficients = [
         &plane.normal.x,
         &plane.normal.y,
         &plane.normal.z,
         &plane.offset,
-    ]);
+    ];
+    let filter = LinearForm3Filter::from_reals(coefficients);
+    let rational_filter = RationalLinearForm4Filter::from_reals(coefficients);
     Plane3Evidence {
         facts: plane.structural_facts(),
         filter,
+        rational_filter,
     }
 }
 
@@ -351,6 +358,11 @@ pub fn classify_point_plane_with_evidence_and_policy(
             Certainty::Exact,
             Escalation::Exact,
         );
+    }
+    if let Some(outcome) =
+        classify_exact_rational_point_plane(point, plane, evidence.rational_filter)
+    {
+        return outcome;
     }
     classify_point_plane_with_facts(point, plane, evidence.facts, policy)
 }
@@ -530,7 +542,66 @@ pub(crate) fn classify_point_plane_with_policy(
             Escalation::Exact,
         );
     }
+    if let Some(outcome) = classify_exact_rational_point_plane(point, plane, None) {
+        return outcome;
+    }
     classify_point_plane_real(point, plane, None, policy)
+}
+
+#[inline]
+fn classify_exact_rational_point_plane(
+    point: &Point3,
+    plane: &Plane3,
+    filter: Option<RationalLinearForm4Filter>,
+) -> Option<PredicateOutcome<PlaneSide>> {
+    let [Some(a), Some(b), Some(c), Some(d)] = [
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+    ]
+    .map(Real::exact_rational_ref) else {
+        return None;
+    };
+    let [Some(x), Some(y), Some(z)] = [&point.x, &point.y, &point.z].map(Real::exact_rational_ref)
+    else {
+        return None;
+    };
+
+    if let Some(sign) = filter.and_then(|filter| {
+        RationalLinearForm4Query::from_affine_point3([x, y, z])
+            .and_then(|query| filter.sign(&query))
+    }) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "classify_point_plane",
+            "evidence-rational-linear-form-filter"
+        );
+        return Some(PredicateOutcome::decided(
+            PlaneSide::from(crate::real::map_real_sign(sign)),
+            Certainty::Exact,
+            Escalation::Filter,
+        ));
+    }
+
+    let one = Rational::one();
+    let sign =
+        match Rational::signed_product_sum_ordering([true; 4], [[a, x], [b, y], [c, z], [d, &one]])
+        {
+            Ordering::Less => RealSign::Negative,
+            Ordering::Equal => RealSign::Zero,
+            Ordering::Greater => RealSign::Positive,
+        };
+    crate::trace_dispatch!(
+        "hyperlimit",
+        "classify_point_plane",
+        "exact-rational-product-sum-sign"
+    );
+    Some(PredicateOutcome::decided(
+        PlaneSide::from(crate::real::map_real_sign(sign)),
+        Certainty::Exact,
+        Escalation::Exact,
+    ))
 }
 
 /// Classify a point/plane pair without attempting the primitive dyadic filter.
@@ -859,50 +930,40 @@ pub(crate) fn classify_plane_aabb3_report_with_policy(
         "classify_plane_aabb3",
     );
 
-    let upper_sign = match resolve_real_sign(
-        &upper_value,
-        policy,
-        || None,
-        || None,
-        RefinementNeed::RealRefinement,
-    ) {
-        PredicateOutcome::Decided {
-            value,
-            certainty: value_certainty,
-            stage: value_stage,
-        } => {
-            absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
-            value
-        }
-        PredicateOutcome::Unknown { needed, stage } => {
-            return PredicateOutcome::unknown(needed, stage);
-        }
-    };
+    let upper_sign =
+        match resolve_real_sign_direct(&upper_value, policy, RefinementNeed::RealRefinement) {
+            PredicateOutcome::Decided {
+                value,
+                certainty: value_certainty,
+                stage: value_stage,
+            } => {
+                absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+                value
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return PredicateOutcome::unknown(needed, stage);
+            }
+        };
     let lower_value = point_plane_expression_from_coords(
         lower_coords,
         plane,
         Some(facts),
         "classify_plane_aabb3",
     );
-    let lower_sign = match resolve_real_sign(
-        &lower_value,
-        policy,
-        || None,
-        || None,
-        RefinementNeed::RealRefinement,
-    ) {
-        PredicateOutcome::Decided {
-            value,
-            certainty: value_certainty,
-            stage: value_stage,
-        } => {
-            absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
-            value
-        }
-        PredicateOutcome::Unknown { needed, stage } => {
-            return PredicateOutcome::unknown(needed, stage);
-        }
-    };
+    let lower_sign =
+        match resolve_real_sign_direct(&lower_value, policy, RefinementNeed::RealRefinement) {
+            PredicateOutcome::Decided {
+                value,
+                certainty: value_certainty,
+                stage: value_stage,
+            } => {
+                absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+                value
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return PredicateOutcome::unknown(needed, stage);
+            }
+        };
     let relation = plane_aabb_relation_from_extrema(lower_sign, upper_sign);
     PredicateOutcome::decided(
         PlaneAabbReport {
@@ -962,14 +1023,7 @@ fn plane_aabb_relation_from_extrema(lower_sign: Sign, upper_sign: Sign) -> Plane
 }
 
 fn sign_real_default(value: &Real) -> Option<Sign> {
-    resolve_real_sign(
-        value,
-        PredicatePolicy,
-        || None,
-        || None,
-        RefinementNeed::RealRefinement,
-    )
-    .value()
+    resolve_real_sign_direct(value, PredicatePolicy, RefinementNeed::RealRefinement).value()
 }
 
 fn point3_from_coords(coordinates: [&Real; 3]) -> Point3 {
@@ -1172,6 +1226,10 @@ mod tests {
 
     fn p3(x: f64, y: f64, z: f64) -> Point3 {
         Point3::new(real(x), real(y), real(z))
+    }
+
+    fn rational(numerator: i64, denominator: u64) -> Real {
+        Real::new(Rational::fraction(numerator, denominator).expect("valid test rational"))
     }
 
     #[test]
@@ -1389,6 +1447,59 @@ mod tests {
     }
 
     #[test]
+    fn exact_rational_plane_cascade_preserves_cancellation_and_evidence() {
+        let plane = Plane3::new(
+            Point3::new(rational(1, 3), rational(1, 5), rational(1, 7)),
+            Real::from(-3),
+        );
+        let point = Point3::new(Real::from(3), Real::from(5), Real::from(7));
+        let evidence = plane3_evidence(&plane);
+        let expected =
+            PredicateOutcome::decided(PlaneSide::On, Certainty::Exact, Escalation::Exact);
+
+        assert_eq!(classify_point_plane(&point, &plane), expected);
+        assert_eq!(
+            classify_point_plane_with_evidence(&point, &plane, &evidence),
+            expected
+        );
+    }
+
+    #[test]
+    fn exact_rational_plane_cascade_matches_materialized_expression_signs() {
+        let plane = Plane3::new(
+            Point3::new(rational(17, 19), rational(-23, 29), rational(31, 37)),
+            rational(-41, 43),
+        );
+        let evidence = plane3_evidence(&plane);
+
+        for index in -12_i64..=12 {
+            let point = Point3::new(
+                rational(index, 47),
+                rational(2 * index - 1, 53),
+                rational(3 * index + 2, 59),
+            );
+            let expression = point_plane_expression(&point, &plane, None);
+            let expected = map_outcome(
+                crate::resolve::resolve_real_sign_direct(
+                    &expression,
+                    PredicatePolicy::STRICT,
+                    RefinementNeed::RealRefinement,
+                ),
+                PlaneSide::from,
+            );
+
+            assert_eq!(
+                classify_point_plane(&point, &plane).value(),
+                expected.value()
+            );
+            assert_eq!(
+                classify_point_plane_with_evidence(&point, &plane, &evidence).value(),
+                expected.value()
+            );
+        }
+    }
+
+    #[test]
     fn oriented_plane_evidence_matches_orient3d_side() {
         let a = p3(-0.85, -0.7, -0.25);
         let b = p3(0.9, -0.35, 0.35);
@@ -1452,7 +1563,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn point_plane_evidence_reuses_coefficients_for_one_exact_product_sum() {
+    fn point_plane_evidence_reuses_rational_linear_form_filter() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1477,7 +1588,7 @@ mod tests {
             trace.path_count(
                 "hyperlimit",
                 "classify_point_plane",
-                "evidence-exact-product-sum"
+                "evidence-rational-linear-form-filter"
             ),
             1
         );
@@ -1491,7 +1602,7 @@ mod tests {
         );
         assert_eq!(
             trace.path_count("real", "product_sum", "exact-rational-known-shared-denom"),
-            1
+            0
         );
     }
 }

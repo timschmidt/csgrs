@@ -16,7 +16,7 @@ use crate::predicates::segment_plane::{
     intersect_segment_with_plane_values, point_plane_value,
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
-use crate::resolve::resolve_real_sign;
+use crate::resolve::resolve_real_sign_direct;
 use hyperreal::Real;
 
 /// Derived orientation evidence for one ordered 3D triangle.
@@ -362,13 +362,7 @@ pub(crate) fn triangle3_winding_normal_sign_with_policy(
             [&normal.z, &reference_normal.z],
         ],
     );
-    resolve_real_sign(
-        &dot,
-        policy,
-        || None,
-        || None,
-        RefinementNeed::RealRefinement,
-    )
+    resolve_real_sign_direct(&dot, policy, RefinementNeed::RealRefinement)
 }
 
 /// Classify the intersection of a closed 3D segment `pq` with triangle `abc`.
@@ -1466,13 +1460,7 @@ fn segment_triangle_sign(
 }
 
 fn sign_for_ray_triangle(value: &Real, policy: PredicatePolicy) -> PredicateOutcome<Sign> {
-    resolve_real_sign(
-        value,
-        policy,
-        || None,
-        || None,
-        RefinementNeed::RealRefinement,
-    )
+    resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement)
 }
 
 fn triangle3_normal_signs_outcome(
@@ -1524,13 +1512,7 @@ fn edge_halfspace3_sign(
     let dot = add_ref(&nxy, &nz);
 
     triangle3_sign(
-        resolve_real_sign(
-            &dot,
-            policy,
-            || None,
-            || None,
-            RefinementNeed::RealRefinement,
-        ),
+        resolve_real_sign_direct(&dot, policy, RefinementNeed::RealRefinement),
         certainty,
         stage,
     )
@@ -1544,35 +1526,17 @@ fn real_signs3(
 ) -> Result<[Sign; 3], PredicateOutcome<Triangle3Location>> {
     Ok([
         triangle3_sign(
-            resolve_real_sign(
-                values[0],
-                policy,
-                || None,
-                || None,
-                RefinementNeed::RealRefinement,
-            ),
+            resolve_real_sign_direct(values[0], policy, RefinementNeed::RealRefinement),
             certainty,
             stage,
         )?,
         triangle3_sign(
-            resolve_real_sign(
-                values[1],
-                policy,
-                || None,
-                || None,
-                RefinementNeed::RealRefinement,
-            ),
+            resolve_real_sign_direct(values[1], policy, RefinementNeed::RealRefinement),
             certainty,
             stage,
         )?,
         triangle3_sign(
-            resolve_real_sign(
-                values[2],
-                policy,
-                || None,
-                || None,
-                RefinementNeed::RealRefinement,
-            ),
+            resolve_real_sign_direct(values[2], policy, RefinementNeed::RealRefinement),
             certainty,
             stage,
         )?,

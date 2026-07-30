@@ -11,7 +11,7 @@ use crate::geometry::{Point2, Point3};
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::real::sub_ref;
 use crate::resolve::{map_outcome, resolve_real_sign_direct};
-use hyperreal::Real;
+use hyperreal::{CertifiedRealOrdering, Problem, Rational, Real, RealOrderingCertificate};
 
 /// Decide the sign of one Real value through the predicate pipeline.
 pub fn classify_real_sign(value: &Real) -> PredicateOutcome<Sign> {
@@ -26,7 +26,93 @@ pub fn classify_real_sign_with_policy(
     resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement)
 }
 
+/// Construct a reciprocal after deciding nonzero status through the shared
+/// predicate policy.
+///
+/// The returned outcome retains the certainty and escalation stage of the
+/// denominator decision. This is the construction counterpart to
+/// [`classify_real_sign`]: downstream exact geometry can reuse one policy
+/// decision instead of asking `Real` division to repeat the same potentially
+/// expensive refinement for every coordinate.
+pub fn reciprocal_real(value: &Real) -> Result<PredicateOutcome<Real>, Problem> {
+    reciprocal_real_with_policy(value, PredicatePolicy)
+}
+
+/// Policy-controlled variant of [`reciprocal_real`].
+pub fn reciprocal_real_with_policy(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<PredicateOutcome<Real>, Problem> {
+    match classify_real_sign_with_policy(value, policy) {
+        PredicateOutcome::Decided {
+            value: Sign::Zero, ..
+        } => Err(Problem::DivideByZero),
+        PredicateOutcome::Decided {
+            certainty, stage, ..
+        } => Ok(PredicateOutcome::decided(
+            value.inverse_ref_assuming_nonzero()?,
+            certainty,
+            stage,
+        )),
+        PredicateOutcome::Unknown { needed, stage } => Ok(PredicateOutcome::unknown(needed, stage)),
+    }
+}
+
+/// Decide two Real signs through one predicate cascade.
+///
+/// This is useful for paired domain checks and vector-like sign queries. It
+/// batches the common exact-rational path while preserving the weakest
+/// certainty and latest escalation stage when either value needs the general
+/// resolver.
+pub fn classify_real_sign_pair(left: &Real, right: &Real) -> PredicateOutcome<(Sign, Sign)> {
+    classify_real_sign_pair_with_policy(left, right, PredicatePolicy)
+}
+
+/// Decide two Real signs with an explicit predicate policy.
+pub fn classify_real_sign_pair_with_policy(
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<(Sign, Sign)> {
+    if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
+        crate::trace_dispatch!("hyperlimit", "classify_real_sign_pair", "exact-rational");
+        return PredicateOutcome::decided(
+            (exact_rational_sign(left), exact_rational_sign(right)),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+
+    crate::trace_dispatch!("hyperlimit", "classify_real_sign_pair", "scalar-cascades");
+    match (
+        classify_real_sign_with_policy(left, policy),
+        classify_real_sign_with_policy(right, policy),
+    ) {
+        (
+            PredicateOutcome::Decided {
+                value: left,
+                certainty: left_certainty,
+                stage: left_stage,
+            },
+            PredicateOutcome::Decided {
+                value: right,
+                certainty: right_certainty,
+                stage: right_stage,
+            },
+        ) => PredicateOutcome::decided(
+            (left, right),
+            max_certainty(left_certainty, right_certainty),
+            max_stage(left_stage, right_stage),
+        ),
+        (PredicateOutcome::Unknown { needed, stage }, _)
+        | (_, PredicateOutcome::Unknown { needed, stage }) => {
+            PredicateOutcome::unknown(needed, stage)
+        }
+    }
+}
+
 /// Compare two Real values by deciding the sign of `left - right`.
+#[inline]
 pub fn compare_reals(left: &Real, right: &Real) -> PredicateOutcome<Ordering> {
     compare_reals_with_policy(left, right, PredicatePolicy)
 }
@@ -39,6 +125,7 @@ pub fn compare_reals(left: &Real, right: &Real) -> PredicateOutcome<Ordering> {
 /// breaking without importing primitive-float ordering into topology code.
 /// Numerical structure may be carried by Real objects, while geometric
 /// decisions ask a predicate layer to certify signs.
+#[inline]
 pub fn compare_reals_with_policy(
     left: &Real,
     right: &Real,
@@ -54,12 +141,48 @@ pub fn compare_reals_with_policy(
         );
     }
 
-    crate::trace_dispatch!("hyperlimit", "compare_reals", "difference-sign");
-    let difference = sub_ref(left, right);
-    map_outcome(
-        resolve_real_sign_direct(&difference, policy, RefinementNeed::RealRefinement),
-        ordering_from_sign,
-    )
+    match left.certified_cmp_until(right, PredicatePolicy::MAX_REFINEMENT_PRECISION) {
+        CertifiedRealOrdering::Known {
+            ordering,
+            certificate,
+        } => {
+            let stage = match certificate {
+                RealOrderingCertificate::StructuralEquality
+                | RealOrderingCertificate::StructuralFacts
+                | RealOrderingCertificate::DifferenceStructuralFacts => Escalation::Structural,
+                RealOrderingCertificate::ExactRationalComparison => Escalation::Exact,
+                RealOrderingCertificate::BoundedRefinement { .. } => Escalation::Refined,
+            };
+            crate::trace_dispatch!("hyperlimit", "compare_reals", "certified-real-ordering");
+            PredicateOutcome::decided(ordering, Certainty::Exact, stage)
+        }
+        CertifiedRealOrdering::Unknown { .. } => {
+            let Some(precision) = policy.final_approximation_precision() else {
+                crate::trace_dispatch!("hyperlimit", "compare_reals", "unknown");
+                return PredicateOutcome::unknown(
+                    RefinementNeed::RealRefinement,
+                    Escalation::Undecided,
+                );
+            };
+            crate::trace_dispatch!("hyperlimit", "compare_reals", "policy-final-approximation");
+            let difference = sub_ref(left, right);
+            let Some([lower, upper]) = difference.certified_dyadic_interval(precision) else {
+                return PredicateOutcome::unknown(
+                    RefinementNeed::RealRefinement,
+                    Escalation::Undecided,
+                );
+            };
+            let zero = Rational::zero();
+            let ordering = if upper < zero {
+                Ordering::Less
+            } else if lower > zero {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            };
+            PredicateOutcome::decided(ordering, Certainty::Approximate, Escalation::Refined)
+        }
+    }
 }
 
 /// Return whether `left <= right` under the exact Real ordering predicate.
@@ -68,7 +191,7 @@ pub fn real_le(left: &Real, right: &Real) -> PredicateOutcome<bool> {
 }
 
 /// Policy-controlled variant of [`real_le`].
-pub(crate) fn real_le_with_policy(
+pub fn real_le_with_policy(
     left: &Real,
     right: &Real,
     policy: PredicatePolicy,
@@ -84,7 +207,7 @@ pub fn real_ge(left: &Real, right: &Real) -> PredicateOutcome<bool> {
 }
 
 /// Policy-controlled variant of [`real_ge`].
-pub(crate) fn real_ge_with_policy(
+pub fn real_ge_with_policy(
     left: &Real,
     right: &Real,
     policy: PredicatePolicy,
@@ -100,7 +223,7 @@ pub fn real_min<'a>(left: &'a Real, right: &'a Real) -> PredicateOutcome<&'a Rea
 }
 
 /// Policy-controlled variant of [`real_min`].
-pub(crate) fn real_min_with_policy<'a>(
+pub fn real_min_with_policy<'a>(
     left: &'a Real,
     right: &'a Real,
     policy: PredicatePolicy,
@@ -120,7 +243,7 @@ pub fn real_max<'a>(left: &'a Real, right: &'a Real) -> PredicateOutcome<&'a Rea
 }
 
 /// Policy-controlled variant of [`real_max`].
-pub(crate) fn real_max_with_policy<'a>(
+pub fn real_max_with_policy<'a>(
     left: &'a Real,
     right: &'a Real,
     policy: PredicatePolicy,
@@ -140,7 +263,7 @@ pub fn real_clamp(value: Real, min: &Real, max: &Real) -> PredicateOutcome<Real>
 }
 
 /// Policy-controlled variant of [`real_clamp`].
-pub(crate) fn real_clamp_with_policy(
+pub fn real_clamp_with_policy(
     value: Real,
     min: &Real,
     max: &Real,
@@ -223,7 +346,7 @@ pub fn compare_point2_lexicographic(left: &Point2, right: &Point2) -> PredicateO
 /// This is useful for deterministic exact event queues and canonical endpoint
 /// ordering. It deliberately does not impose polygon, segment, or sweep-line
 /// topology; it only composes two Real ordering predicates.
-pub(crate) fn compare_point2_lexicographic_with_policy(
+pub fn compare_point2_lexicographic_with_policy(
     left: &Point2,
     right: &Point2,
     policy: PredicatePolicy,
@@ -261,11 +384,31 @@ pub fn point2_equal(left: &Point2, right: &Point2) -> PredicateOutcome<bool> {
 /// Keeping it here avoids each arrangement, curve, or triangulation crate
 /// reimplementing "compare x, then compare y" with slightly different
 /// uncertainty handling while preserving the exact-computation boundary.
-pub(crate) fn point2_equal_with_policy(
+pub fn point2_equal_with_policy(
     left: &Point2,
     right: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
+    if let (Some(left_x), Some(right_x)) =
+        (left.x.exact_rational_ref(), right.x.exact_rational_ref())
+    {
+        if left_x != right_x {
+            crate::trace_dispatch!("hyperlimit", "point2_equal", "exact-rational-x");
+            return PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact);
+        }
+        if let (Some(left_y), Some(right_y)) =
+            (left.y.exact_rational_ref(), right.y.exact_rational_ref())
+        {
+            crate::trace_dispatch!("hyperlimit", "point2_equal", "exact-rational-xy");
+            return PredicateOutcome::decided(
+                left_y == right_y,
+                Certainty::Exact,
+                Escalation::Exact,
+            );
+        }
+    }
+
+    crate::trace_dispatch!("hyperlimit", "point2_equal", "lexicographic-cascade");
     map_outcome(
         compare_point2_lexicographic_with_policy(left, right, policy),
         |ordering| ordering == Ordering::Equal,
@@ -284,7 +427,7 @@ pub fn compare_point3_lexicographic(left: &Point3, right: &Point3) -> PredicateO
 /// exact Real ordering predicates for deterministic canonicalization and
 /// equality decisions without routing coordinate equality through an unrelated
 /// geometric primitive such as a zero-radius sphere.
-pub(crate) fn compare_point3_lexicographic_with_policy(
+pub fn compare_point3_lexicographic_with_policy(
     left: &Point3,
     right: &Point3,
     policy: PredicatePolicy,
@@ -340,7 +483,7 @@ pub fn point3_equal(left: &Point3, right: &Point3) -> PredicateOutcome<bool> {
 /// Keeping the 3D form beside [`point2_equal`] gives callers a direct semantic
 /// API for vertex identity and normal-row deduplication instead of requiring a
 /// zero-radius sphere classification.
-pub(crate) fn point3_equal_with_policy(
+pub fn point3_equal_with_policy(
     left: &Point3,
     right: &Point3,
     policy: PredicatePolicy,
@@ -352,14 +495,18 @@ pub(crate) fn point3_equal_with_policy(
 }
 
 #[inline(always)]
-fn ordering_from_sign(sign: Sign) -> Ordering {
-    match sign {
-        Sign::Negative => Ordering::Less,
-        Sign::Zero => Ordering::Equal,
-        Sign::Positive => Ordering::Greater,
+fn exact_rational_sign(value: &Rational) -> Sign {
+    match value
+        .partial_cmp(&Rational::zero())
+        .expect("exact rational ordering is total")
+    {
+        Ordering::Less => Sign::Negative,
+        Ordering::Equal => Sign::Zero,
+        Ordering::Greater => Sign::Positive,
     }
 }
 
+#[inline(always)]
 fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
     if certainty_rank(left) >= certainty_rank(right) {
         left
@@ -368,6 +515,7 @@ fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
     }
 }
 
+#[inline(always)]
 fn certainty_rank(certainty: Certainty) -> u8 {
     match certainty {
         Certainty::Exact => 0,
@@ -376,6 +524,7 @@ fn certainty_rank(certainty: Certainty) -> u8 {
     }
 }
 
+#[inline(always)]
 fn max_stage(left: Escalation, right: Escalation) -> Escalation {
     if stage_rank(left) >= stage_rank(right) {
         left
@@ -384,6 +533,7 @@ fn max_stage(left: Escalation, right: Escalation) -> Escalation {
     }
 }
 
+#[inline(always)]
 fn stage_rank(stage: Escalation) -> u8 {
     match stage {
         Escalation::Structural => 0,
@@ -400,6 +550,20 @@ mod tests {
 
     fn real(value: i32) -> hyperreal::Real {
         hyperreal::Real::from(value)
+    }
+
+    #[test]
+    fn paired_signs_batch_exact_rationals_and_preserve_unknowns() {
+        assert_eq!(
+            classify_real_sign_pair(&real(-1), &real(0)).value(),
+            Some((Sign::Negative, Sign::Zero))
+        );
+
+        let undecidable = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        assert!(matches!(
+            classify_real_sign_pair_with_policy(&real(1), &undecidable, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
     }
 
     #[test]
@@ -473,5 +637,24 @@ mod tests {
         assert_eq!(real_clamp(mid.clone(), &low, &high).value(), Some(mid));
         assert_eq!(real_clamp(real(0), &low, &high).value(), Some(low.clone()));
         assert_eq!(real_clamp(real(4), &low, &high).value(), Some(high));
+    }
+
+    #[test]
+    fn reciprocal_reuses_the_policy_nonzero_decision() {
+        let reciprocal = reciprocal_real(&real(2))
+            .expect("two is nonzero")
+            .value()
+            .expect("the reciprocal is decided");
+        assert_eq!(
+            compare_reals(&(real(2) * reciprocal), &real(1)).value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(reciprocal_real(&real(0)), Err(Problem::DivideByZero));
+
+        let undecidable = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        assert!(matches!(
+            reciprocal_real_with_policy(&undecidable, PredicatePolicy::STRICT),
+            Ok(PredicateOutcome::Unknown { .. })
+        ));
     }
 }

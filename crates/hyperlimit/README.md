@@ -156,7 +156,7 @@ that need an explicit `PredicatePolicy`.
 | --- | --- |
 | Point/AABB | `classify_point_aabb2`, `classify_point_aabb3`, `point_in_aabb2`, `point_in_aabb3` |
 | AABB/AABB | `classify_aabb2_intersection`, `classify_aabb3_intersection`, `aabb2s_intersect`, `aabb3s_intersect` |
-| Ordered AABBs | `ordered_aabb3_contains`, `ordered_aabb3s_intersect`, `point_in_ordered_aabb3_relative_interior` |
+| Ordered AABBs | `ordered_aabb2s_intersect_coordinates`, `point_in_ordered_aabb2_coordinates`, `ordered_aabb3_contains`, `ordered_aabb3s_intersect`, `point_in_ordered_aabb3_relative_interior` |
 | Reuse box facts | `aabb2_facts`, `classify_aabb2_intersection_with_facts`, `point_in_triangle2_aabb` |
 | Compare squared distances | `compare_point2_distance_squared`, `compare_point3_distance_squared`, `compare_point_line3_distance_squared`, `compare_point_segment3_distance_squared`, `compare_point_plane_distance_squared` |
 | Circle relations | `classify_circle_line2`, `classify_circle_segment2` |

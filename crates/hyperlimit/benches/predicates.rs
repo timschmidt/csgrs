@@ -20,19 +20,22 @@ use hyperlimit::{
     classify_point_segment_with_facts, classify_point_segment3, classify_point_sphere3,
     classify_point_triangle_with_orientation, classify_point_triangle3_with_orientation,
     classify_ray_triangle3_intersection, classify_ray_triangle3_intersection_report,
-    classify_segment_intersection_with_facts, classify_segment_triangle3_intersection,
-    classify_segment_triangle3_intersection_report, classify_segment3_intersection,
-    classify_sphere3_intersection, classify_triangle_against_oriented_plane,
-    classify_triangle_triangle3, classify_triangle3_degeneracy,
-    compare_point_line3_distance_squared, compare_point_plane_distance_squared,
-    compare_point_segment3_distance_squared, incircle2 as incircle2d, incircle2_evidence,
+    classify_real_sign, classify_real_sign_pair, classify_segment_intersection_with_facts,
+    classify_segment_triangle3_intersection, classify_segment_triangle3_intersection_report,
+    classify_segment3_intersection, classify_sphere3_intersection,
+    classify_triangle_against_oriented_plane, classify_triangle_triangle3,
+    classify_triangle3_degeneracy, compare_point_line3_distance_squared,
+    compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
+    incircle2 as incircle2d, incircle2_evidence,
     incircle2_with_evidence as incircle2d_with_evidence, insphere_d, insphere3 as insphere3d,
     insphere3_evidence, insphere3_with_evidence as insphere3d_with_evidence,
     intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes,
-    line2_orientation, ordered_aabb3_contains, ordered_aabb3s_intersect, orient_d,
-    orient2 as orient2d, orient3 as orient3d, oriented_plane3_evidence, plane3_evidence,
-    point_in_ordered_aabb3_relative_interior, point2_displacement_facts, projected_line_parameter3,
-    projected_segment_parameter3, segment2_facts, support_dop3_from_points, triangle3_orientation,
+    line2_orientation, ordered_aabb2s_intersect_coordinates, ordered_aabb3_contains,
+    ordered_aabb3s_intersect, orient_d, orient2 as orient2d, orient3 as orient3d,
+    oriented_plane3_evidence, plane3_evidence, point_in_ordered_aabb2_coordinates,
+    point_in_ordered_aabb3_relative_interior, point2_displacement_facts, point2_equal,
+    projected_line_parameter3, projected_segment_parameter3, segment2_facts,
+    support_dop3_from_points, triangle3_orientation,
 };
 use robust::{Coord, Coord3D};
 
@@ -69,6 +72,8 @@ impl Workload {
 }
 
 fn bench_predicates(c: &mut Criterion) {
+    bench_real_sign_pair(c);
+    bench_point2_equality(c);
     bench_aabb_immediate(c);
     bench_explicit_sphere_immediate(c);
     bench_line2_immediate(c);
@@ -94,6 +99,38 @@ fn bench_predicates(c: &mut Criterion) {
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_point2_equality(c: &mut Criterion) {
+    let left = rational_point2(17, 3, -29, 7);
+    let equal = left.clone();
+    let unequal = rational_point2(17, 3, -30, 7);
+    let mut group = c.benchmark_group("point2_equality");
+    group.bench_function("equal_exact_rational", |bench| {
+        bench.iter(|| point2_equal(black_box(&left), black_box(&equal)))
+    });
+    group.bench_function("unequal_y_exact_rational", |bench| {
+        bench.iter(|| point2_equal(black_box(&left), black_box(&unequal)))
+    });
+    group.finish();
+}
+
+fn bench_real_sign_pair(c: &mut Criterion) {
+    let left = hyperreal_real(-7.0);
+    let right = hyperreal_real(11.0);
+    let mut group = c.benchmark_group("real_sign_pair");
+    group.bench_function("composed_scalar_cascades", |bench| {
+        bench.iter(|| {
+            (
+                classify_real_sign(black_box(&left)),
+                classify_real_sign(black_box(&right)),
+            )
+        })
+    });
+    group.bench_function("paired_cascade", |bench| {
+        bench.iter(|| classify_real_sign_pair(black_box(&left), black_box(&right)))
+    });
+    group.finish();
 }
 
 fn bench_line2_immediate(c: &mut Criterion) {
@@ -293,6 +330,7 @@ fn bench_aabb_immediate(c: &mut Criterion) {
     let contained_3d_min = rational_point3(1, 1, 1, 1, 1, 1);
     let contained_3d_max = rational_point3(3, 1, 3, 1, 3, 1);
     let query_3d = rational_point3(2, 1, 2, 1, 2, 1);
+    let query_2d = rational_point2(4, 1, 0, 1);
 
     let mut group = c.benchmark_group("aabb_immediate");
     group.bench_function("2d/intersection_with_facts", |bench| {
@@ -304,6 +342,25 @@ fn bench_aabb_immediate(c: &mut Criterion) {
                 black_box(&second_2d_max),
                 black_box(first_2d_facts),
                 black_box(second_2d_facts),
+            )
+        })
+    });
+    group.bench_function("2d/ordered_intersection_coordinates", |bench| {
+        bench.iter(|| {
+            ordered_aabb2s_intersect_coordinates(
+                black_box([&first_2d_min.x, &first_2d_min.y]),
+                black_box([&first_2d_max.x, &first_2d_max.y]),
+                black_box([&second_2d_min.x, &second_2d_min.y]),
+                black_box([&second_2d_max.x, &second_2d_max.y]),
+            )
+        })
+    });
+    group.bench_function("2d/ordered_point_coordinates", |bench| {
+        bench.iter(|| {
+            point_in_ordered_aabb2_coordinates(
+                black_box([&first_2d_min.x, &first_2d_min.y]),
+                black_box([&first_2d_max.x, &first_2d_max.y]),
+                black_box([&query_2d.x, &query_2d.y]),
             )
         })
     });

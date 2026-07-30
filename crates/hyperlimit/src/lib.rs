@@ -81,6 +81,7 @@ pub use orient::{
     incircle2, incircle2_evidence, incircle2_with_evidence, incircle2_with_evidence_and_policy,
     insphere3, insphere3_evidence, insphere3_with_evidence, insphere3_with_evidence_and_policy,
     line2_orientation, line2_orientation_with_facts, orient2, orient2_with_policy, orient3,
+    orient3_with_policy,
 };
 pub use plane::{
     OrientedPlane3Evidence, Plane3, Plane3Evidence, PlaneAabbReport,
@@ -100,8 +101,11 @@ pub use predicate::{
 pub use predicates::aabb::{
     aabb2s_intersect, aabb3s_intersect, classify_aabb2_intersection,
     classify_aabb2_intersection_with_facts, classify_aabb3_intersection, classify_point_aabb2,
-    classify_point_aabb3, ordered_aabb3_contains, ordered_aabb3s_intersect, point_in_aabb2,
-    point_in_aabb3, point_in_ordered_aabb3_relative_interior, point_in_triangle2_aabb,
+    classify_point_aabb3, classify_point_aabb3_with_policy, ordered_aabb2s_intersect_coordinates,
+    ordered_aabb2s_intersect_coordinates_with_policy, ordered_aabb3_contains,
+    ordered_aabb3s_intersect, point_in_aabb2, point_in_aabb3, point_in_ordered_aabb2_coordinates,
+    point_in_ordered_aabb2_coordinates_with_policy, point_in_ordered_aabb3_relative_interior,
+    point_in_triangle2_aabb,
 };
 pub use predicates::convex::{classify_point_convex_planes3, classify_point_convex_polygon2};
 pub use predicates::coplanar::{
@@ -115,8 +119,9 @@ pub use predicates::coplanar::{
     projected_segment_parameter3, projected_vector3,
 };
 pub use predicates::distance::{
-    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
-    classify_point_sphere3, classify_sphere3_intersection, compare_point_line3_distance_squared,
+    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_line2_with_policy,
+    classify_circle_segment2, classify_circle_segment2_with_policy, classify_point_sphere3,
+    classify_sphere3_intersection, compare_point_line3_distance_squared,
     compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
     compare_point2_distance_squared, compare_point3_distance_squared,
 };
@@ -139,9 +144,14 @@ pub use predicates::interval::{
 };
 pub use predicates::nd::{affine_independent_d, insphere_d, orient_d};
 pub use predicates::order::{
-    classify_real_sign, classify_real_sign_with_policy, compare_point2_lexicographic,
-    compare_point3_lexicographic, compare_reals, compare_reals_with_policy, point2_equal,
-    point3_equal, real_clamp, real_ge, real_le, real_max, real_min,
+    classify_real_sign, classify_real_sign_pair, classify_real_sign_pair_with_policy,
+    classify_real_sign_with_policy, compare_point2_lexicographic,
+    compare_point2_lexicographic_with_policy, compare_point3_lexicographic,
+    compare_point3_lexicographic_with_policy, compare_reals, compare_reals_with_policy,
+    point2_equal, point2_equal_with_policy, point3_equal, point3_equal_with_policy, real_clamp,
+    real_clamp_with_policy, real_ge, real_ge_with_policy, real_le, real_le_with_policy, real_max,
+    real_max_with_policy, real_min, real_min_with_policy, reciprocal_real,
+    reciprocal_real_with_policy,
 };
 pub use predicates::ring::{
     Ring2Facts, RingEvenOddEdgeReport, RingEvenOddReport, RingEvenOddValidationError,
@@ -151,10 +161,13 @@ pub use predicates::ring::{
     point_in_ring_even_odd, ring_area_sign, ring_convexity, ring2_facts,
 };
 pub use predicates::segment::{
-    classify_point_segment, classify_point_segment_with_facts, classify_point_segment3,
+    classify_point_segment, classify_point_segment_with_facts, classify_point_segment_with_policy,
+    classify_point_segment_with_policy_and_facts, classify_point_segment3,
     classify_segment_intersection, classify_segment_intersection_with_facts,
+    classify_segment_intersection_with_policy, classify_segment_intersection_with_policy_and_facts,
     classify_segment3_intersection, point_on_segment, point_on_segment_with_facts,
     point_on_segment3, proper_segment_intersection_point,
+    proper_segment_intersection_point_with_policy,
 };
 pub use predicates::segment_plane::{
     SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,

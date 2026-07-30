@@ -125,7 +125,7 @@ pub fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> PredicateOutc
 }
 
 /// Orientation of four 3D points with an explicit escalation policy.
-pub(crate) fn orient3d_with_policy(
+pub fn orient3d_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,

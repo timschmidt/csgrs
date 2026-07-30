@@ -19,6 +19,138 @@ use crate::predicates::order::compare_reals_with_policy;
 use core::cmp::Ordering;
 use hyperreal::Real;
 
+/// Return whether a point lies in an ordered closed 2D box using borrowed
+/// coordinates.
+///
+/// `min[axis] <= max[axis]` is a caller-provided precondition. This
+/// coordinate-borrowed form lets curve and broad-phase crates reuse the
+/// canonical Hyperlimit cascade without cloning their own point carriers into
+/// [`Point2`].
+#[inline]
+pub fn point_in_ordered_aabb2_coordinates(
+    min: [&Real; 2],
+    max: [&Real; 2],
+    point: [&Real; 2],
+) -> PredicateOutcome<bool> {
+    point_in_ordered_aabb2_coordinates_with_policy(min, max, point, PredicatePolicy)
+}
+
+/// Policy-controlled variant of [`point_in_ordered_aabb2_coordinates`].
+#[inline]
+pub fn point_in_ordered_aabb2_coordinates_with_policy(
+    min: [&Real; 2],
+    max: [&Real; 2],
+    point: [&Real; 2],
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    if let (Some(min), Some(max), Some(point)) = (
+        exact_rational_coordinates2(min),
+        exact_rational_coordinates2(max),
+        exact_rational_coordinates2(point),
+    ) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "point_in_ordered_aabb2_coordinates",
+            "exact-rational"
+        );
+        let inside = (0..2).all(|axis| min[axis] <= point[axis] && point[axis] <= max[axis]);
+        return PredicateOutcome::decided(inside, Certainty::Exact, Escalation::Exact);
+    }
+
+    let mut trace = DecisionTrace::default();
+    for axis in 0..2 {
+        let below_minimum = match decided(
+            compare_reals_with_policy(point[axis], min[axis], policy),
+            &mut trace,
+        ) {
+            Ok(ordering) => ordering == Ordering::Less,
+            Err(unknown) => return unknown.into_outcome(),
+        };
+        if below_minimum {
+            return PredicateOutcome::decided(false, trace.certainty, trace.stage);
+        }
+
+        let above_maximum = match decided(
+            compare_reals_with_policy(point[axis], max[axis], policy),
+            &mut trace,
+        ) {
+            Ok(ordering) => ordering == Ordering::Greater,
+            Err(unknown) => return unknown.into_outcome(),
+        };
+        if above_maximum {
+            return PredicateOutcome::decided(false, trace.certainty, trace.stage);
+        }
+    }
+
+    PredicateOutcome::decided(true, trace.certainty, trace.stage)
+}
+
+/// Return whether two ordered closed 2D boxes intersect inclusively using
+/// borrowed coordinates.
+///
+/// Both min/max pairs must already be ordered on every axis. Edge and corner
+/// contact count as intersection.
+#[inline]
+pub fn ordered_aabb2s_intersect_coordinates(
+    first_min: [&Real; 2],
+    first_max: [&Real; 2],
+    second_min: [&Real; 2],
+    second_max: [&Real; 2],
+) -> PredicateOutcome<bool> {
+    ordered_aabb2s_intersect_coordinates_with_policy(
+        first_min,
+        first_max,
+        second_min,
+        second_max,
+        PredicatePolicy,
+    )
+}
+
+/// Policy-controlled variant of [`ordered_aabb2s_intersect_coordinates`].
+#[inline]
+pub fn ordered_aabb2s_intersect_coordinates_with_policy(
+    first_min: [&Real; 2],
+    first_max: [&Real; 2],
+    second_min: [&Real; 2],
+    second_max: [&Real; 2],
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    if let (Some(first_min), Some(first_max), Some(second_min), Some(second_max)) = (
+        exact_rational_coordinates2(first_min),
+        exact_rational_coordinates2(first_max),
+        exact_rational_coordinates2(second_min),
+        exact_rational_coordinates2(second_max),
+    ) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "ordered_aabb2s_intersect_coordinates",
+            "exact-rational"
+        );
+        let intersects = (0..2)
+            .all(|axis| first_max[axis] >= second_min[axis] && second_max[axis] >= first_min[axis]);
+        return PredicateOutcome::decided(intersects, Certainty::Exact, Escalation::Exact);
+    }
+
+    let mut trace = DecisionTrace::default();
+    for axis in 0..2 {
+        for (left, right) in [
+            (first_max[axis], second_min[axis]),
+            (second_max[axis], first_min[axis]),
+        ] {
+            let separated =
+                match decided(compare_reals_with_policy(left, right, policy), &mut trace) {
+                    Ok(ordering) => ordering == Ordering::Less,
+                    Err(unknown) => return unknown.into_outcome(),
+                };
+            if separated {
+                return PredicateOutcome::decided(false, trace.certainty, trace.stage);
+            }
+        }
+    }
+
+    PredicateOutcome::decided(true, trace.certainty, trace.stage)
+}
+
 /// Classify a point relative to a closed 2D axis-aligned box.
 pub fn classify_point_aabb2(
     min: &Point2,
@@ -175,7 +307,7 @@ pub fn classify_point_aabb3(
 ///
 /// The min/max corners may be supplied in either coordinate order; each axis is
 /// normalized by exact interval predicates.
-pub(crate) fn classify_point_aabb3_with_policy(
+pub fn classify_point_aabb3_with_policy(
     min: &Point3,
     max: &Point3,
     point: &Point3,
@@ -885,6 +1017,14 @@ fn is_interval_boundary(location: RealIntervalLocation) -> bool {
 }
 
 #[inline]
+fn exact_rational_coordinates2(coordinates: [&Real; 2]) -> Option<[&hyperreal::Rational; 2]> {
+    let [Some(x), Some(y)] = coordinates.map(Real::exact_rational_ref) else {
+        return None;
+    };
+    Some([x, y])
+}
+
+#[inline]
 fn exact_rational_coordinates3(coordinates: [&Real; 3]) -> Option<[&hyperreal::Rational; 3]> {
     let [Some(x), Some(y), Some(z)] = coordinates.map(Real::exact_rational_ref) else {
         return None;
@@ -1163,6 +1303,54 @@ mod tests {
             point_in_ordered_aabb3_relative_interior(&inner_min, &inner_max, &p3(2, 1, 2)).value(),
             Some(false)
         );
+    }
+
+    #[test]
+    fn ordered_aabb2_coordinate_predicates_cover_overlap_and_point_membership() {
+        let outer_min = p2(0, 0);
+        let outer_max = p2(4, 4);
+        let touching_min = p2(4, 1);
+        let touching_max = p2(6, 3);
+        let disjoint_min = p2(5, 1);
+        let disjoint_max = p2(6, 3);
+        let inside = p2(2, 3);
+        let boundary = p2(4, 3);
+        let outside = p2(5, 3);
+
+        fn coordinates(point: &Point2) -> [&Real; 2] {
+            [&point.x, &point.y]
+        }
+        assert_eq!(
+            ordered_aabb2s_intersect_coordinates(
+                coordinates(&outer_min),
+                coordinates(&outer_max),
+                coordinates(&touching_min),
+                coordinates(&touching_max),
+            )
+            .value(),
+            Some(true)
+        );
+        assert_eq!(
+            ordered_aabb2s_intersect_coordinates(
+                coordinates(&outer_min),
+                coordinates(&outer_max),
+                coordinates(&disjoint_min),
+                coordinates(&disjoint_max),
+            )
+            .value(),
+            Some(false)
+        );
+        for (point, expected) in [(&inside, true), (&boundary, true), (&outside, false)] {
+            assert_eq!(
+                point_in_ordered_aabb2_coordinates(
+                    coordinates(&outer_min),
+                    coordinates(&outer_max),
+                    coordinates(point),
+                )
+                .value(),
+                Some(expected)
+            );
+        }
     }
 
     #[test]

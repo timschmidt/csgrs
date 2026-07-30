@@ -10,7 +10,7 @@ use crate::predicate::PredicatePolicy;
 use hyperreal::{Rational, Real};
 
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
-use crate::resolve::resolve_real_sign;
+use crate::resolve::resolve_real_sign_direct;
 
 /// Decides the orientation sign of `dimension + 1` points in `dimension` space.
 ///
@@ -34,13 +34,7 @@ pub(crate) fn orient_d_with_policy(
         return PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Structural);
     }
     let determinant = orient_d_determinant(points, dimension);
-    resolve_real_sign(
-        &determinant,
-        policy,
-        || None,
-        || None,
-        RefinementNeed::RealRefinement,
-    )
+    resolve_real_sign_direct(&determinant, policy, RefinementNeed::RealRefinement)
 }
 
 /// Decides the lifted D-dimensional in-sphere determinant sign.
@@ -67,13 +61,7 @@ pub(crate) fn insphere_d_with_policy(
         return PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Structural);
     }
     let determinant = insphere_d_determinant(simplex, query, dimension);
-    resolve_real_sign(
-        &determinant,
-        policy,
-        || None,
-        || None,
-        RefinementNeed::RealRefinement,
-    )
+    resolve_real_sign_direct(&determinant, policy, RefinementNeed::RealRefinement)
 }
 
 /// Returns whether a `dimension + 1` point set is affinely independent.

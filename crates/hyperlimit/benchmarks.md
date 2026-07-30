@@ -2,7 +2,7 @@
 
 This file is generated from Criterion output under `target/criterion`.
 
-Generated at Unix timestamp `1785221176`.
+Generated at Unix timestamp `1785399044`.
 
 ## Commands
 
@@ -30,37 +30,37 @@ Open Criterion's detailed HTML report at `target/criterion/report/index.html`.
 
 | Predicate | Representation | Workload | Mean | 95% CI | Median | Change vs Baseline |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `classify_point_line` | `hyperreal` | `easy` | 13.41 us | 13.40 us - 13.43 us | 13.39 us | - |
-| `classify_point_line` | `hyperreal` | `near_degenerate` | 13.61 us | 13.57 us - 13.65 us | 13.55 us | - |
-| `classify_point_line_fixed` | `hyperreal` | `easy` | 14.07 us | 14.05 us - 14.08 us | 14.05 us | - |
-| `classify_point_line_fixed` | `hyperreal` | `near_degenerate` | 13.19 us | 13.13 us - 13.27 us | 13.07 us | - |
-| `classify_point_line_fixed` | `hyperreal_oriented` | `easy` | 8.69 us | 8.67 us - 8.70 us | 8.67 us | - |
-| `classify_point_line_fixed` | `hyperreal_oriented` | `near_degenerate` | 8.08 us | 8.06 us - 8.11 us | 8.05 us | - |
-| `classify_point_oriented_plane` | `hyperreal` | `easy` | 37.18 us | 37.09 us - 37.29 us | 37.09 us | -3.59% |
-| `classify_point_oriented_plane` | `hyperreal` | `near_degenerate` | 36.85 us | 36.80 us - 36.89 us | 36.77 us | -5.60% |
-| `classify_point_oriented_plane` | `hyperreal_evidence` | `easy` | 19.12 us | 19.07 us - 19.18 us | 19.02 us | - |
-| `classify_point_oriented_plane` | `hyperreal_evidence` | `near_degenerate` | 19.39 us | 19.37 us - 19.41 us | 19.36 us | - |
-| `classify_point_plane` | `hyperreal` | `easy` | 20.86 us | 20.82 us - 20.92 us | 20.87 us | -4.24% |
-| `classify_point_plane` | `hyperreal` | `near_degenerate` | 19.21 us | 19.17 us - 19.25 us | 19.14 us | -2.34% |
-| `classify_point_plane` | `hyperreal_evidence` | `easy` | 8.83 us | 8.81 us - 8.84 us | 8.80 us | +0.42% |
-| `classify_point_plane` | `hyperreal_evidence` | `near_degenerate` | 7.53 us | 7.50 us - 7.57 us | 7.48 us | -2.01% |
-| `incircle2d` | `hyperreal` | `easy` | 23.19 us | 23.12 us - 23.26 us | 23.13 us | -2.94% |
-| `incircle2d` | `hyperreal` | `near_degenerate` | 23.36 us | 23.19 us - 23.55 us | 23.16 us | -0.48% |
-| `incircle2d` | `hyperreal_evidence` | `easy` | 16.86 us | 16.81 us - 16.91 us | 16.80 us | -0.15% |
-| `incircle2d` | `hyperreal_evidence` | `near_degenerate` | 16.83 us | 16.79 us - 16.88 us | 16.73 us | -1.09% |
-| `incircle2d` | `robust` | `easy` | 2.81 us | 2.81 us - 2.82 us | 2.80 us | - |
-| `incircle2d` | `robust` | `near_degenerate` | 2.91 us | 2.91 us - 2.92 us | 2.91 us | - |
-| `insphere3d` | `hyperreal` | `easy` | 64.48 us | 64.10 us - 64.94 us | 63.95 us | +0.77% |
-| `insphere3d` | `hyperreal` | `near_degenerate` | 65.63 us | 65.42 us - 65.87 us | 65.29 us | -2.50% |
-| `insphere3d` | `hyperreal_evidence` | `easy` | 40.56 us | 40.45 us - 40.69 us | 40.35 us | -0.36% |
-| `insphere3d` | `hyperreal_evidence` | `near_degenerate` | 41.89 us | 41.56 us - 42.26 us | 41.28 us | +0.95% |
-| `insphere3d` | `robust` | `easy` | 13.05 us | 13.03 us - 13.08 us | 13.01 us | - |
-| `insphere3d` | `robust` | `near_degenerate` | 13.10 us | 13.08 us - 13.12 us | 13.08 us | - |
-| `orient2d` | `hyperreal` | `easy` | 12.39 us | 12.26 us - 12.56 us | 12.16 us | -1.60% |
-| `orient2d` | `hyperreal` | `near_degenerate` | 12.25 us | 12.24 us - 12.26 us | 12.23 us | -2.04% |
-| `orient2d` | `robust` | `easy` | 1.22 us | 1.21 us - 1.22 us | 1.21 us | - |
-| `orient2d` | `robust` | `near_degenerate` | 1.27 us | 1.27 us - 1.27 us | 1.27 us | - |
-| `orient3d` | `hyperreal` | `easy` | 43.54 us | 43.33 us - 43.80 us | 43.50 us | -0.44% |
-| `orient3d` | `hyperreal` | `near_degenerate` | 38.34 us | 38.23 us - 38.46 us | 38.45 us | +1.10% |
-| `orient3d` | `robust` | `easy` | 8.94 us | 8.92 us - 8.95 us | 8.93 us | - |
-| `orient3d` | `robust` | `near_degenerate` | 8.94 us | 8.90 us - 9.00 us | 8.85 us | - |
+| `classify_point_line` | `hyperreal` | `easy` | 23.17 us | 22.33 us - 23.95 us | 25.39 us | - |
+| `classify_point_line` | `hyperreal` | `near_degenerate` | 14.35 us | 14.31 us - 14.40 us | 14.36 us | - |
+| `classify_point_line_fixed` | `hyperreal` | `easy` | 15.41 us | 15.37 us - 15.45 us | 15.38 us | - |
+| `classify_point_line_fixed` | `hyperreal` | `near_degenerate` | 13.84 us | 13.81 us - 13.86 us | 13.82 us | - |
+| `classify_point_line_fixed` | `hyperreal_oriented` | `easy` | 9.55 us | 9.54 us - 9.56 us | 9.54 us | - |
+| `classify_point_line_fixed` | `hyperreal_oriented` | `near_degenerate` | 9.06 us | 9.05 us - 9.07 us | 9.04 us | - |
+| `classify_point_oriented_plane` | `hyperreal` | `easy` | 39.52 us | 39.30 us - 39.78 us | 39.11 us | - |
+| `classify_point_oriented_plane` | `hyperreal` | `near_degenerate` | 39.09 us | 38.84 us - 39.44 us | 38.74 us | - |
+| `classify_point_oriented_plane` | `hyperreal_evidence` | `easy` | 21.14 us | 20.91 us - 21.40 us | 20.74 us | - |
+| `classify_point_oriented_plane` | `hyperreal_evidence` | `near_degenerate` | 20.15 us | 20.13 us - 20.17 us | 20.14 us | - |
+| `classify_point_plane` | `hyperreal` | `easy` | 21.50 us | 21.44 us - 21.56 us | 21.55 us | - |
+| `classify_point_plane` | `hyperreal` | `near_degenerate` | 32.22 us | 32.09 us - 32.36 us | 32.40 us | - |
+| `classify_point_plane` | `hyperreal_evidence` | `easy` | 9.65 us | 9.21 us - 10.13 us | 8.73 us | - |
+| `classify_point_plane` | `hyperreal_evidence` | `near_degenerate` | 11.81 us | 11.08 us - 12.56 us | 9.86 us | - |
+| `incircle2d` | `hyperreal` | `easy` | 32.09 us | 29.88 us - 34.35 us | 24.16 us | - |
+| `incircle2d` | `hyperreal` | `near_degenerate` | 22.33 us | 22.29 us - 22.37 us | 22.27 us | - |
+| `incircle2d` | `hyperreal_evidence` | `easy` | 17.89 us | 17.87 us - 17.91 us | 17.87 us | - |
+| `incircle2d` | `hyperreal_evidence` | `near_degenerate` | 17.79 us | 17.67 us - 17.94 us | 17.54 us | - |
+| `incircle2d` | `robust` | `easy` | 2.84 us | 2.83 us - 2.84 us | 2.83 us | - |
+| `incircle2d` | `robust` | `near_degenerate` | 2.89 us | 2.88 us - 2.89 us | 2.88 us | - |
+| `insphere3d` | `hyperreal` | `easy` | 66.37 us | 66.11 us - 66.68 us | 65.86 us | - |
+| `insphere3d` | `hyperreal` | `near_degenerate` | 67.82 us | 67.54 us - 68.16 us | 67.35 us | - |
+| `insphere3d` | `hyperreal_evidence` | `easy` | 41.01 us | 40.87 us - 41.19 us | 40.76 us | - |
+| `insphere3d` | `hyperreal_evidence` | `near_degenerate` | 41.37 us | 41.22 us - 41.56 us | 41.12 us | - |
+| `insphere3d` | `robust` | `easy` | 13.70 us | 13.64 us - 13.76 us | 13.59 us | - |
+| `insphere3d` | `robust` | `near_degenerate` | 13.79 us | 13.74 us - 13.84 us | 13.66 us | - |
+| `orient2d` | `hyperreal` | `easy` | 13.84 us | 13.82 us - 13.86 us | 13.81 us | - |
+| `orient2d` | `hyperreal` | `near_degenerate` | 14.24 us | 14.17 us - 14.33 us | 14.10 us | - |
+| `orient2d` | `robust` | `easy` | 1.23 us | 1.22 us - 1.23 us | 1.23 us | - |
+| `orient2d` | `robust` | `near_degenerate` | 1.28 us | 1.27 us - 1.28 us | 1.27 us | - |
+| `orient3d` | `hyperreal` | `easy` | 43.19 us | 42.81 us - 43.63 us | 42.97 us | - |
+| `orient3d` | `hyperreal` | `near_degenerate` | 39.47 us | 39.31 us - 39.65 us | 39.22 us | - |
+| `orient3d` | `robust` | `easy` | 8.27 us | 8.25 us - 8.31 us | 8.26 us | - |
+| `orient3d` | `robust` | `near_degenerate` | 8.17 us | 8.16 us - 8.19 us | 8.18 us | - |

@@ -73,23 +73,26 @@ pub(crate) fn certified_interval_sign_with_policy(
     // report-bearing forms so trace/report users can audit the sub-decisions
     // that fed this interval certificate, keeping endpoint ordering inside the
     // certified-filter layer rather than treating it as anonymous scalar work.
-    let first_cmp = compare_reals_with_policy(first, &zero, policy).value()?;
-    let second_cmp = compare_reals_with_policy(second, &zero, policy).value()?;
+    let (first_cmp, first_certainty) =
+        ordering_and_certainty(compare_reals_with_policy(first, &zero, policy))?;
+    let (second_cmp, second_certainty) =
+        ordering_and_certainty(compare_reals_with_policy(second, &zero, policy))?;
+    let certainty = filter_certainty(first_certainty, second_certainty);
     let lower_cmp = min_ordering(first_cmp, second_cmp);
     let upper_cmp = max_ordering(first_cmp, second_cmp);
 
     match (lower_cmp, upper_cmp) {
         (Ordering::Greater, Ordering::Greater) => {
             crate::trace_dispatch!("hyperlimit", "certified_interval_sign", "positive");
-            Some(filtered(Sign::Positive))
+            Some(filtered(Sign::Positive, certainty))
         }
         (Ordering::Less, Ordering::Less) => {
             crate::trace_dispatch!("hyperlimit", "certified_interval_sign", "negative");
-            Some(filtered(Sign::Negative))
+            Some(filtered(Sign::Negative, certainty))
         }
         (Ordering::Equal, Ordering::Equal) => {
             crate::trace_dispatch!("hyperlimit", "certified_interval_sign", "zero");
-            Some(filtered(Sign::Zero))
+            Some(filtered(Sign::Zero, certainty))
         }
         _ => {
             crate::trace_dispatch!("hyperlimit", "certified_interval_sign", "crosses-zero");
@@ -112,24 +115,42 @@ fn certified_ball_sign_outcome_with_policy(
 ) -> BallFilterResult {
     crate::trace_dispatch!("hyperlimit", "certified_ball_sign", "start");
     let zero = Real::from(0);
-    match compare_reals_with_policy(radius, &zero, policy).value() {
-        Some(Ordering::Less) => {
+    let radius_certainty = match compare_reals_with_policy(radius, &zero, policy) {
+        PredicateOutcome::Decided {
+            value: Ordering::Less,
+            ..
+        } => {
             crate::trace_dispatch!("hyperlimit", "certified_ball_sign", "invalid-radius");
             return BallFilterResult::InvalidRadius;
         }
-        Some(Ordering::Equal | Ordering::Greater) => {}
-        None => {
+        PredicateOutcome::Decided {
+            value: Ordering::Equal | Ordering::Greater,
+            certainty,
+            ..
+        } => certainty,
+        PredicateOutcome::Unknown { .. } => {
             crate::trace_dispatch!("hyperlimit", "certified_ball_sign", "radius-unknown");
             return BallFilterResult::Uncertain;
         }
-    }
+    };
 
     let lower = center - radius;
     let upper = center + radius;
     match certified_interval_sign_with_policy(&lower, &upper, policy) {
-        Some(outcome) => {
+        Some(PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        }) => {
             crate::trace_dispatch!("hyperlimit", "certified_ball_sign", "decided");
-            BallFilterResult::Decided(outcome)
+            BallFilterResult::Decided(PredicateOutcome::decided(
+                value,
+                weaker_certainty(radius_certainty, certainty),
+                stage,
+            ))
+        }
+        Some(PredicateOutcome::Unknown { .. }) => {
+            unreachable!("certified interval filters return only decided outcomes")
         }
         None => {
             crate::trace_dispatch!("hyperlimit", "certified_ball_sign", "uncertain");
@@ -139,8 +160,35 @@ fn certified_ball_sign_outcome_with_policy(
 }
 
 #[inline(always)]
-fn filtered(sign: Sign) -> PredicateOutcome<Sign> {
-    PredicateOutcome::decided(sign, Certainty::Filtered, Escalation::Filter)
+fn filtered(sign: Sign, certainty: Certainty) -> PredicateOutcome<Sign> {
+    PredicateOutcome::decided(sign, certainty, Escalation::Filter)
+}
+
+#[inline(always)]
+fn ordering_and_certainty(outcome: PredicateOutcome<Ordering>) -> Option<(Ordering, Certainty)> {
+    match outcome {
+        PredicateOutcome::Decided {
+            value, certainty, ..
+        } => Some((value, certainty)),
+        PredicateOutcome::Unknown { .. } => None,
+    }
+}
+
+#[inline(always)]
+const fn filter_certainty(left: Certainty, right: Certainty) -> Certainty {
+    match weaker_certainty(left, right) {
+        Certainty::Approximate => Certainty::Approximate,
+        Certainty::Exact | Certainty::Filtered => Certainty::Filtered,
+    }
+}
+
+#[inline(always)]
+const fn weaker_certainty(left: Certainty, right: Certainty) -> Certainty {
+    match (left, right) {
+        (Certainty::Approximate, _) | (_, Certainty::Approximate) => Certainty::Approximate,
+        (Certainty::Filtered, _) | (_, Certainty::Filtered) => Certainty::Filtered,
+        (Certainty::Exact, Certainty::Exact) => Certainty::Exact,
+    }
 }
 
 #[inline(always)]
@@ -233,5 +281,39 @@ mod tests {
             ))
         );
         assert_eq!(certified_ball_sign(&Real::from(1), &Real::from(2)), None);
+    }
+
+    #[test]
+    fn interval_and_ball_filters_preserve_terminal_approximation_certainty() {
+        let undecidable = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+
+        assert_eq!(
+            certified_interval_sign_with_policy(
+                &undecidable,
+                &undecidable,
+                PredicatePolicy::STRICT
+            ),
+            None
+        );
+        assert_eq!(
+            certified_interval_sign_with_policy(
+                &undecidable,
+                &undecidable,
+                PredicatePolicy::APPROXIMATE_512,
+            ),
+            Some(PredicateOutcome::decided(
+                Sign::Zero,
+                Certainty::Approximate,
+                Escalation::Filter,
+            ))
+        );
+        assert_eq!(
+            classify_ball_sign_with_policy(
+                &undecidable,
+                &Real::zero(),
+                PredicatePolicy::APPROXIMATE_512,
+            ),
+            PredicateOutcome::decided(Sign::Zero, Certainty::Approximate, Escalation::Filter,)
+        );
     }
 }

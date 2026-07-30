@@ -86,7 +86,7 @@ pub fn classify_circle_line2(
 /// `radius_squared * |b-a|^2`, so it never constructs a square root or divides
 /// by line length. This is the standard line/circle discriminant written as an
 /// exact squared-distance sign comparison.
-pub(crate) fn classify_circle_line2_with_policy(
+pub fn classify_circle_line2_with_policy(
     center: &Point2,
     radius_squared: &Real,
     a: &Point2,
@@ -151,7 +151,7 @@ pub fn classify_circle_segment2(
 /// comparison distinguishes disjoint, tangent, and secant cases without a
 /// primitive tolerance. Degenerate segments reduce to exact point/circle
 /// classification.
-pub(crate) fn classify_circle_segment2_with_policy(
+pub fn classify_circle_segment2_with_policy(
     center: &Point2,
     radius_squared: &Real,
     a: &Point2,

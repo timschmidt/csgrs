@@ -11,7 +11,7 @@ use crate::predicate::PredicatePolicy;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::predicates::orient::orient2d_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
-use crate::resolve::resolve_real_sign;
+use crate::resolve::resolve_real_sign_direct;
 use hyperreal::Real;
 
 /// Classify `point` relative to the closed segment `ab`.
@@ -77,7 +77,7 @@ pub(crate) fn classify_point_segment3_with_policy(
 
 /// Classify `point` relative to the closed segment `ab` with an explicit
 /// predicate escalation policy.
-pub(crate) fn classify_point_segment_with_policy(
+pub fn classify_point_segment_with_policy(
     a: &Point2,
     b: &Point2,
     point: &Point2,
@@ -122,7 +122,7 @@ pub fn classify_point_segment_with_facts(
 /// determinant for a structurally degenerate segment, but the point equality
 /// decision still goes through exact Real predicates while retaining reusable
 /// object facts for degeneracy-aware algorithms.
-pub(crate) fn classify_point_segment_with_policy_and_facts(
+pub fn classify_point_segment_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
     point: &Point2,
@@ -271,7 +271,7 @@ pub fn proper_segment_intersection_point(
 /// `a + t (b - a)` only after the segment classifier certifies a proper
 /// crossing. The formula is the ordinary segment-intersection construction;
 /// exact predicates certify its precondition.
-pub(crate) fn proper_segment_intersection_point_with_policy(
+pub fn proper_segment_intersection_point_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -463,7 +463,7 @@ pub(crate) fn classify_segment3_intersection_with_policy(
 
 /// Classify the intersection of closed segments `ab` and `cd` with an explicit
 /// predicate escalation policy.
-pub(crate) fn classify_segment_intersection_with_policy(
+pub fn classify_segment_intersection_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -501,7 +501,7 @@ pub fn classify_segment_intersection_with_facts(
 /// cases before evaluating the four-orientation classifier. The reduction never
 /// accepts lossy coordinates: every remaining equality or containment question
 /// is certified by exact Real predicates.
-pub(crate) fn classify_segment_intersection_with_policy_and_facts(
+pub fn classify_segment_intersection_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -1027,13 +1027,7 @@ fn sign_of_difference(
 ) -> Result<Sign, UnknownDecision> {
     let diff = sub_ref(left, right);
     decided(
-        resolve_real_sign(
-            &diff,
-            policy,
-            || None,
-            || None,
-            RefinementNeed::RealRefinement,
-        ),
+        resolve_real_sign_direct(&diff, policy, RefinementNeed::RealRefinement),
         trace,
     )
 }
@@ -1044,13 +1038,7 @@ fn sign_of_real(
     trace: &mut DecisionTrace,
 ) -> Result<Sign, UnknownDecision> {
     decided(
-        resolve_real_sign(
-            value,
-            policy,
-            || None,
-            || None,
-            RefinementNeed::RealRefinement,
-        ),
+        resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement),
         trace,
     )
 }

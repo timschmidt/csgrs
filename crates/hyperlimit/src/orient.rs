@@ -10,7 +10,7 @@ pub use crate::predicates::orient::{
     insphere3d as insphere3, insphere3d_with_evidence as insphere3_with_evidence,
     insphere3d_with_evidence_and_policy as insphere3_with_evidence_and_policy, line2_orientation,
     line2_orientation_with_facts, orient2d as orient2, orient2d_with_policy as orient2_with_policy,
-    orient3d as orient3,
+    orient3d as orient3, orient3d_with_policy as orient3_with_policy,
 };
 pub(crate) use crate::predicates::orient::{
     classify_point_line_with_policy, incircle2d_with_policy, insphere3d_with_policy,

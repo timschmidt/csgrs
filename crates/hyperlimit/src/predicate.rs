@@ -192,11 +192,130 @@ impl<T> PredicateOutcome<T> {
     }
 
     /// Return the decided value, or `None` when the outcome is unknown.
+    #[inline]
     pub fn value(self) -> Option<T> {
         match self {
             Self::Decided { value, .. } => Some(value),
             Self::Unknown { .. } => None,
         }
+    }
+}
+
+impl PredicateOutcome<bool> {
+    /// Combine two predicate outcomes with logical conjunction.
+    ///
+    /// A decided `false` operand is sufficient even when the other operand is
+    /// unknown. Two decided `true` operands retain the weaker certainty and
+    /// later escalation stage.
+    pub const fn and(self, other: Self) -> Self {
+        match (self, other) {
+            (
+                Self::Decided {
+                    value: false,
+                    certainty,
+                    stage,
+                },
+                _,
+            )
+            | (
+                _,
+                Self::Decided {
+                    value: false,
+                    certainty,
+                    stage,
+                },
+            ) => Self::decided(false, certainty, stage),
+            (
+                Self::Decided {
+                    value: true,
+                    certainty: left_certainty,
+                    stage: left_stage,
+                },
+                Self::Decided {
+                    value: true,
+                    certainty: right_certainty,
+                    stage: right_stage,
+                },
+            ) => Self::decided(
+                true,
+                weaker_certainty(left_certainty, right_certainty),
+                later_stage(left_stage, right_stage),
+            ),
+            (Self::Unknown { needed, stage }, _) | (_, Self::Unknown { needed, stage }) => {
+                Self::unknown(needed, stage)
+            }
+        }
+    }
+
+    /// Combine two predicate outcomes with logical disjunction.
+    ///
+    /// A decided `true` operand is sufficient even when the other operand is
+    /// unknown. Two decided `false` operands retain the weaker certainty and
+    /// later escalation stage.
+    pub const fn or(self, other: Self) -> Self {
+        match (self, other) {
+            (
+                Self::Decided {
+                    value: true,
+                    certainty,
+                    stage,
+                },
+                _,
+            )
+            | (
+                _,
+                Self::Decided {
+                    value: true,
+                    certainty,
+                    stage,
+                },
+            ) => Self::decided(true, certainty, stage),
+            (
+                Self::Decided {
+                    value: false,
+                    certainty: left_certainty,
+                    stage: left_stage,
+                },
+                Self::Decided {
+                    value: false,
+                    certainty: right_certainty,
+                    stage: right_stage,
+                },
+            ) => Self::decided(
+                false,
+                weaker_certainty(left_certainty, right_certainty),
+                later_stage(left_stage, right_stage),
+            ),
+            (Self::Unknown { needed, stage }, _) | (_, Self::Unknown { needed, stage }) => {
+                Self::unknown(needed, stage)
+            }
+        }
+    }
+}
+
+const fn weaker_certainty(left: Certainty, right: Certainty) -> Certainty {
+    match (left, right) {
+        (Certainty::Approximate, _) | (_, Certainty::Approximate) => Certainty::Approximate,
+        (Certainty::Filtered, _) | (_, Certainty::Filtered) => Certainty::Filtered,
+        (Certainty::Exact, Certainty::Exact) => Certainty::Exact,
+    }
+}
+
+const fn later_stage(left: Escalation, right: Escalation) -> Escalation {
+    if escalation_rank(left) >= escalation_rank(right) {
+        left
+    } else {
+        right
+    }
+}
+
+const fn escalation_rank(stage: Escalation) -> u8 {
+    match stage {
+        Escalation::Structural => 0,
+        Escalation::Filter => 1,
+        Escalation::Exact => 2,
+        Escalation::Refined => 3,
+        Escalation::Undecided => 4,
     }
 }
 
@@ -250,3 +369,26 @@ impl Default for PredicatePolicy {
 /// returning to [`PredicatePolicy::STRICT`] a one-line policy change.
 #[allow(non_upper_case_globals)]
 pub const PredicatePolicy: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn boolean_outcome_combinators_preserve_certainty_and_short_circuit_unknowns() {
+        let exact_true = PredicateOutcome::decided(true, Certainty::Exact, Escalation::Structural);
+        let approximate_true =
+            PredicateOutcome::decided(true, Certainty::Approximate, Escalation::Refined);
+        let exact_false = PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact);
+        let unknown =
+            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided);
+
+        assert_eq!(
+            exact_true.and(approximate_true),
+            PredicateOutcome::decided(true, Certainty::Approximate, Escalation::Refined)
+        );
+        assert_eq!(unknown.and(exact_false), exact_false);
+        assert_eq!(unknown.or(exact_true), exact_true);
+        assert_eq!(exact_false.or(unknown), unknown);
+    }
+}

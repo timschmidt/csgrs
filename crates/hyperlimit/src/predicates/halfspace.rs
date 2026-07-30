@@ -24,7 +24,7 @@ use crate::geometry::{Plane3, Point3, intersect_three_planes};
 use crate::plane::classify_point_plane_without_filter_with_policy;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::real::{add_ref, mul_ref, sub_ref};
-use crate::resolve::resolve_real_sign;
+use crate::resolve::resolve_real_sign_direct;
 
 /// Feasibility report for a closed 3D halfspace system.
 #[derive(Clone, Debug, PartialEq)]
@@ -765,13 +765,7 @@ fn det3(a: &Point3, b: &Point3, c: &Point3) -> Real {
 }
 
 fn sign_of(value: &Real, policy: PredicatePolicy) -> PredicateOutcome<Sign> {
-    resolve_real_sign(
-        value,
-        policy,
-        || None,
-        || None,
-        RefinementNeed::RealRefinement,
-    )
+    resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement)
 }
 
 fn dot(left: &Point3, right: &Point3) -> Real {
