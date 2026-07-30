@@ -530,10 +530,8 @@ impl Curve3 {
             relative - axial
         };
         let start_radial = radial(&self.point_at(self.domain().start())?);
-        if decided_order(compare_reals(
-            &start_radial.norm_squared(),
-            &Real::zero(),
-        ))? != Ordering::Greater
+        if decided_order(compare_reals(&start_radial.norm_squared(), &Real::zero()))?
+            != Ordering::Greater
         {
             return Ok(false);
         }
@@ -558,9 +556,7 @@ impl Curve3 {
             CurveGeometry3::RationalBezier(curve) => {
                 Some(curve.control_points.iter().collect::<Vec<_>>())
             }
-            CurveGeometry3::Nurbs(curve) => {
-                Some(curve.control_points.iter().collect::<Vec<_>>())
-            }
+            CurveGeometry3::Nurbs(curve) => Some(curve.control_points.iter().collect::<Vec<_>>()),
             CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => None,
         };
         if let Some(controls) = controls {
@@ -584,16 +580,12 @@ impl Curve3 {
         // Supported curve/plane intersections enumerate the complete finite
         // parameter interval; unsupported polynomial degrees remain explicit.
         let transverse = axis.cross(&witness);
-        let first_plane = Surface::plane(
-            axis_origin.clone(),
-            axis.clone(),
-            witness.clone(),
-        )?;
+        let first_plane = Surface::plane(axis_origin.clone(), axis.clone(), witness.clone())?;
         let point_is_on_axis = |point: &Point3| -> GeometryResult<bool> {
-            Ok(decided_order(compare_reals(
-                &radial(point).norm_squared(),
-                &Real::zero(),
-            ))? == Ordering::Equal)
+            Ok(
+                decided_order(compare_reals(&radial(point).norm_squared(), &Real::zero()))?
+                    == Ordering::Equal,
+            )
         };
         match first_plane.intersect_curve(self)? {
             CurveSurfaceIntersection::None => Ok(true),
@@ -606,8 +598,7 @@ impl Curve3 {
                 Ok(true)
             }
             CurveSurfaceIntersection::Contained => {
-                let second_plane =
-                    Surface::plane(axis_origin.clone(), axis.clone(), transverse)?;
+                let second_plane = Surface::plane(axis_origin.clone(), axis.clone(), transverse)?;
                 match second_plane.intersect_curve(self)? {
                     CurveSurfaceIntersection::None => Ok(true),
                     CurveSurfaceIntersection::Points(_) => Ok(false),
@@ -11267,13 +11258,9 @@ mod tests {
             Point2::new(r(1), r(1))
         );
 
-        let planar_controls = vec![
-            vec![p(0, 0, 0), p(2, 0, 0)],
-            vec![p(0, 2, 0), p(2, 2, 0)],
-        ];
+        let planar_controls = vec![vec![p(0, 0, 0), p(2, 0, 0)], vec![p(0, 2, 0), p(2, 2, 0)]];
         let planar_weights = vec![vec![r(1), r(2)], vec![r(3), r(4)]];
-        let planar =
-            Surface::rational_bezier(planar_controls.clone(), planar_weights).unwrap();
+        let planar = Surface::rational_bezier(planar_controls.clone(), planar_weights).unwrap();
         assert!(matches!(
             plane.intersect_surface(&planar).unwrap(),
             SurfaceSurfaceIntersection::ContainedSurface(SurfaceIntersectionOperand::Second)
@@ -11287,11 +11274,7 @@ mod tests {
             plane
                 .transformed(&containment_translation, false)
                 .unwrap()
-                .intersect_surface(
-                    &planar
-                        .transformed(&containment_translation, false)
-                        .unwrap()
-                )
+                .intersect_surface(&planar.transformed(&containment_translation, false).unwrap())
                 .unwrap(),
             SurfaceSurfaceIntersection::ContainedSurface(SurfaceIntersectionOperand::Second)
         ));

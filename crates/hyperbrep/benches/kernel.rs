@@ -1246,11 +1246,10 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
-        let SurfaceSurfaceIntersection::ContainedSurface(
-            SurfaceIntersectionOperand::Second,
-        ) = black_box(&pole_plane)
-            .intersect_surface(black_box(&contained_tensor))
-            .expect("benchmark exact bounded tensor containment")
+        let SurfaceSurfaceIntersection::ContainedSurface(SurfaceIntersectionOperand::Second) =
+            black_box(&pole_plane)
+                .intersect_surface(black_box(&contained_tensor))
+                .expect("benchmark exact bounded tensor containment")
         else {
             panic!("planar weighted tensor must retain its exact contained-surface relation");
         };
