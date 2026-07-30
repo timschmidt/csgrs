@@ -8,6 +8,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Classification;
+use crate::predicate::points_equal;
 use crate::{ExactPointBvh, Point3, Real, Triangle, TriangleMesh};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -263,16 +264,40 @@ fn deduplicate_points(
     }
     let mut buckets = HashMap::<PositionBucket, usize>::with_capacity(input.len());
     let mut next_in_bucket = Vec::<Option<usize>>::with_capacity(input.len());
+    let mut general_points = Vec::<usize>::new();
     for (input_index, point) in input.iter().enumerate() {
         let bucket = PositionBucket::new(point);
+        let exact_rational = point.x.exact_rational_ref().is_some()
+            && point.y.exact_rational_ref().is_some()
+            && point.z.exact_rational_ref().is_some();
         let mut duplicate = None;
         let mut candidate = buckets.get(&bucket).copied();
         while let Some(candidate_index) = candidate {
-            if points_equal(&points[candidate_index], point) {
+            if points_equal(&points[candidate_index], point)? {
                 duplicate = Some(candidate_index);
                 break;
             }
             candidate = next_in_bucket[candidate_index];
+        }
+        if duplicate.is_none() {
+            if exact_rational {
+                for &candidate_index in &general_points {
+                    if points_equal(&points[candidate_index], point)? {
+                        duplicate = Some(candidate_index);
+                        break;
+                    }
+                }
+            } else {
+                for (candidate_index, candidate) in points.iter().enumerate() {
+                    if PositionBucket::new(candidate) == bucket {
+                        continue;
+                    }
+                    if points_equal(candidate, point)? {
+                        duplicate = Some(candidate_index);
+                        break;
+                    }
+                }
+            }
         }
         if let Some(candidate) = duplicate {
             if let (Some(memberships), Some(input_memberships)) =
@@ -284,6 +309,9 @@ fn deduplicate_points(
             let point_index = points.len();
             next_in_bucket.push(buckets.insert(bucket, point_index));
             points.push(point.clone());
+            if !exact_rational {
+                general_points.push(point_index);
+            }
             if let (Some(coordinate_ids), Some(input_coordinate_ids)) =
                 (&mut coordinate_ids, input_coordinate_ids)
             {
@@ -299,15 +327,6 @@ fn deduplicate_points(
     Ok((points, memberships, coordinate_ids))
 }
 
-fn points_equal(left: &Point3, right: &Point3) -> bool {
-    if left == right {
-        return true;
-    }
-    hyperlimit::point3_equal(left, right)
-        .value()
-        .unwrap_or(false)
-}
-
 fn seed_tetrahedron(
     points: &[Point3],
     memberships: Option<&[BTreeSet<usize>]>,
@@ -319,15 +338,22 @@ fn seed_tetrahedron(
     let p0 = 0;
     let p1 = 1;
     let mut p2 = None;
+    let mut p2_unknown = false;
     for (candidate, point) in points.iter().enumerate().skip(2) {
-        let cross = (point - &points[p0]).cross(&(&points[p1] - &points[p0]));
-        if cross.structural_facts().squared_norm_zero_status() == hyperlattice::ZeroStatus::NonZero
-        {
-            p2 = Some(candidate);
-            break;
+        match hyperlimit::classify_triangle3_degeneracy(&points[p0], &points[p1], point) {
+            hyperlimit::TriangleDegeneracy::NonDegenerate => {
+                p2 = Some(candidate);
+                break;
+            }
+            hyperlimit::TriangleDegeneracy::Degenerate => {}
+            hyperlimit::TriangleDegeneracy::Unknown => p2_unknown = true,
         }
     }
-    let p2 = p2.ok_or(HypermeshError::DegeneratePointSet)?;
+    let p2 = match p2 {
+        Some(p2) => p2,
+        None if p2_unknown => return Err(HypermeshError::UnknownClassification),
+        None => return Err(HypermeshError::DegeneratePointSet),
+    };
     let mut p3 = None;
     for (candidate, _) in points.iter().enumerate().skip(2) {
         if candidate != p2
@@ -601,6 +627,25 @@ mod tests {
         assert_eq!(hull.positions.len(), 8);
         assert_eq!(hull.triangles.len(), 12);
         crate::polygon_soup(&[hull.as_ref()]).unwrap();
+    }
+
+    #[test]
+    fn hull_deduplicates_numeric_points_with_distinct_representations() {
+        let left = Real::pi() + Real::e();
+        let equivalent_left = Real::e() + Real::pi();
+        assert_ne!(left, equivalent_left);
+        let input = vec![
+            Point3::new(left.clone(), Real::zero(), Real::zero()),
+            Point3::new(left.clone() + Real::one(), Real::zero(), Real::zero()),
+            Point3::new(left.clone(), Real::one(), Real::zero()),
+            Point3::new(left, Real::zero(), Real::one()),
+            Point3::new(equivalent_left, Real::zero(), Real::zero()),
+        ];
+
+        let hull = convex_hull(&input).unwrap();
+
+        assert_eq!(hull.positions.len(), 4);
+        assert_eq!(hull.triangles.len(), 4);
     }
 
     #[test]

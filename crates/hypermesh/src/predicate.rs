@@ -490,7 +490,60 @@ pub fn compare_real(left: &Real, right: &Real) -> HypermeshResult<Ordering> {
     }
 }
 
+/// Decides equality of three exact coordinates.
+///
+/// Exact rationals and identical retained expressions are sound early
+/// certificates. Every remaining coordinate is decided by Hyperlimit's active
+/// policy, and exhausted certainty is preserved as `UnknownClassification`.
+#[inline]
+pub(crate) fn coordinates3_equal(left: [&Real; 3], right: [&Real; 3]) -> HypermeshResult<bool> {
+    let mut saw_unknown = false;
+    for (left, right) in left.into_iter().zip(right) {
+        if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
+            if left != right {
+                return Ok(false);
+            }
+            continue;
+        }
+        if left == right {
+            continue;
+        }
+        match hyperlimit::compare_reals(left, right) {
+            PredicateOutcome::Decided {
+                value: Ordering::Equal,
+                ..
+            } => {}
+            PredicateOutcome::Decided { .. } => return Ok(false),
+            PredicateOutcome::Unknown { .. } => saw_unknown = true,
+        }
+    }
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(true)
+    }
+}
+
+/// Decides exact affine-point equality through the shared coordinate cascade.
+#[inline]
+pub(crate) fn points_equal(left: &Point3, right: &Point3) -> HypermeshResult<bool> {
+    coordinates3_equal([&left.x, &left.y, &left.z], [&right.x, &right.y, &right.z])
+}
+
 pub(crate) fn classify_real(value: &Real) -> HypermeshResult<Classification> {
+    if let Some(value) = value.exact_rational_ref() {
+        crate::trace_dispatch!("classify-real", "exact-rational");
+        return Ok(
+            match value
+                .partial_cmp(&Rational::zero())
+                .expect("exact rationals are totally ordered")
+            {
+                Ordering::Less => Classification::Negative,
+                Ordering::Equal => Classification::On,
+                Ordering::Greater => Classification::Positive,
+            },
+        );
+    }
     crate::trace_dispatch!("classify-real", "hyperlimit");
     match classify_real_sign(value) {
         PredicateOutcome::Decided {

@@ -146,7 +146,8 @@ impl Plane {
         Self::new(normal, offset)
     }
 
-    /// Returns whether three affine points structurally define a valid plane.
+    /// Returns whether three affine points define a valid plane under the
+    /// configured exact predicate policy.
     ///
     /// This is the allocation-reduced validation counterpart of
     /// `Plane::from_points(...).is_valid()`: it evaluates cross-product
@@ -154,10 +155,24 @@ impl Plane {
     /// the unused plane offset.
     #[inline]
     pub fn points_are_nondegenerate(p0: &Point3, p1: &Point3, p2: &Point3) -> bool {
-        matches!(
-            hyperlimit::classify_triangle3_degeneracy(p0, p1, p2),
-            hyperlimit::TriangleDegeneracy::NonDegenerate
-        )
+        Self::decide_points_are_nondegenerate(p0, p1, p2).unwrap_or(false)
+    }
+
+    /// Decides whether three affine points define a valid plane, preserving
+    /// predicate uncertainty for geometry-producing callers.
+    #[inline]
+    pub(crate) fn decide_points_are_nondegenerate(
+        p0: &Point3,
+        p1: &Point3,
+        p2: &Point3,
+    ) -> crate::error::HypermeshResult<bool> {
+        match hyperlimit::classify_triangle3_degeneracy(p0, p1, p2) {
+            hyperlimit::TriangleDegeneracy::NonDegenerate => Ok(true),
+            hyperlimit::TriangleDegeneracy::Degenerate => Ok(false),
+            hyperlimit::TriangleDegeneracy::Unknown => {
+                Err(crate::error::HypermeshError::UnknownClassification)
+            }
+        }
     }
 
     pub(crate) fn points_are_collinear_on_support(
@@ -165,7 +180,7 @@ impl Plane {
         a: &Point3,
         b: &Point3,
         c: &Point3,
-    ) -> bool {
+    ) -> crate::error::HypermeshResult<bool> {
         let normal = [&self.normal.x, &self.normal.y, &self.normal.z];
         let coordinates = [[&a.x, &a.y, &a.z], [&b.x, &b.y, &b.z], [&c.x, &c.y, &c.z]];
         for (axis, coefficient) in normal.into_iter().enumerate() {
@@ -188,14 +203,14 @@ impl Plane {
                 break;
             };
             if (au == bu && bu == cu) || (av == bv && bv == cv) {
-                return true;
+                return Ok(true);
             }
-            return Rational::signed_product_sum_ordering(
+            return Ok(Rational::signed_product_sum_ordering(
                 [true, true, true, false, false, false],
                 [[au, bv], [bu, cv], [cu, av], [au, cv], [bu, av], [cu, bv]],
-            ) == std::cmp::Ordering::Equal;
+            ) == std::cmp::Ordering::Equal);
         }
-        !Self::points_are_nondegenerate(a, b, c)
+        Ok(!Self::decide_points_are_nondegenerate(a, b, c)?)
     }
 
     /// Returns this plane with all coefficients negated.
@@ -257,14 +272,27 @@ impl Plane {
     /// Returns true when the configured exact predicate policy certifies a
     /// non-zero normal component.
     pub fn is_valid(&self) -> bool {
-        [&self.normal.x, &self.normal.y, &self.normal.z]
-            .into_iter()
-            .any(|component| {
-                matches!(
-                    crate::predicate::classify_real(component),
-                    Ok(Classification::Negative | Classification::Positive)
-                )
-            })
+        self.decide_is_valid().unwrap_or(false)
+    }
+
+    /// Decides whether the normal is non-zero, preserving exhausted predicate
+    /// certainty for geometry-producing callers.
+    #[inline]
+    pub(crate) fn decide_is_valid(&self) -> crate::error::HypermeshResult<bool> {
+        let mut saw_unknown = false;
+        for component in [&self.normal.x, &self.normal.y, &self.normal.z] {
+            match crate::predicate::classify_real(component) {
+                Ok(Classification::Negative | Classification::Positive) => return Ok(true),
+                Ok(Classification::On) => {}
+                Err(crate::error::HypermeshError::UnknownClassification) => saw_unknown = true,
+                Err(error) => return Err(error),
+            }
+        }
+        if saw_unknown {
+            Err(crate::error::HypermeshError::UnknownClassification)
+        } else {
+            Ok(false)
+        }
     }
 
     /// Converts to hyperlattice's projective plane carrier.

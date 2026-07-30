@@ -22,12 +22,6 @@ type SplitEdgeCache = StorageHashMap<[usize; 2], SplitEdgeChain>;
 
 struct SplitEdgeChain(Vec<usize>);
 
-#[derive(Clone, Copy)]
-struct ApproximateOutputVertex {
-    coordinates: [f64; 3],
-    scale: f64,
-}
-
 impl SplitEdgeChain {
     fn subedges(&self) -> impl DoubleEndedIterator<Item = [usize; 2]> + '_ {
         self.0
@@ -612,7 +606,9 @@ impl BooleanMesh {
         if self.sources.len() != self.triangles.len() {
             return false;
         }
-        let canonical = merge_duplicate_vertices(self);
+        let Ok(canonical) = merge_duplicate_vertices(self) else {
+            return false;
+        };
         let mut seen = BTreeSet::new();
         for triangle in &canonical.triangles {
             let [Some(a), Some(b), Some(c)] = triangle.map(|index| canonical.vertices.get(index))
@@ -819,12 +815,6 @@ where
             })
             .collect::<Vec<_>>()
     });
-    let recovery_approximate_vertices = filter_recovery_candidates.then(|| {
-        vertices
-            .iter()
-            .map(output_vertex_f64)
-            .collect::<Vec<Option<ApproximateOutputVertex>>>()
-    });
     let construction_candidates = prefer_construction_candidates
         .then(|| build_construction_edge_candidates(polygons, &indexed_polygons, vertices.len()))
         .transpose()?;
@@ -879,7 +869,6 @@ where
                     canonical,
                     &candidates.groups[candidates.polygon_edges[polygon_index][edge_index]],
                     &candidates.recovery_vertices,
-                    recovery_approximate_vertices.as_deref(),
                     rational_vertex_queries.as_deref(),
                     filter_recovery_candidates,
                 )
@@ -1565,11 +1554,9 @@ where
         return Ok((merger.into_vertices(), indexed_polygons));
     }
 
-    // Non-rational exact coordinates need not be order-comparable: equality
-    // can be structurally certified even when the sign of `left - right`
-    // cannot.  Vertex canonicalization only needs equality, so use the lossy
-    // values as an acceleration bucket and confirm every merge structurally.
-    // This keeps approximation out of the geometric decision.
+    // Non-rational exact coordinates need not be order-comparable. Lossy
+    // values are only preferred-candidate buckets; all remaining eligible
+    // vertices are checked through the centralized exact equality cascade.
     let mut vertices: Vec<OutputVertex> = Vec::with_capacity(positions.len());
     let mut vertex_identities: Vec<Option<ConstructionVertexIdentity>> =
         Vec::with_capacity(positions.len());
@@ -1584,26 +1571,41 @@ where
             indexed_polygons[polygon_index][vertex_index] = merged_index;
             continue;
         }
-        let key = OutputVertexBucket([
-            vertex.x.to_f64_lossy().map(f64::to_bits),
-            vertex.y.to_f64_lossy().map(f64::to_bits),
-            vertex.z.to_f64_lossy().map(f64::to_bits),
-        ]);
-        let candidates = buckets.entry(key).or_default();
-        let merged_index = if let Some(existing) = candidates.iter().copied().find(|&candidate| {
+        let key = output_vertex_bucket(&vertex);
+        let preferred = buckets.get(&key).cloned().unwrap_or_default();
+        let mut merged_index = None;
+        for candidate in preferred.iter().copied() {
             // Projective construction identities have already been
             // canonicalized with exact plane-incidence certificates.
-            // Distinct retained identities therefore must not trigger a
-            // potentially undecidable transcendental coordinate equality.
-            (identity.is_none() || vertex_identities[candidate].is_none())
-                && vertices[candidate] == vertex
-        }) {
+            if identity.is_some() && vertex_identities[candidate].is_some() {
+                continue;
+            }
+            if output_vertices_equal(&vertices[candidate], &vertex)? {
+                merged_index = Some(candidate);
+                break;
+            }
+        }
+        if merged_index.is_none() {
+            for (candidate, existing) in vertices.iter().enumerate() {
+                if output_vertex_bucket(existing) == key {
+                    continue;
+                }
+                if identity.is_some() && vertex_identities[candidate].is_some() {
+                    continue;
+                }
+                if output_vertices_equal(existing, &vertex)? {
+                    merged_index = Some(candidate);
+                    break;
+                }
+            }
+        }
+        let merged_index = if let Some(existing) = merged_index {
             existing
         } else {
             let index = vertices.len();
             vertices.push(vertex);
             vertex_identities.push(identity.clone());
-            candidates.push(index);
+            buckets.entry(key).or_default().push(index);
             index
         };
         if let Some(identity) = identity {
@@ -1916,7 +1918,6 @@ fn split_segment_subedges_exact_candidates<'a>(
     edge: [usize; 2],
     candidates: &ConstructionEdgeCandidateGroup,
     recovery_vertices: &[usize],
-    recovery_approximate_vertices: Option<&[Option<ApproximateOutputVertex>]>,
     rational_vertex_queries: Option<&[Option<RationalPoint3Query>]>,
     filter_recovery_candidates: bool,
 ) -> HypermeshResult<&'a SplitEdgeChain> {
@@ -1928,15 +1929,6 @@ fn split_segment_subedges_exact_candidates<'a>(
                     eprintln!("[DEBUG] construction edge axis failed: {error}");
                 }
             })?;
-        let (min, max) = ordered_reals(
-            vertex_axis(&vertices[edge[0]], axis),
-            vertex_axis(&vertices[edge[1]], axis),
-        )
-        .inspect_err(|error| {
-            if cfg!(debug_assertions) {
-                eprintln!("[DEBUG] construction edge endpoint order failed: {error}");
-            }
-        })?;
         let projection_filters = filter_recovery_candidates
             .then(|| {
                 let queries = rational_vertex_queries?;
@@ -1958,15 +1950,11 @@ fn split_segment_subedges_exact_candidates<'a>(
             if vertex_index == edge[0] || vertex_index == edge[1] {
                 continue;
             }
-            let coordinate = vertex_axis(&vertices[vertex_index], axis);
-            if compare_real(coordinate, min).is_ok_and(|order| !order.is_lt())
-                && compare_real(coordinate, max).is_ok_and(|order| !order.is_gt())
-                && point_on_segment_exact(
-                    &vertices[vertex_index],
-                    &vertices[edge[0]],
-                    &vertices[edge[1]],
-                )?
-            {
+            if point_on_segment_exact(
+                &vertices[vertex_index],
+                &vertices[edge[0]],
+                &vertices[edge[1]],
+            )? {
                 on_edge.push(vertex_index);
             }
         }
@@ -1982,16 +1970,6 @@ fn split_segment_subedges_exact_candidates<'a>(
             {
                 continue;
             }
-            let approximate_candidate = recovery_approximate_vertices.and_then(|vertices| {
-                Some(approximate_point_on_segment_candidate(
-                    vertices[vertex_index]?,
-                    vertices[edge[0]]?,
-                    vertices[edge[1]]?,
-                ))
-            });
-            if approximate_candidate == Some(false) {
-                continue;
-            }
             if projection_filters.as_ref().is_some_and(|filters| {
                 let Some(point) = rational_vertex_queries
                     .and_then(|queries| queries.get(vertex_index))
@@ -2005,14 +1983,11 @@ fn split_segment_subedges_exact_candidates<'a>(
             }) {
                 continue;
             }
-            if matches!(
-                point_on_segment_exact(
-                    &vertices[vertex_index],
-                    &vertices[edge[0]],
-                    &vertices[edge[1]],
-                ),
-                Ok(true)
-            ) {
+            if point_on_segment_exact(
+                &vertices[vertex_index],
+                &vertices[edge[0]],
+                &vertices[edge[1]],
+            )? {
                 on_edge.push(vertex_index);
             }
         }
@@ -2027,56 +2002,6 @@ fn split_segment_subedges_exact_candidates<'a>(
         entry.insert(SplitEdgeChain(chain));
     }
     Ok(cache.get(&edge).expect("candidate edge was just cached"))
-}
-
-fn output_vertex_f64(vertex: &OutputVertex) -> Option<ApproximateOutputVertex> {
-    let [Some(x), Some(y), Some(z)] = [&vertex.x, &vertex.y, &vertex.z].map(Real::to_f64_lossy)
-    else {
-        return None;
-    };
-    let coordinates = [x, y, z];
-    if coordinates.iter().any(|coordinate| !coordinate.is_finite()) {
-        return None;
-    }
-    let scale = coordinates
-        .iter()
-        .fold(1.0_f64, |scale, coordinate| scale.max(coordinate.abs()));
-    Some(ApproximateOutputVertex { coordinates, scale })
-}
-
-fn approximate_point_on_segment_candidate(
-    point: ApproximateOutputVertex,
-    start: ApproximateOutputVertex,
-    end: ApproximateOutputVertex,
-) -> bool {
-    let scale = point.scale.max(start.scale).max(end.scale);
-    let point = point.coordinates;
-    let start = start.coordinates;
-    let end = end.coordinates;
-    let tolerance = scale * 1.0e-10;
-    if (0..3).any(|axis| {
-        point[axis] < start[axis].min(end[axis]) - tolerance
-            || point[axis] > start[axis].max(end[axis]) + tolerance
-    }) {
-        return false;
-    }
-    let direction = [end[0] - start[0], end[1] - start[1], end[2] - start[2]];
-    let offset = [
-        point[0] - start[0],
-        point[1] - start[1],
-        point[2] - start[2],
-    ];
-    let cross = [
-        direction[1] * offset[2] - direction[2] * offset[1],
-        direction[2] * offset[0] - direction[0] * offset[2],
-        direction[0] * offset[1] - direction[1] * offset[0],
-    ];
-    let direction_scale = direction
-        .iter()
-        .fold(0.0_f64, |scale, value| scale.max(value.abs()));
-    cross
-        .iter()
-        .all(|component| component.abs() <= tolerance * direction_scale.max(1.0))
 }
 
 fn exact_output_vertices_f64(vertices: &[OutputVertex]) -> Option<Vec<[f64; 3]>> {
@@ -2288,8 +2213,8 @@ fn resolve_tjunctions_with_pass_limit(
     input: &BooleanMesh,
     pass_limit: usize,
 ) -> HypermeshResult<BooleanMesh> {
-    let mut soup = merge_duplicate_vertices(input);
-    remove_degenerate_and_duplicate_triangles(&mut soup);
+    let mut soup = merge_duplicate_vertices(input)?;
+    remove_degenerate_and_duplicate_triangles(&mut soup)?;
 
     let mut passes = 0;
     loop {
@@ -2302,52 +2227,116 @@ fn resolve_tjunctions_with_pass_limit(
             return Ok(soup);
         }
         passes += 1;
-        remove_degenerate_and_duplicate_triangles(&mut soup);
+        remove_degenerate_and_duplicate_triangles(&mut soup)?;
     }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 struct OutputVertexBucket([Option<u64>; 3]);
 
-fn merge_duplicate_vertices(input: &BooleanMesh) -> BooleanMesh {
+fn output_vertex_bucket(vertex: &OutputVertex) -> OutputVertexBucket {
+    OutputVertexBucket([
+        vertex.x.to_f64_lossy().map(f64::to_bits),
+        vertex.y.to_f64_lossy().map(f64::to_bits),
+        vertex.z.to_f64_lossy().map(f64::to_bits),
+    ])
+}
+
+fn output_vertices_equal(left: &OutputVertex, right: &OutputVertex) -> HypermeshResult<bool> {
+    crate::predicate::coordinates3_equal(
+        [&left.x, &left.y, &left.z],
+        [&right.x, &right.y, &right.z],
+    )
+}
+
+fn merge_duplicate_vertices(input: &BooleanMesh) -> HypermeshResult<BooleanMesh> {
+    if input.vertices.iter().all(|vertex| {
+        vertex.x.exact_rational_ref().is_some()
+            && vertex.y.exact_rational_ref().is_some()
+            && vertex.z.exact_rational_ref().is_some()
+    }) {
+        let mut merger = ExactOutputVertexMerger::with_capacity(input.vertices.len());
+        let remap = input
+            .vertices
+            .iter()
+            .map(|vertex| merger.merge(ExactOutputVertexSource::Owned(vertex.clone())))
+            .collect::<Vec<_>>();
+        let triangles = remap_triangle_indices(&input.triangles, &remap)?;
+        return Ok(BooleanMesh {
+            vertices: merger.into_vertices(),
+            triangles,
+            sources: input.sources.clone(),
+        });
+    }
+
     let mut vertices: Vec<OutputVertex> = Vec::with_capacity(input.vertices.len());
     let mut buckets: HashMap<OutputVertexBucket, Vec<usize>> = HashMap::new();
     let mut remap = vec![0; input.vertices.len()];
 
     for (index, vertex) in input.vertices.iter().enumerate() {
-        let key = OutputVertexBucket([
-            vertex.x.to_f64_lossy().map(f64::to_bits),
-            vertex.y.to_f64_lossy().map(f64::to_bits),
-            vertex.z.to_f64_lossy().map(f64::to_bits),
-        ]);
-        let candidates = buckets.entry(key).or_default();
-        if let Some(existing) = candidates
-            .iter()
-            .copied()
-            .find(|&candidate| vertices[candidate] == *vertex)
-        {
+        let key = output_vertex_bucket(vertex);
+        let preferred = buckets.get(&key).cloned().unwrap_or_default();
+        let mut existing = None;
+        for candidate in preferred {
+            if output_vertices_equal(&vertices[candidate], vertex)? {
+                existing = Some(candidate);
+                break;
+            }
+        }
+        if existing.is_none() {
+            for (candidate, existing_vertex) in vertices.iter().enumerate() {
+                if output_vertex_bucket(existing_vertex) == key {
+                    continue;
+                }
+                if output_vertices_equal(existing_vertex, vertex)? {
+                    existing = Some(candidate);
+                    break;
+                }
+            }
+        }
+        if let Some(existing) = existing {
             remap[index] = existing;
         } else {
             remap[index] = vertices.len();
             vertices.push(vertex.clone());
-            candidates.push(vertices.len() - 1);
+            buckets.entry(key).or_default().push(vertices.len() - 1);
         }
     }
 
-    let triangles = input
-        .triangles
-        .iter()
-        .map(|triangle| [remap[triangle[0]], remap[triangle[1]], remap[triangle[2]]])
-        .collect();
+    let triangles = remap_triangle_indices(&input.triangles, &remap)?;
 
-    BooleanMesh {
+    Ok(BooleanMesh {
         vertices,
         triangles,
         sources: input.sources.clone(),
-    }
+    })
 }
 
-fn remove_degenerate_and_duplicate_triangles(soup: &mut BooleanMesh) {
+fn remap_triangle_indices(
+    triangles: &[[usize; 3]],
+    remap: &[usize],
+) -> HypermeshResult<Vec<[usize; 3]>> {
+    triangles
+        .iter()
+        .map(|triangle| {
+            triangle.map(|index| {
+                remap
+                    .get(index)
+                    .copied()
+                    .ok_or(HypermeshError::VertexIndexOutOfBounds {
+                        index,
+                        vertex_count: remap.len(),
+                    })
+            })
+        })
+        .map(|triangle| {
+            let [a, b, c] = triangle;
+            Ok([a?, b?, c?])
+        })
+        .collect()
+}
+
+fn remove_degenerate_and_duplicate_triangles(soup: &mut BooleanMesh) -> HypermeshResult<()> {
     let mut seen = BTreeSet::new();
     let mut triangles = Vec::with_capacity(soup.triangles.len());
     let mut sources = Vec::with_capacity(soup.sources.len());
@@ -2358,11 +2347,11 @@ fn remove_degenerate_and_duplicate_triangles(soup: &mut BooleanMesh) {
         if triangle[0] == triangle[1]
             || triangle[1] == triangle[2]
             || triangle[0] == triangle[2]
-            || !Plane::points_are_nondegenerate(
+            || !Plane::decide_points_are_nondegenerate(
                 &Point3::new(a.x.clone(), a.y.clone(), a.z.clone()),
                 &Point3::new(b.x.clone(), b.y.clone(), b.z.clone()),
                 &Point3::new(c.x.clone(), c.y.clone(), c.z.clone()),
-            )
+            )?
         {
             continue;
         }
@@ -2375,6 +2364,7 @@ fn remove_degenerate_and_duplicate_triangles(soup: &mut BooleanMesh) {
     }
     soup.triangles = triangles;
     soup.sources = sources;
+    Ok(())
 }
 
 fn triangle_edge_counts(triangles: &[[usize; 3]]) -> StorageHashMap<[usize; 2], DirectedEdgeUses> {
@@ -2529,14 +2519,25 @@ fn split_one_edge_crossing_pass(soup: &mut BooleanMesh) -> HypermeshResult<bool>
         .into_iter()
         .map(|edge| exact_edge_bounds(edge, &soup.vertices))
         .collect::<HypermeshResult<Vec<_>>>()?;
-    bounded_edges.sort_by(|left, right| {
-        compare_real(
-            vertex_axis(&soup.vertices[left.min[0]], 0),
-            vertex_axis(&soup.vertices[right.min[0]], 0),
-        )
-        .expect("exact edge-bound ordering should compare")
-        .then_with(|| left.edge.cmp(&right.edge))
-    });
+    for index in 1..bounded_edges.len() {
+        let mut current = index;
+        while current > 0 {
+            let ordering = compare_real(
+                vertex_axis(&soup.vertices[bounded_edges[current - 1].min[0]], 0),
+                vertex_axis(&soup.vertices[bounded_edges[current].min[0]], 0),
+            )?
+            .then_with(|| {
+                bounded_edges[current - 1]
+                    .edge
+                    .cmp(&bounded_edges[current].edge)
+            });
+            if !ordering.is_gt() {
+                break;
+            }
+            bounded_edges.swap(current - 1, current);
+            current -= 1;
+        }
+    }
 
     for left_index in 0..bounded_edges.len() {
         let left = &bounded_edges[left_index];
@@ -2568,7 +2569,7 @@ fn split_one_edge_crossing_pass(soup: &mut BooleanMesh) -> HypermeshResult<bool>
                 continue;
             };
 
-            let new_index = insert_or_find_vertex(soup, point);
+            let new_index = insert_or_find_vertex(soup, point)?;
             split_edges_at_vertex(soup, &[left, right], new_index);
             return Ok(true);
         }
@@ -2635,19 +2636,15 @@ fn proper_segment_intersection_after_bounds_overlap(
     let ab = sub_vertex(b, a);
     let cd = sub_vertex(d, c);
     let normal = cross_arrays(&ab, &cd);
-    if normal
-        .iter()
-        .all(|component| crate::geometry::classify_real(component) == Ok(Classification::On))
-    {
+    let Some(projection_axis) = certified_nonzero_component_axis(&normal)? else {
         return Ok(None);
-    }
+    };
 
     let ac = sub_vertex(c, a);
     if crate::geometry::classify_real(&dot_arrays(&ac, &normal))? != Classification::On {
         return Ok(None);
     }
 
-    let projection_axis = dominant_component_axis(&normal)?;
     let (u_axis, v_axis) = match projection_axis {
         0 => (1, 2),
         1 => (0, 2),
@@ -2672,8 +2669,10 @@ fn proper_segment_intersection_after_bounds_overlap(
         z: &a.z + &(t * &ab[2]),
     };
 
-    if point == *a || point == *b || point == *c || point == *d {
-        return Ok(None);
+    for endpoint in [a, b, c, d] {
+        if output_vertices_equal(&point, endpoint)? {
+            return Ok(None);
+        }
     }
     if point_on_segment_exact(&point, a, b)? && point_on_segment_exact(&point, c, d)? {
         Ok(Some(point))
@@ -2682,18 +2681,15 @@ fn proper_segment_intersection_after_bounds_overlap(
     }
 }
 
-fn insert_or_find_vertex(soup: &mut BooleanMesh, vertex: OutputVertex) -> usize {
-    if let Some(index) = soup
-        .vertices
-        .iter()
-        .position(|existing| existing == &vertex)
-    {
-        index
-    } else {
-        let index = soup.vertices.len();
-        soup.vertices.push(vertex);
-        index
+fn insert_or_find_vertex(soup: &mut BooleanMesh, vertex: OutputVertex) -> HypermeshResult<usize> {
+    for (index, existing) in soup.vertices.iter().enumerate() {
+        if output_vertices_equal(existing, &vertex)? {
+            return Ok(index);
+        }
     }
+    let index = soup.vertices.len();
+    soup.vertices.push(vertex);
+    Ok(index)
 }
 
 fn split_edges_at_vertex(soup: &mut BooleanMesh, edges: &[[usize; 2]], vertex: usize) {
@@ -2766,14 +2762,13 @@ fn point_collinear_with_segment_exact(
     let ab = sub_vertex(end, start);
     let av = sub_vertex(point, start);
     let cross = cross_arrays(&ab, &av);
-    if cross
-        .iter()
-        .any(|component| crate::geometry::classify_real(component) != Ok(Classification::On))
-    {
-        return Ok(false);
+    for component in &cross {
+        if crate::geometry::classify_real(component)? != Classification::On {
+            return Ok(false);
+        }
     }
 
-    Ok(point != start && point != end)
+    Ok(!output_vertices_equal(point, start)? && !output_vertices_equal(point, end)?)
 }
 
 fn point_within_edge_bounds_except_axis_exact(
@@ -2906,7 +2901,9 @@ fn inexpensive_nonzero_segment_axis(
                 best = Some(axis);
             }
         }
-        if let Some(axis) = best {
+        if let Some(axis) = best
+            && compare_real(vertex_axis(start, axis), vertex_axis(end, axis))?.is_ne()
+        {
             return Ok(axis);
         }
     }
@@ -2929,19 +2926,21 @@ fn dominant_segment_axis(start: &OutputVertex, end: &OutputVertex) -> HypermeshR
     Ok(best)
 }
 
-fn dominant_component_axis(values: &[Real; 3]) -> HypermeshResult<usize> {
-    let abs = [
-        values[0].clone().abs(),
-        values[1].clone().abs(),
-        values[2].clone().abs(),
-    ];
-    let mut best = 0;
-    for axis in 1..3 {
-        if compare_real(&abs[axis], &abs[best])?.is_gt() {
-            best = axis;
+fn certified_nonzero_component_axis(values: &[Real; 3]) -> HypermeshResult<Option<usize>> {
+    let mut saw_unknown = false;
+    for (axis, value) in values.iter().enumerate() {
+        match crate::geometry::classify_real(value) {
+            Ok(Classification::Negative | Classification::Positive) => return Ok(Some(axis)),
+            Ok(Classification::On) => {}
+            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+            Err(error) => return Err(error),
         }
     }
-    Ok(best)
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(None)
+    }
 }
 
 fn certify_positive_signed_volume(soup: &BooleanMesh) -> HypermeshResult<()> {
@@ -3419,6 +3418,51 @@ mod tests {
     }
 
     #[test]
+    fn output_vertex_merging_uses_numeric_equality() {
+        let left = Real::pi() + Real::e();
+        let equivalent_left = Real::e() + Real::pi();
+        assert_ne!(left, equivalent_left);
+        let soup = BooleanMesh {
+            vertices: vec![
+                OutputVertex {
+                    x: left,
+                    y: Real::zero(),
+                    z: Real::zero(),
+                },
+                OutputVertex {
+                    x: equivalent_left,
+                    y: Real::zero(),
+                    z: Real::zero(),
+                },
+            ],
+            triangles: Vec::new(),
+            sources: Vec::new(),
+        };
+
+        let merged = merge_duplicate_vertices(&soup).unwrap();
+
+        assert_eq!(merged.vertices.len(), 1);
+    }
+
+    #[test]
+    fn output_vertex_merging_rejects_invalid_indices() {
+        let soup = BooleanMesh {
+            vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0)],
+            triangles: vec![[0, 1, 3]],
+            sources: vec![TriangleSource::default()],
+        };
+
+        assert!(!soup.has_unique_nondegenerate_triangles());
+        assert!(matches!(
+            merge_duplicate_vertices(&soup),
+            Err(HypermeshError::VertexIndexOutOfBounds {
+                index: 3,
+                vertex_count: 3
+            })
+        ));
+    }
+
+    #[test]
     fn merge_duplicate_polygon_vertices_reuses_exact_vertex_keys() {
         let polygons = vec![
             op(vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0)]),
@@ -3634,7 +3678,6 @@ mod tests {
             [0, 1],
             &candidates,
             &[],
-            None,
             None,
             false,
         )

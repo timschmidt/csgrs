@@ -447,6 +447,7 @@ fn point_row(point: Point3) -> [Real; 3] {
     [point.x, point.y, point.z]
 }
 
+#[inline(always)]
 fn try_approximate_row<T: Copy>(
     row: &[Real; 3],
     approximate: impl Fn(&Real) -> Option<T>,
@@ -483,6 +484,7 @@ fn try_approximate_rows<T: Copy>(
     Ok((positions, normals))
 }
 
+#[inline]
 fn try_approximate_interleaved_rows<T: Copy>(
     vertices: &[ExactGpuVertex],
     approximate: impl Fn(&Real) -> Option<T> + Copy,

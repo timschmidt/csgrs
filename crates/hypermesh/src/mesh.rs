@@ -4,7 +4,7 @@ use std::collections::{BTreeSet, HashMap};
 use std::num::NonZeroU32;
 use std::sync::{Arc, Mutex, OnceLock};
 
-use hyperlattice::{Aabb as ExactAabb, Matrix4, Point3, Real, RealSign, Vector3};
+use hyperlattice::{Aabb as ExactAabb, Matrix4, Point3, Rational, Real, RealSign, Vector3};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Aabb, Classification, Plane, axis_ref, classify_point, compare_real};
@@ -66,6 +66,7 @@ pub(crate) struct TriangleMeshFacts {
     ray_queries: Mutex<Vec<(Point3, Vector3, Arc<[(Point3, Real)]>)>>,
     containment_queries: Mutex<Vec<(Point3, bool)>>,
     laplacian_smoothings: Mutex<Vec<(Real, usize, TriangleMesh)>>,
+    unique_nondegenerate_triangles: OnceLock<bool>,
 }
 
 /// Canonical owned triangle mesh.
@@ -254,27 +255,32 @@ impl TriangleMesh {
     /// triangle keys are compared, so independently indexed duplicate faces
     /// are rejected as well.
     pub fn has_unique_nondegenerate_triangles(&self) -> bool {
-        let canonical_indices = canonical_position_indices(&self.positions);
-        let mut seen = BTreeSet::new();
-        for triangle in self.triangles.iter() {
-            let indices = triangle.indices();
-            let [Some(a), Some(b), Some(c)] = indices.map(|index| self.positions.get(index)) else {
+        *self.facts.unique_nondegenerate_triangles.get_or_init(|| {
+            let Ok(canonical_indices) = canonical_position_indices(&self.positions) else {
                 return false;
             };
-            let mut key = indices.map(|index| canonical_indices[index]);
-            if key[0] == key[1]
-                || key[1] == key[2]
-                || key[0] == key[2]
-                || !Plane::points_are_nondegenerate(a, b, c)
-            {
-                return false;
+            let mut seen = BTreeSet::new();
+            for triangle in self.triangles.iter() {
+                let indices = triangle.indices();
+                let [Some(a), Some(b), Some(c)] = indices.map(|index| self.positions.get(index))
+                else {
+                    return false;
+                };
+                let mut key = indices.map(|index| canonical_indices[index]);
+                if key[0] == key[1]
+                    || key[1] == key[2]
+                    || key[0] == key[2]
+                    || !Plane::points_are_nondegenerate(a, b, c)
+                {
+                    return false;
+                }
+                key.sort_unstable();
+                if !seen.insert(key) {
+                    return false;
+                }
             }
-            key.sort_unstable();
-            if !seen.insert(key) {
-                return false;
-            }
-        }
-        true
+            true
+        })
     }
 
     /// Checks exact geometric edge pairing for a closed, consistently
@@ -288,7 +294,9 @@ impl TriangleMesh {
         if self.triangles.is_empty() || !self.has_unique_nondegenerate_triangles() {
             return false;
         }
-        let canonical_indices = canonical_position_indices(&self.positions);
+        let Ok(canonical_indices) = canonical_position_indices(&self.positions) else {
+            return false;
+        };
         let mut edges = HashMap::<[usize; 2], [usize; 2]>::new();
         for triangle in self.triangles.iter() {
             let [a, b, c] = triangle.indices().map(|index| canonical_indices[index]);
@@ -575,12 +583,15 @@ impl TriangleMesh {
     }
 
     /// Applies and retains an exact `Rz * Ry * Rx` Euler rotation in degrees.
-    pub fn rotated_xyz_degrees(&self, x: Real, y: Real, z: Real) -> Self {
+    ///
+    /// Returns `None` when a transformed coordinate cannot be produced rather
+    /// than substituting the unchanged input mesh.
+    pub fn try_rotated_xyz_degrees(&self, x: Real, y: Real, z: Real) -> Option<Self> {
         let degrees = [x, y, z];
         if let Ok(rotations) = self.facts.rotations.lock()
             && let Some((_, transformed)) = rotations.iter().find(|(cached, _)| cached == &degrees)
         {
-            return transformed.clone();
+            return Some(transformed.clone());
         }
         let x = degrees[0].clone().to_radians();
         let y = degrees[1].clone().to_radians();
@@ -610,9 +621,7 @@ impl TriangleMesh {
             zero,
             one,
         ]);
-        let transformed = self
-            .try_transformed(&matrix)
-            .unwrap_or_else(|| self.clone());
+        let transformed = self.try_transformed(&matrix)?;
         if let Ok(mut rotations) = self.facts.rotations.lock() {
             const CAPACITY: usize = 8;
             if rotations.len() == CAPACITY {
@@ -620,7 +629,14 @@ impl TriangleMesh {
             }
             rotations.push((degrees, transformed.clone()));
         }
-        transformed
+        Some(transformed)
+    }
+
+    /// Applies an exact Euler rotation, retaining the compatibility behavior
+    /// of returning the unchanged mesh if coordinate transformation fails.
+    pub fn rotated_xyz_degrees(&self, x: Real, y: Real, z: Real) -> Self {
+        self.try_rotated_xyz_degrees(x, y, z)
+            .unwrap_or_else(|| self.clone())
     }
 
     /// Uniformly subdivides every triangle while sharing edge midpoints.
@@ -1344,7 +1360,7 @@ fn build_polygon_soup_with_edge_mode(
                 (None, None) => convex_triangle(p0, p1, p2, mesh_index as isize, polygon_index),
             }
             .with_source_triangle_edge_identities(mesh_index, [i0, i1, i2]);
-            if !polygon.support.is_valid() {
+            if !polygon.support.decide_is_valid()? {
                 return Err(HypermeshError::DegenerateTriangle {
                     mesh_index,
                     triangle_index,
@@ -1364,7 +1380,7 @@ fn build_polygon_soup_with_edge_mode(
             polygon_index += 1;
         }
         if !input_is_certified_convex {
-            let edge_balance = classify_indexed_edge_balance(mesh);
+            let edge_balance = classify_indexed_edge_balance(mesh)?;
             if edge_balance.boundary_edges != 0 {
                 return Err(HypermeshError::OpenInput {
                     mesh_index,
@@ -1441,24 +1457,110 @@ fn approximate_triangle_axis(positions: &[Point3], indices: [usize; 3]) -> Optio
     (0..3).find(|&axis| p0[axis] == p1[axis] && p0[axis] == p2[axis])
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-struct PositionBucket([Option<u64>; 3]);
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+struct ExactRationalPositionBucket([Option<u64>; 3]);
 
-fn canonical_position_indices(positions: &[Point3]) -> Vec<usize> {
+type CertifiedPositionInterval = [[Rational; 2]; 3];
+
+fn certified_position_interval(position: &Point3) -> Option<CertifiedPositionInterval> {
+    const BROAD_PHASE_PRECISION: i32 = -20;
+
+    Some([
+        position
+            .x
+            .certified_dyadic_interval(BROAD_PHASE_PRECISION)?,
+        position
+            .y
+            .certified_dyadic_interval(BROAD_PHASE_PRECISION)?,
+        position
+            .z
+            .certified_dyadic_interval(BROAD_PHASE_PRECISION)?,
+    ])
+}
+
+fn certified_position_intervals_are_disjoint(
+    left: Option<&CertifiedPositionInterval>,
+    right: Option<&CertifiedPositionInterval>,
+) -> bool {
+    let (Some(left), Some(right)) = (left, right) else {
+        return false;
+    };
+    left.iter()
+        .zip(right)
+        .any(|(left, right)| left[1] < right[0] || right[1] < left[0])
+}
+
+type CertifiedPositionCells = [[i64; 2]; 3];
+
+fn rational_floor_i64(value: &Rational) -> Option<i64> {
+    let truncated = value.trunc();
+    let mut integer = i64::try_from(truncated.clone()).ok()?;
+    if value.is_negative() && truncated != *value {
+        integer = integer.checked_sub(1)?;
+    }
+    Some(integer)
+}
+
+fn certified_position_cells(
+    interval: Option<&CertifiedPositionInterval>,
+) -> Option<CertifiedPositionCells> {
+    const CELLS_PER_UNIT: i64 = 256;
+    const MAX_CELLS_PER_POSITION: u64 = 64;
+
+    let interval = interval?;
+    let scale = Rational::from(CELLS_PER_UNIT);
+    let mut cells = [[0; 2]; 3];
+    let mut cell_count = 1_u64;
+    for axis in 0..3 {
+        cells[axis] = [
+            rational_floor_i64(&(&interval[axis][0] * &scale))?,
+            rational_floor_i64(&(&interval[axis][1] * &scale))?,
+        ];
+        let axis_count = cells[axis][1].checked_sub(cells[axis][0])?.checked_add(1)?;
+        cell_count = cell_count.checked_mul(u64::try_from(axis_count).ok()?)?;
+        if cell_count > MAX_CELLS_PER_POSITION {
+            return None;
+        }
+    }
+    Some(cells)
+}
+
+fn position_cells(cells: CertifiedPositionCells) -> impl Iterator<Item = [i64; 3]> {
+    (cells[0][0]..=cells[0][1]).flat_map(move |x| {
+        (cells[1][0]..=cells[1][1])
+            .flat_map(move |y| (cells[2][0]..=cells[2][1]).map(move |z| [x, y, z]))
+    })
+}
+
+fn exact_rational_position_bucket(position: &Point3) -> Option<ExactRationalPositionBucket> {
+    [&position.x, &position.y, &position.z]
+        .iter()
+        .all(|coordinate| coordinate.exact_rational_ref().is_some())
+        .then(|| {
+            ExactRationalPositionBucket([
+                position.x.to_f64_lossy().map(f64::to_bits),
+                position.y.to_f64_lossy().map(f64::to_bits),
+                position.z.to_f64_lossy().map(f64::to_bits),
+            ])
+        })
+}
+
+fn canonical_exact_rational_position_indices(positions: &[Point3]) -> Option<Vec<usize>> {
     let mut canonical_positions: Vec<&Point3> = Vec::with_capacity(positions.len());
-    let mut buckets = HashMap::<PositionBucket, Vec<usize>>::new();
+    let mut buckets = HashMap::<ExactRationalPositionBucket, Vec<usize>>::new();
     let mut canonical_indices = Vec::with_capacity(positions.len());
     for position in positions {
-        let key = PositionBucket([
-            position.x.to_f64_lossy().map(f64::to_bits),
-            position.y.to_f64_lossy().map(f64::to_bits),
-            position.z.to_f64_lossy().map(f64::to_bits),
-        ]);
+        let key = exact_rational_position_bucket(position)?;
         let candidates = buckets.entry(key).or_default();
         let canonical = candidates
             .iter()
             .copied()
-            .find(|index| *canonical_positions[*index] == *position)
+            .find(|&index| {
+                let candidate = canonical_positions[index];
+                candidate.x.exact_rational_ref() == position.x.exact_rational_ref()
+                    && candidate.y.exact_rational_ref() == position.y.exact_rational_ref()
+                    && candidate.z.exact_rational_ref() == position.z.exact_rational_ref()
+            })
             .unwrap_or_else(|| {
                 let index = canonical_positions.len();
                 canonical_positions.push(position);
@@ -1467,11 +1569,101 @@ fn canonical_position_indices(positions: &[Point3]) -> Vec<usize> {
             });
         canonical_indices.push(canonical);
     }
-    canonical_indices
+    Some(canonical_indices)
 }
 
-fn classify_indexed_edge_balance(mesh: &TriangleMeshRef<'_>) -> EdgeBalance {
-    let canonical_indices = canonical_position_indices(mesh.positions);
+fn canonical_position_indices(positions: &[Point3]) -> HypermeshResult<Vec<usize>> {
+    if let Some(indices) = canonical_exact_rational_position_indices(positions) {
+        return Ok(indices);
+    }
+
+    let mut canonical_positions: Vec<&Point3> = Vec::with_capacity(positions.len());
+    let mut canonical_position_intervals: Vec<Option<CertifiedPositionInterval>> =
+        Vec::with_capacity(positions.len());
+    let mut exact_rational_buckets = HashMap::<ExactRationalPositionBucket, Vec<usize>>::new();
+    let mut certified_position_buckets = HashMap::<[i64; 3], Vec<usize>>::new();
+    let mut unbucketed_positions = Vec::<usize>::new();
+    let mut canonical_indices = Vec::with_capacity(positions.len());
+    for position in positions {
+        let position_interval = certified_position_interval(position);
+        let position_cell_range = certified_position_cells(position_interval.as_ref());
+        let exact_coordinates = [
+            position.x.exact_rational_ref(),
+            position.y.exact_rational_ref(),
+            position.z.exact_rational_ref(),
+        ];
+        let exact_rational_bucket = exact_rational_position_bucket(position);
+        let mut canonical = exact_rational_bucket
+            .as_ref()
+            .and_then(|key| exact_rational_buckets.get(key))
+            .into_iter()
+            .flatten()
+            .copied()
+            .find(|&index| {
+                let candidate = canonical_positions[index];
+                candidate.x.exact_rational_ref() == exact_coordinates[0]
+                    && candidate.y.exact_rational_ref() == exact_coordinates[1]
+                    && candidate.z.exact_rational_ref() == exact_coordinates[2]
+            });
+        if canonical.is_none() {
+            let mut candidates = BTreeSet::new();
+            if let Some(cells) = position_cell_range {
+                for cell in position_cells(cells) {
+                    candidates.extend(
+                        certified_position_buckets
+                            .get(&cell)
+                            .into_iter()
+                            .flatten()
+                            .copied(),
+                    );
+                }
+                candidates.extend(unbucketed_positions.iter().copied());
+            } else {
+                candidates.extend(0..canonical_positions.len());
+            }
+            for index in candidates {
+                if certified_position_intervals_are_disjoint(
+                    canonical_position_intervals[index].as_ref(),
+                    position_interval.as_ref(),
+                ) {
+                    continue;
+                }
+                if crate::predicate::points_equal(canonical_positions[index], position)? {
+                    canonical = Some(index);
+                    break;
+                }
+            }
+        }
+        let is_new = canonical.is_none();
+        let canonical = canonical.unwrap_or_else(|| {
+            let index = canonical_positions.len();
+            canonical_positions.push(position);
+            canonical_position_intervals.push(position_interval);
+            if let Some(cells) = position_cell_range {
+                for cell in position_cells(cells) {
+                    certified_position_buckets
+                        .entry(cell)
+                        .or_default()
+                        .push(index);
+                }
+            } else {
+                unbucketed_positions.push(index);
+            }
+            index
+        });
+        if is_new && let Some(key) = exact_rational_bucket {
+            exact_rational_buckets
+                .entry(key)
+                .or_default()
+                .push(canonical);
+        }
+        canonical_indices.push(canonical);
+    }
+    Ok(canonical_indices)
+}
+
+fn classify_indexed_edge_balance(mesh: &TriangleMeshRef<'_>) -> HypermeshResult<EdgeBalance> {
+    let canonical_indices = canonical_position_indices(mesh.positions)?;
     let mut edge_uses: StorageHashMap<[usize; 2], [usize; 2]> = StorageHashMap::default();
     for triangle in mesh.triangles {
         let [a, b, c] = triangle.indices().map(|index| canonical_indices[index]);
@@ -1485,7 +1677,7 @@ fn classify_indexed_edge_balance(mesh: &TriangleMeshRef<'_>) -> EdgeBalance {
         }
     }
 
-    edge_uses
+    Ok(edge_uses
         .values()
         .fold(EdgeBalance::default(), |mut balance, uses| {
             if uses[0] + uses[1] == 1 {
@@ -1495,7 +1687,7 @@ fn classify_indexed_edge_balance(mesh: &TriangleMeshRef<'_>) -> EdgeBalance {
                 balance.unbalanced_edges += 1;
             }
             balance
-        })
+        }))
 }
 
 fn validate_non_empty_mesh_views(meshes: &[TriangleMeshRef<'_>]) -> HypermeshResult<()> {
@@ -1516,7 +1708,7 @@ pub(crate) struct EdgeBalance {
     pub(crate) unbalanced_edges: usize,
 }
 
-pub(crate) fn classify_edge_balance(edges: &[[Point3; 2]]) -> EdgeBalance {
+pub(crate) fn classify_edge_balance(edges: &[[Point3; 2]]) -> HypermeshResult<EdgeBalance> {
     let mut balance = EdgeBalance::default();
     let mut visited = vec![false; edges.len()];
     for (index, edge) in edges.iter().enumerate() {
@@ -1527,14 +1719,16 @@ pub(crate) fn classify_edge_balance(edges: &[[Point3; 2]]) -> EdgeBalance {
         let mut forward_uses = 0usize;
         let mut reverse_uses = 0usize;
         for (other_index, other) in edges.iter().enumerate() {
-            if !undirected_edges_match(edge, other) {
-                continue;
-            }
-            visited[other_index] = true;
-            if edge == other {
-                forward_uses += 1;
-            } else {
-                reverse_uses += 1;
+            match edge_match_direction(edge, other)? {
+                Some(false) => {
+                    visited[other_index] = true;
+                    forward_uses += 1;
+                }
+                Some(true) => {
+                    visited[other_index] = true;
+                    reverse_uses += 1;
+                }
+                None => {}
             }
         }
 
@@ -1545,11 +1739,43 @@ pub(crate) fn classify_edge_balance(edges: &[[Point3; 2]]) -> EdgeBalance {
             balance.unbalanced_edges += 1;
         }
     }
-    balance
+    Ok(balance)
 }
 
-fn undirected_edges_match(left: &[Point3; 2], right: &[Point3; 2]) -> bool {
-    (left[0] == right[0] && left[1] == right[1]) || (left[0] == right[1] && left[1] == right[0])
+fn ordered_edge_matches(
+    left_start: &Point3,
+    left_end: &Point3,
+    right_start: &Point3,
+    right_end: &Point3,
+) -> HypermeshResult<bool> {
+    let start = crate::predicate::points_equal(left_start, right_start);
+    let end = crate::predicate::points_equal(left_end, right_end);
+    match (start, end) {
+        (Ok(false), _) | (_, Ok(false)) => Ok(false),
+        (Ok(true), Ok(true)) => Ok(true),
+        (Err(HypermeshError::UnknownClassification), _)
+        | (_, Err(HypermeshError::UnknownClassification)) => {
+            Err(HypermeshError::UnknownClassification)
+        }
+        (Err(error), _) | (_, Err(error)) => Err(error),
+    }
+}
+
+/// Returns `Some(false)` for the same direction, `Some(true)` for the reverse
+/// direction, or `None` for distinct undirected edges.
+fn edge_match_direction(left: &[Point3; 2], right: &[Point3; 2]) -> HypermeshResult<Option<bool>> {
+    let forward = ordered_edge_matches(&left[0], &left[1], &right[0], &right[1]);
+    let reverse = ordered_edge_matches(&left[0], &left[1], &right[1], &right[0]);
+    match (forward, reverse) {
+        (Ok(true), _) => Ok(Some(false)),
+        (_, Ok(true)) => Ok(Some(true)),
+        (Ok(false), Ok(false)) => Ok(None),
+        (Err(HypermeshError::UnknownClassification), _)
+        | (_, Err(HypermeshError::UnknownClassification)) => {
+            Err(HypermeshError::UnknownClassification)
+        }
+        (Err(error), _) | (_, Err(error)) => Err(error),
+    }
 }
 
 fn bounds_for_positions<'a>(
@@ -1633,6 +1859,69 @@ mod tests {
         let duplicate = TriangleMesh::new(mesh.positions.to_vec(), triangles);
         assert!(!duplicate.has_unique_nondegenerate_triangles());
         assert!(!duplicate.is_closed_manifold_geometry());
+    }
+
+    #[test]
+    fn geometric_closure_uses_numeric_point_equality() {
+        let mesh = tetrahedron_with_independent_face_indices();
+        let left = Real::pi() + Real::e();
+        let equivalent_left = Real::e() + Real::pi();
+        assert_ne!(left, equivalent_left);
+        let positions = mesh
+            .positions
+            .iter()
+            .enumerate()
+            .map(|(index, point)| {
+                let offset = if index % 2 == 0 {
+                    left.clone()
+                } else {
+                    equivalent_left.clone()
+                };
+                Point3::new(&point.x + offset, point.y.clone(), point.z.clone())
+            })
+            .collect();
+        let mesh = TriangleMesh::new(positions, mesh.triangles.to_vec());
+
+        assert!(mesh.has_unique_nondegenerate_triangles());
+        assert!(mesh.is_closed_manifold_geometry());
+    }
+
+    #[test]
+    fn certified_position_intervals_only_reject_provably_distinct_points() {
+        let left = Point3::new(Real::pi() + Real::e(), Real::zero(), Real::zero());
+        let equivalent = Point3::new(Real::e() + Real::pi(), Real::zero(), Real::zero());
+        let distinct = Point3::new(Real::pi(), Real::zero(), Real::zero());
+        let left_interval = certified_position_interval(&left);
+        let equivalent_interval = certified_position_interval(&equivalent);
+        let distinct_interval = certified_position_interval(&distinct);
+
+        assert!(!certified_position_intervals_are_disjoint(
+            left_interval.as_ref(),
+            equivalent_interval.as_ref(),
+        ));
+        assert!(certified_position_intervals_are_disjoint(
+            left_interval.as_ref(),
+            distinct_interval.as_ref(),
+        ));
+    }
+
+    #[test]
+    fn geometric_edge_balance_uses_numeric_point_equality() {
+        let left = Real::pi() + Real::e();
+        let equivalent_left = Real::e() + Real::pi();
+        assert_ne!(left, equivalent_left);
+        let edges = [
+            [
+                Point3::new(left, Real::zero(), Real::zero()),
+                Point3::new(Real::from(2_u8), Real::one(), Real::zero()),
+            ],
+            [
+                Point3::new(Real::from(2_u8), Real::one(), Real::zero()),
+                Point3::new(equivalent_left, Real::zero(), Real::zero()),
+            ],
+        ];
+
+        assert_eq!(classify_edge_balance(&edges), Ok(EdgeBalance::default()));
     }
 
     #[test]
@@ -1765,7 +2054,7 @@ mod tests {
 
         assert_eq!(
             classify_indexed_edge_balance(&mesh.as_ref()),
-            EdgeBalance::default()
+            Ok(EdgeBalance::default())
         );
         polygon_soup(&[mesh.as_ref()]).expect("closed coincident-index tetrahedron");
     }

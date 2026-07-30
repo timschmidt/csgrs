@@ -1142,10 +1142,11 @@ fn update_positive_stop(stop_t: &mut Option<Real>, candidate: Real) -> Hypermesh
     if !compare_real(&candidate, &Real::zero())?.is_gt() {
         return Ok(());
     }
-    if stop_t
-        .as_ref()
-        .is_none_or(|current| compare_real(&candidate, current).is_ok_and(|order| order.is_lt()))
-    {
+    let replace = match stop_t.as_ref() {
+        None => true,
+        Some(current) => compare_real(&candidate, current)?.is_lt(),
+    };
+    if replace {
         *stop_t = Some(candidate);
     }
     Ok(())

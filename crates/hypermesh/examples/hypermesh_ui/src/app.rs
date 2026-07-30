@@ -637,7 +637,7 @@ fn cube_triangles() -> Vec<Triangle> {
 
 fn input_mesh_faces(mesh: &TriangleMesh, color: Color3) -> ExactMesh {
     let mut out = ExactMesh::empty(Primitive::Triangles);
-    for triangle in &mesh.triangles {
+    for triangle in mesh.triangles.iter() {
         let [Some(a), Some(b), Some(c)] = triangle
             .indices()
             .map(|index| mesh.positions.get(index).cloned())
@@ -654,7 +654,7 @@ fn input_mesh_faces(mesh: &TriangleMesh, color: Color3) -> ExactMesh {
 
 fn input_mesh_wire(mesh: &TriangleMesh, color: Color3) -> ExactMesh {
     let mut out = ExactMesh::empty(Primitive::Lines);
-    for triangle in &mesh.triangles {
+    for triangle in mesh.triangles.iter() {
         push_wire_triangle(
             &mut out,
             triangle

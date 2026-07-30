@@ -3576,7 +3576,7 @@ fn polygon_family_is_closed_within_bounds(
     }
 
     for edges in &mesh_edges {
-        let balance = classify_edge_balance(edges);
+        let balance = classify_edge_balance(edges)?;
         if balance.boundary_edges != 0 || balance.unbalanced_edges != 0 {
             return Ok(false);
         }
