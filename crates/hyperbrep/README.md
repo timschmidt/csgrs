@@ -187,7 +187,10 @@ The clean-break implementation currently provides:
   shell with true union classification and no false primitive profile.
   Strict cross-family containment regularizes the complete Boolean truth
   table in either direction; the nontrivial difference retains the contained
-  finite cylinder or sphere as one native inward void with exact queries;
+  finite cylinder or sphere as one native inward void with exact queries.
+  The exact clearance fast path precedes carrier intersection, so strictly
+  contained off-axis pairs do not pay for or depend on an unsupported
+  sphere/cylinder surface relation;
 - transverse plane/cone cuts use the same two-pcurve latitude abstraction,
   with cone slant parameter retained exactly. Frustum side descendants prove
   the same no-gap/no-overlap parameter grid, so slab clips remain native conic

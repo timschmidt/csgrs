@@ -235,6 +235,11 @@ area `42*pi` and volume `34*pi`; a radius-2 cylinder on `[-2,2]` minus a
 centered radius-1 sphere has area `28*pi` and volume `44*pi/3`. Both mixed
 voids retain exact classification, rigid/reflection transforms, persistence,
 operand-order symmetry for union/intersection, and no false primitive profile.
+These strict predicates are evaluated before carrier intersection and include
+the exact cylinder-axis offset, so off-axis contained pairs have the same
+operation matrix even though general off-axis sphere/cylinder surface
+intersection remains unsupported. Equality does not enter the fast path;
+off-axis tangency remains explicit unsupported evidence.
 
 `boolean::intersection_graph` now builds the common retained face-pair graph
 for any validated solids. It computes each certified face bound once, rejects

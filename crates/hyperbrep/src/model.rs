@@ -1371,6 +1371,62 @@ pub(crate) struct CertifiedCylinderProfile {
     pub(crate) v_max: Real,
 }
 
+impl CertifiedSphereProfile {
+    pub(crate) fn strictly_contains_cylinder(
+        &self,
+        cylinder: &CertifiedCylinderProfile,
+    ) -> Result<bool, GeometryError> {
+        let offset = &self.center - &cylinder.origin;
+        let center_parameter = offset.dot(&cylinder.axis);
+        let radial = offset - cylinder.axis.clone() * &center_parameter;
+        let radial_distance = radial
+            .norm_squared()
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let maximum_radial = radial_distance + &cylinder.radius;
+        let lower_height = (&cylinder.v_min - &center_parameter).abs();
+        let upper_height = (&cylinder.v_max - center_parameter).abs();
+        let maximum_height = if decided_model_order(compare_reals(&lower_height, &upper_height))?
+            == std::cmp::Ordering::Greater
+        {
+            lower_height
+        } else {
+            upper_height
+        };
+        Ok(decided_model_order(compare_reals(
+            &(&maximum_radial * &maximum_radial + &maximum_height * &maximum_height),
+            &(&self.radius * &self.radius),
+        ))? == std::cmp::Ordering::Less)
+    }
+}
+
+impl CertifiedCylinderProfile {
+    pub(crate) fn strictly_contains_sphere(
+        &self,
+        sphere: &CertifiedSphereProfile,
+    ) -> Result<bool, GeometryError> {
+        let offset = &sphere.center - &self.origin;
+        let center_parameter = offset.dot(&self.axis);
+        let radial = offset - self.axis.clone() * &center_parameter;
+        let radial_distance = radial
+            .norm_squared()
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        Ok(decided_model_order(compare_reals(
+            &(&radial_distance + &sphere.radius),
+            &self.radius,
+        ))? == std::cmp::Ordering::Less
+            && decided_model_order(compare_reals(
+                &self.v_min,
+                &(&center_parameter - &sphere.radius),
+            ))? == std::cmp::Ordering::Less
+            && decided_model_order(compare_reals(
+                &(&center_parameter + &sphere.radius),
+                &self.v_max,
+            ))? == std::cmp::Ordering::Less)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct CertifiedConeFrustumProfile {
     pub(crate) apex: Point3,
@@ -9941,27 +9997,18 @@ impl ModelBuilder {
         if cylinder.sphere_subtraction.is_some() {
             return Ok(false);
         }
-        let offset = sphere_center - &cylinder.origin;
-        let center_parameter = offset.dot(&cylinder.axis);
-        let radial = offset - cylinder.axis.clone() * &center_parameter;
-        let radial_distance = radial
-            .norm_squared()
-            .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        let maximum_radial = radial_distance + &cylinder.radius;
-        let lower_height = (&cylinder.v_min - &center_parameter).abs();
-        let upper_height = (&cylinder.v_max - center_parameter).abs();
-        let maximum_height = if decided_model_order(compare_reals(&lower_height, &upper_height))?
-            == std::cmp::Ordering::Greater
-        {
-            lower_height
-        } else {
-            upper_height
-        };
-        Ok(decided_model_order(compare_reals(
-            &(&maximum_radial * &maximum_radial + &maximum_height * &maximum_height),
-            &(sphere_radius * sphere_radius),
-        ))? == std::cmp::Ordering::Less)
+        CertifiedSphereProfile {
+            center: sphere_center.clone(),
+            radius: sphere_radius.clone(),
+        }
+        .strictly_contains_cylinder(&CertifiedCylinderProfile {
+            origin: cylinder.origin.clone(),
+            axis: cylinder.axis.clone(),
+            radius: cylinder.radius.clone(),
+            v_min: cylinder.v_min.clone(),
+            v_max: cylinder.v_max.clone(),
+        })
+        .map_err(BuildError::from)
     }
 
     fn cylinder_strictly_contains_sphere(
@@ -9973,25 +10020,18 @@ impl ModelBuilder {
         if cylinder.sphere_subtraction.is_some() {
             return Ok(false);
         }
-        let offset = sphere_center - &cylinder.origin;
-        let center_parameter = offset.dot(&cylinder.axis);
-        let radial = offset - cylinder.axis.clone() * &center_parameter;
-        let radial_distance = radial
-            .norm_squared()
-            .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        Ok(decided_model_order(compare_reals(
-            &(&radial_distance + sphere_radius),
-            &cylinder.radius,
-        ))? == std::cmp::Ordering::Less
-            && decided_model_order(compare_reals(
-                &cylinder.v_min,
-                &(&center_parameter - sphere_radius),
-            ))? == std::cmp::Ordering::Less
-            && decided_model_order(compare_reals(
-                &(&center_parameter + sphere_radius),
-                &cylinder.v_max,
-            ))? == std::cmp::Ordering::Less)
+        CertifiedCylinderProfile {
+            origin: cylinder.origin.clone(),
+            axis: cylinder.axis.clone(),
+            radius: cylinder.radius.clone(),
+            v_min: cylinder.v_min.clone(),
+            v_max: cylinder.v_max.clone(),
+        }
+        .strictly_contains_sphere(&CertifiedSphereProfile {
+            center: sphere_center.clone(),
+            radius: sphere_radius.clone(),
+        })
+        .map_err(BuildError::from)
     }
 
     fn certified_sphere_segment_shell(

@@ -313,6 +313,13 @@ closed sphere-or-finite-cylinder enum; cylinder spherical subtraction is a
 closed whole-void-or-intersecting-component enum. This makes exact volume,
 classification, rigid transforms, and replay share the same topology proof,
 while mixed-void results remain excluded from primitive optimization profiles.
+The same authoritative clearance predicates live on the certified primitive
+profiles and run before intersection-graph construction. Consequently,
+strictly contained off-axis pairs select the whole outer/inner operands or
+copy the two complete shells into an exact outer-plus-reversed-void result
+without asking the narrower coaxial carrier-intersection implementation.
+Equality is deliberately excluded: tangent or otherwise non-strict off-axis
+pairs fall through to explicit unsupported intersection evidence.
 Closed face-local curves are split into two canonical edge records so the new
 interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented

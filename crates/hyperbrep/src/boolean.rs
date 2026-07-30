@@ -3565,6 +3565,15 @@ fn boolean(
     )? {
         return Ok(result);
     }
+    if let Some(result) = sphere_cylinder_containment_boolean(
+        first_model,
+        first_solid,
+        second_model,
+        second_solid,
+        operation,
+    )? {
+        return Ok(result);
+    }
     if let Some(result) = sphere_boolean(
         first_model,
         first_solid,
@@ -3640,6 +3649,145 @@ fn boolean(
             }
         }
     }
+}
+
+fn sphere_cylinder_containment_boolean(
+    first_model: &Model,
+    first_solid: SolidId,
+    second_model: &Model,
+    second_solid: SolidId,
+    operation: BooleanOp,
+) -> Result<Option<BooleanResult>, BooleanError> {
+    let first_sphere = first_model.certified_sphere_profile(first_solid);
+    let first_cylinder = first_model.certified_cylinder_profile(first_solid);
+    let second_sphere = second_model.certified_sphere_profile(second_solid);
+    let second_cylinder = second_model.certified_cylinder_profile(second_solid);
+    let relation = match (
+        first_sphere.as_ref(),
+        first_cylinder.as_ref(),
+        second_sphere.as_ref(),
+        second_cylinder.as_ref(),
+    ) {
+        (Some(sphere), None, None, Some(cylinder)) => {
+            if sphere.strictly_contains_cylinder(cylinder)? {
+                Some(Ordering::Greater)
+            } else if cylinder.strictly_contains_sphere(sphere)? {
+                Some(Ordering::Less)
+            } else {
+                None
+            }
+        }
+        (None, Some(cylinder), Some(sphere), None) => {
+            if cylinder.strictly_contains_sphere(sphere)? {
+                Some(Ordering::Greater)
+            } else if sphere.strictly_contains_cylinder(cylinder)? {
+                Some(Ordering::Less)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    };
+    let Some(relation) = relation else {
+        return Ok(None);
+    };
+    Ok(Some(match operation {
+        BooleanOp::Union => {
+            if relation == Ordering::Greater {
+                BooleanResult::Solid {
+                    model: first_model.clone(),
+                    solid: first_solid,
+                }
+            } else {
+                BooleanResult::Solid {
+                    model: second_model.clone(),
+                    solid: second_solid,
+                }
+            }
+        }
+        BooleanOp::Intersection => {
+            if relation == Ordering::Greater {
+                BooleanResult::Solid {
+                    model: second_model.clone(),
+                    solid: second_solid,
+                }
+            } else {
+                BooleanResult::Solid {
+                    model: first_model.clone(),
+                    solid: first_solid,
+                }
+            }
+        }
+        BooleanOp::Difference if relation == Ordering::Less => BooleanResult::Empty,
+        BooleanOp::Difference => {
+            contained_solid_difference(first_model, first_solid, second_model, second_solid)?
+        }
+        BooleanOp::Xor => unreachable!("not exposed by HyperBREP"),
+    }))
+}
+
+fn contained_solid_difference(
+    outer_model: &Model,
+    outer_solid: SolidId,
+    inner_model: &Model,
+    inner_solid: SolidId,
+) -> Result<BooleanResult, BooleanError> {
+    let mut builder = ModelBuilder::new();
+    let mut vertices = Vec::<(Point3, crate::VertexId)>::new();
+    let mut edges = Vec::<StitchedEdge>::new();
+    let mut source_edges =
+        BTreeMap::<(bool, crate::EdgeId), (crate::EdgeId, bool, crate::ParameterDomain)>::new();
+    let mut source_surfaces = BTreeMap::<(bool, crate::SurfaceId), crate::SurfaceId>::new();
+    let selected_edge_uses = BTreeMap::new();
+    let mut outer_faces = Vec::new();
+    for face in solid_faces(outer_model, outer_solid)? {
+        outer_faces.push(
+            copy_selected_face(
+                outer_model,
+                face,
+                true,
+                false,
+                &mut builder,
+                &mut vertices,
+                &mut edges,
+                &mut source_edges,
+                &mut source_surfaces,
+                &selected_edge_uses,
+                false,
+            )?
+            .id,
+        );
+    }
+    let mut inner_faces = Vec::new();
+    for face in solid_faces(inner_model, inner_solid)? {
+        inner_faces.push(
+            copy_selected_face(
+                inner_model,
+                face,
+                false,
+                true,
+                &mut builder,
+                &mut vertices,
+                &mut edges,
+                &mut source_edges,
+                &mut source_surfaces,
+                &selected_edge_uses,
+                false,
+            )?
+            .id,
+        );
+    }
+    let outer = builder
+        .shell(outer_faces)
+        .map_err(ConstructionError::from)?;
+    let inner = builder
+        .shell(inner_faces)
+        .map_err(ConstructionError::from)?;
+    let solid = builder
+        .solid(outer, vec![inner])
+        .map_err(ConstructionError::from)?;
+    let model = builder.finish().map_err(ConstructionError::from)?;
+    Ok(BooleanResult::Solid { model, solid })
 }
 
 fn coaxial_revolution_boolean(
@@ -5869,6 +6017,301 @@ mod tests {
             compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
             Some(Ordering::Equal)
         );
+    }
+
+    #[test]
+    fn off_axis_sphere_cylinder_containment_bypasses_unsupported_carriers_exactly() {
+        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(5)).unwrap();
+        let (inner_cylinder, inner_cylinder_solid) =
+            crate::builder::cylinder(Real::one(), Real::from(2)).unwrap();
+        let inner_cylinder = inner_cylinder
+            .transformed(&Matrix4::affine_translation([
+                Real::one(),
+                Real::zero(),
+                -Real::one(),
+            ]))
+            .unwrap();
+        assert!(
+            intersection_graph(&sphere, sphere_solid, &inner_cylinder, inner_cylinder_solid)
+                .unwrap()
+                .unsupported_pairs()
+                > 0
+        );
+        let sphere_volume = (Real::from(500) * Real::pi() / Real::from(3)).unwrap();
+        let inner_cylinder_volume = Real::from(2) * Real::pi();
+        for (result, expected) in [
+            (
+                union(&sphere, sphere_solid, &inner_cylinder, inner_cylinder_solid).unwrap(),
+                sphere_volume.clone(),
+            ),
+            (
+                union(&inner_cylinder, inner_cylinder_solid, &sphere, sphere_solid).unwrap(),
+                sphere_volume.clone(),
+            ),
+            (
+                intersection(&sphere, sphere_solid, &inner_cylinder, inner_cylinder_solid).unwrap(),
+                inner_cylinder_volume.clone(),
+            ),
+            (
+                intersection(&inner_cylinder, inner_cylinder_solid, &sphere, sphere_solid).unwrap(),
+                inner_cylinder_volume,
+            ),
+        ] {
+            let BooleanResult::Solid { model, solid } = result else {
+                panic!("strict off-axis containment must retain one whole operand");
+            };
+            assert_eq!(
+                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                Some(Ordering::Equal)
+            );
+        }
+        assert!(matches!(
+            difference(&inner_cylinder, inner_cylinder_solid, &sphere, sphere_solid).unwrap(),
+            BooleanResult::Empty
+        ));
+        let BooleanResult::Solid {
+            model: bored_sphere,
+            solid: bored_sphere_solid,
+        } = difference(&sphere, sphere_solid, &inner_cylinder, inner_cylinder_solid).unwrap()
+        else {
+            panic!("off-axis contained cylinder must become one native void");
+        };
+        let bored_sphere_volume =
+            (Real::from(500) * Real::pi() / Real::from(3)).unwrap() - Real::from(2) * Real::pi();
+        assert_eq!(
+            compare_reals(
+                &bored_sphere.solid_volume(bored_sphere_solid).unwrap(),
+                &bored_sphere_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        for (point, location) in [
+            (p(1, 0, 0), SolidPointLocation::Outside),
+            (p(2, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 3, 0), SolidPointLocation::Inside),
+            (p(5, 0, 0), SolidPointLocation::Boundary),
+        ] {
+            assert_eq!(
+                bored_sphere
+                    .classify_point(bored_sphere_solid, &point)
+                    .unwrap(),
+                location
+            );
+        }
+        assert!(
+            bored_sphere
+                .certified_sphere_profile(bored_sphere_solid)
+                .is_none()
+        );
+        let json = bored_sphere.to_json().unwrap();
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(
+                &decoded.solid_volume(bored_sphere_solid).unwrap(),
+                &bored_sphere_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_sphere = sphere.transformed(&cyclic).unwrap();
+        let oriented_inner_cylinder = inner_cylinder.transformed(&cyclic).unwrap();
+        let BooleanResult::Solid {
+            model: oriented_bored_sphere,
+            solid: oriented_bored_sphere_solid,
+        } = difference(
+            &oriented_sphere,
+            sphere_solid,
+            &oriented_inner_cylinder,
+            inner_cylinder_solid,
+        )
+        .unwrap()
+        else {
+            panic!("rigid reorientation must retain off-axis containment");
+        };
+        assert_eq!(
+            compare_reals(
+                &oriented_bored_sphere
+                    .solid_volume(oriented_bored_sphere_solid)
+                    .unwrap(),
+                &bored_sphere_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let reflected = bored_sphere
+            .transformed(&Matrix4::affine_nonuniform_scale([
+                Real::one(),
+                -Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(
+                &reflected.solid_volume(bored_sphere_solid).unwrap(),
+                &bored_sphere_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+
+        let (outer_cylinder, outer_cylinder_solid) =
+            crate::builder::cylinder(Real::from(4), Real::from(6)).unwrap();
+        let outer_cylinder = outer_cylinder
+            .transformed(&Matrix4::affine_translation([
+                Real::zero(),
+                Real::zero(),
+                -Real::from(3),
+            ]))
+            .unwrap();
+        let (inner_sphere, inner_sphere_solid) = crate::builder::sphere(Real::one()).unwrap();
+        let inner_sphere = inner_sphere
+            .transformed(&Matrix4::affine_translation([
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+            ]))
+            .unwrap();
+        assert!(
+            intersection_graph(
+                &outer_cylinder,
+                outer_cylinder_solid,
+                &inner_sphere,
+                inner_sphere_solid
+            )
+            .unwrap()
+            .unsupported_pairs()
+                > 0
+        );
+        let BooleanResult::Solid {
+            model: hollow_cylinder,
+            solid: hollow_cylinder_solid,
+        } = difference(
+            &outer_cylinder,
+            outer_cylinder_solid,
+            &inner_sphere,
+            inner_sphere_solid,
+        )
+        .unwrap()
+        else {
+            panic!("off-axis contained sphere must become one native void");
+        };
+        let hollow_cylinder_volume = (Real::from(284) * Real::pi() / Real::from(3)).unwrap();
+        assert_eq!(
+            compare_reals(
+                &hollow_cylinder.solid_volume(hollow_cylinder_solid).unwrap(),
+                &hollow_cylinder_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        for (point, location) in [
+            (p(1, 0, 0), SolidPointLocation::Outside),
+            (p(2, 0, 0), SolidPointLocation::Boundary),
+            (p(3, 0, 0), SolidPointLocation::Inside),
+            (p(4, 0, 0), SolidPointLocation::Boundary),
+        ] {
+            assert_eq!(
+                hollow_cylinder
+                    .classify_point(hollow_cylinder_solid, &point)
+                    .unwrap(),
+                location
+            );
+        }
+        assert!(
+            hollow_cylinder
+                .certified_cylinder_profile(hollow_cylinder_solid)
+                .is_none()
+        );
+        let hollow_json = hollow_cylinder.to_json().unwrap();
+        let decoded_hollow = crate::RawModel::from_json(&hollow_json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded_hollow.to_json().unwrap(), hollow_json);
+        assert_eq!(
+            compare_reals(
+                &decoded_hollow.solid_volume(hollow_cylinder_solid).unwrap(),
+                &hollow_cylinder_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert!(matches!(
+            difference(
+                &inner_sphere,
+                inner_sphere_solid,
+                &outer_cylinder,
+                outer_cylinder_solid
+            )
+            .unwrap(),
+            BooleanResult::Empty
+        ));
+        for (result, expected) in [
+            (
+                union(
+                    &outer_cylinder,
+                    outer_cylinder_solid,
+                    &inner_sphere,
+                    inner_sphere_solid,
+                )
+                .unwrap(),
+                Real::from(96) * Real::pi(),
+            ),
+            (
+                intersection(
+                    &inner_sphere,
+                    inner_sphere_solid,
+                    &outer_cylinder,
+                    outer_cylinder_solid,
+                )
+                .unwrap(),
+                (Real::from(4) * Real::pi() / Real::from(3)).unwrap(),
+            ),
+        ] {
+            let BooleanResult::Solid { model, solid } = result else {
+                panic!("reverse off-axis containment must retain one whole operand");
+            };
+            assert_eq!(
+                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                Some(Ordering::Equal)
+            );
+        }
+
+        let tangent_radius = Real::from(26).sqrt().unwrap();
+        let (tangent_sphere, tangent_sphere_solid) =
+            crate::builder::sphere(tangent_radius).unwrap();
+        let (tangent_cylinder, tangent_cylinder_solid) =
+            crate::builder::cylinder(Real::one(), Real::from(2)).unwrap();
+        let tangent_cylinder = tangent_cylinder
+            .transformed(&Matrix4::affine_translation([
+                Real::from(4),
+                Real::zero(),
+                -Real::one(),
+            ]))
+            .unwrap();
+        assert!(matches!(
+            union(
+                &tangent_sphere,
+                tangent_sphere_solid,
+                &tangent_cylinder,
+                tangent_cylinder_solid,
+            ),
+            Err(BooleanError::FallbackFailed { optimized, .. })
+                if matches!(optimized.as_ref(), BooleanError::UnsupportedOperand)
+        ));
     }
 
     #[test]
