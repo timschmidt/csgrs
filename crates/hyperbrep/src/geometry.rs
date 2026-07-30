@@ -5780,19 +5780,13 @@ fn intersect_plane_projective_bilinear_nurbs(
         homogeneous_controls: OnceLock::new(),
     };
     let intersection = intersect_plane_rational_bilinear(plane, &bezier)?;
-    let native = Surface::nurbs(
-        surface.u_degree,
-        surface.v_degree,
-        surface.control_points.clone(),
-        surface.weights.clone(),
-        surface.u_knots.clone(),
-        surface.v_knots.clone(),
-    )?;
+    let u_start = surface.u_knots[surface.u_degree].clone();
+    let u_span = &surface.u_knots[surface.control_points[0].len()] - &u_start;
+    let v_start = surface.v_knots[surface.v_degree].clone();
+    let v_span = &surface.v_knots[surface.control_points.len()] - &v_start;
     let remap = |mut section: SurfaceIntersectionCurve| -> GeometryResult<_> {
-        let Some(pcurve) = native.affine_bilinear_inverse_pcurve(&section.curve)? else {
-            return Err(GeometryError::UnsupportedIntersection);
-        };
-        section.second_pcurve = SurfaceIntersectionPcurve::retained_curve(pcurve)?;
+        section.second_pcurve =
+            remap_unit_tensor_pcurve(section.second_pcurve, &u_start, &u_span, &v_start, &v_span)?;
         Ok(section)
     };
     Ok(match intersection {
@@ -5806,6 +5800,43 @@ fn intersect_plane_projective_bilinear_nurbs(
                 .collect::<GeometryResult<Vec<_>>>()?,
         ),
         other => other,
+    })
+}
+
+fn remap_unit_tensor_pcurve(
+    pcurve: SurfaceIntersectionPcurve,
+    u_start: &Real,
+    u_span: &Real,
+    v_start: &Real,
+    v_span: &Real,
+) -> GeometryResult<SurfaceIntersectionPcurve> {
+    let SurfaceIntersectionPcurve {
+        domain,
+        source_scale,
+        source_offset,
+        mapping,
+    } = pcurve;
+    let SurfaceIntersectionPcurveMapping::RetainedCurve { curve } = mapping else {
+        return Err(GeometryError::UnsupportedIntersection);
+    };
+    let map = |point: &CurvePoint2| {
+        CurvePoint2::new(u_start + u_span * point.x(), v_start + v_span * point.y())
+    };
+    let curve = match curve.geometry() {
+        CurveGeometry2::Line(line) => {
+            Curve2::from(LineSeg2::try_new(map(line.start()), map(line.end()))?)
+        }
+        CurveGeometry2::RationalBezier(curve) => Curve2::from(RationalBezier2::try_new(
+            curve.control_points().iter().map(map).collect(),
+            curve.weights().to_vec(),
+        )?),
+        _ => return Err(GeometryError::UnsupportedIntersection),
+    };
+    Ok(SurfaceIntersectionPcurve {
+        domain,
+        source_scale,
+        source_offset,
+        mapping: SurfaceIntersectionPcurveMapping::RetainedCurve { curve },
     })
 }
 
@@ -11508,6 +11539,51 @@ mod tests {
             &section.curve().point_at(&q(1, 2)).unwrap(),
         );
 
+        let nurbs = Surface::nurbs(
+            1,
+            1,
+            controls.clone(),
+            weights.clone(),
+            vec![r(2), r(2), r(5), r(5)],
+            vec![r(-3), r(-3), r(7), r(7)],
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(native_section) =
+            nurbs.intersect_surface(&section_plane).unwrap()
+        else {
+            panic!("single-span NURBS must retain the equivalent weighted bilinear section");
+        };
+        assert_eq!(
+            native_section.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            Point2::new(q(8, 3), r(2))
+        );
+        assert_points_equal(
+            &native_section.curve().point_at(&q(1, 2)).unwrap(),
+            &section.curve().point_at(&q(1, 2)).unwrap(),
+        );
+        let SurfaceSurfaceIntersection::Curve(native_swapped) =
+            section_plane.intersect_surface(&nurbs).unwrap()
+        else {
+            panic!("native-domain weighted bilinear section must survive operand reversal");
+        };
+        assert_eq!(
+            native_swapped.second_pcurve().point_at(&q(1, 2)).unwrap(),
+            Point2::new(q(8, 3), r(2))
+        );
+        for numerator in 0_i64..=8 {
+            let parameter = q(numerator, 8);
+            let surface_parameter = native_section.first_pcurve().point_at(&parameter).unwrap();
+            assert_points_equal(
+                &native_section.curve().point_at(&parameter).unwrap(),
+                &nurbs
+                    .point_at(&Point2::new(
+                        surface_parameter.x.clone(),
+                        surface_parameter.y.clone(),
+                    ))
+                    .unwrap(),
+            );
+        }
+
         let u_graph_plane = Surface::plane(
             p(0, 1, 0),
             Vector3::x(),
@@ -11557,6 +11633,41 @@ mod tests {
             &clipped.curve().point_at(&r(1)).unwrap(),
             &Point3::new(q(5, 4), r(2), q(5, 8)),
         );
+        let SurfaceSurfaceIntersection::Curve(native_clipped) =
+            nurbs.intersect_surface(&clipping_plane).unwrap()
+        else {
+            panic!("single-span NURBS must retain its clipped weighted section");
+        };
+        assert_eq!(
+            native_clipped.first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(r(5), q(-11, 7))
+        );
+        assert_eq!(
+            native_clipped.first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(q(11, 3), r(7))
+        );
+        for parameter in [Real::zero(), q(1, 2), Real::one()] {
+            let uv = native_clipped.first_pcurve().point_at(&parameter).unwrap();
+            assert_points_equal(
+                &native_clipped.curve().point_at(&parameter).unwrap(),
+                &nurbs.point_at(&Point2::new(uv.x, uv.y)).unwrap(),
+            );
+        }
+
+        let boundary_plane = Surface::plane(Point3::origin(), Vector3::y(), Vector3::z()).unwrap();
+        let SurfaceSurfaceIntersection::Curve(native_boundary) =
+            nurbs.intersect_surface(&boundary_plane).unwrap()
+        else {
+            panic!("single-span NURBS must retain its native-domain boundary iso-line");
+        };
+        assert_eq!(
+            native_boundary.first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(r(2), r(-3))
+        );
+        assert_eq!(
+            native_boundary.first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(r(2), r(7))
+        );
 
         let disjoint_plane = Surface::plane(
             p(5, 0, 0),
@@ -11605,7 +11716,8 @@ mod tests {
             section.curve().point_at(&q(1, 2)).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
         assert_points_equal(&translated.curve().point_at(&q(1, 2)).unwrap(), &expected);
 
-        let (patch, face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
+        let (patch, face) =
+            crate::builder::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
         let patch_surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let SurfaceSurfaceIntersection::Curve(patch_section) =
             patch_surface.intersect_surface(&section_plane).unwrap()
@@ -11670,6 +11782,70 @@ mod tests {
                 .to_json()
                 .unwrap(),
             partial_json
+        );
+
+        let (native_patch, native_face) = crate::builder::nurbs_patch(
+            1,
+            1,
+            controls,
+            weights,
+            vec![r(2), r(2), r(5), r(5)],
+            vec![r(-3), r(-3), r(7), r(7)],
+        )
+        .unwrap();
+        let native_patch_surface = native_patch
+            .surface(native_patch.face(native_face).unwrap().surface())
+            .unwrap();
+        let SurfaceSurfaceIntersection::Curve(native_patch_section) = native_patch_surface
+            .intersect_surface(&section_plane)
+            .unwrap()
+        else {
+            panic!("native NURBS patch must retain its exact weighted graph section");
+        };
+        let (native_split, native_record) = native_patch
+            .split_face_by_surface_curve(
+                native_face,
+                native_patch_section.curve(),
+                native_patch_section.first_pcurve(),
+            )
+            .unwrap();
+        assert_eq!(native_split.counts().faces, 2);
+        let native_graph_use = native_split
+            .edge_use(native_record.open().unwrap().face.edge_uses[0])
+            .unwrap();
+        let native_graph = native_split
+            .pcurve(native_graph_use.pcurve())
+            .unwrap()
+            .clone();
+        let CurveGeometry2::RationalBezier(native_graph_curve) = native_graph.curve().geometry()
+        else {
+            panic!("native NURBS split must retain its rational graph pcurve");
+        };
+        let mut forged_controls = native_graph_curve.control_points().to_vec();
+        forged_controls[1] = CurvePoint2::new(
+            forged_controls[1].x().clone() + Real::one(),
+            forged_controls[1].y().clone(),
+        );
+        let forged = Pcurve::new(Curve2::from(
+            RationalBezier2::try_new(forged_controls, native_graph_curve.weights().to_vec())
+                .unwrap(),
+        ));
+        let mut edit = native_split.edit();
+        edit.replace_pcurve(native_graph_use.pcurve(), forged)
+            .unwrap();
+        assert!(
+            edit.commit().is_err(),
+            "native-domain graph forgery must fail complete homogeneous image validation"
+        );
+        let json = native_split.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
         );
     }
 

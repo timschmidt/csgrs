@@ -7988,6 +7988,12 @@ impl ModelBuilder {
                     ParameterCorrespondence::Affine { .. },
                 )
                 | (
+                    Curve3Kind::RationalBezier,
+                    CurveFamily2::Line,
+                    SurfaceKind::Nurbs,
+                    ParameterCorrespondence::Affine { .. },
+                )
+                | (
                     Curve3Kind::Line,
                     CurveFamily2::Line,
                     SurfaceKind::RationalBezier,
@@ -8114,6 +8120,41 @@ impl ModelBuilder {
         }
         if self.validate_affine_tensor_parameter_image(curve, edge_use, pcurve, surface)? {
             return Ok(());
+        }
+        if let SurfaceExactData::Nurbs {
+            u_degree,
+            v_degree,
+            control_points: surface_points,
+            weights: surface_weights,
+            u_knots,
+            v_knots,
+        } = surface.exact_data()
+            && u_degree == 1
+            && v_degree == 1
+            && surface_points.len() == 2
+            && surface_points
+                .iter()
+                .zip(&surface_weights)
+                .all(|(points, weights)| points.len() == 2 && weights.len() == 2)
+        {
+            let oriented_pcurve = match edge_use.direction {
+                Direction::Forward => pcurve.clone(),
+                Direction::Reversed => pcurve.reversed()?,
+            };
+            let normalized = normalize_single_span_nurbs_pcurve(
+                oriented_pcurve.curve(),
+                &u_knots[1],
+                &u_knots[2],
+                &v_knots[1],
+                &v_knots[2],
+            )?;
+            if let Some(expected) =
+                rational_bilinear_parameter_curve(&surface_points, &surface_weights, &normalized)?
+                && curve_parameterizations_equal(curve, &expected)?
+            {
+                return Ok(());
+            }
+            return Err(BuildError::EdgeUseSupportMismatch);
         }
         let SurfaceExactData::RationalBezier {
             control_points: surface_points,
@@ -17332,6 +17373,34 @@ fn planar_rational_bezier_curve(
             RationalBezier2::try_new(control_points, weights).map_err(GeometryError::from)?,
         )),
     }
+}
+
+fn normalize_single_span_nurbs_pcurve(
+    curve: &Curve2,
+    u_start: &Real,
+    u_end: &Real,
+    v_start: &Real,
+    v_end: &Real,
+) -> Result<Curve2, BuildError> {
+    let CurveGeometry2::RationalBezier(curve) = curve.geometry() else {
+        return Err(BuildError::EdgeUseSupportMismatch);
+    };
+    let u_span = u_end - u_start;
+    let v_span = v_end - v_start;
+    let controls = curve
+        .control_points()
+        .iter()
+        .map(|point| {
+            Ok(CurvePoint2::new(
+                ((point.x() - u_start) / &u_span).map_err(|_| GeometryError::ProjectiveDivision)?,
+                ((point.y() - v_start) / &v_span).map_err(|_| GeometryError::ProjectiveDivision)?,
+            ))
+        })
+        .collect::<Result<Vec<_>, BuildError>>()?;
+    Ok(Curve2::from(
+        RationalBezier2::try_new(controls, curve.weights().to_vec())
+            .map_err(GeometryError::from)?,
+    ))
 }
 
 fn validate_projective_pcurve_equal(actual: &Curve2, expected: &Curve2) -> Result<(), BuildError> {

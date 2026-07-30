@@ -1237,6 +1237,43 @@ fn main() {
         elapsed / SPLINE_ITERATIONS as u32,
     );
 
+    let native_nurbs_bilinear_tensor = Surface::nurbs(
+        1,
+        1,
+        vec![
+            vec![point(0, 0, 0), point(2, 0, 0)],
+            vec![point(0, 2, 0), point(2, 2, 1)],
+        ],
+        vec![
+            vec![Real::one(), Real::from(2)],
+            vec![Real::from(3), Real::from(4)],
+        ],
+        vec![Real::from(2), Real::from(2), Real::from(5), Real::from(5)],
+        vec![Real::from(-3), Real::from(-3), Real::from(7), Real::from(7)],
+    )
+    .expect("benchmark native-domain weighted NURBS bilinear tensor");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..SPLINE_ITERATIONS {
+        let SurfaceSurfaceIntersection::Curve(curve) = black_box(&native_nurbs_bilinear_tensor)
+            .intersect_surface(black_box(&bilinear_plane))
+            .expect("benchmark exact native-domain weighted bilinear section")
+        else {
+            panic!("weighted NURBS bilinear tensor must retain one exact section");
+        };
+        black_box(curve.curve().point_at(black_box(&midpoint)))
+            .expect("benchmark exact native rational-quartic section evaluation");
+        black_box(curve.first_pcurve().point_at(black_box(&midpoint)))
+            .expect("benchmark exact native rational-quadratic graph evaluation");
+        checksum += 1;
+        black_box(curve);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/native_nurbs_bilinear_plane_rational_quartic_intersection: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / SPLINE_ITERATIONS as u32,
+    );
+
     let fraction = |numerator: i32, denominator: i32| {
         (Real::from(numerator) / Real::from(denominator)).expect("benchmark rational denominator")
     };

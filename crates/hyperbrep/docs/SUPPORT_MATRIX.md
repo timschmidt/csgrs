@@ -120,6 +120,7 @@ strict-convexity certificate.
 | Plane / one-axis-linear rational Bézier translation tensor | None or one complete native non-isoparametric rational Bézier curve |
 | Plane / degree-1 translation-axis NURBS tensor | None or one complete native non-isoparametric NURBS curve |
 | Plane / positive-weight `2×2` rational Bézier tensor | None; one/multiple isolated corner points; one/two native boundary or factorized iso-lines; one/multiple exact bounded rational-quartic branches, including retained denominator poles; or exact containment of the complete bounded tensor surface |
+| Plane / positive-weight degree-one `2×2` NURBS tensor | The same complete rational-bilinear outcome matrix, with every retained line or rational pcurve mapped exactly into the authored active knot domains |
 
 Transverse plane/extrusion intersections apply the exact affine projection
 along the authored extrusion direction; named conics whose projection needs a
@@ -227,6 +228,10 @@ constant-sign cells inside the tensor rectangle become separate exact
 rational-quadratic/rational-quartic branches. A common numerator/denominator
 root factors exactly into one or two native iso-lines, including crossing
 relations consumable by multi-curve face partitioning.
+Degree-one `2×2` NURBS tensors use this same homogeneous carrier proof. Their
+unit-domain solution pcurves are transformed exactly into the authored active
+knot rectangle before publication; topology agreement normalizes those native
+coordinates back to the homogeneous carrier and rejects any control forgery.
 
 For a tensor iso-section, the two controls on the linear axis must have exactly
 equal weights and one exact common control translation; every profile control

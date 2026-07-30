@@ -368,10 +368,12 @@ The clean-break implementation currently provides:
   and NURBS translation tensors linear in either parameter axis when every
   rational graph coefficient is certified inside the bounded patch; the native
   spatial spline and exact rational graph pcurve are retained without fitting.
-  Any positive-weight `2×2` rational Bézier patch additionally reduces the
-  homogeneous plane numerator to an exact rational-quadratic parameter graph
-  and composes it with the weighted surface into an exact rational-quartic
-  spatial curve, again without sampling or fitting.
+  Any positive-weight `2×2` rational Bézier patch, or equivalent degree-one
+  `2×2` NURBS patch over arbitrary active knot domains, additionally reduces
+  the homogeneous plane numerator to an exact rational-quadratic parameter
+  graph and composes it with the weighted surface into an exact
+  rational-quartic spatial curve. NURBS pcurves retain authored coordinates;
+  neither path samples or fits.
   Exact roots against both tensor boundaries and every graph-denominator pole
   partition sign-changing relations into one or more bounded retained
   branches. Common numerator/denominator roots factor into native crossing

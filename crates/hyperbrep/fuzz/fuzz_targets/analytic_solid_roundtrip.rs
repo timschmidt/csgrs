@@ -698,9 +698,25 @@ fuzz_target!(|bytes: &[u8]| {
         vec![Real::one(), Real::from(2)],
         vec![Real::from(3), Real::from(4)],
     ];
-    let Ok(rational_bilinear_tensor) =
+    let use_native_nurbs = bytes[0] & 8 != 0;
+    let bilinear_tensor = if use_native_nurbs {
+        Surface::nurbs(
+            1,
+            1,
+            bilinear_controls.clone(),
+            bilinear_weights.clone(),
+            vec![Real::from(2), Real::from(2), Real::from(5), Real::from(5)],
+            vec![
+                Real::from(-3),
+                Real::from(-3),
+                Real::from(7),
+                Real::from(7),
+            ],
+        )
+    } else {
         Surface::rational_bezier(bilinear_controls.clone(), bilinear_weights.clone())
-    else {
+    };
+    let Ok(rational_bilinear_tensor) = bilinear_tensor else {
         return;
     };
     let section_offset = i32::from(bytes[1] % 7);
@@ -719,9 +735,24 @@ fuzz_target!(|bytes: &[u8]| {
         let _ = curve.first_pcurve().point_at(&parameter);
         let _ = curve.second_pcurve().point_at(&parameter);
         if matches!(section_offset, 1 | 3) {
-            let Ok((patch, face)) =
+            let patch = if use_native_nurbs {
+                builder::nurbs_patch(
+                    1,
+                    1,
+                    bilinear_controls,
+                    bilinear_weights,
+                    vec![Real::from(2), Real::from(2), Real::from(5), Real::from(5)],
+                    vec![
+                        Real::from(-3),
+                        Real::from(-3),
+                        Real::from(7),
+                        Real::from(7),
+                    ],
+                )
+            } else {
                 builder::rational_bezier_patch(bilinear_controls, bilinear_weights)
-            else {
+            };
+            let Ok((patch, face)) = patch else {
                 return;
             };
             if let Ok((split, _)) =
@@ -753,10 +784,7 @@ fuzz_target!(|bytes: &[u8]| {
         ],
         2 => [[Real::one(), -Real::one()], [Real::one(), Real::one()]],
         3 => [[Real::zero(), Real::one()], [Real::one(), Real::zero()]],
-        _ => [
-            [Real::zero(), Real::zero()],
-            [Real::zero(), Real::zero()],
-        ],
+        _ => [[Real::zero(), Real::zero()], [Real::zero(), Real::zero()]],
     };
     let pole_weights = vec![
         vec![Real::one(), Real::from(2)],
@@ -861,10 +889,7 @@ fuzz_target!(|bytes: &[u8]| {
         let (outer, holes) = match bytes[3] % 3 {
             0 => (rectangle(-1, -1, 3, 3), Vec::new()),
             1 => (rectangle(1, -1, 3, 3), Vec::new()),
-            _ => (
-                rectangle(-2, -2, 4, 4),
-                vec![rectangle(-1, -1, 3, 3)],
-            ),
+            _ => (rectangle(-2, -2, 4, 4), vec![rectangle(-1, -1, 3, 3)]),
         };
         let Ok((plane, plane_face)) = builder::planar_face(
             &outer,
@@ -899,7 +924,9 @@ fuzz_target!(|bytes: &[u8]| {
                 let _ = region.filled_area(&hypercurve::CurvePolicy::certified());
             }
             (2, boolean::FacePairTrim::NoContact) => {}
-            _ => panic!("planar tensor containment must retain exact two-dimensional trim evidence"),
+            _ => {
+                panic!("planar tensor containment must retain exact two-dimensional trim evidence")
+            }
         }
     }
     if bytes[0] % 7 == 3 {

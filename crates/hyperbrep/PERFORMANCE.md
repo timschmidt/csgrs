@@ -136,6 +136,9 @@ certificate deliberately rebases rational Bézier patch construction from
 - non-separable positive-weight rational bilinear tensor / oblique-plane exact
   rational-quartic spatial section, rational-quadratic graph construction, and
   midpoint evaluation: `32.671 us/iteration`;
+- equivalent degree-one NURBS tensor over authored `[2, 5] × [-3, 7]` active
+  knot domains, including exact native-coordinate pcurve remapping and
+  midpoint evaluation: `34.393 us/iteration`;
 - non-separable positive-weight rational bilinear tensor / plane intersection
   with one retained denominator pole, two bounded rational-quartic branches,
   and spatial plus pcurve midpoint evaluation on both components:
