@@ -12,7 +12,10 @@
 //! integrands and use exact Hermite reduction to the same inverse-quadratic
 //! branches. Higher-degree rational carriers first attempt exact inverse
 //! Bernstein degree elevation in homogeneous space, so serialized or otherwise
-//! provenance-free degree-elevated conics reuse the same integral.
+//! provenance-free degree-elevated conics reuse the same integral. Genuinely
+//! higher-degree images whose Bernstein weight polynomial certifiably reduces
+//! to degree two or less use polynomial division followed by the same Hermite
+//! kernel.
 //! This preserves the exact object structure required by exact-computation discipline, and supplies
 //! the area facts needed by fitting/simplification pipelines discussed by Raph
 //! Bezier approximation analysis. The polynomial and rational
@@ -448,16 +451,18 @@ impl RationalQuadraticBezier2 {
 }
 
 impl RationalBezier2 {
-    /// Returns the exact signed-area contribution for polynomial-equivalent
-    /// or degree-two rational Béziers.
+    /// Returns the exact signed-area contribution for polynomial-equivalent,
+    /// conic, or at-most-quadratic-weight rational Béziers.
     ///
     /// Equal nonzero weights cancel from every homogeneous coordinate. The
     /// affine controls can therefore use the arbitrary-degree polynomial
     /// Green integral directly without changing the curve family or sampling.
     /// Nonuniform degree-two carriers and exact degree elevations of them
-    /// specialize to the retained conic kernel. `None` means another
-    /// higher-degree genuinely rational integral is not implemented; it does
-    /// not approximate one.
+    /// specialize to the retained conic kernel. Other arbitrary-degree
+    /// carriers are integrated when exact Bernstein conversion certifies that
+    /// their weight polynomial has degree at most two. `None` means another
+    /// genuinely rational integral is not implemented; it does not approximate
+    /// one.
     pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -465,19 +470,19 @@ impl RationalBezier2 {
         if !self.weights().iter().all(|weight| weight == first_weight) {
             return match rational_quadratic_specialization(self)? {
                 Some(curve) => curve.signed_area_contribution(),
-                None => Ok(None),
+                None => rational_bezier_quadratic_weight_signed_area(self),
             };
         }
         let controls = self.control_points().iter().collect::<Vec<_>>();
         signed_area_for_controls(&controls).map(Some)
     }
 
-    /// Returns exact area and first moments for polynomial-equivalent or
-    /// degree-two rational Béziers.
+    /// Returns exact area and first moments for polynomial-equivalent, conic,
+    /// or at-most-quadratic-weight rational Béziers.
     ///
     /// `None` is an explicit unsupported symbolic integral for a genuinely
-    /// rational degree-three-or-higher image that has no retained quadratic
-    /// representative, never a finite approximation.
+    /// rational image with a cubic-or-higher weight polynomial, never a finite
+    /// approximation.
     pub fn area_moments_contribution(&self) -> CurveResult<Option<BezierAreaMoments2>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -485,7 +490,7 @@ impl RationalBezier2 {
         if !self.weights().iter().all(|weight| weight == first_weight) {
             return match rational_quadratic_specialization(self)? {
                 Some(curve) => curve.area_moments_contribution(),
-                None => Ok(None),
+                None => rational_bezier_quadratic_weight_area_moments(self),
             };
         }
         let controls = self.control_points().iter().collect::<Vec<_>>();
@@ -500,6 +505,131 @@ fn rational_quadratic_specialization(
         Classification::Decided(representative) => Ok(representative),
         Classification::Uncertain(_) => Ok(None),
     }
+}
+
+fn rational_bezier_quadratic_weight_signed_area(
+    curve: &RationalBezier2,
+) -> CurveResult<Option<Real>> {
+    let policy = CurvePolicy::certified();
+    let Some((nx, ny, w)) = rational_bezier_quadratic_weight_power_coordinates(curve, &policy)?
+    else {
+        return Ok(None);
+    };
+    let dnx = derivative_coefficients(&nx)?;
+    let dny = derivative_coefficients(&ny)?;
+    let numerator = polynomial_difference(
+        &polynomial_product(&nx, &dny),
+        &polynomial_product(&ny, &dnx),
+    );
+    let mut cache = RationalQuadraticAreaIntegralCache::default();
+    let Some(integral) =
+        integrate_polynomial_over_quadratic_square(&numerator, &w, &policy, &mut cache)?
+    else {
+        return Ok(None);
+    };
+    Ok(Some((integral / Real::from(2_i8))?))
+}
+
+fn rational_bezier_quadratic_weight_area_moments(
+    curve: &RationalBezier2,
+) -> CurveResult<Option<BezierAreaMoments2>> {
+    let policy = CurvePolicy::certified();
+    let Some((nx, ny, w)) = rational_bezier_quadratic_weight_power_coordinates(curve, &policy)?
+    else {
+        return Ok(None);
+    };
+    let dnx = derivative_coefficients(&nx)?;
+    let dny = derivative_coefficients(&ny)?;
+    let dw = derivative_coefficients(&w)?;
+    let dx_numerator =
+        polynomial_difference(&polynomial_product(&dnx, &w), &polynomial_product(&nx, &dw));
+    let dy_numerator =
+        polynomial_difference(&polynomial_product(&dny, &w), &polynomial_product(&ny, &dw));
+    let area_numerator = polynomial_difference(
+        &polynomial_product(&nx, &dny),
+        &polynomial_product(&ny, &dnx),
+    );
+    let x_numerator = polynomial_product(&polynomial_product(&nx, &nx), &dy_numerator);
+    let y_numerator = polynomial_product(&polynomial_product(&ny, &ny), &dx_numerator);
+    let mut cache = RationalQuadraticAreaIntegralCache::default();
+    let Some(area_integral) =
+        integrate_polynomial_over_quadratic_square(&area_numerator, &w, &policy, &mut cache)?
+    else {
+        return Ok(None);
+    };
+    let Some(x_integral) =
+        integrate_polynomial_over_quadratic_fourth(&x_numerator, &w, &policy, &mut cache)?
+    else {
+        return Ok(None);
+    };
+    let Some(y_integral) =
+        integrate_polynomial_over_quadratic_fourth(&y_numerator, &w, &policy, &mut cache)?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(BezierAreaMoments2 {
+        signed_area: (area_integral / Real::from(2_i8))?,
+        x_moment: (x_integral / Real::from(2_i8))?,
+        y_moment: (Real::zero() - (y_integral / Real::from(2_i8))?),
+    }))
+}
+
+fn rational_bezier_quadratic_weight_power_coordinates(
+    curve: &RationalBezier2,
+    policy: &CurvePolicy,
+) -> CurveResult<Option<(Vec<Real>, Vec<Real>, [Real; 3])>> {
+    let Some(first_sign) = compare_reals(&curve.weights()[0], &Real::zero(), policy) else {
+        return Ok(None);
+    };
+    if first_sign == std::cmp::Ordering::Equal {
+        return Ok(None);
+    }
+    for weight in &curve.weights()[1..] {
+        let Some(sign) = compare_reals(weight, &Real::zero(), policy) else {
+            return Ok(None);
+        };
+        if sign != first_sign {
+            return Ok(None);
+        }
+    }
+    let nx = bernstein_to_power(
+        curve
+            .control_points()
+            .iter()
+            .zip(curve.weights())
+            .map(|(point, weight)| point.x() * weight)
+            .collect(),
+    )?;
+    let ny = bernstein_to_power(
+        curve
+            .control_points()
+            .iter()
+            .zip(curve.weights())
+            .map(|(point, weight)| point.y() * weight)
+            .collect(),
+    )?;
+    let mut weight_power = bernstein_to_power(curve.weights().to_vec())?;
+    while weight_power.len() > 3 {
+        let leading = weight_power
+            .last()
+            .expect("nonempty Bernstein conversion has a leading coefficient");
+        match compare_reals(leading, &Real::zero(), policy) {
+            Some(std::cmp::Ordering::Equal) => {
+                weight_power.pop();
+            }
+            Some(_) | None => return Ok(None),
+        }
+    }
+    weight_power.resize(3, Real::zero());
+    Ok(Some((
+        nx,
+        ny,
+        [
+            weight_power[0].clone(),
+            weight_power[1].clone(),
+            weight_power[2].clone(),
+        ],
+    )))
 }
 
 fn prefix_signed_area_for_controls(
@@ -812,6 +942,109 @@ fn integrate_quadratic_over_repeated_quadratic_square(
     Ok(Some(upper - lower))
 }
 
+fn integrate_polynomial_over_quadratic_square(
+    numerator: &[Real],
+    denominator: &[Real; 3],
+    policy: &CurvePolicy,
+    cache: &mut RationalQuadraticAreaIntegralCache,
+) -> CurveResult<Option<Real>> {
+    let c = &denominator[0];
+    let b = &denominator[1];
+    let a = &denominator[2];
+    match compare_reals(a, &Real::zero(), policy) {
+        Some(std::cmp::Ordering::Equal) => {
+            return integrate_polynomial_over_linear_power(numerator, b, c, 2, policy);
+        }
+        Some(_) => {}
+        None => return Ok(None),
+    }
+    let delta = Real::from(4_i8) * a * c - b * b;
+    match compare_reals(&delta, &Real::zero(), policy) {
+        Some(std::cmp::Ordering::Equal) => {
+            integrate_polynomial_over_repeated_quadratic_power(numerator, a, b, 2, policy)
+        }
+        Some(_) => integrate_polynomial_over_square_free_quadratic_square(
+            numerator,
+            denominator,
+            &delta,
+            policy,
+            cache,
+        ),
+        None => Ok(None),
+    }
+}
+
+fn integrate_polynomial_over_square_free_quadratic_square(
+    numerator: &[Real],
+    denominator: &[Real; 3],
+    delta: &Real,
+    policy: &CurvePolicy,
+    cache: &mut RationalQuadraticAreaIntegralCache,
+) -> CurveResult<Option<Real>> {
+    let q = denominator.to_vec();
+    let dq = vec![q[1].clone(), Real::from(2_i8) * &q[2]];
+    let q2 = polynomial_product(&q, &q);
+    let Some((quotient, remainder)) = polynomial_division(numerator, &q2, policy)? else {
+        return Ok(None);
+    };
+    let polynomial_integral = integrate_polynomial(&quotient)?;
+    let linear_basis = [vec![Real::one()], vec![Real::zero(), Real::one()]];
+    let mut basis = Vec::with_capacity(4);
+    for linear in &linear_basis {
+        basis.push(polynomial_difference(
+            &polynomial_product(&derivative_coefficients(linear)?, &q),
+            &polynomial_product(linear, &dq),
+        ));
+    }
+    for linear in &linear_basis {
+        basis.push(polynomial_product(linear, &q));
+    }
+    let mut augmented = vec![vec![Real::zero(); 5]; 4];
+    for (row, values) in augmented.iter_mut().enumerate() {
+        for (column, polynomial) in basis.iter().enumerate() {
+            values[column] = coefficient(polynomial, row);
+        }
+        values[4] = coefficient(&remainder, row);
+    }
+    let Some(solution) = solve_exact_linear_system(augmented, policy)? else {
+        return Ok(None);
+    };
+    let rational_at = |t: &Real| -> CurveResult<Option<Real>> {
+        let q_at = evaluate_polynomial(&q, t);
+        match evaluate_linear(&solution[0], &solution[1], t) / q_at {
+            Ok(value) => Ok(Some(value)),
+            Err(_) => Ok(None),
+        }
+    };
+    let Some(upper_rational) = rational_at(&Real::one())? else {
+        return Ok(None);
+    };
+    let Some(lower_rational) = rational_at(&Real::zero())? else {
+        return Ok(None);
+    };
+    let two_a = Real::from(2_i8) * &q[2];
+    let alpha = match solution[3].clone() / &two_a {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let beta = &solution[2] - &(&alpha * &q[1]);
+    let q0 = q[0].clone();
+    let q1 = &q[0] + &q[1] + &q[2];
+    let log_ratio = match (q1 / q0).and_then(Real::ln) {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let Some(inverse_integral) = cache.inverse_quadratic_integral(denominator, delta, policy)?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(
+        polynomial_integral + upper_rational - lower_rational
+            + alpha * log_ratio
+            + beta * inverse_integral,
+    ))
+}
+
 fn integrate_polynomial_over_quadratic_fourth(
     numerator: &[Real],
     denominator: &[Real; 3],
@@ -831,7 +1064,7 @@ fn integrate_polynomial_over_quadratic_fourth(
     let delta = Real::from(4_i8) * a * c - b * b;
     match compare_reals(&delta, &Real::zero(), policy) {
         Some(std::cmp::Ordering::Equal) => {
-            integrate_polynomial_over_repeated_quadratic_fourth(numerator, a, b, policy)
+            integrate_polynomial_over_repeated_quadratic_power(numerator, a, b, 4, policy)
         }
         Some(_) => integrate_polynomial_over_square_free_quadratic_fourth(
             numerator,
@@ -855,6 +1088,11 @@ fn integrate_polynomial_over_square_free_quadratic_fourth(
     let dq = vec![q[1].clone(), Real::from(2_i8) * &q[2]];
     let q2 = polynomial_product(&q, &q);
     let q3 = polynomial_product(&q2, &q);
+    let q4 = polynomial_product(&q3, &q);
+    let Some((quotient, remainder)) = polynomial_division(numerator, &q4, policy)? else {
+        return Ok(None);
+    };
+    let polynomial_integral = integrate_polynomial(&quotient)?;
     let linear_basis = [vec![Real::one()], vec![Real::zero(), Real::one()]];
     let mut basis = Vec::with_capacity(8);
     for linear in &linear_basis {
@@ -890,7 +1128,7 @@ fn integrate_polynomial_over_square_free_quadratic_fourth(
         for (column, polynomial) in basis.iter().enumerate() {
             values[column] = coefficient(polynomial, row);
         }
-        values[8] = coefficient(numerator, row);
+        values[8] = coefficient(&remainder, row);
     }
     let Some(solution) = solve_exact_linear_system(augmented, policy)? else {
         return Ok(None);
@@ -931,7 +1169,9 @@ fn integrate_polynomial_over_square_free_quadratic_fourth(
         return Ok(None);
     };
     Ok(Some(
-        upper_rational - lower_rational + alpha * log_ratio + beta * inverse_integral,
+        polynomial_integral + upper_rational - lower_rational
+            + alpha * log_ratio
+            + beta * inverse_integral,
     ))
 }
 
@@ -980,10 +1220,11 @@ fn integrate_polynomial_over_linear_power(
     )
 }
 
-fn integrate_polynomial_over_repeated_quadratic_fourth(
+fn integrate_polynomial_over_repeated_quadratic_power(
     numerator: &[Real],
     a: &Real,
     b: &Real,
+    power: usize,
     policy: &CurvePolicy,
 ) -> CurveResult<Option<Real>> {
     let r = match (Real::zero() - b) / &(Real::from(2_i8) * a) {
@@ -1012,10 +1253,19 @@ fn integrate_polynomial_over_repeated_quadratic_fourth(
             *target = &*target + &(source * binomial * shift_power);
         }
     }
-    let Some(integral) = integrate_laurent_polynomial(&shifted, &lower, &upper, -8)? else {
+    let exponent_offset = i32::try_from(power)
+        .map_err(|_| CurveError::InvalidBezierPolynomial)?
+        .checked_mul(-2)
+        .ok_or(CurveError::InvalidBezierPolynomial)?;
+    let Some(integral) = integrate_laurent_polynomial(&shifted, &lower, &upper, exponent_offset)?
+    else {
         return Ok(None);
     };
-    match integral / integer_power(a, 4)? {
+    match integral
+        / integer_power(
+            a,
+            i32::try_from(power).map_err(|_| CurveError::InvalidBezierPolynomial)?,
+        )? {
         Ok(value) => Ok(Some(value)),
         Err(_) => Ok(None),
     }
@@ -1109,6 +1359,43 @@ fn polynomial_difference(first: &[Real], second: &[Real]) -> Vec<Real> {
     (0..first.len().max(second.len()))
         .map(|degree| coefficient(first, degree) - coefficient(second, degree))
         .collect()
+}
+
+fn polynomial_division(
+    numerator: &[Real],
+    divisor: &[Real],
+    policy: &CurvePolicy,
+) -> CurveResult<Option<(Vec<Real>, Vec<Real>)>> {
+    let Some(leading) = divisor.last() else {
+        return Err(CurveError::InvalidBezierPolynomial);
+    };
+    match compare_reals(leading, &Real::zero(), policy) {
+        Some(std::cmp::Ordering::Equal) => {
+            return Err(CurveError::InvalidBezierPolynomial);
+        }
+        Some(_) => {}
+        None => return Ok(None),
+    }
+    if numerator.len() < divisor.len() {
+        return Ok(Some((Vec::new(), numerator.to_vec())));
+    }
+    let divisor_degree = divisor.len() - 1;
+    let mut remainder = numerator.to_vec();
+    let mut quotient = vec![Real::zero(); numerator.len() - divisor_degree];
+    for degree in (divisor_degree..remainder.len()).rev() {
+        let factor = match remainder[degree].clone() / leading {
+            Ok(value) => value,
+            Err(_) => return Ok(None),
+        };
+        let quotient_degree = degree - divisor_degree;
+        quotient[quotient_degree] = factor.clone();
+        for (divisor_degree, divisor_coefficient) in divisor.iter().enumerate() {
+            let target_degree = quotient_degree + divisor_degree;
+            remainder[target_degree] = &remainder[target_degree] - &(&factor * divisor_coefficient);
+        }
+    }
+    remainder.truncate(divisor_degree);
+    Ok(Some((quotient, remainder)))
 }
 
 fn evaluate_polynomial(coefficients: &[Real], parameter: &Real) -> Real {
@@ -1419,7 +1706,7 @@ mod tests {
     }
 
     #[test]
-    fn uniform_weight_general_rational_bezier_uses_exact_polynomial_area() {
+    fn general_rational_bezier_uses_exact_polynomial_and_low_degree_weight_moments() {
         let controls = vec![point(-2, 3), point(5, 11), point(13, -7), point(17, 2)];
         let polynomial = CubicBezier2::new(
             controls[0].clone(),
@@ -1434,11 +1721,84 @@ mod tests {
             Some(polynomial.signed_area_contribution().unwrap())
         );
 
-        let nonuniform =
-            RationalBezier2::try_new(controls, vec![Real::one(), 2.into(), 3.into(), 4.into()])
-                .expect("positive nonuniform weights are valid");
-        assert_eq!(nonuniform.signed_area_contribution().unwrap(), None);
-        assert_eq!(nonuniform.area_moments_contribution().unwrap(), None);
+        let nonuniform = RationalBezier2::try_new(
+            controls.clone(),
+            vec![Real::one(), 2.into(), 3.into(), 4.into()],
+        )
+        .expect("positive nonuniform weights are valid");
+        let signed_area = nonuniform
+            .signed_area_contribution()
+            .unwrap()
+            .expect("linear weight denominator is symbolically integrable");
+        let moments = nonuniform
+            .area_moments_contribution()
+            .unwrap()
+            .expect("linear weight denominator first moments are symbolically integrable");
+        assert_eq!(
+            compare_reals(
+                &signed_area,
+                moments.signed_area(),
+                &CurvePolicy::certified()
+            ),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let cubic_weight =
+            RationalBezier2::try_new(controls, vec![Real::one(), 2.into(), 3.into(), 5.into()])
+                .expect("positive cubic weight function is valid");
+        assert_eq!(cubic_weight.signed_area_contribution().unwrap(), None);
+        assert_eq!(cubic_weight.area_moments_contribution().unwrap(), None);
+    }
+
+    #[test]
+    fn genuinely_cubic_rational_quadratic_weight_moments_are_exactly_additive() {
+        let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        let curve = RationalBezier2::try_new(
+            vec![point(4, 0), point(6, 0), point(6, 2), point(4, 2)],
+            vec![Real::one(), two_thirds.clone(), two_thirds, Real::one()],
+        )
+        .unwrap();
+        let whole = curve
+            .area_moments_contribution()
+            .unwrap()
+            .expect("quadratic weight polynomial has an exact symbolic integral");
+        let signed_area = curve
+            .signed_area_contribution()
+            .unwrap()
+            .expect("quadratic weight polynomial signed area is exact");
+        assert_eq!(
+            compare_reals(&signed_area, whole.signed_area(), &CurvePolicy::certified()),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let Classification::Decided((left, right)) = curve
+            .split_at_exact(
+                &((Real::one() / Real::from(2_i8)).unwrap()),
+                &CurvePolicy::certified(),
+            )
+            .unwrap()
+        else {
+            panic!("represented midpoint split is exact");
+        };
+        let parts = left
+            .area_moments_contribution()
+            .unwrap()
+            .expect("left quadratic-denominator moment is exact")
+            .plus(
+                &right
+                    .area_moments_contribution()
+                    .unwrap()
+                    .expect("right quadratic-denominator moment is exact"),
+            );
+        for (actual, expected) in [
+            (parts.signed_area(), whole.signed_area()),
+            (parts.x_moment(), whole.x_moment()),
+            (parts.y_moment(), whole.y_moment()),
+        ] {
+            assert_eq!(
+                compare_reals(actual, expected, &CurvePolicy::certified()),
+                Some(std::cmp::Ordering::Equal)
+            );
+        }
     }
 
     #[test]
