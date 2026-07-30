@@ -1774,9 +1774,14 @@ pub fn extrude_contour_regions(
     let mut solids = Vec::with_capacity(normalized.len());
     for (outer, holes) in normalized {
         let mut loops = Vec::with_capacity(holes.len() + 1);
-        loops.push(outer);
-        loops.extend(holes);
-        solids.push(add_line_arc_region(
+        loops.push(curve_path_from_contour(&outer)?);
+        loops.extend(
+            holes
+                .iter()
+                .map(curve_path_from_contour)
+                .collect::<Result<Vec<_>, _>>()?,
+        );
+        solids.push(add_curve_path_region(
             &mut builder,
             &loops,
             z_min.clone(),
@@ -1784,6 +1789,77 @@ pub fn extrude_contour_regions(
         )?);
     }
     Ok((builder.finish()?, solids))
+}
+
+/// Extrudes one exact simple [`CurvePath2`] between two z coordinates.
+///
+/// The path is normalized counterclockwise before its native line, circular,
+/// rational Bézier, and NURBS carriers are authored. Polynomial carriers are
+/// promoted exactly to persistence-supported rational Bézier or NURBS
+/// carriers. No fitting, sampling, or direct arena manipulation is required.
+pub fn extrude_path(
+    path: &CurvePath2,
+    z_min: Real,
+    z_max: Real,
+) -> Result<(Model, SolidId), ConstructionError> {
+    extrude_path_region(path, &[], z_min, z_max)
+}
+
+/// Extrudes one exact [`CurvePath2`] material region with disjoint holes.
+pub fn extrude_path_region(
+    outer: &CurvePath2,
+    holes: &[CurvePath2],
+    z_min: Real,
+    z_max: Real,
+) -> Result<(Model, SolidId), ConstructionError> {
+    let (model, solids) = extrude_path_regions(&[(outer.clone(), holes.to_vec())], z_min, z_max)?;
+    Ok((model, solids[0]))
+}
+
+/// Extrudes disjoint exact [`CurvePath2`] regions into one validated model.
+///
+/// Returned solid IDs follow input order. Every outer path is normalized
+/// counterclockwise, every hole clockwise, and all pairwise contact,
+/// containment, and hole-nesting decisions are certified before topology is
+/// authored.
+pub fn extrude_path_regions(
+    regions: &[(CurvePath2, Vec<CurvePath2>)],
+    z_min: Real,
+    z_max: Real,
+) -> Result<(Model, Vec<SolidId>), ConstructionError> {
+    require_increasing(&z_min, &z_max, Axis::Z)?;
+    let normalized = regions
+        .iter()
+        .map(|(outer, holes)| {
+            let outer = normalize_planar_path(outer, true)?;
+            let holes = holes
+                .iter()
+                .map(|hole| normalize_planar_path(hole, false))
+                .collect::<Result<Vec<_>, _>>()?;
+            validate_planar_path_nesting(&outer, &holes)?;
+            Ok((outer, holes))
+        })
+        .collect::<Result<Vec<_>, ConstructionError>>()?;
+    let mut builder = ModelBuilder::new();
+    let mut solids = Vec::with_capacity(normalized.len());
+    for (outer, holes) in normalized {
+        let mut loops = Vec::with_capacity(holes.len() + 1);
+        loops.push(outer);
+        loops.extend(holes);
+        solids.push(add_curve_path_region(
+            &mut builder,
+            &loops,
+            z_min.clone(),
+            z_max.clone(),
+        )?);
+    }
+    Ok((builder.finish()?, solids))
+}
+
+fn curve_path_from_contour(contour: &Contour2) -> Result<CurvePath2, ConstructionError> {
+    CurvePath2::try_new(contour.segments().iter().map(curve2_from_segment).collect())
+        .map_err(GeometryError::from)
+        .map_err(Into::into)
 }
 
 fn normalize_contour(
@@ -1888,38 +1964,35 @@ fn validate_contour_nesting(outer: &Contour2, holes: &[Contour2]) -> Result<(), 
     Ok(())
 }
 
-fn add_line_arc_region(
+fn add_curve_path_region(
     builder: &mut ModelBuilder,
-    loops: &[Contour2],
+    loops: &[CurvePath2],
     z_min: Real,
     z_max: Real,
 ) -> Result<SolidId, ConstructionError> {
-    let loop_offsets = loops
+    let loop_curves = loops
         .iter()
-        .scan(0_usize, |offset, contour| {
+        .map(persistent_extrusion_path_curves)
+        .collect::<Result<Vec<_>, _>>()?;
+    let loop_offsets = loop_curves
+        .iter()
+        .scan(0_usize, |offset, curves| {
             let current = *offset;
-            *offset += contour.segments().len();
+            *offset += curves.len();
             Some(current)
         })
         .collect::<Vec<_>>();
-    let count = loops
-        .iter()
-        .map(|contour| contour.segments().len())
-        .sum::<usize>();
+    let count = loop_curves.iter().map(Vec::len).sum::<usize>();
     let mut next_indices = vec![0_usize; count];
-    for (contour, offset) in loops.iter().zip(&loop_offsets) {
-        for local in 0..contour.segments().len() {
-            next_indices[offset + local] = offset + (local + 1) % contour.segments().len();
+    for (curves, offset) in loop_curves.iter().zip(&loop_offsets) {
+        for local in 0..curves.len() {
+            next_indices[offset + local] = offset + (local + 1) % curves.len();
         }
     }
-    let segments = loops
+    let curves = loop_curves.iter().flatten().cloned().collect::<Vec<_>>();
+    let points_2d = curves
         .iter()
-        .flat_map(|contour| contour.segments())
-        .cloned()
-        .collect::<Vec<_>>();
-    let points_2d = segments
-        .iter()
-        .map(|segment| segment.start().clone())
+        .map(|curve| curve.start().clone())
         .collect::<Vec<_>>();
     let mut points = Vec::with_capacity(points_2d.len() * 2);
     points.extend(
@@ -1941,9 +2014,10 @@ fn add_line_arc_region(
     let mut bottom_edges = Vec::with_capacity(count);
     let mut top_edges = Vec::with_capacity(count);
     let mut domains = Vec::with_capacity(count);
-    for (index, segment) in segments.iter().enumerate() {
+    for (index, pcurve) in curves.iter().enumerate() {
         let next = next_indices[index];
-        let (bottom_curve, domain) = spatial_segment_curve(segment, &z_min)?;
+        let bottom_curve = spatial_extrusion_curve(pcurve, &z_min)?;
+        let domain = bottom_curve.domain().clone();
         let bottom_curve_id = builder.curve(bottom_curve.clone())?;
         bottom_edges.push(builder.edge(
             vertices[index],
@@ -1951,7 +2025,8 @@ fn add_line_arc_region(
             bottom_curve_id,
             domain.clone(),
         )?);
-        let (top_curve, top_domain) = spatial_segment_curve(segment, &z_max)?;
+        let top_curve = spatial_extrusion_curve(pcurve, &z_max)?;
+        let top_domain = top_curve.domain().clone();
         let top_curve_id = builder.curve(top_curve)?;
         top_edges.push(builder.edge(
             vertices[index + count],
@@ -1982,13 +2057,14 @@ fn add_line_arc_region(
         Vector3::y(),
     )?)?;
     let mut bottom_wires = Vec::with_capacity(loops.len());
-    for (contour, offset) in loops.iter().zip(&loop_offsets) {
-        let mut uses = Vec::with_capacity(contour.segments().len());
-        for local in (0..contour.segments().len()).rev() {
+    for (loop_curves, offset) in loop_curves.iter().zip(&loop_offsets) {
+        let mut uses = Vec::with_capacity(loop_curves.len());
+        for local in (0..loop_curves.len()).rev() {
             let index = offset + local;
-            let reversed = segments[index].reversed();
-            let pcurve = builder.pcurve(Pcurve::new(curve2_from_segment(&reversed)))?;
-            let correspondence = segment_correspondence(&segments[index], Direction::Reversed)?;
+            let pcurve = builder.pcurve(Pcurve::new(
+                curves[index].reversed().map_err(GeometryError::from)?,
+            ))?;
+            let correspondence = planar_curve_correspondence(&curves[index], Direction::Reversed)?;
             uses.push(builder.edge_use(
                 bottom_edges[index],
                 Direction::Reversed,
@@ -2011,16 +2087,16 @@ fn add_line_arc_region(
         Vector3::y(),
     )?)?;
     let mut top_wires = Vec::with_capacity(loops.len());
-    for (contour, offset) in loops.iter().zip(&loop_offsets) {
-        let mut uses = Vec::with_capacity(contour.segments().len());
-        for local in 0..contour.segments().len() {
+    for (loop_curves, offset) in loop_curves.iter().zip(&loop_offsets) {
+        let mut uses = Vec::with_capacity(loop_curves.len());
+        for local in 0..loop_curves.len() {
             let index = offset + local;
-            let pcurve = builder.pcurve(Pcurve::new(curve2_from_segment(&segments[index])))?;
+            let pcurve = builder.pcurve(Pcurve::new(curves[index].clone()))?;
             uses.push(builder.edge_use(
                 top_edges[index],
                 Direction::Forward,
                 pcurve,
-                segment_correspondence(&segments[index], Direction::Forward)?,
+                planar_curve_correspondence(&curves[index], Direction::Forward)?,
             )?);
         }
         top_wires.push(builder.wire(uses)?);
@@ -2164,19 +2240,6 @@ fn curve2_from_segment(segment: &Segment2) -> Curve2 {
     match segment {
         Segment2::Line(line) => Curve2::from(line.clone()),
         Segment2::Arc(arc) => Curve2::from(arc.clone()),
-    }
-}
-
-fn segment_correspondence(
-    segment: &Segment2,
-    direction: Direction,
-) -> Result<ParameterCorrespondence, ConstructionError> {
-    match segment {
-        Segment2::Line(_) => Ok(match direction {
-            Direction::Forward => ParameterCorrespondence::identity(),
-            Direction::Reversed => ParameterCorrespondence::affine(-Real::one(), Real::one())?,
-        }),
-        Segment2::Arc(_) => Ok(ParameterCorrespondence::angular_sweep()),
     }
 }
 
@@ -3432,6 +3495,80 @@ fn persistent_planar_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, Const
         }
     }
     Ok(persistent)
+}
+
+fn persistent_extrusion_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, ConstructionError> {
+    let mut persistent = Vec::new();
+    for curve in path.curves() {
+        match curve.geometry() {
+            CurveGeometry2::Line(_)
+            | CurveGeometry2::CircularArc(_)
+            | CurveGeometry2::RationalBezier(_)
+            | CurveGeometry2::Nurbs(_) => persistent.push(curve.clone()),
+            CurveGeometry2::PolynomialBSpline(curve) => {
+                persistent.push(
+                    Curve2::try_nurbs(
+                        curve.degree(),
+                        curve.control_points().to_vec(),
+                        vec![Real::one(); curve.control_points().len()],
+                        curve.knots().to_vec(),
+                    )
+                    .map_err(GeometryError::from)?,
+                );
+            }
+            CurveGeometry2::QuadraticBezier(_)
+            | CurveGeometry2::CubicBezier(_)
+            | CurveGeometry2::RationalQuadraticBezier(_) => {
+                for fragment in curve
+                    .native_bezier_fragments()
+                    .map_err(GeometryError::from)?
+                {
+                    persistent.push(persistent_rational_bezier(fragment.curve())?);
+                }
+            }
+        }
+    }
+    Ok(persistent)
+}
+
+fn spatial_extrusion_curve(curve: &Curve2, z: &Real) -> Result<Curve3, ConstructionError> {
+    let lift = |point: &CurvePoint2| Point3::new(point.x().clone(), point.y().clone(), z.clone());
+    match curve.geometry() {
+        CurveGeometry2::Line(line) => Ok(Curve3::line(lift(line.start()), lift(line.end()))?),
+        CurveGeometry2::CircularArc(arc) => {
+            spatial_segment_curve(&Segment2::Arc(arc.clone()), z).map(|(curve, _)| curve)
+        }
+        CurveGeometry2::RationalBezier(curve) => Ok(Curve3::rational_bezier(
+            curve.control_points().iter().map(lift).collect(),
+            curve.weights().to_vec(),
+        )?),
+        CurveGeometry2::Nurbs(curve) => Ok(Curve3::nurbs(
+            curve.degree(),
+            curve.control_points().iter().map(lift).collect(),
+            curve.weights().to_vec(),
+            curve.knots().to_vec(),
+        )?),
+        CurveGeometry2::QuadraticBezier(_)
+        | CurveGeometry2::CubicBezier(_)
+        | CurveGeometry2::RationalQuadraticBezier(_)
+        | CurveGeometry2::PolynomialBSpline(_) => Err(ConstructionError::UnsupportedPlanarProfile),
+    }
+}
+
+fn planar_curve_correspondence(
+    curve: &Curve2,
+    direction: Direction,
+) -> Result<ParameterCorrespondence, ConstructionError> {
+    if matches!(curve.geometry(), CurveGeometry2::CircularArc(_)) {
+        return Ok(ParameterCorrespondence::angular_sweep());
+    }
+    Ok(match direction {
+        Direction::Forward => ParameterCorrespondence::identity(),
+        Direction::Reversed => ParameterCorrespondence::affine(
+            -Real::one(),
+            curve.parameter_domain().start() + curve.parameter_domain().end(),
+        )?,
+    })
 }
 
 fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, ConstructionError> {
@@ -4999,6 +5136,136 @@ mod tests {
                 GeometryError::DegeneratePlaneBasis
             )))
         ));
+    }
+
+    #[test]
+    fn path_extrusion_retains_native_splines_and_exact_through_holes() {
+        let cp = |x, y| CurvePoint2::new(r(x), r(y));
+        let line =
+            |x0, y0, x1, y1| Curve2::from(LineSeg2::try_new(cp(x0, y0), cp(x1, y1)).unwrap());
+        let outer = CurvePath2::try_new(vec![
+            Curve2::try_nurbs(
+                2,
+                vec![cp(0, 0), cp(2, 0), cp(4, 0)],
+                vec![Real::one(), r(2), r(3)],
+                vec![r(2), r(2), r(2), r(5), r(5), r(5)],
+            )
+            .unwrap(),
+            line(4, 0, 4, 4),
+            line(4, 4, 0, 4),
+            line(0, 4, 0, 0),
+        ])
+        .unwrap()
+        .reversed()
+        .unwrap();
+        let hole_center = cp(2, 2);
+        let hole = CurvePath2::try_new(vec![
+            Curve2::from(
+                CircularArc2::try_from_center(cp(3, 2), cp(1, 2), hole_center.clone(), false)
+                    .unwrap(),
+            ),
+            Curve2::from(
+                CircularArc2::try_from_center(cp(1, 2), cp(3, 2), hole_center, false).unwrap(),
+            ),
+        ])
+        .unwrap();
+        let (model, solid) =
+            extrude_path_region(&outer, &[hole], r(-1), r(2)).expect("exact path extrusion");
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 12,
+                curves: 18,
+                pcurves: 36,
+                surfaces: 8,
+                edges: 18,
+                edge_uses: 36,
+                wires: 10,
+                faces: 8,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            model
+                .curves()
+                .filter(|(_, curve)| curve.kind() == crate::Curve3Kind::Nurbs)
+                .count(),
+            2
+        );
+        assert_eq!(
+            model
+                .curves()
+                .filter(|(_, curve)| curve.kind() == crate::Curve3Kind::CircleArc)
+                .count(),
+            4
+        );
+        assert_eq!(
+            model
+                .pcurves()
+                .filter(|(_, pcurve)| pcurve.kind() == hypercurve::CurveFamily2::Nurbs)
+                .count(),
+            2
+        );
+        let expected_volume = r(48) - r(3) * Real::pi();
+        let expected_area = r(80) + r(4) * Real::pi();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, area| sum + area);
+        assert_eq!(
+            compare_reals(&area, &expected_area).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(1, 1, 0), SolidPointLocation::Inside),
+            (p(2, 2, 0), SolidPointLocation::Outside),
+            (p(3, 2, 0), SolidPointLocation::Boundary),
+            (p(5, 2, 0), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+
+        let transformed = model
+            .transformed(&crate::Matrix4::affine_orthonormal(
+                [
+                    [Real::zero(), Real::zero(), Real::one()],
+                    [Real::one(), Real::zero(), Real::zero()],
+                    [Real::zero(), Real::one(), Real::zero()],
+                ],
+                [r(-3), r(11), r(2)],
+            ))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&transformed.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let json = transformed.to_json().unwrap();
+        let replayed = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(replayed.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&replayed.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let outside_hole = CurvePath2::try_new(vec![
+            line(5, 1, 6, 1),
+            line(6, 1, 6, 2),
+            line(6, 2, 5, 2),
+            line(5, 2, 5, 1),
+        ])
+        .unwrap();
+        assert_eq!(
+            extrude_path_region(&outer, &[outside_hole], Real::zero(), Real::one()).unwrap_err(),
+            ConstructionError::HoleOutside
+        );
     }
 
     #[test]

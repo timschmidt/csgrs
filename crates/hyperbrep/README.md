@@ -117,6 +117,10 @@ The clean-break implementation currently provides:
 - exact concave-simple-polygon `builder::extrude` plus native line/arc
   `builder::{extrude_contour, extrude_contour_regions}` construction with
   holes and disconnected solids;
+- exact `builder::{extrude_path, extrude_path_region, extrude_path_regions}`
+  construction from native `CurvePath2` line, circle, rational Bézier, and
+  NURBS boundaries, including spline-bounded through-holes, exact volume, and
+  material classification;
 - exact affine `builder::{sweep, sweep_region}` for polygonal linear-path
   sweeps in an explicit model-space profile frame, including through-holes
   and shear without a hidden moving-frame policy;

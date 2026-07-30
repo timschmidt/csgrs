@@ -1152,8 +1152,8 @@ struct CertifiedZPrismShell {
 
 #[derive(Clone, Debug)]
 struct CertifiedPrismShell {
-    outer: Contour2,
-    holes: Vec<Contour2>,
+    outer: CurvePath2,
+    holes: Vec<CurvePath2>,
     origin: Point3,
     u: Vector3,
     v: Vector3,
@@ -4711,18 +4711,9 @@ impl Model {
             return Ok(area * progress * &sweep.area_scale_integral);
         }
         if let Some(prism) = &self.data.certified_prisms[id.index()] {
-            let mut area = prism
-                .outer
-                .signed_area()
-                .map_err(GeometryError::from)?
-                .ok_or(GeometryError::UnsupportedMeasurement)?
-                .abs();
+            let mut area = curve_path_signed_area(&prism.outer)?.abs();
             for hole in &prism.holes {
-                area -= hole
-                    .signed_area()
-                    .map_err(GeometryError::from)?
-                    .ok_or(GeometryError::UnsupportedMeasurement)?
-                    .abs();
+                area -= curve_path_signed_area(hole)?.abs();
             }
             let jacobian = prism.u.dot(&prism.v.cross(&prism.extrusion)).abs();
             return Ok(area * jacobian * (&prism.parameter_max - &prism.parameter_min));
@@ -5338,7 +5329,11 @@ impl Model {
         }
         let planar = CurvePoint2::new(planar_u, planar_v);
         let policy = CurvePolicy::certified();
-        match prism.outer.classify_point(&planar, &policy) {
+        match prism
+            .outer
+            .classify_point(&planar, &policy)
+            .map_err(GeometryError::from)?
+        {
             Classification::Decided(ContourPointLocation::Outside) => {
                 return Ok(SolidPointLocation::Outside);
             }
@@ -5351,7 +5346,10 @@ impl Model {
             }
         }
         for hole in &prism.holes {
-            match hole.classify_point(&planar, &policy) {
+            match hole
+                .classify_point(&planar, &policy)
+                .map_err(GeometryError::from)?
+            {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(SolidPointLocation::Outside);
                 }
@@ -6733,7 +6731,7 @@ impl ModelBuilder {
         let line_arc_prism = if analytic_closed || simple_prism {
             false
         } else {
-            self.certify_line_arc_prism_shell(outer)?
+            self.certify_extrusion_prism_shell(outer)?
         };
         let curve_sweep = if analytic_closed || simple_prism || line_arc_prism {
             None
@@ -9991,7 +9989,7 @@ impl ModelBuilder {
         Ok(edges)
     }
 
-    fn certify_line_arc_prism_shell(&self, shell: ShellId) -> Result<bool, BuildError> {
+    fn certify_extrusion_prism_shell(&self, shell: ShellId) -> Result<bool, BuildError> {
         let mut cap_surfaces = HashSet::new();
         for face_id in &self.shell_ref(shell)?.faces {
             let face = self.face_ref(*face_id)?;
@@ -10007,7 +10005,11 @@ impl ModelBuilder {
                     let edge = self.edge_ref(self.edge_use_ref(*edge_use_id)?.edge)?;
                     if !matches!(
                         self.curve_ref(edge.curve)?.kind(),
-                        Curve3Kind::Line | Curve3Kind::CircleArc
+                        Curve3Kind::Line
+                            | Curve3Kind::CircleArc
+                            | Curve3Kind::EllipseArc
+                            | Curve3Kind::RationalBezier
+                            | Curve3Kind::Nurbs
                     ) {
                         return Ok(false);
                     }
@@ -10046,7 +10048,7 @@ impl ModelBuilder {
     ) -> Result<Option<CertifiedPrismShell>, BuildError> {
         if !self.certify_simple_prism_shell(shell)?
             && !self.certify_internally_partitioned_prism_shell(shell)?
-            && !self.certify_line_arc_prism_shell(shell)?
+            && !self.certify_extrusion_prism_shell(shell)?
         {
             return Ok(None);
         }
@@ -10101,14 +10103,14 @@ impl ModelBuilder {
                 let mut outer = None;
                 let mut holes = Vec::new();
                 for uses in first_boundary {
-                    let segments = uses
+                    let curves = uses
                         .iter()
-                        .map(|edge_use_id| {
+                        .map(|edge_use_id| -> Result<Curve2, BuildError> {
                             let edge_use = self.edge_use_ref(*edge_use_id)?;
                             let edge = self.edge_ref(edge_use.edge)?;
                             if self.curve_ref(edge.curve)?.kind() == Curve3Kind::Line {
                                 let (start, end) = self.directed_vertices(*edge_use_id)?;
-                                Ok(Segment2::Line(
+                                Ok(Curve2::from(
                                     LineSeg2::try_new(
                                         project_point_to_plane_frame(
                                             self.vertex_ref(start)?.point(),
@@ -10126,27 +10128,21 @@ impl ModelBuilder {
                                     .map_err(GeometryError::from)?,
                                 ))
                             } else {
-                                self.pcurve_ref(edge_use.pcurve)?
-                                    .segment()
-                                    .map_err(BuildError::from)
+                                Ok(self.pcurve_ref(edge_use.pcurve)?.curve().clone())
                             }
                         })
                         .collect::<Result<Vec<_>, _>>()?;
-                    let contour = Contour2::try_new(segments).map_err(GeometryError::from)?;
-                    let area = contour.signed_area().map_err(GeometryError::from)?.ok_or(
-                        BuildError::DegenerateWireArea(
-                            first_face.outer().expect("trimmed cap face"),
-                        ),
-                    )?;
+                    let path = CurvePath2::try_new(curves).map_err(GeometryError::from)?;
+                    let area = curve_path_signed_area(&path)?;
                     let positive = decided_model_order(compare_reals(&area, &Real::zero()))?
                         == std::cmp::Ordering::Greater;
                     let is_outer = positive == (first_face.orientation == Orientation::Forward);
                     if is_outer {
-                        if outer.replace(contour).is_some() {
+                        if outer.replace(path).is_some() {
                             return Ok(None);
                         }
                     } else {
-                        holes.push(contour);
+                        holes.push(path);
                     }
                 }
                 let Some(outer) = outer else {
@@ -14814,7 +14810,7 @@ impl ModelBuilder {
     ) -> Result<Option<CertifiedZPrismShell>, BuildError> {
         if !self.certify_simple_prism_shell(shell)?
             && !self.certify_internally_partitioned_prism_shell(shell)?
-            && !self.certify_line_arc_prism_shell(shell)?
+            && !self.certify_extrusion_prism_shell(shell)?
         {
             return Ok(None);
         }
@@ -17146,6 +17142,13 @@ fn update_max(current: &mut Real, candidate: &Real) -> Result<(), GeometryError>
         *current = candidate.clone();
     }
     Ok(())
+}
+
+fn curve_path_signed_area(path: &CurvePath2) -> Result<Real, GeometryError> {
+    path.bezier_boundary_loop()?
+        .boundary_loop()
+        .signed_area()?
+        .ok_or(GeometryError::UnsupportedMeasurement)
 }
 
 fn decided_model_order(

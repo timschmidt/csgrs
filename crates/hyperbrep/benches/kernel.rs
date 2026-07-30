@@ -817,6 +817,30 @@ fn main() {
         elapsed / SPLINE_ITERATIONS as u32,
     );
 
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..SPLINE_ITERATIONS {
+        let (model, solid) = builder::extrude_path_region(
+            black_box(&planar_outer),
+            black_box(std::slice::from_ref(&planar_hole)),
+            black_box(-Real::one()),
+            black_box(Real::from(2)),
+        )
+        .expect("benchmark exact path extrusion");
+        let volume = model
+            .solid_volume(solid)
+            .expect("benchmark exact path extrusion volume");
+        checksum += usize::from(
+            compare_reals(&volume, &Real::from(45)).value() == Some(std::cmp::Ordering::Equal),
+        );
+        black_box(model);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/nurbs_path_extrusion_build_exact_volume: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / SPLINE_ITERATIONS as u32,
+    );
+
     let extrusion_profile = Curve3::nurbs(
         2,
         vec![point(0, 0, 0), point(2, 1, 0), point(0, 2, 0)],

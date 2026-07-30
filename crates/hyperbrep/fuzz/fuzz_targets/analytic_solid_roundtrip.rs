@@ -980,7 +980,7 @@ fuzz_target!(|bytes: &[u8]| {
     ) else {
         return;
     };
-    let expected_planar_area = planar_width * planar_height * planar_u_scale * planar_v_scale;
+    let expected_planar_area = &planar_width * &planar_height * planar_u_scale * planar_v_scale;
     assert_eq!(
         hyperlimit::compare_reals(
             &planar_model
@@ -1004,6 +1004,39 @@ fuzz_target!(|bytes: &[u8]| {
                 .face_area(planar_face)
                 .expect("replayed planar spline region has exact area"),
             &expected_planar_area,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+
+    let path_extrusion_height = positive(3);
+    let Ok((path_extrusion, path_extrusion_solid)) =
+        builder::extrude_path(&planar_outer, Real::zero(), path_extrusion_height.clone())
+    else {
+        return;
+    };
+    let expected_path_extrusion_volume = planar_width * planar_height * path_extrusion_height;
+    assert_eq!(
+        hyperlimit::compare_reals(
+            &path_extrusion
+                .solid_volume(path_extrusion_solid)
+                .expect("path extrusion has exact volume"),
+            &expected_path_extrusion_volume,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+    let path_extrusion_json = path_extrusion.to_json().expect("path extrusion serializes");
+    let replayed_path_extrusion = RawModel::from_json(&path_extrusion_json)
+        .expect("path extrusion JSON parses")
+        .validate()
+        .expect("path extrusion JSON revalidates");
+    assert_eq!(
+        hyperlimit::compare_reals(
+            &replayed_path_extrusion
+                .solid_volume(path_extrusion_solid)
+                .expect("replayed path extrusion has exact volume"),
+            &expected_path_extrusion_volume,
         )
         .value(),
         Some(std::cmp::Ordering::Equal)

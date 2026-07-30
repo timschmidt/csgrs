@@ -44,6 +44,7 @@ variable-speed profile areas remain explicit unsupported measurements.
 | `extrude` / `extrude_region(s)` | Line prisms, holes, components | Yes | Yes | Yes | Affine / exact |
 | `extrude_with_voids` | Nested inward line-prism shells | Yes | Yes | Yes | Affine / exact |
 | `extrude_contour(_regions)` | Native line/arc caps and extrusion sides | Yes | Yes | Yes | Family-preserving / exact |
+| `extrude_path(_region(s))` | Native `CurvePath2` caps and one exact extrusion side per persistent path curve; through-holes share one genus shell | Exact for line, normal-circle, and certified transverse-monotone planar rational Bézier/NURBS sides; other variable-speed sides unsupported | Exact Hypercurve outer-minus-hole area × height | Exact height interval and `CurvePath2` material-region test | Family-preserving / exact |
 | `cylinder` | Circular caps and one cylinder carrier | Yes | `pi*r²*h` | Analytic | Rigid / exact |
 | `sphere` | One boundaryless closed-surface face | `4*pi*r²` | `4*pi*r³/3` | Analytic radial test | Rigid / exact |
 | `sphere_with_voids` | Complete outer and inward spherical faces | Yes | Exact sphere subtraction | Analytic radial test | Rigid / exact |

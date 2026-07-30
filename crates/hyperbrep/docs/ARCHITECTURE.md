@@ -290,6 +290,13 @@ circular, polynomial Bézier, rational-quadratic, and polynomial B-spline
 inputs are promoted exactly to persistence-supported rational Bézier or NURBS
 boundaries without fitting or sampling.
 
+Path extrusion applies the same certified region boundary to two z-plane caps
+and one exact extrusion carrier per path curve. Cap edges and pcurves retain
+their native line, circular, rational Bézier, or NURBS domains; polynomial
+families are promoted exactly. The prism certificate retains the complete
+`CurvePath2` outer-minus-hole region, so exact volume and point
+classification never reduce spline boundaries to chords.
+
 Finite revolution patches share one native latitude extractor between
 construction and validation. Latitude edges are compared against the complete
 expected circle parameterization, including frame, domain, and directed
