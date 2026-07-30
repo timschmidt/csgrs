@@ -6,6 +6,10 @@ only changes that survived tests and Criterion A/B measurements. Timings are loc
 Criterion estimates from an optimized build; they are evidence for relative changes,
 not portable absolute promises.
 
+The explicit-policy runtime, native/WASM size, and call-graph baseline is
+recorded separately in
+[`benchmarks/baselines/policy-context-2026-07-30.md`](benchmarks/baselines/policy-context-2026-07-30.md).
+
 ## Retained changes
 
 ### Immediate runtime triangulation reports
