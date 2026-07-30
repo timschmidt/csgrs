@@ -5770,6 +5770,43 @@ mod tests {
     }
 
     #[test]
+    fn revolution_path_measures_nonuniform_rational_nurbs_line_images_exactly() {
+        let cp = |x, y| CurvePoint2::new(r(x), r(y));
+        let profile = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(cp(2, 0), cp(4, 0)).unwrap()),
+            Curve2::try_nurbs(
+                1,
+                vec![cp(4, 0), cp(4, 2)],
+                vec![Real::one(), r(3)],
+                vec![r(0), r(0), r(1), r(1)],
+            )
+            .unwrap(),
+            Curve2::from(LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
+        ])
+        .unwrap();
+        let (model, solid) = revolve_path(&profile).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &(r(24) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(3, 0, 1)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        let json = model.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &(r(24) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
     fn revolution_path_region_retains_exact_curved_profile_cavity() {
         let cp = |x, y| CurvePoint2::new(r(x), r(y));
         let outer = CurvePath2::try_new(vec![
