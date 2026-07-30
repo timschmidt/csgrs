@@ -50,21 +50,11 @@ impl Triangle {
 pub(crate) struct TriangleMeshFacts {
     input_plane_sources: Option<Arc<[TriangleSource]>>,
     input_provenance_certainty: Option<MeshCertainty>,
-    input_polygons: OnceLock<Option<Arc<[ConvexPolygon]>>>,
-    exact_bounds: OnceLock<Option<ExactAabb>>,
-    adjacency: OnceLock<Vec<Vec<usize>>>,
-    connectivity_counts: OnceLock<(usize, usize)>,
-    closed_manifold: OnceLock<bool>,
-    finite_positions: OnceLock<Option<Vec<[f64; 3]>>>,
-    finite_materialization: OnceLock<Option<TriangleMesh>>,
-    pub(crate) exact_gpu:
-        OnceLock<Result<crate::gpu::ExactGpuMeshBuffers, crate::gpu::GpuMeshError>>,
-    pub(crate) gpu_f32: OnceLock<Result<crate::gpu::GpuMeshBuffersF32, crate::gpu::GpuMeshError>>,
-    pub(crate) gpu_f64: OnceLock<Result<crate::gpu::GpuMeshBuffersF64, crate::gpu::GpuMeshError>>,
+    input_polygons: Option<Arc<[ConvexPolygon]>>,
+    exact_bounds: OnceLock<Option<Arc<ExactAabb>>>,
     valid_pwn: CertaintyFact,
     certified_convex: CertaintyFact,
-    axis_aligned_box: OnceLock<Option<ExactAabb>>,
-    reversed_winding: OnceLock<TriangleMesh>,
+    axis_aligned_box: OnceLock<Option<Arc<ExactAabb>>>,
 }
 
 /// Canonical owned triangle mesh.
@@ -109,9 +99,9 @@ impl TriangleMesh {
             let facts = TriangleMeshFacts {
                 input_plane_sources: Some(sources.into()),
                 input_provenance_certainty: Some(certainty),
+                input_polygons: Some(polygons.into()),
                 ..TriangleMeshFacts::default()
             };
-            let _ = facts.input_polygons.set(Some(polygons.into()));
             facts.valid_pwn.record(certainty);
             self.facts = Arc::new(facts);
         }
@@ -136,7 +126,7 @@ impl TriangleMesh {
         {
             return None;
         }
-        self.facts.input_polygons.get()?.as_deref()
+        self.facts.input_polygons.as_deref()
     }
 
     pub(crate) fn has_retained_input_plane_sources(&self, decisions: &DecisionContext) -> bool {
@@ -214,22 +204,41 @@ impl TriangleMesh {
         }
     }
 
-    /// Builds native vertex adjacency from triangle index rows.
-    pub fn adjacency(&self) -> HypermeshResult<&[Vec<usize>]> {
+    /// Builds caller-owned native vertex adjacency from triangle index rows.
+    ///
+    /// The result is deliberately not retained by the mesh carrier. Algorithms
+    /// that reuse adjacency keep this value for the duration of their own
+    /// operation, so one-shot queries do not permanently increase mesh memory.
+    pub fn adjacency(&self) -> HypermeshResult<Vec<Vec<usize>>> {
         self.validate_triangle_indices()?;
-        Ok(self.facts.adjacency.get_or_init(|| self.build_adjacency()))
+        Ok(self.build_adjacency())
     }
 
-    /// Returns retained `(position rows, directed adjacency entries)` counts.
-    ///
-    /// This is the compact topology fact for callers that need connectivity
-    /// diagnostics without walking every retained adjacency row again.
+    /// Returns `(position rows, directed adjacency entries)` counts without
+    /// retaining or materializing the complete adjacency table.
     pub fn connectivity_counts(&self) -> HypermeshResult<(usize, usize)> {
-        let adjacency_entries = self.adjacency()?.iter().map(Vec::len).sum();
-        Ok(*self
-            .facts
-            .connectivity_counts
-            .get_or_init(|| (self.positions.len(), adjacency_entries)))
+        self.validate_triangle_indices()?;
+        let mut edges = BTreeSet::new();
+        for triangle in self.triangles.iter() {
+            let [a, b, c] = triangle.indices();
+            for [left, right] in [[a, b], [b, c], [c, a]] {
+                if left != right {
+                    edges.insert(if left < right {
+                        [left, right]
+                    } else {
+                        [right, left]
+                    });
+                }
+            }
+        }
+        let adjacency_entries =
+            edges
+                .len()
+                .checked_mul(2)
+                .ok_or(HypermeshError::CapacityOverflow {
+                    operation: "connectivity counting",
+                })?;
+        Ok((self.positions.len(), adjacency_entries))
     }
 
     fn build_adjacency(&self) -> Vec<Vec<usize>> {
@@ -268,30 +277,28 @@ impl TriangleMesh {
     /// Checks indexed edge pairing for a closed, consistently oriented
     /// two-manifold.
     pub fn is_closed_manifold(&self) -> bool {
-        *self.facts.closed_manifold.get_or_init(|| {
-            let mut edges = HashMap::<[usize; 2], [usize; 2]>::new();
-            for triangle in self.triangles.iter() {
-                let [a, b, c] = triangle.indices();
-                if [a, b, c]
-                    .into_iter()
-                    .any(|index| index >= self.positions.len())
-                {
+        let mut edges = HashMap::<[usize; 2], [usize; 2]>::new();
+        for triangle in self.triangles.iter() {
+            let [a, b, c] = triangle.indices();
+            if [a, b, c]
+                .into_iter()
+                .any(|index| index >= self.positions.len())
+            {
+                return false;
+            }
+            for [start, end] in [[a, b], [b, c], [c, a]] {
+                if start == end {
                     return false;
                 }
-                for [start, end] in [[a, b], [b, c], [c, a]] {
-                    if start == end {
-                        return false;
-                    }
-                    let key = if start < end {
-                        [start, end]
-                    } else {
-                        [end, start]
-                    };
-                    edges.entry(key).or_default()[usize::from(start > end)] += 1;
-                }
+                let key = if start < end {
+                    [start, end]
+                } else {
+                    [end, start]
+                };
+                edges.entry(key).or_default()[usize::from(start > end)] += 1;
             }
-            !self.triangles.is_empty() && edges.values().all(|uses| uses[0] == 1 && uses[1] == 1)
-        })
+        }
+        !self.triangles.is_empty() && edges.values().all(|uses| uses[0] == 1 && uses[1] == 1)
     }
 
     /// Returns true when every triangle has valid, nondegenerate exact
@@ -448,7 +455,7 @@ impl TriangleMesh {
         decisions: &DecisionContext,
     ) -> HypermeshResult<Option<ExactAabb>> {
         if let Some(bounds) = self.facts.exact_bounds.get() {
-            return Ok(bounds.clone());
+            return Ok(bounds.as_deref().cloned());
         }
 
         let local = decisions.isolated();
@@ -456,8 +463,13 @@ impl TriangleMesh {
         decisions.absorb(local.certainty());
         let bounds = bounds?;
         if local.certainty() == crate::MeshCertainty::Certified {
-            let _ = self.facts.exact_bounds.set(bounds.clone());
-            return Ok(self.facts.exact_bounds.get().cloned().unwrap_or(bounds));
+            let _ = self.facts.exact_bounds.set(bounds.clone().map(Arc::new));
+            return Ok(self
+                .facts
+                .exact_bounds
+                .get()
+                .and_then(Option::as_deref)
+                .cloned());
         }
         Ok(bounds)
     }
@@ -486,50 +498,40 @@ impl TriangleMesh {
         Ok(Some(bounds))
     }
 
-    /// Returns a retained finite projection of every exact position.
+    /// Returns a caller-owned finite projection of every exact position.
     ///
     /// This is an explicit approximation boundary for renderers, exporters,
     /// diagnostics, and benchmarks. Native geometry remains exact.
-    pub fn finite_positions(&self) -> Option<&[[f64; 3]]> {
-        self.facts
-            .finite_positions
-            .get_or_init(|| {
-                self.positions
-                    .iter()
-                    .map(|point| {
-                        Some([
-                            point.x.to_f64_lossy()?,
-                            point.y.to_f64_lossy()?,
-                            point.z.to_f64_lossy()?,
-                        ])
-                    })
-                    .collect()
+    pub fn finite_positions(&self) -> Option<Vec<[f64; 3]>> {
+        self.positions
+            .iter()
+            .map(|point| {
+                Some([
+                    point.x.to_f64_lossy()?,
+                    point.y.to_f64_lossy()?,
+                    point.z.to_f64_lossy()?,
+                ])
             })
-            .as_deref()
+            .collect()
     }
 
-    /// Returns retained geometry whose coordinates are exact promotions of
+    /// Returns geometry whose coordinates are exact promotions of
     /// this mesh's finite binary64 projection.
     ///
     /// `None` means at least one native coordinate has no finite projection.
     pub fn materialize_finite(&self) -> Option<Self> {
-        self.facts
-            .finite_materialization
-            .get_or_init(|| {
-                let positions = self
-                    .finite_positions()?
-                    .iter()
-                    .map(|position| {
-                        Some(Point3::new(
-                            Real::try_from(position[0]).ok()?,
-                            Real::try_from(position[1]).ok()?,
-                            Real::try_from(position[2]).ok()?,
-                        ))
-                    })
-                    .collect::<Option<Vec<_>>>()?;
-                Some(Self::new(positions, self.triangles.to_vec()))
+        let positions = self
+            .finite_positions()?
+            .into_iter()
+            .map(|position| {
+                Some(Point3::new(
+                    Real::try_from(position[0]).ok()?,
+                    Real::try_from(position[1]).ok()?,
+                    Real::try_from(position[2]).ok()?,
+                ))
             })
-            .clone()
+            .collect::<Option<Vec<_>>>()?;
+        Some(Self::new(positions, self.triangles.to_vec()))
     }
 
     /// Records that the constructor certifies this mesh as convex.
@@ -581,7 +583,7 @@ impl TriangleMesh {
         decisions: &DecisionContext,
     ) -> HypermeshResult<Option<ExactAabb>> {
         if let Some(bounds) = self.facts.axis_aligned_box.get() {
-            return Ok(bounds.clone());
+            return Ok(bounds.as_deref().cloned());
         }
 
         let local = decisions.isolated();
@@ -592,8 +594,21 @@ impl TriangleMesh {
             self.facts.valid_pwn.record(local.certainty());
         }
         if local.certainty() == crate::MeshCertainty::Certified {
-            let _ = self.facts.axis_aligned_box.set(bounds.clone());
-            return Ok(self.facts.axis_aligned_box.get().cloned().unwrap_or(bounds));
+            let cached = bounds.as_ref().map(|bounds| {
+                self.facts
+                    .exact_bounds
+                    .get()
+                    .and_then(Option::as_ref)
+                    .cloned()
+                    .unwrap_or_else(|| Arc::new(bounds.clone()))
+            });
+            let _ = self.facts.axis_aligned_box.set(cached);
+            return Ok(self
+                .facts
+                .axis_aligned_box
+                .get()
+                .and_then(Option::as_deref)
+                .cloned());
         }
         Ok(bounds)
     }
@@ -749,28 +764,23 @@ impl TriangleMesh {
 
     /// Reverses every triangle while sharing the immutable position buffer.
     ///
-    /// The derived orientation is retained, so repeated requests on the same
-    /// native mesh share both indexed buffers.
+    /// The returned mesh owns its derived index buffer; callers that need it
+    /// repeatedly retain the returned value explicitly.
     pub fn reversed_winding(&self) -> Self {
-        self.facts
-            .reversed_winding
-            .get_or_init(|| {
-                let facts = Arc::new(TriangleMeshFacts::default());
-                if let Some(certainty) = self.facts.valid_pwn.certainty() {
-                    facts.valid_pwn.record(certainty);
-                }
-                Self {
-                    positions: Arc::clone(&self.positions),
-                    triangles: self
-                        .triangles
-                        .iter()
-                        .map(|triangle| Triangle::new(triangle.v2, triangle.v1, triangle.v0))
-                        .collect::<Vec<_>>()
-                        .into(),
-                    facts,
-                }
-            })
-            .clone()
+        let facts = Arc::new(TriangleMeshFacts::default());
+        if let Some(certainty) = self.facts.valid_pwn.certainty() {
+            facts.valid_pwn.record(certainty);
+        }
+        Self {
+            positions: Arc::clone(&self.positions),
+            triangles: self
+                .triangles
+                .iter()
+                .map(|triangle| Triangle::new(triangle.v2, triangle.v1, triangle.v0))
+                .collect::<Vec<_>>()
+                .into(),
+            facts,
+        }
     }
 
     /// Applies an exact `Rz * Ry * Rx` Euler rotation in degrees.
@@ -899,9 +909,6 @@ impl TriangleMesh {
             triangles = refined;
         }
         let mesh = Self::new(positions, triangles);
-        if self.is_closed_manifold() {
-            let _ = mesh.facts.closed_manifold.set(true);
-        }
         if let Some(certainty) = self.facts.valid_pwn.certainty() {
             mesh.facts.valid_pwn.record(certainty);
         }
@@ -1182,23 +1189,10 @@ impl TriangleMesh {
     pub fn laplacian_smooth(&self, lambda: &Real, iterations: usize) -> HypermeshResult<Self> {
         let adjacency = self.adjacency()?;
         let mut positions = self.positions.to_vec();
+        let mut scratch = Vec::with_capacity(positions.len());
         for _ in 0..iterations {
-            let previous = positions.clone();
-            for (index, neighbors) in adjacency.iter().enumerate() {
-                if neighbors.is_empty() {
-                    continue;
-                }
-                let mut sum = hyperlattice::Vector3::zero();
-                for &neighbor in neighbors {
-                    sum = sum + previous[neighbor].to_vector();
-                }
-                let count = Real::from(neighbors.len() as u64);
-                let average =
-                    (sum / count).expect("a nonempty adjacency row has a nonzero divisor");
-                let current = previous[index].to_vector();
-                positions[index] =
-                    Point3::origin() + current.clone() + (average - current) * lambda.clone();
-            }
+            smooth_positions_once(&positions, &mut scratch, &adjacency, lambda);
+            std::mem::swap(&mut positions, &mut scratch);
         }
         Ok(Self::new(positions, self.triangles.to_vec()))
     }
@@ -1214,12 +1208,39 @@ impl TriangleMesh {
         mu: &Real,
         iterations: usize,
     ) -> HypermeshResult<Self> {
-        let mut mesh = self.clone();
+        let adjacency = self.adjacency()?;
+        let mut positions = self.positions.to_vec();
+        let mut scratch = Vec::with_capacity(positions.len());
         for _ in 0..iterations {
-            mesh = mesh.laplacian_smooth(lambda, 1)?;
-            mesh = mesh.laplacian_smooth(mu, 1)?;
+            smooth_positions_once(&positions, &mut scratch, &adjacency, lambda);
+            std::mem::swap(&mut positions, &mut scratch);
+            smooth_positions_once(&positions, &mut scratch, &adjacency, mu);
+            std::mem::swap(&mut positions, &mut scratch);
         }
-        Ok(mesh)
+        Ok(Self::new(positions, self.triangles.to_vec()))
+    }
+}
+
+fn smooth_positions_once(
+    positions: &[Point3],
+    output: &mut Vec<Point3>,
+    adjacency: &[Vec<usize>],
+    factor: &Real,
+) {
+    output.clear();
+    for (index, neighbors) in adjacency.iter().enumerate() {
+        if neighbors.is_empty() {
+            output.push(positions[index].clone());
+            continue;
+        }
+        let mut sum = hyperlattice::Vector3::zero();
+        for &neighbor in neighbors {
+            sum = sum + positions[neighbor].to_vector();
+        }
+        let count = Real::from(neighbors.len() as u64);
+        let average = (sum / count).expect("a nonempty adjacency row has a nonzero divisor");
+        let current = positions[index].to_vector();
+        output.push(Point3::origin() + current.clone() + (average - current) * factor.clone());
     }
 }
 
@@ -2347,7 +2368,7 @@ mod tests {
     }
 
     #[test]
-    fn reversed_winding_shares_native_positions_and_retains_the_result() {
+    fn reversed_winding_shares_positions_without_retaining_derived_indices() {
         let mesh = TriangleMesh::new(
             vec![
                 Point3::new(Real::zero(), Real::zero(), Real::zero()),
@@ -2360,9 +2381,19 @@ mod tests {
         let reversed = mesh.reversed_winding();
         let retained = mesh.reversed_winding();
         assert!(Arc::ptr_eq(&mesh.positions, &reversed.positions));
-        assert!(Arc::ptr_eq(&reversed.triangles, &retained.triangles));
+        assert!(!Arc::ptr_eq(&reversed.triangles, &retained.triangles));
+        assert_eq!(reversed, retained);
         assert_eq!(mesh.triangles[0], Triangle::new(0, 1, 2));
         assert_eq!(reversed.triangles[0], Triangle::new(2, 1, 0));
+    }
+
+    #[test]
+    fn mesh_fact_header_stays_compact() {
+        assert!(
+            std::mem::size_of::<TriangleMeshFacts>() <= 80,
+            "cold mesh facts occupy {} bytes",
+            std::mem::size_of::<TriangleMeshFacts>(),
+        );
     }
     use hyperlattice::Rational;
 

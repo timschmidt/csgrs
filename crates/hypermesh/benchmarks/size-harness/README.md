@@ -27,6 +27,21 @@ cargo build --release --bin retention
 heaptrack --record-only target/release/retention 512
 ```
 
+`native_repeat` runs the same workload through owned native views, retaining
+only the compact reusable proof facts on each input:
+
+```sh
+cargo run --release --bin native_repeat -- 512
+```
+
+`carrier_retention` holds 100,000 cold owned meshes to expose the fixed
+per-mesh proof-header cost independently of position and triangle buffers:
+
+```sh
+cargo build --release --bin carrier_retention
+heaptrack --record-only target/release/carrier_retention 100000
+```
+
 Measure the default or all-feature dependency graph:
 
 ```sh

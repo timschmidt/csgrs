@@ -7,7 +7,7 @@
 use std::error::Error;
 use std::fmt;
 
-use hyperlattice::{Point3, Real, Vector3};
+use hyperlattice::{Point3, Real};
 
 use crate::TriangleMesh;
 use crate::output::BooleanMesh;
@@ -50,11 +50,19 @@ impl ExactGpuMeshBuffers {
         triangle_capacity: usize,
         triangles: impl Iterator<Item = [ExactGpuVertex; 3]>,
     ) -> Result<Self, GpuMeshError> {
+        Self::from_fallible_triangle_iterator(triangle_capacity, triangles.map(Ok))
+    }
+
+    fn from_fallible_triangle_iterator(
+        triangle_capacity: usize,
+        triangles: impl Iterator<Item = Result<[ExactGpuVertex; 3], GpuMeshError>>,
+    ) -> Result<Self, GpuMeshError> {
         let vertex_capacity = triangle_capacity.saturating_mul(3);
         let mut vertices = Vec::with_capacity(vertex_capacity);
         let mut indices = Vec::with_capacity(vertex_capacity);
 
         for triangle in triangles {
+            let triangle = triangle?;
             let base =
                 u32::try_from(vertices.len()).map_err(|_| GpuMeshError::VertexCountExceededU32)?;
             let second = base
@@ -181,6 +189,11 @@ pub enum GpuMeshError {
         /// Number of available source vertices.
         vertex_count: usize,
     },
+    /// An exact triangle has no certifiable finite unit normal.
+    TriangleNormalUnavailable {
+        /// Offset of the triangle in the source mesh.
+        triangle: usize,
+    },
     /// An exact attribute could not be approximated as a finite floating-point row.
     AttributeApproximationFailed {
         /// Vertex containing the attribute.
@@ -217,6 +230,12 @@ impl fmt::Display for GpuMeshError {
                 formatter,
                 "triangle {triangle} corner {corner} references source vertex {index}, but only {vertex_count} vertices exist"
             ),
+            Self::TriangleNormalUnavailable { triangle } => {
+                write!(
+                    formatter,
+                    "triangle {triangle} has no certifiable unit normal"
+                )
+            }
             Self::AttributeApproximationFailed { vertex, attribute } => {
                 write!(
                     formatter,
@@ -329,26 +348,18 @@ impl BooleanMesh {
             }
         }
 
-        let triangles = self.triangles.iter().map(|triangle| {
-            let [a, b, c] = triangle.map(|index| {
-                let vertex = &self.vertices[index];
-                Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
+        let triangles = self
+            .triangles
+            .iter()
+            .enumerate()
+            .map(|(triangle_index, triangle)| {
+                let [a, b, c] = triangle.map(|index| {
+                    let vertex = &self.vertices[index];
+                    Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
+                });
+                exact_gpu_triangle(triangle_index, a, b, c)
             });
-            let normal = (&b - &a)
-                .unit_cross_checked(&(&c - &a))
-                .unwrap_or_else(|_| Vector3::z());
-            let normal = [
-                normal.0[0].clone(),
-                normal.0[1].clone(),
-                normal.0[2].clone(),
-            ];
-            [
-                (point_row(a), normal.clone()),
-                (point_row(b), normal.clone()),
-                (point_row(c), normal),
-            ]
-        });
-        ExactGpuMeshBuffers::from_triangles_with_capacity(self.triangles.len(), triangles)
+        ExactGpuMeshBuffers::from_fallible_triangle_iterator(self.triangles.len(), triangles)
     }
 
     /// Produces strict finite-`f32` GPU buffers from this exact triangle soup.
@@ -375,72 +386,66 @@ impl BooleanMesh {
 }
 
 impl TriangleMesh {
-    /// Returns retained exact flat-shaded render rows and `u32` indices.
+    /// Builds caller-owned exact flat-shaded render rows and `u32` indices.
     ///
-    /// The first call derives the rows from native indexed geometry; clones of
-    /// the same immutable mesh share the retained result.
-    pub fn exact_gpu_mesh_buffers(&self) -> Result<&ExactGpuMeshBuffers, &GpuMeshError> {
-        self.facts
-            .exact_gpu
-            .get_or_init(|| {
-                for (triangle_offset, triangle) in self.triangles.iter().enumerate() {
-                    for (corner, index) in triangle.indices().into_iter().enumerate() {
-                        if index >= self.positions.len() {
-                            return Err(GpuMeshError::SourceTriangleIndexOutOfBounds {
-                                triangle: triangle_offset,
-                                corner,
-                                index,
-                                vertex_count: self.positions.len(),
-                            });
-                        }
-                    }
+    /// Derived buffers are intentionally not retained by the exact mesh
+    /// carrier. Renderers that reuse them keep the returned value.
+    pub fn to_exact_gpu_mesh_buffers(&self) -> Result<ExactGpuMeshBuffers, GpuMeshError> {
+        for (triangle_offset, triangle) in self.triangles.iter().enumerate() {
+            for (corner, index) in triangle.indices().into_iter().enumerate() {
+                if index >= self.positions.len() {
+                    return Err(GpuMeshError::SourceTriangleIndexOutOfBounds {
+                        triangle: triangle_offset,
+                        corner,
+                        index,
+                        vertex_count: self.positions.len(),
+                    });
                 }
-                let triangles = self.triangles.iter().map(|triangle| {
-                    let [a, b, c] = triangle
-                        .indices()
-                        .map(|index| self.positions[index].clone());
-                    let normal = (&b - &a)
-                        .unit_cross_checked(&(&c - &a))
-                        .unwrap_or_else(|_| Vector3::z());
-                    let normal = [
-                        normal.0[0].clone(),
-                        normal.0[1].clone(),
-                        normal.0[2].clone(),
-                    ];
-                    [
-                        (point_row(a), normal.clone()),
-                        (point_row(b), normal.clone()),
-                        (point_row(c), normal),
-                    ]
-                });
-                ExactGpuMeshBuffers::from_triangles_with_capacity(self.triangles.len(), triangles)
-            })
-            .as_ref()
+            }
+        }
+        let triangles = self
+            .triangles
+            .iter()
+            .enumerate()
+            .map(|(triangle_index, triangle)| {
+                let [a, b, c] = triangle
+                    .indices()
+                    .map(|index| self.positions[index].clone());
+                exact_gpu_triangle(triangle_index, a, b, c)
+            });
+        ExactGpuMeshBuffers::from_fallible_triangle_iterator(self.triangles.len(), triangles)
     }
 
-    /// Produces strict finite-`f32` GPU buffers from retained exact rows.
+    /// Produces strict finite-`f32` GPU buffers from native exact rows.
     pub fn try_to_gpu_mesh_f32(&self) -> Result<GpuMeshBuffersF32, GpuMeshError> {
-        self.facts
-            .gpu_f32
-            .get_or_init(|| {
-                self.exact_gpu_mesh_buffers()
-                    .map_err(Clone::clone)?
-                    .try_approximate_f32()
-            })
-            .clone()
+        self.to_exact_gpu_mesh_buffers()?.try_approximate_f32()
     }
 
-    /// Produces strict finite-`f64` GPU buffers from retained exact rows.
+    /// Produces strict finite-`f64` GPU buffers from native exact rows.
     pub fn try_to_gpu_mesh_f64(&self) -> Result<GpuMeshBuffersF64, GpuMeshError> {
-        self.facts
-            .gpu_f64
-            .get_or_init(|| {
-                self.exact_gpu_mesh_buffers()
-                    .map_err(Clone::clone)?
-                    .try_approximate_f64()
-            })
-            .clone()
+        self.to_exact_gpu_mesh_buffers()?.try_approximate_f64()
     }
+}
+
+fn exact_gpu_triangle(
+    triangle: usize,
+    a: Point3,
+    b: Point3,
+    c: Point3,
+) -> Result<[ExactGpuVertex; 3], GpuMeshError> {
+    let normal = (&b - &a)
+        .unit_cross_checked(&(&c - &a))
+        .map_err(|_| GpuMeshError::TriangleNormalUnavailable { triangle })?;
+    let normal = [
+        normal.0[0].clone(),
+        normal.0[1].clone(),
+        normal.0[2].clone(),
+    ];
+    Ok([
+        (point_row(a), normal.clone()),
+        (point_row(b), normal.clone()),
+        (point_row(c), normal),
+    ])
 }
 
 fn point_row(point: Point3) -> [Real; 3] {
@@ -549,6 +554,7 @@ fn validate_indices(vertex_count: usize, indices: &[u32]) -> Result<(), GpuMeshE
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Triangle;
     use crate::mesh::OutputVertex;
 
     fn exact_vertex(position: [i64; 3], normal: [i64; 3]) -> ExactGpuVertex {
@@ -701,6 +707,37 @@ mod tests {
                 index: 4,
                 vertex_count: 1,
             })
+        );
+    }
+
+    #[test]
+    fn exact_gpu_exports_reject_degenerate_triangle_normals() {
+        let positions = vec![
+            Point3::origin(),
+            Point3::new(Real::one(), Real::zero(), Real::zero()),
+            Point3::new(Real::from(2), Real::zero(), Real::zero()),
+        ];
+        let mesh = TriangleMesh::new(positions.clone(), vec![Triangle::new(0, 1, 2)]);
+        assert_eq!(
+            mesh.to_exact_gpu_mesh_buffers(),
+            Err(GpuMeshError::TriangleNormalUnavailable { triangle: 0 })
+        );
+
+        let soup = BooleanMesh {
+            vertices: positions
+                .into_iter()
+                .map(|point| OutputVertex {
+                    x: point.x,
+                    y: point.y,
+                    z: point.z,
+                })
+                .collect(),
+            triangles: vec![[0, 1, 2]],
+            sources: Vec::new(),
+        };
+        assert_eq!(
+            soup.to_exact_gpu_mesh_buffers(),
+            Err(GpuMeshError::TriangleNormalUnavailable { triangle: 0 })
         );
     }
 
