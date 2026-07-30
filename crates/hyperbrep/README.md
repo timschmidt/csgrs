@@ -103,7 +103,8 @@ The clean-break implementation currently provides:
   line/cone, plane/sphere, and sphere/sphere intersections, plus certified
   transverse plane/cone/torus and
   perpendicular/oblique/axial-parallel plane/cylinder cuts,
-  parallel-cylinder intersections, and coaxial sphere/cylinder intersections,
+  parallel-cylinder intersections, and coaxial sphere/cylinder intersections
+  with retained two-surface pcurves when their authored frames align,
   with retained multiplicity, overlaps, coincidence, tangent points, lines,
   circles, and exact ellipse curves;
 - topology-safe exact family-preserving transforms, including rigid
@@ -171,6 +172,10 @@ The clean-break implementation currently provides:
   loop, cylinder parameter rectangles tile exactly across axial subdivision,
   and axial slab clipping survives stitching, rigid orientation, reflection,
   operand reversal, and byte-identical persistence with exact `πr²h` volume;
+- authored-frame-aligned coaxial sphere/cylinder cuts retain both exact
+  latitude pcurves, clip each circle across the four bounded cylinder patches,
+  coalesce those fragments back into one periodic sphere trace, and partition
+  both complete carriers with volume-preserving, byte-identical replay;
 - transverse plane/cone cuts use the same two-pcurve latitude abstraction,
   with cone slant parameter retained exactly. Frustum side descendants prove
   the same no-gap/no-overlap parameter grid, so slab clips remain native conic

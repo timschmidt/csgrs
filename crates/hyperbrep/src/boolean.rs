@@ -712,8 +712,11 @@ fn partition_graph_faces(
         let surface = staged
             .surface(staged.face(face).expect("validated graph face").surface())
             .expect("validated graph face surface");
-        if surface.kind() == crate::SurfaceKind::Plane {
-            curves = coalesce_planar_closed_circle_traces(surface, curves)?;
+        if matches!(
+            surface.kind(),
+            crate::SurfaceKind::Plane | crate::SurfaceKind::Sphere
+        ) {
+            curves = coalesce_closed_circle_traces(surface, curves)?;
         }
         let (next, partition) = staged.split_face_by_surface_curves(face, &curves, operand)?;
         staged = next;
@@ -723,7 +726,7 @@ fn partition_graph_faces(
     Ok((staged, partitions))
 }
 
-fn coalesce_planar_closed_circle_traces(
+fn coalesce_closed_circle_traces(
     surface: &Surface,
     curves: Vec<SurfaceIntersectionCurve>,
 ) -> Result<Vec<SurfaceIntersectionCurve>, BooleanError> {
@@ -762,7 +765,7 @@ fn coalesce_planar_closed_circle_traces(
     }
     let mut result = Vec::new();
     for group in groups {
-        result.extend(coalesce_planar_circle_group(surface, group)?);
+        result.extend(coalesce_circle_group(surface, group)?);
     }
     Ok(result)
 }
@@ -783,7 +786,7 @@ fn circle_supports_equal(first: &Curve3, second: &Curve3) -> Result<bool, Geomet
         && exact_order(&first.y_radius, &second.y_radius)? == Ordering::Equal)
 }
 
-fn coalesce_planar_circle_group(
+fn coalesce_circle_group(
     surface: &Surface,
     normalized: Vec<SurfaceIntersectionCurve>,
 ) -> Result<Vec<SurfaceIntersectionCurve>, BooleanError> {
@@ -829,7 +832,46 @@ fn coalesce_planar_circle_group(
         start,
         end,
     )?;
-    Ok(vec![SurfaceIntersectionCurve::on_plane(closed, surface)?])
+    if surface.kind() == crate::SurfaceKind::Plane {
+        return Ok(vec![SurfaceIntersectionCurve::on_plane(closed, surface)?]);
+    }
+    let Some((first_constant, second_constant)) = iso_v_constants(&normalized)? else {
+        return Ok(normalized);
+    };
+    Ok(vec![SurfaceIntersectionCurve::from_iso_v_pcurves(
+        closed,
+        first_constant,
+        second_constant,
+    )])
+}
+
+fn iso_v_constants(
+    curves: &[SurfaceIntersectionCurve],
+) -> Result<Option<(Real, Real)>, GeometryError> {
+    let mut constants = None;
+    for curve in curves {
+        let start = curve.curve().domain().start();
+        let end = curve.curve().domain().end();
+        let first_start = curve.first_pcurve().point_at(start)?;
+        let first_end = curve.first_pcurve().point_at(end)?;
+        let second_start = curve.second_pcurve().point_at(start)?;
+        let second_end = curve.second_pcurve().point_at(end)?;
+        if exact_order(&first_start.y, &first_end.y)? != Ordering::Equal
+            || exact_order(&second_start.y, &second_end.y)? != Ordering::Equal
+        {
+            return Ok(None);
+        }
+        if let Some((first, second)) = &constants {
+            if exact_order(&first_start.y, first)? != Ordering::Equal
+                || exact_order(&second_start.y, second)? != Ordering::Equal
+            {
+                return Ok(None);
+            }
+        } else {
+            constants = Some((first_start.y.clone(), second_start.y.clone()));
+        }
+    }
+    Ok(constants)
 }
 
 fn add_opposite_planar_edge_supports(
@@ -4788,6 +4830,110 @@ mod tests {
             graph.intersections()[0].trim(),
             FacePairTrim::CompleteCarrier
         ));
+    }
+
+    #[test]
+    fn coaxial_sphere_cylinder_graph_partitions_both_exact_carriers() {
+        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (cylinder, cylinder_solid) =
+            crate::builder::cylinder(Real::from(2), Real::from(6)).unwrap();
+        let cylinder = cylinder
+            .transformed(&Matrix4::affine_translation([
+                Real::zero(),
+                Real::zero(),
+                -Real::from(3),
+            ]))
+            .unwrap();
+        let graph = intersection_graph(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap();
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match pair.trim() {
+                FacePairTrim::SurfaceCurveFragments(fragments) => Some(fragments),
+                _ => None,
+            })
+            .flatten()
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 8);
+        assert!(retained.iter().all(|trace| {
+            trace.first_pcurve().materialize().is_ok()
+                && trace.second_pcurve().materialize().is_ok()
+        }));
+
+        let (partitioned_sphere, sphere_partitions) = graph.partition_first_faces().unwrap();
+        assert_eq!(sphere_partitions.len(), 1);
+        assert_eq!(sphere_partitions[0].traces.len(), 2);
+        assert_eq!(
+            compare_reals(
+                &partitioned_sphere.solid_volume(sphere_solid).unwrap(),
+                &sphere.solid_volume(sphere_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let sphere_json = partitioned_sphere.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&sphere_json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            sphere_json
+        );
+
+        let (partitioned_cylinder, cylinder_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(cylinder_partitions.len(), 4);
+        assert!(
+            cylinder_partitions
+                .iter()
+                .all(|partition| partition.traces.len() == 2)
+        );
+        assert_eq!(
+            compare_reals(
+                &partitioned_cylinder.solid_volume(cylinder_solid).unwrap(),
+                &cylinder.solid_volume(cylinder_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let cylinder_json = partitioned_cylinder.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&cylinder_json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            cylinder_json
+        );
+
+        let reversed =
+            intersection_graph(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap();
+        let (_, reversed_sphere_partitions) = reversed.partition_second_faces().unwrap();
+        assert_eq!(reversed_sphere_partitions.len(), 1);
+        assert_eq!(reversed_sphere_partitions[0].traces.len(), 2);
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_sphere = sphere.transformed(&cyclic).unwrap();
+        let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
+        let oriented = intersection_graph(
+            &oriented_sphere,
+            sphere_solid,
+            &oriented_cylinder,
+            cylinder_solid,
+        )
+        .unwrap();
+        let (_, oriented_sphere_partitions) = oriented.partition_first_faces().unwrap();
+        assert_eq!(oriented_sphere_partitions.len(), 1);
+        assert_eq!(oriented_sphere_partitions[0].traces.len(), 2);
     }
 
     #[test]

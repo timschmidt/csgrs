@@ -1312,6 +1312,19 @@ impl SurfaceIntersectionCurve {
         ))
     }
 
+    pub(crate) fn from_iso_v_pcurves(
+        curve: Curve3,
+        first_constant: Real,
+        second_constant: Real,
+    ) -> Self {
+        let domain = curve.domain().clone();
+        Self::new(
+            curve,
+            SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), first_constant),
+            SurfaceIntersectionPcurve::tensor_iso_v(domain, second_constant),
+        )
+    }
+
     fn swapped(mut self) -> Self {
         std::mem::swap(&mut self.first_pcurve, &mut self.second_pcurve);
         self
@@ -2968,9 +2981,11 @@ impl Surface {
             (SurfaceGeometry::Cylinder(first), SurfaceGeometry::Cylinder(second)) => {
                 intersect_parallel_cylinders(first, second)
             }
-            (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Cylinder(cylinder))
-            | (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Sphere(sphere)) => {
+            (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Cylinder(cylinder)) => {
                 intersect_coaxial_sphere_cylinder(sphere, cylinder)
+            }
+            (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Sphere(sphere)) => {
+                intersect_coaxial_sphere_cylinder(sphere, cylinder).map(swapped_curve_intersection)
             }
             (SurfaceGeometry::Sphere(first), SurfaceGeometry::Sphere(second)) => {
                 intersect_spheres(first, second)
@@ -4813,7 +4828,7 @@ fn intersect_coaxial_sphere_cylinder(
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
     let center_offset = &sphere.center - &cylinder.origin;
     let axial_offset = center_offset.dot(&cylinder.frame.z);
-    let radial_offset = center_offset - cylinder.frame.z.clone() * axial_offset;
+    let radial_offset = center_offset - cylinder.frame.z.clone() * &axial_offset;
     if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
         != Ordering::Equal
     {
@@ -4821,23 +4836,73 @@ fn intersect_coaxial_sphere_cylinder(
     }
     let sphere_radius_squared = &sphere.radius * &sphere.radius;
     let cylinder_radius_squared = &cylinder.radius * &cylinder.radius;
+    let frames_match = || -> GeometryResult<bool> {
+        [&sphere.frame.x, &sphere.frame.y, &sphere.frame.z]
+            .into_iter()
+            .zip([&cylinder.frame.x, &cylinder.frame.y, &cylinder.frame.z])
+            .try_fold(true, |matches, (sphere_axis, cylinder_axis)| {
+                Ok::<_, GeometryError>(
+                    matches
+                        && decided_order(compare_reals(
+                            &(sphere_axis - cylinder_axis).norm_squared(),
+                            &Real::zero(),
+                        ))? == Ordering::Equal,
+                )
+            })
+    };
+    let retained_circle = |height: Real| -> GeometryResult<SurfaceIntersectionCurve> {
+        let center = sphere.center.clone() + cylinder.frame.z.clone() * &height;
+        let curve = Curve3::circle_arc(
+            center,
+            sphere.frame.x.clone(),
+            sphere.frame.y.clone(),
+            cylinder.radius.clone(),
+            Real::zero(),
+            Real::tau(),
+        )?;
+        let latitude = (height.clone() / &sphere.radius)
+            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .asin()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let cylinder_height = &axial_offset + height;
+        let domain = curve.domain().clone();
+        Ok(SurfaceIntersectionCurve::new(
+            curve,
+            SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), latitude),
+            SurfaceIntersectionPcurve::tensor_iso_v(domain, cylinder_height),
+        ))
+    };
     match decided_order(compare_reals(
         &sphere_radius_squared,
         &cylinder_radius_squared,
     ))? {
         Ordering::Less => Ok(SurfaceSurfaceIntersection::None),
-        Ordering::Equal => Ok(SurfaceSurfaceIntersection::Circle(Curve3::circle_arc(
-            sphere.center.clone(),
-            cylinder.frame.x.clone(),
-            cylinder.frame.y.clone(),
-            cylinder.radius.clone(),
-            Real::zero(),
-            Real::from(2) * Real::pi(),
-        )?)),
+        Ordering::Equal => {
+            if frames_match()? {
+                Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+                    retained_circle(Real::zero())?,
+                )))
+            } else {
+                Ok(SurfaceSurfaceIntersection::Circle(Curve3::circle_arc(
+                    sphere.center.clone(),
+                    cylinder.frame.x.clone(),
+                    cylinder.frame.y.clone(),
+                    cylinder.radius.clone(),
+                    Real::zero(),
+                    Real::tau(),
+                )?))
+            }
+        }
         Ordering::Greater => {
             let axial_distance = (sphere_radius_squared - cylinder_radius_squared)
                 .sqrt()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
+            if frames_match()? {
+                return Ok(SurfaceSurfaceIntersection::Curves(vec![
+                    retained_circle(axial_distance.clone())?,
+                    retained_circle(-axial_distance)?,
+                ]));
+            }
             Ok(SurfaceSurfaceIntersection::Circles(vec![
                 Curve3::circle_arc(
                     sphere.center.clone() + cylinder.frame.z.clone() * &axial_distance,
@@ -9050,20 +9115,64 @@ mod tests {
             r(3),
         )
         .unwrap();
-        let SurfaceSurfaceIntersection::Circles(circles) =
+        let SurfaceSurfaceIntersection::Curves(circles) =
             sphere.intersect_surface(&cylinder).unwrap()
         else {
-            panic!("larger coaxial sphere must cut the cylinder in two circles");
+            panic!("aligned coaxial carriers must retain two circles with exact pcurves");
         };
         let sqrt_five = r(5).sqrt().unwrap();
         assert_points_equal(
-            &circles[0].start().unwrap(),
+            &circles[0].curve().start().unwrap(),
             &Point3::new(r(2), Real::zero(), sqrt_five.clone()),
         );
         assert_points_equal(
-            &circles[1].start().unwrap(),
+            &circles[1].curve().start().unwrap(),
             &Point3::new(r(2), Real::zero(), -sqrt_five),
         );
+        for circle in &circles {
+            let parameter = Real::pi();
+            let spatial = circle.curve().point_at(&parameter).unwrap();
+            let sphere_point = sphere
+                .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                .unwrap();
+            let cylinder_point = cylinder
+                .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                .unwrap();
+            assert_points_equal(&sphere_point, &spatial);
+            assert_points_equal(&cylinder_point, &spatial);
+            assert!(circle.first_pcurve().materialize().is_ok());
+            assert!(circle.second_pcurve().materialize().is_ok());
+        }
+        let SurfaceSurfaceIntersection::Curves(swapped) =
+            cylinder.intersect_surface(&sphere).unwrap()
+        else {
+            panic!("operand reversal must retain the same two exact circles");
+        };
+        let parameter = Real::pi();
+        assert_points_equal(
+            &cylinder
+                .point_at(&swapped[0].first_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &swapped[0].curve().point_at(&parameter).unwrap(),
+        );
+        assert_points_equal(
+            &sphere
+                .point_at(&swapped[0].second_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &swapped[0].curve().point_at(&parameter).unwrap(),
+        );
+        let rotated_parameters = Surface::sphere(
+            Point3::origin(),
+            Vector3::y(),
+            -Vector3::x(),
+            Vector3::z(),
+            r(3),
+        )
+        .unwrap();
+        assert!(matches!(
+            cylinder.intersect_surface(&rotated_parameters).unwrap(),
+            SurfaceSurfaceIntersection::Circles(_)
+        ));
 
         let tangent = Surface::sphere(
             Point3::origin(),
@@ -9073,12 +9182,14 @@ mod tests {
             r(2),
         )
         .unwrap();
-        let SurfaceSurfaceIntersection::Circle(circle) =
+        let SurfaceSurfaceIntersection::Curve(circle) =
             cylinder.intersect_surface(&tangent).unwrap()
         else {
-            panic!("equal radius coaxial sphere must retain one tangent circle");
+            panic!("equal-radius aligned carriers must retain one tangent circle");
         };
-        assert_points_equal(&circle.start().unwrap(), &p(2, 0, 0));
+        assert_points_equal(&circle.curve().start().unwrap(), &p(2, 0, 0));
+        assert!(circle.first_pcurve().materialize().is_ok());
+        assert!(circle.second_pcurve().materialize().is_ok());
         let contained = Surface::sphere(
             Point3::origin(),
             Vector3::x(),

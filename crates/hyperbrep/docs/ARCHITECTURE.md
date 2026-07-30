@@ -257,6 +257,14 @@ spatial fragment parameter. Topology transfer therefore needs neither inverse
 fitting nor an assumed identity parameterization.
 Retained pcurves may run in either source direction; materialization preserves
 that affine direction exactly for lines, rational Béziers, and NURBS curves.
+For an authored-frame-aligned coaxial sphere/cylinder pair, each intersection
+circle instead has two constant-`v` analytic pcurves. Face-pair clipping
+restricts the cylinder image to its four native parameter rectangles. Before
+the boundaryless sphere is edited, exact common circle support and adjacent
+angular domains coalesce the patch fragments back into one periodic trace;
+the coalescer reconstructs both constant parameters rather than substituting a
+plane projection. Operand reversal and a common rigid transform preserve the
+same two authoritative images.
 Closed face-local curves are split into two canonical edge records so the new
 interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented

@@ -87,7 +87,7 @@ strict-convexity certificate.
 | Plane / torus | Transverse none, tangent circle, or two circles |
 | Plane / extrusion surface | Transverse native line/rational Bézier/NURBS curve; parallel none or lifted profile-contact lines |
 | Parallel cylinder / cylinder | None, coincident, tangent line, or two axial lines |
-| Coaxial sphere / cylinder | None, tangent circle, or two circles |
+| Coaxial sphere / cylinder | None, tangent circle, or two circles; authored-frame-aligned circles retain both exact pcurves |
 | Plane / linear-extrusion rational Bézier tensor patch | None or one native rational Bézier iso-curve |
 | Plane / degree-1-v linear-extrusion NURBS tensor patch | None or one native NURBS iso-curve |
 | Plane / one-axis-linear rational Bézier translation tensor | None or one complete native non-isoparametric rational Bézier curve |
@@ -113,6 +113,11 @@ their trim evidence remain explicit. Native finite results use
 `Curve3`, both exact pcurves, and one shared public parameter domain. Exact
 affine composition reconciles unit-domain rational Bézier fragments with
 native-domain NURBS fragments.
+Authored-frame-aligned coaxial sphere/cylinder circles use constant-latitude
+and constant-height pcurves directly. The graph clips them across the four
+native cylinder patches and exactly coalesces adjacent common-support
+fragments before partitioning the boundaryless sphere; both partitioned
+operands retain certified volume and byte-identical persistence.
 
 For a tensor iso-section, the two controls on the linear axis must have exactly
 equal weights and one exact common control translation; every profile control
