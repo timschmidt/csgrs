@@ -30,11 +30,11 @@ pub use error::{GeometryError, GeometryResult};
 pub use geometry::{
     Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceIntersection,
     CurveSurfacePoint, IntersectionMultiplicity, MaterializedSurfacePcurve, ParameterDomain,
-    Pcurve, Surface, SurfaceBounds, SurfaceDomain, SurfaceIntersectionCurve,
-    SurfaceIntersectionLine, SurfaceIntersectionOperand, SurfaceIntersectionParameterRay,
-    SurfaceIntersectionPcurve, SurfaceIntersectionRay, SurfaceIsoAxis, SurfaceKind,
-    SurfaceParameterDomain, SurfacePartials, SurfacePcurveCorrespondence,
-    SurfaceSurfaceIntersection,
+    Pcurve, Surface, SurfaceBounds, SurfaceDomain, SurfaceIntersectionComponents,
+    SurfaceIntersectionCurve, SurfaceIntersectionLine, SurfaceIntersectionOperand,
+    SurfaceIntersectionParameterRay, SurfaceIntersectionPcurve, SurfaceIntersectionRay,
+    SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePartials,
+    SurfacePcurveCorrespondence, SurfaceSurfaceIntersection,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use model::{

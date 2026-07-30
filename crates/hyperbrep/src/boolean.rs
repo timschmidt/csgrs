@@ -130,6 +130,13 @@ pub enum FacePairTrim {
     /// Finite native surface-curve fragments retain their exact spatial curve
     /// and the matching pcurve on each face carrier.
     SurfaceCurveFragments(Vec<SurfaceIntersectionCurve>),
+    /// Exact mixed-dimensional components survive both face trims.
+    Components {
+        /// Isolated exact point contacts.
+        point_contacts: Vec<Point3>,
+        /// Finite exact curve fragments with pcurves on both face carriers.
+        surface_curve_fragments: Vec<SurfaceIntersectionCurve>,
+    },
     /// One exact isolated point lies on both face trims.
     PointContact(Point3),
     /// The complete carrier relation misses at least one face trim.
@@ -540,6 +547,18 @@ fn partition_graph_planar_faces(
                     push_unique_planar_trace(traces.entry(face).or_default(), fragment)?;
                 }
             }
+            FacePairTrim::Components {
+                surface_curve_fragments,
+                ..
+            } => {
+                let curves = surface_curve_fragments
+                    .iter()
+                    .map(|fragment| fragment.curve().clone())
+                    .collect::<Vec<_>>();
+                for fragment in planar_line_support_split_traces(model, face, &curves)? {
+                    push_unique_planar_trace(traces.entry(face).or_default(), fragment)?;
+                }
+            }
             FacePairTrim::CoincidentPlanar {
                 first_traces,
                 second_traces,
@@ -626,6 +645,29 @@ fn partition_graph_faces(
                         .entry(face)
                         .or_default()
                         .extend(fragments.iter().cloned());
+                }
+            }
+            FacePairTrim::Components {
+                surface_curve_fragments,
+                ..
+            } => {
+                if surface.kind() == crate::SurfaceKind::Plane
+                    && surface_curve_fragments
+                        .iter()
+                        .all(|fragment| fragment.curve().kind() == crate::Curve3Kind::Line)
+                {
+                    let curves = surface_curve_fragments
+                        .iter()
+                        .map(|fragment| fragment.curve().clone())
+                        .collect::<Vec<_>>();
+                    for fragment in planar_line_support_split_traces(model, face, &curves)? {
+                        push_unique_planar_trace(planar_traces.entry(face).or_default(), fragment)?;
+                    }
+                } else {
+                    surface_traces
+                        .entry(face)
+                        .or_default()
+                        .extend(surface_curve_fragments.iter().cloned());
                 }
             }
             FacePairTrim::CurveFragments(fragments) => {
@@ -2216,6 +2258,12 @@ pub fn intersection_graph(
                             FacePairTrim::SurfaceCurveFragments(fragments) => {
                                 trimmed_curve_fragments += fragments.len();
                             }
+                            FacePairTrim::Components {
+                                surface_curve_fragments,
+                                ..
+                            } => {
+                                trimmed_curve_fragments += surface_curve_fragments.len();
+                            }
                             FacePairTrim::Unresolved(_) => unresolved_trim_pairs += 1,
                             FacePairTrim::NotAvailable
                             | FacePairTrim::CompleteCarrier
@@ -2430,6 +2478,15 @@ fn trim_face_pair_intersection(
             FacePairTrim::SurfaceCurveFragments(retained)
         });
     }
+    if let SurfaceSurfaceIntersection::Components(components) = intersection {
+        return trim_intersection_components(
+            first_model,
+            first_face,
+            second_model,
+            second_face,
+            components,
+        );
+    }
     if let SurfaceSurfaceIntersection::Rays(rays) = intersection {
         return trim_supported_surface_rays(
             first_model,
@@ -2505,6 +2562,69 @@ fn trim_face_pair_intersection(
     } else {
         FacePairTrim::CurveFragments(common_fragments)
     })
+}
+
+fn trim_intersection_components(
+    first_model: &Model,
+    first_face: FaceId,
+    second_model: &Model,
+    second_face: FaceId,
+    components: &crate::SurfaceIntersectionComponents,
+) -> Result<FacePairTrim, GeometryError> {
+    if !components.curves().is_empty() {
+        return Ok(FacePairTrim::NotAvailable);
+    }
+
+    let mut point_contacts = Vec::new();
+    for point in components.points() {
+        match trim_point_contact(first_model, first_face, second_model, second_face, point)? {
+            FacePairTrim::PointContact(point) => point_contacts.push(point),
+            FacePairTrim::NoContact => {}
+            FacePairTrim::Unresolved(reason) => return Ok(FacePairTrim::Unresolved(reason)),
+            FacePairTrim::NotAvailable => return Ok(FacePairTrim::NotAvailable),
+            _ => return Ok(FacePairTrim::NotAvailable),
+        }
+    }
+
+    let mut surface_curve_fragments = Vec::new();
+    for curve in components.surface_curves() {
+        match trim_retained_surface_curve(
+            first_model,
+            first_face,
+            second_model,
+            second_face,
+            curve,
+        )? {
+            FacePairTrim::SurfaceCurveFragments(fragments) => {
+                surface_curve_fragments.extend(fragments);
+            }
+            FacePairTrim::NoCurveInterior | FacePairTrim::NoContact => {}
+            FacePairTrim::Unresolved(reason) => return Ok(FacePairTrim::Unresolved(reason)),
+            FacePairTrim::NotAvailable => return Ok(FacePairTrim::NotAvailable),
+            _ => return Ok(FacePairTrim::NotAvailable),
+        }
+    }
+
+    Ok(
+        match (
+            point_contacts.is_empty(),
+            surface_curve_fragments.is_empty(),
+        ) {
+            (false, false) => FacePairTrim::Components {
+                point_contacts,
+                surface_curve_fragments,
+            },
+            (false, true) if point_contacts.len() == 1 => {
+                FacePairTrim::PointContact(point_contacts.pop().expect("one point contact"))
+            }
+            (false, true) => FacePairTrim::Components {
+                point_contacts,
+                surface_curve_fragments,
+            },
+            (true, false) => FacePairTrim::SurfaceCurveFragments(surface_curve_fragments),
+            (true, true) => FacePairTrim::NoContact,
+        },
+    )
 }
 
 fn trim_retained_surface_curve(
@@ -7101,6 +7221,7 @@ mod tests {
                 FacePairTrim::NotAvailable
                 | FacePairTrim::CompleteCarrier
                 | FacePairTrim::SurfaceCurveFragments(_)
+                | FacePairTrim::Components { .. }
                 | FacePairTrim::CoincidentPlanar { .. }
                 | FacePairTrim::PointContact(_)
                 | FacePairTrim::NoContact
@@ -9913,6 +10034,85 @@ mod tests {
             assert!(fragment.first_pcurve().materialize().is_ok());
             assert!(fragment.second_pcurve().materialize().is_ok());
         }
+    }
+
+    #[test]
+    fn coaxial_sphere_cone_graph_clips_mixed_carrier_components() {
+        let (frustum, frustum_solid) =
+            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let sphere = sphere
+            .transformed(&Matrix4::affine_orthonormal(
+                [
+                    [Real::one(), Real::zero(), Real::zero()],
+                    [Real::zero(), -Real::one(), Real::zero()],
+                    [Real::zero(), Real::zero(), -Real::one()],
+                ],
+                [Real::zero(), Real::zero(), Real::one()],
+            ))
+            .unwrap();
+        let graph = intersection_graph(&sphere, sphere_solid, &frustum, frustum_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match (pair.relation(), pair.trim()) {
+                (
+                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Components(components)),
+                    FacePairTrim::SurfaceCurveFragments(fragments),
+                ) => Some((components, fragments)),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 4);
+        for (components, fragments) in retained {
+            assert_eq!(components.points().len(), 1);
+            assert_eq!(components.surface_curves().len(), 1);
+            assert!(components.curves().is_empty());
+            assert_eq!(fragments.len(), 1);
+            assert!(fragments[0].first_pcurve().materialize().is_ok());
+            assert!(fragments[0].second_pcurve().materialize().is_ok());
+        }
+    }
+
+    #[test]
+    fn mixed_component_trim_retains_points_and_curves_together() {
+        let (first, _) = crate::builder::sphere(Real::from(2)).unwrap();
+        let second = first.clone();
+        let first_face = first.faces().next().unwrap().0;
+        let second_face = second.faces().next().unwrap().0;
+        let circle = Curve3::circle_arc(
+            Point3::origin(),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+            Real::from(2),
+            Real::zero(),
+            Real::tau(),
+        )
+        .unwrap();
+        let section =
+            SurfaceIntersectionCurve::from_iso_v_pcurves(circle, Real::zero(), Real::zero());
+        let components =
+            crate::SurfaceIntersectionComponents::new(vec![p(0, 0, 2)], Vec::new(), vec![section]);
+
+        let FacePairTrim::Components {
+            point_contacts,
+            surface_curve_fragments,
+        } = trim_intersection_components(&first, first_face, &second, second_face, &components)
+            .unwrap()
+        else {
+            panic!("both exact component dimensions must survive whole-face clipping");
+        };
+        assert_eq!(point_contacts.len(), 1);
+        assert_eq!(surface_curve_fragments.len(), 1);
+        assert_eq!(
+            compare_reals(
+                surface_curve_fragments[0].curve().domain().end(),
+                &Real::tau(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]

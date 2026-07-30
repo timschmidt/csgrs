@@ -1171,6 +1171,65 @@ pub enum SurfaceSurfaceIntersection {
     /// Two finite carriers meet in multiple disjoint exact curves with
     /// retained parameter images on both surfaces.
     Curves(Vec<SurfaceIntersectionCurve>),
+    /// The surfaces meet in exact components of more than one dimension.
+    Components(Box<SurfaceIntersectionComponents>),
+}
+
+/// Exact mixed-dimensional components of one surface/surface intersection.
+///
+/// Spatial curves appear in `curves` when an exact parameter image on both
+/// authored carriers is unavailable. Curves in `surface_curves` retain both
+/// exact pcurves. At least two of the three collections are nonempty in
+/// relations produced by [`Surface::intersect_surface`].
+#[derive(Clone, Debug)]
+pub struct SurfaceIntersectionComponents {
+    points: Vec<Point3>,
+    curves: Vec<Curve3>,
+    surface_curves: Vec<SurfaceIntersectionCurve>,
+}
+
+impl SurfaceIntersectionComponents {
+    pub(crate) fn new(
+        points: Vec<Point3>,
+        curves: Vec<Curve3>,
+        surface_curves: Vec<SurfaceIntersectionCurve>,
+    ) -> Self {
+        debug_assert!(
+            usize::from(!points.is_empty())
+                + usize::from(!curves.is_empty())
+                + usize::from(!surface_curves.is_empty())
+                >= 2
+        );
+        Self {
+            points,
+            curves,
+            surface_curves,
+        }
+    }
+
+    /// Returns the isolated exact point components.
+    pub fn points(&self) -> &[Point3] {
+        &self.points
+    }
+
+    /// Returns exact spatial curve components without retained pcurves.
+    pub fn curves(&self) -> &[Curve3] {
+        &self.curves
+    }
+
+    /// Returns exact curve components with pcurves on both surfaces.
+    pub fn surface_curves(&self) -> &[SurfaceIntersectionCurve] {
+        &self.surface_curves
+    }
+
+    fn swapped(mut self) -> Self {
+        self.surface_curves = self
+            .surface_curves
+            .into_iter()
+            .map(SurfaceIntersectionCurve::swapped)
+            .collect();
+        self
+    }
 }
 
 /// One exact finite surface/surface intersection curve and its two pcurves.
@@ -3643,6 +3702,9 @@ fn swapped_curve_intersection(
                 .map(SurfaceIntersectionRay::swapped)
                 .collect(),
         ),
+        SurfaceSurfaceIntersection::Components(components) => {
+            SurfaceSurfaceIntersection::Components(Box::new((*components).swapped()))
+        }
         other => other,
     }
 }
@@ -5254,10 +5316,7 @@ fn intersect_coaxial_sphere_cone(
             Ordering::Greater => slant_parameters.push(parameter),
         }
     }
-    if has_apex && !slant_parameters.is_empty() {
-        return Err(GeometryError::UnsupportedIntersection);
-    }
-    if has_apex {
+    if has_apex && slant_parameters.is_empty() {
         return Ok(SurfaceSurfaceIntersection::Point(Box::new(
             cone.apex.clone(),
         )));
@@ -5296,6 +5355,11 @@ fn intersect_coaxial_sphere_cone(
         } else {
             circles.push(curve);
         }
+    }
+    if has_apex {
+        return Ok(SurfaceSurfaceIntersection::Components(Box::new(
+            SurfaceIntersectionComponents::new(vec![cone.apex.clone()], circles, retained),
+        )));
     }
     if frames_match {
         Ok(match retained.len() {
@@ -10219,9 +10283,57 @@ mod tests {
 
         let mixed_dimension =
             Surface::sphere(p(0, 0, 5), Vector3::x(), Vector3::y(), Vector3::z(), r(5)).unwrap();
-        assert_eq!(
-            mixed_dimension.intersect_surface(&cone).unwrap_err(),
-            GeometryError::UnsupportedIntersection
+        let SurfaceSurfaceIntersection::Components(components) =
+            mixed_dimension.intersect_surface(&cone).unwrap()
+        else {
+            panic!("apex-plus-circle contact must retain both exact dimensions");
+        };
+        assert_eq!(components.points().len(), 1);
+        assert_points_equal(&components.points()[0], &Point3::origin());
+        assert!(components.curves().is_empty());
+        assert_eq!(components.surface_curves().len(), 1);
+        let mixed_circle = &components.surface_curves()[0];
+        assert_points_equal(
+            &mixed_circle.curve().start().unwrap(),
+            &Point3::new(q(24, 5), Real::zero(), q(32, 5)),
+        );
+        for parameter in [Real::zero(), Real::pi()] {
+            let spatial = mixed_circle.curve().point_at(&parameter).unwrap();
+            assert_points_equal(
+                &mixed_dimension
+                    .point_at(&mixed_circle.first_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+            assert_points_equal(
+                &cone
+                    .point_at(&mixed_circle.second_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+        }
+        let SurfaceSurfaceIntersection::Components(swapped) =
+            cone.intersect_surface(&mixed_dimension).unwrap()
+        else {
+            panic!("operand reversal must retain both exact dimensions");
+        };
+        assert_eq!(swapped.points().len(), 1);
+        assert!(swapped.curves().is_empty());
+        assert_eq!(swapped.surface_curves().len(), 1);
+        let swapped_circle = &swapped.surface_curves()[0];
+        let parameter = q(1, 3);
+        let spatial = swapped_circle.curve().point_at(&parameter).unwrap();
+        assert_points_equal(
+            &cone
+                .point_at(&swapped_circle.first_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
+        assert_points_equal(
+            &mixed_dimension
+                .point_at(&swapped_circle.second_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
         );
         let off_axis =
             Surface::sphere(p(1, 0, 0), Vector3::x(), Vector3::y(), Vector3::z(), r(2)).unwrap();
@@ -10230,18 +10342,21 @@ mod tests {
             GeometryError::UnsupportedIntersection
         );
 
-        let rotated_parameters = Surface::sphere(
-            Point3::origin(),
-            Vector3::y(),
-            -Vector3::x(),
-            Vector3::z(),
-            r(2),
-        )
-        .unwrap();
-        assert!(matches!(
-            cone.intersect_surface(&rotated_parameters).unwrap(),
-            SurfaceSurfaceIntersection::Circle(_)
-        ));
+        let rotated_parameters =
+            Surface::sphere(p(0, 0, 5), Vector3::y(), -Vector3::x(), Vector3::z(), r(5)).unwrap();
+        let SurfaceSurfaceIntersection::Components(rotated) =
+            cone.intersect_surface(&rotated_parameters).unwrap()
+        else {
+            panic!("rotated parameters must retain the exact spatial components");
+        };
+        assert_eq!(rotated.points().len(), 1);
+        assert_eq!(rotated.curves().len(), 1);
+        assert!(rotated.surface_curves().is_empty());
+        assert_points_equal(&rotated.points()[0], &Point3::origin());
+        assert_points_equal(
+            &rotated.curves()[0].start().unwrap(),
+            &Point3::new(q(24, 5), Real::zero(), q(32, 5)),
+        );
     }
 
     #[test]

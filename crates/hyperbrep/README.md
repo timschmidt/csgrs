@@ -116,10 +116,11 @@ The clean-break implementation currently provides:
   authored-axis transverse plane/revolution profile sections,
   transverse plane/cone/torus and
   perpendicular/oblique/axial-parallel plane/cylinder cuts,
-  parallel-cylinder intersections, and coaxial sphere/cylinder intersections
-  with retained two-surface pcurves when their authored frames align,
+  parallel-cylinder intersections, coaxial sphere/cylinder,
+  sphere/cone, and cylinder/cone intersections with retained two-surface
+  pcurves when their authored frames align,
   with retained multiplicity, overlaps, coincidence, tangent points, lines,
-  circles, and exact ellipse curves;
+  circles, exact ellipse curves, and typed mixed-dimensional component sets;
 - topology-safe exact family-preserving transforms, including rigid
   cylindrical/conical/toroidal/revolution translations and reflections,
   arbitrary affine line prisms, and rigidly reoriented curved prisms;
@@ -181,8 +182,10 @@ The clean-break implementation currently provides:
   rejection, exact analytic carrier relations, and explicit unsupported-pair
   evidence, plus exact two-face trim clipping for transverse planar carrier
   lines and exact rational-conic clipping against planar face regions, as the
-  common input to general intersection-driven splitting; retained line,
-  rational-Bézier, and NURBS fragments can be grouped by source face and
+  common input to general intersection-driven splitting; mixed point/curve
+  relations clip each dimension independently and retain combined exact trim
+  evidence when both survive. Retained line, rational-Bézier, and NURBS
+  fragments can be grouped by source face and
   applied through `partition_first_faces` or `partition_second_faces` as
   deterministic validated partitions on either operand. Unsupported transfer
   is a typed error and never silently skips a known exact trace;

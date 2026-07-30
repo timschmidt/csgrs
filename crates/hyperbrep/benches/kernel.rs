@@ -1283,6 +1283,10 @@ fn main() {
             .filter_map(|pair| match pair.trim() {
                 boolean::FacePairTrim::CurveFragments(fragments) => Some(fragments.len()),
                 boolean::FacePairTrim::SurfaceCurveFragments(fragments) => Some(fragments.len()),
+                boolean::FacePairTrim::Components {
+                    surface_curve_fragments,
+                    ..
+                } => Some(surface_curve_fragments.len()),
                 boolean::FacePairTrim::NotAvailable
                 | boolean::FacePairTrim::CompleteCarrier
                 | boolean::FacePairTrim::CoincidentPlanar { .. }
