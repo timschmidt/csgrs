@@ -27,7 +27,7 @@ fn pi(x: i32, y: i32) -> Point2 {
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 
 fn decided<T>(classification: Classification<T>) -> T {

@@ -120,7 +120,7 @@ pub(crate) fn evaluate_decomposition(
     decomposition: &CircularArcBezierDecomposition2,
     parameter: &Real,
 ) -> ExactCurveResult<Point2> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for span in &decomposition.spans {
         let lower = crate::classify::compare_reals(&span.parameter_start, parameter, &policy);
         let upper = crate::classify::compare_reals(parameter, &span.parameter_end, &policy);
@@ -161,7 +161,7 @@ pub(crate) fn evaluate_decomposition(
 }
 
 fn validate_radius(arc: &CircularArc2) -> ExactCurveResult<()> {
-    match crate::classify::is_zero(arc.radius_squared_ref(), &CurvePolicy::certified()) {
+    match crate::classify::is_zero(arc.radius_squared_ref(), &CurvePolicy::STRICT) {
         Some(false) => {}
         Some(true) => {
             return Err(arc_error(
@@ -182,7 +182,7 @@ fn validate_radius(arc: &CircularArc2) -> ExactCurveResult<()> {
     }
     let mismatch =
         arc.start().distance_squared(arc.center()) - arc.end().distance_squared(arc.center());
-    match crate::classify::is_zero(&mismatch, &CurvePolicy::certified()) {
+    match crate::classify::is_zero(&mismatch, &CurvePolicy::STRICT) {
         Some(true) => Ok(()),
         Some(false) => Err(arc_error(
             CurveOperation2::BezierDecomposition,
@@ -205,7 +205,7 @@ pub(crate) fn classify_sweep(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKin
 }
 
 fn classify_sweep_uncached(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKind> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let endpoint_distance = arc.start().distance_squared(arc.end());
     match crate::classify::is_zero(&endpoint_distance, &policy) {
         Some(true) => return Ok(ArcSweepKind::FullCircle),

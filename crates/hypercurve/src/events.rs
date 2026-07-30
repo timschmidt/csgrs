@@ -271,7 +271,7 @@ impl PartialEq for ContourIntersectionSet {
 impl ContourIntersectionSet {
     /// Constructs an event set from already-normalized events.
     pub fn new(events: Vec<ContourIntersection>) -> CurveResult<Self> {
-        validate_contour_intersection_events(&events, &CurvePolicy::certified())?;
+        validate_contour_intersection_events(&events, &CurvePolicy::STRICT)?;
         Ok(Self {
             storage: ContourIntersectionStorage::Materialized(events),
             certified_positive_line_crossings: None,
@@ -2155,7 +2155,7 @@ mod tests {
 
     #[test]
     fn exact_dyadic_line_sweep_matches_exact_box_sweep() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let first = rectangle(0, 0, 8, 6);
         let second = rectangle(3, -2, 11, 4);
         let first_box = decided_contour_aabb(&first, &policy);
@@ -2188,7 +2188,7 @@ mod tests {
 
     #[test]
     fn retained_line_candidates_match_unreserved_dense_sweep() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let first = star(64, (0.0, 0.0), (100.0, 72.0), 0.0);
         let second = star(64, (18.0, 7.0), (96.0, 68.0), std::f64::consts::PI / 64.0);
         let first_boxes = first.exact_dyadic_line_aabbs(&policy).unwrap();
@@ -2265,7 +2265,7 @@ mod tests {
 
     #[test]
     fn indexed_sweep_candidates_match_flat_decided_aabb_filter() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let first: Vec<_> = (0..128)
             .map(|index| Some(bbox(index * 3, -1, index * 3 + 2, 1)))
             .collect();
@@ -2314,7 +2314,7 @@ mod tests {
 
     #[test]
     fn dense_ranked_candidates_match_flat_decided_aabb_filter() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let first: Vec<_> = (0..64)
             .map(|index| Some(bbox(0, index * 3, 10, index * 3 + 2)))
             .collect();
@@ -2354,7 +2354,7 @@ mod tests {
 
     #[test]
     fn preview_min_x_sort_recovers_from_rounded_ties() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let one = Real::one();
         let epsilon = (Real::one() / Real::from(1_u128 << 100)).unwrap();
         let larger = &one + epsilon;

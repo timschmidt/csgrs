@@ -3350,7 +3350,7 @@ mod conversion_tests {
     fn polynomial(coefficients: &[i32]) -> BezierParameterPolynomial {
         match BezierParameterPolynomial::try_new_power_basis(
             coefficients.iter().copied().map(Real::from).collect(),
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         {
@@ -3362,7 +3362,7 @@ mod conversion_tests {
     }
 
     fn algebraic_parameter(polynomial: &BezierParameterPolynomial) -> BezierParameter2 {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let interval =
             match BezierParameterInterval::try_new(rational(1, 2), Real::one(), &policy).unwrap() {
                 Classification::Decided(interval) => interval,
@@ -3455,7 +3455,7 @@ mod conversion_tests {
 
     #[test]
     fn primitive_pseudo_remainder_is_positive_field_remainder_scale() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         for (dividend, divisor) in [
             (
                 vec![
@@ -3502,7 +3502,7 @@ mod conversion_tests {
 
     #[test]
     fn primitive_integer_sturm_matches_field_sequence_variations() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let polynomials = [
             vec![rational(-1, 3), rational(0, 1), rational(2, 5)],
             vec![
@@ -3560,7 +3560,7 @@ mod conversion_tests {
 
     #[test]
     fn carried_sturm_variations_match_partition_root_counts() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         // (2t² - 1)(3t² - 1) has two irrational roots in (1/2, 3/4).
         let defining = polynomial(&[1, 0, -5, 0, 6]);
         let sequence = match sturm_sequence(defining.coefficients(), &policy).unwrap() {
@@ -3621,7 +3621,7 @@ mod conversion_tests {
 
     #[test]
     fn bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let pi = Real::pi();
         let defining = BezierParameterPolynomial::try_new_power_basis(
             vec![
@@ -3716,11 +3716,11 @@ mod conversion_tests {
                     &nonrational_coefficients,
                     &intervals,
                     &control,
-                    &CurvePolicy::certified(),
+                    &CurvePolicy::STRICT,
                 ),
                 real_sign(
                     &quartic_bernstein_basis_value(&nonrational_coefficients, &control),
-                    &CurvePolicy::certified(),
+                    &CurvePolicy::STRICT,
                 ),
             );
         }
@@ -3728,7 +3728,7 @@ mod conversion_tests {
 
     #[test]
     fn simple_root_certificate_distinguishes_exact_multiplicity() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let root = BezierParameter2::Exact(rational(1, 2));
 
         assert_eq!(
@@ -3743,7 +3743,7 @@ mod conversion_tests {
 
     #[test]
     fn simple_root_certificate_distinguishes_algebraic_multiplicity() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let simple = polynomial(&[-1, 0, 2]);
         let simple_root = algebraic_parameter(&simple);
         let repeated = polynomial(&[1, 0, -4, 0, 4]);
@@ -3761,7 +3761,7 @@ mod conversion_tests {
 
     #[test]
     fn simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         // t(2t² - 1) has a represented endpoint root and one nonrational
         // interior root. Isolation deflates t before retaining the algebraic
         // carrier, without changing the interior root's multiplicity.
@@ -3796,7 +3796,7 @@ mod conversion_tests {
 
     #[test]
     fn retained_sturm_certificate_classifies_mixed_root_multiplicity() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         // (2t² - 1)²(8t² - 1) has one simple and one repeated root in
         // the unit interval, neither representable as a rational scalar.
         let polynomial = polynomial(&[-1, 0, 12, 0, -36, 0, 32]);
@@ -3832,7 +3832,7 @@ mod conversion_tests {
     #[cfg(feature = "predicates")]
     #[test]
     fn retained_refinement_matches_square_free_reference_and_shares_sturm_work() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         for (defining, expects_sturm_fallback) in [
             (polynomial(&[-1, 0, 2]), false),
             (polynomial(&[1, 0, -4, 0, 4]), true),
@@ -3891,7 +3891,7 @@ mod conversion_tests {
     #[cfg(feature = "predicates")]
     #[test]
     fn progressive_refinement_matches_one_pass_proof_budget() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let source = algebraic_parameter(&polynomial(&[-1, 0, 2]));
         let direct = source.clone().refined_isolating_interval(8, &policy);
         let mut progressive = BezierParameterRefinement2::new(&source, &policy);
@@ -3948,7 +3948,7 @@ mod conversion_tests {
 
     #[test]
     fn integer_polynomial_sign_matches_exact_rational_evaluation() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let wide = (BigInt::one() << 200_usize) + BigInt::from(123_456_789_u64);
         let polynomials = [
             vec![rational(-2, 1), rational(0, 1), rational(1, 1)],
@@ -4027,7 +4027,7 @@ mod conversion_tests {
                 .collect(),
         )
         .unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         assert_eq!(coefficients.len(), degree + 1);
         assert_eq!(

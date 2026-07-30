@@ -1450,7 +1450,7 @@ mod tests {
         let second = rectangle(2, -1, 6, 2);
         let first_view = first.as_view();
         let second_view = second.as_view();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let events = first_view.intersect_region(&second_view, &policy).unwrap();
         let fragments = match events
             .split_regions(&first_view, &second_view, &policy)

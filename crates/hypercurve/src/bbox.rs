@@ -362,7 +362,7 @@ impl Aabb2 {
     pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
         #[cfg(feature = "predicates")]
         if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
-            return match hyperlimit::point_in_ordered_aabb2_coordinates_with_policy(
+            return match hyperlimit::point_in_ordered_aabb2_coordinates(
                 [self.min_x(), self.min_y()],
                 [self.max_x(), self.max_y()],
                 [point.x(), point.y()],
@@ -397,7 +397,7 @@ impl Aabb2 {
     pub fn overlaps(&self, other: &Self, policy: &CurvePolicy) -> Classification<bool> {
         #[cfg(feature = "predicates")]
         if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
-            return match hyperlimit::ordered_aabb2s_intersect_coordinates_with_policy(
+            return match hyperlimit::ordered_aabb2s_intersect_coordinates(
                 [self.min_x(), self.min_y()],
                 [self.max_x(), self.max_y()],
                 [other.min_x(), other.min_y()],

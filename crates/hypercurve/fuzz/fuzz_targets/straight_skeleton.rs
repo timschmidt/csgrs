@@ -62,7 +62,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
     let contour = transformed_fixture(data);
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     let Classification::Decided(trajectories) = contour
         .straight_skeleton_vertex_trajectories(&policy)

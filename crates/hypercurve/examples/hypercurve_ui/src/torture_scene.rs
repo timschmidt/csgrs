@@ -462,7 +462,7 @@ fn boolean_pair(
                 BooleanMode::Difference => BooleanOp::Difference,
                 BooleanMode::Xor => BooleanOp::Xor,
             },
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .map_err(|error| error.to_string())?;
     Shape::from_curve_region(&region).map(|display| display.map(|display| (region, display)))

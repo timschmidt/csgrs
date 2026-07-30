@@ -157,7 +157,7 @@ fn bench_sparse_contours(rung_count: usize, iterations: u32, policy: &CurvePolic
 }
 
 fn main() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for (segment_count, iterations) in [(32, 100), (64, 50), (128, 20), (512, 3)] {
         bench_direct(segment_count, iterations, &policy);
         bench_x_dense(segment_count, iterations, &policy);

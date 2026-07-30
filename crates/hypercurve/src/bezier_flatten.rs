@@ -450,7 +450,7 @@ mod tests {
     #[test]
     fn cubic_half_split_keeps_exact_de_casteljau_values() {
         let curve = CubicBezier2::new(point(0, 0), point(2, 0), point(4, 0), point(6, 0));
-        let (left, right) = curve.split_half(&CurvePolicy::certified()).unwrap();
+        let (left, right) = curve.split_half(&CurvePolicy::STRICT).unwrap();
 
         let left_controls = left
             .control_points()
@@ -474,7 +474,7 @@ mod tests {
 
     #[test]
     fn flatten_certificate_evidence_actual_depth_used() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let options = BezierFlatteningOptions::try_new(Real::one(), 8, &policy).unwrap();
         let curve = QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 0));
 

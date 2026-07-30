@@ -67,7 +67,7 @@ fn line_fragment(
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let split = [decided(BezierParameter2::exact(q(1, 2), &policy)?)];
     let mut materializations = Vec::new();
     let curve_count = benchmark_curve_count();

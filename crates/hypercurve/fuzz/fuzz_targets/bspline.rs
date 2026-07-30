@@ -34,7 +34,7 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 10 {
         return;
     }
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let degree = if data[0] & 1 == 0 { 2 } else { 3 };
     let control_count = degree + 3;
     let mut controls = Vec::new();

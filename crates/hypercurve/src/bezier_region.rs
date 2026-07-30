@@ -1233,7 +1233,7 @@ fn validate_native_boundary_loop(fragments: &[BezierSubcurve2]) -> CurveResult<(
         ));
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for (left, right) in fragments
         .iter()
         .zip(fragments.iter().cycle().skip(1))
@@ -1303,7 +1303,7 @@ impl CurveRegionBoundaryLoop2 {
                 "certified arrangement chain has inconsistent retained fragments".into(),
             ));
         }
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         for fragment in &fragments {
             validate_retained_fragment_provenance(fragment, &policy)?;
         }
@@ -1410,9 +1410,9 @@ fn validate_retained_boundary_loop(fragments: &[BezierSplitFragment2]) -> CurveR
         ));
     }
     for fragment in fragments {
-        validate_retained_fragment_provenance(fragment, &CurvePolicy::certified())?;
+        validate_retained_fragment_provenance(fragment, &CurvePolicy::STRICT)?;
     }
-    validate_retained_boundary_loop_connectivity(fragments, &CurvePolicy::certified())
+    validate_retained_boundary_loop_connectivity(fragments, &CurvePolicy::STRICT)
 }
 
 fn validate_retained_fragment_provenance(
@@ -2203,7 +2203,7 @@ impl CurveRegion2 {
             paths,
             roles,
             fill_rules,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
             None,
         )
     }
@@ -2257,7 +2257,7 @@ impl CurveRegion2 {
             paths,
             roles,
             fill_rules,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
             Some(
                 interior_sides
                     .iter()
@@ -2623,7 +2623,7 @@ impl CurveRegion2 {
                 && validate_retained_arrangement_chain_connectivity(
                     graph,
                     chain.fragment_indices(),
-                    &CurvePolicy::certified(),
+                    &CurvePolicy::STRICT,
                 )
                 .is_err()
             {
@@ -5006,7 +5006,7 @@ fn validate_signed_area_roles(
     roles: &[CurveRegionLoopRole],
     signed_areas: &[Real],
 ) -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for (role, signed_area) in roles.iter().zip(signed_areas) {
         let expected = match real_sign(signed_area, &policy) {
             Some(RealSign::Negative) => CurveRegionLoopRole::Material,
@@ -5029,7 +5029,7 @@ fn validate_signed_area_roles(
 }
 
 fn validate_nonzero_signed_area_evidence(signed_areas: &[Real]) -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for signed_area in signed_areas {
         match real_sign(signed_area, &policy) {
             Some(RealSign::Positive | RealSign::Negative) => {}
@@ -6394,7 +6394,7 @@ fn rational_line_signed_area_contribution(curve: &RationalBezier2) -> CurveResul
         return Ok(None);
     };
     if !matches!(
-        curve.relation_to_line_with_contacts(&line, &CurvePolicy::certified()),
+        curve.relation_to_line_with_contacts(&line, &CurvePolicy::STRICT),
         Classification::Decided(BezierLineContactRelation::OnSupportingLine)
     ) {
         return Ok(None);
@@ -6411,7 +6411,7 @@ fn rational_line_area_moments_contribution(
         return Ok(None);
     };
     if !matches!(
-        subcurve_relation_to_line_with_contacts(curve, &line, None, &CurvePolicy::certified()),
+        subcurve_relation_to_line_with_contacts(curve, &line, None, &CurvePolicy::STRICT),
         Classification::Decided(BezierLineContactRelation::OnSupportingLine)
     ) {
         return Ok(None);
@@ -6501,7 +6501,7 @@ mod tests {
 
     #[test]
     fn single_loop_filled_side_uses_area_without_constructing_nesting_bounds() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         for (clockwise, expected) in [(false, true), (true, false)] {
             let region = single_quadratic_loop_region(clockwise);
             assert!(region.native_boundary_bounds.get().is_none());
@@ -6515,7 +6515,7 @@ mod tests {
 
     #[test]
     fn native_query_bounds_use_exact_conservative_control_hulls() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let cubic = CubicBezier2::new(p(0, 0), p(0, 6), p(4, 6), p(4, 0));
         let curve = BezierSubcurve2::Cubic(cubic.clone());
         let query_bounds = match subcurve_query_bounds(&curve, &policy) {
@@ -6553,7 +6553,7 @@ mod tests {
 
     #[test]
     fn independent_region_orientations_share_equal_conic_area_kernels() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let first = single_rational_quadratic_loop_region();
         let second = single_rational_quadratic_loop_region();
         let mut cache = RationalQuadraticAreaIntegralCache::default();
@@ -6584,14 +6584,14 @@ mod tests {
         let subcurve = BezierSubcurve2::RationalQuadratic(conic);
 
         assert_eq!(
-            subcurve_contains_point(&subcurve, &p(100, 0), &CurvePolicy::certified()),
+            subcurve_contains_point(&subcurve, &p(100, 0), &CurvePolicy::STRICT),
             Classification::Uncertain(UncertaintyReason::Boundary)
         );
     }
 
     #[test]
     fn irrational_weight_semicircle_region_classifies_without_native_accelerator() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let upper =
             Curve2::from(CircularArc2::try_from_center(p(0, 0), p(2, 0), p(1, 0), true).unwrap());
         let lower =
@@ -6669,7 +6669,7 @@ mod tests {
             .unwrap()
         }
 
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let region = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
             &[rectangle(-3, 3), rectangle(1, 7)],
             &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],

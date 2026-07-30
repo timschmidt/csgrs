@@ -24,7 +24,7 @@ fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 #[test]
 fn curve_string_self_contact_detector_does_not_ignore_closing_endpoint() {

@@ -57,7 +57,7 @@ fn large_rational_inputs(control_count: usize) -> (Vec<Point2>, Vec<Real>) {
 }
 
 fn bench_large_rational_bezier() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let control_count = large_rational_control_count();
     let iterations = large_rational_iterations();
     let (controls, weights) = large_rational_inputs(control_count);
@@ -119,7 +119,7 @@ fn main() {
         return;
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let curve = RationalBezier2::try_new(
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
         vec![r(1), r(2), r(3), r(4)],

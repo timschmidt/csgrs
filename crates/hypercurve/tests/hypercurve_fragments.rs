@@ -47,11 +47,11 @@ fn arc_overlap_cutter() -> Contour2 {
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 
 fn approx_policy() -> CurvePolicy {
-    CurvePolicy::edge_preview(1e-7, 1e-7)
+    CurvePolicy::edge_preview_strict(1e-7, 1e-7)
 }
 
 fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {

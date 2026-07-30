@@ -52,7 +52,7 @@ pub(crate) fn expand_periodic_spline(
         return Err(periodic_error(family, CurveError::InvalidPeriodicSpline));
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for pair in period_knots.windows(2) {
         match crate::classify::compare_reals(&pair[0], &pair[1], &policy) {
             Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {}
@@ -134,7 +134,7 @@ pub(crate) fn wrap_periodic_parameter(
                 UncertaintyReason::Ordering,
             )
         })?;
-    match crate::classify::compare_reals(&remainder, &Real::zero(), &CurvePolicy::certified()) {
+    match crate::classify::compare_reals(&remainder, &Real::zero(), &CurvePolicy::STRICT) {
         Some(std::cmp::Ordering::Equal) if side == CurveParameterSide2::Left => {
             Ok(domain_end.clone())
         }

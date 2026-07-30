@@ -11104,7 +11104,7 @@ mod tests {
         let points = [(0, 0), (4, 0), (4, 4), (2, 2), (0, 4)];
         let forward = line_contour(&points);
         let reverse = line_contour(&points.into_iter().rev().collect::<Vec<_>>());
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         assert_eq!(
             line_contour_directed_orientation(&forward, &policy),
@@ -11118,7 +11118,7 @@ mod tests {
 
     #[test]
     fn direction_winding_matches_extreme_vertex_on_simple_concave_contours() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         for points in [
             vec![(0, 0), (8, 0), (8, 8), (4, 4), (0, 8)],
             vec![
@@ -11152,7 +11152,7 @@ mod tests {
     #[test]
     fn direction_winding_tracks_reversed_retained_fragment_supports() {
         let points = [(0, 0), (8, 0), (8, 8), (4, 4), (0, 8)];
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let forward = retained_split_line_contour(&points, false);
         let reverse = retained_split_line_contour(&points, true);
 
@@ -11182,7 +11182,7 @@ mod tests {
                 &(Real::one(), Real::zero()),
                 &(-Real::one(), Real::zero()),
                 &mut winding,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             ),
             None
         );
@@ -11198,7 +11198,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            line_contour_directed_orientation(&contour, &CurvePolicy::certified()),
+            line_contour_directed_orientation(&contour, &CurvePolicy::STRICT),
             None
         );
     }

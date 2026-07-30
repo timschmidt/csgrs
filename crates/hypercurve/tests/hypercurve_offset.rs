@@ -32,7 +32,7 @@ fn assert_line(segment: &Segment2, start: Point2, end: Point2) {
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 
 #[test]

@@ -340,7 +340,7 @@ fn benchmark_boolean_case(
     let cavalier_second = cavalier_polyline(&second_points, None);
     let geo_first = geo_polygon(&first_points);
     let geo_second = geo_polygon(&second_points);
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     let hypercurve_result_size =
         hypercurve_boolean_result_size(&hypercurve_first, &hypercurve_second, operation, &policy);
@@ -509,7 +509,7 @@ fn benchmark_contour_offset(runner: &Runner) {
     let hypercurve_contour = Contour2::from_bulge_vertices(&hypercurve_vertices)
         .expect("valid hypercurve capsule contour");
     let cavalier_contour = cavalier_polyline(&points, Some(&bulges));
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let distance = real(5.0);
 
     let hypercurve_offset = hypercurve_contour
@@ -541,7 +541,7 @@ fn benchmark_bezier_offset(runner: &Runner) {
     if !runner.group_enabled("bezier_offset/open_cubic") {
         return;
     }
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let controls = [[0.0, 0.0], [1.0, 2.0], [2.0, 1.0], [4.0, 0.0]];
     let source = CubicBezier2::new(
         Point2::new(real(0.0), real(0.0)),
@@ -730,7 +730,7 @@ fn benchmark_pathological_cross_suite(runner: &Runner) {
                     )
                 })
                 .collect::<Vec<_>>();
-            let policy = CurvePolicy::certified();
+            let policy = CurvePolicy::STRICT;
             runner.measure(&group, "hypercurve_flattened", || {
                 hypercurve_cells
                     .iter()

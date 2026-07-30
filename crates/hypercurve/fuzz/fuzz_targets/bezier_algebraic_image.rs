@@ -30,7 +30,7 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 7 {
         return;
     }
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mode = data[6] % 3;
     let curve = if mode == 0 {
         QuadraticBezier2::new(

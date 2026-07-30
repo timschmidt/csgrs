@@ -73,7 +73,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     .map(|(start, end)| LineSeg2::try_new(p(start.0, start.1), p(end.0, end.1)).map(Segment2::Line))
     .collect::<hypercurve::CurveResult<Vec<_>>>()?;
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let contour = Contour2::try_new(boundary)?;
     let region = CurveRegion2::try_from_native_material_contours(vec![contour], &policy)?;
     let location = region.classify_point(&p(1, 1), &policy)?;
@@ -238,8 +238,10 @@ Hypercurve separates exact values from decisions about them:
 
 - Coordinates are `Real` values, not an implicit `f64` tolerance model.
 - Checked constructors reject malformed or structurally invalid input.
-- Topological branches use `CurvePolicy`; `CurvePolicy::certified()` is the
-  normal correctness-first policy.
+- Topological branches use an explicit `CurvePolicy`.
+  `CurvePolicy::STRICT` accepts only certified decisions, while
+  `CurvePolicy::APPROXIMATE_512` may consume Hyperlimit's terminal 512-bit
+  interpretation.
 - `Classification::Decided(value)` is a supported conclusion.
   `Classification::Uncertain(reason)` preserves an undecidable or unsupported
   predicate instead of silently choosing a side.

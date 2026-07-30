@@ -626,7 +626,7 @@ fn validate_directed_boolean_fragment_geometry(
     fragments: &[DirectedBooleanFragment],
     owner: &str,
 ) -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for fragment in fragments {
         match is_zero(
             &fragment
@@ -713,7 +713,7 @@ fn certified_endpoint_match(
     right: &DirectedBooleanFragment,
     owner: &str,
 ) -> CurveResult<bool> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match points_match(left.segment.end(), right.segment.start(), &policy) {
         Classification::Decided(matches) => Ok(matches),
         Classification::Uncertain(reason) => Err(CurveError::Topology(format!(

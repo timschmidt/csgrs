@@ -332,7 +332,7 @@ impl BezierSubcurve2 {
                     curve.end_weight().clone(),
                     curve.control_weight().clone(),
                     curve.start_weight().clone(),
-                    curve.common_nonzero_weight_sign(&CurvePolicy::certified()),
+                    curve.common_nonzero_weight_sign(&CurvePolicy::STRICT),
                     curve.retained_implicit_quadratic_conic().cloned(),
                     curve.retained_circular_conic().cloned(),
                 )
@@ -429,7 +429,7 @@ fn validate_bezier_split_fragments(fragments: &[BezierSplitFragment2]) -> CurveR
         ));
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     validate_bezier_split_coverage(fragments, &policy)?;
     for (left_index, left) in fragments.iter().enumerate() {
         validate_bezier_split_fragment(left, &policy)?;
@@ -555,8 +555,7 @@ fn validate_adjacent_bezier_split_fragments(
     {
         let left_endpoint = left_curve.end_point();
         let right_endpoint = right_curve.start_point();
-        if !certified_split_points_equal(&left_endpoint, &right_endpoint, &CurvePolicy::certified())
-        {
+        if !certified_split_points_equal(&left_endpoint, &right_endpoint, &CurvePolicy::STRICT) {
             return Err(CurveError::Topology(
                 "adjacent materialized Bezier split fragments must be endpoint-connected".into(),
             ));

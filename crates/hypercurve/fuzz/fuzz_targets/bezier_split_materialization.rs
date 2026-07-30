@@ -24,7 +24,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let curve = QuadraticBezier2::new(
         point(data[0], data[1]),
         point(data[2], data[3]),

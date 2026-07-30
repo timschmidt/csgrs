@@ -431,7 +431,7 @@ impl Curve2 {
                         curve.end_weight().clone(),
                         curve.control_weight().clone(),
                         curve.start_weight().clone(),
-                        curve.common_nonzero_weight_sign(&CurvePolicy::certified()),
+                        curve.common_nonzero_weight_sign(&CurvePolicy::STRICT),
                         curve.retained_implicit_quadratic_conic().cloned(),
                         curve.retained_circular_conic().cloned(),
                     )
@@ -579,7 +579,7 @@ impl Curve2 {
             return Ok(self.clone());
         }
         validate_subcurve_range(domain.start(), &start, &end, domain.end(), self.family())?;
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         if crate::classify::compare_reals(&start, domain.start(), &policy)
             == Some(std::cmp::Ordering::Equal)
             && crate::classify::compare_reals(&end, domain.end(), &policy)
@@ -787,7 +787,7 @@ impl Curve2 {
             CurveGeometry2::PolynomialBSpline(curve) => curve.point_at_side(parameter, side),
             CurveGeometry2::Nurbs(curve) => curve.point_at_side(parameter, side),
             geometry => {
-                let policy = CurvePolicy::certified();
+                let policy = CurvePolicy::STRICT;
                 let location = validate_unit_parameter(parameter, geometry.family(), &policy)?;
                 if let Some(endpoint) = retained_native_endpoint(geometry, location, &policy) {
                     return Ok(endpoint);
@@ -972,10 +972,10 @@ impl Curve2 {
         let evaluator = &self.rational_evaluators()?[fragment_index];
         let local_derivatives = match if max_order == 1 {
             evaluator
-                .derivative_at_classified(&local, &crate::CurvePolicy::certified())
+                .derivative_at_classified(&local, &crate::CurvePolicy::STRICT)
                 .map(|derivative| vec![derivative])
         } else {
-            evaluator.derivatives_at_classified(&local, max_order, &crate::CurvePolicy::certified())
+            evaluator.derivatives_at_classified(&local, max_order, &crate::CurvePolicy::STRICT)
         } {
             Classification::Decided(derivatives) => derivatives,
             Classification::Uncertain(reason) => {
@@ -1215,7 +1215,7 @@ impl CurvePath2 {
             }
             match crate::classify::is_zero(
                 &adjacent[0].end().distance_squared(adjacent[1].start()),
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             ) {
                 Some(true) => {}
                 Some(false) => {
@@ -1479,7 +1479,7 @@ impl CurvePath2 {
     pub fn bounds(&self) -> ExactCurveResult<&Aabb2> {
         match self.data.bounds.get_or_init(|| {
             let mut bounds = self.data.curves[0].bounds()?.clone();
-            let policy = crate::CurvePolicy::certified();
+            let policy = crate::CurvePolicy::STRICT;
             for curve in &self.data.curves[1..] {
                 bounds = decided_bounds(bounds.union(curve.bounds()?, &policy), curve.family())?;
             }
@@ -1559,7 +1559,7 @@ impl CurvePath2 {
             if self.start() != self.end() {
                 match crate::classify::is_zero(
                     &self.start().distance_squared(self.end()),
-                    &CurvePolicy::certified(),
+                    &CurvePolicy::STRICT,
                 ) {
                     Some(true) => {}
                     Some(false) => {
@@ -1890,7 +1890,7 @@ impl NativeBezierBoundaryLoop2 {
 }
 
 fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
-    let policy = crate::CurvePolicy::certified();
+    let policy = crate::CurvePolicy::STRICT;
     match curve.geometry() {
         CurveGeometry2::Line(line) => {
             decided_bounds(Aabb2::from_line(line, &policy), curve.family())
@@ -1945,7 +1945,7 @@ fn select_native_fragments(
     parameter: &Real,
     family: CurveFamily2,
 ) -> ExactCurveResult<(usize, usize)> {
-    let policy = crate::CurvePolicy::certified();
+    let policy = crate::CurvePolicy::STRICT;
     let mut first = None;
     let mut last = None;
     for (index, fragment) in fragments.iter().enumerate() {
@@ -1986,7 +1986,7 @@ fn certify_matching_derivatives(
     family: CurveFamily2,
 ) -> ExactCurveResult<Vec<CurveDerivative2>> {
     debug_assert_eq!(first.len(), second.len());
-    let policy = crate::CurvePolicy::certified();
+    let policy = crate::CurvePolicy::STRICT;
     for (first_derivative, second_derivative) in first.iter().zip(&second) {
         match (
             crate::classify::compare_reals(first_derivative.dx(), second_derivative.dx(), &policy),
@@ -2157,7 +2157,7 @@ fn evaluate_promoted_arc(
     fragments: &[NativeBezierFragment2],
     parameter: &Real,
 ) -> ExactCurveResult<Point2> {
-    let policy = crate::CurvePolicy::certified();
+    let policy = crate::CurvePolicy::STRICT;
     for fragment in fragments {
         let (start, end) = fragment.parameter_range();
         let lower = crate::classify::compare_reals(start, parameter, &policy);
@@ -2285,7 +2285,7 @@ fn certify_closed_path(path: &CurvePath2, operation: CurveOperation2) -> ExactCu
     let first = &path.data.curves[0];
     match crate::classify::is_zero(
         &path.start().distance_squared(path.end()),
-        &CurvePolicy::certified(),
+        &CurvePolicy::STRICT,
     ) {
         Some(true) => Ok(()),
         Some(false) => Err(ExactCurveError::invalid(
@@ -2307,7 +2307,7 @@ fn validate_fillet_radius(
     next_point: &Point2,
     center: &Point2,
 ) -> ExactCurveResult<Real> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let radius_squared = previous_point.distance_squared(center);
     match crate::classify::is_zero(&radius_squared, &policy) {
         Some(false) => {}
@@ -2398,7 +2398,7 @@ fn validate_curve_fillet_tangent(
         (-radius_dy, radius_dx)
     };
     let tangent_cross = &source_dx * &fillet_dy - &source_dy * &fillet_dx;
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match crate::classify::is_zero(&tangent_cross, &policy) {
         Some(true) => {}
         Some(false) => {
@@ -2439,7 +2439,7 @@ fn validate_strict_split_parameter(
     domain_end: &Real,
     family: CurveFamily2,
 ) -> ExactCurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match (
         crate::classify::compare_reals(domain_start, parameter, &policy),
         crate::classify::compare_reals(parameter, domain_end, &policy),
@@ -2465,7 +2465,7 @@ fn validate_subcurve_range(
     domain_end: &Real,
     family: CurveFamily2,
 ) -> ExactCurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match (
         crate::classify::compare_reals(domain_start, start, &policy),
         crate::classify::compare_reals(start, end, &policy),

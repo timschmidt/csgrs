@@ -1040,7 +1040,7 @@ impl Shape {
         {
             Classification::Decided(paths) => paths,
             Classification::Uncertain(_) => match region
-                .project_to_finite_curve_paths(&CurvePolicy::certified())
+                .project_to_finite_curve_paths(&CurvePolicy::STRICT)
                 .map_err(|error| error.to_string())?
             {
                 Classification::Decided(paths) => paths,
@@ -1051,7 +1051,7 @@ impl Shape {
             return Ok(Some(Self::default()));
         }
         let roles = match region
-            .loop_roles(&CurvePolicy::certified())
+            .loop_roles(&CurvePolicy::STRICT)
             .map_err(|error| error.to_string())?
         {
             Classification::Decided(roles) => Some(roles),
@@ -1059,7 +1059,7 @@ impl Shape {
         };
         let filled_sides = if roles.is_none() {
             match region
-                .filled_side_is_left(&CurvePolicy::certified())
+                .filled_side_is_left(&CurvePolicy::STRICT)
                 .map_err(|error| error.to_string())?
             {
                 Classification::Decided(sides) => Some(sides),
@@ -1118,7 +1118,7 @@ impl Shape {
 
         let first = self.to_curve_region()?;
         let second = other.to_curve_region()?;
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let result = first.boolean_region(&second, op, &policy).map_err(|error| {
             first
                 .intersect_region(&second, &policy)
@@ -1191,7 +1191,7 @@ pub fn policy() -> CurvePolicy {
     // predicate policy inside this value remains strict, and the UI must not
     // treat sampled `f64`/Geo fallback output as exact topology provenance.
     // Finite output remains useful only with explicit boundary handling.
-    CurvePolicy::edge_preview(1e-7, 1e-7)
+    CurvePolicy::edge_preview_strict(1e-7, 1e-7)
 }
 
 pub fn boolean_polylines(

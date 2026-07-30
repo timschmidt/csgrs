@@ -9,6 +9,9 @@
 use crate::finite_projection::normalize_finite_ring_vertices;
 use crate::{CurveError, CurveResult, FiniteRegionProfile2, Real};
 
+const TRIANGULATION_CONTEXT: hypertri::TriangulationContext =
+    hypertri::TriangulationContext::new(hypertri::PredicatePolicy::STRICT);
+
 /// A finite triangle emitted from a projected region profile.
 ///
 /// The coordinates are projection-boundary `f64` values. Exact CAD topology
@@ -63,8 +66,9 @@ pub fn triangulate_finite_rings(
         }
     }
 
-    let indices = hypertri::earcut(&exact, &hole_indices)
-        .map_err(|err| CurveError::Topology(err.to_string()))?;
+    let indices = hypertri::earcut(&TRIANGULATION_CONTEXT, &exact, &hole_indices)
+        .map_err(|err| CurveError::Topology(err.to_string()))?
+        .into_value();
     triangles_from_indices(&vertices, &indices)
 }
 

@@ -62,7 +62,7 @@ fn closed_under_cubic(curve: CubicBezier2, lower_y: i32) -> CurvePath2 {
 }
 
 fn main() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let first = rectangle(0, 0, 2, 2);
     let second = rectangle(1, -1, 3, 1);
 

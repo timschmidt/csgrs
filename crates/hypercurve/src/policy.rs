@@ -2,14 +2,15 @@
 
 /// Numeric policy for a curve operation.
 ///
-/// The default and [`CurvePolicy::certified`] policy exhaust exact and
-/// certified-refinement stages before applying Hyperlimit's current terminal
-/// predicate policy. [`CurvePolicy::edge_preview`] additionally permits lossy
-/// finite views at rendering and diagnostics boundaries.
+/// [`CurvePolicy::STRICT`] accepts only exact or certified-refinement
+/// predicate decisions. [`CurvePolicy::APPROXIMATE_512`] additionally permits
+/// Hyperlimit's terminal 512-bit interpretation. The named edge-preview
+/// constructors permit lossy finite views only at rendering and diagnostics
+/// boundaries.
 ///
 /// The representation is intentionally closed: callers cannot combine a
-/// certified operation with preview tolerances, request preview behavior
-/// without tolerances, or weaken the predicate policy used by topology.
+/// certified operation with preview tolerances or request preview behavior
+/// without tolerances.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurvePolicy {
     pub(crate) mode: NumericMode,
@@ -31,27 +32,47 @@ pub(crate) struct PreviewTolerance {
 }
 
 impl CurvePolicy {
-    /// Topology policy backed by the workspace predicate policy.
-    pub const fn certified() -> Self {
-        Self {
-            mode: NumericMode::Certified,
-            #[cfg(feature = "predicates")]
-            predicate_policy: hyperlimit::PredicatePolicy,
-            preview_tolerance: None,
-        }
-    }
+    /// Topology accepts only certified predicate decisions.
+    pub const STRICT: Self = Self {
+        mode: NumericMode::Certified,
+        #[cfg(feature = "predicates")]
+        predicate_policy: hyperlimit::PredicatePolicy::STRICT,
+        preview_tolerance: None,
+    };
 
-    /// Edge-preview policy for diagnostics and exploratory rendering.
+    /// Topology may consume Hyperlimit's terminal 512-bit interpretation.
+    pub const APPROXIMATE_512: Self = Self {
+        mode: NumericMode::Certified,
+        #[cfg(feature = "predicates")]
+        predicate_policy: hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        preview_tolerance: None,
+    };
+
+    /// Strict-predicate edge preview for diagnostics and exploratory rendering.
     ///
-    /// This policy is intentionally not the default. It exists for code that is
-    /// already at an IO, rendering, or compatibility boundary. Hyperlimit
-    /// predicates still use the centralized workspace policy. The tolerances
-    /// are available only to named curve-local preview operations.
-    pub const fn edge_preview(absolute_tolerance: f64, relative_tolerance: f64) -> Self {
+    /// The tolerances are available only to named curve-local preview
+    /// operations.
+    pub const fn edge_preview_strict(absolute_tolerance: f64, relative_tolerance: f64) -> Self {
         Self {
             mode: NumericMode::EdgePreview,
             #[cfg(feature = "predicates")]
-            predicate_policy: hyperlimit::PredicatePolicy,
+            predicate_policy: hyperlimit::PredicatePolicy::STRICT,
+            preview_tolerance: Some(PreviewTolerance {
+                absolute: absolute_tolerance,
+                relative: relative_tolerance,
+            }),
+        }
+    }
+
+    /// Approximate-512-predicate edge preview for diagnostics and rendering.
+    pub const fn edge_preview_approximate_512(
+        absolute_tolerance: f64,
+        relative_tolerance: f64,
+    ) -> Self {
+        Self {
+            mode: NumericMode::EdgePreview,
+            #[cfg(feature = "predicates")]
+            predicate_policy: hyperlimit::PredicatePolicy::APPROXIMATE_512,
             preview_tolerance: Some(PreviewTolerance {
                 absolute: absolute_tolerance,
                 relative: relative_tolerance,
@@ -60,25 +81,27 @@ impl CurvePolicy {
     }
 }
 
-impl Default for CurvePolicy {
-    fn default() -> Self {
-        Self::certified()
-    }
-}
-
 #[cfg(all(test, feature = "predicates"))]
 mod tests {
     use super::CurvePolicy;
 
     #[test]
-    fn curve_modes_follow_the_central_workspace_predicate_policy() {
+    fn curve_modes_name_both_hyperlimit_policies() {
         assert_eq!(
-            CurvePolicy::certified().predicate_policy,
-            hyperlimit::PredicatePolicy
+            CurvePolicy::STRICT.predicate_policy,
+            hyperlimit::PredicatePolicy::STRICT
         );
         assert_eq!(
-            CurvePolicy::edge_preview(1.0e-6, 1.0e-6).predicate_policy,
-            hyperlimit::PredicatePolicy
+            CurvePolicy::APPROXIMATE_512.predicate_policy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512
+        );
+        assert_eq!(
+            CurvePolicy::edge_preview_strict(1.0e-6, 1.0e-6).predicate_policy,
+            hyperlimit::PredicatePolicy::STRICT
+        );
+        assert_eq!(
+            CurvePolicy::edge_preview_approximate_512(1.0e-6, 1.0e-6).predicate_policy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512
         );
     }
 }

@@ -1169,7 +1169,7 @@ fn unit_tangent_for_line(line: &LineSeg2) -> CurveResult<(Real, Real)> {
 }
 
 fn unit_direction_for_delta(dx: &Real, dy: &Real) -> CurveResult<(Real, Real)> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let dx_sign = real_sign(dx, &policy);
     let dy_sign = real_sign(dy, &policy);
     if is_zero(&(dx * dx - dy * dy), &policy) == Some(true)

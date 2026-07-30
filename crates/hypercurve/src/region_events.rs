@@ -657,7 +657,7 @@ mod tests {
         assert!(
             RegionPointEndpointContactIndex::from_intersections(
                 &intersections,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .vertex_masks
             .is_empty()
@@ -667,7 +667,7 @@ mod tests {
     #[test]
     fn endpoint_contact_index_checks_both_incident_segments() {
         let key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let mut index = RegionPointEndpointContactIndex::default();
         index
             .vertex_masks

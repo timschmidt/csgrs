@@ -566,7 +566,7 @@ impl Contour2 {
         &self,
         policy: &CurvePolicy,
     ) -> Option<Arc<ExactDyadicLineAabbs>> {
-        if policy != &CurvePolicy::certified() {
+        if policy != &CurvePolicy::STRICT {
             return None;
         }
         self.exact_dyadic_line_aabbs_cache
@@ -1235,7 +1235,7 @@ fn closure_status_from_distance(distance_squared: &Real) -> Classification<()> {
     match distance_squared.zero_status() {
         ZeroStatus::Zero => Classification::Decided(()),
         ZeroStatus::NonZero => Classification::Uncertain(UncertaintyReason::Boundary),
-        ZeroStatus::Unknown => match is_zero(distance_squared, &CurvePolicy::certified()) {
+        ZeroStatus::Unknown => match is_zero(distance_squared, &CurvePolicy::STRICT) {
             Some(true) => Classification::Decided(()),
             Some(false) => Classification::Uncertain(UncertaintyReason::Boundary),
             None => Classification::Uncertain(UncertaintyReason::RealSign),
@@ -1542,7 +1542,7 @@ mod tests {
         ] {
             assert!(
                 contour
-                    .intersect_self(&CurvePolicy::certified())
+                    .intersect_self(&CurvePolicy::STRICT)
                     .unwrap()
                     .is_empty()
             );
@@ -1685,7 +1685,7 @@ mod tests {
         ])
         .unwrap();
         let bounds = contour
-            .exact_dyadic_line_aabbs(&CurvePolicy::certified())
+            .exact_dyadic_line_aabbs(&CurvePolicy::STRICT)
             .unwrap();
 
         assert_eq!(size_of::<ExactF64Aabb>(), 32);
@@ -1704,9 +1704,7 @@ mod tests {
         assert_eq!(bounds.segment_endpoints(2), [[3.0, 4.0], [-2.0, 4.0]]);
         assert_eq!(bounds.segment_endpoints(3), [[-2.0, 4.0], [-2.0, 0.0]]);
         let clone = contour.clone();
-        let replay = clone
-            .exact_dyadic_line_aabbs(&CurvePolicy::certified())
-            .unwrap();
+        let replay = clone.exact_dyadic_line_aabbs(&CurvePolicy::STRICT).unwrap();
         assert!(Arc::ptr_eq(&bounds, &replay));
     }
 
@@ -1720,7 +1718,7 @@ mod tests {
         ])
         .unwrap();
         let bounds = contour
-            .exact_dyadic_line_aabbs(&CurvePolicy::certified())
+            .exact_dyadic_line_aabbs(&CurvePolicy::STRICT)
             .unwrap();
         let packed = bounds.min_x_order_with_prefix_max.as_deref().unwrap();
 

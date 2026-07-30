@@ -101,7 +101,7 @@ fn finite_region_profile_triangulates_material_with_owned_hole() {
     let profiles = region
         .project_to_finite_profiles(
             &FiniteProjectionOptions::try_new(1.0e-3).unwrap(),
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .expect_decided("rectangle hole ownership should be decided");

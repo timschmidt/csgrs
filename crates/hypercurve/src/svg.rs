@@ -29,7 +29,7 @@ use std::fmt::{self, Write};
 const EXACT_PATH_ATTRIBUTE: &str = "data-hypercurve-path";
 
 fn svg_real_sign(value: &Real) -> Option<RealSign> {
-    crate::classify::real_sign(value, &CurvePolicy::certified())
+    crate::classify::real_sign(value, &CurvePolicy::STRICT)
 }
 
 /// Error produced by strict SVG geometry import or export.
@@ -218,7 +218,7 @@ impl SvgGeometry2 {
         } else if !other.region.is_empty() {
             self.region = self
                 .region
-                .boolean_region(&other.region, BooleanOp::Union, &CurvePolicy::certified())
+                .boolean_region(&other.region, BooleanOp::Union, &CurvePolicy::STRICT)
                 .map_err(svg_geometry_error)?;
         }
         self.wires.append(&mut other.wires);
@@ -1167,7 +1167,7 @@ fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<Cur
     if paths.is_empty() {
         return Ok(CurveRegion2::empty());
     }
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let preliminary = CurveRegion2::try_from_boundary_paths(paths).map_err(svg_geometry_error)?;
     let roles = match preliminary
         .loop_roles(&policy)
@@ -1464,7 +1464,7 @@ pub fn export_svg_document_with_options(
     if !geometry.region.is_empty() {
         let profiles = match geometry
             .region
-            .project_to_finite_profiles(&projection, &CurvePolicy::certified())
+            .project_to_finite_profiles(&projection, &CurvePolicy::STRICT)
             .map_err(svg_geometry_error)?
         {
             Classification::Decided(profiles) => profiles,
@@ -1561,7 +1561,7 @@ fn append_native_path(
                 match crate::arc_bezier::classify_sweep(arc).map_err(svg_geometry_error)? {
                     crate::arc_bezier::ArcSweepKind::FullCircle => {
                         let midpoint = match arc
-                            .representative_point(&CurvePolicy::certified())
+                            .representative_point(&CurvePolicy::STRICT)
                             .map_err(svg_geometry_error)?
                         {
                             Classification::Decided(point) => point,
@@ -1689,7 +1689,7 @@ fn finite_point(point: &Point2) -> SvgResult<[f64; 2]> {
 }
 
 fn exact_finite_bounds(geometry: &SvgGeometry2) -> SvgResult<[f64; 4]> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mut bounds = if geometry.region.is_empty() {
         None
     } else {

@@ -318,7 +318,7 @@ mod tests {
     }
 
     fn topology_policy() -> CurvePolicy {
-        CurvePolicy::certified()
+        CurvePolicy::STRICT
     }
 
     #[test]

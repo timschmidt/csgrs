@@ -16,7 +16,7 @@ fn q(numerator: i32, denominator: i32) -> Real {
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 
 fn decided<T>(classification: Classification<T>) -> T {

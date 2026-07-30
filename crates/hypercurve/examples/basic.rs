@@ -19,7 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     .map(|(start, end)| LineSeg2::try_new(p(start.0, start.1), p(end.0, end.1)).map(Segment2::Line))
     .collect::<hypercurve::CurveResult<Vec<_>>>()?;
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let contour = Contour2::try_new(boundary)?;
     let region = CurveRegion2::try_from_native_material_contours(vec![contour], &policy)?;
     let location = region.classify_point(&p(1, 1), &policy)?;

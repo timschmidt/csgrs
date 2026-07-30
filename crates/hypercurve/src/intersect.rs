@@ -2155,7 +2155,7 @@ mod tests {
     fn certified_aabb_line_kernel_matches_public_fallback() {
         let point = |x, y| Point2::new(Real::from(x), Real::from(y));
         let line = |start, end| Segment2::Line(LineSeg2::try_new(start, end).unwrap());
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         for (first, second) in [
             (
@@ -2187,7 +2187,7 @@ mod tests {
         let point =
             |x: f64, y: f64| Point2::new(Real::try_from(x).unwrap(), Real::try_from(y).unwrap());
         let line = |start, end| LineSeg2::try_new(start, end).unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         for (first, second) in [
             (
                 line(point(-7.25, -2.5), point(9.5, 6.75)),

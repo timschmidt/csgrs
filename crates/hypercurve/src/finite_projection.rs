@@ -845,7 +845,7 @@ fn finite_parameter_representative(parameter: &BezierParameter2) -> CurveResult<
     if let Some(exact) = parameter.as_exact() {
         return Ok(exact.clone());
     }
-    let interval = match parameter.known_interval(&CurvePolicy::certified())? {
+    let interval = match parameter.known_interval(&CurvePolicy::STRICT)? {
         Classification::Decided(interval) => interval,
         Classification::Uncertain(reason) => {
             return Err(CurveError::Topology(format!(
@@ -882,24 +882,22 @@ fn append_bezier_subcurve_samples(
     }
 
     let half = (Real::one() / Real::from(2_u8))?;
-    let left =
-        match curve.subcurve_between_exact(&Real::zero(), &half, &CurvePolicy::certified())? {
-            Classification::Decided(curve) => curve,
-            Classification::Uncertain(reason) => {
-                return Err(CurveError::Topology(format!(
-                    "finite projection could not split higher-order curve: {reason:?}"
-                )));
-            }
-        };
-    let right =
-        match curve.subcurve_between_exact(&half, &Real::one(), &CurvePolicy::certified())? {
-            Classification::Decided(curve) => curve,
-            Classification::Uncertain(reason) => {
-                return Err(CurveError::Topology(format!(
-                    "finite projection could not split higher-order curve: {reason:?}"
-                )));
-            }
-        };
+    let left = match curve.subcurve_between_exact(&Real::zero(), &half, &CurvePolicy::STRICT)? {
+        Classification::Decided(curve) => curve,
+        Classification::Uncertain(reason) => {
+            return Err(CurveError::Topology(format!(
+                "finite projection could not split higher-order curve: {reason:?}"
+            )));
+        }
+    };
+    let right = match curve.subcurve_between_exact(&half, &Real::one(), &CurvePolicy::STRICT)? {
+        Classification::Decided(curve) => curve,
+        Classification::Uncertain(reason) => {
+            return Err(CurveError::Topology(format!(
+                "finite projection could not split higher-order curve: {reason:?}"
+            )));
+        }
+    };
     append_bezier_subcurve_samples(points, &left, options, depth + 1)?;
     append_bezier_subcurve_samples(points, &right, options, depth + 1)
 }
@@ -935,7 +933,7 @@ fn subcurve_has_common_weight_sign(curve: &BezierSubcurve2) -> bool {
     };
     let mut sign = None;
     for weight in weights {
-        let current = crate::classify::real_sign(weight, &CurvePolicy::certified())
+        let current = crate::classify::real_sign(weight, &CurvePolicy::STRICT)
             .filter(|value| *value != RealSign::Zero);
         match (sign, current) {
             (None, Some(current)) => sign = Some(current),
@@ -1098,7 +1096,7 @@ mod tests {
     fn projects_higher_order_region_after_exact_role_assignment() {
         let region = CurveRegion2::try_from_boundary_paths(&[cubic_cap()]).unwrap();
         let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let profiles = region
             .project_to_finite_profiles(&options, &policy)
             .unwrap();

@@ -28,7 +28,7 @@ fn assert_line(segment: &Segment2, start: hypercurve::Point2, end: hypercurve::P
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 
 fn rectangle() -> Contour2 {

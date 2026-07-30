@@ -491,7 +491,7 @@ impl BezierArrangementGraph2 {
 fn validate_arrangement_fragment_provenance(
     fragments: &[BezierArrangementFragment2],
 ) -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for (index, fragment) in fragments.iter().enumerate() {
         validate_arrangement_fragment_source_range(fragment, &policy)?;
         for other in &fragments[index + 1..] {
@@ -1660,7 +1660,7 @@ mod endpoint_adjacency_tests {
     fn sqrt_half_parameter() -> crate::BezierAlgebraicParameter2 {
         let polynomial = match crate::BezierParameterPolynomial::try_new_power_basis(
             vec![Real::from(-1), Real::zero(), Real::from(2)],
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .expect("valid parameter polynomial")
         {
@@ -1672,7 +1672,7 @@ mod endpoint_adjacency_tests {
         let interval = match crate::BezierParameterInterval::try_new(
             Real::from(Rational::fraction(2, 3).expect("nonzero denominator")),
             Real::from(Rational::fraction(3, 4).expect("nonzero denominator")),
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .expect("valid parameter interval")
         {
@@ -1684,7 +1684,7 @@ mod endpoint_adjacency_tests {
         match crate::BezierAlgebraicParameter2::try_isolate(
             polynomial,
             interval,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .expect("isolated parameter")
         {
@@ -1698,7 +1698,7 @@ mod endpoint_adjacency_tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn lazy_polynomial_endpoint_derivatives_match_eager_images() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let parameter = sqrt_half_parameter();
         let curve = crate::CubicBezier2::new(
             point(0),
@@ -1750,7 +1750,7 @@ mod endpoint_adjacency_tests {
         endpoints[4].start_topology_vertex = Some(9);
 
         let Classification::Decided((outgoing, predecessors)) =
-            retained_tangent_adjacency(&endpoints, &CurvePolicy::certified())
+            retained_tangent_adjacency(&endpoints, &CurvePolicy::STRICT)
         else {
             panic!("indexed retained adjacency should remain exact");
         };
@@ -1790,7 +1790,7 @@ mod endpoint_adjacency_tests {
             ),
         ])
         .expect("valid branch graph");
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         assert_eq!(
             graph.traverse_retained_with_certified_successors(&[None], &policy),
@@ -1816,7 +1816,7 @@ mod endpoint_adjacency_tests {
             },
         )])
         .expect("valid branch-free graph");
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         assert!(matches!(
             graph.traverse_retained_with_tangent_order(&policy),
@@ -1853,7 +1853,7 @@ mod endpoint_adjacency_tests {
         };
         let first = fragment(0, 0, 1, point2(0, 0), point2(1, 0));
         let second = fragment(1, 1, 2, point2(100, 0), point2(101, 0));
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let first_endpoints = retained_topology_endpoint_data(&first);
 
         assert!(first_endpoints.start.is_none());
@@ -3062,7 +3062,7 @@ mod rational_quadratic_endpoint_derivative_tests {
 
     #[test]
     fn polynomial_endpoint_tangent_keeps_its_structural_zero_evidence() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         for (dx, expected_status, expected_nonzero) in [
             (Real::zero(), ZeroStatus::Zero, false),
             (Real::from(7_i8), ZeroStatus::NonZero, true),
@@ -3080,7 +3080,7 @@ mod rational_quadratic_endpoint_derivative_tests {
 
     #[test]
     fn specialized_endpoint_jets_match_general_rational_quotient_derivatives() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         for (weight_case, (start_weight, control_weight, end_weight)) in [
             (Real::one(), Real::one(), Real::one()),

@@ -359,9 +359,7 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
         for local in [r(0), q(1, 2), r(1)] {
             let source_parameter = start + &local * (end - start);
             assert_eq!(
-                span.curve()
-                    .point_at(&local, &CurvePolicy::certified())
-                    .unwrap(),
+                span.curve().point_at(&local, &CurvePolicy::STRICT).unwrap(),
                 curve
                     .point_at_side(
                         &source_parameter,
@@ -863,7 +861,7 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
             .first()
             .unwrap()
             .curve()
-            .point_at(&Real::zero(), &CurvePolicy::certified())
+            .point_at(&Real::zero(), &CurvePolicy::STRICT)
             .unwrap(),
         curve.start().clone()
     );
@@ -873,7 +871,7 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
             .last()
             .unwrap()
             .curve()
-            .point_at(&Real::one(), &CurvePolicy::certified())
+            .point_at(&Real::one(), &CurvePolicy::STRICT)
             .unwrap(),
         curve.end().clone()
     );

@@ -108,7 +108,7 @@ fn validate_positive_unit_overlap_ranges(
     second_range: &ParamRange,
     extent: BezierRetainedOverlapExtent2,
 ) -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     validate_positive_unit_overlap_range(first_range)?;
     validate_positive_unit_overlap_range(second_range)?;
     let expected = line_overlap_extent(first_range, second_range, &policy).ok_or_else(|| {
@@ -125,7 +125,7 @@ fn validate_positive_unit_overlap_ranges(
 }
 
 fn validate_positive_unit_overlap_range(range: &ParamRange) -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     if in_closed_unit_interval(range.start(), &policy) != Some(true)
         || in_closed_unit_interval(range.end(), &policy) != Some(true)
     {
@@ -146,7 +146,7 @@ fn validate_positive_unit_overlap_range(range: &ParamRange) -> CurveResult<()> {
 }
 
 fn validate_refined_fragment_local_range(range: &ParamRange) -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     if in_closed_unit_interval(range.start(), &policy) != Some(true)
         || in_closed_unit_interval(range.end(), &policy) != Some(true)
     {
@@ -193,7 +193,7 @@ fn validate_overlap_relation_evidence(
 }
 
 fn validate_line_overlap_segment_geometry(segment: &LineSeg2) -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match is_zero(&segment.length_squared(), &policy) {
         Some(false) => Ok(()),
         Some(true) => Err(CurveError::Topology(
@@ -713,7 +713,7 @@ fn validate_linear_overlap_refinement_provenance(
         }
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let refined_fragment_count = graph.len();
     for resolved in resolved_overlaps {
         validate_resolved_overlap_refined_index(
@@ -858,8 +858,7 @@ fn overlap_evidence_has_linear_split(
             && segment == split.overlap_segment()
             && a_range == split.first_bezier_range()
             && b_range == split.second_bezier_range()
-            && line_overlap_extent(a_range, b_range, &CurvePolicy::certified())
-                == Some(split.extent())
+            && line_overlap_extent(a_range, b_range, &CurvePolicy::STRICT) == Some(split.extent())
     })
 }
 
@@ -874,7 +873,7 @@ fn overlap_evidence_has_rational_split(
             return false;
         };
         let Classification::Decided(Some((first_range, second_range))) =
-            rational_overlap_exact_ranges(rational, &CurvePolicy::certified())
+            rational_overlap_exact_ranges(rational, &CurvePolicy::STRICT)
         else {
             return false;
         };
@@ -883,7 +882,7 @@ fn overlap_evidence_has_rational_split(
             && &first_range == split.first_bezier_range()
             && &second_range == split.second_bezier_range()
             && rational.orientation() == split.orientation()
-            && line_overlap_extent(&first_range, &second_range, &CurvePolicy::certified())
+            && line_overlap_extent(&first_range, &second_range, &CurvePolicy::STRICT)
                 == Some(split.extent())
     })
 }
@@ -1647,7 +1646,7 @@ impl BezierRetainedOverlapEvidence2 {
         graph: &BezierArrangementGraph2,
         policy: &CurvePolicy,
     ) -> Classification<Self> {
-        let cacheable = *policy == CurvePolicy::certified();
+        let cacheable = *policy == CurvePolicy::STRICT;
         if cacheable && let Some(evidence) = graph.cached_certified_overlap_evidence() {
             return evidence;
         }
@@ -3120,7 +3119,7 @@ mod tests {
 
     #[test]
     fn control_hull_sweep_matches_complete_exact_pair_scan() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let mut state = 0x9e37_79b9_7f4a_7c15_u64;
         let mut next = || {
             state = state

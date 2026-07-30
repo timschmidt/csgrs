@@ -96,7 +96,7 @@ fn main() {
         std::mem::size_of::<StraightSkeletonArcKind2>(),
         std::mem::size_of::<StraightSkeletonArcGeometry2>(),
     );
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let concave = contour(&[
         (0, 0),
         (30, 0),

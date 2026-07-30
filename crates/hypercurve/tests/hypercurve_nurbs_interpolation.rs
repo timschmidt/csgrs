@@ -37,7 +37,7 @@ fn fixed_weight_rational_nurbs_interpolation_recovers_exact_control_net() {
         .iter()
         .map(|parameter| {
             source_curve
-                .point_at(parameter, &CurvePolicy::certified())
+                .point_at(parameter, &CurvePolicy::STRICT)
                 .unwrap()
         })
         .collect::<Vec<_>>();
@@ -89,7 +89,7 @@ proptest! {
             .iter()
             .map(|parameter| {
                 source_curve
-                    .point_at(parameter, &CurvePolicy::certified())
+                    .point_at(parameter, &CurvePolicy::STRICT)
                     .unwrap()
             })
             .collect::<Vec<_>>();

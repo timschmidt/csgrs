@@ -30,7 +30,7 @@ fn vertex(x: f64, y: f64) -> BulgeVertex2 {
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 
 fn contour(coords: &[(f64, f64)]) -> HContour {

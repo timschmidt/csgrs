@@ -119,7 +119,7 @@ fn document_import_preserves_cubic_fills_and_strokes() {
     assert_eq!(
         geometry
             .region()
-            .loop_role_counts(&CurvePolicy::certified())
+            .loop_role_counts(&CurvePolicy::STRICT)
             .unwrap(),
         Classification::Decided((1, 0))
     );
@@ -186,7 +186,7 @@ fn document_import_applies_inherited_styles_and_all_affine_transform_forms() {
     assert_eq!(
         geometry
             .region()
-            .loop_role_counts(&CurvePolicy::certified())
+            .loop_role_counts(&CurvePolicy::STRICT)
             .unwrap(),
         Classification::Decided((1, 0))
     );
@@ -206,7 +206,7 @@ fn document_import_unions_filled_shapes_and_skips_transparent_geometry() {
     assert_eq!(
         geometry
             .region()
-            .loop_role_counts(&CurvePolicy::certified())
+            .loop_role_counts(&CurvePolicy::STRICT)
             .unwrap(),
         Classification::Decided((2, 0))
     );

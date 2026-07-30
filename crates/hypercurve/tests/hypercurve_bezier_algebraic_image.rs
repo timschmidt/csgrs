@@ -18,7 +18,7 @@ fn q(numerator: i32, denominator: i32) -> Real {
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 
 fn p(x: i32, y: i32) -> Point2 {

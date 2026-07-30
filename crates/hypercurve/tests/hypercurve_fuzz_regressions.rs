@@ -11,7 +11,7 @@ fn p(x: i32, y: i32) -> Point2 {
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 
 #[test]

@@ -89,7 +89,7 @@ fn rational_second_vector(
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let parameter = decided(BezierAlgebraicParameter2::try_isolate(
         decided(BezierParameterPolynomial::try_new_power_basis(
             vec![r(-1), r(0), r(2)],

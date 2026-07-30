@@ -802,7 +802,7 @@ impl CircularArc2 {
     fn compute_representative_point(&self) -> CurveResult<Classification<Point2>> {
         let half = (Real::one() / Real::from(2_i8))?;
         if self.retained_facts.parameter_lineage.get().is_some() {
-            return self.point_at_sweep_fraction(&half, &CurvePolicy::certified());
+            return self.point_at_sweep_fraction(&half, &CurvePolicy::STRICT);
         }
         match self
             .rational_bezier_decomposition()
@@ -1117,7 +1117,7 @@ impl CircularArc2 {
         if sweep_kind == crate::arc_bezier::ArcSweepKind::FullCircle {
             return Ok(Classification::Decided(Real::tau()));
         }
-        directed_radial_angle(self, self.end(), &CurvePolicy::certified())
+        directed_radial_angle(self, self.end(), &CurvePolicy::STRICT)
     }
 
     pub(crate) fn fragment_between_sweep_range(
@@ -1456,7 +1456,7 @@ fn clockwise_from_bulge(bulge: &Real) -> CurveResult<bool> {
 
     // Bulge sign chooses the arc sweep orientation, so route it through the
     // shared predicate policy used by the rest of curve topology.
-    match crate::classify::real_sign(bulge, &CurvePolicy::certified()) {
+    match crate::classify::real_sign(bulge, &CurvePolicy::STRICT) {
         Some(RealSign::Negative) => Ok(true),
         Some(RealSign::Positive) => Ok(false),
         Some(RealSign::Zero) => Err(CurveError::AmbiguousBulge),

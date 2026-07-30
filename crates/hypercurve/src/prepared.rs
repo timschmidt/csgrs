@@ -1069,7 +1069,7 @@ fn classify_oriented_line(
     point: &hyperlimit::Point2,
     policy: &CurvePolicy,
 ) -> Classification<LineSide> {
-    match hyperlimit::classify_point_line_with_orientation_and_policy(
+    match hyperlimit::classify_point_line_with_orientation(
         from,
         to,
         point,

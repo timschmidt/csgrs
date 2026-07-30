@@ -104,7 +104,7 @@ fn main() -> CurveResult<()> {
         return Ok(());
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let spline = decided(PolynomialBSplineCurve2::try_new(
         3,
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],

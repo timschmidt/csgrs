@@ -598,7 +598,7 @@ mod tests {
         let curve = linear_quadratic();
         let region = decided(
             curve
-                .inverse_length_parameter_region(Real::zero(), 4, 2, &CurvePolicy::certified())
+                .inverse_length_parameter_region(Real::zero(), 4, 2, &CurvePolicy::STRICT)
                 .unwrap(),
         );
 
@@ -613,7 +613,7 @@ mod tests {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let region = decided(
             curve
-                .inverse_length_parameter_region(Real::one(), 4, 2, &CurvePolicy::certified())
+                .inverse_length_parameter_region(Real::one(), 4, 2, &CurvePolicy::STRICT)
                 .unwrap(),
         );
 
@@ -639,10 +639,7 @@ mod tests {
     fn degree_elevated_linear_certificate_checks_parameters_exactly() {
         let linear = vec![point(0, 0), point(1, 0), point(2, 0), point(3, 0)];
         assert_eq!(
-            controls_are_degree_elevated_linear_parameterization(
-                &linear,
-                &CurvePolicy::certified()
-            ),
+            controls_are_degree_elevated_linear_parameterization(&linear, &CurvePolicy::STRICT),
             Classification::Decided(true)
         );
 
@@ -650,7 +647,7 @@ mod tests {
         assert_eq!(
             controls_are_degree_elevated_linear_parameterization(
                 &nonlinear_speed,
-                &CurvePolicy::certified()
+                &CurvePolicy::STRICT
             ),
             Classification::Decided(false)
         );

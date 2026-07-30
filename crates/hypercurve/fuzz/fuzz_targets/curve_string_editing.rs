@@ -79,7 +79,7 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 16 {
         return;
     }
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let points = data
         .chunks(2)
         .take(6)

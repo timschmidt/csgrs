@@ -48,7 +48,7 @@ fn curve() -> RationalBezier2 {
 #[test]
 fn general_rational_cubic_evaluates_exactly() {
     let curve = curve();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let half = q(1, 2);
 
     assert_eq!(curve.point_at(&r(0), &policy).unwrap(), p(0, 0));
@@ -65,7 +65,7 @@ fn rational_quadratic_rational_parameter_uses_exact_power_quotient() {
         RationalQuadraticBezier2::try_new(p(0, 0), p(2, 4), p(6, 0), r(1), r(2), r(3)).unwrap();
 
     assert_eq!(
-        decided(curve.point_at(q(1, 2), &CurvePolicy::certified())),
+        decided(curve.point_at(q(1, 2), &CurvePolicy::STRICT)),
         Point2::new(q(13, 4), r(2))
     );
 }
@@ -83,7 +83,7 @@ fn rational_quadratic_monotone_root_preserves_unequal_weight_quotient_derivative
     .unwrap();
 
     assert_eq!(
-        decided(curve.axis_monotone_parameters(Axis2::X, &CurvePolicy::certified())),
+        decided(curve.axis_monotone_parameters(Axis2::X, &CurvePolicy::STRICT)),
         vec![q(1, 2)]
     );
 }
@@ -105,7 +105,7 @@ fn rational_quadratic_monotone_root_retains_exact_transcendental_endpoint() {
     .unwrap();
 
     assert_eq!(
-        decided(curve.axis_monotone_parameters(Axis2::X, &CurvePolicy::certified())),
+        decided(curve.axis_monotone_parameters(Axis2::X, &CurvePolicy::STRICT)),
         vec![Real::one()]
     );
 }
@@ -114,7 +114,7 @@ fn rational_quadratic_monotone_root_retains_exact_transcendental_endpoint() {
 fn general_rational_derivative_is_exact_and_reuses_power_basis() {
     let curve = RationalBezier2::try_new(vec![p(0, 0), p(4, 0)], vec![r(1), r(3)]).unwrap();
     let clone = curve.clone();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     let derivative = curve.derivative_at(&q(1, 2), &policy).unwrap();
     assert_eq!(derivative.dx(), &r(3));
@@ -125,7 +125,7 @@ fn general_rational_derivative_is_exact_and_reuses_power_basis() {
 #[test]
 fn general_rational_derivatives_are_not_truncated_at_bezier_degree() {
     let curve = RationalBezier2::try_new(vec![p(0, 0), p(4, 0)], vec![r(1), r(3)]).unwrap();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     let derivatives = curve.derivatives_at(&q(1, 2), 3, &policy).unwrap();
 
@@ -139,7 +139,7 @@ fn general_rational_derivatives_are_not_truncated_at_bezier_degree() {
 fn rational_bezier_clones_evaluate_identically() {
     let curve = curve();
     let clone = curve.clone();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     assert_eq!(
         clone.point_at(&q(1, 2), &policy).unwrap(),
         curve.point_at(&q(1, 2), &policy).unwrap()
@@ -150,7 +150,7 @@ fn rational_bezier_clones_evaluate_identically() {
 fn rational_bezier_clones_have_identical_point_incidence() {
     let curve = curve();
     let clone = curve.clone();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let point = Point2::new(q(49, 20), q(9, 4));
     assert!(clone.contains_point(&point, &policy).unwrap());
     assert_eq!(
@@ -162,7 +162,7 @@ fn rational_bezier_clones_have_identical_point_incidence() {
 #[test]
 fn general_rational_split_preserves_join_and_degree() {
     let curve = curve();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let half = q(1, 2);
     let expected_join = curve.point_at(&half, &policy).unwrap();
     let (left, right) = decided(curve.split_at_exact(&half, &policy).unwrap());
@@ -178,7 +178,7 @@ fn general_rational_split_preserves_join_and_degree() {
 #[test]
 fn general_rational_cubic_certifies_obvious_axis_monotonicity() {
     let curve = curve();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     assert!(curve.axis_is_monotone(Axis2::X, &policy).unwrap());
     assert!(!curve.axis_is_monotone(Axis2::Y, &policy).unwrap());
@@ -186,7 +186,7 @@ fn general_rational_cubic_certifies_obvious_axis_monotonicity() {
 
 #[test]
 fn mixed_derivative_controls_use_exact_root_multiplicity_for_monotonicity() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let stationary_monotone =
         RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(0, 0), p(1, 0)], vec![r(1); 4]).unwrap();
     let two_extrema =
@@ -219,7 +219,7 @@ fn high_degree_nonuniform_rational_weights_preserve_axis_monotonicity() {
 
     assert!(
         curve
-            .axis_is_monotone(Axis2::X, &CurvePolicy::certified())
+            .axis_is_monotone(Axis2::X, &CurvePolicy::STRICT)
             .unwrap()
     );
 }
@@ -234,7 +234,7 @@ fn degree_40_rational_monotonicity_does_not_depend_on_u64_binomials() {
 
     assert!(
         curve
-            .axis_is_monotone(Axis2::X, &CurvePolicy::certified())
+            .axis_is_monotone(Axis2::X, &CurvePolicy::STRICT)
             .unwrap()
     );
 }
@@ -246,7 +246,7 @@ fn shared_cancellation_resolves_rational_weight_monotonicity_blocker() {
 
     assert!(
         curve
-            .axis_is_monotone(Axis2::X, &CurvePolicy::certified())
+            .axis_is_monotone(Axis2::X, &CurvePolicy::STRICT)
             .unwrap()
     );
 }
@@ -255,7 +255,7 @@ fn shared_cancellation_resolves_rational_weight_monotonicity_blocker() {
 fn shared_cancellation_resolves_rational_evaluation_and_bounds_blockers() {
     let curve = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![unresolved_positive(), r(1)])
         .unwrap();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     assert_eq!(curve.point_at(&r(0), &policy).unwrap(), p(0, 0));
     assert!(curve.derivative_at(&r(0), &policy).is_ok());
@@ -279,7 +279,7 @@ fn top_level_general_rational_curve_preserves_family_and_native_geometry() {
 #[test]
 fn represented_multi_split_materializes_connected_rational_fragments() {
     let curve = curve();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let split = decided(
         curve
             .split_at_parameters(
@@ -315,7 +315,7 @@ fn represented_multi_split_materializes_connected_rational_fragments() {
 #[test]
 fn general_rational_line_contact_retains_exact_parameter_and_kind() {
     let curve = curve();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let line =
         LineSeg2::try_new(Point2::new(q(49, 20), r(-1)), Point2::new(q(49, 20), r(1))).unwrap();
 
@@ -337,7 +337,7 @@ fn general_rational_line_contact_retains_irrational_crossing_parameter() {
     .unwrap();
     let line = LineSeg2::try_new(Point2::new(r(-1), q(1, 2)), Point2::new(r(2), q(1, 2))).unwrap();
 
-    let relation = decided(curve.relation_to_line_with_contacts(&line, &CurvePolicy::certified()));
+    let relation = decided(curve.relation_to_line_with_contacts(&line, &CurvePolicy::STRICT));
     let BezierLineContactRelation::Contacts { contacts } = relation else {
         panic!("irrational rational-Bezier line root was not retained");
     };
@@ -351,7 +351,7 @@ fn general_rational_line_contact_retains_irrational_crossing_parameter() {
 
 #[test]
 fn every_bezier_family_retains_irrational_line_contacts() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let horizontal_half =
         LineSeg2::try_new(Point2::new(r(-1), q(1, 2)), Point2::new(r(2), q(1, 2))).unwrap();
     let quadratic = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
@@ -400,14 +400,14 @@ fn exact_line_contact_solver_distinguishes_hull_overlap_from_curve_contact() {
     let axis = LineSeg2::try_new(p(-1, 0), p(2, 0)).unwrap();
 
     assert_eq!(
-        curve.relation_to_line_with_contacts(&axis, &CurvePolicy::certified()),
+        curve.relation_to_line_with_contacts(&axis, &CurvePolicy::STRICT),
         Classification::Decided(BezierLineContactRelation::NoContact)
     );
 }
 
 #[test]
 fn general_rational_line_relation_certifies_hull_miss_and_coincidence() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let below = LineSeg2::try_new(p(0, -1), p(4, -1)).unwrap();
     assert!(matches!(
         curve().relation_to_line_with_contacts(&below, &policy),
@@ -429,7 +429,7 @@ fn general_rational_line_relation_certifies_hull_miss_and_coincidence() {
 #[test]
 fn general_rational_point_incidence_rechecks_full_homogeneous_image() {
     let curve = curve();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let midpoint = Point2::new(q(49, 20), q(9, 4));
 
     assert_eq!(
@@ -445,7 +445,7 @@ fn general_rational_point_incidence_rechecks_full_homogeneous_image() {
 fn general_rational_point_incidence_retains_nonlinear_algebraic_parameter() {
     let curve =
         RationalBezier2::try_new(vec![p(0, 0), p(0, 0), p(1, 1)], vec![r(1), r(1), r(1)]).unwrap();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let query = Point2::new(q(1, 2), q(1, 2));
     let incidence = curve.point_incidence(&query, &policy).unwrap();
     let RationalBezierPointIncidence2::Parameters(parameters) = incidence else {
@@ -459,7 +459,7 @@ fn general_rational_point_incidence_retains_nonlinear_algebraic_parameter() {
 
 #[test]
 fn general_rational_point_incidence_retains_endpoint_and_entire_curve_cases() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let parabola =
         RationalBezier2::try_new(vec![p(0, 0), p(0, 0), p(1, 1)], vec![r(1), r(1), r(1)]).unwrap();
     assert_eq!(
@@ -483,7 +483,7 @@ fn general_rational_point_incidence_retains_endpoint_and_entire_curve_cases() {
 #[test]
 fn general_rational_contacts_recognize_projective_scale_and_reversal() {
     let curve = curve();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let scaled = RationalBezier2::try_new(
         curve.control_points().to_vec(),
         vec![r(2), r(4), r(6), r(8)],
@@ -520,7 +520,7 @@ fn general_rational_contacts_recognize_projective_scale_and_reversal() {
 
 #[test]
 fn general_rational_contacts_reject_disjoint_control_hulls() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let shifted = RationalBezier2::try_new(
         vec![p(10, 0), p(11, 3), p(13, 3), p(14, 0)],
         vec![r(1), r(2), r(3), r(4)],
@@ -535,7 +535,7 @@ fn general_rational_contacts_reject_disjoint_control_hulls() {
 
 #[test]
 fn direct_disjoint_conic_cubic_reports_no_candidates_or_contacts() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let conic =
         RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
     let disjoint_cubic =
@@ -559,7 +559,7 @@ fn direct_disjoint_conic_cubic_reports_no_candidates_or_contacts() {
 #[test]
 #[cfg(feature = "predicates")]
 fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let conic =
         RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
     let cubic_line = RationalBezier2::try_new(
@@ -608,7 +608,7 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
 #[test]
 #[cfg(feature = "predicates")]
 fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let conic = RationalBezier2::try_new(
         vec![p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1)],
         vec![Real::one(), Real::pi(), Real::one()],
@@ -659,7 +659,7 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
 #[test]
 #[cfg(feature = "predicates")]
 fn implicit_conic_route_retains_an_interior_rational_quadratic_cubic_contact() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let conic = RationalBezier2::try_new(vec![p(5, 6), p(14, 5), p(23, 6)], vec![r(1), r(2), r(1)])
         .unwrap();
     let cubic = RationalBezier2::try_new(
@@ -686,7 +686,7 @@ fn implicit_conic_route_retains_an_interior_rational_quadratic_cubic_contact() {
 #[test]
 #[cfg(feature = "predicates")]
 fn resultant_replay_retains_an_interior_nonuniform_rational_cubic_contact() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let first = RationalBezier2::try_new(
         vec![p(5, 6), p(11, 5), p(17, 5), p(23, 6)],
         vec![r(1), r(2), r(2), r(1)],
@@ -713,7 +713,7 @@ fn resultant_replay_retains_an_interior_nonuniform_rational_cubic_contact() {
 #[test]
 #[cfg(feature = "predicates")]
 fn polynomial_graph_replay_accepts_unequal_resultant_projection_counts() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let first = RationalBezier2::try_new(
         vec![p(5, 6), p(11, 5), p(17, 5), p(23, 6)],
         vec![r(1), r(2), r(2), r(1)],
@@ -740,7 +740,7 @@ fn polynomial_graph_replay_accepts_unequal_resultant_projection_counts() {
 #[test]
 #[cfg(feature = "predicates")]
 fn implicit_conic_route_does_not_certify_a_tangent_root_as_transverse() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let conic =
         RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
     let tangent_line =
@@ -763,7 +763,7 @@ fn shared_cancellation_resolves_disjoint_rational_contact_blocker() {
 
     assert!(matches!(
         first
-            .intersection_contacts(&second, &CurvePolicy::certified())
+            .intersection_contacts(&second, &CurvePolicy::STRICT)
             .unwrap(),
         RationalBezierIntersectionContacts2::NoIntersection
     ));
@@ -771,7 +771,7 @@ fn shared_cancellation_resolves_disjoint_rational_contact_blocker() {
 
 #[test]
 fn rational_resultant_certifies_disjoint_and_represented_crossing_parameters() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let rising = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![r(1), r(1)]).unwrap();
     let falling = RationalBezier2::try_new(vec![p(0, 1), p(1, 0)], vec![r(1), r(1)]).unwrap();
     let crossing = rising.intersection_candidates(&falling, &policy).unwrap();
@@ -804,7 +804,7 @@ fn rational_resultant_certifies_disjoint_and_represented_crossing_parameters() {
 #[test]
 #[cfg(feature = "predicates")]
 fn rational_resultant_retains_algebraic_parameter_projections() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let parabola = RationalBezier2::try_new(
         vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
         vec![r(1), r(1), r(1)],
@@ -950,7 +950,7 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
 
 #[test]
 fn rational_contacts_replay_represented_resultant_candidates() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let parabola = RationalBezier2::try_new(
         vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
         vec![r(1), r(1), r(1)],
@@ -977,7 +977,7 @@ fn rational_contacts_replay_represented_resultant_candidates() {
 
 #[test]
 fn rational_resultant_replays_identical_and_reversed_full_image_overlap() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let curve = curve();
     assert_eq!(
         curve
@@ -1038,7 +1038,7 @@ fn projectively_reparameterized_rational_quadratic_certifies_shared_conic() {
     )
     .unwrap();
     let contacts = first
-        .intersection_contacts(&second, &CurvePolicy::certified())
+        .intersection_contacts(&second, &CurvePolicy::STRICT)
         .unwrap();
     let RationalBezierIntersectionContacts2::Overlap(overlap) = contacts else {
         panic!("projectively reparameterized conic remained unresolved: {contacts:?}");
@@ -1057,7 +1057,7 @@ fn projectively_reparameterized_rational_quadratic_certifies_shared_conic() {
     );
 
     let RationalBezierIntersectionContacts2::Overlap(reversed) = first
-        .intersection_contacts(&second.reversed(), &CurvePolicy::certified())
+        .intersection_contacts(&second.reversed(), &CurvePolicy::STRICT)
         .unwrap()
     else {
         panic!("reversed projective conic did not retain overlap");
@@ -1074,7 +1074,7 @@ fn projectively_reparameterized_rational_quadratic_certifies_shared_conic() {
 
 #[test]
 fn independently_trimmed_projective_conics_retain_partial_overlap() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let weight = (r(2).sqrt().unwrap() / r(2)).unwrap();
     let controls = vec![p(1, 0), p(1, 1), p(0, 1)];
     let first =
@@ -1120,7 +1120,7 @@ fn independently_trimmed_projective_conics_retain_partial_overlap() {
 
 #[test]
 fn rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = curve();
     let first = decided(
         source
@@ -1195,7 +1195,7 @@ fn rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges() {
 }
 #[test]
 fn independently_constructed_partial_overlap_reconstructs_rational_endpoints() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = curve();
     let source_first = decided(
         source
@@ -1235,7 +1235,7 @@ fn independently_constructed_partial_overlap_reconstructs_rational_endpoints() {
 
 #[test]
 fn line_image_overlap_retains_irrational_algebraic_parameter_boundary() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let quadratic_parameterization = RationalBezier2::try_new(
         vec![p(0, 0), Point2::new(q(1, 4), r(0)), p(1, 0)],
         vec![r(1), r(1), r(1)],
@@ -1268,7 +1268,7 @@ fn line_image_overlap_retains_irrational_algebraic_parameter_boundary() {
 
 #[test]
 fn line_image_overlap_accepts_monotone_parameterization_with_stationary_point() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let stationary_monotone =
         RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(0, 0), p(1, 0)], vec![r(1); 4]).unwrap();
     let upper_half =
@@ -1297,7 +1297,7 @@ fn line_image_overlap_accepts_monotone_parameterization_with_stationary_point() 
 
 #[test]
 fn polynomial_graph_overlap_retains_irrational_curved_boundary() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let partial_parabola = RationalBezier2::try_new(
         vec![
             Point2::new(q(1, 2), q(1, 4)),
@@ -1359,8 +1359,8 @@ fn rational_bezier_degree_elevation_preserves_exact_parameterized_image_and_line
     );
     for parameter in [r(0), q(1, 4), q(1, 2), q(3, 4), r(1)] {
         assert_eq!(
-            elevated.point_at(&parameter, &CurvePolicy::certified()),
-            curve.point_at(&parameter, &CurvePolicy::certified())
+            elevated.point_at(&parameter, &CurvePolicy::STRICT),
+            curve.point_at(&parameter, &CurvePolicy::STRICT)
         );
     }
     assert_eq!(clone.elevated_to_degree(5).unwrap(), elevated);

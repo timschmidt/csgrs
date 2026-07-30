@@ -235,18 +235,18 @@ mod tests {
         let region = LineArcRegion2::new(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
         let line = Curve2::from(LineSeg2::try_new(p(-1, 2), p(7, 2)).unwrap());
         let fragments = line
-            .trim_inside_region(&region, &CurvePolicy::certified())
+            .trim_inside_region(&region, &CurvePolicy::STRICT)
             .unwrap();
         assert_eq!(fragments.len(), 2);
         assert_eq!(
             fragments[0]
-                .representative_point(&CurvePolicy::certified())
+                .representative_point(&CurvePolicy::STRICT)
                 .unwrap(),
             Classification::Decided(p(1, 2))
         );
         assert_eq!(
             fragments[1]
-                .representative_point(&CurvePolicy::certified())
+                .representative_point(&CurvePolicy::STRICT)
                 .unwrap(),
             Classification::Decided(p(5, 2))
         );
@@ -258,18 +258,17 @@ mod tests {
         let circle =
             Curve2::from(CircularArc2::try_from_center(p(2, 0), p(2, 0), p(0, 0), false).unwrap());
         let fragments = circle
-            .trim_inside_region(&region, &CurvePolicy::certified())
+            .trim_inside_region(&region, &CurvePolicy::STRICT)
             .unwrap();
         assert_eq!(fragments.len(), 2);
         for fragment in fragments {
-            let Classification::Decided(point) = fragment
-                .representative_point(&CurvePolicy::certified())
-                .unwrap()
+            let Classification::Decided(point) =
+                fragment.representative_point(&CurvePolicy::STRICT).unwrap()
             else {
                 panic!("retained conic fragment must have an exact representative");
             };
             assert!(matches!(
-                region.classify_point(&point, &CurvePolicy::certified()),
+                region.classify_point(&point, &CurvePolicy::STRICT),
                 Classification::Decided(RegionPointLocation::Inside)
             ));
         }
@@ -286,7 +285,7 @@ mod tests {
         )
         .unwrap();
         let fragments = curve
-            .trim_inside_region_with_parameters(&region, &CurvePolicy::certified())
+            .trim_inside_region_with_parameters(&region, &CurvePolicy::STRICT)
             .unwrap();
         assert_eq!(fragments.len(), 1);
         assert_eq!(fragments[0].promoted_span_index(), 0);
@@ -294,11 +293,11 @@ mod tests {
             .represented_parameter_range()
             .expect("linear boundary roots are represented exactly");
         assert_eq!(
-            crate::classify::compare_reals(&start, &q(9, 4), &CurvePolicy::certified()),
+            crate::classify::compare_reals(&start, &q(9, 4), &CurvePolicy::STRICT),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
-            crate::classify::compare_reals(&end, &q(13, 4), &CurvePolicy::certified()),
+            crate::classify::compare_reals(&end, &q(13, 4), &CurvePolicy::STRICT),
             Some(std::cmp::Ordering::Equal)
         );
     }

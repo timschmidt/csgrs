@@ -64,7 +64,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let Ok(Classification::Decided(polynomial)) = BezierParameterPolynomial::try_new_power_basis(
         vec![Real::from(-1), Real::from(2)],
         &policy,

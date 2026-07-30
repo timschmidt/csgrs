@@ -12,7 +12,7 @@ fn line(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> hypercurve::Curve
 }
 
 fn main() -> hypercurve::CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let boundary = vec![
         line(0, 0, 4, 0)?,
         line(4, 0, 4, 4)?,

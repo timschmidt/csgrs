@@ -232,7 +232,7 @@ pub struct ContourFragmentSet {
 impl ContourFragmentSet {
     /// Constructs a fragment set from already-built fragments.
     pub fn new(fragments: Vec<ContourFragment>) -> CurveResult<Self> {
-        Self::new_with_policy(fragments, &CurvePolicy::certified())
+        Self::new_with_policy(fragments, &CurvePolicy::STRICT)
     }
 
     fn new_with_policy(fragments: Vec<ContourFragment>, policy: &CurvePolicy) -> CurveResult<Self> {
@@ -868,7 +868,7 @@ mod tests {
             point: point(coordinate),
         };
         let markers = [marker(0, 0), marker(2, 1), marker(4, 2), marker(6, 3)];
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let mut fragments = Vec::new();
 
         assert!(matches!(
@@ -930,7 +930,7 @@ mod tests {
         );
 
         assert_eq!(
-            first.retained_support_intervals_decided_disjoint(&last, &CurvePolicy::certified()),
+            first.retained_support_intervals_decided_disjoint(&last, &CurvePolicy::STRICT),
             Some(true)
         );
     }

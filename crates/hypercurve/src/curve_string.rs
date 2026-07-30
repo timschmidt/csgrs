@@ -107,7 +107,7 @@ impl CurveString2 {
                     return Err(CurveError::DisconnectedCurveString);
                 }
                 hyperreal::ZeroKnowledge::Unknown => {
-                    match is_zero(&distance, &CurvePolicy::certified()) {
+                    match is_zero(&distance, &CurvePolicy::STRICT) {
                         Some(true) => {}
                         Some(false) => return Err(CurveError::DisconnectedCurveString),
                         None => return Err(CurveError::AmbiguousCurveStringConnection),

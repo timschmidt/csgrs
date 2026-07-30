@@ -36,9 +36,7 @@ fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurveRegion2 {
 
 fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLocation) {
     assert_eq!(
-        region
-            .classify_point(&point, &CurvePolicy::certified())
-            .unwrap(),
+        region.classify_point(&point, &CurvePolicy::STRICT).unwrap(),
         Classification::Decided(expected)
     );
 }
@@ -47,7 +45,7 @@ fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLo
 fn curved_regions_immediate_batch_reuses_pair_topology() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let contacts = first.intersect_region(&second, &policy).unwrap();
     assert!(contacts.is_complete());
     assert!(!contacts.is_disjoint());
@@ -95,7 +93,7 @@ fn curved_region_boolean_output_can_feed_another_boolean() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);
     let third = square(4, 0, 8, 4);
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     let first_union = first
         .boolean_region(&second, BooleanOp::Union, &policy)
@@ -118,7 +116,7 @@ fn curved_region_boolean_respects_nested_hole_roles() {
     ])
     .unwrap();
     let island = square(4, 4, 6, 6);
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     let union = ring
         .boolean_region(&island, BooleanOp::Union, &policy)
@@ -146,7 +144,7 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     ])
     .unwrap();
     let cutter_path = square_path(-3, 2, 3, 5);
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let algebraic = curved
         .boolean_region(
             &cutter_path,
@@ -204,7 +202,7 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
         Curve2::from(LineSeg2::try_new(point(2, 4), point(-2, 4)).unwrap()),
     ])
     .unwrap();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let narrow = curved
         .boolean_region(
             &square_path(-3, -1, 3, 2),

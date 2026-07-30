@@ -116,7 +116,7 @@ pub(crate) fn classify_oriented_line(
         // certified predicate path rather than comparing approximate floats,
         // matching robust-predicate practice for topology
         // branches.
-        let predicate_outcome = hyperlimit::orient2_with_policy(
+        let predicate_outcome = hyperlimit::orient2(
             &predicate_point(from),
             &predicate_point(to),
             &predicate_point(point),
@@ -174,7 +174,7 @@ pub(crate) fn real_sign(value: &Real, policy: &CurvePolicy) -> Option<RealSign> 
 
     #[cfg(feature = "predicates")]
     {
-        hyperlimit::classify_real_sign_with_policy(value, policy.predicate_policy)
+        hyperlimit::classify_real_sign(value, policy.predicate_policy)
             .value()
             .map(|sign| match sign {
                 hyperlimit::Sign::Negative => RealSign::Negative,
@@ -216,7 +216,7 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> 
         // This follows the exactness model's exact geometric computation split between exact
         // predicate decisions and approximate edge views.
         if let Some(ordering) =
-            hyperlimit::compare_reals_with_policy(left, right, policy.predicate_policy).value()
+            hyperlimit::compare_reals(left, right, policy.predicate_policy).value()
         {
             return Some(ordering);
         }

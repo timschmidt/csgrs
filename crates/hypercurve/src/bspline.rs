@@ -1212,7 +1212,7 @@ fn validate_span_fact_evidence(
     weight_domain: Option<&RetainedSpanWeightDomainEvidence2>,
 ) -> CurveResult<()> {
     validate_positive_knot_interval(knot_start, knot_end)?;
-    match bounds.has_valid_ordering(&CurvePolicy::certified()) {
+    match bounds.has_valid_ordering(&CurvePolicy::STRICT) {
         Classification::Decided(true) => {}
         Classification::Decided(false) => {
             return Err(CurveError::Topology(
@@ -1271,7 +1271,7 @@ fn validate_span_fact_evidence_evidence(
             "retained span fact evidence must carry at least one span".into(),
         ));
     }
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for (expected_index, fact) in span_facts.iter().enumerate() {
         if fact.span_index() != expected_index {
             return Err(CurveError::Topology(
@@ -1302,7 +1302,7 @@ fn validate_span_topology_evidence_evidence(
         ));
     }
     let degree = span_evidence[0].degree();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for (expected_index, evidence) in span_evidence.iter().enumerate() {
         if evidence.span_index() != expected_index {
             return Err(CurveError::Topology(
@@ -1402,7 +1402,7 @@ fn validate_rational_span_topology_evidence(
 }
 
 fn validate_positive_knot_interval(knot_start: &Real, knot_end: &Real) -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     if compare_reals(knot_start, knot_end, &policy) != Some(Ordering::Less) {
         return Err(CurveError::Topology(
             "retained B-spline span evidence must carry certified positive knot interval".into(),
@@ -2242,7 +2242,7 @@ mod tests {
 
     #[test]
     fn binary_knot_search_matches_complete_scan_on_large_repeated_vectors() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let mut state = 0x9e37_79b9_u64;
         for case in 0..128_usize {
             state = state
@@ -2300,7 +2300,7 @@ mod tests {
 
     #[test]
     fn retained_periodicity_survives_knot_insertion() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let periodicity = SplinePeriodicity2::Periodic {
             period: Real::from(4),
         };
@@ -2345,7 +2345,7 @@ mod tests {
             SplinePeriodicity2::Periodic {
                 period: Real::from(5),
             },
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         );
         assert_eq!(result.unwrap_err(), CurveError::InvalidPeriodicSpline);
     }

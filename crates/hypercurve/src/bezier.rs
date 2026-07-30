@@ -198,13 +198,8 @@ impl QuadraticBezier2 {
     pub fn interpolate_midpoint(start: Point2, midpoint: Point2, end: Point2) -> CurveResult<Self> {
         let two = Real::from(2_i8);
         let half = (Real::one() / two.clone())?;
-        let Classification::Decided(curve) = Self::interpolate_point_at_parameter(
-            start,
-            half,
-            midpoint,
-            end,
-            &CurvePolicy::certified(),
-        )?
+        let Classification::Decided(curve) =
+            Self::interpolate_point_at_parameter(start, half, midpoint, end, &CurvePolicy::STRICT)?
         else {
             unreachable!("the exact half parameter is strictly interior")
         };

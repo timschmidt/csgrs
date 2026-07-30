@@ -24,7 +24,7 @@ fn decided<T>(classification: Classification<T>) -> T {
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let bernstein_coefficients = (0..=32).map(|index| r((index % 7) - 3)).collect::<Vec<_>>();
     let conversion_iterations = 20_000_u32;
     let started = Instant::now();

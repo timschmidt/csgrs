@@ -804,7 +804,7 @@ fn trim_polynomial(coefficients: &[Real]) -> Option<Vec<Real>> {
 
 fn trim_polynomial_in_place(coefficients: &mut Vec<Real>) -> Option<()> {
     while coefficients.last().is_some_and(|coefficient| {
-        compare_reals(coefficient, &Real::zero(), &CurvePolicy::certified())
+        compare_reals(coefficient, &Real::zero(), &CurvePolicy::STRICT)
             == Some(std::cmp::Ordering::Equal)
     }) {
         coefficients.pop();

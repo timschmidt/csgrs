@@ -27,7 +27,7 @@ fn decided<T>(classification: Classification<T>) -> T {
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let curve = CubicBezier2::new(p(0, 0), p(2, 6), p(6, -2), p(8, 0));
     let parameters = [
         decided(BezierParameter2::exact(q(1, 4), &policy)?),

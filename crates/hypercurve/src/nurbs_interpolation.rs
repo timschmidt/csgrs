@@ -287,11 +287,8 @@ fn uniform_interpolation_system(
 fn interpolation_determinant(coefficient_matrix: &[Vec<Real>]) -> ExactCurveResult<Real> {
     let evidence = determinant_bareiss(coefficient_matrix, INTERPOLATION_SOLVE_PRECISION)
         .map_err(interpolation_solve_error)?;
-    match crate::classify::compare_reals(
-        &evidence.determinant,
-        &Real::zero(),
-        &CurvePolicy::certified(),
-    ) {
+    match crate::classify::compare_reals(&evidence.determinant, &Real::zero(), &CurvePolicy::STRICT)
+    {
         Some(Ordering::Less | Ordering::Greater) => Ok(evidence.determinant),
         Some(Ordering::Equal) => Err(ExactCurveError::invalid(
             CurveOperation2::Interpolation,
@@ -400,7 +397,7 @@ fn distance_interpolation_parameters(
     if data_points.len() < 2 {
         return Err(invalid_interpolation());
     }
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mut increments = Vec::with_capacity(data_points.len() - 1);
     for pair in data_points.windows(2) {
         let chord = pair[0].distance_squared(&pair[1]).sqrt().map_err(|cause| {
@@ -447,7 +444,7 @@ fn distance_interpolation_parameters(
 }
 
 fn certify_interpolation_denominator(denominator: &Real) -> ExactCurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match crate::classify::compare_reals(denominator, &Real::zero(), &policy) {
         Some(Ordering::Less | Ordering::Greater) => Ok(()),
         Some(Ordering::Equal) => Err(ExactCurveError::invalid(
@@ -531,7 +528,7 @@ fn validate_interpolation_inputs(
         return Err(invalid_interpolation());
     }
     validate_strict_parameters(parameters)?;
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for pair in knots.windows(2) {
         match crate::classify::compare_reals(&pair[0], &pair[1], &policy) {
             Some(Ordering::Less | Ordering::Equal) => {}
@@ -553,7 +550,7 @@ fn validate_strict_parameters(parameters: &[Real]) -> ExactCurveResult<()> {
     if parameters.len() < 2 {
         return Err(invalid_interpolation());
     }
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for pair in parameters.windows(2) {
         match crate::classify::compare_reals(&pair[0], &pair[1], &policy) {
             Some(Ordering::Less) => {}
@@ -609,7 +606,7 @@ fn interpolation_span(
     knots: &[Real],
     parameter: &Real,
 ) -> ExactCurveResult<usize> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let last_control = control_count - 1;
     match crate::classify::compare_reals(parameter, &knots[control_count], &policy) {
         Some(Ordering::Equal) => return Ok(last_control),
@@ -630,7 +627,7 @@ fn interpolation_span(
 }
 
 fn exact_scalar_equal(first: &Real, second: &Real) -> ExactCurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match crate::classify::compare_reals(first, second, &policy) {
         Some(Ordering::Equal) => Ok(()),
         Some(_) => Err(invalid_interpolation()),

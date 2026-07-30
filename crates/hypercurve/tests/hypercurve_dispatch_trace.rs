@@ -15,7 +15,7 @@ fn public_curve_query_emits_correlated_exact_path_trace() {
 
     hyperreal::dispatch_trace::reset();
     let relation = hyperreal::dispatch_trace::with_recording(|| {
-        horizontal.intersect_line(&vertical, &CurvePolicy::certified())
+        horizontal.intersect_line(&vertical, &CurvePolicy::STRICT)
     })
     .unwrap();
     assert!(!matches!(relation, hypercurve::LineLineIntersection::None));
@@ -60,7 +60,7 @@ fn public_straight_skeleton_emits_correlated_exact_path_trace() {
 
     hyperreal::dispatch_trace::reset();
     let evidence = hyperreal::dispatch_trace::with_recording(|| {
-        contour.straight_skeleton(&CurvePolicy::certified())
+        contour.straight_skeleton(&CurvePolicy::STRICT)
     })
     .unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);

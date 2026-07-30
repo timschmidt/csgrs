@@ -2635,7 +2635,7 @@ mod conversion_tests {
         let coefficients =
             power_to_bernstein_coefficients(&[Real::zero(), Real::one()], degree).unwrap();
         let degree_real = Real::from(u64::try_from(degree).unwrap());
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         assert_eq!(coefficients.len(), degree + 1);
         for (index, coefficient) in coefficients.iter().enumerate() {

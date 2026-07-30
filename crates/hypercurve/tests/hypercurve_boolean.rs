@@ -85,7 +85,7 @@ fn assert_exact_boolean_matrix(
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 
 #[test]

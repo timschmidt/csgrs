@@ -43,7 +43,7 @@ impl Similarity2 {
     ) -> CurveResult<Self> {
         let first_len_squared = a.clone() * a.clone() + d.clone() * d.clone();
         let second_len_squared = b.clone() * b.clone() + e.clone() * e.clone();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let equal_scale =
             crate::classify::real_sign(&(first_len_squared - second_len_squared), &policy);
         let orthogonal =

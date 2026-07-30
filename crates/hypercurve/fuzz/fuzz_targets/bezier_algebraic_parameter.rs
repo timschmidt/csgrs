@@ -19,7 +19,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let polynomial = match BezierParameterPolynomial::try_new_power_basis(
         vec![
             real_from_byte(data[0]),

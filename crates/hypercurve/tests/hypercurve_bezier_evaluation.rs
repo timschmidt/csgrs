@@ -94,7 +94,7 @@ fn optimized_polynomial_evaluation_matches_de_casteljau_exactly() {
 
 #[test]
 fn certified_exact_scalar_segmentation_covers_rational_bezier_and_nurbs() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let options = BezierFlatteningOptions::try_new(q(1, 64), 16, &policy).unwrap();
     let rational = Curve2::from(
         RationalBezier2::try_new(

@@ -63,7 +63,7 @@ fn trace<T>(name: &str, workload: impl FnOnce() -> CurveResult<T>) {
 }
 
 fn main() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let horizontal = LineSeg2::try_new(p(-4, 0), p(4, 0)).expect("line is valid");
     let vertical = LineSeg2::try_new(p(0, -4), p(0, 4)).expect("line is valid");
     trace("line_line_intersection", || {

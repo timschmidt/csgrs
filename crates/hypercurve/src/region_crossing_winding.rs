@@ -517,7 +517,7 @@ mod tests {
 
     #[test]
     fn lossy_crossing_order_is_exactly_certified_and_rejects_duplicates() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let point = Point2::new(Real::zero(), Real::zero());
         let large = 1_i128 << 100;
         let lower = Real::from(large);
@@ -546,7 +546,7 @@ mod tests {
 
     #[test]
     fn grouped_crossing_sort_builds_offsets_and_certifies_local_order() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let point = Point2::new(Real::zero(), Real::zero());
         let lower = Real::from(1_i8);
         let upper = Real::from(2_i8);
@@ -575,7 +575,7 @@ mod tests {
 
     #[test]
     fn grouped_crossing_sort_bounds_dense_segment_insertion_work() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let point = Point2::new(Real::zero(), Real::zero());
         let parameters = (0..32).map(Real::from).collect::<Vec<_>>();
         let mut crossings = parameters

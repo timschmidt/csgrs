@@ -170,7 +170,7 @@ impl RationalQuadraticBezier2 {
         }
         let classified_common_weight_sign = common_weight_sign_for_values(
             [&start_weight, &control_weight, &end_weight],
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         );
         debug_assert!(
             classified_common_weight_sign.is_none()
@@ -3805,7 +3805,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            relation_to_polynomial_bezier(&rational, &[], &CurvePolicy::certified()),
+            relation_to_polynomial_bezier(&rational, &[], &CurvePolicy::STRICT),
             Classification::Uncertain(UncertaintyReason::Unsupported)
         );
         assert_eq!(polynomial_point_at(&[], Real::zero()), None);
@@ -3919,7 +3919,7 @@ mod tests {
         let relation = same_parameter_dyadic_rational_polynomial_relation(
             &rational,
             &controls,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         );
 
         match relation {

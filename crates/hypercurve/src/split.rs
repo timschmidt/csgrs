@@ -564,7 +564,7 @@ fn validate_split_param_sequence<'a>(
         ));
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     if compare_reals(params[0], &Real::zero(), &policy) != Some(Ordering::Equal)
         || compare_reals(params[params.len() - 1], &Real::one(), &policy) != Some(Ordering::Equal)
     {

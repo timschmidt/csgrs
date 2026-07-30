@@ -200,7 +200,7 @@ fn decided<T>(classification: Classification<T>) -> T {
 
 #[test]
 fn unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let contour = bow_tie_contour(FillRule::EvenOdd);
 
     let region =
@@ -213,7 +213,7 @@ fn unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics(
 
 #[test]
 fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentation() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(-2, 0), p(0, 4), p(2, 0))),
         Curve2::from(LineSeg2::try_new(p(2, 0), p(2, -2)).unwrap()),
@@ -274,7 +274,7 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
 
 #[test]
 fn unified_region_bounds_cover_native_and_higher_order_carriers_exactly() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let native = CurveRegion2::try_from_line_arc_region(
         &LineArcRegion2::from_material_contours(vec![square(-3, -2, 7, 5)]),
         &policy,
@@ -308,7 +308,7 @@ fn unified_region_bounds_cover_native_and_higher_order_carriers_exactly() {
 
 #[test]
 fn unified_region_offset_regularizes_overlapping_expanded_components() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source =
         LineArcRegion2::from_material_contours(vec![square(0, 0, 2, 2), square(4, 0, 6, 2)]);
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
@@ -326,7 +326,7 @@ fn unified_region_offset_regularizes_overlapping_expanded_components() {
 
 #[test]
 fn unified_region_offset_regularizes_overlapping_expanded_voids() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = LineArcRegion2::new(
         vec![square(0, 0, 20, 16)],
         vec![square(5, 5, 7, 7), square(9, 5, 11, 7)],
@@ -346,7 +346,7 @@ fn unified_region_offset_regularizes_overlapping_expanded_voids() {
 
 #[test]
 fn unified_region_expansion_regularizes_a_closed_concavity() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = LineArcRegion2::from_material_contours(vec![u_shape()]);
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
@@ -371,7 +371,7 @@ fn unified_region_expansion_regularizes_a_closed_concavity() {
 
 #[test]
 fn unified_region_contracts_nonconvex_material_before_its_medial_collapse() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = CurveRegion2::try_from_native_material_contours(vec![u_shape()], &policy).unwrap();
 
     let eroded = decided(source.offset(-Real::one(), &policy).unwrap());
@@ -388,7 +388,7 @@ fn unified_region_contracts_nonconvex_material_before_its_medial_collapse() {
 
 #[test]
 fn unified_region_discards_nonconvex_material_after_wavefront_collapse() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = CurveRegion2::try_from_native_material_contours(vec![u_shape()], &policy).unwrap();
 
     let eroded = decided(source.offset(Real::from(-2), &policy).unwrap());
@@ -402,7 +402,7 @@ fn unified_region_discards_nonconvex_material_after_wavefront_collapse() {
 
 #[test]
 fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source =
         CurveRegion2::try_from_native_material_contours(vec![dumbbell_shape()], &policy).unwrap();
 
@@ -425,7 +425,7 @@ fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
 
 #[test]
 fn unified_region_convex_contraction_decides_collapse_and_over_contraction() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source =
         CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)], &policy).unwrap();
 
@@ -441,7 +441,7 @@ fn unified_region_convex_contraction_decides_collapse_and_over_contraction() {
 
 #[test]
 fn unified_region_convex_erosion_handles_orientation_and_redundant_edges() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for contour in [reversed(&square(0, 0, 4, 4)), square_with_redundant_edge()] {
         let source =
             CurveRegion2::try_from_native_material_contours(vec![contour], &policy).unwrap();
@@ -460,7 +460,7 @@ fn unified_region_convex_erosion_handles_orientation_and_redundant_edges() {
 
 #[test]
 fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_exact() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source =
         CurveRegion2::try_from_native_material_contours(vec![right_isosceles_triangle()], &policy)
             .unwrap();
@@ -517,7 +517,7 @@ fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_ex
 
 #[test]
 fn unified_region_positive_offset_removes_exactly_collapsed_convex_hole() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = CurveRegion2::try_from_native_contours(
         vec![square(0, 0, 20, 20)],
         vec![square(5, 5, 15, 15)],
@@ -536,12 +536,9 @@ fn unified_region_positive_offset_removes_exactly_collapsed_convex_hole() {
 #[test]
 fn unified_native_arrangement_exposes_immediate_evidence() {
     let source = square(0, 0, 4, 4).segments().to_vec();
-    let result = CurveRegion2::arrange_unordered_segments(
-        source,
-        FillRule::NonZero,
-        &CurvePolicy::certified(),
-    )
-    .unwrap();
+    let result =
+        CurveRegion2::arrange_unordered_segments(source, FillRule::NonZero, &CurvePolicy::STRICT)
+            .unwrap();
 
     assert!(result.region().is_some());
     assert_eq!(result.fill_rule(), FillRule::NonZero);
@@ -553,7 +550,7 @@ fn unified_native_arrangement_exposes_immediate_evidence() {
 
 #[test]
 fn native_self_crossing_walk_regularizes_with_both_fill_rules() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
         let contour = bow_tie_contour(fill_rule);
         let classification =
@@ -583,7 +580,7 @@ fn native_self_crossing_walk_regularizes_with_both_fill_rules() {
 
 #[test]
 fn native_self_overlap_regularization_honors_winding_multiplicity() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     let nonzero = decided(
         CurveRegion2::try_from_regularized_native_contour(
@@ -612,7 +609,7 @@ fn native_self_overlap_regularization_honors_winding_multiplicity() {
 
 #[test]
 fn region_promotion_retains_explicit_roles_and_line_fast_path() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = LineArcRegion2::new(vec![square(0, 0, 10, 10), square(2, 2, 8, 8)], Vec::new());
 
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
@@ -649,7 +646,7 @@ fn region_promotion_retains_explicit_roles_and_line_fast_path() {
 
 #[test]
 fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = LineArcRegion2::new(vec![square(0, 0, 10, 10), square(2, 2, 8, 8)], Vec::new());
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
@@ -683,7 +680,7 @@ fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
 
 #[test]
 fn similarity_rotation_preserves_unified_region_semantics_and_fast_path() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let region = CurveRegion2::try_from_native_contours(
         vec![square(0, 0, 10, 10)],
         vec![square(2, 2, 8, 8)],
@@ -722,7 +719,7 @@ fn similarity_rotation_preserves_unified_region_semantics_and_fast_path() {
 
 #[test]
 fn exact_profiles_assign_holes_to_the_smallest_containing_material() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = LineArcRegion2::new(
         vec![square(0, 0, 10, 10), square(2, 2, 8, 8)],
         vec![square(3, 3, 7, 7)],
@@ -743,7 +740,7 @@ fn exact_profiles_assign_holes_to_the_smallest_containing_material() {
 
 #[test]
 fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for (fill_rule, expected) in [
         (FillRule::NonZero, RegionPointLocation::Inside),
         (FillRule::EvenOdd, RegionPointLocation::Outside),
@@ -776,7 +773,7 @@ fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
 
 #[test]
 fn authored_loop_semantics_drive_nonzero_and_even_odd_classification() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for (fill_rule, expected) in [
         (FillRule::NonZero, RegionPointLocation::Inside),
         (FillRule::EvenOdd, RegionPointLocation::Outside),
@@ -807,7 +804,7 @@ fn authored_loop_semantics_drive_nonzero_and_even_odd_classification() {
 
 #[test]
 fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for (fill_rule, expected) in [
         (FillRule::NonZero, RegionPointLocation::Inside),
         (FillRule::EvenOdd, RegionPointLocation::Outside),
@@ -862,7 +859,7 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
 
 #[test]
 fn nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[bow_tie_path()],
         &[CurveRegionLoopRole::Material],
@@ -879,7 +876,7 @@ fn nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area() {
 
 #[test]
 fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let region = CurveRegion2::try_from_native_contours(
         vec![square(0, 0, 10, 10), square(2, 2, 8, 8)],
         vec![square(4, 4, 6, 6)],
@@ -933,7 +930,7 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
 }
 #[test]
 fn authored_line_arc_paths_retain_the_native_offset_engine() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[full_circle_path(5)],
         &[CurveRegionLoopRole::Material],
@@ -955,7 +952,7 @@ fn authored_line_arc_paths_retain_the_native_offset_engine() {
 
 #[test]
 fn authored_nested_material_roles_certify_filled_sides_directly() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let outer = path_from_contour(&square(0, 0, 10, 10));
     let inner = path_from_contour(&square(2, 2, 8, 8));
     let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -980,7 +977,7 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
 }
 #[test]
 fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = LineArcRegion2::from_material_contours(vec![square(0, 0, 4, 4)]);
     let region = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
@@ -1023,7 +1020,7 @@ fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
 
 #[test]
 fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[quadratic_fillet_path()],
         &[CurveRegionLoopRole::Material],
@@ -1062,7 +1059,7 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
 
 #[test]
 fn unified_region_offset_expands_material_and_contracts_holes() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = LineArcRegion2::new(vec![square(0, 0, 10, 10)], vec![square(3, 3, 7, 7)]);
     let region = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
@@ -1089,7 +1086,7 @@ fn unified_region_offset_expands_material_and_contracts_holes() {
 
 #[test]
 fn region_promotion_retains_hole_role_for_projection() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let source = LineArcRegion2::new(vec![square(0, 0, 10, 10)], vec![square(2, 2, 8, 8)]);
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
@@ -1123,7 +1120,7 @@ fn region_promotion_retains_hole_role_for_projection() {
 
 #[test]
 fn empty_region_promotion_is_decided_and_reusable() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let promoted =
         CurveRegion2::try_from_line_arc_region(&LineArcRegion2::empty(), &policy).unwrap();
 

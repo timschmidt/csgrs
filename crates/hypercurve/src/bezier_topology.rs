@@ -98,7 +98,7 @@ pub struct BezierGraphContact {
 impl BezierGraphContact {
     /// Constructs a represented shared-graph contact.
     pub fn new(parameter: Real, kind: BezierLineContactKind) -> CurveResult<Self> {
-        match in_closed_unit_interval(&parameter, &CurvePolicy::certified()) {
+        match in_closed_unit_interval(&parameter, &CurvePolicy::STRICT) {
             Some(true) => Ok(Self { parameter, kind }),
             Some(false) | None => Err(CurveError::Topology(
                 "Bezier graph contact parameter must be certified inside the unit interval".into(),
@@ -189,7 +189,7 @@ impl BezierCurveIntersectionRegion {
 impl BezierMonotoneSpan {
     /// Constructs a closed monotone parameter span.
     pub fn new(start: Real, end: Real) -> CurveResult<Self> {
-        match compare_reals(&start, &end, &CurvePolicy::certified()) {
+        match compare_reals(&start, &end, &CurvePolicy::STRICT) {
             Some(Ordering::Less | Ordering::Equal) => Ok(Self { start, end }),
             Some(Ordering::Greater) | None => Err(CurveError::Topology(
                 "Bezier monotone span endpoints must be certified in nondecreasing order".into(),
@@ -292,7 +292,7 @@ pub enum BezierLineContactRelation {
 impl BezierLineContact {
     /// Constructs an exact Bezier/supporting-line contact.
     pub fn new(parameter: BezierParameter2, kind: BezierLineContactKind) -> CurveResult<Self> {
-        match parameter.known_interval(&CurvePolicy::certified()) {
+        match parameter.known_interval(&CurvePolicy::STRICT) {
             Ok(Classification::Decided(_)) => Ok(Self {
                 parameter,
                 kind,
@@ -4079,7 +4079,7 @@ mod tests {
 
     #[test]
     fn shared_axis_sign_pruned_schedule_discards_strictly_separated_graphs() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let quadratic = [p(0, 0), p(3, 10), p(6, 0)];
         let cubic = [p(0, 20), p(2, 20), p(4, 20), p(6, 20)];
         let quadratic_refs = refs(&quadratic);
@@ -4099,7 +4099,7 @@ mod tests {
 
     #[test]
     fn shared_axis_sign_pruned_schedule_keeps_frontier_boundary_roots() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let quadratic = [p(0, 0), p(3, 255), p(6, 0)];
         let cubic = [p(0, 1), p(2, 0), p(4, 0), p(6, -511)];
         let quadratic_refs = refs(&quadratic);

@@ -2004,7 +2004,7 @@ mod tests {
         let hole = rectangle_at(1, 1, 3, 3);
         let ring = LineArcRegion2::new(vec![outer], vec![hole.clone()]);
         let plug = LineArcRegion2::from_material_contours(vec![hole]);
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         let intersection = decided_region(ring.boolean_region(
             &plug,
@@ -2095,7 +2095,7 @@ mod tests {
                 real(0),
                 true,
                 BooleanOp::Union,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             ),
             Classification::Uncertain(UncertaintyReason::Unsupported)
         );

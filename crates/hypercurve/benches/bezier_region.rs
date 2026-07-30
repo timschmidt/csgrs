@@ -156,7 +156,7 @@ fn retained_algebraic_line_fragment(
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let moment_curve = hypercurve::CubicBezier2::new(p(0, 0), p(1, 3), p(3, -2), p(4, 0));
     let moment_iterations = 20_000_u32;
     let started = Instant::now();

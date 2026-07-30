@@ -9967,7 +9967,7 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let evidence = path.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        let evidence = path.straight_skeleton(&CurvePolicy::STRICT).unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
 
         let line_start = Point2::new(r(0), r(0));
@@ -10040,7 +10040,7 @@ mod tests {
                 ),
             ])
             .unwrap();
-            let evidence = path.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            let evidence = path.straight_skeleton(&CurvePolicy::STRICT).unwrap();
             assert_eq!(
                 evidence.stage(),
                 StraightSkeletonStage2::Complete,
@@ -10097,7 +10097,7 @@ mod tests {
             ])
             .unwrap();
             let evidence = rational_sector
-                .straight_skeleton(&CurvePolicy::certified())
+                .straight_skeleton(&CurvePolicy::STRICT)
                 .unwrap();
             assert_eq!(
                 evidence.stage(),
@@ -10115,7 +10115,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            rational_bezier_circular_arc(&noncircular_rational, &CurvePolicy::certified()).unwrap(),
+            rational_bezier_circular_arc(&noncircular_rational, &CurvePolicy::STRICT).unwrap(),
             Classification::Decided(None)
         );
 
@@ -10134,9 +10134,7 @@ mod tests {
             )),
         ])
         .unwrap();
-        let evidence = unsupported
-            .straight_skeleton(&CurvePolicy::certified())
-            .unwrap();
+        let evidence = unsupported.straight_skeleton(&CurvePolicy::STRICT).unwrap();
         assert_eq!(
             evidence.blocker(),
             Some(&StraightSkeletonBlocker2::UnsupportedCurveFamily {
@@ -10164,7 +10162,7 @@ mod tests {
         ])
         .unwrap();
         let Classification::Decided(trajectories) = source
-            .straight_skeleton_vertex_trajectories(&CurvePolicy::certified())
+            .straight_skeleton_vertex_trajectories(&CurvePolicy::STRICT)
             .unwrap()
         else {
             panic!("mixed line/arc trajectories must be decided");
@@ -10179,10 +10177,7 @@ mod tests {
                 panic!("line/circle vertex must retain a conic");
             };
             assert_eq!(
-                real_sign(
-                    &conic.evaluate(trajectory.start()),
-                    &CurvePolicy::certified()
-                ),
+                real_sign(&conic.evaluate(trajectory.start()), &CurvePolicy::STRICT),
                 Some(RealSign::Zero)
             );
             assert_eq!(
@@ -10228,7 +10223,7 @@ mod tests {
                 ),
             ])
             .unwrap();
-            let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
             assert_eq!(
                 evidence.stage(),
                 StraightSkeletonStage2::Complete,
@@ -10261,7 +10256,7 @@ mod tests {
                 assert_eq!(
                     real_sign(
                         &branch.equation().evaluate(terminal.point()),
-                        &CurvePolicy::certified()
+                        &CurvePolicy::STRICT
                     ),
                     Some(RealSign::Zero)
                 );
@@ -10295,7 +10290,7 @@ mod tests {
                 Segment2::Line(LineSeg2::try_new(first_line_end, second_line_end).unwrap()),
             ])
             .unwrap();
-            let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
             assert_eq!(
                 evidence.stage(),
                 StraightSkeletonStage2::Complete,
@@ -10327,7 +10322,7 @@ mod tests {
                         assert_eq!(
                             real_sign(
                                 &branch.equation().evaluate(source_node.point()),
-                                &CurvePolicy::certified()
+                                &CurvePolicy::STRICT
                             ),
                             Some(RealSign::Zero)
                         );
@@ -10356,7 +10351,7 @@ mod tests {
         ])
         .unwrap();
         let Classification::Decided(events) = sector
-            .straight_skeleton_local_arc_events(&CurvePolicy::certified())
+            .straight_skeleton_local_arc_events(&CurvePolicy::STRICT)
             .unwrap()
         else {
             panic!("sector local event must be decided");
@@ -10379,7 +10374,7 @@ mod tests {
         ])
         .unwrap();
         let bubble_events = bubble_source
-            .straight_skeleton_local_arc_events(&CurvePolicy::certified())
+            .straight_skeleton_local_arc_events(&CurvePolicy::STRICT)
             .unwrap();
         let Classification::Decided(events) = bubble_events else {
             panic!("bubble local event must be decided: {bubble_events:?}");
@@ -10387,7 +10382,7 @@ mod tests {
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].kind(), StraightSkeletonLocalArcEventKind2::Bubble);
         let Classification::Decided(splices) = bubble_source
-            .straight_skeleton_splice_events(&CurvePolicy::certified())
+            .straight_skeleton_splice_events(&CurvePolicy::STRICT)
             .unwrap()
         else {
             panic!("bubble fixture splice candidates must be decided");
@@ -10399,7 +10394,7 @@ mod tests {
                 .all(|event| [1, 2].contains(&event.source_vertex()))
         );
         let evidence = bubble_source
-            .straight_skeleton(&CurvePolicy::certified())
+            .straight_skeleton(&CurvePolicy::STRICT)
             .unwrap();
         assert_eq!(
             evidence.stage(),
@@ -10410,7 +10405,7 @@ mod tests {
         let skeleton = evidence.skeleton().unwrap();
         assert!(skeleton.nodes().len() > bubble_source.segments().len());
         assert!(matches!(
-            compare_reals(skeleton.maximum_time(), &r(1), &CurvePolicy::certified()),
+            compare_reals(skeleton.maximum_time(), &r(1), &CurvePolicy::STRICT),
             Some(Ordering::Equal | Ordering::Greater)
         ));
         let bubble_node = skeleton
@@ -10442,9 +10437,7 @@ mod tests {
             ),
         ])
         .unwrap();
-        let evidence = clockwise
-            .straight_skeleton(&CurvePolicy::certified())
-            .unwrap();
+        let evidence = clockwise.straight_skeleton(&CurvePolicy::STRICT).unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -10472,7 +10465,7 @@ mod tests {
         ])
         .unwrap();
         let Classification::Decided(events) = contour
-            .straight_skeleton_local_arc_events(&CurvePolicy::certified())
+            .straight_skeleton_local_arc_events(&CurvePolicy::STRICT)
             .unwrap()
         else {
             panic!("branch validation must be decided");
@@ -10503,16 +10496,16 @@ mod tests {
         assert_eq!(
             real_sign(
                 &source.signed_area().unwrap().unwrap(),
-                &CurvePolicy::certified()
+                &CurvePolicy::STRICT
             ),
             Some(RealSign::Positive)
         );
         assert_eq!(
-            source.has_self_contacts(&CurvePolicy::certified()).unwrap(),
+            source.has_self_contacts(&CurvePolicy::STRICT).unwrap(),
             Classification::Decided(false)
         );
         let Classification::Decided(splices) = source
-            .straight_skeleton_splice_events(&CurvePolicy::certified())
+            .straight_skeleton_splice_events(&CurvePolicy::STRICT)
             .unwrap()
         else {
             panic!("splice fixture must be decided");
@@ -10537,7 +10530,7 @@ mod tests {
             &mut cycles,
             &Real::zero(),
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -10587,7 +10580,7 @@ mod tests {
             .expect("coincident anti-parallel overlap must terminate exactly");
         assert!(arcs.iter().any(|arc| arc.end_node() == overlap_node
             && arc.kind() == &StraightSkeletonArcKind2::TerminalRidge));
-        let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -10663,7 +10656,7 @@ mod tests {
                 &mut active,
                 &event,
                 orientation,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .unwrap()
             .unwrap();
@@ -10730,7 +10723,7 @@ mod tests {
                 (3, generated),
                 &records,
                 orientation,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .unwrap()
             .unwrap();
@@ -10750,7 +10743,7 @@ mod tests {
                 (generated, 0),
                 &records,
                 orientation,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .unwrap()
             .unwrap();
@@ -10822,7 +10815,7 @@ mod tests {
             &r(4),
             &r(8),
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap()
@@ -10842,7 +10835,7 @@ mod tests {
             &mut active,
             &event,
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -10994,7 +10987,7 @@ mod tests {
             &topology,
             &collapsing,
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11125,7 +11118,7 @@ mod tests {
             &topology,
             &[],
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11210,7 +11203,7 @@ mod tests {
             &mut active,
             &splice,
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11236,7 +11229,7 @@ mod tests {
             &active,
             &split,
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11322,7 +11315,7 @@ mod tests {
             &mut active,
             &splice,
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11338,7 +11331,7 @@ mod tests {
             bottom_position,
             splice.time(),
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap()
@@ -11353,7 +11346,7 @@ mod tests {
             &mut active,
             &[candidate],
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11448,7 +11441,7 @@ mod tests {
             0,
             &half,
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap()
@@ -11464,7 +11457,7 @@ mod tests {
                 &Point2::new(r(1), half.clone()),
                 &half,
                 RealSign::Positive,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .unwrap()
             .unwrap()
@@ -11478,7 +11471,7 @@ mod tests {
                 &Point2::new(r(3), half.clone()),
                 &half,
                 RealSign::Positive,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .unwrap()
             .unwrap()
@@ -11490,7 +11483,7 @@ mod tests {
             &mut active,
             &Real::zero(),
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11533,7 +11526,7 @@ mod tests {
                 )
             }));
             let source = Contour2::try_new(segments).unwrap();
-            let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
             assert_eq!(
                 evidence.stage(),
                 StraightSkeletonStage2::Complete,
@@ -11590,7 +11583,7 @@ mod tests {
                 ),
             ])
             .unwrap();
-            let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
             assert_eq!(
                 evidence.stage(),
                 StraightSkeletonStage2::Complete,
@@ -11606,7 +11599,7 @@ mod tests {
 
     #[test]
     fn circle_support_pairs_classify_exact_conic_families() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let root_two = r(2).sqrt().unwrap();
         let opposite = shape_preserving_vertex_trajectory(
             0,
@@ -11685,7 +11678,7 @@ mod tests {
 
     #[test]
     fn exact_three_support_solver_handles_two_and_three_circle_events() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let first_circle = ShapePreservingSupport2::Circle {
             center: Point2::new(r(-2), r(0)),
             signed_radius: r(3),
@@ -11748,7 +11741,7 @@ mod tests {
 
     #[test]
     fn exact_curved_pair_solver_handles_line_and_circle_tangencies() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let line = ShapePreservingSupport2::Line {
             normal_x: r(0),
             normal_y: r(-1),
@@ -11817,7 +11810,7 @@ mod tests {
 
     #[test]
     fn tracked_support_pairs_evaluate_exact_points_during_local_evolution() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let horizontal = ShapePreservingSupport2::Line {
             normal_x: r(0),
             normal_y: r(1),
@@ -11933,7 +11926,7 @@ mod tests {
                 &Point2::new(radial.clone(), radial),
                 &time,
                 RealSign::Positive,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .unwrap()
             .unwrap()
@@ -11947,7 +11940,7 @@ mod tests {
                 &Point2::new(-(r(3) / r(4)).unwrap(), r(0)),
                 &time,
                 RealSign::Positive,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .unwrap()
             .unwrap()
@@ -11957,7 +11950,7 @@ mod tests {
     #[test]
     fn square_collapses_to_one_exact_center_event() {
         let evidence = contour(&[(0, 0), (2, 0), (2, 2), (0, 2)])
-            .straight_skeleton(&CurvePolicy::certified())
+            .straight_skeleton(&CurvePolicy::STRICT)
             .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.event_count(), 1);
@@ -11973,7 +11966,7 @@ mod tests {
     #[test]
     fn rectangle_retains_the_terminal_ridge() {
         let evidence = contour(&[(0, 0), (4, 0), (4, 2), (0, 2)])
-            .straight_skeleton(&CurvePolicy::certified())
+            .straight_skeleton(&CurvePolicy::STRICT)
             .unwrap();
         let skeleton = evidence.skeleton().unwrap();
         assert_eq!(skeleton.nodes().len(), 6);
@@ -11990,7 +11983,7 @@ mod tests {
     #[test]
     fn clockwise_square_has_the_same_exact_collapse() {
         let evidence = contour(&[(0, 0), (0, 2), (2, 2), (2, 0)])
-            .straight_skeleton(&CurvePolicy::certified())
+            .straight_skeleton(&CurvePolicy::STRICT)
             .unwrap();
         let skeleton = evidence.skeleton().unwrap();
         assert_eq!(
@@ -12006,7 +11999,7 @@ mod tests {
             &[(0, 2), (2, 2), (2, 0), (1, 0), (0, 0)][..],
         ] {
             let evidence = contour(points)
-                .straight_skeleton(&CurvePolicy::certified())
+                .straight_skeleton(&CurvePolicy::STRICT)
                 .unwrap();
             assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
             assert_eq!(evidence.source_edge_count(), 5);
@@ -12017,7 +12010,7 @@ mod tests {
     #[test]
     fn non_general_position_l_shape_materializes_terminal_vertex_event() {
         let evidence = contour(&[(0, 0), (3, 0), (3, 1), (1, 1), (1, 3), (0, 3)])
-            .straight_skeleton(&CurvePolicy::certified())
+            .straight_skeleton(&CurvePolicy::STRICT)
             .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.vertex_event_count(), 1);
@@ -12054,7 +12047,7 @@ mod tests {
             (0, 24),
         ]);
         let global_contacts = source
-            .straight_skeleton_global_contact_events(&CurvePolicy::certified())
+            .straight_skeleton_global_contact_events(&CurvePolicy::STRICT)
             .unwrap();
         let Classification::Decided(global_contacts) = global_contacts else {
             panic!("line split candidates must be decided: {global_contacts:?}");
@@ -12068,7 +12061,7 @@ mod tests {
                 ..
             }
         )));
-        let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.split_event_count(), 1);
         let skeleton = evidence.skeleton().unwrap();
@@ -12128,7 +12121,7 @@ mod tests {
         ));
         let source = Contour2::try_new(segments).unwrap();
         let contacts = source
-            .straight_skeleton_global_contact_events(&CurvePolicy::certified())
+            .straight_skeleton_global_contact_events(&CurvePolicy::STRICT)
             .unwrap();
         let Classification::Decided(contacts) = contacts else {
             panic!("mixed split queue must be decided: {contacts:?}");
@@ -12169,7 +12162,7 @@ mod tests {
             &active,
             split,
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -12189,7 +12182,7 @@ mod tests {
             &mut cycles,
             split.time(),
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap();
         let completion = completion.unwrap();
@@ -12207,7 +12200,7 @@ mod tests {
             &mut scheduled_cycles,
             &Real::zero(),
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap();
         assert!(scheduled_nodes.iter().any(|node| matches!(
@@ -12218,7 +12211,7 @@ mod tests {
                 hit_source_edge: 0,
             }
         )));
-        let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -12254,11 +12247,11 @@ mod tests {
         ])
         .unwrap();
         assert_eq!(
-            source.has_self_contacts(&CurvePolicy::certified()).unwrap(),
+            source.has_self_contacts(&CurvePolicy::STRICT).unwrap(),
             Classification::Decided(false)
         );
         let contacts = source
-            .straight_skeleton_global_contact_events(&CurvePolicy::certified())
+            .straight_skeleton_global_contact_events(&CurvePolicy::STRICT)
             .unwrap();
         let Classification::Decided(contacts) = contacts else {
             panic!("squeeze queue must be decided: {contacts:?}");
@@ -12283,7 +12276,7 @@ mod tests {
             &active,
             squeeze,
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -12315,7 +12308,7 @@ mod tests {
             &mut scheduled_cycles,
             &Real::zero(),
             RealSign::Positive,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .unwrap();
         assert!(scheduled.is_ok(), "{scheduled:?}");
@@ -12324,7 +12317,7 @@ mod tests {
                 .iter()
                 .any(|node| matches!(node.kind(), StraightSkeletonNodeKind2::SqueezeEvent { .. }))
         );
-        let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -12344,7 +12337,7 @@ mod tests {
             (30, 0),
             (0, 0),
         ])
-        .straight_skeleton(&CurvePolicy::certified())
+        .straight_skeleton(&CurvePolicy::STRICT)
         .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.split_event_count(), 1);
@@ -12413,7 +12406,7 @@ mod tests {
         ];
         for (name, points) in fixtures {
             let evidence = contour(points)
-                .straight_skeleton(&CurvePolicy::certified())
+                .straight_skeleton(&CurvePolicy::STRICT)
                 .unwrap();
             assert_eq!(
                 evidence.stage(),
@@ -12446,7 +12439,7 @@ mod tests {
             (4, 4),
             (0, 4),
         ])
-        .straight_skeleton(&CurvePolicy::certified())
+        .straight_skeleton(&CurvePolicy::STRICT)
         .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.vertex_event_count(), 2);
@@ -12475,7 +12468,7 @@ mod tests {
             (4, 0),
             (0, 0),
         ])
-        .straight_skeleton(&CurvePolicy::certified())
+        .straight_skeleton(&CurvePolicy::STRICT)
         .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.vertex_event_count(), 2);
@@ -12513,7 +12506,7 @@ mod tests {
             (5, 4),
             (4, 4),
         ])
-        .straight_skeleton(&CurvePolicy::certified())
+        .straight_skeleton(&CurvePolicy::STRICT)
         .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.vertex_event_count(), 5);

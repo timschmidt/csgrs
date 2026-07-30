@@ -139,7 +139,7 @@ fn run_tier(tier: MemoryTier, mode: BenchmarkMode) {
 }
 
 fn benchmark_booleans(dataset: &NativeDataset) {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let started = Instant::now();
     let mut completed_pair_count = 0_usize;
     let mut candidate_pair_count = 0_usize;

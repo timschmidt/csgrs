@@ -184,7 +184,7 @@ impl NurbsCurve2 {
                 weights,
                 knots,
                 periodicity,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             ),
             CurveOperation2::Construction,
         )?;
@@ -216,7 +216,7 @@ impl NurbsCurve2 {
             NurbsEndpoints2::AuthoredControls
         } else {
             let extraction = exact_value(
-                retained.extract_bezier_spans(&CurvePolicy::certified()),
+                retained.extract_bezier_spans(&CurvePolicy::STRICT),
                 CurveOperation2::Construction,
             )?;
             let start = extraction
@@ -590,9 +590,7 @@ impl NurbsCurve2 {
 
     fn insert_knots_uncached(&self, knots: Vec<Real>) -> ExactCurveResult<Self> {
         let (retained, inserted_count) = exact_value(
-            self.data
-                .retained
-                .insert_knots(knots, &CurvePolicy::certified()),
+            self.data.retained.insert_knots(knots, &CurvePolicy::STRICT),
             CurveOperation2::KnotInsertion,
         )?;
         if inserted_count == 0 {
@@ -603,9 +601,7 @@ impl NurbsCurve2 {
 
     fn remove_knot_uncached(&self, knot: Real) -> ExactCurveResult<Option<Self>> {
         let retained = exact_value(
-            self.data
-                .retained
-                .remove_knot(knot, &CurvePolicy::certified()),
+            self.data.retained.remove_knot(knot, &CurvePolicy::STRICT),
             CurveOperation2::KnotRemoval,
         )?;
         retained
@@ -620,7 +616,7 @@ impl NurbsCurve2 {
     pub fn split_at(&self, parameter: Real) -> ExactCurveResult<(Self, Self)> {
         validate_strict_interior_parameter(self, &parameter)?;
         let refined = self.insert_knots(vec![parameter.clone(); self.degree()])?;
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let equal_indices = refined
             .knots()
             .iter()
@@ -672,7 +668,7 @@ impl NurbsCurve2 {
     pub fn subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
         validate_subcurve_range(self, &start, &end)?;
         let (domain_start, domain_end) = self.parameter_domain();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let starts_at_domain = crate::classify::compare_reals(&start, domain_start, &policy)
             == Some(std::cmp::Ordering::Equal);
         let ends_at_domain = crate::classify::compare_reals(&end, domain_end, &policy)
@@ -828,7 +824,7 @@ impl NurbsCurve2 {
             exact_value(
                 self.data
                     .retained
-                    .extract_bezier_spans(&CurvePolicy::certified()),
+                    .extract_bezier_spans(&CurvePolicy::STRICT),
                 CurveOperation2::BezierDecomposition,
             )
             .map(|extraction| NurbsBezierDecomposition2 { extraction })
@@ -858,7 +854,7 @@ impl NurbsCurve2 {
             exact_value(
                 decomposition
                     .extraction
-                    .native_subcurves(&CurvePolicy::certified()),
+                    .native_subcurves(&CurvePolicy::STRICT),
                 CurveOperation2::NativeTopology,
             )
         })?;
@@ -966,7 +962,7 @@ impl NurbsCurve2 {
         let decomposition = self.bezier_decomposition()?;
         let local = local_span_parameter(&decomposition.spans()[span_index], parameter)?;
         exact_classification(
-            curve.point_at_classified(&local, &CurvePolicy::certified()),
+            curve.point_at_classified(&local, &CurvePolicy::STRICT),
             CurveOperation2::Evaluation,
         )
     }
@@ -1110,16 +1106,12 @@ impl NurbsCurve2 {
         let rational_span = &self.rational_spans()?[span_index];
         let local_derivatives = if max_order == 1 {
             vec![exact_classification(
-                rational_span.derivative_at_classified(&local, &CurvePolicy::certified()),
+                rational_span.derivative_at_classified(&local, &CurvePolicy::STRICT),
                 CurveOperation2::Evaluation,
             )?]
         } else {
             exact_classification(
-                rational_span.derivatives_at_classified(
-                    &local,
-                    max_order,
-                    &CurvePolicy::certified(),
-                ),
+                rational_span.derivatives_at_classified(&local, max_order, &CurvePolicy::STRICT),
                 CurveOperation2::Evaluation,
             )?
         };
@@ -1168,7 +1160,7 @@ impl NurbsCurve2 {
         if !self.periodicity().is_periodic() {
             return Ok(());
         }
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         match (
             crate::classify::compare_reals(self.start().x(), self.end().x(), &policy),
             crate::classify::compare_reals(self.start().y(), self.end().y(), &policy),
@@ -1192,7 +1184,7 @@ impl NurbsCurve2 {
             return Ok(false);
         }
         let (start, end) = self.parameter_domain();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         match (
             crate::classify::compare_reals(parameter, start, &policy),
             crate::classify::compare_reals(parameter, end, &policy),
@@ -1383,7 +1375,7 @@ fn validate_strict_interior(
     operation: CurveOperation2,
 ) -> ExactCurveResult<()> {
     let (start, end) = curve.parameter_domain();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match (
         crate::classify::compare_reals(start, parameter, &policy),
         crate::classify::compare_reals(parameter, end, &policy),
@@ -1407,7 +1399,7 @@ fn has_clamped_endpoints(
     degree: usize,
     control_count: usize,
 ) -> ExactCurveResult<bool> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match (
         crate::classify::compare_reals(&knots[0], &knots[degree], &policy),
         crate::classify::compare_reals(
@@ -1428,7 +1420,7 @@ fn has_clamped_endpoints(
 
 fn validate_subcurve_range(curve: &NurbsCurve2, start: &Real, end: &Real) -> ExactCurveResult<()> {
     let (domain_start, domain_end) = curve.parameter_domain();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match (
         crate::classify::compare_reals(domain_start, start, &policy),
         crate::classify::compare_reals(start, end, &policy),
@@ -1457,7 +1449,7 @@ fn exact_nurbs_knot_multiplicity(
     knot: &Real,
     operation: CurveOperation2,
 ) -> ExactCurveResult<usize> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mut multiplicity = 0;
     for candidate in knots {
         match crate::classify::compare_reals(candidate, knot, &policy) {
@@ -1480,7 +1472,7 @@ fn exact_points_equal(
     second: &Point2,
     operation: CurveOperation2,
 ) -> ExactCurveResult<()> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match (
         crate::classify::compare_reals(first.x(), second.x(), &policy),
         crate::classify::compare_reals(first.y(), second.y(), &policy),
@@ -1527,7 +1519,7 @@ fn select_span_indices(
     spans: &[RationalBezierSpan2],
     parameter: &Real,
 ) -> ExactCurveResult<(SelectedNurbsSpan, SelectedNurbsSpan)> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mut first = None;
     let mut last = None;
     for (span_index, span) in spans.iter().enumerate() {
@@ -1576,7 +1568,7 @@ fn matching_nurbs_derivatives(
     second: Vec<CurveDerivative2>,
 ) -> ExactCurveResult<Vec<CurveDerivative2>> {
     debug_assert_eq!(first.len(), second.len());
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for (first_derivative, second_derivative) in first.iter().zip(&second) {
         match (
             crate::classify::compare_reals(first_derivative.dx(), second_derivative.dx(), &policy),
@@ -1603,7 +1595,7 @@ fn matching_nurbs_derivatives(
 }
 
 fn matching_nurbs_point(first: Point2, second: Point2) -> ExactCurveResult<Point2> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     match (
         crate::classify::compare_reals(first.x(), second.x(), &policy),
         crate::classify::compare_reals(first.y(), second.y(), &policy),

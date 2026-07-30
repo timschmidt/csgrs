@@ -624,7 +624,7 @@ impl RationalBezier2 {
             return Ok(self.clone());
         }
         if source_degree == 2 {
-            self.retain_quadratic_conic_parameter_frame(&CurvePolicy::certified());
+            self.retain_quadratic_conic_parameter_frame(&CurvePolicy::STRICT);
         }
         let elevation_count = target_degree.checked_sub(source_degree).ok_or_else(|| {
             ExactCurveError::invalid(
@@ -702,7 +702,7 @@ impl RationalBezier2 {
         }
         homogeneous.push(source[source.len() - 1].clone());
 
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let mut control_points = Vec::with_capacity(homogeneous.len());
         let mut weights = Vec::with_capacity(homogeneous.len());
         for point in homogeneous {
@@ -6018,7 +6018,7 @@ mod tests {
             vec![Real::one(); 4],
         )
         .unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let reduced = elevated
             .exact_linear_homogeneous_representative(&policy)
             .unwrap()
@@ -6062,7 +6062,7 @@ mod tests {
             vec![Real::one(); 4],
         )
         .unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         let contacts = conic
             .implicit_conic_intersection_contacts(&cubic, &policy)
@@ -6102,7 +6102,7 @@ mod tests {
             vec![Real::one(); 4],
         )
         .unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let contacts = first.intersection_contacts(&second, &policy).unwrap();
         let RationalBezierIntersectionContacts2::Contacts(contacts) = contacts else {
             panic!("shared cubic pair should produce complete contacts");
@@ -6135,7 +6135,7 @@ mod tests {
             vec![Real::one(); 3],
         )
         .unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         let contacts = conic.intersection_contacts(&line, &policy).unwrap();
         let RationalBezierIntersectionContacts2::Contacts(ref contacts) = contacts else {
@@ -6175,7 +6175,7 @@ mod tests {
             vec![Real::one(); 3],
         )
         .unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         let contacts = conic.intersection_contacts(&line, &policy).unwrap();
         let RationalBezierIntersectionContacts2::Contacts(ref contacts) = contacts else {
@@ -6201,7 +6201,7 @@ mod tests {
         assert!(curve.data.x_derivative_numerator_bernstein.get().is_none());
         assert!(curve.data.x_axis_monotonicity.get().is_none());
         assert!(matches!(
-            clone.axis_is_monotone(Axis2::X, &CurvePolicy::certified()),
+            clone.axis_is_monotone(Axis2::X, &CurvePolicy::STRICT),
             Ok(true)
         ));
         assert!(curve.data.x_derivative_numerator_bernstein.get().is_some());
@@ -6224,7 +6224,7 @@ mod tests {
             vec![2.into(), 3.into(), 5.into(), 7.into()],
         )
         .unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         for (at_end, parameter) in [(false, Real::zero()), (true, Real::one())] {
             assert_eq!(
@@ -6245,7 +6245,7 @@ mod tests {
             vec![2.into(), 3.into(), 5.into()],
         )
         .unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let Classification::Decided(parameter_map) =
             conic_parameter_map(&curve, &curve, &policy).unwrap()
         else {
@@ -6265,7 +6265,7 @@ mod tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn conic_parameter_primary_map_defers_fallback_image_polynomial() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
             vec![-half, Real::zero(), Real::one()],
@@ -6313,7 +6313,7 @@ mod tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn conic_parameter_refines_primary_map_before_constructing_fallback() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
             vec![-half.clone(), Real::zero(), Real::one()],
@@ -6361,7 +6361,7 @@ mod tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn quotient_ring_rational_image_retains_nonrational_source_coefficients() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let pi = Real::pi();
         let coefficients = quotient_ring_rational_map_image_polynomial(
             &[-pi.clone(), Real::zero(), Real::one()],
@@ -6384,7 +6384,7 @@ mod tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn quotient_ring_rational_image_reuses_nonrational_source_scale() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let pi = Real::pi();
         let numerator = [Real::zero(), Real::one()];
         let denominator = [Real::one(), Real::one()];
@@ -6416,7 +6416,7 @@ mod tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn quotient_ring_rational_image_matches_exact_resultant_samples() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let source = [Real::from(-2_i8), Real::zero(), Real::zero(), Real::one()];
         let numerator = [Real::one(), Real::zero(), Real::one()];
         let denominator = [Real::from(2_i8), Real::one()];
@@ -6474,7 +6474,7 @@ mod tests {
         )
         .unwrap();
 
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let Some(Classification::Decided(RationalBezierIntersectionContacts2::Contacts(contacts))) =
             conic
                 .implicit_conic_intersection_contacts(&line, &policy)
@@ -6542,7 +6542,7 @@ mod tests {
             vec![1.into(), Real::from(2_i8) * weight, 4.into()],
         )
         .unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         let shared = first.shares_implicit_quadratic_conic(&second, &policy);
         assert!(
@@ -6689,7 +6689,7 @@ mod tests {
         )
         .unwrap();
         let parameter = (Real::one() / Real::from(2_u8)).unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         let point = curve.point_at(&parameter, &policy).unwrap();
         let expected_x = (Real::from(u64::try_from(degree).unwrap()) / Real::from(2_u8)).unwrap();
@@ -6718,7 +6718,7 @@ mod tests {
         )
         .unwrap();
         let parameter = (Real::one() / Real::from(3_u8)).unwrap();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
 
         let actual = curve.point_at(&parameter, &policy).unwrap();
         let expected = match curve.homogeneous_de_casteljau_value(&parameter) {

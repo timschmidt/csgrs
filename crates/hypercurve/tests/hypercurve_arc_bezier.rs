@@ -52,7 +52,7 @@ fn semicircle_uses_two_quarter_spans_with_exact_join() {
     assert_eq!(decomposition.spans()[1].parameter_range(), (&half(), &r(1)));
     assert_eq!(decomposition.point_at(&half()).unwrap(), p(0, 1));
     assert_eq!(
-        arc.representative_point(&CurvePolicy::certified()).unwrap(),
+        arc.representative_point(&CurvePolicy::STRICT).unwrap(),
         Classification::Decided(p(0, 1))
     );
 }
@@ -83,22 +83,22 @@ fn major_arc_uses_requested_orientation_and_major_midpoint() {
     assert_eq!(decomposition.spans().len(), 2);
     assert_eq!(decomposition.point_at(&half()).unwrap(), expected_midpoint);
     assert_eq!(
-        arc.representative_point(&CurvePolicy::certified()).unwrap(),
+        arc.representative_point(&CurvePolicy::STRICT).unwrap(),
         Classification::Decided(expected_midpoint.clone())
     );
     assert_eq!(
-        arc.contains_point(&expected_midpoint, &CurvePolicy::certified()),
+        arc.contains_point(&expected_midpoint, &CurvePolicy::STRICT),
         Classification::Decided(true)
     );
     assert_eq!(
         arc.contains_sweep_point(
             &Point2::new(half().sqrt().unwrap(), half().sqrt().unwrap()),
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         ),
         Classification::Decided(false)
     );
     assert_eq!(
-        arc.contains_sweep_point(&p(-1, 0), &CurvePolicy::certified()),
+        arc.contains_sweep_point(&p(-1, 0), &CurvePolicy::STRICT),
         Classification::Decided(true)
     );
 }
@@ -106,7 +106,7 @@ fn major_arc_uses_requested_orientation_and_major_midpoint() {
 #[test]
 fn sweep_fraction_orders_major_arc_cardinal_points_exactly() {
     let arc = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     assert_eq!(
         arc.sweep_fraction(&p(1, 0), &policy).unwrap(),
@@ -128,7 +128,7 @@ fn sweep_fraction_orders_major_arc_cardinal_points_exactly() {
 
 #[test]
 fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::APPROXIMATE_512;
     let minor = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap();
     let root_half = (r(2).sqrt().unwrap() / r(2)).unwrap();
     let minor_midpoint = Point2::new(root_half.clone(), root_half);
@@ -154,6 +154,12 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
     );
 
     let major = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap();
+    assert!(matches!(
+        major
+            .parameter_at_sweep_fraction(&q(1, 3), &CurvePolicy::STRICT)
+            .unwrap(),
+        Classification::Uncertain(_)
+    ));
     for (fraction, expected) in [(q(1, 3), p(0, -1)), (q(2, 3), p(-1, 0))] {
         assert_eq!(
             major.point_at_sweep_fraction(&fraction, &policy).unwrap(),
@@ -209,7 +215,7 @@ fn inverse_sweep_witness_replays_exact_point_across_existing_clone() {
         CircularArc2::try_from_center(Point2::new(r(3), q(13, 3)), p(5, 3), center, false).unwrap();
     let retained_clone = arc.clone();
     let witness = p(3, 0);
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     let Classification::Decided(parameter) = arc.sweep_fraction(&witness, &policy).unwrap() else {
         panic!("non-cardinal incident point should have an exact directed-sweep parameter");
@@ -239,11 +245,11 @@ fn full_circle_uses_four_quarter_spans() {
     assert_eq!(decomposition.point_at(&three_quarters).unwrap(), p(0, -1));
     assert_eq!(decomposition.point_at(&r(1)).unwrap(), p(1, 0));
     assert_eq!(
-        arc.contains_sweep_point(&p(0, 1), &CurvePolicy::certified()),
+        arc.contains_sweep_point(&p(0, 1), &CurvePolicy::STRICT),
         Classification::Decided(true)
     );
     assert_eq!(
-        arc.contains_sweep_point(&p(7, -3), &CurvePolicy::certified()),
+        arc.contains_sweep_point(&p(7, -3), &CurvePolicy::STRICT),
         Classification::Decided(true)
     );
 }
@@ -251,7 +257,7 @@ fn full_circle_uses_four_quarter_spans() {
 #[test]
 fn sweep_fraction_orders_full_circle_cardinal_points_exactly() {
     let arc = CircularArc2::try_from_center(p(1, 0), p(1, 0), p(0, 0), false).unwrap();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
 
     assert_eq!(
         arc.sweep_fraction(&p(0, 1), &policy).unwrap(),

@@ -121,7 +121,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mut materializations = Vec::new();
     for chunk in data.chunks(8).take(8) {
         if chunk.len() < 8 {

@@ -315,7 +315,7 @@ fn exact_boolean_results(
     second: &CurveRegion2,
     compare_individual_calls: bool,
 ) -> Result<(), String> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let evidence = first
         .intersect_region(second, &policy)
         .map_err(|error| format!("{label}: exact intersection failed: {error}"))?;
@@ -857,7 +857,7 @@ fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
                 &fraction(1, 5),
                 &Real::zero(),
                 &Real::zero(),
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .unwrap(),
     }
@@ -887,7 +887,7 @@ fn retired_thermal_spoke_circular_subtraction_case() -> RetiredFailureCase {
         weight_denominator: 1,
     });
     let first = horizontal
-        .boolean_region(&vertical, BooleanOp::Union, &CurvePolicy::certified())
+        .boolean_region(&vertical, BooleanOp::Union, &CurvePolicy::STRICT)
         .unwrap();
     RetiredFailureCase {
         failure: RetiredFailure::ThermalSpokeCircularSubtraction,
@@ -900,7 +900,7 @@ fn retired_thermal_spoke_circular_subtraction_case() -> RetiredFailureCase {
                 &fraction(1, 5),
                 &Real::zero(),
                 &Real::zero(),
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .unwrap(),
     }
@@ -918,7 +918,7 @@ fn retired_transformed_degree_elevated_line_case() -> RetiredFailureCase {
         .collect();
     let source =
         CurveRegion2::try_from_boundary_paths(&[CurvePath2::try_new(curves).unwrap()]).unwrap();
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let transformed = source
         .transform_affine(
             &Real::zero(),
@@ -982,7 +982,7 @@ fn retired_circular_line_endpoint_case() -> RetiredFailureCase {
 }
 
 fn retired_distinct_circular_conic_contacts_case() -> RetiredFailureCase {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let translated = exact_circle_region(1, false)
         .transform_affine(
             &Real::one(),

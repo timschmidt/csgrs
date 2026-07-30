@@ -43,7 +43,7 @@ fn partial_line_overlap_graph() -> BezierArrangementGraph2 {
 }
 
 fn policy() -> CurvePolicy {
-    CurvePolicy::certified()
+    CurvePolicy::STRICT
 }
 
 fn decided<T>(classification: Classification<T>) -> T {

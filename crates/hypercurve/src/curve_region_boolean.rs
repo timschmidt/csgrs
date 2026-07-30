@@ -2469,7 +2469,7 @@ mod certified_successor_tests {
 
     #[test]
     fn contact_point_bounds_reject_disjoint_lazy_sources() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let parameter = sqrt_half_parameter(&policy);
         let first_curve = rational_line(0, 1);
         let second_curve = rational_line(2, 3);
@@ -2516,7 +2516,7 @@ mod certified_successor_tests {
 
     #[test]
     fn identical_injective_source_parameters_compare_without_materialization() {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let parameter = sqrt_half_parameter(&policy);
         let curve = rational_line(0, 1);
         let first = RationalBezierIntersectionPointEvidence2::Algebraic(
