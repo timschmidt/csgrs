@@ -89,6 +89,7 @@ strict-convexity certificate.
 | Plane / extrusion surface | Transverse native line/rational Bézier/NURBS curve; parallel none or lifted profile-contact lines |
 | Plane / revolution surface | Authored-axis transverse none, isolated axis point, or one/more exact profile-contact circles with native pcurves on both carriers; finite multi-span NURBS contacts map to authored knot parameters and deduplicate knot seams |
 | Parallel cylinder / cylinder | None, coincident, tangent line, or two axial lines |
+| Coaxial cylinder / cone | One exact circle; authored-frame-aligned carriers retain cylinder height and cone slant pcurves |
 | Coaxial sphere / cylinder | None, tangent circle, or two circles; authored-frame-aligned circles retain both exact pcurves |
 | Coaxial sphere / cone | None, isolated apex point, one tangent/secant circle, or two circles; authored-frame-aligned circles retain sphere latitude and cone slant pcurves |
 | Plane / linear-extrusion rational Bézier tensor patch | None or one native rational Bézier iso-curve |
@@ -137,6 +138,13 @@ fragments without inverse fitting. A sphere passing through the apex can
 produce both an isolated apex point and a positive-radius circle; that mixed
 dimensional result remains explicitly unsupported until the result enum can
 represent both components without discarding either.
+Coaxial cylinder/cone intersections use the same native cone coordinate
+directly: the unique positive slant is
+`cylinder_radius / sin(semi_angle)`. Matching authored frames retain the
+cylinder height and cone slant pcurves on the common full circle. Bounded
+cylinder and frustum faces clip that carrier into four exact quarter-circle
+fragments; skew axes or offset center lines remain explicit unsupported
+relations.
 An axis-containing plane/ring-torus pair returns two native minor-radius
 meridian circles. Their exact planar circular pcurves and constant-longitude
 torus pcurves share the spatial curve domain. The graph clips an oblique

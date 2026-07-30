@@ -3071,6 +3071,12 @@ impl Surface {
             (SurfaceGeometry::Cylinder(first), SurfaceGeometry::Cylinder(second)) => {
                 intersect_parallel_cylinders(first, second)
             }
+            (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Cone(cone)) => {
+                intersect_coaxial_cylinder_cone(cylinder, cone)
+            }
+            (SurfaceGeometry::Cone(cone), SurfaceGeometry::Cylinder(cylinder)) => {
+                intersect_coaxial_cylinder_cone(cylinder, cone).map(swapped_curve_intersection)
+            }
             (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Cylinder(cylinder)) => {
                 intersect_coaxial_sphere_cylinder(sphere, cylinder)
             }
@@ -5304,6 +5310,53 @@ fn intersect_coaxial_sphere_cone(
             _ => SurfaceSurfaceIntersection::Circles(circles),
         })
     }
+}
+
+fn intersect_coaxial_cylinder_cone(
+    cylinder: &CylinderSurface,
+    cone: &ConeSurface,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    if decided_order(compare_reals(
+        &cylinder.frame.z.cross(&cone.frame.z).norm_squared(),
+        &Real::zero(),
+    ))? != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let origin_offset = &cylinder.origin - &cone.apex;
+    let radial_offset = &origin_offset - &(cone.frame.z.clone() * origin_offset.dot(&cone.frame.z));
+    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
+        != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+
+    let sine = cone.semi_angle.clone().sin();
+    let cosine = cone.semi_angle.clone().cos();
+    let slant_parameter =
+        (&cylinder.radius / &sine).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let axial_height = &slant_parameter * cosine;
+    let center = cone.apex.clone() + cone.frame.z.clone() * axial_height;
+    let curve = Curve3::circle_arc(
+        center.clone(),
+        cone.frame.x.clone(),
+        cone.frame.y.clone(),
+        cylinder.radius.clone(),
+        Real::zero(),
+        Real::tau(),
+    )?;
+    if !orthonormal_frames_equal(&cylinder.frame, &cone.frame)? {
+        return Ok(SurfaceSurfaceIntersection::Circle(curve));
+    }
+    let cylinder_height = (&center - &cylinder.origin).dot(&cylinder.frame.z);
+    let domain = curve.domain().clone();
+    Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+        SurfaceIntersectionCurve::new(
+            curve,
+            SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), cylinder_height),
+            SurfaceIntersectionPcurve::tensor_iso_v(domain, slant_parameter),
+        ),
+    )))
 }
 
 fn orthonormal_frames_equal(
@@ -10189,6 +10242,74 @@ mod tests {
             cone.intersect_surface(&rotated_parameters).unwrap(),
             SurfaceSurfaceIntersection::Circle(_)
         ));
+    }
+
+    #[test]
+    fn coaxial_cylinder_cone_intersection_retains_native_slant_circle() {
+        let semi_angle = q(3, 4).atan().unwrap();
+        let cone = Surface::cone(
+            p(0, 0, 5),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            semi_angle,
+        )
+        .unwrap();
+        let cylinder =
+            Surface::cylinder(p(0, 0, 1), Vector3::x(), Vector3::y(), Vector3::z(), r(3)).unwrap();
+        let SurfaceSurfaceIntersection::Curve(circle) = cylinder.intersect_surface(&cone).unwrap()
+        else {
+            panic!("aligned coaxial cylinder/cone carriers must retain both pcurves");
+        };
+        assert_points_equal(
+            &circle.curve().start().unwrap(),
+            &Point3::new(r(3), Real::zero(), r(9)),
+        );
+        for parameter in [Real::zero(), Real::pi()] {
+            let spatial = circle.curve().point_at(&parameter).unwrap();
+            assert_points_equal(
+                &cylinder
+                    .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+            assert_points_equal(
+                &cone
+                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+        }
+        let SurfaceSurfaceIntersection::Curve(swapped) = cone.intersect_surface(&cylinder).unwrap()
+        else {
+            panic!("operand reversal must retain the same native circle");
+        };
+        let parameter = q(2, 3);
+        assert_points_equal(
+            &cone
+                .point_at(&swapped.first_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &swapped.curve().point_at(&parameter).unwrap(),
+        );
+
+        let rotated_parameters =
+            Surface::cylinder(p(0, 0, 1), Vector3::y(), -Vector3::x(), Vector3::z(), r(3)).unwrap();
+        assert!(matches!(
+            cone.intersect_surface(&rotated_parameters).unwrap(),
+            SurfaceSurfaceIntersection::Circle(_)
+        ));
+        let off_axis =
+            Surface::cylinder(p(1, 0, 1), Vector3::x(), Vector3::y(), Vector3::z(), r(3)).unwrap();
+        assert_eq!(
+            cone.intersect_surface(&off_axis).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+        let skew =
+            Surface::cylinder(p(0, 0, 1), Vector3::y(), Vector3::z(), Vector3::x(), r(3)).unwrap();
+        assert_eq!(
+            cone.intersect_surface(&skew).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
     }
 
     #[test]

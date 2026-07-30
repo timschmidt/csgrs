@@ -346,6 +346,11 @@ therefore partitions the full circle across its native quarter-angle cells
 without a sampled inverse. A lone zero root is the exact apex point; a zero
 root accompanied by a positive circle is rejected as an unsupported
 mixed-dimensional relation rather than losing one component.
+For an authored-frame-aligned coaxial cylinder/cone pair, the cone slant
+parameter is obtained directly from the common radius and exact semi-angle.
+The retained full circle carries constant-height cylinder and constant-slant
+cone pcurves. Bounded cylinder/frustum graphs clip it across matching periodic
+quarter cells without fitting or root isolation.
 Selected intersection faces form two spherical caps and one subdivided
 cylindrical band. Their mixed-shell certificate reuses the cylinder's exact
 parameter-cell coverage, proves both cap latitudes have the same sphere and
