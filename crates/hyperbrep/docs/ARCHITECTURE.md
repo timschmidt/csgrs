@@ -401,8 +401,15 @@ containment relation and projects the contained face's oriented exact spatial
 boundary into the plane operand's parameter space. Hypercurve intersects that
 mixed-family `CurveRegion2` with the bounded plane face region, so
 `FacePairTrim::SurfaceRegion` represents full or partial two-dimensional
-overlap without sampling; an empty intersection is `NoContact`. Region-driven
-face partition and solid stitching remain a later consumer of this evidence.
+overlap without sampling; an empty intersection is `NoContact`. A lazy exact
+region difference records whether the plane face covers the complete contained
+face. On the plane operand, projected boundary fragments must carry a
+Hypercurve exact line-image certificate before they are promoted to complete
+planar support traces and passed through deterministic multi-trace partition.
+The contained operand needs no split when coverage is complete. Partial
+tensor-side partition remains explicit unsupported evidence because it
+requires inverse tensor pcurves; neither endpoint chords nor fitted parameters
+are accepted.
 
 `boolean::intersect_faces` owns this face-pair operation:
 validated open-shell faces and solid-owned faces use the same certified bounds,

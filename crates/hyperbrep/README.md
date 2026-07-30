@@ -354,7 +354,10 @@ The clean-break implementation currently provides:
   misreported as coincidence or collapsed to a curve result. Face queries
   project the contained face's exact oriented boundary into plane parameters
   and retain the full, partial, holed, or empty overlap as a native
-  `CurveRegion2`;
+  `CurveRegion2`. An exact region-difference proof records complete contained
+  face coverage; certified straight boundary images then become deterministic
+  support traces for plane-face partitioning, while partial tensor-side
+  partition remains explicit until inverse pcurves are representable;
 - exact `Surface::iso_curve` extraction in either tensor direction and
   `Model::split_face_by_surface_curve` transfer for one retained rational
   Bézier/NURBS iso-curve or complete rational-Bézier or NURBS

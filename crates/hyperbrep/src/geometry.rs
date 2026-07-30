@@ -11320,15 +11320,31 @@ mod tests {
         let crate::FacePairTrim::SurfaceRegion {
             parameterized_on: SurfaceIntersectionOperand::Second,
             region,
+            covers_contained_face,
         } = face_pair.trim()
         else {
             panic!("contained tensor/plane faces must retain an exact two-dimensional trim");
         };
         assert!(!region.is_empty());
+        assert!(*covers_contained_face);
         assert!(matches!(
             region.loop_role_counts(&CurvePolicy::certified()).unwrap(),
             hypercurve::Classification::Decided((1, 0))
         ));
+        let complete_plane_traces = crate::boolean::contained_face_boundary_traces_on_plane(
+            &planar_patch,
+            planar_face,
+            &cube,
+            containing_face,
+        )
+        .unwrap()
+        .expect("represented contained-face boundary must transfer to plane traces");
+        assert_eq!(complete_plane_traces.len(), 4);
+        let (partitioned_cube, complete_partition) = cube
+            .split_face_by_curves(containing_face, &complete_plane_traces)
+            .unwrap();
+        assert_eq!(complete_partition.faces.len(), 9);
+        assert_eq!(partitioned_cube.counts().faces, cube.counts().faces + 8);
 
         let partial_points = [
             CurvePoint2::new(r(1), r(-1)),
@@ -11358,6 +11374,23 @@ mod tests {
             Vector3::from_xyz(r(0), r(1), r(0)),
         )
         .unwrap();
+        let partial_plane_traces = crate::boolean::contained_face_boundary_traces_on_plane(
+            &planar_patch,
+            planar_face,
+            &partial_plane,
+            partial_face,
+        )
+        .unwrap()
+        .expect("represented partial contained-face boundary must transfer to plane traces");
+        assert_eq!(partial_plane_traces.len(), 3);
+        let (partitioned_partial_plane, partial_partition) = partial_plane
+            .split_face_by_curves(partial_face, &partial_plane_traces)
+            .unwrap();
+        assert_eq!(partial_partition.faces.len(), 6);
+        assert_eq!(
+            partitioned_partial_plane.counts().faces,
+            partial_plane.counts().faces + 5
+        );
         for (pair, expected_parameter_operand) in [
             (
                 crate::boolean::intersect_faces(
@@ -11385,11 +11418,13 @@ mod tests {
             let crate::FacePairTrim::SurfaceRegion {
                 parameterized_on,
                 region,
+                covers_contained_face,
             } = pair.trim()
             else {
                 panic!("partial tensor/plane overlap must retain its exact region");
             };
             assert_eq!(*parameterized_on, expected_parameter_operand);
+            assert!(!covers_contained_face);
             assert!(matches!(
                 region.filled_area(&CurvePolicy::certified()).unwrap(),
                 hypercurve::Classification::Decided(Some(area))

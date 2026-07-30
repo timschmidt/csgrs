@@ -838,12 +838,27 @@ fuzz_target!(|bytes: &[u8]| {
         let Ok(Some(pair)) = boolean::intersect_faces(&patch, face, &plane, plane_face) else {
             return;
         };
-        match pair.trim() {
-            boolean::FacePairTrim::SurfaceRegion { region, .. } => {
+        match (bytes[3] % 3, pair.trim()) {
+            (
+                0,
+                boolean::FacePairTrim::SurfaceRegion {
+                    region,
+                    covers_contained_face: true,
+                    ..
+                },
+            )
+            | (
+                1,
+                boolean::FacePairTrim::SurfaceRegion {
+                    region,
+                    covers_contained_face: false,
+                    ..
+                },
+            ) => {
                 let _ = region.is_empty();
                 let _ = region.filled_area(&hypercurve::CurvePolicy::certified());
             }
-            boolean::FacePairTrim::NoContact => {}
+            (2, boolean::FacePairTrim::NoContact) => {}
             _ => panic!("planar tensor containment must retain exact two-dimensional trim evidence"),
         }
     }

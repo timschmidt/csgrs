@@ -142,7 +142,8 @@ certificate deliberately rebases rational Bézier patch construction from
   plane exact complete-surface relation: `395 ns/iteration`;
 - non-separable positive-weight planar rational bilinear face / partially
   overlapping bounded plane face exact `CurveRegion2` trim:
-  `40.619 us/iteration`;
+  `54.358 us/iteration`, including the exact contained-face coverage
+  difference proof;
 - complete non-isoparametric rational tensor section, graph-control
   recertification, curved-loop validation, identity-shared face split, and full
   model revalidation: `180.175 us/iteration`;

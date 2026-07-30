@@ -208,7 +208,10 @@ Face-pair enumeration retains this exact carrier relation, projects the
 contained face's oriented exact boundary into plane parameters, and intersects
 the resulting `CurveRegion2` with the bounded plane face. Full, partial,
 holed, and empty results remain exact `SurfaceRegion` or `NoContact` trim
-evidence. A
+evidence. Exact difference proves complete contained-face coverage. Certified
+straight images of represented contained boundaries transfer to deterministic
+support-line partitions on the plane operand; a completely covered contained
+operand needs no partition. A
 sign-definite hull with zero controls exactly returns its one/multiple corner
 points or boundary iso-lines. Mixed sections are clipped in UV through the
 same exact tensor rectangle path used by translation graphs before the
@@ -232,8 +235,8 @@ lies in the bounded translation-axis domain or that the complete carrier is
 outside it. Mixed graph hulls are clipped exactly against the tensor rectangle:
 represented roots retain one or more exact fragments, while algebraic roots
 that cannot enter `Real` remain explicit. Remaining unsupported work includes
-oblique cone sections, non-axial torus quartics, region-driven partition and
-stitching for two-dimensional contained-face overlaps, and the rest of the
+oblique cone sections, non-axial torus quartics, inverse-pcurve partition and
+stitching on partially clipped tensor operands, and the rest of the
 analytic/spline pair matrix.
 
 ## Booleans

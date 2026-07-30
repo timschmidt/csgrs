@@ -5,11 +5,11 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 use hypercurve::{
-    Aabb2, BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Contour2,
-    ContourPointLocation, Curve2, CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole,
-    CurveString2, ExactCurveError, FillRule, LineArcIntersection, LineArcRegion2,
-    LineLineIntersection, LineSeg2, RationalQuadraticBezier2, RegionPointLocation, Segment2,
-    UncertaintyReason,
+    Aabb2, BezierLineImageFitRelation, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
+    Classification, Contour2, ContourPointLocation, Curve2, CurvePath2, CurvePolicy, CurveRegion2,
+    CurveRegionLoopRole, CurveString2, ExactCurveError, FillRule, LineArcIntersection,
+    LineArcRegion2, LineLineIntersection, LineSeg2, RationalQuadraticBezier2, RegionPointLocation,
+    Segment2, UncertaintyReason,
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
@@ -132,6 +132,8 @@ pub enum FacePairTrim {
         parameterized_on: SurfaceIntersectionOperand,
         /// Exact filled overlap region in that surface parameter space.
         region: CurveRegion2,
+        /// Exact region difference proves the complete contained face survives.
+        covers_contained_face: bool,
     },
     /// Exact curve fragments lie in the interiors or boundaries of both faces.
     CurveFragments(Vec<Curve3>),
@@ -584,8 +586,23 @@ fn partition_graph_planar_faces(
                     }
                 }
             }
-            FacePairTrim::SurfaceRegion { .. } => {
-                return Err(BooleanError::FacePartitionUnsupported { face });
+            FacePairTrim::SurfaceRegion {
+                parameterized_on, ..
+            } => {
+                let operand = if first {
+                    SurfaceIntersectionOperand::First
+                } else {
+                    SurfaceIntersectionOperand::Second
+                };
+                if operand != *parameterized_on {
+                    return Err(BooleanError::FacePartitionUnsupported { face });
+                }
+                let Some(region_traces) = surface_region_plane_traces(graph, pair)? else {
+                    return Err(BooleanError::FacePartitionUnsupported { face });
+                };
+                for fragment in region_traces {
+                    push_unique_planar_trace(traces.entry(face).or_default(), fragment)?;
+                }
             }
             FacePairTrim::NotAvailable
             | FacePairTrim::CompleteCarrier
@@ -705,8 +722,29 @@ fn partition_graph_faces(
                 }
             }
             FacePairTrim::Unresolved(reason) => return Err(BooleanError::Unresolved(*reason)),
-            FacePairTrim::SurfaceRegion { .. } => {
-                return Err(BooleanError::FacePartitionUnsupported { face });
+            FacePairTrim::SurfaceRegion {
+                parameterized_on,
+                covers_contained_face,
+                ..
+            } => {
+                let operand = if first {
+                    SurfaceIntersectionOperand::First
+                } else {
+                    SurfaceIntersectionOperand::Second
+                };
+                if operand == *parameterized_on {
+                    if surface.kind() != crate::SurfaceKind::Plane {
+                        return Err(BooleanError::FacePartitionUnsupported { face });
+                    }
+                    let Some(region_traces) = surface_region_plane_traces(graph, pair)? else {
+                        return Err(BooleanError::FacePartitionUnsupported { face });
+                    };
+                    for fragment in region_traces {
+                        push_unique_planar_trace(planar_traces.entry(face).or_default(), fragment)?;
+                    }
+                } else if !covers_contained_face {
+                    return Err(BooleanError::FacePartitionUnsupported { face });
+                }
             }
             FacePairTrim::NotAvailable | FacePairTrim::CompleteCarrier => match &pair.relation {
                 FacePairRelation::Unsupported => {
@@ -785,6 +823,37 @@ fn partition_graph_faces(
     }
     partitions.sort_by_key(|partition| partition.source_face);
     Ok((staged, partitions))
+}
+
+fn surface_region_plane_traces(
+    graph: &SolidIntersectionGraph,
+    pair: &FacePairIntersection,
+) -> Result<Option<Vec<Curve3>>, BooleanError> {
+    let FacePairRelation::Exact(SurfaceSurfaceIntersection::ContainedSurface(contained)) =
+        &pair.relation
+    else {
+        return Ok(None);
+    };
+    let (contained_model, contained_face, plane_model, plane_face) = match contained {
+        SurfaceIntersectionOperand::First => (
+            &graph.first_model,
+            pair.first_face,
+            &graph.second_model,
+            pair.second_face,
+        ),
+        SurfaceIntersectionOperand::Second => (
+            &graph.second_model,
+            pair.second_face,
+            &graph.first_model,
+            pair.first_face,
+        ),
+    };
+    contained_face_boundary_traces_on_plane(
+        contained_model,
+        contained_face,
+        plane_model,
+        plane_face,
+    )
 }
 
 fn coalesce_closed_circle_traces(
@@ -2661,18 +2730,30 @@ fn trim_contained_surface_region(
     else {
         return Ok(FacePairTrim::NotAvailable);
     };
-    let region = if face_is_boundaryless(plane_model, plane_face) {
-        contained_region
+    let (region, covers_contained_face) = if face_is_boundaryless(plane_model, plane_face) {
+        (contained_region, true)
     } else {
         let plane_region = CurveRegion2::try_from_line_arc_region(
             &planar_face_region(plane_model, plane_face)?,
             &CurvePolicy::certified(),
         )?;
-        contained_region.boolean_region(
+        let remainder = contained_region.boolean_region(
             &plane_region,
-            BooleanOp::Intersection,
+            BooleanOp::Difference,
             &CurvePolicy::certified(),
-        )?
+        )?;
+        if remainder.is_empty() {
+            (contained_region, true)
+        } else {
+            (
+                contained_region.boolean_region(
+                    &plane_region,
+                    BooleanOp::Intersection,
+                    &CurvePolicy::certified(),
+                )?,
+                false,
+            )
+        }
     };
     if region.is_empty() {
         Ok(FacePairTrim::NoContact)
@@ -2680,6 +2761,7 @@ fn trim_contained_surface_region(
         Ok(FacePairTrim::SurfaceRegion {
             parameterized_on: plane_operand,
             region,
+            covers_contained_face,
         })
     }
 }
@@ -2689,6 +2771,27 @@ fn project_face_region_to_plane(
     face: FaceId,
     plane: &Surface,
 ) -> Result<Option<CurveRegion2>, GeometryError> {
+    let Some(paths) = project_face_boundary_paths_to_plane(model, face, plane)? else {
+        return Ok(None);
+    };
+    let face = model.face(face).expect("validated contained face");
+    let roles = std::iter::once(CurveRegionLoopRole::Material)
+        .chain(std::iter::repeat_n(
+            CurveRegionLoopRole::Hole,
+            face.inner().len(),
+        ))
+        .collect::<Vec<_>>();
+    let fill_rules = vec![FillRule::NonZero; paths.len()];
+    Ok(Some(
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(&paths, &roles, &fill_rules)?,
+    ))
+}
+
+fn project_face_boundary_paths_to_plane(
+    model: &Model,
+    face: FaceId,
+    plane: &Surface,
+) -> Result<Option<Vec<CurvePath2>>, GeometryError> {
     let face = model.face(face).expect("validated contained face");
     let Some(outer) = face.outer() else {
         return Ok(None);
@@ -2727,16 +2830,80 @@ fn project_face_region_to_plane(
         }
         paths.push(CurvePath2::try_new(projected)?);
     }
-    let roles = std::iter::once(CurveRegionLoopRole::Material)
-        .chain(std::iter::repeat_n(
-            CurveRegionLoopRole::Hole,
-            face.inner().len(),
-        ))
-        .collect::<Vec<_>>();
-    let fill_rules = vec![FillRule::NonZero; paths.len()];
-    Ok(Some(
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(&paths, &roles, &fill_rules)?,
-    ))
+    Ok(Some(paths))
+}
+
+pub(crate) fn contained_face_boundary_traces_on_plane(
+    contained_model: &Model,
+    contained_face: FaceId,
+    plane_model: &Model,
+    plane_face: FaceId,
+) -> Result<Option<Vec<Curve3>>, BooleanError> {
+    let plane = face_surface(plane_model, plane_face);
+    if plane.kind() != crate::SurfaceKind::Plane {
+        return Ok(None);
+    }
+    let Some(paths) = project_face_boundary_paths_to_plane(contained_model, contained_face, plane)?
+    else {
+        return Ok(None);
+    };
+    let plane_region = (!face_is_boundaryless(plane_model, plane_face))
+        .then(|| planar_face_region(plane_model, plane_face))
+        .transpose()?;
+    let mut traces = Vec::new();
+    for curve in paths.iter().flat_map(|path| path.curves()) {
+        if let Some(region) = &plane_region {
+            for fragment in curve
+                .trim_inside_region(region, &CurvePolicy::certified())
+                .map_err(GeometryError::from)?
+            {
+                let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+                    return Ok(None);
+                };
+                let Some(line) = lift_planar_line_image(plane, &curve)? else {
+                    return Ok(None);
+                };
+                traces.push(line);
+            }
+        } else {
+            for fragment in curve
+                .native_bezier_fragments()
+                .map_err(GeometryError::from)?
+            {
+                let Some(line) = lift_planar_line_image(plane, fragment.curve())? else {
+                    return Ok(None);
+                };
+                traces.push(line);
+            }
+        }
+    }
+    planar_line_support_split_traces(plane_model, plane_face, &traces).map(Some)
+}
+
+fn lift_planar_line_image(
+    surface: &Surface,
+    curve: &BezierSubcurve2,
+) -> Result<Option<Curve3>, GeometryError> {
+    let relation = match curve {
+        BezierSubcurve2::Quadratic(curve) => {
+            curve.fit_exact_line_image(&CurvePolicy::certified())?
+        }
+        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image(&CurvePolicy::certified())?,
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.fit_exact_line_image(&CurvePolicy::certified())?
+        }
+        BezierSubcurve2::Rational(curve) => curve.fit_exact_line_image(&CurvePolicy::certified())?,
+    };
+    let Classification::Decided(BezierLineImageFitRelation::Fit(fit)) = relation else {
+        return Ok(None);
+    };
+    let lift = |point: &hypercurve::Point2| {
+        surface.point_at(&crate::Point2::new(point.x().clone(), point.y().clone()))
+    };
+    Ok(Some(Curve3::line(
+        lift(fit.line().start())?,
+        lift(fit.line().end())?,
+    )?))
 }
 
 fn point_contacts_trim(mut points: Vec<Point3>) -> FacePairTrim {
