@@ -296,6 +296,13 @@ persistence. The z-prism specialization now requires certified translation
 geometry before using a two-layer cap profile; cone frustums cannot enter that
 constant-profile kernel.
 
+Transverse plane/torus cuts retain each concentric latitude as its own exact
+support, with a planar angular-sweep pcurve and constant torus-`v` pcurve.
+Multiple patch-local chains coalesce independently before nested planar-loop
+partitioning. Full-torus certification accepts exact latitude subdivisions by
+proving complete periodic parameter-grid coverage; planar-capped torus-band
+stitching remains the next certificate step.
+
 Closed rational-Bézier curve sweeps and translated prism shells retain their
 exact solid certificate after
 cap-edge subdivision, coplanar cap-face partition, and rational-tensor

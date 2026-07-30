@@ -2938,9 +2938,11 @@ impl Surface {
             (SurfaceGeometry::Cone(cone), SurfaceGeometry::Plane(plane)) => {
                 intersect_plane_cone(plane, cone).map(swapped_curve_intersection)
             }
-            (SurfaceGeometry::Plane(plane), SurfaceGeometry::Torus(torus))
-            | (SurfaceGeometry::Torus(torus), SurfaceGeometry::Plane(plane)) => {
+            (SurfaceGeometry::Plane(plane), SurfaceGeometry::Torus(torus)) => {
                 intersect_plane_torus(plane, torus)
+            }
+            (SurfaceGeometry::Torus(torus), SurfaceGeometry::Plane(plane)) => {
+                intersect_plane_torus(plane, torus).map(swapped_curve_intersection)
             }
             (SurfaceGeometry::Plane(plane), SurfaceGeometry::Extrusion(surface)) => {
                 intersect_plane_extrusion(plane, surface)
@@ -4663,34 +4665,44 @@ fn intersect_plane_torus(
             let radial_offset = (minor_squared - axial_squared)
                 .sqrt()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
-            let center = torus.center.clone() + torus.frame.z.clone() * axial_height;
-            if decided_order(compare_reals(&radial_offset, &Real::zero()))? == Ordering::Equal {
-                return Ok(SurfaceSurfaceIntersection::Circle(Curve3::circle_arc(
-                    center,
-                    torus.frame.x.clone(),
-                    torus.frame.y.clone(),
-                    torus.major_radius.clone(),
-                    Real::zero(),
-                    Real::from(2) * Real::pi(),
-                )?));
-            }
-            Ok(SurfaceSurfaceIntersection::Circles(vec![
-                Curve3::circle_arc(
+            let center = torus.center.clone() + torus.frame.z.clone() * axial_height.clone();
+            let normalize_angle = |angle: Real| -> GeometryResult<Real> {
+                Ok(
+                    if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+                        angle + Real::tau()
+                    } else {
+                        angle
+                    },
+                )
+            };
+            let section = |radius: Real, v: Real| -> GeometryResult<SurfaceIntersectionCurve> {
+                let curve = Curve3::circle_arc(
                     center.clone(),
                     torus.frame.x.clone(),
                     torus.frame.y.clone(),
-                    &torus.major_radius + &radial_offset,
+                    radius,
                     Real::zero(),
-                    Real::from(2) * Real::pi(),
-                )?,
-                Curve3::circle_arc(
-                    center,
-                    torus.frame.x.clone(),
-                    torus.frame.y.clone(),
-                    &torus.major_radius - radial_offset,
-                    Real::zero(),
-                    Real::from(2) * Real::pi(),
-                )?,
+                    Real::tau(),
+                )?;
+                let domain = curve.domain().clone();
+                Ok(SurfaceIntersectionCurve::new(
+                    curve.clone(),
+                    SurfaceIntersectionPcurve::plane_projection(curve, plane),
+                    SurfaceIntersectionPcurve::tensor_iso_v(domain, v),
+                ))
+            };
+            if decided_order(compare_reals(&radial_offset, &Real::zero()))? == Ordering::Equal {
+                let v = normalize_angle(axial_height.atan2(radial_offset))?;
+                return Ok(SurfaceSurfaceIntersection::Curve(Box::new(section(
+                    torus.major_radius.clone(),
+                    v,
+                )?)));
+            }
+            let outer_v = normalize_angle(axial_height.clone().atan2(radial_offset.clone()))?;
+            let inner_v = normalize_angle(axial_height.atan2(-radial_offset.clone()))?;
+            Ok(SurfaceSurfaceIntersection::Curves(vec![
+                section(&torus.major_radius + &radial_offset, outer_v)?,
+                section(&torus.major_radius - radial_offset, inner_v)?,
             ]))
         }
     }
@@ -8862,20 +8874,40 @@ mod tests {
             r(1),
         )
         .unwrap();
-        let SurfaceSurfaceIntersection::Circles(circles) =
+        let SurfaceSurfaceIntersection::Curves(circles) =
             torus.intersect_surface(&apex_plane).unwrap()
         else {
             panic!("torus center plane must retain two circles");
         };
         assert_eq!(circles.len(), 2);
-        assert_points_equal(&circles[0].start().unwrap(), &p(4, 0, 0));
-        assert_points_equal(&circles[1].start().unwrap(), &p(2, 0, 0));
+        assert_points_equal(&circles[0].curve().start().unwrap(), &p(4, 0, 0));
+        assert_points_equal(&circles[1].curve().start().unwrap(), &p(2, 0, 0));
+        for section in &circles {
+            assert_eq!(
+                section
+                    .first_pcurve()
+                    .materialize()
+                    .unwrap()
+                    .curve()
+                    .family(),
+                CurveFamily2::Line
+            );
+            assert_eq!(
+                section
+                    .second_pcurve()
+                    .materialize()
+                    .unwrap()
+                    .curve()
+                    .family(),
+                CurveFamily2::CircularArc
+            );
+        }
         let tangent = Surface::plane(p(0, 0, 1), Vector3::x(), Vector3::y()).unwrap();
-        let SurfaceSurfaceIntersection::Circle(circle) = torus.intersect_surface(&tangent).unwrap()
+        let SurfaceSurfaceIntersection::Curve(circle) = torus.intersect_surface(&tangent).unwrap()
         else {
             panic!("top torus plane must retain one tangent circle");
         };
-        assert_points_equal(&circle.start().unwrap(), &p(3, 0, 1));
+        assert_points_equal(&circle.curve().start().unwrap(), &p(3, 0, 1));
         let disjoint = Surface::plane(p(0, 0, 2), Vector3::x(), Vector3::y()).unwrap();
         assert!(matches!(
             torus.intersect_surface(&disjoint).unwrap(),

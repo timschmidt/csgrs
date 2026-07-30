@@ -9007,13 +9007,13 @@ impl ModelBuilder {
         shell: ShellId,
     ) -> Result<Option<CertifiedTorusShell>, BuildError> {
         let faces = &self.shell_ref(shell)?.faces;
-        if faces.len() != 16 {
+        if faces.len() < 16 {
             return Ok(None);
         }
         let mut surface_id = None;
         let mut u_values = Vec::new();
         let mut v_values = Vec::new();
-        let mut face_coordinates = Vec::with_capacity(16);
+        let mut face_coordinates = Vec::with_capacity(faces.len());
         for face_id in faces {
             let face = self.face_ref(*face_id)?;
             if !face.inner().is_empty()
@@ -9036,6 +9036,7 @@ impl ModelBuilder {
             }
             let mut face_u = Vec::with_capacity(8);
             let mut face_v = Vec::with_capacity(8);
+            let mut parameter_segments = Vec::with_capacity(wire.edge_uses.len());
             for edge_use_id in &wire.edge_uses {
                 let edge_use = self.edge_use_ref(*edge_use_id)?;
                 if self.curve_ref(self.edge_ref(edge_use.edge)?.curve)?.kind()
@@ -9054,53 +9055,56 @@ impl ModelBuilder {
                 }
                 face_u.extend([line.start().x().clone(), line.end().x().clone()]);
                 face_v.extend([line.start().y().clone(), line.end().y().clone()]);
+                parameter_segments.push(Segment2::Line(line.clone()));
             }
             let (u_min, u_max) = exact_real_min_max(&face_u)?;
             let (v_min, v_max) = exact_real_min_max(&face_v)?;
+            let contour = Contour2::try_new(parameter_segments).map_err(GeometryError::from)?;
+            let represented_area = contour
+                .signed_area()
+                .map_err(GeometryError::from)?
+                .ok_or(BuildError::DegenerateShellVolume(shell))?
+                .abs();
+            if !real_values_equal(&represented_area, &((&u_max - &u_min) * (&v_max - &v_min)))? {
+                return Ok(None);
+            }
             insert_sorted_real(&mut u_values, &u_min)?;
             insert_sorted_real(&mut u_values, &u_max)?;
             insert_sorted_real(&mut v_values, &v_min)?;
             insert_sorted_real(&mut v_values, &v_max)?;
-            face_coordinates.push((vec![u_min, u_max], vec![v_min, v_max]));
+            face_coordinates.push((u_min, u_max, v_min, v_max));
         }
-        if u_values.len() != 5 || v_values.len() != 5 {
+        if u_values.len() < 5
+            || v_values.len() < 5
+            || !real_values_equal(
+                &(u_values.last().expect("torus u grid") - &u_values[0]),
+                &Real::tau(),
+            )?
+            || !real_values_equal(
+                &(v_values.last().expect("torus v grid") - &v_values[0]),
+                &Real::tau(),
+            )?
+        {
             return Ok(None);
         }
-        let quarter =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
-        for values in [&u_values, &v_values] {
-            for pair in values.windows(2) {
-                if !real_values_equal(&(&pair[1] - &pair[0]), &quarter)? {
-                    return Ok(None);
+        let mut cells = HashSet::new();
+        for (u_min, u_max, v_min, v_max) in face_coordinates {
+            let u_start = exact_real_index(&u_values, &u_min)?;
+            let u_end = exact_real_index(&u_values, &u_max)?;
+            let v_start = exact_real_index(&v_values, &v_min)?;
+            let v_end = exact_real_index(&v_values, &v_max)?;
+            if u_start >= u_end || v_start >= v_end {
+                return Ok(None);
+            }
+            for u_cell in u_start..u_end {
+                for v_cell in v_start..v_end {
+                    if !cells.insert((u_cell, v_cell)) {
+                        return Ok(None);
+                    }
                 }
             }
         }
-        let mut cells = HashSet::with_capacity(16);
-        for (face_u, face_v) in face_coordinates {
-            let mut u_indices = face_u
-                .iter()
-                .map(|value| exact_real_index(&u_values, value))
-                .collect::<Result<HashSet<_>, _>>()?
-                .into_iter()
-                .collect::<Vec<_>>();
-            let mut v_indices = face_v
-                .iter()
-                .map(|value| exact_real_index(&v_values, value))
-                .collect::<Result<HashSet<_>, _>>()?
-                .into_iter()
-                .collect::<Vec<_>>();
-            u_indices.sort_unstable();
-            v_indices.sort_unstable();
-            if u_indices.len() != 2
-                || v_indices.len() != 2
-                || u_indices[1] != u_indices[0] + 1
-                || v_indices[1] != v_indices[0] + 1
-                || !cells.insert((u_indices[0], v_indices[0]))
-            {
-                return Ok(None);
-            }
-        }
-        if cells.len() != 16 {
+        if cells.len() != (u_values.len() - 1) * (v_values.len() - 1) {
             return Ok(None);
         }
         let SurfaceExactData::Torus {

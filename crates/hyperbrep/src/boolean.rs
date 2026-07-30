@@ -746,24 +746,53 @@ fn coalesce_planar_closed_circle_traces(
             curve
         });
     }
+    let mut groups: Vec<Vec<SurfaceIntersectionCurve>> = Vec::new();
+    for curve in normalized {
+        let mut matching = None;
+        for (index, group) in groups.iter().enumerate() {
+            if circle_supports_equal(group[0].curve(), curve.curve())? {
+                matching = Some(index);
+                break;
+            }
+        }
+        match matching {
+            Some(index) => groups[index].push(curve),
+            None => groups.push(vec![curve]),
+        }
+    }
+    let mut result = Vec::new();
+    for group in groups {
+        result.extend(coalesce_planar_circle_group(surface, group)?);
+    }
+    Ok(result)
+}
+
+fn circle_supports_equal(first: &Curve3, second: &Curve3) -> Result<bool, GeometryError> {
+    let (Curve3ExactData::EllipseArc(first), Curve3ExactData::EllipseArc(second)) =
+        (first.exact_data(), second.exact_data())
+    else {
+        return Ok(false);
+    };
+    Ok(first.circle
+        && second.circle
+        && first.direction == second.direction
+        && points_exactly_equal(&first.center, &second.center)?
+        && vectors_exactly_equal(&first.x, &second.x)?
+        && vectors_exactly_equal(&first.y, &second.y)?
+        && exact_order(&first.x_radius, &second.x_radius)? == Ordering::Equal
+        && exact_order(&first.y_radius, &second.y_radius)? == Ordering::Equal)
+}
+
+fn coalesce_planar_circle_group(
+    surface: &Surface,
+    normalized: Vec<SurfaceIntersectionCurve>,
+) -> Result<Vec<SurfaceIntersectionCurve>, BooleanError> {
+    if normalized.len() < 2 {
+        return Ok(normalized);
+    }
     let Curve3ExactData::EllipseArc(reference) = normalized[0].curve().exact_data() else {
         unreachable!("normalized circle retains conic data");
     };
-    for curve in &normalized {
-        let Curve3ExactData::EllipseArc(candidate) = curve.curve().exact_data() else {
-            unreachable!("normalized circle retains conic data");
-        };
-        if !candidate.circle
-            || candidate.direction != reference.direction
-            || !points_exactly_equal(&candidate.center, &reference.center)?
-            || !vectors_exactly_equal(&candidate.x, &reference.x)?
-            || !vectors_exactly_equal(&candidate.y, &reference.y)?
-            || exact_order(&candidate.x_radius, &reference.x_radius)? != Ordering::Equal
-            || exact_order(&candidate.y_radius, &reference.y_radius)? != Ordering::Equal
-        {
-            return Ok(normalized);
-        }
-    }
     let mut ordered: Vec<SurfaceIntersectionCurve> = Vec::with_capacity(normalized.len());
     for curve in normalized {
         let mut insertion = ordered.len();
@@ -5629,6 +5658,54 @@ mod tests {
             .unwrap();
         assert_eq!(
             compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn transverse_torus_graph_partitions_both_exact_circle_supports() {
+        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let (slab, slab_solid) = crate::builder::cuboid(
+            Point3::new(-Real::from(5), -Real::from(5), half),
+            p(5, 5, 2),
+        )
+        .unwrap();
+        let graph = intersection_graph(&torus, torus_solid, &slab, slab_solid).unwrap();
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match pair.trim() {
+                FacePairTrim::SurfaceCurveFragments(fragments) => Some(fragments),
+                _ => None,
+            })
+            .flatten()
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 8);
+        assert!(retained.iter().all(|trace| {
+            trace.curve().kind() == crate::Curve3Kind::CircleArc
+                && trace.first_pcurve().materialize().is_ok()
+                && trace.second_pcurve().materialize().is_ok()
+        }));
+
+        let (partitioned_torus, torus_partitions) = graph.partition_first_faces().unwrap();
+        assert_eq!(torus_partitions.len(), 8);
+        assert_eq!(
+            compare_reals(
+                &partitioned_torus.solid_volume(torus_solid).unwrap(),
+                &torus.solid_volume(torus_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let (partitioned_slab, slab_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(slab_partitions.len(), 1);
+        assert_eq!(
+            compare_reals(
+                &partitioned_slab.solid_volume(slab_solid).unwrap(),
+                &slab.solid_volume(slab_solid).unwrap(),
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
