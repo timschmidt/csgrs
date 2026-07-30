@@ -18,9 +18,9 @@
 //! kernel. Cubic weights extend that reduction with exact rational-root,
 //! Cardano, trigonometric, and repeated-factor partial-fraction branches.
 //! Higher-degree rational weight polynomials through degree eight use the same
-//! partial-fraction kernel when exact rational-root deflation leaves only
-//! linear factors and at most one certified irreducible quadratic with exact
-//! multiplicity.
+//! partial-fraction kernel when exact rational-root deflation leaves an exact
+//! power of one certified irreducible quadratic or a quartic product of two
+//! certified irreducible quadratics.
 //! This preserves the exact object structure required by exact-computation discipline, and supplies
 //! the area facts needed by fitting/simplification pipelines discussed by Raph
 //! Bezier approximation analysis. The polynomial and rational
@@ -528,9 +528,10 @@ impl RationalBezier2 {
     /// carriers are integrated when exact Bernstein conversion certifies that
     /// their weight polynomial has degree at most two, is a cubic with an
     /// exactly classified discriminant, or has degree at most eight and exact
-    /// rational-root deflation leaves at most one irreducible quadratic factor
-    /// with exact multiplicity. `None` means another genuinely rational
-    /// integral is not implemented; it does not approximate one.
+    /// rational-root deflation leaves an exact power of one irreducible
+    /// quadratic or a quartic product of two irreducible quadratics. `None`
+    /// means another genuinely rational integral is not implemented; it does
+    /// not approximate one.
     pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -551,9 +552,9 @@ impl RationalBezier2 {
     /// Cubic weight polynomials use exact Cardano or repeated-factor reduction.
     /// Higher weight polynomials through degree eight use exact
     /// multiplicity-aware partial fractions when rational-root deflation leaves
-    /// at most one irreducible quadratic with exact multiplicity. `None` is an
-    /// explicit unsupported symbolic integral for any remaining weight
-    /// polynomial, never a finite approximation.
+    /// an exact power of one irreducible quadratic or a quartic product of two.
+    /// `None` is an explicit unsupported symbolic integral for any remaining
+    /// weight polynomial, never a finite approximation.
     pub fn area_moments_contribution(&self) -> CurveResult<Option<BezierAreaMoments2>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -1799,12 +1800,16 @@ fn exact_rational_polynomial_factors(
     let mut factors = Vec::with_capacity(polynomial.len() - 1);
     while remaining.len() > 1 {
         let Some(root) = exact_rational_polynomial_root(&remaining) else {
-            let Some(factor) = exact_repeated_irreducible_quadratic_factor(&remaining, policy)?
-            else {
-                return Ok(None);
-            };
-            factors.push(factor);
-            return Ok(Some(factors));
+            if let Some(factor) = exact_repeated_irreducible_quadratic_factor(&remaining, policy)? {
+                factors.push(factor);
+                return Ok(Some(factors));
+            }
+            if let Some(quadratics) = exact_irreducible_quadratic_pair_factors(&remaining, policy)?
+            {
+                factors.extend(quadratics);
+                return Ok(Some(factors));
+            }
+            return Ok(None);
         };
         let factor = [Real::zero() - &root, Real::one()];
         let mut multiplicity = 0_usize;
@@ -1886,6 +1891,121 @@ fn exact_repeated_irreducible_quadratic_factor(
         denominator,
         multiplicity,
     }))
+}
+
+fn exact_irreducible_quadratic_pair_factors(
+    polynomial: &[Real],
+    policy: &CurvePolicy,
+) -> CurveResult<Option<Vec<ExactPolynomialFactor>>> {
+    if polynomial.len() != 5 {
+        return Ok(None);
+    }
+    let leading = &polynomial[4];
+    match compare_reals(leading, &Real::zero(), policy) {
+        Some(std::cmp::Ordering::Equal) => {
+            return Err(CurveError::InvalidBezierPolynomial);
+        }
+        Some(_) => {}
+        None => return Ok(None),
+    }
+    let a = (polynomial[3].clone() / leading)?;
+    let b = (polynomial[2].clone() / leading)?;
+    let c = (polynomial[1].clone() / leading)?;
+    let d = (polynomial[0].clone() / leading)?;
+    let normalized = [a, b, c, d];
+    let mut resolvent = vec![
+        &normalized[3] * &(Real::from(4_i8) * &normalized[1] - &normalized[0] * &normalized[0])
+            - &normalized[2] * &normalized[2],
+        &normalized[0] * &normalized[2] - Real::from(4_i8) * &normalized[3],
+        Real::zero() - &normalized[1],
+        Real::one(),
+    ];
+    while resolvent.len() > 1 {
+        let Some(sum) = exact_rational_polynomial_root(&resolvent) else {
+            return Ok(None);
+        };
+        if let Some(factors) = irreducible_quadratic_pair_from_resolvent_root(
+            polynomial,
+            leading,
+            &normalized,
+            &sum,
+            policy,
+        )? {
+            return Ok(Some(factors));
+        }
+        let factor = [Real::zero() - &sum, Real::one()];
+        let Some((quotient, remainder)) = polynomial_division(&resolvent, &factor, policy)? else {
+            return Ok(None);
+        };
+        if !polynomial_is_certified_zero(&remainder, policy) {
+            return Ok(None);
+        }
+        resolvent = quotient;
+    }
+    Ok(None)
+}
+
+fn irreducible_quadratic_pair_from_resolvent_root(
+    polynomial: &[Real],
+    leading: &Real,
+    normalized: &[Real; 4],
+    sum: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Option<Vec<ExactPolynomialFactor>>> {
+    let [a, b, c, d] = normalized;
+    let difference_squared = a * a - Real::from(4_i8) * b + Real::from(4_i8) * sum;
+    let product = a * sum - Real::from(2_i8) * c;
+    let difference = match compare_reals(&difference_squared, &Real::zero(), policy) {
+        Some(std::cmp::Ordering::Greater) => difference_squared.sqrt()?,
+        Some(std::cmp::Ordering::Equal) => Real::zero(),
+        Some(std::cmp::Ordering::Less) | None => return Ok(None),
+    };
+    let constant_difference = match compare_reals(&difference, &Real::zero(), policy) {
+        Some(std::cmp::Ordering::Equal) => {
+            if compare_reals(&product, &Real::zero(), policy) != Some(std::cmp::Ordering::Equal) {
+                return Ok(None);
+            }
+            let squared = sum * sum - Real::from(4_i8) * d;
+            match compare_reals(&squared, &Real::zero(), policy) {
+                Some(std::cmp::Ordering::Greater) => squared.sqrt()?,
+                Some(std::cmp::Ordering::Equal) => Real::zero(),
+                Some(std::cmp::Ordering::Less) | None => return Ok(None),
+            }
+        }
+        Some(_) => (product / &difference)?,
+        None => return Ok(None),
+    };
+    let two = Real::from(2_i8);
+    let first = [
+        ((sum + &constant_difference) / &two)?,
+        ((a + &difference) / &two)?,
+        Real::one(),
+    ];
+    let second = [
+        ((sum - &constant_difference) / &two)?,
+        ((a - &difference) / &two)?,
+        Real::one(),
+    ];
+    for denominator in [&first, &second] {
+        let delta = Real::from(4_i8) * &denominator[0] - &denominator[1] * &denominator[1];
+        if compare_reals(&delta, &Real::zero(), policy) != Some(std::cmp::Ordering::Greater) {
+            return Ok(None);
+        }
+    }
+    let reconstructed = polynomial_scaled(&polynomial_product(&first, &second), leading);
+    if !polynomial_is_certified_zero(&polynomial_difference(polynomial, &reconstructed), policy) {
+        return Ok(None);
+    }
+    Ok(Some(vec![
+        ExactPolynomialFactor::IrreducibleQuadratic {
+            denominator: first,
+            multiplicity: 1,
+        },
+        ExactPolynomialFactor::IrreducibleQuadratic {
+            denominator: second,
+            multiplicity: 1,
+        },
+    ]))
 }
 
 fn exact_rational_polynomial_root(polynomial: &[Real]) -> Option<Real> {
@@ -2861,6 +2981,29 @@ mod tests {
                 (Real::from(4_i8) / Real::from(3_i8)).unwrap(),
                 Real::from(2_i8),
                 Real::from(4_i8),
+            ],
+        )
+        .unwrap();
+
+        assert_rational_moments_are_exactly_additive(&curve);
+    }
+
+    #[test]
+    fn distinct_irreducible_quadratic_weight_moments_are_exactly_additive() {
+        let curve = RationalBezier2::try_new(
+            vec![
+                point(4, 0),
+                point(6, 0),
+                point(6, 1),
+                point(6, 2),
+                point(4, 2),
+            ],
+            vec![
+                Real::from(2_i8),
+                (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                Real::from(2_i8),
             ],
         )
         .unwrap();
