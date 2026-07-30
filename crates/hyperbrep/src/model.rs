@@ -7212,20 +7212,15 @@ impl ModelBuilder {
                     ParameterCorrespondence::Affine { .. },
                 ) => self.validate_extrusion_line_image(pcurve, surface)?,
                 (
-                    Curve3Kind::RationalBezier | Curve3Kind::Nurbs,
+                    Curve3Kind::CircleArc
+                    | Curve3Kind::EllipseArc
+                    | Curve3Kind::RationalBezier
+                    | Curve3Kind::Nurbs,
                     CurveFamily2::Line,
                     SurfaceKind::Extrusion,
                     ParameterCorrespondence::Affine { .. },
                 ) => {
                     self.validate_extrusion_profile_image(curve, edge, edge_use, pcurve, surface)?;
-                }
-                (
-                    Curve3Kind::CircleArc,
-                    CurveFamily2::Line,
-                    SurfaceKind::Extrusion,
-                    ParameterCorrespondence::Affine { .. },
-                ) => {
-                    self.validate_extrusion_circle_image(curve, edge, edge_use, pcurve, surface)?;
                 }
                 (
                     Curve3Kind::Line,
@@ -8338,69 +8333,6 @@ impl ModelBuilder {
             )?;
         }
         Ok(())
-    }
-
-    fn validate_extrusion_circle_image(
-        &self,
-        curve: &Curve3,
-        edge: &Edge,
-        edge_use: &EdgeUse,
-        pcurve: &Pcurve,
-        surface: &Surface,
-    ) -> Result<(), BuildError> {
-        let line = pcurve
-            .line_segment()
-            .expect("line pcurve kind carries line geometry");
-        require_real_equal(
-            line.start().y(),
-            line.end().y(),
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-        let Curve3ExactData::EllipseArc(curve_data) = curve.exact_data() else {
-            unreachable!("circle kind carries ellipse-arc exact data");
-        };
-        let SurfaceExactData::Extrusion { profile, direction } = surface.exact_data() else {
-            unreachable!("extrusion kind carries extrusion exact data");
-        };
-        let Curve3ExactData::EllipseArc(profile_data) = *profile else {
-            return Err(BuildError::EdgeUseSupportMismatch);
-        };
-        if !profile_data.circle {
-            return Err(BuildError::EdgeUseSupportMismatch);
-        }
-        let expected_center = profile_data.center + direction * line.start().y();
-        require_point_equal(
-            &curve_data.center,
-            &expected_center,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-        require_real_equal(
-            &curve_data.x_radius,
-            &profile_data.x_radius,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-
-        let pcurve_span = pcurve.domain_end() - pcurve.domain_start();
-        let du = line.end().x() - line.start().x();
-        let du_dt = (du / pcurve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
-        let surface_parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
-        let surface_tangent = surface.partials_at(&surface_parameter)?.u().clone() * du_dt;
-        let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
-            pcurve,
-            &edge.domain,
-            edge_use.direction,
-            pcurve.domain_start(),
-        )?;
-        let edge_rate = match &edge_use.parameter_correspondence {
-            ParameterCorrespondence::Affine { scale, .. } => scale,
-            ParameterCorrespondence::AngularSweep => unreachable!("matched affine relation"),
-        };
-        let edge_tangent = curve.derivative_at(&edge_parameter, 1)?.vector().clone() * edge_rate;
-        require_vector_equal(
-            &surface_tangent,
-            &edge_tangent,
-            BuildError::EdgeUseSupportMismatch,
-        )
     }
 
     fn validate_revolution_meridian_image(
@@ -18025,7 +17957,7 @@ mod tests {
     }
 
     #[test]
-    fn extrusion_area_certifies_rational_line_images_and_rejects_variable_speed_profiles() {
+    fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_speed_profiles() {
         let profiles = [
             Curve3::rational_bezier(
                 vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)],
@@ -18093,6 +18025,22 @@ mod tests {
         );
         assert_eq!(
             oblique_model.face_area(oblique_face),
+            Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
+        );
+
+        let ellipse = Curve3::ellipse_arc(
+            p(0, 0, 0),
+            Vector3::x(),
+            Vector3::y(),
+            r(2),
+            Real::one(),
+            Real::zero(),
+            (Real::pi() / r(2)).unwrap(),
+        )
+        .unwrap();
+        let (ellipse_model, ellipse_face) = extrusion_rectangle(ellipse, Vector3::z(), r(3));
+        assert_eq!(
+            ellipse_model.face_area(ellipse_face),
             Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
         );
     }

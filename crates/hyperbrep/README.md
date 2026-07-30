@@ -48,7 +48,7 @@ The clean-break implementation currently provides:
   directed-angular-sweep relations;
 - certified line/plane, circular-arc/plane, axial-line/cylinder,
   circular-edge/cylinder, generator-or-circle/cone, circular-edge/torus, and
-  line/circle/rational-Bézier/NURBS profile-image agreement on extrusion
+  line/circle/ellipse/rational-Bézier/NURBS profile-image agreement on extrusion
   surfaces over complete parameter intervals; exact
   line/circle/rational-Bézier/NURBS meridian and latitude-circle agreement on
   revolution surfaces; plus rational Bézier/NURBS iso-boundary agreement on

@@ -26,7 +26,7 @@ General isolated algebraic parameters that cannot be represented as
 | Sphere | Periodic longitude, closed latitude | Exact cube | Complete closed-surface face without seam/pole edges | Rigid / reflection | Exact |
 | Cone | Periodic `u`, lower-bounded `v` | Unbounded | Generator and constant-`v` circle away from apex | Rigid / reflection | Exact |
 | Ring torus | Periodic `u` and `v` | Exact cube | Both constant-parameter circle families | Rigid / reflection | Exact |
-| Linear extrusion | Profile domain × unbounded | Unbounded | Line/circle/rational Bézier/NURBS profile and extrusion direction | Family-preserving | Exact |
+| Linear extrusion | Profile domain × unbounded | Unbounded | Line/circle/ellipse/rational Bézier/NURBS profile and extrusion direction | Family-preserving | Exact |
 | Revolution | Periodic × profile domain | Conservative exact | Exact line meridians and latitude circles | Rigid / reflection | Exact |
 | Tensor rational Bézier | Closed × closed | Control hull | Exact iso-boundary rational Bézier curves and subintervals | Affine | Exact |
 | Tensor NURBS | Active closed domains | Control hull | Exact iso-boundary NURBS curves and subintervals | Affine | Exact |
