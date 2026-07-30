@@ -114,6 +114,9 @@ certificate deliberately rebases rational Bézier patch construction from
   `947.797 us/iteration`;
 - rational Bézier patch build + validation: `74.365 us/iteration`;
 - NURBS patch build + validation: `323.509 us/iteration`;
+- native-domain NURBS extrusion-patch build, complete profile-image
+  validation, and certified monotone-planar exact face area:
+  `176.412 us/iteration`;
 - paired complete rational Bézier and native-domain NURBS affine-image area
   queries under separable positive projective weights:
   `18.645 us/paired iteration`;

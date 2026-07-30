@@ -274,9 +274,12 @@ cylinders, extrusion surfaces, spheres and spherical caps, cones, and tori use
 family-specific exact routes; no curved boundary is replaced by chords.
 Extrusion measurement uses a constant Jacobian only for line profiles and
 circles swept normal to their plane. A four-edge rectangular trim of a
-certified monotone rational Bézier/NURBS line image instead measures the exact
-profile chord crossed with the authored direction, independent of projective
-speed. Other variable-speed profiles return `UnsupportedMeasurement`.
+certified planar rational Bézier/NURBS profile instead measures the exact
+profile chord crossed with the authored direction when every positive-weight
+control projection is transverse-monotone. This covers curved in-plane strips
+and projectively parameterized line images independently of projective speed.
+Profiles outside that plane or with transverse backtracking return
+`UnsupportedMeasurement`.
 
 Regularized z-prism Booleans delegate planar arrangement and role assignment to
 Hypercurve, then reconstruct line/arc material contours and holes as newly

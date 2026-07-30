@@ -4430,7 +4430,9 @@ impl Model {
                 .map_err(QueryError::from);
         }
         if !face.inner().is_empty()
-            || !certified_monotone_line_curve_image(profile).map_err(build_error_geometry)?
+            || !(certified_monotone_line_curve_image(profile).map_err(build_error_geometry)?
+                || certified_monotone_planar_extrusion_image(profile, direction)
+                    .map_err(build_error_geometry)?)
         {
             return Err(GeometryError::UnsupportedMeasurement.into());
         }
@@ -15712,6 +15714,70 @@ fn certified_monotone_line_curve_image(curve: &Curve3) -> Result<bool, BuildErro
     Ok(true)
 }
 
+/// Proves that `|C'(u) × direction|` integrates to
+/// `|(C(end) - C(start)) × direction|`.
+///
+/// Coplanar controls keep every cross product on one fixed normal. Positive
+/// rational Bézier and NURBS bases are normalized totally-positive bases, so
+/// nondecreasing transverse control projections certify a nonnegative
+/// derivative over the complete native domain without sampling.
+fn certified_monotone_planar_extrusion_image(
+    curve: &Curve3,
+    direction: &Vector3,
+) -> Result<bool, BuildError> {
+    let control_points = match curve.exact_data() {
+        Curve3ExactData::RationalBezier { control_points, .. }
+        | Curve3ExactData::Nurbs { control_points, .. } => control_points,
+        _ => return Ok(false),
+    };
+    let start = curve.point_at(curve.domain().start())?;
+    let end = curve.point_at(curve.domain().end())?;
+    if !points_equal(
+        control_points
+            .first()
+            .expect("validated spline has control points"),
+        &start,
+    )? || !points_equal(
+        control_points
+            .last()
+            .expect("validated spline has control points"),
+        &end,
+    )? {
+        return Ok(false);
+    }
+    let chord = &end - &start;
+    let normal = chord.cross(direction);
+    if decided_model_order(compare_reals(&normal.norm_squared(), &Real::zero()))?
+        != std::cmp::Ordering::Greater
+    {
+        return Ok(false);
+    }
+    let transverse = direction.cross(&normal);
+    let end_projection = chord.dot(&transverse);
+    if decided_model_order(compare_reals(&end_projection, &Real::zero()))?
+        != std::cmp::Ordering::Greater
+    {
+        return Ok(false);
+    }
+    let mut previous_projection = Real::zero();
+    for control in control_points {
+        let relative = control - &start;
+        if !real_values_equal(&relative.dot(&normal), &Real::zero())? {
+            return Ok(false);
+        }
+        let projection = relative.dot(&transverse);
+        if decided_model_order(compare_reals(&projection, &previous_projection))?
+            == std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(&projection, &end_projection))?
+                == std::cmp::Ordering::Greater
+        {
+            return Ok(false);
+        }
+        previous_projection = projection;
+    }
+    Ok(true)
+}
+
 struct AffineTensorImage {
     spatial_area: Real,
     parameter_area: Real,
@@ -17853,109 +17919,6 @@ mod tests {
         assert!(!certified_monotone_line_curve_image(&backtracking).unwrap());
     }
 
-    fn extrusion_rectangle(profile: Curve3, direction: Vector3, height: Real) -> (Model, FaceId) {
-        let mut builder = ModelBuilder::new();
-        let offset = direction.clone() * &height;
-        let start = profile.start().unwrap();
-        let end = profile.end().unwrap();
-        let top_start = start.clone() + &offset;
-        let top_end = end.clone() + &offset;
-        let vertices = [
-            builder.vertex(start.clone()).unwrap(),
-            builder.vertex(end.clone()).unwrap(),
-            builder.vertex(top_end.clone()).unwrap(),
-            builder.vertex(top_start.clone()).unwrap(),
-        ];
-        let profile_domain = profile.domain().clone();
-        let top_profile = translated_curve(&profile, &offset).unwrap();
-        let curves = [
-            builder.curve(profile.clone()).unwrap(),
-            builder.curve(Curve3::line(end, top_end).unwrap()).unwrap(),
-            builder.curve(top_profile).unwrap(),
-            builder
-                .curve(Curve3::line(start, top_start).unwrap())
-                .unwrap(),
-        ];
-        let edges = [
-            builder
-                .edge(vertices[0], vertices[1], curves[0], profile_domain.clone())
-                .unwrap(),
-            builder
-                .edge(vertices[1], vertices[2], curves[1], ParameterDomain::unit())
-                .unwrap(),
-            builder
-                .edge(vertices[3], vertices[2], curves[2], profile_domain.clone())
-                .unwrap(),
-            builder
-                .edge(vertices[0], vertices[3], curves[3], ParameterDomain::unit())
-                .unwrap(),
-        ];
-        let u_start = profile_domain.start().clone();
-        let u_end = profile_domain.end().clone();
-        let pcurve_points = [
-            (
-                CurvePoint2::new(u_start.clone(), Real::zero()),
-                CurvePoint2::new(u_end.clone(), Real::zero()),
-            ),
-            (
-                CurvePoint2::new(u_end.clone(), Real::zero()),
-                CurvePoint2::new(u_end.clone(), height.clone()),
-            ),
-            (
-                CurvePoint2::new(u_end.clone(), height.clone()),
-                CurvePoint2::new(u_start.clone(), height.clone()),
-            ),
-            (
-                CurvePoint2::new(u_start.clone(), height),
-                CurvePoint2::new(u_start.clone(), Real::zero()),
-            ),
-        ];
-        let profile_span = &u_end - &u_start;
-        let correspondences = [
-            ParameterCorrespondence::affine(profile_span.clone(), u_start.clone()).unwrap(),
-            ParameterCorrespondence::identity(),
-            ParameterCorrespondence::affine(-profile_span, u_end).unwrap(),
-            ParameterCorrespondence::affine(-Real::one(), Real::one()).unwrap(),
-        ];
-        let directions = [
-            Direction::Forward,
-            Direction::Forward,
-            Direction::Reversed,
-            Direction::Reversed,
-        ];
-        let mut uses = Vec::with_capacity(4);
-        for index in 0..4 {
-            let pcurve = builder
-                .pcurve(Pcurve::new(Curve2::from(
-                    LineSeg2::try_new(
-                        pcurve_points[index].0.clone(),
-                        pcurve_points[index].1.clone(),
-                    )
-                    .unwrap(),
-                )))
-                .unwrap();
-            uses.push(
-                builder
-                    .edge_use(
-                        edges[index],
-                        directions[index],
-                        pcurve,
-                        correspondences[index].clone(),
-                    )
-                    .unwrap(),
-            );
-        }
-        let wire = builder.wire(uses).unwrap();
-        let surface = builder
-            .surface(Surface::extrusion(profile, direction).unwrap())
-            .unwrap();
-        let face = builder
-            .face(surface, Orientation::Forward, wire, Vec::new())
-            .unwrap();
-        builder.shell(vec![face]).unwrap();
-        (builder.finish().unwrap(), face)
-    }
-
     #[test]
     fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_speed_profiles() {
         let profiles = [
@@ -17973,10 +17936,43 @@ mod tests {
             .unwrap(),
         ];
         for profile in profiles {
-            let (model, face) = extrusion_rectangle(profile, Vector3::z(), r(3));
+            let (model, face) =
+                crate::builder::extrusion_patch(profile, Vector3::z(), Real::zero(), r(3)).unwrap();
             let area = model.face_area(face).unwrap();
             assert_eq!(
                 compare_reals(&area, &r(6)).value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+            let replayed = crate::RawModel::from_json(&model.to_json().unwrap())
+                .unwrap()
+                .validate()
+                .unwrap();
+            assert_eq!(
+                compare_reals(&replayed.face_area(face).unwrap(), &r(6)).value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+        }
+
+        let planar_profiles = [
+            Curve3::rational_bezier(
+                vec![p(0, 0, 0), p(2, 1, 0), p(0, 2, 0)],
+                vec![Real::one(), r(2), r(3)],
+            )
+            .unwrap(),
+            Curve3::nurbs(
+                2,
+                vec![p(0, 0, 0), p(2, 1, 0), p(0, 2, 0)],
+                vec![Real::one(), r(2), r(3)],
+                vec![r(2), r(2), r(2), r(5), r(5), r(5)],
+            )
+            .unwrap(),
+        ];
+        for profile in planar_profiles {
+            assert!(certified_monotone_planar_extrusion_image(&profile, &Vector3::x()).unwrap());
+            let (model, face) =
+                crate::builder::extrusion_patch(profile, Vector3::x(), Real::zero(), r(3)).unwrap();
+            assert_eq!(
+                compare_reals(&model.face_area(face).unwrap(), &r(6)).value(),
                 Some(std::cmp::Ordering::Equal)
             );
             let replayed = crate::RawModel::from_json(&model.to_json().unwrap())
@@ -17994,9 +17990,24 @@ mod tests {
             vec![Real::one(), r(2), r(3)],
         )
         .unwrap();
-        let (model, face) = extrusion_rectangle(curved, Vector3::z(), r(3));
+        let (model, face) =
+            crate::builder::extrusion_patch(curved, Vector3::z(), Real::zero(), r(3)).unwrap();
         assert_eq!(
             model.face_area(face),
+            Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
+        );
+
+        let backtracking = Curve3::rational_bezier(
+            vec![p(0, 0, 0), p(2, 3, 0), p(0, 2, 0)],
+            vec![Real::one(), r(2), r(3)],
+        )
+        .unwrap();
+        assert!(!certified_monotone_planar_extrusion_image(&backtracking, &Vector3::x()).unwrap());
+        let (backtracking_model, backtracking_face) =
+            crate::builder::extrusion_patch(backtracking, Vector3::x(), Real::zero(), r(3))
+                .unwrap();
+        assert_eq!(
+            backtracking_model.face_area(backtracking_face),
             Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
         );
 
@@ -18009,7 +18020,9 @@ mod tests {
             (Real::pi() / r(2)).unwrap(),
         )
         .unwrap();
-        let (normal_model, normal_face) = extrusion_rectangle(circle.clone(), Vector3::z(), r(3));
+        let (normal_model, normal_face) =
+            crate::builder::extrusion_patch(circle.clone(), Vector3::z(), Real::zero(), r(3))
+                .unwrap();
         assert_eq!(
             compare_reals(
                 &normal_model.face_area(normal_face).unwrap(),
@@ -18018,11 +18031,13 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let (oblique_model, oblique_face) = extrusion_rectangle(
+        let (oblique_model, oblique_face) = crate::builder::extrusion_patch(
             circle,
             Vector3::from_xyz(Real::one(), Real::zero(), Real::one()),
+            Real::zero(),
             r(3),
-        );
+        )
+        .unwrap();
         assert_eq!(
             oblique_model.face_area(oblique_face),
             Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
@@ -18038,7 +18053,8 @@ mod tests {
             (Real::pi() / r(2)).unwrap(),
         )
         .unwrap();
-        let (ellipse_model, ellipse_face) = extrusion_rectangle(ellipse, Vector3::z(), r(3));
+        let (ellipse_model, ellipse_face) =
+            crate::builder::extrusion_patch(ellipse, Vector3::z(), Real::zero(), r(3)).unwrap();
         assert_eq!(
             ellipse_model.face_area(ellipse_face),
             Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))

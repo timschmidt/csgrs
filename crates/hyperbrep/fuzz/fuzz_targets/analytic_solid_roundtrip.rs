@@ -921,6 +921,72 @@ fuzz_target!(|bytes: &[u8]| {
         Some(std::cmp::Ordering::Equal)
     );
 
+    let transverse_middle = positive(2);
+    let transverse_end = &transverse_middle + positive(3);
+    let extrusion_controls = vec![
+        hyperbrep::Point3::origin(),
+        hyperbrep::Point3::new(positive(1), transverse_middle, Real::zero()),
+        hyperbrep::Point3::new(Real::zero(), transverse_end.clone(), Real::zero()),
+    ];
+    let extrusion_weights = vec![Real::one(), positive(2), positive(3)];
+    let spline_profile = if bytes[0] & 1 == 0 {
+        hyperbrep::Curve3::rational_bezier(extrusion_controls, extrusion_weights)
+    } else {
+        hyperbrep::Curve3::nurbs(
+            2,
+            extrusion_controls,
+            extrusion_weights,
+            vec![
+                Real::from(2),
+                Real::from(2),
+                Real::from(2),
+                Real::from(5),
+                Real::from(5),
+                Real::from(5),
+            ],
+        )
+    };
+    let Ok(spline_profile) = spline_profile else {
+        return;
+    };
+    let extrusion_end = positive(1);
+    let Ok((extrusion_patch, extrusion_face)) = builder::extrusion_patch(
+        spline_profile,
+        Vector3::x(),
+        -Real::one(),
+        extrusion_end.clone(),
+    ) else {
+        return;
+    };
+    let expected_extrusion_area = transverse_end * (extrusion_end + Real::one());
+    assert_eq!(
+        hyperlimit::compare_reals(
+            &extrusion_patch
+                .face_area(extrusion_face)
+                .expect("monotone planar spline extrusion has exact area"),
+            &expected_extrusion_area,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+    let extrusion_json = extrusion_patch
+        .to_json()
+        .expect("spline extrusion patch serializes");
+    let replayed_extrusion = RawModel::from_json(&extrusion_json)
+        .expect("spline extrusion patch JSON parses")
+        .validate()
+        .expect("spline extrusion patch JSON revalidates");
+    assert_eq!(
+        hyperlimit::compare_reals(
+            &replayed_extrusion
+                .face_area(extrusion_face)
+                .expect("replayed spline extrusion has exact area"),
+            &expected_extrusion_area,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+
     let Ok((crossing_patch, crossing_face)) = builder::rational_bezier_patch(
         vec![
             vec![

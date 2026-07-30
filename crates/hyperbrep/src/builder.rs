@@ -283,6 +283,47 @@ pub fn cuboid(min: Point3, max: Point3) -> Result<(Model, SolidId), Construction
     extrude(&profile, min.z, max.z)
 }
 
+/// Constructs one finite rectangular patch of an exact extrusion surface.
+///
+/// The profile parameter is retained as `u`; `v_start` and `v_end` are
+/// strictly ordered signed coefficients of `direction`. The two profile edges
+/// retain the profile's exact curve family and native domain, while the two
+/// connector edges are exact lines. The returned model contains one validated
+/// open shell and no solid.
+pub fn extrusion_patch(
+    profile: Curve3,
+    direction: Vector3,
+    v_start: Real,
+    v_end: Real,
+) -> Result<(Model, FaceId), ConstructionError> {
+    let v_domain = ParameterDomain::new(v_start, v_end)?;
+    let u_start = profile.domain().start().clone();
+    let u_end = profile.domain().end().clone();
+    let surface = Surface::extrusion(profile.clone(), direction.clone())?;
+    let lower_offset = direction.clone() * v_domain.start();
+    let upper_offset = direction * v_domain.end();
+    let lower_profile = translated_curve(&profile, &lower_offset)?;
+    let upper_profile = translated_curve(&profile, &upper_offset)?;
+    let lower_start = lower_profile.point_at(lower_profile.domain().start())?;
+    let lower_end = lower_profile.point_at(lower_profile.domain().end())?;
+    let upper_start = upper_profile.point_at(upper_profile.domain().start())?;
+    let upper_end = upper_profile.point_at(upper_profile.domain().end())?;
+    let boundaries = [
+        lower_profile,
+        Curve3::line(lower_end, upper_end)?,
+        upper_profile,
+        Curve3::line(lower_start, upper_start)?,
+    ];
+    build_rectangular_face_patch(
+        surface,
+        boundaries,
+        u_start,
+        u_end,
+        v_domain.start().clone(),
+        v_domain.end().clone(),
+    )
+}
+
 /// Constructs one validated trimmed tensor-product rational Bézier patch.
 ///
 /// The four boundary edges are exact rational Bézier restrictions of the
@@ -310,7 +351,7 @@ pub fn rational_bezier_patch(
             weights.iter().map(|row| row[0].clone()).collect(),
         )?,
     ];
-    build_tensor_patch(
+    build_rectangular_face_patch(
         surface,
         boundaries,
         Real::zero(),
@@ -375,7 +416,7 @@ pub fn nurbs_patch(
             v_knots.clone(),
         )?,
     ];
-    build_tensor_patch(
+    build_rectangular_face_patch(
         surface,
         boundaries,
         u_knots[u_degree].clone(),
@@ -729,7 +770,11 @@ fn exact_real_equal(left: &Real, right: &Real) -> Result<bool, ConstructionError
     }
 }
 
-fn build_tensor_patch(
+fn translated_curve(curve: &Curve3, offset: &Vector3) -> Result<Curve3, ConstructionError> {
+    Ok(curve.transformed(&crate::Matrix4::affine_translation(offset.0.clone()))?)
+}
+
+fn build_rectangular_face_patch(
     surface: Surface,
     boundaries: [Curve3; 4],
     u_start: Real,
@@ -7499,6 +7544,66 @@ mod tests {
             point3_equal(&source.bounds().unwrap().unwrap().mins, &p(0, 0, 0)).value(),
             Some(true)
         );
+    }
+
+    #[test]
+    fn extrusion_patch_retains_native_profile_domain_and_validates_bounds() {
+        let profile = Curve3::nurbs(
+            2,
+            vec![p(0, 0, 0), p(2, 1, 0), p(0, 2, 0)],
+            vec![Real::one(), r(2), r(3)],
+            vec![r(2), r(2), r(2), r(5), r(5), r(5)],
+        )
+        .unwrap();
+        let (model, face) = extrusion_patch(profile.clone(), Vector3::x(), r(-1), r(2)).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 4,
+                curves: 4,
+                pcurves: 4,
+                surfaces: 1,
+                edges: 4,
+                edge_uses: 4,
+                wires: 1,
+                faces: 1,
+                shells: 1,
+                solids: 0,
+            }
+        );
+        assert_eq!(
+            model
+                .curves()
+                .map(|(_, curve)| curve.kind())
+                .collect::<Vec<_>>(),
+            vec![
+                crate::Curve3Kind::Nurbs,
+                crate::Curve3Kind::Line,
+                crate::Curve3Kind::Nurbs,
+                crate::Curve3Kind::Line,
+            ]
+        );
+        assert_eq!(
+            compare_reals(&model.face_area(face).unwrap(), &r(6)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        crate::RawModel::from_json(&model.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+
+        assert!(matches!(
+            extrusion_patch(profile.clone(), Vector3::x(), r(2), r(2)),
+            Err(ConstructionError::Build(BuildError::Geometry(
+                GeometryError::InvalidParameterDomain
+            )))
+        ));
+        assert!(matches!(
+            extrusion_patch(profile, Vector3::zero(), r(-1), r(2)),
+            Err(ConstructionError::Build(BuildError::Geometry(
+                GeometryError::DegenerateExtrusionDirection
+            )))
+        ));
     }
 
     #[test]

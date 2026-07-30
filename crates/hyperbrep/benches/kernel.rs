@@ -757,6 +757,44 @@ fn main() {
         elapsed / SPLINE_ITERATIONS as u32,
     );
 
+    let extrusion_profile = Curve3::nurbs(
+        2,
+        vec![point(0, 0, 0), point(2, 1, 0), point(0, 2, 0)],
+        vec![Real::one(), Real::from(2), Real::from(3)],
+        vec![
+            Real::from(2),
+            Real::from(2),
+            Real::from(2),
+            Real::from(5),
+            Real::from(5),
+            Real::from(5),
+        ],
+    )
+    .expect("benchmark planar NURBS extrusion profile");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..SPLINE_ITERATIONS {
+        let (model, face) = builder::extrusion_patch(
+            black_box(extrusion_profile.clone()),
+            black_box(Vector3::x()),
+            black_box(-Real::one()),
+            black_box(Real::from(2)),
+        )
+        .expect("benchmark exact extrusion patch");
+        let area = model
+            .face_area(face)
+            .expect("benchmark exact planar spline extrusion area");
+        checksum += usize::from(
+            compare_reals(&area, &Real::from(6)).value() == Some(std::cmp::Ordering::Equal),
+        );
+        black_box(model);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/nurbs_extrusion_patch_build_exact_area: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / SPLINE_ITERATIONS as u32,
+    );
+
     const TENSOR_AREA_ITERATIONS: usize = 1_000;
     let affine_controls = vec![
         vec![point(0, 0, 0), point(2, 0, 0), point(4, 0, 0)],
