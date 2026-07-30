@@ -6039,6 +6039,46 @@ mod tests {
     }
 
     #[test]
+    fn revolution_path_recovers_degree_elevated_conic_moments_after_replay() {
+        let cp = |x, y| CurvePoint2::new(r(x), r(y));
+        let rational = hypercurve::RationalBezier2::try_new(
+            vec![cp(4, 0), cp(5, 1), cp(4, 2)],
+            vec![Real::one(), (Real::one() / r(2)).unwrap(), Real::one()],
+        )
+        .unwrap()
+        .elevated_to_degree(7)
+        .unwrap();
+        assert_eq!(rational.degree(), 7);
+        let profile = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(cp(2, 0), cp(4, 0)).unwrap()),
+            Curve2::from(rational),
+            Curve2::from(LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
+        ])
+        .unwrap();
+        let expected =
+            (r(22) * Real::pi() * &(r(81) + r(4) * Real::from(3).sqrt().unwrap() * Real::pi())
+                / r(81))
+            .unwrap();
+        let (model, solid) = revolve_path(&profile).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let json = model.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
     fn revolution_path_rejects_exact_self_crossings_before_topology_build() {
         let cp = |x, y| CurvePoint2::new(r(x), r(y));
         let profile = CurvePath2::try_new(vec![
