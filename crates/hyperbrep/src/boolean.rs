@@ -10155,6 +10155,56 @@ mod tests {
     }
 
     #[test]
+    fn coaxial_cone_graph_retains_quarter_circle_pcurves() {
+        let (wide, wide_solid) =
+            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+        let (narrow, narrow_solid) =
+            crate::builder::cone_frustum(Real::from(3), Real::from(2), Real::from(2)).unwrap();
+        let narrow = narrow
+            .transformed(&Matrix4::affine_orthonormal(
+                [
+                    [Real::one(), Real::zero(), Real::zero()],
+                    [Real::zero(), Real::one(), Real::zero()],
+                    [Real::zero(), Real::zero(), Real::one()],
+                ],
+                [
+                    Real::zero(),
+                    Real::zero(),
+                    (Real::one() / Real::from(2)).unwrap(),
+                ],
+            ))
+            .unwrap();
+        let graph = intersection_graph(&wide, wide_solid, &narrow, narrow_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| {
+                if face_surface(&wide, pair.first_face()).kind() != crate::SurfaceKind::Cone
+                    || face_surface(&narrow, pair.second_face()).kind() != crate::SurfaceKind::Cone
+                {
+                    return None;
+                }
+                match (pair.relation(), pair.trim()) {
+                    (
+                        FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(curve)),
+                        FacePairTrim::SurfaceCurveFragments(fragments),
+                    ) => Some((curve, fragments)),
+                    _ => None,
+                }
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 4);
+        for (curve, fragments) in retained {
+            assert_eq!(fragments.len(), 1);
+            assert!(curve.first_pcurve().materialize().is_ok());
+            assert!(curve.second_pcurve().materialize().is_ok());
+            assert!(fragments[0].first_pcurve().materialize().is_ok());
+            assert!(fragments[0].second_pcurve().materialize().is_ok());
+        }
+    }
+
+    #[test]
     fn certified_aabb_disjoint_booleans_support_nonprismatic_solids() {
         let (first, first_solid) = crate::builder::sphere(Real::one()).unwrap();
         let (second, second_solid) = crate::builder::sphere(Real::one()).unwrap();
