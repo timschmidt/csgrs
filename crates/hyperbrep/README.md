@@ -152,9 +152,9 @@ The clean-break implementation currently provides:
 - equal, strictly contained, and strictly partially overlapping sphere
   Booleans, including exact spherical-cavity difference and two-face periodic
   cap shells stitched on the exact intersection circle;
-- exact authored-axis sphere/halfspace clipping through retained latitude
-  pcurves, first-cut whole-sphere partitioning, and a native spherical cap plus
-  planar disk with analytic segment measurement/classification;
+- exact authored-axis sphere/slab clipping through retained latitude pcurves,
+  first-cut whole-sphere partitioning, native one-cap or two-cap spherical
+  regions, and analytic segment measurement/classification;
 - retained solid intersection graphs with certified per-face broad-phase
   rejection, exact analytic carrier relations, and explicit unsupported-pair
   evidence, plus exact two-face trim clipping for transverse planar carrier

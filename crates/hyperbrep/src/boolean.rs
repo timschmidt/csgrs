@@ -1214,18 +1214,39 @@ fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, B
             .expect("validated spherical pcurve")
             .line_segment()
             .expect("validated spherical trim uses longitude lines");
-        let increasing = exact_order(line.start().x(), line.end().x())? == Ordering::Less;
-        let upper = match face_record.orientation() {
-            crate::Orientation::Forward => increasing,
-            crate::Orientation::Reversed => !increasing,
-        };
-        let pole = if upper {
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?
+        let latitude = if let [upper_wire] = face_record.inner() {
+            let upper_use = model
+                .edge_use(
+                    model
+                        .wire(*upper_wire)
+                        .expect("validated spherical band wire")
+                        .edge_uses()[0],
+                )
+                .expect("validated spherical band use");
+            let upper = model
+                .pcurve(upper_use.pcurve())
+                .expect("validated spherical band pcurve")
+                .line_segment()
+                .expect("validated spherical band latitude")
+                .start()
+                .y()
+                .clone();
+            ((line.start().y() + upper) / Real::from(2))
+                .map_err(|_| GeometryError::ProjectiveDivision)?
         } else {
-            -(Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?
+            let increasing = exact_order(line.start().x(), line.end().x())? == Ordering::Less;
+            let upper = match face_record.orientation() {
+                crate::Orientation::Forward => increasing,
+                crate::Orientation::Reversed => !increasing,
+            };
+            let pole = if upper {
+                (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?
+            } else {
+                -(Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?
+            };
+            ((line.start().y() + pole) / Real::from(2))
+                .map_err(|_| GeometryError::ProjectiveDivision)?
         };
-        let latitude = ((line.start().y() + pole) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
         let quarter =
             (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
         return (0..4)
@@ -4884,6 +4905,133 @@ mod tests {
             Some(Ordering::Equal)
         );
 
+        let reflected = model
+            .transformed(&Matrix4::affine_nonuniform_scale([
+                Real::one(),
+                -Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn axial_sphere_slab_intersection_stitches_an_exact_band() {
+        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let (slab, slab_solid) = crate::builder::cuboid(p(-3, -3, -1), p(3, 3, 1)).unwrap();
+        let graph = intersection_graph(&sphere, sphere_solid, &slab, slab_solid).unwrap();
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match pair.trim() {
+                FacePairTrim::SurfaceCurveFragments(fragments) => Some(fragments),
+                _ => None,
+            })
+            .flatten()
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 2);
+        assert!(retained.iter().all(|trace| {
+            trace.first_pcurve().materialize().is_ok()
+                && trace.second_pcurve().materialize().is_ok()
+        }));
+        let (partitioned_sphere, sphere_partitions) = graph.partition_first_faces().unwrap();
+        assert_eq!(sphere_partitions.len(), 1);
+        assert_eq!(sphere_partitions[0].traces.len(), 2);
+        assert_eq!(
+            compare_reals(
+                &partitioned_sphere.solid_volume(sphere_solid).unwrap(),
+                &sphere.solid_volume(sphere_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let partitioned_area = partitioned_sphere
+            .faces()
+            .map(|(face, _)| partitioned_sphere.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, area| sum + area);
+        assert_eq!(
+            compare_reals(&partitioned_area, &(Real::from(16) * Real::pi())).value(),
+            Some(Ordering::Equal)
+        );
+
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("the spherical band and two planar disks must form one exact solid");
+        };
+        let expected = (Real::from(22) * Real::pi() / Real::from(3)).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        for (point, location) in [
+            (p(0, 0, 0), SolidPointLocation::Inside),
+            (p(0, 0, 1), SolidPointLocation::Boundary),
+            (
+                Point3::new(
+                    Real::zero(),
+                    Real::zero(),
+                    (Real::from(3) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Outside,
+            ),
+            (p(2, 0, 0), SolidPointLocation::Boundary),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), location);
+        }
+        let json = model.to_json().unwrap();
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+
+        for (index, result) in [
+            intersection(&sphere, sphere_solid, &slab, slab_solid).unwrap(),
+            intersection(&slab, slab_solid, &sphere, sphere_solid).unwrap(),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let BooleanResult::Solid { model, solid } = result else {
+                panic!("operand order {index} must retain one exact spherical band");
+            };
+            assert_eq!(
+                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                Some(Ordering::Equal),
+                "operand order {index}"
+            );
+        }
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_sphere = sphere.transformed(&cyclic).unwrap();
+        let oriented_slab = slab.transformed(&cyclic).unwrap();
+        let BooleanResult::Solid {
+            model: oriented,
+            solid: oriented_solid,
+        } = intersection(&oriented_sphere, sphere_solid, &oriented_slab, slab_solid).unwrap()
+        else {
+            panic!("rigidly oriented clipping must retain one exact spherical band");
+        };
+        assert_eq!(
+            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
         let reflected = model
             .transformed(&Matrix4::affine_nonuniform_scale([
                 Real::one(),

@@ -161,11 +161,14 @@ ring-torus implicit predicate.
 A whole sphere remains one boundaryless face until an actual retained latitude
 requires topology. The first exact axial plane cut authors two identity-shared
 circle halves and two complementary periodic spherical-cap faces; no
-always-present pole or longitude seam is introduced. A selected cap plus its
-planar disk is certified from the exact latitude, circle center/radius, full
-angular coverage, and outward cap normal. Its volume integrates the exact
-cross-section `pi*(r²-h²)` over the retained axial interval, and classification
-combines that interval with the radial sphere predicate.
+always-present pole or longitude seam is introduced. A second latitude splits
+only its containing cap and represents the intervening material as one
+periodic spherical-band face with two latitude loops. Full-sphere
+recertification proves the lower-cap/band/upper-cap latitude chain. Selected
+one-cap and two-cap results validate every exact circle, full angular coverage,
+and outward planar-cap normal. Volume integrates the exact cross-section
+`pi*(r²-h²)` over the retained axial interval, and classification combines
+that interval with the radial sphere predicate.
 
 Line/arc revolution certificates project every authored meridian carrier into
 one exact positive-radius radial/axial contour. Circular meridians are checked

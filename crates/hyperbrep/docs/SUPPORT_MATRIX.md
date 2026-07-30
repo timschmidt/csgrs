@@ -183,8 +183,10 @@ boundaryless whole sphere authors two complementary periodic cap faces only
 when the trim requires them. Sphere/halfspace intersection then selects one
 cap and one planar disk and certifies the exact axial segment for analytic
 volume, point classification, rigid/reflection transforms, operand reversal,
-and persistence. Multi-latitude spherical bands remain a separate topology
-step.
+and persistence. A second latitude turns only the containing cap into a
+periodic two-loop spherical-band face; sphere/slab intersection selects that
+face with two planar disks and carries the same exact query, symmetry,
+transform, and persistence guarantees without a longitude seam.
 
 `boolean::intersection_graph` now builds the common retained face-pair graph
 for any validated solids. It computes each certified face bound once, rejects
