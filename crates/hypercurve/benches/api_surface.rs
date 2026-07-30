@@ -2,9 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    CurveResult, NurbsCurve2, Point2, Real, Similarity2, finite_polyline_vertex_centroid,
-    finite_ring_signed_area, triangulate_finite_rings, try_finite_polyline_vertex_centroid,
-    try_finite_ring_signed_area,
+    CurvePolicy, CurveResult, NurbsCurve2, Point2, Real, Similarity2,
+    finite_polyline_vertex_centroid, finite_ring_signed_area, triangulate_finite_rings,
+    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 
 fn r(value: i32) -> Real {
@@ -83,9 +83,14 @@ fn main() -> CurveResult<()> {
     let material = [[0.0, 0.0], [8.0, 0.0], [8.0, 6.0], [0.0, 6.0]];
     let hole = [[2.0, 2.0], [2.0, 4.0], [6.0, 4.0], [6.0, 2.0]];
     measure("finite_ring_triangulation", 10_000, || {
-        triangulate_finite_rings(black_box(&material), &[black_box(&hole)])
-            .unwrap()
-            .len()
+        triangulate_finite_rings(
+            black_box(&material),
+            &[black_box(&hole)],
+            &CurvePolicy::STRICT,
+        )
+        .unwrap()
+        .into_value()
+        .len()
     });
     Ok(())
 }

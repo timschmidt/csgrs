@@ -244,6 +244,7 @@ fn generated_region(specification: &GeneratedRegion) -> CurveRegion2 {
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
         &[CurveBoundaryInteriorSide2::Left],
+        &CurvePolicy::STRICT,
     )
     .expect("outward graph curves form a simple exact region")
 }
@@ -318,7 +319,8 @@ fn exact_boolean_results(
     let policy = CurvePolicy::STRICT;
     let evidence = first
         .intersect_region(second, &policy)
-        .map_err(|error| format!("{label}: exact intersection failed: {error}"))?;
+        .map_err(|error| format!("{label}: exact intersection failed: {error}"))?
+        .value;
     if !evidence.blockers().is_empty() {
         return Err(format!(
             "{label}: exact intersection retained blockers: {:#?}",
@@ -351,14 +353,16 @@ fn exact_boolean_results(
             "{label}: exact Boolean batch failed: {error}; immediate failures: {immediate:?}; contacts: {contacts:?}; overlap count: {}",
             evidence.overlaps().len(),
         )
-    })?;
+    })?
+    .value;
     if compare_individual_calls {
         for operation in BOOLEAN_OPERATIONS {
             let immediate = first
                 .boolean_region(second, operation, &policy)
                 .map_err(|error| {
                     format!("{label}: immediate {operation:?} failed after batch success: {error}")
-                })?;
+                })?
+                .value;
             if &immediate != batch.region(operation) {
                 return Err(format!(
                     "{label}: immediate and batch {operation:?} results differ"
@@ -802,6 +806,7 @@ fn exact_circle_region(start_quarter: usize, reversed: bool) -> CurveRegion2 {
         } else {
             CurveBoundaryInteriorSide2::Left
         }],
+        &CurvePolicy::STRICT,
     )
     .unwrap()
 }
@@ -844,6 +849,7 @@ fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
         &[capsule, via],
         &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material],
         &[FillRule::NonZero, FillRule::NonZero],
+        &CurvePolicy::STRICT,
     )
     .unwrap();
     RetiredFailureCase {
@@ -888,7 +894,8 @@ fn retired_thermal_spoke_circular_subtraction_case() -> RetiredFailureCase {
     });
     let first = horizontal
         .boolean_region(&vertical, BooleanOp::Union, &CurvePolicy::STRICT)
-        .unwrap();
+        .unwrap()
+        .value;
     RetiredFailureCase {
         failure: RetiredFailure::ThermalSpokeCircularSubtraction,
         first,
@@ -1093,6 +1100,7 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
             &[],
+            &CurvePolicy::STRICT,
         )
         .is_err(),
         "interior-side evidence count must match the authored loops"
@@ -1102,6 +1110,7 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
         &[CurveBoundaryInteriorSide2::Left],
+        &CurvePolicy::STRICT,
     )
     .unwrap();
     let reversed_path = forward_path.reversed().unwrap();
@@ -1110,6 +1119,7 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
         &[CurveBoundaryInteriorSide2::Right],
+        &CurvePolicy::STRICT,
     )
     .unwrap();
     exact_boolean_results(

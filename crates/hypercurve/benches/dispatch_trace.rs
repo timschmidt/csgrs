@@ -168,6 +168,6 @@ fn main() {
     trace("finite_ring_triangulation", || {
         let material = [[0.0, 0.0], [8.0, 0.0], [8.0, 6.0], [0.0, 6.0]];
         let hole = [[2.0, 2.0], [2.0, 4.0], [6.0, 4.0], [6.0, 2.0]];
-        triangulate_finite_rings(&material, &[&hole])
+        triangulate_finite_rings(&material, &[&hole], &policy)
     });
 }

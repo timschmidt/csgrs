@@ -7,11 +7,12 @@ use std::sync::{Arc, OnceLock};
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
 use crate::curve_intersection::CurveIntersectionContext;
+use crate::policy::resolve_certified_operation;
 use crate::{
     Aabb2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
     BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     Classification, Curve2, CurveError, CurveFamily2, CurveIntersectionContact2,
-    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2,
+    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
     CurvePathBooleanOperand2, CurvePolicy, CurveRegion2, ExactCurveError, ExactCurveResult,
     FillRule, RationalBezier2, RationalBezierIntersectionPointEvidence2,
     RationalBezierOverlapOrientation2, RegionPointLocation, UncertaintyReason,
@@ -367,6 +368,17 @@ impl CurveRegion2 {
         other: &Self,
         operation: BooleanOp,
         policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.boolean_region_raw(other, operation, attempt)
+        })
+    }
+
+    pub(crate) fn boolean_region_raw(
+        &self,
+        other: &Self,
+        operation: BooleanOp,
+        policy: &CurvePolicy,
     ) -> ExactCurveResult<Self> {
         if let Some(region) =
             boolean_region_without_general_context(self, other, operation, policy)?
@@ -380,6 +392,14 @@ impl CurveRegion2 {
     /// Computes all four exact regularized Booleans immediately while sharing
     /// intersection and split-topology work within this call.
     pub fn boolean_regions(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurveOutcome<CurveRegionBooleanResults2>> {
+        resolve_certified_operation(policy, |attempt| self.boolean_regions_raw(other, attempt))
+    }
+
+    pub(crate) fn boolean_regions_raw(
         &self,
         other: &Self,
         policy: &CurvePolicy,
@@ -414,6 +434,36 @@ impl CurveRegion2 {
 
     /// Collects exact contacts and overlaps against another region immediately.
     pub fn intersect_region(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurveOutcome<CurveRegionIntersectionResult2>> {
+        if !policy.permits_approximate_512() {
+            return self
+                .intersect_region_raw(other, policy)
+                .map(|value| CurveOutcome::new(value, crate::CurveCertainty::Certified));
+        }
+        match self.intersect_region_raw(other, &policy.strict_counterpart()) {
+            Ok(strict) if strict.is_complete() => {
+                Ok(CurveOutcome::new(strict, crate::CurveCertainty::Certified))
+            }
+            Ok(strict) => match self.intersect_region_raw(other, policy) {
+                Ok(approximate) if approximate.is_complete() => Ok(CurveOutcome::new(
+                    approximate,
+                    crate::CurveCertainty::Approximate512Consumed,
+                )),
+                Ok(_) | Err(_) => Ok(CurveOutcome::new(strict, crate::CurveCertainty::Certified)),
+            },
+            Err(ExactCurveError::Blocked(_)) => {
+                self.intersect_region_raw(other, policy).map(|value| {
+                    CurveOutcome::new(value, crate::CurveCertainty::Approximate512Consumed)
+                })
+            }
+            Err(error) => Err(error),
+        }
+    }
+
+    pub(crate) fn intersect_region_raw(
         &self,
         other: &Self,
         policy: &CurvePolicy,
@@ -1010,18 +1060,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
     }
 
     fn build_xor_from_exact_set_identity(&self) -> ExactCurveResult<CurveRegion2> {
-        let union = self.data.first.boolean_region(
+        let union = self.data.first.boolean_region_raw(
             self.data.second,
             BooleanOp::Union,
             &self.data.policy,
         )?;
-        let intersection = self.data.first.boolean_region(
+        let intersection = self.data.first.boolean_region_raw(
             self.data.second,
             BooleanOp::Intersection,
             &self.data.policy,
         )?;
         if let Ok(xor) =
-            union.boolean_region(&intersection, BooleanOp::Difference, &self.data.policy)
+            union.boolean_region_raw(&intersection, BooleanOp::Difference, &self.data.policy)
         {
             return Ok(xor);
         }

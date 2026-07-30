@@ -218,7 +218,7 @@ impl SvgGeometry2 {
         } else if !other.region.is_empty() {
             self.region = self
                 .region
-                .boolean_region(&other.region, BooleanOp::Union, &CurvePolicy::STRICT)
+                .boolean_region_raw(&other.region, BooleanOp::Union, &CurvePolicy::STRICT)
                 .map_err(svg_geometry_error)?;
         }
         self.wires.append(&mut other.wires);
@@ -1184,6 +1184,7 @@ fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<Cur
         paths,
         &roles,
         &vec![fill_rule; paths.len()],
+        &policy,
     )
     .map_err(svg_geometry_error)
 }

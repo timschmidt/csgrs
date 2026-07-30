@@ -153,6 +153,7 @@ fn benchmark_booleans(dataset: &NativeDataset) {
     for cell in &dataset.cells {
         match cell.source.boolean_regions(&cell.rotated, &policy) {
             Ok(results) => {
+                let results = results.value;
                 completed_pair_count += 1;
                 candidate_pair_count += results.candidate_carrier_pair_count();
                 for operation in [

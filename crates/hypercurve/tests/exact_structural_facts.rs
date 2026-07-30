@@ -88,10 +88,8 @@ fn curve_query_facts_summarize_segment_families_and_dependencies() {
         assert_eq!(facts.decided_segment_box_count, 1);
         assert!(!facts.has_decided_curve_box);
 
-        let approximate_facts = hypercurve::CurveString2::structural_facts(
-            &curve,
-            &CurvePolicy::APPROXIMATE_512,
-        );
+        let approximate_facts =
+            hypercurve::CurveString2::structural_facts(&curve, &CurvePolicy::APPROXIMATE_512);
         assert_eq!(approximate_facts.decided_segment_box_count, 2);
         assert!(approximate_facts.has_decided_curve_box);
     }

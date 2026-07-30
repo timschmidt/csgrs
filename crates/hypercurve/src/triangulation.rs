@@ -7,10 +7,9 @@
 //! basis is ear clipping.
 
 use crate::finite_projection::normalize_finite_ring_vertices;
-use crate::{CurveError, CurveResult, FiniteRegionProfile2, Real};
-
-const TRIANGULATION_CONTEXT: hypertri::TriangulationContext =
-    hypertri::TriangulationContext::new(hypertri::PredicatePolicy::STRICT);
+use crate::{
+    CurveCertainty, CurveError, CurveOutcome, CurvePolicy, CurveResult, FiniteRegionProfile2, Real,
+};
 
 /// A finite triangle emitted from a projected region profile.
 ///
@@ -30,7 +29,8 @@ pub type FiniteTriangle2 = [[f64; 2]; 3];
 pub fn triangulate_finite_rings(
     material: &[[f64; 2]],
     holes: &[&[[f64; 2]]],
-) -> CurveResult<Vec<FiniteTriangle2>> {
+    policy: &CurvePolicy,
+) -> CurveResult<CurveOutcome<Vec<FiniteTriangle2>>> {
     fn push_ring(
         ring: &[[f64; 2]],
         vertices: &mut Vec<[f64; 2]>,
@@ -56,7 +56,7 @@ pub fn triangulate_finite_rings(
     let mut vertices = Vec::new();
     let mut exact = Vec::new();
     if push_ring(material, &mut vertices, &mut exact)?.is_none() {
-        return Ok(Vec::new());
+        return Ok(CurveOutcome::new(Vec::new(), CurveCertainty::Certified));
     }
 
     let mut hole_indices = Vec::with_capacity(holes.len());
@@ -66,10 +66,17 @@ pub fn triangulate_finite_rings(
         }
     }
 
-    let indices = hypertri::earcut(&TRIANGULATION_CONTEXT, &exact, &hole_indices)
-        .map_err(|err| CurveError::Topology(err.to_string()))?
-        .into_value();
-    triangles_from_indices(&vertices, &indices)
+    let context = hypertri::TriangulationContext::new(policy.predicate_policy());
+    let outcome = hypertri::earcut(&context, &exact, &hole_indices)
+        .map_err(|err| CurveError::Topology(err.to_string()))?;
+    let certainty = match outcome.certainty {
+        hypertri::TriangulationCertainty::Certified => CurveCertainty::Certified,
+        hypertri::TriangulationCertainty::Approximate512Consumed => {
+            CurveCertainty::Approximate512Consumed
+        }
+    };
+    triangles_from_indices(&vertices, &outcome.value)
+        .map(|triangles| CurveOutcome::new(triangles, certainty))
 }
 
 fn triangles_from_indices(
@@ -125,13 +132,16 @@ impl FiniteRegionProfile2 {
     /// from winding. Earcut-style triangulation is handled by hypertri using
     /// exact hyperreal predicates; see ear clipping and the exactness model, cited in
     /// the module documentation.
-    pub fn triangulate(&self) -> CurveResult<Vec<FiniteTriangle2>> {
+    pub fn triangulate(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveOutcome<Vec<FiniteTriangle2>>> {
         let hole_refs = self
             .holes()
             .iter()
             .map(|hole| hole.points())
             .collect::<Vec<_>>();
-        triangulate_finite_rings(self.material().points(), &hole_refs)
+        triangulate_finite_rings(self.material().points(), &hole_refs, policy)
     }
 }
 

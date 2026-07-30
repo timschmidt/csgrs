@@ -96,7 +96,8 @@ fn assert_exact_containment_difference_is_empty(cover_count: usize, subject_coun
             hypercurve::BooleanOp::Difference,
             &CurvePolicy::STRICT,
         )
-        .expect("PCB containment difference must decide exactly");
+        .expect("PCB containment difference must decide exactly")
+        .value;
     assert!(result.is_empty());
 
     for point in [point(0, 0), point(100, 0)] {
@@ -156,7 +157,8 @@ fn easyduino_uno_scale_process_image_with_holes_corpus() {
 
     let result = subject
         .boolean_region(&cover, hypercurve::BooleanOp::Difference, &policy)
-        .expect("holed PCB containment difference must decide exactly");
+        .expect("holed PCB containment difference must decide exactly")
+        .value;
 
     assert!(result.is_empty());
 }

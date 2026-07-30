@@ -82,12 +82,14 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
         let evidence = cell
             .source
             .intersect_region(&cell.rotated, &policy)
-            .expect("all-family intersections are evidenceable");
+            .expect("all-family intersections are evidenceable")
+            .value;
         assert!(evidence.blockers().is_empty());
         let results = cell
             .source
             .boolean_regions(&cell.rotated, &policy)
-            .expect("all-family immediate curved Booleans are decided");
+            .expect("all-family immediate curved Booleans are decided")
+            .value;
         assert!(results.authored_carrier_pair_count() > 0);
         assert!(results.candidate_carrier_pair_count() > 0);
         assert!(
@@ -134,13 +136,15 @@ fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
     let evidence = cell
         .source
         .intersect_region(&cell.rotated, &policy)
-        .expect("pi-weight conic/cubic intersections retain exact evidence");
+        .expect("pi-weight conic/cubic intersections retain exact evidence")
+        .value;
     assert!(evidence.blockers().is_empty(), "{:#?}", evidence.blockers());
 
     let results = cell
         .source
         .boolean_regions(&cell.rotated, &policy)
-        .expect("pi-weight all-family pair completes immediate exact Booleans");
+        .expect("pi-weight all-family pair completes immediate exact Booleans")
+        .value;
     for operation in [
         BooleanOp::Union,
         BooleanOp::Intersection,
@@ -170,7 +174,8 @@ fn full_pathological_native_workload_decides_all_268_exact_booleans() {
             .intersect_region(&cell.rotated, &policy)
             .unwrap_or_else(|error| {
                 panic!("pathological cell {cell_index} failed exact intersections: {error}")
-            });
+            })
+            .value;
         assert!(
             evidence.blockers().is_empty(),
             "pathological cell {cell_index} retained blockers: {:#?}",
@@ -182,7 +187,8 @@ fn full_pathological_native_workload_decides_all_268_exact_booleans() {
             .boolean_regions(&cell.rotated, &policy)
             .unwrap_or_else(|error| {
                 panic!("pathological cell {cell_index} immediate Booleans failed: {error}")
-            });
+            })
+            .value;
         for operation in operations {
             let _exact_region = results.region(operation);
             decided += 1;

@@ -1029,7 +1029,12 @@ impl Shape {
             roles.push(CurveRegionLoopRole::Hole);
         }
         let fill_rules = vec![FillRule::NonZero; paths.len()];
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(&paths, &roles, &fill_rules)
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &paths,
+            &roles,
+            &fill_rules,
+            &CurvePolicy::STRICT,
+        )
             .map_err(|error| error.to_string())
     }
 

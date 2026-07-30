@@ -203,7 +203,8 @@ fn main() -> CurveResult<()> {
     for _ in 0..region_boolean_iterations {
         let region = first_region
             .boolean_region(&second_region, BooleanOp::Union, &policy)
-            .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
+            .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?
+            .value;
         region_boolean_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();
@@ -218,7 +219,8 @@ fn main() -> CurveResult<()> {
     for _ in 0..batch_region_boolean_iterations {
         let results = first_region
             .boolean_regions(&second_region, &policy)
-            .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
+            .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?
+            .value;
         batch_region_boolean_checksum ^= black_box(
             results.union().boundary_loops().len()
                 + results.intersection().boundary_loops().len()
@@ -254,7 +256,8 @@ fn main() -> CurveResult<()> {
     for _ in 0..curved_boolean_iterations {
         let results = algebraic
             .boolean_regions(&crossing, &policy)
-            .map_err(|error| CurveError::Topology(format!("curved benchmark: {error}")))?;
+            .map_err(|error| CurveError::Topology(format!("curved benchmark: {error}")))?
+            .value;
         curved_boolean_checksum = curved_boolean_checksum.wrapping_add(black_box(
             results.topology_fragment_count()
                 + results.topology_point_classification_count()

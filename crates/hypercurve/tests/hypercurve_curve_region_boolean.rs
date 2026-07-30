@@ -1,6 +1,6 @@
 use hypercurve::{
-    BooleanOp, Classification, Curve2, CurvePath2, CurvePolicy, CurveRegion2, LineSeg2, Point2,
-    Real, RegionPointLocation,
+    BooleanOp, Classification, Curve2, CurveCertainty, CurvePath2, CurvePolicy, CurveRegion2,
+    LineSeg2, Point2, Real, RegionPointLocation,
 };
 #[cfg(feature = "predicates")]
 use hypercurve::{CurveBoundaryInteriorSide2, QuadraticBezier2};
@@ -34,6 +34,28 @@ fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurveRegion2 {
     CurveRegion2::try_from_boundary_paths(&[square_path(min_x, min_y, max_x, max_y)]).unwrap()
 }
 
+#[cfg(feature = "predicates")]
+fn symbolic_rectangle(width: Real) -> CurveRegion2 {
+    let points = [
+        Point2::new(Real::zero(), Real::zero()),
+        Point2::new(width.clone(), Real::zero()),
+        Point2::new(width, Real::one()),
+        Point2::new(Real::zero(), Real::one()),
+    ];
+    let curves = (0..points.len())
+        .map(|index| {
+            Curve2::from(
+                LineSeg2::try_new(
+                    points[index].clone(),
+                    points[(index + 1) % points.len()].clone(),
+                )
+                .unwrap(),
+            )
+        })
+        .collect();
+    CurveRegion2::try_from_boundary_paths(&[CurvePath2::try_new(curves).unwrap()]).unwrap()
+}
+
 fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLocation) {
     assert_eq!(
         region.classify_point(&point, &CurvePolicy::STRICT).unwrap(),
@@ -47,6 +69,8 @@ fn curved_regions_immediate_batch_reuses_pair_topology() {
     let second = square(2, 0, 6, 4);
     let policy = CurvePolicy::STRICT;
     let contacts = first.intersect_region(&second, &policy).unwrap();
+    assert_eq!(contacts.certainty, CurveCertainty::Certified);
+    let contacts = contacts.value;
     assert!(contacts.is_complete());
     assert!(!contacts.is_disjoint());
     assert!(!contacts.contacts().is_empty());
@@ -60,6 +84,8 @@ fn curved_regions_immediate_batch_reuses_pair_topology() {
     }));
 
     let results = first.boolean_regions(&second, &policy).unwrap();
+    assert_eq!(results.certainty, CurveCertainty::Certified);
+    let results = results.value;
     assert_eq!(results.authored_carrier_pair_count(), 16);
     assert!(results.candidate_carrier_pair_count() < results.authored_carrier_pair_count());
     assert_eq!(
@@ -97,15 +123,55 @@ fn curved_region_boolean_output_can_feed_another_boolean() {
 
     let first_union = first
         .boolean_region(&second, BooleanOp::Union, &policy)
-        .unwrap();
+        .unwrap()
+        .value;
     let chained = first_union
         .boolean_region(&third, BooleanOp::Union, &policy)
-        .unwrap();
+        .unwrap()
+        .value;
 
     for x in [1, 3, 5, 7] {
         assert_location(&chained, point(x, 2), RegionPointLocation::Inside);
     }
     assert_location(&chained, point(9, 2), RegionPointLocation::Outside);
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact() {
+    let first = symbolic_rectangle(Real::pi() + Real::e());
+    let second = symbolic_rectangle(Real::e() + Real::pi());
+
+    assert!(matches!(
+        first.boolean_region(&second, BooleanOp::Union, &CurvePolicy::STRICT),
+        Err(hypercurve::ExactCurveError::Blocked(_))
+    ));
+    let outcome = first
+        .boolean_region(&second, BooleanOp::Union, &CurvePolicy::APPROXIMATE_512)
+        .expect("the authorized 512-bit terminal should complete equal symbolic boundaries");
+    assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
+    assert_location(
+        &outcome.value,
+        Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap()),
+        RegionPointLocation::Inside,
+    );
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
+    let source = square(0, 0, 4, 4);
+    let distance = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+
+    assert!(matches!(
+        source.offset(distance.clone(), &CurvePolicy::STRICT),
+        Err(hypercurve::ExactCurveError::Blocked(_))
+    ));
+    let outcome = source
+        .offset(distance, &CurvePolicy::APPROXIMATE_512)
+        .expect("the authorized 512-bit terminal should decide symbolic zero offset");
+    assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
+    assert_eq!(outcome.value, source);
 }
 
 #[test]
@@ -120,14 +186,16 @@ fn curved_region_boolean_respects_nested_hole_roles() {
 
     let union = ring
         .boolean_region(&island, BooleanOp::Union, &policy)
-        .unwrap();
+        .unwrap()
+        .value;
     assert_location(&union, point(1, 1), RegionPointLocation::Inside);
     assert_location(&union, point(3, 3), RegionPointLocation::Outside);
     assert_location(&union, point(5, 5), RegionPointLocation::Inside);
 
     let intersection = ring
         .boolean_region(&island, BooleanOp::Intersection, &policy)
-        .unwrap();
+        .unwrap()
+        .value;
     assert!(intersection.is_empty());
 }
 
@@ -159,13 +227,14 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     let disjoint = square(10, 0, 12, 2);
     let chained = algebraic
         .boolean_region(&disjoint, BooleanOp::Union, &policy)
-        .unwrap();
+        .unwrap()
+        .value;
     assert!(chained.has_algebraic_fragments());
     assert_location(&chained, point(0, 1), RegionPointLocation::Inside);
     assert_location(&chained, point(11, 1), RegionPointLocation::Inside);
 
     let crossing = square(-2, -1, 2, 1);
-    let results = algebraic.boolean_regions(&crossing, &policy).unwrap();
+    let results = algebraic.boolean_regions(&crossing, &policy).unwrap().value;
     let crossed = results.union();
     assert!(results.topology_fragment_count() > 0);
     assert!(
@@ -179,13 +248,15 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     assert_eq!(
         algebraic
             .boolean_region(&algebraic, BooleanOp::Union, &policy)
-            .unwrap(),
+            .unwrap()
+            .value,
         algebraic
     );
     assert!(
         algebraic
             .boolean_region(&algebraic, BooleanOp::Xor, &policy)
             .unwrap()
+            .value
             .is_empty()
     );
 }
@@ -223,7 +294,7 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
         .unwrap();
     assert!(narrow.has_algebraic_fragments());
     assert!(wide.has_algebraic_fragments());
-    let results = narrow.boolean_regions(&wide, &policy).unwrap();
+    let results = narrow.boolean_regions(&wide, &policy).unwrap().value;
     let union = results.union();
     assert_location(union, point(0, 1), RegionPointLocation::Inside);
     assert_location(union, point(0, 3), RegionPointLocation::Boundary);

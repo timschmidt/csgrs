@@ -225,11 +225,13 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
+        &policy,
     )
     .unwrap();
     assert!(matches!(
-        source.offset(Real::one(), &policy).unwrap(),
-        Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
+        source.offset(Real::one(), &policy),
+        Err(hypercurve::ExactCurveError::Blocked(blocker))
+            if blocker.reason() == hypercurve::UncertaintyReason::Unsupported
     ));
     let options = BezierFlatteningOptions::try_new(q(1, 32), 12, &policy).unwrap();
 
@@ -290,6 +292,7 @@ fn unified_region_bounds_cover_native_and_higher_order_carriers_exactly() {
         &[double_wound_quadratic_cap()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
+        &policy,
     )
     .unwrap();
     let curved_bounds = decided(curved.bounds(&policy).unwrap());
@@ -313,7 +316,10 @@ fn unified_region_offset_regularizes_overlapping_expanded_components() {
         LineArcRegion2::from_material_contours(vec![square(0, 0, 2, 2), square(4, 0, 6, 2)]);
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
-    let offset = decided(promoted.offset(Real::from(2), &policy).unwrap());
+    let offset = promoted
+        .offset(Real::from(2), &policy)
+        .unwrap()
+        .into_value();
     let native = decided(offset.native_contours_fast_path(&policy).unwrap());
 
     assert_eq!(native.material_contours().len(), 1);
@@ -333,7 +339,10 @@ fn unified_region_offset_regularizes_overlapping_expanded_voids() {
     );
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
-    let offset = decided(promoted.offset(Real::from(-2), &policy).unwrap());
+    let offset = promoted
+        .offset(Real::from(-2), &policy)
+        .unwrap()
+        .into_value();
     let native = decided(offset.native_contours_fast_path(&policy).unwrap());
 
     assert_eq!(native.material_contours().len(), 1);
@@ -350,7 +359,10 @@ fn unified_region_expansion_regularizes_a_closed_concavity() {
     let source = LineArcRegion2::from_material_contours(vec![u_shape()]);
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
-    let offset = decided(promoted.offset(Real::from(3), &policy).unwrap());
+    let offset = promoted
+        .offset(Real::from(3), &policy)
+        .unwrap()
+        .into_value();
     let native = decided(offset.native_contours_fast_path(&policy).unwrap());
 
     assert_eq!(native.material_contours().len(), 1);
@@ -374,7 +386,7 @@ fn unified_region_contracts_nonconvex_material_before_its_medial_collapse() {
     let policy = CurvePolicy::STRICT;
     let source = CurveRegion2::try_from_native_material_contours(vec![u_shape()], &policy).unwrap();
 
-    let eroded = decided(source.offset(-Real::one(), &policy).unwrap());
+    let eroded = source.offset(-Real::one(), &policy).unwrap().into_value();
 
     assert_eq!(
         eroded.classify_point(&p(1, 1), &policy).unwrap(),
@@ -391,7 +403,7 @@ fn unified_region_discards_nonconvex_material_after_wavefront_collapse() {
     let policy = CurvePolicy::STRICT;
     let source = CurveRegion2::try_from_native_material_contours(vec![u_shape()], &policy).unwrap();
 
-    let eroded = decided(source.offset(Real::from(-2), &policy).unwrap());
+    let eroded = source.offset(Real::from(-2), &policy).unwrap().into_value();
 
     assert!(eroded.is_empty());
     assert_eq!(
@@ -406,7 +418,7 @@ fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
     let source =
         CurveRegion2::try_from_native_material_contours(vec![dumbbell_shape()], &policy).unwrap();
 
-    let eroded = decided(source.offset(-q(3, 2), &policy).unwrap());
+    let eroded = source.offset(-q(3, 2), &policy).unwrap().into_value();
     let native = decided(eroded.native_contours_fast_path(&policy).unwrap());
 
     assert_eq!(native.material_contours().len(), 2);
@@ -429,14 +441,26 @@ fn unified_region_convex_contraction_decides_collapse_and_over_contraction() {
     let source =
         CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)], &policy).unwrap();
 
-    let near = decided(source.offset(-q(3, 2), &policy).unwrap());
+    let near = source.offset(-q(3, 2), &policy).unwrap().into_value();
     let near_bounds = decided(near.bounds(&policy).unwrap());
     assert_eq!(near_bounds.min_x(), &q(3, 2));
     assert_eq!(near_bounds.min_y(), &q(3, 2));
     assert_eq!(near_bounds.max_x(), &q(5, 2));
     assert_eq!(near_bounds.max_y(), &q(5, 2));
-    assert!(decided(source.offset(Real::from(-2), &policy).unwrap()).is_empty());
-    assert!(decided(source.offset(Real::from(-3), &policy).unwrap()).is_empty());
+    assert!(
+        source
+            .offset(Real::from(-2), &policy)
+            .unwrap()
+            .into_value()
+            .is_empty()
+    );
+    assert!(
+        source
+            .offset(Real::from(-3), &policy)
+            .unwrap()
+            .into_value()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -445,7 +469,7 @@ fn unified_region_convex_erosion_handles_orientation_and_redundant_edges() {
     for contour in [reversed(&square(0, 0, 4, 4)), square_with_redundant_edge()] {
         let source =
             CurveRegion2::try_from_native_material_contours(vec![contour], &policy).unwrap();
-        let eroded = decided(source.offset(Real::from(-1), &policy).unwrap());
+        let eroded = source.offset(Real::from(-1), &policy).unwrap().into_value();
         let bounds = decided(eroded.bounds(&policy).unwrap());
         assert_eq!(bounds.min_x(), &Real::one());
         assert_eq!(bounds.min_y(), &Real::one());
@@ -466,10 +490,7 @@ fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_ex
             .unwrap();
     let root_two = Real::from(2).sqrt().unwrap();
 
-    let eroded = match source.offset(Real::from(-1), &policy).unwrap() {
-        Classification::Decided(region) => region,
-        Classification::Uncertain(reason) => panic!("symbolic erosion was uncertain: {reason:?}"),
-    };
+    let eroded = source.offset(Real::from(-1), &policy).unwrap().into_value();
     let native = decided(eroded.native_contours_fast_path(&policy).unwrap());
     let vertices = native.material_contours()[0]
         .segments()
@@ -509,10 +530,20 @@ fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_ex
 
     let collapse_distance = Real::from(4) - Real::from(2) * root_two;
     assert!(
-        decided(source.offset(-collapse_distance, &policy).unwrap()).is_empty(),
+        source
+            .offset(-collapse_distance, &policy)
+            .unwrap()
+            .into_value()
+            .is_empty(),
         "the exact radical inradius must collapse the triangle without a blocker"
     );
-    assert!(decided(source.offset(Real::from(-2), &policy).unwrap()).is_empty());
+    assert!(
+        source
+            .offset(Real::from(-2), &policy)
+            .unwrap()
+            .into_value()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -525,7 +556,7 @@ fn unified_region_positive_offset_removes_exactly_collapsed_convex_hole() {
     )
     .unwrap();
 
-    let expanded = decided(source.offset(Real::from(5), &policy).unwrap());
+    let expanded = source.offset(Real::from(5), &policy).unwrap().into_value();
     assert_eq!(decided(expanded.loop_roles(&policy).unwrap()).len(), 1);
     assert_eq!(
         expanded.classify_point(&p(10, 10), &policy).unwrap(),
@@ -783,6 +814,7 @@ fn authored_loop_semantics_drive_nonzero_and_even_odd_classification() {
             &[path],
             &[CurveRegionLoopRole::Material],
             &[fill_rule],
+            &policy,
         )
         .unwrap();
 
@@ -813,11 +845,12 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
             &[double_wound_quadratic_cap()],
             &[CurveRegionLoopRole::Material],
             &[fill_rule],
+            &policy,
         )
         .unwrap();
 
         assert_eq!(
-            decided(region.offset(Real::zero(), &policy).unwrap()),
+            region.offset(Real::zero(), &policy).unwrap().into_value(),
             region,
             "zero offset must preserve higher-order regions"
         );
@@ -864,6 +897,7 @@ fn nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area() {
         &[bow_tie_path()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::EvenOdd],
+        &policy,
     )
     .unwrap();
 
@@ -935,6 +969,7 @@ fn authored_line_arc_paths_retain_the_native_offset_engine() {
         &[full_circle_path(5)],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
+        &policy,
     )
     .unwrap();
 
@@ -942,7 +977,7 @@ fn authored_line_arc_paths_retain_the_native_offset_engine() {
         region.native_contours_fast_path(&policy).unwrap(),
         Classification::Decided(_)
     ));
-    let expanded = decided(region.offset(Real::from(2), &policy).unwrap());
+    let expanded = region.offset(Real::from(2), &policy).unwrap().into_value();
     let bounds = decided(expanded.bounds(&policy).unwrap());
     assert_eq!(bounds.min_x(), &Real::from(-7));
     assert_eq!(bounds.min_y(), &Real::from(-7));
@@ -959,6 +994,7 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
         &[outer, inner],
         &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material],
         &[FillRule::NonZero, FillRule::NonZero],
+        &policy,
     )
     .unwrap();
 
@@ -1025,6 +1061,7 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
         &[quadratic_fillet_path()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
+        &policy,
     )
     .unwrap();
     assert!(matches!(
@@ -1063,7 +1100,7 @@ fn unified_region_offset_expands_material_and_contracts_holes() {
     let source = LineArcRegion2::new(vec![square(0, 0, 10, 10)], vec![square(3, 3, 7, 7)]);
     let region = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
-    let offset = decided(region.offset(Real::one(), &policy).unwrap());
+    let offset = region.offset(Real::one(), &policy).unwrap().into_value();
 
     assert_eq!(
         offset.classify_point(&p(0, 5), &policy).unwrap(),

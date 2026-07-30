@@ -25,6 +25,7 @@ use crate::bezier_arrangement::represented_roots_equal;
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
 use crate::classify::{compare_reals, is_zero, real_sign};
+use crate::policy::{PolicyClassificationCache, resolve_cached_classification};
 use crate::region_nesting::ExactCurveWorkspace2;
 use crate::{
     Aabb2, Axis2, BezierAlgebraicEndpointImage2, BezierAreaMoments2, BezierArrangementGraph2,
@@ -35,11 +36,12 @@ use crate::{
     BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
     CurveBoundaryInteriorSide2, CurveError, CurveFamily2, CurveGeometry2,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2, CurvePathIntersectionContact2,
-    CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineArcRegion2,
-    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2,
-    RationalQuadraticBezier2, RegionArrangement2, RegionArrangementSummary2, RegionPointLocation,
-    RetainedTopologyStatus, Segment2, UncertaintyReason,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
+    CurvePathIntersectionContact2, CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult,
+    FillRule, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
+    RegionArrangementSummary2, RegionPointLocation, RetainedTopologyStatus, Segment2,
+    UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -117,10 +119,10 @@ pub struct CurveRegion2 {
     certified_loop_roles: Option<Arc<[CurveRegionLoopRole]>>,
     certified_loop_fill_rules: Option<Arc<[FillRule]>>,
     signed_loop_composition: bool,
-    filled_side_is_left: Arc<OnceLock<CurveResult<Classification<Arc<[bool]>>>>>,
+    filled_side_is_left: Arc<PolicyClassificationCache<Arc<[bool]>>>,
     native_boundary_loops: Arc<OnceLock<Option<Arc<[BezierBoundaryLoop2]>>>>,
-    native_boundary_bounds: Arc<OnceLock<Arc<[Aabb2]>>>,
-    line_image_region: Arc<OnceLock<Option<LineArcRegion2>>>,
+    native_boundary_bounds: Arc<PolicyClassificationCache<Arc<[Aabb2]>>>,
+    line_image_region: Arc<PolicyClassificationCache<Option<LineArcRegion2>>>,
     retained_rational_evaluators: Arc<OnceLock<CurveResult<Vec<Vec<Option<RationalBezier2>>>>>>,
     signed_area_cache: Arc<OnceLock<CurveResult<Option<Real>>>>,
 }
@@ -132,17 +134,17 @@ impl Default for CurveRegion2 {
             certified_loop_roles: Some(Arc::from(Vec::new())),
             certified_loop_fill_rules: Some(Arc::from(Vec::new())),
             signed_loop_composition: false,
-            filled_side_is_left: Arc::new(OnceLock::new()),
+            filled_side_is_left: Arc::new(PolicyClassificationCache::new()),
             native_boundary_loops: Arc::new(OnceLock::new()),
-            native_boundary_bounds: Arc::new(OnceLock::new()),
-            line_image_region: Arc::new(OnceLock::new()),
+            native_boundary_bounds: Arc::new(PolicyClassificationCache::new()),
+            line_image_region: Arc::new(PolicyClassificationCache::new()),
             retained_rational_evaluators: Arc::new(OnceLock::new()),
             signed_area_cache: Arc::new(OnceLock::new()),
         };
-        let _ = region
-            .filled_side_is_left
-            .set(Ok(Classification::Decided(Arc::from(Vec::new()))));
-        let _ = region.line_image_region.set(Some(LineArcRegion2::empty()));
+        region.filled_side_is_left.certify(Arc::from(Vec::new()));
+        region
+            .line_image_region
+            .certify(Some(LineArcRegion2::empty()));
         region
     }
 }
@@ -2087,10 +2089,10 @@ impl CurveRegion2 {
             policy,
             None,
         )?;
-        promoted.line_image_region = Arc::new(OnceLock::new());
-        let _ = promoted
+        promoted.line_image_region = Arc::new(PolicyClassificationCache::new());
+        promoted
             .line_image_region
-            .set(Some(LineArcRegion2::new(material_contours, hole_contours)));
+            .certify(Some(LineArcRegion2::new(material_contours, hole_contours)));
         Ok(promoted)
     }
 
@@ -2198,13 +2200,10 @@ impl CurveRegion2 {
         paths: &[CurvePath2],
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
+        policy: &CurvePolicy,
     ) -> ExactCurveResult<Self> {
         Self::try_from_boundary_paths_with_loop_semantics_and_policy(
-            paths,
-            roles,
-            fill_rules,
-            &CurvePolicy::STRICT,
-            None,
+            paths, roles, fill_rules, policy, None,
         )
     }
 
@@ -2219,9 +2218,10 @@ impl CurveRegion2 {
         paths: &[CurvePath2],
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
+        policy: &CurvePolicy,
     ) -> ExactCurveResult<Self> {
         let mut region =
-            Self::try_from_boundary_paths_with_loop_semantics(paths, roles, fill_rules)?;
+            Self::try_from_boundary_paths_with_loop_semantics(paths, roles, fill_rules, policy)?;
         region.signed_loop_composition = true;
         Ok(region)
     }
@@ -2240,6 +2240,7 @@ impl CurveRegion2 {
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
         interior_sides: &[CurveBoundaryInteriorSide2],
+        policy: &CurvePolicy,
     ) -> ExactCurveResult<Self> {
         if paths.len() != interior_sides.len() {
             let family = paths
@@ -2257,7 +2258,7 @@ impl CurveRegion2 {
             paths,
             roles,
             fill_rules,
-            &CurvePolicy::STRICT,
+            policy,
             Some(
                 interior_sides
                     .iter()
@@ -2297,7 +2298,8 @@ impl CurveRegion2 {
         if let Some(native) = native_region_from_curve_paths(paths, roles, fill_rules)
             .map_err(curve_region_promotion_error)?
         {
-            if region.filled_side_is_left.get().is_none()
+            if region.filled_side_is_left.certified().is_none()
+                && !policy.permits_approximate_512()
                 && let Ok(filled_sides) =
                     filled_sides_from_roles_and_areas(roles, &native.signed_areas, policy)
             {
@@ -2305,7 +2307,7 @@ impl CurveRegion2 {
                     .with_certified_filled_side_is_left(filled_sides)
                     .map_err(curve_region_promotion_error)?;
             }
-            let _ = region.line_image_region.set(Some(native.region));
+            region.line_image_region.certify(Some(native.region));
         }
         Ok(region)
     }
@@ -2441,7 +2443,7 @@ impl CurveRegion2 {
             .certified_line_image_region(policy)
             .map_err(affine_region_error)?
         {
-            let _ = transformed.line_image_region.set(Some(region));
+            transformed.line_image_region.certify(Some(region));
         }
         Ok(transformed)
     }
@@ -2461,10 +2463,10 @@ impl CurveRegion2 {
             certified_loop_roles: None,
             certified_loop_fill_rules: None,
             signed_loop_composition: false,
-            filled_side_is_left: Arc::new(OnceLock::new()),
+            filled_side_is_left: Arc::new(PolicyClassificationCache::new()),
             native_boundary_loops: Arc::new(OnceLock::new()),
-            native_boundary_bounds: Arc::new(OnceLock::new()),
-            line_image_region: Arc::new(OnceLock::new()),
+            native_boundary_bounds: Arc::new(PolicyClassificationCache::new()),
+            line_image_region: Arc::new(PolicyClassificationCache::new()),
             retained_rational_evaluators: Arc::new(OnceLock::new()),
             signed_area_cache: Arc::new(OnceLock::new()),
         }
@@ -2479,9 +2481,8 @@ impl CurveRegion2 {
                 "curved-region filled-side evidence must match the boundary-loop count".into(),
             ));
         }
-        let _ = self
-            .filled_side_is_left
-            .set(Ok(Classification::Decided(Arc::from(filled_side_is_left))));
+        self.filled_side_is_left
+            .certify(Arc::from(filled_side_is_left));
         Ok(self)
     }
 
@@ -2498,13 +2499,10 @@ impl CurveRegion2 {
         policy: &CurvePolicy,
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
     ) -> CurveResult<Classification<&[bool]>> {
-        match self.filled_side_is_left.get_or_init(|| {
-            self.compute_filled_side_is_left_with_area_cache(policy, rational_quadratic_cache)
-        }) {
-            Ok(Classification::Decided(sides)) => Ok(Classification::Decided(sides.as_ref())),
-            Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(*reason)),
-            Err(error) => Err(error.clone()),
-        }
+        resolve_cached_classification(&self.filled_side_is_left, policy, |attempt| {
+            self.compute_filled_side_is_left_with_area_cache(attempt, rational_quadratic_cache)
+        })
+        .map(|classification| classification.map(AsRef::as_ref))
     }
 
     fn compute_filled_side_is_left_with_area_cache(
@@ -3086,36 +3084,41 @@ impl CurveRegion2 {
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<&LineArcRegion2>> {
-        if self.line_image_region.get().is_none() {
-            if self.certified_loop_roles.is_some() {
-                match self.certified_line_image_region(policy)? {
-                    Classification::Decided(region) => {
-                        let _ = self.line_image_region.set(Some(region));
+        let cached = resolve_cached_classification(
+            &self.line_image_region,
+            policy,
+            |attempt| -> CurveResult<Classification<Option<LineArcRegion2>>> {
+                if self.certified_loop_roles.is_some() {
+                    match self.certified_line_image_region(attempt)? {
+                        Classification::Decided(region) => {
+                            Ok(Classification::Decided(Some(region)))
+                        }
+                        Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                            Ok(Classification::Decided(None))
+                        }
+                        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                     }
-                    Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                        let _ = self.line_image_region.set(None);
+                } else {
+                    match self.line_image_role_evidence(attempt)? {
+                        Classification::Decided(evidence) => {
+                            let region = self.region_from_line_role_evidence(&evidence)?;
+                            Ok(Classification::Decided(Some(region)))
+                        }
+                        Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                            Ok(Classification::Decided(None))
+                        }
+                        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                     }
-                    Classification::Uncertain(_) => {}
                 }
-            } else {
-                match self.line_image_role_evidence(policy)? {
-                    Classification::Decided(evidence) => {
-                        let region = self.region_from_line_role_evidence(&evidence)?;
-                        let _ = self.line_image_region.set(Some(region));
-                    }
-                    Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                        let _ = self.line_image_region.set(None);
-                    }
-                    Classification::Uncertain(_) => {}
-                }
-            }
-        }
-        Ok(
-            match self.line_image_region.get().and_then(Option::as_ref) {
-                Some(region) => Classification::Decided(region),
-                None => Classification::Uncertain(UncertaintyReason::Unsupported),
             },
-        )
+        )?;
+        Ok(match cached {
+            Classification::Decided(Some(region)) => Classification::Decided(region),
+            Classification::Decided(None) => {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        })
     }
 
     /// Returns borrowed native line/arc contours without exposing `LineArcRegion2` ownership.
@@ -3434,6 +3437,23 @@ impl CurveRegion2 {
         &self,
         distance: Real,
         policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        crate::policy::resolve_certified_operation(policy, |attempt| {
+            match self.offset_raw(distance.clone(), attempt)? {
+                Classification::Decided(region) => Ok(region),
+                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                    CurveOperation2::Offset,
+                    CurveFamily2::Line,
+                    reason,
+                )),
+            }
+        })
+    }
+
+    fn offset_raw(
+        &self,
+        distance: Real,
+        policy: &CurvePolicy,
     ) -> ExactCurveResult<Classification<Self>> {
         if is_zero(&distance, policy) == Some(true) {
             return Ok(Classification::Decided(self.clone()));
@@ -3683,7 +3703,7 @@ impl CurveRegion2 {
         options: &BezierFlatteningOptions,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<Classification<CurveRegionSegmentedOffsetResult2>> {
-        match self.offset(distance.clone(), policy)? {
+        match self.offset_raw(distance.clone(), policy)? {
             Classification::Decided(region) => {
                 return Ok(Classification::Decided(CurveRegionSegmentedOffsetResult2 {
                     region,
@@ -3708,7 +3728,7 @@ impl CurveRegion2 {
             }
         };
         let (segmented_source, segmentation_evidence) = segmented.into_parts();
-        let region = match segmented_source.offset(distance, policy)? {
+        let region = match segmented_source.offset_raw(distance, policy)? {
             Classification::Decided(region) => region,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -3746,7 +3766,7 @@ impl CurveRegion2 {
         fallback_source_flattening: &BezierFlatteningOptions,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<Classification<CurveRegionCertifiedParallelOffsetResult2>> {
-        match self.offset(distance.clone(), policy)? {
+        match self.offset_raw(distance.clone(), policy)? {
             Classification::Decided(region) => {
                 return Ok(Classification::Decided(
                     CurveRegionCertifiedParallelOffsetResult2 {
@@ -3881,7 +3901,7 @@ impl CurveRegion2 {
         let segmented_region = segmented.region();
         let native = segmented_region
             .line_image_region
-            .get()
+            .certified()
             .and_then(Option::as_ref)
             .expect("certified segmentation always installs native line topology");
         let mut material_components = Vec::new();
@@ -4062,63 +4082,26 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<RegionPointLocation>> {
-        if !self.signed_loop_composition
-            && let Some(Some(region)) = self.line_image_region.get()
-        {
-            return Ok(region.classify_point(point, policy));
-        }
-        if self.line_image_region.get().is_none() && self.certified_loop_roles.is_some() {
-            match self.certified_line_image_region(policy)? {
+        if !self.signed_loop_composition {
+            match self.native_line_arc_region(policy)? {
                 Classification::Decided(region) => {
-                    let _ = self.line_image_region.set(Some(region));
+                    return Ok(region.classify_point(point, policy));
                 }
-                Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                    let _ = self.line_image_region.set(None);
-                }
+                Classification::Uncertain(UncertaintyReason::Unsupported) => {}
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
         }
         let Some(native_loops) = self.native_boundary_loops() else {
-            if let Some(region) = self.line_image_region.get() {
-                return match region {
-                    Some(region) => Ok(region.classify_point(point, policy)),
-                    None => classify_point_against_retained_loops(
-                        &self.boundary_loops,
-                        self.retained_rational_evaluators()?,
-                        point,
-                        policy,
-                        self.certified_loop_roles.as_deref(),
-                        self.certified_loop_fill_rules.as_deref(),
-                    ),
-                };
-            }
-            return match self.line_image_role_evidence(policy)? {
-                Classification::Decided(evidence) => {
-                    let region = self.region_from_line_role_evidence(&evidence)?;
-                    let _ = self.line_image_region.set(Some(region));
-                    Ok(self
-                        .line_image_region
-                        .get()
-                        .expect("decided line-image region was retained")
-                        .as_ref()
-                        .expect("decided line-image cache contains a region")
-                        .classify_point(point, policy))
-                }
-                Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                    let _ = self.line_image_region.set(None);
-                    classify_point_against_retained_loops(
-                        &self.boundary_loops,
-                        self.retained_rational_evaluators()?,
-                        point,
-                        policy,
-                        self.certified_loop_roles.as_deref(),
-                        self.certified_loop_fill_rules.as_deref(),
-                    )
-                }
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            };
+            return classify_point_against_retained_loops(
+                &self.boundary_loops,
+                self.retained_rational_evaluators()?,
+                point,
+                policy,
+                self.certified_loop_roles.as_deref(),
+                self.certified_loop_fill_rules.as_deref(),
+            );
         };
         if self
             .certified_loop_roles
@@ -4460,23 +4443,27 @@ impl CurveRegion2 {
     }
 
     fn native_boundary_bounds(&self, policy: &CurvePolicy) -> Option<&[Aabb2]> {
-        if let Some(bounds) = self.native_boundary_bounds.get() {
-            return Some(bounds);
-        }
         let native_loops = self.native_boundary_loops()?;
-        let mut bounds = Vec::with_capacity(native_loops.len());
-        for boundary_loop in native_loops {
-            match native_loop_bounds(boundary_loop, policy) {
-                Classification::Decided(boundary_bounds) => bounds.push(boundary_bounds),
-                Classification::Uncertain(_) => return None,
-            }
+        let bounds =
+            resolve_cached_classification(&self.native_boundary_bounds, policy, |attempt| {
+                let mut bounds = Vec::with_capacity(native_loops.len());
+                for boundary_loop in native_loops {
+                    match native_loop_bounds(boundary_loop, attempt) {
+                        Classification::Decided(boundary_bounds) => bounds.push(boundary_bounds),
+                        Classification::Uncertain(reason) => {
+                            return Ok::<_, core::convert::Infallible>(Classification::Uncertain(
+                                reason,
+                            ));
+                        }
+                    }
+                }
+                Ok(Classification::Decided(Arc::from(bounds)))
+            })
+            .expect("native boundary bound construction is infallible");
+        match bounds {
+            Classification::Decided(bounds) => Some(bounds),
+            Classification::Uncertain(_) => None,
         }
-        let _ = self.native_boundary_bounds.set(bounds.into());
-        Some(
-            self.native_boundary_bounds
-                .get()
-                .expect("decided native boundary bounds were retained"),
-        )
     }
 }
 
@@ -6504,12 +6491,12 @@ mod tests {
         let policy = CurvePolicy::STRICT;
         for (clockwise, expected) in [(false, true), (true, false)] {
             let region = single_quadratic_loop_region(clockwise);
-            assert!(region.native_boundary_bounds.get().is_none());
+            assert!(region.native_boundary_bounds.is_empty());
             assert!(matches!(
                 region.filled_side_is_left(&policy),
                 Ok(Classification::Decided(sides)) if sides == [expected]
             ));
-            assert!(region.native_boundary_bounds.get().is_none());
+            assert!(region.native_boundary_bounds.is_empty());
         }
     }
 
@@ -6614,7 +6601,7 @@ mod tests {
             region.classify_point(&p(1, 2), &policy),
             Ok(Classification::Decided(RegionPointLocation::Outside))
         );
-        assert!(region.line_image_region.get().is_none());
+        assert!(matches!(region.line_image_region.certified(), Some(None)));
     }
 
     #[test]
@@ -6674,6 +6661,7 @@ mod tests {
             &[rectangle(-3, 3), rectangle(1, 7)],
             &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
             &[FillRule::NonZero, FillRule::NonZero],
+            &policy,
         )
         .unwrap();
         assert_eq!(

@@ -39,7 +39,9 @@ fn signed_area(triangles: &[[[f64; 2]; 3]]) -> f64 {
 fn triangulate_finite_rings_normalizes_repeated_closing_vertex() {
     let outer = [[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0], [0.0, 0.0]];
 
-    let triangles = triangulate_finite_rings(&outer, &[]).unwrap();
+    let triangles = triangulate_finite_rings(&outer, &[], &CurvePolicy::STRICT)
+        .unwrap()
+        .into_value();
 
     assert_eq!(triangles.len(), 2);
     assert!((signed_area(&triangles).abs() - 12.0).abs() < 1.0e-9);
@@ -56,7 +58,9 @@ fn triangulate_finite_rings_normalizes_adjacent_duplicate_vertices() {
         [0.0, 0.0],
     ];
 
-    let triangles = triangulate_finite_rings(&outer, &[]).unwrap();
+    let triangles = triangulate_finite_rings(&outer, &[], &CurvePolicy::STRICT)
+        .unwrap()
+        .into_value();
 
     assert_eq!(triangles.len(), 2);
     assert!((signed_area(&triangles).abs() - 12.0).abs() < 1.0e-9);
@@ -67,7 +71,7 @@ fn triangulate_finite_rings_rejects_nonfinite_before_normalization() {
     let outer = [[0.0, 0.0], [f64::NAN, 0.0], [1.0, 1.0]];
 
     assert_eq!(
-        triangulate_finite_rings(&outer, &[]).unwrap_err(),
+        triangulate_finite_rings(&outer, &[], &CurvePolicy::STRICT).unwrap_err(),
         CurveError::NonFiniteProjectionPoint
     );
 }
@@ -76,21 +80,26 @@ fn triangulate_finite_rings_rejects_nonfinite_before_normalization() {
 fn triangulate_finite_rings_ignores_all_duplicate_rings() {
     let outer = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]];
 
-    assert!(triangulate_finite_rings(&outer, &[]).unwrap().is_empty());
+    assert!(
+        triangulate_finite_rings(&outer, &[], &CurvePolicy::STRICT)
+            .unwrap()
+            .into_value()
+            .is_empty()
+    );
 }
 
 #[test]
 fn triangulate_finite_rings_rejects_nonadjacent_repeated_vertices() {
     let repeated_material = [[0.0, 0.0], [4.0, 0.0], [0.0, 0.0], [0.0, 4.0]];
     assert!(matches!(
-        triangulate_finite_rings(&repeated_material, &[]),
+        triangulate_finite_rings(&repeated_material, &[], &CurvePolicy::STRICT),
         Err(CurveError::Topology(_))
     ));
 
     let material = [[0.0, 0.0], [6.0, 0.0], [6.0, 6.0], [0.0, 6.0]];
     let repeated_hole = [[1.0, 1.0], [2.0, 1.0], [1.0, 1.0], [1.0, 2.0]];
     assert!(matches!(
-        triangulate_finite_rings(&material, &[&repeated_hole]),
+        triangulate_finite_rings(&material, &[&repeated_hole], &CurvePolicy::STRICT),
         Err(CurveError::Topology(_))
     ));
 }
@@ -109,7 +118,10 @@ fn finite_region_profile_triangulates_material_with_owned_hole() {
     assert_eq!(profiles.len(), 1);
     assert_eq!(profiles[0].holes().len(), 1);
 
-    let triangles = profiles[0].triangulate().unwrap();
+    let triangles = profiles[0]
+        .triangulate(&CurvePolicy::STRICT)
+        .unwrap()
+        .into_value();
     assert!(!triangles.is_empty());
     assert!((signed_area(&triangles).abs() - 32.0).abs() < 1.0e-9);
 }
