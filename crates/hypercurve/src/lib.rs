@@ -406,6 +406,42 @@ mod tests {
     }
 
     #[test]
+    fn angular_fraction_maps_directly_to_native_rational_arc_parameter() {
+        let arc = CircularArc2::try_from_center(p(2, 0), p(0, 2), p(0, 0), false).unwrap();
+        let fraction = q(1, 2);
+        let Classification::Decided(parameter) = arc
+            .parameter_at_sweep_fraction(&fraction, &topology_policy())
+            .unwrap()
+        else {
+            panic!("an exact interior angular fraction must map exactly");
+        };
+        let Classification::Decided(angular_point) = arc
+            .point_at_sweep_fraction(&fraction, &topology_policy())
+            .unwrap()
+        else {
+            panic!("an exact interior angular fraction must evaluate exactly");
+        };
+        let expected_midpoint = Point2::new(s(2).sqrt().unwrap(), s(2).sqrt().unwrap());
+        assert_eq!(
+            crate::classify::is_zero(
+                &angular_point.distance_squared(&expected_midpoint),
+                &topology_policy(),
+            ),
+            Some(true)
+        );
+        let expected_parameter = s(2).sqrt().unwrap() - s(1);
+        assert_eq!(
+            hyperlimit::compare_reals(
+                &parameter,
+                &expected_parameter,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
     fn bulge_vertex_builds_segment_to_next_vertex() {
         let a = BulgeVertex2::new(p(0, 0), s(1));
         let b = BulgeVertex2::new(p(2, 0), s(0));

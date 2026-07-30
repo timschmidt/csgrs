@@ -1021,12 +1021,6 @@ impl CircularArc2 {
                 ));
             }
         }
-        let point = match self.point_at_sweep_fraction(fraction, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
         let decomposition = match self.rational_bezier_decomposition() {
             Ok(decomposition) => decomposition,
             Err(crate::ExactCurveError::Invalid { cause, .. }) => return Err(cause),
@@ -1034,42 +1028,51 @@ impl CircularArc2 {
                 return Ok(Classification::Uncertain(blocker.reason()));
             }
         };
-        let mut represented = None;
+        let point = match self.point_at_sweep_fraction(fraction, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         for span in decomposition.spans() {
-            let parameters = match span.curve().parameters_for_point(&point, policy) {
-                Classification::Decided(parameters) => parameters,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
             let (start, end) = span.parameter_range();
-            let width = end - start;
-            for local in parameters {
-                let global = start + &(&width * local);
-                if let Some(existing) = &represented {
-                    match compare_reals(existing, &global, policy) {
-                        Some(Ordering::Equal) => {}
-                        Some(_) => {
-                            return Ok(Classification::Uncertain(
-                                crate::UncertaintyReason::Boundary,
-                            ));
-                        }
-                        None => {
-                            return Ok(Classification::Uncertain(
-                                crate::UncertaintyReason::Ordering,
-                            ));
-                        }
-                    }
-                } else {
-                    represented = Some(global);
+            match (
+                compare_reals(start, fraction, policy),
+                compare_reals(fraction, end, policy),
+            ) {
+                (
+                    Some(Ordering::Less | Ordering::Equal),
+                    Some(Ordering::Less | Ordering::Equal),
+                ) => {
+                    let width = end - start;
+                    let start_radial = span.curve().start().delta_from(self.center());
+                    let end_radial = span.curve().end().delta_from(self.center());
+                    let point_radial = point.delta_from(self.center());
+                    let radius_squared =
+                        &start_radial.0 * &start_radial.0 + &start_radial.1 * &start_radial.1;
+                    let start_point_dot =
+                        &start_radial.0 * &point_radial.0 + &start_radial.1 * &point_radial.1;
+                    let start_point_cross =
+                        &start_radial.0 * &point_radial.1 - &start_radial.1 * &point_radial.0;
+                    let start_end_dot =
+                        &start_radial.0 * &end_radial.0 + &start_radial.1 * &end_radial.1;
+                    let start_end_cross =
+                        &start_radial.0 * &end_radial.1 - &start_radial.1 * &end_radial.0;
+                    let local_rational = (start_point_cross * (&radius_squared + start_end_dot)
+                        / ((&radius_squared + start_point_dot) * start_end_cross))?;
+                    return Ok(Classification::Decided(start + &(width * local_rational)));
+                }
+                (Some(_), Some(_)) => {}
+                _ => {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::Ordering,
+                    ));
                 }
             }
         }
-        Ok(represented
-            .map(Classification::Decided)
-            .unwrap_or(Classification::Uncertain(
-                crate::UncertaintyReason::Boundary,
-            )))
+        Ok(Classification::Uncertain(
+            crate::UncertaintyReason::Boundary,
+        ))
     }
 
     /// Returns the exact positive angular sweep in traversal order.
