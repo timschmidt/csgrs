@@ -88,6 +88,7 @@ strict-convexity certificate.
 | Plane / torus | Axis-transverse none, tangent circle, or two latitude circles; axis-containing two meridian circles; parallel-to-axis outer point tangency or strict separation |
 | Plane / extrusion surface | Transverse native line/rational Bézier/NURBS curve; parallel none or lifted profile-contact lines |
 | Plane / revolution surface | Authored-axis transverse none, isolated axis point, or one/more exact profile-contact circles with native pcurves on both carriers; finite multi-span NURBS contacts map to authored knot parameters and deduplicate knot seams |
+| Coaxial revolution / revolution surface | Line/rational Bézier/NURBS meridians in certified positive-radius axial half-planes reduce to exact Hypercurve contacts; represented contacts lift to latitude circles, equal or reversed complete meridians are coincident, and equal/mirrored angular frames retain both native pcurves |
 | Parallel cylinder / cylinder | None, coincident, tangent line, or two axial lines |
 | Coaxial cylinder / cone | One exact circle; authored-frame-aligned carriers retain cylinder height and cone slant pcurves |
 | Coaxial sphere / cylinder | None, tangent circle, or two circles; authored-frame-aligned circles retain both exact pcurves |
@@ -125,6 +126,19 @@ Axis contact remains an isolated point. A contained profile interval,
 mixed singular-point/circle coverage, and coincident circles with distinct
 profile parameters remain explicit unsupported relations rather than losing
 their multiplicity.
+Coaxial revolution/revolution intersections project each supported meridian
+into a common exact `(radius, axial-height)` frame after proving every affine
+control lies in one strictly positive radial half-plane. Hypercurve then owns
+the complete line/rational-Bézier/NURBS contact calculation. Each contact with
+two represented authored parameters lifts without fitting to a full spatial
+latitude circle. Equal or reversed complete projected meridians publish
+coincidence; partial overlaps, noncoaxial axes, profiles crossing the axis,
+and incomplete contact evidence remain explicit unsupported relations.
+Algebraic-only contact parameters return `UnrepresentableParameter` instead
+of sampling. Equal radial frames retain `(angle, first-profile-parameter)` and
+`(angle, second-profile-parameter)` pcurves; counteroriented axes use the exact
+`tau-angle` map. A rotated radial frame still retains the exact spatial circle
+but does not publish a discontinuous seam-crossing modulo-angle pcurve.
 Authored-frame-aligned coaxial sphere/cylinder circles use constant-latitude
 and constant-height pcurves directly. The graph clips them across the four
 native cylinder patches and exactly coalesces adjacent common-support

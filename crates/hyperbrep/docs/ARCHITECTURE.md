@@ -297,7 +297,17 @@ evidence because the retained relation does not pretend those are one
 single-valued pcurve. Finite NURBS meridians are decomposed into exact rational
 Bézier knot spans for the plane relation; isolated parameters are mapped back
 to the authoritative knot domain and contacts shared by adjacent spans are
-deduplicated before circle publication. Plane/extrusion generator lines use
+deduplicated before circle publication. A coaxial revolution/revolution query
+instead proves that both supported affine-control meridians occupy one
+strictly positive radial half-plane, projects them into a shared exact
+`(radius, axial-height)` chart, and delegates their complete contacts to
+Hypercurve. Represented parameters lift directly to latitude circles. Equal
+or reversed complete meridians are coincident; partial overlaps, incomplete
+evidence, and algebraic-only parameters stay explicit. Equal radial frames
+retain both constant-profile pcurves, with an exact `tau-angle` map for a
+counteroriented second axis. Rotated frames retain only the spatial circle
+because their modulo-angle correspondence crosses the authored seam and is
+not one affine pcurve. Plane/extrusion generator lines use
 the same principle with an affine surface-parameter line. An axis-containing
 plane/cone relation is represented explicitly as two lower-bounded
 `SurfaceIntersectionRay` values,

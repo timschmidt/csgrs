@@ -120,7 +120,8 @@ The clean-break implementation currently provides:
   transverse plane/cone/torus and
   perpendicular/oblique/axial-parallel plane/cylinder cuts,
   parallel-cylinder intersections, coaxial sphere/cylinder,
-  sphere/cone/torus, cylinder/cone/torus, cone/cone-or-torus, and torus/torus
+  sphere/cone/torus, cylinder/cone/torus, cone/cone-or-torus,
+  line/rational-Bézier/NURBS revolution/revolution, and torus/torus
   intersections
   with retained two-surface pcurves when their authored frames align or mirror,
   with retained multiplicity, overlaps, coincidence, tangent points, lines,

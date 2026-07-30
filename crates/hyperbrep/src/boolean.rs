@@ -10864,6 +10864,42 @@ mod tests {
     }
 
     #[test]
+    fn coaxial_revolution_graph_clips_general_meridian_contacts() {
+        let profile = |points: &[(i32, i32)]| {
+            points
+                .iter()
+                .map(|(radius, axial)| crate::Point2::new(Real::from(*radius), Real::from(*axial)))
+                .collect::<Vec<_>>()
+        };
+        let (first, first_solid) =
+            crate::builder::revolve(&profile(&[(2, 0), (8, 0), (8, 6), (2, 6)])).unwrap();
+        let (second, second_solid) =
+            crate::builder::revolve(&profile(&[(4, -2), (10, 2), (6, 8), (3, 4)])).unwrap();
+        let graph = intersection_graph(&first, first_solid, &second, second_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        assert_eq!(graph.unresolved_trim_pairs(), 0);
+
+        let mut fragment_count = 0;
+        for pair in graph.intersections() {
+            let (
+                FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(_)),
+                FacePairTrim::SurfaceCurveFragments(fragments),
+            ) = (pair.relation(), pair.trim())
+            else {
+                continue;
+            };
+            let first_surface = face_surface(&first, pair.first_face());
+            let second_surface = face_surface(&second, pair.second_face());
+            for fragment in fragments {
+                assert_surface_fragment_replays(fragment, first_surface, second_surface);
+            }
+            fragment_count += fragments.len();
+        }
+        assert_eq!(fragment_count, graph.trimmed_curve_fragments());
+        assert_eq!(fragment_count, 24);
+    }
+
+    #[test]
     fn counteroriented_coaxial_cone_graph_reverses_angular_pcurves() {
         let (first, first_solid) =
             crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
