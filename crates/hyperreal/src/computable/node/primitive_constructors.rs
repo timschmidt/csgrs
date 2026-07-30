@@ -75,6 +75,9 @@ impl Computable {
                 (Approximation::PrescaledAtan(left), Approximation::PrescaledAtan(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
+                (Approximation::AtanDeferred(left), Approximation::AtanDeferred(right)) => {
+                    Computable::internal_structural_eq(left, right)
+                }
                 (Approximation::AtanRational(left), Approximation::AtanRational(right)) => {
                     left == right
                 }

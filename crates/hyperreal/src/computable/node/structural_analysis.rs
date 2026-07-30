@@ -640,6 +640,17 @@ impl Computable {
             }
             ExactSignCache::Invalid => {}
         }
+        if matches!(self.internal.approximation, Approximation::Add(_, _))
+            && let Some(form) = self.pi_atan_linear_form(32)
+            && form.constant.sign() == Sign::NoSign
+            && form.pi.sign() == Sign::NoSign
+            && form.atan.sign() == Sign::NoSign
+        {
+            self.internal
+                .facts
+                .replace_exact_sign(ExactSignCache::Valid(Sign::NoSign));
+            return Some(Sign::NoSign);
+        }
 
         enum Frame<'a> {
             Eval(&'a Computable),
@@ -714,6 +725,7 @@ impl Computable {
                 | Approximation::LogNormalSf(_)
                 | Approximation::LogDnorm(_) => Some(Some(Sign::Minus)),
                 Approximation::PrescaledAtan(child)
+                | Approximation::AtanDeferred(child)
                 | Approximation::PrescaledAsin(child)
                 | Approximation::AsinDeferred(child)
                 | Approximation::AsinhNearZero(child)
@@ -874,6 +886,10 @@ impl Computable {
     }
 
     fn exact_quadratic_surd_sign(&self) -> Option<Sign> {
+        Some(self.exact_quadratic_surd()?.sign())
+    }
+
+    fn exact_quadratic_surd(&self) -> Option<QuadraticSurd> {
         const NODE_BUDGET: usize = 256;
 
         fn parse(
@@ -969,8 +985,23 @@ impl Computable {
         // allocation and hashing overhead of a map while preserving shared nodes.
         let mut memo = None;
         let value = parse(self, &mut remaining, &mut memo)?;
-        crate::trace_dispatch!("computable", "exact_sign", "quadratic-surd");
-        Some(value.sign())
+        crate::trace_dispatch!("computable", "structural", "quadratic-surd");
+        Some(value)
+    }
+
+    pub(crate) fn exact_pure_quadratic_surd(&self) -> Option<(Rational, Rational)> {
+        let value = self.exact_quadratic_surd()?;
+        if value.rational.sign() != Sign::NoSign {
+            return None;
+        }
+        Some((value.radical_scale, value.radicand?))
+    }
+
+    pub(crate) fn exact_quadratic_surd_parts(
+        &self,
+    ) -> Option<(Rational, Rational, Option<Rational>)> {
+        let value = self.exact_quadratic_surd()?;
+        Some((value.rational, value.radical_scale, value.radicand))
     }
 
     #[cfg(test)]

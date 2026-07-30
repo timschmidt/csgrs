@@ -94,6 +94,10 @@ pub(super) enum Approximation {
     // reductions without constructing a rational reciprocal node.
     IntegralAtan(BigInt),
     PrescaledAtan(Computable),
+    // Generic non-rational atan retains its exact argument so inverse-trig
+    // compositions can recover algebraic sine/cosine images. Approximation
+    // performs the usual small/medium/reciprocal reduction lazily.
+    AtanDeferred(Computable),
     // Exact rational atan inputs are common in scalar benches. A single
     // deferred node performs the same small/medium/large reductions as
     // Computable::atan without allocating the intermediate add/divide graph.

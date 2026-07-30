@@ -1132,6 +1132,30 @@ mod tests {
     }
 
     #[test]
+    fn independently_expanded_quadratic_products_cancel_exactly() {
+        let left_sqrt = Computable::sqrt_rational(Rational::new(2));
+        let right_sqrt = Computable::sqrt_rational(Rational::new(2));
+        let positive = left_sqrt
+            .clone()
+            .multiply(right_sqrt.clone().shift_left(1))
+            .shift_right(1);
+        let negative = left_sqrt
+            .multiply(right_sqrt.shift_left(1).negate())
+            .shift_right(1);
+        assert_eq!(positive.add(negative).exact_sign(), Some(Sign::NoSign));
+    }
+
+    #[test]
+    fn sign_normalization_exposes_scaled_product_cancellation() {
+        let left = Computable::sqrt_rational(Rational::new(2));
+        let right = Computable::sqrt_rational(Rational::new(2)).shift_left(1);
+        let positive = left.clone().multiply(right.clone()).shift_right(1);
+        let negative = left.multiply(right.negate()).shift_right(1);
+        let sum = positive.add(negative);
+        assert_eq!(sum.exact_rational(), Some(Rational::zero()));
+    }
+
+    #[test]
     fn square_of_sqrt_of_positive_value_collapses_at_construction() {
         let value = Computable::rational(Rational::new(2)).sqrt().square();
         let expected = Computable::rational(Rational::new(2));
@@ -1593,6 +1617,23 @@ mod tests {
     }
 
     #[test]
+    fn add_folds_rational_terms_across_nested_sum() {
+        let root_five = Computable::sqrt_rational(Rational::new(5)).negate();
+        for reduced in [
+            Computable::integer(BigInt::from(-3))
+                .add(root_five.clone())
+                .add(Computable::integer(BigInt::from(3))),
+            Computable::integer(BigInt::from(3)).add(
+                root_five
+                    .clone()
+                    .add(Computable::integer(BigInt::from(-3))),
+            ),
+        ] {
+            assert!(Computable::internal_structural_eq(&reduced, &root_five));
+        }
+    }
+
+    #[test]
     fn exact_sign_reduces_quadratic_surd_field_identities() {
         let root_two = Computable::sqrt_rational(Rational::new(2));
         let collapse_distance = Computable::rational(Rational::new(4))
@@ -1621,6 +1662,46 @@ mod tests {
 
         assert_eq!(positive.exact_sign(), Some(Sign::Plus));
         assert_eq!(negative.exact_sign(), Some(Sign::Minus));
+    }
+
+    #[test]
+    fn shared_pi_reciprocals_cancel_across_a_product() {
+        let argument = Computable::sqrt_rational(Rational::new(15)).atan();
+
+        let right_nested = Computable::pi().multiply(
+            argument
+                .clone()
+                .multiply(Computable::pi_inverse_constant()),
+        );
+        let left_nested = Computable::pi_inverse_constant()
+            .multiply(argument.clone())
+            .multiply(Computable::pi());
+
+        assert!(Arc::ptr_eq(&right_nested.internal, &argument.internal));
+        assert!(Arc::ptr_eq(&left_nested.internal, &argument.internal));
+    }
+
+    #[test]
+    fn normalized_half_pi_complement_retains_its_atan_argument() {
+        let argument = Computable::sqrt_rational(Rational::new(15))
+            .inverse()
+            .atan();
+        let normalized = Computable::one().add(
+            argument
+                .clone()
+                .multiply(Computable::pi_inverse_constant())
+                .shift_left(1)
+                .negate(),
+        );
+        let angle = Computable::pi().multiply(normalized).shift_right(1);
+
+        let retained = angle
+            .half_pi_minus_atan_argument()
+            .expect("pi/2 - atan argument must remain structurally available");
+        let expected = argument
+            .atan_argument()
+            .expect("the test expression is an atan node");
+        assert!(Arc::ptr_eq(&retained.internal, &expected.internal));
     }
 
     #[test]

@@ -87,6 +87,13 @@ fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     scale(sum, calc_precision - p)
 }
 
+fn atan_deferred(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Preserve the source argument at construction time, then apply the same
+    // convergence reduction previously performed eagerly by Computable::atan.
+    // Recursive atan calls operate on strictly smaller residuals.
+    c.clone().atan_reduced().approx_signal(signal, p)
+}
+
 fn atan_rational_small(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Same Taylor kernel as `atan_computable`, but exact rational leaves can
     // provide the working approximation directly. This removes a Computable

@@ -444,7 +444,9 @@ impl Computable {
             Approximation::AtanRational(argument) => {
                 Some(Self::rational(argument.clone()))
             }
-            Approximation::PrescaledAtan(argument) => Some(argument.clone()),
+            Approximation::PrescaledAtan(argument) | Approximation::AtanDeferred(argument) => {
+                Some(argument.clone())
+            }
             _ => None,
         }
     }
@@ -457,6 +459,10 @@ impl Computable {
             }
             _ => None,
         }
+    }
+
+    pub(crate) fn atan_pure_quadratic_surd_argument(&self) -> Option<(Rational, Rational)> {
+        self.atan_argument()?.exact_pure_quadratic_surd()
     }
 
     fn asin_argument(&self) -> Option<Computable> {

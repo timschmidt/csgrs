@@ -1,4 +1,145 @@
+#[derive(Clone)]
+struct PiAtanLinearForm {
+    constant: Rational,
+    pi: Rational,
+    atan: Rational,
+    argument: Option<Computable>,
+}
+
+impl PiAtanLinearForm {
+    fn scaled(mut self, scale: Rational) -> Self {
+        self.constant *= &scale;
+        self.pi *= &scale;
+        self.atan *= scale;
+        self
+    }
+
+    fn add(self, other: Self) -> Option<Self> {
+        let argument = match (&self.argument, &other.argument) {
+            (Some(left), Some(right)) if !Computable::internal_structural_eq(left, right) => {
+                return None;
+            }
+            (Some(argument), _) | (_, Some(argument)) => Some(argument.clone()),
+            (None, None) => None,
+        };
+        Some(Self {
+            constant: self.constant + other.constant,
+            pi: self.pi + other.pi,
+            atan: self.atan + other.atan,
+            argument,
+        })
+    }
+}
+
 impl Computable {
+    fn without_scaled_shared_factor(&self, factor: SharedConstant) -> Option<Computable> {
+        if self.shared_constant_kind() == Some(factor) {
+            return Some(Self::one());
+        }
+        match &self.internal.approximation {
+            Approximation::Multiply(left, right) => {
+                if left.shared_constant_kind() == Some(factor) {
+                    return Some(right.clone());
+                }
+                if right.shared_constant_kind() == Some(factor) {
+                    return Some(left.clone());
+                }
+            }
+            Approximation::Negate(child) => {
+                return child
+                    .without_scaled_shared_factor(factor)
+                    .map(Computable::negate);
+            }
+            Approximation::Offset(child, shift) => {
+                return child
+                    .without_scaled_shared_factor(factor)
+                    .map(|remainder| remainder.shift_left(*shift));
+            }
+            _ => {}
+        }
+        None
+    }
+
+    fn pi_atan_linear_form(&self, budget: usize) -> Option<PiAtanLinearForm> {
+        if budget == 0 {
+            return None;
+        }
+        if let Some(rational) = self.exact_rational() {
+            return Some(PiAtanLinearForm {
+                constant: rational,
+                pi: Rational::zero(),
+                atan: Rational::zero(),
+                argument: None,
+            });
+        }
+        if self.shared_constant_kind() == Some(SharedConstant::Pi) {
+            return Some(PiAtanLinearForm {
+                constant: Rational::zero(),
+                pi: Rational::one(),
+                atan: Rational::zero(),
+                argument: None,
+            });
+        }
+        if let Some(argument) = self.atan_argument() {
+            return Some(PiAtanLinearForm {
+                constant: Rational::zero(),
+                pi: Rational::zero(),
+                atan: Rational::one(),
+                argument: Some(argument),
+            });
+        }
+        match &self.internal.approximation {
+            Approximation::Add(left, right) => left
+                .pi_atan_linear_form(budget - 1)?
+                .add(right.pi_atan_linear_form(budget - 1)?),
+            Approximation::Negate(child) => Some(
+                child
+                    .pi_atan_linear_form(budget - 1)?
+                    .scaled(Rational::new(-1)),
+            ),
+            Approximation::Offset(child, shift) => Some(
+                child
+                    .pi_atan_linear_form(budget - 1)?
+                    .scaled(Self::power_of_two_rational(*shift)),
+            ),
+            Approximation::Multiply(left, right) => {
+                if let Some(scale) = left.exact_rational() {
+                    return Some(
+                        right
+                            .pi_atan_linear_form(budget - 1)?
+                            .scaled(scale),
+                    );
+                }
+                if let Some(scale) = right.exact_rational() {
+                    return Some(left.pi_atan_linear_form(budget - 1)?.scaled(scale));
+                }
+                None
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn signed_half_pi_minus_atan_argument(&self) -> Option<(Sign, Computable)> {
+        let form = self.pi_atan_linear_form(32)?;
+        if form.constant.sign() != Sign::NoSign || !form.atan.is_minus_one() {
+            return None;
+        }
+        let orientation = if form.pi == Rational::fraction(1, 2).expect("two is nonzero") {
+            Sign::Plus
+        } else if form.pi == Rational::fraction(-1, 2).expect("two is nonzero") {
+            Sign::Minus
+        } else {
+            return None;
+        };
+        let argument = form.argument?;
+        (argument.exact_sign()? == orientation).then_some((orientation, argument))
+    }
+
+    pub(crate) fn half_pi_minus_atan_argument(&self) -> Option<Computable> {
+        let (orientation, argument) = self.signed_half_pi_minus_atan_argument()?;
+        (orientation == Sign::Plus).then_some(argument)
+    }
+
     fn pi_rational_multiple(&self) -> Option<Rational> {
         let Approximation::Multiply(left, right) = &self.internal.approximation else {
             return None;
@@ -170,6 +311,11 @@ impl Computable {
         if n == 0 {
             return self;
         }
+        if let Approximation::Negate(child) = &self.internal.approximation {
+            // Keep the sign outside an exact binary scale so independently
+            // expanded products retain the common unsigned expression.
+            return child.clone().shift_left(n).negate();
+        }
         if let Approximation::Offset(child, inner) = &self.internal.approximation {
             // Combine nested binary offsets rather than growing a chain of
             // no-op-ish wrappers.
@@ -246,6 +392,64 @@ impl Computable {
 
     /// Multiply this number by some other number.
     pub fn multiply(self, other: Computable) -> Computable {
+        if let Approximation::Negate(child) = &self.internal.approximation {
+            return child.clone().multiply(other).negate();
+        }
+        if let Approximation::Negate(child) = &other.internal.approximation {
+            return self.multiply(child.clone()).negate();
+        }
+        match self.shared_constant_kind() {
+            Some(SharedConstant::Pi) => {
+                if let Approximation::Add(left, right) = &other.internal.approximation {
+                    if let Some(remainder) =
+                        left.without_scaled_shared_factor(SharedConstant::InvPi)
+                    {
+                        return remainder.add(self.multiply(right.clone()));
+                    }
+                    if let Some(remainder) =
+                        right.without_scaled_shared_factor(SharedConstant::InvPi)
+                    {
+                        return self.multiply(left.clone()).add(remainder);
+                    }
+                }
+                if let Some(remainder) = other.without_scaled_shared_factor(SharedConstant::InvPi)
+                {
+                    return remainder;
+                }
+            }
+            Some(SharedConstant::InvPi) => {
+                if let Some(remainder) = other.without_scaled_shared_factor(SharedConstant::Pi) {
+                    return remainder;
+                }
+            }
+            _ => {}
+        }
+        match other.shared_constant_kind() {
+            Some(SharedConstant::Pi) => {
+                if let Approximation::Add(left, right) = &self.internal.approximation {
+                    if let Some(remainder) =
+                        left.without_scaled_shared_factor(SharedConstant::InvPi)
+                    {
+                        return remainder.add(other.multiply(right.clone()));
+                    }
+                    if let Some(remainder) =
+                        right.without_scaled_shared_factor(SharedConstant::InvPi)
+                    {
+                        return other.multiply(left.clone()).add(remainder);
+                    }
+                }
+                if let Some(remainder) = self.without_scaled_shared_factor(SharedConstant::InvPi)
+                {
+                    return remainder;
+                }
+            }
+            Some(SharedConstant::InvPi) => {
+                if let Some(remainder) = self.without_scaled_shared_factor(SharedConstant::Pi) {
+                    return remainder;
+                }
+            }
+            _ => {}
+        }
         let left_exact = self.exact_rational();
         let right_exact = other.exact_rational();
 
@@ -426,6 +630,50 @@ impl Computable {
     /// Add some other number to this number.
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Computable {
+        if let Approximation::Negate(cancelled) = &other.internal.approximation
+            && Self::internal_structural_eq(&self, cancelled)
+        {
+            crate::trace_dispatch!("computable", "add", "direct-cancellation");
+            return Self::zero();
+        }
+        if let Approximation::Negate(cancelled) = &self.internal.approximation
+            && Self::internal_structural_eq(cancelled, &other)
+        {
+            crate::trace_dispatch!("computable", "add", "direct-cancellation");
+            return Self::zero();
+        }
+        if let Approximation::Add(left, right) = &self.internal.approximation
+            && let Some(other_rational) = other.exact_rational()
+        {
+            if let Some(left_rational) = left.exact_rational() {
+                crate::trace_dispatch!("computable", "add", "nested-left-rational-fold");
+                return right
+                    .clone()
+                    .add(Self::rational(left_rational + other_rational));
+            }
+            if let Some(right_rational) = right.exact_rational() {
+                crate::trace_dispatch!("computable", "add", "nested-right-rational-fold");
+                return left
+                    .clone()
+                    .add(Self::rational(right_rational + other_rational));
+            }
+        }
+        if let Some(self_rational) = self.exact_rational()
+            && let Approximation::Add(left, right) = &other.internal.approximation
+        {
+            if let Some(left_rational) = left.exact_rational() {
+                crate::trace_dispatch!("computable", "add", "nested-left-rational-fold");
+                return right
+                    .clone()
+                    .add(Self::rational(self_rational + left_rational));
+            }
+            if let Some(right_rational) = right.exact_rational() {
+                crate::trace_dispatch!("computable", "add", "nested-right-rational-fold");
+                return left
+                    .clone()
+                    .add(Self::rational(self_rational + right_rational));
+            }
+        }
         if let Approximation::Add(left, right) = &self.internal.approximation
             && let Approximation::Negate(cancelled) = &other.internal.approximation
         {

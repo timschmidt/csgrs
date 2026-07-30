@@ -356,6 +356,17 @@ mod tests {
     }
 
     #[test]
+    fn sqrt_rational_denominator_uses_the_canonical_quadratic_surd() {
+        let sqrt_half = Real::new(Rational::fraction(1, 2).unwrap()).sqrt().unwrap();
+        let sqrt_two_over_two = (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap();
+        assert_eq!(sqrt_half, sqrt_two_over_two);
+        assert_eq!(
+            (sqrt_half - sqrt_two_over_two).zero_status(),
+            ZeroKnowledge::Zero
+        );
+    }
+
+    #[test]
     fn square_sqrt() {
         let two: Real = 2.into();
         let three: Real = 3.into();
@@ -1422,6 +1433,28 @@ mod tests {
         let denominator = (Real::one() + &slope * &slope).sqrt().unwrap();
         assert_eq!(angle.clone().sin(), (&slope / &denominator).unwrap());
         assert_eq!(angle.cos(), (Real::one() / denominator).unwrap());
+
+        let root_five = Real::from(5).sqrt().unwrap();
+        let radical_slope = (-root_five.clone() / Real::from(2)).unwrap();
+        let radical_angle = radical_slope.atan().unwrap();
+        assert_eq!(
+            radical_angle.clone().sin(),
+            (-root_five / Real::from(3)).unwrap()
+        );
+        assert_eq!(
+            radical_angle.cos(),
+            (Real::from(2) / Real::from(3)).unwrap()
+        );
+
+        let displaced_height = Real::from(-3) - Real::from(5).sqrt().unwrap() + Real::from(3);
+        let latitude = (displaced_height.clone() / Real::from(3))
+            .unwrap()
+            .asin()
+            .unwrap();
+        assert_eq!(
+            Real::from(3) * latitude.sin(),
+            -Real::from(5).sqrt().unwrap()
+        );
     }
 
     #[test]
@@ -4080,6 +4113,44 @@ mod tests {
         assert_eq!(
             sqrt_three.atan2(Real::one()),
             (Real::pi() / Real::from(3_i32)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn trig_retains_atan_after_pi_reciprocal_cancellation() {
+        let root_fifteen = Real::from(15).sqrt().unwrap();
+        let angle = root_fifteen.clone().atan().unwrap();
+        let normalized = (&angle / Real::pi()).unwrap();
+        let replayed = Real::pi() * normalized;
+
+        assert_eq!(
+            replayed.clone().sin(),
+            (root_fifteen.clone() / Real::from(4)).unwrap()
+        );
+        assert_eq!(replayed.cos(), (Real::from(1) / Real::from(4)).unwrap());
+
+        let complementary = (Real::pi() / Real::from(2)).unwrap()
+            - (Real::one() / root_fifteen.clone())
+                .unwrap()
+                .atan()
+                .unwrap();
+        assert_eq!(angle, complementary);
+        let inverse_angle = (Real::one() / root_fifteen.clone())
+            .unwrap()
+            .atan()
+            .unwrap();
+        let expanded = ((Real::pi() - Real::from(2) * inverse_angle) / Real::from(2)).unwrap();
+        assert_eq!(
+            angle.certified_cmp_until(&expanded, -512).ordering(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            complementary.clone().sin(),
+            (root_fifteen.clone() / Real::from(4)).unwrap()
+        );
+        assert_eq!(
+            complementary.cos(),
+            (Real::from(1) / Real::from(4)).unwrap()
         );
     }
 

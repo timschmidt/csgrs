@@ -137,6 +137,19 @@ impl Computable {
         }
     }
 
+    fn atan_deferred(value: Computable) -> Self {
+        crate::trace_dispatch!("computable", "constructor", "atan-deferred");
+        let sign = value.exact_sign();
+        Self {
+            internal: Arc::new(Node::new(
+                Approximation::AtanDeferred(value),
+                BoundCache::Invalid,
+                sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid),
+            )),
+            signal: None,
+        }
+    }
+
     fn asin_rational_deferred(rational: Rational) -> Self {
         // Exact rational asin stores the signed input directly. Tiny values use
         // the odd series, while larger values select the endpoint-stable acos
@@ -157,10 +170,24 @@ impl Computable {
                 crate::trace_dispatch!("computable", "atan", "exact-zero");
                 return Self::zero();
             }
-            if rational.sign() == Sign::Plus {
-                crate::trace_dispatch!("computable", "atan", "exact-rational-deferred");
-                return Self::atan_rational_deferred(rational);
+            match rational.sign() {
+                Sign::Plus => {
+                    crate::trace_dispatch!("computable", "atan", "exact-rational-deferred");
+                    return Self::atan_rational_deferred(rational);
+                }
+                Sign::Minus => {
+                    crate::trace_dispatch!("computable", "atan", "negative-rational-deferred");
+                    return Self::atan_rational_deferred(rational.neg()).negate();
+                }
+                Sign::NoSign => unreachable!("zero rational returned above"),
             }
+        }
+        Self::atan_deferred(self)
+    }
+
+    pub(crate) fn atan_reduced(self) -> Computable {
+        if self.exact_rational().is_some() {
+            return self.atan();
         }
         let (known_sign, planning_msd) = self.planning_sign_and_msd();
         if known_sign == Some(Sign::Minus) {

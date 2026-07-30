@@ -54,6 +54,7 @@ impl Approximation {
             }
             IntegralAtan(i) => atan(signal, i, p),
             PrescaledAtan(c) => atan_computable(signal, c, p),
+            AtanDeferred(c) => atan_deferred(signal, c, p),
             AtanRational(r) => atan_rational(signal, r, p),
             AsinRational(r) => asin_rational(signal, r, p),
             PrescaledAsin(c) => asin_computable(signal, c, p),

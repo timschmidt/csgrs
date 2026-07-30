@@ -224,6 +224,16 @@ impl Real {
             }
             _ => (),
         }
+        if matches!(&self.class, Irrational)
+            && let Some((rational, radical_scale, None)) = self
+                .computable
+                .as_ref()
+                .and_then(Computable::exact_quadratic_surd_parts)
+            && radical_scale.sign() == Sign::NoSign
+        {
+            crate::trace_dispatch!("real", "sqrt", "computable-rational-promotion");
+            return Self::new(rational).sqrt();
+        }
         crate::trace_dispatch!("real", "sqrt", "generic-computable");
         Ok(self.make_computable(Computable::sqrt))
     }
@@ -2039,25 +2049,60 @@ impl Real {
         Self::normal_quantile_from_seeded_cdf(self, seed, "qnorm")
     }
 
+    fn retained_atan_argument(&self) -> Option<Real> {
+        if !matches!(&self.class, Irrational) {
+            return None;
+        }
+        let computable = self.computable.as_ref()?;
+        if let Some(argument) = computable.atan_rational_argument() {
+            return Some(Self::new(argument));
+        }
+        let (scale, radicand) = computable.atan_pure_quadratic_surd_argument()?;
+        let radical = Self::new(radicand).sqrt().ok()?;
+        Some(radical.scaled_by_rational(&scale))
+    }
+
+    fn retained_signed_half_pi_minus_atan_argument(&self) -> Option<(Sign, Real)> {
+        let (orientation, argument) =
+            self.fold_ref().signed_half_pi_minus_atan_argument()?;
+        if let Some(rational) = argument.exact_rational() {
+            return Some((orientation, Self::new(rational)));
+        }
+        if let Some((scale, radicand)) = argument.exact_pure_quadratic_surd() {
+            let radical = Self::new(radicand).sqrt().ok()?;
+            return Some((orientation, radical.scaled_by_rational(&scale)));
+        }
+        Some((orientation, Self::irrational_from_computable(argument)))
+    }
+
     /// The sine of this Real.
     pub fn sin(self) -> Real {
         if self.definitely_zero() {
             crate::trace_dispatch!("real", "sin", "exact-zero");
             return Self::zero();
         }
-        if matches!(self.class, Irrational)
-            && let Some(argument) = self
-                .computable
-                .as_ref()
-                .and_then(Computable::atan_rational_argument)
-        {
-            crate::trace_dispatch!("real", "sin", "atan-rational-inverse-rewrite");
-            let argument = Self::new(argument);
+        if let Some(argument) = self.retained_atan_argument() {
+            crate::trace_dispatch!("real", "sin", "atan-inverse-rewrite");
             let denominator = (Self::one() + &argument * &argument)
                 .sqrt()
-                .expect("one plus a rational square is positive");
+                .expect("one plus an exact atan argument square is positive");
             return (&argument / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
+        }
+        if let Some((orientation, argument)) =
+            self.retained_signed_half_pi_minus_atan_argument()
+        {
+            crate::trace_dispatch!("real", "sin", "half-pi-minus-atan-rewrite");
+            let denominator = (Self::one() + &argument * &argument)
+                .sqrt()
+                .expect("one plus an exact atan argument square is positive");
+            let numerator = if orientation == Sign::Minus {
+                -Self::one()
+            } else {
+                Self::one()
+            };
+            return (numerator / denominator)
+                .expect("inverse-trig normalization is nonzero");
         }
         match &self.class {
             One => {
@@ -2109,18 +2154,27 @@ impl Real {
             crate::trace_dispatch!("real", "cos", "exact-zero-one");
             return Self::one();
         }
-        if matches!(self.class, Irrational)
-            && let Some(argument) = self
-                .computable
-                .as_ref()
-                .and_then(Computable::atan_rational_argument)
-        {
-            crate::trace_dispatch!("real", "cos", "atan-rational-inverse-rewrite");
-            let argument = Self::new(argument);
+        if let Some(argument) = self.retained_atan_argument() {
+            crate::trace_dispatch!("real", "cos", "atan-inverse-rewrite");
             let denominator = (Self::one() + &argument * &argument)
                 .sqrt()
-                .expect("one plus a rational square is positive");
+                .expect("one plus an exact atan argument square is positive");
             return (Self::one() / denominator)
+                .expect("positive inverse-trig normalization is nonzero");
+        }
+        if let Some((orientation, argument)) =
+            self.retained_signed_half_pi_minus_atan_argument()
+        {
+            crate::trace_dispatch!("real", "cos", "half-pi-minus-atan-rewrite");
+            let denominator = (Self::one() + &argument * &argument)
+                .sqrt()
+                .expect("one plus an exact atan argument square is positive");
+            let numerator = if orientation == Sign::Minus {
+                -argument
+            } else {
+                argument
+            };
+            return (numerator / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
         }
         match &self.class {
@@ -2550,15 +2604,23 @@ impl Real {
             return Ok(self.make_computable(|value| value.asin()));
         }
 
-        // Generic identity asin(x) = atan(x / sqrt(1-x^2)).
-        crate::trace_dispatch!("real", "asin", "generic-atan-sqrt-rewrite");
-        let one = Self::one();
-        let radicand = one.clone() - self.clone().powi(BigInt::from(2_u8))?;
-        let denominator = radicand.sqrt().map_err(|problem| match problem {
-            Problem::SqrtNegative => Problem::NotANumber,
-            other => other,
-        })?;
-        (self / denominator)?.atan()
+        let radicand = Self::one() - self.clone().powi(BigInt::from(2_u8))?;
+        match radicand.operation_sign()? {
+            Sign::Minus => {
+                crate::trace_dispatch!("real", "asin", "generic-domain-error");
+                return Err(Problem::NotANumber);
+            }
+            Sign::NoSign => {
+                return match self.operation_sign()? {
+                    Sign::Plus => Ok(Self::pi_fraction(1, 2)),
+                    Sign::Minus => Ok(Self::pi_fraction(-1, 2)),
+                    Sign::NoSign => Ok(Self::zero()),
+                };
+            }
+            Sign::Plus => {}
+        }
+        crate::trace_dispatch!("real", "asin", "generic-deferred-computable");
+        Ok(self.make_computable(Computable::asin))
     }
 
     /// The inverse cosine of this Real, or [`Problem::NotANumber`] outside [-1, 1].
@@ -2632,6 +2694,27 @@ impl Real {
         if let Some(exact) = self.atan_exact() {
             crate::trace_dispatch!("real", "atan", "exact-special-form");
             return Ok(exact);
+        }
+        if let Sqrt(radicand) = &self.class
+            && self
+                .rational
+                .compare_magnitude_squared_times(radicand, &rationals::ONE)
+                == std::cmp::Ordering::Greater
+        {
+            // Give large quadratic surds one canonical inverse-tangent form.
+            // The reciprocal stays in the same exact quadratic field, and the
+            // reduced argument also matches the convergent kernel's preferred
+            // representation. This keeps independently constructed angles
+            // identical rather than asking predicates to rediscover
+            // atan(x) = sign(x)*pi/2 - atan(1/x).
+            let sign = self.rational.sign();
+            let reciprocal = (Self::one() / self)?.atan()?;
+            let half_pi = Self::pi_fraction(
+                if sign == Sign::Minus { -1 } else { 1 },
+                2,
+            );
+            crate::trace_dispatch!("real", "atan", "quadratic-surd-reciprocal-form");
+            return Ok(half_pi - reciprocal);
         }
 
         crate::trace_dispatch!("real", "atan", "generic-computable");

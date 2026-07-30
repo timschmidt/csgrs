@@ -94,6 +94,12 @@ impl Real {
         if let Some(rational) = computable.exact_rational() {
             return Self::new(rational);
         }
+        if let Some((scale, radicand)) = computable.exact_pure_quadratic_surd() {
+            let radical = Self::new(radicand)
+                .sqrt()
+                .expect("a retained quadratic-surd radicand is nonnegative");
+            return radical.scaled_by_rational(&scale);
+        }
 
         Self {
             rational: Rational::one(),

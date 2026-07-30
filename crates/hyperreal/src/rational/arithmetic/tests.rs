@@ -1947,6 +1947,15 @@ mod tests {
     }
 
     #[test]
+    fn square_reduction_rationalizes_the_residual_denominator() {
+        let half = Rational::fraction(1, 2).unwrap();
+        let (scale, radicand) = half.clone().extract_square_reduced();
+        assert_eq!(scale, Rational::fraction(1, 2).unwrap());
+        assert_eq!(radicand, Rational::new(2));
+        assert_eq!(&scale * &scale * radicand, half);
+    }
+
+    #[test]
     fn perfect_square_residue_filter_never_rejects_a_square() {
         assert_eq!(
             Rational::SMALL_SQUARE_FACTORS

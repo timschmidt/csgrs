@@ -225,9 +225,16 @@ impl Rational {
         let (sign, numerator, denominator) = self.into_parts();
         let (nroot, nrest) = Self::extract_square(numerator);
         let (droot, drest) = Self::extract_square(denominator);
+        // Rationalize the residual denominator so equivalent quadratic surds
+        // have one exact representation:
+        //
+        //   sqrt(nrest / drest) = sqrt(nrest * drest) / drest.
+        //
+        // Thus sqrt(1/2) becomes sqrt(2)/2 and can cancel structurally with
+        // independently authored sqrt(2) terms.
         (
-            Self::from_parts_raw(Plus, nroot, droot),
-            Self::from_parts_raw(sign, nrest, drest),
+            Self::from_parts_raw(Plus, nroot, &droot * &drest),
+            Self::from_parts_raw(sign, nrest * drest, BigUint::one()),
         )
     }
 
