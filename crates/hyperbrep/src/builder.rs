@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::fmt;
 
 use hypercurve::{
-    Aabb2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2, CurvePolicy,
-    LineSeg2, Point2 as CurvePoint2, Segment2,
+    Aabb2, BezierSubcurve2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2,
+    CurveGeometry2, CurvePath2, CurvePolicy, LineSeg2, Point2 as CurvePoint2, Segment2,
 };
 use hyperlattice::{Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
@@ -41,6 +41,8 @@ pub enum ConstructionError {
     DegenerateProfile,
     /// A radial/axial revolution profile reaches or crosses its axis.
     ProfileCrossesRevolutionAxis,
+    /// A curved revolution profile lacks a required exact topology or integral certificate.
+    UnsupportedRevolutionProfile,
     /// Loft construction requires at least two ordered sections.
     LoftNeedsAtLeastTwoSections,
     /// Loft sections do not have a certifiable positive correspondence.
@@ -138,6 +140,9 @@ impl fmt::Display for ConstructionError {
             Self::ProfileCrossesRevolutionAxis => {
                 formatter.write_str("revolution profile must stay strictly off the axis")
             }
+            Self::UnsupportedRevolutionProfile => formatter.write_str(
+                "curved revolution profile lacks a required exact topology or integral certificate",
+            ),
             Self::LoftNeedsAtLeastTwoSections => {
                 formatter.write_str("loft requires at least two sections")
             }
@@ -1989,6 +1994,52 @@ pub fn revolve_contour(profile: &Contour2) -> Result<(Model, SolidId), Construct
     Ok((builder.finish()?, solid))
 }
 
+/// Revolves one exact closed curved path around the z axis.
+///
+/// Profile `x` is radius and must remain strictly positive. Every authored
+/// line, circular arc, Bézier, polynomial B-spline, or finite NURBS carrier is
+/// retained as the meridian of four periodic revolution faces. The preflight
+/// requires a complete exact simple-loop and orientation certificate; it never
+/// flattens the path to manufacture one.
+pub fn revolve_path(profile: &CurvePath2) -> Result<(Model, SolidId), ConstructionError> {
+    let profile = normalize_revolution_path(profile)?;
+    let mut builder = ModelBuilder::new();
+    let shell = add_normalized_curve_path_revolution_shell(
+        &mut builder,
+        &profile,
+        ShellDirection::Outward,
+    )?;
+    let solid = builder.solid(shell, Vec::new())?;
+    Ok((builder.finish()?, solid))
+}
+
+/// Revolves one exact curved-path region with inward profile cavities.
+///
+/// Every loop uses the same exact simple-path and positive-radius preflight as
+/// [`revolve_path`]. Shell nesting is certified from the retained curved
+/// boundaries before the solid is published.
+pub fn revolve_path_region(
+    outer: &CurvePath2,
+    holes: &[CurvePath2],
+) -> Result<(Model, SolidId), ConstructionError> {
+    let outer = normalize_revolution_path(outer)?;
+    let holes = holes
+        .iter()
+        .map(normalize_revolution_path)
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut builder = ModelBuilder::new();
+    let outer_shell =
+        add_normalized_curve_path_revolution_shell(&mut builder, &outer, ShellDirection::Outward)?;
+    let voids = holes
+        .iter()
+        .map(|hole| {
+            add_normalized_curve_path_revolution_shell(&mut builder, hole, ShellDirection::Inward)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let solid = builder.solid(outer_shell, voids)?;
+    Ok((builder.finish()?, solid))
+}
+
 /// Revolves one exact line/arc region with inward profile cavities.
 pub fn revolve_contour_region(
     outer: &Contour2,
@@ -2724,6 +2775,215 @@ fn normalize_revolution_contour(contour: &Contour2) -> Result<Contour2, Construc
     }
 }
 
+fn curve2_from_bezier_subcurve(curve: &BezierSubcurve2) -> Curve2 {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => Curve2::from(curve.clone()),
+        BezierSubcurve2::Cubic(curve) => Curve2::from(curve.clone()),
+        BezierSubcurve2::RationalQuadratic(curve) => Curve2::from(curve.clone()),
+        BezierSubcurve2::Rational(curve) => Curve2::from(curve.clone()),
+    }
+}
+
+fn exact_parameter_is(parameter: Option<Real>, expected: &Real) -> Result<bool, ConstructionError> {
+    parameter
+        .map(|parameter| exact_real_equal(&parameter, expected))
+        .transpose()
+        .map(Option::unwrap_or_default)
+}
+
+fn validate_simple_revolution_path(profile: &CurvePath2) -> Result<(), ConstructionError> {
+    let policy = CurvePolicy::certified();
+    let fragments = profile
+        .native_bezier_fragments()
+        .map_err(GeometryError::from)?;
+    if fragments.len() < 2 {
+        return Err(ConstructionError::ProfileTooSmall);
+    }
+    for fragment in fragments {
+        if !fragment
+            .has_certified_injective_axis(&policy)
+            .map_err(GeometryError::from)?
+        {
+            return Err(ConstructionError::UnsupportedRevolutionProfile);
+        }
+    }
+    let curves = fragments
+        .iter()
+        .map(|fragment| curve2_from_bezier_subcurve(fragment.curve()))
+        .collect::<Vec<_>>();
+    for first_index in 0..curves.len() {
+        for second_index in first_index + 1..curves.len() {
+            let result = curves[first_index]
+                .intersect_curve(&curves[second_index], &policy)
+                .map_err(GeometryError::from)?;
+            if !result.blockers().is_empty() {
+                return Err(ConstructionError::UnsupportedRevolutionProfile);
+            }
+            if !result.overlaps().is_empty() {
+                return Err(ConstructionError::SelfIntersectingProfile);
+            }
+            for contact in result.contacts() {
+                let forward_seam = second_index == first_index + 1
+                    && exact_parameter_is(
+                        contact.first().exact_curve_parameter(),
+                        curves[first_index].parameter_domain().end(),
+                    )?
+                    && exact_parameter_is(
+                        contact.second().exact_curve_parameter(),
+                        curves[second_index].parameter_domain().start(),
+                    )?;
+                let closing_seam = first_index == 0
+                    && second_index + 1 == curves.len()
+                    && exact_parameter_is(
+                        contact.first().exact_curve_parameter(),
+                        curves[first_index].parameter_domain().start(),
+                    )?
+                    && exact_parameter_is(
+                        contact.second().exact_curve_parameter(),
+                        curves[second_index].parameter_domain().end(),
+                    )?;
+                if !forward_seam && !closing_seam {
+                    return Err(ConstructionError::SelfIntersectingProfile);
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn normalize_revolution_path(profile: &CurvePath2) -> Result<CurvePath2, ConstructionError> {
+    validate_simple_revolution_path(profile)?;
+    let bounds = profile.bounds().map_err(GeometryError::from)?;
+    match compare_reals(bounds.min_x(), &Real::zero()) {
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Greater,
+            ..
+        } => {}
+        PredicateOutcome::Decided { .. } => {
+            return Err(ConstructionError::ProfileCrossesRevolutionAxis);
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            return Err(
+                BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into(),
+            );
+        }
+    }
+    let signed_area = profile
+        .bezier_boundary_loop()
+        .map_err(GeometryError::from)?
+        .boundary_loop()
+        .signed_area()
+        .map_err(GeometryError::from)?
+        .ok_or(ConstructionError::UnsupportedRevolutionProfile)?;
+    match compare_reals(&signed_area, &Real::zero()) {
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Greater,
+            ..
+        } => Ok(profile.clone()),
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Less,
+            ..
+        } => profile
+            .reversed()
+            .map_err(GeometryError::from)
+            .map_err(Into::into),
+        PredicateOutcome::Decided { .. } => Err(ConstructionError::DegenerateProfile),
+        PredicateOutcome::Unknown { needed, stage } => {
+            Err(BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into())
+        }
+    }
+}
+
+fn positive_projective_weights(weights: &[Real]) -> Result<Vec<Real>, ConstructionError> {
+    let mut sign = None;
+    for weight in weights {
+        let this_sign = match compare_reals(weight, &Real::zero()) {
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Greater,
+                ..
+            } => 1_i8,
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Less,
+                ..
+            } => -1_i8,
+            PredicateOutcome::Decided { .. } => {
+                return Err(ConstructionError::UnsupportedRevolutionProfile);
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
+                    needed,
+                    stage,
+                })
+                .into());
+            }
+        };
+        if sign
+            .replace(this_sign)
+            .is_some_and(|sign| sign != this_sign)
+        {
+            return Err(ConstructionError::UnsupportedRevolutionProfile);
+        }
+    }
+    Ok(if sign == Some(-1) {
+        weights.iter().map(|weight| -weight.clone()).collect()
+    } else {
+        weights.to_vec()
+    })
+}
+
+fn spatial_revolution_curve(
+    curve: &Curve2,
+    angle: &Real,
+) -> Result<(Curve3, ParameterDomain), ConstructionError> {
+    if curve.is_periodic() {
+        return Err(ConstructionError::UnsupportedRevolutionProfile);
+    }
+    let radial = Vector3::from_xyz(angle.clone().cos(), angle.clone().sin(), Real::zero());
+    let lift = |point: &CurvePoint2| {
+        Point3::new(
+            point.x() * &radial.0[0],
+            point.x() * &radial.0[1],
+            point.y().clone(),
+        )
+    };
+    let spatial = match curve.geometry() {
+        CurveGeometry2::Line(line) => Curve3::line(lift(line.start()), lift(line.end()))?,
+        CurveGeometry2::CircularArc(arc) => {
+            return spatial_revolution_segment(&Segment2::Arc(arc.clone()), angle);
+        }
+        CurveGeometry2::QuadraticBezier(curve) => Curve3::rational_bezier(
+            curve.control_points().into_iter().map(lift).collect(),
+            vec![Real::one(); 3],
+        )?,
+        CurveGeometry2::CubicBezier(curve) => Curve3::rational_bezier(
+            curve.control_points().into_iter().map(lift).collect(),
+            vec![Real::one(); 4],
+        )?,
+        CurveGeometry2::RationalQuadraticBezier(curve) => Curve3::rational_bezier(
+            curve.control_points().into_iter().map(lift).collect(),
+            positive_projective_weights(&curve.weights().into_iter().cloned().collect::<Vec<_>>())?,
+        )?,
+        CurveGeometry2::RationalBezier(curve) => Curve3::rational_bezier(
+            curve.control_points().iter().map(lift).collect(),
+            positive_projective_weights(curve.weights())?,
+        )?,
+        CurveGeometry2::PolynomialBSpline(curve) => Curve3::nurbs(
+            curve.degree(),
+            curve.control_points().iter().map(lift).collect(),
+            vec![Real::one(); curve.control_points().len()],
+            curve.knots().to_vec(),
+        )?,
+        CurveGeometry2::Nurbs(curve) => Curve3::nurbs(
+            curve.degree(),
+            curve.control_points().iter().map(lift).collect(),
+            positive_projective_weights(curve.weights())?,
+            curve.knots().to_vec(),
+        )?,
+    };
+    let domain = spatial.domain().clone();
+    Ok((spatial, domain))
+}
+
 fn spatial_revolution_segment(
     segment: &Segment2,
     angle: &Real,
@@ -2794,6 +3054,158 @@ fn spatial_revolution_segment(
             ))
         }
     }
+}
+
+fn add_normalized_curve_path_revolution_shell(
+    builder: &mut ModelBuilder,
+    profile: &CurvePath2,
+    direction: ShellDirection,
+) -> Result<crate::ShellId, ConstructionError> {
+    let curves = profile.curves();
+    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let angles = (0..4)
+        .map(|index| &quarter * Real::from(index))
+        .collect::<Vec<_>>();
+    let mut points = Vec::with_capacity(curves.len() * 4);
+    for curve in curves {
+        for angle in &angles {
+            points.push(Point3::new(
+                curve.start().x() * angle.clone().cos(),
+                curve.start().x() * angle.clone().sin(),
+                curve.start().y().clone(),
+            ));
+        }
+    }
+    let vertices = points
+        .iter()
+        .cloned()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+    let vertex =
+        |profile_index: usize, angle_index: usize| vertices[profile_index * 4 + angle_index];
+
+    let mut circles = vec![Vec::with_capacity(4); curves.len()];
+    for (profile_index, curve) in curves.iter().enumerate() {
+        for angle_index in 0..4 {
+            let next_angle = (angle_index + 1) % 4;
+            let start = &quarter * Real::from(angle_index as i32);
+            let end = &quarter * Real::from(angle_index as i32 + 1);
+            let circle = builder.curve(Curve3::circle_arc(
+                Point3::new(Real::zero(), Real::zero(), curve.start().y().clone()),
+                Vector3::x(),
+                Vector3::y(),
+                curve.start().x().clone(),
+                start.clone(),
+                end.clone(),
+            )?)?;
+            circles[profile_index].push(builder.edge(
+                vertex(profile_index, angle_index),
+                vertex(profile_index, next_angle),
+                circle,
+                ParameterDomain::new(start, end)?,
+            )?);
+        }
+    }
+
+    let mut meridians = vec![Vec::with_capacity(4); curves.len()];
+    let mut profile_curves = Vec::with_capacity(curves.len());
+    let mut domains = Vec::with_capacity(curves.len());
+    for (profile_index, curve) in curves.iter().enumerate() {
+        let next_profile = (profile_index + 1) % curves.len();
+        let (profile_curve, domain) = spatial_revolution_curve(curve, &Real::zero())?;
+        profile_curves.push(profile_curve);
+        domains.push(domain);
+        for (angle_index, angle) in angles.iter().enumerate() {
+            let (meridian, curve_domain) = spatial_revolution_curve(curve, angle)?;
+            let meridian = builder.curve(meridian)?;
+            meridians[profile_index].push(builder.edge(
+                vertex(profile_index, angle_index),
+                vertex(next_profile, angle_index),
+                meridian,
+                curve_domain,
+            )?);
+        }
+    }
+
+    let mut faces = Vec::with_capacity(curves.len() * 4);
+    for profile_index in 0..curves.len() {
+        let next_profile = (profile_index + 1) % curves.len();
+        let surface = builder.surface(Surface::revolution(
+            profile_curves[profile_index].clone(),
+            Point3::origin(),
+            Vector3::z(),
+        )?)?;
+        let domain = &domains[profile_index];
+        let v_min = domain.start();
+        let v_max = domain.end();
+        for angle_index in 0..4 {
+            let next_angle = (angle_index + 1) % 4;
+            let u_min = &quarter * Real::from(angle_index as i32);
+            let u_max = &quarter * Real::from(angle_index as i32 + 1);
+            let mut specs = vec![
+                (
+                    circles[profile_index][angle_index],
+                    Direction::Forward,
+                    CurvePoint2::new(u_min.clone(), v_min.clone()),
+                    CurvePoint2::new(u_max.clone(), v_min.clone()),
+                    ParameterCorrespondence::affine(&u_max - &u_min, u_min.clone())?,
+                ),
+                (
+                    meridians[profile_index][next_angle],
+                    Direction::Forward,
+                    CurvePoint2::new(u_max.clone(), v_min.clone()),
+                    CurvePoint2::new(u_max.clone(), v_max.clone()),
+                    ParameterCorrespondence::affine(v_max - v_min, v_min.clone())?,
+                ),
+                (
+                    circles[next_profile][angle_index],
+                    Direction::Reversed,
+                    CurvePoint2::new(u_max.clone(), v_max.clone()),
+                    CurvePoint2::new(u_min.clone(), v_max.clone()),
+                    ParameterCorrespondence::affine(&u_min - &u_max, u_max.clone())?,
+                ),
+                (
+                    meridians[profile_index][angle_index],
+                    Direction::Reversed,
+                    CurvePoint2::new(u_min.clone(), v_max.clone()),
+                    CurvePoint2::new(u_min, v_min.clone()),
+                    ParameterCorrespondence::affine(v_min - v_max, v_max.clone())?,
+                ),
+            ];
+            if matches!(direction, ShellDirection::Inward) {
+                specs.reverse();
+                for (_, use_direction, start, end, correspondence) in &mut specs {
+                    *use_direction = use_direction.reversed();
+                    std::mem::swap(start, end);
+                    let ParameterCorrespondence::Affine { scale, offset } = correspondence else {
+                        unreachable!("revolution pcurves use affine correspondence");
+                    };
+                    *correspondence = ParameterCorrespondence::affine(
+                        -scale.clone(),
+                        scale.clone() + offset.clone(),
+                    )?;
+                }
+            }
+            let mut uses = Vec::with_capacity(4);
+            for (edge, use_direction, start, end, correspondence) in specs {
+                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+                )))?;
+                uses.push(builder.edge_use(edge, use_direction, pcurve, correspondence)?);
+            }
+            let wire = builder.wire(uses)?;
+            faces.push(builder.face(
+                surface,
+                match direction {
+                    ShellDirection::Outward => Orientation::Forward,
+                    ShellDirection::Inward => Orientation::Reversed,
+                },
+                wire,
+                Vec::new(),
+            )?);
+        }
+    }
+    Ok(builder.shell(faces)?)
 }
 
 fn add_normalized_contour_revolution_shell(
@@ -5287,6 +5699,208 @@ mod tests {
         assert_eq!(
             rebuilt.classify_point(solid, &p(-6, -1, 7)).unwrap(),
             SolidPointLocation::Inside
+        );
+    }
+
+    #[test]
+    fn revolution_path_retains_exact_nurbs_profile_and_polynomial_volume() {
+        let cp = |x, y| CurvePoint2::new(r(x), r(y));
+        let profile = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(cp(2, 0), cp(4, 0)).unwrap()),
+            Curve2::try_nurbs(
+                2,
+                vec![cp(4, 0), cp(5, 1), cp(4, 2)],
+                vec![Real::one(); 3],
+                vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+            )
+            .unwrap(),
+            Curve2::from(LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
+        ])
+        .unwrap();
+        let (model, solid) = revolve_path(&profile).unwrap();
+
+        assert_eq!(model.faces().count(), 16);
+        assert_eq!(
+            model
+                .faces()
+                .filter(|(face, _)| matches!(
+                    model.face_area(*face),
+                    Err(crate::QueryError::Geometry(
+                        GeometryError::UnsupportedMeasurement
+                    ))
+                ))
+                .count(),
+            4
+        );
+        assert_eq!(
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &((r(148) * Real::pi() / r(5)).unwrap()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert!(model.certified_revolution_profile(solid).is_none());
+        for (point, expected) in [
+            (p(3, 0, 1), SolidPointLocation::Inside),
+            (p(5, 0, 1), SolidPointLocation::Outside),
+            (
+                Point3::new((r(9) / r(2)).unwrap(), Real::zero(), r(1)),
+                SolidPointLocation::Boundary,
+            ),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+
+        let json = model.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &((r(148) * Real::pi() / r(5)).unwrap()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn revolution_path_region_retains_exact_curved_profile_cavity() {
+        let cp = |x, y| CurvePoint2::new(r(x), r(y));
+        let outer = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(cp(2, 0), cp(4, 0)).unwrap()),
+            Curve2::try_nurbs(
+                2,
+                vec![cp(4, 0), cp(5, 1), cp(4, 2)],
+                vec![Real::one(); 3],
+                vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+            )
+            .unwrap(),
+            Curve2::from(LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
+        ])
+        .unwrap();
+        let half = (Real::one() / r(2)).unwrap();
+        let three_halves = (r(3) / r(2)).unwrap();
+        let hole_point = |x: i32, y: &Real| CurvePoint2::new(r(x), y.clone());
+        let hole = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(hole_point(3, &half), hole_point(4, &half)).unwrap()),
+            Curve2::from(
+                LineSeg2::try_new(hole_point(4, &half), hole_point(4, &three_halves)).unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(hole_point(4, &three_halves), hole_point(3, &three_halves))
+                    .unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(hole_point(3, &three_halves), hole_point(3, &half)).unwrap(),
+            ),
+        ])
+        .unwrap();
+
+        let (model, solid) = revolve_path_region(&outer, &[hole]).unwrap();
+        assert_eq!(
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &((r(113) * Real::pi() / r(5)).unwrap()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(2, 0, 1)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        assert_eq!(
+            model
+                .classify_point(solid, &Point3::new(half + r(2), Real::zero(), r(1)))
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            model
+                .classify_point(
+                    solid,
+                    &Point3::new((r(7) / r(2)).unwrap(), Real::zero(), r(1)),
+                )
+                .unwrap(),
+            SolidPointLocation::Outside
+        );
+        let json = model.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
+    fn revolution_path_retains_genuinely_rational_profile_without_fake_measurement() {
+        let cp = |x, y| CurvePoint2::new(r(x), r(y));
+        let rational = hypercurve::RationalQuadraticBezier2::try_new(
+            cp(4, 0),
+            cp(5, 1),
+            cp(4, 2),
+            Real::one(),
+            (Real::one() / r(2)).unwrap(),
+            Real::one(),
+        )
+        .unwrap();
+        let profile = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(cp(2, 0), cp(4, 0)).unwrap()),
+            Curve2::from(rational),
+            Curve2::from(LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
+        ])
+        .unwrap();
+        let (model, solid) = revolve_path(&profile).unwrap();
+
+        assert_eq!(
+            model.solid_volume(solid).unwrap_err(),
+            crate::QueryError::Geometry(GeometryError::UnsupportedMeasurement)
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(3, 0, 1)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(5, 0, 1)).unwrap(),
+            SolidPointLocation::Outside
+        );
+        let json = model.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            rebuilt.solid_volume(solid).unwrap_err(),
+            crate::QueryError::Geometry(GeometryError::UnsupportedMeasurement)
+        );
+    }
+
+    #[test]
+    fn revolution_path_rejects_exact_self_crossings_before_topology_build() {
+        let cp = |x, y| CurvePoint2::new(r(x), r(y));
+        let profile = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(cp(2, 0), cp(4, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(cp(2, 2), cp(4, 0)).unwrap()),
+            Curve2::from(LineSeg2::try_new(cp(4, 0), cp(2, 0)).unwrap()),
+        ])
+        .unwrap();
+        assert_eq!(
+            revolve_path(&profile).unwrap_err(),
+            ConstructionError::SelfIntersectingProfile
         );
     }
 

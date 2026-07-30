@@ -2932,6 +2932,11 @@ impl Surface {
         {
             return intersect_rational_bezier_plane(curve, bezier, plane);
         }
+        if let (SurfaceGeometry::Plane(plane), CurveGeometry3::Nurbs(nurbs)) =
+            (&self.data.geometry, &curve.data.geometry)
+        {
+            return intersect_nurbs_plane(nurbs, plane);
+        }
         if let (SurfaceGeometry::Sphere(sphere), CurveGeometry3::CircleArc(arc)) =
             (&self.data.geometry, &curve.data.geometry)
         {
@@ -5351,6 +5356,65 @@ fn intersect_rational_bezier_plane(
         QuadraticRoots::None => Ok(CurveSurfaceIntersection::None),
         QuadraticRoots::All => Ok(CurveSurfaceIntersection::Contained),
         QuadraticRoots::Isolated(roots) => isolated_line_parameters(curve, roots),
+    }
+}
+
+fn intersect_nurbs_plane(
+    nurbs: &NurbsCurve3,
+    plane: &PlaneSurface,
+) -> GeometryResult<CurveSurfaceIntersection> {
+    let segments = decompose_nurbs_into_bezier_segments(nurbs)?;
+    let segment_count = segments.len();
+    let mut points: Vec<CurveSurfacePoint> = Vec::new();
+    let mut contained_count = 0_usize;
+    for (segment, domain) in segments {
+        let CurveGeometry3::RationalBezier(bezier) = &segment.data.geometry else {
+            unreachable!("NURBS decomposition produces rational Bézier segments");
+        };
+        match intersect_rational_bezier_plane(&segment, bezier, plane)? {
+            CurveSurfaceIntersection::None => {}
+            CurveSurfaceIntersection::Points(local_points) => {
+                let span = domain.end() - domain.start();
+                for local in local_points {
+                    let parameter = domain.start() + &span * &local.parameter;
+                    let mut duplicate = None;
+                    for (index, existing) in points.iter().enumerate() {
+                        if decided_order(compare_reals(&existing.parameter, &parameter))?
+                            == Ordering::Equal
+                        {
+                            duplicate = Some(index);
+                            break;
+                        }
+                    }
+                    if let Some(index) = duplicate {
+                        if local.multiplicity == IntersectionMultiplicity::Tangent {
+                            points[index].multiplicity = IntersectionMultiplicity::Tangent;
+                        }
+                    } else {
+                        points.push(CurveSurfacePoint {
+                            parameter,
+                            point: local.point,
+                            multiplicity: local.multiplicity,
+                        });
+                    }
+                }
+            }
+            CurveSurfaceIntersection::Contained => contained_count += 1,
+            CurveSurfaceIntersection::Overlap(_) => {
+                unreachable!("rational Bézier/plane dispatch returns contained spans")
+            }
+        }
+    }
+    if contained_count == segment_count {
+        return Ok(CurveSurfaceIntersection::Contained);
+    }
+    if contained_count != 0 {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    if points.is_empty() {
+        Ok(CurveSurfaceIntersection::None)
+    } else {
+        Ok(CurveSurfaceIntersection::Points(points))
     }
 }
 

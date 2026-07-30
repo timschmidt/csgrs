@@ -103,9 +103,10 @@ curve/pcurve/surface tuple has a complete-interval structural proof:
 - generators and constant-height circles on cones;
 - both circle directions on ring tori;
 - line and circular profile images on extrusion surfaces.
-- exact restricted meridians and constant-profile latitude circles on
-  revolution surfaces, including affine remapping between normalized edge
-  domains and the authoritative profile parameter.
+- exact restricted line, circle, rational Bézier, and NURBS meridians plus
+  constant-profile latitude circles on revolution surfaces, including affine
+  remapping between normalized edge domains and the authoritative profile
+  parameter.
 - rational Bézier and NURBS control-net rows/columns on tensor surfaces,
   including exact edge subintervals, interior iso-curves, and projectively
   equivalent weights.
@@ -143,6 +144,10 @@ families is recertified:
 - native line/arc profile revolutions, including exact inward profile
   cavities, exact profile-parameter subdivision grids, identity-shared
   periodic latitude/meridian edges, and axis-normal planar annular caps;
+- exact closed `CurvePath2` profile revolutions with retained Bézier,
+  polynomial B-spline, and finite NURBS meridians, injective native-span and
+  pairwise simple-loop proofs, curved inward cavities, and topology-rebuilt
+  boundary certificates;
 - multi-section polygon lofts whose spans independently carry either a
   positive homothetic certificate or an exact convex-correspondence
   certificate and native bilinear tensor sides;
@@ -192,6 +197,18 @@ the contour’s exact Green-theorem x-first-moment
 subtracts cavity moments, and reuses the retained contour for radial point
 classification. Circular-profile face area integrates radius times native arc
 length analytically.
+
+Spline-profile revolution certificates instead reconstruct the represented
+meridian carriers as one exact `CurvePath2`; unit-weight NURBS spans remain
+polynomial B-splines and rational Bézier controls and weights are retained
+without flattening. Hypercurve classifies the radial/axial boundary directly
+and supplies exact Green-theorem area moments for polynomial and
+polynomial-equivalent Bézier fragments. HyperBREP applies the same exact
+Pappus factor and cavity subtraction. Genuinely rational first moments and the
+general radius-times-spline-speed face integral are explicit unsupported
+measurements until symbolic integrators exist. Native-only contours remain the
+sole input to the optimized coaxial-profile Boolean path; curved profiles use
+the retained face graph instead of claiming compatibility geometry.
 
 Subdivision does not change that certificate. Revolution descendants must tile
 four exact quarter-angle columns and every represented profile-parameter cell

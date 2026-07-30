@@ -49,8 +49,9 @@ The clean-break implementation currently provides:
 - certified line/plane, circular-arc/plane, axial-line/cylinder,
   circular-edge/cylinder, generator-or-circle/cone, circular-edge/torus, and
   line-or-circle/extrusion image agreement over complete parameter intervals;
-  exact line-meridian and latitude-circle agreement on revolution surfaces;
-  plus rational Bézier/NURBS iso-boundary agreement on tensor surfaces;
+  exact line/circle/rational-Bézier/NURBS meridian and latitude-circle
+  agreement on revolution surfaces; plus rational Bézier/NURBS iso-boundary
+  agreement on tensor surfaces;
 - certified planar loop winding, inner-wire nesting, and exact positive shell
   volume;
 - connected closed wires, connected shells, closed-manifold solid checks, and
@@ -64,6 +65,12 @@ The clean-break implementation currently provides:
   off-axis line/arc profiles and cavities; circular profile meridians remain
   native, exact contour first moments drive Pappus volume, and curved face
   area is integrated analytically;
+- native `builder::{revolve_path, revolve_path_region}` for exact closed
+  `CurvePath2` profiles and cavities; authored Bézier, polynomial B-spline,
+  and finite NURBS meridians remain native, exact span injectivity and
+  pairwise intersections certify simplicity, polynomial-equivalent boundary
+  moments drive exact volume, and genuinely rational unimplemented moments
+  remain explicit unsupported measurements;
 - exact `builder::revolve_region` cavities as inward periodic shells with
   first-moment subtraction and radial/profile material classification;
 - exact `builder::sphere_with_voids` construction with inward complete-sphere

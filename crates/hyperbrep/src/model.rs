@@ -5,9 +5,10 @@ use std::fmt;
 use std::sync::{Arc, OnceLock};
 
 use hypercurve::{
-    BooleanOp, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2, CurveFamily2,
-    CurveGeometry2, CurvePath2, CurvePolicy, FillRule, LineArcRegion2, LineLineIntersection,
-    LineSeg2, Point2 as CurvePoint2, RationalBezier2, RegionPointLocation, Segment2,
+    BooleanOp, CircularArc2, Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
+    CurveFamily2, CurveGeometry2, CurvePath2, CurvePolicy, FillRule, LineArcRegion2,
+    LineLineIntersection, LineSeg2, Point2 as CurvePoint2, QuadraticBezier2, RationalBezier2,
+    RationalQuadraticBezier2, RegionPointLocation, Segment2,
 };
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector3};
 use hyperlimit::{PredicateOutcome, compare_point3_lexicographic, compare_reals, point3_equal};
@@ -1319,8 +1320,88 @@ enum CertifiedTorusRegion {
 struct CertifiedRevolutionShell {
     axis_origin: Point3,
     axis: Vector3,
-    profile: Contour2,
-    voids: Vec<Contour2>,
+    profile: CertifiedRevolutionBoundary,
+    voids: Vec<CertifiedRevolutionBoundary>,
+}
+
+#[derive(Clone, Debug)]
+enum CertifiedRevolutionBoundary {
+    Native(Contour2),
+    Curved(CurvePath2),
+}
+
+impl CertifiedRevolutionBoundary {
+    fn signed_x_first_moment(&self) -> Result<Option<Real>, GeometryError> {
+        match self {
+            Self::Native(contour) => contour.signed_x_first_moment().map_err(GeometryError::from),
+            Self::Curved(path) => path
+                .bezier_boundary_loop()
+                .map_err(GeometryError::from)?
+                .boundary_loop()
+                .area_moments()
+                .map(|moments| moments.map(|moments| moments.x_moment().clone()))
+                .map_err(GeometryError::from),
+        }
+    }
+
+    fn classify_point(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurvePolicy,
+    ) -> Result<Classification<ContourPointLocation>, GeometryError> {
+        match self {
+            Self::Native(contour) => Ok(contour.classify_point(point, policy)),
+            Self::Curved(path) => path
+                .classify_point(point, policy)
+                .map_err(GeometryError::from),
+        }
+    }
+
+    fn start(&self) -> &CurvePoint2 {
+        match self {
+            Self::Native(contour) => contour.segments()[0].start(),
+            Self::Curved(path) => path.start(),
+        }
+    }
+
+    fn as_curve_path(&self) -> Result<CurvePath2, GeometryError> {
+        match self {
+            Self::Native(contour) => CurvePath2::try_new(
+                contour
+                    .segments()
+                    .iter()
+                    .cloned()
+                    .map(curve2_from_segment)
+                    .collect(),
+            )
+            .map_err(GeometryError::from),
+            Self::Curved(path) => Ok(path.clone()),
+        }
+    }
+
+    fn intersects(&self, other: &Self, policy: &CurvePolicy) -> Result<bool, GeometryError> {
+        if let (Self::Native(first), Self::Native(second)) = (self, other) {
+            return first
+                .intersect_contour(second, policy)
+                .map(|intersections| !intersections.is_empty())
+                .map_err(GeometryError::from);
+        }
+        let result = self
+            .as_curve_path()?
+            .intersect_path(&other.as_curve_path()?, policy)
+            .map_err(GeometryError::from)?;
+        if !result.blockers().is_empty() {
+            return Err(GeometryError::UnsupportedIntersection);
+        }
+        Ok(!result.contacts().is_empty() || !result.overlaps().is_empty())
+    }
+
+    const fn native_contour(&self) -> Option<&Contour2> {
+        match self {
+            Self::Native(contour) => Some(contour),
+            Self::Curved(_) => None,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -4489,13 +4570,11 @@ impl Model {
         if let Some(revolution) = &self.data.certified_revolutions[id.index()] {
             let mut first_moment = revolution
                 .profile
-                .signed_x_first_moment()
-                .map_err(GeometryError::from)?
+                .signed_x_first_moment()?
                 .ok_or(GeometryError::UnsupportedMeasurement)?;
             for void in &revolution.voids {
                 first_moment -= void
-                    .signed_x_first_moment()
-                    .map_err(GeometryError::from)?
+                    .signed_x_first_moment()?
                     .ok_or(GeometryError::UnsupportedMeasurement)?;
             }
             return Ok(Real::from(2) * Real::pi() * first_moment);
@@ -4682,7 +4761,7 @@ impl Model {
         let profile_point = CurvePoint2::new(radius, axial);
         let location = match revolution
             .profile
-            .classify_point(&profile_point, &CurvePolicy::certified())
+            .classify_point(&profile_point, &CurvePolicy::certified())?
         {
             Classification::Decided(location) => location,
             Classification::Uncertain(reason) => {
@@ -4695,7 +4774,7 @@ impl Model {
             ContourPointLocation::Inside => {}
         }
         for void in &revolution.voids {
-            match void.classify_point(&profile_point, &CurvePolicy::certified()) {
+            match void.classify_point(&profile_point, &CurvePolicy::certified())? {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(SolidPointLocation::Outside);
                 }
@@ -5868,16 +5947,23 @@ impl Model {
         &self,
         solid: SolidId,
     ) -> Option<CertifiedRevolutionProfile> {
-        self.data
+        let revolution = self
+            .data
             .certified_revolutions
             .get(solid.index())
-            .and_then(Option::as_ref)
-            .map(|revolution| CertifiedRevolutionProfile {
-                axis_origin: revolution.axis_origin.clone(),
-                axis: revolution.axis.clone(),
-                profile: revolution.profile.clone(),
-                holes: revolution.voids.clone(),
-            })
+            .and_then(Option::as_ref)?;
+        let profile = revolution.profile.native_contour()?.clone();
+        let holes = revolution
+            .voids
+            .iter()
+            .map(|void| void.native_contour().cloned())
+            .collect::<Option<Vec<_>>>()?;
+        Some(CertifiedRevolutionProfile {
+            axis_origin: revolution.axis_origin.clone(),
+            axis: revolution.axis.clone(),
+            profile,
+            holes,
+        })
     }
 
     fn projected_model_cap_segment(
@@ -7006,6 +7092,18 @@ impl ModelBuilder {
                 }
                 (
                     Curve3Kind::Line,
+                    CurveFamily2::Line,
+                    SurfaceKind::Revolution,
+                    ParameterCorrespondence::Affine { .. },
+                )
+                | (
+                    Curve3Kind::RationalBezier,
+                    CurveFamily2::Line,
+                    SurfaceKind::Revolution,
+                    ParameterCorrespondence::Affine { .. },
+                )
+                | (
+                    Curve3Kind::Nurbs,
                     CurveFamily2::Line,
                     SurfaceKind::Revolution,
                     ParameterCorrespondence::Affine { .. },
@@ -8919,15 +9017,13 @@ impl ModelBuilder {
                 };
                 if !points_equal(&outer_revolution.axis_origin, &void.axis_origin)?
                     || !vectors_equal(&outer_revolution.axis, &void.axis)?
-                    || !outer_revolution
+                    || outer_revolution
                         .profile
-                        .intersect_contour(&void.profile, &policy)
-                        .map_err(GeometryError::from)?
-                        .is_empty()
+                        .intersects(&void.profile, &policy)?
                     || !classification_is_inside(
                         outer_revolution
                             .profile
-                            .classify_point(void.profile.segments()[0].start(), &policy),
+                            .classify_point(void.profile.start(), &policy)?,
                     )?
                 {
                     return Err(BuildError::VoidShellOutside(*void_shell));
@@ -8938,15 +9034,12 @@ impl ModelBuilder {
                 for second_index in (first_index + 1)..revolution_voids.len() {
                     let (first_shell, first) = &revolution_voids[first_index];
                     let (second_shell, second) = &revolution_voids[second_index];
-                    let boundaries_intersect = !first
-                        .intersect_contour(second, &policy)
-                        .map_err(GeometryError::from)?
-                        .is_empty();
-                    let nested = classification_is_inside(
-                        first.classify_point(second.segments()[0].start(), &policy),
-                    )? || classification_is_inside(
-                        second.classify_point(first.segments()[0].start(), &policy),
-                    )?;
+                    let boundaries_intersect = first.intersects(second, &policy)?;
+                    let nested =
+                        classification_is_inside(first.classify_point(second.start(), &policy)?)?
+                            || classification_is_inside(
+                                second.classify_point(first.start(), &policy)?,
+                            )?;
                     if boundaries_intersect || nested {
                         return Err(BuildError::IntersectingVoidShells {
                             first: *first_shell,
@@ -13528,7 +13621,7 @@ impl ModelBuilder {
         let mut axis = None;
         let mut meridian_ray: Option<Vector3> = None;
         let mut angular_origin: Option<Real> = None;
-        let mut profile_segments = Vec::with_capacity(groups.len() + planar_faces);
+        let mut profile_curves = Vec::with_capacity(groups.len() + planar_faces);
         for (surface_id, group) in groups {
             let SurfaceExactData::Revolution {
                 profile,
@@ -13694,9 +13787,43 @@ impl ModelBuilder {
             let Some(end) = to_profile_point(&end_point, true)? else {
                 return Ok(None);
             };
-            let profile_segment = match represented_profile.exact_data() {
+            let profile_curve = match represented_profile.exact_data() {
                 Curve3ExactData::Line(_) => {
-                    Segment2::Line(LineSeg2::try_new(start, end).map_err(GeometryError::from)?)
+                    Curve2::from(LineSeg2::try_new(start, end).map_err(GeometryError::from)?)
+                }
+                Curve3ExactData::RationalBezier {
+                    control_points,
+                    weights,
+                } => {
+                    let controls = control_points
+                        .iter()
+                        .map(|point| to_profile_point(point, false))
+                        .collect::<Result<Option<Vec<_>>, _>>()?;
+                    let Some(controls) = controls else {
+                        return Ok(None);
+                    };
+                    planar_rational_bezier_curve(controls, weights.clone())?
+                }
+                Curve3ExactData::Nurbs {
+                    degree,
+                    control_points,
+                    weights,
+                    knots,
+                } => {
+                    let controls = control_points
+                        .iter()
+                        .map(|point| to_profile_point(point, false))
+                        .collect::<Result<Option<Vec<_>>, _>>()?;
+                    let Some(controls) = controls else {
+                        return Ok(None);
+                    };
+                    if weights.iter().all(|weight| weight == &weights[0]) {
+                        Curve2::try_polynomial_bspline(degree, controls, knots.clone())
+                            .map_err(GeometryError::from)?
+                    } else {
+                        Curve2::try_nurbs(degree, controls, weights.clone(), knots.clone())
+                            .map_err(GeometryError::from)?
+                    }
                 }
                 Curve3ExactData::EllipseArc(data) if data.circle => {
                     let Some(center) = to_profile_point(&data.center, false)? else {
@@ -13748,11 +13875,11 @@ impl ModelBuilder {
                     )? {
                         return Ok(None);
                     }
-                    Segment2::Arc(arc)
+                    Curve2::from(arc)
                 }
                 _ => return Ok(None),
             };
-            profile_segments.push(profile_segment);
+            profile_curves.push(profile_curve);
         }
         if planar_faces > 0 {
             if orientation != Orientation::Forward {
@@ -13769,23 +13896,23 @@ impl ModelBuilder {
             else {
                 return Ok(None);
             };
-            profile_segments.extend(planar_segments);
+            profile_curves.extend(planar_segments.into_iter().map(curve2_from_segment));
         }
 
-        let mut ordered = Vec::with_capacity(profile_segments.len());
-        ordered.push(profile_segments.remove(0));
-        while !profile_segments.is_empty() {
+        let mut ordered = Vec::with_capacity(profile_curves.len());
+        ordered.push(profile_curves.remove(0));
+        while !profile_curves.is_empty() {
             let end = ordered.last().expect("seeded profile").end();
             let mut matching = None;
-            for (index, segment) in profile_segments.iter().enumerate() {
-                if curve_points_equal(segment.start(), end)? && matching.replace(index).is_some() {
+            for (index, curve) in profile_curves.iter().enumerate() {
+                if curve_points_equal(curve.start(), end)? && matching.replace(index).is_some() {
                     return Ok(None);
                 }
             }
             let Some(index) = matching else {
                 return Ok(None);
             };
-            ordered.push(profile_segments.remove(index));
+            ordered.push(profile_curves.remove(index));
         }
         if !curve_points_equal(
             ordered.last().expect("nonempty profile").end(),
@@ -13793,23 +13920,54 @@ impl ModelBuilder {
         )? {
             return Ok(None);
         }
-        let contour = Contour2::try_new(ordered).map_err(GeometryError::from)?;
-        let revolution_profile_area = contour.signed_area().map_err(GeometryError::from)?;
-        if !contour
-            .intersect_self(&CurvePolicy::certified())
-            .map_err(GeometryError::from)?
-            .is_empty()
-            || decided_model_order(compare_reals(
-                &revolution_profile_area.ok_or(BuildError::DegenerateShellVolume(shell))?,
-                &Real::zero(),
-            ))? != std::cmp::Ordering::Greater
-        {
-            return Ok(None);
-        }
+        let profile = if ordered.iter().all(|curve| {
+            matches!(
+                curve.geometry(),
+                CurveGeometry2::Line(_) | CurveGeometry2::CircularArc(_)
+            )
+        }) {
+            let segments = ordered
+                .into_iter()
+                .map(|curve| match curve.geometry() {
+                    CurveGeometry2::Line(line) => Segment2::Line(line.clone()),
+                    CurveGeometry2::CircularArc(arc) => Segment2::Arc(arc.clone()),
+                    _ => unreachable!("native revolution profile was prefiltered"),
+                })
+                .collect();
+            let contour = Contour2::try_new(segments).map_err(GeometryError::from)?;
+            let revolution_profile_area = contour.signed_area().map_err(GeometryError::from)?;
+            if !contour
+                .intersect_self(&CurvePolicy::certified())
+                .map_err(GeometryError::from)?
+                .is_empty()
+                || decided_model_order(compare_reals(
+                    &revolution_profile_area.ok_or(BuildError::DegenerateShellVolume(shell))?,
+                    &Real::zero(),
+                ))? != std::cmp::Ordering::Greater
+            {
+                return Ok(None);
+            }
+            CertifiedRevolutionBoundary::Native(contour)
+        } else {
+            let path = CurvePath2::try_new(ordered).map_err(GeometryError::from)?;
+            let area = path
+                .bezier_boundary_loop()
+                .map_err(GeometryError::from)?
+                .boundary_loop()
+                .signed_area()
+                .map_err(GeometryError::from)?
+                .ok_or(BuildError::DegenerateShellVolume(shell))?;
+            if decided_model_order(compare_reals(&area, &Real::zero()))?
+                != std::cmp::Ordering::Greater
+            {
+                return Ok(None);
+            }
+            CertifiedRevolutionBoundary::Curved(path)
+        };
         Ok(Some(CertifiedRevolutionShell {
             axis_origin: axis_origin.expect("revolution has faces"),
             axis: axis.expect("revolution has faces"),
-            profile: contour,
+            profile,
             voids: Vec::new(),
         }))
     }
@@ -15401,6 +15559,55 @@ fn validate_weighted_pcurve_controls(
         }
     }
     Ok(())
+}
+
+fn curve2_from_segment(segment: Segment2) -> Curve2 {
+    match segment {
+        Segment2::Line(line) => Curve2::from(line),
+        Segment2::Arc(arc) => Curve2::from(arc),
+    }
+}
+
+fn planar_rational_bezier_curve(
+    control_points: Vec<CurvePoint2>,
+    weights: Vec<Real>,
+) -> Result<Curve2, BuildError> {
+    if control_points.len() != weights.len() || control_points.len() < 2 {
+        return Err(GeometryError::PlanarCurveConstruction(
+            hypercurve::CurveError::InvalidRationalBezier,
+        )
+        .into());
+    }
+    let uniform = weights.iter().all(|weight| weight == &weights[0]);
+    match (uniform, control_points.as_slice(), weights.as_slice()) {
+        (true, [start, control, end], _) => Ok(Curve2::from(QuadraticBezier2::new(
+            start.clone(),
+            control.clone(),
+            end.clone(),
+        ))),
+        (true, [start, first, second, end], _) => Ok(Curve2::from(CubicBezier2::new(
+            start.clone(),
+            first.clone(),
+            second.clone(),
+            end.clone(),
+        ))),
+        (false, [start, control, end], [start_weight, control_weight, end_weight]) => {
+            Ok(Curve2::from(
+                RationalQuadraticBezier2::try_new(
+                    start.clone(),
+                    control.clone(),
+                    end.clone(),
+                    start_weight.clone(),
+                    control_weight.clone(),
+                    end_weight.clone(),
+                )
+                .map_err(GeometryError::from)?,
+            ))
+        }
+        _ => Ok(Curve2::from(
+            RationalBezier2::try_new(control_points, weights).map_err(GeometryError::from)?,
+        )),
+    }
 }
 
 fn validate_projective_pcurve_equal(actual: &Curve2, expected: &Curve2) -> Result<(), BuildError> {
