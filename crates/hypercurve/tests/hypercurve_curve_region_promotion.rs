@@ -203,8 +203,9 @@ fn unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics(
     let policy = CurveContext::STRICT;
     let contour = bow_tie_contour(FillRule::EvenOdd);
 
-    let region =
-        CurveRegion2::try_from_native_material_contours(vec![contour.clone()], &policy).unwrap();
+    let region = CurveRegion2::try_from_native_material_contours(vec![contour.clone()], &policy)
+        .unwrap()
+        .into_value();
     let native = decided(region.native_contours_fast_path(&policy).unwrap());
 
     assert_eq!(native.material_contours(), std::slice::from_ref(&contour));
@@ -227,7 +228,8 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
         &[FillRule::NonZero],
         &policy,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     assert!(matches!(
         source.offset(Real::one(), &policy),
         Err(hypercurve::ExactCurveError::Blocked(blocker))
@@ -281,7 +283,8 @@ fn unified_region_bounds_cover_native_and_higher_order_carriers_exactly() {
         &LineArcRegion2::from_material_contours(vec![square(-3, -2, 7, 5)]),
         &policy,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let native_bounds = decided(native.bounds(&policy).unwrap());
     assert_eq!(native_bounds.min_x(), &Real::from(-3));
     assert_eq!(native_bounds.min_y(), &Real::from(-2));
@@ -294,7 +297,8 @@ fn unified_region_bounds_cover_native_and_higher_order_carriers_exactly() {
         &[FillRule::NonZero],
         &policy,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let curved_bounds = decided(curved.bounds(&policy).unwrap());
     assert_eq!(curved_bounds.min_x(), &Real::from(-2));
     assert_eq!(curved_bounds.min_y(), &Real::zero());
@@ -314,7 +318,9 @@ fn unified_region_offset_regularizes_overlapping_expanded_components() {
     let policy = CurveContext::STRICT;
     let source =
         LineArcRegion2::from_material_contours(vec![square(0, 0, 2, 2), square(4, 0, 6, 2)]);
-    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
+    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy)
+        .unwrap()
+        .into_value();
 
     let offset = promoted
         .offset(Real::from(2), &policy)
@@ -337,7 +343,9 @@ fn unified_region_offset_regularizes_overlapping_expanded_voids() {
         vec![square(0, 0, 20, 16)],
         vec![square(5, 5, 7, 7), square(9, 5, 11, 7)],
     );
-    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
+    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy)
+        .unwrap()
+        .into_value();
 
     let offset = promoted
         .offset(Real::from(-2), &policy)
@@ -357,7 +365,9 @@ fn unified_region_offset_regularizes_overlapping_expanded_voids() {
 fn unified_region_expansion_regularizes_a_closed_concavity() {
     let policy = CurveContext::STRICT;
     let source = LineArcRegion2::from_material_contours(vec![u_shape()]);
-    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
+    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy)
+        .unwrap()
+        .into_value();
 
     let offset = promoted
         .offset(Real::from(3), &policy)
@@ -384,7 +394,9 @@ fn unified_region_expansion_regularizes_a_closed_concavity() {
 #[test]
 fn unified_region_contracts_nonconvex_material_before_its_medial_collapse() {
     let policy = CurveContext::STRICT;
-    let source = CurveRegion2::try_from_native_material_contours(vec![u_shape()], &policy).unwrap();
+    let source = CurveRegion2::try_from_native_material_contours(vec![u_shape()], &policy)
+        .unwrap()
+        .into_value();
 
     let eroded = source.offset(-Real::one(), &policy).unwrap().into_value();
 
@@ -401,7 +413,9 @@ fn unified_region_contracts_nonconvex_material_before_its_medial_collapse() {
 #[test]
 fn unified_region_discards_nonconvex_material_after_wavefront_collapse() {
     let policy = CurveContext::STRICT;
-    let source = CurveRegion2::try_from_native_material_contours(vec![u_shape()], &policy).unwrap();
+    let source = CurveRegion2::try_from_native_material_contours(vec![u_shape()], &policy)
+        .unwrap()
+        .into_value();
 
     let eroded = source.offset(Real::from(-2), &policy).unwrap().into_value();
 
@@ -415,8 +429,9 @@ fn unified_region_discards_nonconvex_material_after_wavefront_collapse() {
 #[test]
 fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
     let policy = CurveContext::STRICT;
-    let source =
-        CurveRegion2::try_from_native_material_contours(vec![dumbbell_shape()], &policy).unwrap();
+    let source = CurveRegion2::try_from_native_material_contours(vec![dumbbell_shape()], &policy)
+        .unwrap()
+        .into_value();
 
     let eroded = source.offset(-q(3, 2), &policy).unwrap().into_value();
     let native = decided(eroded.native_contours_fast_path(&policy).unwrap());
@@ -438,8 +453,9 @@ fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
 #[test]
 fn unified_region_convex_contraction_decides_collapse_and_over_contraction() {
     let policy = CurveContext::STRICT;
-    let source =
-        CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)], &policy).unwrap();
+    let source = CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)], &policy)
+        .unwrap()
+        .into_value();
 
     let near = source.offset(-q(3, 2), &policy).unwrap().into_value();
     let near_bounds = decided(near.bounds(&policy).unwrap());
@@ -467,8 +483,9 @@ fn unified_region_convex_contraction_decides_collapse_and_over_contraction() {
 fn unified_region_convex_erosion_handles_orientation_and_redundant_edges() {
     let policy = CurveContext::STRICT;
     for contour in [reversed(&square(0, 0, 4, 4)), square_with_redundant_edge()] {
-        let source =
-            CurveRegion2::try_from_native_material_contours(vec![contour], &policy).unwrap();
+        let source = CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
+            .unwrap()
+            .into_value();
         let eroded = source.offset(Real::from(-1), &policy).unwrap().into_value();
         let bounds = decided(eroded.bounds(&policy).unwrap());
         assert_eq!(bounds.min_x(), &Real::one());
@@ -487,7 +504,8 @@ fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_ex
     let policy = CurveContext::STRICT;
     let source =
         CurveRegion2::try_from_native_material_contours(vec![right_isosceles_triangle()], &policy)
-            .unwrap();
+            .unwrap()
+            .into_value();
     let root_two = Real::from(2).sqrt().unwrap();
 
     let eroded = source.offset(Real::from(-1), &policy).unwrap().into_value();
@@ -554,7 +572,8 @@ fn unified_region_positive_offset_removes_exactly_collapsed_convex_hole() {
         vec![square(5, 5, 15, 15)],
         &policy,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     let expanded = source.offset(Real::from(5), &policy).unwrap().into_value();
     assert_eq!(decided(expanded.loop_roles(&policy).unwrap()).len(), 1);
@@ -569,7 +588,8 @@ fn unified_native_arrangement_exposes_immediate_evidence() {
     let source = square(0, 0, 4, 4).segments().to_vec();
     let result =
         CurveRegion2::arrange_unordered_segments(source, FillRule::NonZero, &CurveContext::STRICT)
-            .unwrap();
+            .unwrap()
+            .into_value();
 
     assert!(result.region().is_some());
     assert_eq!(result.fill_rule(), FillRule::NonZero);
@@ -584,8 +604,9 @@ fn native_self_crossing_walk_regularizes_with_both_fill_rules() {
     let policy = CurveContext::STRICT;
     for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
         let contour = bow_tie_contour(fill_rule);
-        let classification =
-            CurveRegion2::try_from_regularized_native_contour(&contour, &policy).unwrap();
+        let classification = CurveRegion2::try_from_regularized_native_contour(&contour, &policy)
+            .unwrap()
+            .into_value();
         let region = decided(classification);
         let native = decided(region.native_contours_fast_path(&policy).unwrap());
         assert_eq!(native.material_contours().len(), 2);
@@ -618,7 +639,8 @@ fn native_self_overlap_regularization_honors_winding_multiplicity() {
             &double_wound_square(FillRule::NonZero),
             &policy,
         )
-        .unwrap(),
+        .unwrap()
+        .into_value(),
     );
     let native = decided(nonzero.native_contours_fast_path(&policy).unwrap());
     assert_eq!(native.material_contours().len(), 1);
@@ -633,7 +655,8 @@ fn native_self_overlap_regularization_honors_winding_multiplicity() {
             &double_wound_square(FillRule::EvenOdd),
             &policy,
         )
-        .unwrap(),
+        .unwrap()
+        .into_value(),
     );
     assert!(even_odd.is_empty());
 }
@@ -643,7 +666,9 @@ fn region_promotion_retains_explicit_roles_and_line_fast_path() {
     let policy = CurveContext::STRICT;
     let source = LineArcRegion2::new(vec![square(0, 0, 10, 10), square(2, 2, 8, 8)], Vec::new());
 
-    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
+    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy)
+        .unwrap()
+        .into_value();
 
     assert_eq!(
         decided(promoted.loop_roles(&policy).unwrap()),
@@ -679,7 +704,9 @@ fn region_promotion_retains_explicit_roles_and_line_fast_path() {
 fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
     let policy = CurveContext::STRICT;
     let source = LineArcRegion2::new(vec![square(0, 0, 10, 10), square(2, 2, 8, 8)], Vec::new());
-    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
+    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy)
+        .unwrap()
+        .into_value();
 
     let transformed = promoted
         .transform_affine(
@@ -717,7 +744,8 @@ fn similarity_rotation_preserves_unified_region_semantics_and_fast_path() {
         vec![square(2, 2, 8, 8)],
         &policy,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let quarter_turn = Similarity2::try_from_real_affine(
         Real::zero(),
         Real::from(-1),
@@ -755,7 +783,9 @@ fn exact_profiles_assign_holes_to_the_smallest_containing_material() {
         vec![square(0, 0, 10, 10), square(2, 2, 8, 8)],
         vec![square(3, 3, 7, 7)],
     );
-    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
+    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy)
+        .unwrap()
+        .into_value();
 
     let profiles = decided(promoted.boundary_profiles(&policy).unwrap());
 
@@ -777,7 +807,9 @@ fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
         (FillRule::EvenOdd, RegionPointLocation::Outside),
     ] {
         let source = LineArcRegion2::from_material_contours(vec![double_wound_square(fill_rule)]);
-        let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
+        let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy)
+            .unwrap()
+            .into_value();
         let transformed = promoted
             .transform_affine(
                 &Real::one(),
@@ -816,7 +848,8 @@ fn authored_loop_semantics_drive_nonzero_and_even_odd_classification() {
             &[fill_rule],
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
 
         assert_eq!(region.loop_fill_rules(), Some([fill_rule].as_slice()));
         assert_eq!(
@@ -847,7 +880,8 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
             &[fill_rule],
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
 
         assert_eq!(
             region.offset(Real::zero(), &policy).unwrap().into_value(),
@@ -899,7 +933,8 @@ fn nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area() {
         &[FillRule::EvenOdd],
         &policy,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert_eq!(
         decided(region.filled_area(&policy).unwrap()),
@@ -916,7 +951,8 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
         vec![square(4, 4, 6, 6)],
         &policy,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert_eq!(
         decided(region.loop_roles(&policy).unwrap()),
@@ -944,10 +980,14 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
     );
     let boundaries = vec![square(2, 2, 8, 8), square(0, 0, 10, 10)];
     let nested = decided(
-        CurveRegion2::try_from_native_boundary_contours(boundaries.clone(), &policy).unwrap(),
+        CurveRegion2::try_from_native_boundary_contours(boundaries.clone(), &policy)
+            .unwrap()
+            .into_value(),
     );
     let borrowed = decided(
-        CurveRegion2::try_from_native_boundary_contours_borrowed(&boundaries, &policy).unwrap(),
+        CurveRegion2::try_from_native_boundary_contours_borrowed(&boundaries, &policy)
+            .unwrap()
+            .into_value(),
     );
     assert_eq!(
         decided(nested.loop_roles(&policy).unwrap()),
@@ -971,7 +1011,8 @@ fn authored_line_arc_paths_retain_the_native_offset_engine() {
         &[FillRule::NonZero],
         &policy,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert!(matches!(
         region.native_contours_fast_path(&policy).unwrap(),
@@ -996,7 +1037,8 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
         &[FillRule::NonZero, FillRule::NonZero],
         &policy,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert_eq!(
         decided(region.filled_side_is_left(&policy).unwrap()),
@@ -1015,7 +1057,9 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
 fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
     let policy = CurveContext::STRICT;
     let source = LineArcRegion2::from_material_contours(vec![square(0, 0, 4, 4)]);
-    let region = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
+    let region = CurveRegion2::try_from_line_arc_region(&source, &policy)
+        .unwrap()
+        .into_value();
 
     let chamfered = decided(
         region
@@ -1063,7 +1107,8 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
         &[FillRule::NonZero],
         &policy,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     assert!(matches!(
         region.native_contours_fast_path(&policy).unwrap(),
         Classification::Uncertain(_)
@@ -1098,7 +1143,9 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
 fn unified_region_offset_expands_material_and_contracts_holes() {
     let policy = CurveContext::STRICT;
     let source = LineArcRegion2::new(vec![square(0, 0, 10, 10)], vec![square(3, 3, 7, 7)]);
-    let region = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
+    let region = CurveRegion2::try_from_line_arc_region(&source, &policy)
+        .unwrap()
+        .into_value();
 
     let offset = region.offset(Real::one(), &policy).unwrap().into_value();
 
@@ -1125,7 +1172,9 @@ fn unified_region_offset_expands_material_and_contracts_holes() {
 fn region_promotion_retains_hole_role_for_projection() {
     let policy = CurveContext::STRICT;
     let source = LineArcRegion2::new(vec![square(0, 0, 10, 10)], vec![square(2, 2, 8, 8)]);
-    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
+    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy)
+        .unwrap()
+        .into_value();
 
     assert_eq!(
         decided(promoted.loop_roles(&policy).unwrap()),
@@ -1158,8 +1207,9 @@ fn region_promotion_retains_hole_role_for_projection() {
 #[test]
 fn empty_region_promotion_is_decided_and_reusable() {
     let policy = CurveContext::STRICT;
-    let promoted =
-        CurveRegion2::try_from_line_arc_region(&LineArcRegion2::empty(), &policy).unwrap();
+    let promoted = CurveRegion2::try_from_line_arc_region(&LineArcRegion2::empty(), &policy)
+        .unwrap()
+        .into_value();
 
     assert!(promoted.is_empty());
     assert!(decided(promoted.loop_roles(&policy).unwrap()).is_empty());

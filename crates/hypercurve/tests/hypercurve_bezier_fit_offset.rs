@@ -740,7 +740,8 @@ fn curve_region_uses_certified_parallel_then_regularizes_output_chords() {
         &[FillRule::EvenOdd],
         &policy(),
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let parallel_options =
         BezierParallelVerificationOptions::try_new(q(1, 20), 16, &policy()).unwrap();
     let flattening = BezierFlatteningOptions::try_new(q(1, 20), 16, &policy()).unwrap();
@@ -785,7 +786,8 @@ fn curve_region_evidence_weaker_source_chord_fallback_for_authored_corner() {
         &[FillRule::EvenOdd],
         &policy(),
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let parallel_options =
         BezierParallelVerificationOptions::try_new(q(1, 10), 14, &policy()).unwrap();
     let flattening = BezierFlatteningOptions::try_new(q(1, 10), 14, &policy()).unwrap();

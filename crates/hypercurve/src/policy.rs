@@ -389,7 +389,7 @@ pub(crate) fn resolve_cached_classification<'a, T, E>(
 /// decision actually consumed by the operation weakens the returned certainty.
 pub(crate) fn resolve_certified_operation<T>(
     policy: &CurveContext,
-    mut evaluate: impl FnMut(&CurveContext) -> crate::ExactCurveResult<T>,
+    evaluate: impl FnOnce(&CurveContext) -> crate::ExactCurveResult<T>,
 ) -> crate::ExactCurveResult<CurveOutcome<T>> {
     let observation = OperationObservation::begin();
     evaluate(policy).map(|value| CurveOutcome::new(value, observation.finish()))

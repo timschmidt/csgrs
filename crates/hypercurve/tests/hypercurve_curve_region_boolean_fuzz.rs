@@ -247,6 +247,7 @@ fn generated_region(specification: &GeneratedRegion) -> CurveRegion2 {
         &CurveContext::STRICT,
     )
     .expect("outward graph curves form a simple exact region")
+    .into_value()
 }
 
 fn generated_region_strategy() -> impl Strategy<Value = GeneratedRegion> {
@@ -439,9 +440,12 @@ fn retired_algebraic_polyline_case() -> RetiredFailureCase {
 
     RetiredFailureCase {
         failure: RetiredFailure::AlgebraicPolylineContacts,
-        first: CurveRegion2::try_from_boundary_paths(&[first_path], &CurveContext::STRICT).unwrap(),
+        first: CurveRegion2::try_from_boundary_paths(&[first_path], &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
         second: CurveRegion2::try_from_boundary_paths(&[second_path], &CurveContext::STRICT)
-            .unwrap(),
+            .unwrap()
+            .into_value(),
     }
 }
 
@@ -476,12 +480,14 @@ fn retired_uniform_weight_area_case() -> RetiredFailureCase {
             &[generated_path(&line_region)],
             &CurveContext::STRICT,
         )
-        .expect("retired line region is valid"),
+        .expect("retired line region is valid")
+        .into_value(),
         second: CurveRegion2::try_from_boundary_paths(
             &[generated_path(&rational_region)],
             &CurveContext::STRICT,
         )
-        .expect("retired uniform-weight rational region is valid"),
+        .expect("retired uniform-weight rational region is valid")
+        .into_value(),
     }
 }
 
@@ -816,6 +822,7 @@ fn exact_circle_region(start_quarter: usize, reversed: bool) -> CurveRegion2 {
         &CurveContext::STRICT,
     )
     .unwrap()
+    .into_value()
 }
 
 fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
@@ -858,7 +865,8 @@ fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
         &[FillRule::NonZero, FillRule::NonZero],
         &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     RetiredFailureCase {
         failure: RetiredFailure::SignedCompoundCircularSubtraction,
         first,
@@ -934,7 +942,8 @@ fn retired_transformed_degree_elevated_line_case() -> RetiredFailureCase {
         &[CurvePath2::try_new(curves).unwrap()],
         &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let policy = CurveContext::STRICT;
     let transformed = source
         .transform_affine(
@@ -1122,7 +1131,8 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
         &[CurveBoundaryInteriorSide2::Left],
         &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let reversed_path = forward_path.reversed().unwrap();
     let reversed = CurveRegion2::try_from_boundary_paths_with_loop_topology(
         &[reversed_path],
@@ -1131,7 +1141,8 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
         &[CurveBoundaryInteriorSide2::Right],
         &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     exact_boolean_results(
         "oppositely oriented nonuniform rational regions",
         &forward,

@@ -93,6 +93,7 @@ fn square_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<
         &[square_path(min_x, min_y, max_x, max_y)?],
         &CurveContext::STRICT,
     )
+    .map(|outcome| outcome.into_value())
     .map_err(|error| match error {
         hypercurve::ExactCurveError::Invalid { cause, .. } => cause,
         hypercurve::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
@@ -381,7 +382,9 @@ fn main() -> CurveResult<()> {
     );
 
     let native_region = LineArcRegion2::from_material_contours(vec![rectangle(-4, -4, 4, 4)]);
-    let immediate_region = CurveRegion2::try_from_line_arc_region(&native_region, &policy).unwrap();
+    let immediate_region = CurveRegion2::try_from_line_arc_region(&native_region, &policy)
+        .unwrap()
+        .into_value();
     let depth_point = p(1, 1);
     decided(immediate_region.signed_depth(&depth_point, &policy)?);
     let started = Instant::now();
@@ -553,6 +556,7 @@ fn main() -> CurveResult<()> {
                     evidence
                         .try_to_curve_region(&policy)
                         .expect("line-role evidence must rebuild a unified region")
+                        .into_value()
                         .filled_area(&policy)?
                 )
                 .len(),
@@ -592,6 +596,7 @@ fn main() -> CurveResult<()> {
                 evidence
                     .try_to_curve_region(&policy)
                     .expect("line-role evidence must rebuild a unified region")
+                    .into_value()
                     .filled_area(&policy)?
                     .is_decided(),
             ));

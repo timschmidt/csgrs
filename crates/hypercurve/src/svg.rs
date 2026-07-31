@@ -19,10 +19,10 @@ mod exact;
 
 use crate::{
     Aabb2, BezierSubcurve2, BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2,
-    CurveContext, CurveGeometry2, CurveOperation2, CurvePath2, CurveRegion2, CurveString2,
-    ExactCurveError, FillRule, FiniteProjectionOptions, LineSeg2, NurbsCurve2, Point2,
-    PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
-    RealSign, Segment2, Similarity2,
+    CurveContext, CurveGeometry2, CurveOperation2, CurveOutcome, CurvePath2, CurveRegion2,
+    CurveString2, ExactCurveError, FillRule, FiniteProjectionOptions, LineSeg2, NurbsCurve2,
+    Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
+    Real, RealSign, Segment2, Similarity2,
 };
 use std::fmt::{self, Write};
 
@@ -1168,8 +1168,9 @@ fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<Cur
         return Ok(CurveRegion2::empty());
     }
     let policy = CurveContext::STRICT;
-    let preliminary =
-        CurveRegion2::try_from_boundary_paths(paths, &policy).map_err(svg_geometry_error)?;
+    let preliminary = CurveRegion2::try_from_boundary_paths(paths, &policy)
+        .map_err(svg_geometry_error)?
+        .into_value();
     let roles = match preliminary
         .loop_roles(&policy)
         .map_err(svg_geometry_error)?
@@ -1187,6 +1188,7 @@ fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<Cur
         &vec![fill_rule; paths.len()],
         &policy,
     )
+    .map(CurveOutcome::into_value)
     .map_err(svg_geometry_error)
 }
 

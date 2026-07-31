@@ -1094,8 +1094,9 @@ mod tests {
 
     #[test]
     fn projects_higher_order_region_after_exact_role_assignment() {
-        let region =
-            CurveRegion2::try_from_boundary_paths(&[cubic_cap()], &CurveContext::STRICT).unwrap();
+        let region = CurveRegion2::try_from_boundary_paths(&[cubic_cap()], &CurveContext::STRICT)
+            .unwrap()
+            .into_value();
         let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
         let policy = CurveContext::STRICT;
         let profiles = region

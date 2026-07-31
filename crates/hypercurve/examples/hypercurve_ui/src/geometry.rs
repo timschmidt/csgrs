@@ -1031,7 +1031,8 @@ impl Shape {
             &fill_rules,
             &CurveContext::STRICT,
         )
-            .map_err(|error| error.to_string())
+        .map(|outcome| outcome.into_value())
+        .map_err(|error| error.to_string())
     }
 
     pub fn from_curve_region(region: &CurveRegion2) -> Result<Option<Self>, String> {

@@ -458,7 +458,8 @@ fn bench_curve_region_bezier_offset_lanes(
         &[CurveRegionLoopRole::Material],
         &[FillRule::EvenOdd],
         &CurveContext::STRICT,
-    )?;
+    )?
+    .into_value();
     let policy = CurveContext::STRICT;
     let verification = BezierParallelVerificationOptions::try_new(q(1, 20), 16, &policy)?;
     let flattening = BezierFlatteningOptions::try_new(q(1, 20), 16, &policy)?;

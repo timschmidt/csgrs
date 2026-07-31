@@ -553,6 +553,7 @@ fn retained_line_image_role_evidence_assigns_nested_material_and_hole() {
         evidence
             .try_to_curve_region(&policy())
             .unwrap()
+            .into_value()
             .filled_area(&policy())
             .unwrap(),
         Classification::Decided(Some(r(32)))
@@ -939,6 +940,7 @@ fn retained_line_image_role_evidence_accepts_exact_algebraic_endpoint_carriers()
         evidence
             .try_to_curve_region(&policy())
             .unwrap()
+            .into_value()
             .filled_area(&policy())
             .unwrap(),
         Classification::Decided(Some(r(32)))
@@ -1133,6 +1135,7 @@ fn retained_line_image_role_evidence_accepts_certified_nonlinear_line_image_loop
         evidence
             .try_to_curve_region(&policy())
             .unwrap()
+            .into_value()
             .filled_area(&policy())
             .unwrap(),
         Classification::Decided(Some(r(16)))

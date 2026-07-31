@@ -1339,7 +1339,7 @@ fn boolean_region_without_general_context(
             .map_err(invalid)?
         {
             Classification::Decided(region) => {
-                return CurveRegion2::try_from_line_arc_region(&region, policy)
+                return CurveRegion2::try_from_line_arc_region_raw(&region, policy)
                     .map(Some)
                     .map_err(|error| error.with_operation(CurveOperation2::Boolean));
             }

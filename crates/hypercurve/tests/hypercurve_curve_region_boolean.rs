@@ -36,6 +36,7 @@ fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurveRegion2 {
         &CurveContext::STRICT,
     )
     .unwrap()
+    .into_value()
 }
 
 #[cfg(feature = "predicates")]
@@ -62,6 +63,7 @@ fn symbolic_rectangle(width: Real) -> CurveRegion2 {
         &CurveContext::STRICT,
     )
     .unwrap()
+    .into_value()
 }
 
 fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLocation) {
@@ -190,7 +192,8 @@ fn curved_region_boolean_respects_nested_hole_roles() {
         &[square_path(0, 0, 10, 10), square_path(2, 2, 8, 8)],
         &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let island = square(4, 4, 6, 6);
     let policy = CurveContext::STRICT;
 

@@ -352,7 +352,7 @@ impl CurveRegion2 {
             }
         }
 
-        Self::try_from_native_contours(material_contours, hole_contours, policy)
+        Self::try_from_native_contours_raw(material_contours, hole_contours, policy)
     }
 }
 

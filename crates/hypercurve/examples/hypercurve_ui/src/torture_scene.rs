@@ -425,7 +425,8 @@ fn fuzzed_region(
     }
     let path = CurvePath2::try_new(exact_curves).map_err(|error| error.to_string())?;
     let region = CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::STRICT)
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| error.to_string())?
+        .into_value();
     Ok(GeneratedRegion {
         region,
         display: Polyline::from_curve_data(display_curves, true),

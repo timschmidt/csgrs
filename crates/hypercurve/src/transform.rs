@@ -276,7 +276,7 @@ impl CurveRegion2 {
             let transformed = native.transform_similarity(transform).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Transformation, CurveFamily2::Line, cause)
             })?;
-            return Self::try_from_line_arc_region(&transformed, policy)
+            return Self::try_from_line_arc_region_raw(&transformed, policy)
                 .map_err(|error| error.with_operation(CurveOperation2::Transformation));
         }
         self.transform_affine(

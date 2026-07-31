@@ -84,9 +84,11 @@ fn pcb_containment_fixture(
     let policy = CurveContext::STRICT;
     (
         CurveRegion2::try_from_native_contours(cover, Vec::new(), &policy)
-            .expect("disjoint cover components form an exact region"),
+            .expect("disjoint cover components form an exact region")
+            .into_value(),
         CurveRegion2::try_from_native_contours(subject, Vec::new(), &policy)
-            .expect("disjoint subject components form an exact region"),
+            .expect("disjoint subject components form an exact region")
+            .into_value(),
     )
 }
 
@@ -153,9 +155,11 @@ fn easyduino_uno_scale_process_image_with_holes_corpus() {
         .collect::<Vec<_>>();
     let policy = CurveContext::STRICT;
     let cover = CurveRegion2::try_from_native_contours(materials, holes, &policy)
-        .expect("holed front-copper corpus forms an exact region");
+        .expect("holed front-copper corpus forms an exact region")
+        .into_value();
     let subject = CurveRegion2::try_from_native_contours(subjects, Vec::new(), &policy)
-        .expect("paste corpus forms an exact region");
+        .expect("paste corpus forms an exact region")
+        .into_value();
 
     let result = subject
         .boolean_region(&cover, hypercurve::BooleanOp::Difference, &policy)
@@ -181,7 +185,8 @@ fn pcb_process_image_hole_ownership_culls_sparse_materials() {
         .map(|(x, y)| subdivided_square(x, y, 10, 10))
         .collect::<Vec<_>>();
     let region = CurveRegion2::try_from_native_contours(materials, holes, &CurveContext::STRICT)
-        .expect("sparse material and hole loops form an exact region");
+        .expect("sparse material and hole loops form an exact region")
+        .into_value();
 
     let profiles = region
         .boundary_profiles(&CurveContext::STRICT)

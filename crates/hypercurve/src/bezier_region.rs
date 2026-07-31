@@ -25,7 +25,9 @@ use crate::bezier_arrangement::represented_roots_equal;
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
 use crate::classify::{compare_reals, is_zero, real_sign};
-use crate::policy::{PolicyClassificationCache, resolve_cached_classification};
+use crate::policy::{
+    PolicyClassificationCache, resolve_cached_classification, resolve_certified_operation,
+};
 use crate::region_nesting::ExactCurveWorkspace2;
 use crate::{
     Aabb2, Axis2, BezierAlgebraicEndpointImage2, BezierAreaMoments2, BezierArrangementGraph2,
@@ -872,7 +874,10 @@ impl CurveRegionLineRoleEvidence2 {
     }
 
     /// Builds the unified owned region represented by this exact role evidence.
-    pub fn try_to_curve_region(&self, policy: &CurveContext) -> ExactCurveResult<CurveRegion2> {
+    pub fn try_to_curve_region(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveRegion2>> {
         let mut material = Vec::new();
         let mut holes = Vec::new();
         for (contour, role) in self
@@ -1902,7 +1907,7 @@ fn promote_native_region_arrangement(
     let (region, workspace, summary) = arrangement.into_region_with_facts();
     let region = region
         .as_ref()
-        .map(|region| CurveRegion2::try_from_line_arc_region(region, policy))
+        .map(|region| CurveRegion2::try_from_line_arc_region_raw(region, policy))
         .transpose()?;
     Ok(CurveRegionArrangement2 {
         region,
@@ -2072,11 +2077,13 @@ impl CurveRegion2 {
         source_segments: Vec<Segment2>,
         fill_rule: FillRule,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveRegionArrangement2> {
-        let arrangement =
-            LineArcRegion2::arrange_unordered_segments(source_segments, fill_rule, policy)
-                .map_err(curve_region_promotion_error)?;
-        promote_native_region_arrangement(arrangement, policy)
+    ) -> ExactCurveResult<CurveOutcome<CurveRegionArrangement2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let arrangement =
+                LineArcRegion2::arrange_unordered_segments(source_segments, fill_rule, attempt)
+                    .map_err(curve_region_promotion_error)?;
+            promote_native_region_arrangement(arrangement, attempt)
+        })
     }
 
     /// Arranges borrowed unordered exact line/arc segments into unified topology.
@@ -2084,11 +2091,16 @@ impl CurveRegion2 {
         source_segments: &[Segment2],
         fill_rule: FillRule,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveRegionArrangement2> {
-        let arrangement =
-            LineArcRegion2::arrange_unordered_segments_borrowed(source_segments, fill_rule, policy)
-                .map_err(curve_region_promotion_error)?;
-        promote_native_region_arrangement(arrangement, policy)
+    ) -> ExactCurveResult<CurveOutcome<CurveRegionArrangement2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let arrangement = LineArcRegion2::arrange_unordered_segments_borrowed(
+                source_segments,
+                fill_rule,
+                attempt,
+            )
+            .map_err(curve_region_promotion_error)?;
+            promote_native_region_arrangement(arrangement, attempt)
+        })
     }
 
     /// Arranges unordered exact lines through the specialized line pipeline.
@@ -2096,11 +2108,16 @@ impl CurveRegion2 {
         source_segments: Vec<LineSeg2>,
         fill_rule: FillRule,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveRegionArrangement2> {
-        let arrangement =
-            LineArcRegion2::arrange_unordered_line_segments(source_segments, fill_rule, policy)
-                .map_err(curve_region_promotion_error)?;
-        promote_native_region_arrangement(arrangement, policy)
+    ) -> ExactCurveResult<CurveOutcome<CurveRegionArrangement2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let arrangement = LineArcRegion2::arrange_unordered_line_segments(
+                source_segments,
+                fill_rule,
+                attempt,
+            )
+            .map_err(curve_region_promotion_error)?;
+            promote_native_region_arrangement(arrangement, attempt)
+        })
     }
 
     /// Arranges borrowed unordered exact lines through the specialized line pipeline.
@@ -2108,14 +2125,16 @@ impl CurveRegion2 {
         source_segments: &[LineSeg2],
         fill_rule: FillRule,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveRegionArrangement2> {
-        let arrangement = LineArcRegion2::arrange_unordered_line_segments_borrowed(
-            source_segments,
-            fill_rule,
-            policy,
-        )
-        .map_err(curve_region_promotion_error)?;
-        promote_native_region_arrangement(arrangement, policy)
+    ) -> ExactCurveResult<CurveOutcome<CurveRegionArrangement2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let arrangement = LineArcRegion2::arrange_unordered_line_segments_borrowed(
+                source_segments,
+                fill_rule,
+                attempt,
+            )
+            .map_err(curve_region_promotion_error)?;
+            promote_native_region_arrangement(arrangement, attempt)
+        })
     }
 
     /// Constructs a unified region directly from explicit native contour roles.
@@ -2125,6 +2144,16 @@ impl CurveRegion2 {
     /// migration constructor for callers that already know which contours are
     /// material and which are holes.
     pub fn try_from_native_contours(
+        material_contours: Vec<Contour2>,
+        hole_contours: Vec<Contour2>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::try_from_native_contours_raw(material_contours, hole_contours, attempt)
+        })
+    }
+
+    pub(crate) fn try_from_native_contours_raw(
         material_contours: Vec<Contour2>,
         hole_contours: Vec<Contour2>,
         policy: &CurveContext,
@@ -2148,7 +2177,7 @@ impl CurveRegion2 {
             .chain(&hole_contours)
             .map(Contour2::fill_rule)
             .collect::<Vec<_>>();
-        let mut promoted = Self::try_from_boundary_paths_with_loop_semantics_and_policy(
+        let mut promoted = Self::try_from_boundary_paths_with_loop_semantics_raw(
             &paths,
             &roles,
             &fill_rules,
@@ -2167,7 +2196,7 @@ impl CurveRegion2 {
     pub fn try_from_native_material_contours(
         material_contours: Vec<Contour2>,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Self> {
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
         Self::try_from_native_contours(material_contours, Vec::new(), policy)
     }
 
@@ -2179,16 +2208,18 @@ impl CurveRegion2 {
     pub fn try_from_native_boundary_contours(
         contours: Vec<Contour2>,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<Self>> {
-        Self::try_from_native_boundary_contours_with_evidence(contours, policy)
-            .map(CurveRegionBoundaryContourBuildResult2::into_region_classification)
+    ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::try_from_native_boundary_contours_with_evidence(contours, attempt)
+                .map(CurveRegionBoundaryContourBuildResult2::into_region_classification)
+        })
     }
 
     /// Borrowed counterpart to [`Self::try_from_native_boundary_contours`].
     pub fn try_from_native_boundary_contours_borrowed(
         contours: &[Contour2],
         policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<Self>> {
+    ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
         Self::try_from_native_boundary_contours(contours.to_vec(), policy)
     }
 
@@ -2207,7 +2238,7 @@ impl CurveRegion2 {
         let (region, evidence) = built.into_parts();
         let region = region
             .as_ref()
-            .map(|region| Self::try_from_line_arc_region(region, policy))
+            .map(|region| Self::try_from_line_arc_region_raw(region, policy))
             .transpose()?;
         Ok(CurveRegionBoundaryContourBuildResult2 { region, evidence })
     }
@@ -2225,16 +2256,19 @@ impl CurveRegion2 {
     pub fn try_from_regularized_native_contour(
         contour: &Contour2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<Self>> {
-        match contour
-            .regularize_self_intersections_native(policy)
-            .map_err(curve_region_promotion_error)?
-        {
-            Classification::Decided(region) => {
-                Self::try_from_line_arc_region(&region, policy).map(Classification::Decided)
+    ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
+        resolve_certified_operation(policy, |attempt| {
+            match contour
+                .regularize_self_intersections_native(attempt)
+                .map_err(curve_region_promotion_error)?
+            {
+                Classification::Decided(region) => {
+                    Self::try_from_line_arc_region_raw(&region, attempt)
+                        .map(Classification::Decided)
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }
+        })
     }
 
     /// Losslessly promotes a native line/arc region into the mixed-family carrier.
@@ -2248,8 +2282,17 @@ impl CurveRegion2 {
     pub fn try_from_line_arc_region(
         region: &LineArcRegion2,
         policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::try_from_line_arc_region_raw(region, attempt)
+        })
+    }
+
+    pub(crate) fn try_from_line_arc_region_raw(
+        region: &LineArcRegion2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        Self::try_from_native_contours(
+        Self::try_from_native_contours_raw(
             region.material_contours().to_vec(),
             region.hole_contours().to_vec(),
             policy,
@@ -2268,10 +2311,12 @@ impl CurveRegion2 {
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
         policy: &CurveContext,
-    ) -> ExactCurveResult<Self> {
-        Self::try_from_boundary_paths_with_loop_semantics_and_policy(
-            paths, roles, fill_rules, policy, None,
-        )
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::try_from_boundary_paths_with_loop_semantics_raw(
+                paths, roles, fill_rules, attempt, None,
+            )
+        })
     }
 
     /// Constructs an exact signed composition from independently authored loops.
@@ -2286,11 +2331,14 @@ impl CurveRegion2 {
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
         policy: &CurveContext,
-    ) -> ExactCurveResult<Self> {
-        let mut region =
-            Self::try_from_boundary_paths_with_loop_semantics(paths, roles, fill_rules, policy)?;
-        region.data_mut_for_construction().signed_loop_composition = true;
-        Ok(region)
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            let mut region = Self::try_from_boundary_paths_with_loop_semantics_raw(
+                paths, roles, fill_rules, attempt, None,
+            )?;
+            region.data_mut_for_construction().signed_loop_composition = true;
+            Ok(region)
+        })
     }
 
     /// Constructs a curved region with explicit loop roles, fill rules, and
@@ -2308,34 +2356,36 @@ impl CurveRegion2 {
         fill_rules: &[FillRule],
         interior_sides: &[CurveBoundaryInteriorSide2],
         policy: &CurveContext,
-    ) -> ExactCurveResult<Self> {
-        if paths.len() != interior_sides.len() {
-            let family = paths
-                .first()
-                .map_or(CurveFamily2::Line, |path| path.curves()[0].family());
-            return Err(ExactCurveError::invalid(
-                CurveOperation2::Construction,
-                family,
-                CurveError::Topology(
-                    "curved-region interior sides must match boundary path count".into(),
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            if paths.len() != interior_sides.len() {
+                let family = paths
+                    .first()
+                    .map_or(CurveFamily2::Line, |path| path.curves()[0].family());
+                return Err(ExactCurveError::invalid(
+                    CurveOperation2::Construction,
+                    family,
+                    CurveError::Topology(
+                        "curved-region interior sides must match boundary path count".into(),
+                    ),
+                ));
+            }
+            Self::try_from_boundary_paths_with_loop_semantics_raw(
+                paths,
+                roles,
+                fill_rules,
+                attempt,
+                Some(
+                    interior_sides
+                        .iter()
+                        .map(|side| *side == CurveBoundaryInteriorSide2::Left)
+                        .collect(),
                 ),
-            ));
-        }
-        Self::try_from_boundary_paths_with_loop_semantics_and_policy(
-            paths,
-            roles,
-            fill_rules,
-            policy,
-            Some(
-                interior_sides
-                    .iter()
-                    .map(|side| *side == CurveBoundaryInteriorSide2::Left)
-                    .collect(),
-            ),
-        )
+            )
+        })
     }
 
-    fn try_from_boundary_paths_with_loop_semantics_and_policy(
+    fn try_from_boundary_paths_with_loop_semantics_raw(
         paths: &[CurvePath2],
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
@@ -2354,7 +2404,7 @@ impl CurveRegion2 {
                 ),
             ));
         }
-        let mut region = Self::try_from_boundary_paths(paths, policy)?;
+        let mut region = Self::try_from_boundary_paths_raw(paths, policy)?;
         {
             let data = region.data_mut_for_construction();
             data.certified_loop_roles = Some(Arc::from(roles));
@@ -2387,6 +2437,15 @@ impl CurveRegion2 {
     /// Every authored family is promoted through its clone-shared native
     /// topology once.
     pub fn try_from_boundary_paths(
+        paths: &[CurvePath2],
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::try_from_boundary_paths_raw(paths, attempt)
+        })
+    }
+
+    fn try_from_boundary_paths_raw(
         paths: &[CurvePath2],
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
@@ -3296,7 +3355,7 @@ impl CurveRegion2 {
         };
         let edited = replace_native_region_role_contour(region, role, ordinal, contour)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?;
-        Self::try_from_line_arc_region(&edited, policy).map(Classification::Decided)
+        Self::try_from_line_arc_region_raw(&edited, policy).map(Classification::Decided)
     }
 
     /// Fillets one boundary-loop vertex without leaving the unified carrier.
@@ -3364,7 +3423,7 @@ impl CurveRegion2 {
         };
         let edited = replace_native_region_role_contour(region, role, ordinal, contour)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?;
-        Self::try_from_line_arc_region(&edited, policy).map(Classification::Decided)
+        Self::try_from_line_arc_region_raw(&edited, policy).map(Classification::Decided)
     }
 
     fn materialized_boundary_paths_for_edit(
@@ -3419,7 +3478,7 @@ impl CurveRegion2 {
             .certified_loop_fill_rules
             .as_deref()
             .map_or_else(|| vec![FillRule::EvenOdd; paths.len()], <[_]>::to_vec);
-        Self::try_from_boundary_paths_with_loop_semantics_and_policy(
+        Self::try_from_boundary_paths_with_loop_semantics_raw(
             &paths,
             &roles,
             &fill_rules,
@@ -3505,7 +3564,7 @@ impl CurveRegion2 {
             }
         }
 
-        let region = Self::try_from_native_contours(material, holes, policy)?;
+        let region = Self::try_from_native_contours_raw(material, holes, policy)?;
         Ok(Classification::Decided(
             CurveRegionCertifiedSegmentationResult2 {
                 region,
@@ -3786,7 +3845,7 @@ impl CurveRegion2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        Self::try_from_line_arc_region(&edited, policy).map(Classification::Decided)
+        Self::try_from_line_arc_region_raw(&edited, policy).map(Classification::Decided)
     }
 
     /// Offsets arbitrary materialized curve families through certified exact-scalar segmentation.
@@ -3987,7 +4046,7 @@ impl CurveRegion2 {
             );
         }
 
-        let parallel_region = Self::try_from_boundary_paths_with_loop_semantics_and_policy(
+        let parallel_region = Self::try_from_boundary_paths_with_loop_semantics_raw(
             &parallel_paths,
             roles.as_ref(),
             &fill_rules,
@@ -4040,7 +4099,7 @@ impl CurveRegion2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let region = Self::try_from_line_arc_region(&regularized, policy)?;
+        let region = Self::try_from_line_arc_region_raw(&regularized, policy)?;
         let certified_pre_regularization_boundary_error =
             parallel_options.max_error() + output_flattening.max_error();
         Ok(Classification::Decided(
@@ -6583,11 +6642,11 @@ mod tests {
                     && blocker.reason() == UncertaintyReason::RealSign
         ));
 
-        let approximate =
-            crate::policy::resolve_certified_operation(&CurveContext::APPROXIMATE_512, |policy| {
-                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), policy)
-            })
-            .expect("the authorized terminal equality must close the path");
+        let approximate = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            &CurveContext::APPROXIMATE_512,
+        )
+        .expect("the authorized terminal equality must close the path");
         assert_eq!(
             approximate.certainty,
             CurveCertainty::Approximate512Consumed
@@ -6781,7 +6840,8 @@ mod tests {
             &[CurvePath2::try_new(vec![upper, lower]).unwrap()],
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
         let point = Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap());
         assert_eq!(
             region.classify_point(&point, &policy),
@@ -6860,7 +6920,8 @@ mod tests {
             &[FillRule::NonZero, FillRule::NonZero],
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
         assert_eq!(
             region.classify_point(&p(-2, 0), &policy),
             Ok(Classification::Decided(RegionPointLocation::Inside))

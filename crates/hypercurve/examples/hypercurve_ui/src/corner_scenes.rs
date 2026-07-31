@@ -191,7 +191,8 @@ impl CornerScene {
         let source_paths = curve_region_paths().expect("demo region paths must be valid");
         let source_region =
             CurveRegion2::try_from_boundary_paths(&source_paths, &CurveContext::STRICT)
-                .expect("demo CurveRegion2 must be valid");
+                .expect("demo CurveRegion2 must be valid")
+                .into_value();
         let source_display = display_region(&source_paths).expect("demo region must be drawable");
         Self {
             operation,
@@ -349,7 +350,8 @@ fn build_corner_result(
         })
         .collect::<Result<Vec<_>, _>>()?;
     let region = CurveRegion2::try_from_boundary_paths(&result_paths, &CurveContext::STRICT)
-        .map_err(string_error)?;
+        .map_err(string_error)?
+        .into_value();
     let display = display_region(&result_paths)?;
     Ok(CornerRegionResult { region, display })
 }

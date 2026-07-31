@@ -313,12 +313,14 @@ pub fn build_native_cell(index: usize) -> NativeCell {
         std::slice::from_ref(&source_path),
         &CurveContext::STRICT,
     )
-    .expect("pathological source region is valid");
+    .expect("pathological source region is valid")
+    .into_value();
     let rotated = CurveRegion2::try_from_boundary_paths(
         std::slice::from_ref(&rotated_path),
         &CurveContext::STRICT,
     )
-    .expect("pathological rotated region is valid");
+    .expect("pathological rotated region is valid")
+    .into_value();
     let source_projection = line_region(&flatten_path(&source_path));
     let rotated_projection = line_region(&flatten_path(&rotated_path));
     NativeCell {
@@ -340,6 +342,7 @@ pub fn rotated_region(path: &CurvePath2, index: usize) -> CurveRegion2 {
         .expect("pathological rotation remains exact");
     CurveRegion2::try_from_boundary_paths(&[rotated], &CurveContext::STRICT)
         .expect("pathological rotated region is valid")
+        .into_value()
 }
 
 fn all_family_path(
