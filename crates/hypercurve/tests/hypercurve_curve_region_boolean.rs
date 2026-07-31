@@ -115,6 +115,35 @@ fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLo
 }
 
 #[test]
+fn boolean_batch_short_circuits_empty_and_identical_operands() {
+    let empty = CurveRegion2::empty();
+    let region = square(0, 0, 4, 4);
+    let policy = CurveContext::STRICT;
+
+    let empty_first = empty
+        .boolean_regions(&region, &policy)
+        .unwrap()
+        .into_value();
+    assert_eq!(empty_first.union(), &region);
+    assert!(empty_first.intersection().is_empty());
+    assert!(empty_first.difference().is_empty());
+    assert_eq!(empty_first.xor(), &region);
+    assert_eq!(empty_first.candidate_carrier_pair_count(), 0);
+    assert_eq!(empty_first.topology_fragment_count(), 0);
+
+    let identical = region
+        .boolean_regions(&region, &policy)
+        .unwrap()
+        .into_value();
+    assert_eq!(identical.union(), &region);
+    assert_eq!(identical.intersection(), &region);
+    assert!(identical.difference().is_empty());
+    assert!(identical.xor().is_empty());
+    assert_eq!(identical.candidate_carrier_pair_count(), 0);
+    assert_eq!(identical.topology_fragment_count(), 0);
+}
+
+#[test]
 fn affine_line_batch_reuses_the_authoritative_arrangement_topology() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);

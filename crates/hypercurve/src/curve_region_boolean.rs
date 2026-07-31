@@ -410,28 +410,18 @@ impl CurveRegion2 {
             BooleanOp::Difference,
             BooleanOp::Xor,
         ];
-        // Four separate native line or arc Booleans repeat the same support
-        // intersections and splits. Degree-elevated affine carriers retain
-        // native line dispatch, while retained circular-conic carriers share
-        // one exact support relation per circle pair inside the canonical
-        // arrangement. These specialized predicates make shared topology the
-        // batch authority without discarding the single-operation fast paths.
-        let shared_specialized_arrangement = !self.is_empty()
-            && !other.is_empty()
-            && self != other
-            && region_has_only_affine_or_circular_conic_carriers(self)
-            && region_has_only_affine_or_circular_conic_carriers(other);
-        let immediate = if shared_specialized_arrangement {
-            [None, None, None, None]
-        } else {
-            [
+        // Every nontrivial batch builds one authoritative arrangement. Pair
+        // dispatch retains the affine, circular-conic, and general-curve fast
+        // paths inside that topology instead of rebuilding a native region
+        // Boolean four times. Empty and structurally identical operands need
+        // no arrangement at all.
+        if self.is_empty() || other.is_empty() || self == other {
+            let immediate = [
                 boolean_region_without_general_context(self, other, operations[0], policy)?,
                 boolean_region_without_general_context(self, other, operations[1], policy)?,
                 boolean_region_without_general_context(self, other, operations[2], policy)?,
                 boolean_region_without_general_context(self, other, operations[3], policy)?,
-            ]
-        };
-        if immediate.iter().all(Option::is_some) {
+            ];
             return Ok(CurveRegionBooleanResults2 {
                 regions: Box::new(
                     immediate
@@ -444,7 +434,7 @@ impl CurveRegion2 {
                 topology_point_classification_count: 0,
             });
         }
-        CurveRegionBooleanContext::try_new(self, other, policy)?.build_boolean_regions(immediate)
+        CurveRegionBooleanContext::try_new(self, other, policy)?.build_boolean_regions()
     }
 
     /// Collects exact contacts and overlaps against another region immediately.
@@ -995,10 +985,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         })
     }
 
-    fn build_boolean_regions(
-        &self,
-        immediate: [Option<CurveRegion2>; 4],
-    ) -> ExactCurveResult<CurveRegionBooleanResults2> {
+    fn build_boolean_regions(&self) -> ExactCurveResult<CurveRegionBooleanResults2> {
         let operations = [
             BooleanOp::Union,
             BooleanOp::Intersection,
@@ -1006,20 +993,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             BooleanOp::Xor,
         ];
         let topology = self.build_boolean_topology()?;
-        let [union, intersection, difference, xor] = immediate;
-        let resolve = |region: Option<CurveRegion2>,
-                       operation: BooleanOp|
-         -> ExactCurveResult<CurveRegion2> {
-            match region {
-                Some(region) => Ok(region),
-                None => self.build_boolean_region_from_topology(operation, &topology),
-            }
-        };
         let regions = [
-            resolve(union, operations[0])?,
-            resolve(intersection, operations[1])?,
-            resolve(difference, operations[2])?,
-            match resolve(xor, operations[3]) {
+            self.build_boolean_region_from_topology(operations[0], &topology)?,
+            self.build_boolean_region_from_topology(operations[1], &topology)?,
+            self.build_boolean_region_from_topology(operations[2], &topology)?,
+            match self.build_boolean_region_from_topology(operations[3], &topology) {
                 Ok(region) => region,
                 Err(ExactCurveError::Blocked(_)) => self.build_xor_from_exact_set_identity()?,
                 Err(error) => return Err(error),
@@ -1408,26 +1386,6 @@ fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
             ..
         } if curve.retained_exact_line_image().is_some()
     )
-}
-
-fn split_fragment_is_circular_conic(fragment: &BezierSplitFragment2) -> bool {
-    matches!(
-        fragment,
-        BezierSplitFragment2::Materialized {
-            curve: BezierSubcurve2::RationalQuadratic(curve),
-            ..
-        } if curve.retained_circular_conic().is_some()
-    )
-}
-
-fn region_has_only_affine_or_circular_conic_carriers(region: &CurveRegion2) -> bool {
-    region
-        .boundary_loops()
-        .iter()
-        .flat_map(|boundary| boundary.fragments())
-        .all(|fragment| {
-            split_fragment_is_affine_line(fragment) || split_fragment_is_circular_conic(fragment)
-        })
 }
 
 fn boolean_region_without_general_context(
@@ -2566,7 +2524,7 @@ mod certified_successor_tests {
 
         let general = CurveRegionBooleanContext::try_new(&first, &second, &policy)
             .unwrap()
-            .build_boolean_regions([None, None, None, None])
+            .build_boolean_regions()
             .unwrap();
         assert!(general.candidate_carrier_pair_count() > 0);
         assert!(general.topology_fragment_count() > 0);
