@@ -555,6 +555,13 @@ mod tests {
             compare_reals_with_policy(&positive, &Real::zero(), APPROX),
             PredicateOutcome::decided(Ordering::Greater, Certainty::Exact, Escalation::Exact)
         );
+
+        let left = Point2::new(positive, Real::zero());
+        let right = Point2::new(Real::zero(), Real::zero());
+        assert_eq!(
+            point2_equal_with_policy(&left, &right, APPROX),
+            PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact)
+        );
     }
 
     #[test]

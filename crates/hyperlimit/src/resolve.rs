@@ -11,7 +11,9 @@ use hyperreal::{CertifiedRealSign, Real, RealSignCertificate, ZeroKnowledge};
 ///
 /// `exact` is the predicate-level exact evaluation hook. It should do actual
 /// exact determinant/sign work for the whole predicate, while Real facts only
-/// certify signs that are already exposed by the computed Real value.
+/// certify signs that are already exposed by the computed Real value. If both
+/// stages and bounded refinement are inconclusive, an exact rational normal
+/// form is attempted before policy-authorized approximation.
 pub(crate) fn resolve_real_sign(
     value: &Real,
     policy: PredicatePolicy,
@@ -49,6 +51,11 @@ pub(crate) fn resolve_real_sign(
         return outcome;
     }
 
+    if let Some(sign) = exact_rational_normal_form_sign(value) {
+        crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "exact-normal-form");
+        return PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact);
+    }
+
     if let Some(outcome) = approximate_real_sign(value, policy) {
         crate::trace_dispatch!(
             "hyperlimit",
@@ -65,8 +72,11 @@ pub(crate) fn resolve_real_sign(
 /// Resolve a Real sign when no predicate-specific filter or exact callback
 /// exists between structural inspection and bounded refinement.
 ///
-/// Calling `certified_sign_until` once preserves the same proof stages while
-/// avoiding the duplicate structural-facts pass in the general resolver.
+/// Calling `certified_sign_until` once avoids the duplicate structural-facts
+/// pass in the general resolver. If bounded refinement is inconclusive, an
+/// exact rational normal form is still attempted before any policy-authorized
+/// terminal approximation so approximate zero cannot mask an exact nonzero
+/// result.
 pub(crate) fn resolve_real_sign_direct(
     value: &Real,
     policy: PredicatePolicy,
@@ -95,16 +105,7 @@ pub(crate) fn resolve_real_sign_direct(
             PredicateOutcome::decided(map_real_sign(sign), Certainty::Exact, stage)
         }
         CertifiedRealSign::Unknown { .. } => {
-            if let Some(rational) = value.exact_rational_normal_form() {
-                let zero = hyperreal::Rational::zero();
-                let sign = match rational
-                    .partial_cmp(&zero)
-                    .expect("exact rational ordering is total")
-                {
-                    core::cmp::Ordering::Less => Sign::Negative,
-                    core::cmp::Ordering::Equal => Sign::Zero,
-                    core::cmp::Ordering::Greater => Sign::Positive,
-                };
+            if let Some(sign) = exact_rational_normal_form_sign(value) {
                 crate::trace_dispatch!(
                     "hyperlimit",
                     "resolve_real_sign_direct",
@@ -118,6 +119,21 @@ pub(crate) fn resolve_real_sign_direct(
             })
         }
     }
+}
+
+fn exact_rational_normal_form_sign(value: &Real) -> Option<Sign> {
+    let rational = value.exact_rational_normal_form()?;
+    let zero = hyperreal::Rational::zero();
+    Some(
+        match rational
+            .partial_cmp(&zero)
+            .expect("exact rational ordering is total")
+        {
+            core::cmp::Ordering::Less => Sign::Negative,
+            core::cmp::Ordering::Equal => Sign::Zero,
+            core::cmp::Ordering::Greater => Sign::Positive,
+        },
+    )
 }
 
 pub(crate) fn decide_real_sign(value: &Real, stage: Escalation) -> Option<PredicateOutcome<Sign>> {
@@ -387,6 +403,35 @@ mod tests {
                 RefinementNeed::RealRefinement,
             ),
             PredicateOutcome::decided(Sign::Zero, Certainty::Approximate, Escalation::Refined,)
+        );
+    }
+
+    #[test]
+    fn general_resolver_normalizes_exact_rationals_before_approximation() {
+        let root_two = Real::from(2).sqrt().unwrap();
+        let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();
+        let half = (Real::from(1) / Real::from(2)).unwrap();
+        let shared_offset = root_two.clone() * Real::from(3) + half;
+        let contact = (((root_two.clone() * Real::from(4) - shared_offset.clone()) * Real::pi())
+            * root_two_over_pi.clone()
+            / Real::from(4))
+        .unwrap();
+        let domain = (((root_two * Real::from(2) - shared_offset) * Real::pi()) * root_two_over_pi
+            / Real::from(4))
+        .unwrap()
+            + Real::from(1);
+        let tiny = Real::from(2).powi_i64(-600).unwrap();
+        let positive = contact - domain + tiny;
+
+        assert_eq!(
+            resolve_real_sign(
+                &positive,
+                PredicatePolicy::APPROXIMATE_512,
+                || None,
+                || None,
+                RefinementNeed::RealRefinement,
+            ),
+            PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
         );
     }
 }
