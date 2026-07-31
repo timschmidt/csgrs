@@ -6379,6 +6379,72 @@ and all 37 standalone UI tests in 323.96 seconds.
 Machine-readable samples and call-graph evidence are in
 [`2026-07-31-curve-region-query-outcomes.json`](benchmarks/checkpoints/2026-07-31-curve-region-query-outcomes.json).
 
+### Explicit measurement outcomes
+
+Signed-area and first-moment evaluation now follows the same policy/outcome
+contract as construction and topology queries. `BezierSubcurve2`,
+`BezierBoundaryLoop2`, `BezierRegion2`, `CurveRegionBoundaryLoop2`, and
+`CurveRegion2` accept the caller's `CurveContext` and return
+`CurveOutcome<Classification<Option<T>>>`. Private raw kernels keep internal
+composition one-pass. The rational-line fallback no longer performs a hidden
+strict capability probe or turns strict uncertainty into unsupported
+geometry.
+
+A degree-four rational line whose interior ordinates contain
+`(pi + e) - (e + pi)` exercises the terminal path. `STRICT` returns a
+certified outer outcome containing `Classification::Uncertain(RealSign)`;
+`APPROXIMATE_512` returns the exact chord area and first moments and reports
+`Approximate512Consumed`. An approximate-first region cache retains both the
+exact value and its strict blocker: a later strict query remains uncertain,
+while a repeated approximate query reuses the value and still reports
+consumption.
+
+The immutable signed-area cache was specialized after the first generic
+policy-aware implementation proved too large. On this 64-bit baseline
+machine, the compact single-`OnceLock` carrier is 64 bytes and the shared
+`CurveRegion2` data is 424 bytes. That is 56 bytes smaller than the temporary
+two-slot design and only 8 bytes larger than the original policy-unaware data.
+The public `CurveRegion2` handle remains one word. A portable layout test caps
+the cache overhead at one alignment word.
+
+Seven parent/candidate release pairs ran the focused measurement lane at
+250,000 iterations, with execution order reversed on alternate pairs:
+
+| Exact measurement | Parent median | Policy-explicit median | Change |
+| --- | ---: | ---: | ---: |
+| Cached `CurveRegion2` signed area | 36.090 ns | 33.613 ns | -6.86% |
+| Polynomial subcurve signed area | 382.970 ns | 398.066 ns | +3.94% |
+| Polynomial subcurve area moments | 14.192 us | 13.895 us | -2.09% |
+
+All three parent/candidate ranges overlap. The signed-area regression is
+reported rather than dismissed; that standalone polynomial kernel does not
+touch the changed region cache, so no cache-design causality is established.
+The cached public operation materially improved and the much more expensive
+moment kernel also improved.
+
+Seven final-source pathological processes retained 67 cells, 603 candidate
+pairs, 3,248 fragments, 134 point classifications, all 268 decided
+operations, zero blockers, and checksum 6. Their Boolean median was
+472.054 ms, 0.33% above the preceding checkpoint and 0.13% above the frozen
+baseline. Construction improved 1.57% to 72.843 ms and median observed RSS
+delta remained 34.5 MiB.
+
+The final-source competitive suite kept every exact Hypercurve lane within
+3.9% of its frozen median except the source-chord fallback, which improved
+6.0%. The stripped pathological executable is 5,521,424 bytes: 13,064 bytes
+above the preceding checkpoint and 9,869 bytes below the frozen consolidation
+baseline.
+
+Validation passed the complete all-feature suite with 253 unit tests, the
+161.36-second exact CurveRegion2 corpus, and all pathological operations;
+warning-denied all-target all-feature and no-default matrices; every fuzz
+target; warning-denied rustdoc; the release WASM UI; and all 37 standalone UI
+tests in 321.27 seconds.
+
+Machine-readable samples, layout evidence, competitive medians, binary size,
+and the 22,309-node/38,138-edge call graph are in
+[`2026-07-31-curve-region-measurement-outcomes.json`](benchmarks/checkpoints/2026-07-31-curve-region-measurement-outcomes.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

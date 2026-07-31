@@ -1,0 +1,269 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "curve-region2-measurement-outcomes",
+  "source_revision": "fd2ffecb5587f9523a49a5ac128ca71d5e638803",
+  "parent_revision": "b7bd0a6f312fd94713d47971b32b1d85abe19b67",
+  "implementation_revisions": [
+    "e2e688775a38aaae44b2e290ab79b08f885816ba",
+    "585cbea4d38b9afba0363738053fd9e78f1d5d47",
+    "fd2ffecb5587f9523a49a5ac128ca71d5e638803"
+  ],
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "policy_explicit_public_measurement_apis": [
+      "BezierSubcurve2::signed_area_contribution",
+      "BezierSubcurve2::area_moments_contribution",
+      "BezierBoundaryLoop2::signed_area",
+      "BezierBoundaryLoop2::area_moments",
+      "BezierRegion2::signed_area",
+      "CurveRegionBoundaryLoop2::signed_area",
+      "CurveRegion2::signed_area"
+    ],
+    "measurement_return_contract": "CurveOutcome<Classification<Option<T>>>",
+    "internal_composition_uses_raw_measurement_kernels": true,
+    "measurement_geometry_is_evaluated_once": true,
+    "operation_certainty_is_aggregated_once": true,
+    "rational_line_fallback_uses_caller_policy": true,
+    "strict_symbolic_rational_line_result": "Certified outcome containing Classification::Uncertain(RealSign)",
+    "approximate_512_symbolic_rational_line_result": "exact chord area and first moments",
+    "approximate_512_terminal_consumption_observed": true,
+    "returned_measurements_remain_exact_real_values": true,
+    "approximate_first_cache_cannot_answer_strict": true,
+    "repeated_approximate_cache_hit_reports_consumption": true,
+    "compatibility_overload_or_implicit_value_shim_added": false
+  },
+  "cache_layout_on_baseline_machine": {
+    "curve_region_handle_bytes": 8,
+    "original_single_policy_curve_region_data_bytes": 416,
+    "intermediate_two_slot_policy_cache_bytes": 120,
+    "intermediate_curve_region_data_bytes": 480,
+    "compact_policy_evaluation_cache_bytes": 64,
+    "final_curve_region_data_bytes": 424,
+    "final_growth_from_original_bytes": 8,
+    "saved_from_intermediate_design_bytes": 56,
+    "portable_guard": "policy-aware signed-area cache adds at most one alignment word over OnceLock<CurveResult<Option<Real>>>"
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 253,
+    "exact_curve_region2_fuzz_seconds": 161.36,
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_check_all_features_all_targets": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features_all_targets": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "standalone_ui_tests": "37/37 pass in 321.27 seconds",
+    "standalone_ui_clippy_all_targets_deny_warnings": "pass",
+    "standalone_ui_release_wasm": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "cargo_fmt_all": "pass",
+    "git_diff_check": "pass"
+  },
+  "matched_measurement_benchmarks": {
+    "command": "seven interleaved parent/candidate executions of the env-only release bezier_region measurement lane at 250000 iterations, reversing execution order on alternate pairs",
+    "parent_revision": "b7bd0a6f312fd94713d47971b32b1d85abe19b67",
+    "candidate_revision": "fd2ffecb5587f9523a49a5ac128ca71d5e638803",
+    "curve_region_cached_signed_area_ns": {
+      "parent_samples": [
+        38.474000,
+        35.792468,
+        33.255560,
+        36.473300,
+        36.090244,
+        36.410228,
+        33.326592
+      ],
+      "candidate_samples": [
+        33.891116,
+        33.613020,
+        33.252920,
+        33.213844,
+        33.462068,
+        34.130580,
+        33.763528
+      ],
+      "parent_median": 36.090244,
+      "candidate_median": 33.613020,
+      "change_percent": -6.8640
+    },
+    "bezier_subcurve_exact_signed_area_ns": {
+      "parent_samples": [
+        372.677416,
+        401.843976,
+        375.680808,
+        391.440568,
+        382.970388,
+        383.907720,
+        373.918688
+      ],
+      "candidate_samples": [
+        398.066472,
+        427.166916,
+        393.947232,
+        391.735028,
+        424.322872,
+        401.491036,
+        393.922516
+      ],
+      "parent_median": 382.970388,
+      "candidate_median": 398.066472,
+      "change_percent": 3.9418
+    },
+    "bezier_subcurve_exact_area_moments_ns": {
+      "parent_samples": [
+        14687.280532,
+        14056.386344,
+        14198.810496,
+        14225.442912,
+        14119.061848,
+        14192.228468,
+        14139.819740
+      ],
+      "candidate_samples": [
+        14155.205728,
+        13953.435916,
+        13782.391124,
+        13895.436212,
+        13957.865856,
+        13878.645528,
+        13831.694024
+      ],
+      "parent_median": 14192.228468,
+      "candidate_median": 13895.436212,
+      "change_percent": -2.0912
+    },
+    "interpretation": "cached region measurement improved materially and exact moments improved; the standalone signed-area median regressed 3.94 percent, but its parent and candidate ranges overlap and this kernel does not use the changed cache"
+  },
+  "pathological_curve_region2": {
+    "command": "seven independent executions of target/release/deps/pathological_regions-524727024aa54dcb --bench",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "candidate_all_four_native_booleans_ms": [
+      496.037907,
+      478.242066,
+      469.306278,
+      466.623593,
+      472.054000,
+      478.557705,
+      468.435708
+    ],
+    "candidate_median_ms": 472.054000,
+    "preceding_checkpoint_median_ms": 470.507755,
+    "frozen_baseline_median_ms": 471.450000,
+    "change_from_preceding_checkpoint_percent": 0.3286,
+    "change_from_frozen_baseline_percent": 0.1281,
+    "candidate_build_ms": [
+      73.191823,
+      74.946662,
+      71.261754,
+      72.165223,
+      70.836414,
+      72.842566,
+      88.442338
+    ],
+    "candidate_build_median_ms": 72.842566,
+    "preceding_checkpoint_build_median_ms": 74.007946,
+    "build_change_percent": -1.5747,
+    "candidate_observed_rss_delta_mib": [
+      34.6,
+      34.5,
+      34.5,
+      34.6,
+      34.5,
+      34.4,
+      34.5
+    ],
+    "candidate_observed_rss_delta_mib_median": 34.5,
+    "interpretation": "deterministic topology is identical; Boolean timing is within 0.33 percent of both historical controls, construction improved, and process-scale RSS is unchanged"
+  },
+  "comparative_release_medians_ns": {
+    "command": "HYPERCURVE_COMPARE_SAMPLES=7 HYPERCURVE_COMPARE_SAMPLE_MS=75 cargo bench --locked --features comparative-benchmarks --bench comparative",
+    "candidate_revision": "fd2ffecb5587f9523a49a5ac128ca71d5e638803",
+    "rectangle_union": {
+      "hypercurve": 4715.1,
+      "hypercurve_contours": 4706.3,
+      "hypercurve_loops": 5201.2,
+      "cavalier_contours": 900.5,
+      "i_overlay": 998.6,
+      "geo": 1231.1,
+      "change_from_frozen_hypercurve_percent": -1.3990
+    },
+    "star64_intersection": {
+      "hypercurve": 35487.1,
+      "hypercurve_contours": 36185.9,
+      "hypercurve_loops": 101750.2,
+      "cavalier_contours": 27354.7,
+      "i_overlay": 33931.1,
+      "geo": 35807.2,
+      "change_from_frozen_hypercurve_percent": -0.4374
+    },
+    "star256_intersection": {
+      "hypercurve": 417707.0,
+      "hypercurve_contours": 296780.6,
+      "hypercurve_loops": 848158.7,
+      "cavalier_contours": 478436.3,
+      "i_overlay": 507250.4,
+      "geo": 515217.0,
+      "change_from_frozen_hypercurve_percent": -0.6951
+    },
+    "star1024_intersection": {
+      "hypercurve": 5010795.9,
+      "hypercurve_contours": 3957149.3,
+      "hypercurve_loops": 10831467.4,
+      "cavalier_contours": 19293245.0,
+      "i_overlay": 9977443.6,
+      "geo": 10002798.1,
+      "change_from_frozen_hypercurve_percent": -1.5947
+    },
+    "inward_capsule_offset": {
+      "hypercurve": 18956.9,
+      "cavalier_contours": 900.6,
+      "change_from_frozen_hypercurve_percent": -1.7421
+    },
+    "certified_open_cubic_offset": {
+      "hypercurve": 29866006.0,
+      "curvo_heuristic": 8152.3,
+      "change_from_frozen_hypercurve_percent": 1.2922
+    },
+    "source_chord_cubic_fallback": {
+      "hypercurve": 920742.5,
+      "change_from_frozen_hypercurve_percent": -5.9637
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "hypercurve": 1627.8,
+      "curvo": 57.9,
+      "change_from_frozen_hypercurve_percent": 3.8138
+    },
+    "interpretation": "every exact Hypercurve lane remains within 3.9 percent of the frozen baseline except the source-chord fallback, which improved 6.0 percent; competitive positioning is unchanged"
+  },
+  "release_pathological_binary": {
+    "measurement": "copy of the release executable stripped with strip --strip-all",
+    "preceding_checkpoint_bytes": 5508360,
+    "candidate_bytes": 5521424,
+    "delta_bytes": 13064,
+    "delta_percent": 0.2372,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": -9869,
+    "delta_from_frozen_baseline_percent": -0.1784,
+    "candidate_text_bytes": 5250685,
+    "candidate_data_bytes": 266864,
+    "candidate_bss_bytes": 1504
+  },
+  "static_callgraph": {
+    "command": "hyper-callgraph --root . --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22309,
+    "edges": 38138,
+    "artifact": "/tmp/hypercurve-measurement-final-callgraph/callgraphs/callgraph.json",
+    "policy_explicit_public_and_raw_measurement_nodes_present": true,
+    "compact_policy_evaluation_cache_nodes_present": true
+  }
+}
