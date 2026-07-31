@@ -242,7 +242,8 @@ impl CurveContext {
         }
     }
 
-    pub(crate) fn permits_approximate_512(&self) -> bool {
+    #[inline]
+    pub(crate) const fn permits_approximate_512(&self) -> bool {
         #[cfg(feature = "predicates")]
         {
             self.0 & APPROXIMATE_512_CONTEXT != 0
@@ -469,18 +470,26 @@ pub(crate) fn resolve_cached_classification<'a, T, E>(
 /// `APPROXIMATE_512` follows the same operation once. Hyperlimit performs its
 /// certified pipeline before any terminal interpretation, and only a terminal
 /// decision actually consumed by the operation weakens the returned certainty.
+#[inline(always)]
 pub(crate) fn resolve_certified_operation<T, E>(
     policy: &CurveContext,
     evaluate: impl FnOnce(&CurveContext) -> Result<T, E>,
 ) -> Result<CurveOutcome<T>, E> {
+    if !policy.permits_approximate_512() {
+        return evaluate(policy).map(|value| CurveOutcome::new(value, CurveCertainty::Certified));
+    }
     let observation = OperationObservation::begin();
     evaluate(policy).map(|value| CurveOutcome::new(value, observation.finish()))
 }
 
+#[inline(always)]
 pub(crate) fn resolve_certified_value<T>(
     policy: &CurveContext,
     evaluate: impl FnOnce(&CurveContext) -> T,
 ) -> CurveOutcome<T> {
+    if !policy.permits_approximate_512() {
+        return CurveOutcome::new(evaluate(policy), CurveCertainty::Certified);
+    }
     let observation = OperationObservation::begin();
     CurveOutcome::new(evaluate(policy), observation.finish())
 }

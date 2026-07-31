@@ -347,6 +347,7 @@ impl CurvePath2 {
     /// Authored curve families remain authoritative. Polynomial and rational
     /// Bezier spans are subdivided in their native representation and only the
     /// resulting boundary product is converted to `f64`.
+    #[inline]
     pub fn project_to_finite_polyline(
         &self,
         options: &FiniteProjectionOptions,
@@ -397,6 +398,7 @@ impl CurveRegion2 {
     /// This is a display/export boundary: Boolean topology remains owned by
     /// this exact region, while the returned paths retain lines and native
     /// Bezier curves instead of segmenting them into chords.
+    #[inline]
     pub fn project_to_finite_curve_paths(
         &self,
         policy: &CurveContext,
@@ -406,6 +408,7 @@ impl CurveRegion2 {
         })
     }
 
+    #[inline]
     fn project_to_finite_curve_paths_raw(
         &self,
         policy: &CurveContext,
@@ -430,6 +433,7 @@ impl CurveRegion2 {
     /// certified filled sides, then derive export-only roles and ownership from
     /// projected ring orientation and containment. That fallback never feeds
     /// exact predicates.
+    #[inline]
     pub fn project_to_finite_profiles(
         &self,
         options: &FiniteProjectionOptions,
@@ -536,6 +540,7 @@ impl CurveRegion2 {
     /// Unlike [`Self::project_to_finite_profiles`], this mesh/topology-facing
     /// variant does not infer export-only roles from finite winding or
     /// containment when algebraic endpoints cannot inhabit [`Point2`].
+    #[inline]
     pub fn project_to_finite_profiles_exact(
         &self,
         options: &FiniteProjectionOptions,
@@ -583,8 +588,80 @@ fn project_curve_region_loop_to_curve_path(
     boundary: &CurveRegionBoundaryLoop2,
     policy: &CurveContext,
 ) -> CurveResult<Option<CurvePath2>> {
-    let mut subcurves = Vec::with_capacity(boundary.fragments().len());
-    for fragment in boundary.fragments() {
+    let finish = |curves| {
+        CurvePath2::try_new(curves)
+            .map(Some)
+            .map_err(|error| match error {
+                crate::ExactCurveError::Invalid { cause, .. } => cause,
+                crate::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
+                    "finite curve projection was blocked by {:?}",
+                    blocker.reason()
+                )),
+            })
+    };
+    let fragments = boundary.fragments();
+    let fully_materialized = !fragments.is_empty()
+        && fragments
+            .iter()
+            .all(|fragment| matches!(fragment, BezierSplitFragment2::Materialized { .. }));
+    let structurally_connected = fully_materialized
+        && fragments
+            .iter()
+            .zip(fragments.iter().cycle().skip(1))
+            .all(|(left, right)| match (left, right) {
+                (
+                    BezierSplitFragment2::Materialized {
+                        curve: left_curve, ..
+                    },
+                    BezierSplitFragment2::Materialized {
+                        curve: right_curve, ..
+                    },
+                ) => {
+                    projection_points_are_structurally_equal(left_curve.end(), right_curve.start())
+                }
+                _ => unreachable!("the materialized fast path checked every fragment"),
+            });
+    if structurally_connected {
+        return Ok(Some(CurvePath2::from_structurally_connected_curves(
+            fragments
+                .iter()
+                .map(|fragment| match fragment {
+                    BezierSplitFragment2::Materialized { curve, .. } => Curve2::from(curve.clone()),
+                    _ => unreachable!("the materialized fast path checked every fragment"),
+                })
+                .collect(),
+        )));
+    }
+    if fully_materialized {
+        for (left, right) in fragments.iter().zip(fragments.iter().cycle().skip(1)) {
+            let (
+                BezierSplitFragment2::Materialized {
+                    curve: left_curve, ..
+                },
+                BezierSplitFragment2::Materialized {
+                    curve: right_curve, ..
+                },
+            ) = (left, right)
+            else {
+                unreachable!("the materialized connectivity path checked every fragment");
+            };
+            match crate::classify::is_zero(
+                &left_curve.end().distance_squared(right_curve.start()),
+                policy,
+            ) {
+                Some(true) => {}
+                Some(false) => {
+                    return Err(CurveError::Topology(
+                        "materialized finite curve projection contains a disconnected join".into(),
+                    ));
+                }
+                None => return Ok(None),
+            }
+        }
+    }
+
+    let mut subcurves = Vec::with_capacity(fragments.len());
+    for fragment in fragments {
         let curve = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => curve.clone(),
             BezierSplitFragment2::AlgebraicEndpointImages {
@@ -628,15 +705,22 @@ fn project_curve_region_loop_to_curve_path(
             .map(Curve2::from)
         })
         .collect::<CurveResult<Vec<_>>>()?;
-    CurvePath2::try_new(curves)
-        .map(Some)
-        .map_err(|error| match error {
-            crate::ExactCurveError::Invalid { cause, .. } => cause,
-            crate::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
-                "finite curve projection was blocked by {:?}",
-                blocker.reason()
-            )),
-        })
+    finish(curves)
+}
+
+fn projection_points_are_structurally_equal(left: &Point2, right: &Point2) -> bool {
+    if left.shares_storage(right) {
+        return true;
+    }
+    if let (Some(left_x), Some(left_y), Some(right_x), Some(right_y)) = (
+        left.x().exact_rational_ref(),
+        left.y().exact_rational_ref(),
+        right.x().exact_rational_ref(),
+        right.y().exact_rational_ref(),
+    ) {
+        return left_x == right_x && left_y == right_y;
+    }
+    left == right
 }
 
 fn finite_parameter_pair(
@@ -736,6 +820,7 @@ impl LineArcRegion2 {
     /// region. This follows the exact-object/API-boundary split and the
     /// boundary-first point-in-polygon structure used by
     /// [`LineArcRegion2::contour_profiles`].
+    #[inline]
     pub fn project_to_finite_profiles(
         &self,
         options: &FiniteProjectionOptions,
@@ -763,6 +848,7 @@ impl<'a> RegionView2<'a> {
     }
 
     /// Projects exact material/hole ownership profiles to finite rings.
+    #[inline]
     pub fn project_to_finite_profiles(
         &self,
         options: &FiniteProjectionOptions,
@@ -1181,6 +1267,43 @@ mod tests {
         assert!(approximate.value.is_closed());
     }
 
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn region_curve_path_projection_rechecks_symbolic_materialized_joins() {
+        let start = Point2::new(Real::pi() + Real::e(), Real::zero());
+        let end = Point2::new(Real::e() + Real::pi(), Real::zero());
+        let path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
+            start,
+            point(0, 1),
+            end,
+        ))])
+        .unwrap();
+        let region = CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::APPROXIMATE_512)
+            .unwrap()
+            .into_value();
+
+        let strict = region
+            .project_to_finite_curve_paths(&CurveContext::STRICT)
+            .unwrap();
+        assert_eq!(strict.certainty, crate::CurveCertainty::Certified);
+        assert_eq!(
+            strict.value,
+            Classification::Uncertain(crate::UncertaintyReason::Unsupported)
+        );
+        let approximate = region
+            .project_to_finite_curve_paths(&CurveContext::APPROXIMATE_512)
+            .unwrap();
+        assert_eq!(
+            approximate.certainty,
+            crate::CurveCertainty::Approximate512Consumed
+        );
+        let Classification::Decided(paths) = approximate.value else {
+            panic!("the authorized terminal must project the symbolic loop");
+        };
+        assert_eq!(paths.len(), 1);
+        assert_eq!(paths[0].start(), paths[0].end());
+    }
+
     #[test]
     fn projects_higher_order_region_after_exact_role_assignment() {
         let region = CurveRegion2::try_from_boundary_paths(&[cubic_cap()], &CurveContext::STRICT)
@@ -1207,5 +1330,38 @@ mod tests {
         assert_eq!(profiles.len(), 1);
         assert!(profiles[0].material().points().len() > 5);
         assert!(profiles[0].holes().is_empty());
+    }
+
+    #[test]
+    fn materialized_curve_path_projection_preserves_conic_provenance() {
+        let circle = CurvePath2::try_new(vec![
+            Curve2::from(
+                CircularArc2::try_from_center(point(1, 0), point(-1, 0), point(0, 0), false)
+                    .unwrap(),
+            ),
+            Curve2::from(
+                CircularArc2::try_from_center(point(-1, 0), point(1, 0), point(0, 0), false)
+                    .unwrap(),
+            ),
+        ])
+        .unwrap();
+        let region = CurveRegion2::try_from_boundary_paths(&[circle], &CurveContext::STRICT)
+            .unwrap()
+            .into_value();
+        let Classification::Decided(paths) = region
+            .project_to_finite_curve_paths(&CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the materialized circle must project to native curve paths");
+        };
+
+        assert!(paths[0].curves().iter().all(|curve| {
+            matches!(
+                curve.geometry(),
+                crate::CurveGeometry2::RationalQuadraticBezier(conic)
+                    if conic.retained_circular_conic().is_some()
+            )
+        }));
     }
 }

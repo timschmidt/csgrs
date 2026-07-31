@@ -100,6 +100,11 @@ impl Point2 {
         )
     }
 
+    #[inline]
+    pub(crate) fn shares_storage(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+
     pub(crate) fn from_exact_dyadic_line_point(point: ExactDyadicLinePoint2) -> Self {
         Self::from_arc(
             Arc::new(DeferredPoint2 {

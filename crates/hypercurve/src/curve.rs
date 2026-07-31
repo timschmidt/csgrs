@@ -1200,6 +1200,27 @@ impl<'a> CurveView2<'a> {
 }
 
 impl CurvePath2 {
+    fn from_connected_curves(curves: Vec<Curve2>) -> Self {
+        Self {
+            data: Arc::new(CurvePathData2 {
+                curves,
+                native_bezier_fragments: OnceLock::new(),
+                bezier_boundary_loop: OnceLock::new(),
+                bounds: OnceLock::new(),
+            }),
+        }
+    }
+
+    pub(crate) fn from_structurally_connected_curves(curves: Vec<Curve2>) -> Self {
+        debug_assert!(!curves.is_empty());
+        debug_assert!(
+            curves
+                .windows(2)
+                .all(|adjacent| adjacent[0].end() == adjacent[1].start())
+        );
+        Self::from_connected_curves(curves)
+    }
+
     /// Constructs a nonempty ordered path with exactly connected endpoints.
     pub fn try_new(curves: Vec<Curve2>) -> ExactCurveResult<Self> {
         if curves.is_empty() {
@@ -1234,14 +1255,7 @@ impl CurvePath2 {
                 }
             }
         }
-        Ok(Self {
-            data: Arc::new(CurvePathData2 {
-                curves,
-                native_bezier_fragments: OnceLock::new(),
-                bezier_boundary_loop: OnceLock::new(),
-                bounds: OnceLock::new(),
-            }),
-        })
+        Ok(Self::from_connected_curves(curves))
     }
 
     /// Returns a borrowed path view.
