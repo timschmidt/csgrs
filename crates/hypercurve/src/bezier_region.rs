@@ -126,6 +126,7 @@ struct CurveRegionData2 {
     certified_loop_roles: Option<Arc<[CurveRegionLoopRole]>>,
     certified_loop_fill_rules: Option<Arc<[FillRule]>>,
     signed_loop_composition: bool,
+    strict_materialized_connectivity_certified: bool,
     filled_side_is_left: PolicyClassificationCache<Arc<[bool]>>,
     native_boundary_loops: OnceLock<Option<Arc<[BezierBoundaryLoop2]>>>,
     native_boundary_bounds: PolicyClassificationCache<Arc<[Aabb2]>>,
@@ -136,11 +137,14 @@ struct CurveRegionData2 {
 
 impl CurveRegionData2 {
     fn new(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> Self {
+        let strict_materialized_connectivity_certified =
+            retained_region_has_strict_materialized_connectivity(&boundary_loops);
         Self {
             boundary_loops,
             certified_loop_roles: None,
             certified_loop_fill_rules: None,
             signed_loop_composition: false,
+            strict_materialized_connectivity_certified,
             filled_side_is_left: PolicyClassificationCache::new(),
             native_boundary_loops: OnceLock::new(),
             native_boundary_bounds: PolicyClassificationCache::new(),
@@ -149,6 +153,32 @@ impl CurveRegionData2 {
             signed_area_cache: PolicyEvaluationCache::new(),
         }
     }
+}
+
+fn retained_region_has_strict_materialized_connectivity(
+    boundary_loops: &[CurveRegionBoundaryLoop2],
+) -> bool {
+    boundary_loops.iter().all(|boundary_loop| {
+        let fragments = boundary_loop.fragments();
+        fragments
+            .iter()
+            .zip(fragments.iter().cycle().skip(1))
+            .take(fragments.len())
+            .all(|(left, right)| {
+                let (
+                    BezierSplitFragment2::Materialized {
+                        curve: left_curve, ..
+                    },
+                    BezierSplitFragment2::Materialized {
+                        curve: right_curve, ..
+                    },
+                ) = (left, right)
+                else {
+                    return false;
+                };
+                left_curve.endpoint_refs().1 == right_curve.endpoint_refs().0
+            })
+    })
 }
 
 fn shared_empty_curve_region_data() -> Arc<CurveRegionData2> {
@@ -3690,16 +3720,21 @@ impl CurveRegion2 {
                 };
                 curves.push(Curve2::from(curve.clone()));
             }
-            let path = CurvePath2::try_new_with_policy(curves, policy)
-                .map_err(|error| error.with_operation(operation))?;
-            match crate::curve::validate_closed_curve_path_connectivity(&path, policy)
-                .map_err(|error| error.with_operation(operation))?
-            {
-                Classification::Decided(()) => paths.push(path),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+            let path = if self.data.strict_materialized_connectivity_certified {
+                CurvePath2::from_structurally_closed_curves(curves)
+            } else {
+                let path = CurvePath2::try_new_with_policy(curves, policy)
+                    .map_err(|error| error.with_operation(operation))?;
+                match crate::curve::validate_closed_curve_path_connectivity(&path, policy)
+                    .map_err(|error| error.with_operation(operation))?
+                {
+                    Classification::Decided(()) => path,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
-            }
+            };
+            paths.push(path);
         }
         Ok(Classification::Decided(paths))
     }
@@ -7097,6 +7132,24 @@ mod tests {
             CurveCertainty::Approximate512Consumed
         );
         assert_eq!(approximate.value.len(), 1);
+        assert!(
+            !approximate
+                .value
+                .data
+                .strict_materialized_connectivity_certified
+        );
+
+        let exact_start = p(0, 0);
+        let exact_path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
+            exact_start.clone(),
+            p(1, 1),
+            exact_start,
+        ))])
+        .unwrap();
+        let exact = CurveRegion2::try_from_boundary_paths(&[exact_path], &CurveContext::STRICT)
+            .unwrap()
+            .into_value();
+        assert!(exact.data.strict_materialized_connectivity_certified);
     }
 
     #[cfg(feature = "predicates")]

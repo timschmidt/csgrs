@@ -197,6 +197,7 @@ pub struct CurvePath2 {
 struct CurvePathData2 {
     curves: Vec<Curve2>,
     strict_connectivity_certified: bool,
+    strict_closure_certified: bool,
     native_bezier_fragments: PolicyEvaluationCache<Vec<NativeBezierFragment2>>,
     bezier_boundary_loop: PolicyEvaluationCache<NativeBezierBoundaryLoop2>,
     bounds: OnceLock<ExactCurveResult<Aabb2>>,
@@ -1369,11 +1370,16 @@ impl<'a> CurveView2<'a> {
 }
 
 impl CurvePath2 {
-    fn from_connected_curves(curves: Vec<Curve2>, strict_connectivity_certified: bool) -> Self {
+    fn from_connected_curves(
+        curves: Vec<Curve2>,
+        strict_connectivity_certified: bool,
+        strict_closure_certified: bool,
+    ) -> Self {
         Self {
             data: Arc::new(CurvePathData2 {
                 curves,
                 strict_connectivity_certified,
+                strict_closure_certified,
                 native_bezier_fragments: PolicyEvaluationCache::new(),
                 bezier_boundary_loop: PolicyEvaluationCache::new(),
                 bounds: OnceLock::new(),
@@ -1388,7 +1394,21 @@ impl CurvePath2 {
                 .windows(2)
                 .all(|adjacent| adjacent[0].end() == adjacent[1].start())
         );
-        Self::from_connected_curves(curves, true)
+        let strict_closure_certified =
+            curves.last().expect("nonempty path").end() == curves[0].start();
+        Self::from_connected_curves(curves, true, strict_closure_certified)
+    }
+
+    pub(crate) fn from_structurally_closed_curves(curves: Vec<Curve2>) -> Self {
+        debug_assert!(!curves.is_empty());
+        debug_assert!(
+            curves
+                .iter()
+                .zip(curves.iter().cycle().skip(1))
+                .take(curves.len())
+                .all(|(left, right)| left.end() == right.start())
+        );
+        Self::from_connected_curves(curves, true, true)
     }
 
     /// Constructs a nonempty ordered path with exactly connected endpoints.
@@ -1407,6 +1427,8 @@ impl CurvePath2 {
                 CurveError::EmptyCurvePath,
             ));
         }
+        let strict_closure_certified =
+            curves.last().expect("nonempty path").end() == curves[0].start();
         let mut strict_connectivity_certified = true;
         for adjacent in curves.windows(2) {
             if adjacent[0].end() == adjacent[1].start() {
@@ -1438,6 +1460,7 @@ impl CurvePath2 {
         Ok(Self::from_connected_curves(
             curves,
             strict_connectivity_certified,
+            strict_closure_certified,
         ))
     }
 
@@ -1478,6 +1501,7 @@ impl CurvePath2 {
         Ok(Self::from_connected_curves(
             curves,
             self.data.strict_connectivity_certified,
+            self.data.strict_closure_certified,
         ))
     }
 
@@ -1491,6 +1515,7 @@ impl CurvePath2 {
         Ok(Self::from_connected_curves(
             curves,
             self.data.strict_connectivity_certified,
+            self.data.strict_closure_certified,
         ))
     }
 
@@ -1978,6 +2003,9 @@ pub(crate) fn validate_closed_curve_path_connectivity(
             }
         }
     }
+    if path.data.strict_closure_certified {
+        return Ok(Classification::Decided(()));
+    }
     match curve_path_points_equal(path.end(), path.start(), policy) {
         Some(true) => Ok(Classification::Decided(())),
         Some(false) => Err(ExactCurveError::invalid(
@@ -2154,23 +2182,33 @@ impl<'a> CurvePathView2<'a> {
 
     /// Returns an owned path with traversal direction reversed.
     pub fn reversed(self) -> ExactCurveResult<CurvePath2> {
+        let strict_closure_certified = self.end() == self.start();
         let curves = self
             .curves
             .iter()
             .rev()
             .map(Curve2::reversed)
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        Ok(CurvePath2::from_connected_curves(curves, false))
+        Ok(CurvePath2::from_connected_curves(
+            curves,
+            false,
+            strict_closure_certified,
+        ))
     }
 
     /// Applies an exact planar similarity to the borrowed connected path.
     pub fn transform_similarity(self, transform: &Similarity2) -> ExactCurveResult<CurvePath2> {
+        let strict_closure_certified = self.end() == self.start();
         let curves = self
             .curves
             .iter()
             .map(|curve| curve.transform_similarity(transform))
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        Ok(CurvePath2::from_connected_curves(curves, false))
+        Ok(CurvePath2::from_connected_curves(
+            curves,
+            false,
+            strict_closure_certified,
+        ))
     }
 
     /// Replaces one borrowed path vertex with an exact line chamfer.
