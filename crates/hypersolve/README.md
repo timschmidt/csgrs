@@ -127,9 +127,10 @@ blocks before an algorithm is selected.
 - `determinant_bareiss`, `solve_dense_linear_system_bareiss`, and the sparse,
   multi-right-hand-side, pattern-preserving, and minimum-degree Bareiss
   variants provide exact fraction-free linear algebra with reports. Dense
-  solves take an explicit `PredicatePolicy`, fall back to a pivot-free exact
-  determinant construction when a fast pivot is unresolved, and retain the
-  weakest determinant/residual certainty in their reports.
+  solves take an explicit `PredicatePolicy`, extend unresolved fast pivots
+  through that policy, fall back to a pivot-free exact determinant construction
+  when no pivot can be selected, and retain the weakest pivot,
+  determinant, and residual certainty in their reports.
 - `analyze_exact_affine_rank` reports exact rank evidence.
 - `find_equality_substitutions`, `validate_equality_substitutions`,
   `equality_substitution_classes`, `apply_equality_substitutions`,

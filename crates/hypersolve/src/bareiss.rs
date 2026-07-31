@@ -463,10 +463,14 @@ pub fn solve_dense_linear_system_bareiss(
     let mut swaps = 0;
     let mut pivots = Vec::with_capacity(n.saturating_sub(1));
     let mut previous_pivot = Real::one();
+    let mut solve_certainty = PredicateCertainty::Exact;
 
     for pivot in 0..n.saturating_sub(1) {
-        let pivot_row = match select_pivot_row(&work, pivot, min_precision) {
-            Ok(pivot_row) => pivot_row,
+        let pivot_row = match select_pivot_row_for_solve(&work, pivot, min_precision, policy) {
+            Ok((pivot_row, certainty)) => {
+                solve_certainty = weaker_certainty(solve_certainty, certainty);
+                pivot_row
+            }
             Err(BareissError::UndecidedPivot { .. }) => {
                 return solve_dense_linear_system_bareiss_cramer(
                     matrix,
@@ -576,7 +580,10 @@ pub fn solve_dense_linear_system_bareiss(
     let residual_replay =
         replay_dense_linear_residuals(matrix, rhs, &solution, min_precision, policy)
             .map_err(map_dense_replay_error)?;
-    let certainty = weaker_certainty(determinant_certainty, residual_replay.certainty);
+    let certainty = weaker_certainty(
+        solve_certainty,
+        weaker_certainty(determinant_certainty, residual_replay.certainty),
+    );
 
     Ok(BareissSolveReport {
         solution,
@@ -613,10 +620,14 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
     let mut swaps = 0;
     let mut pivots = Vec::with_capacity(n.saturating_sub(1));
     let mut previous_pivot = Real::one();
+    let mut solve_certainty = PredicateCertainty::Exact;
 
     for pivot in 0..n.saturating_sub(1) {
-        let pivot_row = match select_pivot_row(&work, pivot, min_precision) {
-            Ok(pivot_row) => pivot_row,
+        let pivot_row = match select_pivot_row_for_solve(&work, pivot, min_precision, policy) {
+            Ok((pivot_row, certainty)) => {
+                solve_certainty = weaker_certainty(solve_certainty, certainty);
+                pivot_row
+            }
             Err(BareissError::UndecidedPivot { .. }) => {
                 return solve_dense_linear_system_bareiss_multi_rhs_cramer(
                     matrix,
@@ -746,11 +757,10 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
                 .map_err(map_dense_replay_error)
         })
         .collect::<Result<Vec<_>, _>>()?;
-    let certainty = residual_replays
-        .iter()
-        .fold(determinant_certainty, |certainty, replay| {
-            weaker_certainty(certainty, replay.certainty)
-        });
+    let certainty = residual_replays.iter().fold(
+        weaker_certainty(solve_certainty, determinant_certainty),
+        |certainty, replay| weaker_certainty(certainty, replay.certainty),
+    );
 
     Ok(BareissMultiRhsSolveReport {
         solutions,
@@ -1223,6 +1233,40 @@ fn minimum_degree_symmetric_permutation(
     permutation
 }
 
+fn select_pivot_row_for_solve(
+    matrix: &[Vec<Real>],
+    pivot: usize,
+    min_precision: i32,
+    policy: PredicatePolicy,
+) -> Result<(Option<usize>, PredicateCertainty), BareissError> {
+    match select_pivot_row(matrix, pivot, min_precision) {
+        Ok(row) => return Ok((row, PredicateCertainty::Exact)),
+        Err(BareissError::UndecidedPivot { .. }) => {}
+        Err(error) => return Err(error),
+    }
+
+    let mut zero_certainty = PredicateCertainty::Exact;
+    let mut saw_unknown = false;
+    for (row, matrix_row) in matrix.iter().enumerate().skip(pivot) {
+        match certified_sign_with_policy(&matrix_row[pivot], min_precision, policy) {
+            Ok((RealSign::Negative | RealSign::Positive, certainty)) => {
+                return Ok((Some(row), certainty));
+            }
+            Ok((RealSign::Zero, certainty)) => {
+                zero_certainty = weaker_certainty(zero_certainty, certainty);
+            }
+            Err(BareissError::UndecidedPivot { .. }) => saw_unknown = true,
+            Err(error) => return Err(error),
+        }
+    }
+
+    if saw_unknown {
+        Err(BareissError::UndecidedPivot { pivot })
+    } else {
+        Ok((None, zero_certainty))
+    }
+}
+
 fn select_pivot_row(
     matrix: &[Vec<Real>],
     pivot: usize,
@@ -1506,7 +1550,7 @@ mod tests {
         assert_eq!(solve.certainty, PredicateCertainty::Exact);
         assert_eq!(
             solve.determinant.method,
-            BareissDeterminantMethod::PivotFreeFaddeevLeverrier
+            BareissDeterminantMethod::FractionFree
         );
         assert_eq!(solve.solution, vec![Real::zero(), Real::zero()]);
         assert!(matches!(
