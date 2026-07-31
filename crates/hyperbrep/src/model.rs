@@ -3883,31 +3883,28 @@ impl Model {
                 if !curve.shares_identity(contact.curve()) {
                     continue;
                 }
-                if contact.parameter() == edge.domain.start() {
-                    if !matching_vertices.contains(&edge.start) {
-                        matching_vertices.push(edge.start);
-                    }
-                    continue;
-                }
-                if contact.parameter() == edge.domain.end() {
-                    if !matching_vertices.contains(&edge.end) {
-                        matching_vertices.push(edge.end);
-                    }
-                    continue;
-                }
-                if !edge.domain.contains(contact.parameter())? {
-                    continue;
-                }
                 let start_order = decided_model_order(compare_reals(
                     contact.parameter(),
                     edge.domain.start(),
                     crate::STRICT_PREDICATES,
                 ))?;
+                if start_order == std::cmp::Ordering::Equal {
+                    if !matching_vertices.contains(&edge.start) {
+                        matching_vertices.push(edge.start);
+                    }
+                    continue;
+                }
                 let end_order = decided_model_order(compare_reals(
                     contact.parameter(),
                     edge.domain.end(),
                     crate::STRICT_PREDICATES,
                 ))?;
+                if end_order == std::cmp::Ordering::Equal {
+                    if !matching_vertices.contains(&edge.end) {
+                        matching_vertices.push(edge.end);
+                    }
+                    continue;
+                }
                 if start_order == std::cmp::Ordering::Greater
                     && end_order == std::cmp::Ordering::Less
                     && !matching_edges
