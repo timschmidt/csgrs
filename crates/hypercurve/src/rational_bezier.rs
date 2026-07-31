@@ -112,42 +112,6 @@ impl RationalQuadraticBezier2 {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn try_new_with_circular_conic(
-        start: Point2,
-        control: Point2,
-        end: Point2,
-        start_weight: Real,
-        control_weight: Real,
-        end_weight: Real,
-        center: Point2,
-        radius_squared: Real,
-    ) -> Result<Self, CurveError> {
-        let two = Real::from(2_i8);
-        let implicit_quadratic_conic = Arc::new([
-            Real::one(),
-            Real::zero(),
-            Real::one(),
-            -(&two * center.x()),
-            -(&two * center.y()),
-            center.x() * center.x() + center.y() * center.y() - &radius_squared,
-        ]);
-        Self::try_new_with_common_weight_sign_and_implicit_conic(
-            start,
-            control,
-            end,
-            start_weight,
-            control_weight,
-            end_weight,
-            None,
-            Some(implicit_quadratic_conic),
-            Some(Arc::new(RationalQuadraticCircle2 {
-                center,
-                radius_squared,
-            })),
-        )
-    }
-
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn try_new_with_common_weight_sign_and_implicit_conic(
         start: Point2,
         control: Point2,

@@ -6,14 +6,15 @@ use std::sync::OnceLock;
 use hyperreal::Real;
 
 use crate::classify::compare_reals;
-use crate::intersect::oriented_param_range_overlap;
+use crate::intersect::{circle_relation_from_supports, oriented_param_range_overlap};
 use crate::policy::resolve_certified_operation;
+use crate::rational_bezier::RationalQuadraticCircle2;
 use crate::rational_bezier_general::RationalBezierIntersectionContext;
 use crate::{
     ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
     BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
-    CurveContext, CurveError, CurveGeometry2, CurveOperation2, CurveOutcome, CurveResult,
-    CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcIntersection,
+    CurveContext, CurveError, CurveFamily2, CurveGeometry2, CurveOperation2, CurveOutcome,
+    CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcIntersection,
     LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange, Point2,
     RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
     RationalBezierIntersectionContacts2, RationalBezierIntersectionPointEvidence2,
@@ -102,6 +103,68 @@ pub(crate) struct CurveIntersectionContext {
     data: CurveIntersectionContextData,
 }
 
+#[derive(Debug, Default)]
+pub(crate) struct CurveIntersectionBatchCache {
+    circular_support_relations: Vec<CircularSupportRelationCacheEntry>,
+}
+
+#[derive(Debug)]
+struct CircularSupportRelationCacheEntry {
+    first: Arc<RationalQuadraticCircle2>,
+    second: Arc<RationalQuadraticCircle2>,
+    relation: CircleCircleRelation,
+}
+
+impl CurveIntersectionBatchCache {
+    fn circular_support_relation(
+        &mut self,
+        first_curve: &Curve2,
+        second_curve: &Curve2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<CircleCircleRelation>> {
+        let (
+            CurveGeometry2::RationalQuadraticBezier(first_curve),
+            CurveGeometry2::RationalQuadraticBezier(second_curve),
+        ) = (first_curve.geometry(), second_curve.geometry())
+        else {
+            return Ok(None);
+        };
+        let (Some(first), Some(second)) = (
+            first_curve.retained_circular_conic(),
+            second_curve.retained_circular_conic(),
+        ) else {
+            return Ok(None);
+        };
+        if let Some(entry) = self.circular_support_relations.iter().find(|entry| {
+            (Arc::ptr_eq(&entry.first, first) || entry.first.as_ref() == first.as_ref())
+                && (Arc::ptr_eq(&entry.second, second) || entry.second.as_ref() == second.as_ref())
+        }) {
+            return Ok(Some(entry.relation.clone()));
+        }
+        let relation = circle_relation_from_supports(
+            &first.center,
+            &first.radius_squared,
+            &second.center,
+            &second.radius_squared,
+            policy,
+        )
+        .map_err(|cause| {
+            ExactCurveError::invalid(
+                CurveOperation2::Intersection,
+                CurveFamily2::RationalQuadraticBezier,
+                cause,
+            )
+        })?;
+        self.circular_support_relations
+            .push(CircularSupportRelationCacheEntry {
+                first: Arc::clone(first),
+                second: Arc::clone(second),
+                relation: relation.clone(),
+            });
+        Ok(Some(relation))
+    }
+}
+
 #[derive(Debug)]
 struct CurveIntersectionContextData {
     first: Curve2,
@@ -154,6 +217,7 @@ fn build_span_pairs(
     first_evaluators: &[RationalBezier2],
     second_evaluators: &[RationalBezier2],
     policy: &CurveContext,
+    circle_relation: Option<&CircleCircleRelation>,
 ) -> ExactCurveResult<Vec<CurveSpanPair>> {
     let first_fragments =
         first_curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
@@ -208,7 +272,12 @@ fn build_span_pairs(
                 });
                 continue;
             }
-            let state = match RationalBezierIntersectionContext::try_new(first, second, policy) {
+            let state = match RationalBezierIntersectionContext::try_new_with_circle_relation(
+                first,
+                second,
+                policy,
+                circle_relation,
+            ) {
                 Ok(intersection) => CurveSpanPairState::Rational(intersection),
                 Err(ExactCurveError::Blocked(blocker)) => {
                     CurveSpanPairState::Blocked(blocker.reason())
@@ -1128,6 +1197,24 @@ impl CurveIntersectionContext {
         second: &Curve2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        Self::try_new_with_optional_batch_cache(first, second, policy, None)
+    }
+
+    pub(crate) fn try_new_with_batch_cache(
+        first: &Curve2,
+        second: &Curve2,
+        policy: &CurveContext,
+        batch_cache: &mut CurveIntersectionBatchCache,
+    ) -> ExactCurveResult<Self> {
+        Self::try_new_with_optional_batch_cache(first, second, policy, Some(batch_cache))
+    }
+
+    fn try_new_with_optional_batch_cache(
+        first: &Curve2,
+        second: &Curve2,
+        policy: &CurveContext,
+        batch_cache: Option<&mut CurveIntersectionBatchCache>,
+    ) -> ExactCurveResult<Self> {
         let (span_pair_count, dispatch) = match native_line_intersection(first, second, policy)? {
             Some(relation) => (1, CurveIntersectionDispatch::NativeLine(relation)),
             None => {
@@ -1194,6 +1281,12 @@ impl CurveIntersectionContext {
                                 )?;
                                 let span_pair_count =
                                     first_evaluators.len() * second_evaluators.len();
+                                let circle_relation = match batch_cache {
+                                    Some(cache) => {
+                                        cache.circular_support_relation(first, second, policy)?
+                                    }
+                                    None => None,
+                                };
                                 let dispatch =
                                     CurveIntersectionDispatch::SpanPairs(build_span_pairs(
                                         first,
@@ -1201,6 +1294,7 @@ impl CurveIntersectionContext {
                                         first_evaluators,
                                         second_evaluators,
                                         policy,
+                                        circle_relation.as_ref(),
                                     )?);
                                 (span_pair_count, dispatch)
                             }
@@ -1818,7 +1912,7 @@ fn same_curve_parameter(
 #[cfg(test)]
 mod native_dispatch_tests {
     use super::*;
-    use crate::{LineSeg2, QuadraticBezier2};
+    use crate::{CircularArc2, LineSeg2, QuadraticBezier2};
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::from_values(x, y)
@@ -1852,5 +1946,34 @@ mod native_dispatch_tests {
             result.contacts()[0].second().exact_curve_parameter(),
             Some((Real::one() / Real::from(2_i8)).unwrap())
         );
+    }
+
+    #[test]
+    fn batch_cache_reuses_one_circle_support_relation_across_spans() {
+        let first =
+            CircularArc2::try_from_center(point(2, 0), point(2, 0), point(0, 0), false).unwrap();
+        let second =
+            CircularArc2::try_from_center(point(3, 0), point(3, 0), point(1, 0), false).unwrap();
+        let first = first
+            .rational_bezier_decomposition(&CurveContext::STRICT)
+            .unwrap()
+            .into_value();
+        let second = second
+            .rational_bezier_decomposition(&CurveContext::STRICT)
+            .unwrap()
+            .into_value();
+        let mut cache = CurveIntersectionBatchCache::default();
+        for first_span in first.spans() {
+            for second_span in second.spans() {
+                CurveIntersectionContext::try_new_with_batch_cache(
+                    &Curve2::from(first_span.curve().clone()),
+                    &Curve2::from(second_span.curve().clone()),
+                    &CurveContext::STRICT,
+                    &mut cache,
+                )
+                .unwrap();
+            }
+        }
+        assert_eq!(cache.circular_support_relations.len(), 1);
     }
 }

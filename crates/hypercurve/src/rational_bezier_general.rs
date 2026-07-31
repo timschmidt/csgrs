@@ -33,14 +33,14 @@ use crate::classify::{
     classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2_real_expr,
     real_sign,
 };
-use crate::intersect::oriented_param_range_overlap;
+use crate::intersect::{circle_relation_from_supports, oriented_param_range_overlap};
 use crate::{
     Aabb2, Axis2, BezierArrangementGraph2, BezierLineContactKind, BezierLineContactRelation,
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
-    BezierParameterPolynomial, BezierParameterRange2, BezierSplitMaterialization2, Classification,
-    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2, CurveResult,
-    ExactCurveError, ExactCurveResult, LineSeg2, LineSide, ParamRange, Point2,
-    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    BezierParameterPolynomial, BezierParameterRange2, BezierSplitMaterialization2,
+    CircleCircleRelation, Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
+    CurveOperation2, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, LineSide,
+    ParamRange, Point2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalQuadraticBezier2, UncertaintyReason,
 };
 
@@ -330,7 +330,16 @@ impl RationalBezierIntersectionContext {
         second: &RationalBezier2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        match first.intersection_context_classified(second, policy) {
+        Self::try_new_with_circle_relation(first, second, policy, None)
+    }
+
+    pub(crate) fn try_new_with_circle_relation(
+        first: &RationalBezier2,
+        second: &RationalBezier2,
+        policy: &CurveContext,
+        circle_relation: Option<&CircleCircleRelation>,
+    ) -> ExactCurveResult<Self> {
+        match first.intersection_context_classified(second, policy, circle_relation) {
             Ok(Classification::Decided(context)) => Ok(context),
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
@@ -1469,6 +1478,7 @@ impl RationalBezier2 {
         &self,
         other: &Self,
         policy: &CurveContext,
+        circle_relation: Option<&CircleCircleRelation>,
     ) -> CurveResult<Classification<RationalBezierIntersectionContext>> {
         if self == other {
             let overlap = RationalBezierIntersectionOverlap2 {
@@ -1543,7 +1553,9 @@ impl RationalBezier2 {
                 },
             }));
         }
-        if let Some(contacts) = self.circular_conic_intersection_contacts(other, policy)? {
+        if let Some(contacts) =
+            self.circular_conic_intersection_contacts(other, policy, circle_relation)?
+        {
             let contacts = match contacts {
                 Classification::Decided(contacts) => contacts,
                 Classification::Uncertain(reason) => {
@@ -1617,7 +1629,7 @@ impl RationalBezier2 {
                 }
                 Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
             };
-            return elevated.intersection_context_classified(other, policy);
+            return elevated.intersection_context_classified(other, policy, None);
         }
         if other.degree() < self.degree()
             && matches!(
@@ -1632,7 +1644,7 @@ impl RationalBezier2 {
                 }
                 Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
             };
-            return self.intersection_context_classified(&elevated, policy);
+            return self.intersection_context_classified(&elevated, policy, None);
         }
 
         let line_image_contacts =
@@ -2415,6 +2427,7 @@ impl RationalBezier2 {
         &self,
         other: &Self,
         policy: &CurveContext,
+        circle_relation: Option<&CircleCircleRelation>,
     ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
         if self.degree() != 2 || other.degree() != 2 {
             return Ok(None);
@@ -2425,61 +2438,34 @@ impl RationalBezier2 {
         ) else {
             return Ok(None);
         };
-        let (center_dx, center_dy) = second.center.delta_from(&first.center);
-        let center_distance_squared =
-            Real::dot2_refs([&center_dx, &center_dy], [&center_dx, &center_dy]);
-        match is_zero(&center_distance_squared, policy) {
-            Some(true) => return Ok(None),
-            Some(false) => {}
+        let computed_relation;
+        let circle_relation = match circle_relation {
+            Some(relation) => relation,
             None => {
-                return Ok(Some(Classification::Uncertain(UncertaintyReason::RealSign)));
-            }
-        }
-        let along_numerator =
-            &first.radius_squared - &second.radius_squared + &center_distance_squared;
-        let along_denominator = Real::from(2_i8) * &center_distance_squared;
-        let along = match along_numerator / &along_denominator {
-            Ok(along) => along,
-            Err(_) => {
-                return Ok(Some(Classification::Uncertain(
-                    UncertaintyReason::Unsupported,
-                )));
+                computed_relation = circle_relation_from_supports(
+                    &first.center,
+                    &first.radius_squared,
+                    &second.center,
+                    &second.radius_squared,
+                    policy,
+                )?;
+                &computed_relation
             }
         };
-        let base = Point2::new(
-            first.center.x() + &center_dx * &along,
-            first.center.y() + &center_dy * &along,
-        );
-        let height_squared = &first.radius_squared - &along * &along * &center_distance_squared;
-        let (points, certified_transverse) = match real_sign(&height_squared, policy) {
-            Some(RealSign::Negative) => {
+        let (points, certified_transverse) = match circle_relation {
+            CircleCircleRelation::Coincident => return Ok(None),
+            CircleCircleRelation::Disjoint => {
                 return Ok(Some(Classification::Decided(
                     RationalBezierIntersectionContacts2::NoIntersection,
                 )));
             }
-            Some(RealSign::Zero) => (vec![base], false),
-            Some(RealSign::Positive) => {
-                let offset_scale =
-                    match (height_squared / &center_distance_squared).and_then(Real::sqrt) {
-                        Ok(scale) => scale,
-                        Err(_) => {
-                            return Ok(Some(Classification::Uncertain(
-                                UncertaintyReason::Unsupported,
-                            )));
-                        }
-                    };
-                let offset_x = &center_dy * &offset_scale;
-                let offset_y = &center_dx * &offset_scale;
-                (
-                    vec![
-                        Point2::new(base.x() - &offset_x, base.y() + &offset_y),
-                        Point2::new(base.x() + offset_x, base.y() - offset_y),
-                    ],
-                    true,
-                )
-            }
-            None => {
-                return Ok(Some(Classification::Uncertain(UncertaintyReason::RealSign)));
+            CircleCircleRelation::Tangent { point } => (vec![point.clone()], false),
+            CircleCircleRelation::Secant {
+                first_point,
+                second_point,
+            } => (vec![first_point.clone(), second_point.clone()], true),
+            CircleCircleRelation::Uncertain { reason } => {
+                return Ok(Some(Classification::Uncertain(*reason)));
             }
         };
         let mut contacts = Vec::with_capacity(points.len());

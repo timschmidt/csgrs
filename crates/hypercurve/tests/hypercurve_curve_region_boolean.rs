@@ -1,6 +1,6 @@
 use hypercurve::{
-    BooleanOp, Classification, Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2,
-    LineSeg2, Point2, Real, RegionPointLocation,
+    BooleanOp, BulgeVertex2, Classification, Contour2, Curve2, CurveCertainty, CurveContext,
+    CurvePath2, CurveRegion2, LineSeg2, Point2, Real, RegionPointLocation,
 };
 #[cfg(feature = "predicates")]
 use hypercurve::{CurveBoundaryInteriorSide2, QuadraticBezier2};
@@ -37,6 +37,27 @@ fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurveRegion2 {
     )
     .unwrap()
     .into_value()
+}
+
+fn circle(center_x: Real) -> CurveRegion2 {
+    circle_with_policy(center_x, &CurveContext::STRICT)
+}
+
+fn circle_with_policy(center_x: Real, policy: &CurveContext) -> CurveRegion2 {
+    let contour = Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(
+            Point2::new(&center_x - Real::from(2_i8), Real::zero()),
+            Real::one(),
+        ),
+        BulgeVertex2::new(
+            Point2::new(center_x + Real::from(2_i8), Real::zero()),
+            Real::one(),
+        ),
+    ])
+    .unwrap();
+    CurveRegion2::try_from_native_material_contours(vec![contour], policy)
+        .unwrap()
+        .into_value()
 }
 
 #[cfg(feature = "predicates")]
@@ -177,6 +198,84 @@ fn affine_line_batch_preserves_material_and_hole_roles() {
     assert_location(intersection, point(2, 2), RegionPointLocation::Inside);
     assert_location(intersection, point(5, 5), RegionPointLocation::Outside);
     assert_location(intersection, point(0, 0), RegionPointLocation::Outside);
+}
+
+#[test]
+fn circular_conic_batch_reuses_one_authoritative_topology() {
+    let first = circle(Real::zero());
+    let second = circle(Real::one());
+    let policy = CurveContext::STRICT;
+    let batch = first.boolean_regions(&second, &policy).unwrap();
+    assert_eq!(batch.certainty, CurveCertainty::Certified);
+    let batch = batch.into_value();
+    assert_eq!(batch.authored_carrier_pair_count(), 16);
+    assert!(batch.candidate_carrier_pair_count() > 0);
+    assert!(batch.candidate_carrier_pair_count() < batch.authored_carrier_pair_count());
+    assert!(batch.topology_fragment_count() > 0);
+    assert!(batch.topology_point_classification_count() < batch.topology_fragment_count());
+
+    let operations = [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::Xor,
+    ];
+    let shared = [
+        batch.union(),
+        batch.intersection(),
+        batch.difference(),
+        batch.xor(),
+    ];
+    let independent = operations.map(|operation| {
+        first
+            .boolean_region(&second, operation, &policy)
+            .unwrap()
+            .into_value()
+    });
+    for (shared, independent) in shared.into_iter().zip(&independent) {
+        for x_numerator in -5_i8..=7 {
+            for y_numerator in -5_i8..=5 {
+                let sample = Point2::new(
+                    (Real::from(x_numerator) / Real::from(2_i8)).unwrap(),
+                    (Real::from(y_numerator) / Real::from(2_i8)).unwrap(),
+                );
+                assert_eq!(
+                    shared
+                        .classify_point(&sample, &policy)
+                        .unwrap()
+                        .into_value(),
+                    independent
+                        .classify_point(&sample, &policy)
+                        .unwrap()
+                        .into_value(),
+                    "shared and native circle results differ at ({x_numerator}/2, {y_numerator}/2)",
+                );
+            }
+        }
+    }
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn circular_conic_batch_obeys_the_approximate_512_terminal() {
+    let first = circle_with_policy(Real::pi() + Real::e(), &CurveContext::APPROXIMATE_512);
+    let second = circle_with_policy(Real::e() + Real::pi(), &CurveContext::APPROXIMATE_512);
+
+    assert!(matches!(
+        first.boolean_regions(&second, &CurveContext::STRICT),
+        Err(hypercurve::ExactCurveError::Blocked(_))
+    ));
+    let batch = first
+        .boolean_regions(&second, &CurveContext::APPROXIMATE_512)
+        .expect("the authorized terminal should decide equal circle supports");
+    assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
+    assert!(batch.value.difference().is_empty());
+    assert!(batch.value.xor().is_empty());
+    assert_location(
+        batch.value.union(),
+        Point2::new(Real::pi() + Real::e(), Real::zero()),
+        RegionPointLocation::Inside,
+    );
 }
 
 #[test]

@@ -1,10 +1,12 @@
 //! Exact circular-arc decomposition into rational quadratic Bezier spans.
 
 use std::cmp::Ordering;
+use std::sync::Arc;
 
 use hyperreal::RealSign;
 
 use crate::policy::{resolve_cached_evaluation, resolve_certified_operation};
+use crate::rational_bezier::RationalQuadraticCircle2;
 use crate::{
     CircularArc2, Classification, CurveContext, CurveError, CurveFamily2, CurveOperation2,
     CurveOutcome, ExactCurveError, ExactCurveResult, Point2, RationalQuadraticBezier2, Real,
@@ -147,6 +149,20 @@ fn compute_circular_arc_decomposition(
     };
     let span_count = points.len() - 1;
     let denominator = Real::from(span_count as u8);
+    let two = Real::from(2_i8);
+    let implicit_quadratic_conic = Arc::new([
+        Real::one(),
+        Real::zero(),
+        Real::one(),
+        -(&two * arc.center().x()),
+        -(&two * arc.center().y()),
+        arc.center().x() * arc.center().x() + arc.center().y() * arc.center().y()
+            - arc.radius_squared_ref(),
+    ]);
+    let circular_conic = Arc::new(RationalQuadraticCircle2 {
+        center: arc.center().clone(),
+        radius_squared: arc.radius_squared_ref().clone(),
+    });
     let mut spans = Vec::with_capacity(span_count);
     for (span_index, endpoints) in points.windows(2).enumerate() {
         let parameter_start = (Real::from(span_index as u8) / &denominator)
@@ -154,7 +170,7 @@ fn compute_circular_arc_decomposition(
         let parameter_end = (Real::from((span_index + 1) as u8) / &denominator)
             .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
         spans.push(CircularArcBezierSpan2 {
-            curve: rational_minor_arc_span(arc.center(), arc.radius_squared_ref(), endpoints)?,
+            curve: rational_minor_arc_span(&implicit_quadratic_conic, &circular_conic, endpoints)?,
             parameter_start,
             parameter_end,
         });
@@ -349,10 +365,12 @@ fn full_circle_quarter_points(arc: &CircularArc2) -> Vec<Point2> {
 }
 
 fn rational_minor_arc_span(
-    center: &Point2,
-    radius_squared: &Real,
+    implicit_quadratic_conic: &Arc<[Real; 6]>,
+    circular_conic: &Arc<RationalQuadraticCircle2>,
     endpoints: &[Point2],
 ) -> ExactCurveResult<RationalQuadraticBezier2> {
+    let center = &circular_conic.center;
+    let radius_squared = &circular_conic.radius_squared;
     let start = endpoints[0].delta_from(center);
     let end = endpoints[1].delta_from(center);
     let dot = (&start.0 * &end.0) + (&start.1 * &end.1);
@@ -364,15 +382,16 @@ fn rational_minor_arc_span(
         center.y() + &start.1 + &tangent_half * &start.0,
     );
     let end_weight = Real::one() + &tangent_half * &tangent_half;
-    RationalQuadraticBezier2::try_new_with_circular_conic(
+    RationalQuadraticBezier2::try_new_with_common_weight_sign_and_implicit_conic(
         endpoints[0].clone(),
         control,
         endpoints[1].clone(),
         Real::one(),
         Real::one(),
         end_weight,
-        center.clone(),
-        radius_squared.clone(),
+        None,
+        Some(Arc::clone(implicit_quadratic_conic)),
+        Some(Arc::clone(circular_conic)),
     )
     .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause))
 }
@@ -410,5 +429,28 @@ mod tests {
         assert!(Arc::ptr_eq(&arc.retained_facts, &clone.retained_facts));
         assert!(!clone.retained_facts.sweep_kind.is_empty());
         assert!(!clone.retained_facts.bezier_decomposition.is_empty());
+    }
+
+    #[test]
+    fn one_arc_decomposition_shares_exact_conic_provenance() {
+        let arc =
+            CircularArc2::try_from_center(point(2, 0), point(2, 0), point(0, 0), false).unwrap();
+        let decomposition = arc
+            .rational_bezier_decomposition(&CurveContext::STRICT)
+            .unwrap()
+            .into_value();
+        let [first, second, third, fourth] = decomposition.spans() else {
+            panic!("a full circle must retain four spans")
+        };
+        for span in [second, third, fourth] {
+            assert!(Arc::ptr_eq(
+                first.curve().retained_circular_conic().unwrap(),
+                span.curve().retained_circular_conic().unwrap(),
+            ));
+            assert!(Arc::ptr_eq(
+                first.curve().retained_implicit_quadratic_conic().unwrap(),
+                span.curve().retained_implicit_quadratic_conic().unwrap(),
+            ));
+        }
     }
 }

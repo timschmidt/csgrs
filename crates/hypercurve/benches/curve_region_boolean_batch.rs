@@ -17,6 +17,14 @@ fn rectangle(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Contour2 {
     .unwrap()
 }
 
+fn circle(center_x: i32) -> Contour2 {
+    Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(point(center_x - 2, 0), Real::one()),
+        BulgeVertex2::new(point(center_x + 2, 0), Real::one()),
+    ])
+    .unwrap()
+}
+
 fn region_weight(region: &CurveRegion2) -> usize {
     region
         .boundary_loops()
@@ -36,14 +44,17 @@ fn measure(operation: &mut impl FnMut() -> usize, iterations: u32) -> (u128, usi
 
 fn main() {
     let policy = CurveContext::STRICT;
-    let first =
-        CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)], &policy)
-            .unwrap()
-            .into_value();
-    let second =
-        CurveRegion2::try_from_native_material_contours(vec![rectangle(2, 0, 6, 4)], &policy)
-            .unwrap()
-            .into_value();
+    let contours = match std::env::var("HYPERCURVE_CURVE_REGION_BATCH_FIXTURE").as_deref() {
+        Ok("circles") => (circle(0), circle(1)),
+        Ok(fixture) => panic!("unknown batch benchmark fixture {fixture}"),
+        Err(_) => (rectangle(0, 0, 4, 4), rectangle(2, 0, 6, 4)),
+    };
+    let first = CurveRegion2::try_from_native_material_contours(vec![contours.0], &policy)
+        .unwrap()
+        .into_value();
+    let second = CurveRegion2::try_from_native_material_contours(vec![contours.1], &policy)
+        .unwrap()
+        .into_value();
     let iterations = std::env::var("HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS")
         .ok()
         .and_then(|value| value.parse().ok())
@@ -76,6 +87,35 @@ fn main() {
             + region_weight(regions.difference())
             + region_weight(regions.xor())
     };
+
+    if std::env::var_os("HYPERCURVE_CURVE_REGION_BATCH_REPORT").is_some() {
+        let independent_regions = [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ]
+        .map(|operation| {
+            first
+                .boolean_region(&second, operation, &policy)
+                .unwrap()
+                .into_value()
+        });
+        let shared_regions = first
+            .boolean_regions(&second, &policy)
+            .unwrap()
+            .into_value();
+        println!(
+            "independent_fragment_counts={:?}, shared_fragment_counts={:?}",
+            independent_regions.map(|region| region_weight(&region)),
+            [
+                region_weight(shared_regions.union()),
+                region_weight(shared_regions.intersection()),
+                region_weight(shared_regions.difference()),
+                region_weight(shared_regions.xor()),
+            ]
+        );
+    }
 
     black_box(independent());
     black_box(shared());

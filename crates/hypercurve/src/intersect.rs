@@ -1075,36 +1075,13 @@ impl CircularArc2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<CircleCircleRelation> {
-        let center_delta = other.center().delta_from(self.center());
-        let center_distance_squared = dot(
-            &center_delta.0,
-            &center_delta.1,
-            &center_delta.0,
-            &center_delta.1,
-        );
-
-        match is_zero(&center_distance_squared, policy) {
-            Some(true) => {
-                let radius_delta = self.radius_squared() - other.radius_squared();
-                match is_zero(&radius_delta, policy) {
-                    Some(true) => Ok(CircleCircleRelation::Coincident),
-                    Some(false) => Ok(CircleCircleRelation::Disjoint),
-                    None => Ok(CircleCircleRelation::Uncertain {
-                        reason: UncertaintyReason::RealSign,
-                    }),
-                }
-            }
-            Some(false) => circle_relation_for_distinct_centers(
-                self,
-                other,
-                center_delta,
-                center_distance_squared,
-                policy,
-            ),
-            None => Ok(CircleCircleRelation::Uncertain {
-                reason: UncertaintyReason::RealSign,
-            }),
-        }
+        circle_relation_from_supports(
+            self.center(),
+            self.radius_squared_ref(),
+            other.center(),
+            other.radius_squared_ref(),
+            policy,
+        )
     }
 
     /// Intersects this circular arc with another circular arc.
@@ -1139,6 +1116,45 @@ impl CircularArc2 {
                 reason: UncertaintyReason::RealSign,
             }),
         }
+    }
+}
+
+pub(crate) fn circle_relation_from_supports(
+    first_center: &Point2,
+    first_radius_squared: &Real,
+    second_center: &Point2,
+    second_radius_squared: &Real,
+    policy: &CurveContext,
+) -> CurveResult<CircleCircleRelation> {
+    let center_delta = second_center.delta_from(first_center);
+    let center_distance_squared = dot(
+        &center_delta.0,
+        &center_delta.1,
+        &center_delta.0,
+        &center_delta.1,
+    );
+    match is_zero(&center_distance_squared, policy) {
+        Some(true) => {
+            let radius_delta = first_radius_squared - second_radius_squared;
+            match is_zero(&radius_delta, policy) {
+                Some(true) => Ok(CircleCircleRelation::Coincident),
+                Some(false) => Ok(CircleCircleRelation::Disjoint),
+                None => Ok(CircleCircleRelation::Uncertain {
+                    reason: UncertaintyReason::RealSign,
+                }),
+            }
+        }
+        Some(false) => circle_relation_for_distinct_supports(
+            first_center,
+            first_radius_squared,
+            second_radius_squared,
+            center_delta,
+            center_distance_squared,
+            policy,
+        ),
+        None => Ok(CircleCircleRelation::Uncertain {
+            reason: UncertaintyReason::RealSign,
+        }),
     }
 }
 
@@ -1814,8 +1830,14 @@ fn intersect_distinct_circle_arcs(
         return Ok(result);
     }
 
-    match circle_relation_for_distinct_centers(a, b, center_delta, center_distance_squared, policy)?
-    {
+    match circle_relation_for_distinct_supports(
+        a.center(),
+        a.radius_squared_ref(),
+        b.radius_squared_ref(),
+        center_delta,
+        center_distance_squared,
+        policy,
+    )? {
         CircleCircleRelation::Disjoint => Ok(ArcArcIntersection::None),
         CircleCircleRelation::Tangent { point } => {
             match arc_arc_hit_candidate(a, b, point, IntersectionKind::Tangent, policy)? {
@@ -1835,28 +1857,27 @@ fn intersect_distinct_circle_arcs(
     }
 }
 
-fn circle_relation_for_distinct_centers(
-    a: &CircularArc2,
-    b: &CircularArc2,
+fn circle_relation_for_distinct_supports(
+    first_center: &Point2,
+    first_radius_squared: &Real,
+    second_radius_squared: &Real,
     center_delta: (Real, Real),
     center_distance_squared: Real,
     policy: &CurveContext,
 ) -> CurveResult<CircleCircleRelation> {
-    let radius_a_squared = a.radius_squared();
-    let radius_b_squared = b.radius_squared();
     // Radical-axis circle intersection: project from `a.center` toward
     // `b.center`, then step perpendicular by the solved height. This is the
     // standard closed-form circle-circle construction
     // primitive-intersection catalogue; exact sign classification of
     // `height_squared` decides disjoint/tangent/two-point topology.
-    let along_numerator = (&radius_a_squared - &radius_b_squared) + &center_distance_squared;
+    let along_numerator = (first_radius_squared - second_radius_squared) + &center_distance_squared;
     let along_denominator = Real::from(2_i8) * &center_distance_squared;
     let along = (along_numerator / &along_denominator)?;
     let base = Point2::new(
-        a.center().x() + (&center_delta.0 * &along),
-        a.center().y() + (&center_delta.1 * &along),
+        first_center.x() + (&center_delta.0 * &along),
+        first_center.y() + (&center_delta.1 * &along),
     );
-    let height_squared = radius_a_squared - ((&along * &along) * &center_distance_squared);
+    let height_squared = first_radius_squared - ((&along * &along) * &center_distance_squared);
 
     match crate::classify::real_sign(&height_squared, policy) {
         Some(RealSign::Negative) => Ok(CircleCircleRelation::Disjoint),

@@ -6,7 +6,7 @@ use std::sync::{Arc, OnceLock};
 
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
-use crate::curve_intersection::CurveIntersectionContext;
+use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
 use crate::policy::resolve_certified_operation;
 use crate::{
     Aabb2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
@@ -410,16 +410,20 @@ impl CurveRegion2 {
             BooleanOp::Difference,
             BooleanOp::Xor,
         ];
-        // Four separate native line Booleans repeat the same intersections and
-        // splits. Degree-elevated affine-line carriers now retain native pair
-        // dispatch inside the canonical arrangement, so the shared topology
-        // route is both the single authority and the faster batch path.
-        let shared_affine_line_arrangement = !self.is_empty()
+        // Four separate native line or arc Booleans repeat the same support
+        // intersections and splits. Degree-elevated affine carriers retain
+        // native line dispatch, while retained circular-conic carriers share
+        // one exact support relation per circle pair inside the canonical
+        // arrangement. These specialized predicates make shared topology the
+        // batch authority without discarding the single-operation fast paths.
+        let shared_specialized_arrangement = !self.is_empty()
             && !other.is_empty()
             && self != other
-            && region_has_only_affine_line_carriers(self)
-            && region_has_only_affine_line_carriers(other);
-        let immediate = if shared_affine_line_arrangement {
+            && ((region_has_only_affine_line_carriers(self)
+                && region_has_only_affine_line_carriers(other))
+                || (region_has_only_circular_conic_carriers(self)
+                    && region_has_only_circular_conic_carriers(other)));
+        let immediate = if shared_specialized_arrangement {
             [None, None, None, None]
         } else {
             [
@@ -496,6 +500,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .saturating_add(carriers.len() - first_carrier_count)
                 .min(authored_carrier_pair_count),
         );
+        let mut intersection_cache = CurveIntersectionBatchCache::default();
         for first_carrier_index in 0..first_carrier_count {
             for second_carrier_index in first_carrier_count..carriers.len() {
                 let first_curve = &curves[first_carrier_index];
@@ -506,7 +511,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 pairs.push(RegionCarrierPair {
                     first_carrier_index,
                     second_carrier_index,
-                    context: CurveIntersectionContext::try_new(first_curve, second_curve, policy)?,
+                    context: CurveIntersectionContext::try_new_with_batch_cache(
+                        first_curve,
+                        second_curve,
+                        policy,
+                        &mut intersection_cache,
+                    )?,
                 });
             }
         }
@@ -1159,7 +1169,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
             && arrangement_fragments
                 .iter()
                 .all(|fragment| split_fragment_is_affine_line(fragment.fragment()));
-
         let graph = BezierArrangementGraph2::from_certified_fragments(arrangement_fragments);
         let certified_successors = certified_boolean_successors(
             &graph,
@@ -1409,6 +1418,24 @@ fn region_has_only_affine_line_carriers(region: &CurveRegion2) -> bool {
         .iter()
         .flat_map(|boundary| boundary.fragments())
         .all(split_fragment_is_affine_line)
+}
+
+fn split_fragment_is_circular_conic(fragment: &BezierSplitFragment2) -> bool {
+    matches!(
+        fragment,
+        BezierSplitFragment2::Materialized {
+            curve: BezierSubcurve2::RationalQuadratic(curve),
+            ..
+        } if curve.retained_circular_conic().is_some()
+    )
+}
+
+fn region_has_only_circular_conic_carriers(region: &CurveRegion2) -> bool {
+    region
+        .boundary_loops()
+        .iter()
+        .flat_map(|boundary| boundary.fragments())
+        .all(split_fragment_is_circular_conic)
 }
 
 fn boolean_region_without_general_context(
