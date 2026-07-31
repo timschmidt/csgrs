@@ -218,6 +218,7 @@ impl Pcurve {
 #[derive(Clone, Debug)]
 pub struct Curve3 {
     data: Arc<Curve3Data>,
+    parameterization_identity: Arc<()>,
 }
 
 #[derive(Debug)]
@@ -466,7 +467,59 @@ impl Curve3 {
                 domain,
                 bounds: OnceLock::new(),
             }),
+            parameterization_identity: Arc::new(()),
         }
+    }
+
+    fn retaining_parameterization_of(mut self, source: &Self) -> Self {
+        self.parameterization_identity = source.parameterization_identity.clone();
+        self
+    }
+
+    pub(crate) fn shares_parameterization(&self, other: &Self) -> bool {
+        Arc::ptr_eq(
+            &self.parameterization_identity,
+            &other.parameterization_identity,
+        )
+    }
+
+    pub(crate) fn has_certified_same_parameterization(&self, other: &Self) -> bool {
+        if self.shares_parameterization(other) {
+            return true;
+        }
+        let (
+            CurveGeometry3::CircleArc(first) | CurveGeometry3::EllipseArc(first),
+            CurveGeometry3::CircleArc(second) | CurveGeometry3::EllipseArc(second),
+        ) = (&self.data.geometry, &other.data.geometry)
+        else {
+            return false;
+        };
+        if self.kind() != other.kind()
+            || first.direction != second.direction
+            || point3_equal(&first.center, &second.center, crate::STRICT_PREDICATES).value()
+                != Some(true)
+        {
+            return false;
+        }
+        let equal = |left: &Real, right: &Real| {
+            compare_reals(left, right, crate::STRICT_PREDICATES).value() == Some(Ordering::Equal)
+        };
+        if !first
+            .x
+            .0
+            .iter()
+            .zip(&second.x.0)
+            .chain(first.y.0.iter().zip(&second.y.0))
+            .all(|(left, right)| equal(left, right))
+            || !equal(&first.x_radius, &second.x_radius)
+            || !equal(&first.y_radius, &second.y_radius)
+        {
+            return false;
+        }
+        let direction = Real::from(first.direction);
+        let first_offset = &first.angle_at_start - &(direction.clone() * self.domain().start());
+        let second_offset = &second.angle_at_start - &(direction * other.domain().start());
+        equal(&first_offset, &second_offset)
     }
 
     /// Returns the curve family.
@@ -949,12 +1002,28 @@ impl Curve3 {
                     rational_bezier_from_homogeneous(right, Some(&curve.constant_coordinates))?,
                 ))
             }
-            CurveGeometry3::Nurbs(curve) => split_nurbs_curve(curve, parameter),
+            CurveGeometry3::Nurbs(curve) => {
+                let (left, right) = split_nurbs_curve(curve, parameter)?;
+                Ok((
+                    left.retaining_parameterization_of(self),
+                    right.retaining_parameterization_of(self),
+                ))
+            }
             CurveGeometry3::CircleArc(arc) => {
-                split_ellipse_arc(arc, self.domain(), parameter, Curve3Kind::CircleArc)
+                let (left, right) =
+                    split_ellipse_arc(arc, self.domain(), parameter, Curve3Kind::CircleArc)?;
+                Ok((
+                    left.retaining_parameterization_of(self),
+                    right.retaining_parameterization_of(self),
+                ))
             }
             CurveGeometry3::EllipseArc(arc) => {
-                split_ellipse_arc(arc, self.domain(), parameter, Curve3Kind::EllipseArc)
+                let (left, right) =
+                    split_ellipse_arc(arc, self.domain(), parameter, Curve3Kind::EllipseArc)?;
+                Ok((
+                    left.retaining_parameterization_of(self),
+                    right.retaining_parameterization_of(self),
+                ))
             }
         }
     }
@@ -1043,7 +1112,8 @@ impl Curve3 {
                         CurveGeometry3::EllipseArc(geometry)
                     },
                     ParameterDomain::new(start.clone(), end.clone())?,
-                ))
+                )
+                .retaining_parameterization_of(self))
             }
         }
     }
@@ -9285,34 +9355,43 @@ fn locate_ellipse_arc_parameters(
     let x_coordinate = arc.x.dot(&relative);
     let y_coordinate = arc.y.dot(&relative);
     let represented = arc.x.clone() * &x_coordinate + arc.y.clone() * &y_coordinate;
-    if decided_order(compare_reals(
-        &(&relative - &represented).norm_squared(),
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ))? != Ordering::Equal
-    {
+    if matches!(
+        compare_reals(
+            &(&relative - &represented).norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ),
+        PredicateOutcome::Decided { value, .. } if value != Ordering::Equal
+    ) {
         return Ok(CurveParameterLocation::None);
     }
     let normalized_x =
         (x_coordinate / &arc.x_radius).map_err(|_| GeometryError::ProjectiveDivision)?;
     let normalized_y =
         (y_coordinate / &arc.y_radius).map_err(|_| GeometryError::ProjectiveDivision)?;
-    if decided_order(compare_reals(
-        &(&normalized_x * &normalized_x + &normalized_y * &normalized_y),
-        &Real::one(),
-        crate::STRICT_PREDICATES,
-    ))? != Ordering::Equal
-    {
+    let normalized_radius_squared = &normalized_x * &normalized_x + &normalized_y * &normalized_y;
+    if matches!(
+        compare_reals(
+            &normalized_radius_squared,
+            &Real::one(),
+            crate::STRICT_PREDICATES,
+        ),
+        PredicateOutcome::Decided { value, .. } if value != Ordering::Equal
+    ) {
         return Ok(CurveParameterLocation::None);
     }
-    let start_sin = arc.angle_at_start.clone().sin();
-    let start_cos = arc.angle_at_start.clone().cos();
-    let cosine_delta = &start_cos * &normalized_x + &start_sin * &normalized_y;
-    let mut sine_delta = &start_cos * &normalized_y - &start_sin * &normalized_x;
-    if arc.direction < 0 {
-        sine_delta = -sine_delta;
-    }
-    let mut delta = certified_atan2(sine_delta, cosine_delta)?;
+    let angle = match certified_atan2(normalized_y.clone(), normalized_x.clone()) {
+        Ok(angle) => angle,
+        Err(GeometryError::PredicateUnresolved { .. }) => {
+            atan2_replay_candidate(&normalized_y, &normalized_x)?
+        }
+        Err(error) => return Err(error),
+    };
+    let mut delta = if arc.direction < 0 {
+        &arc.angle_at_start - angle
+    } else {
+        angle - &arc.angle_at_start
+    };
     if decided_order(compare_reals(
         &delta,
         &Real::zero(),
@@ -9327,6 +9406,44 @@ fn locate_ellipse_arc_parameters(
     } else {
         Ok(CurveParameterLocation::None)
     }
+}
+
+fn atan2_replay_candidate(y: &Real, x: &Real) -> GeometryResult<Real> {
+    let (Some(y_approx), Some(x_approx)) = (y.to_f64_lossy(), x.to_f64_lossy()) else {
+        return Err(GeometryError::PredicateUnresolved {
+            needed: hyperlimit::RefinementNeed::RealRefinement,
+            stage: hyperlimit::Escalation::Undecided,
+        });
+    };
+    if !y_approx.is_finite() || !x_approx.is_finite() {
+        return Err(GeometryError::PredicateUnresolved {
+            needed: hyperlimit::RefinementNeed::RealRefinement,
+            stage: hyperlimit::Escalation::Undecided,
+        });
+    }
+    if x_approx == 0.0 {
+        return if y_approx > 0.0 {
+            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+        } else if y_approx < 0.0 {
+            (-Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+        } else {
+            Err(GeometryError::PredicateUnresolved {
+                needed: hyperlimit::RefinementNeed::RealRefinement,
+                stage: hyperlimit::Escalation::Undecided,
+            })
+        };
+    }
+    let principal = (y / x)
+        .map_err(|_| GeometryError::ProjectiveDivision)?
+        .atan()
+        .map_err(|_| GeometryError::ElementaryFunction)?;
+    Ok(if x_approx > 0.0 {
+        principal
+    } else if y_approx >= 0.0 {
+        principal + Real::pi()
+    } else {
+        principal - Real::pi()
+    })
 }
 
 fn points_equal(left: &Point3, right: &Point3) -> GeometryResult<bool> {
@@ -10729,6 +10846,8 @@ mod tests {
         )
         .unwrap();
         let (left, right) = nurbs.split_at(&r(1)).unwrap();
+        assert!(left.shares_parameterization(&nurbs));
+        assert!(right.shares_parameterization(&nurbs));
         assert_points_equal(&left.end().unwrap(), &right.start().unwrap());
         assert_points_equal(
             &left.point_at(&q(1, 2)).unwrap(),
@@ -16611,7 +16730,22 @@ mod tests {
         assert_points_equal(&reversed.end().unwrap(), &circle.start().unwrap());
         let split = (half_pi.clone() / r(2)).unwrap();
         let (left, right) = circle.split_at(&split).unwrap();
+        assert!(left.shares_parameterization(&circle));
+        assert!(right.shares_parameterization(&circle));
+        assert!(left.has_certified_same_parameterization(&right));
         assert_points_equal(&left.end().unwrap(), &right.start().unwrap());
+        let retained = circle.subcurve(&split, &half_pi).unwrap();
+        assert!(retained.shares_parameterization(&circle));
+        let independently_constructed = Curve3::circle_arc(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            r(2),
+            Real::zero(),
+            (Real::pi() / r(2)).unwrap(),
+        )
+        .unwrap();
+        assert!(circle.has_certified_same_parameterization(&independently_constructed));
 
         let ellipse = Curve3::ellipse_arc(
             Point3::origin(),

@@ -1758,7 +1758,7 @@ fn stitch_graph_faces(
     let mut second = graph.select_second_faces(operation)?;
     let mut atomic_points = selected_edge_endpoints(&first)?;
     for point in selected_edge_endpoints(&second)? {
-        push_unique_point(&mut atomic_points, point)?;
+        push_atomic_point(&mut atomic_points, point);
     }
     atomize_selected_edges(&mut first, &atomic_points)?;
     atomize_selected_edges(&mut second, &atomic_points)?;
@@ -1989,7 +1989,13 @@ fn selected_edge_use_counts(
     Ok(counts)
 }
 
-fn selected_edge_endpoints(selection: &FaceSelection) -> Result<Vec<Point3>, BooleanError> {
+#[derive(Clone)]
+struct AtomicPoint {
+    point: Point3,
+    curve_parameters: Vec<(Curve3, Real)>,
+}
+
+fn selected_edge_endpoints(selection: &FaceSelection) -> Result<Vec<AtomicPoint>, BooleanError> {
     let mut points = Vec::new();
     for classified in &selection.faces {
         if matches!(
@@ -2018,16 +2024,27 @@ fn selected_edge_endpoints(selection: &FaceSelection) -> Result<Vec<Point3>, Boo
                             .edge(),
                     )
                     .expect("validated selected edge");
-                for vertex in [edge.start(), edge.end()] {
-                    push_unique_point(
+                let curve = selection
+                    .model
+                    .curve(edge.curve())
+                    .expect("validated selected curve")
+                    .clone();
+                for (vertex, parameter) in [
+                    (edge.start(), edge.domain().start()),
+                    (edge.end(), edge.domain().end()),
+                ] {
+                    push_atomic_point(
                         &mut points,
-                        selection
-                            .model
-                            .vertex(vertex)
-                            .expect("validated selected vertex")
-                            .point()
-                            .clone(),
-                    )?;
+                        AtomicPoint {
+                            point: selection
+                                .model
+                                .vertex(vertex)
+                                .expect("validated selected vertex")
+                                .point()
+                                .clone(),
+                            curve_parameters: vec![(curve.clone(), parameter.clone())],
+                        },
+                    );
                 }
             }
         }
@@ -2035,19 +2052,22 @@ fn selected_edge_endpoints(selection: &FaceSelection) -> Result<Vec<Point3>, Boo
     Ok(points)
 }
 
-fn push_unique_point(points: &mut Vec<Point3>, candidate: Point3) -> Result<(), GeometryError> {
-    for point in points.iter() {
-        if points_exactly_equal(point, &candidate)? {
-            return Ok(());
-        }
+fn push_atomic_point(points: &mut Vec<AtomicPoint>, mut candidate: AtomicPoint) {
+    if let Some(index) = points.iter().position(|point| {
+        point3_equal(&point.point, &candidate.point, crate::STRICT_PREDICATES).value() == Some(true)
+    }) {
+        let point = &mut points[index];
+        point
+            .curve_parameters
+            .append(&mut candidate.curve_parameters);
+        return;
     }
     points.push(candidate);
-    Ok(())
 }
 
 fn atomize_selected_edges(
     selection: &mut FaceSelection,
-    points: &[Point3],
+    points: &[AtomicPoint],
 ) -> Result<(), BooleanError> {
     let mut edge_ids = Vec::new();
     for classified in &selection.faces {
@@ -2092,10 +2112,23 @@ fn atomize_selected_edges(
             .expect("validated selected curve");
         let mut cuts = Vec::new();
         for point in points {
-            let crate::CurveParameterLocation::Parameters(parameters) =
-                curve.parameters_of(point)?
-            else {
-                continue;
+            let parameters = point
+                .curve_parameters
+                .iter()
+                .filter_map(|(source, parameter)| {
+                    source
+                        .has_certified_same_parameterization(curve)
+                        .then_some(parameter.clone())
+                })
+                .collect::<Vec<_>>();
+            let parameters = if parameters.is_empty() {
+                let location = curve.parameters_of(&point.point)?;
+                let crate::CurveParameterLocation::Parameters(parameters) = location else {
+                    continue;
+                };
+                parameters
+            } else {
+                parameters
             };
             for parameter in parameters {
                 if exact_order(&parameter, edge.domain().start())? == Ordering::Greater
@@ -2416,10 +2449,31 @@ fn copy_or_match_selected_edge(
             if candidate.is_first == is_first || !candidate.cross_matchable {
                 continue;
             }
-            let same = points_exactly_equal(start, &candidate.start)?
-                && points_exactly_equal(end, &candidate.end)?;
-            let reversed = points_exactly_equal(start, &candidate.end)?
-                && points_exactly_equal(end, &candidate.start)?;
+            if curve_domains_certify_same_parameterization(
+                &restricted_curve,
+                &restricted_domain,
+                &candidate.curve,
+                &candidate.domain,
+            ) {
+                let mapped = (candidate.id, false, candidate.domain.clone());
+                source_edges.insert((is_first, source_edge_id), mapped.clone());
+                return Ok(mapped);
+            }
+            let reversed_curve = restricted_curve.reversed()?;
+            if curve_domains_certify_same_parameterization(
+                &reversed_curve,
+                &restricted_domain,
+                &candidate.curve,
+                &candidate.domain,
+            ) {
+                let mapped = (candidate.id, true, candidate.domain.clone());
+                source_edges.insert((is_first, source_edge_id), mapped.clone());
+                return Ok(mapped);
+            }
+            let same = points_certifiably_equal(start, &candidate.start)
+                && points_certifiably_equal(end, &candidate.end);
+            let reversed = points_certifiably_equal(start, &candidate.end)
+                && points_certifiably_equal(end, &candidate.start);
             if (same || reversed)
                 && exact_edge_curve_equal(&restricted_curve, &candidate.curve, reversed)?
             {
@@ -2435,7 +2489,7 @@ fn copy_or_match_selected_edge(
         .curve(restricted_curve.clone())
         .map_err(ConstructionError::from)?;
     let id = builder
-        .edge(start_id, end_id, curve_id, restricted_domain.clone())
+        .edge_with_endpoint_certificate(start_id, end_id, curve_id, restricted_domain.clone(), true)
         .map_err(ConstructionError::from)?;
     stitched_edges.push(StitchedEdge {
         id,
@@ -2449,6 +2503,33 @@ fn copy_or_match_selected_edge(
     let mapped = (id, false, restricted_domain);
     source_edges.insert((is_first, source_edge_id), mapped.clone());
     Ok(mapped)
+}
+
+fn curve_domains_certify_same_parameterization(
+    first_curve: &Curve3,
+    first_domain: &crate::ParameterDomain,
+    second_curve: &Curve3,
+    second_domain: &crate::ParameterDomain,
+) -> bool {
+    first_curve.has_certified_same_parameterization(second_curve)
+        && compare_reals(
+            first_domain.start(),
+            second_domain.start(),
+            crate::STRICT_PREDICATES,
+        )
+        .value()
+            == Some(Ordering::Equal)
+        && compare_reals(
+            first_domain.end(),
+            second_domain.end(),
+            crate::STRICT_PREDICATES,
+        )
+        .value()
+            == Some(Ordering::Equal)
+}
+
+fn points_certifiably_equal(first: &Point3, second: &Point3) -> bool {
+    point3_equal(first, second, crate::STRICT_PREDICATES).value() == Some(true)
 }
 
 fn exact_edge_curve_equal(
@@ -5832,7 +5913,8 @@ fn points_exactly_equal(first: &Point3, second: &Point3) -> Result<bool, Geometr
         (&first.y, &second.y),
         (&first.z, &second.z),
     ] {
-        if exact_order(first, second)? != Ordering::Equal {
+        let ordering = exact_order(first, second)?;
+        if ordering != Ordering::Equal {
             return Ok(false);
         }
     }

@@ -13660,6 +13660,8 @@ impl ModelBuilder {
             .map(|index| &quarter * Real::from(index))
             .collect::<Vec<_>>();
         let mut face_coordinates = Vec::with_capacity(side_faces.len());
+        let mut edge_parameterization_coordinates =
+            Vec::<(Curve3, Option<Real>, Option<Real>)>::new();
         for face_id in &side_faces {
             let face = self.face_ref(*face_id)?;
             match surface_id {
@@ -13674,14 +13676,14 @@ impl ModelBuilder {
             if wire.edge_uses.len() < 4 {
                 return Ok(None);
             }
-            let mut face_u = Vec::with_capacity(8);
-            let mut face_v = Vec::with_capacity(8);
+            let mut face_u = Vec::with_capacity(2);
+            let mut face_v = Vec::with_capacity(2);
             let mut parameter_segments = Vec::with_capacity(wire.edge_uses.len());
             for edge_use_id in &wire.edge_uses {
                 let edge_use = self.edge_use_ref(*edge_use_id)?;
-                if self.curve_ref(self.edge_ref(edge_use.edge)?.curve)?.kind()
-                    != Curve3Kind::CircleArc
-                {
+                let edge = self.edge_ref(edge_use.edge)?;
+                let spatial_curve = self.curve_ref(edge.curve)?;
+                if spatial_curve.kind() != Curve3Kind::CircleArc {
                     return Ok(None);
                 }
                 let pcurve = self.pcurve_ref(edge_use.pcurve)?;
@@ -13693,9 +13695,45 @@ impl ModelBuilder {
                 if u_constant == v_constant {
                     return Ok(None);
                 }
-                face_u.extend([line.start().x().clone(), line.end().x().clone()]);
-                face_v.extend([line.start().y().clone(), line.end().y().clone()]);
-                parameter_segments.push(Segment2::Line(line.clone()));
+                let proposed_coordinate = if u_constant {
+                    line.start().x()
+                } else {
+                    line.start().y()
+                };
+                let coordinate_index = edge_parameterization_coordinates
+                    .iter()
+                    .position(|(candidate, retained_u, retained_v)| {
+                        let retained = if u_constant { retained_u } else { retained_v };
+                        candidate.has_certified_same_parameterization(spatial_curve)
+                            && retained.as_ref().is_none_or(|retained| {
+                                torus_parameter_coordinates_can_share_representative(
+                                    proposed_coordinate,
+                                    retained,
+                                )
+                            })
+                    })
+                    .unwrap_or_else(|| {
+                        edge_parameterization_coordinates.push((spatial_curve.clone(), None, None));
+                        edge_parameterization_coordinates.len() - 1
+                    });
+                let (_, retained_u, retained_v) =
+                    &mut edge_parameterization_coordinates[coordinate_index];
+                let mut start = line.start().clone();
+                let mut end = line.end().clone();
+                if u_constant {
+                    let coordinate = retained_u.get_or_insert_with(|| start.x().clone()).clone();
+                    start = CurvePoint2::new(coordinate.clone(), start.y().clone());
+                    end = CurvePoint2::new(coordinate.clone(), end.y().clone());
+                    face_u.push(coordinate);
+                } else {
+                    let coordinate = retained_v.get_or_insert_with(|| start.y().clone()).clone();
+                    start = CurvePoint2::new(start.x().clone(), coordinate.clone());
+                    end = CurvePoint2::new(end.x().clone(), coordinate.clone());
+                    face_v.push(coordinate);
+                }
+                parameter_segments.push(Segment2::Line(
+                    LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+                ));
             }
             let (u_min, u_max) = exact_real_min_max(&face_u)?;
             let (v_min, v_max) = exact_real_min_max(&face_v)?;
@@ -19373,6 +19411,30 @@ fn exact_intervals_cover(
         cursor = end;
     }
     real_values_equal(&cursor, domain_end)
+}
+
+fn torus_parameter_coordinates_can_share_representative(left: &Real, right: &Real) -> bool {
+    match compare_reals(left, right, crate::STRICT_PREDICATES) {
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Equal,
+            ..
+        } => true,
+        PredicateOutcome::Decided { .. } => false,
+        PredicateOutcome::Unknown { .. } => {
+            // The caller has already certified identical spatial curve
+            // parameterizations on one torus. Such constant coordinates are
+            // congruent modulo tau. Keeping both strictly inside one period
+            // rules out the distinct 0/tau seam representatives.
+            let zero = Real::zero();
+            let tau = Real::tau();
+            [left, right].into_iter().all(|value| {
+                compare_reals(value, &zero, crate::STRICT_PREDICATES).value()
+                    == Some(std::cmp::Ordering::Greater)
+                    && compare_reals(value, &tau, crate::STRICT_PREDICATES).value()
+                        == Some(std::cmp::Ordering::Less)
+            })
+        }
+    }
 }
 
 fn insert_sorted_real(values: &mut Vec<Real>, value: &Real) -> Result<(), BuildError> {
