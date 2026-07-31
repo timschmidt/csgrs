@@ -1851,20 +1851,28 @@ impl SurfaceIntersectionCurve {
             second_pcurve,
             image_certificates: self.image_certificates,
             first_boundary_contacts: SurfaceIntersectionBoundaryContacts {
-                start: retain_start
-                    .then(|| self.first_boundary_contacts.start.clone())
-                    .unwrap_or_default(),
-                end: retain_end
-                    .then(|| self.first_boundary_contacts.end.clone())
-                    .unwrap_or_default(),
+                start: if retain_start {
+                    self.first_boundary_contacts.start.clone()
+                } else {
+                    Vec::new()
+                },
+                end: if retain_end {
+                    self.first_boundary_contacts.end.clone()
+                } else {
+                    Vec::new()
+                },
             },
             second_boundary_contacts: SurfaceIntersectionBoundaryContacts {
-                start: retain_start
-                    .then(|| self.second_boundary_contacts.start.clone())
-                    .unwrap_or_default(),
-                end: retain_end
-                    .then(|| self.second_boundary_contacts.end.clone())
-                    .unwrap_or_default(),
+                start: if retain_start {
+                    self.second_boundary_contacts.start.clone()
+                } else {
+                    Vec::new()
+                },
+                end: if retain_end {
+                    self.second_boundary_contacts.end.clone()
+                } else {
+                    Vec::new()
+                },
             },
         })
     }

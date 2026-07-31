@@ -10586,9 +10586,7 @@ impl ModelBuilder {
             |first: usize, second: usize, point: &CurvePoint2| -> Result<bool, BuildError> {
                 if first + 1 == second {
                     point_equal(point, &endpoints[first].1)
-                } else if second + 1 == first {
-                    point_equal(point, &endpoints[first].0)
-                } else if first == 0 && second + 1 == endpoints.len() {
+                } else if second + 1 == first || (first == 0 && second + 1 == endpoints.len()) {
                     point_equal(point, &endpoints[first].0)
                 } else if second == 0 && first + 1 == endpoints.len() {
                     point_equal(point, &endpoints[first].1)
@@ -10641,9 +10639,7 @@ impl ModelBuilder {
                     } if adjacent(first_index, second_index) => {
                         let (expected_first, expected_second) = if first_index + 1 == second_index {
                             (Real::one(), Real::zero())
-                        } else if second_index + 1 == first_index {
-                            (Real::zero(), Real::one())
-                        } else if first_index == 0 {
+                        } else if second_index + 1 == first_index || first_index == 0 {
                             (Real::zero(), Real::one())
                         } else {
                             (Real::one(), Real::zero())
@@ -19305,8 +19301,8 @@ fn circle_data_parameterizations_equal(
         };
         (x, y)
     };
-    let (actual_x, actual_y) = direct_frame(&actual);
-    let (expected_x, expected_y) = direct_frame(&expected);
+    let (actual_x, actual_y) = direct_frame(actual);
+    let (expected_x, expected_y) = direct_frame(expected);
     Ok(vectors_equal(&actual_x, &expected_x)? && vectors_equal(&actual_y, &expected_y)?)
 }
 

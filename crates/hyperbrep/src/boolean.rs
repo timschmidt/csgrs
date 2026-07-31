@@ -3931,9 +3931,11 @@ fn contacts_at_interval_start(
     parameter: &Real,
 ) -> Result<Vec<SurfaceIntersectionBoundaryContact>, GeometryError> {
     Ok(
-        (exact_order(parameter, &interval.start)? == Ordering::Equal)
-            .then(|| interval.start_contacts.clone())
-            .unwrap_or_default(),
+        if exact_order(parameter, &interval.start)? == Ordering::Equal {
+            interval.start_contacts.clone()
+        } else {
+            Vec::new()
+        },
     )
 }
 
@@ -3941,9 +3943,13 @@ fn contacts_at_interval_end(
     interval: &FaceRetainedParameterInterval,
     parameter: &Real,
 ) -> Result<Vec<SurfaceIntersectionBoundaryContact>, GeometryError> {
-    Ok((exact_order(parameter, &interval.end)? == Ordering::Equal)
-        .then(|| interval.end_contacts.clone())
-        .unwrap_or_default())
+    Ok(
+        if exact_order(parameter, &interval.end)? == Ordering::Equal {
+            interval.end_contacts.clone()
+        } else {
+            Vec::new()
+        },
+    )
 }
 
 #[derive(Clone, Debug)]
