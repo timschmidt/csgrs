@@ -3658,7 +3658,7 @@ impl CurveRegion2 {
     /// still contains an algebraic endpoint that cannot be represented by a
     /// public [`Curve2`] return explicit `Unsupported` uncertainty rather than
     /// segmenting the boundary. This is the lossless interchange counterpart
-    /// to [`CurveRegion2::segment_to_finite_profiles`](crate::CurveRegion2::segment_to_finite_profiles).
+    /// to [`CurveRegion2::project_to_finite_profiles`].
     pub fn materialized_boundary_paths(&self) -> ExactCurveResult<Classification<Vec<CurvePath2>>> {
         self.materialized_boundary_paths_for_edit(CurveOperation2::NativeTopology)
     }
@@ -3701,7 +3701,7 @@ impl CurveRegion2 {
     /// roles and authored fill rules are preserved in the returned line-only
     /// [`CurveRegion2`]. No coordinate is converted to `f64`; the operation is
     /// nevertheless explicitly lossy with respect to the source curve image.
-    /// Use [`Self::segment_to_finite_profiles`] for direct mesh/IO output and
+    /// Use [`Self::project_to_finite_profiles`] for direct mesh/IO output and
     /// [`Self::recover_from_finite_profiles`] for its reconstruction counterpart.
     pub fn segment_certified(
         &self,

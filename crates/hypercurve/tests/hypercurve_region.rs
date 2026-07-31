@@ -867,7 +867,8 @@ fn finite_profile_projection_preserves_exact_hole_ownership() {
 
     let profiles = region
         .project_to_finite_profiles(&options, &policy())
-        .unwrap();
+        .unwrap()
+        .into_value();
     let Classification::Decided(profiles) = profiles else {
         panic!("finite profile ownership should be decided: {profiles:?}");
     };
@@ -892,7 +893,8 @@ fn finite_profile_projection_keeps_orphan_hole_uncertainty() {
     assert_eq!(
         region
             .project_to_finite_profiles(&options, &policy())
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }

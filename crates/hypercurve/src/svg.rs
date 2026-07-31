@@ -1470,6 +1470,7 @@ pub fn export_svg_document_with_options(
             .region
             .project_to_finite_profiles(&projection, &CurveContext::STRICT)
             .map_err(svg_geometry_error)?
+            .into_value()
         {
             Classification::Decided(profiles) => profiles,
             Classification::Uncertain(reason) => {
@@ -1621,8 +1622,9 @@ fn append_native_path(
                 let one_curve =
                     CurvePath2::try_new(vec![curve.clone()]).map_err(svg_geometry_error)?;
                 let polyline = one_curve
-                    .project_to_finite_polyline(projection)
-                    .map_err(svg_geometry_error)?;
+                    .project_to_finite_polyline(projection, &CurveContext::STRICT)
+                    .map_err(svg_geometry_error)?
+                    .into_value();
                 if polyline.points().len() < 2 {
                     return Err(SvgError::Geometry(
                         "finite projection emitted no curve continuation".into(),

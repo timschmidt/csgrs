@@ -113,6 +113,7 @@ fn finite_region_profile_triangulates_material_with_owned_hole() {
             &CurveContext::STRICT,
         )
         .unwrap()
+        .into_value()
         .expect_decided("rectangle hole ownership should be decided");
 
     assert_eq!(profiles.len(), 1);

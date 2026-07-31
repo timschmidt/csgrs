@@ -330,7 +330,7 @@ impl Contour2 {
 impl CurveRegion2 {
     /// Recovers exact-scalar line/arc boundaries from segmented finite profiles.
     ///
-    /// This mirrors [`CurveRegion2::segment_to_finite_profiles`]. Material and
+    /// This mirrors [`CurveRegion2::project_to_finite_profiles`]. Material and
     /// hole bins are taken directly from the profile structure rather than
     /// inferred from sampled winding. General source curves cannot be recovered
     /// losslessly from chords, so use the evidence-bearing variant when that

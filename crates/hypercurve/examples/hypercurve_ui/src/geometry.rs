@@ -1044,6 +1044,7 @@ impl Shape {
             Classification::Uncertain(_) => match region
                 .project_to_finite_curve_paths(&CurveContext::STRICT)
                 .map_err(|error| error.to_string())?
+                .into_value()
             {
                 Classification::Decided(paths) => paths,
                 Classification::Uncertain(_) => return Ok(None),
