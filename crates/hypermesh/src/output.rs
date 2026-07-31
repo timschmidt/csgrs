@@ -19,6 +19,7 @@ use hyperreal::{RationalLine2Filter, RationalPoint3Query, RealSign};
 pub(crate) const ARRANGEMENT_CLASSIFICATION: i8 = 2;
 
 type SplitEdgeCache = StorageHashMap<[usize; 2], SplitEdgeChain>;
+type ApproximateOutputVertex = [[f64; 2]; 3];
 
 struct SplitEdgeChain(Vec<usize>);
 
@@ -31,7 +32,7 @@ impl SplitEdgeChain {
 }
 
 enum SplitEdgeSearch<'a> {
-    Approximate(&'a [[f64; 3]]),
+    Approximate(&'a [ApproximateOutputVertex]),
     AxisOrder(&'a [Vec<usize>; 3]),
 }
 
@@ -883,7 +884,7 @@ where
         .then(|| build_construction_edge_candidates(polygons, &indexed_polygons, vertices.len()))
         .transpose()?;
     let approximate_vertices = prefer_precomputed_f64_scan
-        .then(|| exact_output_vertices_f64(&vertices))
+        .then(|| exact_output_vertex_enclosures(&vertices))
         .flatten();
     let axis_order = (approximate_vertices.is_none() && construction_candidates.is_none())
         .then(|| sorted_vertex_indices_by_axis(decisions, &vertices))
@@ -2009,26 +2010,20 @@ fn split_segment_subedges_exact_candidates<'a>(
     }
 }
 
-fn exact_output_vertices_f64(vertices: &[OutputVertex]) -> Option<Vec<[f64; 3]>> {
-    vertices
-        .iter()
-        .map(|vertex| {
-            let coordinates = [&vertex.x, &vertex.y, &vertex.z];
-            if coordinates
-                .iter()
-                .any(|coordinate| coordinate.exact_rational_ref().is_none())
-            {
-                return None;
-            }
-            let point = coordinates
-                .map(|coordinate| coordinate.to_f64_lossy())
-                .map(|coordinate| coordinate.filter(|coordinate| coordinate.is_finite()));
-            let [Some(x), Some(y), Some(z)] = point else {
-                return None;
-            };
-            Some([x, y, z])
-        })
-        .collect()
+fn exact_output_vertex_enclosures(
+    vertices: &[OutputVertex],
+) -> Option<Vec<ApproximateOutputVertex>> {
+    let mut approximate = Vec::with_capacity(vertices.len());
+    for vertex in vertices {
+        let coordinates = [&vertex.x, &vertex.y, &vertex.z];
+        let [Some(x), Some(y), Some(z)] =
+            coordinates.map(|coordinate| coordinate.exact_rational_ref()?.to_f64_enclosure())
+        else {
+            return None;
+        };
+        approximate.push([x, y, z]);
+    }
+    Some(approximate)
 }
 
 fn build_split_edge_chain(
@@ -2048,8 +2043,8 @@ fn build_split_edge_chain(
                     continue;
                 }
                 if (0..3).all(|axis| {
-                    point[axis] >= start[axis].min(end[axis])
-                        && point[axis] <= start[axis].max(end[axis])
+                    point[axis][1] >= start[axis][0].min(end[axis][0])
+                        && point[axis][0] <= start[axis][1].max(end[axis][1])
                 }) && point_on_segment_exact(
                     decisions,
                     &vertices[vertex_index],
@@ -2062,7 +2057,7 @@ fn build_split_edge_chain(
         }
         SplitEdgeSearch::AxisOrder(axis_order) => {
             let axis = dominant_segment_axis(decisions, &vertices[edge[0]], &vertices[edge[1]])?;
-            let bounds = exact_edge_bounds(decisions, edge, vertices)?;
+            let bounds = exact_edge_bounds(decisions, edge, vertices, None)?;
             let (start, end) =
                 candidate_vertex_index_range_for_edge(decisions, axis_order, vertices, edge, axis)?;
             for &vertex_index in &axis_order[axis][start..end] {
@@ -2260,14 +2255,19 @@ pub(crate) fn resolve_tjunctions(
 ) -> HypermeshResult<BooleanMesh> {
     let mut soup = merge_duplicate_vertices(decisions, input)?;
     remove_degenerate_and_duplicate_triangles(decisions, &mut soup)?;
+    let mut approximate_vertices = exact_output_vertex_enclosures(&soup.vertices);
 
     loop {
-        let split_tjunction = split_one_tjunction_pass(decisions, &mut soup)?;
-        let split_crossing = split_edge_crossing_events(decisions, &mut soup)?;
-        if !split_tjunction && !split_crossing {
-            return Ok(soup);
+        if split_one_tjunction_pass(decisions, &mut soup, approximate_vertices.as_deref())? {
+            remove_degenerate_and_duplicate_triangles(decisions, &mut soup)?;
+            continue;
         }
-        remove_degenerate_and_duplicate_triangles(decisions, &mut soup)?;
+        if split_edge_crossing_events(decisions, &mut soup, approximate_vertices.as_deref())? {
+            remove_degenerate_and_duplicate_triangles(decisions, &mut soup)?;
+            approximate_vertices = exact_output_vertex_enclosures(&soup.vertices);
+            continue;
+        }
+        return Ok(soup);
     }
 }
 
@@ -2440,12 +2440,12 @@ fn update_closure_evidence(evidence: &mut BooleanMeshClosureEvidence, uses: Dire
 fn split_one_tjunction_pass(
     decisions: &DecisionContext,
     soup: &mut BooleanMesh,
+    approximate_vertices: Option<&[ApproximateOutputVertex]>,
 ) -> HypermeshResult<bool> {
     let directed_uses = triangle_edge_counts(&soup.triangles);
     if directed_uses.values().all(|uses| uses.is_balanced()) {
         return Ok(false);
     }
-    let approximate_vertices = exact_output_vertices_f64(&soup.vertices);
     let axis_order = approximate_vertices
         .is_none()
         .then(|| sorted_vertex_indices_by_axis(decisions, &soup.vertices))
@@ -2477,7 +2477,7 @@ fn split_one_tjunction_pass(
         let chain = build_split_edge_chain(
             decisions,
             &soup.vertices,
-            if let Some(approximate_vertices) = &approximate_vertices {
+            if let Some(approximate_vertices) = approximate_vertices {
                 SplitEdgeSearch::Approximate(approximate_vertices)
             } else {
                 SplitEdgeSearch::AxisOrder(
@@ -2553,6 +2553,7 @@ fn split_one_tjunction_pass(
 fn split_edge_crossing_events(
     decisions: &DecisionContext,
     soup: &mut BooleanMesh,
+    approximate_vertices: Option<&[ApproximateOutputVertex]>,
 ) -> HypermeshResult<bool> {
     let edge_capacity =
         soup.triangles
@@ -2577,10 +2578,9 @@ fn split_edge_crossing_events(
 
     let mut bounded_edges = edges
         .into_iter()
-        .map(|edge| exact_edge_bounds(decisions, edge, &soup.vertices))
+        .map(|edge| exact_edge_bounds(decisions, edge, &soup.vertices, approximate_vertices))
         .collect::<HypermeshResult<Vec<_>>>()?;
-    let approximate_vertices = exact_output_vertices_f64(&soup.vertices);
-    if let Some(approximate_vertices) = &approximate_vertices {
+    if let Some(approximate_vertices) = approximate_vertices {
         bounded_edges.sort_unstable_by(|left, right| {
             approximate_edge_min(approximate_vertices, left.edge, 0)
                 .total_cmp(&approximate_edge_min(approximate_vertices, right.edge, 0))
@@ -2625,10 +2625,9 @@ fn split_edge_crossing_events(
     for left_index in 0..bounded_edges.len() {
         let left = &bounded_edges[left_index];
         for right in &bounded_edges[(left_index + 1)..] {
-            if let Some(approximate_vertices) = &approximate_vertices {
-                // Rational-to-f64 rounding is monotone: rounded separation
-                // proves exact separation, while every survivor is checked
-                // against the exact bounds below.
+            if let Some(approximate_vertices) = approximate_vertices {
+                // Disjoint outward-rounded enclosures prove exact separation;
+                // every survivor is checked against the exact bounds below.
                 if approximate_edge_min(approximate_vertices, right.edge, 0)
                     > approximate_edge_max(approximate_vertices, left.edge, 0)
                 {
@@ -2667,7 +2666,7 @@ fn split_edge_crossing_events(
                 &soup.vertices[left_edge[1]],
                 &soup.vertices[right_edge[0]],
                 &soup.vertices[right_edge[1]],
-                approximate_vertices.as_ref().and_then(|vertices| {
+                approximate_vertices.and_then(|vertices| {
                     approximate_projection_axis(vertices, left_edge, right_edge)
                 }),
             )?
@@ -4069,16 +4068,24 @@ fn map_planar_triangulation_error(error: hypertri::Error) -> HypermeshError {
     }
 }
 
-fn approximate_edge_min(vertices: &[[f64; 3]], edge: [usize; 2], axis: usize) -> f64 {
-    vertices[edge[0]][axis].min(vertices[edge[1]][axis])
+fn approximate_edge_min(
+    vertices: &[ApproximateOutputVertex],
+    edge: [usize; 2],
+    axis: usize,
+) -> f64 {
+    vertices[edge[0]][axis][0].min(vertices[edge[1]][axis][0])
 }
 
-fn approximate_edge_max(vertices: &[[f64; 3]], edge: [usize; 2], axis: usize) -> f64 {
-    vertices[edge[0]][axis].max(vertices[edge[1]][axis])
+fn approximate_edge_max(
+    vertices: &[ApproximateOutputVertex],
+    edge: [usize; 2],
+    axis: usize,
+) -> f64 {
+    vertices[edge[0]][axis][1].max(vertices[edge[1]][axis][1])
 }
 
 fn approximate_edge_bounds_overlap(
-    vertices: &[[f64; 3]],
+    vertices: &[ApproximateOutputVertex],
     left: [usize; 2],
     right: [usize; 2],
 ) -> bool {
@@ -4090,12 +4097,12 @@ fn approximate_edge_bounds_overlap(
 }
 
 fn approximate_projection_axis(
-    vertices: &[[f64; 3]],
+    vertices: &[ApproximateOutputVertex],
     left: [usize; 2],
     right: [usize; 2],
 ) -> Option<usize> {
-    let left = [0, 1, 2].map(|axis| vertices[left[1]][axis] - vertices[left[0]][axis]);
-    let right = [0, 1, 2].map(|axis| vertices[right[1]][axis] - vertices[right[0]][axis]);
+    let left = [0, 1, 2].map(|axis| vertices[left[1]][axis][0] - vertices[left[0]][axis][0]);
+    let right = [0, 1, 2].map(|axis| vertices[right[1]][axis][0] - vertices[right[0]][axis][0]);
     let normal = [
         left[1] * right[2] - left[2] * right[1],
         left[2] * right[0] - left[0] * right[2],
@@ -4116,17 +4123,31 @@ fn exact_edge_bounds(
     decisions: &DecisionContext,
     edge: [usize; 2],
     vertices: &[OutputVertex],
+    approximate_vertices: Option<&[ApproximateOutputVertex]>,
 ) -> HypermeshResult<ExactEdgeBounds> {
     let mut min = [edge[0]; 3];
     let mut max = [edge[1]; 3];
     for axis in 0..3 {
-        if compare_real_decision(
-            decisions,
-            vertex_axis(&vertices[edge[0]], axis),
-            vertex_axis(&vertices[edge[1]], axis),
-        )?
-        .is_gt()
-        {
+        let approximate_order = approximate_vertices.and_then(|vertices| {
+            let left = vertices[edge[0]][axis];
+            let right = vertices[edge[1]][axis];
+            if left[1] < right[0] {
+                Some(std::cmp::Ordering::Less)
+            } else if right[1] < left[0] {
+                Some(std::cmp::Ordering::Greater)
+            } else {
+                None
+            }
+        });
+        let ordering = match approximate_order {
+            None => compare_real_decision(
+                decisions,
+                vertex_axis(&vertices[edge[0]], axis),
+                vertex_axis(&vertices[edge[1]], axis),
+            )?,
+            Some(ordering) => ordering,
+        };
+        if ordering.is_gt() {
             min[axis] = edge[1];
             max[axis] = edge[0];
         }
@@ -5018,14 +5039,18 @@ mod tests {
             triangles: vec![[1, 0, 2]],
             sources: vec![TriangleSource::default()],
         };
-        let approximate = exact_output_vertices_f64(&soup.vertices).unwrap();
-        assert_eq!(approximate[0][0], approximate[1][0]);
-        assert_eq!(approximate[0][0], approximate[3][0]);
+        let approximate = exact_output_vertex_enclosures(&soup.vertices).unwrap();
+        assert!(approximate[0][0][1] >= approximate[1][0][0]);
+        assert!(approximate[1][0][1] >= approximate[0][0][0]);
+        assert!(approximate[0][0][1] >= approximate[3][0][0]);
+        assert!(approximate[3][0][1] >= approximate[0][0][0]);
 
         for_each_policy(|decisions| {
             let mut resolved = soup.clone();
 
-            assert!(split_one_tjunction_pass(decisions, &mut resolved).unwrap());
+            assert!(
+                split_one_tjunction_pass(decisions, &mut resolved, Some(&approximate)).unwrap()
+            );
             assert_eq!(resolved.triangles, vec![[1, 3, 2], [3, 0, 2]]);
             assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
         });
@@ -5039,7 +5064,32 @@ mod tests {
             ovx(&sqrt_two * &Real::from(2), 0, 0),
             ovx(sqrt_two, 0, 0),
         ];
-        assert!(exact_output_vertices_f64(&vertices).is_none());
+        assert!(exact_output_vertex_enclosures(&vertices).is_none());
+
+        for_each_policy(|decisions| {
+            let axis_order = sorted_vertex_indices_by_axis(decisions, &vertices).unwrap();
+            let chain = build_split_edge_chain(
+                decisions,
+                &vertices,
+                SplitEdgeSearch::AxisOrder(&axis_order),
+                [0, 1],
+            )
+            .unwrap();
+
+            assert_eq!(chain.subedges().collect::<Vec<_>>(), vec![[0, 2], [2, 1]]);
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
+    }
+
+    #[test]
+    fn tjunction_chain_uses_exact_axis_order_outside_f64_enclosure_range() {
+        let huge = (Real::from(2).powi_i64(1025).unwrap() / Real::from(3)).unwrap();
+        let vertices = vec![
+            ov(0, 0, 0),
+            ovx(&huge * &Real::from(2), 0, 0),
+            ovx(huge, 0, 0),
+        ];
+        assert!(exact_output_vertex_enclosures(&vertices).is_none());
 
         for_each_policy(|decisions| {
             let axis_order = sorted_vertex_indices_by_axis(decisions, &vertices).unwrap();
@@ -5093,9 +5143,45 @@ mod tests {
 
         for_each_policy(|decisions| {
             let mut resolved = soup.clone();
-            assert!(split_edge_crossing_events(decisions, &mut resolved).unwrap());
+            let approximate = exact_output_vertex_enclosures(&resolved.vertices);
+            assert!(
+                split_edge_crossing_events(decisions, &mut resolved, approximate.as_deref())
+                    .unwrap()
+            );
             assert!(resolved.vertices.contains(&ov(0, 0, 0)));
             assert!(resolved.vertices.contains(&ov(10, 0, 0)));
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
+    }
+
+    #[test]
+    fn internal_resolution_exhausts_tjunctions_before_crossing_batches() {
+        let soup = BooleanMesh {
+            vertices: vec![
+                ov(-10, 0, 0),
+                ov(-8, 0, 0),
+                ov(-10, 2, 0),
+                ov(-9, 0, 0),
+                ov(0, 0, 1),
+                ov(4, 0, 1),
+                ov(0, -1, 1),
+                ov(2, -2, 1),
+                ov(2, 2, 1),
+                ov(3, -2, 1),
+            ],
+            triangles: vec![[0, 1, 2], [4, 5, 6], [7, 8, 9]],
+            sources: vec![TriangleSource::default(); 3],
+        };
+
+        for_each_policy(|decisions| {
+            let resolved = resolve_tjunctions(decisions, &soup).unwrap();
+            assert!(
+                resolved
+                    .triangles
+                    .iter()
+                    .any(|triangle| triangle.contains(&3))
+            );
+            assert!(resolved.vertices.contains(&ov(2, 0, 1)));
             assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
         });
     }
@@ -5115,13 +5201,17 @@ mod tests {
             triangles: vec![[0, 1, 2], [3, 4, 5]],
             sources: vec![TriangleSource::default(); 2],
         };
-        let approximate = exact_output_vertices_f64(&soup.vertices).unwrap();
-        assert_eq!(approximate[0][0], approximate[1][0]);
-        assert_eq!(approximate[0][0], approximate[3][0]);
+        let approximate = exact_output_vertex_enclosures(&soup.vertices).unwrap();
+        assert!(approximate[0][0][1] >= approximate[1][0][0]);
+        assert!(approximate[1][0][1] >= approximate[0][0][0]);
+        assert!(approximate[0][0][1] >= approximate[3][0][0]);
+        assert!(approximate[3][0][1] >= approximate[0][0][0]);
 
         for_each_policy(|decisions| {
             let mut resolved = soup.clone();
-            assert!(split_edge_crossing_events(decisions, &mut resolved).unwrap());
+            assert!(
+                split_edge_crossing_events(decisions, &mut resolved, Some(&approximate)).unwrap()
+            );
             let expected = ovx(&base + &Real::one(), 0, 0);
             assert!(
                 resolved
@@ -5176,9 +5266,14 @@ mod tests {
             soup.sources.push(TriangleSource::default());
         }
 
+        let approximate = exact_output_vertex_enclosures(&soup.vertices);
         assert!(
-            split_edge_crossing_events(&crate::test_support::approximate_decisions(), &mut soup)
-                .unwrap()
+            split_edge_crossing_events(
+                &crate::test_support::approximate_decisions(),
+                &mut soup,
+                approximate.as_deref(),
+            )
+            .unwrap()
         );
         for x in 0..17_i32 {
             for y in 0..17_i32 {
