@@ -793,7 +793,10 @@ mod tests {
                 .unwrap()
                 .into_value();
         for (parameter, expected) in first_system.parameters.iter().zip(second_points) {
-            let actual = curve.point_at(parameter).unwrap();
+            let actual = curve
+                .point_at(parameter, &CurveContext::STRICT)
+                .unwrap()
+                .into_value();
             exact_point_equal(&actual, &expected, &CurveContext::STRICT).unwrap();
         }
     }

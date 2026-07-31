@@ -859,8 +859,12 @@ impl Curve2 {
     /// Native line, arc, and Bezier parameters use `[0, 1]`. Arc parameters
     /// traverse exact rational quadratic spans in sweep order. Spline
     /// parameters use their authored knot domain.
-    pub fn point_at(&self, parameter: &Real) -> ExactCurveResult<Point2> {
-        self.point_at_side(parameter, CurveParameterSide2::Automatic)
+    pub fn point_at(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        self.point_at_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact point with explicit spline-knot side policy.
@@ -868,8 +872,11 @@ impl Curve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<Point2> {
-        self.point_at_side_with_policy(parameter, side, &CurveContext::STRICT)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.point_at_side_with_policy(parameter, side, attempt)
+        })
     }
 
     pub(crate) fn point_at_side_with_policy(
@@ -936,8 +943,12 @@ impl Curve2 {
     }
 
     /// Evaluates an explicitly periodic spline at any exactly wrappable parameter.
-    pub fn point_at_wrapped(&self, parameter: &Real) -> ExactCurveResult<Point2> {
-        self.point_at_wrapped_side(parameter, CurveParameterSide2::Automatic)
+    pub fn point_at_wrapped(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        self.point_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates a periodic spline with explicit side selection at wrapped seams.
@@ -945,12 +956,26 @@ impl Curve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.point_at_wrapped_side_with_policy(parameter, side, attempt)
+        })
+    }
+
+    pub(crate) fn point_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
         match self.geometry() {
             CurveGeometry2::PolynomialBSpline(curve) => {
-                curve.point_at_wrapped_side(parameter, side)
+                curve.point_at_wrapped_side_with_policy(parameter, side, policy)
             }
-            CurveGeometry2::Nurbs(curve) => curve.point_at_wrapped_side(parameter, side),
+            CurveGeometry2::Nurbs(curve) => {
+                curve.point_at_wrapped_side_with_policy(parameter, side, policy)
+            }
             _ => Err(ExactCurveError::invalid(
                 CurveOperation2::Evaluation,
                 self.family(),
@@ -964,8 +989,12 @@ impl Curve2 {
     /// Native curves use `[0, 1]`; spline curves use their authored knot
     /// domain. Promoted rational evaluators are built once per shared curve and
     /// preserve source-span parameter scaling.
-    pub fn derivative_at(&self, parameter: &Real) -> ExactCurveResult<CurveDerivative2> {
-        self.derivative_at_side(parameter, CurveParameterSide2::Automatic)
+    pub fn derivative_at(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        self.derivative_at_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact first derivative with explicit knot-boundary side policy.
@@ -973,8 +1002,11 @@ impl Curve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<CurveDerivative2> {
-        self.derivative_at_side_with_policy(parameter, side, &CurveContext::STRICT)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.derivative_at_side_with_policy(parameter, side, attempt)
+        })
     }
 
     pub(crate) fn derivative_at_side_with_policy(
@@ -988,8 +1020,12 @@ impl Curve2 {
     }
 
     /// Evaluates the first periodic derivative at any wrappable parameter.
-    pub fn derivative_at_wrapped(&self, parameter: &Real) -> ExactCurveResult<CurveDerivative2> {
-        self.derivative_at_wrapped_side(parameter, CurveParameterSide2::Automatic)
+    pub fn derivative_at_wrapped(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        self.derivative_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates the first periodic derivative with explicit seam-side selection.
@@ -997,9 +1033,13 @@ impl Curve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<CurveDerivative2> {
-        let mut derivatives = self.derivatives_at_wrapped_side(parameter, 1, side)?;
-        Ok(derivatives.pop().expect("one derivative requested"))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let mut derivatives =
+                self.derivatives_at_wrapped_side_with_policy(parameter, 1, side, attempt)?;
+            Ok(derivatives.pop().expect("one derivative requested"))
+        })
     }
 
     /// Evaluates exact derivatives through `max_order` in the public parameter.
@@ -1010,8 +1050,9 @@ impl Curve2 {
         &self,
         parameter: &Real,
         max_order: usize,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.derivatives_at_side(parameter, max_order, CurveParameterSide2::Automatic)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        self.derivatives_at_side(parameter, max_order, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates exact derivatives with explicit retained-fragment side policy.
@@ -1020,11 +1061,14 @@ impl Curve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.derivatives_at_side_with_policy(parameter, max_order, side, &CurveContext::STRICT)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.derivatives_at_side_with_policy(parameter, max_order, side, attempt)
+        })
     }
 
-    fn derivatives_at_side_with_policy(
+    pub(crate) fn derivatives_at_side_with_policy(
         &self,
         parameter: &Real,
         max_order: usize,
@@ -1069,8 +1113,14 @@ impl Curve2 {
         &self,
         parameter: &Real,
         max_order: usize,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.derivatives_at_wrapped_side(parameter, max_order, CurveParameterSide2::Automatic)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        self.derivatives_at_wrapped_side(
+            parameter,
+            max_order,
+            CurveParameterSide2::Automatic,
+            policy,
+        )
     }
 
     /// Evaluates periodic derivatives with explicit side selection at wrapped seams.
@@ -1079,13 +1129,26 @@ impl Curve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, attempt)
+        })
+    }
+
+    pub(crate) fn derivatives_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         match self.geometry() {
             CurveGeometry2::PolynomialBSpline(curve) => {
-                curve.derivatives_at_wrapped_side(parameter, max_order, side)
+                curve.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, policy)
             }
             CurveGeometry2::Nurbs(curve) => {
-                curve.derivatives_at_wrapped_side(parameter, max_order, side)
+                curve.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, policy)
             }
             _ => Err(ExactCurveError::invalid(
                 CurveOperation2::Evaluation,
@@ -1348,8 +1411,12 @@ impl<'a> CurveView2<'a> {
     }
 
     /// Evaluates this borrowed curve without cloning its retained carrier.
-    pub fn point_at(self, parameter: &Real) -> ExactCurveResult<Point2> {
-        self.curve.point_at(parameter)
+    pub fn point_at(
+        self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        self.curve.point_at(parameter, policy)
     }
 
     /// Evaluates an exact point with explicit spline-knot side policy.
@@ -1357,13 +1424,18 @@ impl<'a> CurveView2<'a> {
         self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<Point2> {
-        self.curve.point_at_side(parameter, side)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        self.curve.point_at_side(parameter, side, policy)
     }
 
     /// Evaluates an explicitly periodic spline at any wrappable parameter.
-    pub fn point_at_wrapped(self, parameter: &Real) -> ExactCurveResult<Point2> {
-        self.curve.point_at_wrapped(parameter)
+    pub fn point_at_wrapped(
+        self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        self.curve.point_at_wrapped(parameter, policy)
     }
 
     /// Evaluates a periodic spline with explicit side selection at wrapped seams.
@@ -1371,13 +1443,18 @@ impl<'a> CurveView2<'a> {
         self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<Point2> {
-        self.curve.point_at_wrapped_side(parameter, side)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        self.curve.point_at_wrapped_side(parameter, side, policy)
     }
 
     /// Evaluates the exact first derivative without cloning the curve.
-    pub fn derivative_at(self, parameter: &Real) -> ExactCurveResult<CurveDerivative2> {
-        self.curve.derivative_at(parameter)
+    pub fn derivative_at(
+        self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        self.curve.derivative_at(parameter, policy)
     }
 
     /// Evaluates an exact one-sided or certified two-sided first derivative.
@@ -1385,13 +1462,18 @@ impl<'a> CurveView2<'a> {
         self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<CurveDerivative2> {
-        self.curve.derivative_at_side(parameter, side)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        self.curve.derivative_at_side(parameter, side, policy)
     }
 
     /// Evaluates the first periodic derivative at any wrappable parameter.
-    pub fn derivative_at_wrapped(self, parameter: &Real) -> ExactCurveResult<CurveDerivative2> {
-        self.curve.derivative_at_wrapped(parameter)
+    pub fn derivative_at_wrapped(
+        self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        self.curve.derivative_at_wrapped(parameter, policy)
     }
 
     /// Evaluates the first periodic derivative with explicit seam-side selection.
@@ -1399,8 +1481,10 @@ impl<'a> CurveView2<'a> {
         self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<CurveDerivative2> {
-        self.curve.derivative_at_wrapped_side(parameter, side)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        self.curve
+            .derivative_at_wrapped_side(parameter, side, policy)
     }
 
     /// Evaluates exact derivatives through `max_order` without cloning the curve.
@@ -1408,8 +1492,9 @@ impl<'a> CurveView2<'a> {
         self,
         parameter: &Real,
         max_order: usize,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.curve.derivatives_at(parameter, max_order)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        self.curve.derivatives_at(parameter, max_order, policy)
     }
 
     /// Evaluates exact derivatives with explicit retained-fragment side policy.
@@ -1418,8 +1503,10 @@ impl<'a> CurveView2<'a> {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.curve.derivatives_at_side(parameter, max_order, side)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        self.curve
+            .derivatives_at_side(parameter, max_order, side, policy)
     }
 
     /// Evaluates periodic derivatives through `max_order` at any wrappable parameter.
@@ -1427,8 +1514,10 @@ impl<'a> CurveView2<'a> {
         self,
         parameter: &Real,
         max_order: usize,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.curve.derivatives_at_wrapped(parameter, max_order)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        self.curve
+            .derivatives_at_wrapped(parameter, max_order, policy)
     }
 
     /// Evaluates periodic derivatives with explicit side selection at wrapped seams.
@@ -1437,9 +1526,10 @@ impl<'a> CurveView2<'a> {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
         self.curve
-            .derivatives_at_wrapped_side(parameter, max_order, side)
+            .derivatives_at_wrapped_side(parameter, max_order, side, policy)
     }
 }
 

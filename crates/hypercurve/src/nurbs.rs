@@ -542,8 +542,14 @@ impl NurbsCurve2 {
         &self,
         target_degree: usize,
     ) -> ExactCurveResult<NurbsDegreeElevation2> {
-        let decomposition = self.bezier_decomposition()?;
-        let rational_spans = self.rational_spans()?;
+        let decomposition = self.bezier_decomposition_for_operation(
+            &CurveContext::STRICT,
+            CurveOperation2::DegreeElevation,
+        )?;
+        let rational_spans = self.rational_spans_for_operation(
+            &CurveContext::STRICT,
+            CurveOperation2::DegreeElevation,
+        )?;
         let spans = decomposition
             .spans()
             .iter()
@@ -997,11 +1003,13 @@ impl NurbsCurve2 {
     }
 
     /// Returns the shared exact homogeneous Bezier decomposition.
-    pub fn bezier_decomposition(&self) -> ExactCurveResult<&NurbsBezierDecomposition2> {
-        self.bezier_decomposition_for_operation(
-            &CurveContext::STRICT,
-            CurveOperation2::BezierDecomposition,
-        )
+    pub fn bezier_decomposition(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<&NurbsBezierDecomposition2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.bezier_decomposition_for_operation(attempt, CurveOperation2::BezierDecomposition)
+        })
     }
 
     pub(crate) fn bezier_decomposition_with_policy(
@@ -1034,13 +1042,17 @@ impl NurbsCurve2 {
     /// Iterates exact retained Bezier spans with indices and knot intervals.
     pub fn bezier_spans(
         &self,
-    ) -> ExactCurveResult<impl ExactSizeIterator<Item = NurbsBezierSpanView2<'_>>> {
-        Ok(self
-            .bezier_decomposition()?
-            .spans()
-            .iter()
-            .enumerate()
-            .map(move |(span_index, span)| NurbsBezierSpanView2 { span_index, span }))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<impl ExactSizeIterator<Item = NurbsBezierSpanView2<'_>>>>
+    {
+        resolve_certified_operation(policy, |attempt| {
+            Ok(self
+                .bezier_decomposition_for_operation(attempt, CurveOperation2::BezierDecomposition)?
+                .spans()
+                .iter()
+                .enumerate()
+                .map(move |(span_index, span)| NurbsBezierSpanView2 { span_index, span }))
+        })
     }
 
     /// Returns native conic/polynomial Bezier spans when every span supports them.
@@ -1048,8 +1060,13 @@ impl NurbsCurve2 {
     /// Linear rational spans are elevated exactly in homogeneous coordinates,
     /// quadratics use native conics, equal-weight cubics collapse to polynomial
     /// cubics, and all remaining spans use exact general rational Beziers.
-    pub fn native_subcurves(&self) -> ExactCurveResult<&[BezierSubcurve2]> {
-        self.native_subcurves_for_operation(&CurveContext::STRICT, CurveOperation2::NativeTopology)
+    pub fn native_subcurves(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<&[BezierSubcurve2]>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.native_subcurves_for_operation(attempt, CurveOperation2::NativeTopology)
+        })
     }
 
     pub(crate) fn native_subcurves_with_policy(
@@ -1090,22 +1107,22 @@ impl NurbsCurve2 {
     /// Iterates native promoted spans without losing their rational source span.
     pub fn native_spans(
         &self,
-    ) -> ExactCurveResult<impl ExactSizeIterator<Item = NurbsNativeSpanView2<'_>>> {
-        let decomposition = self.bezier_decomposition_for_operation(
-            &CurveContext::STRICT,
-            CurveOperation2::NativeTopology,
-        )?;
-        let native = self.native_subcurves_for_operation(
-            &CurveContext::STRICT,
-            CurveOperation2::NativeTopology,
-        )?;
-        debug_assert_eq!(decomposition.spans().len(), native.len());
-        Ok(decomposition.spans().iter().zip(native).enumerate().map(
-            move |(span_index, (span, curve))| NurbsNativeSpanView2 {
-                source_span: NurbsBezierSpanView2 { span_index, span },
-                curve,
-            },
-        ))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<impl ExactSizeIterator<Item = NurbsNativeSpanView2<'_>>>>
+    {
+        resolve_certified_operation(policy, |attempt| {
+            let decomposition =
+                self.bezier_decomposition_for_operation(attempt, CurveOperation2::NativeTopology)?;
+            let native =
+                self.native_subcurves_for_operation(attempt, CurveOperation2::NativeTopology)?;
+            debug_assert_eq!(decomposition.spans().len(), native.len());
+            Ok(decomposition.spans().iter().zip(native).enumerate().map(
+                move |(span_index, (span, curve))| NurbsNativeSpanView2 {
+                    source_span: NurbsBezierSpanView2 { span_index, span },
+                    curve,
+                },
+            ))
+        })
     }
 
     /// Evaluates the NURBS at an exact source-domain parameter.
@@ -1113,8 +1130,12 @@ impl NurbsCurve2 {
     /// The exact homogeneous Bezier decomposition is retained on first use.
     /// Evaluation then selects the source knot span and applies homogeneous de
     /// Casteljau interpolation without finite projection.
-    pub fn point_at(&self, parameter: &Real) -> ExactCurveResult<Point2> {
-        self.point_at_side(parameter, CurveParameterSide2::Automatic)
+    pub fn point_at(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        self.point_at_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact point with explicit knot-boundary side policy.
@@ -1122,8 +1143,11 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<Point2> {
-        self.point_at_side_with_policy(parameter, side, &CurveContext::STRICT)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.point_at_side_with_policy(parameter, side, attempt)
+        })
     }
 
     pub(crate) fn point_at_side_with_policy(
@@ -1150,8 +1174,12 @@ impl NurbsCurve2 {
     }
 
     /// Evaluates a periodic NURBS at any exactly wrappable parameter.
-    pub fn point_at_wrapped(&self, parameter: &Real) -> ExactCurveResult<Point2> {
-        self.point_at_wrapped_side(parameter, CurveParameterSide2::Automatic)
+    pub fn point_at_wrapped(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        self.point_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates a periodic NURBS with explicit side selection at wrapped seams.
@@ -1159,6 +1187,18 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.point_at_wrapped_side_with_policy(parameter, side, attempt)
+        })
+    }
+
+    pub(crate) fn point_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
         let (start, end) = self.parameter_domain();
         let wrapped = wrap_periodic_parameter(
@@ -1168,8 +1208,9 @@ impl NurbsCurve2 {
             self.periodicity(),
             side,
             CurveFamily2::Nurbs,
+            policy,
         )?;
-        self.point_at_side(&wrapped, side)
+        self.point_at_side_with_policy(&wrapped, side, policy)
     }
 
     fn point_at_canonical_side(
@@ -1216,8 +1257,12 @@ impl NurbsCurve2 {
     }
 
     /// Evaluates the exact first derivative in the authored knot parameter.
-    pub fn derivative_at(&self, parameter: &Real) -> ExactCurveResult<CurveDerivative2> {
-        self.derivative_at_side(parameter, CurveParameterSide2::Automatic)
+    pub fn derivative_at(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        self.derivative_at_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact first derivative with explicit knot-boundary side policy.
@@ -1225,15 +1270,22 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<CurveDerivative2> {
-        let mut derivatives =
-            self.derivatives_at_side_with_policy(parameter, 1, side, &CurveContext::STRICT)?;
-        Ok(derivatives.pop().expect("one derivative requested"))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let mut derivatives =
+                self.derivatives_at_side_with_policy(parameter, 1, side, attempt)?;
+            Ok(derivatives.pop().expect("one derivative requested"))
+        })
     }
 
     /// Evaluates the first periodic derivative at any wrappable parameter.
-    pub fn derivative_at_wrapped(&self, parameter: &Real) -> ExactCurveResult<CurveDerivative2> {
-        self.derivative_at_wrapped_side(parameter, CurveParameterSide2::Automatic)
+    pub fn derivative_at_wrapped(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        self.derivative_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates the first periodic derivative with explicit seam-side selection.
@@ -1241,9 +1293,13 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<CurveDerivative2> {
-        let mut derivatives = self.derivatives_at_wrapped_side(parameter, 1, side)?;
-        Ok(derivatives.pop().expect("one derivative requested"))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let mut derivatives =
+                self.derivatives_at_wrapped_side_with_policy(parameter, 1, side, attempt)?;
+            Ok(derivatives.pop().expect("one derivative requested"))
+        })
     }
 
     /// Evaluates exact derivatives through `max_order` in the authored knot parameter.
@@ -1255,8 +1311,9 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         max_order: usize,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.derivatives_at_side(parameter, max_order, CurveParameterSide2::Automatic)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        self.derivatives_at_side(parameter, max_order, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates exact derivatives with explicit knot-boundary side policy.
@@ -1265,8 +1322,11 @@ impl NurbsCurve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.derivatives_at_side_with_policy(parameter, max_order, side, &CurveContext::STRICT)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.derivatives_at_side_with_policy(parameter, max_order, side, attempt)
+        })
     }
 
     pub(crate) fn derivatives_at_side_with_policy(
@@ -1306,8 +1366,14 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         max_order: usize,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.derivatives_at_wrapped_side(parameter, max_order, CurveParameterSide2::Automatic)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        self.derivatives_at_wrapped_side(
+            parameter,
+            max_order,
+            CurveParameterSide2::Automatic,
+            policy,
+        )
     }
 
     /// Evaluates periodic derivatives with explicit side selection at wrapped seams.
@@ -1316,6 +1382,19 @@ impl NurbsCurve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, attempt)
+        })
+    }
+
+    pub(crate) fn derivatives_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let (start, end) = self.parameter_domain();
         let wrapped = wrap_periodic_parameter(
@@ -1325,8 +1404,9 @@ impl NurbsCurve2 {
             self.periodicity(),
             side,
             CurveFamily2::Nurbs,
+            policy,
         )?;
-        self.derivatives_at_side(&wrapped, max_order, side)
+        self.derivatives_at_side_with_policy(&wrapped, max_order, side, policy)
     }
 
     fn derivatives_at_canonical_side(
@@ -1397,10 +1477,6 @@ impl NurbsCurve2 {
                 derivative.scaled(&scale)
             })
             .collect())
-    }
-
-    fn rational_spans(&self) -> ExactCurveResult<&[RationalBezier2]> {
-        self.rational_spans_for_operation(&CurveContext::STRICT, CurveOperation2::NativeTopology)
     }
 
     fn rational_spans_with_policy(

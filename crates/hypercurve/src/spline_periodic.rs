@@ -117,6 +117,7 @@ pub(crate) fn wrap_periodic_parameter(
     periodicity: &SplinePeriodicity2,
     side: CurveParameterSide2,
     family: CurveFamily2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Real> {
     let Some(period) = periodicity.period() else {
         return Err(ExactCurveError::invalid(
@@ -125,16 +126,15 @@ pub(crate) fn wrap_periodic_parameter(
             CurveError::CurveIsNotPeriodic,
         ));
     };
-    let remainder = (parameter - domain_start)
-        .rem_euclid_certified(period)
-        .map_err(|_| {
-            ExactCurveError::blocked(
-                CurveOperation2::Evaluation,
-                family,
-                UncertaintyReason::Ordering,
-            )
-        })?;
-    match crate::classify::compare_reals(&remainder, &Real::zero(), &CurveContext::STRICT) {
+    let displacement = parameter - domain_start;
+    let remainder = match displacement.rem_euclid_certified(period) {
+        Ok(remainder) => remainder,
+        Err(_) if policy.permits_approximate_512() => {
+            terminal_periodic_remainder(&displacement, period, family, policy)?
+        }
+        Err(_) => return Err(periodic_evaluation_blocker(family)),
+    };
+    match crate::classify::compare_reals(&remainder, &Real::zero(), policy) {
         Some(std::cmp::Ordering::Equal) if side == CurveParameterSide2::Left => {
             Ok(domain_end.clone())
         }
@@ -146,6 +146,39 @@ pub(crate) fn wrap_periodic_parameter(
             UncertaintyReason::Ordering,
         )),
     }
+}
+
+#[cold]
+fn terminal_periodic_remainder(
+    displacement: &Real,
+    period: &Real,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Real> {
+    let quotient = (displacement / period).map_err(|_| periodic_evaluation_blocker(family))?;
+    let half =
+        (Real::one() / Real::from(2_i8)).expect("the exact positive integer two has a reciprocal");
+    let nearest = (&quotient + half)
+        .floor_certified()
+        .map_err(|_| periodic_evaluation_blocker(family))?;
+    let nearest = Real::integer(nearest);
+    // `nearest` differs from floor(quotient) by at most one.  The policy is
+    // therefore consumed only to choose between those two exact integers; the
+    // returned remainder retains the authored symbolic displacement and period.
+    let floor = match crate::classify::compare_reals(&quotient, &nearest, policy) {
+        Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => nearest,
+        Some(std::cmp::Ordering::Less) => nearest - Real::one(),
+        None => return Err(periodic_evaluation_blocker(family)),
+    };
+    Ok(displacement - &(floor * period))
+}
+
+fn periodic_evaluation_blocker(family: CurveFamily2) -> ExactCurveError {
+    ExactCurveError::blocked(
+        CurveOperation2::Evaluation,
+        family,
+        UncertaintyReason::Ordering,
+    )
 }
 
 fn periodic_error(family: CurveFamily2, cause: CurveError) -> ExactCurveError {

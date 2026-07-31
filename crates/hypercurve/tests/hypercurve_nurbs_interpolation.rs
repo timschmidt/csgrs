@@ -62,7 +62,13 @@ fn chord_length_and_centripetal_interpolation_retain_exact_parameters() {
         .into_value();
     let chord_parameters = [r(0), q(1, 14), q(5, 14), r(1)];
     for (parameter, point) in chord_parameters.iter().zip(&points) {
-        assert_eq!(chord.point_at(parameter).unwrap(), point.clone());
+        assert_eq!(
+            chord
+                .point_at(parameter, &CurveContext::STRICT)
+                .unwrap()
+                .into_value(),
+            point.clone()
+        );
     }
 
     let centripetal =
@@ -71,7 +77,13 @@ fn chord_length_and_centripetal_interpolation_retain_exact_parameters() {
             .into_value();
     let centripetal_parameters = [r(0), q(1, 6), q(1, 2), r(1)];
     for (parameter, point) in centripetal_parameters.iter().zip(points) {
-        assert_eq!(centripetal.point_at(parameter).unwrap(), point);
+        assert_eq!(
+            centripetal
+                .point_at(parameter, &CurveContext::STRICT)
+                .unwrap()
+                .into_value(),
+            point
+        );
     }
 }
 #[test]
@@ -102,7 +114,13 @@ fn fixed_weight_rational_nurbs_interpolation_recovers_exact_control_net() {
     assert_eq!(interpolation.control_points(), controls);
     assert_eq!(interpolation.weights(), weights);
     for (parameter, point) in parameters.iter().zip(data_points) {
-        assert_eq!(interpolation.point_at(parameter).unwrap(), point);
+        assert_eq!(
+            interpolation
+                .point_at(parameter, &CurveContext::STRICT)
+                .unwrap()
+                .into_value(),
+            point
+        );
     }
 }
 
@@ -124,7 +142,13 @@ fn nonuniform_global_interpolation_derives_averaged_knots_and_replays_every_poin
         &[r(2), r(2), r(2), r(4), q(13, 2), r(12), r(12), r(12)]
     );
     for (parameter, point) in parameters.iter().zip(points) {
-        assert_eq!(interpolation.point_at(parameter).unwrap(), point);
+        assert_eq!(
+            interpolation
+                .point_at(parameter, &CurveContext::STRICT)
+                .unwrap()
+                .into_value(),
+            point
+        );
     }
 }
 proptest! {

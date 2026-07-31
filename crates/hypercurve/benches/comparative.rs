@@ -657,8 +657,9 @@ fn benchmark_nurbs_evaluation(runner: &Runner) {
         hypercurve_parameters.iter().zip(parameters.iter().copied())
     {
         let hypercurve_point = hypercurve_curve
-            .point_at(hypercurve_parameter)
-            .expect("hypercurve NURBS fixture evaluates");
+            .point_at(hypercurve_parameter, &CurveContext::STRICT)
+            .expect("hypercurve NURBS fixture evaluates")
+            .into_value();
         let curvo_point = curvo_curve.point_at(curvo_parameter);
         let x = hypercurve_point.x().to_f64_lossy().unwrap();
         let y = hypercurve_point.y().to_f64_lossy().unwrap();
@@ -673,8 +674,12 @@ fn benchmark_nurbs_evaluation(runner: &Runner) {
         hypercurve_index += 1;
         black_box(
             hypercurve_curve
-                .point_at(black_box(&hypercurve_parameters[index]))
-                .expect("hypercurve NURBS fixture evaluates"),
+                .point_at(
+                    black_box(&hypercurve_parameters[index]),
+                    &CurveContext::STRICT,
+                )
+                .expect("hypercurve NURBS fixture evaluates")
+                .into_value(),
         );
         index
     });

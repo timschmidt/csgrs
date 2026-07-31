@@ -240,6 +240,15 @@ fn bspline_constructor_rejects_degenerate_knot_vectors() {
         ),
         Err(CurveError::InvalidBSpline)
     );
+    assert_eq!(
+        PolynomialBSplineCurve2::try_new(
+            2,
+            vec![p(0, 0), p(1, 1), p(2, 0)],
+            vec![r(0), r(0), r(0), r(2), r(1), r(1)],
+            &policy(),
+        ),
+        Err(CurveError::InvalidBSpline)
+    );
 }
 
 #[test]

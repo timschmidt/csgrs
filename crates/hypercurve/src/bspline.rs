@@ -248,7 +248,7 @@ impl PolynomialBSplineCurve2 {
         if degree < 1 || control_points.len() < order || knots.len() != expected_knot_count {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
-        match validate_nondecreasing_knots(&knots, policy) {
+        match validate_nondecreasing_knots(&knots, policy)? {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
@@ -309,13 +309,22 @@ impl PolynomialBSplineCurve2 {
             knots: self.knots.clone(),
             inserted_knot_count: 0,
         };
-        let break_knots = match distinct_bezier_break_knots(&refined.knots, self.degree, policy) {
+        match validate_nondecreasing_knots(&refined.knots, policy)? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        let break_knots = match distinct_bezier_break_knots(&refined.knots, self.degree, policy)? {
             Classification::Decided(knots) => knots,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         for knot in break_knots {
             loop {
-                let multiplicity = knot_multiplicity(&refined.knots, &knot, policy)?;
+                let multiplicity = match knot_multiplicity(&refined.knots, &knot, policy) {
+                    Classification::Decided(multiplicity) => multiplicity,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
                 if multiplicity >= self.degree {
                     break;
                 }
@@ -407,7 +416,7 @@ impl RationalQuadraticBSplineCurve2 {
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             }
         }
-        match validate_nondecreasing_knots(&knots, policy) {
+        match validate_nondecreasing_knots(&knots, policy)? {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
@@ -458,13 +467,22 @@ impl RationalQuadraticBSplineCurve2 {
             knots: self.knots.clone(),
             inserted_knot_count: 0,
         };
-        let break_knots = match distinct_bezier_break_knots(&refined.knots, 2, policy) {
+        match validate_nondecreasing_knots(&refined.knots, policy)? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        let break_knots = match distinct_bezier_break_knots(&refined.knots, 2, policy)? {
             Classification::Decided(knots) => knots,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         for knot in break_knots {
             loop {
-                let multiplicity = knot_multiplicity(&refined.knots, &knot, policy)?;
+                let multiplicity = match knot_multiplicity(&refined.knots, &knot, policy) {
+                    Classification::Decided(multiplicity) => multiplicity,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
                 if multiplicity >= 2 {
                     break;
                 }
@@ -601,7 +619,7 @@ impl RationalBSplineCurve2 {
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             }
         }
-        match validate_nondecreasing_knots(&knots, policy) {
+        match validate_nondecreasing_knots(&knots, policy)? {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
@@ -707,24 +725,37 @@ impl RationalBSplineCurve2 {
         knot: Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Self>>> {
-        let knot_index = match exact_knot_index(&self.knots, &knot, policy)? {
-            Some(index) => index,
-            None => return Ok(Classification::Decided(None)),
+        let knot_index = match exact_knot_index(&self.knots, &knot, policy) {
+            Classification::Decided(Some(index)) => index,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
         let mut coarse_knots = self.knots.clone();
         coarse_knots.remove(knot_index);
         let coarse_control_count = self.control_points.len() - 1;
-        let Some(span) = find_insertion_span(
+        let span = match find_insertion_span(
             &coarse_knots,
             self.degree,
             coarse_control_count,
             &knot,
             policy,
-        )?
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        ) {
+            Classification::Decided(Some(span)) => span,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
-        let multiplicity = knot_multiplicity(&coarse_knots, &knot, policy)?;
+        let multiplicity = match knot_multiplicity(&coarse_knots, &knot, policy) {
+            Classification::Decided(multiplicity) => multiplicity,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         if multiplicity >= self.degree {
             return Ok(Classification::Decided(None));
         }
@@ -805,13 +836,22 @@ impl RationalBSplineCurve2 {
             knots: self.knots.clone(),
             inserted_knot_count: 0,
         };
-        let break_knots = match distinct_bezier_break_knots(&refined.knots, self.degree, policy) {
+        match validate_nondecreasing_knots(&refined.knots, policy)? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        let break_knots = match distinct_bezier_break_knots(&refined.knots, self.degree, policy)? {
             Classification::Decided(knots) => knots,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         for knot in break_knots {
             loop {
-                let multiplicity = knot_multiplicity(&refined.knots, &knot, policy)?;
+                let multiplicity = match knot_multiplicity(&refined.knots, &knot, policy) {
+                    Classification::Decided(multiplicity) => multiplicity,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
                 if multiplicity >= self.degree {
                     break;
                 }
@@ -893,9 +933,7 @@ impl RationalBSplineBezierExtraction2 {
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
-        Ok(Classification::Decided(
-            RationalBSplineNativeTopologyEvidence2::new(span_evidence)?,
-        ))
+        RationalBSplineNativeTopologyEvidence2::new_with_policy(span_evidence, policy)
     }
 
     /// Returns how many knots were inserted to produce Bezier form.
@@ -956,7 +994,7 @@ impl RationalBSplineBezierExtraction2 {
                         RetainedSpanAxisMonotonicity::Unsupported,
                     )
                 };
-            facts.push(RetainedBSplineSpanFacts2::new(
+            let fact = match RetainedBSplineSpanFacts2::new_with_policy(
                 span_index,
                 span.knot_start.clone(),
                 span.knot_end.clone(),
@@ -965,11 +1003,16 @@ impl RationalBSplineBezierExtraction2 {
                 y_monotonicity,
                 topology_evidence.status(),
                 Some(weight_domain_evidence(span.weights(), policy)?),
-            )?);
+                policy,
+            )? {
+                Classification::Decided(fact) => fact,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            facts.push(fact);
         }
-        Ok(Classification::Decided(
-            RetainedBSplineSpanFactEvidence2::new(facts)?,
-        ))
+        RetainedBSplineSpanFactEvidence2::new_with_policy(facts, policy)
     }
 }
 
@@ -1021,7 +1064,35 @@ impl RetainedBSplineSpanFacts2 {
         topology_status: RetainedTopologyStatus,
         weight_domain: Option<RetainedSpanWeightDomainEvidence2>,
     ) -> CurveResult<Self> {
-        validate_span_fact_evidence(
+        require_strict_evidence(
+            Self::new_with_policy(
+                span_index,
+                knot_start,
+                knot_end,
+                bounds,
+                x_monotonicity,
+                y_monotonicity,
+                topology_status,
+                weight_domain,
+                &CurveContext::STRICT,
+            )?,
+            "retained span facts require strict mathematical evidence",
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn new_with_policy(
+        span_index: usize,
+        knot_start: Real,
+        knot_end: Real,
+        bounds: Aabb2,
+        x_monotonicity: RetainedSpanAxisMonotonicity,
+        y_monotonicity: RetainedSpanAxisMonotonicity,
+        topology_status: RetainedTopologyStatus,
+        weight_domain: Option<RetainedSpanWeightDomainEvidence2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match validate_span_fact_evidence(
             &knot_start,
             &knot_end,
             &bounds,
@@ -1029,8 +1100,12 @@ impl RetainedBSplineSpanFacts2 {
             x_monotonicity,
             y_monotonicity,
             weight_domain.as_ref(),
-        )?;
-        Ok(Self {
+            policy,
+        )? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        Ok(Classification::Decided(Self {
             span_index,
             knot_start,
             knot_end,
@@ -1039,7 +1114,7 @@ impl RetainedBSplineSpanFacts2 {
             y_monotonicity,
             topology_status,
             weight_domain,
-        })
+        }))
     }
 
     /// Returns the span index in extraction order.
@@ -1081,8 +1156,20 @@ impl RetainedBSplineSpanFacts2 {
 impl RetainedBSplineSpanFactEvidence2 {
     /// Constructs a span-local fact evidence.
     pub fn new(span_facts: Vec<RetainedBSplineSpanFacts2>) -> CurveResult<Self> {
-        validate_span_fact_evidence_evidence(&span_facts)?;
-        Ok(Self { span_facts })
+        require_strict_evidence(
+            Self::new_with_policy(span_facts, &CurveContext::STRICT)?,
+            "retained span fact collection requires strict mathematical evidence",
+        )
+    }
+
+    fn new_with_policy(
+        span_facts: Vec<RetainedBSplineSpanFacts2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match validate_span_fact_evidence_evidence(&span_facts, policy)? {
+            Classification::Decided(()) => Ok(Classification::Decided(Self { span_facts })),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
     }
 
     /// Returns facts in extraction order.
@@ -1094,8 +1181,20 @@ impl RetainedBSplineSpanFactEvidence2 {
 impl RationalBSplineNativeTopologyEvidence2 {
     /// Constructs a rational B-spline topology evidence from per-span evidence.
     pub fn new(span_evidence: Vec<RationalBezierSpanTopologyEvidence2>) -> CurveResult<Self> {
-        validate_span_topology_evidence_evidence(&span_evidence)?;
-        Ok(Self { span_evidence })
+        require_strict_evidence(
+            Self::new_with_policy(span_evidence, &CurveContext::STRICT)?,
+            "retained span topology collection requires strict mathematical evidence",
+        )
+    }
+
+    fn new_with_policy(
+        span_evidence: Vec<RationalBezierSpanTopologyEvidence2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match validate_span_topology_evidence_evidence(&span_evidence, policy)? {
+            Classification::Decided(()) => Ok(Classification::Decided(Self { span_evidence })),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
     }
 
     /// Returns the per-span topology evidence in source parameter order.
@@ -1134,15 +1233,45 @@ impl RationalBezierSpanTopologyEvidence2 {
         decision_path: RationalBezierSpanTopologyPath2,
         native_subcurve: Option<BezierSubcurve2>,
     ) -> CurveResult<Self> {
-        validate_rational_span_topology_evidence(
+        require_strict_evidence(
+            Self::new_with_policy(
+                span_index,
+                degree,
+                knot_start,
+                knot_end,
+                status,
+                decision_path,
+                native_subcurve,
+                &CurveContext::STRICT,
+            )?,
+            "retained rational span topology requires strict mathematical evidence",
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn new_with_policy(
+        span_index: usize,
+        degree: usize,
+        knot_start: Real,
+        knot_end: Real,
+        status: RetainedTopologyStatus,
+        decision_path: RationalBezierSpanTopologyPath2,
+        native_subcurve: Option<BezierSubcurve2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match validate_rational_span_topology_evidence(
             degree,
             &knot_start,
             &knot_end,
             status,
             decision_path,
             native_subcurve.as_ref(),
-        )?;
-        Ok(Self {
+            policy,
+        )? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        Ok(Classification::Decided(Self {
             span_index,
             degree,
             knot_start,
@@ -1150,7 +1279,7 @@ impl RationalBezierSpanTopologyEvidence2 {
             status,
             decision_path,
             native_subcurve,
-        })
+        }))
     }
 
     /// Returns the span index within the extraction evidence.
@@ -1202,6 +1331,15 @@ fn validate_weight_domain_evidence(
     Ok(())
 }
 
+fn require_strict_evidence<T>(classification: Classification<T>, message: &str) -> CurveResult<T> {
+    match classification {
+        Classification::Decided(value) => Ok(value),
+        Classification::Uncertain(reason) => {
+            Err(CurveError::Topology(format!("{message}: {reason:?}")))
+        }
+    }
+}
+
 fn validate_span_fact_evidence(
     knot_start: &Real,
     knot_end: &Real,
@@ -1210,20 +1348,20 @@ fn validate_span_fact_evidence(
     x_monotonicity: RetainedSpanAxisMonotonicity,
     y_monotonicity: RetainedSpanAxisMonotonicity,
     weight_domain: Option<&RetainedSpanWeightDomainEvidence2>,
-) -> CurveResult<()> {
-    validate_positive_knot_interval(knot_start, knot_end)?;
-    match bounds.has_valid_ordering(&CurveContext::STRICT) {
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    match validate_positive_knot_interval(knot_start, knot_end, policy)? {
+        Classification::Decided(()) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    match bounds.has_valid_ordering(policy) {
         Classification::Decided(true) => {}
         Classification::Decided(false) => {
             return Err(CurveError::Topology(
                 "retained span facts must carry a well-ordered bounding box".into(),
             ));
         }
-        Classification::Uncertain(reason) => {
-            return Err(CurveError::Topology(format!(
-                "retained span fact bounds ordering is uncertified: {reason:?}"
-            )));
-        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     if !topology_status.is_native_exact()
         && (x_monotonicity != RetainedSpanAxisMonotonicity::Unsupported
@@ -1260,18 +1398,18 @@ fn validate_span_fact_evidence(
             "native retained rational span facts must carry all-nonzero weight evidence".into(),
         ));
     }
-    Ok(())
+    Ok(Classification::Decided(()))
 }
 
 fn validate_span_fact_evidence_evidence(
     span_facts: &[RetainedBSplineSpanFacts2],
-) -> CurveResult<()> {
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
     if span_facts.is_empty() {
         return Err(CurveError::Topology(
             "retained span fact evidence must carry at least one span".into(),
         ));
     }
-    let policy = CurveContext::STRICT;
     for (expected_index, fact) in span_facts.iter().enumerate() {
         if fact.span_index() != expected_index {
             return Err(CurveError::Topology(
@@ -1282,27 +1420,32 @@ fn validate_span_fact_evidence_evidence(
             .checked_sub(1)
             .and_then(|index| span_facts.get(index))
         {
-            validate_adjacent_knot_windows(
+            match validate_adjacent_knot_windows(
                 previous.knot_interval().1,
                 fact.knot_interval().0,
-                &policy,
+                policy,
                 "retained span fact evidence knot intervals must be contiguous",
-            )?;
+            )? {
+                Classification::Decided(()) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
         }
     }
-    Ok(())
+    Ok(Classification::Decided(()))
 }
 
 fn validate_span_topology_evidence_evidence(
     span_evidence: &[RationalBezierSpanTopologyEvidence2],
-) -> CurveResult<()> {
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
     if span_evidence.is_empty() {
         return Err(CurveError::Topology(
             "retained span topology evidence must carry at least one span".into(),
         ));
     }
     let degree = span_evidence[0].degree();
-    let policy = CurveContext::STRICT;
     for (expected_index, evidence) in span_evidence.iter().enumerate() {
         if evidence.span_index() != expected_index {
             return Err(CurveError::Topology(
@@ -1318,15 +1461,20 @@ fn validate_span_topology_evidence_evidence(
             .checked_sub(1)
             .and_then(|index| span_evidence.get(index))
         {
-            validate_adjacent_knot_windows(
+            match validate_adjacent_knot_windows(
                 previous.knot_interval().1,
                 evidence.knot_interval().0,
-                &policy,
+                policy,
                 "retained span topology evidence knot intervals must be contiguous",
-            )?;
+            )? {
+                Classification::Decided(()) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
         }
     }
-    Ok(())
+    Ok(Classification::Decided(()))
 }
 
 fn validate_rational_span_topology_evidence(
@@ -1336,8 +1484,12 @@ fn validate_rational_span_topology_evidence(
     status: RetainedTopologyStatus,
     decision_path: RationalBezierSpanTopologyPath2,
     native_subcurve: Option<&BezierSubcurve2>,
-) -> CurveResult<()> {
-    validate_positive_knot_interval(knot_start, knot_end)?;
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    match validate_positive_knot_interval(knot_start, knot_end, policy)? {
+        Classification::Decided(()) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
     if degree < 1 {
         return Err(CurveError::Topology(
             "retained rational span topology evidence degree must be at least one".into(),
@@ -1385,9 +1537,13 @@ fn validate_rational_span_topology_evidence(
         ));
     }
     match (status.is_native_exact(), native_subcurve) {
-        (true, Some(BezierSubcurve2::RationalQuadratic(_))) if degree == 1 || degree == 2 => Ok(()),
-        (true, Some(BezierSubcurve2::Cubic(_))) if degree == 3 => Ok(()),
-        (true, Some(BezierSubcurve2::Rational(_))) if degree >= 3 => Ok(()),
+        (true, Some(BezierSubcurve2::RationalQuadratic(_))) if degree == 1 || degree == 2 => {
+            Ok(Classification::Decided(()))
+        }
+        (true, Some(BezierSubcurve2::Cubic(_))) if degree == 3 => Ok(Classification::Decided(())),
+        (true, Some(BezierSubcurve2::Rational(_))) if degree >= 3 => {
+            Ok(Classification::Decided(()))
+        }
         (true, Some(_)) => Err(CurveError::Topology(
             "native rational span topology evidence subcurve does not match retained degree".into(),
         )),
@@ -1397,18 +1553,22 @@ fn validate_rational_span_topology_evidence(
         (false, Some(_)) => Err(CurveError::Topology(
             "non-native rational span topology evidence must not carry a native subcurve".into(),
         )),
-        (false, None) => Ok(()),
+        (false, None) => Ok(Classification::Decided(())),
     }
 }
 
-fn validate_positive_knot_interval(knot_start: &Real, knot_end: &Real) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
-    if compare_reals(knot_start, knot_end, &policy) != Some(Ordering::Less) {
-        return Err(CurveError::Topology(
+fn validate_positive_knot_interval(
+    knot_start: &Real,
+    knot_end: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    match compare_reals(knot_start, knot_end, policy) {
+        Some(Ordering::Less) => Ok(Classification::Decided(())),
+        Some(Ordering::Equal | Ordering::Greater) => Err(CurveError::Topology(
             "retained B-spline span evidence must carry certified positive knot interval".into(),
-        ));
+        )),
+        None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
     }
-    Ok(())
 }
 
 fn validate_adjacent_knot_windows(
@@ -1416,11 +1576,12 @@ fn validate_adjacent_knot_windows(
     next_start: &Real,
     policy: &CurveContext,
     message: &str,
-) -> CurveResult<()> {
-    if compare_reals(previous_end, next_start, policy) != Some(Ordering::Equal) {
-        return Err(CurveError::Topology(message.into()));
+) -> CurveResult<Classification<()>> {
+    match compare_reals(previous_end, next_start, policy) {
+        Some(Ordering::Equal) => Ok(Classification::Decided(())),
+        Some(Ordering::Less | Ordering::Greater) => Err(CurveError::Topology(message.into())),
+        None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
     }
-    Ok(())
 }
 
 impl RationalBezierSpan2 {
@@ -1472,33 +1633,31 @@ impl RationalBezierSpan2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierSpanTopologyEvidence2>> {
         if self.control_points.len() != self.degree + 1 || self.weights.len() != self.degree + 1 {
-            return Ok(Classification::Decided(
-                RationalBezierSpanTopologyEvidence2::new(
-                    span_index,
-                    self.degree,
-                    self.knot_start.clone(),
-                    self.knot_end.clone(),
-                    RetainedTopologyStatus::Unsupported,
-                    RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
-                    None,
-                )?,
-            ));
+            return RationalBezierSpanTopologyEvidence2::new_with_policy(
+                span_index,
+                self.degree,
+                self.knot_start.clone(),
+                self.knot_end.clone(),
+                RetainedTopologyStatus::Unsupported,
+                RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
+                None,
+                policy,
+            );
         }
         match self.degree {
             1 => {
                 let weight_sum = &self.weights[0] + &self.weights[1];
                 match is_zero(&weight_sum, policy) {
-                    Some(true) => Ok(Classification::Decided(
-                        RationalBezierSpanTopologyEvidence2::new(
-                            span_index,
-                            self.degree,
-                            self.knot_start.clone(),
-                            self.knot_end.clone(),
-                            RetainedTopologyStatus::Unsupported,
-                            RationalBezierSpanTopologyPath2::RetainedSingularLinearSpan,
-                            None,
-                        )?,
-                    )),
+                    Some(true) => RationalBezierSpanTopologyEvidence2::new_with_policy(
+                        span_index,
+                        self.degree,
+                        self.knot_start.clone(),
+                        self.knot_end.clone(),
+                        RetainedTopologyStatus::Unsupported,
+                        RationalBezierSpanTopologyPath2::RetainedSingularLinearSpan,
+                        None,
+                        policy,
+                    ),
                     Some(false) => {
                         let two = Real::from(2_i8);
                         let middle_weight = (&weight_sum / &two)?;
@@ -1516,17 +1675,16 @@ impl RationalBezierSpan2 {
                             middle_weight,
                             self.weights[1].clone(),
                         )?;
-                        Ok(Classification::Decided(
-                            RationalBezierSpanTopologyEvidence2::new(
-                                span_index,
-                                self.degree,
-                                self.knot_start.clone(),
-                                self.knot_end.clone(),
-                                RetainedTopologyStatus::NativeExact,
-                                RationalBezierSpanTopologyPath2::NativeRationalLinearSpan,
-                                Some(BezierSubcurve2::RationalQuadratic(curve)),
-                            )?,
-                        ))
+                        RationalBezierSpanTopologyEvidence2::new_with_policy(
+                            span_index,
+                            self.degree,
+                            self.knot_start.clone(),
+                            self.knot_end.clone(),
+                            RetainedTopologyStatus::NativeExact,
+                            RationalBezierSpanTopologyPath2::NativeRationalLinearSpan,
+                            Some(BezierSubcurve2::RationalQuadratic(curve)),
+                            policy,
+                        )
                     }
                     None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
                 }
@@ -1540,21 +1698,20 @@ impl RationalBezierSpan2 {
                     self.weights[1].clone(),
                     self.weights[2].clone(),
                 )?;
-                Ok(Classification::Decided(
-                    RationalBezierSpanTopologyEvidence2::new(
-                        span_index,
-                        self.degree,
-                        self.knot_start.clone(),
-                        self.knot_end.clone(),
-                        RetainedTopologyStatus::NativeExact,
-                        RationalBezierSpanTopologyPath2::NativeRationalQuadraticSpan,
-                        Some(BezierSubcurve2::RationalQuadratic(curve)),
-                    )?,
-                ))
+                RationalBezierSpanTopologyEvidence2::new_with_policy(
+                    span_index,
+                    self.degree,
+                    self.knot_start.clone(),
+                    self.knot_end.clone(),
+                    RetainedTopologyStatus::NativeExact,
+                    RationalBezierSpanTopologyPath2::NativeRationalQuadraticSpan,
+                    Some(BezierSubcurve2::RationalQuadratic(curve)),
+                    policy,
+                )
             }
             3 => match weights_are_all_equal(&self.weights, policy) {
-                Classification::Decided(true) => Ok(Classification::Decided(
-                    RationalBezierSpanTopologyEvidence2::new(
+                Classification::Decided(true) => {
+                    RationalBezierSpanTopologyEvidence2::new_with_policy(
                         span_index,
                         self.degree,
                         self.knot_start.clone(),
@@ -1567,13 +1724,14 @@ impl RationalBezierSpan2 {
                             self.control_points[2].clone(),
                             self.control_points[3].clone(),
                         ))),
-                    )?,
-                )),
+                        policy,
+                    )
+                }
                 Classification::Decided(false) | Classification::Uncertain(_) => {
-                    general_rational_span_topology_evidence(self, span_index)
+                    general_rational_span_topology_evidence(self, span_index, policy)
                 }
             },
-            _ => general_rational_span_topology_evidence(self, span_index),
+            _ => general_rational_span_topology_evidence(self, span_index, policy),
         }
     }
 }
@@ -1581,19 +1739,19 @@ impl RationalBezierSpan2 {
 fn general_rational_span_topology_evidence(
     span: &RationalBezierSpan2,
     span_index: usize,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezierSpanTopologyEvidence2>> {
     let curve = crate::RationalBezier2::try_new(span.control_points.clone(), span.weights.clone())?;
-    Ok(Classification::Decided(
-        RationalBezierSpanTopologyEvidence2::new(
-            span_index,
-            span.degree,
-            span.knot_start.clone(),
-            span.knot_end.clone(),
-            RetainedTopologyStatus::NativeExact,
-            RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan,
-            Some(BezierSubcurve2::Rational(curve)),
-        )?,
-    ))
+    RationalBezierSpanTopologyEvidence2::new_with_policy(
+        span_index,
+        span.degree,
+        span.knot_start.clone(),
+        span.knot_end.clone(),
+        RetainedTopologyStatus::NativeExact,
+        RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan,
+        Some(BezierSubcurve2::Rational(curve)),
+        policy,
+    )
 }
 
 #[derive(Clone, Debug)]
@@ -1682,17 +1840,27 @@ impl BSplineWorkingCurve {
         knot: Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<()>> {
-        let Some(span) = find_insertion_span(
+        let span = match find_insertion_span(
             &self.knots,
             self.degree,
             self.control_points.len(),
             &knot,
             policy,
-        )?
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        ) {
+            Classification::Decided(Some(span)) => span,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
-        let multiplicity = knot_multiplicity(&self.knots, &knot, policy)?;
+        let multiplicity = match knot_multiplicity(&self.knots, &knot, policy) {
+            Classification::Decided(multiplicity) => multiplicity,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         if multiplicity >= self.degree {
             return Ok(Classification::Decided(()));
         }
@@ -1724,12 +1892,23 @@ impl HomogeneousBSplineWorkingCurve {
         knot: Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<()>> {
-        let Some(span) =
-            find_insertion_span(&self.knots, self.degree, self.controls.len(), &knot, policy)?
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        let span =
+            match find_insertion_span(&self.knots, self.degree, self.controls.len(), &knot, policy)
+            {
+                Classification::Decided(Some(span)) => span,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let multiplicity = match knot_multiplicity(&self.knots, &knot, policy) {
+            Classification::Decided(multiplicity) => multiplicity,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
-        let multiplicity = knot_multiplicity(&self.knots, &knot, policy)?;
         if multiplicity >= self.degree {
             return Ok(Classification::Decided(()));
         }
@@ -1754,17 +1933,18 @@ impl HomogeneousBSplineWorkingCurve {
     }
 }
 
-fn validate_nondecreasing_knots(knots: &[Real], policy: &CurveContext) -> Classification<()> {
+fn validate_nondecreasing_knots(
+    knots: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
     for pair in knots.windows(2) {
         match compare_reals(&pair[0], &pair[1], policy) {
             Some(Ordering::Less | Ordering::Equal) => {}
-            Some(Ordering::Greater) => {
-                return Classification::Uncertain(UncertaintyReason::Ordering);
-            }
-            None => return Classification::Uncertain(UncertaintyReason::Ordering),
+            Some(Ordering::Greater) => return Err(CurveError::InvalidBSpline),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
     }
-    Classification::Decided(())
+    Ok(Classification::Decided(()))
 }
 
 fn has_positive_span(
@@ -1814,13 +1994,17 @@ fn native_span_fact_evidence(
     let mut span_index = 0_usize;
     let refined_control_count = refined_knots.len().saturating_sub(degree + 1);
     for knot_index in degree..refined_control_count {
-        if compare_reals(
+        match compare_reals(
             &refined_knots[knot_index],
             &refined_knots[knot_index + 1],
             policy,
-        ) != Some(Ordering::Less)
-        {
-            continue;
+        ) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal) => continue,
+            Some(Ordering::Greater) => return Err(CurveError::InvalidBSpline),
+            None => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            }
         }
         let Some(span) = spans.get(span_index) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -1829,7 +2013,7 @@ fn native_span_fact_evidence(
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        facts.push(RetainedBSplineSpanFacts2::new(
+        let fact = match RetainedBSplineSpanFacts2::new_with_policy(
             span_index,
             refined_knots[knot_index].clone(),
             refined_knots[knot_index + 1].clone(),
@@ -1844,15 +2028,20 @@ fn native_span_fact_evidence(
             },
             RetainedTopologyStatus::NativeExact,
             None,
-        )?);
+            policy,
+        )? {
+            Classification::Decided(fact) => fact,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        facts.push(fact);
         span_index += 1;
     }
     if span_index != spans.len() {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
-    Ok(Classification::Decided(
-        RetainedBSplineSpanFactEvidence2::new(facts)?,
-    ))
+    RetainedBSplineSpanFactEvidence2::new_with_policy(facts, policy)
 }
 
 fn subcurve_certified_bounds(
@@ -1924,26 +2113,34 @@ fn distinct_bezier_break_knots(
     knots: &[Real],
     degree: usize,
     policy: &CurveContext,
-) -> Classification<Vec<Real>> {
+) -> CurveResult<Classification<Vec<Real>>> {
     let mut result = Vec::new();
     for knot in &knots[degree..=knots.len() - degree - 1] {
-        if result
-            .last()
-            .is_some_and(|last| compare_reals(last, knot, policy) == Some(Ordering::Equal))
-        {
-            continue;
+        if let Some(last) = result.last() {
+            match compare_reals(last, knot, policy) {
+                Some(Ordering::Equal) => continue,
+                Some(Ordering::Less) => {}
+                Some(Ordering::Greater) => return Err(CurveError::InvalidBSpline),
+                None => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+                }
+            }
         }
         result.push(knot.clone());
     }
-    Classification::Decided(result)
+    Ok(Classification::Decided(result))
 }
 
-fn knot_multiplicity(knots: &[Real], knot: &Real, policy: &CurveContext) -> CurveResult<usize> {
-    let lower =
-        knot_partition_point(knots, knot, false, policy).ok_or(CurveError::InvalidBSpline)?;
-    let upper =
-        knot_partition_point(knots, knot, true, policy).ok_or(CurveError::InvalidBSpline)?;
-    Ok(upper - lower)
+fn knot_multiplicity(knots: &[Real], knot: &Real, policy: &CurveContext) -> Classification<usize> {
+    let lower = match knot_partition_point(knots, knot, false, policy) {
+        Classification::Decided(lower) => lower,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let upper = match knot_partition_point(knots, knot, true, policy) {
+        Classification::Decided(upper) => upper,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    Classification::Decided(upper - lower)
 }
 
 fn weights_are_all_equal(weights: &[Real], policy: &CurveContext) -> Classification<bool> {
@@ -1966,19 +2163,23 @@ fn find_insertion_span(
     control_count: usize,
     knot: &Real,
     policy: &CurveContext,
-) -> CurveResult<Option<usize>> {
+) -> Classification<Option<usize>> {
     let n = control_count - 1;
-    if compare_reals(knot, &knots[n + 1], policy) == Some(Ordering::Equal) {
-        return Ok(Some(if n + 1 < knots.len() - 1 { n + 1 } else { n }));
+    match compare_reals(knot, &knots[n + 1], policy) {
+        Some(Ordering::Equal) => {
+            return Classification::Decided(Some(if n + 1 < knots.len() - 1 { n + 1 } else { n }));
+        }
+        Some(Ordering::Less | Ordering::Greater) => {}
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
     }
     let insertion = match knot_partition_point(knots, knot, true, policy) {
-        Some(insertion) => insertion,
-        None => return Ok(None),
+        Classification::Decided(insertion) => insertion,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
     let Some(span) = insertion.checked_sub(1) else {
-        return Ok(None);
+        return Classification::Decided(None);
     };
-    Ok((degree..=n).contains(&span).then_some(span))
+    Classification::Decided((degree..=n).contains(&span).then_some(span))
 }
 
 fn knot_partition_point(
@@ -1986,18 +2187,21 @@ fn knot_partition_point(
     knot: &Real,
     include_equal: bool,
     policy: &CurveContext,
-) -> Option<usize> {
+) -> Classification<usize> {
     let mut left = 0;
     let mut right = knots.len();
     while left < right {
         let middle = left + (right - left) / 2;
-        match compare_reals(&knots[middle], knot, policy)? {
-            Ordering::Less => left = middle + 1,
-            Ordering::Equal if include_equal => left = middle + 1,
-            Ordering::Equal | Ordering::Greater => right = middle,
+        match compare_reals(&knots[middle], knot, policy) {
+            None => return Classification::Uncertain(UncertaintyReason::Ordering),
+            Some(ordering) => match ordering {
+                Ordering::Less => left = middle + 1,
+                Ordering::Equal if include_equal => left = middle + 1,
+                Ordering::Equal | Ordering::Greater => right = middle,
+            },
         }
     }
-    Some(left)
+    Classification::Decided(left)
 }
 
 fn extract_refined_bezier_spans(
@@ -2011,13 +2215,17 @@ fn extract_refined_bezier_spans(
         None
     };
     for knot_index in refined.degree..refined.control_points.len() {
-        if compare_reals(
+        match compare_reals(
             &refined.knots[knot_index],
             &refined.knots[knot_index + 1],
             policy,
-        ) != Some(Ordering::Less)
-        {
-            continue;
+        ) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal) => continue,
+            Some(Ordering::Greater) => return Err(CurveError::InvalidBSpline),
+            None => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            }
         }
         let start = knot_index - refined.degree;
         let controls = &refined.control_points[start..=knot_index];
@@ -2072,13 +2280,17 @@ fn extract_refined_rational_quadratic_spans(
 
     let mut spans = Vec::new();
     for knot_index in refined.degree..refined.controls.len() {
-        if compare_reals(
+        match compare_reals(
             &refined.knots[knot_index],
             &refined.knots[knot_index + 1],
             policy,
-        ) != Some(Ordering::Less)
-        {
-            continue;
+        ) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal) => continue,
+            Some(Ordering::Greater) => return Err(CurveError::InvalidBSpline),
+            None => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            }
         }
         let start = knot_index - refined.degree;
         let curve = RationalQuadraticBezier2::try_new(
@@ -2114,13 +2326,17 @@ fn extract_refined_rational_spans(
 
     let mut spans = Vec::new();
     for knot_index in refined.degree..refined.controls.len() {
-        if compare_reals(
+        match compare_reals(
             &refined.knots[knot_index],
             &refined.knots[knot_index + 1],
             policy,
-        ) != Some(Ordering::Less)
-        {
-            continue;
+        ) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal) => continue,
+            Some(Ordering::Greater) => return Err(CurveError::InvalidBSpline),
+            None => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            }
         }
         let start = knot_index - refined.degree;
         spans.push(RationalBezierSpan2 {
@@ -2171,15 +2387,15 @@ fn exact_knot_index(
     knots: &[Real],
     knot: &Real,
     policy: &CurveContext,
-) -> CurveResult<Option<usize>> {
+) -> Classification<Option<usize>> {
     for (index, candidate) in knots.iter().enumerate() {
         match compare_reals(candidate, knot, policy) {
-            Some(Ordering::Equal) => return Ok(Some(index)),
+            Some(Ordering::Equal) => return Classification::Decided(Some(index)),
             Some(_) => {}
-            None => return Err(CurveError::InvalidBSpline),
+            None => return Classification::Uncertain(UncertaintyReason::Ordering),
         }
     }
-    Ok(None)
+    Classification::Decided(None)
 }
 
 fn rational_bspline_exact_eq(
@@ -2279,7 +2495,7 @@ mod tests {
                     })
                     .count();
                 assert_eq!(
-                    knot_multiplicity(&knots, &query, &policy).unwrap(),
+                    decided(knot_multiplicity(&knots, &query, &policy)),
                     expected_multiplicity,
                     "case={case}; query={query_value}"
                 );
@@ -2298,7 +2514,13 @@ mod tests {
                             .filter(|span| (degree..=n).contains(span))
                     };
                 assert_eq!(
-                    find_insertion_span(&knots, degree, control_count, &query, &policy).unwrap(),
+                    decided(find_insertion_span(
+                        &knots,
+                        degree,
+                        control_count,
+                        &query,
+                        &policy,
+                    )),
                     expected_span,
                     "case={case}; query={query_value}"
                 );

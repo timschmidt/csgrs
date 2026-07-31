@@ -275,7 +275,12 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
     .unwrap()
     .into_value();
 
-    assert_eq!(line.point_at(&half).unwrap(), p(1, 0));
+    assert_eq!(
+        line.point_at(&half, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(1, 0)
+    );
     assert_eq!(
         (
             line.parameter_domain().start(),
@@ -283,8 +288,21 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
         ),
         (&r(0), &r(1))
     );
-    assert_eq!(quadratic.as_view().point_at(&half).unwrap(), p(1, 1));
-    assert_eq!(spline.point_at(&r(1)).unwrap(), p(1, 1));
+    assert_eq!(
+        quadratic
+            .as_view()
+            .point_at(&half, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(1, 1)
+    );
+    assert_eq!(
+        spline
+            .point_at(&r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(1, 1)
+    );
     assert_eq!(
         (
             spline.parameter_domain().start(),
@@ -302,11 +320,17 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
 fn top_level_curve_reuses_retained_native_endpoints() {
     for curve in every_family_open_chain() {
         assert_eq!(
-            curve.point_at(curve.parameter_domain().start()).unwrap(),
+            curve
+                .point_at(curve.parameter_domain().start(), &CurveContext::STRICT)
+                .unwrap()
+                .into_value(),
             curve.start().clone()
         );
         assert_eq!(
-            curve.point_at(curve.parameter_domain().end()).unwrap(),
+            curve
+                .point_at(curve.parameter_domain().end(), &CurveContext::STRICT)
+                .unwrap()
+                .into_value(),
             curve.end().clone()
         );
     }
@@ -314,10 +338,25 @@ fn top_level_curve_reuses_retained_native_endpoints() {
     let rational =
         RationalBezier2::try_new(vec![p(0, 0), p(1, 2), p(2, 0)], vec![r(1), r(2), r(3)]).unwrap();
     let top_level = Curve2::from(rational.clone());
-    assert_eq!(top_level.point_at(&r(0)).unwrap(), p(0, 0));
-    assert_eq!(top_level.point_at(&r(1)).unwrap(), p(2, 0));
     assert_eq!(
-        top_level.point_at(&(r(1) / r(2)).unwrap()).unwrap(),
+        top_level
+            .point_at(&r(0), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(0, 0)
+    );
+    assert_eq!(
+        top_level
+            .point_at(&r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(2, 0)
+    );
+    assert_eq!(
+        top_level
+            .point_at(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
         rational
             .point_at(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
             .unwrap()
@@ -329,13 +368,26 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
     let half = (r(1) / r(2)).unwrap();
     let line = Curve2::from(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap());
     let line_clone = line.clone();
-    let line_derivative = line.as_view().derivative_at(&half).unwrap();
+    let line_derivative = line
+        .as_view()
+        .derivative_at(&half, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(line_derivative.dx(), &r(2));
     assert_eq!(line_derivative.dy(), &r(0));
-    assert_eq!(line_clone.derivative_at(&half).unwrap(), line_derivative);
+    assert_eq!(
+        line_clone
+            .derivative_at(&half, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        line_derivative
+    );
 
     let quadratic = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0)));
-    let quadratic_derivative = quadratic.derivative_at(&half).unwrap();
+    let quadratic_derivative = quadratic
+        .derivative_at(&half, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(quadratic_derivative.dx(), &r(2));
     assert_eq!(quadratic_derivative.dy(), &r(0));
 
@@ -350,14 +402,26 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
     let CurveGeometry2::PolynomialBSpline(retained_spline) = spline.geometry() else {
         panic!("top-level polynomial constructor returned another family");
     };
-    let spline_derivative = spline.derivative_at(&r(1)).unwrap();
+    let spline_derivative = spline
+        .derivative_at(&r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(spline_derivative.dx(), &r(1));
     assert_eq!(spline_derivative.dy(), &r(0));
     assert_eq!(
-        retained_spline.derivative_at(&r(1)).unwrap(),
+        retained_spline
+            .derivative_at(&r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
         spline_derivative
     );
-    assert_eq!(spline.derivative_at(&r(1)).unwrap(), spline_derivative);
+    assert_eq!(
+        spline
+            .derivative_at(&r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        spline_derivative
+    );
 }
 
 #[test]
@@ -367,7 +431,11 @@ fn top_level_curve_and_view_expose_exact_higher_derivatives() {
     );
     let half = (r(1) / r(2)).unwrap();
 
-    let derivatives = curve.as_view().derivatives_at(&half, 3).unwrap();
+    let derivatives = curve
+        .as_view()
+        .derivatives_at(&half, 3, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 
     assert_eq!(derivatives.len(), 3);
     assert_eq!(derivatives[0].dx(), &r(3));

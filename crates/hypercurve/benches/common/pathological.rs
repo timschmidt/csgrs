@@ -536,8 +536,9 @@ fn flatten_path(path: &CurvePath2) -> Vec<[f64; 2]> {
             let t = fraction(sample as i64, (CURVE_SAMPLES - 1) as i64);
             let parameter = domain.start() + &(&span * t);
             let point = curve
-                .point_at(&parameter)
-                .expect("benchmark curve evaluates at a rational parameter");
+                .point_at(&parameter, &CurveContext::STRICT)
+                .expect("benchmark curve evaluates at a rational parameter")
+                .into_value();
             points.push([
                 point.x().to_f64_lossy().expect("finite x coordinate"),
                 point.y().to_f64_lossy().expect("finite y coordinate"),

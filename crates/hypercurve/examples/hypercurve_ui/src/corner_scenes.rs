@@ -496,8 +496,9 @@ fn endpoint_tangent(curve: &Curve2, at_start: bool) -> Result<(Real, Real), Stri
         (domain.end(), CurveParameterSide2::Left)
     };
     let tangent = curve
-        .derivative_at_side(parameter, side)
-        .map_err(string_error)?;
+        .derivative_at_side(parameter, side, &CurveContext::STRICT)
+        .map_err(string_error)?
+        .into_value();
     Ok((tangent.dx().clone(), tangent.dy().clone()))
 }
 
@@ -763,7 +764,10 @@ fn sample_path(path: &CurvePath2, steps: usize) -> Result<Polyline, String> {
             let fraction = (Real::from(i32::try_from(index).map_err(string_error)?) / &step_count)
                 .map_err(string_error)?;
             let parameter = domain.start() + &(&span * fraction);
-            let point = curve.point_at(&parameter).map_err(string_error)?;
+            let point = curve
+                .point_at(&parameter, &CurveContext::STRICT)
+                .map_err(string_error)?
+                .into_value();
             display.add(real_to_f64(point.x()), real_to_f64(point.y()), 0.0);
         }
     }

@@ -78,7 +78,14 @@ fn bench_large_nurbs() {
         )
         .unwrap()
         .into_value();
-        cold_checksum ^= black_box(curve.bezier_decomposition().unwrap().spans().len());
+        cold_checksum ^= black_box(
+            curve
+                .bezier_decomposition(&CurveContext::STRICT)
+                .unwrap()
+                .into_value()
+                .spans()
+                .len(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -92,12 +99,15 @@ fn bench_large_nurbs() {
     let domain_end = i32::try_from(control_count - 3).unwrap();
     let parameter = q(domain_end, 2);
     curve
-        .point_at(&parameter)
+        .point_at(&parameter, &CurveContext::STRICT)
         .expect("large NURBS midpoint evaluates exactly");
     let started = Instant::now();
     let mut evaluation_checksum = 0_usize;
     for _ in 0..iterations {
-        let point = curve.point_at(&parameter).unwrap();
+        let point = curve
+            .point_at(&parameter, &CurveContext::STRICT)
+            .unwrap()
+            .into_value();
         evaluation_checksum ^=
             black_box(point.x().to_f64_lossy().unwrap_or_default().to_bits() as usize);
     }
@@ -150,8 +160,9 @@ fn main() -> CurveResult<()> {
     let mut cached_polynomial_checksum = 0_usize;
     for _ in 0..iterations {
         let decomposition = cached_polynomial
-            .bezier_decomposition()
-            .expect("benchmark decomposition remains exact");
+            .bezier_decomposition(&CurveContext::STRICT)
+            .expect("benchmark decomposition remains exact")
+            .into_value();
         cached_polynomial_checksum ^= black_box(
             decomposition.spans().len()
                 + decomposition.intervals().len()
@@ -293,11 +304,13 @@ fn main() -> CurveResult<()> {
     let mut cached_checksum = 0_usize;
     for _ in 0..iterations {
         let decomposition = cached_nurbs
-            .bezier_decomposition()
-            .expect("benchmark decomposition remains exact");
+            .bezier_decomposition(&CurveContext::STRICT)
+            .expect("benchmark decomposition remains exact")
+            .into_value();
         let native = cached_nurbs
-            .native_subcurves()
-            .expect("general rational cubic remains native");
+            .native_subcurves(&CurveContext::STRICT)
+            .expect("general rational cubic remains native")
+            .into_value();
         cached_checksum ^= black_box(
             decomposition.spans().len() + decomposition.inserted_knot_count() + native.len(),
         );
@@ -310,14 +323,14 @@ fn main() -> CurveResult<()> {
 
     let parameter = (r(1) / r(2)).expect("two is nonzero");
     cached_nurbs
-        .point_at(&parameter)
+        .point_at(&parameter, &CurveContext::STRICT)
         .expect("initial rational evaluation remains exact");
     let started = Instant::now();
     let mut evaluation_count = 0_u32;
     for _ in 0..iterations {
         black_box(
             cached_nurbs
-                .point_at(&parameter)
+                .point_at(&parameter, &CurveContext::STRICT)
                 .expect("cached rational evaluation remains exact"),
         );
         evaluation_count += 1;
@@ -329,14 +342,14 @@ fn main() -> CurveResult<()> {
     );
 
     cached_nurbs
-        .derivative_at(&parameter)
+        .derivative_at(&parameter, &CurveContext::STRICT)
         .expect("initial rational derivative remains exact");
     let started = Instant::now();
     let mut derivative_count = 0_u32;
     for _ in 0..iterations {
         black_box(
             cached_nurbs
-                .derivative_at(&parameter)
+                .derivative_at(&parameter, &CurveContext::STRICT)
                 .expect("cached rational derivative remains exact"),
         );
         derivative_count += 1;
@@ -352,8 +365,9 @@ fn main() -> CurveResult<()> {
     for _ in 0..iterations {
         higher_derivative_count += black_box(
             cached_nurbs
-                .derivatives_at(&parameter, 3)
+                .derivatives_at(&parameter, 3, &CurveContext::STRICT)
                 .expect("cached higher rational derivatives remain exact")
+                .into_value()
                 .len(),
         );
     }
@@ -399,14 +413,14 @@ fn main() -> CurveResult<()> {
     .into_value();
     let wrapped_parameter = r(4_000_000) + q(1, 2);
     periodic
-        .point_at_wrapped(&wrapped_parameter)
+        .point_at_wrapped(&wrapped_parameter, &CurveContext::STRICT)
         .expect("large periodic parameter wraps exactly");
     let started = Instant::now();
     let mut periodic_evaluation_count = 0_u32;
     for _ in 0..iterations {
         black_box(
             periodic
-                .point_at_wrapped(&wrapped_parameter)
+                .point_at_wrapped(&wrapped_parameter, &CurveContext::STRICT)
                 .expect("cached periodic evaluation remains exact"),
         );
         periodic_evaluation_count += 1;

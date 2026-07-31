@@ -439,11 +439,13 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Returns the shared exact Bezier decomposition and source intervals.
-    pub fn bezier_decomposition(&self) -> ExactCurveResult<&PolynomialSplineBezierDecomposition2> {
-        self.bezier_decomposition_for_operation(
-            &CurveContext::STRICT,
-            CurveOperation2::BezierDecomposition,
-        )
+    pub fn bezier_decomposition(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<&PolynomialSplineBezierDecomposition2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.bezier_decomposition_for_operation(attempt, CurveOperation2::BezierDecomposition)
+        })
     }
 
     pub(crate) fn bezier_decomposition_with_policy(
@@ -484,28 +486,37 @@ impl PolynomialSplineCurve2 {
     /// Iterates exact Bezier spans with source identity and knot intervals.
     pub fn bezier_spans(
         &self,
-    ) -> ExactCurveResult<impl ExactSizeIterator<Item = PolynomialSplineBezierSpanView2<'_>>> {
-        let decomposition = self.bezier_decomposition_for_operation(
-            &CurveContext::STRICT,
-            CurveOperation2::BezierDecomposition,
-        )?;
-        Ok(decomposition
-            .spans()
-            .iter()
-            .zip(decomposition.intervals())
-            .enumerate()
-            .map(
-                move |(span_index, (curve, interval))| PolynomialSplineBezierSpanView2 {
-                    span_index,
-                    curve,
-                    interval,
-                },
-            ))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<
+        CurveOutcome<impl ExactSizeIterator<Item = PolynomialSplineBezierSpanView2<'_>>>,
+    > {
+        resolve_certified_operation(policy, |attempt| {
+            let decomposition = self.bezier_decomposition_for_operation(
+                attempt,
+                CurveOperation2::BezierDecomposition,
+            )?;
+            Ok(decomposition
+                .spans()
+                .iter()
+                .zip(decomposition.intervals())
+                .enumerate()
+                .map(
+                    move |(span_index, (curve, interval))| PolynomialSplineBezierSpanView2 {
+                        span_index,
+                        curve,
+                        interval,
+                    },
+                ))
+        })
     }
 
     /// Evaluates the spline at an exact source-domain parameter.
-    pub fn point_at(&self, parameter: &Real) -> ExactCurveResult<Point2> {
-        self.point_at_side(parameter, CurveParameterSide2::Automatic)
+    pub fn point_at(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        self.point_at_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact point with explicit knot-boundary side policy.
@@ -513,8 +524,11 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<Point2> {
-        self.point_at_side_with_policy(parameter, side, &CurveContext::STRICT)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.point_at_side_with_policy(parameter, side, attempt)
+        })
     }
 
     pub(crate) fn point_at_side_with_policy(
@@ -541,8 +555,12 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Evaluates a periodic spline at any exactly wrappable parameter.
-    pub fn point_at_wrapped(&self, parameter: &Real) -> ExactCurveResult<Point2> {
-        self.point_at_wrapped_side(parameter, CurveParameterSide2::Automatic)
+    pub fn point_at_wrapped(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        self.point_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates a periodic spline with explicit side selection at wrapped seams.
@@ -550,6 +568,18 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.point_at_wrapped_side_with_policy(parameter, side, attempt)
+        })
+    }
+
+    pub(crate) fn point_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
         let (start, end) = self.parameter_domain();
         let wrapped = wrap_periodic_parameter(
@@ -559,8 +589,9 @@ impl PolynomialSplineCurve2 {
             self.periodicity(),
             side,
             CurveFamily2::PolynomialBSpline,
+            policy,
         )?;
-        self.point_at_side(&wrapped, side)
+        self.point_at_side_with_policy(&wrapped, side, policy)
     }
 
     fn point_at_canonical_side(
@@ -600,8 +631,12 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Evaluates the exact first derivative in the authored knot parameter.
-    pub fn derivative_at(&self, parameter: &Real) -> ExactCurveResult<CurveDerivative2> {
-        self.derivative_at_side(parameter, CurveParameterSide2::Automatic)
+    pub fn derivative_at(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        self.derivative_at_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact first derivative with explicit knot-boundary side policy.
@@ -609,15 +644,22 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<CurveDerivative2> {
-        let mut derivatives =
-            self.derivatives_at_side_with_policy(parameter, 1, side, &CurveContext::STRICT)?;
-        Ok(derivatives.pop().expect("one derivative requested"))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let mut derivatives =
+                self.derivatives_at_side_with_policy(parameter, 1, side, attempt)?;
+            Ok(derivatives.pop().expect("one derivative requested"))
+        })
     }
 
     /// Evaluates the first periodic derivative at any wrappable parameter.
-    pub fn derivative_at_wrapped(&self, parameter: &Real) -> ExactCurveResult<CurveDerivative2> {
-        self.derivative_at_wrapped_side(parameter, CurveParameterSide2::Automatic)
+    pub fn derivative_at_wrapped(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        self.derivative_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates the first periodic derivative with explicit seam-side selection.
@@ -625,9 +667,13 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<CurveDerivative2> {
-        let mut derivatives = self.derivatives_at_wrapped_side(parameter, 1, side)?;
-        Ok(derivatives.pop().expect("one derivative requested"))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let mut derivatives =
+                self.derivatives_at_wrapped_side_with_policy(parameter, 1, side, attempt)?;
+            Ok(derivatives.pop().expect("one derivative requested"))
+        })
     }
 
     /// Evaluates exact derivatives through `max_order` in the authored knot parameter.
@@ -635,8 +681,9 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         max_order: usize,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.derivatives_at_side(parameter, max_order, CurveParameterSide2::Automatic)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        self.derivatives_at_side(parameter, max_order, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates exact derivatives with explicit knot-boundary side policy.
@@ -645,8 +692,11 @@ impl PolynomialSplineCurve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.derivatives_at_side_with_policy(parameter, max_order, side, &CurveContext::STRICT)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.derivatives_at_side_with_policy(parameter, max_order, side, attempt)
+        })
     }
 
     pub(crate) fn derivatives_at_side_with_policy(
@@ -686,8 +736,14 @@ impl PolynomialSplineCurve2 {
         &self,
         parameter: &Real,
         max_order: usize,
-    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        self.derivatives_at_wrapped_side(parameter, max_order, CurveParameterSide2::Automatic)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        self.derivatives_at_wrapped_side(
+            parameter,
+            max_order,
+            CurveParameterSide2::Automatic,
+            policy,
+        )
     }
 
     /// Evaluates periodic derivatives with explicit side selection at wrapped seams.
@@ -696,6 +752,19 @@ impl PolynomialSplineCurve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, attempt)
+        })
+    }
+
+    pub(crate) fn derivatives_at_wrapped_side_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let (start, end) = self.parameter_domain();
         let wrapped = wrap_periodic_parameter(
@@ -705,8 +774,9 @@ impl PolynomialSplineCurve2 {
             self.periodicity(),
             side,
             CurveFamily2::PolynomialBSpline,
+            policy,
         )?;
-        self.derivatives_at_side(&wrapped, max_order, side)
+        self.derivatives_at_side_with_policy(&wrapped, max_order, side, policy)
     }
 
     fn derivatives_at_canonical_side(

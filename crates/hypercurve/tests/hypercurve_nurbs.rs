@@ -31,7 +31,7 @@ fn quadratic_nurbs() -> NurbsCurve2 {
 #[test]
 fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
-    let symbolic_end = r(1) + undecidable_zero;
+    let symbolic_end = r(1) + undecidable_zero.clone();
     let controls = vec![p(0, 0), p(2, 0)];
     let weights = vec![Real::one(), Real::one()];
     let knots = vec![r(0), r(0), symbolic_end.clone(), r(1)];
@@ -63,6 +63,144 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     );
     assert_eq!(constructed.value.knots(), knots);
     assert_eq!(constructed.value.parameter_domain().1, &symbolic_end);
+
+    let half = q(1, 2);
+    let symbolic_half = &half + undecidable_zero;
+    let evaluation_curve = NurbsCurve2::try_new(
+        2,
+        vec![p(0, 0), p(1, 2), p(2, 0), p(3, -2), p(4, 0)],
+        vec![Real::one(); 5],
+        vec![
+            r(0),
+            r(0),
+            r(0),
+            half,
+            symbolic_half.clone(),
+            r(1),
+            r(1),
+            r(1),
+        ],
+        &CurveContext::APPROXIMATE_512,
+    )
+    .expect("the terminal policy must retain the symbolically repeated interior knot")
+    .into_value();
+    assert!(matches!(
+        evaluation_curve.bezier_decomposition(&CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::BezierDecomposition
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
+    let decomposition = evaluation_curve
+        .bezier_decomposition(&CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must decompose the exact symbolic carrier");
+    assert_eq!(
+        decomposition.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert!(
+        decomposition
+            .value
+            .refined_knots()
+            .iter()
+            .any(|knot| knot == &symbolic_half)
+    );
+
+    let spans = evaluation_curve
+        .bezier_spans(&CurveContext::APPROXIMATE_512)
+        .expect("the retained decomposition must preserve approximate ownership");
+    assert_eq!(
+        spans.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(spans.into_value().len(), 2);
+    let native = evaluation_curve
+        .native_subcurves(&CurveContext::APPROXIMATE_512)
+        .expect("native promotion must use the same terminal policy");
+    assert_eq!(
+        native.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(native.value.len(), 2);
+    let native_spans = evaluation_curve
+        .native_spans(&CurveContext::APPROXIMATE_512)
+        .expect("native span views must preserve terminal consumption");
+    assert_eq!(
+        native_spans.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(native_spans.into_value().len(), 2);
+
+    assert!(matches!(
+        evaluation_curve.point_at(&symbolic_half, &CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Evaluation
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
+    let point = evaluation_curve
+        .point_at(&symbolic_half, &CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must evaluate the exact symbolic knot");
+    assert_eq!(
+        point.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(point.value, p(2, 0));
+    let derivative = evaluation_curve
+        .derivative_at_side(
+            &symbolic_half,
+            CurveParameterSide2::Left,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .expect("the terminal policy must evaluate the exact symbolic derivative");
+    assert_eq!(
+        derivative.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(derivative.value.dx(), &r(4));
+    assert_eq!(derivative.value.dy(), &r(-8));
+    let derivatives = evaluation_curve
+        .derivatives_at_side(
+            &symbolic_half,
+            2,
+            CurveParameterSide2::Left,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .expect("higher derivatives must use the selected terminal policy");
+    assert_eq!(
+        derivatives.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(derivatives.value.len(), 2);
+    assert_eq!(derivatives.value[0], derivative.value);
+
+    let evaluation_top_level = Curve2::from(evaluation_curve.clone());
+    let top_level_point = evaluation_top_level
+        .as_view()
+        .point_at(&symbolic_half, &CurveContext::APPROXIMATE_512)
+        .expect("CurveView2 must preserve NURBS evaluation certainty");
+    assert_eq!(
+        top_level_point.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(top_level_point.value, p(2, 0));
+    assert!(matches!(
+        evaluation_top_level.point_at(&symbolic_half, &CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Evaluation
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
+
+    assert!(matches!(
+        evaluation_curve.bezier_decomposition(&CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::BezierDecomposition
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
+    assert!(matches!(
+        evaluation_curve.native_subcurves(&CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::NativeTopology
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
 
     let top_level = Curve2::try_nurbs(
         1,
@@ -159,12 +297,31 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
 
     assert_eq!(curve.degree(), 1);
     assert_eq!(curve.parameter_domain(), (&r(0), &r(1)));
-    assert_eq!(curve.point_at(&half).unwrap(), p(3, 0));
-    let derivative = curve.derivative_at(&half).unwrap();
+    assert_eq!(
+        curve
+            .point_at(&half, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(3, 0)
+    );
+    let derivative = curve
+        .derivative_at(&half, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(derivative.dx(), &r(3));
     assert_eq!(derivative.dy(), &r(0));
-    assert_eq!(curve.derivative_at(&half).unwrap(), derivative);
-    let spans = curve.native_spans().unwrap().collect::<Vec<_>>();
+    assert_eq!(
+        curve
+            .derivative_at(&half, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        derivative
+    );
+    let spans = curve
+        .native_spans(&CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .collect::<Vec<_>>();
     assert_eq!(spans.len(), 1);
     assert_eq!(spans[0].source_span().knot_interval(), (&r(0), &r(1)));
     assert!(matches!(
@@ -195,10 +352,19 @@ fn nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators() {
     let clone = curve.clone();
 
     assert_eq!(curve.parameter_domain(), (&r(2), &r(6)));
-    let derivative = curve.derivative_at(&r(3)).unwrap();
+    let derivative = curve
+        .derivative_at(&r(3), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(derivative.dx(), &r(1));
     assert_eq!(derivative.dy(), &r(2));
-    assert_eq!(clone.derivative_at(&r(5)).unwrap(), derivative);
+    assert_eq!(
+        clone
+            .derivative_at(&r(5), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        derivative
+    );
 }
 
 #[test]
@@ -213,7 +379,10 @@ fn nurbs_higher_derivatives_use_each_authored_parameter_chain_power() {
     .unwrap()
     .into_value();
 
-    let derivatives = curve.derivatives_at(&r(4), 3).unwrap();
+    let derivatives = curve
+        .derivatives_at(&r(4), 3, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 
     assert_eq!(derivatives.len(), 3);
     assert_eq!(
@@ -242,27 +411,36 @@ fn nurbs_internal_corner_requires_explicit_derivative_side() {
     .unwrap()
     .into_value();
 
-    let error = curve.derivative_at(&r(1)).unwrap_err();
+    let error = curve
+        .derivative_at(&r(1), &CurveContext::STRICT)
+        .unwrap_err();
     assert!(matches!(
         error,
         ExactCurveError::Blocked(blocker)
             if blocker.reason() == hypercurve::UncertaintyReason::Boundary
     ));
     let left = curve
-        .derivative_at_side(&r(1), CurveParameterSide2::Left)
-        .unwrap();
+        .derivative_at_side(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let right = curve
-        .derivative_at_side(&r(1), CurveParameterSide2::Right)
-        .unwrap();
+        .derivative_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!((left.dx(), left.dy()), (&r(1), &r(0)));
     assert_eq!((right.dx(), right.dy()), (&r(0), &r(1)));
 
     let top_level = Curve2::from(curve);
-    assert!(top_level.derivative_at(&r(1)).is_err());
+    assert!(
+        top_level
+            .derivative_at(&r(1), &CurveContext::STRICT)
+            .is_err()
+    );
     assert_eq!(
         top_level
-            .derivative_at_side(&r(1), CurveParameterSide2::Right)
-            .unwrap(),
+            .derivative_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
         right
     );
 }
@@ -280,20 +458,22 @@ fn discontinuous_nurbs_knot_requires_explicit_point_side() {
     .into_value();
 
     assert!(matches!(
-        curve.point_at(&r(1)),
+        curve.point_at(&r(1), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.reason() == hypercurve::UncertaintyReason::Boundary
     ));
     assert_eq!(
         curve
-            .point_at_side(&r(1), CurveParameterSide2::Left)
-            .unwrap(),
+            .point_at_side(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
         p(2, 0)
     );
     assert_eq!(
         curve
-            .point_at_side(&r(1), CurveParameterSide2::Right)
-            .unwrap(),
+            .point_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
         p(10, 0)
     );
 
@@ -310,8 +490,9 @@ fn discontinuous_nurbs_knot_requires_explicit_point_side() {
     assert_eq!(
         top_level
             .as_view()
-            .point_at_side(&r(1), CurveParameterSide2::Right)
-            .unwrap(),
+            .point_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
         p(10, 0)
     );
 }
@@ -330,7 +511,12 @@ fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache
     let samples = [r(0), (r(1) / r(2)).unwrap(), r(1), r(2)];
     let expected = samples
         .iter()
-        .map(|parameter| curve.point_at(parameter).unwrap())
+        .map(|parameter| {
+            curve
+                .point_at(parameter, &CurveContext::STRICT)
+                .unwrap()
+                .into_value()
+        })
         .collect::<Vec<_>>();
 
     let once = curve.insert_knot(r(1)).unwrap();
@@ -350,14 +536,26 @@ fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache
     assert_eq!(
         samples
             .iter()
-            .map(|parameter| twice.point_at(parameter).unwrap())
+            .map(|parameter| twice
+                .point_at(parameter, &CurveContext::STRICT)
+                .unwrap()
+                .into_value())
             .collect::<Vec<_>>(),
         expected
     );
 
-    let cached = twice.bezier_decomposition().unwrap();
+    let cached = twice
+        .bezier_decomposition(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let no_op = twice.insert_knot(r(1)).unwrap();
-    assert!(std::ptr::eq(cached, no_op.bezier_decomposition().unwrap()));
+    assert!(std::ptr::eq(
+        cached,
+        no_op
+            .bezier_decomposition(&CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+    ));
     assert_eq!(no_op, twice);
 }
 
@@ -379,14 +577,23 @@ fn nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result() {
     let sequential = curve.insert_knot(r(1)).unwrap().insert_knot(r(1)).unwrap();
     assert_eq!(batch, sequential);
     for parameter in [r(0), q(1, 2), r(1), q(3, 2), r(2)] {
-        assert_eq!(batch.point_at(&parameter), curve.point_at(&parameter));
+        assert_eq!(
+            batch.point_at(&parameter, &CurveContext::STRICT),
+            curve.point_at(&parameter, &CurveContext::STRICT)
+        );
     }
 
-    let retained = batch.bezier_decomposition().unwrap();
+    let retained = batch
+        .bezier_decomposition(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let replay = clone.insert_knots(request).unwrap();
     assert!(std::ptr::eq(
         retained,
-        replay.bezier_decomposition().unwrap()
+        replay
+            .bezier_decomposition(&CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     ));
 }
 
@@ -424,14 +631,23 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
     assert_eq!(removed.control_points(), curve.control_points());
     assert_eq!(removed.weights(), curve.weights());
     for parameter in [r(0), q(1, 4), q(3, 4), q(3, 2), r(2)] {
-        assert_eq!(removed.point_at(&parameter), curve.point_at(&parameter));
+        assert_eq!(
+            removed.point_at(&parameter, &CurveContext::STRICT),
+            curve.point_at(&parameter, &CurveContext::STRICT)
+        );
     }
 
-    let retained = removed.bezier_decomposition().unwrap();
+    let retained = removed
+        .bezier_decomposition(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let replay = clone.remove_knot(knot).unwrap().unwrap();
     assert!(std::ptr::eq(
         retained,
-        replay.bezier_decomposition().unwrap()
+        replay
+            .bezier_decomposition(&CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     ));
 }
 
@@ -475,8 +691,8 @@ fn periodic_nurbs_knot_removal_preserves_period_and_wrapped_image() {
     assert_eq!(removed.start(), removed.end());
     for parameter in [r(-3), r(0), q(5, 2), r(7), r(13)] {
         assert_eq!(
-            removed.point_at_wrapped(&parameter),
-            curve.point_at_wrapped(&parameter)
+            removed.point_at_wrapped(&parameter, &CurveContext::STRICT),
+            curve.point_at_wrapped(&parameter, &CurveContext::STRICT)
         );
     }
 }
@@ -515,8 +731,10 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
                         } else {
                             CurveParameterSide2::Left
                         },
+                        &CurveContext::STRICT,
                     )
                     .unwrap()
+                    .into_value()
             );
         }
     }
@@ -552,20 +770,29 @@ fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
         3
     );
     for parameter in [r(0), q(1, 4), q(3, 4), r(1), q(3, 2), r(2)] {
-        assert_eq!(elevated.point_at(&parameter), curve.point_at(&parameter));
+        assert_eq!(
+            elevated.point_at(&parameter, &CurveContext::STRICT),
+            curve.point_at(&parameter, &CurveContext::STRICT)
+        );
     }
     for parameter in [q(1, 2), r(1), q(3, 2)] {
         assert_eq!(
-            elevated.derivative_at(&parameter),
-            curve.derivative_at(&parameter)
+            elevated.derivative_at(&parameter, &CurveContext::STRICT),
+            curve.derivative_at(&parameter, &CurveContext::STRICT)
         );
     }
 
-    let retained = elevated.bezier_decomposition().unwrap();
+    let retained = elevated
+        .bezier_decomposition(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let replay = clone.elevated_to_degree(4).unwrap();
     assert!(std::ptr::eq(
         retained,
-        replay.bezier_decomposition().unwrap()
+        replay
+            .bezier_decomposition(&CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     ));
 }
 
@@ -592,15 +819,15 @@ fn nurbs_elevated_carrier_preserves_discontinuous_knot_sides() {
         5
     );
     assert_eq!(
-        elevated.point_at_side(&r(1), CurveParameterSide2::Left),
-        curve.point_at_side(&r(1), CurveParameterSide2::Left)
+        elevated.point_at_side(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT),
+        curve.point_at_side(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT)
     );
     assert_eq!(
-        elevated.point_at_side(&r(1), CurveParameterSide2::Right),
-        curve.point_at_side(&r(1), CurveParameterSide2::Right)
+        elevated.point_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT),
+        curve.point_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
     );
     assert!(matches!(
-        elevated.point_at(&r(1)),
+        elevated.point_at(&r(1), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.reason() == hypercurve::UncertaintyReason::Boundary
     ));
@@ -624,12 +851,12 @@ fn periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives() {
     assert_eq!(elevated.start(), elevated.end());
     for parameter in [r(-3), q(1, 2), q(7, 2), r(4), q(17, 2)] {
         assert_eq!(
-            elevated.point_at_wrapped(&parameter),
-            curve.point_at_wrapped(&parameter)
+            elevated.point_at_wrapped(&parameter, &CurveContext::STRICT),
+            curve.point_at_wrapped(&parameter, &CurveContext::STRICT)
         );
         assert_eq!(
-            elevated.derivative_at_wrapped(&parameter),
-            curve.derivative_at_wrapped(&parameter)
+            elevated.derivative_at_wrapped(&parameter, &CurveContext::STRICT),
+            curve.derivative_at_wrapped(&parameter, &CurveContext::STRICT)
         );
     }
 }
@@ -684,14 +911,31 @@ fn nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image() {
     assert_eq!(left.parameter_domain(), (&r(0), &r(1)));
     assert_eq!(right.parameter_domain(), (&r(1), &r(2)));
     assert_eq!(left.end(), right.start());
-    assert_eq!(left.end(), &curve.point_at(&r(1)).unwrap());
     assert_eq!(
-        left.point_at(&q(1, 2)).unwrap(),
-        curve.point_at(&q(1, 2)).unwrap()
+        left.end(),
+        &curve
+            .point_at(&r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     );
     assert_eq!(
-        right.point_at(&q(3, 2)).unwrap(),
-        curve.point_at(&q(3, 2)).unwrap()
+        left.point_at(&q(1, 2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .point_at(&q(1, 2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+    );
+    assert_eq!(
+        right
+            .point_at(&q(3, 2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .point_at(&q(3, 2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     );
 
     let middle = curve
@@ -699,11 +943,29 @@ fn nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image() {
         .unwrap()
         .into_value();
     assert_eq!(middle.parameter_domain(), (&q(1, 2), &q(3, 2)));
-    assert_eq!(middle.start(), &curve.point_at(&q(1, 2)).unwrap());
-    assert_eq!(middle.end(), &curve.point_at(&q(3, 2)).unwrap());
     assert_eq!(
-        middle.point_at(&r(1)).unwrap(),
-        curve.point_at(&r(1)).unwrap()
+        middle.start(),
+        &curve
+            .point_at(&q(1, 2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+    );
+    assert_eq!(
+        middle.end(),
+        &curve
+            .point_at(&q(3, 2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+    );
+    assert_eq!(
+        middle
+            .point_at(&r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .point_at(&r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     );
 }
 
@@ -716,11 +978,23 @@ fn nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping() {
     assert_eq!(reversed.start(), curve.end());
     assert_eq!(reversed.end(), curve.start());
     assert_eq!(
-        reversed.point_at(&q(1, 2)).unwrap(),
-        curve.point_at(&q(3, 2)).unwrap()
+        reversed
+            .point_at(&q(1, 2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .point_at(&q(3, 2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     );
-    let forward_derivative = curve.derivative_at(&q(3, 2)).unwrap();
-    let reverse_derivative = reversed.derivative_at(&q(1, 2)).unwrap();
+    let forward_derivative = curve
+        .derivative_at(&q(3, 2), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    let reverse_derivative = reversed
+        .derivative_at(&q(1, 2), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(reverse_derivative.dx(), &(-forward_derivative.dx()));
     assert_eq!(reverse_derivative.dy(), &(-forward_derivative.dy()));
     assert_eq!(reversed.reversed().unwrap(), curve);
@@ -759,8 +1033,14 @@ fn nurbs_clones_share_one_retained_bezier_decomposition() {
     let curve = quadratic_nurbs();
     let clone = curve.clone();
 
-    let first = curve.bezier_decomposition().unwrap();
-    let second = clone.bezier_decomposition().unwrap();
+    let first = curve
+        .bezier_decomposition(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    let second = clone
+        .bezier_decomposition(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 
     assert!(std::ptr::eq(first, second));
     assert_eq!(first.spans().len(), 2);
@@ -771,9 +1051,15 @@ fn nurbs_clones_share_one_retained_bezier_decomposition() {
 fn native_nurbs_spans_are_cached_and_borrowed() {
     let curve = quadratic_nurbs();
 
-    let first = curve.native_subcurves().unwrap();
+    let first = curve
+        .native_subcurves(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let first_ptr = first.as_ptr();
-    let second = curve.native_subcurves().unwrap();
+    let second = curve
+        .native_subcurves(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 
     assert_eq!(first_ptr, second.as_ptr());
     assert_eq!(first.len(), 2);
@@ -783,8 +1069,16 @@ fn native_nurbs_spans_are_cached_and_borrowed() {
             .all(|span| matches!(span, BezierSubcurve2::RationalQuadratic(_)))
     );
 
-    let retained = curve.bezier_spans().unwrap().collect::<Vec<_>>();
-    let promoted = curve.native_spans().unwrap().collect::<Vec<_>>();
+    let retained = curve
+        .bezier_spans(&CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .collect::<Vec<_>>();
+    let promoted = curve
+        .native_spans(&CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .collect::<Vec<_>>();
     assert_eq!(retained.len(), 2);
     assert_eq!(retained[0].span_index(), 0);
     assert_eq!(retained[1].span_index(), 1);
@@ -793,8 +1087,9 @@ fn native_nurbs_spans_are_cached_and_borrowed() {
     assert!(std::ptr::eq(
         retained[0].retained_span(),
         curve
-            .bezier_decomposition()
+            .bezier_decomposition(&CurveContext::STRICT)
             .unwrap()
+            .into_value()
             .spans()
             .first()
             .unwrap()
@@ -807,19 +1102,40 @@ fn native_nurbs_spans_are_cached_and_borrowed() {
 fn nurbs_evaluation_reuses_decomposition_and_preserves_exact_coordinates() {
     let curve = quadratic_nurbs();
 
-    assert_eq!(curve.point_at(&r(0)).unwrap(), p(0, 0));
-    let join = curve.point_at(&r(1)).unwrap();
+    assert_eq!(
+        curve
+            .point_at(&r(0), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(0, 0)
+    );
+    let join = curve
+        .point_at(&r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(join.x(), &(Real::from(10) / Real::from(3)).unwrap());
     assert_eq!(join.y(), &r(4));
-    assert_eq!(curve.point_at(&r(2)).unwrap(), p(6, 0));
-    assert_eq!(curve.point_at(&r(1)).unwrap(), join);
+    assert_eq!(
+        curve
+            .point_at(&r(2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(6, 0)
+    );
+    assert_eq!(
+        curve
+            .point_at(&r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        join
+    );
 }
 
 #[test]
 fn out_of_domain_nurbs_evaluation_has_contextual_error() {
     let curve = quadratic_nurbs();
 
-    let error = curve.point_at(&r(3)).unwrap_err();
+    let error = curve.point_at(&r(3), &CurveContext::STRICT).unwrap_err();
 
     assert_eq!(error.operation(), CurveOperation2::Evaluation);
     assert_eq!(error.family(), CurveFamily2::Nurbs);
@@ -844,9 +1160,15 @@ fn unequal_weight_cubic_nurbs_promotes_once_with_provenance() {
     .unwrap()
     .into_value();
 
-    let first = curve.native_subcurves().unwrap();
+    let first = curve
+        .native_subcurves(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let first_pointer = first.as_ptr();
-    let second = curve.native_subcurves().unwrap();
+    let second = curve
+        .native_subcurves(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(first_pointer, second.as_ptr());
     assert_eq!(first.len(), 2);
     assert!(
@@ -855,7 +1177,11 @@ fn unequal_weight_cubic_nurbs_promotes_once_with_provenance() {
             .all(|span| matches!(span, BezierSubcurve2::Rational(_)))
     );
 
-    let spans = curve.native_spans().unwrap().collect::<Vec<_>>();
+    let spans = curve
+        .native_spans(&CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .collect::<Vec<_>>();
     assert_eq!(spans.len(), 2);
 }
 
@@ -872,8 +1198,18 @@ fn higher_degree_nurbs_promotes_evaluates_and_splits_exactly() {
     .into_value();
 
     assert_eq!(curve.degree(), 4);
-    assert_eq!(curve.point_at(&q(1, 2)).unwrap(), p(2, 2));
-    let spans = curve.native_spans().unwrap().collect::<Vec<_>>();
+    assert_eq!(
+        curve
+            .point_at(&q(1, 2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(2, 2)
+    );
+    let spans = curve
+        .native_spans(&CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .collect::<Vec<_>>();
     assert_eq!(spans.len(), 1);
     assert_eq!(spans[0].source_span().degree(), 4);
     assert!(matches!(spans[0].curve(), BezierSubcurve2::Rational(_)));
@@ -901,12 +1237,24 @@ fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
     assert_eq!(curve.parameter_domain(), (&r(2), &r(4)));
     assert_eq!(curve.start(), &Point2::new(r(1), r(2)));
     assert_eq!(curve.end(), &Point2::new(r(5), r(2)));
-    assert_eq!(curve.point_at(&r(3)).unwrap(), p(3, 4));
+    assert_eq!(
+        curve
+            .point_at(&r(3), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(3, 4)
+    );
 
     let inserted = curve.insert_knot(r(3)).unwrap();
     assert_eq!(inserted.start(), curve.start());
     assert_eq!(inserted.end(), curve.end());
-    assert_eq!(inserted.point_at(&r(3)).unwrap(), p(3, 4));
+    assert_eq!(
+        inserted
+            .point_at(&r(3), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(3, 4)
+    );
 
     let (left, right) = curve
         .split_at(r(3), &CurveContext::STRICT)
@@ -923,8 +1271,14 @@ fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
     assert_eq!(reversed.start(), curve.end());
     assert_eq!(reversed.end(), curve.start());
     assert_eq!(
-        reversed.point_at(&r(3)).unwrap(),
-        curve.point_at(&r(3)).unwrap()
+        reversed
+            .point_at(&r(3), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .point_at(&r(3), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     );
 }
 
@@ -942,12 +1296,25 @@ fn unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence() {
 
     assert_eq!(curve.start(), &Point2::new(q(4, 3), q(8, 3)));
     assert_eq!(curve.end(), &Point2::new(q(36, 7), q(12, 7)));
-    assert_eq!(curve.point_at(&r(2)).unwrap(), curve.start().clone());
-    assert_eq!(curve.point_at(&r(4)).unwrap(), curve.end().clone());
+    assert_eq!(
+        curve
+            .point_at(&r(2), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve.start().clone()
+    );
+    assert_eq!(
+        curve
+            .point_at(&r(4), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve.end().clone()
+    );
     assert!(
         curve
-            .bezier_decomposition()
+            .bezier_decomposition(&CurveContext::STRICT)
             .unwrap()
+            .into_value()
             .refined_weights()
             .iter()
             .all(|weight| weight.zero_status() == hyperreal::ZeroKnowledge::NonZero)
@@ -997,18 +1364,116 @@ fn periodic_nurbs_wraps_exact_points_derivatives_and_retains_source() {
     assert_eq!(curve.control_points().len(), 6);
     assert_eq!(curve.knots().len(), 9);
     assert_eq!(curve.start(), curve.end());
-    assert_eq!(curve.point_at(&r(0)).unwrap(), p(1, 0));
-    assert_eq!(curve.point_at_wrapped(&r(-1)).unwrap(), p(0, 1));
-    assert_eq!(curve.point_at_wrapped(&r(5)).unwrap(), p(2, 1));
-    assert_eq!(curve.point_at_wrapped(&r(9)).unwrap(), p(2, 1));
     assert_eq!(
-        curve.derivatives_at_wrapped(&q(11, 2), 3).unwrap(),
-        curve.derivatives_at(&q(3, 2), 3).unwrap()
+        curve
+            .point_at(&r(0), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(1, 0)
     );
     assert_eq!(
-        curve.derivatives_at_wrapped(&r(4), 1).unwrap(),
-        curve.derivatives_at(&r(0), 1).unwrap()
+        curve
+            .point_at_wrapped(&r(-1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(0, 1)
     );
+    assert_eq!(
+        curve
+            .point_at_wrapped(&r(5), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(2, 1)
+    );
+    assert_eq!(
+        curve
+            .point_at_wrapped(&r(9), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        p(2, 1)
+    );
+    assert_eq!(
+        curve
+            .derivatives_at_wrapped(&q(11, 2), 3, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .derivatives_at(&q(3, 2), 3, &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+    );
+    assert_eq!(
+        curve
+            .derivatives_at_wrapped(&r(4), 1, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .derivatives_at(&r(0), 1, &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+    );
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn periodic_nurbs_wrapping_obeys_terminal_policy() {
+    let curve = NurbsCurve2::try_new_periodic(
+        2,
+        vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
+        vec![r(1), r(2), r(3), r(4)],
+        (0..=4).map(r).collect(),
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let wrapped_seam = r(4) + undecidable_zero;
+
+    assert!(matches!(
+        curve.point_at_wrapped(&wrapped_seam, &CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Evaluation
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
+    let point = curve
+        .point_at_wrapped(&wrapped_seam, &CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must resolve an undecidable NURBS seam");
+    assert_eq!(
+        point.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(point.value, curve.start().clone());
+
+    let derivatives = curve
+        .derivatives_at_wrapped_side(
+            &wrapped_seam,
+            2,
+            CurveParameterSide2::Right,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .expect("wrapped NURBS derivatives must share the terminal policy");
+    assert_eq!(
+        derivatives.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(
+        derivatives.value,
+        curve
+            .derivatives_at_side(&r(0), 2, CurveParameterSide2::Right, &CurveContext::STRICT,)
+            .unwrap()
+            .into_value()
+    );
+
+    let top_level = Curve2::from(curve);
+    let top_level_point = top_level
+        .as_view()
+        .point_at_wrapped(&wrapped_seam, &CurveContext::APPROXIMATE_512)
+        .expect("CurveView2 must preserve wrapped NURBS certainty");
+    assert_eq!(
+        top_level_point.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(top_level_point.value, top_level.start().clone());
 }
 
 #[test]
@@ -1026,8 +1491,14 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
     let inserted = curve.insert_knots(vec![q(1, 2), q(3, 2)]).unwrap();
     assert_eq!(inserted.period(), curve.period());
     assert_eq!(
-        inserted.point_at_wrapped(&r(5)).unwrap(),
-        curve.point_at_wrapped(&r(5)).unwrap()
+        inserted
+            .point_at_wrapped(&r(5), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .point_at_wrapped(&r(5), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     );
 
     let elevated = curve.degree_elevation(3).unwrap();
@@ -1066,8 +1537,14 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
     assert_eq!(reversed.period(), curve.period());
     assert_eq!(reversed.start(), reversed.end());
     assert_eq!(
-        reversed.point_at_wrapped(&r(1)).unwrap(),
-        curve.point_at_wrapped(&r(3)).unwrap()
+        reversed
+            .point_at_wrapped(&r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .point_at_wrapped(&r(3), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     );
 
     let (left, right) = curve
@@ -1086,8 +1563,20 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
     assert_eq!(clamped.period(), None);
     assert_eq!(clamped.parameter_domain(), (&r(0), &r(1)));
     assert_eq!(clamped.knots(), &[r(0), r(0), r(0), r(1), r(1), r(1)]);
-    assert_eq!(clamped.start(), &curve.point_at(&r(0)).unwrap());
-    assert_eq!(clamped.end(), &curve.point_at(&r(1)).unwrap());
+    assert_eq!(
+        clamped.start(),
+        &curve
+            .point_at(&r(0), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+    );
+    assert_eq!(
+        clamped.end(),
+        &curve
+            .point_at(&r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+    );
 }
 
 #[test]
@@ -1107,14 +1596,33 @@ fn nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots() {
     assert_eq!(curve.period(), Some(&r(8)));
     assert_eq!(curve.start(), curve.end());
     assert_eq!(
-        curve.point_at_wrapped(&shifted).unwrap(),
-        curve.point_at(&parameter).unwrap()
+        curve
+            .point_at_wrapped(&shifted, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .point_at(&parameter, &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     );
     assert_eq!(
-        curve.derivative_at_wrapped(&shifted).unwrap(),
-        curve.derivative_at(&parameter).unwrap()
+        curve
+            .derivative_at_wrapped(&shifted, &CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+            .derivative_at(&parameter, &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
     );
-    assert!(curve.bezier_spans().unwrap().len() >= 4);
+    assert!(
+        curve
+            .bezier_spans(&CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+            .len()
+            >= 4
+    );
 }
 
 #[test]
@@ -1136,7 +1644,9 @@ fn periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping() {
     ));
 
     let open = quadratic_nurbs();
-    let error = open.point_at_wrapped(&r(3)).unwrap_err();
+    let error = open
+        .point_at_wrapped(&r(3), &CurveContext::STRICT)
+        .unwrap_err();
     assert_eq!(error.operation(), CurveOperation2::Evaluation);
     assert!(matches!(
         error,
