@@ -764,7 +764,11 @@ impl Real {
         let magnitude = match (self.rational.msd_exact(), computable.magnitude) {
             (Some(rational_msd), Some(magnitude)) => Some(MagnitudeBits {
                 msd: rational_msd + magnitude.msd,
-                exact_msd: magnitude.exact_msd,
+                // Adding binade indices is exact only when the outer scale is
+                // itself a power of two. General rational significands can
+                // carry the product into the next binade.
+                exact_msd: magnitude.exact_msd
+                    && self.rational.power_of_two_shift().is_some(),
             }),
             _ => computable.magnitude,
         };

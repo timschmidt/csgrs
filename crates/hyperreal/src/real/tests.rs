@@ -1026,6 +1026,66 @@ mod tests {
     }
 
     #[test]
+    fn certified_sign_refines_mixed_pi_atan_terms() {
+        let negative_argument = Real::from(2).sqrt().unwrap() - Real::from(2);
+        let value = Real::from(-2) * negative_argument.atan().unwrap() - pi_fraction(1, 8);
+
+        assert_eq!(value.structural_facts().sign, None);
+        let [lower, upper] = value.certified_dyadic_interval(-64).unwrap();
+        assert!(lower > Rational::zero());
+        assert!(upper >= lower);
+        assert_eq!(
+            value.certified_sign_until(-64).sign(),
+            Some(RealSign::Positive)
+        );
+        assert_eq!(
+            value.certified_cmp_until(&Real::zero(), -64).ordering(),
+            Some(Ordering::Greater)
+        );
+    }
+
+    #[test]
+    fn cycloidal_root_angles_compare_in_geometric_order() {
+        let generating_radius = Real::new(Rational::fraction(3, 4).unwrap());
+        let root_phase = Real::new(Rational::fraction(-121, 174).unwrap())
+            .acos()
+            .unwrap();
+        let root_parameter = (root_phase.clone() * generating_radius.clone() / Real::from(8))
+            .expect("pitch radius is nonzero");
+        let hypocycle_radius = Real::new(Rational::fraction(29, 4).unwrap());
+        let hypocycle_ratio = (hypocycle_radius.clone() / generating_radius.clone())
+            .expect("generating radius is nonzero");
+        let parameter = -root_parameter;
+        let rolling = hypocycle_ratio * parameter.clone();
+        let x = hypocycle_radius.clone() * parameter.clone().cos()
+            + generating_radius.clone() * rolling.clone().cos();
+        let y = hypocycle_radius * parameter.sin() - generating_radius * rolling.sin();
+
+        let angular_pitch = (Real::tau() / Real::from(16)).expect("tooth count is nonzero");
+        let flank_rotation = -(angular_pitch.clone() / Real::from(4)).expect("four is nonzero");
+        let flank_sine = flank_rotation.clone().sin();
+        let flank_cosine = flank_rotation.cos();
+        let rotated_x = x.clone() * flank_cosine.clone() - y.clone() * flank_sine.clone();
+        let rotated_y = x * flank_sine + y * flank_cosine;
+        let right_root = rotated_y.atan2(rotated_x);
+        let left_root = -right_root.clone();
+        let next_right_root = angular_pitch + right_root;
+        let value = left_root - next_right_root;
+
+        let [lower, upper] = value.certified_dyadic_interval(-64).unwrap();
+        assert!(lower > Rational::zero());
+        assert!(upper >= lower);
+        assert_eq!(
+            value.certified_sign_until(-64).sign(),
+            Some(RealSign::Positive)
+        );
+        assert_eq!(
+            value.certified_cmp_until(&Real::zero(), -64).ordering(),
+            Some(Ordering::Greater)
+        );
+    }
+
+    #[test]
     fn certified_eq_until_reports_structural_and_exact_rational_results() {
         let two = Real::from(2);
         assert_eq!(
@@ -1129,6 +1189,40 @@ mod tests {
                 certificate: RealOrderingCertificate::StructuralFacts,
             }
         );
+    }
+
+    #[test]
+    fn scaled_irrational_magnitude_does_not_claim_an_exact_product_binade() {
+        let radius = Real::new(Rational::fraction(225, 8).unwrap())
+            .sqrt()
+            .unwrap();
+        let magnitude = radius
+            .structural_facts()
+            .magnitude
+            .expect("positive quadratic surd has magnitude facts");
+
+        assert!(!magnitude.exact_msd);
+        assert_eq!(
+            radius.certified_cmp_until(&Real::from(4), -64).ordering(),
+            Some(Ordering::Greater)
+        );
+    }
+
+    #[test]
+    fn quadratic_surd_weight_discriminant_retains_its_positive_sign() {
+        let weight = Real::from(2_i8).sqrt().unwrap();
+        let b = Real::from(2_i8) * (&weight - Real::one());
+        let a = Real::from(2_i8) * (Real::one() - &weight);
+        let delta = Real::from(4_i8) * a - &b * &b;
+        let discriminant = Real::zero() - delta;
+
+        assert_eq!(
+            discriminant
+                .certified_cmp_until(&Real::zero(), -512)
+                .ordering(),
+            Some(Ordering::Greater)
+        );
+        assert_eq!(discriminant.sqrt().unwrap(), Real::from(2_i8));
     }
 
     #[test]
@@ -4146,6 +4240,54 @@ mod tests {
             (-Real::one()).atan2(Real::one()),
             (Real::pi() / Real::from(-4_i32)).unwrap(),
         );
+    }
+
+    #[test]
+    fn integer_pi_shifted_atan_trig_replays_exactly() {
+        let root_thirteen = Real::from(13_i32).sqrt().unwrap();
+
+        for pi_multiple in -2_i32..=2 {
+            let parity = if pi_multiple.rem_euclid(2) == 0 {
+                1
+            } else {
+                -1
+            };
+            for atan_orientation in [-1_i32, 1] {
+                for argument_numerator in [-2_i32, 2] {
+                    let argument = (Real::from(argument_numerator) / Real::from(3_i32)).unwrap();
+                    let angle = Real::from(pi_multiple) * Real::pi()
+                        + Real::from(atan_orientation) * argument.atan().unwrap();
+                    let sine_numerator = parity * atan_orientation * argument_numerator;
+                    let cosine_numerator = parity * 3;
+
+                    assert_eq!(
+                        angle.clone().sin(),
+                        (Real::from(sine_numerator) / root_thirteen.clone()).unwrap(),
+                        "pi_multiple={pi_multiple}, atan_orientation={atan_orientation}, \
+                         argument_numerator={argument_numerator}",
+                    );
+                    assert_eq!(
+                        angle.cos(),
+                        (Real::from(cosine_numerator) / root_thirteen.clone()).unwrap(),
+                        "pi_multiple={pi_multiple}, atan_orientation={atan_orientation}, \
+                         argument_numerator={argument_numerator}",
+                    );
+                }
+            }
+        }
+
+        let argument = (Real::one() / Real::from(3_i32)).unwrap();
+        let double_angle = Real::from(2_i32) * argument.atan().unwrap();
+        let expected_sine = Real::new(Rational::fraction(3, 5).unwrap());
+        let expected_cosine = Real::new(Rational::fraction(4, 5).unwrap());
+        for difference in [
+            double_angle.clone().sin() - expected_sine,
+            double_angle.cos() - expected_cosine,
+        ] {
+            let [lower, upper] = difference.certified_dyadic_interval(-96).unwrap();
+            assert!(lower <= Rational::zero());
+            assert!(upper >= Rational::zero());
+        }
     }
 
     #[test]

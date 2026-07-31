@@ -575,6 +575,33 @@ impl Computable {
         (argument.exact_sign()? == orientation).then_some((orientation, argument))
     }
 
+    pub(crate) fn integer_pi_plus_or_minus_atan_argument(
+        &self,
+    ) -> Option<(Sign, Sign, Computable)> {
+        let form = self.pi_atan_linear_form(64)?;
+        if form.constant.sign() != Sign::NoSign
+            || (!form.atan.is_one() && !form.atan.is_minus_one())
+        {
+            return None;
+        }
+        let multiple = form.pi.integer_magnitude()?;
+        let cosine_sign = if multiple.bit(0) {
+            Sign::Minus
+        } else {
+            Sign::Plus
+        };
+        let sine_sign = if form.atan.is_minus_one() {
+            match cosine_sign {
+                Sign::Plus => Sign::Minus,
+                Sign::Minus => Sign::Plus,
+                Sign::NoSign => unreachable!("integer-pi parity has a nonzero orientation"),
+            }
+        } else {
+            cosine_sign
+        };
+        Some((sine_sign, cosine_sign, form.argument?))
+    }
+
     fn pi_acos_linear_form(&self, budget: usize) -> Option<PiAcosLinearForm> {
         if budget == 0 {
             return None;
@@ -814,6 +841,11 @@ impl Computable {
             (Sign::Plus, Sign::Plus) | (Sign::Minus, Sign::Minus) => Sign::Plus,
             _ => Sign::Minus,
         };
+        let atan_term_sign = |argument: &Computable, coefficient: &Rational| {
+            argument
+                .exact_sign()
+                .map(|argument_sign| product_sign(coefficient.sign(), argument_sign))
+        };
         let magnitude = |value: &Rational| {
             if value.sign() == Sign::Minus {
                 -value.clone()
@@ -845,13 +877,21 @@ impl Computable {
                     .exact_sign()?;
                 return Some(product_sign(form.terms[0].1.sign(), argument_order));
             }
-            if form.pi.sign() != Sign::NoSign
-                && form
-                    .terms
-                    .iter()
-                    .all(|(_, coefficient)| coefficient.sign() == form.pi.sign())
-            {
-                return Some(form.pi.sign());
+            let pi_sign = form.pi.sign();
+            if pi_sign != Sign::NoSign {
+                let terms_follow_pi =
+                    form.terms
+                        .iter()
+                        .try_fold(true, |all_follow, (argument, coefficient)| {
+                            if !all_follow {
+                                return Some(false);
+                            }
+                            atan_term_sign(argument, coefficient)
+                                .map(|term_sign| term_sign == Sign::NoSign || term_sign == pi_sign)
+                        });
+                if terms_follow_pi == Some(true) {
+                    return Some(pi_sign);
+                }
             }
             let atan_bound = form
                 .terms
@@ -859,10 +899,8 @@ impl Computable {
                 .fold(Rational::zero(), |sum, (_, coefficient)| {
                     sum + magnitude(coefficient)
                 });
-            if form.pi.sign() != Sign::NoSign
-                && magnitude(&form.pi) * Rational::new(2) >= atan_bound
-            {
-                return Some(form.pi.sign());
+            if pi_sign != Sign::NoSign && magnitude(&form.pi) * Rational::new(2) >= atan_bound {
+                return Some(pi_sign);
             }
         }
 
@@ -878,7 +916,11 @@ impl Computable {
             if form.atan.sign() == Sign::NoSign {
                 return Some(form.pi.sign());
             }
-            if form.pi.sign() == form.atan.sign() {
+            let atan_sign = form
+                .argument
+                .as_ref()
+                .and_then(|argument| atan_term_sign(argument, &form.atan));
+            if atan_sign == Some(Sign::NoSign) || atan_sign == Some(form.pi.sign()) {
                 return Some(form.pi.sign());
             }
             if magnitude(&form.pi) * Rational::new(2) >= magnitude(&form.atan) {

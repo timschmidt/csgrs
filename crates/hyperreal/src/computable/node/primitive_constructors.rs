@@ -220,43 +220,21 @@ impl Computable {
             return None;
         }
 
-        let (base_sign, base_msd) = base.planning_sign_and_msd();
         let (perturb_sign, perturb_msd) = perturbation.planning_sign_and_msd();
-        let base_sign = base_sign?;
         let perturb_sign = perturb_sign?;
-        let base_msd = base_msd.flatten();
         let perturb_msd = perturb_msd.flatten();
 
-        match (base_sign, perturb_sign) {
-            (Sign::NoSign, Sign::NoSign) => Some(Ordering::Equal),
-            (Sign::NoSign, _) => {
-                if perturb_msd.is_some_and(|msd| msd < tolerance) {
-                    Some(Ordering::Equal)
-                } else {
-                    Some(Ordering::Greater)
-                }
-            }
-            (base_sign, perturb_sign) if base_sign == perturb_sign => Some(
-                if perturb_sign == Sign::NoSign || perturb_msd.is_some_and(|msd| msd < tolerance) {
-                    Ordering::Equal
-                } else {
-                    Ordering::Greater
-                },
-            ),
-            (base_sign, perturb_sign) if base_sign != perturb_sign => {
-                if perturb_msd.is_some_and(|msd| msd < tolerance) {
-                    Some(Ordering::Equal)
-                } else if let (Some(base_msd), Some(perturb_msd)) = (base_msd, perturb_msd) {
-                    if base_msd > perturb_msd {
-                        Some(Ordering::Less)
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            }
-            _ => None,
+        if perturb_sign == Sign::NoSign || perturb_msd.is_some_and(|msd| msd < tolerance) {
+            return Some(Ordering::Equal);
+        }
+
+        // `(base + perturbation) - base` is exactly the perturbation. The
+        // ordering therefore depends only on its sign; the sign or magnitude
+        // of a negative base must not reverse the comparison.
+        match perturb_sign {
+            Sign::Minus => Some(Ordering::Less),
+            Sign::NoSign => Some(Ordering::Equal),
+            Sign::Plus => Some(Ordering::Greater),
         }
     }
 

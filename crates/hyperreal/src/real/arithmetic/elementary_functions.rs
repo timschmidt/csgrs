@@ -232,7 +232,7 @@ impl Real {
             && radical_scale.sign() == Sign::NoSign
         {
             crate::trace_dispatch!("real", "sqrt", "computable-rational-promotion");
-            return Self::new(rational).sqrt();
+            return Self::new(&self.rational * &rational).sqrt();
         }
         crate::trace_dispatch!("real", "sqrt", "generic-computable");
         Ok(self.make_computable(Computable::sqrt))
@@ -2050,16 +2050,43 @@ impl Real {
     }
 
     fn retained_atan_argument(&self) -> Option<Real> {
-        if !matches!(&self.class, Irrational) {
+        if !matches!(&self.class, Irrational)
+            || (!self.rational.is_one() && !self.rational.is_minus_one())
+        {
             return None;
         }
         let computable = self.computable.as_ref()?;
-        if let Some(argument) = computable.atan_rational_argument() {
-            return Some(Self::new(argument));
-        }
-        let (scale, radicand) = computable.atan_pure_quadratic_surd_argument()?;
-        let radical = Self::new(radicand).sqrt().ok()?;
-        Some(radical.scaled_by_rational(&scale))
+        let argument = if let Some(argument) = computable.atan_rational_argument() {
+            Self::new(argument)
+        } else {
+            let (scale, radicand) = computable.atan_pure_quadratic_surd_argument()?;
+            let radical = Self::new(radicand).sqrt().ok()?;
+            radical.scaled_by_rational(&scale)
+        };
+        Some(if self.rational.is_minus_one() {
+            -argument
+        } else {
+            argument
+        })
+    }
+
+    fn retained_integer_pi_plus_or_minus_atan_argument(
+        &self,
+    ) -> Option<(Sign, Sign, Real)> {
+        let (sine_sign, cosine_sign, argument) = self
+            .fold_ref()
+            .integer_pi_plus_or_minus_atan_argument()?;
+        let argument = if let Some(rational) = argument.exact_rational() {
+            Self::new(rational)
+        } else if let Some((scale, radicand)) = argument.exact_pure_quadratic_surd() {
+            Self::new(radicand)
+                .sqrt()
+                .ok()?
+                .scaled_by_rational(&scale)
+        } else {
+            Self::irrational_from_computable(argument)
+        };
+        Some((sine_sign, cosine_sign, argument))
     }
 
     fn retained_signed_half_pi_minus_atan_argument(&self) -> Option<(Sign, Real)> {
@@ -2109,6 +2136,21 @@ impl Real {
                 .expect("one plus an exact atan argument square is positive");
             return (&argument / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
+        }
+        if let Some((sine_sign, _, argument)) =
+            self.retained_integer_pi_plus_or_minus_atan_argument()
+        {
+            crate::trace_dispatch!("real", "sin", "integer-pi-atan-rewrite");
+            let denominator = (Self::one() + &argument * &argument)
+                .sqrt()
+                .expect("one plus an exact atan argument square is positive");
+            let value = (&argument / denominator)
+                .expect("positive inverse-trig normalization is nonzero");
+            return if sine_sign == Sign::Minus {
+                -value
+            } else {
+                value
+            };
         }
         if let Some((orientation, argument)) =
             self.retained_signed_half_pi_minus_atan_argument()
@@ -2192,6 +2234,21 @@ impl Real {
                 .expect("one plus an exact atan argument square is positive");
             return (Self::one() / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
+        }
+        if let Some((_, cosine_sign, argument)) =
+            self.retained_integer_pi_plus_or_minus_atan_argument()
+        {
+            crate::trace_dispatch!("real", "cos", "integer-pi-atan-rewrite");
+            let denominator = (Self::one() + &argument * &argument)
+                .sqrt()
+                .expect("one plus an exact atan argument square is positive");
+            let value = (Self::one() / denominator)
+                .expect("positive inverse-trig normalization is nonzero");
+            return if cosine_sign == Sign::Minus {
+                -value
+            } else {
+                value
+            };
         }
         if let Some((orientation, argument)) =
             self.retained_signed_half_pi_minus_atan_argument()

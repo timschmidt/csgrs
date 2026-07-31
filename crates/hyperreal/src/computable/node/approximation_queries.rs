@@ -650,10 +650,12 @@ impl Computable {
         let self_sign = self.exact_sign();
         let other_sign = other.exact_sign();
         match (self_sign, other_sign) {
-            // Exact signs can prove the nonzero ordering of absolute values.
+            // Exact signs can order zero and opposite-signed values directly.
+            (Some(Sign::Minus), Some(Sign::NoSign | Sign::Plus))
+            | (Some(Sign::NoSign), Some(Sign::Plus)) => return Ordering::Less,
+            (Some(Sign::Plus), Some(Sign::Minus | Sign::NoSign))
+            | (Some(Sign::NoSign), Some(Sign::Minus)) => return Ordering::Greater,
             (Some(Sign::NoSign), Some(Sign::NoSign)) => return Ordering::Equal,
-            (Some(Sign::NoSign), Some(_)) => return Ordering::Less,
-            (Some(_), Some(Sign::NoSign)) => return Ordering::Greater,
             _ => {}
         }
 
@@ -671,11 +673,11 @@ impl Computable {
                 return Ordering::Equal;
             }
             match (self_structural_sign, other_structural_sign) {
+                (Some(Sign::Minus), Some(Sign::NoSign | Sign::Plus))
+                | (Some(Sign::NoSign), Some(Sign::Plus)) => return Ordering::Less,
+                (Some(Sign::Plus), Some(Sign::Minus | Sign::NoSign))
+                | (Some(Sign::NoSign), Some(Sign::Minus)) => return Ordering::Greater,
                 (Some(Sign::NoSign), Some(Sign::NoSign)) => return Ordering::Equal,
-                (Some(Sign::NoSign), Some(_)) => return Ordering::Less,
-                (Some(_), Some(Sign::NoSign)) => return Ordering::Greater,
-                (Some(Sign::Minus), Some(Sign::Plus)) => return Ordering::Less,
-                (Some(Sign::Plus), Some(Sign::Minus)) => return Ordering::Greater,
                 _ => {}
             }
             if let (Some(left_sign), Some(right_sign), Some(left_msd), Some(right_msd)) = (

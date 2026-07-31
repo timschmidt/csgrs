@@ -515,6 +515,112 @@ mod tests {
     }
 
     #[test]
+    fn compare_absolute_orders_zero_and_signed_irrationals_by_value() {
+        let zero = Computable::zero();
+        let pi = Computable::pi();
+        let minus_pi = pi.clone().negate();
+
+        assert_eq!(zero.compare_absolute(&minus_pi, -16), Ordering::Greater);
+        assert_eq!(minus_pi.compare_absolute(&zero, -16), Ordering::Less);
+        assert_eq!(zero.compare_absolute(&pi, -16), Ordering::Less);
+        assert_eq!(pi.compare_absolute(&zero, -16), Ordering::Greater);
+    }
+
+    #[test]
+    fn compare_to_orders_structurally_shared_signed_perturbations() {
+        let cases = [
+            (Computable::pi(), Computable::one(), Ordering::Greater),
+            (
+                Computable::pi(),
+                Computable::one().negate(),
+                Ordering::Less,
+            ),
+            (
+                Computable::pi().negate(),
+                Computable::one(),
+                Ordering::Greater,
+            ),
+            (
+                Computable::pi().negate(),
+                Computable::one().negate(),
+                Ordering::Less,
+            ),
+        ];
+
+        for (base, perturbation, expected) in cases {
+            let perturbed = base.clone().add(perturbation);
+            assert_eq!(
+                perturbed.try_compare_to(&base),
+                Some(expected),
+                "perturbed value should be ordered by the signed perturbation"
+            );
+            assert_eq!(
+                base.try_compare_to(&perturbed),
+                Some(expected.reverse()),
+                "reverse comparison should reverse the signed perturbation"
+            );
+        }
+    }
+
+    #[test]
+    fn certified_compare_cascade_matches_separated_full_evaluation_corpus() {
+        fn evaluated_order(
+            left: &Computable,
+            right: &Computable,
+            precision: Precision,
+        ) -> Option<Ordering> {
+            let left = left.approx(precision);
+            let right = right.approx(precision);
+            let error_width = BigInt::from(2_u8);
+            if left > &right + &error_width {
+                Some(Ordering::Greater)
+            } else if right > left + error_width {
+                Some(Ordering::Less)
+            } else {
+                None
+            }
+        }
+
+        let pi = Computable::pi();
+        let e = Computable::e();
+        let root_two = Computable::rational(Rational::new(2)).sqrt();
+        let atan_third =
+            Computable::rational(Rational::fraction(1, 3).unwrap()).atan();
+        let values = [
+            Computable::zero(),
+            Computable::one(),
+            Computable::one().negate(),
+            pi.clone(),
+            pi.clone().negate(),
+            e.clone(),
+            e.negate(),
+            root_two.clone(),
+            root_two.negate(),
+            pi.clone().add(Computable::one()),
+            pi.clone().add(Computable::one().negate()),
+            pi.clone().negate().add(Computable::one()),
+            pi.clone().negate().add(Computable::one().negate()),
+            atan_third.clone(),
+            atan_third.negate(),
+            pi.clone().inverse(),
+            pi.inverse().negate(),
+        ];
+
+        for left in &values {
+            for right in &values {
+                let Some(expected) = evaluated_order(left, right, -256) else {
+                    continue;
+                };
+                assert_eq!(
+                    left.try_compare_to_until(right, -128),
+                    Some(expected),
+                    "certified comparison disagreed with separated evaluation"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn compare_absolute_uses_exact_msd_gap_shortcut() {
         let base = Computable::pi();
         base.approx(-16);
@@ -1662,6 +1768,29 @@ mod tests {
 
         assert_eq!(positive.exact_sign(), Some(Sign::Plus));
         assert_eq!(negative.exact_sign(), Some(Sign::Minus));
+    }
+
+    #[test]
+    fn inverse_atan_linear_sign_includes_the_argument_sign() {
+        let negative_argument = Computable::sqrt_rational(Rational::new(2))
+            .add(Computable::rational(Rational::new(-2)));
+        assert_eq!(negative_argument.exact_sign(), Some(Sign::Minus));
+
+        let positive_atan_term = negative_argument
+            .atan()
+            .multiply_rational(Rational::new(-2));
+        let opposed = positive_atan_term
+            .clone()
+            .add(Computable::pi().multiply_rational(Rational::fraction(-1, 8).unwrap()));
+
+        assert!(opposed.approx(-64) > BigInt::zero());
+        assert_eq!(opposed.inverse_trig_linear_sign(), None);
+        assert_eq!(opposed.exact_sign(), Some(Sign::Plus));
+
+        let aligned = positive_atan_term
+            .add(Computable::pi().multiply_rational(Rational::fraction(1, 8).unwrap()));
+        assert_eq!(aligned.inverse_trig_linear_sign(), Some(Sign::Plus));
+        assert_eq!(aligned.exact_sign(), Some(Sign::Plus));
     }
 
     #[test]
