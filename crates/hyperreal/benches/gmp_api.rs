@@ -11,7 +11,12 @@ use criterion::{
 use hyperreal::{Computable, Rational, Real};
 use num::One;
 use num::bigint::{BigInt, BigUint};
-use rug::{Float, Integer, Rational as GmpRational, float::Constant, integer::Order, ops::Pow};
+use rug::{
+    Float, Integer, Rational as GmpRational,
+    float::{Constant, Round},
+    integer::Order,
+    ops::Pow,
+};
 
 const GMP_PRECISION: u32 = 128;
 
@@ -29,6 +34,12 @@ fn rational(numerator: i64, denominator: u64) -> Rational {
 
 fn gmp_rational(numerator: i64, denominator: u64) -> GmpRational {
     GmpRational::from((numerator, denominator))
+}
+
+fn gmp_rational_f64_enclosure(value: &GmpRational) -> [f64; 2] {
+    let (lower, _) = Float::with_val_round(53, value, Round::Down);
+    let (upper, _) = Float::with_val_round(53, value, Round::Up);
+    [lower.to_f64(), upper.to_f64()]
 }
 
 fn bench_real_unary<H, G>(
@@ -298,6 +309,11 @@ fn bench_rational_api(c: &mut Criterion) {
         gmp_lhs.denom().is_power_of_two()
     );
     pair!("to_f64", lhs.dyadic_to_f64_exact(), gmp_lhs.to_f64());
+    pair!(
+        "to_f64_enclosure",
+        lhs.to_f64_enclosure(),
+        gmp_rational_f64_enclosure(&gmp_lhs)
+    );
     pair!(
         "to_integer",
         lhs.to_big_integer(),

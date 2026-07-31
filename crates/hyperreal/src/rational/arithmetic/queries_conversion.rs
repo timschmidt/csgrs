@@ -398,15 +398,29 @@ impl Rational {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().dyadic_to_f64_exact();
         }
-        if !self.is_dyadic() {
-            return None;
-        }
         if self.is_zero() {
             self.mark_exact_f64_view();
             return Some(0.0);
         }
 
         let denominator_shift = self.dyadic_denominator_shift()?;
+        if !self.is_exact_f64_with_denominator_shift(denominator_shift) {
+            return None;
+        }
+        let magnitude = self
+            .normal_dyadic_f64_magnitude(denominator_shift)
+            .or_else(|| self.exact_subnormal_dyadic_f64_magnitude(denominator_shift))?;
+        let value = if self.sign == Minus {
+            -magnitude
+        } else {
+            magnitude
+        };
+        self.mark_exact_f64_view();
+        Some(value)
+    }
+
+    #[inline]
+    fn is_exact_f64_with_denominator_shift(&self, denominator_shift: u64) -> bool {
         let numerator_shift = self
             .numerator
             .trailing_zeros()
@@ -419,16 +433,77 @@ impl Rational {
         // set bit cannot exceed 2^1023, and its least set bit cannot fall below
         // the subnormal quantum 2^-1074. These structural checks prove exact
         // representability without allocating a round-trip Rational.
-        if significand_bits > 53 || greatest_exponent > 1023 || least_exponent < -1074 {
+        significand_bits <= 53 && greatest_exponent <= 1023 && least_exponent >= -1074
+    }
+
+    fn exact_subnormal_dyadic_f64_magnitude(&self, denominator_shift: u64) -> Option<f64> {
+        if !(-1074..=-1023).contains(&self.msd_exact()?) {
             return None;
+        }
+        let unit_shift = 1074_i128 - i128::from(denominator_shift);
+        let units = if unit_shift >= 0 {
+            &self.numerator << usize::try_from(unit_shift).ok()?
+        } else {
+            &self.numerator >> usize::try_from(-unit_shift).ok()?
+        };
+        let units = units.to_u64()?;
+        (units != 0 && units <= (1_u64 << 52)).then(|| f64::from_bits(units))
+    }
+
+    /// Return finite outward-rounded binary64 bounds for this exact rational.
+    ///
+    /// The first value is no greater than the rational and the second is no
+    /// less than it. Values outside the supported finite binary64 enclosure
+    /// range return `None` instead of weakening the enclosure.
+    #[inline]
+    pub fn to_f64_enclosure(&self) -> Option<[f64; 2]> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().to_f64_enclosure();
+        }
+        if self.sign == NoSign {
+            return Some([0.0, 0.0]);
+        }
+        if let Some(denominator_shift) = self.dyadic_denominator_shift() {
+            let exact = self.is_exact_f64_with_denominator_shift(denominator_shift);
+            let magnitude = self
+                .normal_dyadic_f64_magnitude(denominator_shift)
+                .or_else(|| {
+                    if exact {
+                        self.exact_subnormal_dyadic_f64_magnitude(denominator_shift)
+                    } else {
+                        None
+                    }
+                });
+            if let Some(magnitude) = magnitude {
+                let value = if self.sign == Minus {
+                    -magnitude
+                } else {
+                    magnitude
+                };
+                return Some(if exact {
+                    [value, value]
+                } else {
+                    [value.next_down(), value.next_up()]
+                });
+            }
         }
 
-        let value = self.to_f64_lossy()?;
-        if value == 0.0 {
+        let msd = self.msd_exact()?;
+        if !(-1022..=1022).contains(&msd) {
             return None;
         }
-        self.mark_exact_f64_view();
-        Some(value)
+        let (lower, upper) = normalized_rational_magnitude_interval(self, msd)?;
+        let scale = f64::from_bits(u64::try_from(msd + 1023).ok()? << 52);
+        let lower = (lower * scale).next_down();
+        let upper = (upper * scale).next_up();
+        if !lower.is_finite() || !upper.is_finite() {
+            return None;
+        }
+        Some(match self.sign {
+            Minus => [-upper, -lower],
+            NoSign => [0.0, 0.0],
+            Plus => [lower, upper],
+        })
     }
 
     #[inline]

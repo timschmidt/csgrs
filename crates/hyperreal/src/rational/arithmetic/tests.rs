@@ -9,6 +9,15 @@ mod tests {
         })
     }
 
+    fn assert_f64_enclosure_contains(value: &Rational) {
+        let [lower, upper] = value.to_f64_enclosure().unwrap();
+        assert!(lower.is_finite());
+        assert!(upper.is_finite());
+        assert!(lower <= upper);
+        assert!(Rational::try_from(lower).unwrap() <= *value);
+        assert!(*value <= Rational::try_from(upper).unwrap());
+    }
+
     #[test]
     fn direct_shifted_stack_products_match_biguint_boundaries() {
         let cases = [
@@ -1770,6 +1779,12 @@ mod tests {
             BigUint::from(1_u8) << 1075,
         )
         .unwrap();
+        let least_subnormal = Rational::from_bigint_fraction(
+            BigInt::from(1_u8),
+            BigUint::from(1_u8) << 1074,
+        )
+        .unwrap();
+        let negative_least_subnormal = -least_subnormal.clone();
 
         assert_eq!(non_dyadic.dyadic_to_f64_exact(), None);
         assert_eq!(too_precise.dyadic_to_f64_exact(), None);
@@ -1777,7 +1792,91 @@ mod tests {
             exactly_representable.dyadic_to_f64_exact(),
             Some((1_u64 << 54) as f64 + 4.0),
         );
+        assert_eq!(
+            least_subnormal.dyadic_to_f64_exact().map(f64::to_bits),
+            Some(1),
+        );
+        assert_eq!(
+            negative_least_subnormal
+                .dyadic_to_f64_exact()
+                .map(f64::to_bits),
+            Some((1_u64 << 63) | 1),
+        );
+        assert_eq!(
+            least_subnormal.to_f64_enclosure().map(|bounds| bounds.map(f64::to_bits)),
+            Some([1, 1]),
+        );
         assert_eq!(too_small.dyadic_to_f64_exact(), None);
+    }
+
+    #[test]
+    fn f64_enclosure_contains_wide_non_dyadic_rationals() {
+        let wide = BigUint::one() << 4096_usize;
+        let below_one = Rational::from_bigint_fraction(
+            BigInt::from_biguint(Plus, &wide + BigUint::one()),
+            &wide + BigUint::from(3_u8),
+        )
+        .unwrap();
+        let above_one = Rational::from_bigint_fraction(
+            BigInt::from_biguint(Plus, &wide + BigUint::from(3_u8)),
+            &wide + BigUint::one(),
+        )
+        .unwrap();
+        let negative = -above_one.clone();
+
+        for value in [
+            Rational::fraction(1, 3).unwrap(),
+            below_one,
+            above_one,
+            negative,
+        ] {
+            assert_f64_enclosure_contains(&value);
+        }
+        assert_f64_enclosure_contains(&Rational::fraction(3, 8).unwrap());
+        assert_eq!(Rational::zero().to_f64_enclosure(), Some([0.0, 0.0]));
+    }
+
+    #[test]
+    fn f64_enclosure_contains_varied_exact_rational_corpus() {
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            let mut offset = 0_usize;
+            while offset < bits {
+                *state ^= *state << 13;
+                *state ^= *state >> 7;
+                *state ^= *state << 17;
+                let width = (bits - offset).min(64);
+                let mask = if width == 64 {
+                    u64::MAX
+                } else {
+                    (1_u64 << width) - 1
+                };
+                value |= BigUint::from(*state & mask) << offset;
+                offset += width;
+            }
+            value | (BigUint::one() << (bits - 1)) | BigUint::one()
+        }
+
+        let mut state = 0x1319_8a2e_0370_7344_u64;
+        for (numerator_bits, denominator_bits) in [
+            (1, 1),
+            (53, 64),
+            (64, 53),
+            (193, 257),
+            (257, 193),
+            (997, 1024),
+            (1024, 997),
+            (4000, 4096),
+            (4096, 4000),
+        ] {
+            for case in 0..8 {
+                let numerator = generated_magnitude(numerator_bits, &mut state);
+                let denominator = generated_magnitude(denominator_bits, &mut state);
+                let sign = if case % 2 == 0 { Plus } else { Minus };
+                let value = Rational::from_fraction_parts(sign, numerator, denominator);
+                assert_f64_enclosure_contains(&value);
+            }
+        }
     }
 
     #[test]
@@ -1850,6 +1949,10 @@ mod tests {
             let expected = Float::with_val(53, &gmp).to_f64();
 
             assert_eq!(value.to_f64_lossy().map(f64::to_bits), Some(expected.to_bits()));
+            assert_eq!(
+                value.to_f64_enclosure(),
+                Some([expected.next_down(), expected.next_up()]),
+            );
             checked += 1;
         }
         assert!(checked > 3_000);
