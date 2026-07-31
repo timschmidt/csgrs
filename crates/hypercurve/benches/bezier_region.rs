@@ -158,10 +158,73 @@ fn retained_algebraic_line_fragment(
     })
 }
 
+fn benchmark_measurements(region: &CurveRegion2, policy: &CurveContext) -> CurveResult<()> {
+    let iterations = std::env::var("HYPERCURVE_BEZIER_REGION_MEASURE_ITERATIONS")
+        .ok()
+        .and_then(|value| value.parse::<u32>().ok())
+        .unwrap_or(1_000_000);
+    let expected_area = decided(region.signed_area(policy)?.into_value())
+        .expect("benchmark square has an exact area");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..iterations {
+        let area = decided(
+            black_box(region)
+                .signed_area(black_box(policy))?
+                .into_value(),
+        )
+        .expect("cached square area remains exact");
+        checksum += black_box(area == expected_area) as usize;
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_cached_signed_area: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+
+    let curve = BezierSubcurve2::Cubic(hypercurve::CubicBezier2::new(
+        p(0, 0),
+        p(1, 3),
+        p(3, -2),
+        p(4, 0),
+    ));
+    let started = Instant::now();
+    for _ in 0..iterations {
+        black_box(decided(
+            black_box(&curve)
+                .signed_area_contribution(black_box(policy))?
+                .into_value(),
+        ));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_subcurve_exact_signed_area: {iterations} iterations in {elapsed:?} ({:?}/iter)",
+        elapsed / iterations
+    );
+
+    let started = Instant::now();
+    for _ in 0..iterations {
+        black_box(decided(
+            black_box(&curve)
+                .area_moments_contribution(black_box(policy))?
+                .into_value(),
+        ));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_subcurve_exact_area_moments: {iterations} iterations in {elapsed:?} ({:?}/iter)",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn main() -> CurveResult<()> {
     let policy = CurveContext::STRICT;
     let first_region = square_region(0, 0, 4, 4)?;
     let second_region = square_region(2, 0, 6, 4)?;
+    if std::env::var_os("HYPERCURVE_BEZIER_REGION_MEASURE_ONLY").is_some() {
+        return benchmark_measurements(&first_region, &policy);
+    }
     let region_clone_iterations = 1_000_000_u32;
     let started = Instant::now();
     let mut region_clone_checksum = 0_usize;

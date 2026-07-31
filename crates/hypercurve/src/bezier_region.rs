@@ -38,8 +38,8 @@ use crate::{
     BezierParameter2, BezierRetainedLinearOverlapTraversal2,
     BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveContext, CurveError, CurveFamily2, CurveGeometry2,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
+    CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveError, CurveFamily2,
+    CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
     CurvePathIntersectionContact2, CurveResult, ExactCurveError, ExactCurveResult, FillRule,
     LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
     RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
@@ -4686,6 +4686,12 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
+        if let Some(area) = self.data.signed_area_cache.certified() {
+            return Ok(CurveOutcome::new(
+                Classification::Decided(area.clone()),
+                CurveCertainty::Certified,
+            ));
+        }
         resolve_certified_operation(policy, |attempt| self.signed_area_raw(attempt))
     }
 
@@ -6738,6 +6744,15 @@ impl BezierSubcurve2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
+        match self {
+            Self::Quadratic(curve) => {
+                return curve.signed_area_contribution().map(certified_measurement);
+            }
+            Self::Cubic(curve) => {
+                return curve.signed_area_contribution().map(certified_measurement);
+            }
+            Self::RationalQuadratic(_) | Self::Rational(_) => {}
+        }
         resolve_certified_operation(policy, |attempt| self.signed_area_contribution_raw(attempt))
     }
 
@@ -6768,6 +6783,15 @@ impl BezierSubcurve2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Option<BezierAreaMoments2>>>> {
+        match self {
+            Self::Quadratic(curve) => {
+                return curve.area_moments_contribution().map(certified_measurement);
+            }
+            Self::Cubic(curve) => {
+                return curve.area_moments_contribution().map(certified_measurement);
+            }
+            Self::RationalQuadratic(_) | Self::Rational(_) => {}
+        }
         resolve_certified_operation(policy, |attempt| {
             self.area_moments_contribution_raw(attempt)
         })
@@ -6816,6 +6840,13 @@ impl BezierSubcurve2 {
             },
         }
     }
+}
+
+fn certified_measurement<T>(value: T) -> CurveOutcome<Classification<Option<T>>> {
+    CurveOutcome::new(
+        Classification::Decided(Some(value)),
+        CurveCertainty::Certified,
+    )
 }
 
 fn rational_line_signed_area_contribution(
