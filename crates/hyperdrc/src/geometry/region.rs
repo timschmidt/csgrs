@@ -3,7 +3,7 @@
 //! Checks retain exact Hypercurve topology while parsers use local finite
 //! coordinate views only until promotion at this boundary.
 
-use hypercurve::{Classification, CurvePolicy, CurveRegion2};
+use hypercurve::{Classification, CurveContext, CurveRegion2};
 
 use super::{MultiPolygon, Polygon};
 use crate::{LayerMetadata, PcbRegion};
@@ -33,11 +33,15 @@ pub fn polygons_to_profile(
         )
         .with_exact_construction_error(error);
     }
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut material = Vec::new();
     let mut holes = Vec::new();
     for polygon in &polygons {
-        let native = match polygon.exact_region().native_contours_fast_path(&policy) {
+        let native = match polygon
+            .exact_region()
+            .native_contours_fast_path(&policy)
+            .map(hypercurve::CurveOutcome::into_value)
+        {
             Ok(Classification::Decided(native)) => native,
             Ok(Classification::Uncertain(uncertainty)) => {
                 return PcbRegion::new_with_exact_bounds_and_projection(
@@ -78,7 +82,7 @@ pub fn polygons_to_profile(
     }
     match CurveRegion2::try_from_native_contours(material, holes, &policy) {
         Ok(region) => PcbRegion::new_with_exact_bounds_and_projection(
-            region,
+            region.into_value(),
             metadata,
             exact_bounds,
             had_non_finite_input,

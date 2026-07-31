@@ -2268,7 +2268,10 @@ fn native_region_bounds_scalar(region: &crate::PcbRegion) -> Option<ScalarBounds
         });
     }
     let mut bounds = None;
-    let native = match region.native_contours_fast_path(&hypercurve::CurvePolicy::STRICT) {
+    let native = match region
+        .native_contours_fast_path(&hypercurve::CurveContext::STRICT)
+        .map(hypercurve::CurveOutcome::into_value)
+    {
         Ok(hypercurve::Classification::Decided(native)) => native,
         Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => {
             return Some(certified_region_bounds_scalar(region));
@@ -2405,7 +2408,10 @@ fn estimated_feature_length(feature: &CopperFeature) -> Scalar {
 }
 
 fn maximum_exterior_edge_length(region: &crate::PcbRegion) -> Option<Scalar> {
-    let region = match region.native_contours_fast_path(&hypercurve::CurvePolicy::STRICT) {
+    let region = match region
+        .native_contours_fast_path(&hypercurve::CurveContext::STRICT)
+        .map(hypercurve::CurveOutcome::into_value)
+    {
         Ok(hypercurve::Classification::Decided(region)) => region,
         Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => return None,
     };

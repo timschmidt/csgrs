@@ -10,7 +10,7 @@
 
 use std::collections::BTreeMap;
 
-use hypercurve::{CurvePolicy, CurveRegion2, LineLineIntersection, LineSeg2};
+use hypercurve::{CurveContext, CurveRegion2, LineLineIntersection, LineSeg2};
 use hyperlimit::{Point2, SegmentIntersection, Sign, compare_reals};
 
 use crate::PREDICATE_POLICY;
@@ -4027,7 +4027,7 @@ fn ring_segment_intersection_with_grid(
     )
     .ok()?;
     match segment_a
-        .intersect_line(&segment_b, &CurvePolicy::STRICT)
+        .intersect_line(&segment_b, &CurveContext::STRICT)
         .ok()?
     {
         LineLineIntersection::Point { point, kind, .. } => {
@@ -4143,7 +4143,9 @@ fn exact_region_components(region: &PcbRegion) -> Option<Vec<ExactRegionComponen
 
 fn exact_region_components_or_whole(region: &PcbRegion) -> Option<Vec<ExactRegionComponent>> {
     if matches!(
-        region.loop_role_counts(&hypercurve::CurvePolicy::STRICT),
+        region
+            .loop_role_counts(&hypercurve::CurveContext::STRICT)
+            .map(hypercurve::CurveOutcome::into_value),
         Ok(hypercurve::Classification::Decided((1, 0)))
     ) {
         return Some(vec![ExactRegionComponent {
