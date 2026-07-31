@@ -992,6 +992,14 @@ pub fn involute_rack(
 }
 
 /// Linear cycloidal rack region.
+///
+/// Each tooth joins an addendum cycloid above the pitch line to a dedendum
+/// cycloid below it on both sides. Each rolling radius is twice its
+/// corresponding standard height, so every sampled flank spans one sixth turn
+/// and meets a horizontal tip or root land.
+///
+/// Returns an empty region when the requested clearance would close the root
+/// land between neighboring teeth.
 pub fn cycloidal_rack(
     module: Real,
     teeth: usize,
@@ -1005,54 +1013,107 @@ pub fn cycloidal_rack(
     {
         return empty();
     }
-    let half = (Real::one() / Real::from(2_u8)).expect("two is nonzero");
-    let generating_radius = module.clone() * half.clone();
+    let two = Real::from(2_u8);
+    let three = Real::from(3_u8);
+    let four = Real::from(4_u8);
     let pitch = Real::pi() * module.clone();
-    let root = -(module.clone()
-        * (Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero")
-        + clearance);
-    let left = -half.clone() * pitch.clone();
-    let right = (Real::from(teeth as u64) - half.clone()) * pitch.clone();
-    let Some(lobe_capacity) = segments_per_flank.checked_add(1) else {
+    let half_pitch = (pitch.clone() / two.clone()).expect("two is nonzero");
+    let quarter_pitch = (pitch.clone() / four.clone()).expect("four is nonzero");
+    let dedendum =
+        module.clone() * (Real::from(5_u8) / four).expect("four is nonzero") + clearance;
+    let root = -dedendum.clone();
+    let flank_sweep = (Real::pi() / three).expect("three is nonzero");
+    let run_factor = two.clone() * (flank_sweep.clone() - flank_sweep.clone().sin());
+    let face_run = module.clone() * run_factor.clone();
+    let root_run = dedendum.clone() * run_factor;
+    if real_cmp(&face_run, &quarter_pitch) != Some(Ordering::Less)
+        || real_cmp(&root_run, &quarter_pitch) != Some(Ordering::Less)
+    {
+        return empty();
+    }
+
+    let Some(sample_capacity) = segments_per_flank.checked_add(1) else {
         return empty();
     };
-    let mut lobe = Vec::with_capacity(lobe_capacity);
+    let mut unit_flank = Vec::with_capacity(sample_capacity);
     for sample in 0..=segments_per_flank {
         let Some(fraction) = exact_ratio(sample, segments_per_flank) else {
             return empty();
         };
-        let theta = Real::tau() * fraction;
-        lobe.push([
-            generating_radius.clone() * (theta.clone() - theta.clone().sin()),
-            generating_radius.clone() * (Real::one() - theta.cos()),
+        let theta = flank_sweep.clone() * fraction;
+        unit_flank.push([
+            two.clone() * (theta.clone() - theta.clone().sin()),
+            two.clone() * (Real::one() - theta.cos()),
         ]);
     }
+
+    let Some(tooth_capacity) = segments_per_flank
+        .checked_mul(4)
+        .and_then(|count| count.checked_add(4))
+    else {
+        return empty();
+    };
+    let mut tooth_points = Vec::with_capacity(tooth_capacity);
+    tooth_points.push([-half_pitch.clone(), root.clone()]);
+    tooth_points.extend(unit_flank.iter().rev().map(|[run, rise]| {
+        [
+            -quarter_pitch.clone() - dedendum.clone() * run.clone(),
+            -(dedendum.clone() * rise.clone()),
+        ]
+    }));
+    tooth_points.extend(unit_flank.iter().skip(1).map(|[run, rise]| {
+        [
+            -quarter_pitch.clone() + module.clone() * run.clone(),
+            module.clone() * rise.clone(),
+        ]
+    }));
+    tooth_points.push([quarter_pitch.clone() - face_run, module.clone()]);
+    tooth_points.extend(
+        unit_flank[..segments_per_flank]
+            .iter()
+            .rev()
+            .map(|[run, rise]| {
+                [
+                    quarter_pitch.clone() - module.clone() * run.clone(),
+                    module.clone() * rise.clone(),
+                ]
+            }),
+    );
+    tooth_points.extend(unit_flank.iter().skip(1).map(|[run, rise]| {
+        [
+            quarter_pitch.clone() + dedendum.clone() * run.clone(),
+            -(dedendum.clone() * rise.clone()),
+        ]
+    }));
+    tooth_points.push([half_pitch.clone(), root.clone()]);
+
     let Some(top_capacity) = teeth
-        .checked_mul(segments_per_flank)
+        .checked_mul(tooth_points.len().saturating_sub(1))
         .and_then(|count| count.checked_add(1))
     else {
         return empty();
     };
     let mut top = Vec::with_capacity(top_capacity);
     for tooth in 0..teeth {
-        let tooth_left = (Real::from(tooth as u64) - half.clone()) * pitch.clone();
-        for (sample, point) in lobe.iter().enumerate() {
-            if tooth > 0 && sample == 0 {
+        let offset = Real::from(tooth as u64) * pitch.clone();
+        for (point_index, point) in tooth_points.iter().enumerate() {
+            if tooth > 0 && point_index == 0 {
                 continue;
             }
-            top.push([tooth_left.clone() + point[0].clone(), point[1].clone()]);
+            top.push([offset.clone() + point[0].clone(), point[1].clone()]);
         }
     }
-    let Some(point_capacity) = top.len().checked_add(4) else {
+
+    let Some(point_capacity) = top.len().checked_add(2) else {
         return empty();
     };
     let mut points = Vec::with_capacity(point_capacity);
     let backing = root.clone() - module;
-    points.push([left.clone(), backing.clone()]);
-    points.push([right.clone(), backing]);
-    points.push([right, root.clone()]);
+    let left = top.first().expect("validated rack has a left root")[0].clone();
+    let right = top.last().expect("validated rack has a right root")[0].clone();
+    points.push([left, backing.clone()]);
+    points.push([right, backing]);
     points.extend(top.into_iter().rev());
-    points.push([left, root]);
     region_from_ring(&points)
 }
 
@@ -2431,14 +2492,34 @@ pub fn truetype_text(text: &str, font_data: &[u8], scale: Real) -> CurveRegion2 
     super::truetype::text_region(text, font_data, scale)
 }
 
-/// Hershey stroke geometry as native open curve strings.
+/// Hershey stroke geometry as native open curve strings in Cartesian coordinates.
+///
+/// Hershey's source records use screen-style coordinates with positive Y
+/// pointing down. The returned geometry reflects that axis so positive Y
+/// points up, consistently with the rest of the planar curve API.
 #[cfg(feature = "hershey-text")]
 pub fn hershey_strings(
     text: &str,
     font: &hypercurve::hershey::Font<'_>,
     size: Real,
 ) -> Vec<CurveString2> {
+    let source_to_cartesian = hypercurve::Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        -Real::one(),
+        Real::zero(),
+        Real::zero(),
+    )
+    .expect("Y reflection is a nonsingular exact similarity");
     hypercurve::hershey::strings(text, font, size)
+        .into_iter()
+        .map(|string| {
+            string
+                .transform_similarity(&source_to_cartesian)
+                .expect("Hershey line strings remain valid under Y reflection")
+        })
+        .collect()
 }
 
 /// Convenience CSG and construction operations on native filled regions.
@@ -3063,6 +3144,47 @@ mod tests {
     }
 
     #[test]
+    fn cycloidal_rack_alternates_face_and_root_flanks() {
+        let teeth = 4;
+        let tip = Real::one();
+        let pitch_line = Real::zero();
+        let root = -(Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero");
+        let rack = cycloidal_rack(Real::one(), teeth, Real::zero(), 8);
+        let paths = match rack
+            .project_to_finite_curve_paths(&CurvePolicy::STRICT)
+            .expect("cycloidal rack edge projection")
+        {
+            Classification::Decided(paths) => paths,
+            Classification::Uncertain(reason) => {
+                panic!("cycloidal rack edge topology is uncertain: {reason:?}")
+            },
+        };
+        assert_eq!(paths.len(), 1, "rack must have one closed boundary");
+
+        let curves = paths[0].curves();
+        let vertices_at = |level: &Real| {
+            curves
+                .iter()
+                .filter(|curve| curve.start().y() == level)
+                .count()
+        };
+        assert_eq!(
+            vertices_at(&pitch_line),
+            teeth * 2,
+            "both sides of every tooth must cross the pitch line"
+        );
+        assert_eq!(
+            vertices_at(&tip),
+            teeth * 2,
+            "both addendum cycloids must reach every tooth tip"
+        );
+        assert!(
+            vertices_at(&root) >= teeth * 2,
+            "both dedendum cycloids must reach every tooth root"
+        );
+    }
+
+    #[test]
     fn gear_and_rack_profiles_form_one_hole_free_material_component() {
         let cycloidal = cycloidal_gear(
             Real::one(),
@@ -3363,5 +3485,20 @@ mod tests {
         assert!(!strings.is_empty());
         assert_eq!(crate::curve::hershey::fonts::ALL.len(), 32);
         assert!(strings.iter().all(|string| !string.segments().is_empty()));
+    }
+
+    #[cfg(feature = "hershey-text")]
+    #[test]
+    fn hershey_strings_convert_source_coordinates_to_y_up() {
+        let font = crate::curve::hershey::Font::new(&["MWRMNV RRMVV"], 'A');
+        let strings = hershey_strings("A", &font, Real::one());
+
+        assert_eq!(strings.len(), 2);
+        let left = &strings[0].segments()[0];
+        let right = &strings[1].segments()[0];
+        assert_eq!(left.start(), &Point2::new(Real::zero(), Real::from(5_u8)));
+        assert_eq!(left.end(), &Point2::new(Real::from(-4_i8), Real::from(-4_i8)));
+        assert_eq!(right.start(), &Point2::new(Real::zero(), Real::from(5_u8)));
+        assert_eq!(right.end(), &Point2::new(Real::from(4_u8), Real::from(-4_i8)));
     }
 }
