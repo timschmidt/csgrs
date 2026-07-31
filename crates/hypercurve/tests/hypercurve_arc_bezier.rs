@@ -154,12 +154,18 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
     );
 
     let major = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap();
-    assert!(matches!(
-        major
-            .parameter_at_sweep_fraction(&q(1, 3), &CurvePolicy::STRICT)
+    let Classification::Decided(strict_major_parameter) = major
+        .parameter_at_sweep_fraction(&q(1, 3), &CurvePolicy::STRICT)
+        .unwrap()
+    else {
+        panic!("strict major-arc rational parameter was not certified");
+    };
+    assert_eq!(
+        Curve2::from(major.clone())
+            .point_at(&strict_major_parameter)
             .unwrap(),
-        Classification::Uncertain(_)
-    ));
+        p(0, -1)
+    );
     for (fraction, expected) in [(q(1, 3), p(0, -1)), (q(2, 3), p(-1, 0))] {
         assert_eq!(
             major.point_at_sweep_fraction(&fraction, &policy).unwrap(),

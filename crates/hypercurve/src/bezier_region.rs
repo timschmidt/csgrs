@@ -1251,7 +1251,9 @@ fn validate_native_boundary_loop(fragments: &[BezierSubcurve2]) -> CurveResult<(
 }
 
 fn certified_points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> bool {
-    is_zero(&left.distance_squared(right), policy) == Some(true)
+    left == right
+        || (is_zero(&(left.x() - right.x()), policy) == Some(true)
+            && is_zero(&(left.y() - right.y()), policy) == Some(true))
 }
 
 fn validate_bezier_region_loops<Loop>(boundary_loops: &[Loop]) -> CurveResult<()>

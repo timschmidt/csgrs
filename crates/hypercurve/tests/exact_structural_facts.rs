@@ -83,10 +83,10 @@ fn curve_query_facts_summarize_segment_families_and_dependencies() {
     assert_eq!(facts.segment_kinds.total(), 2);
     #[cfg(feature = "predicates")]
     {
-        // The strict policy leaves the transcendental arc-cardinal comparison
-        // unresolved instead of consuming Hyperlimit's terminal decision.
-        assert_eq!(facts.decided_segment_box_count, 1);
-        assert!(!facts.has_decided_curve_box);
+        // Hyperreal canonicalizes the arc-cardinal `pi +/- atan` forms, so the
+        // strict predicate path now certifies both segment boxes exactly.
+        assert_eq!(facts.decided_segment_box_count, 2);
+        assert!(facts.has_decided_curve_box);
 
         let approximate_facts =
             hypercurve::CurveString2::structural_facts(&curve, &CurvePolicy::APPROXIMATE_512);
