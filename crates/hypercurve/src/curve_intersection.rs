@@ -286,9 +286,10 @@ fn native_line_intersection(
     second: &Curve2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<LineLineIntersection>> {
-    let (CurveGeometry2::Line(first_line), CurveGeometry2::Line(second_line)) =
-        (first.geometry(), second.geometry())
-    else {
+    let (Some(first_line), Some(second_line)) = (
+        affine_line_image(first.geometry()),
+        affine_line_image(second.geometry()),
+    ) else {
         return Ok(None);
     };
     first_line
@@ -297,6 +298,18 @@ fn native_line_intersection(
         .map_err(|cause| {
             ExactCurveError::invalid(CurveOperation2::Intersection, first.family(), cause)
         })
+}
+
+fn affine_line_image(geometry: &CurveGeometry2) -> Option<&crate::LineSeg2> {
+    match geometry {
+        CurveGeometry2::Line(line) => Some(line),
+        // A line promoted with `QuadraticBezier2::from_line_segment` is exact
+        // degree elevation: its local parameter is still the affine segment
+        // parameter. Retaining that fact lets the canonical arrangement use
+        // the native line solver without restoring a second region engine.
+        CurveGeometry2::QuadraticBezier(curve) => curve.retained_exact_line_image(),
+        _ => None,
+    }
 }
 
 fn native_line_arc_intersection(
@@ -1799,5 +1812,45 @@ fn same_curve_parameter(
     match compare_reals(&first, &second, policy) {
         Some(ordering) => Classification::Decided(ordering == std::cmp::Ordering::Equal),
         None => Classification::Uncertain(UncertaintyReason::Ordering),
+    }
+}
+
+#[cfg(test)]
+mod native_dispatch_tests {
+    use super::*;
+    use crate::{LineSeg2, QuadraticBezier2};
+
+    fn point(x: i8, y: i8) -> Point2 {
+        Point2::from_values(x, y)
+    }
+
+    #[test]
+    fn degree_elevated_affine_lines_keep_native_pair_dispatch() {
+        let horizontal = Curve2::from(QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(point(0, 0), point(4, 0)).unwrap(),
+        ));
+        let vertical = Curve2::from(QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(point(2, -2), point(2, 2)).unwrap(),
+        ));
+        let context =
+            CurveIntersectionContext::try_new(&horizontal, &vertical, &CurveContext::STRICT)
+                .unwrap();
+
+        assert!(matches!(
+            context.data.dispatch,
+            CurveIntersectionDispatch::NativeLine(_)
+        ));
+        let result = context.result().unwrap();
+        assert!(result.is_complete());
+        assert_eq!(result.contacts().len(), 1);
+        assert!(result.overlaps().is_empty());
+        assert_eq!(
+            result.contacts()[0].first().exact_curve_parameter(),
+            Some((Real::one() / Real::from(2_i8)).unwrap())
+        );
+        assert_eq!(
+            result.contacts()[0].second().exact_curve_parameter(),
+            Some((Real::one() / Real::from(2_i8)).unwrap())
+        );
     }
 }
