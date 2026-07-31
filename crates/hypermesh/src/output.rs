@@ -2714,6 +2714,11 @@ fn split_edge_crossing_events(
     let mut repairs: Vec<CoplanarOutputRepair> = Vec::new();
     for event in &events {
         for edge in [event.left_edge, event.right_edge] {
+            let other_edge = if edge == event.left_edge {
+                event.right_edge
+            } else {
+                event.left_edge
+            };
             for triangle in soup.triangles.iter().copied().filter(|triangle| {
                 triangle_edges(*triangle)
                     .into_iter()
@@ -2722,6 +2727,11 @@ fn split_edge_crossing_events(
             }) {
                 let [a, b, c] = triangle.map(|vertex| output_vertex_point3(&soup.vertices[vertex]));
                 let plane = Plane::from_points(&a, &b, &c);
+                if !output_vertex_on_plane(decisions, &plane, &soup.vertices[other_edge[0]])?
+                    || !output_vertex_on_plane(decisions, &plane, &soup.vertices[other_edge[1]])?
+                {
+                    continue;
+                }
                 let mut matching_repair = None;
                 for (index, repair) in repairs.iter().enumerate() {
                     if output_triangle_on_plane(decisions, &repair.plane, &soup.vertices, triangle)?
@@ -2749,11 +2759,6 @@ fn split_edge_crossing_events(
             }
         }
     }
-    if repairs.is_empty() {
-        return Err(HypermeshError::OutputPlanarizationFailed {
-            reason: "proper crossing edges have no incident triangles",
-        });
-    }
     if std::env::var_os("HYPERMESH_OUTPUT_DIAGNOSTIC").is_some() {
         eprintln!(
             "output crossing batch: events={}, planes={}",
@@ -2769,6 +2774,18 @@ fn split_edge_crossing_events(
             &repair.event_vertices,
         )?;
     }
+    let mut edge_splits: BTreeMap<[usize; 2], BTreeSet<usize>> = BTreeMap::new();
+    for event in events {
+        edge_splits
+            .entry(event.left_edge)
+            .or_default()
+            .insert(event.vertex);
+        edge_splits
+            .entry(event.right_edge)
+            .or_default()
+            .insert(event.vertex);
+    }
+    split_output_edges_at_vertices(decisions, soup, &edge_splits)?;
     Ok(true)
 }
 
@@ -2789,6 +2806,90 @@ struct PlanarCoverageTriangle {
     vertices: [usize; 3],
     source: TriangleSource,
     orientation: i8,
+}
+
+fn split_output_edges_at_vertices(
+    decisions: &DecisionContext,
+    soup: &mut BooleanMesh,
+    edge_splits: &BTreeMap<[usize; 2], BTreeSet<usize>>,
+) -> HypermeshResult<()> {
+    if soup.triangles.len() != soup.sources.len() {
+        return Err(HypermeshError::TriangleSourceCountMismatch {
+            triangles: soup.triangles.len(),
+            sources: soup.sources.len(),
+        });
+    }
+    for (&edge, split_vertices) in edge_splits {
+        if edge[1] >= soup.vertices.len() {
+            return Err(HypermeshError::VertexIndexOutOfBounds {
+                index: edge[1],
+                vertex_count: soup.vertices.len(),
+            });
+        }
+        let mut interior = split_vertices.iter().copied().collect::<Vec<_>>();
+        for &vertex in &interior {
+            if vertex >= soup.vertices.len() {
+                return Err(HypermeshError::VertexIndexOutOfBounds {
+                    index: vertex,
+                    vertex_count: soup.vertices.len(),
+                });
+            }
+            if !point_on_segment_exact(
+                decisions,
+                &soup.vertices[vertex],
+                &soup.vertices[edge[0]],
+                &soup.vertices[edge[1]],
+            )? {
+                return Err(HypermeshError::OutputPlanarizationFailed {
+                    reason: "crossing split vertex is not in the edge interior",
+                });
+            }
+        }
+        interior = sort_along_segment(decisions, &interior, edge[0], edge[1], &soup.vertices)?;
+        let mut chain = Vec::with_capacity(interior.len() + 2);
+        chain.push(edge[0]);
+        chain.extend(interior);
+        chain.push(edge[1]);
+
+        let mut triangles = Vec::with_capacity(
+            soup.triangles
+                .len()
+                .saturating_add(chain.len().saturating_sub(2)),
+        );
+        let mut sources = Vec::with_capacity(triangles.capacity());
+        for (face_index, triangle) in soup.triangles.iter().copied().enumerate() {
+            let mut split = false;
+            for edge_index in 0..3 {
+                let from = triangle[edge_index];
+                let to = triangle[(edge_index + 1) % 3];
+                let opposite = triangle[(edge_index + 2) % 3];
+                if sorted_edge([from, to]) != edge {
+                    continue;
+                }
+                let follows_canonical = from == edge[0];
+                for pair in chain.windows(2) {
+                    let pair = if follows_canonical {
+                        [pair[0], pair[1]]
+                    } else {
+                        [pair[1], pair[0]]
+                    };
+                    if pair[0] != opposite && pair[1] != opposite {
+                        triangles.push([pair[0], pair[1], opposite]);
+                        sources.push(soup.sources[face_index]);
+                    }
+                }
+                split = true;
+                break;
+            }
+            if !split {
+                triangles.push(triangle);
+                sources.push(soup.sources[face_index]);
+            }
+        }
+        soup.triangles = triangles;
+        soup.sources = sources;
+    }
+    Ok(())
 }
 
 fn retriangulate_coplanar_output_plane(
@@ -3476,6 +3577,7 @@ fn bounded_planar_faces(
 
     let mut visited = BTreeSet::new();
     let mut faces = Vec::new();
+    let mut positions = vec![usize::MAX; points.len()];
     let halfedge_count = edges
         .len()
         .checked_mul(2)
@@ -3514,15 +3616,42 @@ fn bounded_planar_faces(
                     reason: "planar face traversal did not close",
                 });
             }
-            if face.len() >= 3
-                && planar_polygon_area_classification(decisions, points, &face)?
-                    == Classification::Positive
-            {
-                faces.push(face);
+            for simple_face in split_planar_face_walk(&face, &mut positions) {
+                if simple_face.len() >= 3
+                    && planar_polygon_area_classification(decisions, points, &simple_face)?
+                        == Classification::Positive
+                {
+                    faces.push(simple_face);
+                }
             }
         }
     }
     Ok(faces)
+}
+
+fn split_planar_face_walk(face: &[usize], positions: &mut [usize]) -> Vec<Vec<usize>> {
+    let mut path = Vec::new();
+    let mut cycles = Vec::new();
+    for &vertex in face.iter().chain(face.first()) {
+        let position = positions[vertex];
+        if position == usize::MAX {
+            positions[vertex] = path.len();
+            path.push(vertex);
+            continue;
+        }
+
+        let cycle = path[position..].to_vec();
+        if cycle.len() >= 3 {
+            cycles.push(cycle);
+        }
+        for removed in path.drain((position + 1)..) {
+            positions[removed] = usize::MAX;
+        }
+    }
+    for vertex in path {
+        positions[vertex] = usize::MAX;
+    }
+    cycles
 }
 
 fn compare_planar_directions(
