@@ -1111,6 +1111,7 @@ impl CircularArc2 {
     /// the angular measure used by [`CircularArc2::sweep_fraction`]. The
     /// returned [`CurveOutcome`] records whether exact angle classification
     /// consumed the `APPROXIMATE_512` terminal.
+    #[inline(always)]
     pub fn directed_sweep_angle(
         &self,
         policy: &CurveContext,
@@ -1128,6 +1129,7 @@ impl CircularArc2 {
             .map(|classification| classification.map(Clone::clone))
     }
 
+    #[inline]
     fn retained_directed_sweep_angle(
         &self,
         policy: &CurveContext,

@@ -41,6 +41,7 @@ impl CircularArc2 {
     /// intervals partition `[0, 1]`; each interval uses the native rational
     /// Bezier parameter locally. The returned [`CurveOutcome`] records whether
     /// classifying the exact sweep consumed the `APPROXIMATE_512` terminal.
+    #[inline(always)]
     pub fn rational_bezier_decomposition(
         &self,
         policy: &CurveContext,
@@ -57,6 +58,7 @@ impl CircularArc2 {
         })
     }
 
+    #[inline]
     pub(crate) fn rational_bezier_decomposition_with_policy(
         &self,
         policy: &CurveContext,
@@ -79,6 +81,7 @@ impl CircularArcBezierDecomposition2 {
     ///
     /// The returned [`CurveOutcome`] records whether selecting or evaluating
     /// the exact span consumed the `APPROXIMATE_512` terminal.
+    #[inline(always)]
     pub fn point_at(
         &self,
         parameter: &Real,

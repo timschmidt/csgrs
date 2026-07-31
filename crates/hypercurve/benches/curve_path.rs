@@ -74,13 +74,13 @@ fn main() {
     let started = Instant::now();
     let mut promotion_checksum = 0_usize;
     for _ in 0..promotion_cache_iterations {
-        promotion_checksum ^= black_box(
-            first
+        promotion_checksum = promotion_checksum.wrapping_add(black_box(
+            black_box(&first)
                 .native_bezier_fragments(&policy)
                 .expect("cached path promotion remains exact")
                 .into_value()
                 .len(),
-        );
+        ));
     }
     let elapsed = started.elapsed();
     println!(

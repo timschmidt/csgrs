@@ -164,17 +164,19 @@ fn main() {
         .expect("benchmark arc is valid");
     let iterations = 20_000_u32;
     let cached_query_iterations = 2_000_000_u32;
+    let decomposition_point_iterations = 100_000_u32;
 
     let started = Instant::now();
     let mut raw_checksum = 0_usize;
     for _ in 0..cached_query_iterations {
-        raw_checksum ^= black_box(
-            arc.rational_bezier_decomposition(&CurveContext::STRICT)
+        raw_checksum = raw_checksum.wrapping_add(black_box(
+            black_box(&arc)
+                .rational_bezier_decomposition(&CurveContext::STRICT)
                 .expect("arc decomposition remains exact")
                 .into_value()
                 .spans()
                 .len(),
-        );
+        ));
     }
     let elapsed = started.elapsed();
     println!(
@@ -185,16 +187,13 @@ fn main() {
     let started = Instant::now();
     let mut sweep_checksum = 0_usize;
     for _ in 0..cached_query_iterations {
-        let sweep = arc
+        let sweep = black_box(&arc)
             .directed_sweep_angle(&CurveContext::STRICT)
             .expect("arc sweep remains exact");
-        sweep_checksum ^= black_box(
-            usize::from(matches!(sweep.value, Classification::Decided(_)))
-                ^ usize::from(matches!(
-                    sweep.certainty,
-                    hypercurve::CurveCertainty::Approximate512Consumed
-                )),
-        );
+        sweep_checksum = sweep_checksum.wrapping_add(black_box(usize::from(matches!(
+            sweep.value,
+            Classification::Decided(_)
+        ))));
     }
     let elapsed = started.elapsed();
     println!(
@@ -209,10 +208,10 @@ fn main() {
     let decomposition_parameter = q(1, 3);
     let started = Instant::now();
     let mut decomposition_point_count = 0_u32;
-    for _ in 0..iterations {
+    for _ in 0..decomposition_point_iterations {
         black_box(
-            decomposition
-                .point_at(&decomposition_parameter, &CurveContext::STRICT)
+            black_box(decomposition)
+                .point_at(black_box(&decomposition_parameter), &CurveContext::STRICT)
                 .expect("arc decomposition evaluation remains exact")
                 .into_value(),
         );
@@ -220,8 +219,8 @@ fn main() {
     }
     let elapsed = started.elapsed();
     println!(
-        "arc_decomposition_point_evaluation: {iterations} iterations in {elapsed:?} ({:?}/iter), count={decomposition_point_count}",
-        elapsed / iterations
+        "arc_decomposition_point_evaluation: {decomposition_point_iterations} iterations in {elapsed:?} ({:?}/iter), count={decomposition_point_count}",
+        elapsed / decomposition_point_iterations
     );
 
     let started = Instant::now();
@@ -269,13 +268,13 @@ fn main() {
     let started = Instant::now();
     let mut retained_checksum = 0_usize;
     for _ in 0..cached_query_iterations {
-        retained_checksum ^= black_box(
-            retained
+        retained_checksum = retained_checksum.wrapping_add(black_box(
+            black_box(&retained)
                 .native_bezier_fragments(&policy)
                 .expect("retained arc promotion remains exact")
                 .into_value()
                 .len(),
-        );
+        ));
     }
     let elapsed = started.elapsed();
     println!(

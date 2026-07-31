@@ -123,11 +123,13 @@ impl<T> CurveOutcome<T> {
     }
 
     /// Transform the completed value without changing its certainty.
+    #[inline]
     pub fn map<U>(self, map: impl FnOnce(T) -> U) -> CurveOutcome<U> {
         CurveOutcome::new(map(self.value), self.certainty)
     }
 
     /// Consume the outcome and return its value.
+    #[inline]
     pub fn into_value(self) -> T {
         self.value
     }

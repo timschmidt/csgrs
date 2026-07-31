@@ -1118,6 +1118,7 @@ impl Curve2 {
     /// spline, and native NURBS spans preserve their source span index and
     /// exact parameter interval. The returned [`CurveOutcome`] records whether
     /// promotion consumed the `APPROXIMATE_512` terminal.
+    #[inline(always)]
     pub fn native_bezier_fragments(
         &self,
         policy: &CurveContext,
@@ -1127,6 +1128,7 @@ impl Curve2 {
         })
     }
 
+    #[inline]
     pub(crate) fn native_bezier_fragments_with_policy(
         &self,
         policy: &CurveContext,
@@ -1143,6 +1145,7 @@ impl Curve2 {
         )
     }
 
+    #[inline]
     pub(crate) fn native_bezier_fragments_for_operation(
         &self,
         policy: &CurveContext,
@@ -1831,6 +1834,7 @@ impl CurvePath2 {
     ///
     /// The returned [`CurveOutcome`] records whether promotion consumed the
     /// `APPROXIMATE_512` terminal.
+    #[inline(always)]
     pub fn native_bezier_fragments(
         &self,
         policy: &CurveContext,
@@ -1847,6 +1851,7 @@ impl CurvePath2 {
         })
     }
 
+    #[inline]
     pub(crate) fn native_bezier_fragments_with_policy(
         &self,
         policy: &CurveContext,
