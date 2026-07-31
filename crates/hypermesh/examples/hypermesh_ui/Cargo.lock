@@ -1576,6 +1576,7 @@ dependencies = [
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
+ "hypertri",
 ]
 
 [[package]]

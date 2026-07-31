@@ -9,10 +9,12 @@ use hypergraphics::{
     axes_mesh, grid_mesh,
 };
 use hypermesh::{
-    BooleanOp, EmberConfig, TriangleMesh, TriangleMeshRef, OutputVertex, Point3, Real, Triangle, BooleanMesh,
-    boolean_operation, triangulate_and_resolve_certified,
+    BooleanMesh, BooleanOp, EmberConfig, MeshCertainty, MeshContext, MeshOutcome, OutputVertex,
+    Point3, PredicatePolicy, Real, Triangle, TriangleMesh, TriangleMeshRef, boolean_mesh,
 };
 use web_time::{Duration, Instant};
+
+const GEOMETRY_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
 
 pub struct MainApp {
     cube_a: TriangleMesh,
@@ -85,8 +87,14 @@ impl MainApp {
 
         match run_boolean(&refs, op, config) {
             Ok(result) => {
-                self.stats = DemoStats::ok(started.elapsed(), &self.cube_a, &self.cube_b, &result);
-                self.result = Some(result);
+                self.stats = DemoStats::ok(
+                    started.elapsed(),
+                    &self.cube_a,
+                    &self.cube_b,
+                    &result.value,
+                    result.certainty,
+                );
+                self.result = Some(result.value);
             }
             Err(error) => {
                 self.stats = DemoStats::failed(started.elapsed(), error.to_string());
@@ -165,6 +173,13 @@ impl eframe::App for MainApp {
                 ui.label(format!("Cube B triangles: {}", self.stats.cube_b_triangles));
                 ui.label(format!("Result triangles: {}", self.stats.result_triangles));
                 ui.label(format!("Result vertices: {}", self.stats.result_vertices));
+                ui.label("Predicate policy: APPROXIMATE_512");
+                ui.label(format!(
+                    "Predicate result: {}",
+                    self.stats
+                        .certainty
+                        .map_or("not completed", certainty_label)
+                ));
                 ui.label(format!(
                     "Solve: {:.2} ms",
                     self.stats.elapsed.as_secs_f64() * 1000.0
@@ -188,6 +203,7 @@ impl eframe::App for MainApp {
                 .projection64(
                     Viewport::new(0.0, 0.0, f64::from(rect.width()), f64::from(rect.height()))
                         .expect("finite egui viewport"),
+                    GEOMETRY_CONTEXT.predicate_policy(),
                 )
                 .ok();
             let visibility = RenderVisibility {
@@ -254,7 +270,11 @@ impl RenderScene {
         }
     }
 
-    fn from_demo(cube_a: &TriangleMesh, cube_b: &TriangleMesh, result: Option<&BooleanMesh>) -> Self {
+    fn from_demo(
+        cube_a: &TriangleMesh,
+        cube_b: &TriangleMesh,
+        result: Option<&BooleanMesh>,
+    ) -> Self {
         let blue = Color3::new(0.31, 0.67, 1.0).expect("finite input color");
         let red = Color3::new(1.0, 0.47, 0.40).expect("finite input color");
         let green = Color3::new(0.41, 0.86, 0.60).expect("finite result color");
@@ -532,6 +552,7 @@ struct DemoStats {
     cube_b_triangles: usize,
     result_triangles: usize,
     result_vertices: usize,
+    certainty: Option<MeshCertainty>,
     error: Option<String>,
 }
 
@@ -543,6 +564,7 @@ impl Default for DemoStats {
             cube_b_triangles: 0,
             result_triangles: 0,
             result_vertices: 0,
+            certainty: None,
             error: None,
         }
     }
@@ -554,6 +576,7 @@ impl DemoStats {
         cube_a: &TriangleMesh,
         cube_b: &TriangleMesh,
         result: &BooleanMesh,
+        certainty: MeshCertainty,
     ) -> Self {
         Self {
             elapsed,
@@ -561,6 +584,7 @@ impl DemoStats {
             cube_b_triangles: cube_b.triangles.len(),
             result_triangles: result.triangles.len(),
             result_vertices: result.vertices.len(),
+            certainty: Some(certainty),
             error: None,
         }
     }
@@ -578,9 +602,15 @@ fn run_boolean(
     meshes: &[TriangleMeshRef<'_>],
     op: BooleanOp,
     config: EmberConfig,
-) -> hypermesh::HypermeshResult<BooleanMesh> {
-    let result = boolean_operation(meshes, op, config)?;
-    triangulate_and_resolve_certified(&result)
+) -> hypermesh::HypermeshResult<MeshOutcome<BooleanMesh>> {
+    boolean_mesh(&GEOMETRY_CONTEXT, meshes, op, config)
+}
+
+fn certainty_label(certainty: MeshCertainty) -> &'static str {
+    match certainty {
+        MeshCertainty::Certified => "certified",
+        MeshCertainty::Approximate512Consumed => "APPROXIMATE_512 consumed",
+    }
 }
 
 fn cube_mesh(min: i32, max: i32) -> TriangleMesh {
@@ -836,13 +866,9 @@ mod tests {
                 DemoOperation::CubeAMinusB | DemoOperation::CubeBMinusA => BooleanOp::Difference,
                 DemoOperation::SymmetricDifference => BooleanOp::SymmetricDifference,
             };
-            let result = run_boolean(&refs, op, config);
-            assert!(
-                result.is_ok(),
-                "{} failed: {:?}",
-                operation.label(),
-                result.err()
-            );
+            let result = run_boolean(&refs, op, config)
+                .unwrap_or_else(|error| panic!("{} failed: {error}", operation.label()));
+            assert_eq!(result.certainty, MeshCertainty::Certified);
         }
     }
 
@@ -884,6 +910,8 @@ mod tests {
             EmberConfig { max_depth: 8 },
         )
         .unwrap();
+        assert_eq!(result.certainty, MeshCertainty::Certified);
+        let result = result.value;
 
         for triangle in &result.triangles {
             let vertices = triangle.map(|index| &result.vertices[index]);
@@ -912,6 +940,8 @@ mod tests {
             EmberConfig { max_depth: 8 },
         )
         .unwrap();
+        assert_eq!(result.certainty, MeshCertainty::Certified);
+        let result = result.value;
         let green = Color3::new(0.41, 0.86, 0.60).unwrap();
         let faces = boolean_mesh_faces(&result, green);
         let mut plane_colors = [None; 6];
