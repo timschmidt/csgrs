@@ -6294,12 +6294,13 @@ Machine-readable samples and provenance are in
 ### Explicit construction outcomes
 
 Every predicate-bearing public `CurveRegion2` constructor and arrangement
-entry point now returns `CurveOutcome<T>`. Construction therefore cannot
-silently discard an Approximate-512 terminal decision. Internal composition
-uses private raw builders under one outer observation frame, so the geometry
-is built once and certainty is aggregated once. The same contract applies
-when exact line-role evidence is promoted back into the authoritative region.
-No dereference or implicit-value compatibility shim was added.
+entry point now returns `CurveOutcome<T>` across `d7bc1ab` and the retained
+traversal completion `cd11bb4`. Construction therefore cannot silently discard
+an Approximate-512 terminal decision. Internal composition uses private raw
+builders under one outer observation frame, so the geometry is built once and
+certainty is aggregated once. The same contract applies when exact line-role
+evidence is promoted back into the authoritative region. No dereference or
+implicit-value compatibility shim was added.
 
 The complete all-feature suite passed with 251 unit tests, the 173.92-second
 exact CurveRegion2 Boolean corpus, and all 268 pathological operations. Both
