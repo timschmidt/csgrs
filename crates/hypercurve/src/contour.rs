@@ -398,7 +398,9 @@ impl Contour2 {
             current_index = next_index;
         }
 
-        Self::try_new_with_fill_rule(output_segments, self.fill_rule).map(Classification::Decided)
+        Ok(Classification::Decided(
+            Self::from_validated_closed_segments(output_segments, self.fill_rule),
+        ))
     }
 
     /// Chamfers an interior native-segment contour vertex by exact parameters.
