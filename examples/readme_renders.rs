@@ -9,8 +9,8 @@ use csgrs::{
     solid::{self, SolidExt},
 };
 use hypercurve::{
-    BezierSplitFragment2, Classification, CurvePath2, CurvePolicy, CurveRegion2, CurveString2,
-    FiniteProjectionOptions, FiniteRegionProfile2, Point2,
+    BezierSplitFragment2, Classification, CurveContext, CurveOutcome, CurvePath2,
+    CurveRegion2, CurveString2, FiniteProjectionOptions, FiniteRegionProfile2, Point2,
 };
 use hyperlattice::{Point3, Real, Vector3};
 use image::{GrayImage, Luma, Rgba, RgbaImage};
@@ -501,13 +501,13 @@ fn render_curve(name: &str, region: &CurveRegion2) {
     // before the finite raster projection is created.
     let profiles = expect_decided(
         region
-            .project_to_finite_profiles_exact(&projection, &CurvePolicy::STRICT)
+            .project_to_finite_profiles_exact(&projection, &CurveContext::STRICT)
             .expect("project exact CurveRegion2 profiles"),
         "exact CurveRegion2 profile topology",
     );
     let edge_paths = expect_decided(
         region
-            .project_to_finite_curve_paths(&CurvePolicy::STRICT)
+            .project_to_finite_curve_paths(&CurveContext::STRICT)
             .expect("project exact CurveRegion2 edge paths"),
         "exact CurveRegion2 edge topology",
     );
@@ -519,7 +519,7 @@ fn render_curve(name: &str, region: &CurveRegion2) {
 
     for profile in &profiles {
         for triangle in profile
-            .triangulate(&CurvePolicy::STRICT)
+            .triangulate(&CurveContext::STRICT)
             .expect("triangulate exact CurveRegion2 profile")
             .into_value()
         {
@@ -543,8 +543,9 @@ fn render_curve(name: &str, region: &CurveRegion2) {
 }
 
 fn exact_region_vertices(region: &CurveRegion2) -> Vec<Point2> {
-    if let Ok(Classification::Decided(native)) =
-        region.native_contours_fast_path(&CurvePolicy::STRICT)
+    if let Ok(Classification::Decided(native)) = region
+        .native_contours_fast_path(&CurveContext::STRICT)
+        .map(CurveOutcome::into_value)
     {
         return native
             .material_contours()
@@ -1218,13 +1219,14 @@ mod tests {
         .expect("two exact semicircles form a closed contour");
         let region = CurveRegion2::try_from_native_material_contours(
             vec![contour],
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
-        .expect("promote exact circular contour");
+        .expect("promote exact circular contour")
+        .into_value();
 
         let projected_paths = expect_decided(
             region
-                .project_to_finite_curve_paths(&CurvePolicy::STRICT)
+                .project_to_finite_curve_paths(&CurveContext::STRICT)
                 .expect("project circular boundary"),
             "circular boundary projection",
         );

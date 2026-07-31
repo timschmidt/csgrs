@@ -1679,7 +1679,7 @@ pub fn exact_mass_properties(
 /// Flattens native triangle faces into native filled curve topology.
 #[cfg(feature = "curve")]
 pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
-    use hypercurve::{BooleanOp as CurveBooleanOp, Contour2, CurvePolicy, CurveRegion2};
+    use hypercurve::{BooleanOp as CurveBooleanOp, Contour2, CurveContext, CurveRegion2};
 
     if let Some(region) = FLATTEN_CACHE.with_borrow(|entries| {
         entries
@@ -1692,7 +1692,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
     }) {
         return region;
     }
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut output = CurveRegion2::empty();
     for triangle in mesh.triangles.iter() {
         let [a, b, c] = triangle.indices();
@@ -1726,6 +1726,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
         else {
             return CurveRegion2::empty();
         };
+        let region = region.into_value();
         output = if output.is_empty() {
             region
         } else {
@@ -1754,7 +1755,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
 #[cfg(feature = "curve")]
 pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
     use hypercurve::{
-        BooleanOp as CurveBooleanOp, Contour2, CurvePolicy, CurveRegion2, CurveString2,
+        BooleanOp as CurveBooleanOp, Contour2, CurveContext, CurveRegion2, CurveString2,
     };
     let empty_result = || (CurveRegion2::empty(), Vec::new(), Vec::new());
 
@@ -1875,7 +1876,7 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
         chains.push(chain);
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut region = if coplanar_triangles.is_empty() {
         CurveRegion2::empty()
     } else {
@@ -1905,6 +1906,7 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
             else {
                 return empty_result();
             };
+            let loop_region = loop_region.into_value();
             region = if region.is_empty() {
                 loop_region
             } else {

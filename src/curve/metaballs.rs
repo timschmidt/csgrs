@@ -2,7 +2,7 @@
 
 use crate::hyper_math::{hreal_from_f64, hreal_gt_f64, hreal_sign};
 use hashbrown::HashMap;
-use hypercurve::{Contour2, CurvePolicy, CurveRegion2, Point2};
+use hypercurve::{Contour2, CurveContext, CurveOutcome, CurveRegion2, Point2};
 use hyperlattice::Real;
 use hyperlimit::{real_max, real_min};
 use hyperreal::RealSign;
@@ -283,7 +283,8 @@ pub(crate) fn metaballs(
         return CurveRegion2::empty();
     }
 
-    CurveRegion2::try_from_native_material_contours(material, &CurvePolicy::STRICT)
+    CurveRegion2::try_from_native_material_contours(material, &CurveContext::STRICT)
+        .map(CurveOutcome::into_value)
         .unwrap_or_else(|_| CurveRegion2::empty())
 }
 
