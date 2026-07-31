@@ -6562,6 +6562,77 @@ Machine-readable samples, semantic evidence, caller validation, binary size,
 and the 22,408-node/38,297-edge call graph are in
 [`2026-07-31-finite-projection-outcomes.json`](benchmarks/checkpoints/2026-07-31-finite-projection-outcomes.json).
 
+## Higher-order edit policy checkpoint
+
+`CurvePath2` and `CurvePathView2` parameter chamfer/fillet operations now
+receive `CurveContext` and return `CurveOutcome<CurvePath2>`. Point,
+derivative, subcurve, native-fragment, and arc-sweep work follows the active
+policy beneath one outer operation observation. `CurveRegion2` higher-order
+fallbacks call the raw kernels inside their existing observation frame, so
+geometry is evaluated once and terminal certainty is not lost or counted
+twice. The terminal regression exercises every public curve family:
+`STRICT` preserves the exact blocker, while `APPROXIMATE_512` returns exact
+fillet geometry and reports consumption.
+
+The arc audit also closed a deeper certainty defect. A fragment derived from
+an approximate sweep no longer receives certified sweep facts, and a later
+strict evaluation remains uncertain. Directed radial angle construction now
+classifies both quadrant signs under the active policy instead of reaching an
+infallible `Real::atan2`. The final immutable arc caches use one compact value
+plus its optional strict blocker. `CircularArcRetainedFacts2` is 328 bytes,
+down from 384 in the strict-only parent and 392 in the rejected first
+policy-aware design. `CurveData2` fell from 544 to 528 bytes and
+`CurvePathData2` from 176 to 168 bytes.
+
+Cache-miss initialization is cold-outlined while cache hits remain inline.
+This restored the native-fragment hot accessor to 215 bytes of release text
+versus 217 in the parent. Nine interleaved focused parent/candidate process
+pairs at 10,000 operations measured:
+
+| Exact higher-order edit | Parent median | Policy-explicit median | Change |
+| --- | ---: | ---: | ---: |
+| Path chamfer | 3.672 us | 3.501 us | -4.66% |
+| Path fillet | 6.428 us | 6.510 us | +1.28% |
+| Region chamfer | 9.385 us | 9.537 us | +1.62% |
+| Region fillet | 19.386 us | 20.102 us | +3.69% |
+
+All ranges overlap. Paired geometric-mean changes are -4.73%, +3.30%,
++0.89%, and +2.42%, respectively. Three complete editing-suite `perf stat`
+pairs record a 0.30% instruction increase for explicit policy/certainty, with
+the touched carrier layouts and cache accessor both smaller.
+
+Seven matched pathological parent/candidate pairs retained 67 cells, 603
+candidate pairs, 3,248 fragments, 134 point classifications, all 268 native
+operations decided, zero blockers, and checksum 6. The all-four Boolean paired
+geometric mean improved 0.83%; construction moved 1.90% and median observed
+RSS remained effectively unchanged at 34.5 MiB. The stripped executable grew
+12,840 bytes (0.23%) from the immediate parent and remains 5,997 bytes below
+the frozen consolidation baseline.
+
+The seven-sample competitive suite remained within 5% of the preceding exact
+Hypercurve lanes. An isolated three-process, 11-sample matched capsule-offset
+control improved 2.70%, rejecting the broad-run apparent line/arc regression.
+Hypercurve remains faster than every measured finite peer at 256- and
+1,024-vertex star intersections; certified general offset and exact NURBS
+evaluation retain their explicitly non-equivalent guarantee/performance gaps.
+
+Validation passed the complete all-feature suite with 258 unit tests and all
+integration tests other than the two explicitly ignored release-scale PCB
+performance corpora; all 268 pathological Booleans; warning-denied all-target
+all-feature and no-default Clippy; every fuzz-target build; warning-denied
+rustdoc; formatting; and diff checks. Hypermesh was not modified.
+
+This does not close the Phase 1 policy audit. Public strict-only wrappers still
+exist for directed sweep and materialized boundary paths; closed-path Bezier
+classification retains a strict-only cache; curve-intersection routes still
+mix an active policy with policy-free native-fragment promotion; and spline
+subcurve/reconstruction policy propagation remains incomplete. Those are the
+next authoritative cuts.
+
+Machine-readable semantic evidence, samples, layouts, binary size, remaining
+audit, and the 22,469-node/38,434-edge call graph are in
+[`2026-07-31-higher-order-edit-policy.json`](benchmarks/checkpoints/2026-07-31-higher-order-edit-policy.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
