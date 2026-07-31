@@ -9,7 +9,7 @@ use csgrs::{
     solid::{self, SolidExt},
 };
 use hypercurve::{
-    Classification, CurvePath2, CurvePolicy, CurveRegion2, CurveString2,
+    BezierSplitFragment2, Classification, CurvePath2, CurvePolicy, CurveRegion2, CurveString2,
     FiniteProjectionOptions, FiniteRegionProfile2, Point2,
 };
 use hyperlattice::{Point3, Real, Vector3};
@@ -533,16 +533,42 @@ fn render_curve(name: &str, region: &CurveRegion2) {
         stroke_points(&mut image, &map, points, EDGE_WIDTH_2D, EDGE);
     }
 
-    let vertex_count = edge_paths.iter().map(|path| path.curves().len()).sum();
-    let radius = vertex_radius(vertex_count);
-    for path in &edge_paths {
-        // Mark exact curve-fragment junctions, not chordization samples.
-        for edge in path.curves() {
-            let vertex = (real_to_f64(edge.start().x()), real_to_f64(edge.start().y()));
-            draw_vertex_2d(&mut image, map.point(vertex), radius);
-        }
+    let vertices = exact_region_vertices(region);
+    let radius = vertex_radius(vertices.len());
+    for vertex in vertices {
+        let vertex = (real_to_f64(vertex.x()), real_to_f64(vertex.y()));
+        draw_vertex_2d(&mut image, map.point(vertex), radius);
     }
     save_image(name, &image);
+}
+
+fn exact_region_vertices(region: &CurveRegion2) -> Vec<Point2> {
+    if let Ok(Classification::Decided(native)) =
+        region.native_contours_fast_path(&CurvePolicy::STRICT)
+    {
+        return native
+            .material_contours()
+            .iter()
+            .chain(native.hole_contours())
+            .flat_map(|contour| contour.segments().iter())
+            .map(|segment| segment.start().clone())
+            .collect();
+    }
+
+    // Higher-order regions have no native line/arc view. Draw only represented
+    // endpoints retained by the exact boundary itself. Algebraic endpoint
+    // images deliberately remain unmarked because turning an isolating interval
+    // into a screen coordinate would invent a projected vertex.
+    region
+        .boundary_loops()
+        .iter()
+        .flat_map(|boundary| boundary.fragments())
+        .filter_map(|fragment| match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => Some(curve.start().clone()),
+            BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | BezierSplitFragment2::Unresolved { .. } => None,
+        })
+        .collect()
 }
 
 fn render_open_curves(name: &str, paths: &[CurvePath2], strings: &[CurveString2]) {
@@ -1174,4 +1200,46 @@ fn p3(x: f64, y: f64, z: f64) -> Point3 {
 
 fn v3(x: f64, y: f64, z: f64) -> Vector3 {
     Vector3::from_xyz(r(x), r(y), r(z))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use hypercurve::{BulgeVertex2, Contour2};
+
+    #[test]
+    fn exact_region_vertices_ignore_arc_projection_fragments() {
+        let right = Point2::new(Real::one(), Real::zero());
+        let left = Point2::new(-Real::one(), Real::zero());
+        let contour = Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(right.clone(), Real::one()),
+            BulgeVertex2::new(left.clone(), Real::one()),
+        ])
+        .expect("two exact semicircles form a closed contour");
+        let region = CurveRegion2::try_from_native_material_contours(
+            vec![contour],
+            &CurvePolicy::STRICT,
+        )
+        .expect("promote exact circular contour");
+
+        let projected_paths = expect_decided(
+            region
+                .project_to_finite_curve_paths(&CurvePolicy::STRICT)
+                .expect("project circular boundary"),
+            "circular boundary projection",
+        );
+        let projected_vertices = projected_paths
+            .iter()
+            .map(|path| path.curves().len())
+            .sum::<usize>();
+        assert!(
+            projected_vertices > 2,
+            "arc-to-Bezier projection must expose the former false markers"
+        );
+
+        let vertices = exact_region_vertices(&region);
+        assert_eq!(vertices.len(), 2);
+        assert!(vertices.contains(&right));
+        assert!(vertices.contains(&left));
+    }
 }
