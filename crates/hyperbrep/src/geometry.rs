@@ -55,6 +55,9 @@ impl ParameterDomain {
 
     /// Certifies whether `parameter` belongs to this interval.
     pub fn contains(&self, parameter: &Real) -> GeometryResult<bool> {
+        if parameter == &self.start || parameter == &self.end {
+            return Ok(true);
+        }
         let after_start = decided_order(compare_reals(
             parameter,
             &self.start,
@@ -320,6 +323,10 @@ type HomogeneousNurbsSplit = (
 );
 
 impl Curve3 {
+    pub(crate) fn shares_identity(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data)
+    }
+
     /// Constructs a finite exact line segment.
     pub fn line(start: Point3, end: Point3) -> GeometryResult<Self> {
         match point3_equal(&start, &end, crate::STRICT_PREDICATES) {
@@ -1441,6 +1448,40 @@ pub struct SurfaceIntersectionCurve {
     curve: Curve3,
     first_pcurve: SurfaceIntersectionPcurve,
     second_pcurve: SurfaceIntersectionPcurve,
+    image_certificates: [bool; 2],
+    first_boundary_contacts: SurfaceIntersectionBoundaryContacts,
+    second_boundary_contacts: SurfaceIntersectionBoundaryContacts,
+}
+
+/// Exact model-space support evidence for one trimmed face-boundary contact.
+///
+/// The support curve and its canonical parameter survive subsequent edge
+/// splits. This lets topology recover the current edge or vertex by identity
+/// instead of re-solving incidence from independently formed coordinates.
+#[derive(Clone, Debug)]
+pub(crate) struct SurfaceIntersectionBoundaryContact {
+    curve: Curve3,
+    parameter: Real,
+}
+
+impl SurfaceIntersectionBoundaryContact {
+    pub(crate) fn new(curve: Curve3, parameter: Real) -> Self {
+        Self { curve, parameter }
+    }
+
+    pub(crate) const fn curve(&self) -> &Curve3 {
+        &self.curve
+    }
+
+    pub(crate) const fn parameter(&self) -> &Real {
+        &self.parameter
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+struct SurfaceIntersectionBoundaryContacts {
+    start: Vec<SurfaceIntersectionBoundaryContact>,
+    end: Vec<SurfaceIntersectionBoundaryContact>,
 }
 
 /// Identifies an operand of a surface intersection.
@@ -1511,6 +1552,7 @@ impl SurfacePcurveCorrespondence {
 
 #[derive(Clone, Debug)]
 enum SurfaceIntersectionPcurveMapping {
+    Unsupported,
     RetainedCurve {
         curve: Curve2,
     },
@@ -1560,6 +1602,9 @@ impl SurfaceIntersectionCurve {
             curve,
             first_pcurve,
             second_pcurve,
+            image_certificates: [true, true],
+            first_boundary_contacts: SurfaceIntersectionBoundaryContacts::default(),
+            second_boundary_contacts: SurfaceIntersectionBoundaryContacts::default(),
         }
     }
 
@@ -1574,7 +1619,43 @@ impl SurfaceIntersectionCurve {
         ))
     }
 
+    pub(crate) fn on_single_plane(
+        curve: Curve3,
+        surface: &Surface,
+        operand: SurfaceIntersectionOperand,
+    ) -> GeometryResult<Self> {
+        let SurfaceGeometry::Plane(plane) = &surface.data.geometry else {
+            return Err(GeometryError::UnsupportedIntersection);
+        };
+        let plane_pcurve = SurfaceIntersectionPcurve::plane_projection(curve.clone(), plane);
+        let unavailable = SurfaceIntersectionPcurve::unsupported(curve.domain().clone());
+        let mut intersection = match operand {
+            SurfaceIntersectionOperand::First => Self::new(curve, plane_pcurve, unavailable),
+            SurfaceIntersectionOperand::Second => Self::new(curve, unavailable, plane_pcurve),
+        };
+        intersection.image_certificates = match operand {
+            SurfaceIntersectionOperand::First => [true, false],
+            SurfaceIntersectionOperand::Second => [false, true],
+        };
+        Ok(intersection)
+    }
+
+    #[cfg(test)]
     pub(crate) fn from_exact_pcurves(
+        curve: Curve3,
+        first_pcurve: Curve2,
+        second_pcurve: Curve2,
+    ) -> GeometryResult<Self> {
+        let mut intersection = Self::new(
+            curve,
+            SurfaceIntersectionPcurve::retained_curve(first_pcurve)?,
+            SurfaceIntersectionPcurve::retained_curve(second_pcurve)?,
+        );
+        intersection.image_certificates = [false, false];
+        Ok(intersection)
+    }
+
+    pub(crate) fn from_certified_exact_pcurves(
         curve: Curve3,
         first_pcurve: Curve2,
         second_pcurve: Curve2,
@@ -1601,6 +1682,26 @@ impl SurfaceIntersectionCurve {
 
     fn swapped(mut self) -> Self {
         std::mem::swap(&mut self.first_pcurve, &mut self.second_pcurve);
+        self.image_certificates.swap(0, 1);
+        std::mem::swap(
+            &mut self.first_boundary_contacts,
+            &mut self.second_boundary_contacts,
+        );
+        self
+    }
+
+    pub(crate) fn with_boundary_contacts(
+        mut self,
+        operand: SurfaceIntersectionOperand,
+        start: Vec<SurfaceIntersectionBoundaryContact>,
+        end: Vec<SurfaceIntersectionBoundaryContact>,
+    ) -> Self {
+        let contacts = match operand {
+            SurfaceIntersectionOperand::First => &mut self.first_boundary_contacts,
+            SurfaceIntersectionOperand::Second => &mut self.second_boundary_contacts,
+        };
+        contacts.start = start;
+        contacts.end = end;
         self
     }
 
@@ -1627,6 +1728,33 @@ impl SurfaceIntersectionCurve {
         }
     }
 
+    pub(crate) const fn has_image_certificate(&self, operand: SurfaceIntersectionOperand) -> bool {
+        match operand {
+            SurfaceIntersectionOperand::First => self.image_certificates[0],
+            SurfaceIntersectionOperand::Second => self.image_certificates[1],
+        }
+    }
+
+    pub(crate) fn start_boundary_contacts(
+        &self,
+        operand: SurfaceIntersectionOperand,
+    ) -> &[SurfaceIntersectionBoundaryContact] {
+        match operand {
+            SurfaceIntersectionOperand::First => &self.first_boundary_contacts.start,
+            SurfaceIntersectionOperand::Second => &self.second_boundary_contacts.start,
+        }
+    }
+
+    pub(crate) fn end_boundary_contacts(
+        &self,
+        operand: SurfaceIntersectionOperand,
+    ) -> &[SurfaceIntersectionBoundaryContact] {
+        match operand {
+            SurfaceIntersectionOperand::First => &self.first_boundary_contacts.end,
+            SurfaceIntersectionOperand::Second => &self.second_boundary_contacts.end,
+        }
+    }
+
     /// Restricts the spatial curve and both exact pcurve mappings to one
     /// increasing represented parameter interval.
     pub fn subcurve(&self, start: &Real, end: &Real) -> GeometryResult<Self> {
@@ -1637,21 +1765,70 @@ impl SurfaceIntersectionCurve {
         let second_pcurve =
             self.second_pcurve
                 .reparameterized_subcurve(start, end, curve.domain())?;
-        Ok(Self::new(curve, first_pcurve, second_pcurve))
+        let retain_start = decided_order(compare_reals(
+            start,
+            self.curve.domain().start(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal;
+        let retain_end = decided_order(compare_reals(
+            end,
+            self.curve.domain().end(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal;
+        Ok(Self {
+            curve,
+            first_pcurve,
+            second_pcurve,
+            image_certificates: self.image_certificates,
+            first_boundary_contacts: SurfaceIntersectionBoundaryContacts {
+                start: retain_start
+                    .then(|| self.first_boundary_contacts.start.clone())
+                    .unwrap_or_default(),
+                end: retain_end
+                    .then(|| self.first_boundary_contacts.end.clone())
+                    .unwrap_or_default(),
+            },
+            second_boundary_contacts: SurfaceIntersectionBoundaryContacts {
+                start: retain_start
+                    .then(|| self.second_boundary_contacts.start.clone())
+                    .unwrap_or_default(),
+                end: retain_end
+                    .then(|| self.second_boundary_contacts.end.clone())
+                    .unwrap_or_default(),
+            },
+        })
     }
 
     /// Returns the same exact spatial and two-operand parameter-space images
     /// with one common reversed traversal.
     pub fn reversed(&self) -> GeometryResult<Self> {
-        Ok(Self::new(
-            self.curve.reversed()?,
-            self.first_pcurve.reversed()?,
-            self.second_pcurve.reversed()?,
-        ))
+        Ok(Self {
+            curve: self.curve.reversed()?,
+            first_pcurve: self.first_pcurve.reversed()?,
+            second_pcurve: self.second_pcurve.reversed()?,
+            image_certificates: self.image_certificates,
+            first_boundary_contacts: SurfaceIntersectionBoundaryContacts {
+                start: self.first_boundary_contacts.end.clone(),
+                end: self.first_boundary_contacts.start.clone(),
+            },
+            second_boundary_contacts: SurfaceIntersectionBoundaryContacts {
+                start: self.second_boundary_contacts.end.clone(),
+                end: self.second_boundary_contacts.start.clone(),
+            },
+        })
     }
 }
 
 impl SurfaceIntersectionPcurve {
+    fn unsupported(domain: ParameterDomain) -> Self {
+        Self {
+            domain,
+            source_scale: Real::one(),
+            source_offset: Real::zero(),
+            mapping: SurfaceIntersectionPcurveMapping::Unsupported,
+        }
+    }
+
     fn retained_curve(curve: Curve2) -> GeometryResult<Self> {
         let curve_domain = curve.parameter_domain();
         Ok(Self {
@@ -1733,6 +1910,10 @@ impl SurfaceIntersectionPcurve {
         &self.domain
     }
 
+    pub(crate) fn is_available(&self) -> bool {
+        !matches!(self.mapping, SurfaceIntersectionPcurveMapping::Unsupported)
+    }
+
     /// Evaluates the exact surface parameter corresponding to `parameter` on
     /// the retained spatial curve.
     pub fn point_at(&self, parameter: &Real) -> GeometryResult<Point2> {
@@ -1741,6 +1922,9 @@ impl SurfaceIntersectionPcurve {
         }
         let source_parameter = &self.source_scale * parameter + &self.source_offset;
         match &self.mapping {
+            SurfaceIntersectionPcurveMapping::Unsupported => {
+                Err(GeometryError::UnsupportedIntersection)
+            }
             SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
                 let point = curve.point_at(&source_parameter)?;
                 Ok(Point2::new(point.x().clone(), point.y().clone()))
@@ -1836,6 +2020,9 @@ impl SurfaceIntersectionPcurve {
             }
         };
         match &self.mapping {
+            SurfaceIntersectionPcurveMapping::Unsupported => {
+                Err(GeometryError::UnsupportedIntersection)
+            }
             SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
                 let domain = curve.parameter_domain();
                 let restricted = if decided_order(compare_reals(
@@ -2024,6 +2211,7 @@ impl SurfaceIntersectionPcurve {
             spatial_offset: Real::zero(),
         };
         match &self.mapping {
+            SurfaceIntersectionPcurveMapping::Unsupported => Ok(None),
             SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
                 Ok(Some(vec![identity(curve.clone())]))
             }
@@ -3962,12 +4150,20 @@ fn intersect_circle_arc_sphere(
     arc: &EllipseArc3,
     sphere: &SphereSurface,
 ) -> GeometryResult<CurveSurfaceIntersection> {
-    let offset = &arc.center - &sphere.center;
+    intersect_circle_arc_center_radius(curve, arc, &sphere.center, &sphere.radius)
+}
+
+fn intersect_circle_arc_center_radius(
+    curve: &Curve3,
+    arc: &EllipseArc3,
+    center: &Point3,
+    radius: &Real,
+) -> GeometryResult<CurveSurfaceIntersection> {
+    let offset = &arc.center - center;
     let twice_radius = Real::from(2) * &arc.x_radius;
     let cosine_coefficient = &twice_radius * arc.x.dot(&offset);
     let sine_coefficient = &twice_radius * arc.y.dot(&offset);
-    let center_value =
-        offset.norm_squared() + &arc.x_radius * &arc.x_radius - &sphere.radius * &sphere.radius;
+    let center_value = offset.norm_squared() + &arc.x_radius * &arc.x_radius - radius * radius;
     intersect_ellipse_arc_scalar_equation(
         curve,
         arc,
@@ -4045,7 +4241,7 @@ fn intersect_transverse_circle_arc_torus(
         crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
-        return Err(GeometryError::UnsupportedIntersection);
+        return intersect_axial_circle_arc_torus(curve, arc, torus, &circle_axis);
     }
     let center_offset = &arc.center - &torus.center;
     let height = center_offset.dot(&torus.frame.z);
@@ -4080,6 +4276,109 @@ fn intersect_transverse_circle_arc_torus(
             &torus.frame.z,
             &radius,
         )? {
+            CurveSurfaceIntersection::None => {}
+            CurveSurfaceIntersection::Points(points) => {
+                for point in points {
+                    let mut duplicate = false;
+                    for existing in &combined {
+                        if decided_order(compare_reals(
+                            &existing.parameter,
+                            &point.parameter,
+                            crate::STRICT_PREDICATES,
+                        ))? == Ordering::Equal
+                        {
+                            duplicate = true;
+                            break;
+                        }
+                    }
+                    if !duplicate {
+                        combined.push(point);
+                    }
+                }
+            }
+            CurveSurfaceIntersection::Contained => {
+                return Ok(CurveSurfaceIntersection::Contained);
+            }
+            CurveSurfaceIntersection::Overlap(_) => {
+                unreachable!("exact circle relation has no proper overlap")
+            }
+        }
+    }
+    for index in 1..combined.len() {
+        let mut position = index;
+        while position > 0
+            && decided_order(compare_reals(
+                &combined[position].parameter,
+                &combined[position - 1].parameter,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Less
+        {
+            combined.swap(position, position - 1);
+            position -= 1;
+        }
+    }
+    if combined.is_empty() {
+        Ok(CurveSurfaceIntersection::None)
+    } else {
+        Ok(CurveSurfaceIntersection::Points(combined))
+    }
+}
+
+fn intersect_axial_circle_arc_torus(
+    curve: &Curve3,
+    arc: &EllipseArc3,
+    torus: &TorusSurface,
+    circle_axis: &Vector3,
+) -> GeometryResult<CurveSurfaceIntersection> {
+    let center_offset = &arc.center - &torus.center;
+    if decided_order(compare_reals(
+        &circle_axis.dot(&torus.frame.z),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
+        || decided_order(compare_reals(
+            &circle_axis.dot(&center_offset),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let height = center_offset.dot(&torus.frame.z);
+    let radial = &center_offset - &(torus.frame.z.clone() * height);
+    let radial_squared = radial.norm_squared();
+    if decided_order(compare_reals(
+        &radial_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let major_squared = &torus.major_radius * &torus.major_radius;
+    let (first_center, second_center) = if radial_squared == major_squared
+        || decided_order(compare_reals(
+            &radial_squared,
+            &major_squared,
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+    {
+        (
+            torus.center.clone() + radial.clone(),
+            torus.center.clone() - radial,
+        )
+    } else {
+        let radial = radial
+            .normalize()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        (
+            torus.center.clone() + radial.clone() * &torus.major_radius,
+            torus.center.clone() - radial * &torus.major_radius,
+        )
+    };
+    let mut combined = Vec::<CurveSurfacePoint>::new();
+    for center in [&first_center, &second_center] {
+        match intersect_circle_arc_center_radius(curve, arc, center, &torus.minor_radius)? {
             CurveSurfaceIntersection::None => {}
             CurveSurfaceIntersection::Points(points) => {
                 for point in points {
@@ -4208,12 +4507,11 @@ fn intersect_ellipse_arc_scalar_equation(
     for angle in angles {
         let point = arc.center.clone()
             + arc.x.clone() * (&arc.x_radius * angle.clone().cos())
-            + arc.y.clone() * (&arc.y_radius * angle.sin());
-        let CurveParameterLocation::Parameters(parameters) =
-            locate_ellipse_arc_parameters(curve, arc, &point)?
-        else {
+            + arc.y.clone() * (&arc.y_radius * angle.clone().sin());
+        let parameters = ellipse_arc_parameters_at_angle(curve, arc, angle)?;
+        if parameters.is_empty() {
             continue;
-        };
+        }
         for parameter in parameters {
             let mut duplicate = false;
             for existing in &points {
@@ -4254,6 +4552,49 @@ fn intersect_ellipse_arc_scalar_equation(
         Ok(CurveSurfaceIntersection::None)
     } else {
         Ok(CurveSurfaceIntersection::Points(points))
+    }
+}
+
+fn ellipse_arc_parameters_at_angle(
+    curve: &Curve3,
+    arc: &EllipseArc3,
+    angle: Real,
+) -> GeometryResult<Vec<Real>> {
+    let mut delta = if arc.direction < 0 {
+        &arc.angle_at_start - angle
+    } else {
+        angle - &arc.angle_at_start
+    };
+    if decided_order(compare_reals(
+        &delta,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Less
+    {
+        delta += Real::tau();
+    }
+    let sweep = curve.domain().end() - curve.domain().start();
+    if decided_order(compare_reals(
+        &delta,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
+        let mut parameters = vec![curve.domain().start().clone()];
+        if decided_order(compare_reals(
+            &sweep,
+            &Real::tau(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+        {
+            parameters.push(curve.domain().end().clone());
+        }
+        return Ok(parameters);
+    }
+    match decided_order(compare_reals(&delta, &sweep, crate::STRICT_PREDICATES))? {
+        Ordering::Less => Ok(vec![curve.domain().start() + delta]),
+        Ordering::Equal => Ok(vec![curve.domain().end().clone()]),
+        Ordering::Greater => Ok(Vec::new()),
     }
 }
 
@@ -11468,7 +11809,7 @@ mod tests {
         );
 
         let (split, record) = patch
-            .split_face_by_surface_curve(face, fragments[0].curve(), fragments[0].first_pcurve())
+            .split_face_by_surface_curve(face, &fragments[0], SurfaceIntersectionOperand::First)
             .unwrap();
         assert_eq!(split.counts().faces, 2);
         let graph_use = split
@@ -11636,7 +11977,7 @@ mod tests {
         let original_area = model.face_area(face).unwrap();
         let original_volume = model.solid_volume(solid).unwrap();
         let (partitioned, split) = model
-            .split_face_by_surface_curve(face, trace.curve(), trace.first_pcurve())
+            .split_face_by_surface_curve(face, &trace, SurfaceIntersectionOperand::First)
             .unwrap();
         let closed = split.closed().expect("closed trace returns a loop split");
         assert_eq!(closed.first_face, face);
@@ -11685,11 +12026,7 @@ mod tests {
             SurfaceIntersectionPcurve::plane_projection(reversed_circle.clone(), plane),
         );
         let (reversed, _) = model
-            .split_face_by_surface_curve(
-                face,
-                reversed_trace.curve(),
-                reversed_trace.first_pcurve(),
-            )
+            .split_face_by_surface_curve(face, &reversed_trace, SurfaceIntersectionOperand::First)
             .unwrap();
         assert_eq!(reversed.to_json().unwrap(), json);
     }
@@ -11982,8 +12319,8 @@ mod tests {
         let (rational_split, _) = rational_patch
             .split_face_by_surface_curve(
                 rational_face,
-                rational_section.curve(),
-                rational_section.first_pcurve(),
+                &rational_section,
+                SurfaceIntersectionOperand::First,
             )
             .unwrap();
         assert_eq!(rational_split.counts().faces, 2);
@@ -12018,8 +12355,8 @@ mod tests {
         let (nurbs_split, _) = nurbs_patch
             .split_face_by_surface_curve(
                 nurbs_face,
-                nurbs_section.curve(),
-                nurbs_section.first_pcurve(),
+                &nurbs_section,
+                SurfaceIntersectionOperand::First,
             )
             .unwrap();
         assert_eq!(nurbs_split.counts().faces, 2);
@@ -12056,7 +12393,7 @@ mod tests {
             panic!("translation tensor must retain one exact graph section");
         };
         let (split, record) = patch
-            .split_face_by_surface_curve(face, section.curve(), section.first_pcurve())
+            .split_face_by_surface_curve(face, &section, SurfaceIntersectionOperand::First)
             .unwrap();
         assert_eq!(split.counts().faces, 2);
         assert_eq!(record.first_face(), face);
@@ -12288,7 +12625,7 @@ mod tests {
             panic!("bilinear patch must retain its exact graph section");
         };
         let (split, record) = patch
-            .split_face_by_surface_curve(face, patch_section.curve(), patch_section.first_pcurve())
+            .split_face_by_surface_curve(face, &patch_section, SurfaceIntersectionOperand::First)
             .unwrap();
         assert_eq!(split.counts().faces, 2);
         let graph_use = split
@@ -12329,11 +12666,7 @@ mod tests {
             panic!("bilinear patch must retain its exact clipped graph section");
         };
         let (partial_split, _) = patch
-            .split_face_by_surface_curve(
-                face,
-                partial_section.curve(),
-                partial_section.first_pcurve(),
-            )
+            .split_face_by_surface_curve(face, &partial_section, SurfaceIntersectionOperand::First)
             .unwrap();
         assert_eq!(partial_split.counts().faces, 2);
         let partial_json = partial_split.to_json().unwrap();
@@ -12589,7 +12922,7 @@ mod tests {
             panic!("weighted bilinear patch must retain its exact graph section");
         };
         let (split, record) = patch
-            .split_face_by_surface_curve(face, patch_section.curve(), patch_section.first_pcurve())
+            .split_face_by_surface_curve(face, &patch_section, SurfaceIntersectionOperand::First)
             .unwrap();
         assert_eq!(split.counts().faces, 2);
         let graph_use = split
@@ -12630,11 +12963,7 @@ mod tests {
             panic!("weighted bilinear patch must retain its exact clipped graph section");
         };
         let (partial_split, _) = patch
-            .split_face_by_surface_curve(
-                face,
-                partial_section.curve(),
-                partial_section.first_pcurve(),
-            )
+            .split_face_by_surface_curve(face, &partial_section, SurfaceIntersectionOperand::First)
             .unwrap();
         assert_eq!(partial_split.counts().faces, 2);
         let partial_json = partial_split.to_json().unwrap();
@@ -12669,8 +12998,8 @@ mod tests {
         let (native_split, native_record) = native_patch
             .split_face_by_surface_curve(
                 native_face,
-                native_patch_section.curve(),
-                native_patch_section.first_pcurve(),
+                &native_patch_section,
+                SurfaceIntersectionOperand::First,
             )
             .unwrap();
         assert_eq!(native_split.counts().faces, 2);
@@ -13240,7 +13569,7 @@ mod tests {
             CurvePoint2::new(q(17, 2), q(7, 2))
         );
         let (split, _) = patch
-            .split_face_by_surface_curve(face, section.curve(), section.first_pcurve())
+            .split_face_by_surface_curve(face, &section, SurfaceIntersectionOperand::First)
             .unwrap();
         assert_eq!(split.counts().faces, 2);
         let json = split.to_json().unwrap();
@@ -13310,7 +13639,7 @@ mod tests {
             );
         }
         let (split, record) = patch
-            .split_face_by_surface_curve(face, section.curve(), section.first_pcurve())
+            .split_face_by_surface_curve(face, &section, SurfaceIntersectionOperand::First)
             .unwrap();
         assert_eq!(split.counts().faces, 2);
         let graph_use = split
@@ -13378,7 +13707,7 @@ mod tests {
             Some((&r(1), &r(0)))
         );
         let (v_split, _) = v_patch
-            .split_face_by_surface_curve(v_face, v_section.curve(), v_section.first_pcurve())
+            .split_face_by_surface_curve(v_face, &v_section, SurfaceIntersectionOperand::First)
             .unwrap();
         assert_eq!(v_split.counts().faces, 2);
         let v_json = v_split.to_json().unwrap();

@@ -16,10 +16,11 @@ use hyperlimit::{PredicateOutcome, compare_point3_lexicographic, compare_reals, 
 use crate::error::GeometryError;
 use crate::geometry::{
     Curve3, Curve3ExactData, Curve3Kind, CurveParameterLocation, EllipseArcExactData,
-    ParameterDomain, Pcurve, Surface, SurfaceExactData, SurfaceIntersectionCurve,
-    SurfaceIntersectionOperand, SurfaceIntersectionPcurve, SurfaceIsoAxis, SurfaceKind,
-    SurfaceParameterDomain, SurfacePcurveCorrespondence, affine_transform_orientation,
-    materialize_nurbs_parameter_graph, rational_bilinear_parameter_curve,
+    ParameterDomain, Pcurve, Surface, SurfaceExactData, SurfaceIntersectionBoundaryContact,
+    SurfaceIntersectionCurve, SurfaceIntersectionOperand, SurfaceIntersectionPcurve,
+    SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePcurveCorrespondence,
+    affine_transform_orientation, materialize_nurbs_parameter_graph,
+    rational_bilinear_parameter_curve,
 };
 
 macro_rules! model_id {
@@ -148,7 +149,7 @@ impl ParameterCorrespondence {
     /// Returns affine coefficients, or `None` for a non-affine relation.
     pub const fn affine_coefficients(&self) -> Option<(&Real, &Real)> {
         match self {
-            Self::Affine { scale, offset } => Some((scale, offset)),
+            Self::Affine { scale, offset, .. } => Some((scale, offset)),
             Self::AngularSweep => None,
         }
     }
@@ -160,8 +161,38 @@ impl ParameterCorrespondence {
         direction: Direction,
         pcurve_parameter: &Real,
     ) -> Result<Real, GeometryError> {
+        let (directed_start, directed_end) = match direction {
+            Direction::Forward => (edge_domain.start(), edge_domain.end()),
+            Direction::Reversed => (edge_domain.end(), edge_domain.start()),
+        };
+        if matches!(
+            compare_reals(
+                pcurve_parameter,
+                pcurve.domain_start(),
+                crate::STRICT_PREDICATES
+            ),
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Equal,
+                ..
+            }
+        ) {
+            return Ok(directed_start.clone());
+        }
+        if matches!(
+            compare_reals(
+                pcurve_parameter,
+                pcurve.domain_end(),
+                crate::STRICT_PREDICATES
+            ),
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Equal,
+                ..
+            }
+        ) {
+            return Ok(directed_end.clone());
+        }
         match self {
-            Self::Affine { scale, offset } => Ok(scale * pcurve_parameter + offset),
+            Self::Affine { scale, offset, .. } => Ok(scale * pcurve_parameter + offset),
             Self::AngularSweep => {
                 let arc = pcurve
                     .circular_arc()
@@ -174,11 +205,7 @@ impl ParameterCorrespondence {
                         return Err(GeometryError::PlanarClassificationUnresolved(reason));
                     }
                 };
-                let (start, end) = match direction {
-                    Direction::Forward => (edge_domain.start(), edge_domain.end()),
-                    Direction::Reversed => (edge_domain.end(), edge_domain.start()),
-                };
-                Ok(start + &((end - start) * fraction))
+                Ok(directed_start + &((directed_end - directed_start) * fraction))
             }
         }
     }
@@ -190,19 +217,38 @@ impl ParameterCorrespondence {
         direction: Direction,
         edge_parameter: &Real,
     ) -> Result<Real, GeometryError> {
+        let (directed_start, directed_end) = match direction {
+            Direction::Forward => (edge_domain.start(), edge_domain.end()),
+            Direction::Reversed => (edge_domain.end(), edge_domain.start()),
+        };
+        if matches!(
+            compare_reals(edge_parameter, directed_start, crate::STRICT_PREDICATES),
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Equal,
+                ..
+            }
+        ) {
+            return Ok(pcurve.domain_start().clone());
+        }
+        if matches!(
+            compare_reals(edge_parameter, directed_end, crate::STRICT_PREDICATES),
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Equal,
+                ..
+            }
+        ) {
+            return Ok(pcurve.domain_end().clone());
+        }
         match self {
-            Self::Affine { scale, offset } => {
+            Self::Affine { scale, offset, .. } => {
                 ((edge_parameter - offset) / scale).map_err(|_| GeometryError::ProjectiveDivision)
             }
             Self::AngularSweep => {
                 let arc = pcurve
                     .circular_arc()
                     .ok_or(GeometryError::UnsupportedPcurveContour)?;
-                let (start, end) = match direction {
-                    Direction::Forward => (edge_domain.start(), edge_domain.end()),
-                    Direction::Reversed => (edge_domain.end(), edge_domain.start()),
-                };
-                let fraction = ((edge_parameter - start) / (end - start))
+                let fraction = ((edge_parameter - directed_start)
+                    / (directed_end - directed_start))
                     .map_err(|_| GeometryError::ProjectiveDivision)?;
                 match arc.parameter_at_sweep_fraction(&fraction, &CurvePolicy::STRICT)? {
                     Classification::Decided(parameter) => Ok(parameter),
@@ -964,6 +1010,7 @@ pub struct Edge {
     end: VertexId,
     curve: Curve3Id,
     domain: ParameterDomain,
+    endpoint_certificate: bool,
 }
 
 impl Edge {
@@ -995,6 +1042,7 @@ pub struct EdgeUse {
     direction: Direction,
     pcurve: PcurveId,
     parameter_correspondence: ParameterCorrespondence,
+    image_certificate: bool,
 }
 
 impl EdgeUse {
@@ -1023,6 +1071,7 @@ impl EdgeUse {
 #[derive(Clone, Debug)]
 pub struct Wire {
     edge_uses: Vec<EdgeUseId>,
+    simplicity_certificate: bool,
 }
 
 impl Wire {
@@ -1181,6 +1230,7 @@ struct ModelData {
     wire_face: Vec<FaceId>,
     face_shell: Vec<ShellId>,
     shell_solid: Vec<Option<SolidId>>,
+    solid_certificates_valid: Vec<bool>,
     certified_cylinders: Vec<Option<CertifiedCylinderShell>>,
     certified_spheres: Vec<Option<CertifiedSphereShell>>,
     certified_sphere_pairs: Vec<Option<CertifiedSpherePairShell>>,
@@ -1192,6 +1242,19 @@ struct ModelData {
     certified_prisms: Vec<Option<CertifiedPrismShell>>,
     bounds: OnceLock<Result<Option<Aabb>, GeometryError>>,
     face_contours: Vec<OnceLock<Result<Vec<Contour2>, GeometryError>>>,
+}
+
+#[derive(Clone, Debug)]
+struct CertifiedSolid {
+    cylinder: Option<CertifiedCylinderShell>,
+    sphere: Option<CertifiedSphereShell>,
+    sphere_pair: Option<CertifiedSpherePairShell>,
+    cone_frustum: Option<CertifiedConeFrustumShell>,
+    torus: Option<CertifiedTorusShell>,
+    revolution: Option<CertifiedRevolutionShell>,
+    loft: Option<CertifiedLoftShell>,
+    curve_sweep: Option<CertifiedCurveSweepShell>,
+    prism: Option<CertifiedPrismShell>,
 }
 
 #[derive(Clone, Debug)]
@@ -1780,12 +1843,14 @@ impl Model {
             end: vertex,
             curve: edge.curve,
             domain: first_domain,
+            endpoint_certificate: edge.endpoint_certificate,
         };
         data.edges.push(Edge {
             start: vertex,
             end: edge.end,
             curve: edge.curve,
             domain: second_domain,
+            endpoint_certificate: edge.endpoint_certificate,
         });
 
         let mut pcurve_use_counts = vec![0_usize; data.pcurves.len()];
@@ -1811,6 +1876,7 @@ impl Model {
                 direction: split.direction,
                 pcurve: first_pcurve_id,
                 parameter_correspondence: split.first_correspondence,
+                image_certificate: true,
             };
             let continuation = EdgeUseId::from_index(data.edge_uses.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
@@ -1819,6 +1885,7 @@ impl Model {
                 direction: split.direction,
                 pcurve: second_pcurve_id,
                 parameter_correspondence: split.second_correspondence,
+                image_certificate: true,
             });
             split_uses.push((split.use_id, continuation));
         }
@@ -1912,9 +1979,12 @@ impl Model {
     pub fn split_face_by_surface_curve(
         &self,
         face_id: FaceId,
-        curve: &Curve3,
-        pcurve: &SurfaceIntersectionPcurve,
+        intersection: &SurfaceIntersectionCurve,
+        operand: SurfaceIntersectionOperand,
     ) -> Result<(Self, SurfaceCurveFaceSplit), TopologyEditError> {
+        let curve = intersection.curve();
+        let pcurve = intersection.pcurve(operand);
+        let image_certificate = intersection.has_image_certificate(operand);
         let face = self
             .face(face_id)
             .ok_or(TopologyEditError::InvalidReference {
@@ -1923,7 +1993,13 @@ impl Model {
             })?;
         let start = curve.start()?;
         let end = curve.end()?;
-        if exact_point_order(&start, &end)? == std::cmp::Ordering::Equal {
+        if self.retained_surface_curve_endpoints_equal(
+            face_id,
+            intersection,
+            operand,
+            &start,
+            &end,
+        )? {
             let (canonical_curve, canonical_pcurve);
             let reversed = curve.reversed()?;
             let (curve, pcurve) =
@@ -1937,7 +2013,7 @@ impl Model {
                     (curve, pcurve)
                 };
             let (model, split) = if face.outer().is_none() {
-                self.split_whole_sphere_by_surface_curve(face_id, curve, pcurve)?
+                self.split_whole_sphere_by_surface_curve(face_id, curve, pcurve, image_certificate)?
             } else if self
                 .surface(face.surface)
                 .expect("validated face surface")
@@ -1949,9 +2025,14 @@ impl Model {
                     )?
                     || !face.inner().is_empty())
             {
-                self.split_spherical_cap_by_surface_curve(face_id, curve, pcurve)?
+                self.split_spherical_cap_by_surface_curve(
+                    face_id,
+                    curve,
+                    pcurve,
+                    image_certificate,
+                )?
             } else {
-                self.split_face_by_closed_surface_curve(face_id, curve, pcurve)?
+                self.split_face_by_closed_surface_curve(face_id, curve, pcurve, image_certificate)?
             };
             return Ok((model, SurfaceCurveFaceSplit::Closed(split)));
         }
@@ -1967,10 +2048,18 @@ impl Model {
                 ParameterCorrespondence::angular_sweep()
             }
         };
-        let (staged, start_vertex, start_edge) =
-            self.attach_face_split_endpoint(face_id, Endpoint::Start, &start)?;
-        let (staged, end_vertex, end_edge) =
-            staged.attach_face_split_endpoint(face_id, Endpoint::End, &end)?;
+        let (staged, start_vertex, start_edge) = self.attach_surface_curve_split_endpoint(
+            face_id,
+            Endpoint::Start,
+            &start,
+            intersection.start_boundary_contacts(operand),
+        )?;
+        let (staged, end_vertex, end_edge) = staged.attach_surface_curve_split_endpoint(
+            face_id,
+            Endpoint::End,
+            &end,
+            intersection.end_boundary_contacts(operand),
+        )?;
         let (staged, face) = staged.split_face_with_geometry(
             face_id,
             start_vertex,
@@ -1979,6 +2068,7 @@ impl Model {
                 curve.clone(),
                 Pcurve::new(materialized.curve().clone()),
                 correspondence,
+                image_certificate,
             )),
         )?;
         Ok((
@@ -1996,6 +2086,7 @@ impl Model {
         face_id: FaceId,
         curve: &Curve3,
         pcurve: &SurfaceIntersectionPcurve,
+        image_certificate: bool,
     ) -> Result<(Self, ClosedSurfaceCurveFaceSplit), TopologyEditError> {
         let face = self
             .face(face_id)
@@ -2109,6 +2200,7 @@ impl Model {
                 },
                 curve: curve_id,
                 domain,
+                endpoint_certificate: false,
             });
             edges.push(edge);
 
@@ -2122,6 +2214,7 @@ impl Model {
                 direction: Direction::Forward,
                 pcurve: forward_pcurve,
                 parameter_correspondence: forward_map,
+                image_certificate,
             });
             forward_uses.push(forward_use);
 
@@ -2135,6 +2228,7 @@ impl Model {
                 direction: Direction::Reversed,
                 pcurve: reverse_pcurve,
                 parameter_correspondence: reverse_map,
+                image_certificate,
             });
             reverse_uses.push(reverse_use);
         }
@@ -2143,11 +2237,13 @@ impl Model {
             .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
         data.wires.push(Wire {
             edge_uses: forward_uses.clone(),
+            simplicity_certificate: true,
         });
         let second_wire = WireId::from_index(data.wires.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
         data.wires.push(Wire {
             edge_uses: reverse_uses.clone(),
+            simplicity_certificate: true,
         });
         data.faces[face_id.index()].boundary = FaceBoundary::Trimmed {
             outer: first_wire,
@@ -2225,6 +2321,7 @@ impl Model {
         face_id: FaceId,
         curve: &Curve3,
         pcurve: &SurfaceIntersectionPcurve,
+        image_certificate: bool,
     ) -> Result<(Self, ClosedSurfaceCurveFaceSplit), TopologyEditError> {
         let face = self
             .face(face_id)
@@ -2367,6 +2464,7 @@ impl Model {
                 },
                 curve: curve_id,
                 domain,
+                endpoint_certificate: false,
             });
             edges.push(edge);
             let forward_pcurve = PcurveId::from_index(data.pcurves.len())
@@ -2379,6 +2477,7 @@ impl Model {
                 direction: Direction::Forward,
                 pcurve: forward_pcurve,
                 parameter_correspondence: forward_map,
+                image_certificate,
             });
             forward_uses.push(forward_use);
             let reverse_pcurve = PcurveId::from_index(data.pcurves.len())
@@ -2391,6 +2490,7 @@ impl Model {
                 direction: Direction::Reversed,
                 pcurve: reverse_pcurve,
                 parameter_correspondence: reverse_map,
+                image_certificate,
             });
             reverse_uses.push(reverse_use);
         }
@@ -2399,11 +2499,13 @@ impl Model {
             .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
         data.wires.push(Wire {
             edge_uses: forward_uses.clone(),
+            simplicity_certificate: true,
         });
         let reverse_wire = WireId::from_index(data.wires.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
         data.wires.push(Wire {
             edge_uses: reverse_uses.clone(),
+            simplicity_certificate: true,
         });
 
         let second_face = FaceId::from_index(data.faces.len())
@@ -2469,6 +2571,7 @@ impl Model {
         face_id: FaceId,
         curve: &Curve3,
         pcurve: &SurfaceIntersectionPcurve,
+        image_certificate: bool,
     ) -> Result<(Self, ClosedSurfaceCurveFaceSplit), TopologyEditError> {
         let face = self
             .face(face_id)
@@ -2644,6 +2747,7 @@ impl Model {
                 },
                 curve: curve_id,
                 domain,
+                endpoint_certificate: false,
             });
             edges.push(edge);
 
@@ -2657,6 +2761,7 @@ impl Model {
                 direction: Direction::Forward,
                 pcurve: forward_pcurve,
                 parameter_correspondence: forward_map,
+                image_certificate,
             });
             forward_uses.push(forward_use);
 
@@ -2670,6 +2775,7 @@ impl Model {
                 direction: Direction::Reversed,
                 pcurve: reverse_pcurve,
                 parameter_correspondence: reverse_map,
+                image_certificate,
             });
             reverse_uses.push(reverse_use);
         }
@@ -2684,11 +2790,13 @@ impl Model {
             .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
         data.wires.push(Wire {
             edge_uses: exterior_uses.clone(),
+            simplicity_certificate: true,
         });
         let interior_outer_wire = WireId::from_index(data.wires.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
         data.wires.push(Wire {
             edge_uses: interior_uses.clone(),
+            simplicity_certificate: true,
         });
         exterior_inner.push(exterior_inner_wire);
         data.faces[face_id.index()].boundary = FaceBoundary::Trimmed {
@@ -2798,7 +2906,6 @@ impl Model {
             }
             ordered.insert(insertion, trace);
         }
-
         let mut split_parameters = ordered
             .iter()
             .map(|trace| {
@@ -2851,7 +2958,6 @@ impl Model {
                 }
             }
         }
-
         if ordered.len() >= 2
             && split_parameters
                 .iter()
@@ -2867,7 +2973,6 @@ impl Model {
                 return Ok(result);
             }
         }
-
         let mut staged = self.clone();
         let mut faces = vec![face_id];
         let mut traces = Vec::with_capacity(ordered.len());
@@ -2890,11 +2995,7 @@ impl Model {
                 let segment = &segments[0];
                 let mut candidates = Vec::new();
                 for (index, candidate) in faces.iter().copied().enumerate() {
-                    match staged.split_face_by_surface_curve(
-                        candidate,
-                        segment.curve(),
-                        segment.pcurve(operand),
-                    ) {
+                    match staged.split_face_by_surface_curve(candidate, segment, operand) {
                         Ok(result) => candidates.push((index, result)),
                         Err(TopologyEditError::ClosedFaceSplitNotInMaterial { .. }) => {}
                         Err(error) => return Err(error),
@@ -2931,10 +3032,18 @@ impl Model {
                 let end = curve.end()?;
                 let mut candidates = Vec::new();
                 for (index, candidate) in faces.iter().copied().enumerate() {
-                    let start_location =
-                        staged.locate_face_split_endpoint(candidate, Endpoint::Start, &start);
-                    let end_location =
-                        staged.locate_face_split_endpoint(candidate, Endpoint::End, &end);
+                    let start_location = staged.locate_surface_curve_split_endpoint(
+                        candidate,
+                        Endpoint::Start,
+                        &start,
+                        segment.start_boundary_contacts(operand),
+                    );
+                    let end_location = staged.locate_surface_curve_split_endpoint(
+                        candidate,
+                        Endpoint::End,
+                        &end,
+                        segment.end_boundary_contacts(operand),
+                    );
                     match (start_location, end_location) {
                         (Ok(_), Ok(_)) => candidates.push((index, candidate)),
                         (Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary { .. }), _)
@@ -2989,11 +3098,8 @@ impl Model {
                         });
                     }
                 };
-                let (next, split) = staged.split_face_by_surface_curve(
-                    candidate,
-                    curve,
-                    segment.pcurve(operand),
-                )?;
+                let (next, split) =
+                    staged.split_face_by_surface_curve(candidate, segment, operand)?;
                 staged = next;
                 faces[face_index] = split.first_face();
                 faces.insert(face_index + 1, split.second_face());
@@ -3218,6 +3324,7 @@ impl Model {
             curve: Curve3,
             pcurve: Pcurve,
             correspondence: ParameterCorrespondence,
+            image_certificate: bool,
             start_vertex: VertexId,
             end_vertex: VertexId,
         }
@@ -3239,6 +3346,7 @@ impl Model {
                     curve: bridge.intersection.curve().clone(),
                     pcurve: Pcurve::new(materialized.curve().clone()),
                     correspondence,
+                    image_certificate: bridge.intersection.has_image_certificate(operand),
                     start_vertex: bridge.start_vertex,
                     end_vertex: bridge.end_vertex,
                 })
@@ -3261,6 +3369,7 @@ impl Model {
                 end: bridge.end_vertex,
                 curve: curve_id,
                 domain: bridge.curve.domain().clone(),
+                endpoint_certificate: true,
             });
             let forward_pcurve = PcurveId::from_index(data.pcurves.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
@@ -3284,6 +3393,7 @@ impl Model {
                 direction: Direction::Forward,
                 pcurve: forward_pcurve,
                 parameter_correspondence: bridge.correspondence.clone(),
+                image_certificate: bridge.image_certificate,
             });
             let reverse_use = EdgeUseId::from_index(data.edge_uses.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
@@ -3292,6 +3402,7 @@ impl Model {
                 direction: Direction::Reversed,
                 pcurve: reverse_pcurve,
                 parameter_correspondence: reverse_correspondence,
+                image_certificate: bridge.image_certificate,
             });
             bridge_edges.push(edge);
             bridge_forward_uses.push(forward_use);
@@ -3385,6 +3496,7 @@ impl Model {
         let (second_path, second_face_bridge_uses) = build_path(!first_from_start)?;
 
         data.wires[outer.index()].edge_uses = first_path;
+        data.wires[outer.index()].simplicity_certificate = true;
         data.wires[target_inner.index()].edge_uses = second_path;
         data.faces[face_id.index()] = Face {
             surface: face.surface,
@@ -3678,6 +3790,160 @@ impl Model {
         }
     }
 
+    fn attach_surface_curve_split_endpoint(
+        &self,
+        face_id: FaceId,
+        endpoint: Endpoint,
+        point: &Point3,
+        contacts: &[SurfaceIntersectionBoundaryContact],
+    ) -> Result<(Self, VertexId, Option<EdgeSplit>), TopologyEditError> {
+        match self.locate_surface_curve_split_endpoint(face_id, endpoint, point, contacts)? {
+            FaceSplitEndpointLocation::Vertex(vertex) => Ok((self.clone(), vertex, None)),
+            FaceSplitEndpointLocation::Edge { edge, parameter } => {
+                let (staged, split) = self.split_edge(edge, parameter)?;
+                Ok((staged, split.vertex, Some(split)))
+            }
+        }
+    }
+
+    fn retained_surface_curve_endpoints_equal(
+        &self,
+        face_id: FaceId,
+        intersection: &SurfaceIntersectionCurve,
+        operand: SurfaceIntersectionOperand,
+        start: &Point3,
+        end: &Point3,
+    ) -> Result<bool, TopologyEditError> {
+        let start_contacts = intersection.start_boundary_contacts(operand);
+        let end_contacts = intersection.end_boundary_contacts(operand);
+        if !start_contacts.is_empty() && !end_contacts.is_empty() {
+            let start_location = self.locate_surface_curve_split_endpoint(
+                face_id,
+                Endpoint::Start,
+                start,
+                start_contacts,
+            )?;
+            let end_location = self.locate_surface_curve_split_endpoint(
+                face_id,
+                Endpoint::End,
+                end,
+                end_contacts,
+            )?;
+            return Ok(match (start_location, end_location) {
+                (
+                    FaceSplitEndpointLocation::Vertex(start),
+                    FaceSplitEndpointLocation::Vertex(end),
+                ) => start == end,
+                (
+                    FaceSplitEndpointLocation::Edge {
+                        edge: start_edge,
+                        parameter: start_parameter,
+                    },
+                    FaceSplitEndpointLocation::Edge {
+                        edge: end_edge,
+                        parameter: end_parameter,
+                    },
+                ) if start_edge == end_edge => {
+                    decided_model_order(compare_reals(
+                        &start_parameter,
+                        &end_parameter,
+                        crate::STRICT_PREDICATES,
+                    ))? == std::cmp::Ordering::Equal
+                }
+                _ => false,
+            });
+        }
+        Ok(exact_point_order(start, end)? == std::cmp::Ordering::Equal)
+    }
+
+    fn locate_surface_curve_split_endpoint(
+        &self,
+        face_id: FaceId,
+        endpoint: Endpoint,
+        point: &Point3,
+        contacts: &[SurfaceIntersectionBoundaryContact],
+    ) -> Result<FaceSplitEndpointLocation, TopologyEditError> {
+        let face = self
+            .face(face_id)
+            .expect("surface-curve split prevalidates the face");
+        let Some(outer) = face.outer() else {
+            return Err(TopologyEditError::WholeSurfaceFace(face_id));
+        };
+        if contacts.is_empty() {
+            return self.locate_face_split_endpoint(face_id, endpoint, point);
+        }
+        let wire = self.wire(outer).expect("validated face outer wire");
+        let mut matching_vertices = Vec::new();
+        let mut matching_edges = Vec::new();
+        for use_id in wire.edge_uses() {
+            let edge_use = self.edge_use(*use_id).expect("validated edge use");
+            let edge = self.edge(edge_use.edge).expect("validated canonical edge");
+            let curve = self.curve(edge.curve).expect("validated edge curve");
+            for contact in contacts {
+                if !curve.shares_identity(contact.curve()) {
+                    continue;
+                }
+                if contact.parameter() == edge.domain.start() {
+                    if !matching_vertices.contains(&edge.start) {
+                        matching_vertices.push(edge.start);
+                    }
+                    continue;
+                }
+                if contact.parameter() == edge.domain.end() {
+                    if !matching_vertices.contains(&edge.end) {
+                        matching_vertices.push(edge.end);
+                    }
+                    continue;
+                }
+                if !edge.domain.contains(contact.parameter())? {
+                    continue;
+                }
+                let start_order = decided_model_order(compare_reals(
+                    contact.parameter(),
+                    edge.domain.start(),
+                    crate::STRICT_PREDICATES,
+                ))?;
+                let end_order = decided_model_order(compare_reals(
+                    contact.parameter(),
+                    edge.domain.end(),
+                    crate::STRICT_PREDICATES,
+                ))?;
+                if start_order == std::cmp::Ordering::Greater
+                    && end_order == std::cmp::Ordering::Less
+                    && !matching_edges
+                        .iter()
+                        .any(|(candidate, _)| *candidate == edge_use.edge)
+                {
+                    matching_edges.push((edge_use.edge, contact.parameter().clone()));
+                }
+            }
+        }
+        match matching_vertices.as_slice() {
+            [vertex] => return Ok(FaceSplitEndpointLocation::Vertex(*vertex)),
+            [] => {}
+            _ => {
+                return Err(TopologyEditError::FaceSplitEndpointAmbiguous {
+                    face: face_id,
+                    endpoint,
+                });
+            }
+        }
+        match matching_edges.as_slice() {
+            [(edge, parameter)] => Ok(FaceSplitEndpointLocation::Edge {
+                edge: *edge,
+                parameter: parameter.clone(),
+            }),
+            [] => Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary {
+                face: face_id,
+                endpoint,
+            }),
+            _ => Err(TopologyEditError::FaceSplitEndpointAmbiguous {
+                face: face_id,
+                endpoint,
+            }),
+        }
+    }
+
     fn attach_face_boundary_split_endpoint(
         &self,
         face_id: FaceId,
@@ -3915,7 +4181,7 @@ impl Model {
         face_id: FaceId,
         start: VertexId,
         end: VertexId,
-        authored: Option<(Curve3, Pcurve, ParameterCorrespondence)>,
+        authored: Option<(Curve3, Pcurve, ParameterCorrespondence, bool)>,
     ) -> Result<(Self, FaceSplit), TopologyEditError> {
         let face = self
             .face(face_id)
@@ -4003,49 +4269,46 @@ impl Model {
         let mut first_path = cyclic_path(start_index, end_index);
         let mut second_path = cyclic_path(end_index, start_index);
 
-        let (curve_geometry, forward_pcurve, forward_correspondence) = match authored {
-            Some(authored) => authored,
-            None => {
-                let pcurve_start = |edge_use_id: EdgeUseId| -> Result<CurvePoint2, GeometryError> {
-                    let edge_use = self
-                        .edge_use(edge_use_id)
-                        .expect("validated wire edge-use ID");
-                    let pcurve = self
-                        .pcurve(edge_use.pcurve)
-                        .expect("validated edge-use pcurve ID");
-                    let point = pcurve.point_at(pcurve.domain_start())?;
-                    Ok(CurvePoint2::new(point.x, point.y))
-                };
-                let start_uv = pcurve_start(outer_uses[start_index])?;
-                let end_uv = pcurve_start(outer_uses[end_index])?;
-                let start_point = self
-                    .vertex(start)
-                    .expect("outer-boundary vertex resolves")
-                    .point
-                    .clone();
-                let end_point = self
-                    .vertex(end)
-                    .expect("outer-boundary vertex resolves")
-                    .point
-                    .clone();
-                (
-                    Curve3::line(start_point, end_point)?,
-                    Pcurve::new(Curve2::from(
-                        LineSeg2::try_new(start_uv, end_uv).map_err(GeometryError::from)?,
-                    )),
-                    ParameterCorrespondence::identity(),
-                )
-            }
-        };
+        let (curve_geometry, forward_pcurve, forward_correspondence, image_certificate) =
+            match authored {
+                Some(authored) => authored,
+                None => {
+                    let pcurve_start =
+                        |edge_use_id: EdgeUseId| -> Result<CurvePoint2, GeometryError> {
+                            let edge_use = self
+                                .edge_use(edge_use_id)
+                                .expect("validated wire edge-use ID");
+                            let pcurve = self
+                                .pcurve(edge_use.pcurve)
+                                .expect("validated edge-use pcurve ID");
+                            let point = pcurve.point_at(pcurve.domain_start())?;
+                            Ok(CurvePoint2::new(point.x, point.y))
+                        };
+                    let start_uv = pcurve_start(outer_uses[start_index])?;
+                    let end_uv = pcurve_start(outer_uses[end_index])?;
+                    let start_point = self
+                        .vertex(start)
+                        .expect("outer-boundary vertex resolves")
+                        .point
+                        .clone();
+                    let end_point = self
+                        .vertex(end)
+                        .expect("outer-boundary vertex resolves")
+                        .point
+                        .clone();
+                    (
+                        Curve3::line(start_point, end_point)?,
+                        Pcurve::new(Curve2::from(
+                            LineSeg2::try_new(start_uv, end_uv).map_err(GeometryError::from)?,
+                        )),
+                        ParameterCorrespondence::identity(),
+                        false,
+                    )
+                }
+            };
         let edge_domain = curve_geometry.domain().clone();
         let reverse_pcurve = forward_pcurve.reversed()?;
-        let (scale, offset) = forward_correspondence.affine_coefficients().ok_or(
-            TopologyEditError::UnsupportedFaceSplitCurve(curve_geometry.kind()),
-        )?;
-        let reverse_correspondence = ParameterCorrespondence::affine(
-            -scale.clone(),
-            scale * (forward_pcurve.domain_start() + forward_pcurve.domain_end()) + offset,
-        )?;
+        let reverse_correspondence = forward_correspondence.reversed_pcurve(&forward_pcurve);
 
         let mut staged = self.clone();
         let data = Arc::make_mut(&mut staged.data);
@@ -4059,6 +4322,7 @@ impl Model {
             end,
             curve,
             domain: edge_domain,
+            endpoint_certificate: authored_curve,
         });
 
         let first_pcurve = PcurveId::from_index(data.pcurves.len())
@@ -4075,6 +4339,7 @@ impl Model {
             direction: Direction::Reversed,
             pcurve: first_pcurve,
             parameter_correspondence: reverse_correspondence,
+            image_certificate,
         });
         let second_use = EdgeUseId::from_index(data.edge_uses.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
@@ -4083,14 +4348,17 @@ impl Model {
             direction: Direction::Forward,
             pcurve: second_pcurve,
             parameter_correspondence: forward_correspondence,
+            image_certificate,
         });
         first_path.push(first_use);
         second_path.push(second_use);
         data.wires[outer.index()].edge_uses = first_path;
+        data.wires[outer.index()].simplicity_certificate = true;
         let second_wire = WireId::from_index(data.wires.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
         data.wires.push(Wire {
             edge_uses: second_path,
+            simplicity_certificate: true,
         });
 
         data.faces[face_id.index()] = Face {
@@ -4231,11 +4499,12 @@ impl Model {
             .edges
             .iter()
             .map(|edge| {
-                builder.edge(
+                builder.edge_with_endpoint_certificate(
                     vertices[edge.start.index()],
                     vertices[edge.end.index()],
                     curves[edge.curve.index()],
                     edge.domain.clone(),
+                    edge.endpoint_certificate,
                 )
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -4244,11 +4513,12 @@ impl Model {
             .edge_uses
             .iter()
             .map(|edge_use| {
-                builder.edge_use(
+                builder.edge_use_with_image_certificate(
                     edges[edge_use.edge.index()],
                     edge_use.direction,
                     pcurves[edge_use.pcurve.index()],
                     edge_use.parameter_correspondence.clone(),
+                    edge_use.image_certificate,
                 )
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -4257,11 +4527,12 @@ impl Model {
             .wires
             .iter()
             .map(|wire| {
-                builder.wire(
+                builder.wire_with_simplicity_certificate(
                     wire.edge_uses
                         .iter()
                         .map(|edge_use| edge_uses[edge_use.index()])
                         .collect(),
+                    wire.simplicity_certificate,
                 )
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -4292,15 +4563,33 @@ impl Model {
         self.data
             .solids
             .iter()
-            .map(|solid| {
-                builder.solid(
-                    shells[solid.outer.index()],
-                    solid
-                        .voids
-                        .iter()
-                        .map(|shell| shells[shell.index()])
-                        .collect(),
-                )
+            .enumerate()
+            .map(|(index, solid)| {
+                let outer = shells[solid.outer.index()];
+                let voids = solid
+                    .voids
+                    .iter()
+                    .map(|shell| shells[shell.index()])
+                    .collect();
+                if self.data.solid_certificates_valid[index] {
+                    builder.solid_with_retained_certificate(
+                        outer,
+                        voids,
+                        CertifiedSolid {
+                            cylinder: self.data.certified_cylinders[index].clone(),
+                            sphere: self.data.certified_spheres[index].clone(),
+                            sphere_pair: self.data.certified_sphere_pairs[index].clone(),
+                            cone_frustum: self.data.certified_cone_frustums[index].clone(),
+                            torus: self.data.certified_tori[index].clone(),
+                            revolution: self.data.certified_revolutions[index].clone(),
+                            loft: self.data.certified_lofts[index].clone(),
+                            curve_sweep: self.data.certified_curve_sweeps[index].clone(),
+                            prism: self.data.certified_prisms[index].clone(),
+                        },
+                    )
+                } else {
+                    builder.solid(outer, voids)
+                }
             })
             .collect()
     }
@@ -4499,6 +4788,7 @@ impl Model {
                         parameter_correspondence: edge_use
                             .parameter_correspondence
                             .reversed_pcurve(pcurve),
+                        image_certificate: edge_use.image_certificate,
                     }
                 })
                 .collect()
@@ -4818,7 +5108,10 @@ impl Model {
                 .map(|wire| {
                     let mut edge_uses = wire.edge_uses.clone();
                     edge_uses.reverse();
-                    Wire { edge_uses }
+                    Wire {
+                        edge_uses,
+                        simplicity_certificate: wire.simplicity_certificate,
+                    }
                 })
                 .collect()
         } else {
@@ -4842,6 +5135,7 @@ impl Model {
                 wire_face: self.data.wire_face.clone(),
                 face_shell: self.data.face_shell.clone(),
                 shell_solid: self.data.shell_solid.clone(),
+                solid_certificates_valid: self.data.solid_certificates_valid.clone(),
                 certified_cylinders,
                 certified_spheres,
                 certified_sphere_pairs,
@@ -6998,6 +7292,7 @@ impl Edit {
             });
         };
         vertex.point = point;
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7012,6 +7307,7 @@ impl Edit {
             });
         };
         *slot = curve;
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7026,6 +7322,7 @@ impl Edit {
             });
         };
         *slot = pcurve;
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7044,6 +7341,7 @@ impl Edit {
             });
         };
         *slot = surface;
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7069,7 +7367,9 @@ impl Edit {
             end,
             curve,
             domain,
+            endpoint_certificate: false,
         };
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7095,7 +7395,9 @@ impl Edit {
             direction,
             pcurve,
             parameter_correspondence,
+            image_certificate: false,
         };
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7113,7 +7415,11 @@ impl Edit {
                 index: id.index(),
             });
         };
-        *slot = Wire { edge_uses };
+        *slot = Wire {
+            edge_uses,
+            simplicity_certificate: false,
+        };
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7139,6 +7445,7 @@ impl Edit {
             orientation,
             boundary: FaceBoundary::Trimmed { outer, inner },
         };
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7162,6 +7469,7 @@ impl Edit {
             orientation,
             boundary: FaceBoundary::WholeSurface,
         };
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7180,6 +7488,7 @@ impl Edit {
             });
         };
         *slot = Shell { faces };
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7199,6 +7508,7 @@ impl Edit {
             });
         };
         *slot = Solid { outer, voids };
+        invalidate_model_certificates(data);
         reset_model_caches(data);
         Ok(self)
     }
@@ -7212,6 +7522,28 @@ impl Edit {
 fn reset_model_caches(data: &mut ModelData) {
     data.bounds = OnceLock::new();
     data.face_contours = (0..data.faces.len()).map(|_| OnceLock::new()).collect();
+}
+
+fn invalidate_model_certificates(data: &mut ModelData) {
+    for edge in &mut data.edges {
+        edge.endpoint_certificate = false;
+    }
+    for edge_use in &mut data.edge_uses {
+        edge_use.image_certificate = false;
+    }
+    for wire in &mut data.wires {
+        wire.simplicity_certificate = false;
+    }
+    data.solid_certificates_valid.fill(false);
+    data.certified_cylinders.fill(None);
+    data.certified_spheres.fill(None);
+    data.certified_sphere_pairs.fill(None);
+    data.certified_cone_frustums.fill(None);
+    data.certified_tori.fill(None);
+    data.certified_revolutions.fill(None);
+    data.certified_lofts.fill(None);
+    data.certified_curve_sweeps.fill(None);
+    data.certified_prisms.fill(None);
 }
 
 fn compact_wire_arena(
@@ -7278,6 +7610,7 @@ pub struct ModelBuilder {
     wire_face: Vec<Option<FaceId>>,
     face_shell: Vec<Option<ShellId>>,
     shell_solid: Vec<Option<SolidId>>,
+    retained_solid_certificates: Vec<Option<CertifiedSolid>>,
 }
 
 impl ModelBuilder {
@@ -7327,28 +7660,41 @@ impl ModelBuilder {
         curve: Curve3Id,
         domain: ParameterDomain,
     ) -> Result<EdgeId, BuildError> {
+        self.edge_with_endpoint_certificate(start, end, curve, domain, false)
+    }
+
+    pub(crate) fn edge_with_endpoint_certificate(
+        &mut self,
+        start: VertexId,
+        end: VertexId,
+        curve: Curve3Id,
+        domain: ParameterDomain,
+        endpoint_certificate: bool,
+    ) -> Result<EdgeId, BuildError> {
         if start == end {
             return Err(BuildError::DegenerateEdge);
         }
         let start_point = self.vertex_ref(start)?.point();
         let end_point = self.vertex_ref(end)?.point();
         let curve_ref = self.curve_ref(curve)?;
-        let curve_start = curve_ref.point_at(domain.start())?;
-        let curve_end = curve_ref.point_at(domain.end())?;
-        require_point_equal(
-            start_point,
-            &curve_start,
-            BuildError::EdgeEndpointMismatch {
-                endpoint: Endpoint::Start,
-            },
-        )?;
-        require_point_equal(
-            end_point,
-            &curve_end,
-            BuildError::EdgeEndpointMismatch {
-                endpoint: Endpoint::End,
-            },
-        )?;
+        if !endpoint_certificate {
+            let curve_start = curve_ref.point_at(domain.start())?;
+            let curve_end = curve_ref.point_at(domain.end())?;
+            require_point_equal(
+                start_point,
+                &curve_start,
+                BuildError::EdgeEndpointMismatch {
+                    endpoint: Endpoint::Start,
+                },
+            )?;
+            require_point_equal(
+                end_point,
+                &curve_end,
+                BuildError::EdgeEndpointMismatch {
+                    endpoint: Endpoint::End,
+                },
+            )?;
+        }
 
         let id = EdgeId::from_index(self.edges.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Edge))?;
@@ -7357,6 +7703,7 @@ impl ModelBuilder {
             end,
             curve,
             domain,
+            endpoint_certificate,
         });
         self.vertex_edges[start.index()].push(id);
         self.vertex_edges[end.index()].push(id);
@@ -7372,6 +7719,23 @@ impl ModelBuilder {
         pcurve: PcurveId,
         parameter_correspondence: ParameterCorrespondence,
     ) -> Result<EdgeUseId, BuildError> {
+        self.edge_use_with_image_certificate(
+            edge,
+            direction,
+            pcurve,
+            parameter_correspondence,
+            false,
+        )
+    }
+
+    pub(crate) fn edge_use_with_image_certificate(
+        &mut self,
+        edge: EdgeId,
+        direction: Direction,
+        pcurve: PcurveId,
+        parameter_correspondence: ParameterCorrespondence,
+        image_certificate: bool,
+    ) -> Result<EdgeUseId, BuildError> {
         self.edge_ref(edge)?;
         self.pcurve_ref(pcurve)?;
         let id = EdgeUseId::from_index(self.edge_uses.len())
@@ -7381,6 +7745,7 @@ impl ModelBuilder {
             direction,
             pcurve,
             parameter_correspondence,
+            image_certificate,
         });
         self.edge_uses_by_edge[edge.index()].push(id);
         self.edge_use_wire.push(None);
@@ -7389,6 +7754,14 @@ impl ModelBuilder {
 
     /// Adds an ordered, connected, closed wire.
     pub fn wire(&mut self, edge_uses: Vec<EdgeUseId>) -> Result<WireId, BuildError> {
+        self.wire_with_simplicity_certificate(edge_uses, false)
+    }
+
+    pub(crate) fn wire_with_simplicity_certificate(
+        &mut self,
+        edge_uses: Vec<EdgeUseId>,
+        simplicity_certificate: bool,
+    ) -> Result<WireId, BuildError> {
         if edge_uses.is_empty() {
             return Err(BuildError::EmptyWire);
         }
@@ -7415,10 +7788,42 @@ impl ModelBuilder {
             return Err(BuildError::OpenWire);
         }
 
+        if simplicity_certificate {
+            let line_pcurves = edge_uses
+                .iter()
+                .map(|edge_use| {
+                    let pcurve = self.edge_use_ref(*edge_use)?.pcurve;
+                    let line = self.pcurve_ref(pcurve)?.line_segment();
+                    Ok(line.map(|line| (pcurve, line.start().clone(), line.end().clone())))
+                })
+                .collect::<Result<Option<Vec<_>>, BuildError>>()?;
+            if let Some(line_pcurves) = line_pcurves {
+                let uniquely_owned = line_pcurves.iter().all(|(pcurve, _, _)| {
+                    self.edge_uses
+                        .iter()
+                        .filter(|edge_use| edge_use.pcurve == *pcurve)
+                        .count()
+                        == 1
+                });
+                if uniquely_owned {
+                    for (index, (pcurve, start, original_end)) in line_pcurves.iter().enumerate() {
+                        let end = line_pcurves
+                            .get(index + 1)
+                            .map_or(original_end, |(_, start, _)| start);
+                        self.pcurves[pcurve.index()] = Pcurve::new(Curve2::from(
+                            LineSeg2::try_new(start.clone(), end.clone())
+                                .map_err(GeometryError::from)?,
+                        ));
+                    }
+                }
+            }
+        }
+
         let id = WireId::from_index(self.wires.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
         self.wires.push(Wire {
             edge_uses: edge_uses.clone(),
+            simplicity_certificate,
         });
         self.wire_face.push(None);
         for edge_use in edge_uses {
@@ -7487,13 +7892,22 @@ impl ModelBuilder {
             }
         } else {
             for wire in &wires {
-                self.validate_wire_simplicity(*wire)?;
+                if !self.wire_ref(*wire)?.simplicity_certificate {
+                    self.validate_wire_simplicity(*wire)?;
+                }
             }
-            self.validate_wire_orientation(outer, orientation, true, surface)?;
+            let outer_certified = self.wire_ref(outer)?.simplicity_certificate;
+            if !outer_certified {
+                self.validate_wire_orientation(outer, orientation, true, surface)?;
+            }
             for wire in &inner {
-                self.validate_wire_orientation(*wire, orientation, false, surface)?;
+                if !self.wire_ref(*wire)?.simplicity_certificate {
+                    self.validate_wire_orientation(*wire, orientation, false, surface)?;
+                }
             }
-            self.validate_wire_nesting(outer, &inner)?;
+            if !outer_certified {
+                self.validate_wire_nesting(outer, &inner)?;
+            }
         }
 
         let id = FaceId::from_index(self.faces.len())
@@ -7591,8 +8005,14 @@ impl ModelBuilder {
         let sphere_pair = self.certified_sphere_pair_shell(outer)?;
         let revolution = self.certified_revolution_shell(outer)?;
         let cylinder = self.certified_cylinder_solid(&candidate)?;
-        let analytic_closed =
-            sphere.is_some() || sphere_pair.is_some() || revolution.is_some() || cylinder.is_some();
+        let cone_frustum = self.certified_cone_frustum_shell(outer)?;
+        let torus = self.certified_torus_shell(outer)?;
+        let analytic_closed = sphere.is_some()
+            || sphere_pair.is_some()
+            || revolution.is_some()
+            || cylinder.is_some()
+            || cone_frustum.is_some()
+            || torus.is_some();
         let simple_prism = if analytic_closed {
             false
         } else {
@@ -7641,8 +8061,8 @@ impl ModelBuilder {
         if !analytic_closed
             && !simple_prism
             && !line_arc_prism
-            && self.certified_cone_frustum_shell(outer)?.is_none()
-            && self.certified_torus_shell(outer)?.is_none()
+            && cone_frustum.is_none()
+            && torus.is_none()
             && curve_sweep.is_none()
             && loft.is_none()
             && !convex_planar
@@ -7691,6 +8111,42 @@ impl ModelBuilder {
             outer,
             voids: voids.clone(),
         });
+        self.retained_solid_certificates.push(None);
+        for shell in shells {
+            self.shell_solid[shell.index()] = Some(id);
+        }
+        Ok(id)
+    }
+
+    fn solid_with_retained_certificate(
+        &mut self,
+        outer: ShellId,
+        voids: Vec<ShellId>,
+        certificate: CertifiedSolid,
+    ) -> Result<SolidId, BuildError> {
+        self.shell_ref(outer)?;
+        let mut shells = Vec::with_capacity(voids.len() + 1);
+        shells.push(outer);
+        shells.extend(voids.iter().copied());
+        let mut unique = HashSet::with_capacity(shells.len());
+        for shell in &shells {
+            self.shell_ref(*shell)?;
+            if !unique.insert(*shell) {
+                return Err(BuildError::DuplicateShell(*shell));
+            }
+            if self.shell_solid[shell.index()].is_some() {
+                return Err(BuildError::ShellAlreadyOwned(*shell));
+            }
+            self.validate_closed_shell(*shell)?;
+        }
+
+        let id = SolidId::from_index(self.solids.len())
+            .ok_or(BuildError::CapacityExceeded(EntityKind::Solid))?;
+        self.solids.push(Solid {
+            outer,
+            voids: voids.clone(),
+        });
+        self.retained_solid_certificates.push(Some(certificate));
         for shell in shells {
             self.shell_solid[shell.index()] = Some(id);
         }
@@ -7698,7 +8154,7 @@ impl ModelBuilder {
     }
 
     /// Validates global ownership and commits an immutable model.
-    pub fn finish(self) -> Result<Model, ValidationReport> {
+    pub fn finish(mut self) -> Result<Model, ValidationReport> {
         let mut errors = Vec::new();
         for (index, owner) in self.edge_use_wire.iter().enumerate() {
             if owner.is_none() {
@@ -7718,12 +8174,18 @@ impl ModelBuilder {
         if !errors.is_empty() {
             return Err(ValidationReport { errors });
         }
+        for edge_use in &mut self.edge_uses {
+            edge_use.image_certificate = true;
+        }
         let face_count = self.faces.len();
         let certified_prisms = self
             .solids
             .iter()
-            .map(|solid| {
-                if solid.voids.is_empty() {
+            .enumerate()
+            .map(|(index, solid)| {
+                if let Some(certificate) = &self.retained_solid_certificates[index] {
+                    Ok(certificate.prism.clone())
+                } else if solid.voids.is_empty() {
                     self.certified_prism_shell(solid.outer)
                 } else {
                     Ok(None)
@@ -7736,7 +8198,14 @@ impl ModelBuilder {
         let certified_cylinders = self
             .solids
             .iter()
-            .map(|solid| self.certified_cylinder_solid(solid))
+            .enumerate()
+            .map(|(index, solid)| {
+                if let Some(certificate) = &self.retained_solid_certificates[index] {
+                    Ok(certificate.cylinder.clone())
+                } else {
+                    self.certified_cylinder_solid(solid)
+                }
+            })
             .collect::<Result<Vec<_>, _>>()
             .map_err(|error| ValidationReport {
                 errors: vec![error],
@@ -7746,7 +8215,9 @@ impl ModelBuilder {
             .iter()
             .enumerate()
             .map(|(index, solid)| {
-                if solid.voids.is_empty() && certified_prisms[index].is_none() {
+                if let Some(certificate) = &self.retained_solid_certificates[index] {
+                    Ok(certificate.loft.clone())
+                } else if solid.voids.is_empty() && certified_prisms[index].is_none() {
                     self.certified_loft_shell(solid.outer)
                 } else {
                     Ok(None)
@@ -7759,8 +8230,11 @@ impl ModelBuilder {
         let certified_curve_sweeps = self
             .solids
             .iter()
-            .map(|solid| {
-                if solid.voids.is_empty() {
+            .enumerate()
+            .map(|(index, solid)| {
+                if let Some(certificate) = &self.retained_solid_certificates[index] {
+                    Ok(certificate.curve_sweep.clone())
+                } else if solid.voids.is_empty() {
                     self.certified_curve_sweep_shell(solid.outer)
                 } else {
                     Ok(None)
@@ -7773,7 +8247,14 @@ impl ModelBuilder {
         let certified_spheres = self
             .solids
             .iter()
-            .map(|solid| self.certified_sphere_solid(solid))
+            .enumerate()
+            .map(|(index, solid)| {
+                if let Some(certificate) = &self.retained_solid_certificates[index] {
+                    Ok(certificate.sphere.clone())
+                } else {
+                    self.certified_sphere_solid(solid)
+                }
+            })
             .collect::<Result<Vec<_>, _>>()
             .map_err(|error| ValidationReport {
                 errors: vec![error],
@@ -7781,8 +8262,11 @@ impl ModelBuilder {
         let certified_sphere_pairs = self
             .solids
             .iter()
-            .map(|solid| {
-                if solid.voids.is_empty() {
+            .enumerate()
+            .map(|(index, solid)| {
+                if let Some(certificate) = &self.retained_solid_certificates[index] {
+                    Ok(certificate.sphere_pair.clone())
+                } else if solid.voids.is_empty() {
                     self.certified_sphere_pair_shell(solid.outer)
                 } else {
                     Ok(None)
@@ -7795,8 +8279,11 @@ impl ModelBuilder {
         let certified_cone_frustums = self
             .solids
             .iter()
-            .map(|solid| {
-                if solid.voids.is_empty() {
+            .enumerate()
+            .map(|(index, solid)| {
+                if let Some(certificate) = &self.retained_solid_certificates[index] {
+                    Ok(certificate.cone_frustum.clone())
+                } else if solid.voids.is_empty() {
                     self.certified_cone_frustum_shell(solid.outer)
                 } else {
                     Ok(None)
@@ -7809,8 +8296,11 @@ impl ModelBuilder {
         let certified_tori = self
             .solids
             .iter()
-            .map(|solid| {
-                if solid.voids.is_empty() {
+            .enumerate()
+            .map(|(index, solid)| {
+                if let Some(certificate) = &self.retained_solid_certificates[index] {
+                    Ok(certificate.torus.clone())
+                } else if solid.voids.is_empty() {
                     self.certified_torus_shell(solid.outer)
                 } else {
                     Ok(None)
@@ -7823,7 +8313,14 @@ impl ModelBuilder {
         let certified_revolutions = self
             .solids
             .iter()
-            .map(|solid| self.certified_revolution_solid(solid))
+            .enumerate()
+            .map(|(index, solid)| {
+                if let Some(certificate) = &self.retained_solid_certificates[index] {
+                    Ok(certificate.revolution.clone())
+                } else {
+                    self.certified_revolution_solid(solid)
+                }
+            })
             .collect::<Result<Vec<_>, _>>()
             .map_err(|error| ValidationReport {
                 errors: vec![error],
@@ -7846,6 +8343,7 @@ impl ModelBuilder {
                 wire_face: self.wire_face.into_iter().flatten().collect(),
                 face_shell: self.face_shell.into_iter().flatten().collect(),
                 shell_solid: self.shell_solid,
+                solid_certificates_valid: vec![true; certified_cylinders.len()],
                 certified_cylinders,
                 certified_spheres,
                 certified_sphere_pairs,
@@ -7959,6 +8457,7 @@ impl ModelBuilder {
             let edge = self.edge_ref(edge_use.edge)?;
             let curve = self.curve_ref(edge.curve)?;
             let pcurve = self.pcurve_ref(edge_use.pcurve)?;
+            let inherited_image = edge_use.image_certificate;
             let complete_image_certificate_subsumes_endpoint_sampling = matches!(
                 (
                     curve.kind(),
@@ -8008,6 +8507,9 @@ impl ModelBuilder {
                     expected_edge_parameter,
                     BuildError::ParameterCorrespondenceMismatch { endpoint },
                 )?;
+                if inherited_image {
+                    continue;
+                }
                 let edge_point = curve.point_at(&edge_parameter)?;
                 let surface_parameter = pcurve.point_at(pcurve_parameter)?;
                 let surface_point = surface.point_at(&surface_parameter)?;
@@ -8018,6 +8520,9 @@ impl ModelBuilder {
                         BuildError::EdgeUseImageMismatch { endpoint },
                     )?;
                 }
+            }
+            if inherited_image {
+                continue;
             }
 
             match (
@@ -9220,57 +9725,112 @@ impl ModelBuilder {
         if u_constant == v_constant {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
-        let (expected_center, expected_radius) = if v_constant {
-            let v = line.start().y().clone();
-            (
-                center + axis * (&minor_radius * v.clone().sin()),
-                major_radius + &minor_radius * v.cos(),
-            )
-        } else {
-            let u = line.start().x().clone();
-            let radial = x * u.clone().cos() + y * u.sin();
-            (center + radial * major_radius, minor_radius)
-        };
-        require_point_equal(
-            &curve_data.center,
-            &expected_center,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
+        let (expected_center, expected_x, expected_y, expected_radius, first_angle, second_angle) =
+            if v_constant {
+                let v = line.start().y().clone();
+                let center_offset = &curve_data.center - &center;
+                require_real_equal(
+                    &center_offset.dot(&x),
+                    &Real::zero(),
+                    BuildError::EdgeUseSupportMismatch,
+                )?;
+                require_real_equal(
+                    &center_offset.dot(&y),
+                    &Real::zero(),
+                    BuildError::EdgeUseSupportMismatch,
+                )?;
+                require_real_equal(
+                    &center_offset.dot(&axis),
+                    &(&minor_radius * v.clone().sin()),
+                    BuildError::EdgeUseSupportMismatch,
+                )?;
+                (
+                    curve_data.center.clone(),
+                    x,
+                    y,
+                    major_radius + &minor_radius * v.cos(),
+                    line.start().x().clone(),
+                    line.end().x().clone(),
+                )
+            } else {
+                let u = line.start().x().clone();
+                let sine = u.clone().sin();
+                let cosine = u.cos();
+                let radial = x.clone() * &cosine + y.clone() * &sine;
+                let tangent = -x * sine + y * cosine;
+                let center_offset = &curve_data.center - &center;
+                require_real_equal(
+                    &center_offset.dot(&axis),
+                    &Real::zero(),
+                    BuildError::EdgeUseSupportMismatch,
+                )?;
+                require_real_equal(
+                    &center_offset.dot(&radial),
+                    &major_radius,
+                    BuildError::EdgeUseSupportMismatch,
+                )?;
+                require_real_equal(
+                    &center_offset.dot(&tangent),
+                    &Real::zero(),
+                    BuildError::EdgeUseSupportMismatch,
+                )?;
+                (
+                    curve_data.center.clone(),
+                    radial,
+                    axis,
+                    minor_radius,
+                    line.start().y().clone(),
+                    line.end().y().clone(),
+                )
+            };
         require_real_equal(
             &curve_data.x_radius,
             &expected_radius,
             BuildError::EdgeUseSupportMismatch,
         )?;
-        require_real_equal(
-            &curve_data.y_radius,
-            &expected_radius,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
 
-        let pcurve_span = pcurve.domain_end() - pcurve.domain_start();
-        let du_dt = ((line.end().x() - line.start().x()) / &pcurve_span)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
-        let dv_dt = ((line.end().y() - line.start().y()) / pcurve_span)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
-        let surface_parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
-        let partials = surface.partials_at(&surface_parameter)?;
-        let surface_tangent = partials.u().clone() * du_dt + partials.v().clone() * dv_dt;
-        let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
-            pcurve,
-            &edge.domain,
-            edge_use.direction,
-            pcurve.domain_start(),
-        )?;
-        let edge_rate = match &edge_use.parameter_correspondence {
-            ParameterCorrespondence::Affine { scale, .. } => scale,
-            ParameterCorrespondence::AngularSweep => unreachable!("matched affine relation"),
+        let edge_offset = edge.domain.start() - &curve_data.domain_start;
+        let edge_angle_at_start = if curve_data.direction > 0 {
+            &curve_data.angle_at_start + edge_offset
+        } else {
+            &curve_data.angle_at_start - edge_offset
         };
-        let edge_tangent = curve.derivative_at(&edge_parameter, 1)?.vector().clone() * edge_rate;
-        require_vector_equal(
-            &surface_tangent,
-            &edge_tangent,
-            BuildError::EdgeUseSupportMismatch,
-        )
+        let actual = EllipseArcExactData {
+            domain_start: edge.domain.start().clone(),
+            domain_end: edge.domain.end().clone(),
+            angle_at_start: edge_angle_at_start,
+            ..*curve_data
+        };
+        let actual_span = &actual.domain_end - &actual.domain_start;
+        let (angle_at_start, angle_at_end) = match edge_use.direction {
+            Direction::Forward => (first_angle, second_angle),
+            Direction::Reversed => (second_angle, first_angle),
+        };
+        let angle_delta = &angle_at_end - &angle_at_start;
+        let expected_direction = if real_values_equal(&angle_delta, &actual_span)? {
+            1
+        } else if real_values_equal(&angle_delta, &(-actual_span.clone()))? {
+            -1
+        } else {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        };
+        let expected = EllipseArcExactData {
+            circle: true,
+            center: expected_center,
+            x: expected_x,
+            y: expected_y,
+            x_radius: expected_radius.clone(),
+            y_radius: expected_radius,
+            domain_start: actual.domain_start.clone(),
+            domain_end: actual.domain_end.clone(),
+            angle_at_start,
+            direction: expected_direction,
+        };
+        if circle_data_parameterizations_equal(&actual, &expected)? {
+            Ok(())
+        } else {
+            Err(BuildError::EdgeUseSupportMismatch)
+        }
     }
 
     fn validate_cone_generator_image(&self, pcurve: &Pcurve) -> Result<(), BuildError> {
@@ -9943,23 +10503,283 @@ impl ModelBuilder {
     }
 
     fn validate_wire_simplicity(&self, wire: WireId) -> Result<(), BuildError> {
-        match self.build_wire_contour(wire) {
-            Ok(contour) => {
-                if contour
-                    .intersect_self(&CurvePolicy::STRICT)
-                    .map_err(GeometryError::from)?
-                    .is_empty()
-                {
-                    Ok(())
+        if let Some(simple) = self.axis_aligned_line_wire_is_simple(wire)? {
+            return if simple {
+                Ok(())
+            } else {
+                Err(BuildError::SelfIntersectingWire(wire))
+            };
+        }
+        if let Some(simple) = self.circular_arc_chord_wire_is_simple(wire)? {
+            return if simple {
+                Ok(())
+            } else {
+                Err(BuildError::SelfIntersectingWire(wire))
+            };
+        }
+        self.validate_curve_path_simplicity(wire)
+    }
+
+    fn circular_arc_chord_wire_is_simple(&self, wire: WireId) -> Result<Option<bool>, BuildError> {
+        let wire = self.wire_ref(wire)?;
+        let mut arcs = Vec::with_capacity(wire.edge_uses.len().saturating_sub(1));
+        let mut chords = Vec::new();
+        let mut endpoints = Vec::with_capacity(wire.edge_uses.len());
+        for (index, edge_use_id) in wire.edge_uses.iter().enumerate() {
+            let edge_use = self.edge_use_ref(*edge_use_id)?;
+            let pcurve = self.pcurve_ref(edge_use.pcurve)?;
+            if let Some(arc) = pcurve.circular_arc() {
+                arcs.push((index, arc));
+                endpoints.push((arc.start().clone(), arc.end().clone()));
+            } else if let Some(line) = pcurve.line_segment() {
+                chords.push((index, line));
+                endpoints.push((line.start().clone(), line.end().clone()));
+            } else {
+                return Ok(None);
+            }
+        }
+        let Some((_, first_arc)) = arcs.first().copied() else {
+            return Ok(None);
+        };
+        if chords.is_empty() {
+            return Ok(None);
+        }
+        let point_equal = |left: &CurvePoint2, right: &CurvePoint2| -> Result<bool, BuildError> {
+            Ok(real_values_equal(left.x(), right.x())? && real_values_equal(left.y(), right.y())?)
+        };
+        for index in 0..endpoints.len() {
+            if !point_equal(
+                &endpoints[index].1,
+                &endpoints[(index + 1) % endpoints.len()].0,
+            )? {
+                return Ok(Some(false));
+            }
+        }
+
+        let mut total_sweep = Real::zero();
+        for (_, arc) in &arcs {
+            if arc.is_clockwise() != first_arc.is_clockwise()
+                || !point_equal(arc.center(), first_arc.center())?
+                || !real_values_equal(arc.radius_squared_ref(), first_arc.radius_squared_ref())?
+            {
+                return Ok(Some(false));
+            }
+            let sweep = match arc.directed_sweep_angle().map_err(GeometryError::from)? {
+                Classification::Decided(sweep) => sweep,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            total_sweep += sweep.abs();
+        }
+        if decided_model_order(compare_reals(
+            &total_sweep,
+            &Real::tau(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Less
+        {
+            return Ok(Some(false));
+        }
+
+        let adjacent = |first: usize, second: usize| {
+            first + 1 == second
+                || second + 1 == first
+                || (first == 0 && second + 1 == endpoints.len())
+                || (second == 0 && first + 1 == endpoints.len())
+        };
+        let allowed_shared_endpoint =
+            |first: usize, second: usize, point: &CurvePoint2| -> Result<bool, BuildError> {
+                if first + 1 == second {
+                    point_equal(point, &endpoints[first].1)
+                } else if second + 1 == first {
+                    point_equal(point, &endpoints[first].0)
+                } else if first == 0 && second + 1 == endpoints.len() {
+                    point_equal(point, &endpoints[first].0)
+                } else if second == 0 && first + 1 == endpoints.len() {
+                    point_equal(point, &endpoints[first].1)
                 } else {
-                    Err(BuildError::SelfIntersectingWire(wire))
+                    Ok(false)
+                }
+            };
+
+        for (arc_index, arc) in &arcs {
+            for (segment_index, (start, end)) in endpoints.iter().enumerate() {
+                if segment_index == *arc_index {
+                    continue;
+                }
+                for point in [start, end] {
+                    let on_sweep = match arc.contains_sweep_point(point, &CurvePolicy::STRICT) {
+                        Classification::Decided(value) => value,
+                        Classification::Uncertain(_) => return Ok(None),
+                    };
+                    if on_sweep
+                        && (!adjacent(*arc_index, segment_index)
+                            || !allowed_shared_endpoint(*arc_index, segment_index, point)?)
+                    {
+                        return Ok(Some(false));
+                    }
                 }
             }
-            Err(BuildError::Geometry(GeometryError::UnsupportedPcurveContour)) => {
-                self.validate_curve_path_simplicity(wire)
-            }
-            Err(error) => Err(error),
         }
+
+        for (_, chord) in &chords {
+            for endpoint in [chord.start(), chord.end()] {
+                if !real_values_equal(
+                    &endpoint.distance_squared(first_arc.center()),
+                    first_arc.radius_squared_ref(),
+                )? {
+                    return Ok(Some(false));
+                }
+            }
+        }
+        for first in 0..chords.len() {
+            for second in (first + 1)..chords.len() {
+                let (first_index, first_chord) = chords[first];
+                let (second_index, second_chord) = chords[second];
+                match first_chord
+                    .intersect_line(second_chord, &CurvePolicy::STRICT)
+                    .map_err(GeometryError::from)?
+                {
+                    LineLineIntersection::None => {}
+                    LineLineIntersection::Point {
+                        a_param, b_param, ..
+                    } if adjacent(first_index, second_index) => {
+                        let (expected_first, expected_second) = if first_index + 1 == second_index {
+                            (Real::one(), Real::zero())
+                        } else if second_index + 1 == first_index {
+                            (Real::zero(), Real::one())
+                        } else if first_index == 0 {
+                            (Real::zero(), Real::one())
+                        } else {
+                            (Real::one(), Real::zero())
+                        };
+                        if !real_values_equal(&a_param, &expected_first)?
+                            || !real_values_equal(&b_param, &expected_second)?
+                        {
+                            return Ok(Some(false));
+                        }
+                    }
+                    LineLineIntersection::Point { .. } | LineLineIntersection::Overlap { .. } => {
+                        return Ok(Some(false));
+                    }
+                    LineLineIntersection::Uncertain { .. } => return Ok(None),
+                }
+            }
+        }
+        Ok(Some(true))
+    }
+
+    fn axis_aligned_line_wire_is_simple(&self, wire: WireId) -> Result<Option<bool>, BuildError> {
+        enum AxisLine {
+            Horizontal { y: Real, min: Real, max: Real },
+            Vertical { x: Real, min: Real, max: Real },
+        }
+
+        let ordered = |first: &Real, second: &Real| -> Result<(Real, Real), BuildError> {
+            Ok(
+                if decided_model_order(compare_reals(first, second, crate::STRICT_PREDICATES))?
+                    == std::cmp::Ordering::Less
+                {
+                    (first.clone(), second.clone())
+                } else {
+                    (second.clone(), first.clone())
+                },
+            )
+        };
+        let wire_record = self.wire_ref(wire)?;
+        let mut lines = Vec::with_capacity(wire_record.edge_uses.len());
+        for edge_use in &wire_record.edge_uses {
+            let edge_use = self.edge_use_ref(*edge_use)?;
+            let pcurve = self.pcurve_ref(edge_use.pcurve)?;
+            let Some(line) = pcurve.line_segment() else {
+                return Ok(None);
+            };
+            if real_values_equal(line.start().y(), line.end().y())? {
+                let (min, max) = ordered(line.start().x(), line.end().x())?;
+                lines.push(AxisLine::Horizontal {
+                    y: line.start().y().clone(),
+                    min,
+                    max,
+                });
+            } else if real_values_equal(line.start().x(), line.end().x())? {
+                let (min, max) = ordered(line.start().y(), line.end().y())?;
+                lines.push(AxisLine::Vertical {
+                    x: line.start().x().clone(),
+                    min,
+                    max,
+                });
+            } else {
+                return Ok(None);
+            }
+        }
+
+        let contains = |min: &Real, value: &Real, max: &Real| -> Result<bool, BuildError> {
+            Ok(
+                decided_model_order(compare_reals(min, value, crate::STRICT_PREDICATES))?
+                    != std::cmp::Ordering::Greater
+                    && decided_model_order(compare_reals(value, max, crate::STRICT_PREDICATES))?
+                        != std::cmp::Ordering::Greater,
+            )
+        };
+        for first in 0..lines.len() {
+            for second in (first + 1)..lines.len() {
+                if second == first + 1 || (first == 0 && second + 1 == lines.len()) {
+                    continue;
+                }
+                let intersects = match (&lines[first], &lines[second]) {
+                    (
+                        AxisLine::Horizontal {
+                            y: first_y,
+                            min: first_min,
+                            max: first_max,
+                        },
+                        AxisLine::Horizontal {
+                            y: second_y,
+                            min: second_min,
+                            max: second_max,
+                        },
+                    ) => {
+                        real_values_equal(first_y, second_y)?
+                            && (contains(first_min, second_min, first_max)?
+                                || contains(second_min, first_min, second_max)?)
+                    }
+                    (
+                        AxisLine::Vertical {
+                            x: first_x,
+                            min: first_min,
+                            max: first_max,
+                        },
+                        AxisLine::Vertical {
+                            x: second_x,
+                            min: second_min,
+                            max: second_max,
+                        },
+                    ) => {
+                        real_values_equal(first_x, second_x)?
+                            && (contains(first_min, second_min, first_max)?
+                                || contains(second_min, first_min, second_max)?)
+                    }
+                    (
+                        AxisLine::Horizontal { y, min, max },
+                        AxisLine::Vertical {
+                            x,
+                            min: vertical_min,
+                            max: vertical_max,
+                        },
+                    )
+                    | (
+                        AxisLine::Vertical {
+                            x,
+                            min: vertical_min,
+                            max: vertical_max,
+                        },
+                        AxisLine::Horizontal { y, min, max },
+                    ) => contains(min, x, max)? && contains(vertical_min, y, vertical_max)?,
+                };
+                if intersects {
+                    return Ok(Some(false));
+                }
+            }
+        }
+        Ok(Some(true))
     }
 
     fn validate_curve_path_simplicity(&self, wire: WireId) -> Result<(), BuildError> {
@@ -10091,6 +10911,21 @@ impl ModelBuilder {
     }
 
     fn signed_wire_double_area(&self, wire: WireId) -> Result<Real, BuildError> {
+        let wire_record = self.wire_ref(wire)?;
+        let mut line_area = Real::zero();
+        let mut all_lines = true;
+        for edge_use in &wire_record.edge_uses {
+            let edge_use = self.edge_use_ref(*edge_use)?;
+            let pcurve = self.pcurve_ref(edge_use.pcurve)?;
+            let Some(line) = pcurve.line_segment() else {
+                all_lines = false;
+                break;
+            };
+            line_area += line.start().x() * line.end().y() - line.start().y() * line.end().x();
+        }
+        if all_lines {
+            return Ok(line_area);
+        }
         self.build_wire_contour(wire)?
             .signed_area()
             .map_err(GeometryError::from)?
@@ -12867,13 +13702,40 @@ impl ModelBuilder {
             }
             let (u_min, u_max) = exact_real_min_max(&face_u)?;
             let (v_min, v_max) = exact_real_min_max(&face_v)?;
-            let contour = Contour2::try_new(parameter_segments).map_err(GeometryError::from)?;
-            let represented_area = contour
-                .signed_area()
-                .map_err(GeometryError::from)?
-                .ok_or(BuildError::DegenerateShellVolume(shell))?
-                .abs();
-            if !real_values_equal(&represented_area, &((&u_max - &u_min) * (&v_max - &v_min)))? {
+            let mut side_intervals: [Vec<(Real, Real)>; 4] = std::array::from_fn(|_| Vec::new());
+            for segment in &parameter_segments {
+                let Segment2::Line(line) = segment else {
+                    unreachable!("torus parameter segments are exact lines");
+                };
+                let u_constant = real_values_equal(line.start().x(), line.end().x())?;
+                let v_constant = real_values_equal(line.start().y(), line.end().y())?;
+                let (side, first, second) = if v_constant {
+                    if real_values_equal(line.start().y(), &v_min)? {
+                        (0, line.start().x(), line.end().x())
+                    } else if real_values_equal(line.start().y(), &v_max)? {
+                        (1, line.start().x(), line.end().x())
+                    } else {
+                        return Ok(None);
+                    }
+                } else if u_constant {
+                    if real_values_equal(line.start().x(), &u_min)? {
+                        (2, line.start().y(), line.end().y())
+                    } else if real_values_equal(line.start().x(), &u_max)? {
+                        (3, line.start().y(), line.end().y())
+                    } else {
+                        return Ok(None);
+                    }
+                } else {
+                    return Ok(None);
+                };
+                let (start, end) = exact_real_min_max(&[first.clone(), second.clone()])?;
+                side_intervals[side].push((start, end));
+            }
+            if !exact_intervals_cover(&mut side_intervals[0], &u_min, &u_max)?
+                || !exact_intervals_cover(&mut side_intervals[1], &u_min, &u_max)?
+                || !exact_intervals_cover(&mut side_intervals[2], &v_min, &v_max)?
+                || !exact_intervals_cover(&mut side_intervals[3], &v_min, &v_max)?
+            {
                 return Ok(None);
             }
             insert_sorted_real(&mut u_values, &u_min)?;
@@ -12893,7 +13755,6 @@ impl ModelBuilder {
                 return Ok(None);
             }
         }
-
         let SurfaceExactData::Torus {
             center,
             x,
@@ -12925,7 +13786,6 @@ impl ModelBuilder {
                 }
             }
         }
-
         if let [group] = cap_groups.as_slice()
             && let Some(interior_normal) = self.certified_torus_longitudinal_cap_group(
                 faces,
@@ -18372,6 +19232,13 @@ fn circle_parameterizations_equal(actual: &Curve3, expected: &Curve3) -> Result<
     let Curve3ExactData::EllipseArc(expected) = expected.exact_data() else {
         return Ok(false);
     };
+    circle_data_parameterizations_equal(&actual, &expected)
+}
+
+fn circle_data_parameterizations_equal(
+    actual: &EllipseArcExactData,
+    expected: &EllipseArcExactData,
+) -> Result<bool, BuildError> {
     if !actual.circle
         || !expected.circle
         || !real_values_equal(&actual.domain_start, &expected.domain_start)?
@@ -18460,7 +19327,7 @@ fn split_parameter_correspondence(
             let scale = ((edge_end - edge_start) / pcurve_width)
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
             let offset = edge_start - &scale * pcurve.domain_start();
-            ParameterCorrespondence::affine(scale, offset)
+            Ok(ParameterCorrespondence::affine(scale, offset)?)
         }
     }
 }
@@ -18484,6 +19351,31 @@ fn exact_real_min_max(values: &[Real]) -> Result<(Real, Real), BuildError> {
         }
     }
     Ok((min, max))
+}
+
+fn exact_intervals_cover(
+    intervals: &mut Vec<(Real, Real)>,
+    domain_start: &Real,
+    domain_end: &Real,
+) -> Result<bool, BuildError> {
+    let mut cursor = domain_start.clone();
+    while !intervals.is_empty() {
+        let mut continuation = None;
+        for (index, (start, _)) in intervals.iter().enumerate() {
+            if real_values_equal(start, &cursor)? {
+                if continuation.is_some() {
+                    return Ok(false);
+                }
+                continuation = Some(index);
+            }
+        }
+        let Some(index) = continuation else {
+            return Ok(false);
+        };
+        let (_, end) = intervals.swap_remove(index);
+        cursor = end;
+    }
+    real_values_equal(&cursor, domain_end)
 }
 
 fn insert_sorted_real(values: &mut Vec<Real>, value: &Real) -> Result<(), BuildError> {

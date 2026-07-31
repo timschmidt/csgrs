@@ -7,16 +7,19 @@ use std::fmt;
 use hypercurve::{
     Aabb2, BezierLineImageFitRelation, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     Classification, Contour2, ContourPointLocation, Curve2, CurvePath2, CurvePolicy, CurveRegion2,
-    CurveRegionLoopRole, CurveString2, ExactCurveError, FillRule, LineArcIntersection,
-    LineArcRegion2, LineLineIntersection, LineSeg2, RationalBezier2, RationalQuadraticBezier2,
-    RegionPointLocation, Segment2, UncertaintyReason,
+    CurveRegionBoundaryContact2, CurveRegionBoundaryKind2, CurveRegionLoopRole, CurveString2,
+    ExactCurveError, FillRule, LineArcIntersection, LineArcRegion2, LineLineIntersection, LineSeg2,
+    RationalBezier2, RationalQuadraticBezier2, RegionPointLocation, Segment2, UncertaintyReason,
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
 use crate::builder::{
     ConstructionError, SphereVoid, extrude_contour_regions, sphere_pair_boolean, sphere_with_voids,
 };
-use crate::geometry::{Curve3ExactData, EllipseArcExactData, SurfaceExactData, certified_atan2};
+use crate::geometry::{
+    Curve3ExactData, EllipseArcExactData, SurfaceExactData, SurfaceIntersectionBoundaryContact,
+    certified_atan2,
+};
 use crate::model::{
     CertifiedConeFrustumProfile, CertifiedCylinderProfile, CertifiedSpherePairKind,
     CertifiedSphereProfile, CertifiedTorusProfile, CertifiedZPrismProfile,
@@ -784,6 +787,11 @@ fn partition_graph_faces(
         &mut planar_traces,
     )?;
 
+    let operand = if first {
+        SurfaceIntersectionOperand::First
+    } else {
+        SurfaceIntersectionOperand::Second
+    };
     let mut staged = model.clone();
     let mut partitions = Vec::new();
     for (face, curves) in planar_traces {
@@ -797,7 +805,9 @@ fn partition_graph_faces(
                 .expect("validated graph face surface");
             let retained = surface_traces.entry(face).or_default();
             for curve in curves {
-                retained.push(SurfaceIntersectionCurve::on_plane(curve, surface)?);
+                retained.extend(retain_planar_surface_trace_boundary_contacts(
+                    model, face, curve, surface, operand,
+                )?);
             }
         } else {
             let (next, partition) = staged.split_face_by_curves(face, &curves)?;
@@ -805,14 +815,15 @@ fn partition_graph_faces(
             partitions.push(partition);
         }
     }
-    let operand = if first {
-        SurfaceIntersectionOperand::First
-    } else {
-        SurfaceIntersectionOperand::Second
-    };
     for (face, mut curves) in surface_traces {
         if curves.is_empty() {
             continue;
+        }
+        if curves
+            .iter()
+            .any(|curve| !curve.pcurve(operand).is_available())
+        {
+            return Err(BooleanError::FacePartitionUnsupported { face });
         }
         let surface = staged
             .surface(staged.face(face).expect("validated graph face").surface())
@@ -829,6 +840,45 @@ fn partition_graph_faces(
     }
     partitions.sort_by_key(|partition| partition.source_face);
     Ok((staged, partitions))
+}
+
+fn retain_planar_surface_trace_boundary_contacts(
+    model: &Model,
+    face: FaceId,
+    curve: Curve3,
+    surface: &Surface,
+    operand: SurfaceIntersectionOperand,
+) -> Result<Vec<SurfaceIntersectionCurve>, BooleanError> {
+    let trace = SurfaceIntersectionCurve::on_plane(curve, surface)?;
+    let intervals = match retained_curve_face_intervals(
+        model,
+        face,
+        trace.pcurve(operand),
+        trace.curve().domain(),
+        None,
+    )? {
+        Classification::Decided(Some(intervals)) => intervals,
+        Classification::Decided(None) => {
+            return Err(BooleanError::FacePartitionUnsupported { face });
+        }
+        Classification::Uncertain(reason) => {
+            return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+        }
+    };
+    intervals
+        .into_iter()
+        .map(
+            |interval| -> Result<SurfaceIntersectionCurve, BooleanError> {
+                Ok(trace
+                    .subcurve(&interval.start, &interval.end)?
+                    .with_boundary_contacts(
+                        operand,
+                        interval.start_contacts,
+                        interval.end_contacts,
+                    ))
+            },
+        )
+        .collect()
 }
 
 fn surface_region_plane_traces(
@@ -2647,16 +2697,28 @@ fn trim_face_pair_intersection(
             == crate::SurfaceKind::Plane
             && face_is_boundaryless(second_model, second_face)
         {
-            Some((first_model, first_face))
+            Some((
+                first_model,
+                first_face,
+                SurfaceIntersectionOperand::First,
+                face_surface(second_model, second_face),
+            ))
         } else if face_is_boundaryless(first_model, first_face)
             && face_surface(second_model, second_face).kind() == crate::SurfaceKind::Plane
         {
-            Some((second_model, second_face))
+            Some((
+                second_model,
+                second_face,
+                SurfaceIntersectionOperand::Second,
+                face_surface(first_model, first_face),
+            ))
         } else {
             None
         };
         return match planar_face {
-            Some((model, face)) => trim_conic_to_planar_face(curve, model, face),
+            Some((model, face, operand, opposite_surface)) => {
+                trim_conic_to_planar_face(curve, model, face, operand, opposite_surface)
+            }
             None => Ok(FacePairTrim::NotAvailable),
         };
     }
@@ -3040,8 +3102,11 @@ fn contained_face_boundary_traces_from_plane(
                     };
                     pcurve
                 };
-                let candidate =
-                    SurfaceIntersectionCurve::from_exact_pcurves(curve, pcurve.clone(), pcurve)?;
+                let candidate = SurfaceIntersectionCurve::from_certified_exact_pcurves(
+                    curve,
+                    pcurve.clone(),
+                    pcurve,
+                )?;
                 if !push_contained_face_curve_fragments(
                     contained_model,
                     contained_face,
@@ -3231,11 +3296,9 @@ fn concatenate_closed_contained_spline_trace(
     let Some(spatial) = crate::geometry::lift_curve_from_plane_frame(&pcurve, origin, u, v)? else {
         return Ok(None);
     };
-    Ok(Some(SurfaceIntersectionCurve::from_exact_pcurves(
-        spatial,
-        pcurve.clone(),
-        pcurve,
-    )?))
+    Ok(Some(
+        SurfaceIntersectionCurve::from_certified_exact_pcurves(spatial, pcurve.clone(), pcurve)?,
+    ))
 }
 
 fn push_contained_face_curve_fragments(
@@ -3250,6 +3313,7 @@ fn push_contained_face_curve_fragments(
         contained_face,
         candidate.first_pcurve(),
         candidate.curve().domain(),
+        None,
     )? {
         Classification::Decided(Some(intervals)) => intervals,
         Classification::Decided(None) => return Ok(false),
@@ -3260,8 +3324,14 @@ fn push_contained_face_curve_fragments(
             return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
         }
     };
-    for (start, end) in coalesce_parameter_intervals(intervals)? {
-        let fragment = candidate.subcurve(&start, &end)?;
+    for interval in intervals {
+        let fragment = candidate
+            .subcurve(&interval.start, &interval.end)?
+            .with_boundary_contacts(
+                SurfaceIntersectionOperand::First,
+                interval.start_contacts,
+                interval.end_contacts,
+            );
         let midpoint = ((fragment.curve().domain().start() + fragment.curve().domain().end())
             / Real::from(2))
         .map_err(|_| GeometryError::ProjectiveDivision)?;
@@ -3283,11 +3353,25 @@ fn push_contained_face_curve_fragments(
         // Preserve its native tensor pcurve in both slots so caller operand
         // order cannot change topology.
         let pcurve = fragment.first_pcurve().clone();
-        traces.push(SurfaceIntersectionCurve::new(
-            fragment.curve().clone(),
-            pcurve.clone(),
-            pcurve,
-        ));
+        let start_contacts = fragment
+            .start_boundary_contacts(SurfaceIntersectionOperand::First)
+            .to_vec();
+        let end_contacts = fragment
+            .end_boundary_contacts(SurfaceIntersectionOperand::First)
+            .to_vec();
+        traces.push(
+            SurfaceIntersectionCurve::new(fragment.curve().clone(), pcurve.clone(), pcurve)
+                .with_boundary_contacts(
+                    SurfaceIntersectionOperand::First,
+                    start_contacts.clone(),
+                    end_contacts.clone(),
+                )
+                .with_boundary_contacts(
+                    SurfaceIntersectionOperand::Second,
+                    start_contacts,
+                    end_contacts,
+                ),
+        );
     }
     Ok(true)
 }
@@ -3402,6 +3486,7 @@ fn trim_retained_surface_curve(
         first_face,
         intersection.first_pcurve(),
         intersection.curve().domain(),
+        Some(face_surface(second_model, second_face)),
     )? {
         Classification::Decided(intervals) => intervals,
         Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
@@ -3411,6 +3496,7 @@ fn trim_retained_surface_curve(
         second_face,
         intersection.second_pcurve(),
         intersection.curve().domain(),
+        Some(face_surface(first_model, first_face)),
     )? {
         Classification::Decided(intervals) => intervals,
         Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
@@ -3419,18 +3505,40 @@ fn trim_retained_surface_curve(
         return Ok(FacePairTrim::NotAvailable);
     };
     let mut common = Vec::new();
-    for (first_start, first_end) in &first {
-        for (second_start, second_end) in &second {
-            let start = exact_max(first_start, second_start)?;
-            let end = exact_min(first_end, second_end)?;
+    for first_interval in &first {
+        for second_interval in &second {
+            let start = exact_max(&first_interval.start, &second_interval.start)?;
+            let end = exact_min(&first_interval.end, &second_interval.end)?;
             if exact_order(&start, &end)? == Ordering::Less {
-                push_unique_line_interval(&mut common, start, end)?;
+                common.push(CommonRetainedParameterInterval {
+                    first_start_contacts: contacts_at_interval_start(first_interval, &start)?,
+                    first_end_contacts: contacts_at_interval_end(first_interval, &end)?,
+                    second_start_contacts: contacts_at_interval_start(second_interval, &start)?,
+                    second_end_contacts: contacts_at_interval_end(second_interval, &end)?,
+                    start,
+                    end,
+                });
             }
         }
     }
-    let fragments = coalesce_parameter_intervals(common)?
+    let fragments = coalesce_common_parameter_intervals(common)?
         .into_iter()
-        .map(|(start, end)| intersection.subcurve(&start, &end))
+        .map(
+            |interval| -> Result<SurfaceIntersectionCurve, GeometryError> {
+                Ok(intersection
+                    .subcurve(&interval.start, &interval.end)?
+                    .with_boundary_contacts(
+                        SurfaceIntersectionOperand::First,
+                        interval.first_start_contacts,
+                        interval.first_end_contacts,
+                    )
+                    .with_boundary_contacts(
+                        SurfaceIntersectionOperand::Second,
+                        interval.second_start_contacts,
+                        interval.second_end_contacts,
+                    ))
+            },
+        )
         .collect::<Result<Vec<_>, _>>()?;
     Ok(if fragments.is_empty() {
         FacePairTrim::NoCurveInterior
@@ -3439,19 +3547,42 @@ fn trim_retained_surface_curve(
     })
 }
 
-type ExactParameterIntervals = Vec<(Real, Real)>;
+#[derive(Clone, Debug)]
+struct FaceRetainedParameterInterval {
+    start: Real,
+    end: Real,
+    start_contacts: Vec<SurfaceIntersectionBoundaryContact>,
+    end_contacts: Vec<SurfaceIntersectionBoundaryContact>,
+}
+
+#[derive(Clone, Debug)]
+struct CommonRetainedParameterInterval {
+    start: Real,
+    end: Real,
+    first_start_contacts: Vec<SurfaceIntersectionBoundaryContact>,
+    first_end_contacts: Vec<SurfaceIntersectionBoundaryContact>,
+    second_start_contacts: Vec<SurfaceIntersectionBoundaryContact>,
+    second_end_contacts: Vec<SurfaceIntersectionBoundaryContact>,
+}
+
+type ExactParameterIntervals = Vec<FaceRetainedParameterInterval>;
 
 fn retained_curve_face_intervals(
     model: &Model,
     face: FaceId,
     pcurve: &crate::SurfaceIntersectionPcurve,
     spatial_domain: &crate::ParameterDomain,
+    canonical_surface: Option<&Surface>,
 ) -> Result<Classification<Option<ExactParameterIntervals>>, GeometryError> {
     if face_is_boundaryless(model, face) {
-        return Ok(Classification::Decided(Some(vec![(
-            spatial_domain.start().clone(),
-            spatial_domain.end().clone(),
-        )])));
+        return Ok(Classification::Decided(Some(vec![
+            FaceRetainedParameterInterval {
+                start: spatial_domain.start().clone(),
+                end: spatial_domain.end().clone(),
+                start_contacts: Vec::new(),
+                end_contacts: Vec::new(),
+            },
+        ])));
     }
     let Some(carriers) = pcurve.clipping_carriers()? else {
         return Ok(Classification::Decided(None));
@@ -3475,15 +3606,162 @@ fn retained_curve_face_intervals(
             };
             let mut start = &carrier.spatial_scale * pcurve_start + &carrier.spatial_offset;
             let mut end = &carrier.spatial_scale * pcurve_end + &carrier.spatial_offset;
+            let Some(mut start_contacts) = model_boundary_contacts(
+                model,
+                face,
+                fragment.start_boundary_contacts(),
+                canonical_surface,
+            )?
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(mut end_contacts) = model_boundary_contacts(
+                model,
+                face,
+                fragment.end_boundary_contacts(),
+                canonical_surface,
+            )?
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
             if exact_order(&start, &end)? == Ordering::Greater {
                 std::mem::swap(&mut start, &mut end);
+                std::mem::swap(&mut start_contacts, &mut end_contacts);
             }
             if exact_order(&start, &end)? == Ordering::Less {
-                push_unique_line_interval(&mut intervals, start, end)?;
+                intervals.push(FaceRetainedParameterInterval {
+                    start,
+                    end,
+                    start_contacts,
+                    end_contacts,
+                });
             }
         }
     }
-    Ok(Classification::Decided(Some(intervals)))
+    Ok(Classification::Decided(Some(
+        coalesce_face_parameter_intervals(intervals)?,
+    )))
+}
+
+fn model_boundary_contacts(
+    model: &Model,
+    face_id: FaceId,
+    contacts: &[CurveRegionBoundaryContact2],
+    canonical_surface: Option<&Surface>,
+) -> Result<Option<Vec<SurfaceIntersectionBoundaryContact>>, GeometryError> {
+    let face = model.face(face_id).expect("validated trim face");
+    let mut translated = Vec::with_capacity(contacts.len());
+    for contact in contacts {
+        let wire_id = match contact.kind() {
+            CurveRegionBoundaryKind2::Material if contact.contour_index() == 0 => {
+                face.outer().ok_or(GeometryError::UnsupportedIntersection)?
+            }
+            CurveRegionBoundaryKind2::Material => {
+                return Err(GeometryError::UnsupportedIntersection);
+            }
+            CurveRegionBoundaryKind2::Hole => *face
+                .inner()
+                .get(contact.contour_index())
+                .ok_or(GeometryError::UnsupportedIntersection)?,
+        };
+        let wire = model
+            .wire(wire_id)
+            .ok_or(GeometryError::UnsupportedIntersection)?;
+        let edge_use_id = *wire
+            .edge_uses()
+            .get(contact.segment_index())
+            .ok_or(GeometryError::UnsupportedIntersection)?;
+        let Some(pcurve_parameter) = contact.boundary_parameter().exact_curve_parameter() else {
+            return Ok(None);
+        };
+        let observed_parameter = model
+            .edge_parameter_at(edge_use_id, &pcurve_parameter)
+            .map_err(|error| match error {
+                QueryError::Geometry(error) => error,
+                QueryError::InvalidReference { .. } => GeometryError::UnsupportedIntersection,
+            })?;
+        let edge_use = model
+            .edge_use(edge_use_id)
+            .expect("validated boundary edge use");
+        let edge = model
+            .edge(edge_use.edge())
+            .expect("validated boundary edge");
+        let curve = model
+            .curve(edge.curve())
+            .expect("validated boundary curve")
+            .clone();
+        let edge_parameter = match canonical_surface {
+            Some(surface) => {
+                canonical_surface_edge_parameter(surface, &curve, &observed_parameter)?
+                    .unwrap_or(observed_parameter)
+            }
+            None => observed_parameter,
+        };
+        translated.push(SurfaceIntersectionBoundaryContact::new(
+            curve,
+            edge_parameter,
+        ));
+    }
+    Ok(Some(translated))
+}
+
+fn canonical_surface_edge_parameter(
+    surface: &Surface,
+    curve: &Curve3,
+    observed: &Real,
+) -> Result<Option<Real>, GeometryError> {
+    let intersection = match surface.intersect_curve(curve) {
+        Ok(intersection) => intersection,
+        Err(GeometryError::UnsupportedIntersection) => return Ok(None),
+        Err(error) => return Err(error),
+    };
+    let crate::CurveSurfaceIntersection::Points(points) = intersection else {
+        return Ok(None);
+    };
+    if points.is_empty() {
+        return Ok(None);
+    }
+    let mut parameters = Vec::with_capacity(points.len());
+    for point in points {
+        let mut insertion = parameters.len();
+        while insertion > 0
+            && exact_order(&point.parameter, &parameters[insertion - 1])? == Ordering::Less
+        {
+            insertion -= 1;
+        }
+        parameters.insert(insertion, point.parameter);
+    }
+    if parameters.len() == 1 {
+        return Ok(parameters.pop());
+    }
+    for index in 0..parameters.len() - 1 {
+        let midpoint = ((&parameters[index] + &parameters[index + 1]) / Real::from(2))
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        if exact_order(observed, &midpoint)? == Ordering::Less {
+            return Ok(Some(parameters[index].clone()));
+        }
+    }
+    Ok(parameters.pop())
+}
+
+fn contacts_at_interval_start(
+    interval: &FaceRetainedParameterInterval,
+    parameter: &Real,
+) -> Result<Vec<SurfaceIntersectionBoundaryContact>, GeometryError> {
+    Ok(
+        (exact_order(parameter, &interval.start)? == Ordering::Equal)
+            .then(|| interval.start_contacts.clone())
+            .unwrap_or_default(),
+    )
+}
+
+fn contacts_at_interval_end(
+    interval: &FaceRetainedParameterInterval,
+    parameter: &Real,
+) -> Result<Vec<SurfaceIntersectionBoundaryContact>, GeometryError> {
+    Ok((exact_order(parameter, &interval.end)? == Ordering::Equal)
+        .then(|| interval.end_contacts.clone())
+        .unwrap_or_default())
 }
 
 #[derive(Clone, Debug)]
@@ -3537,7 +3815,7 @@ fn trim_supported_surface_rays(
                 retained_ray_pcurve(ray, SurfaceIntersectionOperand::First, &start, &end)?;
             let second_pcurve =
                 retained_ray_pcurve(ray, SurfaceIntersectionOperand::Second, &start, &end)?;
-            fragments.push(SurfaceIntersectionCurve::from_exact_pcurves(
+            fragments.push(SurfaceIntersectionCurve::from_certified_exact_pcurves(
                 Curve3::line(
                     line.point.clone() + line.direction.clone() * &start,
                     line.point.clone() + line.direction.clone() * &end,
@@ -3604,7 +3882,7 @@ fn trim_supported_surface_lines(
             else {
                 return Ok(FacePairTrim::NotAvailable);
             };
-            fragments.push(SurfaceIntersectionCurve::from_exact_pcurves(
+            fragments.push(SurfaceIntersectionCurve::from_certified_exact_pcurves(
                 Curve3::line(
                     line.point.clone() + line.direction.clone() * &start,
                     line.point.clone() + line.direction.clone() * &end,
@@ -3858,6 +4136,98 @@ fn parameter_on_parameter_line(
     Err(GeometryError::DegenerateLine)
 }
 
+fn coalesce_face_parameter_intervals(
+    intervals: Vec<FaceRetainedParameterInterval>,
+) -> Result<Vec<FaceRetainedParameterInterval>, GeometryError> {
+    let mut ordered: Vec<FaceRetainedParameterInterval> = Vec::with_capacity(intervals.len());
+    for interval in intervals {
+        let mut insertion = ordered.len();
+        while insertion > 0
+            && exact_order(&interval.start, &ordered[insertion - 1].start)? == Ordering::Less
+        {
+            insertion -= 1;
+        }
+        ordered.insert(insertion, interval);
+    }
+    let mut coalesced: Vec<FaceRetainedParameterInterval> = Vec::with_capacity(ordered.len());
+    for interval in ordered {
+        let Some(previous) = coalesced.last_mut() else {
+            coalesced.push(interval);
+            continue;
+        };
+        let start_order = exact_order(&interval.start, &previous.end)?;
+        if start_order == Ordering::Greater {
+            coalesced.push(interval);
+            continue;
+        }
+        if exact_order(&interval.start, &previous.start)? == Ordering::Equal {
+            previous
+                .start_contacts
+                .extend(interval.start_contacts.clone());
+        }
+        match exact_order(&interval.end, &previous.end)? {
+            Ordering::Greater => {
+                previous.end = interval.end;
+                previous.end_contacts = interval.end_contacts;
+            }
+            Ordering::Equal => previous.end_contacts.extend(interval.end_contacts),
+            Ordering::Less => {}
+        }
+    }
+    Ok(coalesced)
+}
+
+fn coalesce_common_parameter_intervals(
+    intervals: Vec<CommonRetainedParameterInterval>,
+) -> Result<Vec<CommonRetainedParameterInterval>, GeometryError> {
+    let mut ordered: Vec<CommonRetainedParameterInterval> = Vec::with_capacity(intervals.len());
+    for interval in intervals {
+        let mut insertion = ordered.len();
+        while insertion > 0
+            && exact_order(&interval.start, &ordered[insertion - 1].start)? == Ordering::Less
+        {
+            insertion -= 1;
+        }
+        ordered.insert(insertion, interval);
+    }
+    let mut coalesced: Vec<CommonRetainedParameterInterval> = Vec::with_capacity(ordered.len());
+    for interval in ordered {
+        let Some(previous) = coalesced.last_mut() else {
+            coalesced.push(interval);
+            continue;
+        };
+        if exact_order(&interval.start, &previous.end)? == Ordering::Greater {
+            coalesced.push(interval);
+            continue;
+        }
+        if exact_order(&interval.start, &previous.start)? == Ordering::Equal {
+            previous
+                .first_start_contacts
+                .extend(interval.first_start_contacts.clone());
+            previous
+                .second_start_contacts
+                .extend(interval.second_start_contacts.clone());
+        }
+        match exact_order(&interval.end, &previous.end)? {
+            Ordering::Greater => {
+                previous.end = interval.end;
+                previous.first_end_contacts = interval.first_end_contacts;
+                previous.second_end_contacts = interval.second_end_contacts;
+            }
+            Ordering::Equal => {
+                previous
+                    .first_end_contacts
+                    .extend(interval.first_end_contacts);
+                previous
+                    .second_end_contacts
+                    .extend(interval.second_end_contacts);
+            }
+            Ordering::Less => {}
+        }
+    }
+    Ok(coalesced)
+}
+
 fn push_unique_line_interval(
     intervals: &mut Vec<(Real, Real)>,
     start: Real,
@@ -3872,34 +4242,6 @@ fn push_unique_line_interval(
     }
     intervals.push((start, end));
     Ok(())
-}
-
-fn coalesce_parameter_intervals(
-    intervals: Vec<(Real, Real)>,
-) -> Result<Vec<(Real, Real)>, GeometryError> {
-    let mut ordered: Vec<(Real, Real)> = Vec::with_capacity(intervals.len());
-    for interval in intervals {
-        let mut insertion = ordered.len();
-        while insertion > 0
-            && exact_order(&interval.0, &ordered[insertion - 1].0)? == Ordering::Less
-        {
-            insertion -= 1;
-        }
-        ordered.insert(insertion, interval);
-    }
-    let mut coalesced: Vec<(Real, Real)> = Vec::with_capacity(ordered.len());
-    for (start, end) in ordered {
-        let Some((_, previous_end)) = coalesced.last_mut() else {
-            coalesced.push((start, end));
-            continue;
-        };
-        if exact_order(&start, previous_end)? == Ordering::Greater {
-            coalesced.push((start, end));
-        } else if exact_order(&end, previous_end)? == Ordering::Greater {
-            *previous_end = end;
-        }
-    }
-    Ok(coalesced)
 }
 
 fn boolean_witness_geometry_error(error: BooleanError) -> GeometryError {
@@ -5688,6 +6030,8 @@ fn trim_conic_to_planar_face(
     curve: &Curve3,
     model: &Model,
     face: FaceId,
+    operand: SurfaceIntersectionOperand,
+    opposite_surface: &Surface,
 ) -> Result<FacePairTrim, GeometryError> {
     let Curve3ExactData::EllipseArc(data) = curve.exact_data() else {
         return Ok(FacePairTrim::NotAvailable);
@@ -5702,7 +6046,7 @@ fn trim_conic_to_planar_face(
     let half_quarter = (&quarter / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
     let weight = half_quarter.cos();
     let direction = Real::from(data.direction);
-    let mut spatial_fragments = Vec::new();
+    let mut retained_fragments = Vec::new();
     for index in 0..4 {
         let start_angle = &data.angle_at_start + &direction * (&quarter * Real::from(index));
         let end_angle = &start_angle + &direction * &quarter;
@@ -5719,31 +6063,60 @@ fn trim_conic_to_planar_face(
             weight.clone(),
             Real::one(),
         )?);
-        let fragments = match planar.trim_inside_region(&region, &CurvePolicy::STRICT) {
-            Ok(fragments) => fragments,
-            Err(ExactCurveError::Blocked(blocker)) => {
-                return Ok(FacePairTrim::Unresolved(blocker.reason()));
-            }
-            Err(error) => return Err(GeometryError::from(error)),
-        };
+        let fragments =
+            match planar.trim_inside_region_with_parameters(&region, &CurvePolicy::STRICT) {
+                Ok(fragments) => fragments,
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    return Ok(FacePairTrim::Unresolved(blocker.reason()));
+                }
+                Err(error) => return Err(GeometryError::from(error)),
+            };
         for fragment in fragments {
-            let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+            let Some(start_contacts) = model_boundary_contacts(
+                model,
+                face,
+                fragment.start_boundary_contacts(),
+                Some(opposite_surface),
+            )?
+            else {
                 return Ok(FacePairTrim::Unresolved(UncertaintyReason::Unsupported));
             };
-            spatial_fragments.push(lift_planar_bezier(surface, &curve)?);
+            let Some(end_contacts) = model_boundary_contacts(
+                model,
+                face,
+                fragment.end_boundary_contacts(),
+                Some(opposite_surface),
+            )?
+            else {
+                return Ok(FacePairTrim::Unresolved(UncertaintyReason::Unsupported));
+            };
+            let BezierSplitFragment2::Materialized { curve, .. } = fragment.into_fragment() else {
+                return Ok(FacePairTrim::Unresolved(UncertaintyReason::Unsupported));
+            };
+            retained_fragments.push(
+                SurfaceIntersectionCurve::on_single_plane(
+                    lift_planar_bezier(surface, &curve)?,
+                    surface,
+                    operand,
+                )?
+                .with_boundary_contacts(operand, start_contacts, end_contacts),
+            );
         }
     }
-    let spatial_fragments = merge_adjacent_rational_bezier_fragments(spatial_fragments)?;
-    Ok(if spatial_fragments.is_empty() {
+    let retained_fragments =
+        merge_adjacent_planar_surface_fragments(surface, operand, retained_fragments)?;
+    Ok(if retained_fragments.is_empty() {
         FacePairTrim::NoCurveInterior
     } else {
-        FacePairTrim::CurveFragments(spatial_fragments)
+        FacePairTrim::SurfaceCurveFragments(retained_fragments)
     })
 }
 
-fn merge_adjacent_rational_bezier_fragments(
-    fragments: Vec<Curve3>,
-) -> Result<Vec<Curve3>, GeometryError> {
+fn merge_adjacent_planar_surface_fragments(
+    surface: &Surface,
+    operand: SurfaceIntersectionOperand,
+    fragments: Vec<SurfaceIntersectionCurve>,
+) -> Result<Vec<SurfaceIntersectionCurve>, GeometryError> {
     let mut groups = fragments
         .into_iter()
         .map(|fragment| vec![fragment])
@@ -5758,10 +6131,12 @@ fn merge_adjacent_rational_bezier_fragments(
                 let first_end = groups[first]
                     .last()
                     .expect("fragment group is nonempty")
+                    .curve()
                     .end()?;
                 let second_start = groups[second]
                     .first()
                     .expect("fragment group is nonempty")
+                    .curve()
                     .start()?;
                 // This pass only compacts an already exact fragment set. Merge
                 // solely on a positive strict certificate; uncertainty leaves
@@ -5789,7 +6164,26 @@ fn merge_adjacent_rational_bezier_fragments(
             if group.len() == 1 {
                 Ok(group.into_iter().next().expect("singleton group"))
             } else {
-                concatenate_spatial_rational_beziers(&group)
+                let start_contacts = group
+                    .first()
+                    .expect("fragment group is nonempty")
+                    .start_boundary_contacts(operand)
+                    .to_vec();
+                let end_contacts = group
+                    .last()
+                    .expect("fragment group is nonempty")
+                    .end_boundary_contacts(operand)
+                    .to_vec();
+                let curves = group
+                    .iter()
+                    .map(|fragment| fragment.curve().clone())
+                    .collect::<Vec<_>>();
+                Ok(SurfaceIntersectionCurve::on_single_plane(
+                    concatenate_spatial_rational_beziers(&curves)?,
+                    surface,
+                    operand,
+                )?
+                .with_boundary_contacts(operand, start_contacts, end_contacts))
             }
         })
         .collect()
@@ -10057,8 +10451,8 @@ mod tests {
         let (split_patch, split) = patch
             .split_face_by_surface_curve(
                 patch_face,
-                fragments[0].curve(),
-                fragments[0].first_pcurve(),
+                &fragments[0],
+                SurfaceIntersectionOperand::First,
             )
             .unwrap();
         assert_eq!(split_patch.counts().faces, original_counts.faces + 1);
@@ -10148,8 +10542,8 @@ mod tests {
         let (split_nurbs, nurbs_split) = nurbs
             .split_face_by_surface_curve(
                 nurbs_face,
-                nurbs_fragments[0].curve(),
-                nurbs_fragments[0].first_pcurve(),
+                &nurbs_fragments[0],
+                SurfaceIntersectionOperand::First,
             )
             .unwrap();
         let split_edge = split_nurbs
@@ -12985,13 +13379,13 @@ mod tests {
         assert!(conic_pairs.iter().all(|pair| {
             matches!(
                 pair.trim(),
-                FacePairTrim::CurveFragments(_) | FacePairTrim::NoCurveInterior
+                FacePairTrim::SurfaceCurveFragments(_) | FacePairTrim::NoCurveInterior
             )
         }));
         let fragments = conic_pairs
             .iter()
             .filter_map(|pair| match pair.trim() {
-                FacePairTrim::CurveFragments(fragments) => Some(fragments),
+                FacePairTrim::SurfaceCurveFragments(fragments) => Some(fragments),
                 _ => None,
             })
             .flatten()
@@ -12999,12 +13393,13 @@ mod tests {
         assert!(!fragments.is_empty());
         for fragment in fragments {
             assert!(matches!(
-                fragment.kind(),
+                fragment.curve().kind(),
                 crate::Curve3Kind::RationalBezier | crate::Curve3Kind::Nurbs
             ));
-            let middle =
-                ((fragment.domain().start() + fragment.domain().end()) / Real::from(2)).unwrap();
-            let point = fragment.point_at(&middle).unwrap();
+            let middle = ((fragment.curve().domain().start() + fragment.curve().domain().end())
+                / Real::from(2))
+            .unwrap();
+            let point = fragment.curve().point_at(&middle).unwrap();
             assert_eq!(
                 sphere.classify_point(sphere_solid, &point).unwrap(),
                 crate::SolidPointLocation::Boundary

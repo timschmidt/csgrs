@@ -16,7 +16,7 @@ use crate::{
     ShellId, Surface, SurfaceId, SurfaceKind, ValidationReport, VertexId, WireId,
 };
 
-const FORMAT_VERSION: u32 = 5;
+const FORMAT_VERSION: u32 = 6;
 
 /// Failure while encoding, decoding, or validating an exact model.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -198,7 +198,7 @@ impl RawModel {
             )?;
         }
         for wire in self.data.wires {
-            builder.wire(wire.into_iter().map(edge_use_id).collect())?;
+            builder.wire(wire.edge_uses.into_iter().map(edge_use_id).collect())?;
         }
         for face in self.data.faces {
             match face.outer {
@@ -304,7 +304,7 @@ impl Model {
                 direction: edge_use.direction().into(),
                 pcurve: edge_use.pcurve().index(),
                 parameter_correspondence: match edge_use.parameter_correspondence() {
-                    ParameterCorrespondence::Affine { scale, offset } => {
+                    ParameterCorrespondence::Affine { scale, offset, .. } => {
                         RawParameterCorrespondence::Affine {
                             scale: scale.clone(),
                             offset: offset.clone(),
@@ -318,7 +318,9 @@ impl Model {
             .collect();
         let wires = self
             .wires()
-            .map(|(_, wire)| wire.edge_uses().iter().map(|id| id.index()).collect())
+            .map(|(_, wire)| RawWire {
+                edge_uses: wire.edge_uses().iter().map(|id| id.index()).collect(),
+            })
             .collect();
         let faces = self
             .faces()
@@ -372,7 +374,7 @@ struct RawModelData {
     surfaces: Vec<RawSurface>,
     edges: Vec<RawEdge>,
     edge_uses: Vec<RawEdgeUse>,
-    wires: Vec<Vec<usize>>,
+    wires: Vec<RawWire>,
     faces: Vec<RawFace>,
     shells: Vec<Vec<usize>>,
     solids: Vec<RawSolid>,
@@ -510,6 +512,11 @@ struct RawEdgeUse {
     direction: RawDirection,
     pcurve: usize,
     parameter_correspondence: RawParameterCorrespondence,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct RawWire {
+    edge_uses: Vec<usize>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

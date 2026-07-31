@@ -1485,7 +1485,7 @@ fn main() {
             panic!("graph tensor must retain one exact section");
         };
         let (split, _) = graph_patch
-            .split_face_by_surface_curve(graph_face, curve.curve(), curve.first_pcurve())
+            .split_face_by_surface_curve(graph_face, &curve, SurfaceIntersectionOperand::First)
             .expect("benchmark non-isoparametric tensor face split");
         checksum += split.counts().faces;
         black_box(split);
@@ -1538,7 +1538,11 @@ fn main() {
             panic!("NURBS graph tensor must retain one exact section");
         };
         let (split, _) = nurbs_graph_patch
-            .split_face_by_surface_curve(nurbs_graph_face, curve.curve(), curve.first_pcurve())
+            .split_face_by_surface_curve(
+                nurbs_graph_face,
+                &curve,
+                SurfaceIntersectionOperand::First,
+            )
             .expect("benchmark non-isoparametric NURBS tensor face split");
         checksum += split.counts().faces;
         black_box(split);
@@ -1589,7 +1593,11 @@ fn main() {
             panic!("v-linear NURBS graph tensor must retain one exact section");
         };
         let (split, _) = v_nurbs_graph_patch
-            .split_face_by_surface_curve(v_nurbs_graph_face, curve.curve(), curve.first_pcurve())
+            .split_face_by_surface_curve(
+                v_nurbs_graph_face,
+                &curve,
+                SurfaceIntersectionOperand::First,
+            )
             .expect("benchmark non-isoparametric v-linear NURBS tensor face split");
         checksum += split.counts().faces;
         black_box(split);
@@ -1645,7 +1653,11 @@ fn main() {
             panic!("multi-span NURBS graph tensor must retain one exact section");
         };
         let (split, _) = multi_span_graph_patch
-            .split_face_by_surface_curve(multi_span_graph_face, curve.curve(), curve.first_pcurve())
+            .split_face_by_surface_curve(
+                multi_span_graph_face,
+                &curve,
+                SurfaceIntersectionOperand::First,
+            )
             .expect("benchmark non-isoparametric multi-span NURBS tensor face split");
         checksum += split.counts().faces;
         black_box(split);
@@ -1808,8 +1820,8 @@ fn main() {
         let (split, _) = tensor_patch
             .split_face_by_surface_curve(
                 tensor_face,
-                fragments[0].curve(),
-                fragments[0].first_pcurve(),
+                &fragments[0],
+                SurfaceIntersectionOperand::First,
             )
             .expect("benchmark tensor face transfer");
         checksum += split.counts().faces;

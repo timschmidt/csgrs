@@ -4115,7 +4115,8 @@ fn add_normalized_curve_path_revolution_shell(
                 for (_, use_direction, start, end, correspondence) in &mut specs {
                     *use_direction = use_direction.reversed();
                     std::mem::swap(start, end);
-                    let ParameterCorrespondence::Affine { scale, offset } = correspondence else {
+                    let ParameterCorrespondence::Affine { scale, offset, .. } = correspondence
+                    else {
                         unreachable!("revolution pcurves use affine correspondence");
                     };
                     *correspondence = ParameterCorrespondence::affine(
@@ -4267,7 +4268,8 @@ fn add_normalized_contour_revolution_shell(
                 for (_, use_direction, start, end, correspondence) in &mut specs {
                     *use_direction = use_direction.reversed();
                     std::mem::swap(start, end);
-                    let ParameterCorrespondence::Affine { scale, offset } = correspondence else {
+                    let ParameterCorrespondence::Affine { scale, offset, .. } = correspondence
+                    else {
                         unreachable!("revolution pcurves use affine correspondence");
                     };
                     *correspondence = ParameterCorrespondence::affine(
@@ -4424,7 +4426,8 @@ fn add_normalized_revolution_shell(
                 for (_, use_direction, start, end, correspondence) in &mut specs {
                     *use_direction = use_direction.reversed();
                     std::mem::swap(start, end);
-                    let ParameterCorrespondence::Affine { scale, offset } = correspondence else {
+                    let ParameterCorrespondence::Affine { scale, offset, .. } = correspondence
+                    else {
                         unreachable!("revolution side pcurves use affine correspondence");
                     };
                     *correspondence = ParameterCorrespondence::affine(
