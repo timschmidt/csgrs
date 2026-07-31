@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "one-pass-predicate-certainty",
+  "source_revision": "8b42a81a7ac9c516ff7d7821cf5eb041904d9bc5",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "approximate_operation_evaluations": 1,
+    "certified_terminal_under_approximate_context": "Certified",
+    "approximate_terminal_under_approximate_context": "Approximate512Consumed",
+    "nested_certainty_isolated_and_propagated": true,
+    "strict_after_approximate_cache_isolation": true,
+    "public_policy_send_sync": true,
+    "curve_policy_bytes": 32,
+    "curve_certainty_bytes": 1
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features": "pass"
+  },
+  "pathological_curve_region2": {
+    "command": "HYPERCURVE_PATHOLOGICAL_TIERS=100mb cargo bench --bench pathological_regions",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "observed_build_rss_delta": "35.8 MiB",
+    "deep_copy_rotate_ns": 7113753,
+    "all_four_native_booleans_ns": 471307490,
+    "exact_polyline_control_ns": 16682997,
+    "native_boolean_delta_from_baseline_percent": -0.0302
+  },
+  "comparative_release_medians_ns": {
+    "rectangle_union": {
+      "hypercurve": 4817.3,
+      "cavalier_contours": 941.7,
+      "i_overlay": 1003.1
+    },
+    "star64_intersection": {
+      "hypercurve": 36262.1,
+      "cavalier_contours": 27234.7,
+      "i_overlay": 34230.1
+    },
+    "star256_intersection": {
+      "hypercurve": 428830.4,
+      "cavalier_contours": 480870.6,
+      "i_overlay": 503106.8
+    },
+    "star1024_intersection": {
+      "hypercurve": 5065308.7,
+      "cavalier_contours": 19354393.3,
+      "i_overlay": 10036715.8
+    },
+    "inward_capsule_offset": {
+      "hypercurve": 18878.7,
+      "cavalier_contours": 921.2
+    },
+    "certified_open_cubic_offset": {
+      "hypercurve": 29557618.5,
+      "curvo_heuristic": 8295.2
+    },
+    "source_chord_cubic_fallback": {
+      "hypercurve": 912636.7
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "hypercurve": 1519.6,
+      "curvo": 57.9
+    }
+  },
+  "interpretation": {
+    "strict_pathological_result": "within timing noise with identical deterministic topology counters",
+    "approximate_path": "whole-operation replay removed and directly asserted to execute once",
+    "baseline_replacement": false,
+    "remaining_candidate_evidence": [
+      "Callgrind instruction count",
+      "Heaptrack allocation and peak-memory counts",
+      "native and WASM linked size",
+      "updated call graph"
+    ]
+  }
+}
