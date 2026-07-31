@@ -630,7 +630,7 @@ fn project_curve_region_loop_to_curve_path(
                 _ => unreachable!("the materialized fast path checked every fragment"),
             });
     if structurally_connected {
-        return Ok(Some(CurvePath2::from_structurally_connected_curves(
+        return Ok(Some(CurvePath2::from_structurally_closed_curves(
             fragments
                 .iter()
                 .map(|fragment| match fragment {

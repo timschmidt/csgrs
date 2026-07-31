@@ -1387,18 +1387,6 @@ impl CurvePath2 {
         }
     }
 
-    pub(crate) fn from_structurally_connected_curves(curves: Vec<Curve2>) -> Self {
-        debug_assert!(!curves.is_empty());
-        debug_assert!(
-            curves
-                .windows(2)
-                .all(|adjacent| adjacent[0].end() == adjacent[1].start())
-        );
-        let strict_closure_certified =
-            curves.last().expect("nonempty path").end() == curves[0].start();
-        Self::from_connected_curves(curves, true, strict_closure_certified)
-    }
-
     pub(crate) fn from_structurally_closed_curves(curves: Vec<Curve2>) -> Self {
         debug_assert!(!curves.is_empty());
         debug_assert!(
