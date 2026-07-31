@@ -6772,6 +6772,74 @@ semantic evidence, caller status, binary size, and the
 22,539-node/38,601-edge call graph are in
 [`2026-07-31-closed-curve-path-policy.json`](benchmarks/checkpoints/2026-07-31-closed-curve-path-policy.json).
 
+## Native curve-topology policy checkpoint
+
+Public native promotion and arc topology now obey the selected
+`CurveContext`. `Curve2::native_bezier_fragments`,
+`CurvePath2::native_bezier_fragments`, and
+`CircularArc2::rational_bezier_decomposition` return borrowed exact geometry
+inside `CurveOutcome`; piecewise decomposition evaluation returns an exact
+`Point2` inside the same outcome. `CircularArc2::directed_sweep_angle`
+returns a classified borrowed `Real`, removing the historical clone of the
+retained scalar. Internal evaluation, intersection, arrangement, and edit
+composition still use raw policy kernels beneath one outer observation frame.
+
+The terminal integration matrix exercises an ambiguous symbolic arc sweep,
+conic decomposition, curve and path native promotion, and a piecewise
+decomposition span join. Approximate-512 completes each operation with exact
+geometry and reports `Approximate512Consumed`; repeated cache replay reports
+the same consumption. Later strict requests on the same retained objects
+preserve typed `RealSign` or `Ordering` uncertainty. Approximate cache entries
+therefore cannot certify a later strict request.
+
+Eleven interleaved default-feature release parent/candidate pairs pinned to
+one CPU measured:
+
+| Exact native-topology operation | Parent median | Policy-explicit median | Change |
+| --- | ---: | ---: | ---: |
+| Cached arc decomposition | 1.853 ns | 1.030 ns | -44.41% |
+| Cached directed sweep | 37.817 ns | 1.025 ns | -97.29% |
+| Decomposition point evaluation | 3.279 us | 3.205 us | -2.26% |
+| Cached `Curve2` native promotion | 2.068 ns | 1.066 ns | -48.44% |
+| Cached top-level arc evaluation | 3.345 us | 3.228 us | -3.51% |
+| Cached `CurvePath2` native promotion | 2.215 ns | 1.087 ns | -50.92% |
+
+The same path control kept cached boundary access within -0.35%, fresh
+boundary construction within +0.13%, and improved cached classification,
+immediate Boolean batching, and native-circle dispatch by 0.71--1.52%.
+Seven complete `arc` instruction controls fell from a median
+7,901,856,295 to 7,181,167,962 instructions, a 9.12% reduction.
+
+After one warm-up pair, eight matched pathological runs retained 67 cells,
+603 candidate pairs, 3,248 fragments, 134 point classifications, all 268
+operations decided, zero blockers, and checksum 6. Construction improved
+0.68% at the median, Boolean execution improved 0.70% by paired geometric
+mean, and process-scale RSS remained 34.5 MiB. The stripped pathological
+executable is 1,560 bytes smaller than the parent and 28,493 bytes below the
+frozen consolidation baseline.
+
+The broad competitive matrix kept every exact Hypercurve lane within 3.1% of
+the matched parent. The 256- and 1,024-vertex exact intersection lanes remain
+faster than Cavalier, i_overlay, and Geo in this harness; finite offset and
+NURBS peers retain explicitly weaker or different guarantees and are not
+treated as parity claims.
+
+Validation passed the complete all-feature suite with 260 unit tests, the
+172.97-second generated `CurveRegion2` Boolean corpus, every integration suite
+other than the two explicitly ignored release-scale PCB corpora, all 268
+pathological Booleans, both warning-denied Clippy feature matrices, both
+all-target checks, every fuzz-target build, warning-denied rustdoc, formatting,
+and diff checks. CSGRS and the Hypercurve UI remain warning-clean. Hypermesh
+was not modified.
+
+The remaining old zero-argument native/sweep calls are confined to Hyperbrep,
+whose accumulated Phase 1 migration remains deferred until the last public
+policy surfaces stabilize. The next cut is
+`CurveRegion2::materialized_boundary_paths`, followed by spline subcurve and
+reconstruction propagation. Machine-readable samples, competitive medians,
+binary size, caller status, and the 22,564-node/38,642-edge call graph are in
+[`2026-07-31-native-curve-topology-policy.json`](benchmarks/checkpoints/2026-07-31-native-curve-topology-policy.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
