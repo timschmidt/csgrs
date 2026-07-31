@@ -6291,6 +6291,44 @@ policy-explicit measurement/evaluation API cutover.
 Machine-readable samples and provenance are in
 [`2026-07-31-policy-explicit-curve-region-construction.json`](benchmarks/checkpoints/2026-07-31-policy-explicit-curve-region-construction.json).
 
+### Explicit construction outcomes
+
+Every predicate-bearing public `CurveRegion2` constructor and arrangement
+entry point now returns `CurveOutcome<T>`. Construction therefore cannot
+silently discard an Approximate-512 terminal decision. Internal composition
+uses private raw builders under one outer observation frame, so the geometry
+is built once and certainty is aggregated once. The same contract applies
+when exact line-role evidence is promoted back into the authoritative region.
+No dereference or implicit-value compatibility shim was added.
+
+The complete all-feature suite passed with 251 unit tests, the 173.92-second
+exact CurveRegion2 Boolean corpus, and all 268 pathological operations. Both
+warning-denied feature matrices, fuzz targets, rustdoc, and all 37 standalone
+UI tests also pass.
+
+Seven uncontended release processes retained exactly 67 cells, 603 candidate
+pairs, 3,248 fragments, 134 point classifications, 268 decided operations, no
+blockers, and checksum 6. The all-four Boolean median was 475.984 ms, 1.12%
+above the preceding 470.731 ms checkpoint and 0.96% above the frozen
+471.450 ms baseline, with overlapping ranges and one retained scheduler
+outlier. The separately timed construction median was 74.537 ms, 2.76% below
+the compact-carrier checkpoint. The release executable fell another 16,380
+bytes to 5,506,769 bytes, 0.44% below the frozen baseline.
+
+The seven-sample competitive lane remains stable against the frozen
+Hypercurve medians (all movements within 5.2%). Hypercurve measured 4.765 us
+for a tiny rectangle union, 36.380 us at 64-star intersection, 425.674 us at
+256 vertices, and 5.170 ms at 1,024 vertices. The finite engines retain their
+small-input advantage; Hypercurve is 1.50--1.61 times faster than iOverlay and
+Cavalier Contours at 256 vertices, and 1.94--3.80 times faster at 1,024
+vertices. The exact certified cubic-offset and general NURBS lanes remain much
+slower than heuristic/finite competitors and are explicit optimization
+targets, not like-for-like exactness comparisons.
+
+Machine-readable samples, competitive medians, validation, binary size, and
+call-graph evidence are in
+[`2026-07-31-curve-region-construction-outcomes.json`](benchmarks/checkpoints/2026-07-31-curve-region-construction-outcomes.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

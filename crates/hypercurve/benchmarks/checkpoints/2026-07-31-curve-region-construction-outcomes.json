@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "curve-region2-construction-outcomes",
+  "source_revision": "d7bc1ab7c00c290d54ced19c98ac594054422828",
+  "parent_revision": "e56103239e1da459bf6adecdbe0be9ca5eb05fcb",
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "predicate_bearing_public_curve_region_constructors_return_curve_outcome": true,
+    "arrangement_entry_points_return_curve_outcome": true,
+    "native_promotion_entry_points_return_curve_outcome": true,
+    "boundary_path_entry_points_return_curve_outcome": true,
+    "line_role_evidence_promotion_returns_curve_outcome": true,
+    "internal_callers_use_one_pass_raw_builders": true,
+    "construction_geometry_is_built_once": true,
+    "operation_certainty_is_aggregated_once": true,
+    "strict_symbolic_closure_result": "typed Construction/RealSign blocker",
+    "approximate_512_symbolic_closure_result": "decided",
+    "approximate_512_terminal_consumption_observed": true,
+    "returned_coordinates_remain_exact_real_values": true,
+    "compatibility_deref_or_implicit_value_shim_added": false
+  },
+  "verification": {
+    "cargo_test_all_features": "pass after the README mirror was migrated and rerun",
+    "unit_tests": 251,
+    "exact_curve_region2_fuzz_seconds": 173.92,
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_check_all_features_all_targets": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features_all_targets": "pass",
+    "cargo_clippy_no_default_features_lib_tests_deny_warnings": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "standalone_ui_tests": "37/37 pass in 340.14 seconds",
+    "standalone_ui_clippy_deny_warnings": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "cargo_fmt_hypercurve_package": "pass",
+    "standalone_ui_fmt": "not claimed; pre-existing rustfmt drift remains in geometry.rs outside this checkpoint's changed lines",
+    "git_diff_check": "pass"
+  },
+  "pathological_curve_region2": {
+    "command": "HYPERCURVE_PATHOLOGICAL_MODE=boolean HYPERCURVE_PATHOLOGICAL_CELL_LIMIT=67 target/release/deps/pathological_regions-524727024aa54dcb",
+    "method": "seven independent uncontended candidate processes; an earlier five-process set was excluded because an unrelated release LTO build occupied a full CPU",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "parent_checkpoint_median_ms": 470.730858,
+    "frozen_baseline_median_ms": 471.45,
+    "historical_target_median_ms": 433.937,
+    "candidate_all_four_native_booleans_ms": [
+      467.723376,
+      475.984160,
+      482.384451,
+      476.239042,
+      474.710517,
+      469.919336,
+      668.245380
+    ],
+    "candidate_median_ms": 475.984160,
+    "median_change_from_parent_percent": 1.1160,
+    "median_change_from_frozen_baseline_percent": 0.9617,
+    "median_change_from_historical_target_percent": 9.6897,
+    "interpretation": "the parent and candidate timing ranges overlap, one scheduler outlier is retained, deterministic topology is identical, and no construction-outcome cost is attributable inside the separately timed Boolean phase"
+  },
+  "pathological_build": {
+    "candidate_build_ms": [
+      74.813062,
+      76.352295,
+      72.701876,
+      73.626872,
+      75.531902,
+      74.224782,
+      74.537181
+    ],
+    "candidate_median_ms": 74.537181,
+    "compact_carrier_checkpoint_median_ms": 76.649554,
+    "change_from_compact_carrier_percent": -2.7559,
+    "candidate_observed_rss_delta_mib_median": 34.7,
+    "compact_carrier_observed_rss_delta_mib_median": 35.8,
+    "interpretation": "the construction phase directly exercises the new public outcome boundary; timing improved and RSS remains at coarse process-resolution scale"
+  },
+  "comparative_release_medians_ns": {
+    "command": "HYPERCURVE_COMPARE_SAMPLES=7 HYPERCURVE_COMPARE_SAMPLE_MS=50 cargo bench --locked --features comparative-benchmarks --bench comparative",
+    "rectangle_union": {
+      "hypercurve": 4765.3,
+      "cavalier_contours": 918.0,
+      "i_overlay": 1013.8,
+      "geo": 1234.1,
+      "change_from_frozen_hypercurve_percent": -0.3492
+    },
+    "star64_intersection": {
+      "hypercurve": 36380.1,
+      "cavalier_contours": 27956.6,
+      "i_overlay": 34835.3,
+      "geo": 36157.5,
+      "change_from_frozen_hypercurve_percent": 2.0680
+    },
+    "star256_intersection": {
+      "hypercurve": 425674.3,
+      "cavalier_contours": 686388.2,
+      "i_overlay": 637558.0,
+      "geo": 529795.5,
+      "change_from_frozen_hypercurve_percent": 1.1990
+    },
+    "star1024_intersection": {
+      "hypercurve": 5169694.6,
+      "cavalier_contours": 19623121.3,
+      "i_overlay": 10045573.2,
+      "geo": 10144174.6,
+      "change_from_frozen_hypercurve_percent": 1.5258
+    },
+    "inward_capsule_offset": {
+      "hypercurve": 18952.9,
+      "cavalier_contours": 927.1,
+      "change_from_frozen_hypercurve_percent": -1.7628
+    },
+    "certified_open_cubic_offset": {
+      "hypercurve": 29822285.5,
+      "curvo_heuristic": 8180.9,
+      "change_from_frozen_hypercurve_percent": 1.1439
+    },
+    "source_chord_cubic_fallback": {
+      "hypercurve": 928533.7,
+      "change_from_frozen_hypercurve_percent": -5.1680
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "hypercurve": 1533.5,
+      "curvo": 57.4,
+      "change_from_frozen_hypercurve_percent": -2.2003
+    },
+    "interpretation": "all Hypercurve medians remain within 5.2 percent of the frozen baseline; finite competitors are throughput references rather than exactness oracles. Hypercurve remains slower on tiny inputs, faster than the compared finite polygon engines at 256 and 1024 vertices, and exact certified general-curve work remains the principal optimization gap."
+  },
+  "release_pathological_binary": {
+    "parent_checkpoint_bytes": 5523149,
+    "candidate_bytes": 5506769,
+    "delta_bytes": -16380,
+    "delta_percent": -0.2966,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": -24524,
+    "delta_from_frozen_baseline_percent": -0.4434
+  },
+  "static_callgraph": {
+    "command": "hyper-callgraph --root . --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22242,
+    "edges": 37972,
+    "artifact": "/tmp/hypercurve-construction-outcome-callgraph/callgraph.json",
+    "public_and_raw_constructor_nodes_present": true
+  }
+}
