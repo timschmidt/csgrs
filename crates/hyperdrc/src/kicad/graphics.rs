@@ -4,8 +4,9 @@
 //! not electrical copper. Keeping them separate makes the main loader easier to
 //! scan and keeps arc/outline reconstruction in one place.
 
-use hyperlimit::{Point2, PredicatePolicy, point2_equal_with_policy};
+use hyperlimit::{Point2, point2_equal};
 
+use crate::PREDICATE_POLICY;
 use crate::geometry::{
     Polygon, arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon,
     polygon_from_points,
@@ -201,7 +202,7 @@ fn same_point(left: &ParsedPoint2, right: &ParsedPoint2) -> bool {
     // a local tolerance.
     let left = exact_point(left);
     let right = exact_point(right);
-    point2_equal_with_policy(&left, &right, PredicatePolicy)
+    point2_equal(&left, &right, PREDICATE_POLICY)
         .value()
         .unwrap_or(false)
 }

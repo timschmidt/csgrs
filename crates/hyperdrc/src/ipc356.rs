@@ -428,53 +428,37 @@ impl Ipc356GeometryStats {
         self.min_x = Some(self.min_x.as_ref().map_or_else(
             || point.location[0].clone(),
             |value| {
-                hyperlimit::real_min_with_policy(
-                    value,
-                    &point.location[0],
-                    hyperlimit::PredicatePolicy,
-                )
-                .value()
-                .expect("parsed IPC-D-356 coordinates have a decidable minimum")
-                .clone()
+                hyperlimit::real_min(value, &point.location[0], crate::PREDICATE_POLICY)
+                    .value()
+                    .expect("parsed IPC-D-356 coordinates have a decidable minimum")
+                    .clone()
             },
         ));
         self.max_x = Some(self.max_x.as_ref().map_or_else(
             || point.location[0].clone(),
             |value| {
-                hyperlimit::real_max_with_policy(
-                    value,
-                    &point.location[0],
-                    hyperlimit::PredicatePolicy,
-                )
-                .value()
-                .expect("parsed IPC-D-356 coordinates have a decidable maximum")
-                .clone()
+                hyperlimit::real_max(value, &point.location[0], crate::PREDICATE_POLICY)
+                    .value()
+                    .expect("parsed IPC-D-356 coordinates have a decidable maximum")
+                    .clone()
             },
         ));
         self.min_y = Some(self.min_y.as_ref().map_or_else(
             || point.location[1].clone(),
             |value| {
-                hyperlimit::real_min_with_policy(
-                    value,
-                    &point.location[1],
-                    hyperlimit::PredicatePolicy,
-                )
-                .value()
-                .expect("parsed IPC-D-356 coordinates have a decidable minimum")
-                .clone()
+                hyperlimit::real_min(value, &point.location[1], crate::PREDICATE_POLICY)
+                    .value()
+                    .expect("parsed IPC-D-356 coordinates have a decidable minimum")
+                    .clone()
             },
         ));
         self.max_y = Some(self.max_y.as_ref().map_or_else(
             || point.location[1].clone(),
             |value| {
-                hyperlimit::real_max_with_policy(
-                    value,
-                    &point.location[1],
-                    hyperlimit::PredicatePolicy,
-                )
-                .value()
-                .expect("parsed IPC-D-356 coordinates have a decidable maximum")
-                .clone()
+                hyperlimit::real_max(value, &point.location[1], crate::PREDICATE_POLICY)
+                    .value()
+                    .expect("parsed IPC-D-356 coordinates have a decidable maximum")
+                    .clone()
             },
         ));
         if let Some(diameter) = point
@@ -485,7 +469,7 @@ impl Ipc356GeometryStats {
             self.min_positive_diameter = Some(self.min_positive_diameter.as_ref().map_or_else(
                 || diameter.clone(),
                 |value| {
-                    hyperlimit::real_min_with_policy(value, diameter, hyperlimit::PredicatePolicy)
+                    hyperlimit::real_min(value, diameter, crate::PREDICATE_POLICY)
                         .value()
                         .expect("parsed IPC-D-356 diameters have a decidable minimum")
                         .clone()
@@ -494,7 +478,7 @@ impl Ipc356GeometryStats {
             self.max_positive_diameter = Some(self.max_positive_diameter.as_ref().map_or_else(
                 || diameter.clone(),
                 |value| {
-                    hyperlimit::real_max_with_policy(value, diameter, hyperlimit::PredicatePolicy)
+                    hyperlimit::real_max(value, diameter, crate::PREDICATE_POLICY)
                         .value()
                         .expect("parsed IPC-D-356 diameters have a decidable maximum")
                         .clone()

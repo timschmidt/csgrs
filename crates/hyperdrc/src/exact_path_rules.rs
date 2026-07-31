@@ -6,7 +6,7 @@
 
 use core::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperpath::{PcbViaStack, ViaDrillIntent};
 use hyperreal::{Real, RealSign};
 
@@ -64,7 +64,7 @@ pub fn certify_annular_ring(
         return AnnularRingStatus::InvalidMinimum;
     }
     let required = drill.clone() + minimum.clone() * Real::from(2);
-    match compare_reals_with_policy(via.land_diameter(), &required, policy).value() {
+    match compare_reals(via.land_diameter(), &required, policy).value() {
         Some(Ordering::Less) => AnnularRingStatus::Violation,
         Some(Ordering::Equal | Ordering::Greater) => AnnularRingStatus::Certified,
         None => AnnularRingStatus::Unknown,
@@ -108,7 +108,7 @@ pub fn classify_via_drill_policy(
 }
 
 fn real_sign(value: &Real, policy: PredicatePolicy) -> Option<RealSign> {
-    match compare_reals_with_policy(value, &Real::zero(), policy).value()? {
+    match compare_reals(value, &Real::zero(), policy).value()? {
         Ordering::Less => Some(RealSign::Negative),
         Ordering::Equal => Some(RealSign::Zero),
         Ordering::Greater => Some(RealSign::Positive),

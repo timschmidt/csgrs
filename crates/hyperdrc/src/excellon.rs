@@ -809,7 +809,7 @@ fn record_drill(
     summary.min_diameter = Some(summary.min_diameter.as_ref().map_or_else(
         || exact_diameter.clone(),
         |current| {
-            hyperlimit::real_min_with_policy(current, exact_diameter, hyperlimit::PredicatePolicy)
+            hyperlimit::real_min(current, exact_diameter, crate::PREDICATE_POLICY)
                 .value()
                 .expect("parsed Excellon diameters have a decidable minimum")
                 .clone()
@@ -818,7 +818,7 @@ fn record_drill(
     summary.max_diameter = Some(summary.max_diameter.as_ref().map_or_else(
         || exact_diameter.clone(),
         |current| {
-            hyperlimit::real_max_with_policy(current, exact_diameter, hyperlimit::PredicatePolicy)
+            hyperlimit::real_max(current, exact_diameter, crate::PREDICATE_POLICY)
                 .value()
                 .expect("parsed Excellon diameters have a decidable maximum")
                 .clone()

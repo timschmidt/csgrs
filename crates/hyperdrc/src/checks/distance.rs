@@ -6,13 +6,10 @@
 #[cfg(test)]
 use crate::geometry::Polygon;
 use crate::geometry::{Coord, LineString, MultiPolygon};
-use hyperlimit::{
-    CircleSegmentRelation, Point2, PredicatePolicy, SegmentIntersection,
-    classify_circle_segment2_with_policy,
-};
+use hyperlimit::{CircleSegmentRelation, Point2, SegmentIntersection, classify_circle_segment2};
 
-use crate::Scalar;
 use crate::geometry::{RuleGeometryProvenance, SourceGridFacts};
+use crate::{PREDICATE_POLICY, Scalar};
 
 /// Exact boundary distance over a finite polygon projection.
 ///
@@ -195,7 +192,7 @@ fn point_segment_within_threshold_from_scalars(
     let start = Point2::new(start[0].clone(), start[1].clone());
     let end = Point2::new(end[0].clone(), end[1].clone());
     let threshold_squared = threshold * threshold;
-    classify_circle_segment2_with_policy(&center, &threshold_squared, &start, &end, PredicatePolicy)
+    classify_circle_segment2(&center, &threshold_squared, &start, &end, PREDICATE_POLICY)
         .value()
         .map(|relation| relation != CircleSegmentRelation::Disjoint)
 }
@@ -409,12 +406,12 @@ fn lifted_segment_distance_squared(left: &LiftedSegment, right: &LiftedSegment) 
     let b_start = Point2::new(right.start[0].clone(), right.start[1].clone());
     let b_end = Point2::new(right.end[0].clone(), right.end[1].clone());
     if !matches!(
-        hyperlimit::classify_segment_intersection_with_policy(
+        hyperlimit::classify_segment_intersection(
             &a_start,
             &a_end,
             &b_start,
             &b_end,
-            PredicatePolicy,
+            PREDICATE_POLICY,
         )
         .value(),
         Some(SegmentIntersection::Disjoint)
@@ -673,9 +670,7 @@ fn segments_intersect_with_grid(
     // interval tests through `hyperlimit`. Combinatorial decisions use exact
     // predicates; approximate coordinates only describe inputs or report
     // metric magnitudes.
-    match hyperlimit::classify_segment_intersection_with_policy(&a, &b, &c, &d, PredicatePolicy)
-        .value()
-    {
+    match hyperlimit::classify_segment_intersection(&a, &b, &c, &d, PREDICATE_POLICY).value() {
         Some(SegmentIntersection::Disjoint) => false,
         Some(_) => true,
         // A strict predicate over lifted finite dyadics should decide. If a
@@ -729,7 +724,7 @@ fn exact_coords_equal_with_grid(
     let Some(right) = lift_coord(right, provenance) else {
         return false;
     };
-    hyperlimit::point2_equal_with_policy(&left, &right, PredicatePolicy)
+    hyperlimit::point2_equal(&left, &right, PREDICATE_POLICY)
         .value()
         .unwrap_or(false)
 }

@@ -10,9 +10,10 @@
 use std::sync::{Arc, OnceLock};
 
 use hypercurve::{Classification, Contour2, CurvePolicy, CurveRegion2};
-use hyperlimit::{PredicatePolicy, Sign, classify_real_sign_with_policy};
+use hyperlimit::{Sign, classify_real_sign};
 use hyperreal::Real;
 
+use crate::PREDICATE_POLICY;
 /// A finite report coordinate.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Coord<T = f64> {
@@ -264,7 +265,7 @@ impl Rect<f64> {
 }
 
 pub(crate) fn exact_region_area(region: &CurveRegion2) -> Option<Real> {
-    match region.filled_area(&CurvePolicy::certified()).ok()? {
+    match region.filled_area(&CurvePolicy::STRICT).ok()? {
         Classification::Decided(Some(area)) => Some(area),
         Classification::Decided(None) | Classification::Uncertain(_) => None,
     }
@@ -274,7 +275,7 @@ fn exact_region_bounds(region: &CurveRegion2) -> Option<[Real; 4]> {
     if region.is_empty() {
         return None;
     }
-    let bounds = match region.bounds(&CurvePolicy::certified()).ok()? {
+    let bounds = match region.bounds(&CurvePolicy::STRICT).ok()? {
         Classification::Decided(bounds) => bounds,
         Classification::Uncertain(_) => return None,
     };
@@ -334,7 +335,7 @@ fn region_from_rings(
         .iter()
         .map(|ring| ring_to_contour(ring, true))
         .collect::<Result<Vec<_>, _>>()?;
-    CurveRegion2::try_from_native_contours(vec![material], holes, &CurvePolicy::certified())
+    CurveRegion2::try_from_native_contours(vec![material], holes, &CurvePolicy::STRICT)
         .map_err(|error| format!("exact polygon region construction failed: {error}"))
 }
 
@@ -355,7 +356,7 @@ fn ring_to_contour(ring: &LineString<f64>, hole: bool) -> Result<Contour2, Strin
     }
     let signed_area = exact_ring_signed_area(ring)
         .ok_or_else(|| "exact polygon contour area could not be constructed".to_string())?;
-    let orientation = classify_real_sign_with_policy(&signed_area, PredicatePolicy)
+    let orientation = classify_real_sign(&signed_area, PREDICATE_POLICY)
         .value()
         .ok_or_else(|| "exact polygon contour orientation is unresolved".to_string())?;
     if (!hole && orientation == Sign::Negative) || (hole && orientation == Sign::Positive) {
@@ -405,7 +406,7 @@ pub(crate) fn transform_exact_region(
             &cosine,
             &translate_x,
             &translate_y,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .map_err(|error| format!("exact affine region transformation failed: {error}"))
 }

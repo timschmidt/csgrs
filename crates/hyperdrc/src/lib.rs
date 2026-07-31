@@ -99,6 +99,10 @@ pub mod svg_overlay;
 pub mod test_intent;
 pub mod waiver;
 
+/// HyperDRC accepts only strictly certified scalar and topology decisions.
+pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
+    hyperlimit::PredicatePolicy::STRICT;
+
 pub use app::{RunOutcome, run, run_cli};
 pub use capability::{
     CapabilityProfile, CapabilityProfileClass, DrillCapability, ImagingCapability,
@@ -122,7 +126,7 @@ pub use test_intent::{
 
 use csgrs::curve::{self, CurveRegionExt};
 use geometry::{Coord, LineString, MultiPolygon, Polygon, Rect};
-use hypercurve::CurveRegion2;
+use hypercurve::{CurvePolicy, CurveRegion2};
 use hyperlattice::Aabb;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
@@ -288,11 +292,13 @@ impl PcbRegion {
             ]
         });
         Ok(Self::new_with_exact_bounds(
-            curve::offset(&self.region, distance).map_err(|error| PcbGeometryUncertainty {
-                operation: "profile-offset".into(),
-                source: self.metadata.as_ref().map(|metadata| metadata.name.clone()),
-                detail: error.to_string(),
-            })?,
+            curve::offset(&self.region, distance, &CurvePolicy::STRICT)
+                .map(hypercurve::CurveOutcome::into_value)
+                .map_err(|error| PcbGeometryUncertainty {
+                    operation: "profile-offset".into(),
+                    source: self.metadata.as_ref().map(|metadata| metadata.name.clone()),
+                    detail: error.to_string(),
+                })?,
             self.metadata.clone(),
             exact_bounds,
             self.had_non_finite_input,
@@ -305,7 +311,8 @@ impl PcbRegion {
         self.ensure_binary_exact_geometry(other, "profile-difference")?;
         let mut result = Self::new(
             self.region
-                .try_difference(&other.region)
+                .try_difference(&other.region, &CurvePolicy::STRICT)
+                .map(hypercurve::CurveOutcome::into_value)
                 .map_err(|error| self.boolean_uncertainty("profile-difference", error))?,
             self.metadata.clone(),
         );
@@ -319,7 +326,8 @@ impl PcbRegion {
         self.ensure_binary_exact_geometry(other, "profile-union")?;
         let mut result = Self::new(
             self.region
-                .try_union(&other.region)
+                .try_union(&other.region, &CurvePolicy::STRICT)
+                .map(hypercurve::CurveOutcome::into_value)
                 .map_err(|error| self.boolean_uncertainty("profile-union", error))?,
             self.metadata.clone(),
         );
@@ -333,7 +341,8 @@ impl PcbRegion {
         self.ensure_binary_exact_geometry(other, "profile-intersection")?;
         let mut result = Self::new(
             self.region
-                .try_intersection(&other.region)
+                .try_intersection(&other.region, &CurvePolicy::STRICT)
+                .map(hypercurve::CurveOutcome::into_value)
                 .map_err(|error| self.boolean_uncertainty("profile-intersection", error))?,
             self.metadata.clone(),
         );
@@ -347,7 +356,8 @@ impl PcbRegion {
         self.ensure_binary_exact_geometry(other, "profile-xor")?;
         let mut result = Self::new(
             self.region
-                .try_xor(&other.region)
+                .try_xor(&other.region, &CurvePolicy::STRICT)
+                .map(hypercurve::CurveOutcome::into_value)
                 .map_err(|error| self.boolean_uncertainty("profile-xor", error))?,
             self.metadata.clone(),
         );
@@ -410,7 +420,7 @@ pub(crate) fn translated_circle(
         .expect("positive-radius translated circle must construct its second exact semicircle");
     let contour = Contour2::try_new(vec![Segment2::Arc(first), Segment2::Arc(second)])
         .expect("two exact semicircles must form a closed translated-circle contour");
-    CurveRegion2::try_from_native_material_contours(vec![contour], &CurvePolicy::certified())
+    CurveRegion2::try_from_native_material_contours(vec![contour], &CurvePolicy::STRICT)
         .expect("closed translated-circle contour must construct an exact material region")
 }
 
@@ -448,7 +458,7 @@ impl PcbRegion {
         }
         match self
             .region
-            .classify_point(&Point2::new(x, y), &CurvePolicy::certified())
+            .classify_point(&Point2::new(x, y), &CurvePolicy::STRICT)
             .ok()?
         {
             Classification::Decided(RegionPointLocation::Inside) => Some(true),
@@ -514,7 +524,9 @@ fn exact_backed_finite_polygons(
             components
                 .iter()
                 .flat_map(|component| {
-                    curve::finite_profiles(component.as_ref())
+                    curve::try_finite_profiles(component.as_ref(), &csgrs::GeometryContext::STRICT)
+                        .expect("exact-backed DRC component must have a strict finite projection")
+                        .into_value()
                         .into_iter()
                         .filter_map(|profile| {
                             let exterior = finite_ring_to_linestring(profile.material().points())?;
@@ -535,7 +547,9 @@ fn exact_backed_finite_polygons(
     }
 
     MultiPolygon(
-        curve::finite_profiles(region)
+        curve::try_finite_profiles(region, &csgrs::GeometryContext::STRICT)
+            .expect("exact-backed DRC region must have a strict finite projection")
+            .into_value()
             .into_iter()
             .filter_map(|profile| {
                 let exterior = finite_ring_to_linestring(profile.material().points())?;
@@ -551,7 +565,7 @@ fn exact_backed_finite_polygons(
 }
 
 fn exact_component_regions(region: &CurveRegion2) -> Option<Vec<Arc<CurveRegion2>>> {
-    let policy = hypercurve::CurvePolicy::certified();
+    let policy = hypercurve::CurvePolicy::STRICT;
     let profiles = match region.boundary_profiles(&policy) {
         Ok(hypercurve::Classification::Decided(profiles)) => profiles,
         Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => return None,

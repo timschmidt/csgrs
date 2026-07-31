@@ -4,8 +4,9 @@
 //! exact only for the narrow predicates they name, and callers still fall back
 //! to CSG for non-rectangular outlines, cutouts, or boundary candidates.
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::compare_reals;
 
+use crate::PREDICATE_POLICY;
 use crate::geometry::{Rect, RuleGeometryProvenance, SourceGridFacts};
 use crate::kicad::CopperFeature;
 #[cfg(test)]
@@ -188,7 +189,7 @@ fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<s
     let provenance = RuleGeometryProvenance::new("axis-aligned-outline-rect", grid);
     let left = provenance.lift_f64(left)?;
     let right = provenance.lift_f64(right)?;
-    compare_reals_with_policy(&left, &right, PredicatePolicy).value()
+    compare_reals(&left, &right, PREDICATE_POLICY).value()
 }
 
 #[cfg(test)]

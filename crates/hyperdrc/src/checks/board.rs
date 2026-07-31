@@ -8,7 +8,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::compare_reals;
 
 use super::distance::{
     exact_point_polygon_boundary_within_scalar, polygon_boundaries_within_scalar,
@@ -20,6 +20,7 @@ use super::outline::{
 };
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 use super::{difference_for_check, intersection_for_check, offset_for_check};
+use crate::PREDICATE_POLICY;
 use crate::checks::drill::{drill_radius_with_clearance, drills_to_region};
 use crate::geometry::{
     MultiPolygon, Rect, RuleGeometryProvenance, SourceGridFacts, multipolygon_to_shapes_scalar,
@@ -372,7 +373,7 @@ pub fn plane_clearance_readiness(
             }
             let hole_area = Scalar::pi() * &drill_radius * &drill_radius;
             let contained_area_exceeds_gate = hole_contained
-                && compare_reals_with_policy(&hole_area, min_area, PredicatePolicy).value()
+                && compare_reals(&hole_area, min_area, PREDICATE_POLICY).value()
                     == Some(std::cmp::Ordering::Greater);
             if shapes.is_empty() && !contained_area_exceeds_gate {
                 continue;
@@ -3656,7 +3657,7 @@ fn point_within_radius_with_grid(
     let distance_squared = &(&dx * &dx) + &(&dy * &dy);
     let radius_squared = radius * radius;
 
-    compare_reals_with_policy(&distance_squared, &radius_squared, PredicatePolicy)
+    compare_reals(&distance_squared, &radius_squared, PREDICATE_POLICY)
         .value()
         .is_some_and(|ordering| ordering != std::cmp::Ordering::Greater)
 }

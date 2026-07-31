@@ -4,8 +4,9 @@
 //! circumcircle math here lets board graphics and custom-pad primitives share
 //! the same sweep convention.
 
-use hyperlimit::{Point2, PredicatePolicy, Sign, orient2_with_policy};
+use hyperlimit::{Point2, Sign, orient2};
 
+use crate::PREDICATE_POLICY;
 #[cfg(test)]
 use crate::geometry::{RuleGeometryProvenance, SourceGridFacts, SourceUnit};
 
@@ -138,7 +139,7 @@ fn exact_arc_orientation(start: [f64; 2], mid: [f64; 2], end: [f64; 2]) -> Optio
     let start = lift_point(start, provenance)?;
     let mid = lift_point(mid, provenance)?;
     let end = lift_point(end, provenance)?;
-    orient2_with_policy(&start, &mid, &end, PredicatePolicy).value()
+    orient2(&start, &mid, &end, PREDICATE_POLICY).value()
 }
 
 fn exact_arc_orientation_source(
@@ -149,7 +150,7 @@ fn exact_arc_orientation_source(
     let start = exact_point(start);
     let mid = exact_point(mid);
     let end = exact_point(end);
-    orient2_with_policy(&start, &mid, &end, PredicatePolicy).value()
+    orient2(&start, &mid, &end, PREDICATE_POLICY).value()
 }
 
 fn exact_point(point: &ParsedPoint2) -> Point2 {

@@ -11,8 +11,9 @@
 use std::collections::BTreeMap;
 
 use hypercurve::{CurvePolicy, CurveRegion2, LineLineIntersection, LineSeg2};
-use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection, Sign, compare_reals_with_policy};
+use hyperlimit::{Point2, SegmentIntersection, Sign, compare_reals};
 
+use crate::PREDICATE_POLICY;
 use crate::checks::distance::polygon_boundary_distance_scalar_with_grid;
 use crate::checks::spatial::LayerPolygonSpatialIndex;
 use crate::checks::{
@@ -2072,7 +2073,7 @@ pub fn layer_sanity(
     }
 
     if matches!(
-        compare_reals_with_policy(&area, &Scalar::zero(), PredicatePolicy).value(),
+        compare_reals(&area, &Scalar::zero(), PREDICATE_POLICY).value(),
         Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
     ) {
         violations.push(Violation::new(
@@ -2087,7 +2088,7 @@ pub fn layer_sanity(
     }
 
     if let Some(max_layer_area) = max_layer_area
-        && compare_reals_with_policy(&area, max_layer_area, PredicatePolicy).value()
+        && compare_reals(&area, max_layer_area, PREDICATE_POLICY).value()
             == Some(std::cmp::Ordering::Greater)
     {
         let shapes = multipolygon_to_shapes_scalar(&multipolygon, &Scalar::zero());
@@ -2141,10 +2142,10 @@ pub fn tiny_layer_feature_readiness(
         .iter()
         .filter(|polygon| {
             polygon_area_scalar(polygon).is_some_and(|area| {
-                compare_reals_with_policy(&area, &Scalar::zero(), PredicatePolicy).value()
+                compare_reals(&area, &Scalar::zero(), PREDICATE_POLICY).value()
                     == Some(std::cmp::Ordering::Greater)
                     && matches!(
-                        compare_reals_with_policy(&area, min_area, PredicatePolicy).value(),
+                        compare_reals(&area, min_area, PREDICATE_POLICY).value(),
                         Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
                     )
             })
@@ -2202,12 +2203,12 @@ pub fn skinny_layer_feature_readiness(
         .iter()
         .filter(|polygon| {
             polygon_area_scalar(polygon).is_some_and(|area| {
-                compare_reals_with_policy(&area, min_area, PredicatePolicy).value()
+                compare_reals(&area, min_area, PREDICATE_POLICY).value()
                     == Some(std::cmp::Ordering::Greater)
             }) && polygon_minimum_bounding_dimension_scalar(polygon).is_some_and(|dimension| {
-                compare_reals_with_policy(&dimension, &Scalar::zero(), PredicatePolicy).value()
+                compare_reals(&dimension, &Scalar::zero(), PREDICATE_POLICY).value()
                     == Some(std::cmp::Ordering::Greater)
-                    && compare_reals_with_policy(&dimension, min_width, PredicatePolicy).value()
+                    && compare_reals(&dimension, min_width, PREDICATE_POLICY).value()
                         == Some(std::cmp::Ordering::Less)
             })
         })
@@ -2720,7 +2721,7 @@ where
             let multipolygon = region.to_multipolygon();
             let area = multipolygon_area_scalar(&multipolygon)?;
             let bounds = multipolygon_bounds_scalar(&multipolygon)?;
-            (compare_reals_with_policy(&area, min_area, PredicatePolicy).value()
+            (compare_reals(&area, min_area, PREDICATE_POLICY).value()
                 == Some(std::cmp::Ordering::Greater))
             .then_some(DuplicateLayer {
                 name,
@@ -3583,17 +3584,17 @@ fn collect_board_outline_notches_with_grid(
                 board_outline_notch_interior_angle_with_grid(previous, current, next, is_ccw, grid)
             })
             .max_by(|left, right| {
-                compare_reals_with_policy(left, right, PredicatePolicy)
+                compare_reals(left, right, PREDICATE_POLICY)
                     .value()
                     .expect("exact notch angles must be comparable")
             });
         let Some(interior_angle) = interior_angle else {
             continue;
         };
-        if compare_reals_with_policy(
+        if compare_reals(
             &interior_angle,
             &crate::scalar::scalar(BOARD_OUTLINE_NOTCH_ANGLE_DEGREES),
-            PredicatePolicy,
+            PREDICATE_POLICY,
         )
         .value()
             == Some(std::cmp::Ordering::Less)
@@ -3903,7 +3904,7 @@ fn orient_coords_with_grid(
     let previous = lift_coord_with_provenance(previous, provenance)?;
     let current = lift_coord_with_provenance(current, provenance)?;
     let next = lift_coord_with_provenance(next, provenance)?;
-    hyperlimit::orient2_with_policy(&previous, &current, &next, PredicatePolicy).value()
+    hyperlimit::orient2(&previous, &current, &next, PREDICATE_POLICY).value()
 }
 
 fn polygon_bounding_rects_overlap_with_grid(
@@ -3936,7 +3937,7 @@ fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<s
     let provenance = RuleGeometryProvenance::new("board-outline-overlap-readiness", grid);
     let left = provenance.lift_f64(left)?;
     let right = provenance.lift_f64(right)?;
-    compare_reals_with_policy(&left, &right, PredicatePolicy).value()
+    compare_reals(&left, &right, PREDICATE_POLICY).value()
 }
 
 fn ring_is_ccw(ring: &LineString<f64>) -> Option<bool> {
@@ -4005,9 +4006,7 @@ fn ring_segment_intersection_with_grid(
     let b = lift_coord_with_provenance(end_a, provenance)?;
     let c = lift_coord_with_provenance(start_b, provenance)?;
     let d = lift_coord_with_provenance(end_b, provenance)?;
-    match hyperlimit::classify_segment_intersection_with_policy(&a, &b, &c, &d, PredicatePolicy)
-        .value()
-    {
+    match hyperlimit::classify_segment_intersection(&a, &b, &c, &d, PREDICATE_POLICY).value() {
         Some(SegmentIntersection::Disjoint | SegmentIntersection::EndpointTouch) => return None,
         Some(
             SegmentIntersection::Proper
@@ -4028,7 +4027,7 @@ fn ring_segment_intersection_with_grid(
     )
     .ok()?;
     match segment_a
-        .intersect_line(&segment_b, &CurvePolicy::certified())
+        .intersect_line(&segment_b, &CurvePolicy::STRICT)
         .ok()?
     {
         LineLineIntersection::Point { point, kind, .. } => {
@@ -4090,7 +4089,7 @@ fn locations_are_equal(left: &[f64; 2], right: &[f64; 2]) -> bool {
     ) else {
         return false;
     };
-    hyperlimit::point2_equal_with_policy(&left, &right, PredicatePolicy)
+    hyperlimit::point2_equal(&left, &right, PREDICATE_POLICY)
         .value()
         .unwrap_or(false)
 }
@@ -4144,7 +4143,7 @@ fn exact_region_components(region: &PcbRegion) -> Option<Vec<ExactRegionComponen
 
 fn exact_region_components_or_whole(region: &PcbRegion) -> Option<Vec<ExactRegionComponent>> {
     if matches!(
-        region.loop_role_counts(&hypercurve::CurvePolicy::certified()),
+        region.loop_role_counts(&hypercurve::CurvePolicy::STRICT),
         Ok(hypercurve::Classification::Decided((1, 0)))
     ) {
         return Some(vec![ExactRegionComponent {

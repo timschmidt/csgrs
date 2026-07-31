@@ -8,8 +8,9 @@
 //! or rectangular proxies when source data is incomplete. Verify suspect annular
 //! ring, slot, and clearance findings against the drill drawing and CAM import.
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::compare_reals;
 
+use crate::PREDICATE_POLICY;
 use crate::geometry::{
     Rect, RuleGeometryProvenance, SourceGridFacts, SourceUnit, multipolygon_area_scalar,
     multipolygon_to_shapes_scalar,
@@ -430,7 +431,7 @@ fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<s
     let provenance = RuleGeometryProvenance::new("drill-copper-broad-phase", grid);
     let left = provenance.lift_f64(left)?;
     let right = provenance.lift_f64(right)?;
-    compare_reals_with_policy(&left, &right, PredicatePolicy).value()
+    compare_reals(&left, &right, PREDICATE_POLICY).value()
 }
 
 /// Review edge-to-edge spacing between KiCad and sidecar drills.

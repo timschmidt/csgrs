@@ -15,7 +15,7 @@ pub type Scalar = Real;
 
 /// Compare two internal scalars through the workspace predicate policy.
 pub(crate) fn compare(left: &Scalar, right: &Scalar) -> Option<Ordering> {
-    compare_with_policy(left, right, hyperlimit::PredicatePolicy)
+    compare_with_policy(left, right, crate::PREDICATE_POLICY)
 }
 
 /// Compare two internal scalars through an explicit predicate policy.
@@ -24,17 +24,17 @@ pub(crate) fn compare_with_policy(
     right: &Scalar,
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
-    hyperlimit::compare_reals_with_policy(left, right, policy).value()
+    hyperlimit::compare_reals(left, right, policy).value()
 }
 
 /// Classify an internal scalar sign through the workspace predicate policy.
 pub(crate) fn sign(value: &Scalar) -> Option<Sign> {
-    sign_with_policy(value, hyperlimit::PredicatePolicy)
+    sign_with_policy(value, crate::PREDICATE_POLICY)
 }
 
 /// Classify an internal scalar sign through an explicit predicate policy.
 pub(crate) fn sign_with_policy(value: &Scalar, policy: PredicatePolicy) -> Option<Sign> {
-    hyperlimit::classify_real_sign_with_policy(value, policy).value()
+    hyperlimit::classify_real_sign(value, policy).value()
 }
 
 /// Whether two internal scalars are certified equal under the workspace policy.

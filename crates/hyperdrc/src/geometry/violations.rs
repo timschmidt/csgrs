@@ -2,9 +2,10 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::compare_reals;
 
 use super::{Coord, LineString, MultiPolygon, Polygon};
+use crate::PREDICATE_POLICY;
 use crate::Scalar;
 use crate::report::ViolationPolygon;
 
@@ -47,17 +48,16 @@ pub fn multipolygon_to_shapes_scalar(
         .iter()
         .filter_map(|polygon| {
             let area = polygon_area_scalar(polygon)?;
-            (compare_reals_with_policy(&area, min_area, PredicatePolicy).value()
-                == Some(Ordering::Greater))
-            .then(|| ViolationPolygon {
-                area: polygon.unsigned_area(),
-                exterior: ring_to_coordinates(polygon.exterior()),
-                holes: polygon
-                    .interiors()
-                    .iter()
-                    .map(ring_to_coordinates)
-                    .collect(),
-            })
+            (compare_reals(&area, min_area, PREDICATE_POLICY).value() == Some(Ordering::Greater))
+                .then(|| ViolationPolygon {
+                    area: polygon.unsigned_area(),
+                    exterior: ring_to_coordinates(polygon.exterior()),
+                    holes: polygon
+                        .interiors()
+                        .iter()
+                        .map(ring_to_coordinates)
+                        .collect(),
+                })
         })
         .collect()
 }

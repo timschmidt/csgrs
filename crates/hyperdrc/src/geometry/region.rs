@@ -33,7 +33,7 @@ pub fn polygons_to_profile(
         )
         .with_exact_construction_error(error);
     }
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mut material = Vec::new();
     let mut holes = Vec::new();
     for polygon in &polygons {
