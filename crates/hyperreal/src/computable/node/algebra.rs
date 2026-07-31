@@ -932,7 +932,12 @@ impl Computable {
             && form.constant.sign() == Sign::NoSign
         {
             if form.pi.sign() == Sign::NoSign {
-                return Some(form.acos.sign());
+                let endpoint_distance = Self::one().add(form.argument?.negate()).exact_sign()?;
+                return match endpoint_distance {
+                    Sign::Plus => Some(form.acos.sign()),
+                    Sign::NoSign => Some(Sign::NoSign),
+                    Sign::Minus => None,
+                };
             }
             if form.acos.sign() == Sign::NoSign {
                 return Some(form.pi.sign());
@@ -1738,8 +1743,24 @@ impl Computable {
         if Computable::internal_structural_eq(&lo, &hi) {
             return Self::zero();
         }
+        let exact_order = lo
+            .bounded_laurent_rational()
+            .zip(hi.bounded_laurent_rational())
+            .map(|(lo, hi)| {
+                lo.partial_cmp(&hi)
+                    .expect("exact rational ordering is total")
+            });
+        if exact_order == Some(Ordering::Equal) {
+            return Self::zero();
+        }
+        let exact_sign = match exact_order {
+            Some(Ordering::Less) => ExactSignCache::Valid(Sign::Plus),
+            Some(Ordering::Greater) => ExactSignCache::Valid(Sign::Minus),
+            Some(Ordering::Equal) => unreachable!("equal exact endpoints returned above"),
+            None => ExactSignCache::Invalid,
+        };
         Self {
-            internal: Arc::new(Node::new(Approximation::NormalInterval { lo, hi }, BoundCache::Invalid, ExactSignCache::Valid(Sign::Plus))),
+            internal: Arc::new(Node::new(Approximation::NormalInterval { lo, hi }, BoundCache::Invalid, exact_sign)),
             signal: None,
         }
     }

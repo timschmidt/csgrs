@@ -485,6 +485,11 @@ impl Computable {
             }
         }
 
+        if let Some(rational) = self.bounded_laurent_rational() {
+            crate::trace_dispatch!("computable", "acos", "exact-normal-form");
+            return Self::rational(rational).acos();
+        }
+
         if self.exact_sign() == Some(Sign::Plus) {
             // For positive values, acos(x) = 2 atan(sqrt((1-x)/(1+x))). This is the
             // endpoint-friendly path for values near 1.

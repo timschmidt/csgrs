@@ -3,7 +3,8 @@
 #![no_main]
 
 use hyperreal::{
-    CertifiedRealEquality, CertifiedRealSign, Rational, Real, RealSign, StructuralKind,
+    CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, Rational, Real, RealSign,
+    StructuralKind,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -62,10 +63,36 @@ fuzz_target!(|data: &[u8]| {
                 left.certified_eq_until(left, -512),
                 CertifiedRealEquality::Equal { .. }
             ));
-            let _ = left.certified_cmp_until(right, -512);
+            assert_certificates_match_bounded_evaluation(left, right);
         }
     }
 });
+
+fn assert_certificates_match_bounded_evaluation(left: &Real, right: &Real) {
+    let difference = left - right;
+    let [lower, upper] = difference
+        .certified_dyadic_interval(-768)
+        .expect("representative difference has a bounded approximation");
+    let zero = Rational::zero();
+
+    match left.certified_cmp_until(right, -512) {
+        CertifiedRealOrdering::Known { ordering, .. } => match ordering {
+            core::cmp::Ordering::Less => assert!(&upper < &zero),
+            core::cmp::Ordering::Equal => assert!(&lower <= &zero && &upper >= &zero),
+            core::cmp::Ordering::Greater => assert!(&lower > &zero),
+        },
+        CertifiedRealOrdering::Unknown { .. } => {}
+    }
+    match left.certified_eq_until(right, -512) {
+        CertifiedRealEquality::Equal { .. } => {
+            assert!(&lower <= &zero && &upper >= &zero)
+        }
+        CertifiedRealEquality::NotEqual { .. } => {
+            assert!(&upper < &zero || &lower > &zero)
+        }
+        CertifiedRealEquality::Unknown { .. } => {}
+    }
+}
 
 fn assert_bounded_equal(left: &Real, right: &Real) {
     if matches!(

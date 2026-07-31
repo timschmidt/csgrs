@@ -409,6 +409,18 @@ impl Computable {
         let quadrant =
             ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
 
+        if let Some((sine, cosine)) = reduced.integer_pi_atan_sin_cos() {
+            crate::trace_dispatch!("computable", "cos", "reduced-integer-pi-atan-rewrite");
+            return if quadrant.is_zero() {
+                cosine
+            } else if quadrant == *signed::ONE {
+                sine.negate()
+            } else if quadrant == *signed::TWO {
+                cosine.negate()
+            } else {
+                sine
+            };
+        }
         if quadrant.is_zero() {
             Self::prescaled_cos(reduced)
         } else if quadrant == *signed::ONE {
@@ -428,6 +440,18 @@ impl Computable {
         let quadrant =
             ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
 
+        if let Some((sine, cosine)) = reduced.integer_pi_atan_sin_cos() {
+            crate::trace_dispatch!("computable", "sin", "reduced-integer-pi-atan-rewrite");
+            return if quadrant.is_zero() {
+                sine
+            } else if quadrant == *signed::ONE {
+                cosine
+            } else if quadrant == *signed::TWO {
+                sine.negate()
+            } else {
+                cosine.negate()
+            };
+        }
         if quadrant.is_zero() {
             Self::prescaled_sin(reduced)
         } else if quadrant == *signed::ONE {
@@ -500,6 +524,25 @@ impl Computable {
             .sqrt()
     }
 
+    fn integer_pi_atan_sin_cos(&self) -> Option<(Computable, Computable)> {
+        let (sine_sign, cosine_sign, argument) =
+            self.integer_pi_plus_or_minus_atan_argument()?;
+        let inverse_hypotenuse = Self::unit_hypotenuse(&argument).inverse();
+        let sine = argument.multiply(inverse_hypotenuse.clone());
+        Some((
+            if sine_sign == Sign::Minus {
+                sine.negate()
+            } else {
+                sine
+            },
+            if cosine_sign == Sign::Minus {
+                inverse_hypotenuse.negate()
+            } else {
+                inverse_hypotenuse
+            },
+        ))
+    }
+
     /// Cosine of this number.
     pub fn cos(self) -> Computable {
         if let Approximation::Negate(argument) = &self.internal.approximation {
@@ -513,6 +556,10 @@ impl Computable {
         if let Some(argument) = self.atan_argument() {
             crate::trace_dispatch!("computable", "cos", "atan-inverse-rewrite");
             return Self::unit_hypotenuse(&argument).inverse();
+        }
+        if let Some((_, cosine)) = self.integer_pi_atan_sin_cos() {
+            crate::trace_dispatch!("computable", "cos", "integer-pi-atan-rewrite");
+            return cosine;
         }
         if let Some(argument) = self.asin_argument() {
             crate::trace_dispatch!("computable", "cos", "asin-complement-rewrite");
@@ -610,6 +657,10 @@ impl Computable {
             return argument
                 .clone()
                 .multiply(Self::unit_hypotenuse(&argument).inverse());
+        }
+        if let Some((sine, _)) = self.integer_pi_atan_sin_cos() {
+            crate::trace_dispatch!("computable", "sin", "integer-pi-atan-rewrite");
+            return sine;
         }
         if let Some(argument) = self.asin_argument() {
             crate::trace_dispatch!("computable", "sin", "asin-inverse-rewrite");

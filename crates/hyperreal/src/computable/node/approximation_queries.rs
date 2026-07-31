@@ -479,6 +479,11 @@ impl Computable {
             return Some(order);
         }
 
+        if let Some(order) = self.exact_shared_perturbation_order(other) {
+            crate::trace_dispatch!("computable", "compare_to", "exact-shared-perturbation");
+            return Some(order);
+        }
+
         let exact_signs = (self.exact_sign(), other.exact_sign());
         if let (Some(left), Some(right)) = exact_signs {
             match (left, right) {
@@ -529,11 +534,11 @@ impl Computable {
         let other_bound_sign = other_bound.known_sign();
         if let (Some(left), Some(right)) = (self_bound_sign, other_bound_sign) {
             match (left, right) {
-                (Sign::Minus, Sign::Plus) | (Sign::NoSign, Sign::Plus) => {
+                (Sign::Minus, Sign::NoSign | Sign::Plus) | (Sign::NoSign, Sign::Plus) => {
                     crate::trace_dispatch!("computable", "compare_to", "cheap-bound-opposite-sign");
                     return Some(Ordering::Less);
                 }
-                (Sign::Plus, Sign::Minus) | (Sign::Plus, Sign::NoSign) => {
+                (Sign::Plus, Sign::Minus | Sign::NoSign) | (Sign::NoSign, Sign::Minus) => {
                     crate::trace_dispatch!("computable", "compare_to", "cheap-bound-opposite-sign");
                     return Some(Ordering::Greater);
                 }
@@ -594,14 +599,14 @@ impl Computable {
                     "compare_absolute",
                     "dominant-perturbation-self"
                 );
-                Self::compare_absolute_dominant_perturbation(left, right, other, tolerance)
+                Self::dominant_perturbation_order(left, right, other, Some(tolerance))
             } else if Self::internal_structural_eq(right, other) {
                 crate::trace_dispatch!(
                     "computable",
                     "compare_absolute",
                     "dominant-perturbation-self-reversed"
                 );
-                Self::compare_absolute_dominant_perturbation(right, left, other, tolerance)
+                Self::dominant_perturbation_order(right, left, other, Some(tolerance))
             } else {
                 None
             }
@@ -615,14 +620,14 @@ impl Computable {
                     "compare_absolute",
                     "dominant-perturbation-other"
                 );
-                Self::compare_absolute_dominant_perturbation(left, right, self, tolerance)
+                Self::dominant_perturbation_order(left, right, self, Some(tolerance))
             } else if Self::internal_structural_eq(right, self) {
                 crate::trace_dispatch!(
                     "computable",
                     "compare_absolute",
                     "dominant-perturbation-other-reversed"
                 );
-                Self::compare_absolute_dominant_perturbation(right, left, self, tolerance)
+                Self::dominant_perturbation_order(right, left, self, Some(tolerance))
             } else {
                 None
             }
@@ -694,26 +699,9 @@ impl Computable {
                     _ => {}
                 }
             }
-            if let (Some(Some(left_msd)), Some(Some(right_msd))) = (self_msd, other_msd) {
-                if left_msd > tolerance && right_msd < tolerance {
-                    // Cheap MSD bounds can prove a tolerance-separated absolute ordering
-                    // before allocating fresh approximations.
-                    crate::trace_dispatch!(
-                        "computable",
-                        "compare_absolute",
-                        "exact-sign-tolerance-gap"
-                    );
-                    return Ordering::Greater;
-                }
-                if right_msd > tolerance && left_msd < tolerance {
-                    crate::trace_dispatch!(
-                        "computable",
-                        "compare_absolute",
-                        "exact-sign-tolerance-gap"
-                    );
-                    return Ordering::Less;
-                }
-            }
+            // A known magnitude without a known sign cannot order values.
+            // Same-sign values with exact, distinct MSDs already returned
+            // above with the correct negative-value reversal.
         } else if self_sign == other_sign {
             let self_bound = self.cheap_bound();
             let other_bound = other.cheap_bound();

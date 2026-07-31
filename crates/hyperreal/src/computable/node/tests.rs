@@ -563,6 +563,32 @@ mod tests {
     }
 
     #[test]
+    fn compare_to_retains_exact_perturbation_sign_below_refinement_floor() {
+        let base = Computable::pi();
+        let tiny = Computable::rational(
+            Rational::new(2)
+                .powi(BigInt::from(-100))
+                .expect("two is nonzero"),
+        );
+        let above = base.clone().add(tiny.clone());
+        let below = base.clone().add(tiny.negate());
+
+        assert_eq!(
+            above.try_compare_to_until(&base, -16),
+            Some(Ordering::Greater)
+        );
+        assert_eq!(
+            base.try_compare_to_until(&above, -16),
+            Some(Ordering::Less)
+        );
+        assert_eq!(below.try_compare_to_until(&base, -16), Some(Ordering::Less));
+        assert_eq!(
+            base.try_compare_to_until(&below, -16),
+            Some(Ordering::Greater)
+        );
+    }
+
+    #[test]
     fn certified_compare_cascade_matches_separated_full_evaluation_corpus() {
         fn evaluated_order(
             left: &Computable,
@@ -631,6 +657,40 @@ mod tests {
             )));
         assert_eq!(huge.compare_absolute(&base, -40), Ordering::Greater);
         assert_eq!(base.compare_absolute(&huge, -40), Ordering::Less);
+    }
+
+    #[test]
+    fn unsigned_magnitude_facts_do_not_determine_signed_order() {
+        fn with_unsigned_magnitude(value: Computable, msd: Precision) -> Computable {
+            Computable {
+                internal: Arc::new(Node::new(
+                    Approximation::Offset(value, 0),
+                    BoundCache::Valid(BoundInfo::NonZero {
+                        sign: None,
+                        msd: Some(msd),
+                        exact_msd: true,
+                    }),
+                    ExactSignCache::Unknown,
+                )),
+                signal: None,
+            }
+        }
+
+        let large_negative =
+            with_unsigned_magnitude(Computable::rational(Rational::new(-8)), 3);
+        let small_negative = with_unsigned_magnitude(
+            Computable::rational(Rational::fraction(-1, 8).unwrap()),
+            -3,
+        );
+
+        assert_eq!(
+            large_negative.try_compare_to_until(&small_negative, 0),
+            Some(Ordering::Less)
+        );
+        assert_eq!(
+            small_negative.try_compare_to_until(&large_negative, 0),
+            Some(Ordering::Greater)
+        );
     }
 
     #[test]
@@ -1669,6 +1729,40 @@ mod tests {
     }
 
     #[test]
+    fn exact_endpoint_replays_do_not_gain_nonzero_certificates() {
+        let root_two = Computable::sqrt_rational(Rational::new(2));
+        let replayed_one = root_two
+            .clone()
+            .multiply(root_two)
+            .multiply_rational(Rational::fraction(1, 2).unwrap());
+        assert_eq!(replayed_one.exact_rational(), None);
+
+        let raw_acos = Computable::acos_positive(replayed_one.clone());
+        assert_eq!(raw_acos.approx(-96), BigInt::zero());
+        assert_eq!(raw_acos.exact_sign(), None);
+        assert_eq!(raw_acos.inverse_trig_linear_sign(), Some(Sign::NoSign));
+        assert_eq!(
+            raw_acos.try_compare_to_until(&Computable::zero(), -64),
+            None
+        );
+
+        let normalized_acos = replayed_one.clone().acos();
+        assert_eq!(normalized_acos.exact_sign(), Some(Sign::NoSign));
+        assert_eq!(
+            normalized_acos.try_compare_to(&Computable::zero()),
+            Some(Ordering::Equal)
+        );
+
+        let interval = Computable::normal_interval(replayed_one, Computable::one());
+        assert_eq!(interval.approx(-96), BigInt::zero());
+        assert_eq!(interval.exact_sign(), Some(Sign::NoSign));
+
+        let reversed =
+            Computable::normal_interval(Computable::one(), Computable::zero());
+        assert_eq!(reversed.exact_sign(), Some(Sign::Minus));
+    }
+
+    #[test]
     fn expm1_preserves_small_argument_and_sign() {
         let tiny = Computable::rational(Rational::fraction(1, 1_000_000).unwrap());
         assert_eq!(tiny.clone().expm1().exact_sign(), Some(Sign::Plus));
@@ -1852,6 +1946,36 @@ mod tests {
         assert!(Computable::internal_structural_eq(
             &inverse_root_three.atan(),
             &sixth_pi,
+        ));
+    }
+
+    #[test]
+    fn integer_pi_atan_replay_survives_nested_half_pi_cancellation() {
+        let argument = Computable::rational(
+            Rational::fraction(3, 4).expect("four is nonzero"),
+        );
+        let atan = argument.clone().atan();
+        let angle = atan.negate().add(Computable::pi());
+        let (_, _, retained) = angle
+            .integer_pi_plus_or_minus_atan_argument()
+            .expect("pi minus atan must retain its inverse-trig argument");
+        assert!(Computable::internal_structural_eq(&retained, &argument));
+
+        let half_pi = Computable::pi().shift_right(1);
+        let reduced = angle
+            .add(half_pi.clone().negate())
+            .add(half_pi.negate());
+        let (_, _, retained) = reduced
+            .integer_pi_plus_or_minus_atan_argument()
+            .expect("nested half-pi cancellation must retain its inverse-trig argument");
+        assert!(Computable::internal_structural_eq(&retained, &argument));
+        assert!(Computable::internal_structural_eq(
+            &reduced.clone().sin(),
+            &Computable::rational(Rational::fraction(-3, 5).expect("five is nonzero")),
+        ));
+        assert!(Computable::internal_structural_eq(
+            &reduced.cos(),
+            &Computable::rational(Rational::fraction(4, 5).expect("five is nonzero")),
         ));
     }
 

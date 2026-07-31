@@ -4291,6 +4291,20 @@ mod tests {
     }
 
     #[test]
+    fn nested_half_pi_reduction_preserves_rational_atan_trig() {
+        let argument = Real::new(Rational::fraction(3, 4).unwrap());
+        let angle = Real::pi() - argument.atan().unwrap();
+        let half_pi = (Real::pi() / Real::from(2)).unwrap();
+        let reduced = angle - &half_pi - half_pi;
+
+        assert_eq!(
+            reduced.clone().sin(),
+            Real::new(Rational::fraction(-3, 5).unwrap())
+        );
+        assert_eq!(reduced.cos(), Real::new(Rational::fraction(4, 5).unwrap()));
+    }
+
+    #[test]
     fn atan2_sqrt_three_anchor_matches_pi_third() {
         // atan2(sqrt(3), 1) = pi/3 exactly via Real::atan's sqrt(3) anchor.
         let sqrt_three = Real::from(3_i32).sqrt().unwrap();

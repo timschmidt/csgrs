@@ -710,14 +710,13 @@ impl Computable {
                 Approximation::PrescaledCosHalfPiMinusRational(_)
                 | Approximation::PrescaledSinHalfPiMinusRational(_)
                 | Approximation::PrescaledCotHalfPiMinusRational(_) => Some(Some(Sign::Plus)),
-                Approximation::AcosPositive(_)
-                | Approximation::AcosPositiveRational(_)
+                Approximation::AcosPositiveRational(_)
                 | Approximation::AcosNegativeRational(_)
                 | Approximation::AcoshNearOne(_)
                 | Approximation::AcoshDirect(_)
                 | Approximation::Erfc(_)
-                | Approximation::NormalSf(_)
-                | Approximation::NormalInterval { .. } => Some(Some(Sign::Plus)),
+                | Approximation::NormalSf(_) => Some(Some(Sign::Plus)),
+                Approximation::AcosPositive(_) | Approximation::NormalInterval { .. } => Some(None),
                 Approximation::LogPnorm(_)
                 | Approximation::LogNormalSf(_)
                 | Approximation::LogDnorm(_) => Some(Some(Sign::Minus)),

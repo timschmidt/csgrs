@@ -210,11 +210,33 @@ impl Computable {
         compare_nodes(&left.internal, &right.internal)
     }
 
-    fn compare_absolute_dominant_perturbation(
+    fn exact_shared_perturbation_order(&self, other: &Self) -> Option<Ordering> {
+        if let Approximation::Add(left, right) = &self.internal.approximation {
+            if Computable::internal_structural_eq(left, other) {
+                return Self::dominant_perturbation_order(left, right, other, None);
+            }
+            if Computable::internal_structural_eq(right, other) {
+                return Self::dominant_perturbation_order(right, left, other, None);
+            }
+        }
+        if let Approximation::Add(left, right) = &other.internal.approximation {
+            if Computable::internal_structural_eq(left, self) {
+                return Self::dominant_perturbation_order(left, right, self, None)
+                    .map(Ordering::reverse);
+            }
+            if Computable::internal_structural_eq(right, self) {
+                return Self::dominant_perturbation_order(right, left, self, None)
+                    .map(Ordering::reverse);
+            }
+        }
+        None
+    }
+
+    fn dominant_perturbation_order(
         base: &Self,
         perturbation: &Self,
         comparable: &Self,
-        tolerance: Precision,
+        tolerance: Option<Precision>,
     ) -> Option<Ordering> {
         if !Computable::internal_structural_eq(base, comparable) {
             return None;
@@ -222,15 +244,20 @@ impl Computable {
 
         let (perturb_sign, perturb_msd) = perturbation.planning_sign_and_msd();
         let perturb_sign = perturb_sign?;
-        let perturb_msd = perturb_msd.flatten();
-
-        if perturb_sign == Sign::NoSign || perturb_msd.is_some_and(|msd| msd < tolerance) {
+        if tolerance.is_some_and(|tolerance| {
+            perturb_msd
+                .flatten()
+                .is_some_and(|msd| msd < tolerance)
+        }) {
             return Some(Ordering::Equal);
         }
 
         // `(base + perturbation) - base` is exactly the perturbation. The
         // ordering therefore depends only on its sign; the sign or magnitude
-        // of a negative base must not reverse the comparison.
+        // of a negative base must not reverse the comparison. Exact comparison
+        // passes no tolerance and can retain that proof below its refinement
+        // floor; absolute-tolerance comparison may deliberately collapse a
+        // smaller perturbation to `Equal` above.
         match perturb_sign {
             Sign::Minus => Some(Ordering::Less),
             Sign::NoSign => Some(Ordering::Equal),
@@ -576,7 +603,11 @@ impl Computable {
         // public construction of endpoint-heavy inverse trig expressions.
         crate::trace_dispatch!("computable", "constructor", "acos-positive-deferred");
         Self {
-            internal: Arc::new(Node::new(Approximation::AcosPositive(value), BoundCache::Invalid, ExactSignCache::Valid(Sign::Plus))),
+            // A positive argument may still be exactly one, where acos is
+            // zero. The public constructor normalizes covered exact replay
+            // forms first; unsupported forms must remain Unknown rather than
+            // carrying a false strictly-positive certificate.
+            internal: Arc::new(Node::new(Approximation::AcosPositive(value), BoundCache::Invalid, ExactSignCache::Invalid)),
             signal: None,
         }
     }
