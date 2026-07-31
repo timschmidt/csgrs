@@ -147,6 +147,37 @@ fn bench_exact_triangulation(c: &mut Criterion) {
         })
     });
 
+    let nonconvex_cavity_points = vec![
+        p(r(-2087), r(-1476)),
+        p(r(-2676), r(-124)),
+        p(r(-1936), r(-2394)),
+        p(r(-2561), r(-766)),
+        p(r(-1509), r(-832)),
+        p(r(-2582), r(-618)),
+    ];
+    let nonconvex_cavity_constraint = [Constraint::new(1, 2)];
+    c.bench_function("exact_cdt_nonconvex_cavity_recovery", |b| {
+        b.iter(|| {
+            hypertri::cdt::constrained_delaunay(
+                &APPROX,
+                &nonconvex_cavity_points,
+                &nonconvex_cavity_constraint,
+            )
+            .unwrap()
+        })
+    });
+
+    let nearly_collinear_hull = vec![
+        p(r(-905), r(756)),
+        p(r(-1490), r(702)),
+        p(r(-1611), r(691)),
+        p(r(-2273), r(-576)),
+        p(r(-385), r(-1400)),
+    ];
+    c.bench_function("exact_delaunay_supertriangle_expansion", |b| {
+        b.iter(|| hypertri::cdt::delaunay(&APPROX, &nearly_collinear_hull).unwrap())
+    });
+
     let located_delaunay_points = (0..400_i64)
         .map(|index| {
             p(

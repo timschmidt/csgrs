@@ -55,6 +55,23 @@ fn has_undirected_edge(edges: &[Constraint], expected: Constraint) -> bool {
     })
 }
 
+fn assert_certified_convex_hull_cdt(points: &[ExactPoint], constraints: &[Constraint]) {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let context = TriangulationContext::new(policy);
+        let outcome = hypertri::cdt::constrained_delaunay(&context, points, constraints).unwrap();
+
+        assert_eq!(
+            outcome.certainty,
+            hypertri::TriangulationCertainty::Certified
+        );
+        outcome.value.validate(&context).unwrap();
+        outcome
+            .value
+            .validate_unconstrained_edges_are_delaunay(&context)
+            .unwrap();
+    }
+}
+
 proptest! {
     #![proptest_config(ProptestConfig {
         cases: 256,
@@ -88,6 +105,96 @@ proptest! {
                 .flatten()
                 .all(|&index| index < points.len())
         );
+    }
+
+    #[test]
+    fn fuzz_cdt_recovers_two_finite_constraints(
+        coordinates in prop::collection::vec((-100i32..100, -100i32..100), 5..16),
+        selectors in prop::collection::vec((any::<u16>(), any::<u16>()), 2..3),
+    ) {
+        let mut unique = coordinates.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        prop_assume!(unique.len() == coordinates.len());
+        let (a, b) = (coordinates[0], coordinates[1]);
+        prop_assume!(coordinates[2..].iter().any(|&(x, y)| {
+            let ab = (i64::from(b.0 - a.0), i64::from(b.1 - a.1));
+            let ap = (i64::from(x - a.0), i64::from(y - a.1));
+            ab.0 * ap.1 - ab.1 * ap.0 != 0
+        }));
+
+        let mut constraints = selectors
+            .into_iter()
+            .map(|(from, to)| {
+                let from = usize::from(from) % coordinates.len();
+                let to = (from + 1 + usize::from(to) % (coordinates.len() - 1))
+                    % coordinates.len();
+                Constraint::new(from, to)
+            })
+            .collect::<Vec<_>>();
+        let first = (
+            constraints[0].from.min(constraints[0].to),
+            constraints[0].from.max(constraints[0].to),
+        );
+        if (
+            constraints[1].from.min(constraints[1].to),
+            constraints[1].from.max(constraints[1].to),
+        ) == first
+        {
+            constraints[1].to = (0..coordinates.len())
+                .find(|&to| {
+                    to != constraints[1].from
+                        && (
+                            constraints[1].from.min(to),
+                            constraints[1].from.max(to),
+                        ) != first
+                })
+                .unwrap();
+        }
+        let points = coordinates
+            .into_iter()
+            .map(|(x, y)| p(x, y))
+            .collect::<Vec<_>>();
+
+        assert_certified_convex_hull_cdt(&points, &constraints);
+    }
+
+    #[test]
+    fn fuzz_cdt_recovers_three_edge_fans(
+        coordinates in prop::collection::vec((-100i32..100, -100i32..100), 5..16),
+        anchor_selector in any::<u16>(),
+        target_selectors in prop::collection::vec(any::<u16>(), 3..4),
+    ) {
+        let mut unique = coordinates.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        prop_assume!(unique.len() == coordinates.len());
+        let (a, b) = (coordinates[0], coordinates[1]);
+        prop_assume!(coordinates[2..].iter().any(|&(x, y)| {
+            let ab = (i64::from(b.0 - a.0), i64::from(b.1 - a.1));
+            let ap = (i64::from(x - a.0), i64::from(y - a.1));
+            ab.0 * ap.1 - ab.1 * ap.0 != 0
+        }));
+
+        let anchor = usize::from(anchor_selector) % coordinates.len();
+        let mut used = vec![anchor];
+        let constraints = target_selectors
+            .into_iter()
+            .map(|selector| {
+                let mut target = usize::from(selector) % coordinates.len();
+                while used.contains(&target) {
+                    target = (target + 1) % coordinates.len();
+                }
+                used.push(target);
+                Constraint::new(anchor, target)
+            })
+            .collect::<Vec<_>>();
+        let points = coordinates
+            .into_iter()
+            .map(|(x, y)| p(x, y))
+            .collect::<Vec<_>>();
+
+        assert_certified_convex_hull_cdt(&points, &constraints);
     }
 
     #[test]

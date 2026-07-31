@@ -1,9 +1,10 @@
 //! Constrained Delaunay triangulation API foundation.
 //!
 //! The implementation handles exact incremental Delaunay point sets, planarizes
-//! crossing constraints with exact Steiner points, recovers protected edges,
-//! and re-legalizes unprotected edges. The production path owns its topology
-//! implementation and has no external triangulation dependency.
+//! crossing constraints with exact Steiner points, recovers protected edges by
+//! flipping or exact cavity retriangulation, and re-legalizes unprotected
+//! edges. The production path owns its topology implementation and has no
+//! external triangulation dependency.
 
 use crate::cdt_constraints;
 use crate::context::{TriangulationContext, TriangulationOutcome};
@@ -257,7 +258,8 @@ fn delaunay_spatial_inner(
 ///
 /// The constrained path appends exact intersection vertices for proper
 /// constraint crossings, normalizes constraints into internal PSLG
-/// subsegments, and recovers those subsegments with exact edge flips.
+/// subsegments, and recovers those subsegments with exact edge flips or exact
+/// cavity retriangulation.
 ///
 /// Closed polygon-with-hole inputs are routed through the boundary-preserving
 /// polygon path when `earcut` is enabled. Other planar straight-line graphs are
@@ -279,13 +281,8 @@ pub(crate) fn constrained_delaunay_inner(
     points: &[ExactPoint],
     constraints: &[Constraint],
 ) -> Result<ConstrainedDelaunayTriangulation> {
-    let diagnostic = std::env::var_os("HYPERMESH_OUTPUT_DIAGNOSTIC").is_some();
-    let started = std::time::Instant::now();
     validate_constraints(points.len(), constraints)?;
     validate_unique_points(kernel, points)?;
-    if diagnostic {
-        eprintln!("hypertri CDT unique: {:?}", started.elapsed());
-    }
 
     if constraints.is_empty() {
         let triangulation = delaunay_inner(kernel, points)?;
@@ -295,13 +292,7 @@ pub(crate) fn constrained_delaunay_inner(
             Vec::new(),
             triangulation.triangles,
         );
-        crate::cdt_validate::validate_constrained_topology(
-            kernel,
-            &constrained.points,
-            &constrained.constraint_edges,
-            &constrained.triangles,
-        )?;
-        crate::cdt_validate::validate_constrained_delaunay(
+        crate::cdt_validate::validate_constrained_convex_hull_delaunay(
             kernel,
             &constrained.points,
             &constrained.constraint_edges,
@@ -311,20 +302,9 @@ pub(crate) fn constrained_delaunay_inner(
     }
 
     let planar = crate::cdt_insert::planarize_constraints(kernel, points, constraints)?;
-    if diagnostic {
-        eprintln!(
-            "hypertri CDT planarize: {:?}, points={}, constraints={}",
-            started.elapsed(),
-            planar.points.len(),
-            planar.constraints.len()
-        );
-    }
     let points = planar.points;
     let internal_constraints = planar.constraints;
     validate_constraint_geometry(kernel, &points, &internal_constraints)?;
-    if diagnostic {
-        eprintln!("hypertri CDT validate PSLG: {:?}", started.elapsed());
-    }
 
     if let Some(polygon) =
         cdt_constraints::polygon_from_closed_constraints(kernel, &points, &internal_constraints)?
@@ -386,49 +366,29 @@ pub(crate) fn constrained_delaunay_inner(
         }
     }
 
-    if let Some(triangulation) =
-        constrained_edges_already_delaunay(kernel, &points, &internal_constraints, constraints)?
-    {
-        return Ok(triangulation);
-    }
-    if diagnostic {
-        eprintln!("hypertri CDT base probe: {:?}", started.elapsed());
-    }
+    let base = match constrained_edges_already_delaunay(
+        kernel,
+        &points,
+        &internal_constraints,
+        constraints,
+    )? {
+        Ok(triangulation) => return Ok(triangulation),
+        Err(base) => base,
+    };
 
-    let base = delaunay_inner(kernel, &points)?;
-    if diagnostic {
-        eprintln!(
-            "hypertri CDT base repeat: {:?}, triangles={}",
-            started.elapsed(),
-            base.triangles().len()
-        );
-    }
     let triangles = crate::cdt_insert::insert_constraints(
         kernel,
         &points,
         base.triangles().to_vec(),
         &internal_constraints,
     )?;
-    if diagnostic {
-        eprintln!(
-            "hypertri CDT recovery: {:?}, triangles={}",
-            started.elapsed(),
-            triangles.len()
-        );
-    }
     let triangulation = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
         points,
         constraints.to_vec(),
         internal_constraints,
         triangles,
     );
-    crate::cdt_validate::validate_constrained_topology(
-        kernel,
-        &triangulation.points,
-        &triangulation.constraint_edges,
-        &triangulation.triangles,
-    )?;
-    crate::cdt_validate::validate_constrained_delaunay(
+    crate::cdt_validate::validate_constrained_convex_hull_delaunay(
         kernel,
         &triangulation.points,
         &triangulation.constraint_edges,
@@ -622,9 +582,27 @@ fn incremental_delaunay_in_order(
     points: &[Point2],
     insertion_order: &[usize],
 ) -> Result<Vec<Triangle>> {
+    let two = ExactKernel::from_i64(2);
+    let mut super_scale = ExactKernel::from_i64(64);
+    loop {
+        let triangles =
+            incremental_delaunay_attempt(kernel, points, insertion_order, &super_scale)?;
+        if crate::cdt_validate::triangulates_convex_hull(kernel, points, &triangles)? {
+            return Ok(triangles);
+        }
+        super_scale = ExactKernel::mul(&super_scale, &two);
+    }
+}
+
+fn incremental_delaunay_attempt(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    insertion_order: &[usize],
+    super_scale: &Real,
+) -> Result<Vec<Triangle>> {
     let mut work_points = points.to_vec();
     let first_super = work_points.len();
-    work_points.extend(super_triangle(kernel, points)?);
+    work_points.extend(super_triangle(kernel, points, super_scale)?);
 
     // This is the Bowyer-Watson empty-circumcircle update: remove every
     // triangle whose circumcircle contains the inserted point, then stitch the
@@ -689,7 +667,6 @@ fn incremental_delaunay_in_order(
                 add_cavity_edge(&mut cavity, Edge::new(triangle[2], triangle[0]));
             }
         }
-
         triangles = triangles
             .into_iter()
             .zip(bad)
@@ -945,7 +922,7 @@ fn add_cavity_edge(edges: &mut Vec<Edge>, edge: Edge) {
     }
 }
 
-fn super_triangle(kernel: &ExactKernel, points: &[Point2]) -> Result<[Point2; 3]> {
+fn super_triangle(kernel: &ExactKernel, points: &[Point2], scale: &Real) -> Result<[Point2; 3]> {
     let bounds = Bounds::from_points(kernel, points)?;
     let dx = ExactKernel::sub(&bounds.max_x, &bounds.min_x);
     let dy = ExactKernel::sub(&bounds.max_y, &bounds.min_y);
@@ -956,7 +933,7 @@ fn super_triangle(kernel: &ExactKernel, points: &[Point2]) -> Result<[Point2; 3]
     };
     let one = ExactKernel::from_i64(1);
     let two = ExactKernel::from_i64(2);
-    let radius = ExactKernel::add(&ExactKernel::mul(&span, &ExactKernel::from_i64(64)), &one);
+    let radius = ExactKernel::add(&ExactKernel::mul(&span, scale), &one);
     let double_radius = ExactKernel::mul(&radius, &two);
     let mid_x = ExactKernel::div(&ExactKernel::add(&bounds.min_x, &bounds.max_x), &two)?;
     let mid_y = ExactKernel::div(&ExactKernel::add(&bounds.min_y, &bounds.max_y), &two)?;
@@ -1121,14 +1098,17 @@ fn constrained_edges_already_delaunay(
     points: &[ExactPoint],
     constraints: &[Constraint],
     public_constraints: &[Constraint],
-) -> Result<Option<ConstrainedDelaunayTriangulation>> {
-    let triangulation = delaunay_inner(kernel, points)?;
+) -> Result<std::result::Result<ConstrainedDelaunayTriangulation, DelaunayTriangulation>> {
+    let triangulation = if points.len() >= 32 {
+        delaunay_spatial_inner(kernel, points)?
+    } else {
+        delaunay_inner(kernel, points)?
+    };
 
-    // This accepts a narrow, exact subset of CDT inputs before full edge
-    // insertion is ported: if every requested constrained segment already
-    // exists as an edge in the unconstrained Delaunay triangulation, no DCEL
-    // mutation or legalization is required. The empty-circumcircle property is
-    // inherited from the Delaunay triangulation itself.
+    // Exact fast path: if every requested constrained segment already exists
+    // in the unconstrained Delaunay triangulation, no topology mutation or
+    // legalization is required. The empty-circumcircle property is inherited
+    // from the Delaunay triangulation itself.
     if constraints
         .iter()
         .all(|constraint| triangulation_has_edge(triangulation.triangles(), *constraint))
@@ -1140,22 +1120,16 @@ fn constrained_edges_already_delaunay(
             constraints.to_vec(),
             triangles,
         );
-        crate::cdt_validate::validate_constrained_topology(
+        crate::cdt_validate::validate_constrained_convex_hull_delaunay(
             kernel,
             &constrained.points,
             &constrained.constraint_edges,
             &constrained.triangles,
         )?;
-        crate::cdt_validate::validate_constrained_delaunay(
-            kernel,
-            &constrained.points,
-            &constrained.constraint_edges,
-            &constrained.triangles,
-        )?;
-        return Ok(Some(constrained));
+        return Ok(Ok(constrained));
     }
 
-    Ok(None)
+    Ok(Err(triangulation))
 }
 
 fn triangulation_has_edge(triangles: &[Triangle], constraint: Constraint) -> bool {
@@ -1296,6 +1270,23 @@ mod tests {
     }
 
     #[test]
+    fn empty_constraint_set_accepts_collinear_points() {
+        let points = vec![p(0, 0), p(1, 1), p(2, 2), p(3, 3), p(4, 4)];
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = TriangulationContext::new(policy);
+            let outcome = constrained_delaunay(&context, &points, &[]).unwrap();
+
+            assert_eq!(outcome.certainty, crate::TriangulationCertainty::Certified);
+            assert!(outcome.value.triangles().is_empty());
+            outcome.value.validate(&context).unwrap();
+        }
+    }
+
+    #[test]
     fn delaunay_rejects_duplicate_points() {
         let points = vec![p(0, 0), p(1, 0), p(1, 0), p(0, 1)];
 
@@ -1424,6 +1415,92 @@ mod tests {
                     .any(|triangle| triangle.contains(&index))
             );
         }
+    }
+
+    #[test]
+    fn nearly_collinear_hull_expands_super_triangle_until_complete() {
+        let points = vec![
+            p(-905, 756),
+            p(-1490, 702),
+            p(-1611, 691),
+            p(-2273, -576),
+            p(-385, -1400),
+        ];
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = TriangulationContext::new(policy);
+            let outcome = delaunay(&context, &points).unwrap();
+
+            assert_eq!(outcome.certainty, crate::TriangulationCertainty::Certified);
+            assert_eq!(outcome.value.triangles().len(), 4);
+            assert!(triangulation_has_edge(
+                outcome.value.triangles(),
+                Constraint::new(0, 2)
+            ));
+            outcome.value.validate(&context).unwrap();
+
+            let constrained =
+                constrained_delaunay(&context, &points, &[Constraint::new(0, 2)]).unwrap();
+            assert_eq!(
+                constrained.certainty,
+                crate::TriangulationCertainty::Certified
+            );
+            constrained.value.validate(&context).unwrap();
+        }
+    }
+
+    #[test]
+    fn general_constraint_recovers_across_nonconvex_flip_strip() {
+        let points = vec![
+            p(-2087, -1476),
+            p(-2676, -124),
+            p(-1936, -2394),
+            p(-2561, -766),
+            p(-1509, -832),
+            p(-2582, -618),
+        ];
+        let constraint = Constraint::new(1, 2);
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = TriangulationContext::new(policy);
+            let outcome = constrained_delaunay(&context, &points, &[constraint]).unwrap();
+
+            assert_eq!(outcome.certainty, crate::TriangulationCertainty::Certified);
+            assert!(triangulation_has_edge(
+                outcome.value.triangles(),
+                constraint
+            ));
+            outcome.value.validate(&context).unwrap();
+            outcome
+                .value
+                .validate_unconstrained_edges_are_delaunay(&context)
+                .unwrap();
+        }
+    }
+
+    #[test]
+    fn validation_rejects_locally_legal_incomplete_convex_hull() {
+        let points = vec![
+            p(-905, 756),
+            p(-1490, 702),
+            p(-1611, 691),
+            p(-2273, -576),
+            p(-385, -1400),
+        ];
+        let incomplete =
+            DelaunayTriangulation::from_parts(points, vec![[0, 1, 3], [1, 2, 3], [0, 3, 4]]);
+
+        assert_eq!(
+            incomplete.validate(&APPROX).unwrap_err(),
+            Error::InvalidInput {
+                reason: "triangulation does not cover the convex hull"
+            }
+        );
     }
 
     #[cfg(feature = "earcut")]

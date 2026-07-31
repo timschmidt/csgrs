@@ -2,6 +2,7 @@
 
 #[cfg(feature = "cdt")]
 use crate::cdt::{ConstrainedDelaunayTriangulation, DelaunayTriangulation};
+#[cfg(any(feature = "earcut", feature = "cdt"))]
 use crate::context::{TriangulationContext, TriangulationOutcome};
 #[cfg(any(feature = "earcut", feature = "cdt"))]
 use crate::error::{Error, Result};

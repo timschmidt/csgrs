@@ -12,7 +12,7 @@ fn p(x: i32, y: i32) -> ExactPoint {
     Point2::new(Real::from(x), Real::from(y))
 }
 
-#[cfg(any(feature = "earcut", feature = "cdt", feature = "f64-interop"))]
+#[cfg(any(feature = "earcut", feature = "cdt"))]
 fn q(xn: i64, xd: u64, yn: i64, yd: u64) -> ExactPoint {
     Point2::new(
         Real::from(Rational::fraction(xn, xd).unwrap()),
