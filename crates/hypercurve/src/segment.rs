@@ -938,6 +938,29 @@ impl CircularArc2 {
         fraction: &Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<(Self, Self)>> {
+        let middle = match self.point_at_sweep_fraction(fraction, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.split_at_retained_sweep_point(fraction, middle, policy)
+    }
+
+    /// Splits this arc through an exact point with a retained sweep fraction.
+    ///
+    /// `point` must be retained exact contact evidence already certified on
+    /// this arc at `fraction`. This method validates the strict fraction but
+    /// deliberately does not re-solve point incidence: doing so would discard
+    /// the caller's contact certificate and reconstruct the same image through
+    /// trigonometric predicates. The retained point becomes the shared
+    /// endpoint while the source arc's angular lineage is preserved.
+    pub fn split_at_retained_sweep_point(
+        &self,
+        fraction: &Real,
+        point: Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<(Self, Self)>> {
         match compare_reals(fraction, &Real::zero(), policy) {
             Some(Ordering::Greater) => {}
             Some(_) => return Err(CurveError::InvalidCurveParameter),
@@ -956,17 +979,11 @@ impl CircularArc2 {
                 ));
             }
         }
-        let middle = match self.point_at_sweep_fraction(fraction, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
         let first_range = ParamRange::new(Real::zero(), fraction.clone());
         let second_range = ParamRange::new(fraction.clone(), Real::one());
         let first = match self.fragment_between_sweep_range(
             self.start().clone(),
-            middle.clone(),
+            point.clone(),
             &first_range,
             policy,
         )? {
@@ -976,7 +993,7 @@ impl CircularArc2 {
             }
         };
         let second = match self.fragment_between_sweep_range(
-            middle,
+            point,
             self.end().clone(),
             &second_range,
             policy,

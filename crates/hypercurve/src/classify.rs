@@ -155,6 +155,10 @@ pub(crate) fn orient2_real_expr(from: &Point2, to: &Point2, point: &Point2) -> R
 }
 
 pub(crate) fn real_sign(value: &Real, policy: &CurvePolicy) -> Option<RealSign> {
+    if value.zero_status() == ZeroStatus::Zero {
+        return Some(RealSign::Zero);
+    }
+
     if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let Some(value) = value.to_f64_lossy()
         && value.is_finite()

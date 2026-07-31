@@ -1562,6 +1562,10 @@ fn intersect_same_circle_arcs(
     b: &CircularArc2,
     policy: &CurvePolicy,
 ) -> CurveResult<ArcArcIntersection> {
+    if same_circle_minor_arcs_decided_axis_separated(a, b, policy) {
+        return Ok(ArcArcIntersection::None);
+    }
+
     // Same-circle arc overlaps are degenerate intersections, not ordinary
     // circle-circle points. For the minor/semicircle arc model, the common
     // sweep is bounded by source arc
@@ -1611,6 +1615,68 @@ fn intersect_same_circle_arcs(
             reason: UncertaintyReason::Unsupported,
         }),
     }
+}
+
+fn same_circle_minor_arcs_decided_axis_separated(
+    first: &CircularArc2,
+    second: &CircularArc2,
+    policy: &CurvePolicy,
+) -> bool {
+    if !matches!(
+        crate::arc_bezier::classify_sweep(first),
+        Ok(crate::arc_bezier::ArcSweepKind::Minor)
+    ) || !matches!(
+        crate::arc_bezier::classify_sweep(second),
+        Ok(crate::arc_bezier::ArcSweepKind::Minor)
+    ) {
+        return false;
+    }
+
+    let strict_side = |first: &Real, second: &Real, center: &Real| {
+        let first = compare_reals(first, center, policy)?;
+        let second = compare_reals(second, center, policy)?;
+        match (first, second) {
+            (Ordering::Less, Ordering::Less) => Some((Ordering::Less, true)),
+            (Ordering::Greater, Ordering::Greater) => Some((Ordering::Greater, true)),
+            (Ordering::Less | Ordering::Equal, Ordering::Less | Ordering::Equal)
+                if first == Ordering::Less || second == Ordering::Less =>
+            {
+                Some((Ordering::Less, false))
+            }
+            (Ordering::Greater | Ordering::Equal, Ordering::Greater | Ordering::Equal)
+                if first == Ordering::Greater || second == Ordering::Greater =>
+            {
+                Some((Ordering::Greater, false))
+            }
+            _ => None,
+        }
+    };
+    for (first_start, first_end, second_start, second_end, center) in [
+        (
+            first.start().x(),
+            first.end().x(),
+            second.start().x(),
+            second.end().x(),
+            first.center().x(),
+        ),
+        (
+            first.start().y(),
+            first.end().y(),
+            second.start().y(),
+            second.end().y(),
+            first.center().y(),
+        ),
+    ] {
+        if let (Some((first_side, first_strict)), Some((second_side, second_strict))) = (
+            strict_side(first_start, first_end, center),
+            strict_side(second_start, second_end, center),
+        ) && first_side != second_side
+            && (first_strict || second_strict)
+        {
+            return true;
+        }
+    }
+    false
 }
 
 fn insert_same_circle_candidate(
@@ -2056,7 +2122,11 @@ fn line_point_at_for_policy(
         }
     }
 
-    Ok(line.point_at(line_param.clone()))
+    let parameter = line_param
+        .exact_rational_normal_form()
+        .map(Real::new)
+        .unwrap_or_else(|| line_param.clone());
+    Ok(line.point_at(parameter))
 }
 
 fn point_on_arc_endpoint(arc: &CircularArc2, point: &Point2, policy: &CurvePolicy) -> Option<bool> {

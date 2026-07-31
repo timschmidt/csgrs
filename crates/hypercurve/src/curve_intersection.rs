@@ -717,22 +717,24 @@ fn build_native_coincident_arc_evidence(
 
     for (first_span_index, first_fragment) in first_fragments.iter().enumerate() {
         let (first_start, first_end) = first_fragment.curve().endpoints();
-        let first_span = CircularArc2::try_from_center(
+        let first_span = CircularArc2::new_with_certified_radius(
             first_start.clone(),
             first_end.clone(),
             first_arc.center().clone(),
+            first_arc.radius_squared(),
             first_arc.is_clockwise(),
-        )
-        .map_err(|cause| native_arc_parameter_error(first, cause))?;
+            None,
+        );
         for (second_span_index, second_fragment) in second_fragments.iter().enumerate() {
             let (second_start, second_end) = second_fragment.curve().endpoints();
-            let second_span = CircularArc2::try_from_center(
+            let second_span = CircularArc2::new_with_certified_radius(
                 second_start.clone(),
                 second_end.clone(),
-                second_arc.center().clone(),
+                first_arc.center().clone(),
+                first_arc.radius_squared(),
                 second_arc.is_clockwise(),
-            )
-            .map_err(|cause| native_arc_parameter_error(second, cause))?;
+                None,
+            );
             let relation = first_span
                 .intersect_arc(&second_span, policy)
                 .map_err(|cause| native_arc_parameter_error(first, cause))?;
@@ -978,11 +980,14 @@ fn arc_span_indices_for_point(
     let mut indices = Vec::new();
     for (span_index, fragment) in fragments.iter().enumerate() {
         let (start, end) = fragment.curve().endpoints();
-        let span =
-            CircularArc2::try_from_center(start, end, arc.center().clone(), arc.is_clockwise())
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Intersection, curve.family(), cause)
-                })?;
+        let span = CircularArc2::new_with_certified_radius(
+            start,
+            end,
+            arc.center().clone(),
+            arc.radius_squared(),
+            arc.is_clockwise(),
+            None,
+        );
         match span.contains_sweep_point(point, policy) {
             Classification::Decided(true) => indices.push(span_index),
             Classification::Decided(false) => {}
