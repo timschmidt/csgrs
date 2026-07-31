@@ -5358,7 +5358,8 @@ remain internal implementation details. Immediate `structural_facts` methods
 return scheduling evidence directly, while `Contour2::classify_points` and
 `LineArcRegion2::classify_points` reuse one internal index across an explicit
 point batch. `hyperbrep` follows the same model through
-`BrepPlanarFaceRegion::classify_uv_points`.
+its transient `LineArcRegion2::classify_point` face-region query rather than a
+retained public query facade.
 
 The removal deleted 1,060 net production lines from `hypercurve` and 90 from
 `hyperbrep`; tests, fuzzers, benchmarks, and documentation were migrated away
