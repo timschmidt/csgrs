@@ -692,6 +692,91 @@ fn benchmark_nurbs_evaluation(runner: &Runner) {
     });
 }
 
+fn benchmark_nurbs_editing(runner: &Runner) {
+    let refinement_name = "nurbs_editing/retained_batch_refinement";
+    let elevation_name = "nurbs_editing/retained_degree_elevation";
+    if !runner.group_enabled(refinement_name) && !runner.group_enabled(elevation_name) {
+        return;
+    }
+
+    let control_points = [[0.0, 0.0], [1.0, 3.0], [3.0, 3.0], [5.0, 3.0], [6.0, 0.0]];
+    let weights = [1.0, 2.0, 4.0, 8.0, 16.0];
+    let knots = [0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0, 2.0];
+    let hypercurve_curve = NurbsCurve2::try_new(
+        3,
+        control_points
+            .iter()
+            .map(|point| Point2::new(real(point[0]), real(point[1])))
+            .collect(),
+        weights.iter().copied().map(real).collect(),
+        knots.iter().copied().map(real).collect(),
+        &CurveContext::STRICT,
+    )
+    .expect("valid exact NURBS edit fixture")
+    .into_value();
+    let curvo_curve = CurvoNurbsCurve2D::<f64>::try_new(
+        3,
+        control_points
+            .iter()
+            .zip(weights)
+            .map(|(point, weight)| Point3::new(point[0] * weight, point[1] * weight, weight))
+            .collect(),
+        knots.to_vec(),
+    )
+    .expect("valid finite NURBS edit fixture");
+
+    if runner.group_enabled(refinement_name) {
+        let refined = hypercurve_curve
+            .insert_knots(vec![real(0.5), real(1.5)], &CurveContext::STRICT)
+            .expect("exact retained refinement fixture is valid")
+            .into_value();
+        assert_eq!(refined.control_points().len(), 7);
+        runner.measure(refinement_name, "hypercurve_exact_retained", || {
+            black_box(
+                hypercurve_curve
+                    .insert_knots(vec![real(0.5), real(1.5)], &CurveContext::STRICT)
+                    .expect("exact retained refinement replays")
+                    .into_value(),
+            )
+            .control_points()
+            .len()
+        });
+        runner.measure(refinement_name, "curvo_f64_recomputed", || {
+            let mut curve = curvo_curve.clone();
+            curve
+                .try_refine_knot(vec![0.5, 1.5])
+                .expect("finite refinement fixture remains valid");
+            black_box(curve).control_points().len()
+        });
+    }
+
+    if runner.group_enabled(elevation_name) {
+        let elevated = hypercurve_curve
+            .degree_elevation(6, &CurveContext::STRICT)
+            .expect("exact retained elevation fixture is valid")
+            .into_value();
+        assert_eq!(elevated.target_degree(), 6);
+        runner.measure(elevation_name, "hypercurve_exact_retained", || {
+            black_box(
+                hypercurve_curve
+                    .degree_elevation(6, &CurveContext::STRICT)
+                    .expect("exact retained elevation replays")
+                    .into_value(),
+            )
+            .spans()
+            .len()
+        });
+        runner.measure(elevation_name, "curvo_f64_recomputed", || {
+            black_box(
+                curvo_curve
+                    .try_elevate_degree(6)
+                    .expect("finite degree elevation fixture remains valid"),
+            )
+            .degree()
+        });
+    }
+}
+
 fn benchmark_pathological_cross_suite(runner: &Runner) {
     if env::var_os("HYPERCURVE_COMPARE_PATHOLOGICAL_TIERS").is_none() {
         println!(
@@ -810,5 +895,6 @@ fn main() {
     benchmark_contour_offset(&runner);
     benchmark_bezier_offset(&runner);
     benchmark_nurbs_evaluation(&runner);
+    benchmark_nurbs_editing(&runner);
     benchmark_pathological_cross_suite(&runner);
 }
