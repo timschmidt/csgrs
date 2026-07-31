@@ -514,8 +514,16 @@ fn simplify_sub(left: Expr, right: Expr) -> Expr {
 
 fn simplify_mul(left: Expr, right: Expr) -> Expr {
     match (left, right) {
-        (_, Expr::Constant(value)) if value == Real::zero() => Expr::zero(),
-        (Expr::Constant(value), _) if value == Real::zero() => Expr::zero(),
+        (left, Expr::Constant(value))
+            if value == Real::zero() && has_no_domain_obligations(&left) =>
+        {
+            Expr::zero()
+        }
+        (Expr::Constant(value), right)
+            if value == Real::zero() && has_no_domain_obligations(&right) =>
+        {
+            Expr::zero()
+        }
         (left, Expr::Constant(value)) if value == Real::one() => left,
         (Expr::Constant(value), right) if value == Real::one() => right,
         (Expr::Constant(left), Expr::Constant(right)) => Expr::Constant(left * right),
@@ -523,9 +531,28 @@ fn simplify_mul(left: Expr, right: Expr) -> Expr {
     }
 }
 
+fn has_no_domain_obligations(value: &Expr) -> bool {
+    match value {
+        Expr::Constant(_) | Expr::Symbol(_) => true,
+        Expr::Add(left, right) | Expr::Sub(left, right) | Expr::Mul(left, right) => {
+            has_no_domain_obligations(left) && has_no_domain_obligations(right)
+        }
+        Expr::Neg(value) | Expr::Sin(value) | Expr::Cos(value) => has_no_domain_obligations(value),
+        Expr::Div(_, _)
+        | Expr::PowI(_, i64::MIN..=0)
+        | Expr::Sqrt(_)
+        | Expr::Ln(_)
+        | Expr::Log10(_)
+        | Expr::Asin(_)
+        | Expr::Acos(_)
+        | Expr::Acosh(_)
+        | Expr::Atanh(_) => false,
+        Expr::PowI(value, 1..) => has_no_domain_obligations(value),
+    }
+}
+
 fn simplify_div(left: Expr, right: Expr) -> Expr {
     match (left, right) {
-        (Expr::Constant(value), _) if value == Real::zero() => Expr::zero(),
         (left, Expr::Constant(value)) if value == Real::one() => left,
         (Expr::Constant(left), Expr::Constant(right)) => match left.clone() / right.clone() {
             Ok(value) => Expr::Constant(value),
@@ -548,11 +575,10 @@ fn simplify_neg(value: Expr) -> Expr {
 
 fn simplify_powi(value: Expr, exponent: i64) -> Expr {
     match (value, exponent) {
-        (_, 0) => Expr::int(1),
         (value, 1) => value,
-        (Expr::Constant(value), exponent) => match value.powi(exponent.into()) {
-            Ok(value) => Expr::Constant(value),
-            Err(_) => Expr::PowI(Box::new(Expr::zero()), exponent),
+        (Expr::Constant(value), exponent) => match value.clone().powi(exponent.into()) {
+            Ok(result) => Expr::Constant(result),
+            Err(_) => Expr::PowI(Box::new(Expr::Constant(value)), exponent),
         },
         (value, exponent) => Expr::PowI(Box::new(value), exponent),
     }

@@ -20,8 +20,7 @@
 use std::cmp::Ordering;
 use std::sync::OnceLock;
 
-use hyperlimit::PredicatePolicy;
-use hyperlimit::compare_reals_with_policy;
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::{Rational, Real};
 
 use crate::algebraic::{
@@ -872,7 +871,7 @@ fn constant_rational_map_value(
     let mut scale = None;
     for index in 0..max_len {
         let denominator_coefficient = denominator.get(index).cloned().unwrap_or_else(Real::zero);
-        if compare_reals_with_policy(&denominator_coefficient, &Real::zero(), policy).value()?
+        if compare_reals(&denominator_coefficient, &Real::zero(), policy).value()?
             == Ordering::Equal
         {
             continue;
@@ -885,8 +884,7 @@ fn constant_rational_map_value(
     let scaled_denominator = polynomial_scale(denominator, &scale);
     let difference = trim_real_polynomial(polynomial_sub(numerator, &scaled_denominator), policy)?;
     (difference.len() == 1
-        && compare_reals_with_policy(&difference[0], &Real::zero(), policy).value()?
-            == Ordering::Equal)
+        && compare_reals(&difference[0], &Real::zero(), policy).value()? == Ordering::Equal)
         .then_some(scale)
 }
 
@@ -972,8 +970,8 @@ fn interval_is_strictly_away_from_zero(
     interval: &ValueInterval,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    let lower = compare_reals_with_policy(&interval.lower, &Real::zero(), policy).value()?;
-    let upper = compare_reals_with_policy(&interval.upper, &Real::zero(), policy).value()?;
+    let lower = compare_reals(&interval.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals(&interval.upper, &Real::zero(), policy).value()?;
     Some(lower == Ordering::Greater || upper == Ordering::Less)
 }
 
@@ -1017,7 +1015,7 @@ fn polynomial_mul(left: &[Real], right: &[Real]) -> Vec<Real> {
 fn trim_real_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     while polynomial.len() > 1 {
         let trailing = polynomial.last()?;
-        match compare_reals_with_policy(trailing, &Real::zero(), policy).value()? {
+        match compare_reals(trailing, &Real::zero(), policy).value()? {
             Ordering::Equal => {
                 polynomial.pop();
             }
@@ -1034,8 +1032,7 @@ fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> 
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 {
-            let ordering =
-                compare_reals_with_policy(&values[cursor], &values[cursor - 1], policy).value()?;
+            let ordering = compare_reals(&values[cursor], &values[cursor - 1], policy).value()?;
             if ordering != Ordering::Less {
                 break;
             }
@@ -1069,9 +1066,8 @@ fn rational_evaluation_is_disjoint(
         _ => None,
     };
     value_interval.is_some_and(|(lower, upper)| {
-        compare_reals_with_policy(upper, &target.lower, policy).value() == Some(Ordering::Less)
-            || compare_reals_with_policy(lower, &target.upper, policy).value()
-                == Some(Ordering::Greater)
+        compare_reals(upper, &target.lower, policy).value() == Some(Ordering::Less)
+            || compare_reals(lower, &target.upper, policy).value() == Some(Ordering::Greater)
     })
 }
 
@@ -1189,7 +1185,7 @@ mod tests {
             &sqrt_two_positive(),
             &[Real::zero(), Real::one()],
             &[Real::one(), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
@@ -1211,7 +1207,7 @@ mod tests {
             &root,
             [&numerators[0], &numerators[1]],
             &denominator,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         for (report, numerator) in reports.into_iter().zip(numerators) {
@@ -1221,7 +1217,7 @@ mod tests {
                     &root,
                     &numerator,
                     &denominator,
-                    PredicatePolicy,
+                    PredicatePolicy::APPROXIMATE_512,
                 )
             );
         }
@@ -1246,7 +1242,7 @@ mod tests {
             &positive.polynomial_coefficients,
             &numerator,
             &denominator,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert!(map.resultant_polynomial.get().is_none());
         assert!(map.direct_map.get().is_none());
@@ -1258,7 +1254,7 @@ mod tests {
                     root,
                     &numerator,
                     &denominator,
-                    PredicatePolicy,
+                    PredicatePolicy::APPROXIMATE_512,
                 )
             );
             assert!(map.resultant_polynomial.get().is_some());
@@ -1281,7 +1277,8 @@ mod tests {
             .cloned()
             .map(|value| value * real(2))
             .collect();
-        scaled.validation = validate_algebraic_root_representation(&scaled, PredicatePolicy);
+        scaled.validation =
+            validate_algebraic_root_representation(&scaled, PredicatePolicy::APPROXIMATE_512);
         assert!(scaled.is_valid());
         let numerator = [Real::zero(), Real::one(), Real::one()];
         let denominator = [Real::one()];
@@ -1289,7 +1286,7 @@ mod tests {
             &sqrt_two_positive().polynomial_coefficients,
             &numerator,
             &denominator,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -1298,7 +1295,7 @@ mod tests {
                 &scaled,
                 &numerator,
                 &denominator,
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             )
         );
         assert!(map.direct_map.get().is_none());
@@ -1315,7 +1312,7 @@ mod tests {
                 lower: Real::zero(),
                 upper: Real::one(),
             },
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -1338,7 +1335,7 @@ mod tests {
                 lower: Real::zero(),
                 upper: Real::one(),
             },
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
@@ -1363,7 +1360,7 @@ mod tests {
             &rational,
             &[real(1), real(2), real(3)],
             &[real(1), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
@@ -1381,7 +1378,7 @@ mod tests {
             &sqrt_two_positive(),
             &[Real::one()],
             &[real(-1), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -1398,7 +1395,7 @@ mod tests {
             &sqrt_two_positive(),
             &[Real::one(), Real::one()],
             &[real(10), real(-3), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
@@ -1420,7 +1417,7 @@ mod tests {
             &represented,
             &[Real::zero(), Real::one(), Real::zero(), Real::one()],
             &[real(2), Real::one(), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
@@ -1439,7 +1436,7 @@ mod tests {
             &represented,
             &numerator,
             &denominator,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
@@ -1470,7 +1467,7 @@ mod tests {
             &represented,
             &[Real::zero(), Real::one(), Real::one()],
             &[Real::one(), Real::zero(), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
@@ -1488,7 +1485,7 @@ mod tests {
             &sqrt_two_positive(),
             &[Real::one()],
             &[real(10), real(-3), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -1530,7 +1527,7 @@ mod tests {
                 &represented,
                 &[real(nc), real(nl)],
                 &[real(dc), real(dl)],
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);

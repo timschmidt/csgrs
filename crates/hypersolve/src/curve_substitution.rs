@@ -126,7 +126,7 @@ pub struct BsplineKnotSpanSubstitutionConfig {
 impl Default for BsplineKnotSpanSubstitutionConfig {
     fn default() -> Self {
         Self {
-            min_precision: -64,
+            min_precision: hyperlimit::PredicatePolicy::MAX_REFINEMENT_PRECISION,
             max_degree: 8,
         }
     }

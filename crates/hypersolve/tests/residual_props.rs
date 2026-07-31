@@ -6063,7 +6063,7 @@ proptest! {
 
         let reports = isolate_univariate_polynomial_roots(
             &problem.analyze(),
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         );
 
         prop_assert_eq!(reports.len(), 1);
@@ -6075,17 +6075,17 @@ proptest! {
                 if interval.exact_root.as_ref() == Some(&root) {
                     return true;
                 }
-                let lower_ok = hyperlimit::compare_reals_with_policy(
+                let lower_ok = hyperlimit::compare_reals(
                     &interval.lower,
                     &root,
-                    hyperlimit::PredicatePolicy,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
                 )
                 .value()
                     == Some(std::cmp::Ordering::Less);
-                let upper_ok = hyperlimit::compare_reals_with_policy(
+                let upper_ok = hyperlimit::compare_reals(
                     &root,
                     &interval.upper,
-                    hyperlimit::PredicatePolicy,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
                 )
                 .value()
                     == Some(std::cmp::Ordering::Less);
@@ -6151,7 +6151,7 @@ proptest! {
         let report = certify_univariate_quadratic_alpha(
             &problem.analyze(),
             &context_from_problem(&problem),
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         );
 
         prop_assert_eq!(report.examined_rows, 1);
@@ -6186,7 +6186,7 @@ proptest! {
                 symbol: SymbolId(0),
                 radius: Real::zero(),
             }],
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         );
 
         prop_assert_eq!(report.examined_rows, 1);
@@ -6233,7 +6233,7 @@ proptest! {
                     radius: Real::from(1),
                 },
             ],
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         );
 
         prop_assert_eq!(
@@ -6267,7 +6267,7 @@ proptest! {
         let report = certify_univariate_quadratic_alpha(
             &problem.analyze(),
             &context_from_problem(&problem),
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         );
 
         prop_assert_eq!(report.examined_rows, 1);
@@ -6290,7 +6290,7 @@ proptest! {
         let report = certify_candidate_domains(
             &problem,
             &context_from_problem(&problem),
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         );
 
         prop_assert_eq!(report.checks.len(), 1);
@@ -6378,7 +6378,7 @@ proptest! {
         let report = certify_candidate_domains(
             &problem,
             &context_from_problem(&problem),
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         );
 
         prop_assert_eq!(report.checks.len(), 7);
@@ -6462,14 +6462,15 @@ proptest! {
                 symbol: SymbolId(0),
                 radius: Real::from(i64::from(radius)),
             }],
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ).unwrap();
 
         prop_assert_eq!(report.certified_violation_rows, 1);
         let ball_certified_positive = matches!(
             report.rows[0].status,
             CertifiedCandidateStatus::BallCertified {
-                sign: RealSign::Positive
+                sign: RealSign::Positive,
+                ..
             }
         );
         prop_assert_eq!(ball_certified_positive, true);
@@ -6496,7 +6497,7 @@ proptest! {
                 radius: Real::from(radius),
             }],
             IntervalBoxCertificationPackage::Affine,
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         );
         let delta = (center - target).abs();
 
@@ -6552,7 +6553,7 @@ proptest! {
                     radius: Real::from(y_radius),
                 },
             ],
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         );
 
         prop_assert_eq!(
@@ -6629,13 +6630,14 @@ proptest! {
                     radius: Real::from(i64::from(y_radius)),
                 },
             ],
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ).unwrap();
 
         let ball_certified_positive = matches!(
             report.rows[0].status,
             CertifiedCandidateStatus::BallCertified {
-                sign: RealSign::Positive
+                sign: RealSign::Positive,
+                ..
             }
         );
         prop_assert_eq!(report.certified_violation_rows, 1);

@@ -10,7 +10,7 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::analysis::ProblemAnalysis;
@@ -89,7 +89,7 @@ pub struct UnivariateRootIsolationReport {
 /// certified distinct-root count. Acceptance still belongs to exact candidate
 /// replay or to a future algebraic-number package, preserving the exact
 /// construction/proof boundary.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct RootIsolationConfig {
     /// Exact comparison/refinement policy used by `hyperlimit`.
     pub policy: PredicatePolicy,
@@ -98,6 +98,16 @@ pub struct RootIsolationConfig {
     /// Maximum additional bisection steps once an interval has one certified
     /// root. This bounds work for clustered roots.
     pub max_refinement_steps: usize,
+}
+
+impl Default for RootIsolationConfig {
+    fn default() -> Self {
+        Self {
+            policy: PredicatePolicy::APPROXIMATE_512,
+            max_interval_width: None,
+            max_refinement_steps: 0,
+        }
+    }
 }
 
 /// Status for refining one already-isolated algebraic root interval.
@@ -319,7 +329,7 @@ pub struct BernsteinSubdivisionConfig {
 impl Default for BernsteinSubdivisionConfig {
     fn default() -> Self {
         Self {
-            policy: PredicatePolicy,
+            policy: PredicatePolicy::APPROXIMATE_512,
             max_depth: 32,
         }
     }
@@ -624,7 +634,7 @@ pub fn refine_isolated_univariate_polynomial_interval(
             None,
         );
     }
-    match compare_reals_with_policy(&interval.lower, &interval.upper, policy).value() {
+    match compare_reals(&interval.lower, &interval.upper, policy).value() {
         Some(Ordering::Less) => {}
         Some(Ordering::Equal | Ordering::Greater) => {
             return root_refinement_report(
@@ -713,7 +723,7 @@ pub fn refine_isolated_univariate_polynomial_interval(
     for _ in 0..config.max_refinement_steps {
         if let Some(max_width) = &config.max_interval_width {
             let width = upper.clone() - lower.clone();
-            match compare_reals_with_policy(&width, max_width, policy).value() {
+            match compare_reals(&width, max_width, policy).value() {
                 Some(Ordering::Less | Ordering::Equal) => break,
                 Some(Ordering::Greater) => {}
                 None => {
@@ -1082,7 +1092,7 @@ pub fn count_bernstein_univariate_polynomial_interval_expr(
     upper: Real,
     policy: PredicatePolicy,
 ) -> BernsteinRootCountReport {
-    match compare_reals_with_policy(&lower, &upper, policy).value() {
+    match compare_reals(&lower, &upper, policy).value() {
         Some(Ordering::Less) => {}
         Some(Ordering::Equal | Ordering::Greater) => {
             return bernstein_report(
@@ -1208,9 +1218,7 @@ pub fn count_bernstein_univariate_polynomial_interval_expr(
         );
     }
     let endpoint_lower =
-        match compare_reals_with_policy(&evaluate_polynomial(&poly, &lower), &Real::zero(), policy)
-            .value()
-        {
+        match compare_reals(&evaluate_polynomial(&poly, &lower), &Real::zero(), policy).value() {
             Some(ordering) => ordering == Ordering::Equal,
             None => {
                 return bernstein_report(
@@ -1229,9 +1237,7 @@ pub fn count_bernstein_univariate_polynomial_interval_expr(
             }
         };
     let endpoint_upper =
-        match compare_reals_with_policy(&evaluate_polynomial(&poly, &upper), &Real::zero(), policy)
-            .value()
-        {
+        match compare_reals(&evaluate_polynomial(&poly, &upper), &Real::zero(), policy).value() {
             Some(ordering) => ordering == Ordering::Equal,
             None => {
                 return bernstein_report(
@@ -1650,7 +1656,7 @@ fn should_refine_one_root_interval(
         return Some(false);
     };
     let width = upper.clone() - lower.clone();
-    match compare_reals_with_policy(&width, max_width, config.policy).value()? {
+    match compare_reals(&width, max_width, config.policy).value()? {
         Ordering::Greater => Some(true),
         Ordering::Equal | Ordering::Less => Some(false),
     }
@@ -1706,15 +1712,15 @@ fn sign_variations(sturm: &[Vec<Real>], point: &Real, policy: PredicatePolicy) -
 
 fn sign_at(polynomial: &[Real], point: &Real, policy: PredicatePolicy) -> Option<Ordering> {
     let value = evaluate_polynomial(polynomial, point);
-    compare_reals_with_policy(&value, &Real::zero(), policy).value()
+    compare_reals(&value, &Real::zero(), policy).value()
 }
 
 fn cauchy_bound(polynomial: &[Real], policy: PredicatePolicy) -> Option<Real> {
-    let leading = abs_real(polynomial.last()?, policy)?;
+    let leading = abs_real(polynomial.last()?);
     let mut max_ratio = Real::zero();
     for coefficient in &polynomial[..polynomial.len() - 1] {
-        let ratio = (abs_real(coefficient, policy)? / leading.clone()).ok()?;
-        if compare_reals_with_policy(&ratio, &max_ratio, policy).value()? == Ordering::Greater {
+        let ratio = (abs_real(coefficient) / leading.clone()).ok()?;
+        if compare_reals(&ratio, &max_ratio, policy).value()? == Ordering::Greater {
             max_ratio = ratio;
         }
     }
@@ -1768,7 +1774,7 @@ pub(crate) fn polynomials_share_one_root_in_interval(
     upper: &Real,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    if compare_reals_with_policy(lower, upper, policy).value()? != Ordering::Less {
+    if compare_reals(lower, upper, policy).value()? != Ordering::Less {
         return Some(false);
     }
     let gcd = if left == right {
@@ -1847,7 +1853,7 @@ fn root_refinement_report(
 fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     while polynomial.len() > 1 {
         let trailing = polynomial.last()?;
-        match compare_reals_with_policy(trailing, &Real::zero(), policy).value()? {
+        match compare_reals(trailing, &Real::zero(), policy).value()? {
             Ordering::Equal => {
                 polynomial.pop();
             }
@@ -1862,7 +1868,7 @@ fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option
 
 fn is_zero_polynomial(polynomial: &[Real], policy: PredicatePolicy) -> Option<bool> {
     polynomial.iter().try_fold(true, |all_zero, coefficient| {
-        let sign = compare_reals_with_policy(coefficient, &Real::zero(), policy).value()?;
+        let sign = compare_reals(coefficient, &Real::zero(), policy).value()?;
         Some(all_zero && sign == Ordering::Equal)
     })
 }
@@ -1879,17 +1885,14 @@ fn gcd_monic_normalize(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Op
         .collect()
 }
 
-fn abs_real(value: &Real, policy: PredicatePolicy) -> Option<Real> {
-    match compare_reals_with_policy(value, &Real::zero(), policy).value()? {
-        Ordering::Less => Some(-value.clone()),
-        Ordering::Equal | Ordering::Greater => Some(value.clone()),
-    }
+fn abs_real(value: &Real) -> Real {
+    value.abs()
 }
 
 fn leading_zero_multiplicity(polynomial: &[Real], policy: PredicatePolicy) -> Option<usize> {
     let mut multiplicity = 0;
     for coefficient in polynomial {
-        match compare_reals_with_policy(coefficient, &Real::zero(), policy).value()? {
+        match compare_reals(coefficient, &Real::zero(), policy).value()? {
             Ordering::Equal => multiplicity += 1,
             Ordering::Less | Ordering::Greater => return Some(multiplicity),
         }
@@ -1904,7 +1907,7 @@ fn sign_variations_for_coefficients(
     let mut previous = None;
     let mut variations = 0;
     for coefficient in coefficients.iter().rev() {
-        let sign = compare_reals_with_policy(coefficient, &Real::zero(), policy).value()?;
+        let sign = compare_reals(coefficient, &Real::zero(), policy).value()?;
         if sign == Ordering::Equal {
             continue;
         }
@@ -2216,7 +2219,10 @@ mod tests {
             x.powi(2) + Expr::int(1),
         ));
 
-        let reports = isolate_univariate_polynomial_roots(&problem.analyze(), PredicatePolicy);
+        let reports = isolate_univariate_polynomial_roots(
+            &problem.analyze(),
+            PredicatePolicy::APPROXIMATE_512,
+        );
 
         assert_eq!(reports.len(), 3);
         assert_eq!(reports[0].status, RootIsolationStatus::Isolated);
@@ -2244,7 +2250,10 @@ mod tests {
         problem.add_variable("y", real(0));
         problem.add_constraint(Constraint::equality("xy", x * y));
 
-        let reports = isolate_univariate_polynomial_roots(&problem.analyze(), PredicatePolicy);
+        let reports = isolate_univariate_polynomial_roots(
+            &problem.analyze(),
+            PredicatePolicy::APPROXIMATE_512,
+        );
 
         assert_eq!(reports.len(), 1);
         assert_eq!(
@@ -2268,7 +2277,7 @@ mod tests {
         let reports = isolate_univariate_polynomial_roots_with_config(
             &analysis,
             RootIsolationConfig {
-                policy: PredicatePolicy,
+                policy: PredicatePolicy::APPROXIMATE_512,
                 max_interval_width: Some(Real::one()),
                 max_refinement_steps: 8,
             },
@@ -2372,8 +2381,10 @@ mod tests {
         ));
         problem.add_constraint(Constraint::equality("multivariate unsupported", x * y));
 
-        let reports =
-            count_descartes_univariate_polynomial_roots(&problem.analyze(), PredicatePolicy);
+        let reports = count_descartes_univariate_polynomial_roots(
+            &problem.analyze(),
+            PredicatePolicy::APPROXIMATE_512,
+        );
 
         assert_eq!(reports.len(), 3);
         assert_eq!(reports[0].status, DescartesRootCountStatus::Counted);
@@ -2416,7 +2427,7 @@ mod tests {
             &problem.analyze(),
             real(0),
             real(2),
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(reports.len(), 3);
@@ -2458,7 +2469,7 @@ mod tests {
             real(0),
             real(4),
             BernsteinSubdivisionConfig {
-                policy: PredicatePolicy,
+                policy: PredicatePolicy::APPROXIMATE_512,
                 max_depth: 8,
             },
         );
@@ -2487,7 +2498,7 @@ mod tests {
             real(0),
             real(4),
             BernsteinSubdivisionConfig {
-                policy: PredicatePolicy,
+                policy: PredicatePolicy::APPROXIMATE_512,
                 max_depth: 0,
             },
         );
@@ -2522,7 +2533,7 @@ mod tests {
                 &problem.analyze(),
                 real(root - 1),
                 real(root + 1),
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(reports.len(), 1);

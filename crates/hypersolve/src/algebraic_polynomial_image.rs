@@ -17,7 +17,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::{Rational, Real};
 
 use crate::algebraic::{
@@ -373,10 +373,8 @@ fn certify_derivative_interval_sign(
         },
         policy,
     )?;
-    let lower =
-        compare_reals_with_policy(&derivative_interval.lower, &Real::zero(), policy).value()?;
-    let upper =
-        compare_reals_with_policy(&derivative_interval.upper, &Real::zero(), policy).value()?;
+    let lower = compare_reals(&derivative_interval.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals(&derivative_interval.upper, &Real::zero(), policy).value()?;
     if lower == Ordering::Greater {
         Some(Ordering::Greater)
     } else if upper == Ordering::Less {
@@ -461,7 +459,7 @@ fn interval_mul(
 fn trim_real_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     while polynomial.len() > 1 {
         let trailing = polynomial.last()?;
-        match compare_reals_with_policy(trailing, &Real::zero(), policy).value()? {
+        match compare_reals(trailing, &Real::zero(), policy).value()? {
             Ordering::Equal => {
                 polynomial.pop();
             }
@@ -478,8 +476,7 @@ fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> 
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 {
-            let ordering =
-                compare_reals_with_policy(&values[cursor], &values[cursor - 1], policy).value()?;
+            let ordering = compare_reals(&values[cursor], &values[cursor - 1], policy).value()?;
             if ordering != Ordering::Less {
                 break;
             }
@@ -543,7 +540,7 @@ mod tests {
         let report = transform_algebraic_root_polynomial_image(
             &sqrt_two_positive(),
             &[Real::zero(), Real::zero(), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -565,7 +562,7 @@ mod tests {
         let report = transform_algebraic_root_polynomial_image(
             &sqrt_two_positive(),
             &[Real::zero(), Real::one(), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -592,7 +589,7 @@ mod tests {
         let report = transform_algebraic_root_polynomial_image(
             &represented,
             &image_polynomial,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -621,7 +618,7 @@ mod tests {
         let report = transform_algebraic_root_polynomial_image(
             &sqrt_two_positive(),
             &[Real::zero(), real(-3), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -647,7 +644,7 @@ mod tests {
         let report = transform_algebraic_root_polynomial_image(
             &rational,
             &[real(1), real(2), real(3)],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -686,7 +683,7 @@ mod tests {
             let report = transform_algebraic_root_polynomial_image(
                 &represented,
                 &[real(constant), real(linear), real(quadratic)],
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootPolynomialImageStatus::Transformed);

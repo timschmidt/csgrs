@@ -9881,6 +9881,25 @@ fn simplify_folds_exact_unary_endpoints_without_hiding_invalid_domains() {
 }
 
 #[test]
+fn simplify_preserves_zero_division_and_zero_power_domains() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    assert!(matches!((Expr::zero() / x).simplify(), Expr::Div(_, _)));
+
+    let zero_power = Expr::zero().powi(0).simplify();
+    assert!(matches!(zero_power, Expr::PowI(_, 0)));
+    assert!(
+        zero_power
+            .eval_real(&std::collections::HashMap::new())
+            .is_err()
+    );
+    assert_eq!(Expr::int(2).powi(0).simplify(), Expr::int(1));
+    assert!(matches!(
+        (Expr::zero() * (Expr::int(1) / Expr::symbol(SymbolId(1), "y"))).simplify(),
+        Expr::Mul(_, _)
+    ));
+}
+
+#[test]
 fn problem_analysis_caches_residual_dependency_and_sparsity_facts() {
     let x = Expr::symbol(SymbolId(0), "x");
     let y = Expr::symbol(SymbolId(1), "y");
@@ -10281,7 +10300,7 @@ fn univariate_quadratic_alpha_certifies_exact_simple_root_and_nearby_basin() {
     let exact_report = certify_univariate_quadratic_alpha(
         &exact_root.analyze(),
         &context_from_problem(&exact_root),
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert_eq!(exact_report.examined_rows, 1);
@@ -10300,7 +10319,7 @@ fn univariate_quadratic_alpha_certifies_exact_simple_root_and_nearby_basin() {
     let near_report = certify_univariate_quadratic_alpha(
         &near.analyze(),
         &context_from_problem(&near),
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert_eq!(
@@ -10321,7 +10340,7 @@ fn univariate_quadratic_alpha_reports_multiple_root_and_failed_bound() {
     let multiple_report = certify_univariate_quadratic_alpha(
         &multiple.analyze(),
         &context_from_problem(&multiple),
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
     assert_eq!(
         multiple_report.rows[0].status,
@@ -10338,7 +10357,7 @@ fn univariate_quadratic_alpha_reports_multiple_root_and_failed_bound() {
     let far_report = certify_univariate_quadratic_alpha(
         &far.analyze(),
         &context_from_problem(&far),
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
     assert_eq!(
         far_report.rows[0].status,
@@ -10363,7 +10382,7 @@ fn univariate_quadratic_krawczyk_certifies_unique_root_and_reports_failures() {
             symbol: SymbolId(0),
             radius: real(1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert_eq!(report.examined_rows, 1);
@@ -10389,7 +10408,7 @@ fn univariate_quadratic_krawczyk_certifies_unique_root_and_reports_failures() {
             symbol: SymbolId(0),
             radius: real(1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
     assert_eq!(
         singular_report.rows[0].status,
@@ -10409,7 +10428,7 @@ fn univariate_quadratic_krawczyk_certifies_unique_root_and_reports_failures() {
             symbol: SymbolId(0),
             radius: real(1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
     assert_eq!(
         far_report.rows[0].status,
@@ -10446,7 +10465,7 @@ fn multivariate_quadratic_krawczyk_certifies_coupled_square_system() {
                 radius: Real::new(Rational::fraction(1, 10).unwrap()),
             },
         ],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert_eq!(
@@ -10477,7 +10496,7 @@ fn multivariate_quadratic_krawczyk_certifies_coupled_square_system() {
                 radius: real(0),
             },
         ],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
     assert_eq!(
         tiny_box.status,
@@ -10502,7 +10521,7 @@ fn multivariate_quadratic_krawczyk_certifies_coupled_square_system() {
                 radius: real(1),
             },
         ],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
     assert_eq!(
         singular_report.status,
@@ -10668,8 +10687,10 @@ fn root_isolation_sturm_reports_distinct_repeated_and_unsupported_rows() {
     ));
     problem.add_constraint(Constraint::equality("multivariate unsupported", x * y));
 
-    let reports =
-        isolate_univariate_polynomial_roots(&problem.analyze(), hyperlimit::PredicatePolicy);
+    let reports = isolate_univariate_polynomial_roots(
+        &problem.analyze(),
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
+    );
 
     assert_eq!(reports.len(), 4);
     assert_eq!(reports[0].status, RootIsolationStatus::Isolated);
@@ -10775,6 +10796,42 @@ fn candidate_certification_handles_inequality_active_sets_exactly() {
 }
 
 #[test]
+fn candidate_certification_refines_nonstructural_satisfied_inequality_signs() {
+    let unresolved_negative = Real::new(Rational::fraction(103_993, 33_102).unwrap()) - Real::pi();
+    assert_eq!(unresolved_negative.structural_facts().sign, None);
+
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", unresolved_negative);
+    problem.add_constraint(Constraint {
+        name: "sqrt(2) <= 2".to_owned(),
+        kind: ConstraintKind::LessOrEqual,
+        residual: x,
+        weight: Real::one(),
+        active: true,
+    });
+
+    let prepared = problem.analyze();
+    let context = context_from_problem(&problem);
+    let report = certify_candidate(&prepared, &context);
+
+    assert!(report.all_satisfied());
+    assert!(matches!(
+        report.rows[0].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        prepared.evaluate_residuals(&context).unwrap()[0]
+            .value
+            .certified_sign_until(-128),
+        hyperreal::CertifiedRealSign::Known {
+            sign: hyperreal::RealSign::Zero,
+            ..
+        }
+    ));
+}
+
+#[test]
 fn residual_ball_certification_uses_hyperlimit_filter_boundary() {
     let x = Expr::symbol(SymbolId(0), "x");
     let mut problem = Problem::default();
@@ -10790,14 +10847,80 @@ fn residual_ball_certification_uses_hyperlimit_filter_boundary() {
             active_row: 0,
             radius: real(1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert_eq!(report.certified_violation_rows, 1);
     assert!(matches!(
         report.rows[0].status,
         CertifiedCandidateStatus::BallCertified {
-            sign: hyperreal::RealSign::Positive
+            sign: hyperreal::RealSign::Positive,
+            ..
+        }
+    ));
+}
+
+#[test]
+fn negative_residual_ball_certifies_inequality_satisfaction() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(-10));
+    problem.add_constraint(Constraint {
+        name: "x <= 0".to_owned(),
+        kind: ConstraintKind::LessOrEqual,
+        residual: x,
+        weight: Real::one(),
+        active: true,
+    });
+
+    let prepared = problem.analyze();
+    let report = certify_candidate_with_residual_balls(
+        &prepared,
+        &context_from_problem(&problem),
+        &[CandidateResidualBall {
+            active_row: 0,
+            radius: real(1),
+        }],
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
+    );
+
+    assert!(report.all_satisfied());
+    assert!(matches!(
+        report.rows[0].status,
+        CertifiedCandidateStatus::BallCertified {
+            sign: hyperreal::RealSign::Negative,
+            satisfied: true,
+            ..
+        }
+    ));
+}
+
+#[test]
+fn residual_ball_certification_preserves_approximate_policy_certainty() {
+    let undecidable = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality(
+        "commuted symbolic zero",
+        Expr::real(undecidable),
+    ));
+
+    let report = certify_candidate_with_residual_balls(
+        &problem.analyze(),
+        &context_from_problem(&problem),
+        &[CandidateResidualBall {
+            active_row: 0,
+            radius: Real::zero(),
+        }],
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
+    );
+
+    assert!(matches!(
+        report.rows[0].status,
+        CertifiedCandidateStatus::BallCertified {
+            sign: hyperreal::RealSign::Zero,
+            certainty: hyperlimit::Certainty::Approximate,
+            satisfied: true,
         }
     ));
 }
@@ -10817,13 +10940,14 @@ fn residual_ball_certification_rejects_negative_radius() {
             active_row: 0,
             radius: real(-1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert!(matches!(
         report.rows[0].status,
         CertifiedCandidateStatus::InvalidBallRadius
     ));
+    assert_eq!(report.domain_failure_rows, 1);
 }
 
 #[test]
@@ -10842,7 +10966,7 @@ fn affine_interval_candidate_certifies_box_away_from_zero() {
             symbol: SymbolId(0),
             radius: real(1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     )
     .expect("affine interval certification should be valid");
 
@@ -10850,7 +10974,8 @@ fn affine_interval_candidate_certifies_box_away_from_zero() {
     assert!(matches!(
         report.rows[0].status,
         CertifiedCandidateStatus::BallCertified {
-            sign: hyperreal::RealSign::Positive
+            sign: hyperreal::RealSign::Positive,
+            ..
         }
     ));
 }
@@ -10871,9 +10996,37 @@ fn affine_interval_candidate_rejects_negative_variable_radius() {
             symbol: SymbolId(0),
             radius: real(-1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     )
     .expect_err("negative variable radius must be rejected");
+
+    assert_eq!(
+        error,
+        hypersolve::AffineIntervalError::NegativeVariableRadius {
+            symbol: SymbolId(0)
+        }
+    );
+}
+
+#[test]
+fn affine_interval_candidate_refines_nonstructural_radius_sign() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("x", x));
+    let unresolved_negative = Real::new(Rational::fraction(103_993, 33_102).unwrap()) - Real::pi();
+    assert_eq!(unresolved_negative.structural_facts().sign, None);
+
+    let error = certify_affine_interval_candidate(
+        &problem.analyze(),
+        &context_from_problem(&problem),
+        &[VariableBall {
+            symbol: SymbolId(0),
+            radius: unresolved_negative,
+        }],
+        hyperlimit::PredicatePolicy::STRICT,
+    )
+    .expect_err("a refined negative radius must be rejected");
 
     assert_eq!(
         error,
@@ -10914,7 +11067,7 @@ fn affine_krawczyk_box_certifies_unique_root_inside_exact_box() {
                 radius: Real::zero(),
             },
         ],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert_eq!(
@@ -10957,7 +11110,7 @@ fn affine_krawczyk_box_reports_outside_and_singular_cases() {
                 radius: Real::zero(),
             },
         ],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
     assert_eq!(
         outside_report.status,
@@ -10984,7 +11137,7 @@ fn affine_krawczyk_box_reports_outside_and_singular_cases() {
                 radius: real(1),
             },
         ],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
     assert_eq!(
         singular_report.status,
@@ -11011,7 +11164,7 @@ fn quadratic_interval_candidate_certifies_taylor_ball_away_from_zero() {
             symbol: SymbolId(0),
             radius: real(1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     )
     .expect("quadratic interval certification should be valid");
 
@@ -11019,7 +11172,8 @@ fn quadratic_interval_candidate_certifies_taylor_ball_away_from_zero() {
     assert!(matches!(
         report.rows[0].status,
         CertifiedCandidateStatus::BallCertified {
-            sign: hyperreal::RealSign::Negative
+            sign: hyperreal::RealSign::Negative,
+            ..
         }
     ));
 }
@@ -11043,7 +11197,7 @@ fn quadratic_interval_candidate_certifies_zero_radius_root() {
             symbol: SymbolId(0),
             radius: Real::zero(),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     )
     .expect("zero-radius quadratic interval certification should be valid");
 
@@ -11051,7 +11205,8 @@ fn quadratic_interval_candidate_certifies_zero_radius_root() {
     assert!(matches!(
         report.rows[0].status,
         CertifiedCandidateStatus::BallCertified {
-            sign: hyperreal::RealSign::Zero
+            sign: hyperreal::RealSign::Zero,
+            ..
         }
     ));
 }
@@ -11083,7 +11238,7 @@ fn multivariate_quadratic_interval_candidate_certifies_cross_term_ball() {
                 radius: real(1),
             },
         ],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     )
     .expect("multivariate quadratic interval certification should be valid");
 
@@ -11091,7 +11246,8 @@ fn multivariate_quadratic_interval_candidate_certifies_cross_term_ball() {
     assert!(matches!(
         report.rows[0].status,
         CertifiedCandidateStatus::BallCertified {
-            sign: hyperreal::RealSign::Positive
+            sign: hyperreal::RealSign::Positive,
+            ..
         }
     ));
 }
@@ -11115,7 +11271,7 @@ fn multivariate_quadratic_interval_candidate_rejects_missing_binding() {
             symbol: SymbolId(0),
             radius: real(1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     )
     .expect_err("cross-term interval certification needs both candidate centers");
 
@@ -11146,7 +11302,7 @@ fn quadratic_interval_candidate_rejects_invalid_inputs() {
             symbol: SymbolId(0),
             radius: real(-1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     )
     .expect_err("negative variable radius must be rejected");
     assert_eq!(
@@ -11163,7 +11319,7 @@ fn quadratic_interval_candidate_rejects_invalid_inputs() {
             symbol: SymbolId(0),
             radius: real(1),
         }],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     )
     .expect_err("quadratic interval certification needs the candidate center");
     assert_eq!(
@@ -11213,7 +11369,7 @@ fn interval_box_report_retains_payload_and_status() {
             radius: real(1),
         }],
         IntervalBoxCertificationPackage::Affine,
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert_eq!(report.status, IntervalBoxCertificationStatus::Violation);
@@ -11228,7 +11384,7 @@ fn interval_box_report_retains_payload_and_status() {
             radius: real(-1),
         }],
         IntervalBoxCertificationPackage::Affine,
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
     assert_eq!(invalid.status, IntervalBoxCertificationStatus::InvalidInput);
     assert!(invalid.certification.is_none());
@@ -11740,7 +11896,7 @@ fn candidate_domain_certification_reports_valid_invalid_and_nested_domains() {
     let report = certify_candidate_domains(
         &problem,
         &context_from_problem(&problem),
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert_eq!(report.active_constraint_count, 4);
@@ -11772,7 +11928,7 @@ fn candidate_domain_certification_reports_negative_power_and_unbound_symbols() {
     let report = certify_candidate_domains(
         &problem,
         &context_from_problem(&problem),
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert_eq!(report.checks.len(), 2);
@@ -11788,6 +11944,51 @@ fn candidate_domain_certification_reports_negative_power_and_unbound_symbols() {
             symbol: SymbolId(9)
         }
     ));
+}
+
+#[test]
+fn candidate_domain_certification_reports_zero_power_and_simplified_zero_division() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality(
+        "zero power invalid",
+        x.clone().powi(0).simplify(),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "zero numerator still needs denominator",
+        (Expr::zero() / x.clone()).simplify(),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "zero product still needs denominator",
+        (Expr::zero() * (Expr::int(1) / x)).simplify(),
+    ));
+
+    let report = certify_candidate_domains(
+        &problem,
+        &context_from_problem(&problem),
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
+    );
+    let analysis = problem.analyze();
+
+    assert_eq!(report.checks.len(), 3);
+    assert_eq!(report.certified_invalid_checks, 3);
+    assert!(analysis.affine_residuals()[0].is_none());
+    assert!(analysis.univariate_quadratic_residuals()[0].is_none());
+    assert!(analysis.quadratic_residuals()[0].is_none());
+    assert!(
+        analysis
+            .evaluate_constraint_residual(0, &context_from_problem(&problem))
+            .is_err()
+    );
+    assert!(report.checks.iter().any(|check| {
+        check.kind == DomainCheckKind::ZeroPowerBaseNonZero
+            && check.status == DomainCheckStatus::CertifiedInvalid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.kind == DomainCheckKind::DivisionDenominatorNonZero
+            && check.status == DomainCheckStatus::CertifiedInvalid
+    }));
 }
 
 #[test]
@@ -11821,7 +12022,7 @@ fn candidate_domain_certification_reports_inverse_function_boundaries() {
     let report = certify_candidate_domains(
         &problem,
         &context_from_problem(&problem),
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
 
     assert_eq!(report.checks.len(), 5);

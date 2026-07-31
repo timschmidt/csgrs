@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::diagnostics::{
@@ -656,7 +656,7 @@ fn substitution_representative_bound_seed(
     }
     if let (Some(lower), Some(upper)) = (&lower, &upper)
         && matches!(
-            compare_reals_with_policy(lower, upper, PredicatePolicy).value(),
+            compare_reals(lower, upper, PredicatePolicy::APPROXIMATE_512).value(),
             Some(Ordering::Greater) | None
         )
     {
@@ -687,14 +687,14 @@ fn substitution_class_candidate_feasible(
 }
 
 fn max_exact_bound(left: Real, right: Real) -> Option<Real> {
-    match compare_reals_with_policy(&left, &right, PredicatePolicy).value()? {
+    match compare_reals(&left, &right, PredicatePolicy::APPROXIMATE_512).value()? {
         Ordering::Less => Some(right),
         Ordering::Equal | Ordering::Greater => Some(left),
     }
 }
 
 fn min_exact_bound(left: Real, right: Real) -> Option<Real> {
-    match compare_reals_with_policy(&left, &right, PredicatePolicy).value()? {
+    match compare_reals(&left, &right, PredicatePolicy::APPROXIMATE_512).value()? {
         Ordering::Greater => Some(right),
         Ordering::Equal | Ordering::Less => Some(left),
     }
@@ -703,7 +703,7 @@ fn min_exact_bound(left: Real, right: Real) -> Option<Real> {
 fn value_within_bounds(value: &Real, lower: Option<&Real>, upper: Option<&Real>) -> bool {
     if let Some(lower) = lower
         && matches!(
-            compare_reals_with_policy(value, lower, PredicatePolicy).value(),
+            compare_reals(value, lower, PredicatePolicy::APPROXIMATE_512).value(),
             Some(Ordering::Less) | None
         )
     {
@@ -711,7 +711,7 @@ fn value_within_bounds(value: &Real, lower: Option<&Real>, upper: Option<&Real>)
     }
     if let Some(upper) = upper
         && matches!(
-            compare_reals_with_policy(value, upper, PredicatePolicy).value(),
+            compare_reals(value, upper, PredicatePolicy::APPROXIMATE_512).value(),
             Some(Ordering::Greater) | None
         )
     {
@@ -745,7 +745,12 @@ fn dragged_parameter_dense_rows(
             rows.invalid_count += 1;
             continue;
         }
-        if compare_reals_with_policy(&dragged.weight, &Real::zero(), PredicatePolicy).value()
+        if compare_reals(
+            &dragged.weight,
+            &Real::zero(),
+            PredicatePolicy::APPROXIMATE_512,
+        )
+        .value()
             != Some(Ordering::Greater)
         {
             rows.invalid_count += 1;

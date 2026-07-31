@@ -13,7 +13,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::sketch::{
@@ -125,7 +125,7 @@ pub fn sketch_workplane_frame(
     sketch: &SketchSolveProblem,
     workplane: SketchEntityHandle,
 ) -> SketchWorkplaneFrameReport {
-    sketch_workplane_frame_with_policy(sketch, workplane, PredicatePolicy)
+    sketch_workplane_frame_with_policy(sketch, workplane, PredicatePolicy::APPROXIMATE_512)
 }
 
 /// Returns exact frame facts for a retained workplane using an explicit
@@ -161,7 +161,7 @@ pub fn sketch_workplane_frame_with_policy(
     };
     let squared_norm = squared_norm4(&quaternion);
     let (u_axis, v_axis, n_axis) = quaternion_frame_axes(&quaternion);
-    let status = match compare_reals_with_policy(&squared_norm, &Real::one(), policy).value() {
+    let status = match compare_reals(&squared_norm, &Real::one(), policy).value() {
         Some(Ordering::Equal) => SketchWorkplaneFrameStatus::Certified,
         Some(Ordering::Less | Ordering::Greater) => SketchWorkplaneFrameStatus::NonunitNormal {
             squared_norm: squared_norm.clone(),
@@ -192,7 +192,12 @@ pub fn lift_sketch_point2_to_workplane3(
     workplane: SketchEntityHandle,
     point: SketchEntityHandle,
 ) -> SketchWorkplanePointLiftReport {
-    lift_sketch_point2_to_workplane3_with_policy(sketch, workplane, point, PredicatePolicy)
+    lift_sketch_point2_to_workplane3_with_policy(
+        sketch,
+        workplane,
+        point,
+        PredicatePolicy::APPROXIMATE_512,
+    )
 }
 
 /// Lift a retained 2D point through a certified retained workplane frame using
@@ -259,7 +264,12 @@ pub fn project_sketch_point3_to_workplane2(
     workplane: SketchEntityHandle,
     point: SketchEntityHandle,
 ) -> SketchWorkplanePointProjectionReport {
-    project_sketch_point3_to_workplane2_with_policy(sketch, workplane, point, PredicatePolicy)
+    project_sketch_point3_to_workplane2_with_policy(
+        sketch,
+        workplane,
+        point,
+        PredicatePolicy::APPROXIMATE_512,
+    )
 }
 
 /// Project a retained 3D point into a certified retained workplane frame using

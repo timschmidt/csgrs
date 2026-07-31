@@ -15,7 +15,7 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::{Real, RealSign};
 
 use crate::analysis::ProblemAnalysis;
@@ -89,9 +89,14 @@ pub struct IntervalBoxCertificationReport {
 /// Errors that make affine interval certification invalid.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AffineIntervalError {
-    /// One supplied variable radius was structurally negative.
+    /// One supplied variable radius was proved negative.
     NegativeVariableRadius {
         /// Symbol whose radius was invalid.
+        symbol: SymbolId,
+    },
+    /// A supplied variable radius sign was unresolved under the caller policy.
+    UnknownVariableRadiusSign {
+        /// Symbol whose radius was undecided.
         symbol: SymbolId,
     },
     /// A coefficient sign was not certifiable, so `|coefficient|` could not be
@@ -107,9 +112,14 @@ pub enum AffineIntervalError {
 /// Errors that make quadratic-form interval certification invalid.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum QuadraticIntervalError {
-    /// One supplied variable radius was structurally negative.
+    /// One supplied variable radius was proved negative.
     NegativeVariableRadius {
         /// Symbol whose radius was invalid.
+        symbol: SymbolId,
+    },
+    /// A supplied variable radius sign was unresolved under the caller policy.
+    UnknownVariableRadiusSign {
+        /// Symbol whose radius was undecided.
         symbol: SymbolId,
     },
     /// The candidate did not bind the variable used by a quadratic row.
@@ -465,7 +475,7 @@ pub fn certify_affine_interval_candidate(
     variable_balls: &[VariableBall],
     policy: PredicatePolicy,
 ) -> Result<crate::CandidateCertificationReport, AffineIntervalError> {
-    let radius_by_symbol = validate_variable_balls(variable_balls)?;
+    let radius_by_symbol = validate_variable_balls(variable_balls, policy)?;
     let mut residual_balls = Vec::new();
     let mut active_row = 0_usize;
 
@@ -480,11 +490,7 @@ pub fn certify_affine_interval_candidate(
                 let Some(variable_radius) = radius_by_symbol.get(&variable.symbol) else {
                     continue;
                 };
-                let coefficient_abs =
-                    abs_real(coefficient).ok_or(AffineIntervalError::UnknownCoefficientSign {
-                        constraint_index,
-                        variable_column: column,
-                    })?;
+                let coefficient_abs = abs_real(coefficient);
                 radius += coefficient_abs * variable_radius.clone();
             }
             residual_balls.push(CandidateResidualBall { active_row, radius });
@@ -681,20 +687,8 @@ pub fn certify_affine_krawczyk_box(
                 steps,
             );
         };
-        let displacement = match abs_real(&step) {
-            Some(value) => value,
-            None => {
-                return affine_krawczyk_report(
-                    AffineKrawczykStatus::UndecidedContainment {
-                        symbol: variable.symbol,
-                    },
-                    variable_count,
-                    variable_count,
-                    steps,
-                );
-            }
-        };
-        match compare_reals_with_policy(&displacement, radius, policy).value() {
+        let displacement = abs_real(&step);
+        match compare_reals(&displacement, radius, policy).value() {
             Some(Ordering::Less | Ordering::Equal) => {}
             Some(Ordering::Greater) => {
                 return affine_krawczyk_report(
@@ -1003,30 +997,13 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
             analysis.problem().variables.as_slice(),
             context,
         ));
-        let Some(remainder_radius) = quadratic_remainder_radius(quadratic, &radius_by_symbol)
-        else {
-            return multivariate_quadratic_krawczyk_report(
-                MultivariateQuadraticKrawczykStatus::UnknownMagnitude,
-                variable_count,
-                rows.len(),
-                Vec::new(),
-                Vec::new(),
-            );
-        };
+        let remainder_radius = quadratic_remainder_radius(quadratic, &radius_by_symbol);
         remainder_radii.push(remainder_radius);
-        let Some(variation) = quadratic_derivative_variation(
+        let variation = quadratic_derivative_variation(
             quadratic,
             analysis.problem().variables.as_slice(),
             &radius_by_symbol,
-        ) else {
-            return multivariate_quadratic_krawczyk_report(
-                MultivariateQuadraticKrawczykStatus::UnknownMagnitude,
-                variable_count,
-                rows.len(),
-                Vec::new(),
-                Vec::new(),
-            );
-        };
+        );
         derivative_variation.push(variation);
     }
 
@@ -1058,45 +1035,19 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
     let mut variables = Vec::with_capacity(variable_count);
     for (variable_index, variable) in analysis.problem().variables.iter().enumerate() {
         let step = negative_matrix_vector_entry(&inverse[variable_index], &residual_values);
-        let Some(step_abs) = abs_real(&step) else {
-            return multivariate_quadratic_krawczyk_report(
-                MultivariateQuadraticKrawczykStatus::UnknownMagnitude,
-                variable_count,
-                rows.len(),
-                residual_payloads,
-                variables,
-            );
-        };
-        let Some(remainder_image_radius) =
-            weighted_sum_abs(&inverse[variable_index], &remainder_radii)
-        else {
-            return multivariate_quadratic_krawczyk_report(
-                MultivariateQuadraticKrawczykStatus::UnknownMagnitude,
-                variable_count,
-                rows.len(),
-                residual_payloads,
-                variables,
-            );
-        };
+        let step_abs = abs_real(&step);
+        let remainder_image_radius = weighted_sum_abs(&inverse[variable_index], &remainder_radii);
         let image_radius = step_abs + remainder_image_radius;
-        let Some(contraction_bound) = contraction_row_bound(
+        let contraction_bound = contraction_row_bound(
             &inverse[variable_index],
             &derivative_variation,
             analysis.problem().variables.as_slice(),
             &radius_by_symbol,
-        ) else {
-            return multivariate_quadratic_krawczyk_report(
-                MultivariateQuadraticKrawczykStatus::UnknownMagnitude,
-                variable_count,
-                rows.len(),
-                residual_payloads,
-                variables,
-            );
-        };
+        );
         let radius = radius_by_symbol
             .get(&variable.symbol)
             .expect("radius presence checked before Krawczyk construction");
-        match compare_reals_with_policy(&image_radius, radius, policy).value() {
+        match compare_reals(&image_radius, radius, policy).value() {
             Some(Ordering::Less | Ordering::Equal) => {}
             Some(Ordering::Greater) => {
                 return multivariate_quadratic_krawczyk_report(
@@ -1121,7 +1072,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
                 );
             }
         }
-        match compare_reals_with_policy(&contraction_bound, &Real::from(1), policy).value() {
+        match compare_reals(&contraction_bound, &Real::from(1), policy).value() {
             Some(Ordering::Less) => {}
             Some(Ordering::Equal | Ordering::Greater) => {
                 return multivariate_quadratic_krawczyk_report(
@@ -1190,9 +1141,12 @@ pub fn certify_quadratic_interval_candidate(
     policy: PredicatePolicy,
 ) -> Result<crate::CandidateCertificationReport, QuadraticIntervalError> {
     let radius_by_symbol =
-        validate_variable_balls(variable_balls).map_err(|error| match error {
+        validate_variable_balls(variable_balls, policy).map_err(|error| match error {
             AffineIntervalError::NegativeVariableRadius { symbol } => {
                 QuadraticIntervalError::NegativeVariableRadius { symbol }
+            }
+            AffineIntervalError::UnknownVariableRadiusSign { symbol } => {
+                QuadraticIntervalError::UnknownVariableRadiusSign { symbol }
             }
             AffineIntervalError::UnknownCoefficientSign { .. } => {
                 unreachable!("variable-ball validation cannot produce coefficient-sign errors")
@@ -1217,10 +1171,8 @@ pub fn certify_quadratic_interval_candidate(
             )?;
             let derivative = quadratic.quadratic().clone() * Real::from(2) * candidate.clone()
                 + quadratic.linear().clone();
-            let derivative_abs = abs_real(&derivative)
-                .ok_or(QuadraticIntervalError::UnknownMagnitudeSign { constraint_index })?;
-            let quadratic_abs = abs_real(quadratic.quadratic())
-                .ok_or(QuadraticIntervalError::UnknownMagnitudeSign { constraint_index })?;
+            let derivative_abs = abs_real(&derivative);
+            let quadratic_abs = abs_real(quadratic.quadratic());
             let radius = derivative_abs * variable_radius.clone()
                 + quadratic_abs * variable_radius.clone() * variable_radius;
             residual_balls.push(CandidateResidualBall { active_row, radius });
@@ -1260,9 +1212,12 @@ pub fn certify_multivariate_quadratic_interval_candidate(
     policy: PredicatePolicy,
 ) -> Result<crate::CandidateCertificationReport, QuadraticIntervalError> {
     let radius_by_symbol =
-        validate_variable_balls(variable_balls).map_err(|error| match error {
+        validate_variable_balls(variable_balls, policy).map_err(|error| match error {
             AffineIntervalError::NegativeVariableRadius { symbol } => {
                 QuadraticIntervalError::NegativeVariableRadius { symbol }
+            }
+            AffineIntervalError::UnknownVariableRadiusSign { symbol } => {
+                QuadraticIntervalError::UnknownVariableRadiusSign { symbol }
             }
             AffineIntervalError::UnknownCoefficientSign { .. } => {
                 unreachable!("variable-ball validation cannot produce coefficient-sign errors")
@@ -1311,8 +1266,7 @@ pub fn certify_multivariate_quadratic_interval_candidate(
                     .get(&symbol)
                     .cloned()
                     .unwrap_or_else(Real::zero);
-                let gradient_abs = abs_real(&gradient)
-                    .ok_or(QuadraticIntervalError::UnknownMagnitudeSign { constraint_index })?;
+                let gradient_abs = abs_real(&gradient);
                 radius += gradient_abs * variable_radius;
             }
             for term in quadratic.quadratic_terms() {
@@ -1324,8 +1278,7 @@ pub fn certify_multivariate_quadratic_interval_candidate(
                     .get(&term.second)
                     .cloned()
                     .unwrap_or_else(Real::zero);
-                let coefficient_abs = abs_real(&term.coefficient)
-                    .ok_or(QuadraticIntervalError::UnknownMagnitudeSign { constraint_index })?;
+                let coefficient_abs = abs_real(&term.coefficient);
                 radius += coefficient_abs * first_radius * second_radius;
             }
             residual_balls.push(CandidateResidualBall { active_row, radius });
@@ -1346,13 +1299,34 @@ pub fn certify_multivariate_quadratic_interval_candidate(
 
 fn validate_variable_balls(
     variable_balls: &[VariableBall],
+    policy: PredicatePolicy,
 ) -> Result<HashMap<SymbolId, Real>, AffineIntervalError> {
     let mut radii = HashMap::new();
     for ball in variable_balls {
-        if ball.radius.structural_facts().sign == Some(RealSign::Negative) {
-            return Err(AffineIntervalError::NegativeVariableRadius {
-                symbol: ball.symbol,
-            });
+        match ball.radius.structural_facts().sign {
+            Some(RealSign::Negative) => {
+                return Err(AffineIntervalError::NegativeVariableRadius {
+                    symbol: ball.symbol,
+                });
+            }
+            Some(RealSign::Zero | RealSign::Positive) => {
+                radii.insert(ball.symbol, ball.radius.clone());
+                continue;
+            }
+            None => {}
+        }
+        match compare_reals(&ball.radius, &Real::zero(), policy).value() {
+            Some(Ordering::Less) => {
+                return Err(AffineIntervalError::NegativeVariableRadius {
+                    symbol: ball.symbol,
+                });
+            }
+            Some(Ordering::Equal | Ordering::Greater) => {}
+            None => {
+                return Err(AffineIntervalError::UnknownVariableRadiusSign {
+                    symbol: ball.symbol,
+                });
+            }
         }
         radii.insert(ball.symbol, ball.radius.clone());
     }
@@ -1363,6 +1337,9 @@ fn interval_box_affine_error_message(error: AffineIntervalError) -> String {
     match error {
         AffineIntervalError::NegativeVariableRadius { symbol } => {
             format!("negative variable radius for symbol {:?}", symbol)
+        }
+        AffineIntervalError::UnknownVariableRadiusSign { symbol } => {
+            format!("unknown variable radius sign for symbol {:?}", symbol)
         }
         AffineIntervalError::UnknownCoefficientSign {
             constraint_index,
@@ -1377,6 +1354,9 @@ fn interval_box_quadratic_error_message(error: QuadraticIntervalError) -> String
     match error {
         QuadraticIntervalError::NegativeVariableRadius { symbol } => {
             format!("negative variable radius for symbol {:?}", symbol)
+        }
+        QuadraticIntervalError::UnknownVariableRadiusSign { symbol } => {
+            format!("unknown variable radius sign for symbol {:?}", symbol)
         }
         QuadraticIntervalError::UnboundCandidateSymbol { symbol } => {
             format!("unbound candidate symbol {:?}", symbol)
@@ -1393,7 +1373,7 @@ fn validate_quadratic_krawczyk_variable_balls(
 ) -> Result<HashMap<SymbolId, Real>, QuadraticKrawczykStatus> {
     let mut radii = HashMap::new();
     for ball in variable_balls {
-        match compare_reals_with_policy(&ball.radius, &Real::zero(), policy).value() {
+        match compare_reals(&ball.radius, &Real::zero(), policy).value() {
             Some(Ordering::Less) => {
                 return Err(QuadraticKrawczykStatus::NegativeVariableRadius {
                     symbol: ball.symbol,
@@ -1418,7 +1398,7 @@ fn validate_multivariate_quadratic_krawczyk_variable_balls(
 ) -> Result<HashMap<SymbolId, Real>, MultivariateQuadraticKrawczykStatus> {
     let mut radii = HashMap::new();
     for ball in variable_balls {
-        match compare_reals_with_policy(&ball.radius, &Real::zero(), policy).value() {
+        match compare_reals(&ball.radius, &Real::zero(), policy).value() {
             Some(Ordering::Less) => {
                 return Err(
                     MultivariateQuadraticKrawczykStatus::NegativeVariableRadius {
@@ -1488,7 +1468,7 @@ fn quadratic_gradient(
 fn quadratic_remainder_radius(
     quadratic: &QuadraticResidual,
     radius_by_symbol: &HashMap<SymbolId, Real>,
-) -> Option<Real> {
+) -> Real {
     let mut radius = Real::zero();
     for term in quadratic.quadratic_terms() {
         let first_radius = radius_by_symbol
@@ -1499,16 +1479,16 @@ fn quadratic_remainder_radius(
             .get(&term.second)
             .cloned()
             .unwrap_or_else(Real::zero);
-        radius += abs_real(&term.coefficient)? * first_radius * second_radius;
+        radius += abs_real(&term.coefficient) * first_radius * second_radius;
     }
-    Some(radius)
+    radius
 }
 
 fn quadratic_derivative_variation(
     quadratic: &QuadraticResidual,
     variables: &[crate::model::Variable],
     radius_by_symbol: &HashMap<SymbolId, Real>,
-) -> Option<Vec<Real>> {
+) -> Vec<Real> {
     let mut variation = vec![Real::zero(); variables.len()];
     let symbol_to_column = variables
         .iter()
@@ -1516,7 +1496,7 @@ fn quadratic_derivative_variation(
         .map(|(column, variable)| (variable.symbol, column))
         .collect::<HashMap<_, _>>();
     for term in quadratic.quadratic_terms() {
-        let coefficient_abs = abs_real(&term.coefficient)?;
+        let coefficient_abs = abs_real(&term.coefficient);
         let Some(first_column) = symbol_to_column.get(&term.first).copied() else {
             continue;
         };
@@ -1541,7 +1521,7 @@ fn quadratic_derivative_variation(
                 variation[second_column].clone() + coefficient_abs * first_radius;
         }
     }
-    Some(variation)
+    variation
 }
 
 fn negative_matrix_vector_entry(row: &[Real], values: &[Real]) -> Real {
@@ -1552,12 +1532,12 @@ fn negative_matrix_vector_entry(row: &[Real], values: &[Real]) -> Real {
     value
 }
 
-fn weighted_sum_abs(weights: &[Real], values: &[Real]) -> Option<Real> {
+fn weighted_sum_abs(weights: &[Real], values: &[Real]) -> Real {
     let mut sum = Real::zero();
     for (weight, value) in weights.iter().zip(values) {
-        sum += abs_real(weight)? * value.clone();
+        sum += abs_real(weight) * value.clone();
     }
-    Some(sum)
+    sum
 }
 
 fn contraction_row_bound(
@@ -1565,12 +1545,12 @@ fn contraction_row_bound(
     derivative_variation: &[Vec<Real>],
     variables: &[crate::model::Variable],
     radius_by_symbol: &HashMap<SymbolId, Real>,
-) -> Option<Real> {
+) -> Real {
     let mut bound = Real::zero();
     for (column, variable) in variables.iter().enumerate() {
         let mut operator_entry = Real::zero();
         for (weight, row_variation) in inverse_row.iter().zip(derivative_variation) {
-            operator_entry += abs_real(weight)? * row_variation[column].clone();
+            operator_entry += abs_real(weight) * row_variation[column].clone();
         }
         let radius = radius_by_symbol
             .get(&variable.symbol)
@@ -1578,7 +1558,7 @@ fn contraction_row_bound(
             .unwrap_or_else(Real::zero);
         bound += operator_entry * radius;
     }
-    Some(bound)
+    bound
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1592,20 +1572,8 @@ fn classify_quadratic_krawczyk_row(
     quadratic_coefficient: &Real,
     policy: PredicatePolicy,
 ) -> QuadraticKrawczykRow {
-    let Some(derivative_abs) = abs_real(&derivative) else {
-        return quadratic_krawczyk_row_with_values(
-            constraint_index,
-            symbol,
-            candidate,
-            radius,
-            residual,
-            derivative,
-            QuadraticKrawczykStatus::UnknownMagnitude,
-        );
-    };
-    if compare_reals_with_policy(&derivative_abs, &Real::zero(), policy).value()
-        == Some(Ordering::Equal)
-    {
+    let derivative_abs = abs_real(&derivative);
+    if compare_reals(&derivative_abs, &Real::zero(), policy).value() == Some(Ordering::Equal) {
         return quadratic_krawczyk_row_with_values(
             constraint_index,
             symbol,
@@ -1631,28 +1599,8 @@ fn classify_quadratic_krawczyk_row(
             );
         }
     };
-    let Some(step_abs) = abs_real(&step) else {
-        return quadratic_krawczyk_row_with_values(
-            constraint_index,
-            symbol,
-            candidate,
-            radius,
-            residual,
-            derivative,
-            QuadraticKrawczykStatus::UnknownMagnitude,
-        );
-    };
-    let Some(quadratic_abs) = abs_real(quadratic_coefficient) else {
-        return quadratic_krawczyk_row_with_values(
-            constraint_index,
-            symbol,
-            candidate,
-            radius,
-            residual,
-            derivative,
-            QuadraticKrawczykStatus::UnknownMagnitude,
-        );
-    };
+    let step_abs = abs_real(&step);
+    let quadratic_abs = abs_real(quadratic_coefficient);
 
     let contraction_numerator = quadratic_abs.clone() * Real::from(2) * radius.clone();
     let contraction_denominator = derivative_abs.clone();
@@ -1672,9 +1620,9 @@ fn classify_quadratic_krawczyk_row(
             }
         };
     let image_radius = step_abs + remainder_radius.clone();
-    let containment = compare_reals_with_policy(&image_radius, &radius, policy).value();
+    let containment = compare_reals(&image_radius, &radius, policy).value();
     let contraction =
-        compare_reals_with_policy(&contraction_numerator, &contraction_denominator, policy).value();
+        compare_reals(&contraction_numerator, &contraction_denominator, policy).value();
     let status = match (containment, contraction) {
         (Some(Ordering::Less | Ordering::Equal), Some(Ordering::Less)) => {
             QuadraticKrawczykStatus::CertifiedUniqueRoot
@@ -1747,7 +1695,7 @@ fn validate_krawczyk_variable_balls(
 ) -> Result<HashMap<SymbolId, Real>, AffineKrawczykStatus> {
     let mut radii = HashMap::new();
     for ball in variable_balls {
-        match compare_reals_with_policy(&ball.radius, &Real::zero(), policy).value() {
+        match compare_reals(&ball.radius, &Real::zero(), policy).value() {
             Some(Ordering::Less) => {
                 return Err(AffineKrawczykStatus::NegativeVariableRadius {
                     symbol: ball.symbol,
@@ -1810,7 +1758,7 @@ fn solve_exact_linear_system_raw(
     for pivot in 0..n {
         let pivot_row = (pivot..n).find(|&row| {
             !matches!(
-                compare_reals_with_policy(&matrix[row][pivot], &Real::zero(), policy).value(),
+                compare_reals(&matrix[row][pivot], &Real::zero(), policy).value(),
                 Some(Ordering::Equal) | None
             )
         });
@@ -1835,9 +1783,7 @@ fn solve_exact_linear_system_raw(
                 continue;
             }
             let factor = matrix[row][pivot].clone();
-            if compare_reals_with_policy(&factor, &Real::zero(), policy).value()
-                == Some(Ordering::Equal)
-            {
+            if compare_reals(&factor, &Real::zero(), policy).value() == Some(Ordering::Equal) {
                 continue;
             }
             for (value, pivot_value) in matrix[row].iter_mut().skip(pivot).zip(&pivot_tail) {
@@ -1879,9 +1825,10 @@ fn multivariate_quadratic_krawczyk_report(
     }
 }
 
-fn abs_real(value: &Real) -> Option<Real> {
-    match compare_reals_with_policy(value, &Real::zero(), PredicatePolicy).value()? {
-        std::cmp::Ordering::Less => Some(-value.clone()),
-        std::cmp::Ordering::Equal | std::cmp::Ordering::Greater => Some(value.clone()),
+fn abs_real(value: &Real) -> Real {
+    match value.structural_facts().sign {
+        Some(RealSign::Negative) => -value.clone(),
+        Some(RealSign::Zero | RealSign::Positive) => value.clone(),
+        None => value.abs(),
     }
 }

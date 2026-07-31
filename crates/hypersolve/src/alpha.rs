@@ -12,7 +12,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::analysis::ProblemAnalysis;
@@ -136,7 +136,7 @@ pub fn certify_univariate_quadratic_alpha(
 
         let residual = quadratic
             .eval_real(analysis.problem().variables.as_slice(), context.bindings())
-            .unwrap_or_else(|_| Real::zero());
+            .expect("retained quadratic symbol and candidate binding were checked");
         let derivative = quadratic.quadratic().clone() * Real::from(2) * candidate.clone()
             + quadratic.linear().clone();
         let status_and_bound =
@@ -174,21 +174,14 @@ fn classify_alpha_bound(
     quadratic: &Real,
     policy: PredicatePolicy,
 ) -> AlphaBoundClassification {
-    let Some(residual_abs) = abs_real_with_policy(residual, policy) else {
-        return alpha_status(UnivariateQuadraticAlphaStatus::Undecided);
-    };
-    let Some(derivative_abs) = abs_real_with_policy(derivative, policy) else {
-        return alpha_status(UnivariateQuadraticAlphaStatus::Undecided);
-    };
-    let Some(quadratic_abs) = abs_real_with_policy(quadratic, policy) else {
-        return alpha_status(UnivariateQuadraticAlphaStatus::Undecided);
-    };
+    let residual_abs = residual.abs();
+    let derivative_abs = derivative.abs();
+    let quadratic_abs = quadratic.abs();
 
-    let residual_is_zero = compare_reals_with_policy(&residual_abs, &Real::zero(), policy).value()
-        == Some(Ordering::Equal);
-    let derivative_is_zero = compare_reals_with_policy(&derivative_abs, &Real::zero(), policy)
-        .value()
-        == Some(Ordering::Equal);
+    let residual_is_zero =
+        compare_reals(&residual_abs, &Real::zero(), policy).value() == Some(Ordering::Equal);
+    let derivative_is_zero =
+        compare_reals(&derivative_abs, &Real::zero(), policy).value() == Some(Ordering::Equal);
 
     if residual_is_zero && derivative_is_zero {
         return alpha_status(UnivariateQuadraticAlphaStatus::ExactMultipleRoot);
@@ -207,7 +200,7 @@ fn classify_alpha_bound(
     let numerator = residual_abs * quadratic_abs;
     let denominator = derivative_abs.clone() * derivative_abs;
     let sufficient_left = numerator.clone() * Real::from(8);
-    let status = match compare_reals_with_policy(&sufficient_left, &denominator, policy).value() {
+    let status = match compare_reals(&sufficient_left, &denominator, policy).value() {
         Some(Ordering::Less | Ordering::Equal) => {
             UnivariateQuadraticAlphaStatus::CertifiedSmaleAlphaBound
         }
@@ -226,12 +219,5 @@ fn alpha_status(status: UnivariateQuadraticAlphaStatus) -> AlphaBoundClassificat
         status,
         alpha_numerator: None,
         alpha_denominator: None,
-    }
-}
-
-fn abs_real_with_policy(value: &Real, policy: PredicatePolicy) -> Option<Real> {
-    match compare_reals_with_policy(value, &Real::zero(), policy).value()? {
-        Ordering::Less => Some(-value.clone()),
-        Ordering::Equal | Ordering::Greater => Some(value.clone()),
     }
 }

@@ -14,7 +14,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::algebraic::{
@@ -121,9 +121,7 @@ pub fn transform_algebraic_root_mobius(
 
     let determinant = numerator_scale.clone() * denominator_offset.clone()
         - numerator_offset.clone() * denominator_scale.clone();
-    let Some(determinant_order) =
-        compare_reals_with_policy(&determinant, &Real::zero(), policy).value()
-    else {
+    let Some(determinant_order) = compare_reals(&determinant, &Real::zero(), policy).value() else {
         return mobius_report(
             AlgebraicRootMobiusTransformStatus::Undecided,
             numerator_scale,
@@ -424,8 +422,8 @@ struct AlgebraicValueInterval {
 }
 
 fn interval_contains_zero(value: &AlgebraicValueInterval, policy: PredicatePolicy) -> Option<bool> {
-    let lower = compare_reals_with_policy(&value.lower, &Real::zero(), policy).value()?;
-    let upper = compare_reals_with_policy(&value.upper, &Real::zero(), policy).value()?;
+    let lower = compare_reals(&value.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals(&value.upper, &Real::zero(), policy).value()?;
     Some(lower != Ordering::Greater && upper != Ordering::Less)
 }
 
@@ -461,7 +459,7 @@ fn polynomial_accumulate(target: &mut Vec<Real>, term: &[Real]) {
 fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     while polynomial.len() > 1 {
         let trailing = polynomial.last()?;
-        match compare_reals_with_policy(trailing, &Real::zero(), policy).value()? {
+        match compare_reals(trailing, &Real::zero(), policy).value()? {
             Ordering::Equal => {
                 polynomial.pop();
             }
@@ -478,8 +476,7 @@ fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> 
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 {
-            let ordering =
-                compare_reals_with_policy(&values[cursor], &values[cursor - 1], policy).value()?;
+            let ordering = compare_reals(&values[cursor], &values[cursor - 1], policy).value()?;
             if ordering != Ordering::Less {
                 break;
             }
@@ -548,7 +545,7 @@ mod tests {
             Real::zero(),
             Real::zero(),
             real(2),
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -573,7 +570,7 @@ mod tests {
             real(1),
             Real::one(),
             real(3),
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -598,7 +595,7 @@ mod tests {
             Real::zero(),
             Real::one(),
             real(-1),
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             pole.status,
@@ -611,7 +608,7 @@ mod tests {
             real(4),
             Real::one(),
             real(2),
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             constant.status,
@@ -639,7 +636,7 @@ mod tests {
             real(1),
             Real::one(),
             real(1),
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -670,7 +667,7 @@ mod tests {
             &numerator_offset,
             &denominator_scale,
             &denominator_offset,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         )
         .unwrap();
         let power_sum = mobius_transformed_polynomial_power_sum(
@@ -679,7 +676,7 @@ mod tests {
             &numerator_offset,
             &denominator_scale,
             &denominator_offset,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         )
         .unwrap();
 
@@ -708,7 +705,7 @@ mod tests {
                 &numerator_offset,
                 &denominator_scale,
                 &denominator_offset,
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
             let power_sum = mobius_transformed_polynomial_power_sum(
                 &polynomial,
@@ -716,7 +713,7 @@ mod tests {
                 &numerator_offset,
                 &denominator_scale,
                 &denominator_offset,
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(horner, power_sum);
@@ -755,7 +752,7 @@ mod tests {
                 real(b),
                 real(c),
                 real(d),
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootMobiusTransformStatus::Transformed);
@@ -797,7 +794,7 @@ mod tests {
                 real(b),
                 real(c),
                 real(d),
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootMobiusTransformStatus::Transformed);

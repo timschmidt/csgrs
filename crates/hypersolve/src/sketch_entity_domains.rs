@@ -12,7 +12,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::sketch::{
@@ -146,7 +146,7 @@ impl SketchEntityDomainReport {
 /// Certify retained sketch entity-domain obligations with the default
 /// predicate policy.
 pub fn preflight_sketch_entity_domains(sketch: &SketchSolveProblem) -> SketchEntityDomainReport {
-    preflight_sketch_entity_domains_with_policy(sketch, PredicatePolicy)
+    preflight_sketch_entity_domains_with_policy(sketch, PredicatePolicy::APPROXIMATE_512)
 }
 
 /// Certify retained sketch entity-domain obligations with an explicit
@@ -488,7 +488,7 @@ fn check_arc_nondegenerate(
 }
 
 fn classify_zero_is_valid(value: &Real, policy: PredicatePolicy) -> SketchEntityDomainStatus {
-    match compare_reals_with_policy(value, &Real::zero(), policy).value() {
+    match compare_reals(value, &Real::zero(), policy).value() {
         Some(Ordering::Equal) => SketchEntityDomainStatus::CertifiedValid,
         Some(Ordering::Less | Ordering::Greater) => SketchEntityDomainStatus::CertifiedInvalid,
         None => SketchEntityDomainStatus::Unknown,
@@ -496,7 +496,7 @@ fn classify_zero_is_valid(value: &Real, policy: PredicatePolicy) -> SketchEntity
 }
 
 fn classify_positive_is_valid(value: &Real, policy: PredicatePolicy) -> SketchEntityDomainStatus {
-    match compare_reals_with_policy(value, &Real::zero(), policy).value() {
+    match compare_reals(value, &Real::zero(), policy).value() {
         Some(Ordering::Greater) => SketchEntityDomainStatus::CertifiedValid,
         Some(Ordering::Less | Ordering::Equal) => SketchEntityDomainStatus::CertifiedInvalid,
         None => SketchEntityDomainStatus::Unknown,

@@ -25,7 +25,7 @@ impl Default for SimplexProjectionConfig {
     fn default() -> Self {
         Self {
             max_vertices: 8,
-            min_precision: -64,
+            min_precision: hyperlimit::PredicatePolicy::MAX_REFINEMENT_PRECISION,
         }
     }
 }

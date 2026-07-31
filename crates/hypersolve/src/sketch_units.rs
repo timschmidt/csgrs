@@ -10,7 +10,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::sketch::{
@@ -101,7 +101,7 @@ impl SketchUnitToleranceReport {
 
 /// Audit retained unit/tolerance metadata with the default predicate policy.
 pub fn audit_sketch_unit_tolerances(sketch: &SketchSolveProblem) -> SketchUnitToleranceReport {
-    audit_sketch_unit_tolerances_with_policy(sketch, PredicatePolicy)
+    audit_sketch_unit_tolerances_with_policy(sketch, PredicatePolicy::APPROXIMATE_512)
 }
 
 /// Audit retained unit/tolerance metadata with an explicit predicate policy.
@@ -210,5 +210,5 @@ fn classify_metadata(
 }
 
 fn compare_tolerance_sign(tolerance: &Real, policy: PredicatePolicy) -> Option<Ordering> {
-    compare_reals_with_policy(tolerance, &Real::zero(), policy).value()
+    compare_reals(tolerance, &Real::zero(), policy).value()
 }

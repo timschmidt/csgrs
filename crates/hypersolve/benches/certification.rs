@@ -4021,7 +4021,7 @@ fn certification(c: &mut Criterion) {
                         radius: r(0),
                     },
                 ],
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4584,7 +4584,10 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("isolate_univariate_polynomial_roots_sturm", |b| {
         b.iter(|| {
-            isolate_univariate_polynomial_roots(&quadratic_analysis, hyperlimit::PredicatePolicy)
+            isolate_univariate_polynomial_roots(
+                &quadratic_analysis,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
         })
     });
     c.bench_function("represent_univariate_algebraic_roots", |b| {
@@ -4634,7 +4637,7 @@ fn certification(c: &mut Criterion) {
             compare_algebraic_root_representations(
                 &sqrt_two,
                 &sqrt_three,
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4723,7 +4726,7 @@ fn certification(c: &mut Criterion) {
             evaluate_polynomial_at_algebraic_root(
                 &sqrt_two,
                 &[r(1), r(1), r(1)],
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4733,13 +4736,18 @@ fn certification(c: &mut Criterion) {
                 &sqrt_two,
                 &[r(1), r(1)],
                 &[r(2), r(1)],
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
     c.bench_function("transform_algebraic_root_affine", |b| {
         b.iter(|| {
-            transform_algebraic_root_affine(&sqrt_two, r(2), r(3), hyperlimit::PredicatePolicy)
+            transform_algebraic_root_affine(
+                &sqrt_two,
+                r(2),
+                r(3),
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
         })
     });
     c.bench_function("transform_algebraic_root_mobius", |b| {
@@ -4750,7 +4758,7 @@ fn certification(c: &mut Criterion) {
                 r(1),
                 r(1),
                 r(3),
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4759,7 +4767,7 @@ fn certification(c: &mut Criterion) {
             transform_algebraic_root_polynomial_image(
                 &sqrt_two,
                 &[r(0), r(1), r(1)],
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4769,7 +4777,7 @@ fn certification(c: &mut Criterion) {
                 &sqrt_two,
                 &[r(0), r(1)],
                 &[r(1), r(1)],
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4777,7 +4785,7 @@ fn certification(c: &mut Criterion) {
         &sqrt_two.polynomial_coefficients,
         &[r(0), r(1), r(1)],
         &[r(1)],
-        hyperlimit::PredicatePolicy,
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
     );
     rational_map.transform(&sqrt_two);
     c.bench_function("algebraic_root_rational_map_transform", |b| {
@@ -4791,7 +4799,7 @@ fn certification(c: &mut Criterion) {
                     &degree_twelve,
                     &degree_twelve_cubic_numerator,
                     &degree_twelve_quadratic_denominator,
-                    hyperlimit::PredicatePolicy,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
                 )
             })
         },
@@ -4802,7 +4810,7 @@ fn certification(c: &mut Criterion) {
                 &sqrt_two,
                 &sqrt_three,
                 AlgebraicRootArithmeticOp::Add,
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4812,7 +4820,7 @@ fn certification(c: &mut Criterion) {
                 &sqrt_two,
                 &sqrt_three,
                 AlgebraicRootArithmeticOp::Divide,
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4820,7 +4828,7 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             count_descartes_univariate_polynomial_roots(
                 &quadratic_analysis,
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4832,7 +4840,7 @@ fn certification(c: &mut Criterion) {
                     &quadratic_analysis,
                     r(0),
                     r(4),
-                    hyperlimit::PredicatePolicy,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
                 )
             })
         },
@@ -4846,7 +4854,7 @@ fn certification(c: &mut Criterion) {
                     r(0),
                     r(4),
                     hypersolve::BernsteinSubdivisionConfig {
-                        policy: hyperlimit::PredicatePolicy,
+                        policy: hyperlimit::PredicatePolicy::APPROXIMATE_512,
                         max_depth: 8,
                     },
                 )
@@ -4862,7 +4870,7 @@ fn certification(c: &mut Criterion) {
                     symbol: SymbolId(0),
                     radius: r(1),
                 }],
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4876,7 +4884,7 @@ fn certification(c: &mut Criterion) {
                     radius: r(1),
                 }],
                 IntervalBoxCertificationPackage::UnivariateQuadratic,
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4885,7 +4893,7 @@ fn certification(c: &mut Criterion) {
             certify_univariate_quadratic_alpha(
                 &quadratic_analysis,
                 &quadratic_context,
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4898,7 +4906,7 @@ fn certification(c: &mut Criterion) {
                     symbol: SymbolId(0),
                     radius: r(0),
                 }],
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4917,7 +4925,7 @@ fn certification(c: &mut Criterion) {
                         radius: r(1),
                     },
                 ],
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4936,7 +4944,7 @@ fn certification(c: &mut Criterion) {
                         radius: r(0),
                     },
                 ],
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -5382,7 +5390,7 @@ fn certification(c: &mut Criterion) {
             certify_candidate_domains(
                 &domain_problem,
                 &domain_context,
-                hyperlimit::PredicatePolicy,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });

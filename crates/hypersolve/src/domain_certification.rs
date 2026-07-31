@@ -13,7 +13,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::eval::EvaluationContext;
@@ -27,6 +27,9 @@ pub enum DomainCheckKind {
     DivisionDenominatorNonZero,
     /// Base of `base.powi(exponent)` must be nonzero when `exponent < 0`.
     NegativePowerBaseNonZero,
+    /// Base of `base.powi(0)` must be nonzero because Hyperreal leaves `0^0`
+    /// undefined.
+    ZeroPowerBaseNonZero,
     /// Operand of `sqrt(value)` must be nonnegative.
     SqrtOperandNonNegative,
     /// Operand of `log10(value)` must be strictly positive.
@@ -254,13 +257,17 @@ fn collect_domain_checks(
                 policy,
                 checks,
             );
-            if *exponent < 0 {
+            if *exponent <= 0 {
                 push_value_check(
                     value,
                     &format!("{path}.base"),
                     constraint_index,
                     constraint_name,
-                    DomainCheckKind::NegativePowerBaseNonZero,
+                    if *exponent < 0 {
+                        DomainCheckKind::NegativePowerBaseNonZero
+                    } else {
+                        DomainCheckKind::ZeroPowerBaseNonZero
+                    },
                     context,
                     policy,
                     checks,
@@ -459,22 +466,24 @@ fn classify_domain_value(
     policy: PredicatePolicy,
 ) -> DomainCheckStatus {
     match kind {
-        DomainCheckKind::DivisionDenominatorNonZero | DomainCheckKind::NegativePowerBaseNonZero => {
-            match compare_reals_with_policy(value, &Real::zero(), policy).value() {
+        DomainCheckKind::DivisionDenominatorNonZero
+        | DomainCheckKind::NegativePowerBaseNonZero
+        | DomainCheckKind::ZeroPowerBaseNonZero => {
+            match compare_reals(value, &Real::zero(), policy).value() {
                 Some(Ordering::Less | Ordering::Greater) => DomainCheckStatus::CertifiedValid,
                 Some(Ordering::Equal) => DomainCheckStatus::CertifiedInvalid,
                 None => DomainCheckStatus::Unknown,
             }
         }
         DomainCheckKind::SqrtOperandNonNegative => {
-            match compare_reals_with_policy(value, &Real::zero(), policy).value() {
+            match compare_reals(value, &Real::zero(), policy).value() {
                 Some(Ordering::Equal | Ordering::Greater) => DomainCheckStatus::CertifiedValid,
                 Some(Ordering::Less) => DomainCheckStatus::CertifiedInvalid,
                 None => DomainCheckStatus::Unknown,
             }
         }
         DomainCheckKind::Log10OperandPositive | DomainCheckKind::LnOperandPositive => {
-            match compare_reals_with_policy(value, &Real::zero(), policy).value() {
+            match compare_reals(value, &Real::zero(), policy).value() {
                 Some(Ordering::Greater) => DomainCheckStatus::CertifiedValid,
                 Some(Ordering::Less | Ordering::Equal) => DomainCheckStatus::CertifiedInvalid,
                 None => DomainCheckStatus::Unknown,
@@ -485,7 +494,7 @@ fn classify_domain_value(
             classify_closed_unit_interval(value, policy)
         }
         DomainCheckKind::AcoshOperandAtLeastOne => {
-            match compare_reals_with_policy(value, &Real::one(), policy).value() {
+            match compare_reals(value, &Real::one(), policy).value() {
                 Some(Ordering::Equal | Ordering::Greater) => DomainCheckStatus::CertifiedValid,
                 Some(Ordering::Less) => DomainCheckStatus::CertifiedInvalid,
                 None => DomainCheckStatus::Unknown,
@@ -498,8 +507,8 @@ fn classify_domain_value(
 }
 
 fn classify_closed_unit_interval(value: &Real, policy: PredicatePolicy) -> DomainCheckStatus {
-    let lower = compare_reals_with_policy(value, &(-Real::one()), policy).value();
-    let upper = compare_reals_with_policy(value, &Real::one(), policy).value();
+    let lower = compare_reals(value, &(-Real::one()), policy).value();
+    let upper = compare_reals(value, &Real::one(), policy).value();
     match (lower, upper) {
         (Some(Ordering::Less), _) | (_, Some(Ordering::Greater)) => {
             DomainCheckStatus::CertifiedInvalid
@@ -512,8 +521,8 @@ fn classify_closed_unit_interval(value: &Real, policy: PredicatePolicy) -> Domai
 }
 
 fn classify_open_unit_interval(value: &Real, policy: PredicatePolicy) -> DomainCheckStatus {
-    let lower = compare_reals_with_policy(value, &(-Real::one()), policy).value();
-    let upper = compare_reals_with_policy(value, &Real::one(), policy).value();
+    let lower = compare_reals(value, &(-Real::one()), policy).value();
+    let upper = compare_reals(value, &Real::one(), policy).value();
     match (lower, upper) {
         (Some(Ordering::Greater), Some(Ordering::Less)) => DomainCheckStatus::CertifiedValid,
         (Some(Ordering::Less | Ordering::Equal), _)

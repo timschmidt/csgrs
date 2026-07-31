@@ -273,11 +273,10 @@ impl<'a> AffineBuilder<'a> {
                 let reciprocal = (Real::one() / denominator).ok()?;
                 self.collect(left, scale * reciprocal)
             }
-            Expr::PowI(value, exponent) if *exponent == 0 => {
-                self.constant = self.constant.clone() + scale;
-                let _ = value;
-                Some(())
-            }
+            // Constant nonzero bases are folded by `Expr::simplify`. Any
+            // remaining zero exponent still carries the `base != 0` domain
+            // obligation, so it is not a total affine constant.
+            Expr::PowI(_, 0) => None,
             Expr::PowI(value, exponent) if *exponent == 1 => self.collect(value, scale),
             Expr::PowI(_, _)
             | Expr::Sqrt(_)

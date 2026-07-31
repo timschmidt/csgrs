@@ -1,6 +1,6 @@
 #![no_main]
 
-use hyperlimit::PredicatePolicy;
+use hyperlimit::PredicatePolicy::APPROXIMATE_512;
 use hyperreal::Real;
 use hypersolve::{
     transform_algebraic_root_rational_image, AlgebraicRootKind, AlgebraicRootRationalImageStatus,

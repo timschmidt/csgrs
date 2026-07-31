@@ -88,8 +88,14 @@ pub fn evaluate_residuals(
 
 pub(crate) fn positive_part(value: Real) -> Real {
     match value.structural_facts().sign {
-        Some(RealSign::Negative) => Real::zero(),
-        Some(RealSign::Zero) => Real::zero(),
-        _ => value,
+        Some(RealSign::Negative | RealSign::Zero) => Real::zero(),
+        Some(RealSign::Positive) => value,
+        None => {
+            // Preserve the exact hinge without deciding an unresolved sign:
+            // max(value, 0) = (value + |value|) / 2.
+            let magnitude = value.abs();
+            ((value + magnitude) / Real::from(2))
+                .expect("the exact positive-part denominator is nonzero")
+        }
     }
 }

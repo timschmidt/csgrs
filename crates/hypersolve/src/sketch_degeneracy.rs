@@ -9,7 +9,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::sketch::{
@@ -116,7 +116,7 @@ impl SketchDegeneracyReport {
 /// Certify simple retained sketch entity degeneracies with the default
 /// predicate policy.
 pub fn preflight_sketch_degeneracies(sketch: &SketchSolveProblem) -> SketchDegeneracyReport {
-    preflight_sketch_degeneracies_with_policy(sketch, PredicatePolicy)
+    preflight_sketch_degeneracies_with_policy(sketch, PredicatePolicy::APPROXIMATE_512)
 }
 
 /// Certify simple retained sketch entity degeneracies with an explicit
@@ -442,7 +442,7 @@ fn normal_status_to_workplane(status: SketchDegeneracyStatus) -> SketchDegenerac
 }
 
 fn classify_zero_is_degenerate(value: &Real, policy: PredicatePolicy) -> SketchDegeneracyStatus {
-    match compare_reals_with_policy(value, &Real::zero(), policy).value() {
+    match compare_reals(value, &Real::zero(), policy).value() {
         Some(Ordering::Equal) => SketchDegeneracyStatus::CertifiedDegenerate,
         Some(Ordering::Less | Ordering::Greater) => SketchDegeneracyStatus::CertifiedNondegenerate,
         None => SketchDegeneracyStatus::Unknown,
@@ -450,7 +450,7 @@ fn classify_zero_is_degenerate(value: &Real, policy: PredicatePolicy) -> SketchD
 }
 
 fn classify_one_is_nondegenerate(value: &Real, policy: PredicatePolicy) -> SketchDegeneracyStatus {
-    match compare_reals_with_policy(value, &Real::one(), policy).value() {
+    match compare_reals(value, &Real::one(), policy).value() {
         Some(Ordering::Equal) => SketchDegeneracyStatus::CertifiedNondegenerate,
         Some(Ordering::Less | Ordering::Greater) => SketchDegeneracyStatus::CertifiedDegenerate,
         None => SketchDegeneracyStatus::Unknown,

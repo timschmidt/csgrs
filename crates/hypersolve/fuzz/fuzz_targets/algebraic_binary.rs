@@ -1,6 +1,6 @@
 #![no_main]
 
-use hyperlimit::PredicatePolicy;
+use hyperlimit::PredicatePolicy::APPROXIMATE_512;
 use hyperreal::Real;
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootBinaryTransformStatus, AlgebraicRootKind,

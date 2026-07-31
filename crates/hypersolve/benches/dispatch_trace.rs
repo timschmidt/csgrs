@@ -249,7 +249,7 @@ fn trace_roots_and_interval_certification() -> hyperreal::dispatch_trace::TraceS
         let context = context_from_problem(&problem);
         black_box(isolate_univariate_polynomial_roots(
             &analysis,
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ));
         black_box(represent_univariate_algebraic_roots(
             &analysis,
@@ -263,7 +263,7 @@ fn trace_roots_and_interval_certification() -> hyperreal::dispatch_trace::TraceS
                 radius: r(1),
             }],
             IntervalBoxCertificationPackage::UnivariateQuadratic,
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ));
     })
 }
@@ -286,7 +286,7 @@ fn trace_krawczyk_certification() -> hyperreal::dispatch_trace::TraceSnapshot {
                     radius: r(0),
                 },
             ],
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ));
     })
 }
@@ -303,7 +303,7 @@ fn trace_domain_certification() -> hyperreal::dispatch_trace::TraceSnapshot {
         black_box(certify_candidate_domains(
             &problem,
             &context_from_problem(&problem),
-            hyperlimit::PredicatePolicy,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ));
     })
 }

@@ -16,7 +16,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::algebraic::{
@@ -428,8 +428,8 @@ fn interval_contains_zero(
 }
 
 fn interval_value_contains_zero(interval: &ValueInterval, policy: PredicatePolicy) -> Option<bool> {
-    let lower = compare_reals_with_policy(&interval.lower, &Real::zero(), policy).value()?;
-    let upper = compare_reals_with_policy(&interval.upper, &Real::zero(), policy).value()?;
+    let lower = compare_reals(&interval.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals(&interval.upper, &Real::zero(), policy).value()?;
     Some(lower != Ordering::Greater && upper != Ordering::Less)
 }
 
@@ -444,7 +444,7 @@ fn real_pow(base: &Real, exponent: usize) -> Real {
 fn trim_real_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     while polynomial.len() > 1 {
         let trailing = polynomial.last()?;
-        match compare_reals_with_policy(trailing, &Real::zero(), policy).value()? {
+        match compare_reals(trailing, &Real::zero(), policy).value()? {
             Ordering::Equal => {
                 polynomial.pop();
             }
@@ -458,8 +458,7 @@ fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> 
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 {
-            let ordering =
-                compare_reals_with_policy(&values[cursor], &values[cursor - 1], policy).value()?;
+            let ordering = compare_reals(&values[cursor], &values[cursor - 1], policy).value()?;
             if ordering != Ordering::Less {
                 break;
             }
@@ -538,7 +537,7 @@ mod tests {
             &sqrt_root(2, 1, 2),
             &sqrt_root(3, 1, 2),
             AlgebraicRootArithmeticOp::Add,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -573,7 +572,7 @@ mod tests {
             &left,
             &right,
             AlgebraicRootArithmeticOp::Add,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -598,7 +597,7 @@ mod tests {
             &sqrt_root(2, 1, 2),
             &sqrt_root(3, 1, 2),
             AlgebraicRootArithmeticOp::Multiply,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -628,7 +627,7 @@ mod tests {
             &wide,
             &sqrt_root(3, 1, 2),
             AlgebraicRootArithmeticOp::Add,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -644,7 +643,7 @@ mod tests {
             &sqrt_root(2, 1, 2),
             &sqrt_root(3, 1, 2),
             AlgebraicRootArithmeticOp::Divide,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -674,7 +673,7 @@ mod tests {
             &sqrt_root(2, 1, 2),
             &denominator,
             AlgebraicRootArithmeticOp::Divide,
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
 
         assert_eq!(
@@ -696,7 +695,7 @@ mod tests {
                 &sqrt_root(left, 1, 5),
                 &sqrt_root(right, 1, 5),
                 AlgebraicRootArithmeticOp::Multiply,
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootBinaryTransformStatus::Transformed);

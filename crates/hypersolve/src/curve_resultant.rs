@@ -58,7 +58,7 @@ pub struct CurveIntersectionResultantConfig {
 impl Default for CurveIntersectionResultantConfig {
     fn default() -> Self {
         Self {
-            min_precision: -64,
+            min_precision: hyperlimit::PredicatePolicy::MAX_REFINEMENT_PRECISION,
             max_resultant_degree: 32,
         }
     }

@@ -10,12 +10,12 @@
 //! residual/Jacobian layer with numerical Newton iteration, but makes the
 //! post-iteration trust boundary explicit.
 
-use hyperlimit::{PredicatePolicy, Sign, classify_ball_sign_with_policy};
+use hyperlimit::{Certainty, PredicatePolicy, Sign, classify_ball_sign};
 use hyperreal::{CertifiedRealSign, Real, RealSign, RealSignCertificate};
 
 use crate::analysis::ProblemAnalysis;
 use crate::diagnostics::{ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport};
-use crate::eval::{EvaluationContext, positive_part};
+use crate::eval::EvaluationContext;
 use crate::model::ConstraintKind;
 
 /// Certification policy for replaying one candidate solution.
@@ -32,7 +32,7 @@ pub struct CandidateCertificationConfig {
 impl Default for CandidateCertificationConfig {
     fn default() -> Self {
         Self {
-            min_precision: -2048,
+            min_precision: PredicatePolicy::MAX_REFINEMENT_PRECISION,
         }
     }
 }
@@ -66,6 +66,10 @@ pub enum CertifiedCandidateStatus {
     BallCertified {
         /// Sign proved for every value in the ball.
         sign: RealSign,
+        /// Certainty supplied by the Hyperlimit predicate cascade.
+        certainty: Certainty,
+        /// Whether that sign satisfies this row's constraint kind.
+        satisfied: bool,
     },
     /// The residual ball had a negative or otherwise unsupported radius.
     InvalidBallRadius,
@@ -99,7 +103,8 @@ impl CertifiedCandidateStatus {
             Self::CertifiedZero { .. }
                 | Self::CertifiedSatisfiedInequality { .. }
                 | Self::BallCertified {
-                    sign: RealSign::Zero,
+                    satisfied: true,
+                    ..
                 }
         )
     }
@@ -110,7 +115,8 @@ impl CertifiedCandidateStatus {
             self,
             Self::CertifiedViolation { .. }
                 | Self::BallCertified {
-                    sign: RealSign::Positive | RealSign::Negative,
+                    satisfied: false,
+                    ..
                 }
         )
     }
@@ -323,23 +329,36 @@ pub fn certify_candidate_with_residual_balls(
         let Some(center) = row.signed_residual.as_ref() else {
             continue;
         };
-        let status = match classify_ball_sign_with_policy(center, &ball.radius, policy) {
+        let status = match classify_ball_sign(center, &ball.radius, policy) {
             hyperlimit::PredicateOutcome::Decided {
-                value: Sign::Zero, ..
+                value: Sign::Zero,
+                certainty,
+                ..
             } => CertifiedCandidateStatus::BallCertified {
                 sign: RealSign::Zero,
+                certainty,
+                satisfied: true,
             },
             hyperlimit::PredicateOutcome::Decided {
                 value: Sign::Positive,
+                certainty,
                 ..
             } => CertifiedCandidateStatus::BallCertified {
                 sign: RealSign::Positive,
+                certainty,
+                satisfied: false,
             },
             hyperlimit::PredicateOutcome::Decided {
                 value: Sign::Negative,
+                certainty,
                 ..
             } => CertifiedCandidateStatus::BallCertified {
                 sign: RealSign::Negative,
+                certainty,
+                satisfied: matches!(
+                    row.kind,
+                    ConstraintKind::LessOrEqual | ConstraintKind::GreaterOrEqual
+                ),
             },
             hyperlimit::PredicateOutcome::Unknown {
                 needed: hyperlimit::RefinementNeed::Unsupported,
@@ -359,9 +378,8 @@ pub fn certify_candidate_with_residual_balls(
 
 fn normalize_residual(value: Real, kind: ConstraintKind) -> Real {
     match kind {
-        ConstraintKind::Equality | ConstraintKind::Soft => value,
-        ConstraintKind::LessOrEqual => positive_part(value),
-        ConstraintKind::GreaterOrEqual => positive_part(-value),
+        ConstraintKind::Equality | ConstraintKind::LessOrEqual | ConstraintKind::Soft => value,
+        ConstraintKind::GreaterOrEqual => -value,
     }
 }
 
@@ -375,10 +393,15 @@ fn classify_signed_residual(
             (ConstraintKind::Equality | ConstraintKind::Soft, RealSign::Zero) => {
                 CertifiedCandidateStatus::CertifiedZero { certificate }
             }
-            (ConstraintKind::LessOrEqual | ConstraintKind::GreaterOrEqual, RealSign::Zero) => {
-                CertifiedCandidateStatus::CertifiedSatisfiedInequality { certificate }
-            }
-            (_, RealSign::Positive | RealSign::Negative) => {
+            (
+                ConstraintKind::LessOrEqual | ConstraintKind::GreaterOrEqual,
+                RealSign::Negative | RealSign::Zero,
+            ) => CertifiedCandidateStatus::CertifiedSatisfiedInequality { certificate },
+            (
+                ConstraintKind::Equality | ConstraintKind::Soft,
+                RealSign::Positive | RealSign::Negative,
+            )
+            | (ConstraintKind::LessOrEqual | ConstraintKind::GreaterOrEqual, RealSign::Positive) => {
                 CertifiedCandidateStatus::CertifiedViolation { sign, certificate }
             }
         },
@@ -412,6 +435,12 @@ fn recompute_report_counts(report: &mut CandidateCertificationReport) {
     report.domain_failure_rows = report
         .rows
         .iter()
-        .filter(|row| matches!(row.status, CertifiedCandidateStatus::DomainFailure { .. }))
+        .filter(|row| {
+            matches!(
+                row.status,
+                CertifiedCandidateStatus::DomainFailure { .. }
+                    | CertifiedCandidateStatus::InvalidBallRadius
+            )
+        })
         .count();
 }

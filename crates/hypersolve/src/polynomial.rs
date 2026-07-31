@@ -351,10 +351,10 @@ fn collect_polynomial(expression: &Expr) -> Option<PolynomialAccumulator> {
             let reciprocal = (Real::one() / denominator).ok()?;
             Some(collect_polynomial(left)?.scale(reciprocal))
         }
-        Expr::PowI(value, 0) => {
-            let _ = value;
-            Some(PolynomialAccumulator::constant(Real::one()))
-        }
+        // Constant nonzero bases are folded by `Expr::simplify`. A remaining
+        // zero exponent still carries the `base != 0` domain obligation and
+        // therefore cannot be replaced by a total polynomial constant.
+        Expr::PowI(_, 0) => None,
         Expr::PowI(value, 1) => collect_polynomial(value),
         Expr::PowI(value, 2) => {
             let value = collect_polynomial(value)?;
@@ -479,10 +479,9 @@ fn collect_multivariate_quadratic(expression: &Expr) -> Option<MultivariateQuadr
             let reciprocal = (Real::one() / denominator).ok()?;
             Some(collect_multivariate_quadratic(left)?.scale(reciprocal))
         }
-        Expr::PowI(value, 0) => {
-            let _ = value;
-            Some(MultivariateQuadraticAccumulator::constant(Real::one()))
-        }
+        // See the univariate collector above: retaining `x^0` is necessary to
+        // preserve the undefined `0^0` case.
+        Expr::PowI(_, 0) => None,
         Expr::PowI(value, 1) => collect_multivariate_quadratic(value),
         Expr::PowI(value, 2) => {
             let value = collect_multivariate_quadratic(value)?;

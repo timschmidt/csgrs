@@ -10,7 +10,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::sketch::{SketchParameterDomain, SketchParameterHandle, SketchSolveProblem};
@@ -108,7 +108,7 @@ impl SketchParameterDomainReport {
 pub fn preflight_sketch_parameter_domains(
     sketch: &SketchSolveProblem,
 ) -> SketchParameterDomainReport {
-    preflight_sketch_parameter_domains_with_policy(sketch, PredicatePolicy)
+    preflight_sketch_parameter_domains_with_policy(sketch, PredicatePolicy::APPROXIMATE_512)
 }
 
 /// Certify retained sketch parameter-domain obligations with an explicit
@@ -178,7 +178,7 @@ fn classify_domain(
 ) -> SketchParameterDomainStatus {
     match domain {
         SketchParameterDomain::Locked { value: locked } => {
-            match compare_reals_with_policy(value, locked, policy).value() {
+            match compare_reals(value, locked, policy).value() {
                 Some(Ordering::Equal) => SketchParameterDomainStatus::CertifiedValid,
                 Some(Ordering::Less | Ordering::Greater) => {
                     SketchParameterDomainStatus::CertifiedInvalid
@@ -224,7 +224,7 @@ fn classify_closed_bounds(
     policy: PredicatePolicy,
 ) -> SketchParameterDomainStatus {
     if let (Some(lower), Some(upper)) = (lower, upper) {
-        match compare_reals_with_policy(lower, upper, policy).value() {
+        match compare_reals(lower, upper, policy).value() {
             Some(Ordering::Greater) => return SketchParameterDomainStatus::CertifiedInvalid,
             Some(Ordering::Less | Ordering::Equal) => {}
             None => return SketchParameterDomainStatus::Unknown,
@@ -232,7 +232,7 @@ fn classify_closed_bounds(
     }
 
     let lower_ok = match lower {
-        Some(lower) => match compare_reals_with_policy(value, lower, policy).value() {
+        Some(lower) => match compare_reals(value, lower, policy).value() {
             Some(Ordering::Greater | Ordering::Equal) => Some(true),
             Some(Ordering::Less) => Some(false),
             None => None,
@@ -240,7 +240,7 @@ fn classify_closed_bounds(
         None => Some(true),
     };
     let upper_ok = match upper {
-        Some(upper) => match compare_reals_with_policy(value, upper, policy).value() {
+        Some(upper) => match compare_reals(value, upper, policy).value() {
             Some(Ordering::Less | Ordering::Equal) => Some(true),
             Some(Ordering::Greater) => Some(false),
             None => None,
@@ -256,5 +256,5 @@ fn classify_closed_bounds(
 }
 
 fn compare_zero(value: &Real, policy: PredicatePolicy) -> Option<Ordering> {
-    compare_reals_with_policy(value, &Real::zero(), policy).value()
+    compare_reals(value, &Real::zero(), policy).value()
 }

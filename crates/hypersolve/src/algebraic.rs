@@ -11,7 +11,7 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
-use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::analysis::ProblemAnalysis;
@@ -100,7 +100,7 @@ pub struct AlgebraicRootRefinementComparisonConfig {
 impl Default for AlgebraicRootRefinementComparisonConfig {
     fn default() -> Self {
         Self {
-            policy: PredicatePolicy,
+            policy: PredicatePolicy::APPROXIMATE_512,
             max_refinement_rounds: 16,
             steps_per_round: 1,
         }
@@ -492,7 +492,7 @@ pub fn compare_algebraic_root_representations(
         left.exact_rational_witness(),
         right.exact_rational_witness(),
     ) {
-        let Some(ordering) = compare_reals_with_policy(left, right, policy).value() else {
+        let Some(ordering) = compare_reals(left, right, policy).value() else {
             return algebraic_comparison_report(
                 AlgebraicRootComparisonStatus::Undecided,
                 None,
@@ -507,7 +507,7 @@ pub fn compare_algebraic_root_representations(
     }
 
     let Some(left_before_right) =
-        compare_reals_with_policy(&left.interval.upper, &right.interval.lower, policy).value()
+        compare_reals(&left.interval.upper, &right.interval.lower, policy).value()
     else {
         return algebraic_comparison_report(
             AlgebraicRootComparisonStatus::Undecided,
@@ -524,7 +524,7 @@ pub fn compare_algebraic_root_representations(
     }
 
     let Some(left_after_right) =
-        compare_reals_with_policy(&left.interval.lower, &right.interval.upper, policy).value()
+        compare_reals(&left.interval.lower, &right.interval.upper, policy).value()
     else {
         return algebraic_comparison_report(
             AlgebraicRootComparisonStatus::Undecided,
@@ -709,7 +709,7 @@ pub fn compare_algebraic_root_representations_by_difference(
                     Some(difference),
                 );
             };
-            match compare_reals_with_policy(value, &Real::zero(), config.policy).value() {
+            match compare_reals(value, &Real::zero(), config.policy).value() {
                 Some(ordering) => algebraic_comparison_report(
                     AlgebraicRootComparisonStatus::Compared,
                     Some(ordering),
@@ -774,15 +774,11 @@ fn represented_roots_share_isolated_common_root(
     {
         return Some(false);
     }
-    let lower = match compare_reals_with_policy(&left.interval.lower, &right.interval.lower, policy)
-        .value()?
-    {
+    let lower = match compare_reals(&left.interval.lower, &right.interval.lower, policy).value()? {
         Ordering::Less => &right.interval.lower,
         Ordering::Equal | Ordering::Greater => &left.interval.lower,
     };
-    let upper = match compare_reals_with_policy(&left.interval.upper, &right.interval.upper, policy)
-        .value()?
-    {
+    let upper = match compare_reals(&left.interval.upper, &right.interval.upper, policy).value()? {
         Ordering::Greater => &right.interval.upper,
         Ordering::Equal | Ordering::Less => &left.interval.upper,
     };
@@ -823,19 +819,28 @@ pub fn arithmetic_algebraic_root_representations(
             Some("algebraic root arithmetic requires valid represented inputs".to_owned()),
         );
     }
-    if let Some(report) =
-        arithmetic_with_one_rational_scalar(left, right, operation, PredicatePolicy)
-    {
+    if let Some(report) = arithmetic_with_one_rational_scalar(
+        left,
+        right,
+        operation,
+        PredicatePolicy::APPROXIMATE_512,
+    ) {
         return report;
     }
-    if let Some(report) =
-        arithmetic_with_same_representation(left, right, operation, PredicatePolicy)
-    {
+    if let Some(report) = arithmetic_with_same_representation(
+        left,
+        right,
+        operation,
+        PredicatePolicy::APPROXIMATE_512,
+    ) {
         return report;
     }
-    if let Some(report) =
-        arithmetic_with_independent_representations(left, right, operation, PredicatePolicy)
-    {
+    if let Some(report) = arithmetic_with_independent_representations(
+        left,
+        right,
+        operation,
+        PredicatePolicy::APPROXIMATE_512,
+    ) {
         return report;
     }
     let Some(left_value) = left.exact_rational_witness() else {
@@ -1008,7 +1013,7 @@ fn multiply_by_rational_scalar_report(
     operation: AlgebraicRootArithmeticOp,
     policy: PredicatePolicy,
 ) -> AlgebraicRootArithmeticReport {
-    let Some(ordering) = compare_reals_with_policy(scalar, &Real::zero(), policy).value() else {
+    let Some(ordering) = compare_reals(scalar, &Real::zero(), policy).value() else {
         return algebraic_arithmetic_report(
             operation,
             AlgebraicRootArithmeticStatus::Undecided,
@@ -1042,7 +1047,7 @@ fn divide_by_rational_scalar_report(
     operation: AlgebraicRootArithmeticOp,
     policy: PredicatePolicy,
 ) -> AlgebraicRootArithmeticReport {
-    let Some(ordering) = compare_reals_with_policy(scalar, &Real::zero(), policy).value() else {
+    let Some(ordering) = compare_reals(scalar, &Real::zero(), policy).value() else {
         return algebraic_arithmetic_report(
             operation,
             AlgebraicRootArithmeticStatus::Undecided,
@@ -1229,8 +1234,8 @@ fn root_interval_contains_zero(
     interval: &IsolatedRootInterval,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    let lower = compare_reals_with_policy(&interval.lower, &Real::zero(), policy).value()?;
-    let upper = compare_reals_with_policy(&interval.upper, &Real::zero(), policy).value()?;
+    let lower = compare_reals(&interval.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals(&interval.upper, &Real::zero(), policy).value()?;
     Some(lower != Ordering::Greater && upper != Ordering::Less)
 }
 
@@ -1345,7 +1350,7 @@ pub fn transform_algebraic_root_affine(
             Some("algebraic root representation must be valid before transformation".to_owned()),
         );
     }
-    let Some(scale_sign) = compare_reals_with_policy(&scale, &Real::zero(), policy).value() else {
+    let Some(scale_sign) = compare_reals(&scale, &Real::zero(), policy).value() else {
         return algebraic_affine_transform_report(
             AlgebraicRootAffineTransformStatus::Undecided,
             scale,
@@ -1489,7 +1494,7 @@ pub fn evaluate_polynomial_at_algebraic_root(
     }
     if let Some(witness) = root.exact_rational_witness() {
         let value = evaluate_polynomial(&polynomial, witness);
-        let Some(sign) = compare_reals_with_policy(&value, &Real::zero(), policy).value() else {
+        let Some(sign) = compare_reals(&value, &Real::zero(), policy).value() else {
             return algebraic_polynomial_evaluation_report(
                 AlgebraicRootPolynomialEvaluationStatus::Undecided,
                 Some(value),
@@ -1523,8 +1528,7 @@ pub fn evaluate_polynomial_at_algebraic_root(
             Some("could not order interval polynomial endpoints exactly".to_owned()),
         );
     };
-    let Some(lower_cmp) = compare_reals_with_policy(&interval.lower, &Real::zero(), policy).value()
-    else {
+    let Some(lower_cmp) = compare_reals(&interval.lower, &Real::zero(), policy).value() else {
         return algebraic_polynomial_evaluation_report(
             AlgebraicRootPolynomialEvaluationStatus::Undecided,
             None,
@@ -1533,8 +1537,7 @@ pub fn evaluate_polynomial_at_algebraic_root(
             Some("could not compare interval lower endpoint with zero".to_owned()),
         );
     };
-    let Some(upper_cmp) = compare_reals_with_policy(&interval.upper, &Real::zero(), policy).value()
-    else {
+    let Some(upper_cmp) = compare_reals(&interval.upper, &Real::zero(), policy).value() else {
         return algebraic_polynomial_evaluation_report(
             AlgebraicRootPolynomialEvaluationStatus::Undecided,
             None,
@@ -1647,7 +1650,7 @@ fn rational_expression_evaluation_from_polynomial_reports(
         denominator.exact_value.as_ref(),
     ) {
         let Some(denominator_sign) =
-            compare_reals_with_policy(denominator_value, &Real::zero(), policy).value()
+            compare_reals(denominator_value, &Real::zero(), policy).value()
         else {
             return algebraic_rational_evaluation_report(
                 AlgebraicRootRationalEvaluationStatus::Undecided,
@@ -1681,7 +1684,7 @@ fn rational_expression_evaluation_from_polynomial_reports(
                 Some("exact rational division failed".to_owned()),
             );
         };
-        let sign = compare_reals_with_policy(&quotient, &Real::zero(), policy).value();
+        let sign = compare_reals(&quotient, &Real::zero(), policy).value();
         return algebraic_rational_evaluation_report(
             AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness,
             numerator,
@@ -1805,7 +1808,7 @@ fn negate_algebraic_root_representation(
         validation: AlgebraicRootValidationReport::valid(),
     };
     representation.validation =
-        validate_algebraic_root_representation(&representation, PredicatePolicy);
+        validate_algebraic_root_representation(&representation, PredicatePolicy::APPROXIMATE_512);
     representation
 }
 
@@ -1946,7 +1949,7 @@ fn validate_root_payload(
             "represented algebraic roots require nonconstant exact-rational polynomials",
         );
     }
-    match compare_reals_with_policy(&interval.lower, &interval.upper, policy).value() {
+    match compare_reals(&interval.lower, &interval.upper, policy).value() {
         Some(Ordering::Greater) => {
             return AlgebraicRootValidationReport::invalid(
                 AlgebraicRootValidationStatus::InvalidInterval,
@@ -1976,7 +1979,7 @@ fn validate_root_payload(
             "exact rational witness is outside its isolating interval",
         );
     }
-    match compare_reals_with_policy(
+    match compare_reals(
         &evaluate_polynomial(polynomial, root),
         &Real::zero(),
         policy,
@@ -2001,10 +2004,10 @@ fn point_lies_in_interval(
     upper: &Real,
     policy: PredicatePolicy,
 ) -> bool {
-    let Some(lower_cmp) = compare_reals_with_policy(point, lower, policy).value() else {
+    let Some(lower_cmp) = compare_reals(point, lower, policy).value() else {
         return false;
     };
-    let Some(upper_cmp) = compare_reals_with_policy(point, upper, policy).value() else {
+    let Some(upper_cmp) = compare_reals(point, upper, policy).value() else {
         return false;
     };
     lower_cmp != Ordering::Less && upper_cmp != Ordering::Greater
@@ -2133,7 +2136,7 @@ fn constant_value(expression: &Expr) -> Option<Real> {
 fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     while polynomial.len() > 1 {
         let trailing = polynomial.last()?;
-        match compare_reals_with_policy(trailing, &Real::zero(), policy).value()? {
+        match compare_reals(trailing, &Real::zero(), policy).value()? {
             Ordering::Equal => {
                 polynomial.pop();
             }
@@ -2286,8 +2289,8 @@ fn interval_contains_zero(
     value: &AlgebraicPolynomialValueInterval,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    let lower = compare_reals_with_policy(&value.lower, &Real::zero(), policy).value()?;
-    let upper = compare_reals_with_policy(&value.upper, &Real::zero(), policy).value()?;
+    let lower = compare_reals(&value.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals(&value.upper, &Real::zero(), policy).value()?;
     Some(lower != Ordering::Greater && upper != Ordering::Less)
 }
 
@@ -2295,8 +2298,8 @@ fn interval_sign(
     value: &AlgebraicPolynomialValueInterval,
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
-    let lower = compare_reals_with_policy(&value.lower, &Real::zero(), policy).value()?;
-    let upper = compare_reals_with_policy(&value.upper, &Real::zero(), policy).value()?;
+    let lower = compare_reals(&value.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals(&value.upper, &Real::zero(), policy).value()?;
     if lower == Ordering::Greater {
         Some(Ordering::Greater)
     } else if upper == Ordering::Less {
@@ -2312,8 +2315,7 @@ fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> 
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 {
-            let ordering =
-                compare_reals_with_policy(&values[cursor], &values[cursor - 1], policy).value()?;
+            let ordering = compare_reals(&values[cursor], &values[cursor - 1], policy).value()?;
             if ordering != Ordering::Less {
                 break;
             }
@@ -2364,13 +2366,13 @@ fn represented_root_sign(
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
     if let Some(value) = root.exact_rational_witness() {
-        return compare_reals_with_policy(value, &Real::zero(), policy).value();
+        return compare_reals(value, &Real::zero(), policy).value();
     }
-    let upper = compare_reals_with_policy(&root.interval.upper, &Real::zero(), policy).value()?;
+    let upper = compare_reals(&root.interval.upper, &Real::zero(), policy).value()?;
     if upper == Ordering::Less {
         return Some(Ordering::Less);
     }
-    let lower = compare_reals_with_policy(&root.interval.lower, &Real::zero(), policy).value()?;
+    let lower = compare_reals(&root.interval.lower, &Real::zero(), policy).value()?;
     if lower == Ordering::Greater {
         return Some(Ordering::Greater);
     }
@@ -2583,7 +2585,7 @@ mod tests {
                 && root.exact_rational_witness() == Some(&real(1))
         }));
         assert!(reports[0].roots.iter().all(|root| {
-            validate_algebraic_root_representation(root, PredicatePolicy).status
+            validate_algebraic_root_representation(root, PredicatePolicy::APPROXIMATE_512).status
                 == AlgebraicRootValidationStatus::Valid
         }));
     }
@@ -2605,7 +2607,11 @@ mod tests {
             validation: AlgebraicRootValidationReport::valid(),
         };
         assert_eq!(
-            validate_algebraic_root_representation(&invalid_count, PredicatePolicy).status,
+            validate_algebraic_root_representation(
+                &invalid_count,
+                PredicatePolicy::APPROXIMATE_512
+            )
+            .status,
             AlgebraicRootValidationStatus::NonUnitIsolation
         );
 
@@ -2620,7 +2626,8 @@ mod tests {
             ..invalid_count
         };
         assert_eq!(
-            validate_algebraic_root_representation(&bad_witness, PredicatePolicy).status,
+            validate_algebraic_root_representation(&bad_witness, PredicatePolicy::APPROXIMATE_512)
+                .status,
             AlgebraicRootValidationStatus::WitnessDoesNotSatisfyPolynomial
         );
     }
@@ -2653,11 +2660,13 @@ mod tests {
             ..left.clone()
         };
 
-        let comparison = compare_algebraic_root_representations(&left, &right, PredicatePolicy);
+        let comparison =
+            compare_algebraic_root_representations(&left, &right, PredicatePolicy::APPROXIMATE_512);
         assert_eq!(comparison.status, AlgebraicRootComparisonStatus::Compared);
         assert_eq!(comparison.ordering, Some(Ordering::Less));
 
-        let same = compare_algebraic_root_representations(&left, &left, PredicatePolicy);
+        let same =
+            compare_algebraic_root_representations(&left, &left, PredicatePolicy::APPROXIMATE_512);
         assert_eq!(
             same.status,
             AlgebraicRootComparisonStatus::SameRepresentation
@@ -2691,8 +2700,11 @@ mod tests {
             distinct_root_count: 1,
         };
 
-        let comparison =
-            compare_algebraic_root_representations(&valid, &overlapping, PredicatePolicy);
+        let comparison = compare_algebraic_root_representations(
+            &valid,
+            &overlapping,
+            PredicatePolicy::APPROXIMATE_512,
+        );
         assert_eq!(
             comparison.status,
             AlgebraicRootComparisonStatus::OverlappingIntervals
@@ -2705,7 +2717,12 @@ mod tests {
             "test invalid",
         );
         assert_eq!(
-            compare_algebraic_root_representations(&invalid, &valid, PredicatePolicy).status,
+            compare_algebraic_root_representations(
+                &invalid,
+                &valid,
+                PredicatePolicy::APPROXIMATE_512
+            )
+            .status,
             AlgebraicRootComparisonStatus::InvalidEvidence
         );
     }
@@ -2739,7 +2756,12 @@ mod tests {
         };
 
         assert_eq!(
-            compare_algebraic_root_representations(&sqrt_two, &sqrt_three, PredicatePolicy).status,
+            compare_algebraic_root_representations(
+                &sqrt_two,
+                &sqrt_three,
+                PredicatePolicy::APPROXIMATE_512
+            )
+            .status,
             AlgebraicRootComparisonStatus::OverlappingIntervals
         );
 
@@ -3219,7 +3241,7 @@ mod tests {
         let rational = evaluate_polynomial_at_algebraic_root(
             &rational_root,
             &[real(-9), Real::zero(), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             rational.status,
@@ -3245,7 +3267,7 @@ mod tests {
         let positive = evaluate_polynomial_at_algebraic_root(
             &sqrt_two,
             &[Real::one(), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             positive.status,
@@ -3256,7 +3278,7 @@ mod tests {
         let crossing = evaluate_polynomial_at_algebraic_root(
             &sqrt_two,
             &[real(-2), Real::zero(), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             crossing.status,
@@ -3285,7 +3307,7 @@ mod tests {
             &rational_root,
             &[real(1), Real::one()],
             &[real(-1), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             exact.status,
@@ -3298,7 +3320,7 @@ mod tests {
             &rational_root,
             &[Real::one()],
             &[real(-3), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             zero_denominator.status,
@@ -3323,7 +3345,7 @@ mod tests {
             &sqrt_two,
             &[Real::one()],
             &[Real::one(), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             interval.status,
@@ -3336,7 +3358,7 @@ mod tests {
             &sqrt_two,
             &[Real::one()],
             &[real(-1), Real::one()],
-            PredicatePolicy,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             may_contain_zero.status,
@@ -3360,8 +3382,12 @@ mod tests {
             kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
-        let transformed =
-            transform_algebraic_root_affine(&sqrt_two, real(2), real(3), PredicatePolicy);
+        let transformed = transform_algebraic_root_affine(
+            &sqrt_two,
+            real(2),
+            real(3),
+            PredicatePolicy::APPROXIMATE_512,
+        );
         assert_eq!(
             transformed.status,
             AlgebraicRootAffineTransformStatus::Transformed
@@ -3376,8 +3402,12 @@ mod tests {
         assert_eq!(representation.kind, AlgebraicRootKind::IsolatingInterval);
         assert!(representation.is_valid());
 
-        let reflected =
-            transform_algebraic_root_affine(&sqrt_two, real(-1), Real::zero(), PredicatePolicy);
+        let reflected = transform_algebraic_root_affine(
+            &sqrt_two,
+            real(-1),
+            Real::zero(),
+            PredicatePolicy::APPROXIMATE_512,
+        );
         assert_eq!(
             reflected.status,
             AlgebraicRootAffineTransformStatus::Transformed
@@ -3386,8 +3416,12 @@ mod tests {
         assert_eq!(reflected.interval.lower, real(-2));
         assert_eq!(reflected.interval.upper, real(-1));
 
-        let zero_scale =
-            transform_algebraic_root_affine(&sqrt_two, Real::zero(), real(4), PredicatePolicy);
+        let zero_scale = transform_algebraic_root_affine(
+            &sqrt_two,
+            Real::zero(),
+            real(4),
+            PredicatePolicy::APPROXIMATE_512,
+        );
         assert_eq!(
             zero_scale.status,
             AlgebraicRootAffineTransformStatus::ZeroScale
@@ -3461,7 +3495,7 @@ mod tests {
             let report = compare_algebraic_root_representations(
                 &left_root,
                 &right_root,
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootComparisonStatus::Compared);
@@ -3679,7 +3713,7 @@ mod tests {
                 &root,
                 Real::one(),
                 real(offset),
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(
@@ -3719,7 +3753,7 @@ mod tests {
             let report = evaluate_polynomial_at_algebraic_root(
                 &represented,
                 &[real(constant), real(linear), real(quadratic)],
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(
@@ -3766,7 +3800,7 @@ mod tests {
                 &represented,
                 &[real(numerator_constant), real(numerator_linear)],
                 &[real(denominator_constant), real(denominator_linear)],
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(
@@ -3807,7 +3841,7 @@ mod tests {
                 &represented,
                 real(scale),
                 real(offset),
-                PredicatePolicy,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootAffineTransformStatus::Transformed);
