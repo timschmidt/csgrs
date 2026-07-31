@@ -512,6 +512,10 @@ pub(crate) fn resolve_certified_operation<T, E>(
     policy: &CurveContext,
     evaluate: impl FnOnce(&CurveContext) -> Result<T, E>,
 ) -> Result<CurveOutcome<T>, E> {
+    if *policy == CurveContext::STRICT {
+        return evaluate(&CurveContext::STRICT)
+            .map(|value| CurveOutcome::new(value, CurveCertainty::Certified));
+    }
     if !policy.permits_approximate_512() {
         return evaluate(policy).map(|value| CurveOutcome::new(value, CurveCertainty::Certified));
     }
@@ -524,6 +528,9 @@ pub(crate) fn resolve_certified_value<T>(
     policy: &CurveContext,
     evaluate: impl FnOnce(&CurveContext) -> T,
 ) -> CurveOutcome<T> {
+    if *policy == CurveContext::STRICT {
+        return CurveOutcome::new(evaluate(&CurveContext::STRICT), CurveCertainty::Certified);
+    }
     if !policy.permits_approximate_512() {
         return CurveOutcome::new(evaluate(policy), CurveCertainty::Certified);
     }
