@@ -1519,7 +1519,12 @@ impl CurvePath2 {
             });
         }
         if let Some((arc_curve, arc, chord)) = native_arc_chord_path(self) {
-            return classify_native_arc_chord_path(arc_curve, arc, chord, point, policy);
+            match classify_native_arc_chord_path(arc_curve, arc, chord, point, policy)? {
+                Classification::Decided(location) => {
+                    return Ok(Classification::Decided(location));
+                }
+                Classification::Uncertain(_) => {}
+            }
         }
 
         self.bezier_boundary_loop()?

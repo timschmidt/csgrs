@@ -19,8 +19,9 @@ use crate::{
 /// An axis-aligned bounding box for two-dimensional curve geometry.
 ///
 /// The box is closed: points on `min`/`max` edges are considered contained and
-/// two boxes whose edges touch are considered overlapping. All constructors
-/// return uncertainty when the active policy cannot order a needed coordinate.
+/// two boxes whose edges touch are considered overlapping. Constructors return
+/// uncertainty when the active policy cannot order a needed coordinate unless
+/// the source primitive provides a certified conservative envelope.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Aabb2 {
     min: Point2,
@@ -86,15 +87,21 @@ impl Aabb2 {
     /// The endpoints always contribute. Cardinal circle extrema contribute only
     /// when the arc sweep contains the corresponding point, preserving native
     /// circular-arc geometry without tessellation. If sweep membership at a
-    /// cardinal point is uncertain, the box is uncertain because a too-small box
-    /// would make broad-phase pruning unsound. This is the standard conservative
-    /// broad-phase rule from computational geometry: filters may remove only
-    /// certified misses; uncertain candidates must reach the exact predicate
-    /// stage described by Shewchuk's robust-geometry work.
+    /// cardinal point is uncertain, that point is included conservatively. A
+    /// looser box is safe for broad-phase filtering while omitting an uncertain
+    /// extremum could hide a true intersection.
     pub fn from_arc(arc: &CircularArc2, policy: &CurvePolicy) -> CurveResult<Classification<Self>> {
         let mut bbox = match Self::from_points([arc.start(), arc.end()], policy) {
             Classification::Decided(bbox) => bbox,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            Classification::Uncertain(reason) => {
+                if reason != UncertaintyReason::Ordering {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                let radius = arc.radius_squared().sqrt()?;
+                return Ok(Classification::Decided(Self::arc_circle_envelope(
+                    arc, &radius,
+                )));
+            }
         };
 
         if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
@@ -140,16 +147,29 @@ impl Aabb2 {
             match arc.contains_sweep_point(candidate, policy) {
                 Classification::Decided(true) => match bbox.include_point(candidate, policy) {
                     Classification::Decided(()) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                    Classification::Uncertain(_) => {
+                        return Ok(Classification::Decided(Self::arc_circle_envelope(
+                            arc, &radius,
+                        )));
                     }
                 },
                 Classification::Decided(false) => {}
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+                Classification::Uncertain(_) => {
+                    return Ok(Classification::Decided(Self::arc_circle_envelope(
+                        arc, &radius,
+                    )));
+                }
             }
         }
 
         Ok(Classification::Decided(bbox))
+    }
+
+    fn arc_circle_envelope(arc: &CircularArc2, radius: &Real) -> Self {
+        Self {
+            min: Point2::new(arc.center().x() - radius, arc.center().y() - radius),
+            max: Point2::new(arc.center().x() + radius, arc.center().y() + radius),
+        }
     }
 
     /// Constructs the bounding box of a native line or circular-arc segment.
