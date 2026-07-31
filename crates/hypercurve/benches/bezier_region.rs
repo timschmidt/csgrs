@@ -157,6 +157,38 @@ fn retained_algebraic_line_fragment(
 
 fn main() -> CurveResult<()> {
     let policy = CurveContext::STRICT;
+    let first_region = square_region(0, 0, 4, 4)?;
+    let second_region = square_region(2, 0, 6, 4)?;
+    let region_clone_iterations = 1_000_000_u32;
+    let started = Instant::now();
+    let mut region_clone_checksum = 0_usize;
+    for _ in 0..region_clone_iterations {
+        let cloned = black_box(&first_region).clone();
+        region_clone_checksum =
+            region_clone_checksum.wrapping_add(black_box(cloned.boundary_loops().len()));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_clone: {region_clone_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={region_clone_checksum}",
+        elapsed / region_clone_iterations
+    );
+
+    black_box(CurveRegion2::empty());
+    let started = Instant::now();
+    let mut empty_region_checksum = 0_usize;
+    for _ in 0..region_clone_iterations {
+        empty_region_checksum =
+            empty_region_checksum.wrapping_add(black_box(CurveRegion2::empty()).len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_empty: {region_clone_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={empty_region_checksum}",
+        elapsed / region_clone_iterations
+    );
+    if std::env::var_os("HYPERCURVE_BEZIER_REGION_CARRIER_ONLY").is_some() {
+        return Ok(());
+    }
+
     let moment_curve = hypercurve::CubicBezier2::new(p(0, 0), p(1, 3), p(3, -2), p(4, 0));
     let moment_iterations = 20_000_u32;
     let started = Instant::now();
@@ -195,8 +227,6 @@ fn main() -> CurveResult<()> {
         elapsed / moment_iterations
     );
 
-    let first_region = square_region(0, 0, 4, 4)?;
-    let second_region = square_region(2, 0, 6, 4)?;
     let region_boolean_iterations = 1_000_u32;
     let started = Instant::now();
     let mut region_boolean_checksum = 0_usize;

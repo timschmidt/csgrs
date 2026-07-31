@@ -115,37 +115,57 @@ impl CurveRegionFragmentSource2 {
 /// reuse the Green-integral path described above.
 #[derive(Clone)]
 pub struct CurveRegion2 {
+    data: Arc<CurveRegionData2>,
+}
+
+struct CurveRegionData2 {
     boundary_loops: Vec<CurveRegionBoundaryLoop2>,
     certified_loop_roles: Option<Arc<[CurveRegionLoopRole]>>,
     certified_loop_fill_rules: Option<Arc<[FillRule]>>,
     signed_loop_composition: bool,
-    filled_side_is_left: Arc<PolicyClassificationCache<Arc<[bool]>>>,
-    native_boundary_loops: Arc<OnceLock<Option<Arc<[BezierBoundaryLoop2]>>>>,
-    native_boundary_bounds: Arc<PolicyClassificationCache<Arc<[Aabb2]>>>,
-    line_image_region: Arc<PolicyClassificationCache<Option<LineArcRegion2>>>,
-    retained_rational_evaluators: Arc<OnceLock<CurveResult<Vec<Vec<Option<RationalBezier2>>>>>>,
-    signed_area_cache: Arc<OnceLock<CurveResult<Option<Real>>>>,
+    filled_side_is_left: PolicyClassificationCache<Arc<[bool]>>,
+    native_boundary_loops: OnceLock<Option<Arc<[BezierBoundaryLoop2]>>>,
+    native_boundary_bounds: PolicyClassificationCache<Arc<[Aabb2]>>,
+    line_image_region: PolicyClassificationCache<Option<LineArcRegion2>>,
+    retained_rational_evaluators: OnceLock<CurveResult<Vec<Vec<Option<RationalBezier2>>>>>,
+    signed_area_cache: OnceLock<CurveResult<Option<Real>>>,
+}
+
+impl CurveRegionData2 {
+    fn new(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> Self {
+        Self {
+            boundary_loops,
+            certified_loop_roles: None,
+            certified_loop_fill_rules: None,
+            signed_loop_composition: false,
+            filled_side_is_left: PolicyClassificationCache::new(),
+            native_boundary_loops: OnceLock::new(),
+            native_boundary_bounds: PolicyClassificationCache::new(),
+            line_image_region: PolicyClassificationCache::new(),
+            retained_rational_evaluators: OnceLock::new(),
+            signed_area_cache: OnceLock::new(),
+        }
+    }
+}
+
+fn shared_empty_curve_region_data() -> Arc<CurveRegionData2> {
+    static EMPTY: OnceLock<Arc<CurveRegionData2>> = OnceLock::new();
+    Arc::clone(EMPTY.get_or_init(|| {
+        let mut data = CurveRegionData2::new(Vec::new());
+        data.certified_loop_roles = Some(Arc::from(Vec::new()));
+        data.certified_loop_fill_rules = Some(Arc::from(Vec::new()));
+        data.filled_side_is_left.certify(Arc::from(Vec::new()));
+        data.line_image_region
+            .certify(Some(LineArcRegion2::empty()));
+        Arc::new(data)
+    }))
 }
 
 impl Default for CurveRegion2 {
     fn default() -> Self {
-        let region = Self {
-            boundary_loops: Vec::new(),
-            certified_loop_roles: Some(Arc::from(Vec::new())),
-            certified_loop_fill_rules: Some(Arc::from(Vec::new())),
-            signed_loop_composition: false,
-            filled_side_is_left: Arc::new(PolicyClassificationCache::new()),
-            native_boundary_loops: Arc::new(OnceLock::new()),
-            native_boundary_bounds: Arc::new(PolicyClassificationCache::new()),
-            line_image_region: Arc::new(PolicyClassificationCache::new()),
-            retained_rational_evaluators: Arc::new(OnceLock::new()),
-            signed_area_cache: Arc::new(OnceLock::new()),
-        };
-        region.filled_side_is_left.certify(Arc::from(Vec::new()));
-        region
-            .line_image_region
-            .certify(Some(LineArcRegion2::empty()));
-        region
+        Self {
+            data: shared_empty_curve_region_data(),
+        }
     }
 }
 
@@ -627,20 +647,27 @@ impl std::fmt::Debug for CurveRegion2 {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter
             .debug_struct("CurveRegion2")
-            .field("boundary_loops", &self.boundary_loops)
-            .field("certified_loop_roles", &self.certified_loop_roles)
-            .field("certified_loop_fill_rules", &self.certified_loop_fill_rules)
-            .field("signed_loop_composition", &self.signed_loop_composition)
+            .field("boundary_loops", &self.data.boundary_loops)
+            .field("certified_loop_roles", &self.data.certified_loop_roles)
+            .field(
+                "certified_loop_fill_rules",
+                &self.data.certified_loop_fill_rules,
+            )
+            .field(
+                "signed_loop_composition",
+                &self.data.signed_loop_composition,
+            )
             .finish()
     }
 }
 
 impl PartialEq for CurveRegion2 {
     fn eq(&self, other: &Self) -> bool {
-        self.boundary_loops == other.boundary_loops
-            && self.certified_loop_roles == other.certified_loop_roles
-            && self.certified_loop_fill_rules == other.certified_loop_fill_rules
-            && self.signed_loop_composition == other.signed_loop_composition
+        Arc::ptr_eq(&self.data, &other.data)
+            || (self.data.boundary_loops == other.data.boundary_loops
+                && self.data.certified_loop_roles == other.data.certified_loop_roles
+                && self.data.certified_loop_fill_rules == other.data.certified_loop_fill_rules
+                && self.data.signed_loop_composition == other.data.signed_loop_composition)
     }
 }
 
@@ -1994,6 +2021,21 @@ fn replace_native_region_role_contour(
 }
 
 impl CurveRegion2 {
+    fn data_mut_for_construction(&mut self) -> &mut CurveRegionData2 {
+        if Arc::get_mut(&mut self.data).is_none() {
+            assert!(
+                self.data.boundary_loops.is_empty(),
+                "nonempty CurveRegion2 construction must own its data"
+            );
+            let mut data = CurveRegionData2::new(Vec::new());
+            data.certified_loop_roles = self.data.certified_loop_roles.clone();
+            data.certified_loop_fill_rules = self.data.certified_loop_fill_rules.clone();
+            data.signed_loop_composition = self.data.signed_loop_composition;
+            self.data = Arc::new(data);
+        }
+        Arc::get_mut(&mut self.data).expect("CurveRegion2 construction data is uniquely owned")
+    }
+
     /// Constructs an empty unified region.
     pub fn empty() -> Self {
         Self::default()
@@ -2091,8 +2133,9 @@ impl CurveRegion2 {
             policy,
             None,
         )?;
-        promoted.line_image_region = Arc::new(PolicyClassificationCache::new());
+        promoted.data_mut_for_construction().line_image_region = PolicyClassificationCache::new();
         promoted
+            .data
             .line_image_region
             .certify(Some(LineArcRegion2::new(material_contours, hole_contours)));
         Ok(promoted)
@@ -2224,7 +2267,7 @@ impl CurveRegion2 {
     ) -> ExactCurveResult<Self> {
         let mut region =
             Self::try_from_boundary_paths_with_loop_semantics(paths, roles, fill_rules, policy)?;
-        region.signed_loop_composition = true;
+        region.data_mut_for_construction().signed_loop_composition = true;
         Ok(region)
     }
 
@@ -2290,8 +2333,11 @@ impl CurveRegion2 {
             ));
         }
         let mut region = Self::try_from_boundary_paths(paths)?;
-        region.certified_loop_roles = Some(Arc::from(roles));
-        region.certified_loop_fill_rules = Some(Arc::from(fill_rules));
+        {
+            let data = region.data_mut_for_construction();
+            data.certified_loop_roles = Some(Arc::from(roles));
+            data.certified_loop_fill_rules = Some(Arc::from(fill_rules));
+        }
         if let Some(filled_sides) = certified_filled_sides {
             region = region
                 .with_certified_filled_side_is_left(filled_sides)
@@ -2300,7 +2346,7 @@ impl CurveRegion2 {
         if let Some(native) = native_region_from_curve_paths(paths, roles, fill_rules)
             .map_err(curve_region_promotion_error)?
         {
-            if region.filled_side_is_left.certified().is_none()
+            if region.data.filled_side_is_left.certified().is_none()
                 && !policy.permits_approximate_512()
                 && let Ok(filled_sides) =
                     filled_sides_from_roles_and_areas(roles, &native.signed_areas, policy)
@@ -2309,7 +2355,7 @@ impl CurveRegion2 {
                     .with_certified_filled_side_is_left(filled_sides)
                     .map_err(curve_region_promotion_error)?;
             }
-            region.line_image_region.certify(Some(native.region));
+            region.data.line_image_region.certify(Some(native.region));
         }
         Ok(region)
     }
@@ -2397,8 +2443,8 @@ impl CurveRegion2 {
             }
         };
 
-        let mut loops = Vec::with_capacity(self.boundary_loops.len());
-        for boundary in &self.boundary_loops {
+        let mut loops = Vec::with_capacity(self.data.boundary_loops.len());
+        for boundary in &self.data.boundary_loops {
             let fragments = boundary
                 .fragments()
                 .iter()
@@ -2419,9 +2465,12 @@ impl CurveRegion2 {
             loops.push(boundary);
         }
         let mut transformed = Self::new(loops).map_err(affine_region_error)?;
-        transformed.certified_loop_roles = self.certified_loop_roles.clone();
-        transformed.certified_loop_fill_rules = self.certified_loop_fill_rules.clone();
-        transformed.signed_loop_composition = self.signed_loop_composition;
+        {
+            let data = transformed.data_mut_for_construction();
+            data.certified_loop_roles = self.data.certified_loop_roles.clone();
+            data.certified_loop_fill_rules = self.data.certified_loop_fill_rules.clone();
+            data.signed_loop_composition = self.data.signed_loop_composition;
+        }
         let sides = match self
             .filled_side_is_left(policy)
             .map_err(affine_region_error)?
@@ -2445,7 +2494,7 @@ impl CurveRegion2 {
             .certified_line_image_region(policy)
             .map_err(affine_region_error)?
         {
-            transformed.line_image_region.certify(Some(region));
+            transformed.data.line_image_region.certify(Some(region));
         }
         Ok(transformed)
     }
@@ -2461,16 +2510,7 @@ impl CurveRegion2 {
 
     fn from_certified_boundary_loops(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> Self {
         Self {
-            boundary_loops,
-            certified_loop_roles: None,
-            certified_loop_fill_rules: None,
-            signed_loop_composition: false,
-            filled_side_is_left: Arc::new(PolicyClassificationCache::new()),
-            native_boundary_loops: Arc::new(OnceLock::new()),
-            native_boundary_bounds: Arc::new(PolicyClassificationCache::new()),
-            line_image_region: Arc::new(PolicyClassificationCache::new()),
-            retained_rational_evaluators: Arc::new(OnceLock::new()),
-            signed_area_cache: Arc::new(OnceLock::new()),
+            data: Arc::new(CurveRegionData2::new(boundary_loops)),
         }
     }
 
@@ -2478,12 +2518,13 @@ impl CurveRegion2 {
         self,
         filled_side_is_left: Vec<bool>,
     ) -> CurveResult<Self> {
-        if filled_side_is_left.len() != self.boundary_loops.len() {
+        if filled_side_is_left.len() != self.data.boundary_loops.len() {
             return Err(CurveError::Topology(
                 "curved-region filled-side evidence must match the boundary-loop count".into(),
             ));
         }
-        self.filled_side_is_left
+        self.data
+            .filled_side_is_left
             .certify(Arc::from(filled_side_is_left));
         Ok(self)
     }
@@ -2501,7 +2542,7 @@ impl CurveRegion2 {
         policy: &CurveContext,
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
     ) -> CurveResult<Classification<&[bool]>> {
-        resolve_cached_classification(&self.filled_side_is_left, policy, |attempt| {
+        resolve_cached_classification(&self.data.filled_side_is_left, policy, |attempt| {
             self.compute_filled_side_is_left_with_area_cache(attempt, rational_quadratic_cache)
         })
         .map(|classification| classification.map(AsRef::as_ref))
@@ -2512,8 +2553,9 @@ impl CurveRegion2 {
         policy: &CurveContext,
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
     ) -> CurveResult<Classification<Arc<[bool]>>> {
-        if let Some(roles) = self.certified_loop_roles.as_deref() {
+        if let Some(roles) = self.data.certified_loop_roles.as_deref() {
             let signed_areas = self
+                .data
                 .boundary_loops
                 .iter()
                 .map(|boundary_loop| boundary_loop.signed_area_with_cache(rational_quadratic_cache))
@@ -2525,9 +2567,9 @@ impl CurveRegion2 {
                     .map(|sides| Classification::Decided(Arc::from(sides)));
             }
         }
-        if self.boundary_loops.len() == 1
+        if self.data.boundary_loops.len() == 1
             && let Some(area) =
-                self.boundary_loops[0].signed_area_with_cache(rational_quadratic_cache)?
+                self.data.boundary_loops[0].signed_area_with_cache(rational_quadratic_cache)?
         {
             return Ok(match real_sign(&area, policy) {
                 Some(RealSign::Positive) => Classification::Decided(Arc::from([true].as_slice())),
@@ -2701,10 +2743,10 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveRegionLineRoleEvidence2>> {
-        let mut contours = Vec::with_capacity(self.boundary_loops.len());
+        let mut contours = Vec::with_capacity(self.data.boundary_loops.len());
         let mut materialized_fragment_count = 0_usize;
         let mut algebraic_fragment_count = 0_usize;
-        for boundary_loop in &self.boundary_loops {
+        for boundary_loop in &self.data.boundary_loops {
             let line_loop = match retained_line_loop_to_contour(boundary_loop, policy)? {
                 Classification::Decided(line_loop) => line_loop,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -2725,7 +2767,9 @@ impl CurveRegion2 {
             algebraic_fragment_count,
             contours,
         )?
-        .with_loop_arrangement_sources(retained_loop_arrangement_sources(&self.boundary_loops))?;
+        .with_loop_arrangement_sources(retained_loop_arrangement_sources(
+            &self.data.boundary_loops,
+        ))?;
         Ok(Classification::Decided(evidence))
     }
 
@@ -2741,9 +2785,9 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveRegionSignedAreaRoleEvidence2>> {
-        let mut roles = Vec::with_capacity(self.boundary_loops.len());
-        let mut signed_areas = Vec::with_capacity(self.boundary_loops.len());
-        for boundary_loop in &self.boundary_loops {
+        let mut roles = Vec::with_capacity(self.data.boundary_loops.len());
+        let mut signed_areas = Vec::with_capacity(self.data.boundary_loops.len());
+        for boundary_loop in &self.data.boundary_loops {
             let Some(area) = boundary_loop.signed_area()? else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
@@ -2759,9 +2803,9 @@ impl CurveRegion2 {
             signed_areas.push(area);
         }
         let evidence = CurveRegionSignedAreaRoleEvidence2::new(roles, signed_areas)?
-            .with_loop_fragment_counts(retained_loop_fragment_counts(&self.boundary_loops))?
+            .with_loop_fragment_counts(retained_loop_fragment_counts(&self.data.boundary_loops))?
             .with_loop_arrangement_sources(retained_loop_arrangement_sources(
-                &self.boundary_loops,
+                &self.data.boundary_loops,
             ))?;
         Ok(Classification::Decided(evidence))
     }
@@ -2781,8 +2825,8 @@ impl CurveRegion2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let native_bounds = self.native_boundary_bounds(policy);
-        let mut sample_points = Vec::with_capacity(self.boundary_loops.len());
-        let mut signed_areas = Vec::with_capacity(self.boundary_loops.len());
+        let mut sample_points = Vec::with_capacity(self.data.boundary_loops.len());
+        let mut signed_areas = Vec::with_capacity(self.data.boundary_loops.len());
         for native_loop in native_loops {
             let Some(area) = native_loop.signed_area()? else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -2843,8 +2887,10 @@ impl CurveRegion2 {
             signed_areas,
             sample_points,
         )?
-        .with_loop_fragment_counts(retained_loop_fragment_counts(&self.boundary_loops))?
-        .with_loop_arrangement_sources(retained_loop_arrangement_sources(&self.boundary_loops))?;
+        .with_loop_fragment_counts(retained_loop_fragment_counts(&self.data.boundary_loops))?
+        .with_loop_arrangement_sources(retained_loop_arrangement_sources(
+            &self.data.boundary_loops,
+        ))?;
         Ok(Classification::Decided(evidence))
     }
 
@@ -2857,7 +2903,7 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<CurveRegionLoopRole>>> {
-        if let Some(roles) = &self.certified_loop_roles {
+        if let Some(roles) = &self.data.certified_loop_roles {
             return Ok(Classification::Decided(roles.to_vec()));
         }
         match self.curved_nesting_role_evidence(policy)? {
@@ -2902,7 +2948,7 @@ impl CurveRegion2 {
     /// built only from boundary paths currently return `None`, meaning their
     /// simple-loop topology uses the kernel's default parity behavior.
     pub fn loop_fill_rules(&self) -> Option<&[FillRule]> {
-        self.certified_loop_fill_rules.as_deref()
+        self.data.certified_loop_fill_rules.as_deref()
     }
 
     /// Groups retained material loops with their exact owned hole loops.
@@ -2921,7 +2967,7 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        if roles.len() != self.boundary_loops.len() {
+        if roles.len() != self.data.boundary_loops.len() {
             return Err(CurveError::Topology(
                 "curve-region role count is inconsistent with boundary loops".into(),
             ));
@@ -2933,7 +2979,7 @@ impl CurveRegion2 {
             .filter_map(|(index, role)| {
                 (*role == CurveRegionLoopRole::Material).then_some(CurveRegionProfile2 {
                     material_loop_index: index,
-                    material: &self.boundary_loops[index],
+                    material: &self.data.boundary_loops[index],
                     hole_loop_indices: Vec::new(),
                     holes: Vec::new(),
                 })
@@ -2954,13 +3000,13 @@ impl CurveRegion2 {
             if *role != CurveRegionLoopRole::Hole {
                 continue;
             }
-            let point = match retained_loop_sample_point(&self.boundary_loops[hole_index], policy)?
-            {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let point =
+                match retained_loop_sample_point(&self.data.boundary_loops[hole_index], policy)? {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
 
             let mut owner: Option<usize> = None;
             for (profile_index, profile) in profiles.iter().enumerate() {
@@ -3076,7 +3122,9 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             profiles[owner].hole_loop_indices.push(hole_index);
-            profiles[owner].holes.push(&self.boundary_loops[hole_index]);
+            profiles[owner]
+                .holes
+                .push(&self.data.boundary_loops[hole_index]);
         }
         Ok(Classification::Decided(profiles))
     }
@@ -3087,10 +3135,10 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<&LineArcRegion2>> {
         let cached = resolve_cached_classification(
-            &self.line_image_region,
+            &self.data.line_image_region,
             policy,
             |attempt| -> CurveResult<Classification<Option<LineArcRegion2>>> {
-                if self.certified_loop_roles.is_some() {
+                if self.data.certified_loop_roles.is_some() {
                     match self.certified_line_image_region(attempt)? {
                         Classification::Decided(region) => {
                             Ok(Classification::Decided(Some(region)))
@@ -3272,8 +3320,8 @@ impl CurveRegion2 {
         &self,
         operation: CurveOperation2,
     ) -> ExactCurveResult<Classification<Vec<CurvePath2>>> {
-        let mut paths = Vec::with_capacity(self.boundary_loops.len());
-        for boundary_loop in &self.boundary_loops {
+        let mut paths = Vec::with_capacity(self.data.boundary_loops.len());
+        for boundary_loop in &self.data.boundary_loops {
             let mut curves = Vec::with_capacity(boundary_loop.fragments().len());
             for fragment in boundary_loop.fragments() {
                 let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
@@ -3316,6 +3364,7 @@ impl CurveRegion2 {
             }
         };
         let fill_rules = self
+            .data
             .certified_loop_fill_rules
             .as_deref()
             .map_or_else(|| vec![FillRule::EvenOdd; paths.len()], <[_]>::to_vec);
@@ -3495,8 +3544,8 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        if roles.len() != self.boundary_loops.len()
-            || filled_sides.len() != self.boundary_loops.len()
+        if roles.len() != self.data.boundary_loops.len()
+            || filled_sides.len() != self.data.boundary_loops.len()
         {
             return Err(curve_region_edit_error(
                 CurveOperation2::Offset,
@@ -3902,6 +3951,7 @@ impl CurveRegion2 {
         };
         let segmented_region = segmented.region();
         let native = segmented_region
+            .data
             .line_image_region
             .certified()
             .and_then(Option::as_ref)
@@ -3968,7 +4018,7 @@ impl CurveRegion2 {
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<(LineArcRegion2, CurveRegionLoopRole, usize)>> {
-        if loop_index >= self.boundary_loops.len() {
+        if loop_index >= self.data.boundary_loops.len() {
             return Err(curve_region_edit_error(
                 operation,
                 CurveError::InvalidCurveRange,
@@ -4005,6 +4055,7 @@ impl CurveRegion2 {
         evidence: &CurveRegionLineRoleEvidence2,
     ) -> CurveResult<LineArcRegion2> {
         let roles = self
+            .data
             .certified_loop_roles
             .as_deref()
             .unwrap_or_else(|| evidence.roles());
@@ -4015,11 +4066,11 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<LineArcRegion2>> {
-        let Some(roles) = self.certified_loop_roles.as_deref() else {
+        let Some(roles) = self.data.certified_loop_roles.as_deref() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let mut contours = Vec::with_capacity(self.boundary_loops.len());
-        for boundary_loop in &self.boundary_loops {
+        let mut contours = Vec::with_capacity(self.data.boundary_loops.len());
+        for boundary_loop in &self.data.boundary_loops {
             match retained_line_loop_to_contour(boundary_loop, policy)? {
                 Classification::Decided(line_loop) => contours.push(line_loop.contour),
                 Classification::Uncertain(reason) => {
@@ -4042,6 +4093,7 @@ impl CurveRegion2 {
             ));
         }
         if self
+            .data
             .certified_loop_fill_rules
             .as_ref()
             .is_some_and(|rules| rules.len() != contours.len())
@@ -4054,7 +4106,7 @@ impl CurveRegion2 {
         let mut material = Vec::new();
         let mut holes = Vec::new();
         for (index, (contour, role)) in contours.iter().zip(roles).enumerate() {
-            let contour = match &self.certified_loop_fill_rules {
+            let contour = match &self.data.certified_loop_fill_rules {
                 Some(fill_rules) if contour.fill_rule() != fill_rules[index] => {
                     Contour2::try_new_with_fill_rule(
                         contour.segments().to_vec(),
@@ -4084,7 +4136,7 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RegionPointLocation>> {
-        if !self.signed_loop_composition {
+        if !self.data.signed_loop_composition {
             match self.native_line_arc_region(policy)? {
                 Classification::Decided(region) => {
                     return Ok(region.classify_point(point, policy));
@@ -4097,19 +4149,21 @@ impl CurveRegion2 {
         }
         let Some(native_loops) = self.native_boundary_loops() else {
             return classify_point_against_retained_loops(
-                &self.boundary_loops,
+                &self.data.boundary_loops,
                 self.retained_rational_evaluators()?,
                 point,
                 policy,
-                self.certified_loop_roles.as_deref(),
-                self.certified_loop_fill_rules.as_deref(),
+                self.data.certified_loop_roles.as_deref(),
+                self.data.certified_loop_fill_rules.as_deref(),
             );
         };
         if self
+            .data
             .certified_loop_roles
             .as_ref()
             .is_some_and(|roles| roles.len() != native_loops.len())
             || self
+                .data
                 .certified_loop_fill_rules
                 .as_ref()
                 .is_some_and(|rules| rules.len() != native_loops.len())
@@ -4131,6 +4185,7 @@ impl CurveRegion2 {
                 continue;
             }
             let fill_rule = self
+                .data
                 .certified_loop_fill_rules
                 .as_ref()
                 .map_or(FillRule::EvenOdd, |rules| rules[index]);
@@ -4141,7 +4196,7 @@ impl CurveRegion2 {
                 policy,
             )? {
                 Classification::Decided(ContourPointLocation::Inside) => {
-                    if let Some(roles) = &self.certified_loop_roles {
+                    if let Some(roles) = &self.data.certified_loop_roles {
                         signed_depth += match roles[index] {
                             CurveRegionLoopRole::Material => 1,
                             CurveRegionLoopRole::Hole => -1,
@@ -4160,6 +4215,7 @@ impl CurveRegion2 {
             }
         }
         let inside = self
+            .data
             .certified_loop_roles
             .as_ref()
             .map_or(inside, |_| signed_depth > 0);
@@ -4182,7 +4238,7 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
-        if !self.signed_loop_composition {
+        if !self.data.signed_loop_composition {
             match self.native_line_arc_region(policy)? {
                 Classification::Decided(region) => {
                     return Ok(region.signed_depth(point, policy));
@@ -4204,15 +4260,16 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        if roles.len() != self.boundary_loops.len() {
+        if roles.len() != self.data.boundary_loops.len() {
             return Err(CurveError::Topology(
                 "curve-region signed-depth roles are inconsistent with boundary loops".into(),
             ));
         }
         if self
+            .data
             .certified_loop_fill_rules
             .as_ref()
-            .is_some_and(|rules| rules.len() != self.boundary_loops.len())
+            .is_some_and(|rules| rules.len() != self.data.boundary_loops.len())
         {
             return Err(CurveError::Topology(
                 "curve-region signed-depth fill rules are inconsistent with boundary loops".into(),
@@ -4232,6 +4289,7 @@ impl CurveRegion2 {
                     continue;
                 }
                 let fill_rule = self
+                    .data
                     .certified_loop_fill_rules
                     .as_ref()
                     .map_or(FillRule::EvenOdd, |rules| rules[index]);
@@ -4257,13 +4315,14 @@ impl CurveRegion2 {
         }
 
         let evaluators = self.retained_rational_evaluators()?;
-        if evaluators.len() != self.boundary_loops.len() {
+        if evaluators.len() != self.data.boundary_loops.len() {
             return Err(CurveError::Topology(
                 "curve-region signed-depth evaluator cache is inconsistent with boundary loops"
                     .into(),
             ));
         }
         for (index, ((boundary_loop, evaluators), role)) in self
+            .data
             .boundary_loops
             .iter()
             .zip(evaluators)
@@ -4271,6 +4330,7 @@ impl CurveRegion2 {
             .enumerate()
         {
             let fill_rule = self
+                .data
                 .certified_loop_fill_rules
                 .as_ref()
                 .map_or(FillRule::EvenOdd, |rules| rules[index]);
@@ -4298,27 +4358,31 @@ impl CurveRegion2 {
 
     /// Returns retained boundary loops.
     pub fn boundary_loops(&self) -> &[CurveRegionBoundaryLoop2] {
-        &self.boundary_loops
+        &self.data.boundary_loops
     }
 
     /// Consumes the region and returns retained boundary loops.
     pub fn into_boundary_loops(self) -> Vec<CurveRegionBoundaryLoop2> {
-        self.boundary_loops
+        match Arc::try_unwrap(self.data) {
+            Ok(data) => data.boundary_loops,
+            Err(data) => data.boundary_loops.clone(),
+        }
     }
 
     /// Returns true when the region has no boundary loops.
     pub fn is_empty(&self) -> bool {
-        self.boundary_loops.is_empty()
+        self.data.boundary_loops.is_empty()
     }
 
     /// Returns the number of retained boundary loops.
     pub fn len(&self) -> usize {
-        self.boundary_loops.len()
+        self.data.boundary_loops.len()
     }
 
     /// Returns true when any boundary loop retains algebraic endpoint images.
     pub fn has_algebraic_fragments(&self) -> bool {
-        self.boundary_loops
+        self.data
+            .boundary_loops
             .iter()
             .any(CurveRegionBoundaryLoop2::has_algebraic_fragments)
     }
@@ -4326,7 +4390,8 @@ impl CurveRegion2 {
     /// Returns exact signed area only when all retained loops are native
     /// polynomial loops with implemented Green integrals.
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
-        self.signed_area_cache
+        self.data
+            .signed_area_cache
             .get_or_init(|| self.compute_signed_area())
             .clone()
     }
@@ -4343,21 +4408,23 @@ impl CurveRegion2 {
     /// query remains explicitly uncertain instead of treating traversal
     /// multiplicity as filled-set area.
     pub fn filled_area(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Real>>> {
-        let mut magnitudes = Vec::with_capacity(self.boundary_loops.len());
+        let mut magnitudes = Vec::with_capacity(self.data.boundary_loops.len());
         if self
+            .data
             .certified_loop_fill_rules
             .as_ref()
-            .is_some_and(|rules| rules.len() != self.boundary_loops.len())
+            .is_some_and(|rules| rules.len() != self.data.boundary_loops.len())
         {
             return Err(CurveError::Topology(
                 "curve-region filled-area fill rules are inconsistent with boundary loops".into(),
             ));
         }
-        for (index, boundary_loop) in self.boundary_loops.iter().enumerate() {
+        for (index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
             let Some(area) = boundary_loop.signed_area()? else {
                 return Ok(Classification::Decided(None));
             };
             let fill_rule = self
+                .data
                 .certified_loop_fill_rules
                 .as_ref()
                 .map_or(FillRule::EvenOdd, |rules| rules[index]);
@@ -4399,7 +4466,7 @@ impl CurveRegion2 {
 
     fn compute_signed_area(&self) -> CurveResult<Option<Real>> {
         let mut total = Real::zero();
-        for boundary_loop in &self.boundary_loops {
+        for boundary_loop in &self.data.boundary_loops {
             let Some(area) = boundary_loop.signed_area()? else {
                 return Ok(None);
             };
@@ -4409,9 +4476,11 @@ impl CurveRegion2 {
     }
 
     fn native_boundary_loops(&self) -> Option<&[BezierBoundaryLoop2]> {
-        self.native_boundary_loops
+        self.data
+            .native_boundary_loops
             .get_or_init(|| {
-                self.boundary_loops
+                self.data
+                    .boundary_loops
                     .iter()
                     .map(retained_loop_to_native)
                     .collect::<Option<Vec<_>>>()
@@ -4421,8 +4490,9 @@ impl CurveRegion2 {
     }
 
     fn retained_rational_evaluators(&self) -> CurveResult<&[Vec<Option<RationalBezier2>>]> {
-        match self.retained_rational_evaluators.get_or_init(|| {
-            self.boundary_loops
+        match self.data.retained_rational_evaluators.get_or_init(|| {
+            self.data
+                .boundary_loops
                 .iter()
                 .map(|boundary_loop| {
                     boundary_loop
@@ -4447,7 +4517,7 @@ impl CurveRegion2 {
     fn native_boundary_bounds(&self, policy: &CurveContext) -> Option<&[Aabb2]> {
         let native_loops = self.native_boundary_loops()?;
         let bounds =
-            resolve_cached_classification(&self.native_boundary_bounds, policy, |attempt| {
+            resolve_cached_classification(&self.data.native_boundary_bounds, policy, |attempt| {
                 let mut bounds = Vec::with_capacity(native_loops.len());
                 for boundary_loop in native_loops {
                     match native_loop_bounds(boundary_loop, attempt) {
@@ -6421,6 +6491,19 @@ mod tests {
         Point2::new(Real::from(x), Real::from(y))
     }
 
+    #[test]
+    fn curve_region_is_one_word_and_empty_data_is_process_shared() {
+        let first = CurveRegion2::empty();
+        let second = CurveRegion2::default();
+
+        assert_eq!(
+            core::mem::size_of::<CurveRegion2>(),
+            core::mem::size_of::<usize>()
+        );
+        assert!(Arc::ptr_eq(&first.data, &second.data));
+        assert!(first.clone().into_boundary_loops().is_empty());
+    }
+
     fn quadratic_fragment(start: Point2, control: Point2, end: Point2) -> BezierSplitFragment2 {
         BezierSplitFragment2::Materialized {
             start: BezierParameter2::Exact(Real::zero()),
@@ -6489,16 +6572,33 @@ mod tests {
     }
 
     #[test]
+    fn curve_region_clones_share_geometry_and_lazy_caches() {
+        let region = single_quadratic_loop_region(false);
+        let clone = region.clone();
+
+        assert!(Arc::ptr_eq(&region.data, &clone.data));
+        assert!(region.data.signed_area_cache.get().is_none());
+        let clone_area = clone.signed_area().expect("clone area");
+        assert!(clone_area.is_some());
+        assert!(region.data.signed_area_cache.get().is_some());
+        assert_eq!(clone_area, region.signed_area().expect("source area"));
+
+        let cloned_loops = clone.into_boundary_loops();
+        assert_eq!(cloned_loops, region.boundary_loops());
+        assert_eq!(region.len(), 1);
+    }
+
+    #[test]
     fn single_loop_filled_side_uses_area_without_constructing_nesting_bounds() {
         let policy = CurveContext::STRICT;
         for (clockwise, expected) in [(false, true), (true, false)] {
             let region = single_quadratic_loop_region(clockwise);
-            assert!(region.native_boundary_bounds.is_empty());
+            assert!(region.data.native_boundary_bounds.is_empty());
             assert!(matches!(
                 region.filled_side_is_left(&policy),
                 Ok(Classification::Decided(sides)) if sides == [expected]
             ));
-            assert!(region.native_boundary_bounds.is_empty());
+            assert!(region.data.native_boundary_bounds.is_empty());
         }
     }
 
@@ -6603,7 +6703,10 @@ mod tests {
             region.classify_point(&p(1, 2), &policy),
             Ok(Classification::Decided(RegionPointLocation::Outside))
         );
-        assert!(matches!(region.line_image_region.certified(), Some(None)));
+        assert!(matches!(
+            region.data.line_image_region.certified(),
+            Some(None)
+        ));
     }
 
     #[test]
