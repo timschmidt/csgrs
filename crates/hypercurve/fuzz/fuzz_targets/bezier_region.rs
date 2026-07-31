@@ -170,7 +170,7 @@ fuzz_target!(|data: &[u8]| {
     if let Ok(graph) = BezierArrangementGraph2::from_split_materializations(&materializations) {
         if let Classification::Decided(traversal) = graph.traverse_branch_free(&policy) {
             let _ = BezierRegion2::from_arrangement_traversal(&graph, &traversal, &policy)
-                .map(|region| region.signed_area());
+                .map(|region| region.signed_area(&policy));
         }
         if let Classification::Decided(traversal) =
             graph.traverse_retained_with_tangent_order(&policy)
@@ -179,7 +179,7 @@ fuzz_target!(|data: &[u8]| {
                 CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy)
                     .into_value()
                     .map(|region| {
-                    let _ = region.signed_area();
+                    let _ = region.signed_area(&policy);
                     let _ = region.line_image_role_evidence(&policy);
                     let _ = region.signed_area_role_evidence(&policy);
                     let _ = region.curved_nesting_role_evidence(&policy);
@@ -191,11 +191,11 @@ fuzz_target!(|data: &[u8]| {
             graph.traverse_retained_splitting_linear_overlaps(&policy)
         {
             let _ = BezierRegion2::from_retained_linear_overlap_traversal(&traversal, &policy)
-                .map(|region| region.signed_area());
+                .map(|region| region.signed_area(&policy));
             let _ = CurveRegion2::from_retained_linear_overlap_traversal(&traversal, &policy)
                 .into_value()
                 .map(|region| {
-                    let _ = region.signed_area();
+                    let _ = region.signed_area(&policy);
                     let _ = region.line_image_role_evidence(&policy);
                     let _ = region.signed_area_role_evidence(&policy);
                     let _ = region.curved_nesting_role_evidence(&policy);

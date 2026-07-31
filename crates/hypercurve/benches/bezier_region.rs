@@ -350,7 +350,8 @@ fn main() -> CurveResult<()> {
         let region = decided(BezierRegion2::from_arrangement_traversal(
             &graph, &traversal, &policy,
         ));
-        checksum ^= black_box(format!("{:?}", region.signed_area()?).len());
+        checksum ^=
+            black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
     }
     let elapsed = started.elapsed();
     println!(
@@ -418,7 +419,8 @@ fn main() -> CurveResult<()> {
             CurveRegion2::from_retained_arrangement_traversal(&graph, &retained_traversal, &policy)
                 .into_value(),
         );
-        retained_checksum ^= black_box(format!("{:?}", region.signed_area()?).len());
+        retained_checksum ^=
+            black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
         if let Classification::Decided(envelope) =
             BezierRetainedEndpointEnvelope2::from_region(&region, &policy)
         {
@@ -607,12 +609,14 @@ fn main() -> CurveResult<()> {
             &overlap_traversal,
             &policy,
         ));
-        overlap_checksum ^= black_box(format!("{:?}", native.signed_area()?).len());
+        overlap_checksum ^=
+            black_box(format!("{:?}", decided(native.signed_area(&policy)?.into_value())).len());
         let retained = decided(
             CurveRegion2::from_retained_linear_overlap_traversal(&overlap_traversal, &policy)
                 .into_value(),
         );
-        overlap_checksum ^= black_box(format!("{:?}", retained.signed_area()?).len());
+        overlap_checksum ^=
+            black_box(format!("{:?}", decided(retained.signed_area(&policy)?.into_value())).len());
         if let Classification::Decided(evidence) =
             retained.line_image_role_evidence(&policy)?.into_value()
         {
@@ -660,7 +664,8 @@ fn main() -> CurveResult<()> {
             &conic_traversal,
             &policy,
         ));
-        conic_checksum ^= black_box(format!("{:?}", region.signed_area()?).len());
+        conic_checksum ^=
+            black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
     }
     let elapsed = started.elapsed();
     println!(

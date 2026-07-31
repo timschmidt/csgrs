@@ -574,16 +574,18 @@ fn path_boolean_selection_resolves_partial_same_circle_arc_boundaries() {
         .bezier_boundary_loop()
         .unwrap()
         .boundary_loop()
-        .signed_area()
+        .signed_area(&CurveContext::STRICT)
         .unwrap()
-        .unwrap();
+        .into_value();
+    let first_area = decided(first_area).unwrap();
     let second_area = second
         .bezier_boundary_loop()
         .unwrap()
         .boundary_loop()
-        .signed_area()
+        .signed_area(&CurveContext::STRICT)
         .unwrap()
-        .unwrap();
+        .into_value();
+    let second_area = decided(second_area).unwrap();
     let selections = first
         .boolean_selections(
             &second,
@@ -616,8 +618,10 @@ fn path_boolean_selection_resolves_partial_same_circle_arc_boundaries() {
             .region_view()
             .unwrap_or_else(|error| panic!("{operation:?} region: {error:?}"));
         let actual_area = region
-            .signed_area()
+            .signed_area(&CurveContext::STRICT)
             .unwrap()
+            .into_value();
+        let actual_area = decided(actual_area)
             .unwrap_or_else(|| panic!("{operation:?} did not retain an exact area"));
         assert_real_close(&actual_area, &expected_area, 1.0e-10);
     }
@@ -702,7 +706,15 @@ fn path_boolean_consumes_partial_nonlinear_shared_boundary() {
             .region_view()
             .unwrap_or_else(|error| panic!("{operation:?} region: {error:?}"));
         assert!(!region.boundary_loops().is_empty());
-        assert!(region.signed_area().unwrap().is_some());
+        assert!(
+            decided(
+                region
+                    .signed_area(&CurveContext::STRICT)
+                    .unwrap()
+                    .into_value()
+            )
+            .is_some()
+        );
     }
 }
 
@@ -877,7 +889,15 @@ fn path_boolean_selection_resolves_partial_reversed_shared_line_boundaries() {
         let region = selection
             .region_view()
             .unwrap_or_else(|error| panic!("{operation:?} region: {error:?}"));
-        assert_eq!(region.signed_area().unwrap(), Some(expected_area));
+        assert_eq!(
+            decided(
+                region
+                    .signed_area(&CurveContext::STRICT)
+                    .unwrap()
+                    .into_value()
+            ),
+            Some(expected_area)
+        );
     }
 }
 
@@ -913,7 +933,10 @@ fn path_boolean_selection_materializes_exact_regularized_operation_matrix() {
         assert!(traversal.chains().iter().all(|chain| chain.is_closed()));
         let region = selections.region(operation);
         assert!(std::ptr::eq(region, selection.region_view().unwrap()));
-        assert_eq!(region.signed_area().unwrap(), Some(expected_area));
+        assert_eq!(
+            decided(region.signed_area(&policy).unwrap().into_value()),
+            Some(expected_area)
+        );
     }
 
     let direct = first
@@ -925,7 +948,10 @@ fn path_boolean_selection_materializes_exact_regularized_operation_matrix() {
             &policy,
         )
         .unwrap();
-    assert_eq!(direct.signed_area().unwrap(), Some(r(7)));
+    assert_eq!(
+        decided(direct.signed_area(&policy).unwrap().into_value()),
+        Some(r(7))
+    );
 }
 
 #[test]
@@ -962,7 +988,15 @@ fn path_boolean_selection_consumes_complete_shared_boundaries() {
         let region = selection
             .region_view()
             .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
-        assert_eq!(region.signed_area().unwrap(), Some(expected_area));
+        assert_eq!(
+            decided(
+                region
+                    .signed_area(&CurveContext::STRICT)
+                    .unwrap()
+                    .into_value()
+            ),
+            Some(expected_area)
+        );
     }
 }
 

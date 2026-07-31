@@ -338,7 +338,10 @@ fn extracted_bspline_spans_feed_existing_bezier_region_area() {
     ])
     .unwrap();
 
-    assert_eq!(region.signed_area().unwrap(), Some(q(-88, 3)));
+    assert_eq!(
+        decided(region.signed_area(&policy()).unwrap().into_value()),
+        Some(q(-88, 3))
+    );
 }
 
 #[test]
@@ -554,7 +557,7 @@ fn equal_weight_retained_rational_cubic_spans_feed_native_region_area() {
     ])
     .unwrap();
 
-    assert!(region.signed_area().unwrap().is_some());
+    assert!(decided(region.signed_area(&policy()).unwrap().into_value()).is_some());
 }
 
 #[test]
@@ -1168,5 +1171,5 @@ fn extracted_rational_bspline_spans_feed_conic_region_area() {
     ])
     .unwrap();
 
-    assert!(region.signed_area().unwrap().is_some());
+    assert!(decided(region.signed_area(&policy()).unwrap().into_value()).is_some());
 }

@@ -110,16 +110,21 @@ fn top_level_curve_carries_every_public_family() {
 }
 #[test]
 fn top_level_curve_region_classifies_points_and_shares_results() {
-    let region =
-        CurveRegion2::try_from_boundary_paths(&[every_family_closed_path()], &CurveContext::STRICT)
-            .unwrap()
-            .into_value();
-    let clone = region.clone();
-    let signed_area = region
-        .signed_area()
+    let policy = CurveContext::STRICT;
+    let region = CurveRegion2::try_from_boundary_paths(&[every_family_closed_path()], &policy)
         .unwrap()
-        .expect("degree-two rational boundary contributions are exact");
-    assert_eq!(clone.signed_area(), Ok(Some(signed_area)));
+        .into_value();
+    let clone = region.clone();
+    let signed_area = match region.signed_area(&policy).unwrap().into_value() {
+        Classification::Decided(Some(area)) => area,
+        other => panic!("degree-two rational boundary contributions are exact: {other:?}"),
+    };
+    assert_eq!(
+        clone
+            .signed_area(&policy)
+            .map(|outcome| outcome.into_value()),
+        Ok(Classification::Decided(Some(signed_area)))
+    );
     assert_eq!(
         region
             .classify_point(&p(8, -1), &CurveContext::STRICT)

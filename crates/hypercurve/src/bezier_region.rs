@@ -131,7 +131,7 @@ struct CurveRegionData2 {
     native_boundary_bounds: PolicyClassificationCache<Arc<[Aabb2]>>,
     line_image_region: PolicyClassificationCache<Option<LineArcRegion2>>,
     retained_rational_evaluators: OnceLock<CurveResult<Vec<Vec<Option<RationalBezier2>>>>>,
-    signed_area_cache: OnceLock<CurveResult<Option<Real>>>,
+    signed_area_cache: PolicyClassificationCache<Option<Real>>,
 }
 
 impl CurveRegionData2 {
@@ -146,7 +146,7 @@ impl CurveRegionData2 {
             native_boundary_bounds: PolicyClassificationCache::new(),
             line_image_region: PolicyClassificationCache::new(),
             retained_rational_evaluators: OnceLock::new(),
-            signed_area_cache: OnceLock::new(),
+            signed_area_cache: PolicyClassificationCache::new(),
         }
     }
 }
@@ -1087,9 +1087,19 @@ impl BezierBoundaryLoop2 {
     /// Polynomial Beziers use exact polynomial Green integrals. Rational
     /// quadratics use the homogeneous rational Green integral when their
     /// denominator is certified nonzero on the affine parameter interval.
-    pub fn signed_area(&self) -> CurveResult<Option<Real>> {
+    pub fn signed_area(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
+        resolve_certified_operation(policy, |attempt| self.signed_area_raw(attempt))
+    }
+
+    pub(crate) fn signed_area_raw(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Real>>> {
         let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
-        self.signed_area_with_cache(&mut rational_quadratic_cache)
+        self.signed_area_with_cache(policy, &mut rational_quadratic_cache)
     }
 
     /// Returns exact signed area and first moments when every retained boundary
@@ -1104,7 +1114,17 @@ impl BezierBoundaryLoop2 {
     /// product of two are integrated directly. `None` preserves another
     /// genuinely rational boundary whose first-moment integral is not yet
     /// implemented; it never requests a flattening tolerance.
-    pub fn area_moments(&self) -> CurveResult<Option<BezierAreaMoments2>> {
+    pub fn area_moments(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Option<BezierAreaMoments2>>>> {
+        resolve_certified_operation(policy, |attempt| self.area_moments_raw(attempt))
+    }
+
+    pub(crate) fn area_moments_raw(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAreaMoments2>>> {
         if self.fragments.is_empty() {
             return Err(CurveError::Topology(
                 "Bezier boundary loop moments require nonempty fragments".to_owned(),
@@ -1112,18 +1132,26 @@ impl BezierBoundaryLoop2 {
         }
         let mut total = BezierAreaMoments2::zero();
         for fragment in &self.fragments {
-            let Some(contribution) = fragment.area_moments_contribution()? else {
-                return Ok(None);
+            match fragment.area_moments_contribution_raw(policy)? {
+                Classification::Decided(Some(contribution)) => {
+                    total = total.plus(&contribution);
+                }
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
-            total = total.plus(&contribution);
         }
-        Ok(Some(total))
+        Ok(Classification::Decided(Some(total)))
     }
 
     fn signed_area_with_cache(
         &self,
+        policy: &CurveContext,
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
-    ) -> CurveResult<Option<Real>> {
+    ) -> CurveResult<Classification<Option<Real>>> {
         if self.fragments.is_empty() {
             return Err(CurveError::Topology(
                 "Bezier boundary loop signed area requires nonempty fragments".to_owned(),
@@ -1132,14 +1160,19 @@ impl BezierBoundaryLoop2 {
 
         let mut total = Real::zero();
         for fragment in &self.fragments {
-            let Some(contribution) =
-                fragment.signed_area_contribution_with_cache(rational_quadratic_cache)?
-            else {
-                return Ok(None);
+            match fragment.signed_area_contribution_with_cache(policy, rational_quadratic_cache)? {
+                Classification::Decided(Some(contribution)) => {
+                    total = &total + &contribution;
+                }
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
-            total = &total + &contribution;
         }
-        Ok(Some(total))
+        Ok(Classification::Decided(Some(total)))
     }
 
     /// Classifies an exact point against this curved boundary loop.
@@ -1265,15 +1298,32 @@ impl BezierRegion2 {
     }
 
     /// Returns the exact signed area when all loops have implemented area integrals.
-    pub fn signed_area(&self) -> CurveResult<Option<Real>> {
+    pub fn signed_area(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
+        resolve_certified_operation(policy, |attempt| self.signed_area_raw(attempt))
+    }
+
+    pub(crate) fn signed_area_raw(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Real>>> {
         let mut total = Real::zero();
         for boundary_loop in &self.boundary_loops {
-            let Some(area) = boundary_loop.signed_area()? else {
-                return Ok(None);
+            match boundary_loop.signed_area_raw(policy)? {
+                Classification::Decided(Some(area)) => {
+                    total = &total + &area;
+                }
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
-            total = &total + &area;
         }
-        Ok(Some(total))
+        Ok(Classification::Decided(Some(total)))
     }
 }
 
@@ -1428,15 +1478,26 @@ impl CurveRegionBoundaryLoop2 {
     }
 
     /// Returns exact signed area only for fully native loops with implemented integrals.
-    pub fn signed_area(&self) -> CurveResult<Option<Real>> {
+    pub fn signed_area(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
+        resolve_certified_operation(policy, |attempt| self.signed_area_raw(attempt))
+    }
+
+    pub(crate) fn signed_area_raw(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Real>>> {
         let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
-        self.signed_area_with_cache(&mut rational_quadratic_cache)
+        self.signed_area_with_cache(policy, &mut rational_quadratic_cache)
     }
 
     fn signed_area_with_cache(
         &self,
+        policy: &CurveContext,
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
-    ) -> CurveResult<Option<Real>> {
+    ) -> CurveResult<Classification<Option<Real>>> {
         if self.fragments.is_empty() {
             return Err(CurveError::Topology(
                 "retained Bezier boundary loop signed area requires nonempty fragments".to_owned(),
@@ -1446,16 +1507,21 @@ impl CurveRegionBoundaryLoop2 {
         let mut total = Real::zero();
         for fragment in &self.fragments {
             let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-                return Ok(None);
+                return Ok(Classification::Decided(None));
             };
-            let Some(contribution) =
-                curve.signed_area_contribution_with_cache(rational_quadratic_cache)?
-            else {
-                return Ok(None);
+            match curve.signed_area_contribution_with_cache(policy, rational_quadratic_cache)? {
+                Classification::Decided(Some(contribution)) => {
+                    total = &total + &contribution;
+                }
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
-            total = &total + &contribution;
         }
-        Ok(Some(total))
+        Ok(Classification::Decided(Some(total)))
     }
 }
 
@@ -2665,29 +2731,41 @@ impl CurveRegion2 {
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
     ) -> CurveResult<Classification<Arc<[bool]>>> {
         if let Some(roles) = self.data.certified_loop_roles.as_deref() {
-            let signed_areas = self
-                .data
-                .boundary_loops
-                .iter()
-                .map(|boundary_loop| boundary_loop.signed_area_with_cache(rational_quadratic_cache))
-                .collect::<CurveResult<Vec<_>>>()?
-                .into_iter()
-                .collect::<Option<Vec<_>>>();
-            if let Some(signed_areas) = signed_areas {
+            let mut signed_areas = Vec::with_capacity(self.data.boundary_loops.len());
+            for boundary_loop in &self.data.boundary_loops {
+                match boundary_loop.signed_area_with_cache(policy, rational_quadratic_cache)? {
+                    Classification::Decided(Some(area)) => signed_areas.push(area),
+                    Classification::Decided(None) | Classification::Uncertain(_) => {
+                        signed_areas.clear();
+                        break;
+                    }
+                }
+            }
+            if signed_areas.len() == self.data.boundary_loops.len() {
                 return filled_sides_from_roles_and_areas(roles, &signed_areas, policy)
                     .map(|sides| Classification::Decided(Arc::from(sides)));
             }
         }
-        if self.data.boundary_loops.len() == 1
-            && let Some(area) =
-                self.data.boundary_loops[0].signed_area_with_cache(rational_quadratic_cache)?
-        {
-            return Ok(match real_sign(&area, policy) {
-                Some(RealSign::Positive) => Classification::Decided(Arc::from([true].as_slice())),
-                Some(RealSign::Negative) => Classification::Decided(Arc::from([false].as_slice())),
-                Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
-                None => Classification::Uncertain(UncertaintyReason::RealSign),
-            });
+        if self.data.boundary_loops.len() == 1 {
+            match self.data.boundary_loops[0]
+                .signed_area_with_cache(policy, rational_quadratic_cache)?
+            {
+                Classification::Decided(Some(area)) => {
+                    return Ok(match real_sign(&area, policy) {
+                        Some(RealSign::Positive) => {
+                            Classification::Decided(Arc::from([true].as_slice()))
+                        }
+                        Some(RealSign::Negative) => {
+                            Classification::Decided(Arc::from([false].as_slice()))
+                        }
+                        Some(RealSign::Zero) => {
+                            Classification::Uncertain(UncertaintyReason::Boundary)
+                        }
+                        None => Classification::Uncertain(UncertaintyReason::RealSign),
+                    });
+                }
+                Classification::Decided(None) | Classification::Uncertain(_) => {}
+            }
         }
 
         match self.curved_nesting_role_evidence_raw(policy)? {
@@ -2935,8 +3013,14 @@ impl CurveRegion2 {
         let mut roles = Vec::with_capacity(self.data.boundary_loops.len());
         let mut signed_areas = Vec::with_capacity(self.data.boundary_loops.len());
         for boundary_loop in &self.data.boundary_loops {
-            let Some(area) = boundary_loop.signed_area()? else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            let area = match boundary_loop.signed_area_raw(policy)? {
+                Classification::Decided(Some(area)) => area,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
             let role = match real_sign(&area, policy) {
                 Some(RealSign::Negative) => CurveRegionLoopRole::Material,
@@ -2984,8 +3068,14 @@ impl CurveRegion2 {
         let mut sample_points = Vec::with_capacity(self.data.boundary_loops.len());
         let mut signed_areas = Vec::with_capacity(self.data.boundary_loops.len());
         for native_loop in native_loops {
-            let Some(area) = native_loop.signed_area()? else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            let area = match native_loop.signed_area_raw(policy)? {
+                Classification::Decided(Some(area)) => area,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
             match real_sign(&area, policy) {
                 Some(RealSign::Positive | RealSign::Negative) => {}
@@ -4590,13 +4680,23 @@ impl CurveRegion2 {
             .any(CurveRegionBoundaryLoop2::has_algebraic_fragments)
     }
 
-    /// Returns exact signed area only when all retained loops are native
-    /// polynomial loops with implemented Green integrals.
-    pub fn signed_area(&self) -> CurveResult<Option<Real>> {
-        self.data
-            .signed_area_cache
-            .get_or_init(|| self.compute_signed_area())
-            .clone()
+    /// Returns exact signed area only when all retained loops have implemented
+    /// Green integrals or a policy-certified line image.
+    pub fn signed_area(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
+        resolve_certified_operation(policy, |attempt| self.signed_area_raw(attempt))
+    }
+
+    pub(crate) fn signed_area_raw(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Real>>> {
+        resolve_cached_classification(&self.data.signed_area_cache, policy, |attempt| {
+            self.compute_signed_area(attempt)
+        })
+        .map(|classification| classification.map(Clone::clone))
     }
 
     /// Returns exact material-minus-hole area when every loop has an implemented integral.
@@ -4633,8 +4733,12 @@ impl CurveRegion2 {
             ));
         }
         for (index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
-            let Some(area) = boundary_loop.signed_area()? else {
-                return Ok(Classification::Decided(None));
+            let area = match boundary_loop.signed_area_raw(policy)? {
+                Classification::Decided(Some(area)) => area,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
             let fill_rule = self
                 .data
@@ -4677,15 +4781,25 @@ impl CurveRegion2 {
         Ok(Classification::Decided(Some(total)))
     }
 
-    fn compute_signed_area(&self) -> CurveResult<Option<Real>> {
+    fn compute_signed_area(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Real>>> {
         let mut total = Real::zero();
         for boundary_loop in &self.data.boundary_loops {
-            let Some(area) = boundary_loop.signed_area()? else {
-                return Ok(None);
+            match boundary_loop.signed_area_raw(policy)? {
+                Classification::Decided(Some(area)) => {
+                    total = &total + &area;
+                }
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
-            total = &total + &area;
         }
-        Ok(Some(total))
+        Ok(Classification::Decided(Some(total)))
     }
 
     fn native_boundary_loops(&self) -> Option<&[BezierBoundaryLoop2]> {
@@ -4772,8 +4886,12 @@ fn curve_region_loop_filled_area_magnitude(
         if fill_rule == FillRule::EvenOdd && repeat_count.is_multiple_of(2) {
             return Ok(Classification::Decided(Some(Real::zero())));
         }
-        let Some(base_area) = base_loop.signed_area()? else {
-            return Ok(Classification::Decided(None));
+        let base_area = match base_loop.signed_area_raw(policy)? {
+            Classification::Decided(Some(area)) => area,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
         return absolute_nonzero_area(base_area, policy).map(|area| area.map(Some));
     }
@@ -6616,81 +6734,123 @@ fn subcurve_relation_to_line_with_contacts(
 
 impl BezierSubcurve2 {
     /// Returns exact signed-area contribution when implemented for this curve family.
-    pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
+    pub fn signed_area_contribution(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
+        resolve_certified_operation(policy, |attempt| self.signed_area_contribution_raw(attempt))
+    }
+
+    pub(crate) fn signed_area_contribution_raw(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Real>>> {
         match self {
-            Self::Quadratic(curve) => curve.signed_area_contribution().map(Some),
-            Self::Cubic(curve) => curve.signed_area_contribution().map(Some),
-            Self::RationalQuadratic(curve) => curve.signed_area_contribution(),
+            Self::Quadratic(curve) => curve
+                .signed_area_contribution()
+                .map(|area| Classification::Decided(Some(area))),
+            Self::Cubic(curve) => curve
+                .signed_area_contribution()
+                .map(|area| Classification::Decided(Some(area))),
+            Self::RationalQuadratic(curve) => curve
+                .signed_area_contribution()
+                .map(Classification::Decided),
             Self::Rational(curve) => match curve.signed_area_contribution()? {
-                Some(area) => Ok(Some(area)),
-                None => rational_line_signed_area_contribution(curve),
+                Some(area) => Ok(Classification::Decided(Some(area))),
+                None => rational_line_signed_area_contribution(curve, policy),
             },
         }
     }
 
     /// Returns exact signed-area and first-moment contributions when the
     /// fragment has an implemented symbolic integral.
-    pub fn area_moments_contribution(&self) -> CurveResult<Option<BezierAreaMoments2>> {
+    pub fn area_moments_contribution(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Option<BezierAreaMoments2>>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.area_moments_contribution_raw(attempt)
+        })
+    }
+
+    pub(crate) fn area_moments_contribution_raw(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAreaMoments2>>> {
         match self {
-            Self::Quadratic(curve) => curve.area_moments_contribution().map(Some),
-            Self::Cubic(curve) => curve.area_moments_contribution().map(Some),
+            Self::Quadratic(curve) => curve
+                .area_moments_contribution()
+                .map(|moments| Classification::Decided(Some(moments))),
+            Self::Cubic(curve) => curve
+                .area_moments_contribution()
+                .map(|moments| Classification::Decided(Some(moments))),
             Self::RationalQuadratic(curve) => match curve.area_moments_contribution()? {
-                Some(moments) => Ok(Some(moments)),
-                None => rational_line_area_moments_contribution(self),
+                Some(moments) => Ok(Classification::Decided(Some(moments))),
+                None => rational_line_area_moments_contribution(self, policy),
             },
             Self::Rational(curve) => match curve.area_moments_contribution()? {
-                Some(moments) => Ok(Some(moments)),
-                None => rational_line_area_moments_contribution(self),
+                Some(moments) => Ok(Classification::Decided(Some(moments))),
+                None => rational_line_area_moments_contribution(self, policy),
             },
         }
     }
 
     fn signed_area_contribution_with_cache(
         &self,
+        policy: &CurveContext,
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
-    ) -> CurveResult<Option<Real>> {
+    ) -> CurveResult<Classification<Option<Real>>> {
         match self {
-            Self::Quadratic(curve) => curve.signed_area_contribution().map(Some),
-            Self::Cubic(curve) => curve.signed_area_contribution().map(Some),
-            Self::RationalQuadratic(curve) => {
-                curve.signed_area_contribution_with_cache(rational_quadratic_cache)
-            }
+            Self::Quadratic(curve) => curve
+                .signed_area_contribution()
+                .map(|area| Classification::Decided(Some(area))),
+            Self::Cubic(curve) => curve
+                .signed_area_contribution()
+                .map(|area| Classification::Decided(Some(area))),
+            Self::RationalQuadratic(curve) => curve
+                .signed_area_contribution_with_cache(rational_quadratic_cache)
+                .map(Classification::Decided),
             Self::Rational(curve) => match curve.signed_area_contribution()? {
-                Some(area) => Ok(Some(area)),
-                None => rational_line_signed_area_contribution(curve),
+                Some(area) => Ok(Classification::Decided(Some(area))),
+                None => rational_line_signed_area_contribution(curve, policy),
             },
         }
     }
 }
 
-fn rational_line_signed_area_contribution(curve: &RationalBezier2) -> CurveResult<Option<Real>> {
+fn rational_line_signed_area_contribution(
+    curve: &RationalBezier2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Real>>> {
     let Ok(line) = LineSeg2::try_new(curve.start().clone(), curve.end().clone()) else {
-        return Ok(None);
+        return Ok(Classification::Decided(None));
     };
-    if !matches!(
-        curve.relation_to_line_with_contacts(&line, &CurveContext::STRICT),
-        Classification::Decided(BezierLineContactRelation::OnSupportingLine)
-    ) {
-        return Ok(None);
+    match curve.relation_to_line_with_contacts(&line, policy) {
+        Classification::Decided(BezierLineContactRelation::OnSupportingLine) => {}
+        Classification::Decided(_) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     let twice_area = curve.start().x() * curve.end().y() - curve.start().y() * curve.end().x();
-    Ok(Some((twice_area / Real::from(2_i8))?))
+    Ok(Classification::Decided(Some(
+        (twice_area / Real::from(2_i8))?,
+    )))
 }
 
 fn rational_line_area_moments_contribution(
     curve: &BezierSubcurve2,
-) -> CurveResult<Option<BezierAreaMoments2>> {
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierAreaMoments2>>> {
     let (start, end) = curve.endpoints();
     let Ok(line) = LineSeg2::try_new(start, end) else {
-        return Ok(None);
+        return Ok(Classification::Decided(None));
     };
-    if !matches!(
-        subcurve_relation_to_line_with_contacts(curve, &line, None, &CurveContext::STRICT),
-        Classification::Decided(BezierLineContactRelation::OnSupportingLine)
-    ) {
-        return Ok(None);
+    match subcurve_relation_to_line_with_contacts(curve, &line, None, policy) {
+        Classification::Decided(BezierLineContactRelation::OnSupportingLine) => {}
+        Classification::Decided(_) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
-    BezierAreaMoments2::line_contribution(line.start(), line.end()).map(Some)
+    BezierAreaMoments2::line_contribution(line.start(), line.end())
+        .map(|moments| Classification::Decided(Some(moments)))
 }
 
 #[cfg(test)]
@@ -6755,6 +6915,113 @@ mod tests {
             CurveCertainty::Approximate512Consumed
         );
         assert_eq!(approximate.value.len(), 1);
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn rational_line_measurements_obey_policy_and_isolate_cached_certainty() {
+        let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let line_y = || Real::one() + &undecidable_zero;
+        let rational = RationalBezier2::try_new(
+            vec![
+                p(1, 1),
+                Point2::new(Real::from(2_i8), line_y()),
+                Point2::new(Real::from(3_i8), line_y()),
+                Point2::new(Real::from(4_i8), line_y()),
+                p(5, 1),
+            ],
+            vec![
+                Real::one(),
+                Real::from(2_i8),
+                Real::from(3_i8),
+                Real::from(5_i8),
+                Real::from(10_i8),
+            ],
+        )
+        .expect("positive weights define a finite rational curve");
+        assert_eq!(rational.signed_area_contribution().unwrap(), None);
+        assert_eq!(rational.area_moments_contribution().unwrap(), None);
+
+        let curve = BezierSubcurve2::Rational(rational);
+        let strict_area = curve
+            .signed_area_contribution(&CurveContext::STRICT)
+            .unwrap();
+        assert_eq!(strict_area.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            strict_area.value,
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        );
+        let approximate_area = curve
+            .signed_area_contribution(&CurveContext::APPROXIMATE_512)
+            .unwrap();
+        assert_eq!(
+            approximate_area.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(
+            approximate_area.value,
+            Classification::Decided(Some(Real::from(-2_i8)))
+        );
+
+        let strict_moments = curve
+            .area_moments_contribution(&CurveContext::STRICT)
+            .unwrap();
+        assert_eq!(strict_moments.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            strict_moments.value,
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        );
+        let expected_moments = BezierAreaMoments2::line_contribution(&p(1, 1), &p(5, 1)).unwrap();
+        let approximate_moments = curve
+            .area_moments_contribution(&CurveContext::APPROXIMATE_512)
+            .unwrap();
+        assert_eq!(
+            approximate_moments.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(
+            approximate_moments.value,
+            Classification::Decided(Some(expected_moments))
+        );
+
+        let loop_ = CurveRegionBoundaryLoop2::new(
+            vec![
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve,
+                },
+                quadratic_fragment(p(5, 1), p(5, 2), p(5, 3)),
+                quadratic_fragment(p(5, 3), p(3, 3), p(1, 3)),
+                quadratic_fragment(p(1, 3), p(1, 2), p(1, 1)),
+            ],
+            &CurveContext::STRICT,
+        )
+        .expect("exact endpoints close the retained loop");
+        let region = CurveRegion2::new(vec![loop_]).expect("one retained loop");
+
+        let approximate = region.signed_area(&CurveContext::APPROXIMATE_512).unwrap();
+        assert_eq!(
+            approximate.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(
+            approximate.value,
+            Classification::Decided(Some(Real::from(8_i8)))
+        );
+        let strict = region.signed_area(&CurveContext::STRICT).unwrap();
+        assert_eq!(strict.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            strict.value,
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        );
+        assert_eq!(
+            region
+                .signed_area(&CurveContext::APPROXIMATE_512)
+                .unwrap()
+                .certainty,
+            CurveCertainty::Approximate512Consumed
+        );
     }
 
     fn quadratic_fragment(start: Point2, control: Point2, end: Point2) -> BezierSplitFragment2 {
@@ -6829,13 +7096,20 @@ mod tests {
     fn curve_region_clones_share_geometry_and_lazy_caches() {
         let region = single_quadratic_loop_region(false);
         let clone = region.clone();
+        let policy = CurveContext::STRICT;
 
         assert!(Arc::ptr_eq(&region.data, &clone.data));
-        assert!(region.data.signed_area_cache.get().is_none());
-        let clone_area = clone.signed_area().expect("clone area");
-        assert!(clone_area.is_some());
-        assert!(region.data.signed_area_cache.get().is_some());
-        assert_eq!(clone_area, region.signed_area().expect("source area"));
+        assert!(region.data.signed_area_cache.is_empty());
+        let clone_area = clone.signed_area(&policy).expect("clone area").into_value();
+        assert!(matches!(clone_area, Classification::Decided(Some(_))));
+        assert!(!region.data.signed_area_cache.is_empty());
+        assert_eq!(
+            clone_area,
+            region
+                .signed_area(&policy)
+                .expect("source area")
+                .into_value()
+        );
 
         let cloned_loops = clone.into_boundary_loops();
         assert_eq!(cloned_loops, region.boundary_loops());
@@ -6988,8 +7262,11 @@ mod tests {
             .unwrap(),
         );
         assert_eq!(
-            quadratic.area_moments_contribution().unwrap(),
-            Some(expected.clone())
+            quadratic
+                .area_moments_contribution(&CurveContext::STRICT)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(Some(expected.clone()))
         );
 
         let rational = BezierSubcurve2::Rational(
@@ -7000,8 +7277,11 @@ mod tests {
             .unwrap(),
         );
         assert_eq!(
-            rational.area_moments_contribution().unwrap(),
-            Some(expected)
+            rational
+                .area_moments_contribution(&CurveContext::STRICT)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(Some(expected))
         );
     }
 
