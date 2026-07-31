@@ -830,6 +830,87 @@ mod tests {
         assert_eq!(projected.sign_point3(&boundary, [0, 1]), None);
         assert!(RationalLine2Filter::from_point3(&from, &to, [1, 1]).is_none());
         assert!(projected.sign_point3(&positive, [0, 3]).is_none());
+
+        let enclosed = |point: [&Rational; 3]| {
+            RationalPoint3Query::from_certified_enclosures(
+                point.map(|coordinate| coordinate.to_f64_enclosure().unwrap()),
+            )
+            .expect("finite rational enclosures should construct")
+        };
+        let enclosed_from = enclosed([&zero, &zero, &height]);
+        let enclosed_to = enclosed([&third, &two_thirds, &height]);
+        let enclosed_line =
+            RationalLine2Filter::from_point3(&enclosed_from, &enclosed_to, [0, 1]).unwrap();
+        assert_eq!(
+            enclosed_line.sign_point3(&enclosed([&one, &three, &height]), [0, 1]),
+            Some(RealSign::Positive)
+        );
+        assert_eq!(
+            enclosed_line.sign_point3(&enclosed([&two, &three, &height]), [0, 1]),
+            Some(RealSign::Negative)
+        );
+        assert_eq!(
+            enclosed_line.sign_point3(&enclosed([&one, &two, &height]), [0, 1]),
+            None
+        );
+        assert!(
+            RationalPoint3Query::from_certified_enclosures([
+                [1.0, 0.0],
+                [0.0, 0.0],
+                [0.0, 0.0],
+            ])
+            .is_none()
+        );
+        assert!(
+            RationalPoint3Query::from_certified_enclosures([
+                [0.0, f64::INFINITY],
+                [0.0, 0.0],
+                [0.0, 0.0],
+            ])
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn certified_enclosure_line_filter_matches_exact_randomized_rationals() {
+        let mut state = 0xbb67_ae85_84ca_a73b_u64;
+        let mut certified = 0_u32;
+        for _ in 0..20_000 {
+            let rationals: [Rational; 9] = core::array::from_fn(|_| {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let numerator = i64::try_from(state % 2_000_001).unwrap() - 1_000_000;
+                let denominator = state.rotate_left(23) % 1_000_003 + 1;
+                Rational::fraction(numerator, denominator).unwrap()
+            });
+            let query = |offset: usize| {
+                RationalPoint3Query::from_certified_enclosures([
+                    rationals[offset].to_f64_enclosure().unwrap(),
+                    rationals[offset + 1].to_f64_enclosure().unwrap(),
+                    rationals[offset + 2].to_f64_enclosure().unwrap(),
+                ])
+                .unwrap()
+            };
+            let a_query = query(0);
+            let b_query = query(3);
+            let c_query = query(6);
+            let filter = RationalLine2Filter::from_point3(&a_query, &b_query, [0, 1]).unwrap();
+            let Some(filtered) = filter.sign_point3(&c_query, [0, 1]) else {
+                continue;
+            };
+            let values = rationals.clone().map(Real::from);
+            assert_eq!(
+                filtered,
+                exact_affine_det2_sign(
+                    [&values[0], &values[1]],
+                    [&values[3], &values[4]],
+                    [&values[6], &values[7]],
+                )
+            );
+            certified += 1;
+        }
+        assert!(certified > 10_000, "filter certified only {certified} cases");
     }
 
     #[test]

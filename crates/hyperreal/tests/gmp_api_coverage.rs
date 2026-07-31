@@ -118,6 +118,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "exact_rational_line_intersection2_point_known_dyadic",
     "exact_rational_line_intersection2_point_known_dyadic_wide",
     "first_signs",
+    "from_certified_enclosures",
     "materialize_first_parameter",
     "materialize",
     "materialize_second_parameter",

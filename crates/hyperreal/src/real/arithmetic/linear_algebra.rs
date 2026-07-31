@@ -347,6 +347,35 @@ impl RationalPoint3Query {
         Some(Self { values, errors })
     }
 
+    /// Construct a reusable query from certified outward binary64
+    /// enclosures of exact-rational coordinates.
+    ///
+    /// Each `[lower, upper]` pair must enclose its exact coordinate. Invalid,
+    /// non-finite, or unrepresentable interval widths return `None`, preserving
+    /// the caller's exact fallback.
+    #[inline]
+    #[doc(hidden)]
+    pub fn from_certified_enclosures(point: [[f64; 2]; 3]) -> Option<Self> {
+        let mut values = [0.0; 3];
+        let mut errors = [0.0; 3];
+        for (index, [lower, upper]) in point.into_iter().enumerate() {
+            if !lower.is_finite() || !upper.is_finite() || lower > upper {
+                return None;
+            }
+            values[index] = lower;
+            errors[index] = if lower == upper {
+                0.0
+            } else {
+                let error = (upper - lower).next_up();
+                if !error.is_finite() {
+                    return None;
+                }
+                error
+            };
+        }
+        Some(Self { values, errors })
+    }
+
     fn projection(&self, axes: [usize; 2]) -> Option<([f64; 2], [f64; 2])> {
         let [first, second] = axes;
         if first >= 3 || second >= 3 || first == second {
