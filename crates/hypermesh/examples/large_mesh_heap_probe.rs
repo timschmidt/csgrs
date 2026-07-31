@@ -9,14 +9,24 @@ use std::hint::black_box;
 
 use competitive_support::{
     MeshPair, box_mesh, large_boolean_case, parse_triangle_obj, to_hypermesh,
-    yeahright_boolean_case,
+    yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
 };
 use hypermesh::{BooleanOp, EmberConfig, MeshContext, PredicatePolicy, boolean_mesh};
 
 fn main() {
-    let fixture = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "boxes-3072".to_owned());
+    let mut args = std::env::args().skip(1);
+    let fixture = args
+        .next()
+        .expect("expected <boxes-3072|yeahright|yeahright-4|yeahright-8> <policy>");
+    let (policy_name, policy) = match args.next().as_deref() {
+        Some("strict") => ("STRICT", PredicatePolicy::STRICT),
+        Some("approximate-512") => ("APPROXIMATE_512", PredicatePolicy::APPROXIMATE_512),
+        _ => panic!("expected strict or approximate-512"),
+    };
+    assert!(
+        args.next().is_none(),
+        "expected exactly one fixture and one policy"
+    );
     let (name, left, right, exact_subdivision_levels) = match fixture.as_str() {
         "boxes-3072" => {
             let case = large_boolean_case();
@@ -40,27 +50,36 @@ fn main() {
                 usize::from(case.name == "yeahright_retained_1140_facet_arrangement");
             (case.name, case.left, case.right, exact_subdivision_levels)
         }
-        _ => panic!("expected boxes-3072 or yeahright"),
+        "yeahright-4" => {
+            let case = yeahright_boolean_case_with_subdivisions(4);
+            (case.name, case.left, case.right, 0)
+        }
+        "yeahright-8" => {
+            let case = yeahright_boolean_case_with_subdivisions(8);
+            (case.name, case.left, case.right, 0)
+        }
+        _ => panic!("expected boxes-3072, yeahright, yeahright-4, or yeahright-8"),
     };
-    let meshes = [
-        mesh_common::subdivide_triangles(to_hypermesh(&left), exact_subdivision_levels)
-            .with_certified_convexity(),
-        to_hypermesh(&right).with_certified_convexity(),
-    ];
-    let input_triangles = meshes[0].triangles.len() + meshes[1].triangles.len();
+    let exact_left =
+        mesh_common::subdivide_triangles(to_hypermesh(&left), exact_subdivision_levels);
+    let exact_left = exact_left.with_certified_convexity();
+    let exact_right = to_hypermesh(&right).with_certified_convexity();
     drop((left, right));
+    let meshes = [exact_left, exact_right];
+    let input_triangles = meshes[0].triangles.len() + meshes[1].triangles.len();
 
     let result = boolean_mesh(
-        &MeshContext::new(PredicatePolicy::APPROXIMATE_512),
+        &MeshContext::new(policy),
         black_box(&[meshes[0].as_ref(), meshes[1].as_ref()]),
         BooleanOp::Union,
         EmberConfig::default(),
     )
-    .expect("large fixture union must remain certified")
-    .into_value();
+    .expect("large fixture union must complete under the selected policy");
     println!(
-        "{name}: input_triangles={input_triangles}, output_vertices={}, output_triangles={}",
-        result.vertices.len(),
-        result.triangles.len()
+        "{name}: policy={policy_name}, certainty={:?}, input_triangles={input_triangles}, \
+         output_vertices={}, output_triangles={}",
+        result.certainty,
+        result.value.vertices.len(),
+        result.value.triangles.len()
     );
 }

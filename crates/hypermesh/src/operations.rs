@@ -1925,7 +1925,46 @@ impl ProjectivePointCache {
         entries.sort_unstable_by(|left, right| left.0.cmp(&right.0));
 
         let mut sets = AtomicDisjointSets::new(entries.len());
+        let mut fingerprint_buckets: StorageHashMap<[u64; 3], (usize, Vec<usize>)> =
+            StorageHashMap::default();
+        let mut unkeyed: Vec<usize> = Vec::new();
         for right in 0..entries.len() {
+            let exact_key = exact_projective_affine_fingerprint(self.point(entries[right].1));
+            if let Some(key) = exact_key {
+                if let Some((first, collisions)) = fingerprint_buckets.get_mut(&key) {
+                    let mut matched = false;
+                    for left in std::iter::once(*first).chain(collisions.iter().copied()) {
+                        if self.identities_certifiably_equal(
+                            decisions,
+                            &entries[left].0,
+                            self.point(entries[left].1),
+                            &entries[right].0,
+                            self.point(entries[right].1),
+                        ) {
+                            sets.merge(left, right);
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if !matched {
+                        collisions.push(right);
+                    }
+                } else {
+                    fingerprint_buckets.insert(key, (right, Vec::new()));
+                }
+                for &left in &unkeyed {
+                    if self.identities_certifiably_equal(
+                        decisions,
+                        &entries[left].0,
+                        self.point(entries[left].1),
+                        &entries[right].0,
+                        self.point(entries[right].1),
+                    ) {
+                        sets.merge(left, right);
+                    }
+                }
+                continue;
+            }
             for left in 0..right {
                 if self.identities_certifiably_equal(
                     decisions,
@@ -1937,6 +1976,7 @@ impl ProjectivePointCache {
                     sets.merge(left, right);
                 }
             }
+            unkeyed.push(right);
         }
 
         let representatives = (0..entries.len())
@@ -2052,6 +2092,80 @@ impl ProjectivePointCache {
         );
         (point_index, approximate, identity)
     }
+}
+
+const PROJECTIVE_FINGERPRINT_MODULUS: u64 = (1_u64 << 61) - 1;
+
+/// Return an exact modular affine fingerprint for a finite rational point.
+///
+/// Rational equality is preserved by reduction in the prime field, so two
+/// distinct fingerprints certify inequality without allocating normalized
+/// affine rationals. Matching fingerprints are only candidates: they still
+/// take the complete policy-aware equality path, making modular collisions
+/// harmless. A coordinate whose denominator, or a weight whose numerator,
+/// vanishes modulo the prime declines the filter and retains all-pairs checks.
+fn exact_projective_affine_fingerprint(point: &HomogeneousPoint3) -> Option<[u64; 3]> {
+    let [Some(x), Some(y), Some(z), Some(weight)] = [
+        point.x.exact_rational_ref(),
+        point.y.exact_rational_ref(),
+        point.z.exact_rational_ref(),
+        point.w.exact_rational_ref(),
+    ] else {
+        return None;
+    };
+    if weight.is_zero() {
+        return None;
+    }
+    let weight = exact_rational_modulus(weight)?;
+    let inverse_weight = modular_inverse(weight)?;
+    Some([
+        modular_product(exact_rational_modulus(x)?, inverse_weight),
+        modular_product(exact_rational_modulus(y)?, inverse_weight),
+        modular_product(exact_rational_modulus(z)?, inverse_weight),
+    ])
+}
+
+fn exact_rational_modulus(value: &Rational) -> Option<u64> {
+    let mut numerator = 0_u64;
+    for digit in value.numerator().iter_u64_digits().rev() {
+        numerator = ((((numerator as u128) << 64) + u128::from(digit))
+            % u128::from(PROJECTIVE_FINGERPRINT_MODULUS)) as u64;
+    }
+    let mut denominator = 0_u64;
+    for digit in value.denominator().iter_u64_digits().rev() {
+        denominator = ((((denominator as u128) << 64) + u128::from(digit))
+            % u128::from(PROJECTIVE_FINGERPRINT_MODULUS)) as u64;
+    }
+    let inverse_denominator = modular_inverse(denominator)?;
+    let magnitude = modular_product(numerator, inverse_denominator);
+    Some(if value.is_negative() && magnitude != 0 {
+        PROJECTIVE_FINGERPRINT_MODULUS - magnitude
+    } else {
+        magnitude
+    })
+}
+
+fn modular_product(left: u64, right: u64) -> u64 {
+    (u128::from(left) * u128::from(right) % u128::from(PROJECTIVE_FINGERPRINT_MODULUS))
+        .try_into()
+        .expect("a modular product is less than the u64 modulus")
+}
+
+fn modular_inverse(value: u64) -> Option<u64> {
+    if value == 0 {
+        return None;
+    }
+    let modulus = i128::from(PROJECTIVE_FINGERPRINT_MODULUS);
+    let (mut old_remainder, mut remainder) = (modulus, i128::from(value));
+    let (mut old_coefficient, mut coefficient) = (0_i128, 1_i128);
+    while remainder != 0 {
+        let quotient = old_remainder / remainder;
+        (old_remainder, remainder) = (remainder, old_remainder - quotient * remainder);
+        (old_coefficient, coefficient) = (coefficient, old_coefficient - quotient * coefficient);
+    }
+    (old_remainder == 1)
+        .then(|| old_coefficient.rem_euclid(modulus))
+        .and_then(|inverse| inverse.try_into().ok())
 }
 
 fn projective_point_f64(point: &HomogeneousPoint3) -> Option<[f64; 3]> {
@@ -6159,6 +6273,106 @@ mod tests {
                 .is_some_and(Rational::is_positive)
         );
         assert_eq!(point.to_affine_point().unwrap(), p(1, 2, 3));
+    }
+
+    #[test]
+    fn exact_projective_affine_fingerprint_is_scale_invariant_and_conservative() {
+        let point =
+            HomogeneousPoint3::new(Real::from(1), Real::from(2), Real::from(3), Real::one());
+        let scaled =
+            HomogeneousPoint3::new(Real::from(7), Real::from(14), Real::from(21), Real::from(7));
+        let distinct =
+            HomogeneousPoint3::new(Real::from(1), Real::from(2), Real::from(4), Real::one());
+        let modular_collision = HomogeneousPoint3::new(
+            Real::from(PROJECTIVE_FINGERPRINT_MODULUS as i64 + 1),
+            Real::from(2),
+            Real::from(3),
+            Real::one(),
+        );
+        let zero_weight =
+            HomogeneousPoint3::new(Real::from(1), Real::from(2), Real::from(3), Real::zero());
+        let modular_zero_weight = HomogeneousPoint3::new(
+            Real::from(1),
+            Real::from(2),
+            Real::from(3),
+            Real::from(PROJECTIVE_FINGERPRINT_MODULUS as i64),
+        );
+        let modular_denominator = HomogeneousPoint3::new(
+            Real::new(
+                Rational::fraction(1_i64, PROJECTIVE_FINGERPRINT_MODULUS)
+                    .expect("the prime is a valid denominator"),
+            ),
+            Real::from(2),
+            Real::from(3),
+            Real::one(),
+        );
+        let symbolic =
+            HomogeneousPoint3::new(Real::pi(), Real::from(2), Real::from(3), Real::one());
+
+        assert_eq!(
+            exact_projective_affine_fingerprint(&point),
+            exact_projective_affine_fingerprint(&scaled)
+        );
+        assert_ne!(
+            exact_projective_affine_fingerprint(&point),
+            exact_projective_affine_fingerprint(&distinct)
+        );
+        assert_eq!(
+            exact_projective_affine_fingerprint(&point),
+            exact_projective_affine_fingerprint(&modular_collision)
+        );
+        assert!(exact_projective_affine_fingerprint(&zero_weight).is_none());
+        assert!(exact_projective_affine_fingerprint(&modular_zero_weight).is_none());
+        assert!(exact_projective_affine_fingerprint(&modular_denominator).is_none());
+        assert!(exact_projective_affine_fingerprint(&symbolic).is_none());
+    }
+
+    #[test]
+    fn projective_fingerprint_collisions_still_take_policy_equality_path() {
+        for policy in [
+            crate::PredicatePolicy::STRICT,
+            crate::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = crate::MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let identities = [
+                ConstructionVertexIdentity::Source { mesh: 0, vertex: 0 },
+                ConstructionVertexIdentity::Source { mesh: 0, vertex: 1 },
+                ConstructionVertexIdentity::Source { mesh: 0, vertex: 2 },
+            ];
+            let points = [
+                HomogeneousPoint3::new(Real::from(1), Real::from(2), Real::from(3), Real::one()),
+                HomogeneousPoint3::new(
+                    Real::from(PROJECTIVE_FINGERPRINT_MODULUS as i64 + 1),
+                    Real::from(2),
+                    Real::from(3),
+                    Real::one(),
+                ),
+                HomogeneousPoint3::new(
+                    Real::from(7),
+                    Real::from(14),
+                    Real::from(21),
+                    Real::from(7),
+                ),
+            ];
+            let mut cache = ProjectivePointCache::default();
+            for (identity, point) in identities.iter().cloned().zip(points) {
+                cache.intern_with_approximation(identity, point);
+            }
+
+            cache.resolve_vertex_coincidences(&decisions);
+
+            assert_eq!(
+                cache.canonical_vertex_identity(&identities[2]),
+                identities[0]
+            );
+            assert_eq!(
+                cache.canonical_vertex_identity(&identities[1]),
+                identities[1]
+            );
+            assert_eq!(cache.canonical_identities.len(), 1);
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        }
     }
 
     #[test]

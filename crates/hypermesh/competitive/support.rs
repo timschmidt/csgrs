@@ -238,11 +238,12 @@ pub fn yeahright_boolean_case_with_subdivisions(subdivisions: usize) -> MeshPair
             .positions
             .iter()
             .map(|point| {
-                [
+                let point = [
                     approximate(&point.x),
                     approximate(&point.y),
                     approximate(&point.z),
-                ]
+                ];
+                point.map(snap_yeahright_coordinate)
             })
             .collect(),
         triangles: hull
@@ -283,12 +284,10 @@ pub fn prepare_meshes(left: &RawMesh, right: &RawMesh) -> PreparedInputs {
 }
 
 pub fn prepare_yeahright(case: &MeshPair) -> PreparedInputs {
-    prepare_yeahright_with_subdivisions(case, YEAHRIGHT_SUBDIVISIONS)
-}
-
-pub fn prepare_yeahright_with_subdivisions(case: &MeshPair, subdivisions: usize) -> PreparedInputs {
-    assert!(subdivisions.is_power_of_two());
-    let exact_hull = to_hypermesh(&case.left).with_certified_convexity();
+    let exact_hull = to_hypermesh(&case.left)
+        .try_certify_convex(&APPROXIMATE_CONTEXT)
+        .expect("the dyadic YeahRight benchmark hull is exactly convex")
+        .into_value();
     PreparedInputs {
         hypermesh: [
             exact_hull,
@@ -830,6 +829,18 @@ fn approximate(value: &Real) -> f64 {
     value
         .to_f64_lossy()
         .expect("competitive fixture result has a finite approximation")
+}
+
+fn snap_yeahright_coordinate(value: f64) -> f64 {
+    // The largest stress subdivision has eight segments per source edge.
+    // Keeping source coordinates on a 2^-40 grid leaves three exact midpoint
+    // bits below binary64's 53-bit significand throughout this corpus.
+    const SCALE: f64 = (1_u64 << 40) as f64;
+    assert!(
+        value.is_finite() && value.abs() <= 512.0,
+        "YeahRight hull coordinate exceeds the exact subdivision grid"
+    );
+    (value * SCALE).round() / SCALE
 }
 
 fn quantize(value: f64) -> i64 {

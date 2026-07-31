@@ -3556,20 +3556,20 @@ fn bounded_planar_faces(
         adjacency[from].push(to);
         adjacency[to].push(from);
     }
-    for origin in 0..adjacency.len() {
-        for index in 1..adjacency[origin].len() {
+    for (origin, neighbors) in adjacency.iter_mut().enumerate() {
+        for index in 1..neighbors.len() {
             let mut cursor = index;
             while cursor > 0
                 && compare_planar_directions(
                     decisions,
                     points,
                     origin,
-                    adjacency[origin][cursor],
-                    adjacency[origin][cursor - 1],
+                    neighbors[cursor],
+                    neighbors[cursor - 1],
                 )?
                 .is_lt()
             {
-                adjacency[origin].swap(cursor, cursor - 1);
+                neighbors.swap(cursor, cursor - 1);
                 cursor -= 1;
             }
         }
@@ -3729,8 +3729,7 @@ fn planar_polygon_area_classification(
     for index in 0..polygon.len() {
         let from = &points[polygon[index]];
         let to = &points[polygon[(index + 1) % polygon.len()]];
-        twice_area = twice_area
-            + Real::signed_product_sum([true, false], [[&from.x, &to.y], [&from.y, &to.x]]);
+        twice_area += Real::signed_product_sum([true, false], [[&from.x, &to.y], [&from.y, &to.x]]);
     }
     classify_real(decisions, &twice_area)
 }

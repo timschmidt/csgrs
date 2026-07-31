@@ -9,9 +9,9 @@ use hypermesh::{
 use support::{
     APPROXIMATE_CONTEXT, LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_CONTROL_TRIANGLES,
     YEAHRIGHT_CONTROL_VERTICES, YEAHRIGHT_STRESS_SUBDIVISIONS, assert_close, assert_summary,
-    corpus, large_boolean_case, prepare, prepare_yeahright, prepare_yeahright_with_subdivisions,
-    raw_from_hypermesh, run_boolmesh, run_hypermesh, run_hypermesh_exact, run_hypermesh_polygon,
-    run_manifold, summarize, to_hypermesh, validate_with_tri_mesh, yeahright_boolean_case,
+    corpus, large_boolean_case, prepare, prepare_yeahright, raw_from_hypermesh, run_boolmesh,
+    run_hypermesh, run_hypermesh_exact, run_hypermesh_polygon, run_manifold, summarize,
+    to_hypermesh, validate_with_tri_mesh, yeahright_boolean_case,
     yeahright_boolean_case_with_subdivisions, yeahright_control_mesh,
 };
 
@@ -154,6 +154,13 @@ fn large_boolean_benchmark_inputs_are_closed_and_keep_the_intended_scale() {
 fn yeahright_benchmark_inputs_reach_every_competitor() {
     let case = yeahright_boolean_case();
     assert_eq!(case.name, "yeahright_control_hull_subdivided_box");
+    assert_eq!(
+        to_hypermesh(&case.left)
+            .try_certify_convex(&APPROXIMATE_CONTEXT)
+            .expect("the dyadic benchmark subdivision must remain exactly convex")
+            .certainty,
+        hypermesh::MeshCertainty::Certified
+    );
     let triangle_count = case.left.triangles.len();
     assert!(triangle_count > 12);
     assert_eq!(case.right.triangles.len(), 12);
@@ -328,14 +335,10 @@ fn full_resolution_yeahright_rotated_intersection_remains_a_hard_test() {
 }
 
 #[test]
-#[ignore = "manual 18k/72k-triangle memory-pressure stress"]
+#[ignore = "manual 3,360/13,440-triangle memory-pressure stress"]
 fn larger_yeahright_fixtures_expose_memory_pressure() {
     let cases = YEAHRIGHT_STRESS_SUBDIVISIONS.map(yeahright_boolean_case_with_subdivisions);
-    let prepared = cases
-        .iter()
-        .zip(YEAHRIGHT_STRESS_SUBDIVISIONS)
-        .map(|(case, subdivisions)| prepare_yeahright_with_subdivisions(case, subdivisions))
-        .collect::<Vec<_>>();
+    let prepared = cases.iter().map(prepare_yeahright).collect::<Vec<_>>();
 
     for ((case, inputs), _subdivisions) in cases
         .iter()
