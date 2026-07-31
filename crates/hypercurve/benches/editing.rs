@@ -858,6 +858,12 @@ fn bench_higher_order_curve_edits(iterations: u32) {
 
 fn main() -> CurveResult<()> {
     let iterations = 10_000;
+    if std::env::var_os("HYPERCURVE_EDIT_BENCH")
+        .is_some_and(|selection| selection == "higher-order")
+    {
+        bench_higher_order_curve_edits(iterations);
+        return Ok(());
+    }
     bench_parameter_trim(iterations)?;
     bench_parameter_arc_trim(iterations)?;
     bench_point_arc_trim(iterations)?;

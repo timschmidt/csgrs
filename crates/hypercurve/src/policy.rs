@@ -365,15 +365,25 @@ impl<T> PolicyEvaluationCache<T> {
     }
 }
 
+#[inline]
 pub(crate) fn resolve_cached_evaluation<'a, T, E>(
     cache: &'a PolicyEvaluationCache<T>,
     policy: &CurveContext,
-    mut evaluate: impl FnMut(&CurveContext) -> Result<Classification<T>, E>,
+    evaluate: impl FnMut(&CurveContext) -> Result<Classification<T>, E>,
 ) -> Result<Classification<&'a T>, E> {
     if let Some(resolved) = cache.resolved.get() {
         return Ok(classify_cached_evaluation(resolved, policy));
     }
+    resolve_uncached_evaluation(cache, policy, evaluate)
+}
 
+#[cold]
+#[inline(never)]
+fn resolve_uncached_evaluation<'a, T, E>(
+    cache: &'a PolicyEvaluationCache<T>,
+    policy: &CurveContext,
+    mut evaluate: impl FnMut(&CurveContext) -> Result<Classification<T>, E>,
+) -> Result<Classification<&'a T>, E> {
     let resolved = if policy.permits_approximate_512() {
         match evaluate(&policy.strict_counterpart())? {
             Classification::Decided(value) => (value, None),
@@ -402,6 +412,7 @@ pub(crate) fn resolve_cached_evaluation<'a, T, E>(
     ))
 }
 
+#[inline(always)]
 fn classify_cached_evaluation<'a, T>(
     resolved: &'a (T, Option<UncertaintyReason>),
     policy: &CurveContext,
@@ -417,10 +428,11 @@ fn classify_cached_evaluation<'a, T>(
     }
 }
 
+#[inline]
 pub(crate) fn resolve_cached_classification<'a, T, E>(
     cache: &'a PolicyClassificationCache<T>,
     policy: &CurveContext,
-    mut evaluate: impl FnMut(&CurveContext) -> Result<Classification<T>, E>,
+    evaluate: impl FnMut(&CurveContext) -> Result<Classification<T>, E>,
 ) -> Result<Classification<&'a T>, E> {
     if let Some(value) = cache.certified.get() {
         return Ok(Classification::Decided(value));
@@ -431,7 +443,20 @@ pub(crate) fn resolve_cached_classification<'a, T, E>(
             policy.observe_approximate_512();
             return Ok(Classification::Decided(value));
         }
+    } else if let Some((_, strict_reason)) = cache.approximate_512.get() {
+        return Ok(Classification::Uncertain(*strict_reason));
+    }
+    resolve_uncached_classification(cache, policy, evaluate)
+}
 
+#[cold]
+#[inline(never)]
+fn resolve_uncached_classification<'a, T, E>(
+    cache: &'a PolicyClassificationCache<T>,
+    policy: &CurveContext,
+    mut evaluate: impl FnMut(&CurveContext) -> Result<Classification<T>, E>,
+) -> Result<Classification<&'a T>, E> {
+    if policy.permits_approximate_512() {
         match evaluate(&policy.strict_counterpart())? {
             Classification::Decided(value) => {
                 let _ = cache.certified.set(value);
