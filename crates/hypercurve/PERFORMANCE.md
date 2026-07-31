@@ -6910,6 +6910,74 @@ layout evidence, binary size, caller status, and the 22,575-node/38,676-edge
 call graph are in
 [`2026-07-31-materialized-boundary-policy.json`](benchmarks/checkpoints/2026-07-31-materialized-boundary-policy.json).
 
+## Spline subdivision policy checkpoint
+
+Public NURBS and polynomial-spline subdivision now obeys the selected
+`CurveContext`. `split_at`, `subcurve`, and `clamped_subcurve` on
+`NurbsCurve2`, `PolynomialSplineCurve2`, `Curve2`, and `CurveView2` return
+exact geometry inside `CurveOutcome`. Range validation, knot insertion,
+carrier reconstruction, piecewise-Bezier clamping, unit-weight NURBS
+conversion, polynomial reconstruction, native promotion, and top-level
+lineage preservation all compose beneath one outer policy observation.
+
+The terminal matrix uses the represented parameter
+`1 + ((pi + e) - (e + pi))`. Strict NURBS and polynomial subdivision retains
+typed `Subdivision` or `Ordering` blockers. Approximate-512 constructs the
+exact split, subcurve, and clamped carriers and reports
+`Approximate512Consumed`; no coordinate or knot is sampled. A later strict
+request on the same source still blocks. Decomposition, native-fragment, and
+rational-evaluator caches now retain one exact decided value plus an optional
+strict blocker, so approximate-first evaluation cannot certify a later strict
+request. Full-domain structural extraction remains immediately `Certified`.
+
+Eleven interleaved default-feature release parent/candidate pairs pinned to
+one CPU measured:
+
+| Exact spline/path operation | Parent median | Policy-explicit median | Change |
+| --- | ---: | ---: | ---: |
+| Full-domain subcurve | 20.954 ns | 18.278 ns | -12.77% |
+| Native exact split | 2.394 us | 2.452 us | +2.43% |
+| NURBS exact split | 7.176 us | 7.188 us | +0.17% |
+
+The paired geometric-mean changes were -13.44%, +2.71%, and +1.03%.
+The native split cost remains a visible sentinel; the materially more relevant
+NURBS reconstruction lane is neutral. Eleven matched competitive-group
+controls moved exact Hypercurve NURBS evaluation from 1.123 to 1.114 us
+(-0.73% at the median, -1.51% paired geometric mean). Curvo's roughly 58 ns
+finite lane has a weaker and numerically different contract and is not an
+exactness-parity claim. In the broad candidate snapshot, Hypercurve's exact
+256- and 1,024-vertex Boolean lanes remain faster than the measured finite
+competitors, while small Boolean, offset, and spline-evaluation rows remain
+optimization targets.
+
+After a warm-up pair, eight matched pathological runs retained 67 cells, 603
+candidate pairs, 3,248 fragments, 134 point classifications, all 268
+operations decided, zero blockers, and checksum 6. Exact Boolean execution
+improved 0.93% by paired geometric mean; construction moved +0.66%, and
+process-scale RSS remained 34.4 MiB. `NurbsData2` falls from the synthetic
+historical 520-byte layout to 512 bytes. `PolynomialSplineData2` remains 288
+bytes, both public handles remain 8 bytes, and no heap cache or buffer was
+added. The matched pathological executable is 1,260 loadable bytes and 1,240
+stripped bytes smaller than its parent, and remains 32,200 loadable bytes
+below the frozen consolidation baseline.
+
+Validation passed the complete all-feature suite with 262 unit tests, the
+165.86-second generated `CurveRegion2` Boolean corpus, every integration suite
+other than the two explicitly ignored release-scale PCB corpora, all 268
+pathological Booleans, both warning-denied Clippy feature matrices, every fuzz
+target, warning-denied rustdoc, UI warning-denied Clippy, formatting, and diff
+checks. Hypermesh was not modified.
+
+Hypercurve's tests, benches, and UI example consume the breaking policy API.
+One direct old NURBS clamped-subcurve call remains in Hyperbrep alongside its
+accumulated native-promotion cutover; callers remain deferred until the last
+Phase 1 surfaces stabilize, and no compatibility shim was added. Public spline
+construction, evaluation, editing, and decomposition still contain
+hard-coded strict boundaries and form the next audit. Machine-readable
+samples, comparative controls, layouts, binary size, caller status, and the
+22,635-node/38,791-edge call graph are in
+[`2026-07-31-spline-subdivision-policy.json`](benchmarks/checkpoints/2026-07-31-spline-subdivision-policy.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
