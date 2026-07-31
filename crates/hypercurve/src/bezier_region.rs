@@ -26,8 +26,8 @@ use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::policy::{
-    PolicyClassificationCache, resolve_cached_classification, resolve_certified_operation,
-    resolve_certified_value,
+    PolicyClassificationCache, PolicyEvaluationCache, resolve_cached_classification,
+    resolve_cached_evaluation, resolve_certified_operation, resolve_certified_value,
 };
 use crate::region_nesting::ExactCurveWorkspace2;
 use crate::{
@@ -131,7 +131,7 @@ struct CurveRegionData2 {
     native_boundary_bounds: PolicyClassificationCache<Arc<[Aabb2]>>,
     line_image_region: PolicyClassificationCache<Option<LineArcRegion2>>,
     retained_rational_evaluators: OnceLock<CurveResult<Vec<Vec<Option<RationalBezier2>>>>>,
-    signed_area_cache: PolicyClassificationCache<Option<Real>>,
+    signed_area_cache: PolicyEvaluationCache<Option<Real>>,
 }
 
 impl CurveRegionData2 {
@@ -146,7 +146,7 @@ impl CurveRegionData2 {
             native_boundary_bounds: PolicyClassificationCache::new(),
             line_image_region: PolicyClassificationCache::new(),
             retained_rational_evaluators: OnceLock::new(),
-            signed_area_cache: PolicyClassificationCache::new(),
+            signed_area_cache: PolicyEvaluationCache::new(),
         }
     }
 }
@@ -4699,7 +4699,7 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Real>>> {
-        resolve_cached_classification(&self.data.signed_area_cache, policy, |attempt| {
+        resolve_cached_evaluation(&self.data.signed_area_cache, policy, |attempt| {
             self.compute_signed_area(attempt)
         })
         .map(|classification| classification.map(Clone::clone))
@@ -6901,6 +6901,12 @@ mod tests {
 
     #[test]
     fn curve_region_is_one_word_and_empty_data_is_process_shared() {
+        assert!(
+            core::mem::size_of::<PolicyEvaluationCache<Option<Real>>>()
+                <= core::mem::size_of::<OnceLock<CurveResult<Option<Real>>>>()
+                    + core::mem::size_of::<usize>(),
+            "policy-aware signed-area caching must add at most one alignment word"
+        );
         let first = CurveRegion2::empty();
         let second = CurveRegion2::default();
 

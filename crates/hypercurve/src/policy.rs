@@ -324,6 +324,88 @@ impl<T> PolicyClassificationCache<T> {
     }
 }
 
+/// Compact policy-aware cache for immutable evaluations with no external
+/// certification path.
+///
+/// The optional reason records that the value required an approximate-512
+/// terminal and preserves the strict blocker in the same `OnceLock`. Unlike
+/// [`PolicyClassificationCache`], this carrier cannot later be upgraded by
+/// independent certified evidence.
+pub(crate) struct PolicyEvaluationCache<T> {
+    resolved: OnceLock<(T, Option<UncertaintyReason>)>,
+}
+
+impl<T> PolicyEvaluationCache<T> {
+    pub(crate) const fn new() -> Self {
+        Self {
+            resolved: OnceLock::new(),
+        }
+    }
+
+    pub(crate) fn certified(&self) -> Option<&T> {
+        self.resolved
+            .get()
+            .and_then(|(value, reason)| reason.is_none().then_some(value))
+    }
+
+    #[cfg(test)]
+    pub(crate) fn is_empty(&self) -> bool {
+        self.resolved.get().is_none()
+    }
+}
+
+pub(crate) fn resolve_cached_evaluation<'a, T, E>(
+    cache: &'a PolicyEvaluationCache<T>,
+    policy: &CurveContext,
+    mut evaluate: impl FnMut(&CurveContext) -> Result<Classification<T>, E>,
+) -> Result<Classification<&'a T>, E> {
+    if let Some(resolved) = cache.resolved.get() {
+        return Ok(classify_cached_evaluation(resolved, policy));
+    }
+
+    let resolved = if policy.permits_approximate_512() {
+        match evaluate(&policy.strict_counterpart())? {
+            Classification::Decided(value) => (value, None),
+            Classification::Uncertain(strict_reason) => match evaluate(policy)? {
+                Classification::Decided(value) => (value, Some(strict_reason)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+        }
+    } else {
+        match evaluate(policy)? {
+            Classification::Decided(value) => (value, None),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    };
+    let _ = cache.resolved.set(resolved);
+    Ok(classify_cached_evaluation(
+        cache
+            .resolved
+            .get()
+            .expect("a decided policy evaluation was retained"),
+        policy,
+    ))
+}
+
+fn classify_cached_evaluation<'a, T>(
+    resolved: &'a (T, Option<UncertaintyReason>),
+    policy: &CurveContext,
+) -> Classification<&'a T> {
+    let (value, strict_reason) = resolved;
+    match strict_reason {
+        None => Classification::Decided(value),
+        Some(reason) if policy.permits_approximate_512() => {
+            policy.observe_approximate_512();
+            Classification::Decided(value)
+        }
+        Some(reason) => Classification::Uncertain(*reason),
+    }
+}
+
 pub(crate) fn resolve_cached_classification<'a, T, E>(
     cache: &'a PolicyClassificationCache<T>,
     policy: &CurveContext,
@@ -425,7 +507,8 @@ mod tests {
 
     use super::{
         CurveCertainty, CurveContext, CurvePreviewOptions, PolicyClassificationCache,
-        preview_tolerance, resolve_cached_classification, resolve_certified_operation,
+        PolicyEvaluationCache, preview_tolerance, resolve_cached_classification,
+        resolve_cached_evaluation, resolve_certified_operation,
     };
     use crate::{Classification, UncertaintyReason};
 
@@ -597,5 +680,49 @@ mod tests {
         )
         .unwrap();
         assert_eq!(upgraded, Classification::Decided(&8));
+    }
+
+    #[test]
+    fn compact_approximate_evaluation_cache_never_answers_strict() {
+        let cache = PolicyEvaluationCache::new();
+        let evaluations = Cell::new(0_u8);
+        let approximate = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |attempt| {
+            resolve_cached_evaluation(&cache, attempt, |policy| {
+                evaluations.set(evaluations.get() + 1);
+                Ok::<_, ()>(if policy == &CurveContext::STRICT {
+                    Classification::Uncertain(UncertaintyReason::Predicate)
+                } else {
+                    Classification::Decided(7_u8)
+                })
+            })
+        })
+        .unwrap();
+        assert_eq!(
+            approximate.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(approximate.value, Classification::Decided(&7));
+        assert_eq!(evaluations.get(), 2);
+
+        let strict = resolve_certified_operation(&CurveContext::STRICT, |attempt| {
+            resolve_cached_evaluation(&cache, attempt, |_| -> Result<Classification<u8>, ()> {
+                panic!("the compact cache must retain its strict blocker")
+            })
+        })
+        .unwrap();
+        assert_eq!(strict.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            strict.value,
+            Classification::Uncertain(UncertaintyReason::Predicate)
+        );
+
+        let repeated = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |attempt| {
+            resolve_cached_evaluation(&cache, attempt, |_| -> Result<Classification<u8>, ()> {
+                panic!("the compact cache must reuse its approximate value")
+            })
+        })
+        .unwrap();
+        assert_eq!(repeated.certainty, CurveCertainty::Approximate512Consumed);
+        assert_eq!(repeated.value, Classification::Decided(&7));
     }
 }
