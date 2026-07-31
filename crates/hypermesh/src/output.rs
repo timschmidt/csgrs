@@ -2674,6 +2674,14 @@ fn split_edge_crossing_events(
                 continue;
             }
 
+            let rational_queries = approximate_vertices.and_then(|vertices| {
+                Some([
+                    RationalPoint3Query::from_certified_enclosures(vertices[left_edge[0]])?,
+                    RationalPoint3Query::from_certified_enclosures(vertices[left_edge[1]])?,
+                    RationalPoint3Query::from_certified_enclosures(vertices[right_edge[0]])?,
+                    RationalPoint3Query::from_certified_enclosures(vertices[right_edge[1]])?,
+                ])
+            });
             let Some(projection_axis) = proper_segment_intersection_after_bounds_overlap(
                 decisions,
                 &soup.vertices[left_edge[0]],
@@ -2683,6 +2691,7 @@ fn split_edge_crossing_events(
                 approximate_vertices.and_then(|vertices| {
                     approximate_projection_axis(vertices, left_edge, right_edge)
                 }),
+                rational_queries.as_ref(),
             )?
             else {
                 continue;
@@ -3947,7 +3956,7 @@ fn planar_orientation(
     point: &hypertri::ExactPoint,
 ) -> HypermeshResult<Classification> {
     orientation2(
-        decisions, &from.x, &from.y, &to.x, &to.y, &point.x, &point.y,
+        decisions, &from.x, &from.y, &to.x, &to.y, &point.x, &point.y, None, None,
     )
 }
 
@@ -4250,6 +4259,7 @@ fn proper_segment_intersection_after_bounds_overlap(
     c: &OutputVertex,
     d: &OutputVertex,
     preferred_projection_axis: Option<usize>,
+    rational_queries: Option<&[RationalPoint3Query; 4]>,
 ) -> HypermeshResult<Option<usize>> {
     let mut projections = [[1, 2], [0, 2], [0, 1]];
     if let Some(axis) = preferred_projection_axis {
@@ -4258,7 +4268,8 @@ fn proper_segment_intersection_after_bounds_overlap(
     let mut projection = None;
     let mut saw_unknown = false;
     for [u_axis, v_axis] in projections {
-        match projected_segment_crossing(decisions, a, b, c, d, [u_axis, v_axis]) {
+        match projected_segment_crossing(decisions, a, b, c, d, [u_axis, v_axis], rational_queries)
+        {
             Ok(Some(true)) => {
                 projection = Some((u_axis, v_axis));
                 break;
@@ -4340,6 +4351,7 @@ fn projected_segment_crossing(
     c: &OutputVertex,
     d: &OutputVertex,
     axes: [usize; 2],
+    rational_queries: Option<&[RationalPoint3Query; 4]>,
 ) -> HypermeshResult<Option<bool>> {
     let opposite = |left, right| {
         matches!(
@@ -4356,13 +4368,51 @@ fn projected_segment_crossing(
         )
     };
 
-    let c_side = projected_orientation(decisions, a, b, c, axes)?;
-    let d_side = projected_orientation(decisions, a, b, d, axes)?;
+    let ab_filter = rational_queries
+        .and_then(|queries| RationalLine2Filter::from_point3(&queries[0], &queries[1], axes))
+        .or_else(|| projected_rational_line_filter(a, b, axes));
+    let c_side = projected_orientation(
+        decisions,
+        a,
+        b,
+        c,
+        axes,
+        ab_filter.as_ref(),
+        rational_queries.map(|queries| &queries[2]),
+    )?;
+    let d_side = projected_orientation(
+        decisions,
+        a,
+        b,
+        d,
+        axes,
+        ab_filter.as_ref(),
+        rational_queries.map(|queries| &queries[3]),
+    )?;
     if same_side(c_side, d_side) {
         return Ok(Some(false));
     }
-    let a_side = projected_orientation(decisions, c, d, a, axes)?;
-    let b_side = projected_orientation(decisions, c, d, b, axes)?;
+    let cd_filter = rational_queries
+        .and_then(|queries| RationalLine2Filter::from_point3(&queries[2], &queries[3], axes))
+        .or_else(|| projected_rational_line_filter(c, d, axes));
+    let a_side = projected_orientation(
+        decisions,
+        c,
+        d,
+        a,
+        axes,
+        cd_filter.as_ref(),
+        rational_queries.map(|queries| &queries[0]),
+    )?;
+    let b_side = projected_orientation(
+        decisions,
+        c,
+        d,
+        b,
+        axes,
+        cd_filter.as_ref(),
+        rational_queries.map(|queries| &queries[1]),
+    )?;
     if same_side(a_side, b_side) {
         return Ok(Some(false));
     }
@@ -4373,12 +4423,32 @@ fn projected_segment_crossing(
     }
 }
 
+#[inline]
+fn projected_rational_line_filter(
+    from: &OutputVertex,
+    to: &OutputVertex,
+    [u_axis, v_axis]: [usize; 2],
+) -> Option<RationalLine2Filter> {
+    RationalLine2Filter::from_rationals(
+        [
+            vertex_axis(from, u_axis).exact_rational_ref()?,
+            vertex_axis(from, v_axis).exact_rational_ref()?,
+        ],
+        [
+            vertex_axis(to, u_axis).exact_rational_ref()?,
+            vertex_axis(to, v_axis).exact_rational_ref()?,
+        ],
+    )
+}
+
 fn projected_orientation(
     decisions: &DecisionContext,
     from: &OutputVertex,
     to: &OutputVertex,
     point: &OutputVertex,
     [u_axis, v_axis]: [usize; 2],
+    filter: Option<&RationalLine2Filter>,
+    query: Option<&RationalPoint3Query>,
 ) -> HypermeshResult<Classification> {
     let [from_u, from_v, to_u, to_v, point_u, point_v] = [
         vertex_axis(from, u_axis),
@@ -4388,7 +4458,17 @@ fn projected_orientation(
         vertex_axis(point, u_axis),
         vertex_axis(point, v_axis),
     ];
-    orientation2(decisions, from_u, from_v, to_u, to_v, point_u, point_v)
+    orientation2(
+        decisions,
+        from_u,
+        from_v,
+        to_u,
+        to_v,
+        point_u,
+        point_v,
+        filter,
+        query.map(|query| filter.and_then(|filter| filter.sign_point3(query, [u_axis, v_axis]))),
+    )
 }
 
 fn orientation2(
@@ -4399,6 +4479,8 @@ fn orientation2(
     to_v: &Real,
     point_u: &Real,
     point_v: &Real,
+    filter: Option<&RationalLine2Filter>,
+    precomputed_sign: Option<Option<RealSign>>,
 ) -> HypermeshResult<Classification> {
     if let [
         Some(from_u),
@@ -4415,9 +4497,15 @@ fn orientation2(
         point_u.exact_rational_ref(),
         point_v.exact_rational_ref(),
     ] {
-        if let Some(sign) =
-            Real::certified_rational_line2_sign([from_u, from_v], [to_u, to_v], [point_u, point_v])
-        {
+        let sign = precomputed_sign.unwrap_or_else(|| match filter {
+            Some(filter) => filter.sign_rationals([point_u, point_v]),
+            None => Real::certified_rational_line2_sign(
+                [from_u, from_v],
+                [to_u, to_v],
+                [point_u, point_v],
+            ),
+        });
+        if let Some(sign) = sign {
             return Ok(match sign {
                 RealSign::Negative => Classification::Negative,
                 RealSign::Zero => Classification::On,
@@ -5320,9 +5408,89 @@ mod tests {
 
         for_each_policy(|decisions| {
             assert!(
-                proper_segment_intersection_after_bounds_overlap(decisions, &a, &b, &c, &d, None,)
-                    .unwrap()
-                    .is_none()
+                proper_segment_intersection_after_bounds_overlap(
+                    decisions, &a, &b, &c, &d, None, None,
+                )
+                .unwrap()
+                .is_none()
+            );
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
+    }
+
+    #[test]
+    fn projected_crossing_reuses_rational_line_filters_for_every_topology() {
+        let vertex = |x_num, x_den, y_num, y_den| OutputVertex {
+            x: Real::from(Rational::fraction(x_num, x_den).unwrap()),
+            y: Real::from(Rational::fraction(y_num, y_den).unwrap()),
+            z: Real::zero(),
+        };
+        let a = vertex(0, 1, 1, 3);
+        let b = vertex(1, 1, 2, 3);
+        let c = vertex(0, 1, 2, 3);
+        let d = vertex(1, 1, 1, 3);
+        let same_side_start = vertex(0, 1, 3, 4);
+        let same_side_end = vertex(1, 1, 4, 5);
+        let query = |vertex: &OutputVertex| {
+            RationalPoint3Query::from_certified_enclosures([&vertex.x, &vertex.y, &vertex.z].map(
+                |coordinate| {
+                    coordinate
+                        .exact_rational_ref()
+                        .unwrap()
+                        .to_f64_enclosure()
+                        .unwrap()
+                },
+            ))
+            .unwrap()
+        };
+        let crossing_queries = [query(&a), query(&b), query(&c), query(&d)];
+        let same_side_queries = [
+            query(&a),
+            query(&b),
+            query(&same_side_start),
+            query(&same_side_end),
+        ];
+        let endpoint_queries = [query(&a), query(&b), query(&b), query(&c)];
+
+        for_each_policy(|decisions| {
+            assert_eq!(
+                projected_segment_crossing(
+                    decisions,
+                    &a,
+                    &b,
+                    &c,
+                    &d,
+                    [0, 1],
+                    Some(&crossing_queries),
+                )
+                .unwrap(),
+                Some(true)
+            );
+            assert_eq!(
+                projected_segment_crossing(
+                    decisions,
+                    &a,
+                    &b,
+                    &same_side_start,
+                    &same_side_end,
+                    [0, 1],
+                    Some(&same_side_queries),
+                )
+                .unwrap(),
+                Some(false)
+            );
+            assert_eq!(
+                projected_segment_crossing(
+                    decisions,
+                    &a,
+                    &b,
+                    &b,
+                    &c,
+                    [0, 1],
+                    Some(&endpoint_queries),
+                )
+                .unwrap(),
+                None
             );
             assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
         });
