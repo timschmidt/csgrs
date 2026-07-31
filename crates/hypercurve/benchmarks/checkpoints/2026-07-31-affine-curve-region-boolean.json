@@ -1,0 +1,178 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "affine-curve-region-boolean-shared-arrangement",
+  "source_revision": "600c16ab24873aa971ec60262420600097761a7b",
+  "supporting_revisions": {
+    "affine_pair_dispatch": "647ec5f",
+    "certified_contour_merge": "279414d"
+  },
+  "matched_behavior_control_revision": "279414d85a226b10c5d5fb07bdfb4fa2b5cc7001",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "canonical_batch": "CurveRegion2::boolean_regions on two nonempty, nonidentical affine-line regions",
+    "historical_control": "four independent CurveRegion2::boolean_region calls through the retained native line/arc engine",
+    "single_operation_contract": "unchanged native fast path",
+    "general_pair_specialization": "degree-elevated exact line images dispatch through the native affine line solver inside CurveIntersectionContext",
+    "output": "compact regularized CurveRegion2 loops with certified material/hole roles and a retained native line-region accelerator"
+  },
+  "semantic_evidence": {
+    "all_four_operations_share_one_candidate_schedule": true,
+    "all_four_operations_share_one_split_graph": true,
+    "all_four_operations_share_propagated_fragment_classifications": true,
+    "forced_general_matches_native_signed_areas": true,
+    "forced_general_matches_native_dense_half_grid_point_classifications": true,
+    "nested_material_and_hole_roles_preserved": true,
+    "compact_fragment_counts": {
+      "union": 4,
+      "intersection": 4,
+      "difference": 4,
+      "xor": 8
+    },
+    "downstream_boolean_reuse": true,
+    "lower_dimensional_contacts_and_overlaps_remain_in_intersection_evidence": true
+  },
+  "policy_evidence": {
+    "strict_symbolic_equivalence": "typed blocker",
+    "approximate_512_symbolic_equivalence": "exact returned regions with Approximate512Consumed",
+    "finite_coordinate_replacement": false,
+    "terminal_observed_once_by_outer_operation": true,
+    "strict_after_approximate_cache_isolation": true
+  },
+  "paired_release_benchmark": {
+    "command": "taskset -c 9 HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=10000 target/release/deps/curve_region_boolean_batch-*",
+    "method": "fifteen processes; historical-control-first and shared-first order alternated; both public contracts measured in the same release executable",
+    "iterations_per_process_per_contract": 10000,
+    "historical_four_independent_total_ns": [
+      794143860,
+      793386332,
+      784430096,
+      810028971,
+      786922225,
+      807808783,
+      791955620,
+      794033068,
+      787809974,
+      783118416,
+      807930695,
+      791149056,
+      822431440,
+      799716968,
+      797547866
+    ],
+    "shared_arrangement_total_ns": [
+      746477399,
+      754998954,
+      761210329,
+      773598389,
+      737430229,
+      753614319,
+      745614317,
+      754159921,
+      756156626,
+      744788555,
+      746785007,
+      746992923,
+      802475279,
+      760871571,
+      810815467
+    ],
+    "historical_median_ns_per_batch": 79403.3068,
+    "shared_median_ns_per_batch": 75415.9921,
+    "median_change_percent": -5.021598,
+    "speedup": 1.052871,
+    "interpretation": "the canonical arrangement wins while retaining the same compact 20-fragment all-four result; the ordinary single-operation native fast path remains because one general arrangement is not yet faster for one result"
+  },
+  "heaptrack": {
+    "command": "HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=1000 HYPERCURVE_CURVE_REGION_BATCH_MODE={independent,shared} heaptrack --record-only target/release/deps/curve_region_boolean_batch-*",
+    "measured_batches": 1000,
+    "historical_allocation_calls": 511268,
+    "shared_allocation_calls": 489270,
+    "eliminated_allocation_calls": 21998,
+    "allocation_change_percent": -4.302636,
+    "eliminated_allocation_calls_per_batch": 21.998,
+    "historical_temporary_allocations": 21037,
+    "shared_temporary_allocations": 10037,
+    "eliminated_temporary_allocations": 11000,
+    "temporary_allocation_change_percent": -52.288824,
+    "peak_heap_bytes_historical": 134686,
+    "peak_heap_bytes_shared": 135055,
+    "interpretation": "process peak is setup/profiler noise at this fixture size; operation-scale allocation and temporary-allocation counts both improve materially"
+  },
+  "competitive_rectangle_union": {
+    "command": "taskset -c 9 HYPERCURVE_COMPARE_GROUP=rectangles_union HYPERCURVE_COMPARE_SAMPLES=15 HYPERCURVE_COMPARE_ITERS=10000 target/release/deps/comparative-*",
+    "contract": "one native region union; Hypercurve exact STRICT versus finite binary64 competitors",
+    "median_ns": {
+      "hypercurve": 4886.7,
+      "hypercurve_contours": 4896.5,
+      "hypercurve_loops": 5321.2,
+      "cavalier_contours": 916.4,
+      "i_overlay": 1017.7,
+      "geo": 1236.0
+    },
+    "hypercurve_to_cavalier_ratio": 5.332497,
+    "hypercurve_to_i_overlay_ratio": 4.801710,
+    "hypercurve_change_from_frozen_baseline_percent": 2.189460,
+    "interpretation": "the small finite polygon gap remains an explicit target under unequal numeric guarantees; the new shared CurveRegion2 batch does not replace or alter this single-operation lane"
+  },
+  "matched_release_pathological_binary": {
+    "command": "cargo bench --bench pathological_regions --no-run; size; strip --strip-all",
+    "control_method": "same source and toolchain with the new shared batch selection and affine compaction branches compile-time disabled, leaving their linked code dead",
+    "control_debug_file_bytes": 6981952,
+    "candidate_debug_file_bytes": 7001680,
+    "debug_file_delta_bytes": 19728,
+    "control_stripped_file_bytes": 5546528,
+    "candidate_stripped_file_bytes": 5563152,
+    "stripped_file_delta_bytes": 16624,
+    "stripped_file_delta_percent": 0.299719,
+    "control_size": {
+      "text": 5276749,
+      "data": 265904,
+      "bss": 5072,
+      "total_loadable": 5547725
+    },
+    "candidate_size": {
+      "text": 5293141,
+      "data": 266128,
+      "bss": 4832,
+      "total_loadable": 5564101
+    },
+    "total_loadable_delta_bytes": 16376,
+    "total_loadable_delta_percent": 0.295184,
+    "interpretation": "a measured 0.30 percent linked-size cost buys one authoritative batch topology, compact output, 5.02 percent lower latency, and fewer allocations; later legacy-engine deletion must repay this temporary overlap"
+  },
+  "static_callgraph": {
+    "command": "hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-affine-boolean-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22833,
+    "edges": 39274,
+    "previous_checkpoint_nodes": 22733,
+    "previous_checkpoint_edges": 39116,
+    "node_delta": 100,
+    "edge_delta": 158,
+    "artifact": "/tmp/hypercurve-affine-boolean-callgraph/callgraph.json",
+    "canonical_batch_node_present": true,
+    "affine_compaction_node_present": true,
+    "native_line_pair_dispatch_node_present": true,
+    "benchmark_and_forced_general_differential_nodes_present": true
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": "264/264 pass",
+    "generated_curve_region_boolean_tests": "7/7 pass",
+    "pathological_operations": "268/268 decided with no blockers",
+    "ignored_tests": "two explicitly ignored release-scale PCB performance corpora",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass"
+  },
+  "next_boundary": {
+    "phase": "unified CurveRegion2 arrangement",
+    "next_interactions": "line-arc and conic/general curve pairs through the same operation-mask topology",
+    "legacy_deletion": "remove four-operation native region dispatch only after every interaction family and degeneracy matrix is faster or has a justified exactness-only route",
+    "offset_fillet_chamfer": "pending on the authoritative arrangement and exact parallel-curve substrate"
+  }
+}

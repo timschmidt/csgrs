@@ -7256,6 +7256,54 @@ Hypermesh was neither searched for policy callers nor modified. Complete
 machine-readable evidence is in
 [`2026-07-31-hypersolve-interpolation-policy-bridge.json`](benchmarks/checkpoints/2026-07-31-hypersolve-interpolation-policy-bridge.json).
 
+## Affine `CurveRegion2` shared-arrangement checkpoint (2026-07-31)
+
+`CurveRegion2::boolean_regions` now sends two nonempty, nonidentical
+affine-line regions through one canonical candidate schedule, split graph,
+fragment-classification propagation, and four-bit operation mask. Exact
+degree-elevated line carriers keep a private native line-pair solver inside
+that arrangement. This is the first historical region path moved into the
+authoritative general kernel; the ordinary one-operation entry still keeps
+its faster native-region route.
+
+The general traversal's line output is compacted before publication. Adjacent
+codirected exact line runs merge without replaying already-certified contour
+closure, loop orientation assigns material and hole roles under the active
+policy, and a private constructor installs the certified filled-left and
+native-line-region evidence without repeating authored-path validation.
+Union, intersection, and difference retain four fragments on the overlapping
+rectangle fixture; XOR retains eight. A forced-general differential test
+matches native signed areas and a dense half-grid classification matrix, and a
+second regression preserves a nested material/hole result.
+
+STRICT blocks symbolically equivalent boundaries that it cannot prove equal.
+APPROXIMATE_512 completes the same shared batch, returns exact retained
+regions, and reports `Approximate512Consumed`; it does not replace a
+coordinate or carrier with a finite value.
+
+Fifteen alternating-order CPU-pinned release processes, with 10,000 batches
+per contract, measured 75.416 us for the shared arrangement versus 79.403 us
+for four independent historical `boolean_region` calls. The canonical batch
+is 5.02% faster while publishing the same compact 20-fragment aggregate.
+Heaptrack over 1,000 batches records 489,270 allocation calls versus 511,268
+and 10,037 temporary allocations versus 21,037: 22 fewer allocations and 11
+fewer temporaries per batch.
+
+The current competitive one-operation rectangle sentinel remains explicit:
+exact STRICT Hypercurve measures 4.887 us, Cavalier 0.916 us, i_overlay 1.018
+us, and geo 1.236 us under their finite contracts. The small-polygon gap is a
+continuing target, not an equivalent-guarantee comparison. The new batch does
+not alter that single-operation route.
+
+The temporary coexistence with the historical engine costs 16,624 stripped
+linked bytes (+0.30%) in a matched pathological executable. That debt is
+accepted for the measured speed and allocation wins and must be repaid as the
+remaining interaction families migrate and legacy machinery is deleted. The
+22,833-node/39,274-edge call graph, full all-feature suite, both warning-denied
+Clippy matrices, no-default build, every fuzz target, rustdoc, and all 268
+pathological Booleans pass. Evidence is in
+[`2026-07-31-affine-curve-region-boolean.json`](benchmarks/checkpoints/2026-07-31-affine-curve-region-boolean.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
