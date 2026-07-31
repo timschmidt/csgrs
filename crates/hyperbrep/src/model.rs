@@ -165,30 +165,35 @@ impl ParameterCorrespondence {
             Direction::Forward => (edge_domain.start(), edge_domain.end()),
             Direction::Reversed => (edge_domain.end(), edge_domain.start()),
         };
-        if matches!(
-            compare_reals(
-                pcurve_parameter,
-                pcurve.domain_start(),
-                crate::STRICT_PREDICATES
-            ),
-            PredicateOutcome::Decided {
-                value: std::cmp::Ordering::Equal,
-                ..
-            }
-        ) {
+        if (pcurve_parameter - pcurve.domain_start()).zero_status()
+            == hyperreal::ZeroKnowledge::Zero
+            || matches!(
+                compare_reals(
+                    pcurve_parameter,
+                    pcurve.domain_start(),
+                    crate::STRICT_PREDICATES
+                ),
+                PredicateOutcome::Decided {
+                    value: std::cmp::Ordering::Equal,
+                    ..
+                }
+            )
+        {
             return Ok(directed_start.clone());
         }
-        if matches!(
-            compare_reals(
-                pcurve_parameter,
-                pcurve.domain_end(),
-                crate::STRICT_PREDICATES
-            ),
-            PredicateOutcome::Decided {
-                value: std::cmp::Ordering::Equal,
-                ..
-            }
-        ) {
+        if (pcurve_parameter - pcurve.domain_end()).zero_status() == hyperreal::ZeroKnowledge::Zero
+            || matches!(
+                compare_reals(
+                    pcurve_parameter,
+                    pcurve.domain_end(),
+                    crate::STRICT_PREDICATES
+                ),
+                PredicateOutcome::Decided {
+                    value: std::cmp::Ordering::Equal,
+                    ..
+                }
+            )
+        {
             return Ok(directed_end.clone());
         }
         match self {
@@ -221,22 +226,26 @@ impl ParameterCorrespondence {
             Direction::Forward => (edge_domain.start(), edge_domain.end()),
             Direction::Reversed => (edge_domain.end(), edge_domain.start()),
         };
-        if matches!(
-            compare_reals(edge_parameter, directed_start, crate::STRICT_PREDICATES),
-            PredicateOutcome::Decided {
-                value: std::cmp::Ordering::Equal,
-                ..
-            }
-        ) {
+        if (edge_parameter - directed_start).zero_status() == hyperreal::ZeroKnowledge::Zero
+            || matches!(
+                compare_reals(edge_parameter, directed_start, crate::STRICT_PREDICATES),
+                PredicateOutcome::Decided {
+                    value: std::cmp::Ordering::Equal,
+                    ..
+                }
+            )
+        {
             return Ok(pcurve.domain_start().clone());
         }
-        if matches!(
-            compare_reals(edge_parameter, directed_end, crate::STRICT_PREDICATES),
-            PredicateOutcome::Decided {
-                value: std::cmp::Ordering::Equal,
-                ..
-            }
-        ) {
+        if (edge_parameter - directed_end).zero_status() == hyperreal::ZeroKnowledge::Zero
+            || matches!(
+                compare_reals(edge_parameter, directed_end, crate::STRICT_PREDICATES),
+                PredicateOutcome::Decided {
+                    value: std::cmp::Ordering::Equal,
+                    ..
+                }
+            )
+        {
             return Ok(pcurve.domain_end().clone());
         }
         match self {
@@ -7757,18 +7766,18 @@ impl ModelBuilder {
         let end_point = self.vertex_ref(end)?.point();
         let curve_ref = self.curve_ref(curve)?;
         if !endpoint_certificate {
-            let curve_start = curve_ref.point_at(domain.start())?;
-            let curve_end = curve_ref.point_at(domain.end())?;
-            require_point_equal(
+            require_curve_point_at_parameter(
+                curve_ref,
+                domain.start(),
                 start_point,
-                &curve_start,
                 BuildError::EdgeEndpointMismatch {
                     endpoint: Endpoint::Start,
                 },
             )?;
-            require_point_equal(
+            require_curve_point_at_parameter(
+                curve_ref,
+                domain.end(),
                 end_point,
-                &curve_end,
                 BuildError::EdgeEndpointMismatch {
                     endpoint: Endpoint::End,
                 },
@@ -8557,6 +8566,11 @@ impl ModelBuilder {
                     CurveFamily2::Line,
                     SurfaceKind::Cylinder,
                     ParameterCorrespondence::Affine { .. },
+                ) | (
+                    Curve3Kind::CircleArc,
+                    CurveFamily2::CircularArc,
+                    SurfaceKind::Plane,
+                    ParameterCorrespondence::AngularSweep,
                 )
             );
 
@@ -9497,20 +9511,6 @@ impl ModelBuilder {
         let arc = pcurve
             .circular_arc()
             .expect("circular pcurve kind carries circular geometry");
-        let sweep = match arc.directed_sweep_angle().map_err(GeometryError::from)? {
-            Classification::Decided(sweep) => sweep,
-            Classification::Uncertain(reason) => {
-                return Err(BuildError::Geometry(
-                    GeometryError::PlanarClassificationUnresolved(reason),
-                ));
-            }
-        };
-        require_real_equal(
-            &sweep,
-            &(edge.domain.end() - edge.domain.start()),
-            BuildError::EdgeUseSweepMismatch,
-        )?;
-
         let center_parameter = Point2::new(arc.center().x().clone(), arc.center().y().clone());
         let mapped_center = surface.point_at(&center_parameter)?;
         require_point_equal(
@@ -9519,28 +9519,56 @@ impl ModelBuilder {
             BuildError::EdgeUseSupportMismatch,
         )?;
 
-        let radial_x = arc.start().x() - arc.center().x();
-        let radial_y = arc.start().y() - arc.center().y();
+        let mapped_start = surface.point_at(&Point2::new(
+            arc.start().x().clone(),
+            arc.start().y().clone(),
+        ))?;
+        let mapped_end =
+            surface.point_at(&Point2::new(arc.end().x().clone(), arc.end().y().clone()))?;
+        let (directed_start_vertex, directed_end_vertex) = match edge_use.direction {
+            Direction::Forward => (edge.start, edge.end),
+            Direction::Reversed => (edge.end, edge.start),
+        };
+        require_point_equal(
+            &mapped_start,
+            self.vertex_ref(directed_start_vertex)?.point(),
+            BuildError::EdgeUseSupportMismatch,
+        )?;
+        require_point_equal(
+            &mapped_end,
+            self.vertex_ref(directed_end_vertex)?.point(),
+            BuildError::EdgeUseSupportMismatch,
+        )?;
+
+        // A linear plane map carries a circle to the same spatial circle for
+        // every angle once it carries one radial/tangent frame exactly. This
+        // certifies the complete image and its traversal without asking atan
+        // to reconstruct a persisted arc's authored sweep from its endpoints.
+        let radial_u = arc.start().x() - arc.center().x();
+        let radial_v = arc.start().y() - arc.center().y();
         let (tangent_u, tangent_v) = if arc.is_clockwise() {
-            (radial_y.clone(), -radial_x.clone())
+            (radial_v.clone(), -radial_u.clone())
         } else {
-            (-radial_y.clone(), radial_x.clone())
+            (-radial_v.clone(), radial_u.clone())
         };
         let (plane_u, plane_v) = surface
             .plane_directions()
             .expect("plane kind carries plane directions");
         let mapped_tangent = plane_u.clone() * tangent_u + plane_v.clone() * tangent_v;
-        let directed_start = match edge_use.direction {
-            Direction::Forward => edge.domain.start(),
-            Direction::Reversed => edge.domain.end(),
-        };
-        let mut edge_tangent = curve.derivative_at(directed_start, 1)?.vector().clone();
+
+        let spatial_radial = &mapped_start - &data.center;
+        let radial_x = data.x.dot(&spatial_radial);
+        let radial_y = data.y.dot(&spatial_radial);
+        let mut expected_tangent = data.y.clone() * radial_x - data.x.clone() * radial_y;
+        if data.direction < 0 {
+            expected_tangent = -expected_tangent;
+        }
         if edge_use.direction == Direction::Reversed {
-            edge_tangent = -edge_tangent;
+            expected_tangent = -expected_tangent;
         }
         require_vector_equal(
             &mapped_tangent,
-            &edge_tangent,
+            &expected_tangent,
             BuildError::EdgeUseSupportMismatch,
         )
     }
@@ -10683,7 +10711,7 @@ impl ModelBuilder {
                     continue;
                 }
                 for point in [start, end] {
-                    let on_sweep = match arc.contains_sweep_point(point, &CurvePolicy::STRICT) {
+                    let on_sweep = match arc.contains_point(point, &CurvePolicy::STRICT) {
                         Classification::Decided(value) => value,
                         Classification::Uncertain(_) => return Ok(None),
                     };
@@ -10697,12 +10725,19 @@ impl ModelBuilder {
             }
         }
 
+        // Every chord endpoint must stay in the closed disk. Convexity then
+        // proves that the chord interior cannot cross the supporting circle;
+        // the explicit chord/chord checks below handle the remaining possible
+        // self-intersections. Allowing strict interior endpoints is essential
+        // for radial sector wires produced by concurrent circular-face splits.
         for (_, chord) in &chords {
             for endpoint in [chord.start(), chord.end()] {
-                if !real_values_equal(
+                if decided_model_order(compare_reals(
                     &endpoint.distance_squared(first_arc.center()),
                     first_arc.radius_squared_ref(),
-                )? {
+                    crate::STRICT_PREDICATES,
+                ))? == std::cmp::Ordering::Greater
+                {
                     return Ok(Some(false));
                 }
             }
@@ -18936,6 +18971,9 @@ fn parameter_in_line_material(
 
 fn vectors_equal(left: &Vector3, right: &Vector3) -> Result<bool, BuildError> {
     for axis in 0..3 {
+        if (&left.0[axis] - &right.0[axis]).zero_status() == hyperreal::ZeroKnowledge::Zero {
+            continue;
+        }
         match compare_reals(&left.0[axis], &right.0[axis], crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: std::cmp::Ordering::Equal,
@@ -19681,6 +19719,9 @@ fn certified_periodic_longitudinal_half_coverage(
 }
 
 fn require_real_equal(left: &Real, right: &Real, mismatch: BuildError) -> Result<(), BuildError> {
+    if (left - right).zero_status() == hyperreal::ZeroKnowledge::Zero {
+        return Ok(());
+    }
     match compare_reals(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Equal,
@@ -19713,6 +19754,12 @@ fn require_point_equal(
     right: &Point3,
     mismatch: BuildError,
 ) -> Result<(), BuildError> {
+    if [&left.x - &right.x, &left.y - &right.y, &left.z - &right.z]
+        .into_iter()
+        .all(|difference| difference.zero_status() == hyperreal::ZeroKnowledge::Zero)
+    {
+        return Ok(());
+    }
     match point3_equal(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value: true, .. } => Ok(()),
         PredicateOutcome::Decided { value: false, .. } => Err(mismatch),
@@ -19721,6 +19768,46 @@ fn require_point_equal(
                 needed,
                 stage,
             }))
+        }
+    }
+}
+
+fn require_curve_point_at_parameter(
+    curve: &Curve3,
+    parameter: &Real,
+    point: &Point3,
+    mismatch: BuildError,
+) -> Result<(), BuildError> {
+    match point3_equal(&curve.point_at(parameter)?, point, crate::STRICT_PREDICATES) {
+        PredicateOutcome::Decided { value: true, .. } => return Ok(()),
+        PredicateOutcome::Decided { value: false, .. } => return Err(mismatch),
+        PredicateOutcome::Unknown { .. } => {}
+    }
+    match curve.parameters_of(point)? {
+        CurveParameterLocation::EntireDomain => Ok(()),
+        CurveParameterLocation::None => Err(mismatch),
+        CurveParameterLocation::Parameters(parameters) => {
+            let mut unresolved = None;
+            for candidate in parameters {
+                match compare_reals(&candidate, parameter, crate::STRICT_PREDICATES) {
+                    PredicateOutcome::Decided {
+                        value: std::cmp::Ordering::Equal,
+                        ..
+                    } => return Ok(()),
+                    PredicateOutcome::Decided { .. } => {}
+                    PredicateOutcome::Unknown { needed, stage } => {
+                        unresolved.get_or_insert((needed, stage));
+                    }
+                }
+            }
+            if let Some((needed, stage)) = unresolved {
+                Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
+                    needed,
+                    stage,
+                }))
+            } else {
+                Err(mismatch)
+            }
         }
     }
 }

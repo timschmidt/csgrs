@@ -11781,6 +11781,21 @@ mod tests {
             .value(),
             Some(Ordering::Equal),
         );
+        let json = model.to_json().unwrap();
+        let replayed = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(
+                &replayed.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES,
+            )
+            .value(),
+            Some(Ordering::Equal),
+        );
+        assert_eq!(replayed.to_json().unwrap(), json);
     }
 
     #[test]

@@ -9362,10 +9362,10 @@ fn locate_ellipse_arc_parameters(
     point: &Point3,
 ) -> GeometryResult<CurveParameterLocation> {
     let mut endpoints = Vec::new();
-    if points_equal(&curve.start()?, point)? {
+    if point3_equal(&curve.start()?, point, crate::STRICT_PREDICATES).value() == Some(true) {
         endpoints.push(curve.domain().start().clone());
     }
-    if points_equal(&curve.end()?, point)?
+    if point3_equal(&curve.end()?, point, crate::STRICT_PREDICATES).value() == Some(true)
         && (endpoints.is_empty()
             || decided_order(compare_reals(
                 &endpoints[0],
@@ -9383,30 +9383,38 @@ fn locate_ellipse_arc_parameters(
     let x_coordinate = arc.x.dot(&relative);
     let y_coordinate = arc.y.dot(&relative);
     let represented = arc.x.clone() * &x_coordinate + arc.y.clone() * &y_coordinate;
-    if matches!(
-        compare_reals(
-            &(&relative - &represented).norm_squared(),
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ),
-        PredicateOutcome::Decided { value, .. } if value != Ordering::Equal
+    match compare_reals(
+        &(&relative - &represented).norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
     ) {
-        return Ok(CurveParameterLocation::None);
+        PredicateOutcome::Decided {
+            value: Ordering::Equal,
+            ..
+        } => {}
+        PredicateOutcome::Decided { .. } => return Ok(CurveParameterLocation::None),
+        PredicateOutcome::Unknown { needed, stage } => {
+            return Err(GeometryError::PredicateUnresolved { needed, stage });
+        }
     }
     let normalized_x =
         (x_coordinate / &arc.x_radius).map_err(|_| GeometryError::ProjectiveDivision)?;
     let normalized_y =
         (y_coordinate / &arc.y_radius).map_err(|_| GeometryError::ProjectiveDivision)?;
     let normalized_radius_squared = &normalized_x * &normalized_x + &normalized_y * &normalized_y;
-    if matches!(
-        compare_reals(
-            &normalized_radius_squared,
-            &Real::one(),
-            crate::STRICT_PREDICATES,
-        ),
-        PredicateOutcome::Decided { value, .. } if value != Ordering::Equal
+    match compare_reals(
+        &normalized_radius_squared,
+        &Real::one(),
+        crate::STRICT_PREDICATES,
     ) {
-        return Ok(CurveParameterLocation::None);
+        PredicateOutcome::Decided {
+            value: Ordering::Equal,
+            ..
+        } => {}
+        PredicateOutcome::Decided { .. } => return Ok(CurveParameterLocation::None),
+        PredicateOutcome::Unknown { needed, stage } => {
+            return Err(GeometryError::PredicateUnresolved { needed, stage });
+        }
     }
     let angle = match certified_atan2(normalized_y.clone(), normalized_x.clone()) {
         Ok(angle) => angle,
@@ -9429,11 +9437,24 @@ fn locate_ellipse_arc_parameters(
         delta += Real::from(2) * Real::pi();
     }
     let parameter = curve.domain().start() + delta;
-    if curve.domain().contains(&parameter)? && points_equal(&curve.point_at(&parameter)?, point)? {
-        Ok(CurveParameterLocation::Parameters(vec![parameter]))
-    } else {
-        Ok(CurveParameterLocation::None)
+    if !curve.domain().contains(&parameter)? {
+        return Ok(CurveParameterLocation::None);
     }
+    let mut parameters = vec![parameter];
+    if decided_order(compare_reals(
+        &parameters[0],
+        curve.domain().start(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+        && decided_order(compare_reals(
+            &(curve.domain().end() - curve.domain().start()),
+            &Real::tau(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+    {
+        parameters.push(curve.domain().end().clone());
+    }
+    Ok(CurveParameterLocation::Parameters(parameters))
 }
 
 fn atan2_replay_candidate(y: &Real, x: &Real) -> GeometryResult<Real> {

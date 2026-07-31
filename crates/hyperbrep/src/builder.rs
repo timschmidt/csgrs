@@ -6317,6 +6317,60 @@ mod tests {
     }
 
     #[test]
+    fn crossed_circular_face_partition_revalidates_radial_sector_wires() {
+        let (model, solid) = cylinder(r(2), r(3)).unwrap();
+        let (face, record) = model.faces().nth(1).unwrap();
+        let outer = record.outer().unwrap();
+        let uses = model.wire(outer).unwrap().edge_uses();
+        let directed_vertex = |use_id| {
+            let edge_use = model.edge_use(use_id).unwrap();
+            let edge = model.edge(edge_use.edge()).unwrap();
+            match edge_use.direction() {
+                Direction::Forward => edge.start(),
+                Direction::Reversed => edge.end(),
+            }
+        };
+        let diagonal = |first_use, second_use| {
+            Curve3::line(
+                model
+                    .vertex(directed_vertex(first_use))
+                    .unwrap()
+                    .point()
+                    .clone(),
+                model
+                    .vertex(directed_vertex(second_use))
+                    .unwrap()
+                    .point()
+                    .clone(),
+            )
+            .unwrap()
+        };
+        let traces = [diagonal(uses[1], uses[3]), diagonal(uses[0], uses[2])];
+        let (edited, partition) = model.split_face_by_curves(face, &traces).unwrap();
+
+        assert_eq!(partition.faces.len(), 4);
+        assert_eq!(
+            compare_reals(
+                &edited.solid_volume(solid).unwrap(),
+                &(r(12) * Real::pi()),
+                crate::STRICT_PREDICATES,
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal),
+        );
+        let json = edited.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json,
+        );
+    }
+
+    #[test]
     fn nested_angular_pcurve_splits_persist_without_expression_blowup() {
         let (model, solid) = cylinder(r(65), r(11)).unwrap();
         let face = crate::FaceId::from_index(1).unwrap();
