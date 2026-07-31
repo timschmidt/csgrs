@@ -6206,6 +6206,59 @@ exact CurveRegion2 fuzz corpus and all 268 pathological operations), all-target
 Clippy with warnings denied, no-default-feature compilation, every fuzz
 target, the standalone UI, formatting, and diff whitespace checks.
 
+### Compact `CurveRegion2` shared carrier
+
+`CurveRegion2` is now a one-word shared handle. Immutable boundary and loop
+semantics plus their lazy exact caches live in one `Arc` allocation instead of
+copying the boundary vector while independently sharing six cache allocations.
+All empty values reuse one process-wide data allocation. Clones therefore
+share geometry and computed exact area, consuming a uniquely owned value still
+moves out its loop vector, and consuming a shared clone returns independent
+owned loops without affecting the source.
+
+The handle shrank from 112 to 8 bytes. The boxed four-region payload inside
+`CurveRegionBooleanResults2` consequently shrank from 448 to 32 bytes while
+the result wrapper remains 40 bytes. A permanent carrier-only mode in the
+`bezier_region` benchmark times one million nonempty clones and one million
+empty constructions. Fifteen parent/candidate process pairs were interleaved
+with reversed order:
+
+| Carrier operation | Parent median | Shared-carrier median | Change |
+| --- | ---: | ---: | ---: |
+| 1,000,000 nonempty clones | 314.899 ms | 3.728 ms | -98.8%; 84.5x |
+| 1,000,000 empty constructions | 119.232 ms | 3.128 ms | -97.4%; 38.1x |
+
+An isolated Heaptrack run recorded 12,000,166 allocation calls for the parent
+and 151 process/fixture allocations for the candidate. The candidate's two
+million timed carrier operations added no heap allocations; the change
+eliminated 12,000,015 calls from this workload.
+
+Nine interleaved pathological runs retained exactly 67 cells, 603 candidate
+pairs, 3,248 fragments, 134 point classifications, 268 decided operations, no
+blockers, and checksum 6. The all-four Boolean median moved from 470.503 to
+473.041 ms (+0.54%) with overlapping ranges. Eleven interleaved construction
+runs moved from 79.137 to 76.650 ms (-3.1%) with overlapping ranges. Full-run
+Heaptrack allocation calls fell from 8,250,415 to 8,248,405 and peak heap from
+36.22 to 36.20 MiB.
+
+The release pathological executable fell 4,080 bytes, from 5,535,425 to
+5,531,345 bytes. It is now only 52 bytes larger than the frozen consolidation
+baseline, repaying essentially all native size debt from the one-byte context
+checkpoint.
+
+Validation passed the complete all-feature suite, including the 173.86-second
+exact Boolean corpus and all 268 pathological operations; all-feature
+all-target and no-default library/test Clippy with warnings denied;
+no-default all-target compilation; every fuzz-target build; and all 37
+standalone UI tests, including its 333.28-second shared Boolean scene. The
+warning-denied all-feature rustdoc and standalone release WASM build also pass.
+The no-default test runner still exposes predicate-dependent rational-moment
+and arc assertions that also fail at the paired parent revision; this
+checkpoint does not hide or claim to repair that pre-existing feature-contract
+defect.
+Machine-readable samples and provenance are in
+[`2026-07-31-compact-curve-region-carrier.json`](benchmarks/checkpoints/2026-07-31-compact-curve-region-carrier.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
