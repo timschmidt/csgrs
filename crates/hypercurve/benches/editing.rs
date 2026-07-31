@@ -2,9 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveResult,
-    CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineArcRegion2, LineSeg2,
-    Point2, Real, Segment2,
+    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveRegion2,
+    CurveResult, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule,
+    LineArcRegion2, LineSeg2, Point2, Real, Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -697,6 +697,74 @@ fn bench_contour_signed_area_cache(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
+    let policy = CurveContext::STRICT;
+    let region =
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)], &policy)
+            .expect("benchmark rectangle must promote")
+            .into_value();
+
+    let started = Instant::now();
+    let mut transformed_loops = 0_usize;
+    for _ in 0..iterations {
+        let transformed = region
+            .transform_affine(
+                &Real::zero(),
+                &-Real::one(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::zero(),
+                &policy,
+            )
+            .expect("benchmark transform must remain exact")
+            .into_value();
+        transformed_loops += black_box(transformed.boundary_loops().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_affine_transform: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={transformed_loops}",
+        elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut chamfered_loops = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(chamfered) = region
+            .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 4), &policy)
+            .expect("benchmark chamfer must remain exact")
+            .into_value()
+        else {
+            panic!("CurveRegion2 line chamfer benchmark became uncertain");
+        };
+        chamfered_loops += black_box(chamfered.boundary_loops().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_parameter_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={chamfered_loops}",
+        elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut filleted_loops = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(filleted) = region
+            .fillet_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 4), &p(3, 1), false, &policy)
+            .expect("benchmark fillet must remain exact")
+            .into_value()
+        else {
+            panic!("CurveRegion2 line fillet benchmark became uncertain");
+        };
+        filleted_loops += black_box(filleted.boundary_loops().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={filleted_loops}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn main() -> CurveResult<()> {
     let iterations = 10_000;
     bench_parameter_trim(iterations)?;
@@ -708,6 +776,7 @@ fn main() -> CurveResult<()> {
     bench_arc_chamfer(iterations)?;
     bench_line_fillet(iterations)?;
     bench_arc_fillet(iterations)?;
+    bench_curve_region_mutations(iterations)?;
     bench_arc_extension(iterations)?;
     bench_curve_string_line_merge_evidence(iterations)?;
     bench_curve_string_reversed_duplicate_evidence(iterations)?;

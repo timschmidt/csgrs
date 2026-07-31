@@ -1,0 +1,287 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "curve-region2-mutation-outcomes",
+  "source_revision": "cc6afbdf55adeedb62afd0d6253f173322583092",
+  "parent_revision": "831a21ca510b520d2673179fcdd6778f27d11091",
+  "implementation_revisions": [
+    "cc6afbdf55adeedb62afd0d6253f173322583092"
+  ],
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "policy_explicit_public_mutation_apis": [
+      "CurveRegion2::transform_affine",
+      "CurveRegion2::transform_similarity",
+      "CurveRegion2::chamfer_loop_vertex_by_parameters",
+      "CurveRegion2::fillet_loop_vertex_by_parameters",
+      "CurveRegion2::segment_certified",
+      "CurveRegion2::offset_with_certified_segmentation",
+      "CurveRegion2::offset_with_certified_bezier_parallel"
+    ],
+    "mutation_return_contract": "CurveOutcome<T>",
+    "internal_composition_uses_raw_mutation_kernels": true,
+    "mutation_geometry_is_evaluated_once": true,
+    "operation_certainty_is_aggregated_once": true,
+    "strict_symbolic_fillet_result": "Certified outcome containing Classification::Uncertain(RealSign)",
+    "approximate_512_symbolic_fillet_result": "exact native line/arc CurveRegion2",
+    "strict_symbolic_segmentation_result": "Certified outcome containing Classification::Uncertain(Ordering)",
+    "approximate_512_symbolic_segmentation_result": "exact-Real chord region with Approximate512Consumed",
+    "strict_symbolic_collapse_offset_result": "Certified outcome containing uncertainty",
+    "approximate_512_symbolic_collapse_offset_result": "decided exact empty region with Approximate512Consumed",
+    "returned_geometry_remains_exact": true,
+    "compatibility_overload_or_implicit_value_shim_added": false
+  },
+  "closed_failure_paths": {
+    "symbolic_center_arc_area": {
+      "previous_behavior": "infallible Real::atan2 panicked while rebuilding native fillet topology",
+      "current_behavior": "center_arc_signed_sweep uses try_atan2 and reports unavailable legacy contour area without panicking",
+      "authoritative_fix": "native_region_from_curve_paths no longer computes legacy contour signed areas merely to seed filled-side evidence"
+    },
+    "exact_orthogonal_erosion_collapse": {
+      "previous_behavior": "degenerate joined offset linework raised Real(UnknownZero) before the exact erosion lane ran",
+      "current_behavior": "contracting all-line components schedule exact orthogonal erosion before raw joined-offset construction",
+      "approximate_512_terminal": "the symbolic collapse decision completes once and reports Approximate512Consumed"
+    }
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 254,
+    "exact_curve_region2_fuzz_seconds": 160.91,
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_check_all_features_all_targets": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features_all_targets": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "cargo_fmt_all": "pass",
+    "git_diff_check": "pass",
+    "csgrs_commit": "f47a28e",
+    "csgrs_all_feature_check_clippy_and_tests": "pass",
+    "csgrs_fuzz_all_targets": "pass",
+    "csgrs_no_default_all_targets": "pre-existing ungated example/test failures, unrelated to this migration",
+    "hyperdrc_commit": "6c6d776",
+    "hyperdrc_all_feature_check_clippy_and_tests": "pass, including 1114 unit tests",
+    "hyperdrc_no_default_all_targets": "pass"
+  },
+  "matched_mutation_benchmarks": {
+    "command": "seven interleaved parent/candidate executions of the release editing benchmark at 10000 iterations, reversing execution order on alternate pairs",
+    "benchmark_harness": "persistent CurveRegion2 affine-transform, parameter-chamfer, and parameter-fillet rows added to benches/editing.rs",
+    "parent_revision": "831a21ca510b520d2673179fcdd6778f27d11091",
+    "candidate_revision": "cc6afbdf55adeedb62afd0d6253f173322583092",
+    "curve_region_affine_transform_ns": {
+      "parent_samples": [
+        4700.9827,
+        4361.9100,
+        4511.4707,
+        4513.6736,
+        4385.2293,
+        4327.1553,
+        4418.7051
+      ],
+      "candidate_samples": [
+        4368.1605,
+        4542.6095,
+        4294.6426,
+        4352.1046,
+        4536.2920,
+        4420.3129,
+        4487.0204
+      ],
+      "parent_median": 4418.7051,
+      "candidate_median": 4420.3129,
+      "change_percent": 0.0364
+    },
+    "curve_region_parameter_chamfer_ns": {
+      "parent_samples": [
+        10603.5261,
+        10123.6370,
+        10398.6041,
+        10295.1852,
+        10290.2205,
+        10277.4884,
+        10375.0777
+      ],
+      "candidate_samples": [
+        9638.1583,
+        10223.1801,
+        9539.3651,
+        9735.1376,
+        9695.4813,
+        9598.8739,
+        9843.0962
+      ],
+      "parent_median": 10295.1852,
+      "candidate_median": 9695.4813,
+      "change_percent": -5.8251
+    },
+    "curve_region_parameter_fillet_ns": {
+      "parent_samples": [
+        19755.0917,
+        18406.1442,
+        19110.1989,
+        19055.5536,
+        18519.1514,
+        18732.6187,
+        19365.1593
+      ],
+      "candidate_samples": [
+        12114.8115,
+        12088.3953,
+        12063.0320,
+        11920.1498,
+        12189.5103,
+        11983.2055,
+        12136.3600
+      ],
+      "parent_median": 19055.5536,
+      "candidate_median": 12088.3953,
+      "change_percent": -36.5624
+    },
+    "interpretation": "explicit outcome aggregation is neutral for affine transforms; avoiding eager legacy area work improves chamfer and removes more than one third of native fillet runtime"
+  },
+  "pathological_curve_region2": {
+    "command": "seven independent executions of target/release/deps/pathological_regions-524727024aa54dcb --bench",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "candidate_all_four_native_booleans_ms": [
+      469.122179,
+      468.048962,
+      462.843259,
+      464.033737,
+      460.472661,
+      463.098041,
+      466.888112
+    ],
+    "candidate_median_ms": 464.033737,
+    "preceding_checkpoint_median_ms": 472.054000,
+    "frozen_baseline_median_ms": 471.450000,
+    "change_from_preceding_checkpoint_percent": -1.6990,
+    "change_from_frozen_baseline_percent": -1.5731,
+    "candidate_build_ms": [
+      76.164458,
+      73.461513,
+      75.949593,
+      73.758103,
+      71.574403,
+      70.331578,
+      72.780700
+    ],
+    "candidate_build_median_ms": 73.461513,
+    "preceding_checkpoint_build_median_ms": 72.842566,
+    "build_change_percent": 0.8497,
+    "candidate_observed_rss_delta_mib": [
+      34.7,
+      34.8,
+      34.7,
+      34.8,
+      34.7,
+      34.8,
+      34.7
+    ],
+    "candidate_observed_rss_delta_mib_median": 34.7,
+    "interpretation": "deterministic topology is identical; Boolean execution improved 1.7 percent, construction remained within one percent, and process-scale RSS is unchanged"
+  },
+  "comparative_release_medians_ns": {
+    "command": "HYPERCURVE_COMPARE_SAMPLES=7 HYPERCURVE_COMPARE_SAMPLE_MS=75 cargo bench --locked --features comparative-benchmarks --bench comparative",
+    "candidate_revision": "cc6afbdf55adeedb62afd0d6253f173322583092",
+    "rectangle_union": {
+      "hypercurve": 4856.4,
+      "hypercurve_contours": 4649.1,
+      "hypercurve_loops": 5178.8,
+      "cavalier_contours": 870.1,
+      "i_overlay": 1024.3,
+      "geo": 1213.5,
+      "change_from_preceding_checkpoint_percent": 2.9968
+    },
+    "star64_intersection": {
+      "hypercurve": 35809.3,
+      "hypercurve_contours": 35081.8,
+      "hypercurve_loops": 99220.4,
+      "cavalier_contours": 27330.8,
+      "i_overlay": 33983.1,
+      "geo": 35836.2,
+      "change_from_preceding_checkpoint_percent": 0.9079
+    },
+    "star256_intersection": {
+      "hypercurve": 419755.1,
+      "hypercurve_contours": 293638.8,
+      "hypercurve_loops": 844707.2,
+      "cavalier_contours": 483986.4,
+      "i_overlay": 504702.8,
+      "geo": 512626.7,
+      "change_from_preceding_checkpoint_percent": 0.4903
+    },
+    "star1024_intersection": {
+      "hypercurve": 5057771.9,
+      "hypercurve_contours": 3875207.4,
+      "hypercurve_loops": 10929043.6,
+      "cavalier_contours": 19251492.5,
+      "i_overlay": 10004594.1,
+      "geo": 10409897.6,
+      "change_from_preceding_checkpoint_percent": 0.9375
+    },
+    "inward_capsule_offset": {
+      "broad_run_hypercurve": 19750.6,
+      "broad_run_cavalier_contours": 924.7,
+      "broad_run_change_from_preceding_checkpoint_percent": 4.1869,
+      "tight_parent_medians": [
+        19193.7,
+        19253.9,
+        19114.7
+      ],
+      "tight_candidate_medians": [
+        19056.7,
+        18635.0,
+        18609.9
+      ],
+      "tight_parent_median": 19193.7,
+      "tight_candidate_median": 18635.0,
+      "tight_change_percent": -2.9109,
+      "tight_command": "three interleaved parent/candidate runs, each with 11 samples at 100 ms, group-filtered to line_arc_offset"
+    },
+    "certified_open_cubic_offset": {
+      "hypercurve": 29351358.0,
+      "curvo_heuristic": 8553.5,
+      "change_from_preceding_checkpoint_percent": -1.7232
+    },
+    "source_chord_cubic_fallback": {
+      "hypercurve": 904832.8,
+      "change_from_preceding_checkpoint_percent": -1.7279
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "hypercurve": 1526.5,
+      "curvo": 58.0,
+      "change_from_preceding_checkpoint_percent": -6.2231
+    },
+    "interpretation": "Boolean lanes are within three percent of the preceding checkpoint; both Bezier offset rows and NURBS evaluation improved; a tighter matched control rejects the broad-run capsule regression and measures a 2.9 percent improvement"
+  },
+  "release_pathological_binary": {
+    "measurement": "copy of the release executable stripped with strip --strip-all",
+    "preceding_checkpoint_bytes": 5521424,
+    "candidate_bytes": 5512272,
+    "delta_bytes": -9152,
+    "delta_percent": -0.1658,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": -19021,
+    "delta_from_frozen_baseline_percent": -0.3439,
+    "candidate_text_bytes": 5241481,
+    "candidate_data_bytes": 266912,
+    "candidate_bss_bytes": 2464
+  },
+  "static_callgraph": {
+    "command": "hyper-callgraph --root . --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22341,
+    "edges": 38191,
+    "artifact": "/tmp/hypercurve-mutation-callgraph/callgraph.json",
+    "public_and_raw_mutation_nodes_present": true,
+    "persistent_curve_region_mutation_benchmark_nodes_present": true
+  }
+}

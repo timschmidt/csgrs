@@ -6445,6 +6445,63 @@ Machine-readable samples, layout evidence, competitive medians, binary size,
 and the 22,309-node/38,138-edge call graph are in
 [`2026-07-31-curve-region-measurement-outcomes.json`](benchmarks/checkpoints/2026-07-31-curve-region-measurement-outcomes.json).
 
+## CurveRegion2 mutation outcome checkpoint
+
+The next policy cut returns `CurveOutcome<T>` from the public
+`CurveRegion2` affine/similarity transforms, parameter-based chamfer and
+fillet edits, certified segmentation, certified segmented offset, and
+certified Bezier-parallel offset. Private raw kernels preserve one-pass
+composition, so a nested mutation does not replay geometry or lose terminal
+certainty. The combined policy regression covers strict and Approximate-512
+transform, fillet, segmentation, and exact-collapse offset paths while
+asserting that returned coordinates remain exact.
+
+That regression exposed and closed two historical paths. Native fillet
+reconstruction no longer computes legacy contour signed areas merely to seed
+filled-side evidence; an unresolved center-arc quadrant now returns no legacy
+area instead of calling infallible `Real::atan2` and panicking. Contracting
+all-line components now schedule exact orthogonal erosion before constructing
+degenerate joined offset linework, so an Approximate-512 symbolic collapse
+returns the exact empty region and reports the terminal decision.
+
+Three direct `CurveRegion2` rows were added to the persistent editing
+benchmark. Seven interleaved parent/candidate pairs at 10,000 iterations
+measured:
+
+| Exact mutation | Parent median | Outcome median | Change |
+| --- | ---: | ---: | ---: |
+| Affine transform | 4.419 us | 4.420 us | +0.04% |
+| Parameter chamfer | 10.295 us | 9.695 us | -5.83% |
+| Parameter fillet | 19.056 us | 12.088 us | -36.56% |
+
+The transform row is neutral. Chamfer and especially fillet benefit from
+removing eager legacy area evaluation.
+
+Seven final-source pathological processes retained 67 cells, 603 candidate
+pairs, 3,248 fragments, 134 point classifications, all 268 decided
+operations, zero blockers, and checksum 6. Their Boolean median improved
+1.70% from the preceding checkpoint to 464.034 ms; construction remained
+within 0.85% at 73.462 ms, and median observed RSS delta remained 34.7 MiB.
+
+The broad seven-sample competitive run kept all Boolean rows within 3.0% of
+the preceding checkpoint and improved both Bezier-offset rows. Its isolated
+capsule row initially appeared 4.2% slower, but three interleaved
+parent/candidate controls with 11 samples per run rejected that reading:
+the matched median improved 2.91%, from 19.194 us to 18.635 us. The stripped
+pathological executable shrank 9,152 bytes to 5,512,272 bytes, 19,021 bytes
+below the frozen consolidation baseline.
+
+Validation passed the complete all-feature suite with 254 unit tests, the
+160.91-second exact CurveRegion2 corpus, and all pathological operations;
+warning-denied all-target all-feature and no-default matrices; every fuzz
+target; and warning-denied rustdoc. CSGRS and HyperDRC were migrated without
+shims at `f47a28e` and `6c6d776`; their all-feature suites pass, including
+HyperDRC's 1,114 unit tests.
+
+Machine-readable semantic evidence, samples, caller validation, binary size,
+and the 22,341-node/38,191-edge call graph are in
+[`2026-07-31-curve-region-mutation-outcomes.json`](benchmarks/checkpoints/2026-07-31-curve-region-mutation-outcomes.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
