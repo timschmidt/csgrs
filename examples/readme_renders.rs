@@ -5,15 +5,16 @@
 
 use csgrs::solid::MetaBall;
 use csgrs::{
-    GeometryContext, TriangleMesh, curve,
+    curve,
     solid::{self, SolidExt},
+    GeometryContext, TriangleMesh,
 };
 use hypercurve::{
-    Classification, CurvePath2, CurvePolicy, CurveRegion2, FiniteProjectionOptions,
-    FiniteRegionProfile2,
+    Classification, CurvePath2, CurvePolicy, CurveRegion2, CurveString2,
+    FiniteProjectionOptions, FiniteRegionProfile2, Point2,
 };
 use hyperlattice::{Point3, Real, Vector3};
-use image::{Rgba, RgbaImage};
+use image::{GrayImage, Luma, Rgba, RgbaImage};
 use std::{collections::BTreeSet, fs, path::PathBuf};
 
 const SIZE: u32 = 768;
@@ -43,6 +44,7 @@ fn render_readme_curves() {
     render_curve("square", &curve::square(r(2.0)));
     render_curve("rectangle", &curve::rectangle(r(2.4), r(1.35)));
     render_curve("circle", &curve::circle(r(1.0), 96));
+    render_curve("right_triangle", &curve::right_triangle(r(2.0), r(1.5)));
     render_curve(
         "polygon",
         &curve::polygon(&[[r(0.0), r(1.2)], [r(-1.1), r(-0.8)], [r(1.1), r(-0.8)]]),
@@ -59,6 +61,27 @@ fn render_readme_curves() {
         &curve::trapezoid(r(1.2), r(2.2), r(1.4), r(0.45)),
     );
     render_curve("star", &curve::star(5, r(1.1), r(0.45)));
+    render_curve("teardrop", &curve::teardrop(r(1.5), r(2.3), 96));
+    render_curve("curve_egg", &curve::egg(r(1.6), r(2.2), 96));
+    render_curve("squircle", &curve::squircle(r(2.0), r(1.6), 128));
+    render_curve(
+        "keyhole",
+        &curve::keyhole(
+            r(0.75),
+            r(0.55),
+            r(1.2),
+            96,
+            &GeometryContext::APPROXIMATE_512,
+        )
+        .expect("keyhole Boolean")
+        .into_value(),
+    );
+    render_curve(
+        "reuleaux",
+        &curve::reuleaux(3, r(1.5), 96, &GeometryContext::APPROXIMATE_512)
+            .expect("Reuleaux intersections")
+            .into_value(),
+    );
     render_curve("heart", &curve::heart(r(2.0), r(1.8), 160));
     render_curve(
         "ring",
@@ -67,6 +90,133 @@ fn render_readme_curves() {
             .into_value(),
     );
     render_curve("pie_slice", &curve::pie_slice(r(1.1), r(-35.0), r(115.0), 64));
+    render_curve(
+        "crescent",
+        &curve::crescent(r(1.1), r(0.9), r(0.48), 96, &GeometryContext::APPROXIMATE_512)
+            .expect("crescent Boolean")
+            .into_value(),
+    );
+    render_curve(
+        "supershape",
+        &curve::supershape(r(1.0), r(1.0), r(5.0), r(2.0), r(7.0), r(7.0), 160),
+    );
+    render_curve(
+        "circle_with_keyway",
+        &curve::circle_with_keyway(
+            r(1.0),
+            96,
+            r(0.45),
+            r(0.35),
+            &GeometryContext::APPROXIMATE_512,
+        )
+        .expect("keyway Boolean")
+        .into_value(),
+    );
+    render_curve(
+        "circle_with_flat",
+        &curve::circle_with_flat(r(1.0), 96, r(0.72), &GeometryContext::APPROXIMATE_512)
+            .expect("single-flat Boolean")
+            .into_value(),
+    );
+    render_curve(
+        "circle_with_two_flats",
+        &curve::circle_with_two_flats(r(1.0), 96, r(0.72), &GeometryContext::APPROXIMATE_512)
+            .expect("double-flat Boolean")
+            .into_value(),
+    );
+    render_curve(
+        "involute_gear",
+        &curve::involute_gear(r(0.22), 14, r(20.0), r(0.02), r(0.01), 5),
+    );
+    render_curve(
+        "cycloidal_gear",
+        &curve::cycloidal_gear(r(0.22), 14, r(0.11), r(0.02), 8),
+    );
+    render_curve(
+        "involute_rack",
+        &curve::involute_rack(r(0.32), 7, r(20.0), r(0.02), r(0.01)),
+    );
+    render_curve(
+        "cycloidal_rack",
+        &curve::cycloidal_rack(r(0.32), 7, r(0.02), 12),
+    );
+    render_curve(
+        "airfoil_naca4",
+        &curve::airfoil_naca4(r(2.0), r(4.0), r(12.0), r(3.0), 96),
+    );
+    render_curve(
+        "bezier",
+        &curve::bezier_region(
+            &[
+                [r(0.0), r(0.0)],
+                [r(1.4), r(-0.2)],
+                [r(1.7), r(1.2)],
+                [r(0.1), r(1.5)],
+                [r(0.0), r(0.0)],
+            ],
+            96,
+        ),
+    );
+    let curve_balls = [(Point2::new(r(0.0), r(0.0)), r(1.0))];
+    render_curve(
+        "metaballs_2d",
+        &curve::metaballs(&curve_balls, (24, 24), r(1.0), r(0.0)),
+    );
+    render_curve("from_image", &readme_raster_shape());
+    render_curve(
+        "truetype",
+        &curve::truetype_text("CSG", include_bytes!("../asar.ttf"), r(72.0)),
+    );
+    render_open_curves(
+        "bezier_path",
+        &[curve::bezier_path(
+            &[
+                [r(-1.1), r(-0.5)],
+                [r(-0.4), r(1.2)],
+                [r(0.5), r(-1.1)],
+                [r(1.1), r(0.6)],
+            ],
+            96,
+        )
+        .expect("Bezier path")],
+        &[],
+    );
+    render_open_curves(
+        "bspline_path",
+        &[curve::bspline_path(
+            &[
+                [r(-1.2), r(-0.7)],
+                [r(-0.7), r(0.9)],
+                [r(0.0), r(1.1)],
+                [r(0.7), r(-0.8)],
+                [r(1.2), r(0.4)],
+            ],
+            3,
+            32,
+        )
+        .expect("B-spline path")],
+        &[],
+    );
+    render_open_curves(
+        "hilbert_strings",
+        &[],
+        &curve::hilbert_strings(&curve::square(r(2.0)), 4, r(0.12)),
+    );
+    render_open_curves(
+        "hershey_strings",
+        &[],
+        &curve::hershey_strings("CSG", &hypercurve::hershey::fonts::ROWMANS, r(1.0)),
+    );
+}
+
+fn readme_raster_shape() -> CurveRegion2 {
+    let mut image = GrayImage::from_pixel(16, 16, Luma([0]));
+    for y in 3..13 {
+        for x in 3..13 {
+            image.put_pixel(x, y, Luma([255]));
+        }
+    }
+    curve::from_image(&image, 128).expect("trace README raster shape")
 }
 
 fn render_readme_meshes() {
@@ -74,13 +224,80 @@ fn render_readme_meshes() {
     render_mesh("cuboid", &solid::cuboid(r(1.4), r(2.3), r(0.95)));
     render_mesh("sphere", &solid::sphere(r(1.0), 32, 16));
     render_mesh("cylinder", &solid::cylinder(r(1.0), r(2.0), 32));
+    render_mesh(
+        "ellipsoid",
+        &solid::ellipsoid(r(1.25), r(0.8), r(1.65), 32, 16),
+    );
     render_mesh("frustum", &solid::frustum(r(0.65), r(1.05), r(2.0), 32));
+    render_mesh(
+        "frustum_between",
+        &solid::frustum_between(p3(-0.8, -0.5, -0.7), p3(0.8, 0.5, 1.2), r(0.65), r(0.3), 32),
+    );
     render_mesh("octahedron", &solid::octahedron(r(1.2)));
     render_mesh("icosahedron", &solid::icosahedron(r(1.2)));
     render_mesh("torus", &solid::torus(r(1.25), r(0.35), 36, 14));
     render_mesh(
         "mesh_arrow",
         &solid::arrow(Point3::origin(), v3(0.8, 0.4, 2.0), 32, false),
+    );
+    render_mesh("polyhedron", &readme_polyhedron());
+    render_mesh(
+        "teardrop_cylinder",
+        &solid::teardrop_cylinder(
+            r(1.5),
+            r(2.3),
+            r(0.8),
+            48,
+            &GeometryContext::APPROXIMATE_512,
+        )
+        .expect("teardrop cylinder")
+        .into_value(),
+    );
+    render_mesh(
+        "spur_gear_involute",
+        &solid::spur_gear_involute(
+            r(0.22),
+            14,
+            r(20.0),
+            r(0.02),
+            r(0.01),
+            5,
+            r(0.5),
+            &GeometryContext::APPROXIMATE_512,
+        )
+        .expect("involute spur gear")
+        .into_value(),
+    );
+    render_mesh(
+        "spur_gear_cycloid",
+        &solid::spur_gear_cycloid(
+            r(0.22),
+            14,
+            r(0.11),
+            r(0.02),
+            8,
+            r(0.5),
+            &GeometryContext::APPROXIMATE_512,
+        )
+        .expect("cycloidal spur gear")
+        .into_value(),
+    );
+    render_mesh(
+        "helical_involute_gear",
+        &solid::helical_involute_gear(
+            r(0.22),
+            14,
+            r(20.0),
+            r(0.02),
+            r(0.01),
+            5,
+            r(0.8),
+            r(24.0),
+            8,
+            &GeometryContext::APPROXIMATE_512,
+        )
+        .expect("helical involute gear")
+        .into_value(),
     );
 
     let star = curve::star(5, r(1.0), r(0.45));
@@ -100,6 +317,19 @@ fn render_readme_meshes() {
         .expect("vector extrude")
         .into_value(),
     );
+    render_mesh(
+        "extrude_twisted",
+        &curve::extrude_twisted(
+            &star,
+            r(1.4),
+            r(95.0),
+            [r(0.65), r(0.65)],
+            10,
+            &GeometryContext::APPROXIMATE_512,
+        )
+        .expect("twisted extrude")
+        .into_value(),
+    );
     let revolve_profile = curve::translated(&curve::circle(r(0.18), 32), r(1.0), r(0.0));
     render_mesh(
         "revolve",
@@ -112,6 +342,17 @@ fn render_readme_meshes() {
         .expect("revolve")
         .into_value(),
     );
+    render_mesh(
+        "sweep",
+        &curve::try_sweep(
+            &curve::square(r(0.4)),
+            &[p3(0.0, 0.0, -0.8), p3(0.0, 0.0, 1.1)],
+            &GeometryContext::STRICT,
+        )
+        .expect("sweep")
+        .into_value(),
+    );
+    render_mesh("loft", &solid::loft(&readme_loft_sections()).expect("loft"));
 
     render_mesh("inverse", &solid::inverse(&solid::sphere(r(1.0), 32, 16)));
     render_mesh("csg", &cube_minus_translated_sphere());
@@ -124,12 +365,17 @@ fn render_readme_meshes() {
         &solid::minkowski_sum(&solid::cube(r(1.1)), &solid::octahedron(r(0.45)))
             .expect("Minkowski sum"),
     );
+    let projection_source = solid::frustum(r(0.65), r(1.05), r(2.0), 12);
+    render_curve("flatten", &solid::flatten(&projection_source));
+    let (slice, _, _) = solid::slice_z(&projection_source, r(1.0));
+    render_curve("slice_z", &slice);
 
     render_implicit_meshes();
 }
 
 fn render_implicit_meshes() {
     render_metaballs_mesh();
+    render_sdf_mesh();
     render_tpms_meshes();
 }
 
@@ -142,6 +388,24 @@ fn render_metaballs_mesh() {
     render_mesh(
         "metaballs_3d",
         &solid::metaballs(&balls, (8, 8, 8), r(0.7), r(0.25)),
+    );
+}
+
+fn render_sdf_mesh() {
+    render_mesh(
+        "sdf",
+        &solid::sdf(
+            |point| {
+                point.x.clone() * point.x.clone()
+                    + point.y.clone() * point.y.clone()
+                    + point.z.clone() * point.z.clone()
+                    - r(0.72)
+            },
+            (16, 16, 16),
+            p3(-1.0, -1.0, -1.0),
+            p3(1.0, 1.0, 1.0),
+            r(0.0),
+        ),
     );
 }
 
@@ -160,6 +424,59 @@ fn render_tpms_meshes() {
         "schwarz_d",
         &solid::schwarz_d_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18)),
     );
+    render_mesh(
+        "gyroid_surface",
+        &solid::gyroid(&tpms_box, 24, r(2.0), r(0.2)),
+    );
+    render_mesh(
+        "schwarz_p_surface",
+        &solid::schwarz_p(&tpms_box, 24, r(2.0), r(0.2)),
+    );
+    render_mesh(
+        "schwarz_d_surface",
+        &solid::schwarz_d(&tpms_box, 24, r(2.0), r(0.2)),
+    );
+}
+
+fn readme_polyhedron() -> TriangleMesh {
+    let points = [
+        [r(-1.0), r(-1.0), r(0.0)],
+        [r(1.0), r(-1.0), r(0.0)],
+        [r(1.0), r(1.0), r(0.0)],
+        [r(-1.0), r(1.0), r(0.0)],
+        [r(0.0), r(0.0), r(1.7)],
+    ];
+    let faces: [&[usize]; 5] = [
+        &[3, 2, 1, 0],
+        &[0, 1, 4],
+        &[1, 2, 4],
+        &[2, 3, 4],
+        &[3, 0, 4],
+    ];
+    solid::polyhedron(&points, &faces).expect("README polyhedron")
+}
+
+fn readme_loft_sections() -> Vec<Vec<Point3>> {
+    vec![
+        vec![
+            p3(-0.8, -0.8, -0.8),
+            p3(0.8, -0.8, -0.8),
+            p3(0.8, 0.8, -0.8),
+            p3(-0.8, 0.8, -0.8),
+        ],
+        vec![
+            p3(-1.1, -0.45, 0.0),
+            p3(1.1, -0.45, 0.0),
+            p3(1.1, 0.45, 0.0),
+            p3(-1.1, 0.45, 0.0),
+        ],
+        vec![
+            p3(-0.45, -0.65, 1.0),
+            p3(0.45, -0.65, 1.0),
+            p3(0.45, 0.65, 1.0),
+            p3(-0.45, 0.65, 1.0),
+        ],
+    ]
 }
 
 fn cube_minus_translated_sphere() -> TriangleMesh {
@@ -225,6 +542,61 @@ fn render_curve(name: &str, region: &CurveRegion2) {
             let vertex = (real_to_f64(edge.start().x()), real_to_f64(edge.start().y()));
             draw_vertex_2d(&mut image, map.point(vertex), radius);
         }
+    }
+    save_image(name, &image);
+}
+
+fn render_open_curves(name: &str, paths: &[CurvePath2], strings: &[CurveString2]) {
+    let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
+    let projection = FiniteProjectionOptions::try_new(CURVE_CHORD_ERROR)
+        .expect("README curve chord error is positive");
+    let mut polylines = paths
+        .iter()
+        .map(|path| {
+            path.project_to_finite_polyline(&projection)
+                .expect("project exact open CurvePath2")
+                .points()
+                .to_vec()
+        })
+        .collect::<Vec<_>>();
+    polylines.extend(strings.iter().map(|string| {
+        string
+            .project_to_finite_polyline(&projection)
+            .expect("project exact open CurveString2")
+            .points()
+            .to_vec()
+    }));
+    let mut bounds = None;
+    for point in polylines.iter().flat_map(|polyline| polyline.iter()) {
+        include_point(&mut bounds, (point[0], point[1]));
+    }
+    let Some(bounds) = bounds else {
+        save_image(name, &image);
+        return;
+    };
+    let map = Map2::new(bounds);
+    for points in &polylines {
+        stroke_points(&mut image, &map, points, EDGE_WIDTH_2D, EDGE);
+    }
+
+    let mut vertices = Vec::new();
+    for path in paths {
+        vertices.extend(path.curves().iter().map(|edge| edge.start()));
+        vertices.push(path.end());
+    }
+    for string in strings {
+        vertices.extend(string.segments().iter().map(|segment| segment.start()));
+        if let Some(last) = string.segments().last() {
+            vertices.push(last.end());
+        }
+    }
+    let radius = vertex_radius(vertices.len());
+    for vertex in vertices {
+        draw_vertex_2d(
+            &mut image,
+            map.point((real_to_f64(vertex.x()), real_to_f64(vertex.y()))),
+            radius,
+        );
     }
     save_image(name, &image);
 }
