@@ -196,8 +196,9 @@ pub struct CurvePath2 {
 #[derive(Debug)]
 struct CurvePathData2 {
     curves: Vec<Curve2>,
+    strict_connectivity_certified: bool,
     native_bezier_fragments: PolicyEvaluationCache<Vec<NativeBezierFragment2>>,
-    bezier_boundary_loop: OnceLock<ExactCurveResult<NativeBezierBoundaryLoop2>>,
+    bezier_boundary_loop: PolicyEvaluationCache<NativeBezierBoundaryLoop2>,
     bounds: OnceLock<ExactCurveResult<Aabb2>>,
 }
 
@@ -221,11 +222,10 @@ pub struct NativeBezierFragment2 {
     span_range: CurveSpanRange2,
 }
 
-/// Validated native Bezier boundary with one-to-one fragment correspondence.
+/// Validated native Bezier boundary derived from a path's retained promotion.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NativeBezierBoundaryLoop2 {
     boundary_loop: BezierBoundaryLoop2,
-    fragments: Vec<NativeBezierFragment2>,
 }
 
 impl CurveGeometry2 {
@@ -1367,12 +1367,13 @@ impl<'a> CurveView2<'a> {
 }
 
 impl CurvePath2 {
-    fn from_connected_curves(curves: Vec<Curve2>) -> Self {
+    fn from_connected_curves(curves: Vec<Curve2>, strict_connectivity_certified: bool) -> Self {
         Self {
             data: Arc::new(CurvePathData2 {
                 curves,
+                strict_connectivity_certified,
                 native_bezier_fragments: PolicyEvaluationCache::new(),
-                bezier_boundary_loop: OnceLock::new(),
+                bezier_boundary_loop: PolicyEvaluationCache::new(),
                 bounds: OnceLock::new(),
             }),
         }
@@ -1385,7 +1386,7 @@ impl CurvePath2 {
                 .windows(2)
                 .all(|adjacent| adjacent[0].end() == adjacent[1].start())
         );
-        Self::from_connected_curves(curves)
+        Self::from_connected_curves(curves, true)
     }
 
     /// Constructs a nonempty ordered path with exactly connected endpoints.
@@ -1404,6 +1405,7 @@ impl CurvePath2 {
                 CurveError::EmptyCurvePath,
             ));
         }
+        let mut strict_connectivity_certified = true;
         for adjacent in curves.windows(2) {
             if adjacent[0].end() == adjacent[1].start() {
                 continue;
@@ -1412,7 +1414,9 @@ impl CurvePath2 {
                 &adjacent[0].end().distance_squared(adjacent[1].start()),
                 policy,
             ) {
-                Some(true) => {}
+                Some(true) => {
+                    strict_connectivity_certified &= !policy.permits_approximate_512();
+                }
                 Some(false) => {
                     return Err(ExactCurveError::invalid(
                         CurveOperation2::Construction,
@@ -1429,7 +1433,10 @@ impl CurvePath2 {
                 }
             }
         }
-        Ok(Self::from_connected_curves(curves))
+        Ok(Self::from_connected_curves(
+            curves,
+            strict_connectivity_certified,
+        ))
     }
 
     /// Returns a borrowed path view.
@@ -1466,7 +1473,10 @@ impl CurvePath2 {
             .rev()
             .map(Curve2::reversed)
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        Ok(Self::from_connected_curves(curves))
+        Ok(Self::from_connected_curves(
+            curves,
+            self.data.strict_connectivity_certified,
+        ))
     }
 
     /// Applies an exact planar similarity to every curve in the connected path.
@@ -1476,7 +1486,10 @@ impl CurvePath2 {
             .iter()
             .map(|curve| curve.transform_similarity(transform))
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        Ok(Self::from_connected_curves(curves))
+        Ok(Self::from_connected_curves(
+            curves,
+            self.data.strict_connectivity_certified,
+        ))
     }
 
     /// Replaces one path vertex with an exact line chamfer.
@@ -1750,8 +1763,18 @@ impl CurvePath2 {
     /// Classifies an exact point against this closed path.
     ///
     /// Native full circles use their radial predicate directly. Other paths
-    /// reuse the retained exact Bezier boundary classifier.
+    /// reuse the retained exact Bezier boundary classifier. The returned
+    /// [`CurveOutcome`] records whether the complete classification consumed
+    /// the `APPROXIMATE_512` terminal.
     pub fn classify_point(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Classification<ContourPointLocation>>> {
+        resolve_certified_operation(policy, |attempt| self.classify_point_raw(point, attempt))
+    }
+
+    pub(crate) fn classify_point_raw(
         &self,
         point: &Point2,
         policy: &CurveContext,
@@ -1784,12 +1807,21 @@ impl CurvePath2 {
             }
         }
 
-        self.bezier_boundary_loop()?
+        let boundary = match self
+            .bezier_boundary_loop_with_policy(policy)
+            .map_err(|error| remap_operation(error, CurveOperation2::Classification))?
+        {
+            Classification::Decided(boundary) => boundary,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        boundary
             .boundary_loop()
             .classify_point(point, policy)
             .map_err(|cause| {
                 ExactCurveError::invalid(
-                    CurveOperation2::NativeTopology,
+                    CurveOperation2::Classification,
                     self.curves()[0].family(),
                     cause,
                 )
@@ -1846,53 +1878,153 @@ impl CurvePath2 {
     }
 
     /// Builds a closed native Bezier boundary once and borrows the retained result.
-    pub fn bezier_boundary_loop(&self) -> ExactCurveResult<&NativeBezierBoundaryLoop2> {
-        match self.data.bezier_boundary_loop.get_or_init(|| {
-            if self.start() != self.end() {
-                match crate::classify::is_zero(
-                    &self.start().distance_squared(self.end()),
-                    &CurveContext::STRICT,
-                ) {
-                    Some(true) => {}
-                    Some(false) => {
-                        return Err(ExactCurveError::invalid(
-                            CurveOperation2::Arrangement,
-                            self.data.curves[0].family(),
-                            CurveError::OpenCurvePath,
-                        ));
-                    }
-                    None => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Arrangement,
-                            self.data.curves[0].family(),
-                            crate::UncertaintyReason::RealSign,
-                        ));
-                    }
-                }
-            }
-            let fragments = self.native_bezier_fragments()?.to_vec();
-            let boundary_loop = BezierBoundaryLoop2::new(
-                fragments
-                    .iter()
-                    .map(|fragment| fragment.curve().clone())
-                    .collect(),
-                &CurveContext::STRICT,
-            )
-            .map_err(|cause| {
-                ExactCurveError::invalid(
+    ///
+    /// The returned [`CurveOutcome`] records whether validating every path and
+    /// promoted-fragment join consumed the `APPROXIMATE_512` terminal.
+    pub fn bezier_boundary_loop(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<&NativeBezierBoundaryLoop2>> {
+        resolve_certified_operation(policy, |attempt| {
+            match self.bezier_boundary_loop_with_policy(attempt)? {
+                Classification::Decided(boundary) => Ok(boundary),
+                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                     CurveOperation2::Arrangement,
                     self.data.curves[0].family(),
-                    cause,
-                )
-            })?;
-            Ok(NativeBezierBoundaryLoop2 {
-                boundary_loop,
-                fragments,
+                    reason,
+                )),
+            }
+        })
+    }
+
+    pub(crate) fn bezier_boundary_loop_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<&NativeBezierBoundaryLoop2>> {
+        Ok(
+            match resolve_cached_evaluation(&self.data.bezier_boundary_loop, policy, |attempt| {
+                match validate_closed_curve_path_connectivity(self, attempt)? {
+                    Classification::Decided(()) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                let fragments = match self.native_bezier_fragments_with_policy(attempt)? {
+                    Classification::Decided(fragments) => fragments,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                match validate_native_fragment_cycle(
+                    fragments,
+                    self.data.curves[0].family(),
+                    attempt,
+                )? {
+                    Classification::Decided(()) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                Ok(Classification::Decided(NativeBezierBoundaryLoop2 {
+                    boundary_loop: BezierBoundaryLoop2::from_policy_validated_fragments(
+                        fragments
+                            .iter()
+                            .map(|fragment| fragment.curve().clone())
+                            .collect(),
+                    ),
+                }))
             })
-        }) {
-            Ok(boundary) => Ok(boundary),
-            Err(error) => Err(error.clone()),
+            .map_err(|error| remap_operation(error, CurveOperation2::Arrangement))?
+            {
+                Classification::Decided(boundary) => Classification::Decided(boundary),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+}
+
+pub(crate) fn validate_closed_curve_path_connectivity(
+    path: &CurvePath2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<()>> {
+    if !path.data.strict_connectivity_certified {
+        for adjacent in path.curves().windows(2) {
+            match curve_path_points_equal(adjacent[0].end(), adjacent[1].start(), policy) {
+                Some(true) => {}
+                Some(false) => {
+                    return Err(ExactCurveError::invalid(
+                        CurveOperation2::Arrangement,
+                        adjacent[1].family(),
+                        CurveError::DisconnectedCurvePath,
+                    ));
+                }
+                None => {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            }
         }
+    }
+    match curve_path_points_equal(path.end(), path.start(), policy) {
+        Some(true) => Ok(Classification::Decided(())),
+        Some(false) => Err(ExactCurveError::invalid(
+            CurveOperation2::Arrangement,
+            path.curves()[0].family(),
+            CurveError::OpenCurvePath,
+        )),
+        None => Ok(Classification::Uncertain(
+            crate::UncertaintyReason::RealSign,
+        )),
+    }
+}
+
+fn validate_native_fragment_cycle(
+    fragments: &[NativeBezierFragment2],
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<()>> {
+    if fragments.is_empty() {
+        return Err(ExactCurveError::invalid(
+            CurveOperation2::Arrangement,
+            family,
+            CurveError::Topology("native Bezier boundary requires nonempty fragments".into()),
+        ));
+    }
+    for (left, right) in fragments
+        .iter()
+        .zip(fragments.iter().cycle().skip(1))
+        .take(fragments.len())
+    {
+        let (_, left_end) = left.curve().endpoint_refs();
+        let (right_start, _) = right.curve().endpoint_refs();
+        match curve_path_points_equal(left_end, right_start, policy) {
+            Some(true) => {}
+            Some(false) => {
+                return Err(ExactCurveError::invalid(
+                    CurveOperation2::Arrangement,
+                    family,
+                    CurveError::Topology(
+                        "native Bezier boundary fragments must be endpoint-connected and closed"
+                            .into(),
+                    ),
+                ));
+            }
+            None => {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::RealSign,
+                ));
+            }
+        }
+    }
+    Ok(Classification::Decided(()))
+}
+
+fn curve_path_points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> Option<bool> {
+    if left == right {
+        Some(true)
+    } else {
+        crate::classify::is_zero(&left.distance_squared(right), policy)
     }
 }
 
@@ -2016,7 +2148,7 @@ impl<'a> CurvePathView2<'a> {
             .rev()
             .map(Curve2::reversed)
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        Ok(CurvePath2::from_connected_curves(curves))
+        Ok(CurvePath2::from_connected_curves(curves, false))
     }
 
     /// Applies an exact planar similarity to the borrowed connected path.
@@ -2026,7 +2158,7 @@ impl<'a> CurvePathView2<'a> {
             .iter()
             .map(|curve| curve.transform_similarity(transform))
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        Ok(CurvePath2::from_connected_curves(curves))
+        Ok(CurvePath2::from_connected_curves(curves, false))
     }
 
     /// Replaces one borrowed path vertex with an exact line chamfer.
@@ -2185,14 +2317,19 @@ impl NativeBezierBoundaryLoop2 {
         &self.boundary_loop
     }
 
-    /// Returns native fragments one-to-one with boundary curves.
-    pub fn fragments(&self) -> &[NativeBezierFragment2] {
-        &self.fragments
+    /// Returns the number of native boundary curves.
+    pub fn len(&self) -> usize {
+        self.boundary_loop.len()
     }
 
-    /// Consumes the result into its validated boundary and native fragments.
-    pub fn into_parts(self) -> (BezierBoundaryLoop2, Vec<NativeBezierFragment2>) {
-        (self.boundary_loop, self.fragments)
+    /// Returns whether the validated boundary contains no curves.
+    pub fn is_empty(&self) -> bool {
+        self.boundary_loop.is_empty()
+    }
+
+    /// Consumes the retained result into its validated native boundary.
+    pub fn into_boundary_loop(self) -> BezierBoundaryLoop2 {
+        self.boundary_loop
     }
 }
 
@@ -2603,21 +2740,14 @@ fn certify_closed_path(
     operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<()> {
-    if path.start() == path.end() {
-        return Ok(());
-    }
-    let first = &path.data.curves[0];
-    match crate::classify::is_zero(&path.start().distance_squared(path.end()), policy) {
-        Some(true) => Ok(()),
-        Some(false) => Err(ExactCurveError::invalid(
+    match validate_closed_curve_path_connectivity(path, policy)
+        .map_err(|error| remap_operation(error, operation))?
+    {
+        Classification::Decided(()) => Ok(()),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
             operation,
-            first.family(),
-            CurveError::OpenCurvePath,
-        )),
-        None => Err(ExactCurveError::blocked(
-            operation,
-            first.family(),
-            crate::UncertaintyReason::RealSign,
+            path.data.curves[0].family(),
+            reason,
         )),
     }
 }
@@ -2818,5 +2948,111 @@ fn validate_subcurve_range(
             family,
             crate::UncertaintyReason::Ordering,
         )),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[cfg(target_pointer_width = "64")]
+    fn curve_path_carrier_keeps_compact_policy_aware_boundary_storage() {
+        assert_eq!(core::mem::size_of::<CurvePath2>(), 8);
+        assert_eq!(core::mem::size_of::<CurvePathData2>(), 160);
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn boundary_cache_revalidates_approximate_internal_path_joins() {
+        let left_x = Real::pi() + Real::e();
+        let right_x = Real::e() + Real::pi();
+        let lower_left = Point2::new(Real::zero(), Real::zero());
+        let upper_left = Point2::new(Real::zero(), Real::from(2_i8));
+        let lower_right_left_form = Point2::new(left_x, Real::zero());
+        let lower_right_right_form = Point2::new(right_x.clone(), Real::zero());
+        let upper_right = Point2::new(right_x, Real::from(2_i8));
+        let curves = vec![
+            Curve2::from(LineSeg2::try_new(lower_left.clone(), lower_right_left_form).unwrap()),
+            Curve2::from(LineSeg2::try_new(lower_right_right_form, upper_right.clone()).unwrap()),
+            Curve2::from(LineSeg2::try_new(upper_right, upper_left.clone()).unwrap()),
+            Curve2::from(LineSeg2::try_new(upper_left, lower_left).unwrap()),
+        ];
+        let constructed = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |attempt| {
+            CurvePath2::try_new_with_policy(curves, attempt)
+        })
+        .expect("the terminal policy must construct the symbolically connected path");
+        assert_eq!(
+            constructed.certainty,
+            crate::CurveCertainty::Approximate512Consumed
+        );
+        let path = constructed.value;
+
+        let boundary = path
+            .bezier_boundary_loop(&CurveContext::APPROXIMATE_512)
+            .expect("the terminal policy must validate every path join");
+        assert_eq!(
+            boundary.certainty,
+            crate::CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(boundary.value.len(), 4);
+
+        let strict_boundary = path
+            .bezier_boundary_loop(&CurveContext::STRICT)
+            .unwrap_err();
+        assert!(matches!(
+            strict_boundary,
+            ExactCurveError::Blocked(blocker)
+                if blocker.operation() == CurveOperation2::Arrangement
+                    && blocker.reason() == crate::UncertaintyReason::RealSign
+        ));
+
+        let strict_region = crate::CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            &CurveContext::STRICT,
+        )
+        .unwrap_err();
+        assert!(matches!(
+            strict_region,
+            ExactCurveError::Blocked(blocker)
+                if blocker.operation() == CurveOperation2::Construction
+                    && blocker.reason() == crate::UncertaintyReason::RealSign
+        ));
+        let approximate_region = crate::CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            &CurveContext::APPROXIMATE_512,
+        )
+        .expect("region construction must revalidate the terminal internal join");
+        assert_eq!(
+            approximate_region.certainty,
+            crate::CurveCertainty::Approximate512Consumed
+        );
+
+        let approximate = path
+            .classify_point(
+                &Point2::new(Real::one(), Real::one()),
+                &CurveContext::APPROXIMATE_512,
+            )
+            .expect("the terminal policy must classify through the retained boundary");
+        assert_eq!(
+            approximate.certainty,
+            crate::CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(
+            approximate.value,
+            Classification::Decided(ContourPointLocation::Inside)
+        );
+
+        let strict = path
+            .classify_point(
+                &Point2::new(Real::one(), Real::one()),
+                &CurveContext::STRICT,
+            )
+            .expect("strict classification preserves uncertainty as query evidence");
+        assert_eq!(strict.certainty, crate::CurveCertainty::Certified);
+        assert_eq!(
+            strict.value,
+            Classification::Uncertain(crate::UncertaintyReason::RealSign)
+        );
     }
 }

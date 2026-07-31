@@ -301,7 +301,10 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
 
     let closing = Curve2::from(LineSeg2::try_new(p(1, 0), p(-1, 0)).unwrap());
     let path = CurvePath2::try_new(vec![arc, closing]).unwrap();
-    let boundary = path.bezier_boundary_loop().unwrap();
-    assert_eq!(boundary.fragments().len(), 3);
+    let boundary = path
+        .bezier_boundary_loop(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    assert_eq!(boundary.len(), 3);
     assert_eq!(boundary.boundary_loop().fragments().len(), 3);
 }

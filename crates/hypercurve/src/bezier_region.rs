@@ -1062,6 +1062,11 @@ impl BezierBoundaryLoop2 {
         Ok(Self { fragments })
     }
 
+    pub(crate) fn from_policy_validated_fragments(fragments: Vec<BezierSubcurve2>) -> Self {
+        debug_assert!(!fragments.is_empty());
+        Self { fragments }
+    }
+
     /// Returns native curve fragments in loop order.
     pub fn fragments(&self) -> &[BezierSubcurve2] {
         &self.fragments
@@ -1342,7 +1347,9 @@ fn validate_native_boundary_loop(
         .zip(fragments.iter().cycle().skip(1))
         .take(fragments.len())
     {
-        if !certified_points_equal(&left.endpoints().1, &right.endpoints().0, policy) {
+        let (_, left_end) = left.endpoint_refs();
+        let (right_start, _) = right.endpoint_refs();
+        if !certified_points_equal(left_end, right_start, policy) {
             return Err(CurveError::Topology(
                 "Bezier boundary loop fragments must be endpoint-connected and closed".to_owned(),
             ));
@@ -1355,6 +1362,17 @@ fn certified_points_equal(left: &Point2, right: &Point2, policy: &CurveContext) 
     left == right
         || (is_zero(&(left.x() - right.x()), policy) == Some(true)
             && is_zero(&(left.y() - right.y()), policy) == Some(true))
+}
+
+impl BezierSubcurve2 {
+    pub(crate) fn endpoint_refs(&self) -> (&Point2, &Point2) {
+        match self {
+            Self::Quadratic(curve) => (curve.start(), curve.end()),
+            Self::Cubic(curve) => (curve.start(), curve.end()),
+            Self::RationalQuadratic(curve) => (curve.start(), curve.end()),
+            Self::Rational(curve) => (curve.start(), curve.end()),
+        }
+    }
 }
 
 fn validate_bezier_region_loops<Loop>(boundary_loops: &[Loop]) -> CurveResult<()>
@@ -2498,23 +2516,16 @@ impl CurveRegion2 {
         let mut boundary_loops = Vec::with_capacity(paths.len());
         let mut next_arrangement_fragment_index = 0;
         for path in paths {
-            if path.start() != path.end() {
-                match is_zero(&path.start().distance_squared(path.end()), policy) {
-                    Some(true) => {}
-                    Some(false) => {
-                        return Err(ExactCurveError::invalid(
-                            CurveOperation2::Construction,
-                            path.curves()[0].family(),
-                            CurveError::OpenCurvePath,
-                        ));
-                    }
-                    None => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Construction,
-                            path.curves()[0].family(),
-                            UncertaintyReason::RealSign,
-                        ));
-                    }
+            match crate::curve::validate_closed_curve_path_connectivity(path, policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Construction))?
+            {
+                Classification::Decided(()) => {}
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Construction,
+                        path.curves()[0].family(),
+                        reason,
+                    ));
                 }
             }
             let fragment_capacity = match path.native_bezier_fragments_with_policy(policy)? {

@@ -1,10 +1,10 @@
-#[cfg(feature = "predicates")]
-use hypercurve::CurveCertainty;
 use hypercurve::{
     CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveError, CurveFamily2,
     CurveGeometry2, CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2,
     QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation,
 };
+#[cfg(feature = "predicates")]
+use hypercurve::{ContourPointLocation, CurveCertainty, UncertaintyReason};
 use proptest::prelude::*;
 
 fn r(value: i32) -> Real {
@@ -172,6 +172,64 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
             .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn curve_path_boundary_and_classification_report_terminal_closure() {
+    let start = Point2::new(Real::pi() + Real::e(), Real::zero());
+    let end = Point2::new(Real::e() + Real::pi(), Real::zero());
+    let origin = p(0, 0);
+    let upper = p(0, 2);
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(start.clone(), origin.clone()).unwrap()),
+        Curve2::from(LineSeg2::try_new(origin, upper.clone()).unwrap()),
+        Curve2::from(LineSeg2::try_new(upper, end).unwrap()),
+    ])
+    .unwrap();
+
+    let boundary = path
+        .bezier_boundary_loop(&CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must validate the symbolic closing seam");
+    assert_eq!(boundary.certainty, CurveCertainty::Approximate512Consumed);
+    assert_eq!(boundary.value.len(), 3);
+
+    let strict_boundary = path
+        .bezier_boundary_loop(&CurveContext::STRICT)
+        .unwrap_err();
+    assert!(matches!(
+        strict_boundary,
+        ExactCurveError::Blocked(blocker)
+            if blocker.operation() == CurveOperation2::Arrangement
+                && blocker.reason() == UncertaintyReason::RealSign
+    ));
+
+    let approximate = path
+        .classify_point(&p(1, 1), &CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must classify through the retained boundary");
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(
+        approximate.value,
+        Classification::Decided(ContourPointLocation::Inside)
+    );
+
+    let strict = path
+        .classify_point(&p(1, 1), &CurveContext::STRICT)
+        .expect("strict classification returns explicit uncertainty");
+    assert_eq!(strict.certainty, CurveCertainty::Certified);
+    assert_eq!(
+        strict.value,
+        Classification::Uncertain(UncertaintyReason::RealSign)
+    );
+
+    let repeated = path
+        .classify_point(&p(1, 1), &CurveContext::APPROXIMATE_512)
+        .expect("cached terminal evidence must remain observable");
+    assert_eq!(repeated.certainty, CurveCertainty::Approximate512Consumed);
+    assert_eq!(repeated.value, approximate.value);
 }
 
 #[test]

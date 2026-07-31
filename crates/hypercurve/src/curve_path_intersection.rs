@@ -1216,7 +1216,7 @@ fn append_boolean_fragments(
                         policy,
                     )? {
                         Some(location) => location,
-                        None => other_path.classify_point(&representative, policy)?,
+                        None => other_path.classify_point_raw(&representative, policy)?,
                     };
                     let location = match location_classification {
                         Classification::Decided(location) => location,

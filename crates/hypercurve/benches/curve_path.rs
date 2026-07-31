@@ -2,8 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
-    CurvePath2, LineSeg2, Point2, QuadraticBezier2, Real,
+    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
+    CurveContext, CurvePath2, LineSeg2, Point2, QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -83,6 +83,65 @@ fn main() {
     let elapsed = started.elapsed();
     println!(
         "curve_path_cached_native_promotion: {promotion_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={promotion_checksum}",
+        elapsed / promotion_iterations
+    );
+
+    first
+        .bezier_boundary_loop(&policy)
+        .expect("benchmark boundary materialization is exact");
+    let started = Instant::now();
+    let mut boundary_checksum = 0_usize;
+    for _ in 0..promotion_iterations {
+        boundary_checksum ^= black_box(
+            first
+                .bezier_boundary_loop(&policy)
+                .expect("cached path boundary remains exact")
+                .into_value()
+                .len(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_path_cached_boundary_loop: {promotion_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={boundary_checksum}",
+        elapsed / promotion_iterations
+    );
+
+    let boundary_build_iterations = 2_000_u32;
+    let rectangle_curves = first.curves().to_vec();
+    let started = Instant::now();
+    let mut boundary_build_checksum = 0_usize;
+    for _ in 0..boundary_build_iterations {
+        let path = CurvePath2::try_new(rectangle_curves.clone())
+            .expect("fresh benchmark path is connected");
+        boundary_build_checksum ^= black_box(
+            path.bezier_boundary_loop(&policy)
+                .expect("fresh benchmark boundary is exact")
+                .into_value()
+                .len(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_path_immediate_boundary_loop: {boundary_build_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={boundary_build_checksum}",
+        elapsed / boundary_build_iterations
+    );
+
+    let query = p(1, 1);
+    let started = Instant::now();
+    let mut classification_checksum = 0_usize;
+    for _ in 0..promotion_iterations {
+        let classification = first
+            .classify_point(black_box(&query), &policy)
+            .expect("benchmark path classification is exact")
+            .into_value();
+        let Classification::Decided(location) = classification else {
+            panic!("benchmark path classification became uncertain");
+        };
+        classification_checksum ^= black_box(location as usize);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_path_cached_point_classification: {promotion_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={classification_checksum}",
         elapsed / promotion_iterations
     );
 
