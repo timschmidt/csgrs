@@ -6,7 +6,7 @@ use super::scalar::{
 };
 use crate::curve::{self, CurveRegionExt};
 use crate::{GeometryContext, GeometryOutcome};
-use hypercurve::{CurveOutcome, CurvePolicy, CurveRegion2};
+use hypercurve::{CurveContext, CurveOutcome, CurveRegion2};
 use hyperlattice::{Matrix4, Vector3};
 use hyperreal::Real;
 use std::marker::PhantomData;
@@ -79,7 +79,7 @@ where
     pub fn union(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
             .try_union(&other.inner, policy)
@@ -90,7 +90,7 @@ where
     pub fn difference(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
             .try_difference(&other.inner, policy)
@@ -101,7 +101,7 @@ where
     pub fn intersection(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
             .try_intersection(&other.inner, policy)
@@ -112,7 +112,7 @@ where
     pub fn xor(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
             .try_xor(&other.inner, policy)

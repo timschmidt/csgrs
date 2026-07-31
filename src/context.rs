@@ -2,7 +2,7 @@
 
 use std::cell::Cell;
 
-use hypercurve::{Classification, CurveCertainty, CurveOutcome, CurvePolicy, CurveResult};
+use hypercurve::{Classification, CurveCertainty, CurveContext, CurveOutcome, CurveResult};
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
 use hypermesh::{MeshCertainty, MeshContext, MeshOutcome};
 
@@ -33,11 +33,11 @@ impl GeometryContext {
     }
 
     /// Derive the matching Hypercurve policy.
-    pub fn curve_policy(self) -> CurvePolicy {
+    pub fn curve_policy(self) -> CurveContext {
         if self.predicates == PredicatePolicy::APPROXIMATE_512 {
-            CurvePolicy::APPROXIMATE_512
+            CurveContext::APPROXIMATE_512
         } else {
-            CurvePolicy::STRICT
+            CurveContext::STRICT
         }
     }
 
@@ -95,7 +95,7 @@ impl<T> GeometryOutcome<T> {
 #[allow(dead_code)]
 pub(crate) struct GeometryDecisions {
     context: GeometryContext,
-    curve_policy: CurvePolicy,
+    curve_policy: CurveContext,
     mesh_context: MeshContext,
     certainty: Cell<GeometryCertainty>,
 }
@@ -111,7 +111,7 @@ impl GeometryDecisions {
         }
     }
 
-    pub(crate) const fn curve_policy(&self) -> &CurvePolicy {
+    pub(crate) const fn curve_policy(&self) -> &CurveContext {
         &self.curve_policy
     }
 
@@ -171,7 +171,7 @@ impl GeometryDecisions {
     pub(crate) fn classify_curve<T>(
         &self,
         operation: &'static str,
-        mut evaluate: impl FnMut(&CurvePolicy) -> CurveResult<Classification<T>>,
+        mut evaluate: impl FnMut(&CurveContext) -> CurveResult<Classification<T>>,
     ) -> Result<T, ValidationError> {
         let resolve = |classification| match classification {
             Classification::Decided(value) => Ok(value),
@@ -186,7 +186,7 @@ impl GeometryDecisions {
                 .and_then(resolve);
         }
 
-        match evaluate(&CurvePolicy::STRICT)
+        match evaluate(&CurveContext::STRICT)
             .map_err(|error| ValidationError::Geometry(error.to_string()))?
         {
             Classification::Decided(value) => Ok(value),
@@ -213,10 +213,10 @@ mod tests {
 
     #[test]
     fn one_context_derives_matching_curve_and_mesh_policies() {
-        assert_eq!(GeometryContext::STRICT.curve_policy(), CurvePolicy::STRICT);
+        assert_eq!(GeometryContext::STRICT.curve_policy(), CurveContext::STRICT);
         assert_eq!(
             GeometryContext::APPROXIMATE_512.curve_policy(),
-            CurvePolicy::APPROXIMATE_512
+            CurveContext::APPROXIMATE_512
         );
         assert_eq!(
             GeometryContext::STRICT.mesh_context().predicate_policy(),

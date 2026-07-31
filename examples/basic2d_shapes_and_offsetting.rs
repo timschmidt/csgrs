@@ -28,13 +28,13 @@ fn main() {
     #[cfg(feature = "offset")]
     {
         write_curve(
-            &curve::offset(&square, r(0.2), &hypercurve::CurvePolicy::STRICT)
+            &curve::offset(&square, r(0.2), &hypercurve::CurveContext::STRICT)
                 .expect("square offset")
                 .into_value(),
             "square_offset_out",
         );
         write_curve(
-            &curve::offset(&circle, r(-0.15), &hypercurve::CurvePolicy::STRICT)
+            &curve::offset(&circle, r(-0.15), &hypercurve::CurveContext::STRICT)
                 .expect("circle offset")
                 .into_value(),
             "circle_offset_in",

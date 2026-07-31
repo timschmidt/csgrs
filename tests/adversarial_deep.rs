@@ -2,7 +2,7 @@ use csgrs::{
     curve::{self, CurveRegionExt},
     solid::{self, SolidExt},
 };
-use hypercurve::CurvePolicy;
+use hypercurve::CurveContext;
 use hyperlattice::Real;
 use hyperlimit::PredicatePolicy;
 
@@ -43,7 +43,7 @@ fn native_curve_boolean_outputs_can_be_extruded() {
         &hyperlattice::Matrix4::affine_translation([r(1.0), r(0.5), r(0.0)]),
     );
     let region = left
-        .try_union(&right, &CurvePolicy::STRICT)
+        .try_union(&right, &CurveContext::STRICT)
         .expect("curve union")
         .into_value();
     let mesh = curve::try_extrude(&region, r(0.4), &csgrs::GeometryContext::STRICT)

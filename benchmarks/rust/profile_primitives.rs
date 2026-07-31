@@ -6,7 +6,7 @@ mod support;
 use std::hint::black_box;
 
 use csgrs::{GeometryContext, Real, curve, curve::CurveRegionExt};
-use hypercurve::{CurvePath2, CurvePolicy, CurveRegion2, FiniteProjectionOptions, Point2};
+use hypercurve::{CurveContext, CurvePath2, CurveRegion2, FiniteProjectionOptions, Point2};
 use hyperlattice::Matrix4;
 use support::{Config, Measurement, print_header};
 
@@ -273,7 +273,7 @@ fn main() {
         || {
             let result = black_box(
                 curved_region
-                    .try_union(&disjoint, &CurvePolicy::STRICT)
+                    .try_union(&disjoint, &CurveContext::STRICT)
                     .unwrap()
                     .into_value(),
             );

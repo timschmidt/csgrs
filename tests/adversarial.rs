@@ -111,7 +111,7 @@ fn exact_near_plane_translation_is_preserved_by_native_geometry() {
 fn curve_offset_and_extrude_keep_hyperreal_scalars() {
     let region = curve::square(r(2.0));
     #[cfg(feature = "offset")]
-    let region = curve::offset(&region, r(0.125), &hypercurve::CurvePolicy::STRICT)
+    let region = curve::offset(&region, r(0.125), &hypercurve::CurveContext::STRICT)
         .expect("offset")
         .into_value();
     let mesh = curve::try_extrude(&region, r(0.75), &csgrs::GeometryContext::STRICT)

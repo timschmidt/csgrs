@@ -6,7 +6,7 @@ use crate::wasm::{
     real_from_js_named, real_to_js,
 };
 use crate::{GeometryCertainty, GeometryContext, GeometryOutcome, TriangleMesh};
-use hypercurve::{Contour2, CurveCertainty, CurveOutcome, CurvePolicy, CurveRegion2};
+use hypercurve::{Contour2, CurveCertainty, CurveContext, CurveOutcome, CurveRegion2};
 use hyperlattice::Real;
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use serde::{Deserialize, Serialize};
@@ -124,11 +124,11 @@ impl GeometryMeshResultJs {
     }
 }
 
-const fn boolean_policy(approximate_512: bool) -> CurvePolicy {
+const fn boolean_policy(approximate_512: bool) -> CurveContext {
     if approximate_512 {
-        CurvePolicy::APPROXIMATE_512
+        CurveContext::APPROXIMATE_512
     } else {
-        CurvePolicy::STRICT
+        CurveContext::STRICT
     }
 }
 
@@ -151,7 +151,7 @@ impl CurveRegionJs {
     pub fn from_region_profiles(
         value: JsValue,
         approximate_512: bool,
-    ) -> Result<Self, JsValue> {
+    ) -> Result<CurveBooleanResultJs, JsValue> {
         let profiles: Vec<RegionProfileJs> = from_value(value).map_err(js_error)?;
         let mut materials = Vec::with_capacity(profiles.len());
         let mut holes = Vec::new();
