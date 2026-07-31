@@ -7,14 +7,15 @@ use hyperreal::Real;
 
 use crate::classify::compare_reals;
 use crate::intersect::oriented_param_range_overlap;
+use crate::policy::resolve_certified_operation;
 use crate::rational_bezier_general::RationalBezierIntersectionContext;
 use crate::{
     ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
     BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
-    CurveContext, CurveError, CurveGeometry2, CurveOperation2, CurveResult, CurveSpanRange2,
-    ExactCurveError, ExactCurveResult, LineArcIntersection, LineArcIntersectionPoint, LineArcOrder,
-    LineLineIntersection, ParamRange, Point2, RationalBezier2,
-    RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
+    CurveContext, CurveError, CurveGeometry2, CurveOperation2, CurveOutcome, CurveResult,
+    CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcIntersection,
+    LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange, Point2,
+    RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
     RationalBezierIntersectionContacts2, RationalBezierIntersectionPointEvidence2,
     RationalBezierOverlapOrientation2, UncertaintyReason,
 };
@@ -154,8 +155,10 @@ fn build_span_pairs(
     second_evaluators: &[RationalBezier2],
     policy: &CurveContext,
 ) -> ExactCurveResult<Vec<CurveSpanPair>> {
-    let first_fragments = first_curve.native_bezier_fragments()?;
-    let second_fragments = second_curve.native_bezier_fragments()?;
+    let first_fragments =
+        first_curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+    let second_fragments = second_curve
+        .native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
     let shares_injective_lineage = first_curve.shares_certified_parameter_lineage(second_curve);
     let mut pairs = Vec::with_capacity(first_evaluators.len() * second_evaluators.len());
     for (first_span_index, first) in first_evaluators.iter().enumerate() {
@@ -259,7 +262,8 @@ fn endpoint_parameter(
     point: &Point2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CurveIntersectionParameter2>> {
-    let fragments = curve.native_bezier_fragments()?;
+    let fragments =
+        curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
     let (promoted_span_index, local_parameter) =
         if crate::classify::is_zero(&curve.start().distance_squared(point), policy) == Some(true) {
             (0, Real::zero())
@@ -323,8 +327,10 @@ fn build_native_line_evidence(
     policy: &CurveContext,
     span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
-    let first_fragment = &first.native_bezier_fragments()?[0];
-    let second_fragment = &second.native_bezier_fragments()?[0];
+    let first_fragment =
+        &first.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?[0];
+    let second_fragment =
+        &second.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?[0];
     let contact =
         |first_parameter: Real, second_parameter: Real, point: Point2| CurveIntersectionContact2 {
             first: CurveIntersectionParameter2 {
@@ -495,9 +501,12 @@ fn append_native_line_arc_contact(
             (second, first, arc)
         }
     };
-    let line_fragment = &line.native_bezier_fragments()?[0];
-    let arc_fragments = arc_curve.native_bezier_fragments()?;
-    let arc_evaluators = arc_curve.rational_evaluators()?;
+    let line_fragment =
+        &line.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?[0];
+    let arc_fragments =
+        arc_curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+    let arc_evaluators =
+        arc_curve.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
     let arc_span_indices = arc_span_indices_for_point(arc_curve, arc, &hit.point, policy)?;
     let contact_count = contacts.len();
     for arc_span_index in arc_span_indices {
@@ -631,10 +640,14 @@ fn build_native_arc_evidence(
     else {
         unreachable!("native arc result requires two circular arcs")
     };
-    let first_fragments = first.native_bezier_fragments()?;
-    let second_fragments = second.native_bezier_fragments()?;
-    let first_evaluators = first.rational_evaluators()?;
-    let second_evaluators = second.rational_evaluators()?;
+    let first_fragments =
+        first.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+    let second_fragments =
+        second.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+    let first_evaluators =
+        first.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
+    let second_evaluators =
+        second.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
     let mut contacts = Vec::new();
     for point in points {
         let first_span_indices = arc_span_indices_for_point(first, first_arc, point, policy)?;
@@ -708,10 +721,14 @@ fn build_native_coincident_arc_evidence(
     else {
         unreachable!("coincident-arc result requires two circular arcs")
     };
-    let first_fragments = first.native_bezier_fragments()?;
-    let second_fragments = second.native_bezier_fragments()?;
-    let first_evaluators = first.rational_evaluators()?;
-    let second_evaluators = second.rational_evaluators()?;
+    let first_fragments =
+        first.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+    let second_fragments =
+        second.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+    let first_evaluators =
+        first.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
+    let second_evaluators =
+        second.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
     let mut contacts = Vec::new();
     let mut overlaps = Vec::new();
 
@@ -871,10 +888,14 @@ fn append_native_arc_span_contact(
     point: &Point2,
     policy: &CurveContext,
 ) -> ExactCurveResult<()> {
-    let first_fragments = first.native_bezier_fragments()?;
-    let second_fragments = second.native_bezier_fragments()?;
-    let first_evaluators = first.rational_evaluators()?;
-    let second_evaluators = second.rational_evaluators()?;
+    let first_fragments =
+        first.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+    let second_fragments =
+        second.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+    let first_evaluators =
+        first.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
+    let second_evaluators =
+        second.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
     let candidate = CurveIntersectionContact2 {
         first: CurveIntersectionParameter2 {
             promoted_span_index: first_span_index,
@@ -976,7 +997,8 @@ fn arc_span_indices_for_point(
     point: &Point2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Vec<usize>> {
-    let fragments = curve.native_bezier_fragments()?;
+    let fragments =
+        curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
     let mut indices = Vec::new();
     for (span_index, fragment) in fragments.iter().enumerate() {
         let (start, end) = fragment.curve().endpoints();
@@ -1045,8 +1067,20 @@ fn native_arc_parameter_error(curve: &Curve2, cause: CurveError) -> ExactCurveEr
 }
 
 impl Curve2 {
-    /// Computes exact contact, overlap, and blocker evidence against another curve immediately.
+    /// Computes exact contact, overlap, and blocker evidence against another
+    /// curve immediately.
+    ///
+    /// The returned [`CurveOutcome`] records whether the complete promotion,
+    /// dispatch, and replay consumed the `APPROXIMATE_512` terminal.
     pub fn intersect_curve(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveIntersectionResult2>> {
+        resolve_certified_operation(policy, |attempt| self.intersect_curve_raw(other, attempt))
+    }
+
+    pub(crate) fn intersect_curve_raw(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -1054,8 +1088,19 @@ impl Curve2 {
         CurveIntersectionContext::try_new(self, other, policy)?.result()
     }
 
-    /// Computes exact split topology against another curve immediately.
+    /// Computes exact split topology against another curve immediately and
+    /// reports any consumed terminal decision once.
     pub fn intersection_topology(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveIntersectionTopology2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.intersection_topology_raw(other, attempt)
+        })
+    }
+
+    pub(crate) fn intersection_topology_raw(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -1076,8 +1121,18 @@ impl CurveIntersectionContext {
                 if let Some((order, relation)) =
                     native_line_arc_intersection(first, second, policy)?
                 {
-                    let span_pair_count = first.native_bezier_fragments()?.len()
-                        * second.native_bezier_fragments()?.len();
+                    let span_pair_count = first
+                        .native_bezier_fragments_for_operation(
+                            policy,
+                            CurveOperation2::Intersection,
+                        )?
+                        .len()
+                        * second
+                            .native_bezier_fragments_for_operation(
+                                policy,
+                                CurveOperation2::Intersection,
+                            )?
+                            .len();
                     (
                         span_pair_count,
                         CurveIntersectionDispatch::NativeLineArc { order, relation },
@@ -1085,8 +1140,18 @@ impl CurveIntersectionContext {
                 } else {
                     match native_arc_intersection(first, second, policy)? {
                         Some(native) => {
-                            let span_pair_count = first.native_bezier_fragments()?.len()
-                                * second.native_bezier_fragments()?.len();
+                            let span_pair_count = first
+                                .native_bezier_fragments_for_operation(
+                                    policy,
+                                    CurveOperation2::Intersection,
+                                )?
+                                .len()
+                                * second
+                                    .native_bezier_fragments_for_operation(
+                                        policy,
+                                        CurveOperation2::Intersection,
+                                    )?
+                                    .len();
                             let dispatch = match native {
                                 NativeArcIntersectionDispatch::Points(points) => {
                                     CurveIntersectionDispatch::NativeArcPoints(points)
@@ -1106,8 +1171,14 @@ impl CurveIntersectionContext {
                                     CurveIntersectionDispatch::CertifiedEndpointContact(contact),
                                 )
                             } else {
-                                let first_evaluators = first.rational_evaluators()?;
-                                let second_evaluators = second.rational_evaluators()?;
+                                let first_evaluators = first.rational_evaluators_for_operation(
+                                    policy,
+                                    CurveOperation2::Intersection,
+                                )?;
+                                let second_evaluators = second.rational_evaluators_for_operation(
+                                    policy,
+                                    CurveOperation2::Intersection,
+                                )?;
                                 let span_pair_count =
                                     first_evaluators.len() * second_evaluators.len();
                                 let dispatch =
@@ -1202,8 +1273,14 @@ impl CurveIntersectionContext {
                 self.data.span_pair_count,
             );
         }
-        let first_fragments = self.data.first.native_bezier_fragments()?;
-        let second_fragments = self.data.second.native_bezier_fragments()?;
+        let first_fragments = self.data.first.native_bezier_fragments_for_operation(
+            &self.data.policy,
+            CurveOperation2::Intersection,
+        )?;
+        let second_fragments = self.data.second.native_bezier_fragments_for_operation(
+            &self.data.policy,
+            CurveOperation2::Intersection,
+        )?;
         let mut contacts = Vec::new();
         let mut overlaps = Vec::new();
         let mut blockers = Vec::new();
@@ -1580,7 +1657,8 @@ pub(crate) fn split_curve_spans(
     parameters: impl Iterator<Item = (usize, BezierParameter2)>,
     policy: &CurveContext,
 ) -> ExactCurveResult<Vec<BezierSplitMaterialization2>> {
-    let native_fragments = curve.native_bezier_fragments()?;
+    let native_fragments =
+        curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Arrangement)?;
     let mut by_span = vec![Vec::new(); native_fragments.len()];
     for (span_index, parameter) in parameters {
         by_span[span_index].push(parameter);

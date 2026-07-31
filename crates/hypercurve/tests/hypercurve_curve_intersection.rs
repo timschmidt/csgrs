@@ -1,7 +1,8 @@
 #[cfg(feature = "predicates")]
 use hypercurve::{
-    BezierParameter2, BezierSplitFragment2, CurveFamily2, CurvePathBooleanFragmentAction2,
-    QuadraticBezier2, RationalQuadraticBezier2, RegionPointLocation,
+    BezierParameter2, BezierSplitFragment2, CurveCertainty, CurveFamily2, CurveOperation2,
+    CurvePathBooleanFragmentAction2, ExactCurveError, QuadraticBezier2, RationalQuadraticBezier2,
+    RegionPointLocation, UncertaintyReason,
 };
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
@@ -20,6 +21,30 @@ fn q(numerator: i32, denominator: i32) -> Real {
 
 fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
+}
+
+#[cfg(feature = "predicates")]
+fn symbolic_rectangle_path(width: Real) -> CurvePath2 {
+    let points = [
+        Point2::new(Real::zero(), Real::zero()),
+        Point2::new(width.clone(), Real::zero()),
+        Point2::new(width, Real::one()),
+        Point2::new(Real::zero(), Real::one()),
+    ];
+    CurvePath2::try_new(
+        (0..points.len())
+            .map(|index| {
+                Curve2::from(
+                    LineSeg2::try_new(
+                        points[index].clone(),
+                        points[(index + 1) % points.len()].clone(),
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect(),
+    )
+    .unwrap()
 }
 
 fn decided<T>(classification: Classification<T>) -> T {
@@ -57,7 +82,8 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
 
     let topology = first
         .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
     assert_eq!(evidence.span_pair_count(), 1);
     assert!(evidence.is_complete());
@@ -101,7 +127,8 @@ fn top_level_intersection_retains_implicit_conic_transversality() {
 
     let result = conic
         .intersect_curve(&cubic_line, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     assert_eq!(result.contacts().len(), 1);
     assert!(result.contacts()[0].is_certified_transverse());
 }
@@ -119,7 +146,8 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
 
     let topology = spline
         .intersection_topology(&line, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
     assert_eq!(evidence.span_pair_count(), 2);
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
@@ -138,7 +166,8 @@ fn top_level_shared_component_retains_certified_overlap() {
     let second = first.clone();
     let topology = first
         .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
 
     assert!(evidence.is_complete());
@@ -173,7 +202,8 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
 
     let evidence = first
         .intersect_curve(&second, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
 
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -208,7 +238,10 @@ fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
     let first = Curve2::new(CurveGeometry2::RationalBezier(first_curve));
     let second = Curve2::new(CurveGeometry2::RationalBezier(second_curve));
 
-    let topology = first.intersection_topology(&second, &policy).unwrap();
+    let topology = first
+        .intersection_topology(&second, &policy)
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert!(evidence.contacts().is_empty());
@@ -246,7 +279,8 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
 
     let topology = first
         .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -267,7 +301,8 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
     let second_path = CurvePath2::try_new(vec![second]).unwrap();
     let path_topology = first_path
         .intersection_topology(&second_path, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     assert_eq!(
         path_topology.first()[0].materializations()[0]
             .fragments()
@@ -316,7 +351,8 @@ fn path_boolean_consumes_algebraic_line_image_overlap_boundary() {
             CurveBoundaryInteriorSide2::Left,
             &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -380,7 +416,8 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
             CurveBoundaryInteriorSide2::Left,
             &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -400,6 +437,80 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
+fn path_boolean_surfaces_report_terminal_use_and_preserve_strict_rejection() {
+    let first = symbolic_rectangle_path(Real::pi() + Real::e());
+    let second = symbolic_rectangle_path(Real::e() + Real::pi());
+    let approximate = CurveContext::APPROXIMATE_512;
+
+    let selections = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &approximate,
+        )
+        .expect("the authorized terminal must resolve equivalent symbolic boundaries");
+    assert_eq!(selections.certainty, CurveCertainty::Approximate512Consumed);
+    assert_eq!(
+        selections
+            .value
+            .union()
+            .region_view()
+            .unwrap()
+            .boundary_loops()
+            .len(),
+        1
+    );
+
+    let strict = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurveContext::STRICT,
+        )
+        .unwrap_err();
+    assert!(matches!(
+        strict,
+        ExactCurveError::Blocked(blocker)
+            if blocker.operation() == CurveOperation2::Boolean
+    ));
+
+    let selection = first
+        .boolean_selection(
+            &second,
+            BooleanOp::Union,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &approximate,
+        )
+        .expect("single-selection Boolean must report the same terminal");
+    assert_eq!(selection.certainty, CurveCertainty::Approximate512Consumed);
+    assert_eq!(
+        selection
+            .value
+            .region_view()
+            .unwrap()
+            .boundary_loops()
+            .len(),
+        1
+    );
+
+    let region = first
+        .boolean_region(
+            &second,
+            BooleanOp::Union,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &approximate,
+        )
+        .expect("materialized path Boolean must report the same terminal");
+    assert_eq!(region.certainty, CurveCertainty::Approximate512Consumed);
+    assert_eq!(region.value.boundary_loops().len(), 1);
+}
+
+#[test]
 fn top_level_polynomial_trims_reuse_certified_source_lineage() {
     let source = Curve2::new(CurveGeometry2::CubicBezier(CubicBezier2::new(
         p(0, 0),
@@ -412,7 +523,8 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
 
     let topology = first
         .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -426,7 +538,8 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
     let reversed = second.reversed().unwrap();
     let reversed_evidence = first
         .intersect_curve(&reversed, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     assert!(reversed_evidence.is_complete());
     assert_eq!(reversed_evidence.overlaps().len(), 1);
     assert_eq!(
@@ -445,7 +558,8 @@ fn top_level_disjoint_curves_produce_a_complete_empty_evidence() {
     let second = Curve2::from(LineSeg2::try_new(p(0, 2), p(1, 2)).unwrap());
     let evidence = first
         .intersect_curve(&second, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
 
     assert!(evidence.is_complete());
     assert!(evidence.is_disjoint());
@@ -461,7 +575,8 @@ fn top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters(
         Curve2::from(CircularArc2::try_from_center(p(3, 0), p(13, 0), p(8, 0), true).unwrap());
     let topology = first
         .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
     assert_eq!(evidence.span_pair_count(), 4);
 
@@ -478,13 +593,85 @@ fn top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters(
 }
 
 #[test]
+#[cfg(feature = "predicates")]
+fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches() {
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let arc = Curve2::from(
+        CircularArc2::try_from_center(
+            p(3, 0),
+            p(3, 2),
+            Point2::new(Real::from(3_i8) + undecidable_zero, Real::one()),
+            false,
+        )
+        .unwrap(),
+    );
+    let line = Curve2::from(LineSeg2::try_new(p(2, 1), p(5, 1)).unwrap());
+
+    let approximate = arc
+        .intersect_curve(&line, &CurveContext::APPROXIMATE_512)
+        .expect("the authorized terminal must resolve the ambiguous semicircle");
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert!(approximate.value.is_complete());
+    assert_eq!(approximate.value.contacts().len(), 1);
+    assert!(matches!(
+        approximate.value.contacts()[0].point(),
+        RationalBezierIntersectionPointEvidence2::Exact(_)
+    ));
+
+    let strict = arc
+        .intersect_curve(&line, &CurveContext::STRICT)
+        .unwrap_err();
+    assert!(matches!(
+        strict,
+        ExactCurveError::Blocked(blocker)
+            if blocker.operation() == CurveOperation2::Intersection
+                && blocker.reason() == UncertaintyReason::RealSign
+    ));
+
+    let topology = arc
+        .intersection_topology(&line, &CurveContext::APPROXIMATE_512)
+        .expect("topology must replay the authorized terminal from retained arc facts");
+    assert_eq!(topology.certainty, CurveCertainty::Approximate512Consumed);
+    assert!(topology.value.result().is_complete());
+    assert_eq!(topology.value.result().contacts().len(), 1);
+
+    let arc_path = CurvePath2::try_new(vec![arc]).unwrap();
+    let line_path = CurvePath2::try_new(vec![line]).unwrap();
+    let path_result = arc_path
+        .intersect_path(&line_path, &CurveContext::APPROXIMATE_512)
+        .expect("path intersection must preserve terminal certainty");
+    assert_eq!(
+        path_result.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert!(path_result.value.is_complete());
+    assert_eq!(path_result.value.contacts().len(), 1);
+
+    let strict_path = arc_path
+        .intersection_topology(&line_path, &CurveContext::STRICT)
+        .unwrap_err();
+    assert!(matches!(
+        strict_path,
+        ExactCurveError::Blocked(blocker)
+            if blocker.operation() == CurveOperation2::Intersection
+                && blocker.reason() == UncertaintyReason::RealSign
+    ));
+}
+
+#[test]
 fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
     let line = Curve2::from(LineSeg2::try_new(p(4, -4), p(4, 4)).unwrap());
     let arc =
         Curve2::from(CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap());
     let policy = CurveContext::STRICT;
 
-    let topology = line.intersection_topology(&arc, &policy).unwrap();
+    let topology = line
+        .intersection_topology(&arc, &policy)
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
     assert_eq!(evidence.span_pair_count(), 2);
     assert!(evidence.is_complete());
@@ -502,7 +689,7 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
     assert_eq!(topology.second()[0].fragments().len(), 2);
     assert_eq!(topology.second()[1].fragments().len(), 1);
 
-    let reversed_evidence = arc.intersect_curve(&line, &policy).unwrap();
+    let reversed_evidence = arc.intersect_curve(&line, &policy).unwrap().into_value();
     assert_eq!(reversed_evidence.contacts().len(), 1);
     assert!(
         reversed_evidence.contacts()[0]
@@ -525,7 +712,10 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
     let second =
         Curve2::from(CircularArc2::try_from_center(p(4, 3), p(0, 5), p(0, 0), false).unwrap());
     let policy = CurveContext::STRICT;
-    let topology = first.intersection_topology(&second, &policy).unwrap();
+    let topology = first
+        .intersection_topology(&second, &policy)
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
 
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
@@ -547,7 +737,10 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
 
     let reversed =
         Curve2::from(CircularArc2::try_from_center(p(0, 5), p(4, 3), p(0, 0), true).unwrap());
-    let reversed_evidence = first.intersect_curve(&reversed, &policy).unwrap();
+    let reversed_evidence = first
+        .intersect_curve(&reversed, &policy)
+        .unwrap()
+        .into_value();
     assert_eq!(reversed_evidence.overlaps().len(), 1);
     let reversed_overlap = &reversed_evidence.overlaps()[0];
     assert_eq!(reversed_overlap.second_range().start(), &Real::one());
@@ -593,7 +786,8 @@ fn path_boolean_selection_resolves_partial_same_circle_arc_boundaries() {
             CurveBoundaryInteriorSide2::Left,
             &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -676,7 +870,8 @@ fn path_boolean_consumes_partial_nonlinear_shared_boundary() {
             CurveBoundaryInteriorSide2::Right,
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -724,7 +919,8 @@ fn path_pair_immediate_topology_splits_each_authored_curve_once() {
     let second = rectangle(1, -1, 3, 1);
     let topology = first
         .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
     assert_eq!(evidence.authored_curve_pair_count(), 16);
     assert_eq!(evidence.candidate_curve_pair_count(), 2);
@@ -768,8 +964,11 @@ fn path_overlap_ownership_uses_exact_orientation_and_boolean_side_logic() {
     )])
     .unwrap();
     let policy = CurveContext::STRICT;
-    let same_evidence = first.intersect_path(&same, &policy).unwrap();
-    let reversed_evidence = first.intersect_path(&reversed, &policy).unwrap();
+    let same_evidence = first.intersect_path(&same, &policy).unwrap().into_value();
+    let reversed_evidence = first
+        .intersect_path(&reversed, &policy)
+        .unwrap()
+        .into_value();
 
     let action = |evidence: &hypercurve::CurvePathIntersectionResult2, operation| {
         evidence.resolve_overlap_ownership(
@@ -820,7 +1019,8 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
     let second = Curve2::from(LineSeg2::try_new(p(2, 0), p(6, 0)).unwrap());
     let topology = first
         .intersection_topology(&second, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = topology.result();
 
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
@@ -842,7 +1042,8 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
     let reversed = Curve2::from(LineSeg2::try_new(p(6, 0), p(2, 0)).unwrap());
     let reversed_evidence = first
         .intersect_curve(&reversed, &CurveContext::STRICT)
-        .unwrap();
+        .unwrap()
+        .into_value();
     let reversed_overlap = &reversed_evidence.overlaps()[0];
     assert_eq!(reversed_overlap.second_range().start(), &r(1));
     assert_eq!(reversed_overlap.second_range().end(), &q(1, 2));
@@ -863,7 +1064,8 @@ fn path_boolean_selection_resolves_partial_reversed_shared_line_boundaries() {
             CurveBoundaryInteriorSide2::Left,
             &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -913,7 +1115,8 @@ fn path_boolean_selection_materializes_exact_regularized_operation_matrix() {
             CurveBoundaryInteriorSide2::Left,
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     let cases = [
         (BooleanOp::Union, r(7), 8_usize),
         (BooleanOp::Intersection, r(1), 4_usize),
@@ -947,7 +1150,8 @@ fn path_boolean_selection_materializes_exact_regularized_operation_matrix() {
             CurveBoundaryInteriorSide2::Left,
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     assert_eq!(
         decided(direct.signed_area(&policy).unwrap().into_value()),
         Some(r(7))
@@ -965,7 +1169,8 @@ fn path_boolean_selection_consumes_complete_shared_boundaries() {
             CurveBoundaryInteriorSide2::Left,
             &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     let cases = [
         (BooleanOp::Union, 4_usize, r(4)),
         (BooleanOp::Intersection, 4_usize, r(4)),
@@ -1023,7 +1228,8 @@ fn path_boolean_selection_preserves_disjoint_exact_conic_boundaries() {
             CurveBoundaryInteriorSide2::Left,
             &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
 
     let union = selections.union();
     assert_eq!(union.kept_fragment_count(), 8);
@@ -1057,7 +1263,8 @@ fn path_boolean_selection_traverses_overlapping_circles_with_exact_radical_split
             CurveBoundaryInteriorSide2::Left,
             &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 2);
@@ -1105,7 +1312,8 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
             CurveBoundaryInteriorSide2::Left,
             &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 2);
@@ -1277,7 +1485,8 @@ fn equivalent_top_level_families_complete_independent_region_booleans() {
                 CurveBoundaryInteriorSide2::Left,
                 &policy,
             )
-            .unwrap();
+            .unwrap()
+            .into_value();
         let evidence = selections.result();
         assert!(
             evidence.is_complete(),

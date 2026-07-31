@@ -1144,18 +1144,23 @@ impl Curve2 {
         )
     }
 
-    pub(crate) fn rational_evaluators(&self) -> ExactCurveResult<&[RationalBezier2]> {
-        match self.rational_evaluators_with_policy(&CurveContext::STRICT)? {
-            Classification::Decided(evaluators) => Ok(evaluators),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                CurveOperation2::Evaluation,
-                self.family(),
-                reason,
-            )),
+    pub(crate) fn native_bezier_fragments_for_operation(
+        &self,
+        policy: &CurveContext,
+        operation: CurveOperation2,
+    ) -> ExactCurveResult<&[NativeBezierFragment2]> {
+        match self
+            .native_bezier_fragments_with_policy(policy)
+            .map_err(|error| error.with_operation(operation))?
+        {
+            Classification::Decided(fragments) => Ok(fragments),
+            Classification::Uncertain(reason) => {
+                Err(ExactCurveError::blocked(operation, self.family(), reason))
+            }
         }
     }
 
-    fn rational_evaluators_with_policy(
+    pub(crate) fn rational_evaluators_with_policy(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<&[RationalBezier2]>> {
@@ -1179,6 +1184,22 @@ impl Curve2 {
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
         )
+    }
+
+    pub(crate) fn rational_evaluators_for_operation(
+        &self,
+        policy: &CurveContext,
+        operation: CurveOperation2,
+    ) -> ExactCurveResult<&[RationalBezier2]> {
+        match self
+            .rational_evaluators_with_policy(policy)
+            .map_err(|error| error.with_operation(operation))?
+        {
+            Classification::Decided(evaluators) => Ok(evaluators),
+            Classification::Uncertain(reason) => {
+                Err(ExactCurveError::blocked(operation, self.family(), reason))
+            }
+        }
     }
 }
 

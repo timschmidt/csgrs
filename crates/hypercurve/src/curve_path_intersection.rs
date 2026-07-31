@@ -4,13 +4,14 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 
 use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
+use crate::policy::resolve_certified_operation;
 use crate::{
     BezierArrangementFragment2, BezierArrangementGraph2, BezierArrangementTraversal2,
     BezierParameter2, BezierSplitFragment2, BezierSplitMaterialization2, BooleanOp,
     CircleCircleRelation, Classification, ContourPointLocation, Curve2, CurveContext, CurveFamily2,
     CurveGeometry2, CurveIntersectionContact2, CurveIntersectionOverlap2,
-    CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2,
-    CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
+    CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveOperation2,
+    CurveOutcome, CurvePath2, CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
     RationalBezierOverlapOrientation2, UncertaintyReason,
 };
 
@@ -197,8 +198,17 @@ fn curve_pair_bounds_decided_disjoint(
 }
 
 impl CurvePath2 {
-    /// Computes exact contacts, overlaps, and blockers against another path immediately.
+    /// Computes exact contacts, overlaps, and blockers against another path
+    /// immediately and reports any consumed terminal decision once.
     pub fn intersect_path(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurvePathIntersectionResult2>> {
+        resolve_certified_operation(policy, |attempt| self.intersect_path_raw(other, attempt))
+    }
+
+    pub(crate) fn intersect_path_raw(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -206,8 +216,19 @@ impl CurvePath2 {
         CurvePathIntersectionContext::try_new(self, other, policy)?.build_evidence()
     }
 
-    /// Computes exact split topology against another path immediately.
+    /// Computes exact split topology against another path immediately and
+    /// reports any consumed terminal decision once.
     pub fn intersection_topology(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurvePathIntersectionTopology2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.intersection_topology_raw(other, attempt)
+        })
+    }
+
+    pub(crate) fn intersection_topology_raw(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -223,17 +244,39 @@ impl CurvePath2 {
         first_interior_side: CurveBoundaryInteriorSide2,
         second_interior_side: CurveBoundaryInteriorSide2,
         policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurvePathBooleanSelection2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.boolean_selection_raw(
+                other,
+                operation,
+                first_interior_side,
+                second_interior_side,
+                attempt,
+            )
+        })
+    }
+
+    pub(crate) fn boolean_selection_raw(
+        &self,
+        other: &Self,
+        operation: BooleanOp,
+        first_interior_side: CurveBoundaryInteriorSide2,
+        second_interior_side: CurveBoundaryInteriorSide2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurvePathBooleanSelection2> {
-        let context = CurvePathIntersectionContext::try_new(self, other, policy)?;
-        let topology = context.build_topology()?;
-        let selection = context.build_boolean_selection(
-            &topology,
-            operation,
-            first_interior_side,
-            second_interior_side,
-        )?;
-        selection.region_view()?;
-        Ok(selection)
+        (|| {
+            let context = CurvePathIntersectionContext::try_new(self, other, policy)?;
+            let topology = context.build_topology()?;
+            let selection = context.build_boolean_selection(
+                &topology,
+                operation,
+                first_interior_side,
+                second_interior_side,
+            )?;
+            selection.region_view()?;
+            Ok(selection)
+        })()
+        .map_err(|error: ExactCurveError| error.with_operation(CurveOperation2::Boolean))
     }
 
     /// Computes all four operation-aware exact Boolean selections immediately,
@@ -244,31 +287,46 @@ impl CurvePath2 {
         first_interior_side: CurveBoundaryInteriorSide2,
         second_interior_side: CurveBoundaryInteriorSide2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurvePathBooleanSelections2> {
-        let context = CurvePathIntersectionContext::try_new(self, other, policy)?;
-        let topology = context.build_topology()?;
-        let mut selections = Vec::with_capacity(4);
-        for operation in [
-            BooleanOp::Union,
-            BooleanOp::Intersection,
-            BooleanOp::Difference,
-            BooleanOp::Xor,
-        ] {
-            let selection = context.build_boolean_selection(
-                &topology,
-                operation,
-                first_interior_side,
-                second_interior_side,
-            )?;
-            selection.region_view()?;
-            selections.push(selection);
-        }
-        Ok(CurvePathBooleanSelections2 {
-            topology,
-            selections: selections
-                .try_into()
-                .expect("all four Boolean operations were appended"),
+    ) -> ExactCurveResult<CurveOutcome<CurvePathBooleanSelections2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.boolean_selections_raw(other, first_interior_side, second_interior_side, attempt)
         })
+    }
+
+    pub(crate) fn boolean_selections_raw(
+        &self,
+        other: &Self,
+        first_interior_side: CurveBoundaryInteriorSide2,
+        second_interior_side: CurveBoundaryInteriorSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurvePathBooleanSelections2> {
+        (|| {
+            let context = CurvePathIntersectionContext::try_new(self, other, policy)?;
+            let topology = context.build_topology()?;
+            let mut selections = Vec::with_capacity(4);
+            for operation in [
+                BooleanOp::Union,
+                BooleanOp::Intersection,
+                BooleanOp::Difference,
+                BooleanOp::Xor,
+            ] {
+                let selection = context.build_boolean_selection(
+                    &topology,
+                    operation,
+                    first_interior_side,
+                    second_interior_side,
+                )?;
+                selection.region_view()?;
+                selections.push(selection);
+            }
+            Ok(CurvePathBooleanSelections2 {
+                topology,
+                selections: selections
+                    .try_into()
+                    .expect("all four Boolean operations were appended"),
+            })
+        })()
+        .map_err(|error: ExactCurveError| error.with_operation(CurveOperation2::Boolean))
     }
 
     /// Computes one exact regularized Boolean region immediately.
@@ -279,8 +337,27 @@ impl CurvePath2 {
         first_interior_side: CurveBoundaryInteriorSide2,
         second_interior_side: CurveBoundaryInteriorSide2,
         policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveRegion2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.boolean_region_raw(
+                other,
+                operation,
+                first_interior_side,
+                second_interior_side,
+                attempt,
+            )
+        })
+    }
+
+    pub(crate) fn boolean_region_raw(
+        &self,
+        other: &Self,
+        operation: BooleanOp,
+        first_interior_side: CurveBoundaryInteriorSide2,
+        second_interior_side: CurveBoundaryInteriorSide2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegion2> {
-        self.boolean_selection(
+        self.boolean_selection_raw(
             other,
             operation,
             first_interior_side,
@@ -289,6 +366,7 @@ impl CurvePath2 {
         )?
         .region_view()
         .cloned()
+        .map_err(|error| error.with_operation(CurveOperation2::Boolean))
     }
 }
 
@@ -1107,7 +1185,10 @@ fn append_boolean_fragments(
                                         cause.into(),
                                     )
                                 })?;
-                            curve.rational_evaluators()?[promoted_span_index]
+                            curve.rational_evaluators_for_operation(
+                                policy,
+                                CurveOperation2::Boolean,
+                            )?[promoted_span_index]
                                 .point_at_classified(&midpoint, policy)
                         }
                         _ => fragment.representative_point(policy).map_err(|cause| {

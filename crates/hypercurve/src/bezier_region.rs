@@ -5075,14 +5075,14 @@ fn materialized_boundary_loop_is_simple(
         }
         curves.push(Curve2::from(curve.clone()));
     }
-    let path = match CurvePath2::try_new(curves) {
+    let path = match CurvePath2::try_new_with_policy(curves, policy) {
         Ok(path) => path,
         Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
         Err(ExactCurveError::Blocked(blocker)) => {
             return Ok(Classification::Uncertain(blocker.reason()));
         }
     };
-    let evidence = match path.intersect_path(&path, policy) {
+    let evidence = match path.intersect_path_raw(&path, policy) {
         Ok(evidence) => evidence,
         Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
         Err(ExactCurveError::Blocked(blocker)) => {

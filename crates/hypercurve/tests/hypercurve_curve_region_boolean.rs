@@ -263,7 +263,8 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
             CurveBoundaryInteriorSide2::Left,
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     assert!(algebraic.has_algebraic_fragments());
 
     let disjoint = square(10, 0, 12, 2);
@@ -324,7 +325,8 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
             CurveBoundaryInteriorSide2::Left,
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     let wide = curved
         .boolean_region(
             &square_path(-3, -1, 3, 3),
@@ -333,7 +335,8 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
             CurveBoundaryInteriorSide2::Left,
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     assert!(narrow.has_algebraic_fragments());
     assert!(wide.has_algebraic_fragments());
     let results = narrow.boolean_regions(&wide, &policy).unwrap().value;

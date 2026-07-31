@@ -151,7 +151,8 @@ fn main() {
     for _ in 0..immediate_iterations {
         let evidence = first
             .intersect_path(&second, &policy)
-            .expect("benchmark path evidence is complete");
+            .expect("benchmark path evidence is complete")
+            .into_value();
         evidence_checksum ^= black_box(
             evidence.candidate_curve_pair_count()
                 + evidence.contacts().len()
@@ -170,7 +171,8 @@ fn main() {
     for _ in 0..immediate_iterations {
         let topology = first
             .intersection_topology(&second, &policy)
-            .expect("benchmark path topology is complete");
+            .expect("benchmark path topology is complete")
+            .into_value();
         topology_checksum ^= black_box(
             topology.first().len()
                 + topology.second().len()
@@ -196,7 +198,8 @@ fn main() {
                 CurveBoundaryInteriorSide2::Left,
                 &policy,
             )
-            .expect("all immediate partial-overlap Booleans are exact");
+            .expect("all immediate partial-overlap Booleans are exact")
+            .into_value();
         boolean_checksum ^= black_box(
             selections.union().kept_fragment_count()
                 + selections.intersection().kept_fragment_count()
@@ -218,7 +221,8 @@ fn main() {
             CurveBoundaryInteriorSide2::Left,
             &policy,
         )
-        .expect("partial-overlap union selection is exact");
+        .expect("partial-overlap union selection is exact")
+        .into_value();
     partial_union
         .region_view()
         .expect("partial-overlap union region is exact");
@@ -263,7 +267,8 @@ fn main() {
             CurveBoundaryInteriorSide2::Left,
             &policy,
         )
-        .expect("partial-arc union selection is exact");
+        .expect("partial-arc union selection is exact")
+        .into_value();
     partial_arc_union
         .region_view()
         .expect("partial-arc union region is exact");
@@ -303,7 +308,8 @@ fn main() {
             CurveBoundaryInteriorSide2::Right,
             &policy,
         )
-        .expect("partial nonlinear-overlap union selection is exact");
+        .expect("partial nonlinear-overlap union selection is exact")
+        .into_value();
     nonlinear_union
         .region_view()
         .expect("partial nonlinear-overlap union region is exact");
@@ -337,6 +343,7 @@ fn main() {
             lineage_first
                 .intersect_curve(&lineage_second, &policy)
                 .expect("lineage evidence is exact")
+                .into_value()
                 .overlaps()
                 .len(),
         );
@@ -355,7 +362,8 @@ fn main() {
     for _ in 0..native_iterations {
         let evidence = first_circle
             .intersect_curve(&second_circle, &policy)
-            .expect("native circle evidence is complete");
+            .expect("native circle evidence is complete")
+            .into_value();
         native_checksum ^= black_box(evidence.contacts().len() + evidence.span_pair_count());
     }
     let elapsed = started.elapsed();
@@ -376,7 +384,8 @@ fn main() {
             CurveBoundaryInteriorSide2::Left,
             &policy,
         )
-        .expect("benchmark circle union is exact");
+        .expect("benchmark circle union is exact")
+        .into_value();
     circle_union
         .region_view()
         .expect("benchmark circle region is retained");

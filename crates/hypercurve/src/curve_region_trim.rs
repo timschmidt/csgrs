@@ -220,7 +220,8 @@ impl Curve2 {
         }
 
         let materializations = split_curve_spans(self, split_parameters.into_iter(), policy)?;
-        let native_fragments = self.native_bezier_fragments()?;
+        let native_fragments =
+            self.native_bezier_fragments_for_operation(policy, CurveOperation2::Arrangement)?;
         if materializations.len() != native_fragments.len() {
             return Err(ExactCurveError::invalid(
                 CurveOperation2::Arrangement,

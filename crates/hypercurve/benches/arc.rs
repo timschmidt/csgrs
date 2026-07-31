@@ -109,7 +109,7 @@ fn bench_large_arcs() {
     let started = Instant::now();
     let mut intersection_checksum = 0_usize;
     for _ in 0..iterations {
-        let evidence = first.intersect_path(&second, &policy).unwrap();
+        let evidence = first.intersect_path(&second, &policy).unwrap().into_value();
         intersection_checksum ^= black_box(
             evidence.candidate_curve_pair_count()
                 + evidence.contacts().len()

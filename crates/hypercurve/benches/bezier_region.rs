@@ -344,7 +344,8 @@ fn main() -> CurveResult<()> {
             CurveBoundaryInteriorSide2::Left,
             &policy,
         )
-        .map_err(|error| CurveError::Topology(format!("curved benchmark setup: {error}")))?;
+        .map_err(|error| CurveError::Topology(format!("curved benchmark setup: {error}")))?
+        .into_value();
     let crossing = square_region(-2, -1, 2, 1)?;
     let curved_boolean_iterations = 100_u32;
     let started = Instant::now();
