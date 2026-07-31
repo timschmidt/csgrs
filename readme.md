@@ -105,23 +105,59 @@ documentation contains complete signatures, feature conditions, and errors.
 
 Functions in `csgrs::curve` return native Hypercurve types.
 
-Filled constructors:
+Rendered filled constructors:
 
-- basic: `empty`, `rectangle`, `square`, `circle`, `right_triangle`,
-  `polygon`, `polygon_points`, `ellipse`, and `regular_ngon`;
-- decorative: `arrow`, `trapezoid`, `star`, `teardrop`, `egg`,
-  `rounded_rectangle`, `squircle`, `keyhole`, `reuleaux`, `ring`,
-  `pie_slice`, `heart`, `crescent`, and `supershape`;
-- mechanical: `circle_with_keyway`, `circle_with_flat`,
-  `circle_with_two_flats`, `involute_gear`, `cycloidal_gear`,
-  `involute_rack`, `cycloidal_rack`, and `airfoil_naca4`;
-- sampled/imported: `bezier_region`, `metaballs`, `from_image`, and
-  `truetype_text`.
+| Preview | Function |
+|---|---|
+| <img src="docs/square.png" width="144" alt="Filled square with visible edges and vertices"/> | `curve::square(width: Real) -> CurveRegion2` |
+| <img src="docs/rectangle.png" width="144" alt="Filled rectangle with visible edges and vertices"/> | `curve::rectangle(width: Real, length: Real) -> CurveRegion2` |
+| <img src="docs/circle.png" width="144" alt="Filled sampled circle with visible edges and vertices"/> | `curve::circle(radius: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/right_triangle.png" width="144" alt="Filled right triangle with visible edges and vertices"/> | `curve::right_triangle(width: Real, height: Real) -> CurveRegion2` |
+| <img src="docs/polygon.png" width="144" alt="Filled polygon with visible edges and vertices"/> | `curve::polygon(points: &[[Real; 2]]) -> CurveRegion2` |
+| <img src="docs/rounded_rectangle.png" width="144" alt="Filled rounded rectangle with visible edges and vertices"/> | `curve::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize) -> CurveRegion2` |
+| <img src="docs/ellipse.png" width="144" alt="Filled sampled ellipse with visible edges and vertices"/> | `curve::ellipse(width: Real, height: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/regular_ngon.png" width="144" alt="Filled regular polygon with visible edges and vertices"/> | `curve::regular_ngon(sides: usize, radius: Real) -> CurveRegion2` |
+| <img src="docs/curve_arrow.png" width="144" alt="Filled planar arrow with visible edges and vertices"/> | `curve::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real) -> CurveRegion2` |
+| <img src="docs/trapezoid.png" width="144" alt="Filled trapezoid with visible edges and vertices"/> | `curve::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real) -> CurveRegion2` |
+| <img src="docs/star.png" width="144" alt="Filled star with visible edges and vertices"/> | `curve::star(num_points: usize, outer_radius: Real, inner_radius: Real) -> CurveRegion2` |
+| <img src="docs/teardrop.png" width="144" alt="Filled teardrop with visible edges and vertices"/> | `curve::teardrop(width: Real, length: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/curve_egg.png" width="144" alt="Filled egg with visible edges and vertices"/> | `curve::egg(width: Real, length: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/squircle.png" width="144" alt="Filled squircle with visible edges and vertices"/> | `curve::squircle(width: Real, height: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/keyhole.png" width="144" alt="Filled keyhole with visible edges and vertices"/> | `curve::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
+| <img src="docs/reuleaux.png" width="144" alt="Filled Reuleaux polygon with visible exact curve edges and vertices"/> | `curve::reuleaux(sides: usize, diameter: Real, circle_segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
+| <img src="docs/heart.png" width="144" alt="Filled heart with visible edges and vertices"/> | `curve::heart(width: Real, height: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/ring.png" width="144" alt="Filled annulus with visible exact curve edges and vertices"/> | `curve::ring(inner_diameter: Real, thickness: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
+| <img src="docs/pie_slice.png" width="144" alt="Filled circular sector with visible edges and vertices"/> | `curve::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/crescent.png" width="144" alt="Filled crescent with visible exact curve edges and vertices"/> | `curve::crescent(outer_radius: Real, inner_radius: Real, offset: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
+| <img src="docs/supershape.png" width="144" alt="Filled superformula shape with visible edges and vertices"/> | `curve::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/circle_with_keyway.png" width="144" alt="Circle with a keyway and visible exact curve edges"/> | `curve::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
+| <img src="docs/circle_with_flat.png" width="144" alt="Circle with one flat and visible exact curve edges"/> | `curve::circle_with_flat(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
+| <img src="docs/circle_with_two_flats.png" width="144" alt="Circle with two flats and visible exact curve edges"/> | `curve::circle_with_two_flats(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
+| <img src="docs/involute_gear.png" width="144" alt="Filled involute gear profile with visible edges and vertices"/> | `curve::involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize) -> CurveRegion2` |
+| <img src="docs/cycloidal_gear.png" width="144" alt="Filled cycloidal gear profile with visible edges and vertices"/> | `curve::cycloidal_gear(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize) -> CurveRegion2` |
+| <img src="docs/involute_rack.png" width="144" alt="Filled involute rack profile with visible edges and vertices"/> | `curve::involute_rack(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real) -> CurveRegion2` |
+| <img src="docs/cycloidal_rack.png" width="144" alt="Filled cycloidal rack profile with visible edges and vertices"/> | `curve::cycloidal_rack(module: Real, teeth: usize, clearance: Real, segments_per_flank: usize) -> CurveRegion2` |
+| <img src="docs/airfoil_naca4.png" width="144" alt="Filled NACA four-digit airfoil with visible edges and vertices"/> | `curve::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize) -> CurveRegion2` |
+| <img src="docs/bezier.png" width="144" alt="Filled exact Bezier boundary with visible edge and vertex"/> | `curve::bezier_region(control: &[[Real; 2]], display_segments: usize) -> CurveRegion2` |
+| <img src="docs/metaballs_2d.png" width="144" alt="Filled planar metaball contours with visible edges and vertices"/> | `curve::metaballs(balls: &[(Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real) -> CurveRegion2` |
+| <img src="docs/from_image.png" width="144" alt="Filled raster-traced region with visible edges and vertices"/> | `curve::from_image(image: &GrayImage, threshold: u8) -> Result<CurveRegion2, RasterTraceError>` |
+| <img src="docs/truetype.png" width="144" alt="Filled TrueType glyph regions with visible exact edges and vertices"/> | `curve::truetype_text(text: &str, font_data: &[u8], scale: Real) -> CurveRegion2` |
 
-Open constructors return `CurvePath2`, `CurveString2`, or collections of those
-types: `bezier_path`, `bspline_path`, `hilbert_strings`, and
-`hershey_strings`. The Hershey catalog is compiled into Hypercurve and exposed
-as `curve::hershey::fonts`; no font files or runtime parser are required.
+`curve::empty()` is intentionally image-free because it contains no visible
+geometry. `polygon_points` constructs the same polygon family from native
+Hypercurve `Point2` values.
+
+Open constructors retain their native path/string topology:
+
+| Preview | Function |
+|---|---|
+| <img src="docs/bezier_path.png" width="144" alt="Exact open Bezier path with visible edge and authored vertices"/> | `curve::bezier_path(control: &[[Real; 2]], display_segments: usize) -> Option<CurvePath2>` |
+| <img src="docs/bspline_path.png" width="144" alt="Exact open B-spline path with visible edge and authored vertices"/> | `curve::bspline_path(control: &[[Real; 2]], degree: usize, display_segments_per_span: usize) -> Option<CurvePath2>` |
+| <img src="docs/hilbert_strings.png" width="144" alt="Open Hilbert curve strings with visible edges and vertices"/> | `curve::hilbert_strings(boundary: &CurveRegion2, order: usize, padding: Real) -> Vec<CurveString2>` |
+| <img src="docs/hershey_strings.png" width="144" alt="Open Hershey text curve strings with visible edges and vertices"/> | `curve::hershey_strings(text: &str, font: &hypercurve::hershey::Font<'_>, size: Real) -> Vec<CurveString2>` |
+
+The Hershey catalog is compiled into Hypercurve and exposed as
+`hypercurve::hershey::fonts`; no font files or runtime parser are required.
 
 Planar operations:
 
@@ -137,25 +173,51 @@ replacement for the native curve topology.
 
 These functions consume a `CurveRegion2` and return a native `TriangleMesh`:
 
-- `extrude` and `extrude_vector`;
-- `extrude_twisted`;
-- `revolve`;
-- `sweep`.
-
-`solid::loft` joins corresponding 3D sections and emits native indexed
-triangles directly.
+| Preview | Function |
+|---|---|
+| <img src="docs/extrude.png" width="144" alt="Planar star extruded into a solid with visible faces, edges, and vertices"/> | `curve::try_extrude(region: &CurveRegion2, height: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/extrude_vector.png" width="144" alt="Planar star vector-extruded into a solid with visible faces, edges, and vertices"/> | `curve::try_extrude_vector(region: &CurveRegion2, direction: Vector3, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/extrude_twisted.png" width="144" alt="Planar star twist-extruded into a solid with visible faces, edges, and vertices"/> | `curve::extrude_twisted(input: &CurveRegion2, height: Real, twist_degrees: Real, end_scale: [Real; 2], slices: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/revolve.png" width="144" alt="Planar region revolved into a solid with visible faces, edges, and vertices"/> | `curve::revolve(region: &CurveRegion2, angle_degrees: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/sweep.png" width="144" alt="Planar region swept along a path into a solid with visible faces, edges, and vertices"/> | `curve::try_sweep(region: &CurveRegion2, path: &[Point3], context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/loft.png" width="144" alt="Corresponding planar sections lofted into a solid with visible faces, edges, and vertices"/> | `solid::loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError>` |
 
 ### Solid construction
 
 Functions in `csgrs::solid` return `TriangleMesh`:
 
-- basic: `empty`, `cube`, `cuboid`, `sphere`, `cylinder`, `ellipsoid`,
-  `frustum`, `frustum_between`, `polyhedron`, `octahedron`, and `icosahedron`;
-- modeled parts: `arrow`, `torus`, `teardrop_cylinder`,
-  `spur_gear_involute`, `spur_gear_cycloid`, and
-  `helical_involute_gear`;
-- implicit geometry: `metaballs`, `metaballs_with_diagnostics`, `sdf`,
-  `sdf_expr`, `gyroid_solid`, `schwarz_p_solid`, and `schwarz_d_solid`.
+| Preview | Function |
+|---|---|
+| <img src="docs/cube.png" width="144" alt="Cube with visible faces, edges, and vertices"/> | `solid::cube(width: Real) -> TriangleMesh` |
+| <img src="docs/cuboid.png" width="144" alt="Cuboid with visible faces, edges, and vertices"/> | `solid::cuboid(width: Real, length: Real, height: Real) -> TriangleMesh` |
+| <img src="docs/sphere.png" width="144" alt="Sampled sphere with visible faces, edges, and vertices"/> | `solid::sphere(radius: Real, segments: usize, stacks: usize) -> TriangleMesh` |
+| <img src="docs/cylinder.png" width="144" alt="Sampled cylinder with visible faces, edges, and vertices"/> | `solid::cylinder(radius: Real, height: Real, segments: usize) -> TriangleMesh` |
+| <img src="docs/ellipsoid.png" width="144" alt="Sampled ellipsoid with visible faces, edges, and vertices"/> | `solid::ellipsoid(radius_x: Real, radius_y: Real, radius_z: Real, segments: usize, stacks: usize) -> TriangleMesh` |
+| <img src="docs/frustum.png" width="144" alt="Conical frustum with visible faces, edges, and vertices"/> | `solid::frustum(radius_bottom: Real, radius_top: Real, height: Real, segments: usize) -> TriangleMesh` |
+| <img src="docs/frustum_between.png" width="144" alt="Conical frustum between two points with visible faces, edges, and vertices"/> | `solid::frustum_between(start: Point3, end: Point3, start_radius: Real, end_radius: Real, segments: usize) -> TriangleMesh` |
+| <img src="docs/polyhedron.png" width="144" alt="Indexed polyhedron with visible faces, edges, and vertices"/> | `solid::polyhedron(points: &[[Real; 3]], faces: &[&[usize]]) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/octahedron.png" width="144" alt="Regular octahedron with visible faces, edges, and vertices"/> | `solid::octahedron(radius: Real) -> TriangleMesh` |
+| <img src="docs/icosahedron.png" width="144" alt="Regular icosahedron with visible faces, edges, and vertices"/> | `solid::icosahedron(radius: Real) -> TriangleMesh` |
+| <img src="docs/mesh_arrow.png" width="144" alt="Three-dimensional arrow with visible faces, edges, and vertices"/> | `solid::arrow(start: Point3, direction: Vector3, segments: usize, mirrored: bool) -> TriangleMesh` |
+| <img src="docs/torus.png" width="144" alt="Sampled torus with visible faces, edges, and vertices"/> | `solid::torus(major_radius: Real, minor_radius: Real, major_segments: usize, minor_segments: usize) -> TriangleMesh` |
+| <img src="docs/teardrop_cylinder.png" width="144" alt="Extruded teardrop solid with visible faces, edges, and vertices"/> | `solid::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/spur_gear_involute.png" width="144" alt="Involute spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_involute(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/spur_gear_cycloid.png" width="144" alt="Cycloidal spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_cycloid(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/helical_involute_gear.png" width="144" alt="Helical involute gear with visible faces, edges, and vertices"/> | `solid::helical_involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_degrees: Real, slices: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/metaballs_3d.png" width="144" alt="Sampled metaball solid with visible faces, edges, and vertices"/> | `solid::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real) -> TriangleMesh` |
+| <img src="docs/sdf.png" width="144" alt="Sampled signed-distance-field solid with visible faces, edges, and vertices"/> | `solid::sdf(field: impl Fn(&Point3) -> Real, resolution: (usize, usize, usize), min: Point3, max: Point3, iso_value: Real) -> TriangleMesh` |
+| <img src="docs/gyroid.png" width="144" alt="Bounded gyroid solid with visible faces, edges, and vertices"/> | `solid::gyroid_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> TriangleMesh` |
+| <img src="docs/schwarz_p.png" width="144" alt="Bounded Schwarz-P solid with visible faces, edges, and vertices"/> | `solid::schwarz_p_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> TriangleMesh` |
+| <img src="docs/schwarz_d.png" width="144" alt="Bounded Schwarz-D solid with visible faces, edges, and vertices"/> | `solid::schwarz_d_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> TriangleMesh` |
+| <img src="docs/gyroid_surface.png" width="144" alt="Bounded gyroid level surface with visible faces, edges, and vertices"/> | `solid::gyroid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> TriangleMesh` |
+| <img src="docs/schwarz_p_surface.png" width="144" alt="Bounded Schwarz-P level surface with visible faces, edges, and vertices"/> | `solid::schwarz_p(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> TriangleMesh` |
+| <img src="docs/schwarz_d_surface.png" width="144" alt="Bounded Schwarz-D level surface with visible faces, edges, and vertices"/> | `solid::schwarz_d(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> TriangleMesh` |
+
+`solid::empty()` is intentionally image-free. Diagnostic variants
+`metaballs_with_diagnostics` and `sdf_with_diagnostics` produce the same shape
+families while returning sampling reports. `sdf_expr` and
+`sdf_expr_with_diagnostics` accept retained `hypersdf::SdfExpr` values and
+produce the same SDF shape family.
 
 Sampling arguments such as segments, stacks, slices, and resolution are
 explicit tessellation choices; CSGRS has no global tolerance setting.
@@ -187,6 +249,27 @@ The corresponding free functions and additional operations are:
 Hypermesh retains reusable bounds, topology, transform, convexity, and
 Boolean facts on `TriangleMesh`. Cloning a mesh shares its immutable geometry
 and retained facts.
+
+Rendered solid operations:
+
+| Preview | Function |
+|---|---|
+| <img src="docs/inverse.png" width="144" alt="Solid with inverted triangle winding and visible topology"/> | `solid::inverse(mesh: &TriangleMesh) -> TriangleMesh` |
+| <img src="docs/convex_hull.png" width="144" alt="Convex hull with visible faces, edges, and vertices"/> | `solid::convex_hull(mesh: &TriangleMesh) -> HypermeshResult<TriangleMesh>` |
+| <img src="docs/minkowski_sum.png" width="144" alt="Minkowski sum with visible faces, edges, and vertices"/> | `solid::minkowski_sum(left: &TriangleMesh, right: &TriangleMesh) -> Result<TriangleMesh, ValidationError>` |
+
+### Solids to planar geometry
+
+The inverse dimensional conversions preserve native Hypercurve topology:
+
+| Preview | Function |
+|---|---|
+| <img src="docs/flatten.png" width="144" alt="Filled planar projection of a three-dimensional solid with visible exact edges and vertices"/> | `solid::flatten(mesh: &TriangleMesh) -> CurveRegion2` |
+| <img src="docs/slice_z.png" width="144" alt="Filled planar slice of a three-dimensional solid with visible exact edges and vertices"/> | `solid::slice_z(mesh: &TriangleMesh, z: Real) -> (CurveRegion2, Vec<CurveString2>, Vec<CurvePath2>)` |
+
+`flatten` unions the XY projections of all triangle faces. `slice_z` returns
+filled closed sections, open curve strings, and higher-order paths separately
+instead of discarding their topology roles.
 
 ### Metadata
 
