@@ -419,10 +419,8 @@ impl CurveRegion2 {
         let shared_specialized_arrangement = !self.is_empty()
             && !other.is_empty()
             && self != other
-            && ((region_has_only_affine_line_carriers(self)
-                && region_has_only_affine_line_carriers(other))
-                || (region_has_only_circular_conic_carriers(self)
-                    && region_has_only_circular_conic_carriers(other)));
+            && region_has_only_affine_or_circular_conic_carriers(self)
+            && region_has_only_affine_or_circular_conic_carriers(other);
         let immediate = if shared_specialized_arrangement {
             [None, None, None, None]
         } else {
@@ -1412,14 +1410,6 @@ fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
     )
 }
 
-fn region_has_only_affine_line_carriers(region: &CurveRegion2) -> bool {
-    region
-        .boundary_loops()
-        .iter()
-        .flat_map(|boundary| boundary.fragments())
-        .all(split_fragment_is_affine_line)
-}
-
 fn split_fragment_is_circular_conic(fragment: &BezierSplitFragment2) -> bool {
     matches!(
         fragment,
@@ -1430,12 +1420,14 @@ fn split_fragment_is_circular_conic(fragment: &BezierSplitFragment2) -> bool {
     )
 }
 
-fn region_has_only_circular_conic_carriers(region: &CurveRegion2) -> bool {
+fn region_has_only_affine_or_circular_conic_carriers(region: &CurveRegion2) -> bool {
     region
         .boundary_loops()
         .iter()
         .flat_map(|boundary| boundary.fragments())
-        .all(split_fragment_is_circular_conic)
+        .all(|fragment| {
+            split_fragment_is_affine_line(fragment) || split_fragment_is_circular_conic(fragment)
+        })
 }
 
 fn boolean_region_without_general_context(

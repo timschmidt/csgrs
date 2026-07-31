@@ -60,6 +60,23 @@ fn circle_with_policy(center_x: Real, policy: &CurveContext) -> CurveRegion2 {
         .into_value()
 }
 
+fn capsule(center_x: i64) -> CurveRegion2 {
+    capsule_at(center_x, 0)
+}
+
+fn capsule_at(center_x: i64, center_y: i64) -> CurveRegion2 {
+    let contour = Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(point(center_x - 3, center_y - 2), Real::zero()),
+        BulgeVertex2::new(point(center_x + 3, center_y - 2), Real::one()),
+        BulgeVertex2::new(point(center_x + 3, center_y + 2), Real::zero()),
+        BulgeVertex2::new(point(center_x - 3, center_y + 2), Real::one()),
+    ])
+    .unwrap();
+    CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+}
+
 #[cfg(feature = "predicates")]
 fn symbolic_rectangle(width: Real) -> CurveRegion2 {
     let points = [
@@ -252,6 +269,175 @@ fn circular_conic_batch_reuses_one_authoritative_topology() {
                 );
             }
         }
+    }
+}
+
+#[test]
+fn mixed_line_circular_conic_batch_reuses_one_authoritative_topology() {
+    let first = capsule(0);
+    let second = capsule(2);
+    let policy = CurveContext::STRICT;
+    let batch = first.boolean_regions(&second, &policy).unwrap();
+    assert_eq!(batch.certainty, CurveCertainty::Certified);
+    let batch = batch.into_value();
+    assert!(batch.authored_carrier_pair_count() > 16);
+    assert!(batch.candidate_carrier_pair_count() > 0);
+    assert!(batch.candidate_carrier_pair_count() < batch.authored_carrier_pair_count());
+    assert!(batch.topology_fragment_count() > 0);
+    assert!(batch.topology_point_classification_count() < batch.topology_fragment_count());
+
+    let independent = [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::Xor,
+    ]
+    .map(|operation| {
+        first
+            .boolean_region(&second, operation, &policy)
+            .unwrap()
+            .into_value()
+    });
+    for (shared, independent) in [
+        batch.union(),
+        batch.intersection(),
+        batch.difference(),
+        batch.xor(),
+    ]
+    .into_iter()
+    .zip(&independent)
+    {
+        for x_numerator in -11_i8..=15 {
+            for y_numerator in -7_i8..=7 {
+                let sample = Point2::new(
+                    (Real::from(x_numerator) / Real::from(2_i8)).unwrap(),
+                    (Real::from(y_numerator) / Real::from(2_i8)).unwrap(),
+                );
+                assert_eq!(
+                    shared
+                        .classify_point(&sample, &policy)
+                        .unwrap()
+                        .into_value(),
+                    independent
+                        .classify_point(&sample, &policy)
+                        .unwrap()
+                        .into_value(),
+                    "shared and native capsule results differ at ({x_numerator}/2, {y_numerator}/2)",
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn mixed_line_circular_conic_degeneracy_matrix_matches_native_results() {
+    let cases = [
+        (capsule_at(0, 0), capsule_at(2, 1)),
+        (circle(Real::zero()), square(-1, -3, 1, 3)),
+        (circle(Real::zero()), square(2, -1, 4, 1)),
+        (circle(Real::zero()), square(3, -1, 5, 1)),
+        (circle(Real::zero()), square(-1, -1, 1, 1)),
+    ];
+    let policy = CurveContext::STRICT;
+    for (case_index, (first, second)) in cases.into_iter().enumerate() {
+        let batch = first
+            .boolean_regions(&second, &policy)
+            .unwrap()
+            .into_value();
+        if matches!(case_index, 2 | 3) {
+            assert!(batch.intersection().is_empty());
+            assert!(matches!(
+                batch
+                    .intersection()
+                    .filled_side_is_left(&policy)
+                    .unwrap()
+                    .into_value(),
+                Classification::Decided(sides) if sides.is_empty()
+            ));
+        }
+        let independent = [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ]
+        .map(|operation| {
+            first
+                .boolean_region(&second, operation, &policy)
+                .unwrap()
+                .into_value()
+        });
+        for (operation_index, (shared, independent)) in [
+            batch.union(),
+            batch.intersection(),
+            batch.difference(),
+            batch.xor(),
+        ]
+        .into_iter()
+        .zip(&independent)
+        .enumerate()
+        {
+            for x in -5_i64..=7 {
+                for y in -4_i64..=4 {
+                    let sample = point(x, y);
+                    assert_eq!(
+                        shared
+                            .classify_point(&sample, &policy)
+                            .unwrap()
+                            .into_value(),
+                        independent
+                            .classify_point(&sample, &policy)
+                            .unwrap()
+                            .into_value(),
+                        "mixed case {case_index}, operation {operation_index} differs at ({x}, {y})",
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let disk = circle_with_policy(undecidable_zero, &CurveContext::APPROXIMATE_512);
+    let right_half = square(0, -3, 3, 3);
+
+    assert!(matches!(
+        disk.boolean_regions(&right_half, &CurveContext::STRICT),
+        Err(hypercurve::ExactCurveError::Blocked(_))
+    ));
+    let batch = disk
+        .boolean_regions(&right_half, &CurveContext::APPROXIMATE_512)
+        .expect("the authorized terminal should decide mixed line/conic contacts");
+    assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
+
+    for (region, sample, expected) in [
+        (
+            batch.value.union(),
+            point(-1, 0),
+            RegionPointLocation::Inside,
+        ),
+        (
+            batch.value.intersection(),
+            point(1, 0),
+            RegionPointLocation::Inside,
+        ),
+        (
+            batch.value.difference(),
+            point(-1, 0),
+            RegionPointLocation::Inside,
+        ),
+        (batch.value.xor(), point(1, 0), RegionPointLocation::Outside),
+    ] {
+        assert_eq!(
+            region
+                .classify_point(&sample, &CurveContext::APPROXIMATE_512)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(expected),
+        );
     }
 }
 

@@ -15,8 +15,8 @@ use curvo::prelude::{
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelVerificationOptions, BooleanOp, BulgeVertex2,
-    Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurveString2, FillRule,
-    LineArcRegion2, LineSeg2, NurbsCurve2, Point2, Real, Segment2,
+    Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurveRegion2, CurveString2,
+    FillRule, LineArcRegion2, LineSeg2, NurbsCurve2, Point2, Real, Segment2,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -178,6 +178,17 @@ fn hypercurve_contour(points: &[[f64; 2]]) -> Contour2 {
         })
         .collect::<Vec<_>>();
     Contour2::from_bulge_vertices(&vertices).expect("valid hypercurve benchmark contour")
+}
+
+fn hypercurve_line_arc_contour(points: &[[f64; 2]], bulges: &[f64]) -> Contour2 {
+    let vertices = points
+        .iter()
+        .zip(bulges)
+        .map(|(point, bulge)| {
+            BulgeVertex2::new(Point2::new(real(point[0]), real(point[1])), real(*bulge))
+        })
+        .collect::<Vec<_>>();
+    Contour2::from_bulge_vertices(&vertices).expect("valid line/arc benchmark contour")
 }
 
 fn hypercurve_region(points: &[[f64; 2]]) -> LineArcRegion2 {
@@ -491,6 +502,66 @@ fn benchmark_polygon_booleans(runner: &Runner) {
         star_polygon(1024, 18.0, 7.0, 96.0, 68.0, std::f64::consts::PI / 1024.0),
         CommonBooleanOp::Intersection,
     );
+}
+
+fn benchmark_line_arc_boolean(runner: &Runner) {
+    let name = "line_arc_boolean/capsules_all_four";
+    if !runner.group_enabled(name) {
+        return;
+    }
+    let first_points = vec![[-3.0, -2.0], [3.0, -2.0], [3.0, 2.0], [-3.0, 2.0]];
+    let second_points = vec![[-1.0, -2.0], [5.0, -2.0], [5.0, 2.0], [-1.0, 2.0]];
+    let bulges = vec![0.0, 1.0, 0.0, 1.0];
+    let policy = CurveContext::STRICT;
+    let first = CurveRegion2::try_from_native_material_contours(
+        vec![hypercurve_line_arc_contour(&first_points, &bulges)],
+        &policy,
+    )
+    .expect("valid first exact capsule")
+    .into_value();
+    let second = CurveRegion2::try_from_native_material_contours(
+        vec![hypercurve_line_arc_contour(&second_points, &bulges)],
+        &policy,
+    )
+    .expect("valid second exact capsule")
+    .into_value();
+    let cavalier_first = cavalier_polyline(&first_points, Some(&bulges));
+    let cavalier_second = cavalier_polyline(&second_points, Some(&bulges));
+    let operations = [
+        CommonBooleanOp::Union,
+        CommonBooleanOp::Intersection,
+        CommonBooleanOp::Difference,
+        CommonBooleanOp::Xor,
+    ];
+
+    runner.measure(name, "hypercurve_exact_batch", || {
+        let results = first
+            .boolean_regions(black_box(&second), &policy)
+            .expect("exact capsule batch completes")
+            .into_value();
+        [
+            results.union(),
+            results.intersection(),
+            results.difference(),
+            results.xor(),
+        ]
+        .into_iter()
+        .flat_map(|region| region.boundary_loops())
+        .map(|boundary| boundary.len())
+        .sum()
+    });
+    runner.measure(name, "cavalier_four_calls", || {
+        operations
+            .into_iter()
+            .map(|operation| {
+                cavalier_boolean_result_size(
+                    black_box(&cavalier_first),
+                    black_box(&cavalier_second),
+                    operation,
+                )
+            })
+            .sum()
+    });
 }
 
 fn benchmark_contour_offset(runner: &Runner) {
@@ -942,6 +1013,7 @@ fn main() {
         "timed operations exclude fixture construction; results use each crate's native numeric and topology model"
     );
     benchmark_polygon_booleans(&runner);
+    benchmark_line_arc_boolean(&runner);
     benchmark_contour_offset(&runner);
     benchmark_bezier_offset(&runner);
     benchmark_nurbs_evaluation(&runner);

@@ -25,6 +25,16 @@ fn circle(center_x: i32) -> Contour2 {
     .unwrap()
 }
 
+fn capsule(center_x: i32) -> Contour2 {
+    Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(point(center_x - 3, -2), Real::zero()),
+        BulgeVertex2::new(point(center_x + 3, -2), Real::one()),
+        BulgeVertex2::new(point(center_x + 3, 2), Real::zero()),
+        BulgeVertex2::new(point(center_x - 3, 2), Real::one()),
+    ])
+    .unwrap()
+}
+
 fn region_weight(region: &CurveRegion2) -> usize {
     region
         .boundary_loops()
@@ -46,6 +56,7 @@ fn main() {
     let policy = CurveContext::STRICT;
     let contours = match std::env::var("HYPERCURVE_CURVE_REGION_BATCH_FIXTURE").as_deref() {
         Ok("circles") => (circle(0), circle(1)),
+        Ok("capsules") => (capsule(0), capsule(2)),
         Ok(fixture) => panic!("unknown batch benchmark fixture {fixture}"),
         Err(_) => (rectangle(0, 0, 4, 4), rectangle(2, 0, 6, 4)),
     };

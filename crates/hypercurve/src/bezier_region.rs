@@ -2802,6 +2802,9 @@ impl CurveRegion2 {
     }
 
     fn from_certified_boundary_loops(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> Self {
+        if boundary_loops.is_empty() {
+            return Self::default();
+        }
         Self {
             data: Arc::new(CurveRegionData2::new(boundary_loops)),
         }
