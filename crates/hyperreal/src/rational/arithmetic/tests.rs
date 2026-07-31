@@ -1184,6 +1184,25 @@ mod tests {
                 );
             }
         }
+
+        for bits in [191, 192, 256, 512, 1024, 4096] {
+            let first = generated_magnitude(bits, &mut state);
+            let second = generated_magnitude(bits - 1, &mut state);
+            let (divisor, remainder) = if first > second {
+                (first, second)
+            } else {
+                (second, first)
+            };
+            let dividend =
+                &divisor * (BigUint::one() << usize::try_from(divisor.bits()).unwrap())
+                    + &remainder;
+            assert!(dividend.bits().abs_diff(divisor.bits()) > 1);
+            assert_eq!(
+                Rational::gcd_magnitudes(&dividend, &divisor),
+                num::Integer::gcd(&dividend, &divisor),
+                "failed after an initially unbalanced {bits}-bit state"
+            );
+        }
     }
 
     #[test]
@@ -1326,12 +1345,52 @@ mod tests {
             1
         );
 
+        let dividend =
+            &below * (BigUint::one() << usize::try_from(below.bits()).unwrap()) + &below_previous;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::gcd_magnitudes(&dividend, &below),
+                BigUint::one()
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "gcd",
+                "euclidean-wide-remainder"
+            ),
+            1
+        );
+
         let (current, previous) =
             fibonacci_pair_at_least(Rational::LEHMER_GCD_THRESHOLD_BITS + 128);
         crate::dispatch_trace::reset();
         crate::dispatch_trace::with_recording(|| {
             assert_eq!(
                 Rational::gcd_magnitudes(&current, &previous),
+                BigUint::one()
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "gcd",
+                "lehmer-leading-limb"
+            ),
+            1
+        );
+
+        let dividend = &current
+            * (BigUint::one() << usize::try_from(current.bits()).unwrap())
+            + &previous;
+        assert!(dividend.bits().abs_diff(current.bits()) > 1);
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::gcd_magnitudes(&dividend, &current),
                 BigUint::one()
             );
         });

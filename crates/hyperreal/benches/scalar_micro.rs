@@ -646,6 +646,46 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Runs the full-width Euclidean baseline on the same 4,096-bit pair.",
             },
             BenchDoc {
+                name: "gcd_selected_unbalanced_to_lehmer_192_bits",
+                description: "Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 192 bits.",
+            },
+            BenchDoc {
+                name: "gcd_euclidean_unbalanced_to_lehmer_192_bits",
+                description: "Runs the full-width Euclidean baseline on the same initially unbalanced pair.",
+            },
+            BenchDoc {
+                name: "gcd_selected_unbalanced_to_lehmer_256_bits",
+                description: "Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 256 bits.",
+            },
+            BenchDoc {
+                name: "gcd_euclidean_unbalanced_to_lehmer_256_bits",
+                description: "Runs the full-width Euclidean baseline on the same initially unbalanced pair.",
+            },
+            BenchDoc {
+                name: "gcd_selected_unbalanced_to_lehmer_512_bits",
+                description: "Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 512 bits.",
+            },
+            BenchDoc {
+                name: "gcd_euclidean_unbalanced_to_lehmer_512_bits",
+                description: "Runs the full-width Euclidean baseline on the same initially unbalanced pair.",
+            },
+            BenchDoc {
+                name: "gcd_selected_unbalanced_to_lehmer_1024_bits",
+                description: "Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 1,024 bits.",
+            },
+            BenchDoc {
+                name: "gcd_euclidean_unbalanced_to_lehmer_1024_bits",
+                description: "Runs the full-width Euclidean baseline on the same initially unbalanced pair.",
+            },
+            BenchDoc {
+                name: "gcd_selected_unbalanced_to_lehmer_4096_bits",
+                description: "Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 4,096 bits.",
+            },
+            BenchDoc {
+                name: "gcd_euclidean_unbalanced_to_lehmer_4096_bits",
+                description: "Runs the full-width Euclidean baseline on the same initially unbalanced pair.",
+            },
+            BenchDoc {
                 name: "half_gcd_candidate_8192_bits",
                 description: "Runs the recursive half-GCD candidate below its provisional crossover.",
             },
@@ -2024,6 +2064,59 @@ fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
         });
         group.bench_function(euclidean_name, |b| {
             b.iter(|| black_box(euclidean_magnitude_gcd(black_box(&left), black_box(&right))))
+        });
+    }
+
+    for (bits, selected_name, euclidean_name) in [
+        (
+            192,
+            "gcd_selected_unbalanced_to_lehmer_192_bits",
+            "gcd_euclidean_unbalanced_to_lehmer_192_bits",
+        ),
+        (
+            256,
+            "gcd_selected_unbalanced_to_lehmer_256_bits",
+            "gcd_euclidean_unbalanced_to_lehmer_256_bits",
+        ),
+        (
+            512,
+            "gcd_selected_unbalanced_to_lehmer_512_bits",
+            "gcd_euclidean_unbalanced_to_lehmer_512_bits",
+        ),
+        (
+            1024,
+            "gcd_selected_unbalanced_to_lehmer_1024_bits",
+            "gcd_euclidean_unbalanced_to_lehmer_1024_bits",
+        ),
+        (
+            4096,
+            "gcd_selected_unbalanced_to_lehmer_4096_bits",
+            "gcd_euclidean_unbalanced_to_lehmer_4096_bits",
+        ),
+    ] {
+        let divisor = benchmark_magnitude(bits, 0x3c6e_f372_fe94_f82b);
+        let remainder = benchmark_magnitude(bits - 1, 0xbb67_ae85_84ca_a73b);
+        let dividend = &divisor * (BigUint::from(1_u8) << bits) + &remainder;
+        assert!(remainder < divisor);
+        assert_eq!(
+            Rational::gcd_magnitudes(&dividend, &divisor),
+            euclidean_magnitude_gcd(&dividend, &divisor)
+        );
+        group.bench_function(selected_name, |b| {
+            b.iter(|| {
+                black_box(Rational::gcd_magnitudes(
+                    black_box(&dividend),
+                    black_box(&divisor),
+                ))
+            })
+        });
+        group.bench_function(euclidean_name, |b| {
+            b.iter(|| {
+                black_box(euclidean_magnitude_gcd(
+                    black_box(&dividend),
+                    black_box(&divisor),
+                ))
+            })
         });
     }
 

@@ -1815,8 +1815,14 @@ impl Rational {
             }
             used_half_gcd = true;
         }
-        let lehmer_selected = smaller.bits() >= Self::LEHMER_GCD_THRESHOLD_BITS
-            && larger.bits().abs_diff(smaller.bits()) <= 1;
+        let mut lehmer_selected = smaller.bits() >= Self::LEHMER_GCD_THRESHOLD_BITS;
+        if lehmer_selected && larger.bits().abs_diff(smaller.bits()) > 1 {
+            let remainder = &larger % &smaller;
+            larger = smaller;
+            smaller = remainder;
+            lehmer_selected = smaller.bits() >= Self::LEHMER_GCD_THRESHOLD_BITS
+                && larger.bits().abs_diff(smaller.bits()) <= 1;
+        }
         let mut used_lehmer = false;
         while !smaller.is_zero() {
             if lehmer_selected
