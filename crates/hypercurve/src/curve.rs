@@ -543,19 +543,33 @@ impl Curve2 {
     ///
     /// Native result curves use their usual `[0, 1]` parameter domain. Spline
     /// results retain the two corresponding authored knot-domain intervals.
-    /// Curve family and public parameter mapping are preserved.
-    pub fn split_at(&self, parameter: Real) -> ExactCurveResult<(Self, Self)> {
+    /// Curve family and public parameter mapping are preserved. The returned
+    /// [`CurveOutcome`] covers the complete split and carrier reconstruction.
+    #[inline(always)]
+    pub fn split_at(
+        &self,
+        parameter: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<(Self, Self)>> {
+        resolve_certified_operation(policy, |attempt| self.split_at_raw(parameter, attempt))
+    }
+
+    pub(crate) fn split_at_raw(
+        &self,
+        parameter: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<(Self, Self)> {
         let domain = self.parameter_domain();
         validate_strict_split_parameter(
             domain.start(),
             &parameter,
             domain.end(),
             self.family(),
-            &CurveContext::STRICT,
+            policy,
         )?;
         match self.geometry() {
             CurveGeometry2::PolynomialBSpline(curve) => {
-                let (left, right) = curve.split_at(parameter.clone())?;
+                let (left, right) = curve.split_at_raw(parameter.clone(), policy)?;
                 let left_lineage = self.lineage_subrange(domain.start(), &parameter)?;
                 let right_lineage = self.lineage_subrange(&parameter, domain.end())?;
                 Ok((
@@ -564,7 +578,7 @@ impl Curve2 {
                 ))
             }
             CurveGeometry2::Nurbs(curve) => {
-                let (left, right) = curve.split_at(parameter.clone())?;
+                let (left, right) = curve.split_at_raw(parameter.clone(), policy)?;
                 let left_lineage = self.lineage_subrange(domain.start(), &parameter)?;
                 let right_lineage = self.lineage_subrange(&parameter, domain.end())?;
                 Ok((
@@ -573,8 +587,8 @@ impl Curve2 {
                 ))
             }
             _ => Ok((
-                self.subcurve(domain.start().clone(), parameter.clone())?,
-                self.subcurve(parameter, domain.end().clone())?,
+                self.subcurve_with_policy(domain.start().clone(), parameter.clone(), policy)?,
+                self.subcurve_with_policy(parameter, domain.end().clone(), policy)?,
             )),
         }
     }
@@ -584,8 +598,25 @@ impl Curve2 {
     /// A full-domain request returns a clone sharing retained facts. Native
     /// result curves are reparameterized to `[0, 1]`; spline results retain the
     /// requested authored knot range. Curve family and source are preserved.
-    pub fn subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
-        self.subcurve_with_policy(start, end, &CurveContext::STRICT)
+    /// The returned [`CurveOutcome`] records any terminal decision consumed by
+    /// the complete exact range extraction.
+    #[inline(always)]
+    pub fn subcurve(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        let domain = self.parameter_domain();
+        if &start == domain.start() && &end == domain.end() {
+            return Ok(CurveOutcome::new(
+                self.clone(),
+                crate::CurveCertainty::Certified,
+            ));
+        }
+        resolve_certified_operation(policy, |attempt| {
+            self.subcurve_with_policy(start, end, attempt)
+        })
     }
 
     pub(crate) fn subcurve_with_policy(
@@ -675,12 +706,12 @@ impl Curve2 {
             ),
             CurveGeometry2::PolynomialBSpline(curve) => CurveGeometry2::PolynomialBSpline(
                 curve
-                    .subcurve(start, end)
+                    .subcurve_raw(start, end, policy)
                     .map_err(|error| remap_operation(error, CurveOperation2::Subdivision))?,
             ),
             CurveGeometry2::Nurbs(curve) => CurveGeometry2::Nurbs(
                 curve
-                    .subcurve(start, end)
+                    .subcurve_raw(start, end, policy)
                     .map_err(|error| remap_operation(error, CurveOperation2::Subdivision))?,
             ),
         };
@@ -691,8 +722,25 @@ impl Curve2 {
     ///
     /// Spline families preserve their authored parameter interval and exact
     /// image in clamped piecewise-Bézier form. Other families use their native
-    /// exact subdivision.
-    pub fn clamped_subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
+    /// exact subdivision. One [`CurveOutcome`] covers the complete operation.
+    #[inline(always)]
+    pub fn clamped_subcurve(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.clamped_subcurve_raw(start, end, attempt)
+        })
+    }
+
+    pub(crate) fn clamped_subcurve_raw(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         let domain = self.parameter_domain();
         validate_subcurve_range(
             domain.start(),
@@ -700,19 +748,19 @@ impl Curve2 {
             &end,
             domain.end(),
             self.family(),
-            &CurveContext::STRICT,
+            policy,
         )?;
         let lineage = self.lineage_subrange(&start, &end)?;
         match self.geometry() {
             CurveGeometry2::PolynomialBSpline(curve) => self.with_lineage(
-                CurveGeometry2::PolynomialBSpline(curve.clamped_subcurve(start, end)?),
+                CurveGeometry2::PolynomialBSpline(curve.clamped_subcurve_raw(start, end, policy)?),
                 lineage,
             ),
             CurveGeometry2::Nurbs(curve) => self.with_lineage(
-                CurveGeometry2::Nurbs(curve.clamped_subcurve(start, end)?),
+                CurveGeometry2::Nurbs(curve.clamped_subcurve_raw(start, end, policy)?),
                 lineage,
             ),
-            _ => self.subcurve(start, end),
+            _ => self.subcurve_with_policy(start, end, policy),
         }
     }
 
@@ -1264,13 +1312,35 @@ impl<'a> CurveView2<'a> {
     }
 
     /// Splits this curve exactly at a strict interior public parameter.
-    pub fn split_at(self, parameter: Real) -> ExactCurveResult<(Curve2, Curve2)> {
-        self.curve.split_at(parameter)
+    #[inline(always)]
+    pub fn split_at(
+        self,
+        parameter: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<(Curve2, Curve2)>> {
+        self.curve.split_at(parameter, policy)
     }
 
     /// Returns the exact curve image over a strictly ordered public range.
-    pub fn subcurve(self, start: Real, end: Real) -> ExactCurveResult<Curve2> {
-        self.curve.subcurve(start, end)
+    #[inline(always)]
+    pub fn subcurve(
+        self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Curve2>> {
+        self.curve.subcurve(start, end, policy)
+    }
+
+    /// Returns a finite exact subcurve in clamped topology-ingestion form.
+    #[inline(always)]
+    pub fn clamped_subcurve(
+        self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Curve2>> {
+        self.curve.clamped_subcurve(start, end, policy)
     }
 
     /// Evaluates this borrowed curve without cloning its retained carrier.
@@ -2625,25 +2695,48 @@ fn promote_native_bezier_fragments(
                 end,
             )]))
         }
-        CurveGeometry2::PolynomialBSpline(value) => Ok(Classification::Decided(
-            value
-                .bezier_spans()?
-                .map(|span| {
-                    let (start, end) = span.knot_interval();
-                    native(span.curve().clone(), start.clone(), end.clone())
-                })
-                .collect(),
-        )),
-        CurveGeometry2::Nurbs(value) => Ok(Classification::Decided(
-            value
-                .native_spans()?
-                .map(|span| {
-                    let source_span = span.source_span();
-                    let (start, end) = source_span.knot_interval();
-                    native(span.curve().clone(), start.clone(), end.clone())
-                })
-                .collect(),
-        )),
+        CurveGeometry2::PolynomialBSpline(value) => {
+            let decomposition = match value.bezier_decomposition_with_policy(policy)? {
+                Classification::Decided(decomposition) => decomposition,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            Ok(Classification::Decided(
+                decomposition
+                    .spans()
+                    .iter()
+                    .zip(decomposition.intervals())
+                    .map(|(curve, (start, end))| native(curve.clone(), start.clone(), end.clone()))
+                    .collect(),
+            ))
+        }
+        CurveGeometry2::Nurbs(value) => {
+            let decomposition = match value.bezier_decomposition_with_policy(policy)? {
+                Classification::Decided(decomposition) => decomposition,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let subcurves = match value.native_subcurves_with_policy(policy)? {
+                Classification::Decided(subcurves) => subcurves,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            debug_assert_eq!(decomposition.spans().len(), subcurves.len());
+            Ok(Classification::Decided(
+                decomposition
+                    .spans()
+                    .iter()
+                    .zip(subcurves)
+                    .map(|(span, curve)| {
+                        let (start, end) = span.knot_interval();
+                        native(curve.clone(), start.clone(), end.clone())
+                    })
+                    .collect(),
+            ))
+        }
     }
 }
 

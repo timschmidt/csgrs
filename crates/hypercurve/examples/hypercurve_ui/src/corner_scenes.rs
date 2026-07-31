@@ -404,7 +404,8 @@ fn edit_all_corners(
                 |witness| witness.previous_parameter.clone(),
             );
             curve
-                .subcurve(start, end)
+                .subcurve(start, end, &CurveContext::STRICT)
+                .map(|outcome| outcome.into_value())
                 .map_err(|error| format!("curve {curve_index}: {error}"))
         })
         .collect::<Result<Vec<_>, _>>()?;

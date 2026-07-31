@@ -2802,8 +2802,11 @@ fn nurbs_single_span_circular_arc(
     curve: &crate::NurbsCurve2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<crate::CircularArc2>>> {
-    let decomposition = match curve.bezier_decomposition() {
-        Ok(decomposition) => decomposition,
+    let decomposition = match curve.bezier_decomposition_with_policy(policy) {
+        Ok(Classification::Decided(decomposition)) => decomposition,
+        Ok(Classification::Uncertain(reason)) => {
+            return Ok(Classification::Uncertain(reason));
+        }
         Err(crate::ExactCurveError::Invalid { cause, .. }) => return Err(cause.clone()),
         Err(crate::ExactCurveError::Blocked(blocker)) => {
             return Ok(Classification::Uncertain(blocker.reason()));

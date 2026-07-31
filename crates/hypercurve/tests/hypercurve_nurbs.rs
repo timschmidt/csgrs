@@ -25,6 +25,72 @@ fn quadratic_nurbs() -> NurbsCurve2 {
     .unwrap()
 }
 
+#[cfg(feature = "predicates")]
+#[test]
+fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
+    let curve = quadratic_nurbs();
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let parameter = r(1) + undecidable_zero;
+
+    let strict = curve
+        .split_at(parameter.clone(), &CurveContext::STRICT)
+        .unwrap_err();
+    assert!(
+        matches!(
+            &strict,
+            ExactCurveError::Blocked(blocker)
+                if blocker.operation() == CurveOperation2::Subdivision
+                    && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+        ),
+        "{strict:?}"
+    );
+
+    let split = curve
+        .split_at(parameter.clone(), &CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must resolve the symbolically equal knot");
+    assert_eq!(
+        split.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    let (left, right) = split.into_value();
+    assert_eq!(left.parameter_domain(), (&r(0), &parameter));
+    assert_eq!(right.parameter_domain(), (&parameter, &r(2)));
+    assert_eq!(left.end(), right.start());
+
+    let subcurve = curve
+        .subcurve(r(0), parameter.clone(), &CurveContext::APPROXIMATE_512)
+        .expect("terminal policy must propagate through reconstructed subcurves");
+    assert_eq!(
+        subcurve.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(subcurve.value.parameter_domain(), (&r(0), &parameter));
+
+    let top_level = Curve2::from(curve.clone());
+    let top_level_split = top_level
+        .split_at(parameter.clone(), &CurveContext::APPROXIMATE_512)
+        .expect("Curve2 must propagate the selected policy into its NURBS carrier");
+    assert_eq!(
+        top_level_split.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert!(
+        top_level_split
+            .value
+            .0
+            .parameter_domain()
+            .end()
+            .eq(&parameter)
+    );
+
+    assert!(matches!(
+        curve.split_at(parameter, &CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Subdivision
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
+}
+
 #[test]
 fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
     let curve = NurbsCurve2::try_new(
@@ -168,7 +234,10 @@ fn discontinuous_nurbs_knot_requires_explicit_point_side() {
         p(10, 0)
     );
 
-    let (left, right) = curve.split_at(r(1)).unwrap();
+    let (left, right) = curve
+        .split_at(r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(left.parameter_domain(), (&r(0), &r(1)));
     assert_eq!(right.parameter_domain(), (&r(1), &r(2)));
     assert_eq!(left.end(), &p(2, 0));
@@ -525,7 +594,10 @@ fn nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image() {
     )
     .unwrap();
 
-    let (left, right) = curve.split_at(r(1)).unwrap();
+    let (left, right) = curve
+        .split_at(r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(left.parameter_domain(), (&r(0), &r(1)));
     assert_eq!(right.parameter_domain(), (&r(1), &r(2)));
     assert_eq!(left.end(), right.start());
@@ -539,7 +611,10 @@ fn nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image() {
         curve.point_at(&q(3, 2)).unwrap()
     );
 
-    let middle = curve.subcurve(q(1, 2), q(3, 2)).unwrap();
+    let middle = curve
+        .subcurve(q(1, 2), q(3, 2), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(middle.parameter_domain(), (&q(1, 2), &q(3, 2)));
     assert_eq!(middle.start(), &curve.point_at(&q(1, 2)).unwrap());
     assert_eq!(middle.end(), &curve.point_at(&q(3, 2)).unwrap());
@@ -572,9 +647,13 @@ fn nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping() {
 fn invalid_nurbs_split_and_trim_ranges_evidence_subdivision_context() {
     let curve = quadratic_nurbs();
     for error in [
-        curve.split_at(r(0)).unwrap_err(),
-        curve.subcurve(r(1), r(1)).unwrap_err(),
-        curve.subcurve(r(-1), r(1)).unwrap_err(),
+        curve.split_at(r(0), &CurveContext::STRICT).unwrap_err(),
+        curve
+            .subcurve(r(1), r(1), &CurveContext::STRICT)
+            .unwrap_err(),
+        curve
+            .subcurve(r(-1), r(1), &CurveContext::STRICT)
+            .unwrap_err(),
     ] {
         assert_eq!(error.operation(), CurveOperation2::Subdivision);
         assert_eq!(error.family(), CurveFamily2::Nurbs);
@@ -712,7 +791,10 @@ fn higher_degree_nurbs_promotes_evaluates_and_splits_exactly() {
     assert_eq!(spans[0].source_span().degree(), 4);
     assert!(matches!(spans[0].curve(), BezierSubcurve2::Rational(_)));
 
-    let (left, right) = curve.split_at(q(1, 2)).unwrap();
+    let (left, right) = curve
+        .split_at(q(1, 2), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(left.end(), &p(2, 2));
     assert_eq!(right.start(), &p(2, 2));
 }
@@ -737,7 +819,10 @@ fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
     assert_eq!(inserted.end(), curve.end());
     assert_eq!(inserted.point_at(&r(3)).unwrap(), p(3, 4));
 
-    let (left, right) = curve.split_at(r(3)).unwrap();
+    let (left, right) = curve
+        .split_at(r(3), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(left.parameter_domain(), (&r(2), &r(3)));
     assert_eq!(right.parameter_domain(), (&r(3), &r(4)));
     assert_eq!(left.start(), curve.start());
@@ -889,13 +974,19 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
         curve.point_at_wrapped(&r(3)).unwrap()
     );
 
-    let (left, right) = curve.split_at(r(2)).unwrap();
+    let (left, right) = curve
+        .split_at(r(2), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(left.period(), None);
     assert_eq!(right.period(), None);
     assert_ne!(left.start(), left.end());
     assert_ne!(right.start(), right.end());
 
-    let clamped = curve.clamped_subcurve(r(0), r(1)).unwrap();
+    let clamped = curve
+        .clamped_subcurve(r(0), r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(clamped.period(), None);
     assert_eq!(clamped.parameter_domain(), (&r(0), &r(1)));
     assert_eq!(clamped.knots(), &[r(0), r(0), r(0), r(1), r(1), r(1)]);

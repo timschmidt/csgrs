@@ -1,6 +1,6 @@
 use hypercurve::{
-    BezierSubcurve2, CurveError, CurveFamily2, CurveOperation2, ExactCurveError, Point2,
-    PolynomialSplineCurve2, Real, SplinePeriodicity2,
+    BezierSubcurve2, CurveContext, CurveError, CurveFamily2, CurveOperation2, ExactCurveError,
+    Point2, PolynomialSplineCurve2, Real, SplinePeriodicity2,
 };
 
 fn r(value: i32) -> Real {
@@ -22,6 +22,49 @@ fn two_span_cubic() -> PolynomialSplineCurve2 {
         vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
     )
     .unwrap()
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
+    let curve = two_span_cubic();
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let parameter = r(1) + undecidable_zero;
+
+    assert!(matches!(
+        curve.split_at(parameter.clone(), &CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Subdivision
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
+
+    let split = curve
+        .split_at(parameter.clone(), &CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must reach the unit-weight NURBS kernel");
+    assert_eq!(
+        split.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    let (left, right) = split.into_value();
+    assert_eq!(left.parameter_domain(), (&r(0), &parameter));
+    assert_eq!(right.parameter_domain(), (&parameter, &r(2)));
+    assert_eq!(left.end(), right.start());
+
+    let clamped = curve
+        .clamped_subcurve(parameter.clone(), r(2), &CurveContext::APPROXIMATE_512)
+        .expect("terminal policy must reach clamped polynomial reconstruction");
+    assert_eq!(
+        clamped.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(clamped.value.parameter_domain(), (&parameter, &r(2)));
+
+    assert!(matches!(
+        curve.subcurve(parameter, r(2), &CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Subdivision
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
 }
 
 #[test]
@@ -240,15 +283,23 @@ fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
         expected
     );
 
-    let (left, right) = curve.split_at(r(1)).unwrap();
+    let (left, right) = curve
+        .split_at(r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(left.parameter_domain(), (&r(0), &r(1)));
     assert_eq!(right.parameter_domain(), (&r(1), &r(2)));
     assert_eq!(left.end(), &curve.point_at(&r(1)).unwrap());
     assert_eq!(right.start(), left.end());
 
     let middle = curve
-        .subcurve((r(1) / r(2)).unwrap(), (r(3) / r(2)).unwrap())
-        .unwrap();
+        .subcurve(
+            (r(1) / r(2)).unwrap(),
+            (r(3) / r(2)).unwrap(),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
     assert_eq!(
         middle.start(),
         &curve.point_at(&(r(1) / r(2)).unwrap()).unwrap()
@@ -341,11 +392,17 @@ fn periodic_polynomial_editing_preserves_only_whole_curve_periodicity() {
         curve.point_at_wrapped(&r(3)).unwrap()
     );
 
-    let (left, right) = curve.split_at(r(2)).unwrap();
+    let (left, right) = curve
+        .split_at(r(2), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(left.period(), None);
     assert_eq!(right.period(), None);
 
-    let clamped = curve.clamped_subcurve(r(0), r(1)).unwrap();
+    let clamped = curve
+        .clamped_subcurve(r(0), r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(clamped.period(), None);
     assert_eq!(clamped.parameter_domain(), (&r(0), &r(1)));
     assert_eq!(clamped.knots(), &[r(0), r(0), r(0), r(1), r(1), r(1)]);

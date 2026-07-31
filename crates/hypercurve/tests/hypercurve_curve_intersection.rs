@@ -521,8 +521,14 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
         p(3, 3),
         p(4, 0),
     )));
-    let first = source.subcurve(Real::zero(), q(3, 4)).unwrap();
-    let second = source.subcurve(q(1, 4), Real::one()).unwrap();
+    let first = source
+        .subcurve(Real::zero(), q(3, 4), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    let second = source
+        .subcurve(q(1, 4), Real::one(), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 
     let topology = first
         .intersection_topology(&second, &CurveContext::STRICT)
@@ -864,8 +870,14 @@ fn path_boolean_consumes_partial_nonlinear_shared_boundary() {
         p(3, 3),
         p(4, 0),
     )));
-    let first_curve = source.subcurve(Real::zero(), q(3, 4)).unwrap();
-    let second_curve = source.subcurve(q(1, 4), Real::one()).unwrap();
+    let first_curve = source
+        .subcurve(Real::zero(), q(3, 4), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    let second_curve = source
+        .subcurve(q(1, 4), Real::one(), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let first = closed_under_curve(first_curve, -5);
     let second = closed_under_curve(second_curve, -6);
     let selections = first

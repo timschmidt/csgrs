@@ -1,12 +1,15 @@
-//! Policy-free retained NURBS carrier with shared exact decomposition caches.
+//! Retained NURBS carrier with policy-isolated exact decomposition caches.
 
 use std::sync::Arc;
 use std::sync::{Mutex, OnceLock};
 
+use crate::policy::{
+    PolicyEvaluationCache, resolve_cached_evaluation, resolve_certified_operation,
+};
 use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
     BezierSubcurve2, Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
-    CurveOperation2, CurveParameterSide2, ExactCurveError, ExactCurveResult, Point2,
+    CurveOperation2, CurveOutcome, CurveParameterSide2, ExactCurveError, ExactCurveResult, Point2,
     RationalBSplineBezierExtraction2, RationalBSplineCurve2, RationalBezier2, RationalBezierSpan2,
     Real, Similarity2, SplinePeriodicity2, UncertaintyReason,
 };
@@ -20,9 +23,9 @@ const MAX_RETAINED_DEGREE_ELEVATIONS: usize = 8;
 struct NurbsData2 {
     retained: RationalBSplineCurve2,
     endpoints: NurbsEndpoints2,
-    decomposition: OnceLock<Cached<NurbsBezierDecomposition2>>,
-    native_subcurves: OnceLock<Cached<Vec<BezierSubcurve2>>>,
-    rational_spans: OnceLock<Cached<Vec<RationalBezier2>>>,
+    decomposition: PolicyEvaluationCache<NurbsBezierDecomposition2>,
+    native_subcurves: PolicyEvaluationCache<Vec<BezierSubcurve2>>,
+    rational_spans: PolicyEvaluationCache<Vec<RationalBezier2>>,
     knot_refinements: OnceLock<Mutex<Vec<(Vec<Real>, Cached<NurbsCurve2>)>>>,
     knot_removals: OnceLock<Mutex<Vec<(Real, Cached<Option<NurbsCurve2>>)>>>,
     degree_elevations: OnceLock<Mutex<Vec<(usize, Cached<NurbsDegreeElevation2>)>>>,
@@ -38,8 +41,9 @@ enum NurbsEndpoints2 {
 /// Exact rational B-spline/NURBS curve with shared lazy caches.
 ///
 /// Clones share the same immutable source carrier and lazy exact caches. The
-/// homogeneous Boehm decomposition and native-topology promotion therefore run
-/// at most once for one curve object, including when the result is a blocker.
+/// homogeneous Boehm decomposition and native-topology promotion retain one
+/// decided exact value together with any strict blocker, so approximate-first
+/// evaluation cannot certify a later strict request.
 #[derive(Clone, Debug)]
 pub struct NurbsCurve2 {
     data: Arc<NurbsData2>,
@@ -140,12 +144,29 @@ impl NurbsCurve2 {
         weights: Vec<Real>,
         knots: Vec<Real>,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded(
+        Self::try_new_with_optional_source_and_policy(
+            degree,
+            control_points,
+            weights,
+            knots,
+            &CurveContext::STRICT,
+        )
+    }
+
+    fn try_new_with_optional_source_and_policy(
+        degree: usize,
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        knots: Vec<Real>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        Self::try_new_expanded_with_policy(
             degree,
             control_points,
             weights,
             knots,
             SplinePeriodicity2::NonPeriodic,
+            policy,
         )
     }
 
@@ -155,6 +176,24 @@ impl NurbsCurve2 {
         weights: Vec<Real>,
         knots: Vec<Real>,
         periodicity: SplinePeriodicity2,
+    ) -> ExactCurveResult<Self> {
+        Self::try_new_expanded_with_policy(
+            degree,
+            control_points,
+            weights,
+            knots,
+            periodicity,
+            &CurveContext::STRICT,
+        )
+    }
+
+    fn try_new_expanded_with_policy(
+        degree: usize,
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        knots: Vec<Real>,
+        periodicity: SplinePeriodicity2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let valid_layout = degree
             .checked_add(1)
@@ -184,13 +223,14 @@ impl NurbsCurve2 {
                 weights,
                 knots,
                 periodicity,
-                &CurveContext::STRICT,
+                policy,
             ),
             CurveOperation2::Construction,
         )?;
-        Self::from_retained(retained, None)
+        Self::from_retained(retained, None, policy)
     }
 
+    #[cfg(feature = "svg")]
     pub(crate) fn try_new_expanded_with_periodicity(
         degree: usize,
         control_points: Vec<Point2>,
@@ -201,22 +241,43 @@ impl NurbsCurve2 {
         Self::try_new_expanded(degree, control_points, weights, knots, periodicity)
     }
 
+    pub(crate) fn try_new_expanded_with_periodicity_and_policy(
+        degree: usize,
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        knots: Vec<Real>,
+        periodicity: SplinePeriodicity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        Self::try_new_expanded_with_policy(
+            degree,
+            control_points,
+            weights,
+            knots,
+            periodicity,
+            policy,
+        )
+    }
+
     fn from_retained(
         retained: RationalBSplineCurve2,
         preserved_endpoints: Option<(Point2, Point2)>,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        let decomposition = OnceLock::new();
+        let decomposition = PolicyEvaluationCache::new();
         let endpoints = if let Some((start, end)) = preserved_endpoints {
             NurbsEndpoints2::Extracted { start, end }
         } else if has_clamped_endpoints(
             retained.knots(),
             retained.degree(),
             retained.control_points().len(),
+            policy,
+            CurveOperation2::Construction,
         )? {
             NurbsEndpoints2::AuthoredControls
         } else {
             let extraction = exact_value(
-                retained.extract_bezier_spans(&CurveContext::STRICT),
+                retained.extract_bezier_spans(policy),
                 CurveOperation2::Construction,
             )?;
             let start = extraction
@@ -231,9 +292,9 @@ impl NurbsCurve2 {
                 .and_then(|span| span.control_points().last())
                 .expect("validated NURBS has a positive span")
                 .clone();
-            decomposition
-                .set(Ok(NurbsBezierDecomposition2 { extraction }))
-                .expect("new decomposition cache is empty");
+            if !policy.permits_approximate_512() {
+                decomposition.seed_certified(NurbsBezierDecomposition2 { extraction });
+            }
             NurbsEndpoints2::Extracted { start, end }
         };
         let curve = Self {
@@ -241,15 +302,15 @@ impl NurbsCurve2 {
                 retained,
                 endpoints,
                 decomposition,
-                native_subcurves: OnceLock::new(),
-                rational_spans: OnceLock::new(),
+                native_subcurves: PolicyEvaluationCache::new(),
+                rational_spans: PolicyEvaluationCache::new(),
                 knot_refinements: OnceLock::new(),
                 knot_removals: OnceLock::new(),
                 degree_elevations: OnceLock::new(),
                 elevated_curves: OnceLock::new(),
             }),
         };
-        curve.validate_periodic_seam()?;
+        curve.validate_periodic_seam(policy)?;
         Ok(curve)
     }
 
@@ -331,6 +392,18 @@ impl NurbsCurve2 {
         }
         refinements.push((knots, result.clone()));
         result
+    }
+
+    fn insert_knots_with_policy(
+        &self,
+        knots: Vec<Real>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        if policy.permits_approximate_512() {
+            self.insert_knots_uncached_with_policy(knots, policy)
+        } else {
+            self.insert_knots(knots)
+        }
     }
 
     /// Removes one exact interior knot occurrence when that preserves the curve.
@@ -589,16 +662,26 @@ impl NurbsCurve2 {
     }
 
     fn insert_knots_uncached(&self, knots: Vec<Real>) -> ExactCurveResult<Self> {
+        self.insert_knots_uncached_with_policy(knots, &CurveContext::STRICT)
+    }
+
+    fn insert_knots_uncached_with_policy(
+        &self,
+        knots: Vec<Real>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         let (retained, inserted_count) = exact_value(
-            self.data
-                .retained
-                .insert_knots(knots, &CurveContext::STRICT),
+            self.data.retained.insert_knots(knots, policy),
             CurveOperation2::KnotInsertion,
         )?;
         if inserted_count == 0 {
             return Ok(self.clone());
         }
-        Self::from_retained(retained, Some((self.start().clone(), self.end().clone())))
+        Self::from_retained(
+            retained,
+            Some((self.start().clone(), self.end().clone())),
+            policy,
+        )
     }
 
     fn remove_knot_uncached(&self, knot: Real) -> ExactCurveResult<Option<Self>> {
@@ -608,23 +691,45 @@ impl NurbsCurve2 {
         )?;
         retained
             .map(|retained| {
-                Self::from_retained(retained, Some((self.start().clone(), self.end().clone())))
-                    .map_err(|error| remap_nurbs_operation(error, CurveOperation2::KnotRemoval))
+                Self::from_retained(
+                    retained,
+                    Some((self.start().clone(), self.end().clone())),
+                    &CurveContext::STRICT,
+                )
+                .map_err(|error| remap_nurbs_operation(error, CurveOperation2::KnotRemoval))
             })
             .transpose()
     }
 
     /// Splits this NURBS exactly at a strict interior knot-domain parameter.
-    pub fn split_at(&self, parameter: Real) -> ExactCurveResult<(Self, Self)> {
-        validate_strict_interior_parameter(self, &parameter)?;
-        let refined = self.insert_knots(vec![parameter.clone(); self.degree()])?;
-        let policy = CurveContext::STRICT;
+    ///
+    /// The returned [`CurveOutcome`] records whether parameter ordering, knot
+    /// refinement, or reconstructed-carrier validation consumed the
+    /// `APPROXIMATE_512` terminal.
+    #[inline(always)]
+    pub fn split_at(
+        &self,
+        parameter: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<(Self, Self)>> {
+        resolve_certified_operation(policy, |attempt| self.split_at_raw(parameter, attempt))
+    }
+
+    pub(crate) fn split_at_raw(
+        &self,
+        parameter: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<(Self, Self)> {
+        validate_strict_interior_parameter(self, &parameter, policy)?;
+        let refined = self
+            .insert_knots_with_policy(vec![parameter.clone(); self.degree()], policy)
+            .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))?;
         let equal_indices = refined
             .knots()
             .iter()
             .enumerate()
             .filter_map(|(index, knot)| {
-                (crate::classify::compare_reals(knot, &parameter, &policy)
+                (crate::classify::compare_reals(knot, &parameter, policy)
                     == Some(std::cmp::Ordering::Equal))
                 .then_some(index)
             })
@@ -649,31 +754,57 @@ impl NurbsCurve2 {
         left_knots.extend(std::iter::repeat_n(parameter.clone(), self.degree() + 1));
         let mut right_knots = vec![parameter; self.degree() + 1];
         right_knots.extend_from_slice(&refined.knots()[last_knot + 1..]);
-        let left = Self::try_new_with_optional_source(
+        let left = Self::try_new_with_optional_source_and_policy(
             self.degree(),
             refined.control_points()[..=left_end].to_vec(),
             refined.weights()[..=left_end].to_vec(),
             left_knots,
+            policy,
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))?;
-        let right = Self::try_new_with_optional_source(
+        let right = Self::try_new_with_optional_source_and_policy(
             self.degree(),
             refined.control_points()[right_start..].to_vec(),
             refined.weights()[right_start..].to_vec(),
             right_knots,
+            policy,
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))?;
         Ok((left, right))
     }
 
     /// Returns an exact NURBS subcurve over an ordered source-parameter range.
-    pub fn subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
-        validate_subcurve_range(self, &start, &end)?;
+    ///
+    /// One operation outcome covers range validation, every split, and exact
+    /// reconstructed-carrier validation.
+    #[inline(always)]
+    pub fn subcurve(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
         let (domain_start, domain_end) = self.parameter_domain();
-        let policy = CurveContext::STRICT;
-        let starts_at_domain = crate::classify::compare_reals(&start, domain_start, &policy)
+        if &start == domain_start && &end == domain_end {
+            return Ok(CurveOutcome::new(
+                self.clone(),
+                crate::CurveCertainty::Certified,
+            ));
+        }
+        resolve_certified_operation(policy, |attempt| self.subcurve_raw(start, end, attempt))
+    }
+
+    pub(crate) fn subcurve_raw(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        validate_subcurve_range(self, &start, &end, policy)?;
+        let (domain_start, domain_end) = self.parameter_domain();
+        let starts_at_domain = crate::classify::compare_reals(&start, domain_start, policy)
             == Some(std::cmp::Ordering::Equal);
-        let ends_at_domain = crate::classify::compare_reals(&end, domain_end, &policy)
+        let ends_at_domain = crate::classify::compare_reals(&end, domain_end, policy)
             == Some(std::cmp::Ordering::Equal);
         if starts_at_domain && ends_at_domain {
             return Ok(self.clone());
@@ -681,12 +812,12 @@ impl NurbsCurve2 {
         let through_end = if ends_at_domain {
             self.clone()
         } else {
-            self.split_at(end)?.0
+            self.split_at_raw(end, policy)?.0
         };
         if starts_at_domain {
             Ok(through_end)
         } else {
-            Ok(through_end.split_at(start)?.1)
+            Ok(through_end.split_at_raw(start, policy)?.1)
         }
     }
 
@@ -697,23 +828,44 @@ impl NurbsCurve2 {
     /// rational image while replacing irrelevant exterior knots with clamped
     /// endpoints. Internal spans use full Bézier multiplicity; no fitting,
     /// sampling, or endpoint-only reconstruction is involved.
-    pub fn clamped_subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
-        validate_subcurve_range(self, &start, &end)?;
-        let subcurve = self.subcurve(start, end)?;
+    /// The returned [`CurveOutcome`] covers the complete exact materialization.
+    #[inline(always)]
+    pub fn clamped_subcurve(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.clamped_subcurve_raw(start, end, attempt)
+        })
+    }
+
+    pub(crate) fn clamped_subcurve_raw(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        validate_subcurve_range(self, &start, &end, policy)?;
+        let subcurve = self.subcurve_raw(start, end, policy)?;
         if !subcurve.periodicity().is_periodic()
             && has_clamped_endpoints(
                 subcurve.knots(),
                 subcurve.degree(),
                 subcurve.control_points().len(),
+                policy,
+                CurveOperation2::Subdivision,
             )?
         {
             return Ok(subcurve);
         }
-        subcurve.clamped_piecewise_bezier_form()
+        subcurve.clamped_piecewise_bezier_form(policy)
     }
 
-    fn clamped_piecewise_bezier_form(&self) -> ExactCurveResult<Self> {
-        let decomposition = self.bezier_decomposition()?;
+    fn clamped_piecewise_bezier_form(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
+        let decomposition =
+            self.bezier_decomposition_for_operation(policy, CurveOperation2::Subdivision)?;
         let spans = decomposition.spans();
         let first = spans.first().ok_or_else(|| {
             ExactCurveError::invalid(
@@ -753,8 +905,14 @@ impl NurbsCurve2 {
                 .clone(),
             degree + 1,
         ));
-        Self::try_new_with_optional_source(degree, control_points, weights, knots)
-            .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))
+        Self::try_new_with_optional_source_and_policy(
+            degree,
+            control_points,
+            weights,
+            knots,
+            policy,
+        )
+        .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))
     }
 
     /// Returns the same NURBS image with traversal direction reversed.
@@ -822,15 +980,37 @@ impl NurbsCurve2 {
 
     /// Returns the shared exact homogeneous Bezier decomposition.
     pub fn bezier_decomposition(&self) -> ExactCurveResult<&NurbsBezierDecomposition2> {
-        cached_result(&self.data.decomposition, || {
-            exact_value(
-                self.data
-                    .retained
-                    .extract_bezier_spans(&CurveContext::STRICT),
+        self.bezier_decomposition_for_operation(
+            &CurveContext::STRICT,
+            CurveOperation2::BezierDecomposition,
+        )
+    }
+
+    pub(crate) fn bezier_decomposition_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<&NurbsBezierDecomposition2>> {
+        resolve_cached_evaluation(&self.data.decomposition, policy, |attempt| {
+            map_classified_curve_result(
+                self.data.retained.extract_bezier_spans(attempt),
                 CurveOperation2::BezierDecomposition,
             )
-            .map(|extraction| NurbsBezierDecomposition2 { extraction })
+            .map(|decomposition| {
+                decomposition.map(|extraction| NurbsBezierDecomposition2 { extraction })
+            })
         })
+    }
+
+    fn bezier_decomposition_for_operation(
+        &self,
+        policy: &CurveContext,
+        operation: CurveOperation2,
+    ) -> ExactCurveResult<&NurbsBezierDecomposition2> {
+        require_classification(
+            self.bezier_decomposition_with_policy(policy)
+                .map_err(|error| remap_nurbs_operation(error, operation))?,
+            operation,
+        )
     }
 
     /// Iterates exact retained Bezier spans with indices and knot intervals.
@@ -851,24 +1031,56 @@ impl NurbsCurve2 {
     /// quadratics use native conics, equal-weight cubics collapse to polynomial
     /// cubics, and all remaining spans use exact general rational Beziers.
     pub fn native_subcurves(&self) -> ExactCurveResult<&[BezierSubcurve2]> {
-        let subcurves = cached_result(&self.data.native_subcurves, || {
-            let decomposition = self.bezier_decomposition()?;
-            exact_value(
-                decomposition
-                    .extraction
-                    .native_subcurves(&CurveContext::STRICT),
-                CurveOperation2::NativeTopology,
-            )
-        })?;
-        Ok(subcurves)
+        self.native_subcurves_for_operation(&CurveContext::STRICT, CurveOperation2::NativeTopology)
+    }
+
+    pub(crate) fn native_subcurves_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<&[BezierSubcurve2]>> {
+        Ok(
+            match resolve_cached_evaluation(&self.data.native_subcurves, policy, |attempt| {
+                let decomposition = match self.bezier_decomposition_with_policy(attempt)? {
+                    Classification::Decided(decomposition) => decomposition,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                map_classified_curve_result(
+                    decomposition.extraction.native_subcurves(attempt),
+                    CurveOperation2::NativeTopology,
+                )
+            })? {
+                Classification::Decided(subcurves) => Classification::Decided(subcurves.as_slice()),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
+    fn native_subcurves_for_operation(
+        &self,
+        policy: &CurveContext,
+        operation: CurveOperation2,
+    ) -> ExactCurveResult<&[BezierSubcurve2]> {
+        require_classification(
+            self.native_subcurves_with_policy(policy)
+                .map_err(|error| remap_nurbs_operation(error, operation))?,
+            operation,
+        )
     }
 
     /// Iterates native promoted spans without losing their rational source span.
     pub fn native_spans(
         &self,
     ) -> ExactCurveResult<impl ExactSizeIterator<Item = NurbsNativeSpanView2<'_>>> {
-        let decomposition = self.bezier_decomposition()?;
-        let native = self.native_subcurves()?;
+        let decomposition = self.bezier_decomposition_for_operation(
+            &CurveContext::STRICT,
+            CurveOperation2::NativeTopology,
+        )?;
+        let native = self.native_subcurves_for_operation(
+            &CurveContext::STRICT,
+            CurveOperation2::NativeTopology,
+        )?;
         debug_assert_eq!(decomposition.spans().len(), native.len());
         Ok(decomposition.spans().iter().zip(native).enumerate().map(
             move |(span_index, (span, curve))| NurbsNativeSpanView2 {
@@ -948,7 +1160,8 @@ impl NurbsCurve2 {
         side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
-        let decomposition = self.bezier_decomposition()?;
+        let decomposition =
+            self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
         let (first, last) = select_span_indices(decomposition.spans(), parameter, policy)?;
         let first_point = self.point_on_span(first.index, parameter, first.location, policy)?;
         if first.index == last.index || side == CurveParameterSide2::Left {
@@ -968,13 +1181,15 @@ impl NurbsCurve2 {
         location: NurbsSpanParameterLocation,
         policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
-        let curve = &self.rational_spans()?[span_index];
+        let curve =
+            &self.rational_spans_for_operation(policy, CurveOperation2::Evaluation)?[span_index];
         match location {
             NurbsSpanParameterLocation::Start => return Ok(curve.start().clone()),
             NurbsSpanParameterLocation::End => return Ok(curve.end().clone()),
             NurbsSpanParameterLocation::Interior => {}
         }
-        let decomposition = self.bezier_decomposition()?;
+        let decomposition =
+            self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
         let local = local_span_parameter(&decomposition.spans()[span_index], parameter)?;
         exact_classification(
             curve.point_at_classified(&local, policy),
@@ -1103,7 +1318,8 @@ impl NurbsCurve2 {
         side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        let decomposition = self.bezier_decomposition()?;
+        let decomposition =
+            self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
         let (first, last) = select_span_indices(decomposition.spans(), parameter, policy)?;
         let first_derivatives =
             self.derivatives_on_span(first.index, parameter, max_order, first.location, policy)?;
@@ -1126,14 +1342,16 @@ impl NurbsCurve2 {
         location: NurbsSpanParameterLocation,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        let decomposition = self.bezier_decomposition()?;
+        let decomposition =
+            self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
         let span = &decomposition.spans()[span_index];
         let local = match location {
             NurbsSpanParameterLocation::Start => Real::zero(),
             NurbsSpanParameterLocation::End => Real::one(),
             NurbsSpanParameterLocation::Interior => local_span_parameter(span, parameter)?,
         };
-        let rational_span = &self.rational_spans()?[span_index];
+        let rational_span =
+            &self.rational_spans_for_operation(policy, CurveOperation2::Evaluation)?[span_index];
         let local_derivatives = if max_order == 1 {
             vec![exact_classification(
                 rational_span.derivative_at_classified(&local, policy),
@@ -1164,36 +1382,65 @@ impl NurbsCurve2 {
     }
 
     fn rational_spans(&self) -> ExactCurveResult<&[RationalBezier2]> {
-        let spans = cached_result(&self.data.rational_spans, || {
-            self.bezier_decomposition()?
-                .spans()
-                .iter()
-                .map(|span| {
-                    RationalBezier2::try_new(
-                        span.control_points().to_vec(),
-                        span.weights().to_vec(),
-                    )
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(
-                            CurveOperation2::NativeTopology,
-                            CurveFamily2::Nurbs,
-                            cause,
-                        )
-                    })
-                })
-                .collect()
-        })?;
-        Ok(spans)
+        self.rational_spans_for_operation(&CurveContext::STRICT, CurveOperation2::NativeTopology)
     }
 
-    fn validate_periodic_seam(&self) -> ExactCurveResult<()> {
+    fn rational_spans_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<&[RationalBezier2]>> {
+        Ok(
+            match resolve_cached_evaluation(&self.data.rational_spans, policy, |attempt| {
+                let decomposition = match self.bezier_decomposition_with_policy(attempt)? {
+                    Classification::Decided(decomposition) => decomposition,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                decomposition
+                    .spans()
+                    .iter()
+                    .map(|span| {
+                        RationalBezier2::try_new(
+                            span.control_points().to_vec(),
+                            span.weights().to_vec(),
+                        )
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::NativeTopology,
+                                CurveFamily2::Nurbs,
+                                cause,
+                            )
+                        })
+                    })
+                    .collect::<ExactCurveResult<Vec<_>>>()
+                    .map(Classification::Decided)
+            })? {
+                Classification::Decided(spans) => Classification::Decided(spans.as_slice()),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
+    fn rational_spans_for_operation(
+        &self,
+        policy: &CurveContext,
+        operation: CurveOperation2,
+    ) -> ExactCurveResult<&[RationalBezier2]> {
+        require_classification(
+            self.rational_spans_with_policy(policy)
+                .map_err(|error| remap_nurbs_operation(error, operation))?,
+            operation,
+        )
+    }
+
+    fn validate_periodic_seam(&self, policy: &CurveContext) -> ExactCurveResult<()> {
         if !self.periodicity().is_periodic() {
             return Ok(());
         }
-        let policy = CurveContext::STRICT;
         match (
-            crate::classify::compare_reals(self.start().x(), self.end().x(), &policy),
-            crate::classify::compare_reals(self.start().y(), self.end().y(), &policy),
+            crate::classify::compare_reals(self.start().x(), self.end().x(), policy),
+            crate::classify::compare_reals(self.start().y(), self.end().y(), policy),
         ) {
             (Some(std::cmp::Ordering::Equal), Some(std::cmp::Ordering::Equal)) => Ok(()),
             (Some(_), Some(_)) => Err(ExactCurveError::invalid(
@@ -1349,16 +1596,6 @@ impl NurbsElevatedBezierSpan2 {
     }
 }
 
-fn cached_result<T>(
-    cache: &OnceLock<Cached<T>>,
-    initialize: impl FnOnce() -> Cached<T>,
-) -> ExactCurveResult<&T> {
-    match cache.get_or_init(initialize) {
-        Ok(value) => Ok(value),
-        Err(error) => Err(error.clone()),
-    }
-}
-
 fn exact_value<T>(
     result: crate::CurveResult<Classification<T>>,
     operation: CurveOperation2,
@@ -1374,6 +1611,27 @@ fn exact_value<T>(
             operation,
             CurveFamily2::Nurbs,
             cause,
+        )),
+    }
+}
+
+fn map_classified_curve_result<T>(
+    result: crate::CurveResult<Classification<T>>,
+    operation: CurveOperation2,
+) -> ExactCurveResult<Classification<T>> {
+    result.map_err(|cause| ExactCurveError::invalid(operation, CurveFamily2::Nurbs, cause))
+}
+
+fn require_classification<T>(
+    classification: Classification<T>,
+    operation: CurveOperation2,
+) -> ExactCurveResult<T> {
+    match classification {
+        Classification::Decided(value) => Ok(value),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            operation,
+            CurveFamily2::Nurbs,
+            reason,
         )),
     }
 }
@@ -1394,24 +1652,30 @@ fn remap_degree_elevation_error(error: ExactCurveError) -> ExactCurveError {
 fn validate_strict_interior_parameter(
     curve: &NurbsCurve2,
     parameter: &Real,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
-    validate_strict_interior(curve, parameter, CurveOperation2::Subdivision)
+    validate_strict_interior(curve, parameter, CurveOperation2::Subdivision, policy)
 }
 
 fn validate_strict_interior_knot(curve: &NurbsCurve2, knot: &Real) -> ExactCurveResult<()> {
-    validate_strict_interior(curve, knot, CurveOperation2::KnotRemoval)
+    validate_strict_interior(
+        curve,
+        knot,
+        CurveOperation2::KnotRemoval,
+        &CurveContext::STRICT,
+    )
 }
 
 fn validate_strict_interior(
     curve: &NurbsCurve2,
     parameter: &Real,
     operation: CurveOperation2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
     let (start, end) = curve.parameter_domain();
-    let policy = CurveContext::STRICT;
     match (
-        crate::classify::compare_reals(start, parameter, &policy),
-        crate::classify::compare_reals(parameter, end, &policy),
+        crate::classify::compare_reals(start, parameter, policy),
+        crate::classify::compare_reals(parameter, end, policy),
     ) {
         (Some(std::cmp::Ordering::Less), Some(std::cmp::Ordering::Less)) => Ok(()),
         (Some(_), Some(_)) => Err(ExactCurveError::invalid(
@@ -1431,33 +1695,38 @@ fn has_clamped_endpoints(
     knots: &[Real],
     degree: usize,
     control_count: usize,
+    policy: &CurveContext,
+    operation: CurveOperation2,
 ) -> ExactCurveResult<bool> {
-    let policy = CurveContext::STRICT;
     match (
-        crate::classify::compare_reals(&knots[0], &knots[degree], &policy),
+        crate::classify::compare_reals(&knots[0], &knots[degree], policy),
         crate::classify::compare_reals(
             knots.last().expect("validated NURBS has knots"),
             &knots[control_count],
-            &policy,
+            policy,
         ),
     ) {
         (Some(std::cmp::Ordering::Equal), Some(std::cmp::Ordering::Equal)) => Ok(true),
         (Some(_), Some(_)) => Ok(false),
         _ => Err(ExactCurveError::blocked(
-            CurveOperation2::Construction,
+            operation,
             CurveFamily2::Nurbs,
             UncertaintyReason::Ordering,
         )),
     }
 }
 
-fn validate_subcurve_range(curve: &NurbsCurve2, start: &Real, end: &Real) -> ExactCurveResult<()> {
+fn validate_subcurve_range(
+    curve: &NurbsCurve2,
+    start: &Real,
+    end: &Real,
+    policy: &CurveContext,
+) -> ExactCurveResult<()> {
     let (domain_start, domain_end) = curve.parameter_domain();
-    let policy = CurveContext::STRICT;
     match (
-        crate::classify::compare_reals(domain_start, start, &policy),
-        crate::classify::compare_reals(start, end, &policy),
-        crate::classify::compare_reals(end, domain_end, &policy),
+        crate::classify::compare_reals(domain_start, start, policy),
+        crate::classify::compare_reals(start, end, policy),
+        crate::classify::compare_reals(end, domain_end, policy),
     ) {
         (
             Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
@@ -1673,5 +1942,16 @@ fn exact_classification<T>(
             CurveFamily2::Nurbs,
             reason,
         )),
+    }
+}
+
+#[cfg(all(test, target_pointer_width = "64"))]
+mod layout_tests {
+    use super::{NurbsCurve2, NurbsData2};
+
+    #[test]
+    fn nurbs_carrier_keeps_compact_policy_aware_storage() {
+        assert_eq!(core::mem::size_of::<NurbsCurve2>(), 8);
+        assert_eq!(core::mem::size_of::<NurbsData2>(), 512);
     }
 }

@@ -1,15 +1,17 @@
-//! Policy-free retained polynomial B-spline carrier.
+//! Retained polynomial B-spline carrier with policy-isolated exact caches.
 
 use std::cmp::Ordering;
 use std::sync::Arc;
-use std::sync::OnceLock;
 
+use crate::policy::{
+    PolicyEvaluationCache, resolve_cached_evaluation, resolve_certified_operation,
+};
 use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
     BezierSubcurve2, Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
-    CurveOperation2, CurveParameterSide2, ExactCurveError, ExactCurveResult, NurbsCurve2, Point2,
-    PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBezier2, Real,
-    Similarity2, SplinePeriodicity2, UncertaintyReason,
+    CurveOperation2, CurveOutcome, CurveParameterSide2, ExactCurveError, ExactCurveResult,
+    NurbsCurve2, Point2, PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2,
+    RationalBezier2, Real, Similarity2, SplinePeriodicity2, UncertaintyReason,
 };
 
 type Cached<T> = Result<T, ExactCurveError>;
@@ -18,8 +20,8 @@ type Cached<T> = Result<T, ExactCurveError>;
 struct PolynomialSplineData2 {
     retained: PolynomialBSplineCurve2,
     endpoints: SplineEndpoints2,
-    decomposition: OnceLock<Cached<PolynomialSplineBezierDecomposition2>>,
-    rational_spans: OnceLock<Cached<Vec<RationalBezier2>>>,
+    decomposition: PolicyEvaluationCache<PolynomialSplineBezierDecomposition2>,
+    rational_spans: PolicyEvaluationCache<Vec<RationalBezier2>>,
 }
 
 #[derive(Debug)]
@@ -30,8 +32,9 @@ enum SplineEndpoints2 {
 
 /// Exact polynomial B-spline with retained source identity and decomposition.
 ///
-/// Clones share the authored control net and lazy Boehm decomposition. Both a
-/// successful decomposition and a contextual failure are calculated once.
+/// Clones share the authored control net and lazy Boehm decomposition. One
+/// decided exact decomposition is retained together with any strict blocker,
+/// so approximate-first evaluation cannot certify a later strict request.
 #[derive(Clone, Debug)]
 pub struct PolynomialSplineCurve2 {
     data: Arc<PolynomialSplineData2>,
@@ -111,6 +114,22 @@ impl PolynomialSplineCurve2 {
         knots: Vec<Real>,
         periodicity: SplinePeriodicity2,
     ) -> ExactCurveResult<Self> {
+        Self::try_new_expanded_with_policy(
+            degree,
+            control_points,
+            knots,
+            periodicity,
+            &CurveContext::STRICT,
+        )
+    }
+
+    fn try_new_expanded_with_policy(
+        degree: usize,
+        control_points: Vec<Point2>,
+        knots: Vec<Real>,
+        periodicity: SplinePeriodicity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         let valid_layout = degree
             .checked_add(1)
             .and_then(|order| {
@@ -135,23 +154,28 @@ impl PolynomialSplineCurve2 {
                 control_points,
                 knots,
                 periodicity,
-                &CurveContext::STRICT,
+                policy,
             ),
             CurveOperation2::Construction,
         )?;
-        let decomposition = OnceLock::new();
+        let decomposition = PolicyEvaluationCache::new();
         let endpoints = if has_clamped_endpoints(
             retained.knots(),
             retained.degree(),
             retained.control_points().len(),
+            policy,
+            CurveOperation2::Construction,
         )? {
             SplineEndpoints2::AuthoredControls
         } else {
             let extraction = exact_value(
-                retained.extract_bezier_spans(&CurveContext::STRICT),
+                retained.extract_bezier_spans(policy),
                 CurveOperation2::Construction,
             )?;
-            let intervals = source_intervals(&extraction)?;
+            let intervals = require_classification(
+                source_intervals(&extraction, policy)?,
+                CurveOperation2::Construction,
+            )?;
             let start = extraction
                 .spans()
                 .first()
@@ -164,12 +188,12 @@ impl PolynomialSplineCurve2 {
                 .expect("validated spline has a positive span")
                 .end()
                 .clone();
-            decomposition
-                .set(Ok(PolynomialSplineBezierDecomposition2 {
+            if !policy.permits_approximate_512() {
+                decomposition.seed_certified(PolynomialSplineBezierDecomposition2 {
                     extraction,
                     intervals,
-                }))
-                .expect("new decomposition cache is empty");
+                });
+            }
             SplineEndpoints2::Extracted { start, end }
         };
         let curve = Self {
@@ -177,10 +201,10 @@ impl PolynomialSplineCurve2 {
                 retained,
                 endpoints,
                 decomposition,
-                rational_spans: OnceLock::new(),
+                rational_spans: PolicyEvaluationCache::new(),
             }),
         };
-        curve.validate_periodic_seam()?;
+        curve.validate_periodic_seam(policy)?;
         Ok(curve)
     }
 
@@ -252,7 +276,7 @@ impl PolynomialSplineCurve2 {
     /// Inserts one exact knot without changing the polynomial spline image.
     pub fn insert_knot(&self, knot: Real) -> ExactCurveResult<Self> {
         let refined = self
-            .as_unit_weight_nurbs()?
+            .as_unit_weight_nurbs(&CurveContext::STRICT)?
             .insert_knot(knot)
             .map_err(|error| {
                 remap_spline_family_operation(error, CurveOperation2::KnotInsertion)
@@ -260,40 +284,103 @@ impl PolynomialSplineCurve2 {
         if refined.control_points().len() == self.control_points().len() {
             return Ok(self.clone());
         }
-        Self::from_unit_weight_nurbs(refined, CurveOperation2::KnotInsertion)
+        Self::from_unit_weight_nurbs(
+            refined,
+            CurveOperation2::KnotInsertion,
+            &CurveContext::STRICT,
+        )
     }
 
     /// Splits this polynomial spline exactly at a strict interior parameter.
-    pub fn split_at(&self, parameter: Real) -> ExactCurveResult<(Self, Self)> {
+    ///
+    /// The returned [`CurveOutcome`] covers the unit-weight NURBS split and
+    /// exact polynomial-carrier reconstruction.
+    #[inline(always)]
+    pub fn split_at(
+        &self,
+        parameter: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<(Self, Self)>> {
+        resolve_certified_operation(policy, |attempt| self.split_at_raw(parameter, attempt))
+    }
+
+    pub(crate) fn split_at_raw(
+        &self,
+        parameter: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<(Self, Self)> {
         let (left, right) = self
-            .as_unit_weight_nurbs()?
-            .split_at(parameter)
+            .as_unit_weight_nurbs(policy)?
+            .split_at_raw(parameter, policy)
             .map_err(|error| remap_spline_family_operation(error, CurveOperation2::Subdivision))?;
         Ok((
-            Self::from_unit_weight_nurbs(left, CurveOperation2::Subdivision)?,
-            Self::from_unit_weight_nurbs(right, CurveOperation2::Subdivision)?,
+            Self::from_unit_weight_nurbs(left, CurveOperation2::Subdivision, policy)?,
+            Self::from_unit_weight_nurbs(right, CurveOperation2::Subdivision, policy)?,
         ))
     }
 
     /// Returns an exact polynomial subcurve over an ordered source range.
-    pub fn subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
+    ///
+    /// The returned [`CurveOutcome`] records any `APPROXIMATE_512` terminal
+    /// consumed throughout the complete reconstruction.
+    #[inline(always)]
+    pub fn subcurve(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        let (domain_start, domain_end) = self.parameter_domain();
+        if &start == domain_start && &end == domain_end {
+            return Ok(CurveOutcome::new(
+                self.clone(),
+                crate::CurveCertainty::Certified,
+            ));
+        }
+        resolve_certified_operation(policy, |attempt| self.subcurve_raw(start, end, attempt))
+    }
+
+    pub(crate) fn subcurve_raw(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         let subcurve = self
-            .as_unit_weight_nurbs()?
-            .subcurve(start, end)
+            .as_unit_weight_nurbs(policy)?
+            .subcurve_raw(start, end, policy)
             .map_err(|error| remap_spline_family_operation(error, CurveOperation2::Subdivision))?;
-        Self::from_unit_weight_nurbs(subcurve, CurveOperation2::Subdivision)
+        Self::from_unit_weight_nurbs(subcurve, CurveOperation2::Subdivision, policy)
     }
 
     /// Returns an exact finite subcurve with clamped endpoints.
     ///
     /// Periodic and unclamped polynomial splines are materialized in exact
     /// piecewise-Bézier B-spline form over the requested source interval.
-    pub fn clamped_subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
+    /// The returned [`CurveOutcome`] covers the complete exact materialization.
+    #[inline(always)]
+    pub fn clamped_subcurve(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.clamped_subcurve_raw(start, end, attempt)
+        })
+    }
+
+    pub(crate) fn clamped_subcurve_raw(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         let subcurve = self
-            .as_unit_weight_nurbs()?
-            .clamped_subcurve(start, end)
+            .as_unit_weight_nurbs(policy)?
+            .clamped_subcurve_raw(start, end, policy)
             .map_err(|error| remap_spline_family_operation(error, CurveOperation2::Subdivision))?;
-        Self::from_unit_weight_nurbs(subcurve, CurveOperation2::Subdivision)
+        Self::from_unit_weight_nurbs(subcurve, CurveOperation2::Subdivision, policy)
     }
 
     /// Returns the same polynomial spline image with traversal direction reversed.
@@ -336,26 +423,55 @@ impl PolynomialSplineCurve2 {
 
     /// Returns the shared exact Bezier decomposition and source intervals.
     pub fn bezier_decomposition(&self) -> ExactCurveResult<&PolynomialSplineBezierDecomposition2> {
-        cached_result(&self.data.decomposition, || {
-            let extraction = exact_value(
-                self.data
-                    .retained
-                    .extract_bezier_spans(&CurveContext::STRICT),
+        self.bezier_decomposition_for_operation(
+            &CurveContext::STRICT,
+            CurveOperation2::BezierDecomposition,
+        )
+    }
+
+    pub(crate) fn bezier_decomposition_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<&PolynomialSplineBezierDecomposition2>> {
+        resolve_cached_evaluation(&self.data.decomposition, policy, |attempt| {
+            let extraction = match map_classified_curve_result(
+                self.data.retained.extract_bezier_spans(attempt),
                 CurveOperation2::BezierDecomposition,
-            )?;
-            let intervals = source_intervals(&extraction)?;
-            Ok(PolynomialSplineBezierDecomposition2 {
-                extraction,
-                intervals,
-            })
+            )? {
+                Classification::Decided(extraction) => extraction,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            Ok(source_intervals(&extraction, attempt)?.map(|intervals| {
+                PolynomialSplineBezierDecomposition2 {
+                    extraction,
+                    intervals,
+                }
+            }))
         })
+    }
+
+    fn bezier_decomposition_for_operation(
+        &self,
+        policy: &CurveContext,
+        operation: CurveOperation2,
+    ) -> ExactCurveResult<&PolynomialSplineBezierDecomposition2> {
+        require_classification(
+            self.bezier_decomposition_with_policy(policy)
+                .map_err(|error| remap_spline_operation(error, operation))?,
+            operation,
+        )
     }
 
     /// Iterates exact Bezier spans with source identity and knot intervals.
     pub fn bezier_spans(
         &self,
     ) -> ExactCurveResult<impl ExactSizeIterator<Item = PolynomialSplineBezierSpanView2<'_>>> {
-        let decomposition = self.bezier_decomposition()?;
+        let decomposition = self.bezier_decomposition_for_operation(
+            &CurveContext::STRICT,
+            CurveOperation2::BezierDecomposition,
+        )?;
         Ok(decomposition
             .spans()
             .iter()
@@ -436,7 +552,8 @@ impl PolynomialSplineCurve2 {
         side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
-        let decomposition = self.bezier_decomposition()?;
+        let decomposition =
+            self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
         let (first, last) = select_span_indices(decomposition.intervals(), parameter, policy)?;
         let first_interval = &decomposition.intervals()[first.index];
         let first_point = evaluate_span(
@@ -582,7 +699,8 @@ impl PolynomialSplineCurve2 {
         side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        let decomposition = self.bezier_decomposition()?;
+        let decomposition =
+            self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
         let (first, last) = select_span_indices(decomposition.intervals(), parameter, policy)?;
         let first_derivatives =
             self.derivatives_on_span(first.index, parameter, max_order, first.location, policy)?;
@@ -605,13 +723,16 @@ impl PolynomialSplineCurve2 {
         location: SpanParameterLocation,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        let interval = &self.bezier_decomposition()?.intervals()[span_index];
+        let interval = &self
+            .bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?
+            .intervals()[span_index];
         let local = match location {
             SpanParameterLocation::Start => Real::zero(),
             SpanParameterLocation::End => Real::one(),
             SpanParameterLocation::Interior => local_span_parameter(interval, parameter)?,
         };
-        let evaluator = &self.rational_spans()?[span_index];
+        let evaluator =
+            &self.rational_spans_for_operation(policy, CurveOperation2::Evaluation)?[span_index];
         let local_derivatives = if max_order == 1 {
             vec![exact_classification(
                 evaluator.derivative_at_classified(&local, policy),
@@ -636,25 +757,52 @@ impl PolynomialSplineCurve2 {
             .collect())
     }
 
-    fn rational_spans(&self) -> ExactCurveResult<&[RationalBezier2]> {
-        let spans = cached_result(&self.data.rational_spans, || {
-            self.bezier_decomposition()?
-                .spans()
-                .iter()
-                .map(rationalize_subcurve)
-                .collect()
-        })?;
-        Ok(spans)
+    fn rational_spans_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<&[RationalBezier2]>> {
+        Ok(
+            match resolve_cached_evaluation(&self.data.rational_spans, policy, |attempt| {
+                let decomposition = match self.bezier_decomposition_with_policy(attempt)? {
+                    Classification::Decided(decomposition) => decomposition,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                decomposition
+                    .spans()
+                    .iter()
+                    .map(rationalize_subcurve)
+                    .collect::<ExactCurveResult<Vec<_>>>()
+                    .map(Classification::Decided)
+            })? {
+                Classification::Decided(spans) => Classification::Decided(spans.as_slice()),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 
-    fn as_unit_weight_nurbs(&self) -> ExactCurveResult<NurbsCurve2> {
+    fn rational_spans_for_operation(
+        &self,
+        policy: &CurveContext,
+        operation: CurveOperation2,
+    ) -> ExactCurveResult<&[RationalBezier2]> {
+        require_classification(
+            self.rational_spans_with_policy(policy)
+                .map_err(|error| remap_spline_operation(error, operation))?,
+            operation,
+        )
+    }
+
+    fn as_unit_weight_nurbs(&self, policy: &CurveContext) -> ExactCurveResult<NurbsCurve2> {
         let weights = vec![Real::one(); self.control_points().len()];
-        let result = NurbsCurve2::try_new_expanded_with_periodicity(
+        let result = NurbsCurve2::try_new_expanded_with_periodicity_and_policy(
             self.degree(),
             self.control_points().to_vec(),
             weights,
             self.knots().to_vec(),
             self.periodicity().clone(),
+            policy,
         );
         result
             .map_err(|error| remap_spline_family_operation(error, CurveOperation2::NativeTopology))
@@ -663,24 +811,25 @@ impl PolynomialSplineCurve2 {
     fn from_unit_weight_nurbs(
         curve: NurbsCurve2,
         operation: CurveOperation2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        let result = Self::try_new_expanded(
+        let result = Self::try_new_expanded_with_policy(
             curve.degree(),
             curve.control_points().to_vec(),
             curve.knots().to_vec(),
             curve.periodicity().clone(),
+            policy,
         );
         result.map_err(|error| remap_spline_operation(error, operation))
     }
 
-    fn validate_periodic_seam(&self) -> ExactCurveResult<()> {
+    fn validate_periodic_seam(&self, policy: &CurveContext) -> ExactCurveResult<()> {
         if !self.periodicity().is_periodic() {
             return Ok(());
         }
-        let policy = CurveContext::STRICT;
         match (
-            crate::classify::compare_reals(self.start().x(), self.end().x(), &policy),
-            crate::classify::compare_reals(self.start().y(), self.end().y(), &policy),
+            crate::classify::compare_reals(self.start().x(), self.end().x(), policy),
+            crate::classify::compare_reals(self.start().y(), self.end().y(), policy),
         ) {
             (Some(Ordering::Equal), Some(Ordering::Equal)) => Ok(()),
             (Some(_), Some(_)) => Err(ExactCurveError::invalid(
@@ -777,14 +926,14 @@ impl<'a> PolynomialSplineBezierSpanView2<'a> {
 
 fn source_intervals(
     extraction: &PolynomialBSplineBezierExtraction2,
-) -> ExactCurveResult<Vec<(Real, Real)>> {
-    let policy = CurveContext::STRICT;
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<Vec<(Real, Real)>>> {
     let degree = extraction.degree();
     let knots = extraction.refined_knots();
     let end = knots.len().saturating_sub(degree + 1);
     let mut intervals = Vec::with_capacity(extraction.spans().len());
     for index in degree..end {
-        match crate::classify::compare_reals(&knots[index], &knots[index + 1], &policy) {
+        match crate::classify::compare_reals(&knots[index], &knots[index + 1], policy) {
             Some(Ordering::Less) => {
                 intervals.push((knots[index].clone(), knots[index + 1].clone()));
             }
@@ -797,11 +946,7 @@ fn source_intervals(
                 ));
             }
             None => {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::BezierDecomposition,
-                    CurveFamily2::PolynomialBSpline,
-                    UncertaintyReason::Ordering,
-                ));
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
             }
         }
     }
@@ -812,27 +957,28 @@ fn source_intervals(
             CurveError::Topology("B-spline span/interval count mismatch".into()),
         ));
     }
-    Ok(intervals)
+    Ok(Classification::Decided(intervals))
 }
 
 fn has_clamped_endpoints(
     knots: &[Real],
     degree: usize,
     control_count: usize,
+    policy: &CurveContext,
+    operation: CurveOperation2,
 ) -> ExactCurveResult<bool> {
-    let policy = CurveContext::STRICT;
     match (
-        crate::classify::compare_reals(&knots[0], &knots[degree], &policy),
+        crate::classify::compare_reals(&knots[0], &knots[degree], policy),
         crate::classify::compare_reals(
             knots.last().expect("validated spline has knots"),
             &knots[control_count],
-            &policy,
+            policy,
         ),
     ) {
         (Some(Ordering::Equal), Some(Ordering::Equal)) => Ok(true),
         (Some(_), Some(_)) => Ok(false),
         _ => Err(ExactCurveError::blocked(
-            CurveOperation2::Construction,
+            operation,
             CurveFamily2::PolynomialBSpline,
             UncertaintyReason::Ordering,
         )),
@@ -1038,16 +1184,6 @@ fn matching_spline_point(
     }
 }
 
-fn cached_result<T>(
-    cache: &OnceLock<Cached<T>>,
-    initialize: impl FnOnce() -> Cached<T>,
-) -> ExactCurveResult<&T> {
-    match cache.get_or_init(initialize) {
-        Ok(value) => Ok(value),
-        Err(error) => Err(error.clone()),
-    }
-}
-
 fn exact_value<T>(
     result: crate::CurveResult<Classification<T>>,
     operation: CurveOperation2,
@@ -1063,6 +1199,29 @@ fn exact_value<T>(
             operation,
             CurveFamily2::PolynomialBSpline,
             cause,
+        )),
+    }
+}
+
+fn map_classified_curve_result<T>(
+    result: crate::CurveResult<Classification<T>>,
+    operation: CurveOperation2,
+) -> ExactCurveResult<Classification<T>> {
+    result.map_err(|cause| {
+        ExactCurveError::invalid(operation, CurveFamily2::PolynomialBSpline, cause)
+    })
+}
+
+fn require_classification<T>(
+    classification: Classification<T>,
+    operation: CurveOperation2,
+) -> ExactCurveResult<T> {
+    match classification {
+        Classification::Decided(value) => Ok(value),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            operation,
+            CurveFamily2::PolynomialBSpline,
+            reason,
         )),
     }
 }
@@ -1089,5 +1248,16 @@ fn remap_spline_family_operation(
         ExactCurveError::Blocked(blocker) => {
             ExactCurveError::blocked(operation, CurveFamily2::PolynomialBSpline, blocker.reason())
         }
+    }
+}
+
+#[cfg(all(test, target_pointer_width = "64"))]
+mod layout_tests {
+    use super::{PolynomialSplineCurve2, PolynomialSplineData2};
+
+    #[test]
+    fn polynomial_spline_carrier_keeps_compact_policy_aware_storage() {
+        assert_eq!(core::mem::size_of::<PolynomialSplineCurve2>(), 8);
+        assert_eq!(core::mem::size_of::<PolynomialSplineData2>(), 288);
     }
 }

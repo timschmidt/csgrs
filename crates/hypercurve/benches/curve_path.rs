@@ -157,8 +157,9 @@ fn main() {
     let mut full_trim_checksum = 0_usize;
     for _ in 0..promotion_iterations {
         let trimmed = native
-            .subcurve(r(0), r(1))
-            .expect("full-domain trim is exact");
+            .subcurve(r(0), r(1), &policy)
+            .expect("full-domain trim is exact")
+            .into_value();
         full_trim_checksum ^= black_box(
             trimmed
                 .native_bezier_fragments(&policy)
@@ -178,8 +179,9 @@ fn main() {
     let mut native_split_checksum = 0_usize;
     for _ in 0..native_split_iterations {
         let (left, right) = native
-            .split_at(q(1, 2))
-            .expect("native benchmark split is exact");
+            .split_at(q(1, 2), &policy)
+            .expect("native benchmark split is exact")
+            .into_value();
         native_split_checksum ^= black_box(left.family() as usize ^ right.family() as usize);
     }
     let elapsed = started.elapsed();
@@ -200,8 +202,9 @@ fn main() {
     let mut spline_split_checksum = 0_usize;
     for _ in 0..spline_split_iterations {
         let (left, right) = spline
-            .split_at(r(3))
-            .expect("spline benchmark split is exact");
+            .split_at(r(3), &policy)
+            .expect("spline benchmark split is exact")
+            .into_value();
         spline_split_checksum ^= black_box(
             left.native_bezier_fragments(&policy)
                 .unwrap()
@@ -406,11 +409,13 @@ fn main() {
 
     let lineage_source = Curve2::from(CubicBezier2::new(p(0, 0), p(1, 3), p(3, 3), p(4, 0)));
     let lineage_first = lineage_source
-        .subcurve(r(0), q(3, 4))
-        .expect("benchmark source trim is exact");
+        .subcurve(r(0), q(3, 4), &policy)
+        .expect("benchmark source trim is exact")
+        .into_value();
     let lineage_second = lineage_source
-        .subcurve(q(1, 4), r(1))
-        .expect("benchmark source trim is exact");
+        .subcurve(q(1, 4), r(1), &policy)
+        .expect("benchmark source trim is exact")
+        .into_value();
     let lineage_iterations = 5_000_u32;
     let started = Instant::now();
     let mut lineage_checksum = 0_usize;
