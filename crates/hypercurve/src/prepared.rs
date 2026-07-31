@@ -1069,19 +1069,15 @@ fn classify_oriented_line(
     point: &hyperlimit::Point2,
     policy: &CurvePolicy,
 ) -> Classification<LineSide> {
-    match hyperlimit::classify_point_line_with_orientation(
+    match policy.consume_predicate(hyperlimit::classify_point_line_with_orientation(
         from,
         to,
         point,
         orientation,
         policy.predicate_policy,
-    ) {
-        hyperlimit::PredicateOutcome::Decided { value, .. } => {
-            Classification::Decided(line_side_from_hyperlimit(value))
-        }
-        hyperlimit::PredicateOutcome::Unknown { .. } => {
-            Classification::Uncertain(UncertaintyReason::Predicate)
-        }
+    )) {
+        Some(value) => Classification::Decided(line_side_from_hyperlimit(value)),
+        None => Classification::Uncertain(UncertaintyReason::Predicate),
     }
 }
 

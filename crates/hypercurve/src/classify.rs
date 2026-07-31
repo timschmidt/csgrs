@@ -122,11 +122,9 @@ pub(crate) fn classify_oriented_line(
             &predicate_point(point),
             policy.predicate_policy,
         );
-        match predicate_outcome {
-            hyperlimit::PredicateOutcome::Decided { value, .. } => {
-                Classification::Decided(LineSide::from_predicate_sign(value))
-            }
-            hyperlimit::PredicateOutcome::Unknown { .. } => {
+        match policy.consume_predicate(predicate_outcome) {
+            Some(value) => Classification::Decided(LineSide::from_predicate_sign(value)),
+            None => {
                 let det = orient2_real_expr(from, to, point);
                 real_sign(&det, policy)
                     .map(LineSide::from_real_sign)
@@ -178,8 +176,11 @@ pub(crate) fn real_sign(value: &Real, policy: &CurvePolicy) -> Option<RealSign> 
 
     #[cfg(feature = "predicates")]
     {
-        hyperlimit::classify_real_sign(value, policy.predicate_policy)
-            .value()
+        policy
+            .consume_predicate(hyperlimit::classify_real_sign(
+                value,
+                policy.predicate_policy,
+            ))
             .map(|sign| match sign {
                 hyperlimit::Sign::Negative => RealSign::Negative,
                 hyperlimit::Sign::Zero => RealSign::Zero,
@@ -219,9 +220,11 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> 
         // ordering has the same certified/unknown boundary as orientation.
         // This follows the exactness model's exact geometric computation split between exact
         // predicate decisions and approximate edge views.
-        if let Some(ordering) =
-            hyperlimit::compare_reals(left, right, policy.predicate_policy).value()
-        {
+        if let Some(ordering) = policy.consume_predicate(hyperlimit::compare_reals(
+            left,
+            right,
+            policy.predicate_policy,
+        )) {
             return Some(ordering);
         }
     }

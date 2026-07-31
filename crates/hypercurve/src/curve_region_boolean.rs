@@ -438,29 +438,7 @@ impl CurveRegion2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<CurveOutcome<CurveRegionIntersectionResult2>> {
-        if !policy.permits_approximate_512() {
-            return self
-                .intersect_region_raw(other, policy)
-                .map(|value| CurveOutcome::new(value, crate::CurveCertainty::Certified));
-        }
-        match self.intersect_region_raw(other, &policy.strict_counterpart()) {
-            Ok(strict) if strict.is_complete() => {
-                Ok(CurveOutcome::new(strict, crate::CurveCertainty::Certified))
-            }
-            Ok(strict) => match self.intersect_region_raw(other, policy) {
-                Ok(approximate) if approximate.is_complete() => Ok(CurveOutcome::new(
-                    approximate,
-                    crate::CurveCertainty::Approximate512Consumed,
-                )),
-                Ok(_) | Err(_) => Ok(CurveOutcome::new(strict, crate::CurveCertainty::Certified)),
-            },
-            Err(ExactCurveError::Blocked(_)) => {
-                self.intersect_region_raw(other, policy).map(|value| {
-                    CurveOutcome::new(value, crate::CurveCertainty::Approximate512Consumed)
-                })
-            }
-            Err(error) => Err(error),
-        }
+        resolve_certified_operation(policy, |attempt| self.intersect_region_raw(other, attempt))
     }
 
     pub(crate) fn intersect_region_raw(

@@ -431,12 +431,7 @@ mod tests {
         );
         let expected_parameter = s(2).sqrt().unwrap() - s(1);
         assert_eq!(
-            hyperlimit::compare_reals(
-                &parameter,
-                &expected_parameter,
-                hyperlimit::PredicatePolicy::STRICT,
-            )
-            .value(),
+            crate::classify::compare_reals(&parameter, &expected_parameter, &topology_policy()),
             Some(std::cmp::Ordering::Equal)
         );
     }
