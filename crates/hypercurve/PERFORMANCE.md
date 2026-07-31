@@ -6633,6 +6633,77 @@ Machine-readable semantic evidence, samples, layouts, binary size, remaining
 audit, and the 22,469-node/38,434-edge call graph are in
 [`2026-07-31-higher-order-edit-policy.json`](benchmarks/checkpoints/2026-07-31-higher-order-edit-policy.json).
 
+## Curve intersection policy checkpoint
+
+Every public top-level curve and curve-path intersection surface now returns
+`CurveOutcome<T>`. This includes immediate evidence and topology on `Curve2`
+and `CurvePath2`, plus the single-operation, all-four, and materialized-region
+path Boolean entry points. Private raw kernels preserve one-pass composition,
+so a complete operation is evaluated once and reports terminal certainty once.
+All native-fragment and rational-evaluator selection inside the intersection,
+split, trim, and Boolean representative-point paths now follows the caller's
+`CurveContext`; the obsolete strict-only rational-evaluator wrapper was
+removed.
+
+An ambiguous exact semicircle exercises the retained preparation boundary.
+`APPROXIMATE_512` returns complete contact evidence whose point remains an
+exact `Real` construction and reports `Approximate512Consumed`. A later
+`STRICT` request against the same retained arc still returns an
+`Intersection/RealSign` blocker, proving that approximate cache facts were not
+upgraded. Equivalent symbolic rectangle paths provide the same terminal
+regression for Boolean batching, a single selection, and a materialized
+region. Public Boolean failures are consistently remapped to the Boolean
+operation, and no implicit value, dereference, or compatibility shim was
+added.
+
+Eleven release parent/candidate process pairs were interleaved against the
+immediate `7a087c1` parent:
+
+| Exact immediate operation | Parent median | Policy-explicit median | Change |
+| --- | ---: | ---: | ---: |
+| Path intersection evidence | 2.179 us | 2.155 us | -1.09% |
+| Path intersection topology | 19.857 us | 20.166 us | +1.55% |
+| All-four path Boolean batch | 105.970 us | 107.298 us | +1.25% |
+| Lineage partial nonlinear overlap | 1.375 us | 1.383 us | +0.60% |
+| Native circle dispatch | 124.372 us | 116.397 us | -6.41% |
+
+The paired geometric-mean changes were -2.20%, +2.28%, +1.59%, +2.31%, and
+-4.06%, respectively; the timing ranges overlap. Seven interleaved
+whole-benchmark `perf stat` controls measured a 0.290% instruction increase.
+That process includes unchanged promotion, subdivision, and cached replay
+rows, so it is a conservative complete-surface sentinel.
+
+All seven matched pathological pairs retained 67 cells, 603 candidate pairs,
+3,248 fragments, 134 point classifications, all 268 operations decided, zero
+blockers, and checksum 6. The Boolean median moved from 465.410 to
+470.802 ms (+1.16%; +0.80% paired geometric mean), construction improved
+4.14%, and median observed RSS moved from 34.3 to 34.5 MiB. Removing the dead
+strict path reduced the stripped release executable by 27,272 bytes to
+5,498,376 bytes, 32,917 bytes below the frozen consolidation baseline.
+
+The seven-sample competitive matrix remained stable: 64- and 1,024-vertex
+exact intersections moved +0.01% and -0.24% from the preceding checkpoint,
+while 256 vertices improved 2.26%. Hypercurve therefore retains its
+larger-input advantage over the measured finite engines. The other exact
+Hypercurve sentinels moved between +0.26% and -1.96%; the certified general
+offset and exact NURBS lanes retain their explicitly non-equivalent
+guarantee/performance gap.
+
+Validation passed the complete all-feature suite with 258 unit tests, the
+162.27-second generated CurveRegion2 Boolean corpus, every integration suite
+other than the two explicitly ignored release-scale PCB corpora, all 268
+pathological Booleans, both warning-denied Clippy feature matrices, every fuzz
+target, warning-denied rustdoc, formatting, and diff checks. CSGRS still
+passes its all-feature check. Hypermesh was not modified.
+
+This checkpoint closes the intersection portion of the Phase 1 decision
+context audit, not Phase 1 itself. Strict-only public native-fragment,
+materialized-boundary, closed-path classification, and directed-sweep paths
+remain, as does spline subcurve/reconstruction propagation. Machine-readable
+samples, semantic evidence, binary size, caller status, and the
+22,495-node/38,527-edge call graph are in
+[`2026-07-31-curve-intersection-policy.json`](benchmarks/checkpoints/2026-07-31-curve-intersection-policy.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
