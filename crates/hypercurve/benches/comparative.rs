@@ -9,8 +9,8 @@ use cavalier_contours::polyline::{
     BooleanOp as CavalierBooleanOp, PlineSource, PlineSourceMut, Polyline,
 };
 use curvo::prelude::{
-    CurveOffsetOption as CurvoCurveOffsetOption, NurbsCurve2D as CurvoNurbsCurve2D,
-    Offset as CurvoOffset,
+    CurveOffsetOption as CurvoCurveOffsetOption, Interpolation as _,
+    NurbsCurve2D as CurvoNurbsCurve2D, Offset as CurvoOffset,
 };
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
@@ -21,7 +21,7 @@ use hypercurve::{
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
 use i_overlay::float::single::SingleFloatOverlay;
-use nalgebra::Point3;
+use nalgebra::{Point2 as NalgebraPoint2, Point3};
 
 use pathological_fixture::{CrossSuiteDataset, MemoryTier, selected_tiers};
 
@@ -692,6 +692,56 @@ fn benchmark_nurbs_evaluation(runner: &Runner) {
     });
 }
 
+fn benchmark_nurbs_interpolation(runner: &Runner) {
+    let name = "nurbs_interpolation/chord_length_collinear_degree_2";
+    if !runner.group_enabled(name) {
+        return;
+    }
+
+    // The collinear integer fixture gives both implementations the same exact
+    // chord parameters. The contracts still differ: Hypercurve certifies the
+    // exact solve and residuals; Curvo solves numerically in f64.
+    let coordinates = [[0.0, 0.0], [1.0, 0.0], [5.0, 0.0], [14.0, 0.0]];
+    let hypercurve_points = coordinates
+        .iter()
+        .map(|point| Point2::new(real(point[0]), real(point[1])))
+        .collect::<Vec<_>>();
+    let curvo_points = coordinates
+        .iter()
+        .map(|point| NalgebraPoint2::new(point[0], point[1]))
+        .collect::<Vec<_>>();
+
+    let exact =
+        NurbsCurve2::interpolate_chord_length(2, hypercurve_points.clone(), &CurveContext::STRICT)
+            .expect("exact chord-length interpolation is certified")
+            .into_value();
+    let numeric = CurvoNurbsCurve2D::<f64>::interpolate(&curvo_points, 2)
+        .expect("finite chord-length interpolation completes");
+    assert_eq!(exact.control_points().len(), numeric.control_points().len());
+
+    runner.measure(name, "hypercurve_exact_strict_certified", || {
+        black_box(
+            NurbsCurve2::interpolate_chord_length(
+                2,
+                hypercurve_points.clone(),
+                &CurveContext::STRICT,
+            )
+            .expect("exact chord-length interpolation remains certified")
+            .into_value(),
+        )
+        .control_points()
+        .len()
+    });
+    runner.measure(name, "curvo_f64_numeric", || {
+        black_box(
+            CurvoNurbsCurve2D::<f64>::interpolate(&curvo_points, 2)
+                .expect("finite chord-length interpolation remains solvable"),
+        )
+        .control_points()
+        .len()
+    });
+}
+
 fn benchmark_nurbs_editing(runner: &Runner) {
     let refinement_name = "nurbs_editing/retained_batch_refinement";
     let elevation_name = "nurbs_editing/retained_degree_elevation";
@@ -895,6 +945,7 @@ fn main() {
     benchmark_contour_offset(&runner);
     benchmark_bezier_offset(&runner);
     benchmark_nurbs_evaluation(&runner);
+    benchmark_nurbs_interpolation(&runner);
     benchmark_nurbs_editing(&runner);
     benchmark_pathological_cross_suite(&runner);
 }
