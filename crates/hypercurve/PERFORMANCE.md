@@ -7386,6 +7386,35 @@ unit tests, 14 focused region Boolean tests, seven generated Boolean corpora,
 the no-default build pass. Hypermesh was not modified. Complete evidence is in
 [`2026-07-31-mixed-line-conic-curve-region-boolean.json`](benchmarks/checkpoints/2026-07-31-mixed-line-conic-curve-region-boolean.json).
 
+## Authoritative all-family Boolean batch checkpoint (2026-07-31)
+
+Every nonempty, nonidentical `CurveRegion2::boolean_regions` call now builds
+exactly one candidate schedule, split graph, classification pass, and
+operation-mask traversal. The former curve-family gate, four repeated native
+eligibility probes for general operands, and partial immediate-result plumbing
+are deleted. Empty and structurally identical operands retain a zero-topology
+set-identity path. Affine, circular-conic, mixed, and general pair fast paths
+remain private dispatches inside the arrangement.
+
+The focused matrix covers all four set identities, both policy modes, every
+authored curve family, 20 retired exact blockers, and all 268 pathological
+operations. The 67-cell all-family result is unchanged at 603 candidate pairs,
+3,248 fragments, 134 point classifications, and checksum 6.
+
+Eleven alternating-order immediate-parent comparisons measured 472.644 ms for
+the universal route and 471.514 ms for the gated parent. The +0.24% median and
++0.25% paired geometric mean are within process noise. Heaptrack is exactly
+unchanged at 8,229,440 allocation calls and 1,380,404 temporary allocations;
+both artifacts report 34.70 MiB peak heap.
+
+Removing the dead selection/plumbing path shrinks the matched pathological
+executable by 11,568 stripped file bytes and 8,172 loadable bytes. The call
+graph contracts to 22,915 nodes and 39,445 edges. All 266 unit tests, 15
+focused batch tests, seven generated corpora, both warning-denied Clippy
+feature matrices, and no-default checking pass. Hypermesh was not modified.
+Complete evidence is in
+[`2026-07-31-authoritative-curve-region-boolean-batch.json`](benchmarks/checkpoints/2026-07-31-authoritative-curve-region-boolean-batch.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
