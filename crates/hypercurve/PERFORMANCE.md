@@ -6978,6 +6978,68 @@ samples, comparative controls, layouts, binary size, caller status, and the
 22,635-node/38,791-edge call graph are in
 [`2026-07-31-spline-subdivision-policy.json`](benchmarks/checkpoints/2026-07-31-spline-subdivision-policy.json).
 
+## Spline construction and interpolation policy checkpoint
+
+NURBS and polynomial-spline construction now receives an explicit
+`CurveContext` and returns exact carriers in `CurveOutcome`. This includes
+periodic constructors and the four top-level `Curve2` spline factories. All
+five NURBS interpolation entry points use the same boundary. Private raw
+kernels keep periodic expansion, carrier validation, the Hypersolve exact
+solve, and exact authored-point replay beneath one policy observation.
+
+Terminal tests retain the represented knot
+`1 + ((pi + e) - (e + pi))`. Strict construction and interpolation return
+typed `Construction`/`Interpolation` ordering blockers. Approximate-512 keeps
+that exact symbolic knot in the resulting carrier and reports
+`Approximate512Consumed`; no parameter, knot, control point, or weight is
+replaced by a finite approximation. Hypercurve's source, tests, benches, fuzz
+fixtures, and UI example consume the breaking signatures without a
+compatibility shim.
+
+Eleven interleaved default-feature release parent/candidate pairs pinned to
+one CPU measured:
+
+| Exact spline operation | Parent median | Policy-explicit median | Change |
+| --- | ---: | ---: | ---: |
+| Periodic NURBS construction | 7.777 us | 7.763 us | -0.18% |
+| Uniform global interpolation | 14.424 us | 14.322 us | -0.71% |
+| Symbolic centripetal interpolation | 279.848 us | 275.727 us | -1.47% |
+| Cached rational evaluation control | 896 ns | 893 ns | -0.33% |
+| 256-control cold decomposition | 1.889 ms | 1.885 ms | -0.22% |
+
+The paired geometric-mean changes were +0.92%, -1.72%, -1.25%, +0.42%, and
+-1.20%, respectively: all controls are neutral to slightly faster, with
+periodic construction retaining a sub-one-percent noise sentinel. In eleven
+fixed-iteration competitive processes, exact Hypercurve rational NURBS
+evaluation measured 1.169 us at the median versus Curvo's 59.4 ns finite
+heuristic. That large gap remains an optimization target, but the contracts
+are not exactness-equivalent.
+
+After a warm-up pair, eight matched pathological runs retained 67 cells, 603
+candidate pairs, 3,248 fragments, 134 point classifications, all 268
+operations decided, zero blockers, and checksum 6. Exact Boolean time moved
++0.20% at the median and +0.37% by paired geometric mean. Median RSS moved
+from 34.5 to 34.6 MiB. No carrier layout or heap cache changed. The
+representative stripped artifact adds 5,072 bytes (+0.09%) and remains 23,856
+bytes below the frozen stripped baseline.
+
+Validation passed the complete all-feature suite with 262 unit tests, all
+integration suites other than the two explicitly ignored release-scale PCB
+corpora, the generated Boolean corpus, all 268 pathological Booleans, both
+warning-denied Clippy feature matrices, every fuzz target, warning-denied
+rustdoc, UI warning-denied Clippy, formatting, and diff checks. Hypermesh was
+not modified.
+
+Hypersolve remains an exact evidence producer and does not silently own a
+Hyperlimit geometry policy. Interpolation now honors supportable terminal
+ordering, endpoint, determinant, denominator, carrier, and replay decisions;
+a caller-authorized continuation for a Bareiss `UndecidedPivot` is still an
+explicit Phase 0A/1 gap. Evaluation and direct decomposition are the next
+cohesive spline cut, followed by exact edits and the pivot-proposal bridge.
+Machine-readable samples, size evidence, remaining scope, and the
+22,656-node/38,865-edge call graph are in
+[`2026-07-31-spline-construction-interpolation-policy.json`](benchmarks/checkpoints/2026-07-31-spline-construction-interpolation-policy.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
