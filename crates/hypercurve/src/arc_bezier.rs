@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 
 use hyperreal::RealSign;
 
-use crate::policy::{resolve_cached_classification, resolve_cached_evaluation};
+use crate::policy::resolve_cached_evaluation;
 use crate::{
     CircularArc2, Classification, CurveContext, CurveError, CurveFamily2, CurveOperation2,
     ExactCurveError, ExactCurveResult, Point2, RationalQuadraticBezier2, Real, UncertaintyReason,
@@ -235,7 +235,7 @@ pub(crate) fn classify_sweep_with_policy(
     arc: &CircularArc2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Classification<ArcSweepKind>> {
-    resolve_cached_classification(&arc.retained_facts.sweep_kind, policy, |attempt| {
+    resolve_cached_evaluation(&arc.retained_facts.sweep_kind, policy, |attempt| {
         classify_sweep_uncached(arc, attempt)
     })
     .map(|classification| classification.map(|kind| *kind))

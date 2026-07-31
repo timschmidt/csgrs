@@ -326,13 +326,13 @@ impl<T> PolicyClassificationCache<T> {
     }
 }
 
-/// Compact policy-aware cache for immutable evaluations with no external
-/// certification path.
+/// Compact policy-aware cache for immutable evaluations.
 ///
 /// The optional reason records that the value required an approximate-512
-/// terminal and preserves the strict blocker in the same `OnceLock`. Unlike
-/// [`PolicyClassificationCache`], this carrier cannot later be upgraded by
-/// independent certified evidence.
+/// terminal and preserves the strict blocker in the same `OnceLock`. A cache
+/// may be seeded with certified construction evidence before its owner is
+/// published, but unlike [`PolicyClassificationCache`] it cannot later be
+/// upgraded after an approximate value has been retained.
 #[derive(Debug)]
 pub(crate) struct PolicyEvaluationCache<T> {
     resolved: OnceLock<(T, Option<UncertaintyReason>)>,
@@ -349,6 +349,14 @@ impl<T> PolicyEvaluationCache<T> {
         self.resolved
             .get()
             .and_then(|(value, reason)| reason.is_none().then_some(value))
+    }
+
+    pub(crate) fn seed_certified(&self, value: T) {
+        let seeded = self.resolved.set((value, None));
+        debug_assert!(
+            seeded.is_ok(),
+            "an immutable evaluation cache is seeded only before publication"
+        );
     }
 
     #[cfg(test)]

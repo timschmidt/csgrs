@@ -467,12 +467,11 @@ pub(crate) struct CircularArcRetainedFacts2 {
     clockwise: bool,
     source_bulge: Option<Real>,
     structural_facts: OnceLock<Box<crate::CircularArc2Facts>>,
-    pub(crate) sweep_kind:
-        crate::policy::PolicyClassificationCache<crate::arc_bezier::ArcSweepKind>,
+    pub(crate) sweep_kind: crate::policy::PolicyEvaluationCache<crate::arc_bezier::ArcSweepKind>,
     pub(crate) bezier_decomposition:
         crate::policy::PolicyEvaluationCache<crate::CircularArcBezierDecomposition2>,
     representative_point: crate::policy::PolicyEvaluationCache<Point2>,
-    directed_sweep_angle: crate::policy::PolicyClassificationCache<Real>,
+    directed_sweep_angle: crate::policy::PolicyEvaluationCache<Real>,
     parameter_lineage: OnceLock<Box<CircularArcParameterLineage2>>,
     parameter_witnesses: OnceLock<Box<Mutex<Vec<CircularArcParameterWitness2>>>>,
     fragments: OnceLock<Box<Mutex<Vec<CircularArcFragmentWitness2>>>>,
@@ -497,10 +496,10 @@ impl CircularArcRetainedFacts2 {
             clockwise,
             source_bulge,
             structural_facts: OnceLock::new(),
-            sweep_kind: crate::policy::PolicyClassificationCache::new(),
+            sweep_kind: crate::policy::PolicyEvaluationCache::new(),
             bezier_decomposition: crate::policy::PolicyEvaluationCache::new(),
             representative_point: crate::policy::PolicyEvaluationCache::new(),
-            directed_sweep_angle: crate::policy::PolicyClassificationCache::new(),
+            directed_sweep_angle: crate::policy::PolicyEvaluationCache::new(),
             parameter_lineage: OnceLock::new(),
             parameter_witnesses: OnceLock::new(),
             fragments: OnceLock::new(),
@@ -1123,7 +1122,7 @@ impl CircularArc2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<&Real>> {
-        crate::policy::resolve_cached_classification(
+        crate::policy::resolve_cached_evaluation(
             &self.retained_facts.directed_sweep_angle,
             policy,
             |attempt| self.compute_directed_sweep_angle(attempt),
@@ -1190,6 +1189,17 @@ impl CircularArc2 {
         if let Some(fragment) = self.retained_fragment(source_range, &start, &end) {
             return Ok(Classification::Decided(fragment));
         }
+        let source_sweep = match self.retained_directed_sweep_angle(policy)? {
+            Classification::Decided(angle) => angle.clone(),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let source_sweep_is_certified = self
+            .retained_facts
+            .directed_sweep_angle
+            .certified()
+            .is_some();
         let (root_start, root_sweep_angle, parent_root_range) =
             if let Some(lineage) = self.retained_facts.parameter_lineage.get() {
                 (
@@ -1198,12 +1208,6 @@ impl CircularArc2 {
                     lineage.root_range.clone(),
                 )
             } else {
-                let source_sweep = match self.retained_directed_sweep_angle(policy)? {
-                    Classification::Decided(angle) => angle.clone(),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
                 (
                     self.start().clone(),
                     source_sweep,
@@ -1233,12 +1237,16 @@ impl CircularArc2 {
                     root_sweep_angle,
                     root_range,
                 }));
-        fragment
-            .retained_facts
-            .directed_sweep_angle
-            .certify(fragment_sweep.clone());
-        if let Some(kind) = sweep_kind_from_directed_angle(&fragment_sweep, policy) {
-            fragment.retained_facts.sweep_kind.certify(kind);
+        if source_sweep_is_certified {
+            fragment
+                .retained_facts
+                .directed_sweep_angle
+                .seed_certified(fragment_sweep.clone());
+            if let Some(kind) =
+                sweep_kind_from_directed_angle(&fragment_sweep, &policy.strict_counterpart())
+            {
+                fragment.retained_facts.sweep_kind.seed_certified(kind);
+            }
         }
         self.retain_fragment(source_range, &start, &end, &fragment);
         Ok(Classification::Decided(fragment))
@@ -1579,21 +1587,28 @@ fn directed_radial_angle(
             crate::UncertaintyReason::RealSign,
         ));
     };
-    let angle = match cross_sign {
-        RealSign::Positive => directed_cross.atan2(dot),
-        RealSign::Negative => directed_cross.atan2(dot) + Real::tau(),
-        RealSign::Zero => match crate::classify::real_sign(&dot, policy) {
-            Some(RealSign::Positive) => Real::zero(),
-            Some(RealSign::Negative) => Real::pi(),
-            Some(RealSign::Zero) => {
-                return Err(CurveError::InvalidCurveParameter);
+    let Some(dot_sign) = crate::classify::real_sign(&dot, policy) else {
+        return Ok(Classification::Uncertain(
+            crate::UncertaintyReason::RealSign,
+        ));
+    };
+    let angle = match (cross_sign, dot_sign) {
+        (RealSign::Zero, RealSign::Positive) => Real::zero(),
+        (RealSign::Zero, RealSign::Negative) => Real::pi(),
+        (RealSign::Zero, RealSign::Zero) => {
+            return Err(CurveError::InvalidCurveParameter);
+        }
+        (RealSign::Positive, RealSign::Zero) => (Real::pi() / Real::from(2_i8))?,
+        (RealSign::Negative, RealSign::Zero) => (Real::from(3_i8) * Real::pi() / Real::from(2_i8))?,
+        (cross_sign, RealSign::Positive) => {
+            let base = (directed_cross / dot)?.atan()?;
+            if cross_sign == RealSign::Positive {
+                base
+            } else {
+                base + Real::tau()
             }
-            None => {
-                return Ok(Classification::Uncertain(
-                    crate::UncertaintyReason::RealSign,
-                ));
-            }
-        },
+        }
+        (_, RealSign::Negative) => (directed_cross / dot)?.atan()? + Real::pi(),
     };
     Ok(Classification::Decided(angle))
 }
@@ -1612,4 +1627,51 @@ fn sweep_kind_from_directed_angle(
         Ordering::Equal => crate::arc_bezier::ArcSweepKind::Semicircle,
         Ordering::Greater => crate::arc_bezier::ArcSweepKind::Major,
     })
+}
+
+#[cfg(all(test, feature = "predicates"))]
+mod policy_cache_tests {
+    use super::*;
+
+    fn point(x: i8, y: i8) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn approximate_sweep_fragment_does_not_gain_certified_cache_facts() {
+        let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let center = Point2::new(Real::from(3_i8) + undecidable_zero, Real::one());
+        let start = point(3, 0);
+        let end = point(3, 2);
+        let arc = CircularArc2::new_with_certified_radius(
+            start.clone(),
+            end,
+            center.clone(),
+            start.distance_squared(&center),
+            false,
+            None,
+        );
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        let Classification::Decided((first, _)) = arc
+            .split_at_sweep_fraction(&half, &CurveContext::APPROXIMATE_512)
+            .unwrap()
+        else {
+            panic!("the authorized terminal must split the ambiguous semicircle");
+        };
+        assert!(
+            first
+                .retained_facts
+                .directed_sweep_angle
+                .certified()
+                .is_none()
+        );
+        assert!(first.retained_facts.sweep_kind.certified().is_none());
+        assert_eq!(
+            first
+                .point_at_sweep_fraction(&half, &CurveContext::STRICT)
+                .unwrap(),
+            Classification::Uncertain(crate::UncertaintyReason::RealSign)
+        );
+    }
 }
