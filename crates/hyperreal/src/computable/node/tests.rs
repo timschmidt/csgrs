@@ -1727,6 +1727,126 @@ mod tests {
     }
 
     #[test]
+    fn pi_laurent_arithmetic_canonicalizes_nested_parameter_replay() {
+        let pi = Computable::pi();
+        let pi_squared = pi.clone().multiply(pi.clone());
+        let one_third = Rational::fraction(1, 3).expect("three is nonzero");
+        let third_pi = pi.clone().multiply_rational(one_third.clone());
+        let domain_parameter = pi.clone().multiply(
+            third_pi
+                .clone()
+                .multiply(pi.clone())
+                .multiply(pi_squared.clone().inverse()),
+        );
+        let pi_minus_one = pi.clone().add(Computable::rational(Rational::new(-1)));
+        let contact_parameter = pi
+            .clone()
+            .multiply(
+                pi_minus_one
+                    .clone()
+                    .add(third_pi.negate())
+                    .multiply(pi)
+                    .multiply(pi_squared.inverse()),
+            )
+            .negate()
+            .add(pi_minus_one);
+
+        assert_eq!(
+            domain_parameter.pi_rational_multiple(),
+            Some(one_third.clone())
+        );
+        assert_eq!(
+            contact_parameter.pi_rational_multiple(),
+            Some(one_third)
+        );
+        assert_eq!(
+            contact_parameter
+                .add(domain_parameter.negate())
+                .bounded_laurent_rational(),
+            Some(Rational::zero())
+        );
+
+        let root_two = Computable::sqrt_rational(Rational::new(2));
+        assert_eq!(
+            root_two
+                .clone()
+                .shift_right(2)
+                .multiply(root_two.clone().inverse().shift_left(2))
+                .bounded_laurent_rational(),
+            Some(Rational::one())
+        );
+        assert!(Computable::internal_structural_eq(
+            &root_two
+                .clone()
+                .shift_right(2)
+                .multiply(root_two.clone().inverse().shift_left(2))
+                .negate()
+                .atan(),
+            &Computable::pi().shift_right(2).negate()
+        ));
+        let root_two_over_pi =
+            Computable::pi_inverse_constant().multiply(root_two.clone());
+        let shared_offset = root_two
+            .clone()
+            .multiply_rational(Rational::new(3))
+            .add(Computable::rational(
+                Rational::fraction(1, 2).expect("two is nonzero"),
+            ));
+        let contact_parameter = root_two
+            .clone()
+            .shift_left(2)
+            .add(shared_offset.clone().negate())
+            .multiply(Computable::pi())
+            .multiply(root_two_over_pi.clone())
+            .multiply_rational(Rational::fraction(1, 4).expect("four is nonzero"));
+        let domain_parameter = root_two
+            .shift_left(1)
+            .add(shared_offset.negate())
+            .multiply(Computable::pi())
+            .multiply(root_two_over_pi)
+            .shift_right(2)
+            .add(Computable::one());
+
+        assert_eq!(
+            contact_parameter
+                .add(domain_parameter.negate())
+                .bounded_laurent_rational(),
+            Some(Rational::zero())
+        );
+
+        let pi = Computable::pi();
+        let pi_squared = pi.clone().multiply(pi.clone());
+        let angle = Computable::sqrt_rational(Rational::new(2))
+            .add(Computable::one())
+            .atan();
+        let shifted_angle = angle.add(pi.clone());
+        let contact_parameter = pi
+            .clone()
+            .add(shifted_angle.clone().negate())
+            .multiply(pi.clone())
+            .multiply(pi_squared.clone().inverse())
+            .multiply(pi.clone())
+            .negate()
+            .add(pi.clone());
+        let domain_parameter = pi
+            .clone()
+            .shift_right(1)
+            .add(shifted_angle.negate())
+            .multiply(pi.clone())
+            .multiply(pi_squared.inverse())
+            .multiply(pi.clone())
+            .negate()
+            .add(pi.shift_right(1));
+
+        assert_eq!(
+            contact_parameter
+                .add(domain_parameter.negate())
+                .bounded_laurent_rational(),
+            Some(Rational::zero())
+        );
+    }
+
+    #[test]
     fn scale_up() {
         let ten: BigInt = "10".parse().unwrap();
         let three: BigInt = "3".parse().unwrap();

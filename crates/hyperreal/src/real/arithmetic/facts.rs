@@ -58,6 +58,19 @@ impl Real {
         }
     }
 
+    /// Return the exact rational value when bounded symbolic normalization proves one.
+    ///
+    /// Unlike [`Real::exact_rational`], this query may inspect a retained
+    /// rational/π/quadratic/inverse-trig expression. It never approximates:
+    /// `None` means only that the bounded normal form does not cover the
+    /// expression.
+    pub fn exact_rational_normal_form(&self) -> Option<Rational> {
+        if let Some(rational) = self.exact_rational() {
+            return Some(rational);
+        }
+        Some(self.computable_ref().extended_laurent_rational()? * &self.rational)
+    }
+
     /// Return a borrowed exact rational when that is structurally known.
     ///
     /// Higher-level dense algebra kernels use this to batch exact rational

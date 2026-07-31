@@ -21,6 +21,256 @@ struct PiAtanTermsForm {
     terms: Vec<(Computable, Rational)>,
 }
 
+#[derive(Clone)]
+struct QuadraticCoefficient {
+    rational: Rational,
+    radical: Rational,
+    atoms: Vec<(Computable, Rational)>,
+}
+
+impl QuadraticCoefficient {
+    fn rational(value: Rational) -> Self {
+        Self {
+            rational: value,
+            radical: Rational::zero(),
+            atoms: Vec::new(),
+        }
+    }
+
+    fn radical(value: Rational) -> Self {
+        Self {
+            rational: Rational::zero(),
+            radical: value,
+            atoms: Vec::new(),
+        }
+    }
+
+    fn atom(value: Computable) -> Self {
+        Self {
+            rational: Rational::zero(),
+            radical: Rational::zero(),
+            atoms: vec![(value, Rational::one())],
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.rational.sign() == Sign::NoSign
+            && self.radical.sign() == Sign::NoSign
+            && self.atoms.is_empty()
+    }
+
+    fn add(mut self, other: Self) -> Self {
+        self.rational = self.rational + other.rational;
+        self.radical = self.radical + other.radical;
+        for (atom, coefficient) in other.atoms {
+            if let Some((_, existing)) = self
+                .atoms
+                .iter_mut()
+                .find(|(candidate, _)| Computable::internal_structural_eq(candidate, &atom))
+            {
+                *existing = existing.clone() + coefficient;
+            } else {
+                self.atoms.push((atom, coefficient));
+            }
+        }
+        self.atoms
+            .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
+        self
+    }
+
+    fn scaled(mut self, scale: &Rational) -> Self {
+        self.rational *= scale;
+        self.radical *= scale;
+        for (_, coefficient) in &mut self.atoms {
+            *coefficient *= scale;
+        }
+        self.atoms
+            .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
+        self
+    }
+
+    fn multiply(self, other: &Self, radicand: Option<&Rational>) -> Option<Self> {
+        if (!self.atoms.is_empty()
+            && (other.radical.sign() != Sign::NoSign || !other.atoms.is_empty()))
+            || (!other.atoms.is_empty() && self.radical.sign() != Sign::NoSign)
+        {
+            return None;
+        }
+        let cross = &self.rational * &other.radical + &self.radical * &other.rational;
+        let mut rational = &self.rational * &other.rational;
+        let radical_product = &self.radical * &other.radical;
+        if radical_product.sign() != Sign::NoSign {
+            rational = rational + radical_product * radicand?;
+        }
+        let mut atoms = self
+            .atoms
+            .into_iter()
+            .map(|(atom, coefficient)| (atom, coefficient * &other.rational))
+            .collect::<Vec<_>>();
+        for (atom, coefficient) in &other.atoms {
+            let coefficient = coefficient * &self.rational;
+            if let Some((_, existing)) = atoms
+                .iter_mut()
+                .find(|(candidate, _)| Computable::internal_structural_eq(candidate, atom))
+            {
+                *existing = existing.clone() + coefficient;
+            } else {
+                atoms.push((atom.clone(), coefficient));
+            }
+        }
+        atoms.retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
+        Some(Self {
+            rational,
+            radical: cross,
+            atoms,
+        })
+    }
+
+    fn inverse(self, radicand: Option<&Rational>) -> Option<Self> {
+        if !self.atoms.is_empty() {
+            return None;
+        }
+        if self.radical.sign() == Sign::NoSign {
+            return Some(Self::rational(self.rational.inverse().ok()?));
+        }
+        let radicand = radicand?;
+        let norm =
+            &self.rational * &self.rational - &self.radical * &self.radical * radicand;
+        let inverse_norm = norm.inverse().ok()?;
+        Some(Self {
+            rational: self.rational * &inverse_norm,
+            radical: -self.radical * inverse_norm,
+            atoms: Vec::new(),
+        })
+    }
+
+}
+
+#[derive(Clone)]
+struct PiQuadraticLaurentPolynomial {
+    radicand: Option<Rational>,
+    terms: Vec<(i16, QuadraticCoefficient)>,
+}
+
+impl PiQuadraticLaurentPolynomial {
+    const MAX_TERMS: usize = 8;
+
+    fn monomial(
+        power: i16,
+        coefficient: QuadraticCoefficient,
+        radicand: Option<Rational>,
+    ) -> Self {
+        Self {
+            radicand,
+            terms: (!coefficient.is_zero())
+                .then_some((power, coefficient))
+                .into_iter()
+                .collect(),
+        }
+    }
+
+    fn normalize_radicand(&mut self) {
+        if self
+            .terms
+            .iter()
+            .all(|(_, coefficient)| coefficient.radical.sign() == Sign::NoSign)
+        {
+            self.radicand = None;
+        }
+    }
+
+    fn merge_radicand(&mut self, other: &Self) -> Option<()> {
+        match (&self.radicand, &other.radicand) {
+            (Some(left), Some(right)) if left != right => None,
+            (None, Some(right)) => {
+                self.radicand = Some(right.clone());
+                Some(())
+            }
+            _ => Some(()),
+        }
+    }
+
+    fn insert(&mut self, power: i16, coefficient: QuadraticCoefficient) -> Option<()> {
+        if coefficient.is_zero() {
+            return Some(());
+        }
+        match self
+            .terms
+            .binary_search_by_key(&power, |(candidate, _)| *candidate)
+        {
+            Ok(index) => {
+                let sum = self.terms[index].1.clone().add(coefficient);
+                if sum.is_zero() {
+                    self.terms.remove(index);
+                } else {
+                    self.terms[index].1 = sum;
+                }
+            }
+            Err(index) => {
+                if self.terms.len() == Self::MAX_TERMS {
+                    return None;
+                }
+                self.terms.insert(index, (power, coefficient));
+            }
+        }
+        Some(())
+    }
+
+    fn add(mut self, other: Self) -> Option<Self> {
+        self.merge_radicand(&other)?;
+        for (power, coefficient) in other.terms {
+            self.insert(power, coefficient)?;
+        }
+        self.normalize_radicand();
+        Some(self)
+    }
+
+    fn scaled(mut self, scale: Rational) -> Self {
+        if scale.sign() == Sign::NoSign {
+            self.terms.clear();
+            self.radicand = None;
+            return self;
+        }
+        for (_, coefficient) in &mut self.terms {
+            *coefficient = coefficient.clone().scaled(&scale);
+        }
+        self
+    }
+
+    fn multiply(mut self, other: Self) -> Option<Self> {
+        self.merge_radicand(&other)?;
+        let radicand = self.radicand.clone();
+        let mut product = Self {
+            radicand,
+            terms: Vec::new(),
+        };
+        for (left_power, left_coefficient) in self.terms {
+            for (right_power, right_coefficient) in &other.terms {
+                product.insert(
+                    left_power.checked_add(*right_power)?,
+                    left_coefficient
+                        .clone()
+                        .multiply(right_coefficient, product.radicand.as_ref())?,
+                )?;
+            }
+        }
+        product.normalize_radicand();
+        Some(product)
+    }
+
+    fn inverse_monomial(self) -> Option<Self> {
+        let [(power, coefficient)] = self.terms.as_slice() else {
+            return None;
+        };
+        Some(Self::monomial(
+            power.checked_neg()?,
+            coefficient.clone().inverse(self.radicand.as_ref())?,
+            self.radicand,
+        ))
+    }
+
+}
+
 impl PiAtanTermsForm {
     fn scaled(mut self, scale: Rational) -> Self {
         self.constant *= &scale;
@@ -102,6 +352,126 @@ impl PiAtanLinearForm {
 }
 
 impl Computable {
+    fn pi_laurent_polynomial(
+        &self,
+        budget: usize,
+    ) -> Option<PiQuadraticLaurentPolynomial> {
+        if budget == 0 {
+            return None;
+        }
+        if let Some(rational) = self.exact_rational() {
+            return Some(PiQuadraticLaurentPolynomial::monomial(
+                0,
+                QuadraticCoefficient::rational(rational),
+                None,
+            ));
+        }
+        match self.shared_constant_kind() {
+            Some(SharedConstant::Pi) => {
+                return Some(PiQuadraticLaurentPolynomial::monomial(
+                    1,
+                    QuadraticCoefficient::rational(Rational::one()),
+                    None,
+                ));
+            }
+            Some(SharedConstant::InvPi) => {
+                return Some(PiQuadraticLaurentPolynomial::monomial(
+                    -1,
+                    QuadraticCoefficient::rational(Rational::one()),
+                    None,
+                ));
+            }
+            Some(SharedConstant::Tau) => {
+                return Some(PiQuadraticLaurentPolynomial::monomial(
+                    1,
+                    QuadraticCoefficient::rational(Rational::new(2)),
+                    None,
+                ));
+            }
+            Some(SharedConstant::Sqrt2) => {
+                return Some(PiQuadraticLaurentPolynomial::monomial(
+                    0,
+                    QuadraticCoefficient::radical(Rational::one()),
+                    Some(Rational::new(2)),
+                ));
+            }
+            Some(SharedConstant::Sqrt3) => {
+                return Some(PiQuadraticLaurentPolynomial::monomial(
+                    0,
+                    QuadraticCoefficient::radical(Rational::one()),
+                    Some(Rational::new(3)),
+                ));
+            }
+            _ => {}
+        }
+        if self.atan_argument().is_some()
+            || self.asin_argument().is_some()
+            || self.acos_argument().is_some()
+        {
+            return Some(PiQuadraticLaurentPolynomial::monomial(
+                0,
+                QuadraticCoefficient::atom(self.clone()),
+                None,
+            ));
+        }
+        match &self.internal.approximation {
+            Approximation::Add(left, right) => left
+                .pi_laurent_polynomial(budget - 1)?
+                .add(right.pi_laurent_polynomial(budget - 1)?),
+            Approximation::Multiply(left, right) => left
+                .pi_laurent_polynomial(budget - 1)?
+                .multiply(right.pi_laurent_polynomial(budget - 1)?),
+            Approximation::Negate(child) => Some(
+                child
+                    .pi_laurent_polynomial(budget - 1)?
+                    .scaled(Rational::new(-1)),
+            ),
+            Approximation::Offset(child, shift) => Some(
+                child
+                    .pi_laurent_polynomial(budget - 1)?
+                    .scaled(Self::power_of_two_rational(*shift)),
+            ),
+            Approximation::Inverse(child) => child
+                .pi_laurent_polynomial(budget - 1)?
+                .inverse_monomial(),
+            Approximation::Square(child) => {
+                let child = child.pi_laurent_polynomial(budget - 1)?;
+                child.clone().multiply(child)
+            }
+            Approximation::Sqrt(child) => {
+                let radicand = child.exact_rational()?;
+                Some(PiQuadraticLaurentPolynomial::monomial(
+                    0,
+                    QuadraticCoefficient::radical(Rational::one()),
+                    Some(radicand),
+                ))
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn bounded_laurent_rational(&self) -> Option<Rational> {
+        self.bounded_laurent_rational_with_budget(48)
+    }
+
+    pub(crate) fn extended_laurent_rational(&self) -> Option<Rational> {
+        self.bounded_laurent_rational_with_budget(64)
+    }
+
+    fn bounded_laurent_rational_with_budget(&self, budget: usize) -> Option<Rational> {
+        let polynomial = self.pi_laurent_polynomial(budget)?;
+        match polynomial.terms.as_slice() {
+            [] => Some(Rational::zero()),
+            [(0, coefficient)]
+                if coefficient.radical.sign() == Sign::NoSign
+                    && coefficient.atoms.is_empty() =>
+            {
+                Some(coefficient.rational.clone())
+            }
+            _ => None,
+        }
+    }
+
     fn without_scaled_shared_factor(&self, factor: SharedConstant) -> Option<Computable> {
         if self.shared_constant_kind() == Some(factor) {
             return Some(Self::one());
@@ -553,6 +923,21 @@ impl Computable {
 
     pub(crate) fn pi_rational_multiple(&self) -> Option<Rational> {
         self.retained_pi_rational_multiple(32)
+            .or_else(|| self.pi_laurent_rational_multiple())
+    }
+
+    fn pi_laurent_rational_multiple(&self) -> Option<Rational> {
+        let polynomial = self.pi_laurent_polynomial(48)?;
+        match polynomial.terms.as_slice() {
+            [] => Some(Rational::zero()),
+            [(1, coefficient)]
+                if coefficient.radical.sign() == Sign::NoSign
+                    && coefficient.atoms.is_empty() =>
+            {
+                Some(coefficient.rational.clone())
+            }
+            _ => None,
+        }
     }
 
     fn retained_pi_rational_multiple(&self, budget: usize) -> Option<Rational> {

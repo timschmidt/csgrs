@@ -206,10 +206,22 @@ impl Computable {
                 );
             }
         }
-        if let Some(rational) = self.exact_rational() {
+        if let Some(rational) = self
+            .exact_rational()
+            .or_else(|| self.bounded_laurent_rational())
+        {
             if rational.sign() == Sign::NoSign {
                 crate::trace_dispatch!("computable", "atan", "exact-zero");
                 return Self::zero();
+            }
+            if rational.is_one() || rational.is_minus_one() {
+                crate::trace_dispatch!("computable", "atan", "exact-quarter-turn");
+                let quarter_turn = Self::pi().shift_right(2);
+                return if rational.sign() == Sign::Minus {
+                    quarter_turn.negate()
+                } else {
+                    quarter_turn
+                };
             }
             match rational.sign() {
                 Sign::Plus => {

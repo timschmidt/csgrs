@@ -625,6 +625,19 @@ impl Computable {
         // the expression shape or a separated cached approximation proves the
         // sign. Unknown is cached separately so impossible structural proofs do
         // not repeat on every predicate query.
+        let cached_sign = self.internal.facts.exact_sign();
+        if let ExactSignCache::Valid(sign) = cached_sign {
+            return Some(sign);
+        }
+        if let Some((_, appr)) = self.cached()
+            && appr.abs() > BigInt::one()
+        {
+            let sign = appr.sign();
+            self.internal
+                .facts
+                .replace_exact_sign(ExactSignCache::Valid(sign));
+            return Some(sign);
+        }
         if matches!(self.internal.approximation, Approximation::Add(_, _))
             && let Some(sign) = self.inverse_trig_linear_sign()
         {
@@ -633,20 +646,8 @@ impl Computable {
                 .replace_exact_sign(ExactSignCache::Valid(sign));
             return Some(sign);
         }
-        let cached_sign = self.internal.facts.exact_sign();
-        match cached_sign {
-            ExactSignCache::Valid(sign) => return Some(sign),
-            ExactSignCache::Unknown => {
-                if let Some((_, appr)) = self.cached()
-                    && appr.abs() > BigInt::one()
-                {
-                    let sign = appr.sign();
-                    self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
-                    return Some(sign);
-                }
-                return None;
-            }
-            ExactSignCache::Invalid => {}
+        if cached_sign == ExactSignCache::Unknown {
+            return None;
         }
         enum Frame<'a> {
             Eval(&'a Computable),
