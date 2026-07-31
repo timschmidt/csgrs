@@ -6330,6 +6330,55 @@ Machine-readable samples, competitive medians, validation, binary size, and
 call-graph evidence are in
 [`2026-07-31-curve-region-construction-outcomes.json`](benchmarks/checkpoints/2026-07-31-curve-region-construction-outcomes.json).
 
+### Explicit query outcomes
+
+Every predicate-bearing public `CurveRegion2` read/query operation now returns
+`CurveOutcome<T>`: point classification and signed depth, filled area and
+bounds, loop roles/profiles/filled sides, native-contour eligibility, and the
+three retained role-evidence routes. Internal Boolean, projection, transform,
+offset, and SVG composition call private raw kernels under their existing
+outer observation frame, so no query is recomputed and no nested public
+outcome is discarded. The one-word region carrier and its persistent storage
+are unchanged.
+
+A symbolic right boundary authored with `pi + e` and queried with `e + pi`
+remains a certified outer outcome containing explicit uncertainty under
+`STRICT`. `APPROXIMATE_512` identifies the same point as boundary and reports
+`Approximate512Consumed`; the returned point and region geometry remain exact.
+No implicit value or dereference compatibility shim was added.
+
+Seven parent/candidate `bezier_region` process pairs were interleaved with
+execution order reversed on alternate pairs. The timing ranges overlap:
+
+| Public query | Parent median | Outcome median | Change |
+| --- | ---: | ---: | ---: |
+| Retained point classification | 34.457 us | 33.896 us | -1.63% |
+| Native signed depth | 0.846 us | 0.821 us | -2.96% |
+| Retained algebraic classification | 26.104 us | 25.696 us | -1.56% |
+| Algebraic line-role evidence | 56.436 us | 56.537 us | +0.18% |
+
+Seven pathological processes retained 67 cells, 603 candidate pairs, 3,248
+fragments, 134 point classifications, all 268 decided operations, zero
+blockers, and checksum 6. Their median was 470.508 ms, 1.15% below the
+preceding checkpoint and 0.20% below the frozen baseline. The build median was
+74.008 ms and median observed RSS delta was 34.6 MiB. The stripped release
+executable grew 1,591 bytes to 5,508,360 bytes, remaining 22,933 bytes below
+the frozen consolidation baseline.
+
+The seven-sample competitive lane remained stable: the largest movement from
+the frozen Hypercurve medians was a 7.0% improvement in the source-chord cubic
+fallback, while every other exact Hypercurve lane remained within 4.0%.
+Hypercurve retains its larger-input polygon advantage and its explicit
+exactness/performance gap on certified general offsets and NURBS evaluation.
+
+Validation passed the complete all-feature suite, including the 161.61-second
+exact CurveRegion2 corpus and all pathological operations; warning-denied
+all-target and no-default matrices; fuzz builds; rustdoc; the release WASM UI;
+and all 37 standalone UI tests in 323.96 seconds.
+
+Machine-readable samples and call-graph evidence are in
+[`2026-07-31-curve-region-query-outcomes.json`](benchmarks/checkpoints/2026-07-31-curve-region-query-outcomes.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
