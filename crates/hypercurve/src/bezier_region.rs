@@ -2576,7 +2576,7 @@ impl CurveRegion2 {
             data.signed_loop_composition = self.data.signed_loop_composition;
         }
         let sides = match self
-            .filled_side_is_left(policy)
+            .filled_side_is_left_raw(policy)
             .map_err(affine_region_error)?
         {
             Classification::Decided(sides) => sides
@@ -2636,6 +2636,13 @@ impl CurveRegion2 {
     pub fn filled_side_is_left(
         &self,
         policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<&[bool]>>> {
+        resolve_certified_operation(policy, |attempt| self.filled_side_is_left_raw(attempt))
+    }
+
+    pub(crate) fn filled_side_is_left_raw(
+        &self,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<&[bool]>> {
         let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
         self.filled_side_is_left_with_area_cache(policy, &mut rational_quadratic_cache)
@@ -2683,7 +2690,7 @@ impl CurveRegion2 {
             });
         }
 
-        match self.curved_nesting_role_evidence(policy)? {
+        match self.curved_nesting_role_evidence_raw(policy)? {
             Classification::Decided(evidence) => {
                 return filled_sides_from_roles_and_areas(
                     evidence.roles(),
@@ -2696,7 +2703,7 @@ impl CurveRegion2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
 
-        match self.line_image_role_evidence(policy)? {
+        match self.line_image_role_evidence_raw(policy)? {
             Classification::Decided(evidence) => {
                 let mut areas = Vec::with_capacity(evidence.contours().len());
                 for contour in evidence.contours() {
@@ -2866,6 +2873,13 @@ impl CurveRegion2 {
     pub fn line_image_role_evidence(
         &self,
         policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<CurveRegionLineRoleEvidence2>>> {
+        resolve_certified_operation(policy, |attempt| self.line_image_role_evidence_raw(attempt))
+    }
+
+    pub(crate) fn line_image_role_evidence_raw(
+        &self,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveRegionLineRoleEvidence2>> {
         let mut contours = Vec::with_capacity(self.data.boundary_loops.len());
         let mut materialized_fragment_count = 0_usize;
@@ -2908,6 +2922,15 @@ impl CurveRegion2 {
     pub fn signed_area_role_evidence(
         &self,
         policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<CurveRegionSignedAreaRoleEvidence2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.signed_area_role_evidence_raw(attempt)
+        })
+    }
+
+    pub(crate) fn signed_area_role_evidence_raw(
+        &self,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveRegionSignedAreaRoleEvidence2>> {
         let mut roles = Vec::with_capacity(self.data.boundary_loops.len());
         let mut signed_areas = Vec::with_capacity(self.data.boundary_loops.len());
@@ -2942,6 +2965,15 @@ impl CurveRegion2 {
     /// same-orientation nested nonlinear loops classify as material/hole by
     /// topology instead of by their authored orientation.
     pub fn curved_nesting_role_evidence(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<CurveRegionNestingRoleEvidence2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.curved_nesting_role_evidence_raw(attempt)
+        })
+    }
+
+    pub(crate) fn curved_nesting_role_evidence_raw(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveRegionNestingRoleEvidence2>> {
@@ -3027,23 +3059,30 @@ impl CurveRegion2 {
     pub fn loop_roles(
         &self,
         policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Vec<CurveRegionLoopRole>>>> {
+        resolve_certified_operation(policy, |attempt| self.loop_roles_raw(attempt))
+    }
+
+    pub(crate) fn loop_roles_raw(
+        &self,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<CurveRegionLoopRole>>> {
         if let Some(roles) = &self.data.certified_loop_roles {
             return Ok(Classification::Decided(roles.to_vec()));
         }
-        match self.curved_nesting_role_evidence(policy)? {
+        match self.curved_nesting_role_evidence_raw(policy)? {
             Classification::Decided(evidence) => {
                 return Ok(Classification::Decided(evidence.roles().to_vec()));
             }
             Classification::Uncertain(_) => {}
         }
-        match self.signed_area_role_evidence(policy)? {
+        match self.signed_area_role_evidence_raw(policy)? {
             Classification::Decided(evidence) => {
                 return Ok(Classification::Decided(evidence.roles().to_vec()));
             }
             Classification::Uncertain(_) => {}
         }
-        self.line_image_role_evidence(policy)
+        self.line_image_role_evidence_raw(policy)
             .map(|roles| roles.map(|evidence| evidence.roles().to_vec()))
     }
 
@@ -3055,8 +3094,15 @@ impl CurveRegion2 {
     pub fn loop_role_counts(
         &self,
         policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<(usize, usize)>>> {
+        resolve_certified_operation(policy, |attempt| self.loop_role_counts_raw(attempt))
+    }
+
+    pub(crate) fn loop_role_counts_raw(
+        &self,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<(usize, usize)>> {
-        self.loop_roles(policy).map(|roles| {
+        self.loop_roles_raw(policy).map(|roles| {
             roles.map(|roles| {
                 let material = roles
                     .iter()
@@ -3085,8 +3131,15 @@ impl CurveRegion2 {
     pub fn boundary_profiles(
         &self,
         policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Vec<CurveRegionProfile2<'_>>>>> {
+        resolve_certified_operation(policy, |attempt| self.boundary_profiles_raw(attempt))
+    }
+
+    pub(crate) fn boundary_profiles_raw(
+        &self,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<CurveRegionProfile2<'_>>>> {
-        let roles = match self.loop_roles(policy)? {
+        let roles = match self.loop_roles_raw(policy)? {
             Classification::Decided(roles) => roles,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -3274,7 +3327,7 @@ impl CurveRegion2 {
                         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                     }
                 } else {
-                    match self.line_image_role_evidence(attempt)? {
+                    match self.line_image_role_evidence_raw(attempt)? {
                         Classification::Decided(evidence) => {
                             let region = self.region_from_line_role_evidence(&evidence)?;
                             Ok(Classification::Decided(Some(region)))
@@ -3302,6 +3355,15 @@ impl CurveRegion2 {
     /// need native primitives. Higher-order topology
     /// remains explicit `Unsupported` uncertainty and is never segmented.
     pub fn native_contours_fast_path(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<CurveRegionNativeContourView2<'_>>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.native_contours_fast_path_raw(attempt)
+        })
+    }
+
+    pub(crate) fn native_contours_fast_path_raw(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveRegionNativeContourView2<'_>>> {
@@ -3480,7 +3542,7 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
         let roles = match self
-            .loop_roles(policy)
+            .loop_roles_raw(policy)
             .map_err(|cause| curve_region_edit_error(operation, cause))?
         {
             Classification::Decided(roles) => roles,
@@ -3525,7 +3587,7 @@ impl CurveRegion2 {
             }
         };
         let roles = match self
-            .loop_roles(policy)
+            .loop_roles_raw(policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Subdivision, cause))?
         {
             Classification::Decided(roles) => roles,
@@ -3652,7 +3714,7 @@ impl CurveRegion2 {
             }
         };
         let roles = match self
-            .loop_roles(policy)
+            .loop_roles_raw(policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
         {
             Classification::Decided(roles) => roles,
@@ -3661,7 +3723,7 @@ impl CurveRegion2 {
             }
         };
         let filled_sides = match self
-            .filled_side_is_left(policy)
+            .filled_side_is_left_raw(policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
         {
             Classification::Decided(sides) => sides,
@@ -3974,7 +4036,7 @@ impl CurveRegion2 {
             }
         };
         let roles = match self
-            .loop_roles(policy)
+            .loop_roles_raw(policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
         {
             Classification::Decided(roles) => roles,
@@ -3983,7 +4045,7 @@ impl CurveRegion2 {
             }
         };
         let filled_sides = match self
-            .filled_side_is_left(policy)
+            .filled_side_is_left_raw(policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
         {
             Classification::Decided(sides) => sides,
@@ -4159,7 +4221,7 @@ impl CurveRegion2 {
             }
         };
         let roles = match self
-            .loop_roles(policy)
+            .loop_roles_raw(policy)
             .map_err(|cause| curve_region_edit_error(operation, cause))?
         {
             Classification::Decided(roles) => roles,
@@ -4257,6 +4319,14 @@ impl CurveRegion2 {
     /// represented parameter ranges. A non-line carrier without source-curve
     /// provenance remains explicit `Unsupported` uncertainty.
     pub fn classify_point(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<RegionPointLocation>>> {
+        resolve_certified_operation(policy, |attempt| self.classify_point_raw(point, attempt))
+    }
+
+    pub(crate) fn classify_point_raw(
         &self,
         point: &Point2,
         policy: &CurveContext,
@@ -4362,6 +4432,14 @@ impl CurveRegion2 {
         &self,
         point: &Point2,
         policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<i32>>> {
+        resolve_certified_operation(policy, |attempt| self.signed_depth_raw(point, attempt))
+    }
+
+    pub(crate) fn signed_depth_raw(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
         if !self.data.signed_loop_composition {
             match self.native_line_arc_region(policy)? {
@@ -4379,7 +4457,7 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
-        let roles = match self.loop_roles(policy)? {
+        let roles = match self.loop_roles_raw(policy)? {
             Classification::Decided(roles) => roles,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -4532,7 +4610,17 @@ impl CurveRegion2 {
     /// self-contact analysis cannot certify a non-repeated loop as simple, the
     /// query remains explicitly uncertain instead of treating traversal
     /// multiplicity as filled-set area.
-    pub fn filled_area(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Real>>> {
+    pub fn filled_area(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
+        resolve_certified_operation(policy, |attempt| self.filled_area_raw(attempt))
+    }
+
+    pub(crate) fn filled_area_raw(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Real>>> {
         let mut magnitudes = Vec::with_capacity(self.data.boundary_loops.len());
         if self
             .data
@@ -4567,7 +4655,7 @@ impl CurveRegion2 {
             };
             magnitudes.push(magnitude);
         }
-        let roles = match self.loop_roles(policy)? {
+        let roles = match self.loop_roles_raw(policy)? {
             Classification::Decided(roles) => roles,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -6762,7 +6850,10 @@ mod tests {
             assert!(region.data.native_boundary_bounds.is_empty());
             assert!(matches!(
                 region.filled_side_is_left(&policy),
-                Ok(Classification::Decided(sides)) if sides == [expected]
+                Ok(CurveOutcome {
+                    value: Classification::Decided(sides),
+                    ..
+                }) if sides == [expected]
             ));
             assert!(region.data.native_boundary_bounds.is_empty());
         }
@@ -6859,15 +6950,21 @@ mod tests {
         .into_value();
         let point = Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap());
         assert_eq!(
-            region.classify_point(&point, &policy),
+            region
+                .classify_point(&point, &policy)
+                .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Inside))
         );
         assert_eq!(
-            region.classify_point(&p(1, 1), &policy),
+            region
+                .classify_point(&p(1, 1), &policy)
+                .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Boundary))
         );
         assert_eq!(
-            region.classify_point(&p(1, 2), &policy),
+            region
+                .classify_point(&p(1, 2), &policy)
+                .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Outside))
         );
         assert!(matches!(
@@ -6938,15 +7035,21 @@ mod tests {
         .unwrap()
         .into_value();
         assert_eq!(
-            region.classify_point(&p(-2, 0), &policy),
+            region
+                .classify_point(&p(-2, 0), &policy)
+                .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Inside))
         );
         assert_eq!(
-            region.classify_point(&p(2, 0), &policy),
+            region
+                .classify_point(&p(2, 0), &policy)
+                .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Outside))
         );
         assert_eq!(
-            region.signed_depth(&p(2, 0), &policy),
+            region
+                .signed_depth(&p(2, 0), &policy)
+                .map(CurveOutcome::into_value),
             Ok(Classification::Decided(0))
         );
     }

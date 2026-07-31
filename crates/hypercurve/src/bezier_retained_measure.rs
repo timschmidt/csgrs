@@ -27,8 +27,8 @@ use hypersolve::AlgebraicRootRepresentation;
 use crate::classify::compare_reals;
 use crate::{
     Aabb2, Axis2, BezierEndpointPointImage2, BezierParameter2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CurveContext, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveResult, Point2, UncertaintyReason,
+    BezierSubcurve2, Classification, CurveContext, CurveOutcome, CurveRegion2,
+    CurveRegionBoundaryLoop2, CurveResult, Point2, UncertaintyReason,
 };
 
 impl CurveRegion2 {
@@ -38,7 +38,14 @@ impl CurveRegion2 {
     /// other retained carriers use derivative-root and algebraic-source
     /// evidence without segmentation. Empty regions and carriers lacking
     /// sufficient exact interior evidence return explicit uncertainty.
-    pub fn bounds(&self, policy: &CurveContext) -> CurveResult<Classification<Aabb2>> {
+    pub fn bounds(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Aabb2>>> {
+        crate::policy::resolve_certified_operation(policy, |attempt| self.bounds_raw(attempt))
+    }
+
+    pub(crate) fn bounds_raw(&self, policy: &CurveContext) -> CurveResult<Classification<Aabb2>> {
         match self.native_line_arc_region(policy)? {
             Classification::Decided(native) => Aabb2::from_region(native, policy),
             Classification::Uncertain(_) => {

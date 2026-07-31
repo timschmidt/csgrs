@@ -1172,7 +1172,7 @@ fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<Cur
         .map_err(svg_geometry_error)?
         .into_value();
     let roles = match preliminary
-        .loop_roles(&policy)
+        .loop_roles_raw(&policy)
         .map_err(svg_geometry_error)?
     {
         Classification::Decided(roles) => roles,
@@ -1699,7 +1699,7 @@ fn exact_finite_bounds(geometry: &SvgGeometry2) -> SvgResult<[f64; 4]> {
     } else {
         match geometry
             .region
-            .bounds(&policy)
+            .bounds_raw(&policy)
             .map_err(svg_geometry_error)?
         {
             Classification::Decided(bounds) => Some(bounds),

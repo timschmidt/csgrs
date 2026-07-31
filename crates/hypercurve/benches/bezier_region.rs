@@ -364,12 +364,18 @@ fn main() -> CurveResult<()> {
             .into_value(),
     );
     let classified_point = p(2, 0);
-    decided(classified_region.classify_point(&classified_point, &policy)?);
+    decided(
+        classified_region
+            .classify_point(&classified_point, &policy)?
+            .into_value(),
+    );
     let started = Instant::now();
     let mut curved_classification_checksum = 0_usize;
     for _ in 0..classification_iterations {
         let location = decided(
-            classified_region.classify_point(black_box(&classified_point), black_box(&policy))?,
+            classified_region
+                .classify_point(black_box(&classified_point), black_box(&policy))?
+                .into_value(),
         );
         curved_classification_checksum =
             curved_classification_checksum.wrapping_add(black_box(location as usize));
@@ -385,12 +391,18 @@ fn main() -> CurveResult<()> {
         .unwrap()
         .into_value();
     let depth_point = p(1, 1);
-    decided(immediate_region.signed_depth(&depth_point, &policy)?);
+    decided(
+        immediate_region
+            .signed_depth(&depth_point, &policy)?
+            .into_value(),
+    );
     let started = Instant::now();
     let mut depth_checksum = 0_i32;
     for _ in 0..classification_iterations {
         depth_checksum = depth_checksum.wrapping_add(decided(
-            immediate_region.signed_depth(black_box(&depth_point), black_box(&policy))?,
+            immediate_region
+                .signed_depth(black_box(&depth_point), black_box(&policy))?
+                .into_value(),
         ));
     }
     let elapsed = started.elapsed();
@@ -417,13 +429,19 @@ fn main() -> CurveResult<()> {
         {
             retained_checksum ^= black_box(format!("{:?}", envelope.envelope()).len());
         }
-        if let Classification::Decided(evidence) = region.line_image_role_evidence(&policy)? {
+        if let Classification::Decided(evidence) =
+            region.line_image_role_evidence(&policy)?.into_value()
+        {
             retained_checksum ^= black_box(evidence.roles().len());
         }
-        if let Classification::Decided(evidence) = region.signed_area_role_evidence(&policy)? {
+        if let Classification::Decided(evidence) =
+            region.signed_area_role_evidence(&policy)?.into_value()
+        {
             retained_checksum ^= black_box(evidence.roles().len() + evidence.signed_areas().len());
         }
-        if let Classification::Decided(evidence) = region.curved_nesting_role_evidence(&policy)? {
+        if let Classification::Decided(evidence) =
+            region.curved_nesting_role_evidence(&policy)?.into_value()
+        {
             retained_checksum ^= black_box(evidence.roles().len() + evidence.sample_points().len());
         }
     }
@@ -460,13 +478,18 @@ fn main() -> CurveResult<()> {
     });
     let algebraic_region = CurveRegion2::new(vec![retained_loop(algebraic_region_fragments)?])?;
     let algebraic_region_query = p(2, 0);
-    decided(algebraic_region.classify_point(&algebraic_region_query, &policy)?);
+    decided(
+        algebraic_region
+            .classify_point(&algebraic_region_query, &policy)?
+            .into_value(),
+    );
     let started = Instant::now();
     let mut algebraic_classification_checksum = 0_usize;
     for _ in 0..classification_iterations {
         let location = decided(
             algebraic_region
-                .classify_point(black_box(&algebraic_region_query), black_box(&policy))?,
+                .classify_point(black_box(&algebraic_region_query), black_box(&policy))?
+                .into_value(),
         );
         algebraic_classification_checksum =
             algebraic_classification_checksum.wrapping_add(black_box(location as usize));
@@ -540,8 +563,9 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut algebraic_line_role_checksum = 0_usize;
     for _ in 0..iterations {
-        if let Classification::Decided(evidence) =
-            algebraic_line_region.line_image_role_evidence(&policy)?
+        if let Classification::Decided(evidence) = algebraic_line_region
+            .line_image_role_evidence(&policy)?
+            .into_value()
         {
             algebraic_line_role_checksum ^= black_box(
                 evidence.roles().len()
@@ -589,20 +613,27 @@ fn main() -> CurveResult<()> {
                 .into_value(),
         );
         overlap_checksum ^= black_box(format!("{:?}", retained.signed_area()?).len());
-        if let Classification::Decided(evidence) = retained.line_image_role_evidence(&policy)? {
+        if let Classification::Decided(evidence) =
+            retained.line_image_role_evidence(&policy)?.into_value()
+        {
             overlap_checksum ^= black_box(usize::from(
                 evidence
                     .try_to_curve_region(&policy)
                     .expect("line-role evidence must rebuild a unified region")
                     .into_value()
                     .filled_area(&policy)?
+                    .into_value()
                     .is_decided(),
             ));
         }
-        if let Classification::Decided(evidence) = retained.signed_area_role_evidence(&policy)? {
+        if let Classification::Decided(evidence) =
+            retained.signed_area_role_evidence(&policy)?.into_value()
+        {
             overlap_checksum ^= black_box(evidence.roles().len());
         }
-        if let Classification::Decided(evidence) = retained.curved_nesting_role_evidence(&policy)? {
+        if let Classification::Decided(evidence) =
+            retained.curved_nesting_role_evidence(&policy)?.into_value()
+        {
             overlap_checksum ^= black_box(evidence.roles().len() + evidence.sample_points().len());
         }
     }

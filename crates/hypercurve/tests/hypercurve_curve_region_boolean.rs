@@ -70,7 +70,8 @@ fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLo
     assert_eq!(
         region
             .classify_point(&point, &CurveContext::STRICT)
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         Classification::Decided(expected)
     );
 }
@@ -166,6 +167,34 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
         &outcome.value,
         Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap()),
         RegionPointLocation::Inside,
+    );
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn point_query_reports_when_approximate_policy_decides_a_symbolic_boundary() {
+    let region = symbolic_rectangle(Real::pi() + Real::e());
+    let point = Point2::new(
+        Real::e() + Real::pi(),
+        (Real::one() / Real::from(2_u8)).unwrap(),
+    );
+
+    let strict = region
+        .classify_point(&point, &CurveContext::STRICT)
+        .expect("strict point classification must preserve uncertainty as data");
+    assert_eq!(strict.certainty, CurveCertainty::Certified);
+    assert!(matches!(strict.value, Classification::Uncertain(_)));
+
+    let approximate = region
+        .classify_point(&point, &CurveContext::APPROXIMATE_512)
+        .expect("the authorized 512-bit terminal should identify the symbolic boundary");
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(
+        approximate.value,
+        Classification::Decided(RegionPointLocation::Boundary)
     );
 }
 

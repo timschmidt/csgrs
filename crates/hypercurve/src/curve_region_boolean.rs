@@ -1053,16 +1053,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
         {
             return Ok(xor);
         }
-        let mut filled_sides = match union.filled_side_is_left(&self.data.policy) {
+        let mut filled_sides = match union.filled_side_is_left_raw(&self.data.policy) {
             Ok(Classification::Decided(sides)) => sides.to_vec(),
             Ok(Classification::Uncertain(reason)) => return Err(self.blocked(0, reason)),
             Err(cause) => return Err(self.invalid(0, cause)),
         };
-        let intersection_filled_sides = match intersection.filled_side_is_left(&self.data.policy) {
-            Ok(Classification::Decided(sides)) => sides,
-            Ok(Classification::Uncertain(reason)) => return Err(self.blocked(0, reason)),
-            Err(cause) => return Err(self.invalid(0, cause)),
-        };
+        let intersection_filled_sides =
+            match intersection.filled_side_is_left_raw(&self.data.policy) {
+                Ok(Classification::Decided(sides)) => sides,
+                Ok(Classification::Uncertain(reason)) => return Err(self.blocked(0, reason)),
+                Err(cause) => return Err(self.invalid(0, cause)),
+            };
         filled_sides.extend(intersection_filled_sides.iter().map(|side| !side));
         // XOR is union with the intersection's filled side removed. Retain the
         // two exact boundary sets directly when a second Boolean traversal
@@ -1211,7 +1212,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             CurvePathBooleanOperand2::Second => &self.data.first,
         };
         match other
-            .classify_point(&representative, &self.data.policy)
+            .classify_point_raw(&representative, &self.data.policy)
             .map_err(|cause| self.invalid(carrier_index, cause))?
         {
             Classification::Decided(location) => Ok(location),

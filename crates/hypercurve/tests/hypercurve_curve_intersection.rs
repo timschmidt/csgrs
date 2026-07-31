@@ -1107,21 +1107,24 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
         assert_eq!(
             region
                 .classify_point(&p(0, 1), &CurveContext::STRICT)
-                .unwrap(),
+                .unwrap()
+                .into_value(),
             Classification::Decided(RegionPointLocation::Inside),
             "{operation:?} retained algebraic interior"
         );
         assert_eq!(
             region
                 .classify_point(&p(0, 3), &CurveContext::STRICT)
-                .unwrap(),
+                .unwrap()
+                .into_value(),
             Classification::Decided(RegionPointLocation::Outside),
             "{operation:?} retained algebraic overlap interior"
         );
         assert_eq!(
             region
                 .classify_point(&p(0, 0), &CurveContext::STRICT)
-                .unwrap(),
+                .unwrap()
+                .into_value(),
             Classification::Decided(RegionPointLocation::Boundary),
             "{operation:?} retained algebraic boundary"
         );
@@ -1145,7 +1148,8 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
             assert_eq!(
                 transformed
                     .classify_point(&point, &CurveContext::STRICT)
-                    .unwrap(),
+                    .unwrap()
+                    .into_value(),
                 Classification::Decided(expected),
                 "{operation:?} transformed algebraic classification"
             );

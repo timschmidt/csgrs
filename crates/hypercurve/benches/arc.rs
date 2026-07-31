@@ -128,8 +128,13 @@ fn bench_large_arcs() {
     let started = Instant::now();
     let mut containment_checksum = 0_usize;
     for _ in 0..iterations {
-        containment_checksum ^=
-            black_box(region.classify_point(&query, &policy).unwrap().is_decided() as usize);
+        containment_checksum ^= black_box(
+            region
+                .classify_point(&query, &policy)
+                .unwrap()
+                .into_value()
+                .is_decided() as usize,
+        );
     }
     let elapsed = started.elapsed();
     println!(

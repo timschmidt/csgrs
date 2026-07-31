@@ -1055,6 +1055,7 @@ impl Shape {
         let roles = match region
             .loop_roles(&CurveContext::STRICT)
             .map_err(|error| error.to_string())?
+            .into_value()
         {
             Classification::Decided(roles) => Some(roles),
             Classification::Uncertain(_) => None,
@@ -1063,6 +1064,7 @@ impl Shape {
             match region
                 .filled_side_is_left(&CurveContext::STRICT)
                 .map_err(|error| error.to_string())?
+                .into_value()
             {
                 Classification::Decided(sides) => Some(sides),
                 Classification::Uncertain(_) => return Ok(None),

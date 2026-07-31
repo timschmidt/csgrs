@@ -431,7 +431,7 @@ impl CurveRegion2 {
             .iter()
             .map(|boundary| project_curve_region_loop(boundary, options, policy))
             .collect::<CurveResult<Vec<_>>>()?;
-        if let Classification::Decided(exact_profiles) = self.boundary_profiles(policy)? {
+        if let Classification::Decided(exact_profiles) = self.boundary_profiles_raw(policy)? {
             return Ok(Classification::Decided(
                 exact_profiles
                     .into_iter()
@@ -452,7 +452,7 @@ impl CurveRegion2 {
         // exact role/ownership sampling is not representable as Point2. Keep
         // that limitation at this finite boundary rather than blocking display
         // and meshing of otherwise decided Boolean output.
-        let filled_sides = match self.filled_side_is_left(policy)? {
+        let filled_sides = match self.filled_side_is_left_raw(policy)? {
             Classification::Decided(sides) => sides,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -527,7 +527,7 @@ impl CurveRegion2 {
             .iter()
             .map(|boundary| project_curve_region_loop(boundary, options, policy))
             .collect::<CurveResult<Vec<_>>>()?;
-        match self.boundary_profiles(policy)? {
+        match self.boundary_profiles_raw(policy)? {
             Classification::Decided(exact_profiles) => Ok(Classification::Decided(
                 exact_profiles
                     .into_iter()

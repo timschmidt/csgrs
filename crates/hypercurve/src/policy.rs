@@ -387,10 +387,10 @@ pub(crate) fn resolve_cached_classification<'a, T, E>(
 /// `APPROXIMATE_512` follows the same operation once. Hyperlimit performs its
 /// certified pipeline before any terminal interpretation, and only a terminal
 /// decision actually consumed by the operation weakens the returned certainty.
-pub(crate) fn resolve_certified_operation<T>(
+pub(crate) fn resolve_certified_operation<T, E>(
     policy: &CurveContext,
-    evaluate: impl FnOnce(&CurveContext) -> crate::ExactCurveResult<T>,
-) -> crate::ExactCurveResult<CurveOutcome<T>> {
+    evaluate: impl FnOnce(&CurveContext) -> Result<T, E>,
+) -> Result<CurveOutcome<T>, E> {
     let observation = OperationObservation::begin();
     evaluate(policy).map(|value| CurveOutcome::new(value, observation.finish()))
 }
@@ -508,7 +508,7 @@ mod tests {
                 crate::classify::real_sign(&undecidable_zero, operation),
                 Some(RealSign::Zero)
             );
-            Ok(())
+            Ok::<_, ()>(())
         })
         .unwrap();
         assert_eq!(calls.get(), 1);
@@ -519,7 +519,7 @@ mod tests {
                 crate::classify::real_sign(&Real::one(), operation),
                 Some(RealSign::Positive)
             );
-            Ok(())
+            Ok::<_, ()>(())
         })
         .unwrap();
         assert_eq!(certified.certainty, CurveCertainty::Certified);
@@ -535,10 +535,10 @@ mod tests {
                         crate::classify::real_sign(&Real::one(), inner_policy),
                         Some(RealSign::Positive)
                     );
-                    Ok(())
+                    Ok::<_, ()>(())
                 })?;
             assert_eq!(inner.certainty, CurveCertainty::Certified);
-            Ok(())
+            Ok::<_, ()>(())
         })
         .unwrap();
         assert_eq!(nested.certainty, CurveCertainty::Approximate512Consumed);
@@ -551,10 +551,10 @@ mod tests {
                             crate::classify::real_sign(&undecidable_zero, inner_policy),
                             Some(RealSign::Zero)
                         );
-                        Ok(())
+                        Ok::<_, ()>(())
                     })?;
                 assert_eq!(inner.certainty, CurveCertainty::Approximate512Consumed);
-                Ok(())
+                Ok::<_, ()>(())
             })
             .unwrap();
         assert_eq!(propagated.certainty, CurveCertainty::Approximate512Consumed);

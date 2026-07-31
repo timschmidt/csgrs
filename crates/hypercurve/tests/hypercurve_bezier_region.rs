@@ -4,10 +4,10 @@ use hypercurve::{
     BezierParameterPolynomial, BezierRegion2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
     BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CurveContext, CurveError, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionFragmentSource2,
-    CurveRegionLineRoleEvidence2, CurveRegionLoopRole, CurveRegionNestingRoleEvidence2,
-    CurveRegionSignedAreaRoleEvidence2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
+    CurveCertainty, CurveContext, CurveError, CurveOutcome, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionFragmentSource2, CurveRegionLineRoleEvidence2, CurveRegionLoopRole,
+    CurveRegionNestingRoleEvidence2, CurveRegionSignedAreaRoleEvidence2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -27,8 +27,25 @@ fn policy() -> CurveContext {
     CurveContext::STRICT
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
+trait IntoCertifiedClassification<T> {
+    fn into_certified_classification(self) -> Classification<T>;
+}
+
+impl<T> IntoCertifiedClassification<T> for Classification<T> {
+    fn into_certified_classification(self) -> Classification<T> {
+        self
+    }
+}
+
+impl<T> IntoCertifiedClassification<T> for CurveOutcome<Classification<T>> {
+    fn into_certified_classification(self) -> Classification<T> {
+        assert_eq!(self.certainty, CurveCertainty::Certified);
+        self.value
+    }
+}
+
+fn decided<T>(classification: impl IntoCertifiedClassification<T>) -> T {
+    match classification.into_certified_classification() {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
     }
@@ -552,7 +569,8 @@ fn retained_line_image_role_evidence_assigns_nested_material_and_hole() {
             .unwrap()
             .into_value()
             .filled_area(&policy())
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         Classification::Decided(Some(r(32)))
     );
 }
@@ -939,32 +957,51 @@ fn retained_line_image_role_evidence_accepts_exact_algebraic_endpoint_carriers()
             .unwrap()
             .into_value()
             .filled_area(&policy())
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         Classification::Decided(Some(r(32)))
     );
     assert_eq!(
-        retained.signed_area_role_evidence(&policy()).unwrap(),
+        retained
+            .signed_area_role_evidence(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
     let clone = retained.clone();
     assert_eq!(
-        retained.classify_point(&p(1, 1), &policy()).unwrap(),
+        retained
+            .classify_point(&p(1, 1), &policy())
+            .unwrap()
+            .into_value(),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        retained.classify_point(&p(3, 3), &policy()).unwrap(),
+        retained
+            .classify_point(&p(3, 3), &policy())
+            .unwrap()
+            .into_value(),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
-        retained.classify_point(&p(2, 3), &policy()).unwrap(),
+        retained
+            .classify_point(&p(2, 3), &policy())
+            .unwrap()
+            .into_value(),
         Classification::Decided(RegionPointLocation::Boundary)
     );
     assert_eq!(
-        retained.classify_point(&p(7, 3), &policy()).unwrap(),
+        retained
+            .classify_point(&p(7, 3), &policy())
+            .unwrap()
+            .into_value(),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
-        clone.classify_point(&p(3, 3), &policy()).unwrap(),
+        clone
+            .classify_point(&p(3, 3), &policy())
+            .unwrap()
+            .into_value(),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -1000,23 +1037,38 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
 
     assert!(region.has_algebraic_fragments());
     assert_eq!(
-        region.classify_point(&p(0, 0), &policy).unwrap(),
+        region
+            .classify_point(&p(0, 0), &policy)
+            .unwrap()
+            .into_value(),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        region.classify_point(&p(0, 2), &policy).unwrap(),
+        region
+            .classify_point(&p(0, 2), &policy)
+            .unwrap()
+            .into_value(),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
-        region.classify_point(&p(2, 0), &policy).unwrap(),
+        region
+            .classify_point(&p(2, 0), &policy)
+            .unwrap()
+            .into_value(),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
-        region.classify_point(&p(0, 1), &policy).unwrap(),
+        region
+            .classify_point(&p(0, 1), &policy)
+            .unwrap()
+            .into_value(),
         Classification::Decided(RegionPointLocation::Boundary)
     );
     assert_eq!(
-        clone.classify_point(&p(0, 0), &policy).unwrap(),
+        clone
+            .classify_point(&p(0, 0), &policy)
+            .unwrap()
+            .into_value(),
         Classification::Decided(RegionPointLocation::Inside)
     );
 }
@@ -1076,7 +1128,10 @@ fn retained_line_image_role_evidence_rejects_nonrational_algebraic_endpoint() {
         };
 
     assert_eq!(
-        retained.line_image_role_evidence(&policy()).unwrap(),
+        retained
+            .line_image_role_evidence(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
@@ -1136,7 +1191,8 @@ fn retained_line_image_role_evidence_accepts_certified_nonlinear_line_image_loop
             .unwrap()
             .into_value()
             .filled_area(&policy())
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         Classification::Decided(Some(r(16)))
     );
 }
@@ -1228,7 +1284,10 @@ fn retained_signed_area_role_evidence_accepts_nonlinear_bezier_loops() {
     assert_eq!(evidence.signed_areas()[0], q(-64, 3));
     assert_eq!(evidence.signed_areas()[1], q(8, 3));
     assert_eq!(
-        retained.line_image_role_evidence(&policy()).unwrap(),
+        retained
+            .line_image_role_evidence(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
@@ -1263,7 +1322,10 @@ fn retained_curved_nesting_role_evidence_assigns_same_orientation_nonlinear_hole
     assert_eq!(nesting.hole_loop_indices(), vec![1]);
     assert_eq!(nesting.sample_points().len(), 2);
     assert_eq!(
-        retained.line_image_role_evidence(&policy()).unwrap(),
+        retained
+            .line_image_role_evidence(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
@@ -1291,7 +1353,9 @@ fn retained_signed_area_role_evidence_rejects_zero_area_and_algebraic_loops() {
         },
     ])]);
     assert_eq!(
-        zero.signed_area_role_evidence(&policy()).unwrap(),
+        zero.signed_area_role_evidence(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 
@@ -1300,7 +1364,10 @@ fn retained_signed_area_role_evidence_rejects_zero_area_and_algebraic_loops() {
         retained_algebraic_line_fragment(p(1, 0), p(0, 0)),
     ])]);
     assert_eq!(
-        algebraic.signed_area_role_evidence(&policy()).unwrap(),
+        algebraic
+            .signed_area_role_evidence(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }

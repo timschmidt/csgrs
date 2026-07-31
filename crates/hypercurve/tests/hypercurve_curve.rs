@@ -121,15 +121,21 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
         .expect("degree-two rational boundary contributions are exact");
     assert_eq!(clone.signed_area(), Ok(Some(signed_area)));
     assert_eq!(
-        region.classify_point(&p(8, -1), &CurveContext::STRICT),
+        region
+            .classify_point(&p(8, -1), &CurveContext::STRICT)
+            .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
     assert_eq!(
-        clone.classify_point(&p(8, -4), &CurveContext::STRICT),
+        clone
+            .classify_point(&p(8, -4), &CurveContext::STRICT)
+            .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Outside))
     );
     assert_eq!(
-        clone.classify_point(&p(0, 0), &CurveContext::STRICT),
+        clone
+            .classify_point(&p(0, 0), &CurveContext::STRICT)
+            .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Boundary))
     );
     let debug = format!("{region:?}");
@@ -148,11 +154,15 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
         .into_value();
     let bounded_clone = bounded.clone();
     assert_eq!(
-        bounded.classify_point(&p(1, 1), &CurveContext::STRICT),
+        bounded
+            .classify_point(&p(1, 1), &CurveContext::STRICT)
+            .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
     assert_eq!(
-        bounded_clone.classify_point(&p(1, 1), &CurveContext::STRICT),
+        bounded_clone
+            .classify_point(&p(1, 1), &CurveContext::STRICT)
+            .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
 }

@@ -1,8 +1,8 @@
 use hypercurve::{
-    BezierFlatteningOptions, CircularArc2, Classification, Contour2, Curve2, CurveContext,
-    CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, FiniteProjectionOptions,
-    LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, Real, RegionPointLocation, Segment2,
-    Similarity2,
+    BezierFlatteningOptions, CircularArc2, Classification, Contour2, Curve2, CurveCertainty,
+    CurveContext, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
+    FiniteProjectionOptions, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, Real,
+    RegionPointLocation, Segment2, Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
 
@@ -191,11 +191,33 @@ fn dumbbell_shape() -> Contour2 {
     .unwrap()
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
+trait IntoCertifiedClassification<T> {
+    fn into_certified_classification(self) -> Classification<T>;
+}
+
+impl<T> IntoCertifiedClassification<T> for Classification<T> {
+    fn into_certified_classification(self) -> Classification<T> {
+        self
+    }
+}
+
+impl<T> IntoCertifiedClassification<T> for CurveOutcome<Classification<T>> {
+    fn into_certified_classification(self) -> Classification<T> {
+        assert_eq!(self.certainty, CurveCertainty::Certified);
+        self.value
+    }
+}
+
+fn decided<T>(classification: impl IntoCertifiedClassification<T>) -> T {
+    match classification.into_certified_classification() {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("expected decided result, got {reason:?}"),
     }
+}
+
+fn certified<T>(outcome: CurveOutcome<T>) -> T {
+    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+    outcome.value
 }
 
 #[test]
@@ -251,10 +273,12 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
     );
     assert!(segmented.evidence().loop_evidence()[0].output_segment_count() > 4);
     assert!(matches!(
-        segmented
-            .region()
-            .native_contours_fast_path(&policy)
-            .unwrap(),
+        certified(
+            segmented
+                .region()
+                .native_contours_fast_path(&policy)
+                .unwrap()
+        ),
         Classification::Decided(_)
     ));
 
@@ -271,7 +295,7 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
     assert_eq!(offset.evidence().loop_evidence().len(), 1);
     assert!(offset.evidence().loop_evidence()[0].output_segment_count() > 4);
     assert!(matches!(
-        offset.region().native_contours_fast_path(&policy).unwrap(),
+        certified(offset.region().native_contours_fast_path(&policy).unwrap()),
         Classification::Decided(_)
     ));
 }
@@ -309,7 +333,8 @@ fn unified_region_bounds_cover_native_and_higher_order_carriers_exactly() {
         CurveRegion2::empty()
             .bounds(&policy)
             .unwrap()
-            .is_uncertain()
+            .map(|classification| classification.is_uncertain())
+            .into_value()
     );
 }
 
@@ -356,7 +381,7 @@ fn unified_region_offset_regularizes_overlapping_expanded_voids() {
     assert_eq!(native.material_contours().len(), 1);
     assert_eq!(native.hole_contours().len(), 1);
     assert_eq!(
-        offset.classify_point(&p(8, 6), &policy).unwrap(),
+        certified(offset.classify_point(&p(8, 6), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -378,15 +403,15 @@ fn unified_region_expansion_regularizes_a_closed_concavity() {
     assert_eq!(native.material_contours().len(), 1);
     assert!(native.hole_contours().is_empty());
     assert_eq!(
-        offset.classify_point(&p(5, 8), &policy).unwrap(),
+        certified(offset.classify_point(&p(5, 8), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        offset.classify_point(&p(-2, -2), &policy).unwrap(),
+        certified(offset.classify_point(&p(-2, -2), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        offset.classify_point(&p(14, 5), &policy).unwrap(),
+        certified(offset.classify_point(&p(14, 5), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -401,11 +426,11 @@ fn unified_region_contracts_nonconvex_material_before_its_medial_collapse() {
     let eroded = source.offset(-Real::one(), &policy).unwrap().into_value();
 
     assert_eq!(
-        eroded.classify_point(&p(1, 1), &policy).unwrap(),
+        certified(eroded.classify_point(&p(1, 1), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Boundary)
     );
     assert_eq!(
-        eroded.classify_point(&p(5, 5), &policy).unwrap(),
+        certified(eroded.classify_point(&p(5, 5), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -421,7 +446,7 @@ fn unified_region_discards_nonconvex_material_after_wavefront_collapse() {
 
     assert!(eroded.is_empty());
     assert_eq!(
-        eroded.classify_point(&p(5, 1), &policy).unwrap(),
+        certified(eroded.classify_point(&p(5, 1), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -440,12 +465,12 @@ fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
     assert!(native.hole_contours().is_empty());
     for point in [p(2, 2), p(10, 2)] {
         assert_eq!(
-            eroded.classify_point(&point, &policy).unwrap(),
+            certified(eroded.classify_point(&point, &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside)
         );
     }
     assert_eq!(
-        eroded.classify_point(&p(6, 2), &policy).unwrap(),
+        certified(eroded.classify_point(&p(6, 2), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -493,7 +518,7 @@ fn unified_region_convex_erosion_handles_orientation_and_redundant_edges() {
         assert_eq!(bounds.max_x(), &Real::from(3));
         assert_eq!(bounds.max_y(), &Real::from(3));
         assert_eq!(
-            eroded.classify_point(&p(2, 2), &policy).unwrap(),
+            certified(eroded.classify_point(&p(2, 2), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside)
         );
     }
@@ -578,7 +603,7 @@ fn unified_region_positive_offset_removes_exactly_collapsed_convex_hole() {
     let expanded = source.offset(Real::from(5), &policy).unwrap().into_value();
     assert_eq!(decided(expanded.loop_roles(&policy).unwrap()).len(), 1);
     assert_eq!(
-        expanded.classify_point(&p(10, 10), &policy).unwrap(),
+        certified(expanded.classify_point(&p(10, 10), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
 }
@@ -612,15 +637,15 @@ fn native_self_crossing_walk_regularizes_with_both_fill_rules() {
         assert_eq!(native.material_contours().len(), 2);
         assert!(native.hole_contours().is_empty());
         assert_eq!(
-            region.classify_point(&p(2, 3), &policy).unwrap(),
+            certified(region.classify_point(&p(2, 3), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside)
         );
         assert_eq!(
-            region.classify_point(&p(2, 1), &policy).unwrap(),
+            certified(region.classify_point(&p(2, 1), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside)
         );
         assert_eq!(
-            region.classify_point(&p(0, 2), &policy).unwrap(),
+            certified(region.classify_point(&p(0, 2), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Outside)
         );
         assert_eq!(
@@ -684,18 +709,18 @@ fn region_promotion_retains_explicit_roles_and_line_fast_path() {
 
     for point in [p(-1, 5), p(1, 1), p(5, 5)] {
         assert_eq!(
-            promoted.classify_point(&point, &policy).unwrap(),
+            certified(promoted.classify_point(&point, &policy).unwrap()),
             source.classify_point(&point, &policy)
         );
     }
     assert_eq!(
-        promoted.classify_point(&p(5, 5), &policy).unwrap(),
+        certified(promoted.classify_point(&p(5, 5), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside),
         "nested explicit material must not be reinterpreted as an even-odd hole"
     );
 
     assert!(matches!(
-        promoted.native_contours_fast_path(&policy).unwrap(),
+        certified(promoted.native_contours_fast_path(&policy).unwrap()),
         Classification::Decided(_)
     ));
 }
@@ -725,13 +750,13 @@ fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
         vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material]
     );
     assert_eq!(
-        transformed.classify_point(&p(15, 11), &policy).unwrap(),
+        certified(transformed.classify_point(&p(15, 11), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside),
         "a transformed nested material island must retain its explicit role"
     );
 
     assert!(matches!(
-        transformed.native_contours_fast_path(&policy).unwrap(),
+        certified(transformed.native_contours_fast_path(&policy).unwrap()),
         Classification::Decided(_)
     ));
 }
@@ -759,15 +784,15 @@ fn similarity_rotation_preserves_unified_region_semantics_and_fast_path() {
     let rotated = region.transform_similarity(&quarter_turn, &policy).unwrap();
 
     assert!(matches!(
-        rotated.native_contours_fast_path(&policy).unwrap(),
+        certified(rotated.native_contours_fast_path(&policy).unwrap()),
         Classification::Decided(_)
     ));
     assert_eq!(
-        rotated.classify_point(&p(15, 4), &policy).unwrap(),
+        certified(rotated.classify_point(&p(15, 4), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        rotated.classify_point(&p(15, 8), &policy).unwrap(),
+        certified(rotated.classify_point(&p(15, 8), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
@@ -824,11 +849,11 @@ fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
 
         assert_eq!(transformed.loop_fill_rules(), Some([fill_rule].as_slice()));
         assert_eq!(
-            transformed.classify_point(&p(10, 5), &policy).unwrap(),
+            certified(transformed.classify_point(&p(10, 5), &policy).unwrap()),
             Classification::Decided(expected)
         );
         assert!(matches!(
-            transformed.native_contours_fast_path(&policy).unwrap(),
+            certified(transformed.native_contours_fast_path(&policy).unwrap()),
             Classification::Decided(_)
         ));
     }
@@ -853,7 +878,7 @@ fn authored_loop_semantics_drive_nonzero_and_even_odd_classification() {
 
         assert_eq!(region.loop_fill_rules(), Some([fill_rule].as_slice()));
         assert_eq!(
-            region.classify_point(&p(5, 5), &policy).unwrap(),
+            certified(region.classify_point(&p(5, 5), &policy).unwrap()),
             Classification::Decided(expected)
         );
         assert_eq!(
@@ -890,12 +915,12 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
         );
 
         assert_eq!(
-            region.classify_point(&p(0, 2), &policy).unwrap(),
+            certified(region.classify_point(&p(0, 2), &policy).unwrap()),
             Classification::Decided(expected)
         );
         let expected_depth = i32::from(expected == RegionPointLocation::Inside);
         assert_eq!(
-            region.signed_depth(&p(0, 2), &policy).unwrap(),
+            certified(region.signed_depth(&p(0, 2), &policy).unwrap()),
             Classification::Decided(expected_depth)
         );
         assert_eq!(
@@ -918,7 +943,7 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
             )
             .unwrap();
         assert_eq!(
-            transformed.classify_point(&p(2, 2), &policy).unwrap(),
+            certified(transformed.classify_point(&p(2, 2), &policy).unwrap()),
             Classification::Decided(expected)
         );
     }
@@ -963,19 +988,19 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
         ]
     );
     assert_eq!(
-        region.signed_depth(&p(1, 1), &policy).unwrap(),
+        certified(region.signed_depth(&p(1, 1), &policy).unwrap()),
         Classification::Decided(1)
     );
     assert_eq!(
-        region.signed_depth(&p(3, 3), &policy).unwrap(),
+        certified(region.signed_depth(&p(3, 3), &policy).unwrap()),
         Classification::Decided(2)
     );
     assert_eq!(
-        region.signed_depth(&p(5, 5), &policy).unwrap(),
+        certified(region.signed_depth(&p(5, 5), &policy).unwrap()),
         Classification::Decided(1)
     );
     assert_eq!(
-        region.signed_depth(&p(0, 5), &policy).unwrap(),
+        certified(region.signed_depth(&p(0, 5), &policy).unwrap()),
         Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
     );
     let boundaries = vec![square(2, 2, 8, 8), square(0, 0, 10, 10)];
@@ -994,11 +1019,11 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
         vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
     assert_eq!(
-        nested.signed_depth(&p(5, 5), &policy).unwrap(),
+        certified(nested.signed_depth(&p(5, 5), &policy).unwrap()),
         Classification::Decided(0)
     );
     assert_eq!(
-        borrowed.signed_depth(&p(5, 5), &policy).unwrap(),
+        certified(borrowed.signed_depth(&p(5, 5), &policy).unwrap()),
         Classification::Decided(0)
     );
 }
@@ -1015,7 +1040,7 @@ fn authored_line_arc_paths_retain_the_native_offset_engine() {
     .into_value();
 
     assert!(matches!(
-        region.native_contours_fast_path(&policy).unwrap(),
+        certified(region.native_contours_fast_path(&policy).unwrap()),
         Classification::Decided(_)
     ));
     let expanded = region.offset(Real::from(2), &policy).unwrap().into_value();
@@ -1045,11 +1070,11 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
         &[true, true]
     );
     assert_eq!(
-        region.classify_point(&p(5, 5), &policy).unwrap(),
+        certified(region.classify_point(&p(5, 5), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert!(matches!(
-        region.native_contours_fast_path(&policy).unwrap(),
+        certified(region.native_contours_fast_path(&policy).unwrap()),
         Classification::Decided(_)
     ));
 }
@@ -1075,7 +1100,7 @@ fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
         Some([FillRule::NonZero].as_slice())
     );
     assert_eq!(
-        chamfered.classify_point(&p(2, 2), &policy).unwrap(),
+        certified(chamfered.classify_point(&p(2, 2), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
 
@@ -1093,7 +1118,7 @@ fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
         Some([FillRule::NonZero].as_slice())
     );
     assert_eq!(
-        filleted.classify_point(&p(2, 2), &policy).unwrap(),
+        certified(filleted.classify_point(&p(2, 2), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
 }
@@ -1110,7 +1135,7 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
     .unwrap()
     .into_value();
     assert!(matches!(
-        region.native_contours_fast_path(&policy).unwrap(),
+        certified(region.native_contours_fast_path(&policy).unwrap()),
         Classification::Uncertain(_)
     ));
 
@@ -1150,16 +1175,16 @@ fn unified_region_offset_expands_material_and_contracts_holes() {
     let offset = region.offset(Real::one(), &policy).unwrap().into_value();
 
     assert_eq!(
-        offset.classify_point(&p(0, 5), &policy).unwrap(),
+        certified(offset.classify_point(&p(0, 5), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        offset.classify_point(&p(3, 5), &policy).unwrap(),
+        certified(offset.classify_point(&p(3, 5), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside),
         "positive region offset must contract a hole"
     );
     assert_eq!(
-        offset.classify_point(&p(5, 5), &policy).unwrap(),
+        certified(offset.classify_point(&p(5, 5), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
@@ -1185,7 +1210,7 @@ fn region_promotion_retains_hole_role_for_projection() {
         &[true, false]
     );
     assert_eq!(
-        promoted.classify_point(&p(5, 5), &policy).unwrap(),
+        certified(promoted.classify_point(&p(5, 5), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
     let exact_profiles = decided(promoted.boundary_profiles(&policy).unwrap());

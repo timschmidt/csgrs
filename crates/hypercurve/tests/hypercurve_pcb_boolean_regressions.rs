@@ -108,7 +108,8 @@ fn assert_exact_containment_difference_is_empty(cover_count: usize, subject_coun
         assert_eq!(
             cover
                 .classify_point(&point, &CurveContext::STRICT)
-                .expect("cover point classification must decide"),
+                .expect("cover point classification must decide")
+                .into_value(),
             Classification::Decided(hypercurve::RegionPointLocation::Inside),
         );
     }
@@ -190,7 +191,8 @@ fn pcb_process_image_hole_ownership_culls_sparse_materials() {
 
     let profiles = region
         .boundary_profiles(&CurveContext::STRICT)
-        .expect("PCB profile ownership must complete exactly");
+        .expect("PCB profile ownership must complete exactly")
+        .into_value();
     let Classification::Decided(profiles) = profiles else {
         panic!("PCB profile ownership must decide");
     };
