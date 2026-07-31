@@ -404,10 +404,12 @@ impl NurbsCurve2 {
         }
         resolve_bounded_cached_result(
             &self.data.knot_refinements,
-            knots.clone(),
+            knots,
             MAX_RETAINED_KNOT_REFINEMENTS,
             policy,
-            |attempt| self.insert_knots_uncached_with_policy(knots.clone(), attempt),
+            |retained_knots, attempt| {
+                self.insert_knots_uncached_with_policy(retained_knots.clone(), attempt)
+            },
         )
     }
 
@@ -435,12 +437,17 @@ impl NurbsCurve2 {
     ) -> ExactCurveResult<Option<Self>> {
         resolve_bounded_cached_result(
             &self.data.knot_removals,
-            knot.clone(),
+            knot,
             MAX_RETAINED_KNOT_REMOVALS,
             policy,
-            |attempt| {
-                validate_strict_interior(self, &knot, CurveOperation2::KnotRemoval, attempt)?;
-                self.remove_knot_uncached_with_policy(knot.clone(), attempt)
+            |retained_knot, attempt| {
+                validate_strict_interior(
+                    self,
+                    retained_knot,
+                    CurveOperation2::KnotRemoval,
+                    attempt,
+                )?;
+                self.remove_knot_uncached_with_policy(retained_knot.clone(), attempt)
             },
         )
     }
@@ -478,7 +485,7 @@ impl NurbsCurve2 {
             target_degree,
             MAX_RETAINED_DEGREE_ELEVATIONS,
             policy,
-            |attempt| self.degree_elevation_uncached(target_degree, attempt),
+            |retained_degree, attempt| self.degree_elevation_uncached(*retained_degree, attempt),
         )
     }
 
@@ -526,7 +533,7 @@ impl NurbsCurve2 {
             target_degree,
             MAX_RETAINED_DEGREE_ELEVATIONS,
             policy,
-            |attempt| self.elevated_to_degree_uncached(target_degree, attempt),
+            |retained_degree, attempt| self.elevated_to_degree_uncached(*retained_degree, attempt),
         )
     }
 

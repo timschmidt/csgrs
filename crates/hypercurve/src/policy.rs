@@ -326,41 +326,48 @@ pub(crate) fn resolve_bounded_cached_result<K, T>(
     key: K,
     capacity: usize,
     policy: &CurveContext,
-    mut evaluate: impl FnMut(&CurveContext) -> ExactCurveResult<T>,
+    mut evaluate: impl FnMut(&K, &CurveContext) -> ExactCurveResult<T>,
 ) -> ExactCurveResult<T>
 where
-    K: Clone + PartialEq,
+    K: PartialEq,
     T: Clone,
 {
     debug_assert!(capacity > 0);
     if policy.is_edge_preview() {
-        return evaluate(policy);
+        return evaluate(&key, policy);
     }
 
     let entries = cache.get_or_init(|| Mutex::new(Vec::new()));
-    let cached = entries
-        .lock()
-        .expect("policy result cache mutex poisoned")
-        .iter()
-        .find(|(retained_key, _)| retained_key == &key)
-        .map(|(_, entry)| entry.clone());
-
-    let resolved = match cached {
-        Some(PolicyResultCacheEntry::StrictBlocked(strict_blocker))
-            if policy.permits_approximate_512() =>
+    let cached_strict_blocker = {
+        let entries = entries.lock().expect("policy result cache mutex poisoned");
+        match entries
+            .iter()
+            .find(|(retained_key, _)| retained_key == &key)
+            .map(|(_, entry)| entry)
         {
-            let result = evaluate(policy);
+            Some(PolicyResultCacheEntry::StrictBlocked(strict_blocker))
+                if policy.permits_approximate_512() =>
+            {
+                Some(*strict_blocker)
+            }
+            Some(entry) => return replay_cached_result(entry, policy),
+            None => None,
+        }
+    };
+
+    let resolved = match cached_strict_blocker {
+        Some(strict_blocker) => {
+            let result = evaluate(&key, policy);
             PolicyResultCacheEntry::Approximate512(Box::new(ApproximateResult {
                 strict_blocker,
                 result,
             }))
         }
-        Some(entry) => return replay_cached_result(entry, policy),
         None if policy.permits_approximate_512() => {
-            let strict = evaluate(&policy.strict_counterpart());
+            let strict = evaluate(&key, &policy.strict_counterpart());
             match strict {
                 Err(ExactCurveError::Blocked(strict_blocker)) => {
-                    let result = evaluate(policy);
+                    let result = evaluate(&key, policy);
                     PolicyResultCacheEntry::Approximate512(Box::new(ApproximateResult {
                         strict_blocker,
                         result,
@@ -369,38 +376,33 @@ where
                 result => retain_strict_result(result),
             }
         }
-        None => retain_strict_result(evaluate(policy)),
+        None => retain_strict_result(evaluate(&key, policy)),
     };
 
-    let retained = {
-        let mut entries = entries.lock().expect("policy result cache mutex poisoned");
-        if let Some((_, entry)) = entries
-            .iter_mut()
-            .find(|(retained_key, _)| retained_key == &key)
-        {
-            if matches!(
-                (&*entry, &resolved),
-                (
-                    PolicyResultCacheEntry::StrictBlocked(_),
-                    PolicyResultCacheEntry::Approximate512(_)
-                )
-            ) {
-                *entry = resolved;
-            }
-            entry.clone()
-        } else {
-            if entries.len() == capacity {
-                let _ = entries.remove(0);
-            }
-            entries.push((key, resolved));
-            entries
-                .last()
-                .expect("a policy result was retained")
-                .1
-                .clone()
+    let mut entries = entries.lock().expect("policy result cache mutex poisoned");
+    if let Some((_, entry)) = entries
+        .iter_mut()
+        .find(|(retained_key, _)| retained_key == &key)
+    {
+        if matches!(
+            (&*entry, &resolved),
+            (
+                PolicyResultCacheEntry::StrictBlocked(_),
+                PolicyResultCacheEntry::Approximate512(_)
+            )
+        ) {
+            *entry = resolved;
         }
-    };
-    replay_cached_result(retained, policy)
+        return replay_cached_result(entry, policy);
+    }
+    if entries.len() == capacity {
+        let _ = entries.remove(0);
+    }
+    entries.push((key, resolved));
+    replay_cached_result(
+        &entries.last().expect("a policy result was retained").1,
+        policy,
+    )
 }
 
 #[inline]
@@ -416,18 +418,18 @@ fn retain_strict_result<T>(result: ExactCurveResult<T>) -> PolicyResultCacheEntr
 
 #[inline]
 fn replay_cached_result<T: Clone>(
-    entry: PolicyResultCacheEntry<T>,
+    entry: &PolicyResultCacheEntry<T>,
     policy: &CurveContext,
 ) -> ExactCurveResult<T> {
     match entry {
-        PolicyResultCacheEntry::Decided(value) => Ok(value),
-        PolicyResultCacheEntry::Invalid(error) => Err(*error),
-        PolicyResultCacheEntry::StrictBlocked(blocker) => Err(ExactCurveError::Blocked(blocker)),
+        PolicyResultCacheEntry::Decided(value) => Ok(value.clone()),
+        PolicyResultCacheEntry::Invalid(error) => Err((**error).clone()),
+        PolicyResultCacheEntry::StrictBlocked(blocker) => Err(ExactCurveError::Blocked(*blocker)),
         PolicyResultCacheEntry::Approximate512(resolved) if policy.permits_approximate_512() => {
             if resolved.result.is_ok() {
                 policy.observe_approximate_512();
             }
-            resolved.result
+            resolved.result.clone()
         }
         PolicyResultCacheEntry::Approximate512(resolved) => {
             Err(ExactCurveError::Blocked(resolved.strict_blocker))
