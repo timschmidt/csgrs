@@ -754,6 +754,7 @@ fn curve_region_uses_certified_parallel_then_regularizes_output_chords() {
             &policy(),
         )
         .unwrap()
+        .into_value()
     {
         Classification::Decided(result) => result,
         Classification::Uncertain(reason) => panic!("certified region offset failed: {reason:?}"),
@@ -800,6 +801,7 @@ fn curve_region_evidence_weaker_source_chord_fallback_for_authored_corner() {
             &policy(),
         )
         .unwrap()
+        .into_value()
     {
         Classification::Decided(result) => result,
         Classification::Uncertain(reason) => panic!("corner fallback failed: {reason:?}"),

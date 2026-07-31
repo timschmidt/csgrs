@@ -1172,7 +1172,8 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
                 &r(-1),
                 &CurveContext::STRICT,
             )
-            .unwrap_or_else(|error| panic!("{operation:?} affine transform: {error:?}"));
+            .unwrap_or_else(|error| panic!("{operation:?} affine transform: {error:?}"))
+            .into_value();
         assert!(transformed.has_algebraic_fragments());
         for (point, expected) in [
             (p(7, 2), RegionPointLocation::Inside),

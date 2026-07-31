@@ -1916,16 +1916,11 @@ fn curve_path_from_native_contour(contour: &Contour2) -> ExactCurveResult<CurveP
     CurvePath2::try_new(curves)
 }
 
-struct NativeCurvePathRegion {
-    region: LineArcRegion2,
-    signed_areas: Vec<Real>,
-}
-
 fn native_region_from_curve_paths(
     paths: &[CurvePath2],
     roles: &[CurveRegionLoopRole],
     fill_rules: &[FillRule],
-) -> CurveResult<Option<NativeCurvePathRegion>> {
+) -> CurveResult<Option<LineArcRegion2>> {
     if paths.len() != roles.len() || paths.len() != fill_rules.len() {
         return Err(CurveError::Topology(
             "native curve-path role and fill-rule counts must match".into(),
@@ -1934,7 +1929,6 @@ fn native_region_from_curve_paths(
 
     let mut material = Vec::new();
     let mut holes = Vec::new();
-    let mut signed_areas = Vec::with_capacity(paths.len());
     for ((path, role), fill_rule) in paths.iter().zip(roles).zip(fill_rules) {
         let Some(segments) = path
             .curves()
@@ -1949,18 +1943,12 @@ fn native_region_from_curve_paths(
             return Ok(None);
         };
         let contour = Contour2::try_new_with_fill_rule(segments, *fill_rule)?;
-        signed_areas.push(contour.signed_area()?.ok_or_else(|| {
-            CurveError::Topology("native line/arc path did not provide an exact signed area".into())
-        })?);
         match role {
             CurveRegionLoopRole::Material => material.push(contour),
             CurveRegionLoopRole::Hole => holes.push(contour),
         }
     }
-    Ok(Some(NativeCurvePathRegion {
-        region: LineArcRegion2::new(material, holes),
-        signed_areas,
-    }))
+    Ok(Some(LineArcRegion2::new(material, holes)))
 }
 
 fn curve_region_promotion_error(cause: CurveError) -> ExactCurveError {
@@ -2485,16 +2473,7 @@ impl CurveRegion2 {
         if let Some(native) = native_region_from_curve_paths(paths, roles, fill_rules)
             .map_err(curve_region_promotion_error)?
         {
-            if region.data.filled_side_is_left.certified().is_none()
-                && !policy.permits_approximate_512()
-                && let Ok(filled_sides) =
-                    filled_sides_from_roles_and_areas(roles, &native.signed_areas, policy)
-            {
-                region = region
-                    .with_certified_filled_side_is_left(filled_sides)
-                    .map_err(curve_region_promotion_error)?;
-            }
-            region.data.line_image_region.certify(Some(native.region));
+            region.data.line_image_region.certify(Some(native));
         }
         Ok(region)
     }
@@ -2583,6 +2562,22 @@ impl CurveRegion2 {
     /// carrier while preserving certified arrangement connectivity.
     #[allow(clippy::too_many_arguments)]
     pub fn transform_affine(
+        &self,
+        m00: &Real,
+        m01: &Real,
+        m10: &Real,
+        m11: &Real,
+        tx: &Real,
+        ty: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.transform_affine_raw(m00, m01, m10, m11, tx, ty, attempt)
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn transform_affine_raw(
         &self,
         m00: &Real,
         m01: &Real,
@@ -3480,6 +3475,25 @@ impl CurveRegion2 {
         previous_param: Real,
         next_param: Real,
         policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.chamfer_loop_vertex_by_parameters_raw(
+                loop_index,
+                vertex_index,
+                previous_param,
+                next_param,
+                attempt,
+            )
+        })
+    }
+
+    fn chamfer_loop_vertex_by_parameters_raw(
+        &self,
+        loop_index: usize,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
         let (region, role, ordinal) =
             match self.native_region_loop_for_edit(loop_index, CurveOperation2::Chamfer, policy)? {
@@ -3532,6 +3546,30 @@ impl CurveRegion2 {
     /// Successful output preserves material/hole and fill semantics.
     #[allow(clippy::too_many_arguments)]
     pub fn fillet_loop_vertex_by_parameters(
+        &self,
+        loop_index: usize,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        center: &Point2,
+        clockwise: bool,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.fillet_loop_vertex_by_parameters_raw(
+                loop_index,
+                vertex_index,
+                previous_param,
+                next_param,
+                center,
+                clockwise,
+                attempt,
+            )
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn fillet_loop_vertex_by_parameters_raw(
         &self,
         loop_index: usize,
         vertex_index: usize,
@@ -3666,6 +3704,17 @@ impl CurveRegion2 {
     /// Use [`Self::segment_to_finite_profiles`] for direct mesh/IO output and
     /// [`Self::recover_from_finite_profiles`] for its reconstruction counterpart.
     pub fn segment_certified(
+        &self,
+        options: &BezierFlatteningOptions,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Classification<CurveRegionCertifiedSegmentationResult2>>>
+    {
+        resolve_certified_operation(policy, |attempt| {
+            self.segment_certified_raw(options, attempt)
+        })
+    }
+
+    fn segment_certified_raw(
         &self,
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
@@ -3854,6 +3903,30 @@ impl CurveRegion2 {
                 .segments()
                 .iter()
                 .all(|segment| matches!(segment, Segment2::Line(_)));
+            if !component_expands && all_line_source {
+                match contour
+                    .offset_left_orthogonal_line_erosion(signed_left_distance.clone(), policy)
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+                {
+                    Classification::Decided(region) => {
+                        push_native_offset_component(
+                            *role,
+                            region,
+                            &mut material_components,
+                            &mut void_components,
+                        );
+                        continue;
+                    }
+                    Classification::Uncertain(
+                        UncertaintyReason::Unsupported
+                        | UncertaintyReason::RealSign
+                        | UncertaintyReason::Ordering,
+                    ) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
             let raw_offset = match contour
                 .offset_left_with_line_joins(signed_left_distance.clone(), policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
@@ -3890,28 +3963,6 @@ impl CurveRegion2 {
                 .has_self_contacts(policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
             if !component_expands && all_line_source {
-                match contour
-                    .offset_left_orthogonal_line_erosion(signed_left_distance.clone(), policy)
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-                {
-                    Classification::Decided(region) => {
-                        push_native_offset_component(
-                            *role,
-                            region,
-                            &mut material_components,
-                            &mut void_components,
-                        );
-                        continue;
-                    }
-                    Classification::Uncertain(
-                        UncertaintyReason::Unsupported
-                        | UncertaintyReason::RealSign
-                        | UncertaintyReason::Ordering,
-                    ) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
                 match raw_offset
                     .regularize_contracting_line_offset_native(policy)
                     .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
@@ -4030,6 +4081,17 @@ impl CurveRegion2 {
         distance: Real,
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Classification<CurveRegionSegmentedOffsetResult2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.offset_with_certified_segmentation_raw(distance, options, attempt)
+        })
+    }
+
+    fn offset_with_certified_segmentation_raw(
+        &self,
+        distance: Real,
+        options: &BezierFlatteningOptions,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CurveRegionSegmentedOffsetResult2>> {
         match self.offset_raw(distance.clone(), policy)? {
             Classification::Decided(region) => {
@@ -4049,7 +4111,7 @@ impl CurveRegion2 {
             }
         }
 
-        let segmented = match self.segment_certified(options, policy)? {
+        let segmented = match self.segment_certified_raw(options, policy)? {
             Classification::Decided(segmented) => segmented,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -4087,6 +4149,26 @@ impl CurveRegion2 {
     /// [`Self::offset_with_certified_segmentation`]; that fallback is identified
     /// explicitly and does not claim a final parallel Hausdorff bound.
     pub fn offset_with_certified_bezier_parallel(
+        &self,
+        distance: Real,
+        parallel_options: &BezierParallelVerificationOptions,
+        output_flattening: &BezierFlatteningOptions,
+        fallback_source_flattening: &BezierFlatteningOptions,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Classification<CurveRegionCertifiedParallelOffsetResult2>>>
+    {
+        resolve_certified_operation(policy, |attempt| {
+            self.offset_with_certified_bezier_parallel_raw(
+                distance,
+                parallel_options,
+                output_flattening,
+                fallback_source_flattening,
+                attempt,
+            )
+        })
+    }
+
+    fn offset_with_certified_bezier_parallel_raw(
         &self,
         distance: Real,
         parallel_options: &BezierParallelVerificationOptions,
@@ -4203,7 +4285,7 @@ impl CurveRegion2 {
 
         if needs_fallback {
             return wrap_segmented_parallel_fallback(
-                self.offset_with_certified_segmentation(
+                self.offset_with_certified_segmentation_raw(
                     distance,
                     fallback_source_flattening,
                     policy,
@@ -4220,7 +4302,7 @@ impl CurveRegion2 {
             policy,
             Some(filled_sides.as_ref().to_vec()),
         )?;
-        let segmented = match parallel_region.segment_certified(output_flattening, policy)? {
+        let segmented = match parallel_region.segment_certified_raw(output_flattening, policy)? {
             Classification::Decided(segmented) => segmented,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -7059,6 +7141,230 @@ mod tests {
                 .certainty,
             CurveCertainty::Approximate512Consumed
         );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn curve_region_mutations_report_selected_terminal_policy() {
+        let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let region = single_quadratic_loop_region(false);
+
+        let scale = Real::one() + &undecidable_zero;
+        let strict_transform = region
+            .transform_affine(
+                &scale,
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &CurveContext::STRICT,
+            )
+            .expect("the determinant is certified positive without deciding the symbolic zero");
+        assert_eq!(strict_transform.certainty, CurveCertainty::Certified);
+        let approximate_transform = region
+            .transform_affine(
+                &scale,
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &CurveContext::APPROXIMATE_512,
+            )
+            .expect("the same certified determinant is valid under the broader policy");
+        assert_eq!(approximate_transform.certainty, CurveCertainty::Certified);
+        let BezierSplitFragment2::Materialized {
+            curve: BezierSubcurve2::Quadratic(first),
+            ..
+        } = &approximate_transform.value.boundary_loops()[0].fragments()[0]
+        else {
+            panic!("the transformed quadratic boundary must remain materialized");
+        };
+        let expected_control = affine_region_point(
+            &p(1, 0),
+            &scale,
+            &Real::zero(),
+            &Real::zero(),
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+        );
+        assert_eq!(
+            first.control(),
+            &expected_control,
+            "the terminal policy must not replace transformed coordinates"
+        );
+
+        let identity = crate::Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+        )
+        .unwrap();
+        assert_eq!(
+            region
+                .transform_similarity(&identity, &CurveContext::APPROXIMATE_512)
+                .unwrap()
+                .certainty,
+            CurveCertainty::Certified
+        );
+
+        let chamfer = region
+            .chamfer_loop_vertex_by_parameters(
+                0,
+                0,
+                (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+                (Real::one() / Real::from(4_i8)).unwrap(),
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap();
+        assert_eq!(chamfer.certainty, CurveCertainty::Certified);
+        assert!(matches!(chamfer.value, Classification::Decided(_)));
+
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let symbolic_center = Point2::new(&half + &undecidable_zero, half);
+        let strict_fillet = region
+            .fillet_loop_vertex_by_parameters(
+                0,
+                0,
+                (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+                (Real::one() / Real::from(4_i8)).unwrap(),
+                &symbolic_center,
+                false,
+                &CurveContext::STRICT,
+            )
+            .unwrap();
+        assert_eq!(strict_fillet.certainty, CurveCertainty::Certified);
+        assert!(matches!(
+            strict_fillet.value,
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        ));
+        let approximate_fillet = region
+            .fillet_loop_vertex_by_parameters(
+                0,
+                0,
+                (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+                (Real::one() / Real::from(4_i8)).unwrap(),
+                &symbolic_center,
+                false,
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap();
+        assert_eq!(
+            approximate_fillet.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert!(matches!(
+            &approximate_fillet.value,
+            Classification::Decided(_)
+        ));
+        let Classification::Decided(approximate_fillet_region) = &approximate_fillet.value else {
+            unreachable!("the approximate fillet was decided above");
+        };
+        let Classification::Decided(native_fillet) = approximate_fillet_region
+            .native_line_arc_region(&CurveContext::APPROXIMATE_512)
+            .unwrap()
+        else {
+            panic!("the native fillet must retain its line/arc accelerator");
+        };
+        assert_eq!(
+            native_fillet.material_contours()[0].signed_area().unwrap(),
+            None,
+            "an unresolved center-arc quadrant must return unsupported area, not panic"
+        );
+
+        let bent = CurveRegion2::new(vec![
+            CurveRegionBoundaryLoop2::new(
+                vec![
+                    quadratic_fragment(
+                        p(0, 0),
+                        Point2::new(Real::one(), Real::one() + &undecidable_zero),
+                        p(2, 0),
+                    ),
+                    quadratic_fragment(p(2, 0), p(2, 1), p(2, 2)),
+                    quadratic_fragment(p(2, 2), p(1, 2), p(0, 2)),
+                    quadratic_fragment(p(0, 2), p(0, 1), p(0, 0)),
+                ],
+                &CurveContext::STRICT,
+            )
+            .unwrap(),
+        ])
+        .unwrap();
+        let flattening =
+            BezierFlatteningOptions::try_new(Real::one(), 4, &CurveContext::STRICT).unwrap();
+        let strict_segmentation = bent
+            .segment_certified(&flattening, &CurveContext::STRICT)
+            .unwrap();
+        assert_eq!(strict_segmentation.certainty, CurveCertainty::Certified);
+        assert!(matches!(
+            strict_segmentation.value,
+            Classification::Uncertain(UncertaintyReason::Ordering)
+        ));
+        let approximate_segmentation = bent
+            .segment_certified(&flattening, &CurveContext::APPROXIMATE_512)
+            .unwrap();
+        assert_eq!(
+            approximate_segmentation.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert!(matches!(
+            approximate_segmentation.value,
+            Classification::Decided(_)
+        ));
+
+        let collapse_distance = -Real::one() + &undecidable_zero;
+        let strict_segmented_offset = region
+            .offset_with_certified_segmentation(
+                collapse_distance.clone(),
+                &flattening,
+                &CurveContext::STRICT,
+            )
+            .unwrap();
+        assert_eq!(strict_segmented_offset.certainty, CurveCertainty::Certified);
+        assert!(matches!(
+            strict_segmented_offset.value,
+            Classification::Uncertain(_)
+        ));
+        let approximate_segmented_offset = region
+            .offset_with_certified_segmentation(
+                collapse_distance.clone(),
+                &flattening,
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap();
+        assert_eq!(
+            approximate_segmented_offset.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert!(matches!(
+            approximate_segmented_offset.value,
+            Classification::Decided(_)
+        ));
+
+        let parallel =
+            BezierParallelVerificationOptions::try_new(Real::one(), 4, &CurveContext::STRICT)
+                .unwrap();
+        let approximate_parallel_offset = region
+            .offset_with_certified_bezier_parallel(
+                collapse_distance,
+                &parallel,
+                &flattening,
+                &flattening,
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap();
+        assert_eq!(
+            approximate_parallel_offset.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert!(matches!(
+            approximate_parallel_offset.value,
+            Classification::Decided(_)
+        ));
     }
 
     fn quadratic_fragment(start: Point2, control: Point2, end: Point2) -> BezierSplitFragment2 {

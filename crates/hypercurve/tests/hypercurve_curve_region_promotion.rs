@@ -259,7 +259,12 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
     ));
     let options = BezierFlatteningOptions::try_new(q(1, 32), 12, &policy).unwrap();
 
-    let segmented = decided(source.segment_certified(&options, &policy).unwrap());
+    let segmented = decided(
+        source
+            .segment_certified(&options, &policy)
+            .unwrap()
+            .into_value(),
+    );
     assert_eq!(segmented.evidence().max_source_chord_error(), &q(1, 32));
     assert!(segmented.evidence().lossy_boundary());
     assert_eq!(segmented.evidence().loop_evidence().len(), 1);
@@ -285,7 +290,8 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
     let offset = decided(
         source
             .offset_with_certified_segmentation(Real::one(), &options, &policy)
-            .unwrap(),
+            .unwrap()
+            .into_value(),
     );
 
     assert!(!offset.region().is_empty());
@@ -743,7 +749,8 @@ fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
             &Real::from(-4),
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
 
     assert_eq!(
         decided(transformed.loop_roles(&policy).unwrap()),
@@ -781,7 +788,10 @@ fn similarity_rotation_preserves_unified_region_semantics_and_fast_path() {
     )
     .unwrap();
 
-    let rotated = region.transform_similarity(&quarter_turn, &policy).unwrap();
+    let rotated = region
+        .transform_similarity(&quarter_turn, &policy)
+        .unwrap()
+        .into_value();
 
     assert!(matches!(
         certified(rotated.native_contours_fast_path(&policy).unwrap()),
@@ -845,7 +855,8 @@ fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
                 &Real::zero(),
                 &policy,
             )
-            .unwrap();
+            .unwrap()
+            .into_value();
 
         assert_eq!(transformed.loop_fill_rules(), Some([fill_rule].as_slice()));
         assert_eq!(
@@ -941,7 +952,8 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
                 &Real::zero(),
                 &policy,
             )
-            .unwrap();
+            .unwrap()
+            .into_value();
         assert_eq!(
             certified(transformed.classify_point(&p(2, 2), &policy).unwrap()),
             Classification::Decided(expected)
@@ -1089,7 +1101,8 @@ fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
     let chamfered = decided(
         region
             .chamfer_loop_vertex_by_parameters(0, 0, q(3, 4), q(1, 4), &policy)
-            .unwrap(),
+            .unwrap()
+            .into_value(),
     );
     assert_eq!(
         decided(chamfered.loop_roles(&policy).unwrap()),
@@ -1107,7 +1120,8 @@ fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
     let filleted = decided(
         region
             .fillet_loop_vertex_by_parameters(0, 0, q(3, 4), q(1, 4), &p(1, 1), false, &policy)
-            .unwrap(),
+            .unwrap()
+            .into_value(),
     );
     assert_eq!(
         decided(filleted.loop_roles(&policy).unwrap()),
@@ -1142,12 +1156,14 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
     let chamfered = decided(
         region
             .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 2), &policy)
-            .unwrap(),
+            .unwrap()
+            .into_value(),
     );
     let filleted = decided(
         region
             .fillet_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 2), &p(3, 1), false, &policy)
-            .unwrap(),
+            .unwrap()
+            .into_value(),
     );
 
     assert_eq!(chamfered.boundary_loops()[0].len(), 6);

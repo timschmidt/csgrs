@@ -467,13 +467,15 @@ fn bench_curve_region_bezier_offset_lanes(
     let started = Instant::now();
     let mut certified_loops = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(result) = source.offset_with_certified_bezier_parallel(
-            q(1, 10),
-            &verification,
-            &flattening,
-            &flattening,
-            &policy,
-        )?
+        let Classification::Decided(result) = source
+            .offset_with_certified_bezier_parallel(
+                q(1, 10),
+                &verification,
+                &flattening,
+                &flattening,
+                &policy,
+            )?
+            .into_value()
         else {
             panic!("certified CurveRegion2 Bezier offset became uncertain");
         };
@@ -488,8 +490,9 @@ fn bench_curve_region_bezier_offset_lanes(
     let started = Instant::now();
     let mut fallback_loops = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(result) =
-            source.offset_with_certified_segmentation(q(1, 10), &flattening, &policy)?
+        let Classification::Decided(result) = source
+            .offset_with_certified_segmentation(q(1, 10), &flattening, &policy)?
+            .into_value()
         else {
             panic!("segmented CurveRegion2 Bezier offset became uncertain");
         };

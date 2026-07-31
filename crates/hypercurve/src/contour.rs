@@ -1169,9 +1169,15 @@ fn center_arc_signed_sweep(
                 Real::pi()
             }
         }
-        crate::arc_bezier::ArcSweepKind::Minor => cross.atan2(dot),
+        crate::arc_bezier::ArcSweepKind::Minor => match cross.try_atan2(dot) {
+            Ok(theta) => theta,
+            Err(_) => return Ok(None),
+        },
         crate::arc_bezier::ArcSweepKind::Major => {
-            let principal = cross.atan2(dot);
+            let principal = match cross.try_atan2(dot) {
+                Ok(theta) => theta,
+                Err(_) => return Ok(None),
+            };
             if arc.is_clockwise() {
                 principal - Real::tau()
             } else {

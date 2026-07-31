@@ -880,7 +880,8 @@ fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
                 &Real::zero(),
                 &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
     }
 }
 
@@ -924,7 +925,8 @@ fn retired_thermal_spoke_circular_subtraction_case() -> RetiredFailureCase {
                 &Real::zero(),
                 &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
     }
 }
 
@@ -955,7 +957,8 @@ fn retired_transformed_degree_elevated_line_case() -> RetiredFailureCase {
             &integer(1),
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     RetiredFailureCase {
         failure: RetiredFailure::TransformedDegreeElevatedLineImage,
         first: transformed,
@@ -1019,7 +1022,8 @@ fn retired_distinct_circular_conic_contacts_case() -> RetiredFailureCase {
             &Real::zero(),
             &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
     RetiredFailureCase {
         failure: RetiredFailure::DistinctCircularConicContacts,
         first: exact_circle_region(0, false),
