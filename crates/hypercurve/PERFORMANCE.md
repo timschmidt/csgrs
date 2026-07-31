@@ -7040,6 +7040,88 @@ Machine-readable samples, size evidence, remaining scope, and the
 22,656-node/38,865-edge call graph are in
 [`2026-07-31-spline-construction-interpolation-policy.json`](benchmarks/checkpoints/2026-07-31-spline-construction-interpolation-policy.json).
 
+## Spline evaluation and decomposition policy checkpoint
+
+NURBS and polynomial-spline decomposition, point evaluation, wrapped
+evaluation, and first/higher derivatives now receive an explicit
+`CurveContext` and return `CurveOutcome`. The same contract reaches `Curve2`
+and `CurveView2`. Private raw kernels keep span selection, cached extraction,
+rational promotion, seam recognition, periodic reduction, denominator signs,
+and one-sided agreement beneath one outer certainty observation.
+
+The terminal regressions retain two symbolically adjacent interior knots at
+`1/2` and `1/2 + ((pi + e) - (e + pi))`. Strict decomposition and evaluation
+return typed `Ordering` blockers. Approximate-512 retains the exact authored
+knots and returns exact decompositions, borrowed span views, NURBS native
+topology, points, and derivatives with `Approximate512Consumed`; later strict
+requests still block. Equivalent periodic seam tests cover both spline
+families and the top-level curve/view paths. The cold periodic fallback chooses
+between two adjacent exact integer quotients, so it does not replace the
+symbolic parameter or period with a finite value.
+
+The same audit repaired lower-level B-spline uncertainty handling. Binary
+knot partition, multiplicity, insertion-span selection, distinct-break
+extraction, span-fact validation, and native-topology evidence now propagate
+uncertainty instead of treating it as inequality, skipping a span, or
+collapsing it into `InvalidBSpline`. A decided decreasing knot vector remains
+an ordinary invalid input. Internal approximate evidence is validated under
+the active policy; public evidence constructors still require strict proof.
+
+One warm-up process per artifact followed by eleven alternating-order,
+default-feature release parent/candidate pairs pinned to one CPU measured:
+
+| Exact spline operation | Parent median | Policy-explicit median | Median change | Paired mean |
+| --- | ---: | ---: | ---: | ---: |
+| Polynomial Bezier extraction | 5.857 us | 6.182 us | +5.54% | +2.99% |
+| Rational-cubic Bezier extraction | 6.906 us | 6.833 us | -1.06% | -0.91% |
+| Cached NURBS decomposition + native queries | 5.812 ns | 9.286 ns | +59.78% | +58.25% |
+| Cached general-rational point | 890.426 ns | 872.949 ns | -1.96% | -2.99% |
+| Cached general-rational first derivative | 2.746 us | 2.784 us | +1.37% | +0.58% |
+| Cached derivatives 1 through 3 | 9.978 us | 9.731 us | -2.47% | -1.64% |
+| Cached large periodic point | 1.163 us | 1.160 us | -0.28% | -0.37% |
+| Cold 256-control decomposition | 1.910 ms | 1.902 ms | -0.47% | -0.64% |
+| Cached 256-control point | 9.203 us | 8.961 us | -2.64% | -2.02% |
+
+Specializing the plain-STRICT branch at the shared outcome resolver recovered
+the dynamic-policy cost in the mathematical kernels without changing preview
+or Approximate-512 behavior. The remaining cached-query delta is 3.47 ns total
+across two calls and reflects their explicit certainty-bearing return values.
+The roughly three-percent paired-mean polynomial-extraction cost is retained as
+a visible sentinel for complete uncertainty and evidence validation.
+
+In eleven matched fixed-iteration competitive processes, exact Hypercurve
+rational NURBS evaluation improved from 1.180 us to 1.159 us at the median.
+Curvo measured 57.2 ns, a 20.26x finite-contract gap. That remains an important
+optimization target, but it is not an exactness-equivalent comparison.
+
+After a warm-up pair, eight matched pathological runs retained 67 cells, 603
+candidate pairs, 3,248 fragments, 134 point classifications, all 268
+operations decided, zero blockers, and checksum 6. Exact Boolean execution
+improved 8.52% by paired geometric mean; fixture construction was neutral at
++0.10%. Median RSS moved from 34.45 to 34.50 MiB. No carrier layout, heap
+cache, or buffer changed.
+
+The representative pathological executable adds 9,688 text bytes (+0.18%),
+8,200 total loadable bytes (+0.15%), and 9,776 stripped bytes (+0.18%) against
+its matched parent. It remains 8,144 loadable and 8,432 stripped bytes below
+the frozen consolidation baseline. The smaller default B-spline artifact adds
+9,852 text bytes (+0.34%).
+
+Validation passed the complete all-feature suite with 262 unit tests, the
+165.24-second generated `CurveRegion2` Boolean corpus, every integration suite
+other than the two explicitly ignored release-scale PCB corpora, all 268
+pathological Booleans, both warning-denied Clippy feature matrices, the
+no-default all-target check, every fuzz target build, warning-denied rustdoc,
+UI warning-denied Clippy, formatting, and diff checks. Hypermesh was not
+modified and no compatibility shim was added.
+
+Exact spline edits and retained edit evidence remain the next Phase 1 cut.
+The caller-authorized Hypersolve `UndecidedPivot` proposal/certification bridge
+remains explicit work after that cut; Hypersolve does not silently own
+Hyperlimit geometry policy. Machine-readable samples, size evidence, caller
+status, and the 22,700-node/39,003-edge call graph are in
+[`2026-07-31-spline-evaluation-decomposition-policy.json`](benchmarks/checkpoints/2026-07-31-spline-evaluation-decomposition-policy.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
