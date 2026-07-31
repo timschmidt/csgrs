@@ -395,6 +395,14 @@ pub(crate) fn resolve_certified_operation<T>(
     evaluate(policy).map(|value| CurveOutcome::new(value, observation.finish()))
 }
 
+pub(crate) fn resolve_certified_value<T>(
+    policy: &CurveContext,
+    evaluate: impl FnOnce(&CurveContext) -> T,
+) -> CurveOutcome<T> {
+    let observation = OperationObservation::begin();
+    CurveOutcome::new(evaluate(policy), observation.finish())
+}
+
 #[cfg(test)]
 mod layout_tests {
     use super::{CurveCertainty, CurveContext};

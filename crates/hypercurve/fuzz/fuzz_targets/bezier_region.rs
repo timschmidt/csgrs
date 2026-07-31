@@ -177,6 +177,7 @@ fuzz_target!(|data: &[u8]| {
         {
             let _ =
                 CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy)
+                    .into_value()
                     .map(|region| {
                     let _ = region.signed_area();
                     let _ = region.line_image_role_evidence(&policy);
@@ -192,6 +193,7 @@ fuzz_target!(|data: &[u8]| {
             let _ = BezierRegion2::from_retained_linear_overlap_traversal(&traversal, &policy)
                 .map(|region| region.signed_area());
             let _ = CurveRegion2::from_retained_linear_overlap_traversal(&traversal, &policy)
+                .into_value()
                 .map(|region| {
                     let _ = region.signed_area();
                     let _ = region.line_image_role_evidence(&policy);

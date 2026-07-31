@@ -359,11 +359,10 @@ fn main() -> CurveResult<()> {
     );
 
     let retained_traversal = decided(graph.traverse_retained_with_tangent_order(&policy));
-    let classified_region = decided(CurveRegion2::from_retained_arrangement_traversal(
-        &graph,
-        &retained_traversal,
-        &policy,
-    ));
+    let classified_region = decided(
+        CurveRegion2::from_retained_arrangement_traversal(&graph, &retained_traversal, &policy)
+            .into_value(),
+    );
     let classified_point = p(2, 0);
     decided(classified_region.classify_point(&classified_point, &policy)?);
     let started = Instant::now();
@@ -403,11 +402,10 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut retained_checksum = 0_usize;
     for _ in 0..iterations {
-        let region = decided(CurveRegion2::from_retained_arrangement_traversal(
-            &graph,
-            &retained_traversal,
-            &policy,
-        ));
+        let region = decided(
+            CurveRegion2::from_retained_arrangement_traversal(&graph, &retained_traversal, &policy)
+                .into_value(),
+        );
         retained_checksum ^= black_box(format!("{:?}", region.signed_area()?).len());
         if let Classification::Decided(envelope) =
             BezierRetainedEndpointEnvelope2::from_region(&region, &policy)
@@ -586,10 +584,10 @@ fn main() -> CurveResult<()> {
             &policy,
         ));
         overlap_checksum ^= black_box(format!("{:?}", native.signed_area()?).len());
-        let retained = decided(CurveRegion2::from_retained_linear_overlap_traversal(
-            &overlap_traversal,
-            &policy,
-        ));
+        let retained = decided(
+            CurveRegion2::from_retained_linear_overlap_traversal(&overlap_traversal, &policy)
+                .into_value(),
+        );
         overlap_checksum ^= black_box(format!("{:?}", retained.signed_area()?).len());
         if let Classification::Decided(evidence) = retained.line_image_role_evidence(&policy)? {
             overlap_checksum ^= black_box(usize::from(

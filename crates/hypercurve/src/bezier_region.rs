@@ -27,6 +27,7 @@ use crate::bezier_topology::exact_polynomial_line_contact_relation_from_directio
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::policy::{
     PolicyClassificationCache, resolve_cached_classification, resolve_certified_operation,
+    resolve_certified_value,
 };
 use crate::region_nesting::ExactCurveWorkspace2;
 use crate::{
@@ -2722,6 +2723,16 @@ impl CurveRegion2 {
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
         policy: &CurveContext,
+    ) -> CurveOutcome<Classification<Self>> {
+        resolve_certified_value(policy, |attempt| {
+            Self::from_retained_arrangement_traversal_raw(graph, traversal, attempt)
+        })
+    }
+
+    pub(crate) fn from_retained_arrangement_traversal_raw(
+        graph: &BezierArrangementGraph2,
+        traversal: &BezierArrangementTraversal2,
+        policy: &CurveContext,
     ) -> Classification<Self> {
         Self::from_retained_arrangement_traversal_impl(graph, traversal, Some(policy))
     }
@@ -2815,12 +2826,14 @@ impl CurveRegion2 {
     pub fn from_retained_linear_overlap_traversal(
         traversal: &BezierRetainedLinearOverlapTraversal2,
         policy: &CurveContext,
-    ) -> Classification<Self> {
-        Self::from_retained_arrangement_traversal(
-            traversal.refinement().graph(),
-            traversal.traversal(),
-            policy,
-        )
+    ) -> CurveOutcome<Classification<Self>> {
+        resolve_certified_value(policy, |attempt| {
+            Self::from_retained_arrangement_traversal_raw(
+                traversal.refinement().graph(),
+                traversal.traversal(),
+                attempt,
+            )
+        })
     }
 
     /// Materializes retained carriers from a represented rational-overlap traversal.
@@ -2830,12 +2843,14 @@ impl CurveRegion2 {
     pub fn from_retained_rational_overlap_traversal(
         traversal: &BezierRetainedRationalOverlapTraversal2,
         policy: &CurveContext,
-    ) -> Classification<Self> {
-        Self::from_retained_arrangement_traversal(
-            traversal.refinement().graph(),
-            traversal.traversal(),
-            policy,
-        )
+    ) -> CurveOutcome<Classification<Self>> {
+        resolve_certified_value(policy, |attempt| {
+            Self::from_retained_arrangement_traversal_raw(
+                traversal.refinement().graph(),
+                traversal.traversal(),
+                attempt,
+            )
+        })
     }
 
     /// Assigns material/hole roles for retained loops that are exact line images.

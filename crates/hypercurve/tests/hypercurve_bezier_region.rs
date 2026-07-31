@@ -382,10 +382,9 @@ fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() 
     let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
     assert_eq!(traversal.refinement().resolved_overlaps().len(), 1);
 
-    let retained = decided(CurveRegion2::from_retained_linear_overlap_traversal(
-        &traversal,
-        &policy(),
-    ));
+    let retained = decided(
+        CurveRegion2::from_retained_linear_overlap_traversal(&traversal, &policy()).into_value(),
+    );
     assert_eq!(retained.len(), 1);
     assert_eq!(retained.boundary_loops()[0].len(), 5);
     assert!(!retained.has_algebraic_fragments());
@@ -467,10 +466,9 @@ fn resolved_rational_overlap_traversal_materializes_native_and_retained_regions(
     );
     assert_eq!(traversal.traversal().closed_count(), 1);
 
-    let retained = decided(CurveRegion2::from_retained_rational_overlap_traversal(
-        &traversal,
-        &policy(),
-    ));
+    let retained = decided(
+        CurveRegion2::from_retained_rational_overlap_traversal(&traversal, &policy()).into_value(),
+    );
     assert_eq!(retained.len(), 1);
     assert_eq!(retained.boundary_loops()[0].len(), 5);
     assert!(!retained.has_algebraic_fragments());
@@ -507,10 +505,9 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
         &[1, 7]
     );
 
-    let retained = decided(CurveRegion2::from_retained_linear_overlap_traversal(
-        &traversal,
-        &policy(),
-    ));
+    let retained = decided(
+        CurveRegion2::from_retained_linear_overlap_traversal(&traversal, &policy()).into_value(),
+    );
     assert_eq!(retained.len(), 1);
     assert_eq!(retained.boundary_loops()[0].len(), 6);
     assert_eq!(retained.signed_area().unwrap(), Some(r(8)));
@@ -1069,7 +1066,9 @@ fn retained_line_image_role_evidence_rejects_nonrational_algebraic_endpoint() {
         }
     };
     let retained =
-        match CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy()) {
+        match CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
+            .into_value()
+        {
             Classification::Decided(retained) => retained,
             Classification::Uncertain(reason) => {
                 panic!("nonrational algebraic cycle retention was uncertain: {reason:?}")
@@ -1316,11 +1315,10 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
     ])
     .unwrap();
     let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
-    let retained = decided(CurveRegion2::from_retained_arrangement_traversal(
-        &graph,
-        &traversal,
-        &policy(),
-    ));
+    let retained = decided(
+        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
+            .into_value(),
+    );
     let sources = retained.boundary_loops()[0]
         .arrangement_sources()
         .expect("graph-built retained loop keeps source provenance");
@@ -1510,11 +1508,10 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
         BezierRegion2::from_arrangement_traversal(&graph, &traversal, &policy()),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
-    let retained = decided(CurveRegion2::from_retained_arrangement_traversal(
-        &graph,
-        &traversal,
-        &policy(),
-    ));
+    let retained = decided(
+        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
+            .into_value(),
+    );
     let sources = retained.boundary_loops()[0]
         .arrangement_sources()
         .expect("graph-built algebraic carrier keeps source provenance");
@@ -1567,7 +1564,8 @@ fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
     .unwrap();
 
     assert_eq!(
-        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy()),
+        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
+            .into_value(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }

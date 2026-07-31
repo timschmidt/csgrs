@@ -944,7 +944,7 @@ impl CurvePathBooleanSelection2 {
         match self.data.region.get_or_init(|| {
             let graph = self.arrangement_graph_view()?;
             let traversal = self.traversal_view()?;
-            match CurveRegion2::from_retained_arrangement_traversal(
+            match CurveRegion2::from_retained_arrangement_traversal_raw(
                 graph,
                 traversal,
                 &self.data.policy,
