@@ -289,46 +289,50 @@ impl Curve2 {
         }
     }
 
-    /// Constructs a policy-free exact polynomial B-spline carrier.
+    /// Constructs an exact polynomial B-spline carrier under `policy`.
     pub fn try_polynomial_bspline(
         degree: usize,
         control_points: Vec<Point2>,
         knots: Vec<Real>,
-    ) -> ExactCurveResult<Self> {
-        let curve = PolynomialSplineCurve2::try_new(degree, control_points, knots)?;
-        Ok(Self::new(CurveGeometry2::PolynomialBSpline(curve)))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        PolynomialSplineCurve2::try_new(degree, control_points, knots, policy)
+            .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::PolynomialBSpline(curve))))
     }
 
-    /// Constructs a policy-free exact NURBS carrier.
+    /// Constructs an exact NURBS carrier under `policy`.
     pub fn try_nurbs(
         degree: usize,
         control_points: Vec<Point2>,
         weights: Vec<Real>,
         knots: Vec<Real>,
-    ) -> ExactCurveResult<Self> {
-        let curve = NurbsCurve2::try_new(degree, control_points, weights, knots)?;
-        Ok(Self::new(CurveGeometry2::Nurbs(curve)))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        NurbsCurve2::try_new(degree, control_points, weights, knots, policy)
+            .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::Nurbs(curve))))
     }
 
-    /// Constructs a policy-free periodic polynomial B-spline from one period.
+    /// Constructs a periodic polynomial B-spline from one period under `policy`.
     pub fn try_periodic_polynomial_bspline(
         degree: usize,
         control_points: Vec<Point2>,
         period_knots: Vec<Real>,
-    ) -> ExactCurveResult<Self> {
-        let curve = PolynomialSplineCurve2::try_new_periodic(degree, control_points, period_knots)?;
-        Ok(Self::new(CurveGeometry2::PolynomialBSpline(curve)))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        PolynomialSplineCurve2::try_new_periodic(degree, control_points, period_knots, policy)
+            .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::PolynomialBSpline(curve))))
     }
 
-    /// Constructs a policy-free periodic NURBS from one period.
+    /// Constructs a periodic NURBS from one period under `policy`.
     pub fn try_periodic_nurbs(
         degree: usize,
         control_points: Vec<Point2>,
         weights: Vec<Real>,
         period_knots: Vec<Real>,
-    ) -> ExactCurveResult<Self> {
-        let curve = NurbsCurve2::try_new_periodic(degree, control_points, weights, period_knots)?;
-        Ok(Self::new(CurveGeometry2::Nurbs(curve)))
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        NurbsCurve2::try_new_periodic(degree, control_points, weights, period_knots, policy)
+            .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::Nurbs(curve))))
     }
 
     /// Returns a borrowed view without cloning geometry.

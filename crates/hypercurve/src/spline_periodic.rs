@@ -43,6 +43,7 @@ pub(crate) fn expand_periodic_spline(
     mut control_points: Vec<Point2>,
     period_knots: Vec<Real>,
     family: CurveFamily2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<PeriodicSplineExpansion2> {
     let unique_control_count = control_points.len();
     let valid_layout = degree >= 1
@@ -52,9 +53,8 @@ pub(crate) fn expand_periodic_spline(
         return Err(periodic_error(family, CurveError::InvalidPeriodicSpline));
     }
 
-    let policy = CurveContext::STRICT;
     for pair in period_knots.windows(2) {
-        match crate::classify::compare_reals(&pair[0], &pair[1], &policy) {
+        match crate::classify::compare_reals(&pair[0], &pair[1], policy) {
             Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {}
             Some(std::cmp::Ordering::Greater) => {
                 return Err(periodic_error(family, CurveError::InvalidPeriodicSpline));
@@ -73,7 +73,7 @@ pub(crate) fn expand_periodic_spline(
         .last()
         .expect("validated periodic knot sequence is nonempty")
         - &period_knots[0];
-    match crate::classify::compare_reals(&Real::zero(), &period, &policy) {
+    match crate::classify::compare_reals(&Real::zero(), &period, policy) {
         Some(std::cmp::Ordering::Less) => {}
         Some(_) => {
             return Err(periodic_error(family, CurveError::InvalidPeriodicSpline));

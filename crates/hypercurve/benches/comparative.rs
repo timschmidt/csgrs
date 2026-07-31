@@ -637,8 +637,10 @@ fn benchmark_nurbs_evaluation(runner: &Runner) {
             .collect(),
         weights.iter().copied().map(real).collect(),
         knots.iter().copied().map(real).collect(),
+        &CurveContext::STRICT,
     )
-    .expect("valid hypercurve NURBS fixture");
+    .expect("valid hypercurve NURBS fixture")
+    .into_value();
     let curvo_curve = CurvoNurbsCurve2D::<f64>::try_new(
         3,
         control_points

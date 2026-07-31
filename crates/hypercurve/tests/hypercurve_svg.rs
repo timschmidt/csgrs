@@ -292,8 +292,10 @@ fn exact_extension_round_trips_every_curve_family() {
                 2,
                 vec![point(0, 0), point(1, 2), point(3, 0)],
                 vec![0, 0, 0, 1, 1, 1].into_iter().map(Real::from).collect(),
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         ),
         Curve2::from(
             NurbsCurve2::try_new(
@@ -301,8 +303,10 @@ fn exact_extension_round_trips_every_curve_family() {
                 vec![point(0, 0), point(1, 2), point(3, 0)],
                 vec![Real::one(), one_third, Real::one()],
                 vec![0, 0, 0, 1, 1, 1].into_iter().map(Real::from).collect(),
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         ),
     ];
 
@@ -327,15 +331,23 @@ fn exact_extension_retains_periodic_spline_semantics() {
         .map(Real::from)
         .collect::<Vec<_>>();
     let curves = [
-        Curve2::try_periodic_polynomial_bspline(2, control_points.clone(), period_knots.clone())
-            .unwrap(),
+        Curve2::try_periodic_polynomial_bspline(
+            2,
+            control_points.clone(),
+            period_knots.clone(),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value(),
         Curve2::try_periodic_nurbs(
             2,
             control_points,
             vec![Real::one(), rational(2, 3), Real::from(2), Real::one()],
             period_knots,
+            &CurveContext::STRICT,
         )
-        .unwrap(),
+        .unwrap()
+        .into_value(),
     ];
 
     for source in curves {

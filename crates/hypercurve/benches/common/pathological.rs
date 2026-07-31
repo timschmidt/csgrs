@@ -448,15 +448,19 @@ fn family_curve(
             3,
             vec![start, control1, control2, end],
             clamped_cubic_knots(),
+            &CurveContext::STRICT,
         )
-        .expect("clamped polynomial spline is valid"),
+        .expect("clamped polynomial spline is valid")
+        .into_value(),
         CurveFamily2::Nurbs => Curve2::try_nurbs(
             3,
             vec![start, linear_control1, linear_control2, end],
             vec![Real::one(); 4],
             clamped_cubic_knots(),
+            &CurveContext::STRICT,
         )
-        .expect("clamped NURBS is valid"),
+        .expect("clamped NURBS is valid")
+        .into_value(),
     }
 }
 

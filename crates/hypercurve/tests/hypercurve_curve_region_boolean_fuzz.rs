@@ -186,15 +186,19 @@ fn generated_boundary_curve(
             3,
             vec![start, first_control, second_control, end],
             clamped_cubic_knots(),
+            &CurveContext::STRICT,
         )
-        .expect("generated clamped polynomial spline is valid"),
+        .expect("generated clamped polynomial spline is valid")
+        .into_value(),
         _ => Curve2::try_nurbs(
             3,
             vec![start, first_control, second_control, end],
             vec![Real::one(), weight.clone(), weight.clone(), Real::one()],
             clamped_cubic_knots(),
+            &CurveContext::STRICT,
         )
-        .expect("generated clamped NURBS is valid"),
+        .expect("generated clamped NURBS is valid")
+        .into_value(),
     }
 }
 

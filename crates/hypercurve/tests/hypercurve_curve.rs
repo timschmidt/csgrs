@@ -37,17 +37,23 @@ fn linear_family_curve(family: CurveFamily2, vertical: bool) -> Curve2 {
         CurveFamily2::RationalBezier => Curve2::from(
             RationalBezier2::try_new(vec![start, middle, end], vec![r(1), r(1), r(1)]).unwrap(),
         ),
-        CurveFamily2::PolynomialBSpline => {
-            Curve2::try_polynomial_bspline(1, vec![start, end], vec![r(0), r(0), r(1), r(1)])
-                .unwrap()
-        }
+        CurveFamily2::PolynomialBSpline => Curve2::try_polynomial_bspline(
+            1,
+            vec![start, end],
+            vec![r(0), r(0), r(1), r(1)],
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value(),
         CurveFamily2::Nurbs => Curve2::try_nurbs(
             1,
             vec![start, end],
             vec![r(1), r(1)],
             vec![r(0), r(0), r(1), r(1)],
+            &CurveContext::STRICT,
         )
-        .unwrap(),
+        .unwrap()
+        .into_value(),
         CurveFamily2::CircularArc => panic!("linear test carrier excludes circular arcs"),
     }
 }
@@ -70,15 +76,19 @@ fn every_family_open_chain() -> Vec<Curve2> {
             2,
             vec![p(12, 0), p(13, 2), p(14, 0)],
             vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+            &CurveContext::STRICT,
         )
-        .unwrap(),
+        .unwrap()
+        .into_value(),
         Curve2::try_nurbs(
             2,
             vec![p(14, 0), p(15, 2), p(16, 0)],
             vec![r(1), r(2), r(1)],
             vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+            &CurveContext::STRICT,
         )
-        .unwrap(),
+        .unwrap()
+        .into_value(),
     ]
 }
 
@@ -260,8 +270,10 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
         2,
         vec![p(0, 0), p(1, 2), p(2, 0)],
         vec![r(0), r(0), r(0), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert_eq!(line.point_at(&half).unwrap(), p(1, 0));
     assert_eq!(
@@ -331,8 +343,10 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
         2,
         vec![p(0, 0), p(1, 2), p(2, 0)],
         vec![r(0), r(0), r(0), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let CurveGeometry2::PolynomialBSpline(retained_spline) = spline.geometry() else {
         panic!("top-level polynomial constructor returned another family");
     };

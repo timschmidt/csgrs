@@ -76,7 +76,13 @@ fn main() -> CurveResult<()> {
     });
 
     measure("nurbs_global_interpolation", 10_000, || {
-        let curve = NurbsCurve2::interpolate_uniform(2, vec![p(0, 0), p(2, 2), p(4, 0)]).unwrap();
+        let curve = NurbsCurve2::interpolate_uniform(
+            2,
+            vec![p(0, 0), p(2, 2), p(4, 0)],
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
         curve.control_points().len()
     });
 

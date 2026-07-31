@@ -57,54 +57,71 @@ pub struct PolynomialSplineBezierSpanView2<'a> {
 
 impl PolynomialSplineCurve2 {
     /// Constructs a polynomial B-spline of any positive degree.
+    ///
+    /// The outcome records any terminal decision consumed while validating
+    /// knot ordering, endpoints, or a periodic seam.
     pub fn try_new(
         degree: usize,
         control_points: Vec<Point2>,
         knots: Vec<Real>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::try_new_raw(degree, control_points, knots, attempt)
+        })
+    }
+
+    pub(crate) fn try_new_raw(
+        degree: usize,
+        control_points: Vec<Point2>,
+        knots: Vec<Real>,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_with_optional_source(degree, control_points, knots)
+        Self::try_new_expanded_with_policy(
+            degree,
+            control_points,
+            knots,
+            SplinePeriodicity2::NonPeriodic,
+            policy,
+        )
     }
 
     /// Constructs a periodic polynomial B-spline from one period of controls and knots.
+    ///
+    /// The outcome covers periodic expansion, carrier validation, and seam
+    /// certification under the selected policy.
     pub fn try_new_periodic(
         degree: usize,
         control_points: Vec<Point2>,
         period_knots: Vec<Real>,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_periodic_with_optional_source(degree, control_points, period_knots)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::try_new_periodic_raw(degree, control_points, period_knots, attempt)
+        })
     }
 
-    fn try_new_periodic_with_optional_source(
+    pub(crate) fn try_new_periodic_raw(
         degree: usize,
         control_points: Vec<Point2>,
         period_knots: Vec<Real>,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let expansion = expand_periodic_spline(
             degree,
             control_points,
             period_knots,
             CurveFamily2::PolynomialBSpline,
+            policy,
         )?;
-        Self::try_new_expanded(
+        Self::try_new_expanded_with_policy(
             degree,
             expansion.control_points,
             expansion.knots,
             SplinePeriodicity2::Periodic {
                 period: expansion.period,
             },
-        )
-    }
-
-    fn try_new_with_optional_source(
-        degree: usize,
-        control_points: Vec<Point2>,
-        knots: Vec<Real>,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded(
-            degree,
-            control_points,
-            knots,
-            SplinePeriodicity2::NonPeriodic,
+            policy,
         )
     }
 

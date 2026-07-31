@@ -20,8 +20,41 @@ fn two_span_cubic() -> PolynomialSplineCurve2 {
         3,
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
         vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
     .unwrap()
+    .into_value()
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots() {
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let symbolic_end = r(1) + undecidable_zero;
+    let controls = vec![p(0, 0), p(2, 0)];
+    let knots = vec![r(0), r(0), symbolic_end.clone(), r(1)];
+
+    assert!(matches!(
+        PolynomialSplineCurve2::try_new(
+            1,
+            controls.clone(),
+            knots.clone(),
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Construction
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
+
+    let constructed =
+        PolynomialSplineCurve2::try_new(1, controls, knots.clone(), &CurveContext::APPROXIMATE_512)
+            .expect("the terminal policy must validate the symbolic clamped knot");
+    assert_eq!(
+        constructed.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(constructed.value.knots(), knots);
+    assert_eq!(constructed.value.parameter_domain().1, &symbolic_end);
 }
 
 #[cfg(feature = "predicates")]
@@ -73,8 +106,10 @@ fn linear_polynomial_spline_evaluates_elevated_spans() {
         1,
         vec![p(0, 0), p(2, 2), p(4, 0)],
         vec![r(0), r(0), r(1), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let half = (r(1) / r(2)).unwrap();
     let three_halves = (r(3) / r(2)).unwrap();
 
@@ -119,8 +154,10 @@ fn higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans() {
         4,
         vec![p(0, 0), p(1, 4), p(2, 0), p(3, 4), p(4, 0)],
         [vec![r(0); 5], vec![r(1); 5]].concat(),
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert_eq!(curve.degree(), 4);
     assert_eq!(curve.point_at(&(r(1) / r(2)).unwrap()).unwrap(), p(2, 2));
@@ -153,8 +190,10 @@ fn unclamped_polynomial_spline_retains_exact_active_domain_endpoints() {
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         (0..=6).map(r).collect(),
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert_eq!(curve.parameter_domain(), (&r(2), &r(4)));
     assert_eq!(curve.start(), &Point2::new(r(1), r(2)));
@@ -177,8 +216,10 @@ fn polynomial_spline_corner_requires_explicit_derivative_side() {
         1,
         vec![p(0, 0), p(1, 0), p(1, 1)],
         vec![r(0), r(0), r(1), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert!(matches!(
         curve.derivative_at(&r(1)),
@@ -201,8 +242,10 @@ fn discontinuous_polynomial_knot_requires_explicit_point_side() {
         2,
         vec![p(0, 0), p(1, 1), p(2, 0), p(10, 0), p(11, 1), p(12, 0)],
         vec![r(0), r(0), r(0), r(1), r(1), r(1), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert!(matches!(
         curve.point_at(&r(1)),
@@ -256,8 +299,10 @@ fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
         2,
         vec![p(0, 0), p(2, 4), p(4, 0)],
         vec![r(0), r(0), r(0), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let samples = [
         r(0),
         (r(1) / r(2)).unwrap(),
@@ -316,6 +361,7 @@ fn invalid_polynomial_spline_evidence_context_and_source() {
         4,
         vec![p(0, 0), p(1, 1), p(2, 1), p(3, 1), p(4, 0)],
         vec![r(0); 10],
+        &CurveContext::STRICT,
     )
     .unwrap_err();
 
@@ -352,8 +398,10 @@ fn periodic_polynomial_spline_wraps_and_reuses_exact_native_evaluation() {
         2,
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         (0..=4).map(r).collect(),
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert!(matches!(
         curve.periodicity(),
@@ -375,8 +423,10 @@ fn periodic_polynomial_editing_preserves_only_whole_curve_periodicity() {
         2,
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         (0..=4).map(r).collect(),
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     let inserted = curve.insert_knot(q(1, 2)).unwrap();
     assert_eq!(inserted.period(), curve.period());
@@ -416,6 +466,7 @@ fn periodic_polynomial_spline_evidence_layout_and_wrapping_errors() {
         3,
         vec![p(0, 0), p(1, 0), p(1, 1)],
         vec![r(0), r(1), r(2), r(3)],
+        &CurveContext::STRICT,
     )
     .unwrap_err();
     assert!(matches!(

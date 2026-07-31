@@ -10023,15 +10023,19 @@ mod tests {
                 2,
                 line_controls.clone(),
                 vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
             Curve2::try_nurbs(
                 2,
                 line_controls,
                 vec![r(1), r(2), r(1)],
                 vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         ] {
             let family = line_image_edge.family();
             let path = CurvePath2::try_new(vec![
@@ -10086,8 +10090,10 @@ mod tests {
             rational_arc_controls.clone(),
             rational_arc_weights.clone(),
             vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+            &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
         for curve in [
             Curve2::from(rational_arc),
             Curve2::from(general_rational_arc),

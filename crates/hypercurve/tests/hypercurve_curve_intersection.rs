@@ -140,8 +140,10 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
         vec![p(0, 0), p(1, 1), p(2, 0)],
         vec![r(1), r(1), r(1)],
         vec![r(0), r(0), r(1), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let line = Curve2::from(LineSeg2::try_new(p(0, 1), p(2, 1)).unwrap());
 
     let topology = spline
@@ -1468,8 +1470,10 @@ fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
                 2,
                 controls.to_vec(),
                 vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         ),
         (
             CurveFamily2::Nurbs,
@@ -1478,8 +1482,10 @@ fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
                 controls.to_vec(),
                 vec![r(1); 3],
                 vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         ),
     ]
 }

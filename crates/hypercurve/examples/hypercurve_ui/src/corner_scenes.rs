@@ -704,16 +704,24 @@ fn affine_family_curve(family: CurveFamily2, start: Point2, end: Point2) -> Resu
             .map_err(string_error)?,
         ),
         CurveFamily2::PolynomialBSpline => {
-            Curve2::try_polynomial_bspline(1, vec![start, end], linear_spline_knots())
-                .map_err(string_error)?
+            Curve2::try_polynomial_bspline(
+                1,
+                vec![start, end],
+                linear_spline_knots(),
+                &CurveContext::STRICT,
+            )
+            .map_err(string_error)?
+            .into_value()
         }
         CurveFamily2::Nurbs => Curve2::try_nurbs(
             1,
             vec![start, end],
             vec![Real::one(), Real::one()],
             linear_spline_knots(),
+            &CurveContext::STRICT,
         )
-        .map_err(string_error)?,
+        .map_err(string_error)?
+        .into_value(),
         CurveFamily2::CircularArc => {
             return Err("a circular arc cannot carry an affine line image".into());
         }

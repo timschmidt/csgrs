@@ -69,8 +69,15 @@ fn bench_large_nurbs() {
     let started = Instant::now();
     let mut cold_checksum = 0_usize;
     for _ in 0..iterations {
-        let curve =
-            NurbsCurve2::try_new(3, controls.clone(), weights.clone(), knots.clone()).unwrap();
+        let curve = NurbsCurve2::try_new(
+            3,
+            controls.clone(),
+            weights.clone(),
+            knots.clone(),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
         cold_checksum ^= black_box(curve.bezier_decomposition().unwrap().spans().len());
     }
     let elapsed = started.elapsed();
@@ -79,7 +86,9 @@ fn bench_large_nurbs() {
         elapsed / iterations
     );
 
-    let curve = NurbsCurve2::try_new(3, controls, weights, knots).unwrap();
+    let curve = NurbsCurve2::try_new(3, controls, weights, knots, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let domain_end = i32::try_from(control_count - 3).unwrap();
     let parameter = q(domain_end, 2);
     curve
@@ -133,8 +142,10 @@ fn main() -> CurveResult<()> {
         3,
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
         vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+        &policy,
     )
-    .expect("benchmark polynomial spline is valid");
+    .expect("benchmark polynomial spline is valid")
+    .into_value();
     let started = Instant::now();
     let mut cached_polynomial_checksum = 0_usize;
     for _ in 0..iterations {
@@ -274,8 +285,10 @@ fn main() -> CurveResult<()> {
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
         vec![r(1), r(2), r(4), r(8), r(16)],
         vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+        &policy,
     )
-    .expect("benchmark NURBS is valid");
+    .expect("benchmark NURBS is valid")
+    .into_value();
     let started = Instant::now();
     let mut cached_checksum = 0_usize;
     for _ in 0..iterations {
@@ -362,8 +375,10 @@ fn main() -> CurveResult<()> {
             periodic_controls.clone(),
             periodic_weights.clone(),
             periodic_knots.clone(),
+            &policy,
         )
-        .expect("periodic benchmark NURBS is valid");
+        .expect("periodic benchmark NURBS is valid")
+        .into_value();
         periodic_construction_checksum ^=
             black_box(curve.control_points().len() + curve.knots().len());
     }
@@ -373,9 +388,15 @@ fn main() -> CurveResult<()> {
         elapsed / construction_iterations
     );
 
-    let periodic =
-        NurbsCurve2::try_new_periodic(2, periodic_controls, periodic_weights, periodic_knots)
-            .expect("periodic benchmark NURBS is valid");
+    let periodic = NurbsCurve2::try_new_periodic(
+        2,
+        periodic_controls,
+        periodic_weights,
+        periodic_knots,
+        &policy,
+    )
+    .expect("periodic benchmark NURBS is valid")
+    .into_value();
     let wrapped_parameter = r(4_000_000) + q(1, 2);
     periodic
         .point_at_wrapped(&wrapped_parameter)
@@ -402,8 +423,10 @@ fn main() -> CurveResult<()> {
             vec![p(0, 0), p(2, 4), p(4, 0)],
             vec![r(1), r(2), r(1)],
             vec![r(0), r(0), r(0), r(2), r(2), r(2)],
+            &policy,
         )
         .expect("refinement benchmark NURBS is valid")
+        .into_value()
     };
     let refinement_iterations = 2_000_u32;
     let cold_batch_inputs = (0..refinement_iterations)
@@ -523,8 +546,10 @@ fn main() -> CurveResult<()> {
             vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
             vec![r(1), r(2), r(4), r(8), r(16)],
             vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy,
         )
         .expect("degree-elevation benchmark NURBS is valid")
+        .into_value()
     };
     let elevation_inputs = (0..1_000).map(|_| elevation_source()).collect::<Vec<_>>();
     let started = Instant::now();
@@ -590,7 +615,9 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut interpolation_checksum = 0_usize;
     for points in interpolation_inputs {
-        let curve = NurbsCurve2::interpolate_uniform(3, points).unwrap();
+        let curve = NurbsCurve2::interpolate_uniform(3, points, &policy)
+            .unwrap()
+            .into_value();
         interpolation_checksum ^= black_box(curve.control_points().len());
     }
     let elapsed = started.elapsed();
@@ -605,7 +632,9 @@ fn main() -> CurveResult<()> {
     let mut symbolic_interpolation_checksum = 0_usize;
     for _ in 0..symbolic_interpolation_count {
         let curve =
-            NurbsCurve2::interpolate_centripetal(2, symbolic_interpolation_points.clone()).unwrap();
+            NurbsCurve2::interpolate_centripetal(2, symbolic_interpolation_points.clone(), &policy)
+                .unwrap()
+                .into_value();
         symbolic_interpolation_checksum ^= black_box(curve.control_points().len());
     }
     let elapsed = started.elapsed();
@@ -614,7 +643,9 @@ fn main() -> CurveResult<()> {
         elapsed / symbolic_interpolation_count
     );
 
-    let retained_interpolation = NurbsCurve2::interpolate_uniform(3, interpolation_points).unwrap();
+    let retained_interpolation = NurbsCurve2::interpolate_uniform(3, interpolation_points, &policy)
+        .unwrap()
+        .into_value();
     let started = Instant::now();
     let mut retained_interpolation_checksum = 0_usize;
     for _ in 0..iterations {

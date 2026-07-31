@@ -88,34 +88,61 @@ pub struct NurbsElevatedBezierSpan2 {
 
 impl NurbsCurve2 {
     /// Constructs a degree-one-or-higher NURBS curve over its active knot domain.
+    ///
+    /// The outcome records any terminal decision consumed while validating
+    /// weights, knot ordering, endpoints, or a periodic seam.
     pub fn try_new(
         degree: usize,
         control_points: Vec<Point2>,
         weights: Vec<Real>,
         knots: Vec<Real>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::try_new_raw(degree, control_points, weights, knots, attempt)
+        })
+    }
+
+    pub(crate) fn try_new_raw(
+        degree: usize,
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        knots: Vec<Real>,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_with_optional_source(degree, control_points, weights, knots)
+        Self::try_new_with_optional_source_and_policy(
+            degree,
+            control_points,
+            weights,
+            knots,
+            policy,
+        )
     }
 
     /// Constructs a periodic NURBS from one period of controls and knot breaks.
     ///
     /// `period_knots` must contain exactly one more entry than the unique
     /// control count. Hypercurve extends the cyclic control and knot sequences
-    /// exactly and certifies closure at the canonical seam.
+    /// exactly and certifies closure at the canonical seam. The outcome records
+    /// any terminal decision consumed by that complete construction.
     pub fn try_new_periodic(
         degree: usize,
         control_points: Vec<Point2>,
         weights: Vec<Real>,
         period_knots: Vec<Real>,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_periodic_with_optional_source(degree, control_points, weights, period_knots)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::try_new_periodic_raw(degree, control_points, weights, period_knots, attempt)
+        })
     }
 
-    fn try_new_periodic_with_optional_source(
+    pub(crate) fn try_new_periodic_raw(
         degree: usize,
         control_points: Vec<Point2>,
         mut weights: Vec<Real>,
         period_knots: Vec<Real>,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         if weights.len() != control_points.len() {
             return Err(ExactCurveError::invalid(
@@ -124,10 +151,15 @@ impl NurbsCurve2 {
                 CurveError::InvalidPeriodicSpline,
             ));
         }
-        let expansion =
-            expand_periodic_spline(degree, control_points, period_knots, CurveFamily2::Nurbs)?;
+        let expansion = expand_periodic_spline(
+            degree,
+            control_points,
+            period_knots,
+            CurveFamily2::Nurbs,
+            policy,
+        )?;
         weights.extend_from_within(..degree);
-        Self::try_new_expanded(
+        Self::try_new_expanded_with_policy(
             degree,
             expansion.control_points,
             weights,
@@ -135,21 +167,7 @@ impl NurbsCurve2 {
             SplinePeriodicity2::Periodic {
                 period: expansion.period,
             },
-        )
-    }
-
-    fn try_new_with_optional_source(
-        degree: usize,
-        control_points: Vec<Point2>,
-        weights: Vec<Real>,
-        knots: Vec<Real>,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_with_optional_source_and_policy(
-            degree,
-            control_points,
-            weights,
-            knots,
-            &CurveContext::STRICT,
+            policy,
         )
     }
 

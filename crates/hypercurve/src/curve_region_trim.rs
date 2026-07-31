@@ -455,8 +455,10 @@ mod tests {
             vec![p(-1, 2), p(7, 2)],
             vec![Real::one(), Real::one()],
             vec![Real::from(2), Real::from(2), Real::from(4), Real::from(4)],
+            &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
         let fragments = curve
             .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
             .unwrap();

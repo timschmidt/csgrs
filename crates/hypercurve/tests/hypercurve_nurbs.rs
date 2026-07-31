@@ -21,8 +21,61 @@ fn quadratic_nurbs() -> NurbsCurve2 {
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1), r(2), r(4), r(1)],
         vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
     .unwrap()
+    .into_value()
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let symbolic_end = r(1) + undecidable_zero;
+    let controls = vec![p(0, 0), p(2, 0)];
+    let weights = vec![Real::one(), Real::one()];
+    let knots = vec![r(0), r(0), symbolic_end.clone(), r(1)];
+
+    assert!(matches!(
+        NurbsCurve2::try_new(
+            1,
+            controls.clone(),
+            weights.clone(),
+            knots.clone(),
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Construction
+                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+    ));
+
+    let constructed = NurbsCurve2::try_new(
+        1,
+        controls.clone(),
+        weights.clone(),
+        knots.clone(),
+        &CurveContext::APPROXIMATE_512,
+    )
+    .expect("the terminal policy must validate the symbolic clamped knot");
+    assert_eq!(
+        constructed.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(constructed.value.knots(), knots);
+    assert_eq!(constructed.value.parameter_domain().1, &symbolic_end);
+
+    let top_level = Curve2::try_nurbs(
+        1,
+        controls,
+        weights,
+        vec![r(0), r(0), symbolic_end, r(1)],
+        &CurveContext::APPROXIMATE_512,
+    )
+    .expect("Curve2 must preserve construction certainty");
+    assert_eq!(
+        top_level.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
 }
 
 #[cfg(feature = "predicates")]
@@ -98,8 +151,10 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
         vec![p(0, 0), p(4, 0)],
         vec![r(1), r(3)],
         vec![r(0), r(0), r(1), r(1)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let half = (r(1) / r(2)).unwrap();
 
     assert_eq!(curve.degree(), 1);
@@ -133,8 +188,10 @@ fn nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators() {
         vec![p(0, 0), p(4, 8)],
         vec![r(1), r(1)],
         vec![r(2), r(2), r(6), r(6)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let clone = curve.clone();
 
     assert_eq!(curve.parameter_domain(), (&r(2), &r(6)));
@@ -151,8 +208,10 @@ fn nurbs_higher_derivatives_use_each_authored_parameter_chain_power() {
         vec![p(0, 0), p(4, 0)],
         vec![r(1), r(3)],
         vec![r(2), r(2), r(6), r(6)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     let derivatives = curve.derivatives_at(&r(4), 3).unwrap();
 
@@ -178,8 +237,10 @@ fn nurbs_internal_corner_requires_explicit_derivative_side() {
         vec![p(0, 0), p(1, 0), p(1, 1)],
         vec![r(1), r(1), r(1)],
         vec![r(0), r(0), r(1), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     let error = curve.derivative_at(&r(1)).unwrap_err();
     assert!(matches!(
@@ -213,8 +274,10 @@ fn discontinuous_nurbs_knot_requires_explicit_point_side() {
         vec![p(0, 0), p(1, 1), p(2, 0), p(10, 0), p(11, 1), p(12, 0)],
         vec![r(1); 6],
         vec![r(0), r(0), r(0), r(1), r(1), r(1), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert!(matches!(
         curve.point_at(&r(1)),
@@ -260,8 +323,10 @@ fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache
         vec![p(0, 0), p(2, 4), p(4, 0)],
         vec![r(1), r(2), r(1)],
         vec![r(0), r(0), r(0), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let samples = [r(0), (r(1) / r(2)).unwrap(), r(1), r(2)];
     let expected = samples
         .iter()
@@ -303,8 +368,10 @@ fn nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result() {
         vec![p(0, 0), p(2, 4), p(4, 0)],
         vec![r(1), r(2), r(1)],
         vec![r(0), r(0), r(0), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let clone = curve.clone();
     let request = vec![r(1), r(1)];
 
@@ -343,8 +410,10 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
         vec![p(0, 0), p(1, 4), p(4, 3), p(6, 0)],
         vec![r(1), r(2), r(5), r(3)],
         vec![r(0), r(0), r(0), r(0), r(2), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let knot = q(3, 4);
     let refined = curve.insert_knot(knot.clone()).unwrap();
     let clone = refined.clone();
@@ -394,8 +463,10 @@ fn periodic_nurbs_knot_removal_preserves_period_and_wrapped_image() {
         vec![p(0, 0), p(3, 0), p(4, 2), p(2, 5), p(-1, 2)],
         vec![r(1), r(2), r(5), r(3), r(4)],
         vec![r(0), r(1), r(1), r(3), r(5), r(8)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let knot = q(5, 2);
     let refined = curve.insert_knot(knot.clone()).unwrap();
     let removed = refined.remove_knot(knot).unwrap().unwrap();
@@ -417,8 +488,10 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
         vec![r(1), r(2), r(3), r(4)],
         vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let clone = curve.clone();
 
     let elevation = curve.degree_elevation(4).unwrap();
@@ -461,8 +534,10 @@ fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
         vec![r(1), r(2), r(3), r(4)],
         vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let clone = curve.clone();
 
     let elevated = curve.elevated_to_degree(4).unwrap();
@@ -501,8 +576,10 @@ fn nurbs_elevated_carrier_preserves_discontinuous_knot_sides() {
         vec![p(0, 0), p(1, 1), p(2, 0), p(10, 0), p(11, 1), p(12, 0)],
         vec![r(1); 6],
         vec![r(0), r(0), r(0), r(1), r(1), r(1), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let elevated = curve.elevated_to_degree(4).unwrap();
 
     assert_eq!(elevated.degree(), 4);
@@ -536,8 +613,10 @@ fn periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives() {
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         vec![r(1), r(2), r(3), r(4)],
         (0..=4).map(r).collect(),
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let elevated = curve.elevated_to_degree(3).unwrap();
 
     assert_eq!(elevated.degree(), 3);
@@ -567,8 +646,10 @@ fn nurbs_degree_elevation_retains_contextual_invalid_target_and_projective_block
         vec![p(0, 0), p(2, 0)],
         vec![r(1), r(-1)],
         vec![r(0), r(0), r(1), r(1)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let blocked = singular.degree_elevation(2).unwrap_err();
     assert_eq!(blocked.operation(), CurveOperation2::DegreeElevation);
     assert_eq!(blocked.family(), CurveFamily2::Nurbs);
@@ -591,8 +672,10 @@ fn nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image() {
         vec![p(0, 0), p(2, 4), p(4, 0)],
         vec![r(1), r(2), r(1)],
         vec![r(0), r(0), r(0), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     let (left, right) = curve
         .split_at(r(1), &CurveContext::STRICT)
@@ -661,7 +744,7 @@ fn invalid_nurbs_split_and_trim_ranges_evidence_subdivision_context() {
 }
 
 #[test]
-fn top_level_nurbs_retains_source_and_exact_geometry_without_policy() {
+fn top_level_nurbs_retains_source_and_exact_geometry_under_explicit_policy() {
     let curve = quadratic_nurbs();
 
     assert_eq!(curve.degree(), 2);
@@ -756,8 +839,10 @@ fn unequal_weight_cubic_nurbs_promotes_once_with_provenance() {
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
         vec![r(1), r(2), r(4), r(8), r(16)],
         vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     let first = curve.native_subcurves().unwrap();
     let first_pointer = first.as_ptr();
@@ -781,8 +866,10 @@ fn higher_degree_nurbs_promotes_evaluates_and_splits_exactly() {
         vec![p(0, 0), p(1, 4), p(2, 0), p(3, 4), p(4, 0)],
         vec![r(1); 5],
         [vec![r(0); 5], vec![r(1); 5]].concat(),
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert_eq!(curve.degree(), 4);
     assert_eq!(curve.point_at(&q(1, 2)).unwrap(), p(2, 2));
@@ -806,8 +893,10 @@ fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1); 4],
         (0..=6).map(r).collect(),
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert_eq!(curve.parameter_domain(), (&r(2), &r(4)));
     assert_eq!(curve.start(), &Point2::new(r(1), r(2)));
@@ -846,8 +935,10 @@ fn unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence() {
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1), r(2), r(3), r(4)],
         (0..=6).map(r).collect(),
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert_eq!(curve.start(), &Point2::new(q(4, 3), q(8, 3)));
     assert_eq!(curve.end(), &Point2::new(q(36, 7), q(12, 7)));
@@ -870,6 +961,7 @@ fn invalid_nurbs_construction_returns_contextual_error() {
         vec![p(0, 0), p(1, 1)],
         vec![r(1), r(1)],
         vec![r(0), r(0), r(1)],
+        &CurveContext::STRICT,
     )
     .unwrap_err();
 
@@ -891,8 +983,10 @@ fn periodic_nurbs_wraps_exact_points_derivatives_and_retains_source() {
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         vec![r(1), r(1), r(1), r(1)],
         (0..=4).map(r).collect(),
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     assert_eq!(curve.period(), Some(&r(4)));
     assert!(matches!(
@@ -924,8 +1018,10 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
         vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
         vec![r(1), r(2), r(3), r(4)],
         (0..=4).map(r).collect(),
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
 
     let inserted = curve.insert_knots(vec![q(1, 2), q(3, 2)]).unwrap();
     assert_eq!(inserted.period(), curve.period());
@@ -1001,8 +1097,10 @@ fn nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots() {
         vec![p(0, 0), p(3, 0), p(4, 2), p(2, 5), p(-1, 2)],
         vec![r(1), r(2), r(5), r(3), r(4)],
         vec![r(0), r(1), r(1), r(3), r(5), r(8)],
+        &CurveContext::STRICT,
     )
-    .unwrap();
+    .unwrap()
+    .into_value();
     let parameter = q(5, 2);
     let shifted = q(21, 2);
 
@@ -1026,6 +1124,7 @@ fn periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping() {
         vec![p(0, 0), p(1, 0), p(1, 1)],
         vec![r(1), r(1)],
         (0..=3).map(r).collect(),
+        &CurveContext::STRICT,
     )
     .unwrap_err();
     assert!(matches!(

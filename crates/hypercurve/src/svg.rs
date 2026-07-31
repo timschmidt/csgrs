@@ -939,7 +939,7 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
         )],
         CurveGeometry2::PolynomialBSpline(curve) => {
             vec![Curve2::from(
-                PolynomialSplineCurve2::try_new(
+                PolynomialSplineCurve2::try_new_raw(
                     curve.degree(),
                     curve
                         .control_points()
@@ -947,12 +947,13 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
                         .map(|point| transform.transform_point(point))
                         .collect(),
                     curve.knots().to_vec(),
+                    &CurveContext::STRICT,
                 )
                 .map_err(svg_geometry_error)?,
             )]
         }
         CurveGeometry2::Nurbs(curve) => vec![Curve2::from(
-            NurbsCurve2::try_new(
+            NurbsCurve2::try_new_raw(
                 curve.degree(),
                 curve
                     .control_points()
@@ -961,6 +962,7 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
                     .collect(),
                 curve.weights().to_vec(),
                 curve.knots().to_vec(),
+                &CurveContext::STRICT,
             )
             .map_err(svg_geometry_error)?,
         )],

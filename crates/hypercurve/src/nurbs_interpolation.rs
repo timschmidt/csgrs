@@ -4,9 +4,10 @@ use hypersolve::{BareissError, determinant_bareiss, solve_dense_linear_system_ba
 use std::cmp::Ordering;
 use std::sync::{Arc, Mutex, OnceLock};
 
+use crate::policy::resolve_certified_operation;
 use crate::{
-    CurveContext, CurveError, CurveFamily2, CurveOperation2, ExactCurveError, ExactCurveResult,
-    NurbsCurve2, Point2, Real, UncertaintyReason,
+    CurveContext, CurveError, CurveFamily2, CurveOperation2, CurveOutcome, ExactCurveError,
+    ExactCurveResult, NurbsCurve2, Point2, Real, UncertaintyReason,
 };
 
 const INTERPOLATION_SOLVE_PRECISION: i32 = -128;
@@ -41,61 +42,81 @@ impl NurbsCurve2 {
     ///
     /// A clamped knot vector is derived by the standard averaging construction.
     /// Unit control weights produce a polynomial B-spline represented by the
-    /// top-level NURBS carrier.
+    /// top-level NURBS carrier. The outcome covers every parameter, solve, and
+    /// replay decision under the selected policy.
     pub fn interpolate_global(
         degree: usize,
         data_points: Vec<Point2>,
         parameters: Vec<Real>,
-    ) -> ExactCurveResult<NurbsCurve2> {
-        let knots = averaged_interpolation_knots(degree, &data_points, &parameters)?;
-        interpolate_with_inputs(
-            degree,
-            data_points,
-            parameters,
-            vec![Real::one(); knots.len() - degree - 1],
-            knots,
-        )
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<NurbsCurve2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let knots = averaged_interpolation_knots(degree, &data_points, &parameters, attempt)?;
+            interpolate_with_inputs(
+                degree,
+                data_points,
+                parameters,
+                vec![Real::one(); knots.len() - degree - 1],
+                knots,
+                attempt,
+            )
+        })
     }
 
     /// Globally interpolates exact points at uniformly spaced exact parameters.
+    ///
+    /// The outcome records any terminal decision consumed by solving or
+    /// replaying the complete exact interpolation.
     pub fn interpolate_uniform(
         degree: usize,
         data_points: Vec<Point2>,
-    ) -> ExactCurveResult<NurbsCurve2> {
-        let system = uniform_interpolation_system(degree, &data_points)?;
-        interpolate_with_precomputed_system(
-            degree,
-            data_points,
-            &system.parameters,
-            system.control_weights.iter().cloned().collect(),
-            system.knots.iter().cloned().collect(),
-            &system.coefficient_matrix,
-            &system.denominators,
-        )
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<NurbsCurve2>> {
+        resolve_certified_operation(policy, |attempt| {
+            let system = uniform_interpolation_system(degree, &data_points, attempt)?;
+            interpolate_with_precomputed_system(
+                degree,
+                data_points,
+                &system.parameters,
+                system.control_weights.iter().cloned().collect(),
+                system.knots.iter().cloned().collect(),
+                &system.coefficient_matrix,
+                &system.denominators,
+                attempt,
+            )
+        })
     }
 
     /// Globally interpolates using exact Euclidean chord-length parameters.
     pub fn interpolate_chord_length(
         degree: usize,
         data_points: Vec<Point2>,
-    ) -> ExactCurveResult<NurbsCurve2> {
-        interpolate_distance_parameterized(
-            degree,
-            data_points,
-            DistanceParameterization::ChordLength,
-        )
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<NurbsCurve2>> {
+        resolve_certified_operation(policy, |attempt| {
+            interpolate_distance_parameterized(
+                degree,
+                data_points,
+                DistanceParameterization::ChordLength,
+                attempt,
+            )
+        })
     }
 
     /// Globally interpolates using exact centripetal parameters.
     pub fn interpolate_centripetal(
         degree: usize,
         data_points: Vec<Point2>,
-    ) -> ExactCurveResult<NurbsCurve2> {
-        interpolate_distance_parameterized(
-            degree,
-            data_points,
-            DistanceParameterization::Centripetal,
-        )
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<NurbsCurve2>> {
+        resolve_certified_operation(policy, |attempt| {
+            interpolate_distance_parameterized(
+                degree,
+                data_points,
+                DistanceParameterization::Centripetal,
+                attempt,
+            )
+        })
     }
 
     /// Interpolates with explicit exact parameters, control weights, and knots.
@@ -103,15 +124,26 @@ impl NurbsCurve2 {
     /// The fixed control weights make this a linear homogeneous interpolation
     /// problem. Every solved coordinate is replayed against the coefficient
     /// matrix by `hypersolve`, then every constructed curve point is replayed
-    /// against its authored interpolation constraint.
+    /// against its authored interpolation constraint. The outcome records any
+    /// selected terminal consumed along that complete path.
     pub fn interpolate_with_parameters_and_knots(
         degree: usize,
         data_points: Vec<Point2>,
         parameters: Vec<Real>,
         control_weights: Vec<Real>,
         knots: Vec<Real>,
-    ) -> ExactCurveResult<NurbsCurve2> {
-        interpolate_with_inputs(degree, data_points, parameters, control_weights, knots)
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<NurbsCurve2>> {
+        resolve_certified_operation(policy, |attempt| {
+            interpolate_with_inputs(
+                degree,
+                data_points,
+                parameters,
+                control_weights,
+                knots,
+                attempt,
+            )
+        })
     }
 }
 
@@ -121,16 +153,25 @@ fn interpolate_with_inputs(
     parameters: Vec<Real>,
     control_weights: Vec<Real>,
     knots: Vec<Real>,
+    policy: &CurveContext,
 ) -> ExactCurveResult<NurbsCurve2> {
-    validate_interpolation_inputs(degree, &data_points, &parameters, &control_weights, &knots)?;
+    validate_interpolation_inputs(
+        degree,
+        &data_points,
+        &parameters,
+        &control_weights,
+        &knots,
+        policy,
+    )?;
     let coefficient_matrix = build_interpolation_coefficient_matrix(
         degree,
         data_points.len(),
         &parameters,
         &control_weights,
         &knots,
+        policy,
     )?;
-    let denominators = interpolation_denominators(&coefficient_matrix)?;
+    let denominators = interpolation_denominators(&coefficient_matrix, policy)?;
     interpolate_with_precomputed_system(
         degree,
         data_points,
@@ -139,6 +180,7 @@ fn interpolate_with_inputs(
         knots,
         &coefficient_matrix,
         &denominators,
+        policy,
     )
 }
 
@@ -148,19 +190,32 @@ fn build_interpolation_coefficient_matrix(
     parameters: &[Real],
     control_weights: &[Real],
     knots: &[Real],
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<Vec<Real>>> {
     parameters
         .iter()
-        .map(|parameter| weighted_basis_row(degree, point_count, knots, control_weights, parameter))
+        .map(|parameter| {
+            weighted_basis_row(
+                degree,
+                point_count,
+                knots,
+                control_weights,
+                parameter,
+                policy,
+            )
+        })
         .collect()
 }
 
-fn interpolation_denominators(coefficient_matrix: &[Vec<Real>]) -> ExactCurveResult<Vec<Real>> {
+fn interpolation_denominators(
+    coefficient_matrix: &[Vec<Real>],
+    policy: &CurveContext,
+) -> ExactCurveResult<Vec<Real>> {
     coefficient_matrix
         .iter()
         .map(|row| {
             let denominator = row.iter().fold(Real::zero(), |sum, value| sum + value);
-            certify_interpolation_denominator(&denominator)?;
+            certify_interpolation_denominator(&denominator, policy)?;
             Ok(denominator)
         })
         .collect()
@@ -174,6 +229,7 @@ fn interpolate_with_precomputed_system(
     knots: Vec<Real>,
     coefficient_matrix: &[Vec<Real>],
     denominators: &[Real],
+    policy: &CurveContext,
 ) -> ExactCurveResult<NurbsCurve2> {
     debug_assert_eq!(data_points.len(), coefficient_matrix.len());
     debug_assert_eq!(data_points.len(), denominators.len());
@@ -192,7 +248,7 @@ fn interpolate_with_precomputed_system(
     let (x_solve, y_solve) = if replay_residuals {
         solve_interpolation_coordinates_bareiss(coefficient_matrix, &[rhs_x, rhs_y])?
     } else {
-        let determinant = interpolation_determinant(coefficient_matrix)?;
+        let determinant = interpolation_determinant(coefficient_matrix, policy)?;
         let x_solve = solve_interpolation_coordinate_cramer_identity(
             coefficient_matrix,
             &rhs_x,
@@ -212,14 +268,14 @@ fn interpolate_with_precomputed_system(
         .zip(y_solve.solution.iter().cloned())
         .map(|(x, y)| Point2::new(x, y))
         .collect::<Vec<_>>();
-    let curve = NurbsCurve2::try_new(degree, control_points, control_weights, knots)
+    let curve = NurbsCurve2::try_new_raw(degree, control_points, control_weights, knots, policy)
         .map_err(remap_interpolation_error)?;
     if x_solve.residual_replayed && y_solve.residual_replayed {
         for (parameter, expected) in parameters.iter().zip(&data_points) {
             let actual = curve
-                .point_at(parameter)
+                .point_at_side_with_policy(parameter, crate::CurveParameterSide2::Automatic, policy)
                 .map_err(remap_interpolation_error)?;
-            match exact_point_equal(&actual, expected) {
+            match exact_point_equal(&actual, expected, policy) {
                 Ok(()) => {}
                 Err(ExactCurveError::Blocked(_)) => {
                     break;
@@ -234,6 +290,7 @@ fn interpolate_with_precomputed_system(
 fn uniform_interpolation_system(
     degree: usize,
     data_points: &[Point2],
+    policy: &CurveContext,
 ) -> ExactCurveResult<Arc<InterpolationSystem>> {
     let point_count = data_points.len();
     let systems = UNIFORM_INTERPOLATION_SYSTEMS.get_or_init(|| Mutex::new(Vec::new()));
@@ -247,17 +304,25 @@ fn uniform_interpolation_system(
     }
 
     let parameters = uniform_interpolation_parameters(point_count)?;
-    let knots = averaged_interpolation_knots(degree, data_points, &parameters)?;
+    let knots = averaged_interpolation_knots(degree, data_points, &parameters, policy)?;
     let control_weights = vec![Real::one(); knots.len() - degree - 1];
-    validate_interpolation_inputs(degree, data_points, &parameters, &control_weights, &knots)?;
+    validate_interpolation_inputs(
+        degree,
+        data_points,
+        &parameters,
+        &control_weights,
+        &knots,
+        policy,
+    )?;
     let coefficient_matrix = build_interpolation_coefficient_matrix(
         degree,
         point_count,
         &parameters,
         &control_weights,
         &knots,
+        policy,
     )?;
-    let denominators = interpolation_denominators(&coefficient_matrix)?;
+    let denominators = interpolation_denominators(&coefficient_matrix, policy)?;
     let system = Arc::new(InterpolationSystem {
         degree,
         point_count,
@@ -284,14 +349,13 @@ fn uniform_interpolation_system(
     Ok(system)
 }
 
-fn interpolation_determinant(coefficient_matrix: &[Vec<Real>]) -> ExactCurveResult<Real> {
+fn interpolation_determinant(
+    coefficient_matrix: &[Vec<Real>],
+    policy: &CurveContext,
+) -> ExactCurveResult<Real> {
     let evidence = determinant_bareiss(coefficient_matrix, INTERPOLATION_SOLVE_PRECISION)
         .map_err(interpolation_solve_error)?;
-    match crate::classify::compare_reals(
-        &evidence.determinant,
-        &Real::zero(),
-        &CurveContext::STRICT,
-    ) {
+    match crate::classify::compare_reals(&evidence.determinant, &Real::zero(), policy) {
         Some(Ordering::Less | Ordering::Greater) => Ok(evidence.determinant),
         Some(Ordering::Equal) => Err(ExactCurveError::invalid(
             CurveOperation2::Interpolation,
@@ -381,26 +445,28 @@ fn interpolate_distance_parameterized(
     degree: usize,
     data_points: Vec<Point2>,
     parameterization: DistanceParameterization,
+    policy: &CurveContext,
 ) -> ExactCurveResult<NurbsCurve2> {
-    let parameters = distance_interpolation_parameters(&data_points, parameterization)?;
-    let knots = averaged_interpolation_knots(degree, &data_points, &parameters)?;
+    let parameters = distance_interpolation_parameters(&data_points, parameterization, policy)?;
+    let knots = averaged_interpolation_knots(degree, &data_points, &parameters, policy)?;
     interpolate_with_inputs(
         degree,
         data_points,
         parameters,
         vec![Real::one(); knots.len() - degree - 1],
         knots,
+        policy,
     )
 }
 
 fn distance_interpolation_parameters(
     data_points: &[Point2],
     parameterization: DistanceParameterization,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<Real>> {
     if data_points.len() < 2 {
         return Err(invalid_interpolation());
     }
-    let policy = CurveContext::STRICT;
     let mut increments = Vec::with_capacity(data_points.len() - 1);
     for pair in data_points.windows(2) {
         let chord = pair[0].distance_squared(&pair[1]).sqrt().map_err(|cause| {
@@ -420,7 +486,7 @@ fn distance_interpolation_parameters(
                 )
             })?,
         };
-        match crate::classify::compare_reals(&Real::zero(), &increment, &policy) {
+        match crate::classify::compare_reals(&Real::zero(), &increment, policy) {
             Some(Ordering::Less) => increments.push(increment),
             Some(_) => return Err(invalid_interpolation()),
             None => return Err(blocked_interpolation(UncertaintyReason::RealSign)),
@@ -446,9 +512,11 @@ fn distance_interpolation_parameters(
     Ok(parameters)
 }
 
-fn certify_interpolation_denominator(denominator: &Real) -> ExactCurveResult<()> {
-    let policy = CurveContext::STRICT;
-    match crate::classify::compare_reals(denominator, &Real::zero(), &policy) {
+fn certify_interpolation_denominator(
+    denominator: &Real,
+    policy: &CurveContext,
+) -> ExactCurveResult<()> {
+    match crate::classify::compare_reals(denominator, &Real::zero(), policy) {
         Some(Ordering::Less | Ordering::Greater) => Ok(()),
         Some(Ordering::Equal) => Err(ExactCurveError::invalid(
             CurveOperation2::Interpolation,
@@ -463,11 +531,12 @@ fn averaged_interpolation_knots(
     degree: usize,
     data_points: &[Point2],
     parameters: &[Real],
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<Real>> {
     if degree < 1 || data_points.len() != parameters.len() || data_points.len() <= degree {
         return Err(invalid_interpolation());
     }
-    validate_strict_parameters(parameters)?;
+    validate_parameters(parameters, policy)?;
     let mut knots = Vec::with_capacity(data_points.len() + degree + 1);
     knots.extend(std::iter::repeat_n(parameters[0].clone(), degree + 1));
     let divisor = interpolation_usize_real(degree)?;
@@ -520,6 +589,7 @@ fn validate_interpolation_inputs(
     parameters: &[Real],
     control_weights: &[Real],
     knots: &[Real],
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
     let point_count = data_points.len();
     if degree < 1
@@ -530,18 +600,17 @@ fn validate_interpolation_inputs(
     {
         return Err(invalid_interpolation());
     }
-    validate_strict_parameters(parameters)?;
-    let policy = CurveContext::STRICT;
+    validate_parameters(parameters, policy)?;
     for pair in knots.windows(2) {
-        match crate::classify::compare_reals(&pair[0], &pair[1], &policy) {
+        match crate::classify::compare_reals(&pair[0], &pair[1], policy) {
             Some(Ordering::Less | Ordering::Equal) => {}
             Some(Ordering::Greater) => return Err(invalid_interpolation()),
             None => return Err(blocked_interpolation(UncertaintyReason::Ordering)),
         }
     }
     match (
-        crate::classify::compare_reals(&parameters[0], &knots[degree], &policy),
-        crate::classify::compare_reals(&parameters[point_count - 1], &knots[point_count], &policy),
+        crate::classify::compare_reals(&parameters[0], &knots[degree], policy),
+        crate::classify::compare_reals(&parameters[point_count - 1], &knots[point_count], policy),
     ) {
         (Some(Ordering::Equal), Some(Ordering::Equal)) => Ok(()),
         (Some(_), Some(_)) => Err(invalid_interpolation()),
@@ -549,13 +618,12 @@ fn validate_interpolation_inputs(
     }
 }
 
-fn validate_strict_parameters(parameters: &[Real]) -> ExactCurveResult<()> {
+fn validate_parameters(parameters: &[Real], policy: &CurveContext) -> ExactCurveResult<()> {
     if parameters.len() < 2 {
         return Err(invalid_interpolation());
     }
-    let policy = CurveContext::STRICT;
     for pair in parameters.windows(2) {
-        match crate::classify::compare_reals(&pair[0], &pair[1], &policy) {
+        match crate::classify::compare_reals(&pair[0], &pair[1], policy) {
             Some(Ordering::Less) => {}
             Some(_) => return Err(invalid_interpolation()),
             None => return Err(blocked_interpolation(UncertaintyReason::Ordering)),
@@ -570,8 +638,9 @@ fn weighted_basis_row(
     knots: &[Real],
     control_weights: &[Real],
     parameter: &Real,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<Real>> {
-    let span = interpolation_span(degree, control_count, knots, parameter)?;
+    let span = interpolation_span(degree, control_count, knots, parameter, policy)?;
     let mut basis = vec![Real::one()];
     let mut left = vec![Real::zero(); degree + 1];
     let mut right = vec![Real::zero(); degree + 1];
@@ -608,18 +677,18 @@ fn interpolation_span(
     control_count: usize,
     knots: &[Real],
     parameter: &Real,
+    policy: &CurveContext,
 ) -> ExactCurveResult<usize> {
-    let policy = CurveContext::STRICT;
     let last_control = control_count - 1;
-    match crate::classify::compare_reals(parameter, &knots[control_count], &policy) {
+    match crate::classify::compare_reals(parameter, &knots[control_count], policy) {
         Some(Ordering::Equal) => return Ok(last_control),
         Some(_) => {}
         None => return Err(blocked_interpolation(UncertaintyReason::Ordering)),
     }
     for span in degree..=last_control {
         match (
-            crate::classify::compare_reals(&knots[span], parameter, &policy),
-            crate::classify::compare_reals(parameter, &knots[span + 1], &policy),
+            crate::classify::compare_reals(&knots[span], parameter, policy),
+            crate::classify::compare_reals(parameter, &knots[span + 1], policy),
         ) {
             (Some(Ordering::Less | Ordering::Equal), Some(Ordering::Less)) => return Ok(span),
             (Some(_), Some(_)) => {}
@@ -629,18 +698,21 @@ fn interpolation_span(
     Err(invalid_interpolation())
 }
 
-fn exact_scalar_equal(first: &Real, second: &Real) -> ExactCurveResult<()> {
-    let policy = CurveContext::STRICT;
-    match crate::classify::compare_reals(first, second, &policy) {
+fn exact_scalar_equal(first: &Real, second: &Real, policy: &CurveContext) -> ExactCurveResult<()> {
+    match crate::classify::compare_reals(first, second, policy) {
         Some(Ordering::Equal) => Ok(()),
         Some(_) => Err(invalid_interpolation()),
         None => Err(blocked_interpolation(UncertaintyReason::RealSign)),
     }
 }
 
-fn exact_point_equal(first: &Point2, second: &Point2) -> ExactCurveResult<()> {
-    exact_scalar_equal(first.x(), second.x())?;
-    exact_scalar_equal(first.y(), second.y())
+fn exact_point_equal(
+    first: &Point2,
+    second: &Point2,
+    policy: &CurveContext,
+) -> ExactCurveResult<()> {
+    exact_scalar_equal(first.x(), second.x(), policy)?;
+    exact_scalar_equal(first.y(), second.y(), policy)
 }
 
 fn interpolation_solve_error(error: BareissError) -> ExactCurveError {
@@ -703,8 +775,10 @@ mod tests {
     fn uniform_system_cache_is_exact_and_independent_of_data_coordinates() {
         let first_points = vec![point(0, 0), point(1, 4), point(4, 3), point(6, 0)];
         let second_points = vec![point(-2, 7), point(0, 1), point(5, -3), point(9, 2)];
-        let first_system = uniform_interpolation_system(3, &first_points).unwrap();
-        let second_system = uniform_interpolation_system(3, &second_points).unwrap();
+        let first_system =
+            uniform_interpolation_system(3, &first_points, &CurveContext::STRICT).unwrap();
+        let second_system =
+            uniform_interpolation_system(3, &second_points, &CurveContext::STRICT).unwrap();
         assert!(Arc::ptr_eq(&first_system, &second_system));
         assert!(
             first_system
@@ -714,10 +788,13 @@ mod tests {
                 .all(|value| value.exact_rational_ref().is_some())
         );
 
-        let curve = NurbsCurve2::interpolate_uniform(3, second_points.clone()).unwrap();
+        let curve =
+            NurbsCurve2::interpolate_uniform(3, second_points.clone(), &CurveContext::STRICT)
+                .unwrap()
+                .into_value();
         for (parameter, expected) in first_system.parameters.iter().zip(second_points) {
             let actual = curve.point_at(parameter).unwrap();
-            exact_point_equal(&actual, &expected).unwrap();
+            exact_point_equal(&actual, &expected, &CurveContext::STRICT).unwrap();
         }
     }
 }
