@@ -9,7 +9,10 @@ use std::{
 use crate::classify::{
     LineSide, classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, real_sign,
 };
-use crate::{Classification, CurveContext, CurveError, CurveResult, ParamRange, Point2};
+use crate::policy::resolve_certified_operation;
+use crate::{
+    Classification, CurveContext, CurveError, CurveOutcome, CurveResult, ParamRange, Point2,
+};
 use std::cmp::Ordering;
 
 /// A finite line segment.
@@ -1105,12 +1108,19 @@ impl CircularArc2 {
     /// Counterclockwise and clockwise arcs both report a positive magnitude;
     /// orientation remains available through [`CircularArc2::is_clockwise`].
     /// Full circles report `tau`. The result is retained with the arc and is
-    /// the angular measure used by [`CircularArc2::sweep_fraction`].
-    pub fn directed_sweep_angle(&self) -> CurveResult<Classification<Real>> {
-        self.directed_sweep_angle_with_policy(&CurveContext::STRICT)
+    /// the angular measure used by [`CircularArc2::sweep_fraction`]. The
+    /// returned [`CurveOutcome`] records whether exact angle classification
+    /// consumed the `APPROXIMATE_512` terminal.
+    pub fn directed_sweep_angle(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<&Real>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.retained_directed_sweep_angle(attempt)
+        })
     }
 
-    pub(crate) fn directed_sweep_angle_with_policy(
+    pub(crate) fn directed_sweep_angle_raw(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {

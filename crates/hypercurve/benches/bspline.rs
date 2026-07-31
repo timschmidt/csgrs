@@ -159,8 +159,9 @@ fn main() -> CurveResult<()> {
     for _ in 0..iterations {
         promotion_checksum ^= black_box(
             promoted_polynomial
-                .native_bezier_fragments()
+                .native_bezier_fragments(&CurveContext::STRICT)
                 .expect("polynomial promotion remains exact")
+                .into_value()
                 .len(),
         );
     }

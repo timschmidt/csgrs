@@ -67,23 +67,25 @@ fn main() {
     let second = rectangle(1, -1, 3, 1);
 
     let promotion_iterations = 20_000_u32;
+    let promotion_cache_iterations = 2_000_000_u32;
     first
-        .native_bezier_fragments()
+        .native_bezier_fragments(&policy)
         .expect("path promotion is exact");
     let started = Instant::now();
     let mut promotion_checksum = 0_usize;
-    for _ in 0..promotion_iterations {
+    for _ in 0..promotion_cache_iterations {
         promotion_checksum ^= black_box(
             first
-                .native_bezier_fragments()
+                .native_bezier_fragments(&policy)
                 .expect("cached path promotion remains exact")
+                .into_value()
                 .len(),
         );
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_cached_native_promotion: {promotion_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={promotion_checksum}",
-        elapsed / promotion_iterations
+        "curve_path_cached_native_promotion: {promotion_cache_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={promotion_checksum}",
+        elapsed / promotion_cache_iterations
     );
 
     first
@@ -149,7 +151,7 @@ fn main() {
 
     let native = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0)));
     native
-        .native_bezier_fragments()
+        .native_bezier_fragments(&policy)
         .expect("benchmark native curve promotes exactly");
     let started = Instant::now();
     let mut full_trim_checksum = 0_usize;
@@ -157,7 +159,13 @@ fn main() {
         let trimmed = native
             .subcurve(r(0), r(1))
             .expect("full-domain trim is exact");
-        full_trim_checksum ^= black_box(trimmed.native_bezier_fragments().unwrap().len());
+        full_trim_checksum ^= black_box(
+            trimmed
+                .native_bezier_fragments(&policy)
+                .unwrap()
+                .into_value()
+                .len(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -195,8 +203,15 @@ fn main() {
             .split_at(r(3))
             .expect("spline benchmark split is exact");
         spline_split_checksum ^= black_box(
-            left.native_bezier_fragments().unwrap().len()
-                + right.native_bezier_fragments().unwrap().len(),
+            left.native_bezier_fragments(&policy)
+                .unwrap()
+                .into_value()
+                .len()
+                + right
+                    .native_bezier_fragments(&policy)
+                    .unwrap()
+                    .into_value()
+                    .len(),
         );
     }
     let elapsed = started.elapsed();

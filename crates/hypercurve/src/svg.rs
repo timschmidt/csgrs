@@ -893,8 +893,9 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
                     .map_err(svg_geometry_error);
             }
             curve
-                .native_bezier_fragments()
+                .native_bezier_fragments(&CurveContext::STRICT)
                 .map_err(svg_geometry_error)?
+                .into_value()
                 .iter()
                 .map(|fragment| {
                     transform_bezier_subcurve(fragment.curve(), transform).map(Curve2::from)

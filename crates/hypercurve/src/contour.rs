@@ -1089,7 +1089,7 @@ fn compute_contour_signed_x_first_moment(segments: &[Segment2]) -> CurveResult<O
                     / Real::from(6_i8))?
             }
             Segment2::Arc(arc) => {
-                let sweep = match arc.directed_sweep_angle()? {
+                let sweep = match arc.directed_sweep_angle_raw(&CurveContext::STRICT)? {
                     Classification::Decided(sweep) => sweep,
                     Classification::Uncertain(_) => return Ok(None),
                 };

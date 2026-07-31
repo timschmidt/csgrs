@@ -1116,16 +1116,15 @@ impl Curve2 {
     ///
     /// Promotion runs once per shared curve object. Circular-arc, polynomial
     /// spline, and native NURBS spans preserve their source span index and
-    /// exact parameter interval.
-    pub fn native_bezier_fragments(&self) -> ExactCurveResult<&[NativeBezierFragment2]> {
-        match self.native_bezier_fragments_with_policy(&CurveContext::STRICT)? {
-            Classification::Decided(fragments) => Ok(fragments),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                CurveOperation2::NativeTopology,
-                self.family(),
-                reason,
-            )),
-        }
+    /// exact parameter interval. The returned [`CurveOutcome`] records whether
+    /// promotion consumed the `APPROXIMATE_512` terminal.
+    pub fn native_bezier_fragments(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<&[NativeBezierFragment2]>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.native_bezier_fragments_for_operation(attempt, CurveOperation2::NativeTopology)
+        })
     }
 
     pub(crate) fn native_bezier_fragments_with_policy(
@@ -1829,15 +1828,23 @@ impl CurvePath2 {
     }
 
     /// Promotes this path once and borrows exact native Bezier fragments in traversal order.
-    pub fn native_bezier_fragments(&self) -> ExactCurveResult<&[NativeBezierFragment2]> {
-        match self.native_bezier_fragments_with_policy(&CurveContext::STRICT)? {
-            Classification::Decided(fragments) => Ok(fragments),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                CurveOperation2::NativeTopology,
-                self.data.curves[0].family(),
-                reason,
-            )),
-        }
+    ///
+    /// The returned [`CurveOutcome`] records whether promotion consumed the
+    /// `APPROXIMATE_512` terminal.
+    pub fn native_bezier_fragments(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<&[NativeBezierFragment2]>> {
+        resolve_certified_operation(policy, |attempt| {
+            match self.native_bezier_fragments_with_policy(attempt)? {
+                Classification::Decided(fragments) => Ok(fragments),
+                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                    CurveOperation2::NativeTopology,
+                    self.data.curves[0].family(),
+                    reason,
+                )),
+            }
+        })
     }
 
     pub(crate) fn native_bezier_fragments_with_policy(
@@ -2346,7 +2353,8 @@ fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
             curve.family(),
         ),
         _ => {
-            let fragments = curve.native_bezier_fragments()?;
+            let fragments = curve
+                .native_bezier_fragments_for_operation(&policy, CurveOperation2::NativeTopology)?;
             let mut bounds =
                 decided_subcurve_bounds(fragments[0].curve(), curve.family(), &policy)?;
             for fragment in &fragments[1..] {

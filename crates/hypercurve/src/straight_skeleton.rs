@@ -10057,7 +10057,11 @@ mod tests {
         let center = Point2::new(r(0), r(0));
         let arc = CircularArc2::try_from_center(right.clone(), top.clone(), center.clone(), false)
             .unwrap();
-        let rational_arc = arc.rational_bezier_decomposition().unwrap().spans()[0]
+        let rational_arc = arc
+            .rational_bezier_decomposition(&CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+            .spans()[0]
             .curve()
             .clone();
         let rational_arc_controls = rational_arc

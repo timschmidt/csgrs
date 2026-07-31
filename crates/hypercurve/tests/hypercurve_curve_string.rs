@@ -802,8 +802,14 @@ fn curve_string_trim_retains_non_cardinal_arc_parameter_lineage() {
         panic!("repeated arc trim should preserve the circular-arc family");
     };
     assert!(std::ptr::eq(
-        trimmed_arc.rational_bezier_decomposition().unwrap(),
-        repeated_arc.rational_bezier_decomposition().unwrap()
+        trimmed_arc
+            .rational_bezier_decomposition(&policy)
+            .unwrap()
+            .into_value(),
+        repeated_arc
+            .rational_bezier_decomposition(&policy)
+            .unwrap()
+            .into_value()
     ));
 
     let nested_curve = CurveString2::try_new(vec![Segment2::Arc(trimmed_arc.clone())]).unwrap();

@@ -52,7 +52,10 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
     ));
 
     let top_level = Curve2::from(curve);
-    let fragments = top_level.native_bezier_fragments().unwrap();
+    let fragments = top_level
+        .native_bezier_fragments(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(fragments.len(), 1);
     assert_eq!(fragments[0].parameter_range(), (&r(0), &r(1)));
 }

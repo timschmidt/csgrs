@@ -86,7 +86,12 @@ fn bench_large_arcs() {
     let mut cold_checksum = 0_usize;
     for _ in 0..iterations {
         let path = large_arc_chain(arc_count, 0);
-        cold_checksum ^= black_box(path.native_bezier_fragments().unwrap().len());
+        cold_checksum ^= black_box(
+            path.native_bezier_fragments(&policy)
+                .unwrap()
+                .into_value()
+                .len(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -94,11 +99,17 @@ fn bench_large_arcs() {
         elapsed / iterations
     );
 
-    first.native_bezier_fragments().unwrap();
+    first.native_bezier_fragments(&policy).unwrap();
     let started = Instant::now();
     let mut cached_checksum = 0_usize;
     for _ in 0..iterations {
-        cached_checksum ^= black_box(first.native_bezier_fragments().unwrap().len());
+        cached_checksum ^= black_box(
+            first
+                .native_bezier_fragments(&policy)
+                .unwrap()
+                .into_value()
+                .len(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -152,20 +163,64 @@ fn main() {
     let arc = CircularArc2::try_from_center(p(5, 0), p(0, 5), p(0, 0), true)
         .expect("benchmark arc is valid");
     let iterations = 20_000_u32;
+    let cached_query_iterations = 2_000_000_u32;
 
     let started = Instant::now();
     let mut raw_checksum = 0_usize;
-    for _ in 0..iterations {
+    for _ in 0..cached_query_iterations {
         raw_checksum ^= black_box(
-            arc.rational_bezier_decomposition()
+            arc.rational_bezier_decomposition(&CurveContext::STRICT)
                 .expect("arc decomposition remains exact")
+                .into_value()
                 .spans()
                 .len(),
         );
     }
     let elapsed = started.elapsed();
     println!(
-        "arc_cached_rational_decomposition: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={raw_checksum}",
+        "arc_cached_rational_decomposition: {cached_query_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={raw_checksum}",
+        elapsed / cached_query_iterations
+    );
+
+    let started = Instant::now();
+    let mut sweep_checksum = 0_usize;
+    for _ in 0..cached_query_iterations {
+        let sweep = arc
+            .directed_sweep_angle(&CurveContext::STRICT)
+            .expect("arc sweep remains exact");
+        sweep_checksum ^= black_box(
+            usize::from(matches!(sweep.value, Classification::Decided(_)))
+                ^ usize::from(matches!(
+                    sweep.certainty,
+                    hypercurve::CurveCertainty::Approximate512Consumed
+                )),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "arc_cached_directed_sweep: {cached_query_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={sweep_checksum}",
+        elapsed / cached_query_iterations
+    );
+
+    let decomposition = arc
+        .rational_bezier_decomposition(&CurveContext::STRICT)
+        .expect("arc decomposition remains exact")
+        .into_value();
+    let decomposition_parameter = q(1, 3);
+    let started = Instant::now();
+    let mut decomposition_point_count = 0_u32;
+    for _ in 0..iterations {
+        black_box(
+            decomposition
+                .point_at(&decomposition_parameter, &CurveContext::STRICT)
+                .expect("arc decomposition evaluation remains exact")
+                .into_value(),
+        );
+        decomposition_point_count += 1;
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "arc_decomposition_point_evaluation: {iterations} iterations in {elapsed:?} ({:?}/iter), count={decomposition_point_count}",
         elapsed / iterations
     );
 
@@ -209,22 +264,23 @@ fn main() {
 
     let retained = Curve2::new(CurveGeometry2::CircularArc(arc));
     retained
-        .native_bezier_fragments()
+        .native_bezier_fragments(&policy)
         .expect("initial arc promotion remains exact");
     let started = Instant::now();
     let mut retained_checksum = 0_usize;
-    for _ in 0..iterations {
+    for _ in 0..cached_query_iterations {
         retained_checksum ^= black_box(
             retained
-                .native_bezier_fragments()
+                .native_bezier_fragments(&policy)
                 .expect("retained arc promotion remains exact")
+                .into_value()
                 .len(),
         );
     }
     let elapsed = started.elapsed();
     println!(
-        "arc_cached_native_promotion: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_checksum}",
-        elapsed / iterations
+        "arc_cached_native_promotion: {cached_query_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_checksum}",
+        elapsed / cached_query_iterations
     );
 
     let parameter = (r(1) / r(3)).expect("three is nonzero");

@@ -4,10 +4,11 @@ use std::cmp::Ordering;
 
 use hyperreal::RealSign;
 
-use crate::policy::resolve_cached_evaluation;
+use crate::policy::{resolve_cached_evaluation, resolve_certified_operation};
 use crate::{
     CircularArc2, Classification, CurveContext, CurveError, CurveFamily2, CurveOperation2,
-    ExactCurveError, ExactCurveResult, Point2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    CurveOutcome, ExactCurveError, ExactCurveResult, Point2, RationalQuadraticBezier2, Real,
+    UncertaintyReason,
 };
 
 /// Exact rational quadratic span from one circular-arc decomposition.
@@ -38,18 +39,22 @@ impl CircularArc2 {
     /// Minor sweeps use one span, semicircles and major sweeps use two, and a
     /// full circle uses four quarter-circle spans. The returned parameter
     /// intervals partition `[0, 1]`; each interval uses the native rational
-    /// Bezier parameter locally.
+    /// Bezier parameter locally. The returned [`CurveOutcome`] records whether
+    /// classifying the exact sweep consumed the `APPROXIMATE_512` terminal.
     pub fn rational_bezier_decomposition(
         &self,
-    ) -> ExactCurveResult<&CircularArcBezierDecomposition2> {
-        match self.rational_bezier_decomposition_with_policy(&CurveContext::STRICT)? {
-            Classification::Decided(decomposition) => Ok(decomposition),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                CurveOperation2::BezierDecomposition,
-                CurveFamily2::CircularArc,
-                reason,
-            )),
-        }
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<&CircularArcBezierDecomposition2>> {
+        resolve_certified_operation(policy, |attempt| {
+            match self.rational_bezier_decomposition_with_policy(attempt)? {
+                Classification::Decided(decomposition) => Ok(decomposition),
+                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                    CurveOperation2::BezierDecomposition,
+                    CurveFamily2::CircularArc,
+                    reason,
+                )),
+            }
+        })
     }
 
     pub(crate) fn rational_bezier_decomposition_with_policy(
@@ -71,8 +76,17 @@ impl CircularArcBezierDecomposition2 {
     }
 
     /// Evaluates the piecewise-rational arc parameterization on `[0, 1]`.
-    pub fn point_at(&self, parameter: &Real) -> ExactCurveResult<Point2> {
-        evaluate_decomposition(self, parameter, &CurveContext::STRICT)
+    ///
+    /// The returned [`CurveOutcome`] records whether selecting or evaluating
+    /// the exact span consumed the `APPROXIMATE_512` terminal.
+    pub fn point_at(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+        resolve_certified_operation(policy, |attempt| {
+            evaluate_decomposition(self, parameter, attempt)
+        })
     }
 
     pub(crate) fn point_at_with_policy(
@@ -373,7 +387,7 @@ mod tests {
     use std::sync::Arc;
 
     use super::CircularArc2;
-    use crate::{Point2, Real};
+    use crate::{CurveContext, Point2, Real};
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
@@ -387,7 +401,8 @@ mod tests {
 
         assert!(arc.retained_facts.sweep_kind.is_empty());
         assert!(arc.retained_facts.bezier_decomposition.is_empty());
-        arc.rational_bezier_decomposition().unwrap();
+        arc.rational_bezier_decomposition(&CurveContext::STRICT)
+            .unwrap();
 
         assert!(Arc::ptr_eq(&arc.retained_facts, &clone.retained_facts));
         assert!(!clone.retained_facts.sweep_kind.is_empty());
