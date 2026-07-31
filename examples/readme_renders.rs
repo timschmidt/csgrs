@@ -5,9 +5,8 @@
 
 use csgrs::solid::MetaBall;
 use csgrs::{
-    curve,
+    GeometryContext, TriangleMesh, curve,
     solid::{self, SolidExt},
-    GeometryContext, TriangleMesh,
 };
 use hypercurve::{
     Classification, CurvePath2, CurvePolicy, CurveRegion2, CurveString2,
@@ -130,7 +129,7 @@ fn render_readme_curves() {
     );
     render_curve(
         "cycloidal_gear",
-        &curve::cycloidal_gear(r(0.22), 14, r(0.11), r(0.02), 8),
+        &curve::cycloidal_gear(r(0.22), 14, r(0.275), r(0.02), 8),
     );
     render_curve(
         "involute_rack",
@@ -273,7 +272,7 @@ fn render_readme_meshes() {
         &solid::spur_gear_cycloid(
             r(0.22),
             14,
-            r(0.11),
+            r(0.275),
             r(0.02),
             8,
             r(0.5),
