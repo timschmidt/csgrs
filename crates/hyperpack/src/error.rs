@@ -12,9 +12,9 @@ pub enum PackError {
     NonPositiveDimension,
     /// A support area-ratio policy had an invalid denominator.
     InvalidSupportRatio,
-    /// A load, weight, or capacity value was certified negative.
+    /// A load, weight, cost, or capacity value was not certified nonnegative.
     NegativeLoadValue,
-    /// A requested clearance was certified negative.
+    /// A requested clearance was not certified nonnegative.
     NegativeClearance,
     /// More than one declared item used the same stable id.
     DuplicateItem,

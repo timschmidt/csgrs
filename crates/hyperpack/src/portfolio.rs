@@ -6,7 +6,7 @@
 //! states, but acceptance and comparison use exact reports. No single packing
 //! heuristic is treated as universally best.
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
 use crate::{
     Bin3, CuboidHeuristic3, CuboidHeuristicReport3, FeasibilityStatus, Item3, PackResult,
@@ -339,12 +339,9 @@ fn feasibility_rank(status: FeasibilityStatus) -> u8 {
 }
 
 fn gt(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Positive => Some(true),
-        RealSign::Zero | RealSign::Negative => Some(false),
-    }
+    Some(crate::predicate::compare(left, right)?.is_gt())
 }
 
 fn exact_eq(left: &Real, right: &Real) -> bool {
-    matches!((left - right).refine_sign_until(-64), Some(RealSign::Zero))
+    crate::predicate::equal(left, right)
 }

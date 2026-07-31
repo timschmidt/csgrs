@@ -127,17 +127,14 @@ pub fn verify_clearance_2d(
         for right_index in (left_index + 1)..placements.len() {
             let left = &placements[left_index];
             let right = &placements[right_index];
-            let gap = separating_gap_2d(
+            let (gap, satisfied) = clearance_evidence_2d(
                 placement_items[left_index],
                 left,
                 placement_items[right_index],
                 right,
+                &required_clearance,
                 &mut exact_comparisons,
             );
-            let satisfied = gap.as_ref().and_then(|gap| {
-                exact_comparisons += 1;
-                leq(&required_clearance, gap)
-            });
             match satisfied {
                 Some(true) => {}
                 Some(false) => {
@@ -212,17 +209,14 @@ pub fn verify_clearance_3d(
         for right_index in (left_index + 1)..placements.len() {
             let left = &placements[left_index];
             let right = &placements[right_index];
-            let gap = separating_gap(
+            let (gap, satisfied) = clearance_evidence_3d(
                 placement_items[left_index],
                 left,
                 placement_items[right_index],
                 right,
+                &required_clearance,
                 &mut exact_comparisons,
             );
-            let satisfied = gap.as_ref().and_then(|gap| {
-                exact_comparisons += 1;
-                leq(&required_clearance, gap)
-            });
             match satisfied {
                 Some(true) => {}
                 Some(false) => {
@@ -261,14 +255,15 @@ pub fn verify_clearance_3d(
     })
 }
 
-fn separating_gap_2d(
+fn clearance_evidence_2d(
     left_item: &SheetItem2,
     left: &SheetPlacement2,
     right_item: &SheetItem2,
     right: &SheetPlacement2,
+    required_clearance: &Real,
     exact_comparisons: &mut usize,
-) -> Option<Real> {
-    let mut best = None::<Real>;
+) -> (Option<Real>, Option<bool>) {
+    let mut saw_unknown = false;
     for gap in [
         right.x.clone() - (left.x.clone() + left_item.size.x.clone()),
         left.x.clone() - (right.x.clone() + right_item.size.x.clone()),
@@ -276,26 +271,28 @@ fn separating_gap_2d(
         left.y.clone() - (right.y.clone() + right_item.size.y.clone()),
     ] {
         *exact_comparisons += 1;
-        if nonnegative(&gap).unwrap_or(false)
-            && best.as_ref().is_none_or(|current| {
-                *exact_comparisons += 1;
-                gt(&gap, current).unwrap_or(false)
-            })
-        {
-            best = Some(gap);
+        match leq(required_clearance, &gap) {
+            Some(true) => return (Some(gap), Some(true)),
+            Some(false) => {}
+            None => saw_unknown = true,
         }
     }
-    best
+    if saw_unknown {
+        (None, None)
+    } else {
+        (None, Some(false))
+    }
 }
 
-fn separating_gap(
+fn clearance_evidence_3d(
     left_item: &Item3,
     left: &Placement3,
     right_item: &Item3,
     right: &Placement3,
+    required_clearance: &Real,
     exact_comparisons: &mut usize,
-) -> Option<Real> {
-    let mut best = None::<Real>;
+) -> (Option<Real>, Option<bool>) {
+    let mut saw_unknown = false;
     for gap in [
         right.x.clone() - (left.x.clone() + left_item.size.x.clone()),
         left.x.clone() - (right.x.clone() + right_item.size.x.clone()),
@@ -305,41 +302,25 @@ fn separating_gap(
         left.z.clone() - (right.z.clone() + right_item.size.z.clone()),
     ] {
         *exact_comparisons += 1;
-        if nonnegative(&gap).unwrap_or(false)
-            && best.as_ref().is_none_or(|current| {
-                *exact_comparisons += 1;
-                gt(&gap, current).unwrap_or(false)
-            })
-        {
-            best = Some(gap);
+        match leq(required_clearance, &gap) {
+            Some(true) => return (Some(gap), Some(true)),
+            Some(false) => {}
+            None => saw_unknown = true,
         }
     }
-    best
+    if saw_unknown {
+        (None, None)
+    } else {
+        (None, Some(false))
+    }
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative | RealSign::Zero => Some(true),
-        RealSign::Positive => Some(false),
-    }
-}
-
-fn gt(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Positive => Some(true),
-        RealSign::Zero | RealSign::Negative => Some(false),
-    }
-}
-
-fn nonnegative(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
-        RealSign::Negative => Some(false),
-        RealSign::Zero | RealSign::Positive => Some(true),
-    }
+    Some(!crate::predicate::compare(left, right)?.is_gt())
 }
 
 fn negative(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Negative => Some(true),
         RealSign::Zero | RealSign::Positive => Some(false),
     }

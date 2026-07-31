@@ -1290,6 +1290,26 @@ fn support_replay_rejects_overhang_and_invalid_ratio() {
 }
 
 #[test]
+fn support_replay_unions_overlapping_contact_patches() {
+    let items = [
+        item("base-a", 2, 2, 1),
+        item("base-b", 2, 2, 1),
+        item("top", 4, 2, 1),
+    ];
+    let placements = [
+        placement("base-a", 0, 0, 0),
+        placement("base-b", 0, 0, 0),
+        placement("top", 0, 0, 1),
+    ];
+
+    let report = verify_support_3d(&items, &placements, SupportPolicy3::FullBase).unwrap();
+
+    assert_eq!(report.status, SupportStatus3::Violated);
+    assert_eq!(report.evidence[2].supported_area, r(4));
+    assert_eq!(report.evidence[2].footprint_area, r(8));
+}
+
+#[test]
 fn support_replay_checks_center_of_mass_projection_patch() {
     let items = [item("base", 2, 2, 1), item("top", 5, 2, 1)];
     let centered = [placement("base", 1, 0, 0), placement("top", 0, 0, 1)];

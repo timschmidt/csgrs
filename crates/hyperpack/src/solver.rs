@@ -92,6 +92,7 @@ pub fn branch_and_bound_one_bin_3d(
         nodes: 0,
         candidate_points: 0,
         hit_limit: false,
+        hit_uncertainty: false,
         incumbent: None,
     };
     let mut placements = Vec::new();
@@ -104,7 +105,7 @@ pub fn branch_and_bound_one_bin_3d(
         &mut state,
     )?;
 
-    let status = match (&state.incumbent, state.hit_limit) {
+    let status = match (&state.incumbent, state.hit_limit || state.hit_uncertainty) {
         (Some(_), _) => ExactSearchStatus3::Feasible,
         (None, true) => ExactSearchStatus3::Unknown,
         (None, false) => ExactSearchStatus3::Infeasible,
@@ -122,6 +123,7 @@ struct SearchState3 {
     nodes: usize,
     candidate_points: usize,
     hit_limit: bool,
+    hit_uncertainty: bool,
     incumbent: Option<PackingVerification3>,
 }
 
@@ -155,8 +157,13 @@ fn dfs(
     let item = &items[index];
     for point in candidate_points(placements, items) {
         state.candidate_points += 1;
-        if !candidate_fits(bin, item, placements, items, &point) {
-            continue;
+        match candidate_fits(bin, item, placements, items, &point) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => {
+                state.hit_uncertainty = true;
+                continue;
+            }
         }
         placements.push(Placement3 {
             item: item.id.clone(),
@@ -233,22 +240,26 @@ fn candidate_fits(
     placements: &[Placement3],
     items: &[Item3],
     point: &Point3,
-) -> bool {
-    if !nonnegative(&point.x).unwrap_or(false)
-        || !nonnegative(&point.y).unwrap_or(false)
-        || !nonnegative(&point.z).unwrap_or(false)
-        || !leq(&(point.x.clone() + item.size.x.clone()), &bin.size.x).unwrap_or(false)
-        || !leq(&(point.y.clone() + item.size.y.clone()), &bin.size.y).unwrap_or(false)
-        || !leq(&(point.z.clone() + item.size.z.clone()), &bin.size.z).unwrap_or(false)
-    {
-        return false;
+) -> Option<bool> {
+    if !crate::predicate::decide_all!(
+        nonnegative(&point.x),
+        nonnegative(&point.y),
+        nonnegative(&point.z),
+        leq(&(point.x.clone() + item.size.x.clone()), &bin.size.x),
+        leq(&(point.y.clone() + item.size.y.clone()), &bin.size.y),
+        leq(&(point.z.clone() + item.size.z.clone()), &bin.size.z),
+    )? {
+        return Some(false);
     }
-    placements.iter().all(|placement| {
+    for placement in placements {
         let Some(placed_item) = items.iter().find(|placed| placed.id == placement.item) else {
-            return false;
+            return Some(false);
         };
-        boxes_disjoint(item, point, placed_item, placement).unwrap_or(false)
-    })
+        if !boxes_disjoint(item, point, placed_item, placement)? {
+            return Some(false);
+        }
+    }
+    Some(true)
 }
 
 fn boxes_disjoint(
@@ -257,22 +268,22 @@ fn boxes_disjoint(
     placed_item: &Item3,
     placement: &Placement3,
 ) -> Option<bool> {
-    Some(
-        leq(&(point.x.clone() + item.size.x.clone()), &placement.x)?
-            || leq(
-                &(placement.x.clone() + placed_item.size.x.clone()),
-                &point.x,
-            )?
-            || leq(&(point.y.clone() + item.size.y.clone()), &placement.y)?
-            || leq(
-                &(placement.y.clone() + placed_item.size.y.clone()),
-                &point.y,
-            )?
-            || leq(&(point.z.clone() + item.size.z.clone()), &placement.z)?
-            || leq(
-                &(placement.z.clone() + placed_item.size.z.clone()),
-                &point.z,
-            )?,
+    crate::predicate::decide_any!(
+        leq(&(point.x.clone() + item.size.x.clone()), &placement.x),
+        leq(
+            &(placement.x.clone() + placed_item.size.x.clone()),
+            &point.x,
+        ),
+        leq(&(point.y.clone() + item.size.y.clone()), &placement.y),
+        leq(
+            &(placement.y.clone() + placed_item.size.y.clone()),
+            &point.y,
+        ),
+        leq(&(point.z.clone() + item.size.z.clone()), &placement.z),
+        leq(
+            &(placement.z.clone() + placed_item.size.z.clone()),
+            &point.z,
+        ),
     )
 }
 
@@ -281,26 +292,19 @@ fn points_equal(left: &Point3, right: &Point3) -> bool {
 }
 
 fn compare_desc(left: &Real, right: &Real) -> Option<std::cmp::Ordering> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Positive => Some(std::cmp::Ordering::Less),
-        RealSign::Zero => Some(std::cmp::Ordering::Equal),
-        RealSign::Negative => Some(std::cmp::Ordering::Greater),
-    }
+    crate::predicate::compare(left, right).map(std::cmp::Ordering::reverse)
 }
 
 fn exact_eq(left: &Real, right: &Real) -> bool {
-    matches!((left - right).refine_sign_until(-64), Some(RealSign::Zero))
+    crate::predicate::equal(left, right)
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative | RealSign::Zero => Some(true),
-        RealSign::Positive => Some(false),
-    }
+    Some(!crate::predicate::compare(left, right)?.is_gt())
 }
 
 fn nonnegative(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Negative => Some(false),
         RealSign::Zero | RealSign::Positive => Some(true),
     }

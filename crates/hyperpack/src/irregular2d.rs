@@ -208,7 +208,7 @@ impl IrregularPacking2 {
             return Err(PackError::DuplicateItem.into());
         }
 
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let ids = item_map.keys().cloned().collect::<Vec<_>>();
         let mut pairs = BTreeMap::new();
         let mut ready_pair_count = 0;
@@ -343,7 +343,7 @@ impl IrregularPacking2 {
         bin: &SheetBin2,
         placements: &[IrregularSheetPlacement2],
     ) -> IrregularPackResult2<IrregularSheetVerification2> {
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let mut status = FeasibilityStatus::Feasible;
         let mut containment_checks = 0;
         let mut no_overlap_checks = 0;
@@ -556,11 +556,7 @@ fn compare_bottom_left(
 }
 
 fn real_cmp(left: &Real, right: &Real) -> Option<Ordering> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative => Some(Ordering::Less),
-        RealSign::Zero => Some(Ordering::Equal),
-        RealSign::Positive => Some(Ordering::Greater),
-    }
+    crate::predicate::compare(left, right)
 }
 
 fn contained_in_sheet(
@@ -577,7 +573,7 @@ fn contained_in_sheet(
         let remaining_x = &bin.size.x - &x;
         let remaining_y = &bin.size.y - &y;
         for value in [&x, &y, &remaining_x, &remaining_y] {
-            match value.refine_sign_until(-64)? {
+            match crate::predicate::sign(value)? {
                 RealSign::Negative => return Some(false),
                 RealSign::Zero | RealSign::Positive => {}
             }
@@ -590,7 +586,7 @@ fn absolute_contour_area(contour: &Contour2) -> Result<Option<Real>, CurveError>
     let Some(area) = contour.signed_area()? else {
         return Ok(None);
     };
-    Ok(match area.refine_sign_until(-64) {
+    Ok(match crate::predicate::sign(&area) {
         Some(RealSign::Negative) => Some(-area),
         Some(RealSign::Zero | RealSign::Positive) => Some(area),
         None => None,

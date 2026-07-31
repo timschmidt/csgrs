@@ -6,7 +6,7 @@
 //! comparisons expose certified evidence or explicit uncertainty instead of
 //! relying on primitive-float tolerances.
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 use std::cmp::Ordering;
 
 use crate::{
@@ -174,16 +174,19 @@ pub fn compare_objectives_3d(
             None => {
                 unknown_terms += 1;
                 facts.push(format!("{term:?} comparison was unknown"));
+                return ObjectiveComparison3 {
+                    ordering: None,
+                    decisive_term: None,
+                    compared_terms: index + 1,
+                    unknown_terms,
+                    facts,
+                };
             }
         }
     }
 
     ObjectiveComparison3 {
-        ordering: if unknown_terms == 0 {
-            Some(Ordering::Equal)
-        } else {
-            None
-        },
+        ordering: Some(Ordering::Equal),
         decisive_term: None,
         compared_terms: policy.len(),
         unknown_terms,
@@ -197,14 +200,17 @@ fn update_max(
     exact_comparisons: &mut usize,
     unknown_comparisons: &mut usize,
 ) {
+    if *unknown_comparisons > 0 {
+        return;
+    }
     let Some(existing) = current.as_ref() else {
         *current = Some(candidate.clone());
         return;
     };
     *exact_comparisons += 1;
-    match (candidate - existing).refine_sign_until(-64) {
-        Some(RealSign::Positive) => *current = Some(candidate.clone()),
-        Some(RealSign::Zero | RealSign::Negative) => {}
+    match crate::predicate::compare(candidate, existing) {
+        Some(Ordering::Greater) => *current = Some(candidate.clone()),
+        Some(Ordering::Equal | Ordering::Less) => {}
         None => {
             *unknown_comparisons += 1;
             *current = None;
@@ -221,11 +227,7 @@ fn compare_optional_real_descending(left: Option<&Real>, right: Option<&Real>) -
 }
 
 fn compare_real_ascending(left: &Real, right: &Real) -> Option<Ordering> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative => Some(Ordering::Less),
-        RealSign::Zero => Some(Ordering::Equal),
-        RealSign::Positive => Some(Ordering::Greater),
-    }
+    crate::predicate::compare(left, right)
 }
 
 fn compare_real_descending(left: &Real, right: &Real) -> Option<Ordering> {

@@ -8,7 +8,7 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::{Real, RealExactSetFacts, RealSign};
+use hyperreal::{Real, RealExactSetFacts};
 
 use crate::{
     AxisBox3, Bin3, CapacityBoundReport3, FreeBox3, Item3, ItemId, PairIncompatibilityReport3,
@@ -263,10 +263,8 @@ fn compare_real(
     unknown_orderings: &mut usize,
 ) -> Option<Ordering> {
     *exact_comparisons += 1;
-    match (left - right).refine_sign_until(-64) {
-        Some(RealSign::Negative) => Some(Ordering::Less),
-        Some(RealSign::Zero) => Some(Ordering::Equal),
-        Some(RealSign::Positive) => Some(Ordering::Greater),
+    match crate::predicate::compare(left, right) {
+        Some(ordering) => Some(ordering),
         None => {
             *unknown_orderings += 1;
             None
@@ -296,6 +294,9 @@ fn dimension_facts_3d(items: &[Item3], total_item_volume: Real) -> PackingDimens
     let mut max_item_x = None::<Real>;
     let mut max_item_y = None::<Real>;
     let mut max_item_z = None::<Real>;
+    let mut max_item_x_unknown = false;
+    let mut max_item_y_unknown = false;
+    let mut max_item_z_unknown = false;
     let mut exact_comparisons = 0_usize;
     let mut unknown_max_comparisons = 0_usize;
 
@@ -303,18 +304,21 @@ fn dimension_facts_3d(items: &[Item3], total_item_volume: Real) -> PackingDimens
         update_max(
             &mut max_item_x,
             &item.size.x,
+            &mut max_item_x_unknown,
             &mut exact_comparisons,
             &mut unknown_max_comparisons,
         );
         update_max(
             &mut max_item_y,
             &item.size.y,
+            &mut max_item_y_unknown,
             &mut exact_comparisons,
             &mut unknown_max_comparisons,
         );
         update_max(
             &mut max_item_z,
             &item.size.z,
+            &mut max_item_z_unknown,
             &mut exact_comparisons,
             &mut unknown_max_comparisons,
         );
@@ -334,9 +338,13 @@ fn dimension_facts_3d(items: &[Item3], total_item_volume: Real) -> PackingDimens
 fn update_max(
     current: &mut Option<Real>,
     candidate: &Real,
+    uncertain: &mut bool,
     exact_comparisons: &mut usize,
     unknown_max_comparisons: &mut usize,
 ) {
+    if *uncertain {
+        return;
+    }
     let Some(existing) = current.as_ref() else {
         *current = Some(candidate.clone());
         return;
@@ -349,7 +357,10 @@ fn update_max(
     ) {
         Some(Ordering::Greater) => *current = Some(candidate.clone()),
         Some(Ordering::Less | Ordering::Equal) => {}
-        None => *current = None,
+        None => {
+            *current = None;
+            *uncertain = true;
+        }
     }
 }
 

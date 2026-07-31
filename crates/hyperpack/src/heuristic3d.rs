@@ -565,22 +565,22 @@ fn boxes_disjoint(
     size: &AxisBox3,
     candidate: &PlacementCandidate3,
 ) -> Option<bool> {
-    Some(
-        leq(&(point.x.clone() + size.x.clone()), &candidate.placement.x)?
-            || leq(
-                &(candidate.placement.x.clone() + candidate.size.x.clone()),
-                &point.x,
-            )?
-            || leq(&(point.y.clone() + size.y.clone()), &candidate.placement.y)?
-            || leq(
-                &(candidate.placement.y.clone() + candidate.size.y.clone()),
-                &point.y,
-            )?
-            || leq(&(point.z.clone() + size.z.clone()), &candidate.placement.z)?
-            || leq(
-                &(candidate.placement.z.clone() + candidate.size.z.clone()),
-                &point.z,
-            )?,
+    crate::predicate::decide_any!(
+        leq(&(point.x.clone() + size.x.clone()), &candidate.placement.x),
+        leq(
+            &(candidate.placement.x.clone() + candidate.size.x.clone()),
+            &point.x,
+        ),
+        leq(&(point.y.clone() + size.y.clone()), &candidate.placement.y),
+        leq(
+            &(candidate.placement.y.clone() + candidate.size.y.clone()),
+            &point.y,
+        ),
+        leq(&(point.z.clone() + size.z.clone()), &candidate.placement.z),
+        leq(
+            &(candidate.placement.z.clone() + candidate.size.z.clone()),
+            &point.z,
+        ),
     )
 }
 
@@ -761,40 +761,30 @@ fn score_low_xyz(
 }
 
 fn compare_desc(left: &Real, right: &Real) -> Option<std::cmp::Ordering> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Positive => Some(std::cmp::Ordering::Less),
-        RealSign::Zero => Some(std::cmp::Ordering::Equal),
-        RealSign::Negative => Some(std::cmp::Ordering::Greater),
-    }
+    crate::predicate::compare(left, right).map(std::cmp::Ordering::reverse)
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative | RealSign::Zero => Some(true),
-        RealSign::Positive => Some(false),
-    }
+    Some(!crate::predicate::compare(left, right)?.is_gt())
 }
 
 fn lt(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative => Some(true),
-        RealSign::Zero | RealSign::Positive => Some(false),
-    }
+    Some(crate::predicate::compare(left, right)?.is_lt())
 }
 
 fn exact_eq(left: &Real, right: &Real) -> bool {
-    matches!((left - right).refine_sign_until(-64), Some(RealSign::Zero))
+    crate::predicate::equal(left, right)
 }
 
 fn nonnegative(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Negative => Some(false),
         RealSign::Zero | RealSign::Positive => Some(true),
     }
 }
 
 fn positive(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Positive => Some(true),
         RealSign::Negative | RealSign::Zero => Some(false),
     }

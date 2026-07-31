@@ -137,7 +137,7 @@ impl AxisBox3 {
     /// Creates positive exact dimensions.
     pub fn new(x: Real, y: Real, z: Real) -> PackResult<Self> {
         for value in [&x, &y, &z] {
-            match value.refine_sign_until(-64) {
+            match crate::predicate::sign(value) {
                 Some(RealSign::Positive) => {}
                 Some(RealSign::Negative | RealSign::Zero) | None => {
                     return Err(PackError::NonPositiveDimension);

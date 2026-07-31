@@ -213,12 +213,12 @@ pub fn verify_packing_1d(
 }
 
 fn contains(bin: &StockBin1, item: &StockItem1, placement: &StockPlacement1) -> Option<bool> {
-    Some(
-        nonnegative(&placement.start)?
-            && leq(
-                &(placement.start.clone() + item.length.clone()),
-                &bin.length,
-            )?,
+    crate::predicate::decide_all!(
+        nonnegative(&placement.start),
+        leq(
+            &(placement.start.clone() + item.length.clone()),
+            &bin.length,
+        ),
     )
 }
 
@@ -228,34 +228,32 @@ fn disjoint(
     right_item: &StockItem1,
     right: &StockPlacement1,
 ) -> Option<bool> {
-    Some(
+    crate::predicate::decide_any!(
         leq(
             &(left.start.clone() + left_item.length.clone()),
             &right.start,
-        )? || leq(
+        ),
+        leq(
             &(right.start.clone() + right_item.length.clone()),
             &left.start,
-        )?,
+        ),
     )
 }
 
 fn require_positive(value: &Real) -> PackResult<()> {
-    match value.refine_sign_until(-64) {
+    match crate::predicate::sign(value) {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Negative | RealSign::Zero) | None => Err(PackError::NonPositiveDimension),
     }
 }
 
 fn nonnegative(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Negative => Some(false),
         RealSign::Zero | RealSign::Positive => Some(true),
     }
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative | RealSign::Zero => Some(true),
-        RealSign::Positive => Some(false),
-    }
+    Some(!crate::predicate::compare(left, right)?.is_gt())
 }

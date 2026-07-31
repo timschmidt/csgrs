@@ -170,11 +170,16 @@ pub fn export_no_overlap_model_2d(bin: &SheetBin2, items: &[SheetItem2]) -> NoOv
     let mut facts = Vec::new();
     let mut domains = Vec::new();
     let mut disjunctions = Vec::new();
-    let mut status = if lower_bound.status == CapacityBoundStatus::Violated {
-        facts.push("capacity lower bound proves one-sheet model infeasible".into());
-        ModelExportStatus2::Infeasible
-    } else {
-        ModelExportStatus2::Ready
+    let mut status = match lower_bound.status {
+        CapacityBoundStatus::Violated => {
+            facts.push("capacity lower bound proves one-sheet model infeasible".into());
+            ModelExportStatus2::Infeasible
+        }
+        CapacityBoundStatus::Unknown => {
+            facts.push("capacity lower bound could not be certified".into());
+            ModelExportStatus2::Unknown
+        }
+        CapacityBoundStatus::Satisfied => ModelExportStatus2::Ready,
     };
 
     for item in items {
@@ -215,7 +220,7 @@ pub fn export_no_overlap_model_2d(bin: &SheetBin2, items: &[SheetItem2]) -> NoOv
             let left = &items[left_index];
             let right = &items[right_index];
             let mut disjuncts = Vec::new();
-            push_axis_disjuncts_2d(
+            let mut uncertain_axis = push_axis_disjuncts_2d(
                 &mut disjuncts,
                 left.size.x.clone() + right.size.x.clone(),
                 &bin.size.x,
@@ -223,7 +228,7 @@ pub fn export_no_overlap_model_2d(bin: &SheetBin2, items: &[SheetItem2]) -> NoOv
                 NoOverlapDisjunct2::RightBeforeLeftX,
                 &mut exact_comparisons,
             );
-            push_axis_disjuncts_2d(
+            uncertain_axis |= push_axis_disjuncts_2d(
                 &mut disjuncts,
                 left.size.y.clone() + right.size.y.clone(),
                 &bin.size.y,
@@ -231,10 +236,17 @@ pub fn export_no_overlap_model_2d(bin: &SheetBin2, items: &[SheetItem2]) -> NoOv
                 NoOverlapDisjunct2::RightBeforeLeftY,
                 &mut exact_comparisons,
             );
-            if disjuncts.is_empty() {
+            if disjuncts.is_empty() && !uncertain_axis {
                 status = ModelExportStatus2::Infeasible;
                 facts.push(format!(
                     "{} and {} have no feasible separating-axis disjunction",
+                    left.id.as_str(),
+                    right.id.as_str()
+                ));
+            } else if uncertain_axis && status != ModelExportStatus2::Infeasible {
+                status = ModelExportStatus2::Unknown;
+                facts.push(format!(
+                    "{} and {} have an axis extent that could not be certified",
                     left.id.as_str(),
                     right.id.as_str()
                 ));
@@ -271,11 +283,16 @@ pub fn export_no_overlap_model_3d(bin: &Bin3, items: &[Item3]) -> NoOverlapModel
     let mut facts = Vec::new();
     let mut domains = Vec::new();
     let mut disjunctions = Vec::new();
-    let mut status = if lower_bound.status == CapacityBoundStatus::Violated {
-        facts.push("capacity lower bound proves one-bin model infeasible".into());
-        ModelExportStatus3::Infeasible
-    } else {
-        ModelExportStatus3::Ready
+    let mut status = match lower_bound.status {
+        CapacityBoundStatus::Violated => {
+            facts.push("capacity lower bound proves one-bin model infeasible".into());
+            ModelExportStatus3::Infeasible
+        }
+        CapacityBoundStatus::Unknown => {
+            facts.push("capacity lower bound could not be certified".into());
+            ModelExportStatus3::Unknown
+        }
+        CapacityBoundStatus::Satisfied => ModelExportStatus3::Ready,
     };
 
     for item in items {
@@ -319,7 +336,7 @@ pub fn export_no_overlap_model_3d(bin: &Bin3, items: &[Item3]) -> NoOverlapModel
             let left = &items[left_index];
             let right = &items[right_index];
             let mut disjuncts = Vec::new();
-            push_axis_disjuncts(
+            let mut uncertain_axis = push_axis_disjuncts(
                 &mut disjuncts,
                 left.size.x.clone() + right.size.x.clone(),
                 &bin.size.x,
@@ -327,7 +344,7 @@ pub fn export_no_overlap_model_3d(bin: &Bin3, items: &[Item3]) -> NoOverlapModel
                 NoOverlapDisjunct3::RightBeforeLeftX,
                 &mut exact_comparisons,
             );
-            push_axis_disjuncts(
+            uncertain_axis |= push_axis_disjuncts(
                 &mut disjuncts,
                 left.size.y.clone() + right.size.y.clone(),
                 &bin.size.y,
@@ -335,7 +352,7 @@ pub fn export_no_overlap_model_3d(bin: &Bin3, items: &[Item3]) -> NoOverlapModel
                 NoOverlapDisjunct3::RightBeforeLeftY,
                 &mut exact_comparisons,
             );
-            push_axis_disjuncts(
+            uncertain_axis |= push_axis_disjuncts(
                 &mut disjuncts,
                 left.size.z.clone() + right.size.z.clone(),
                 &bin.size.z,
@@ -343,10 +360,17 @@ pub fn export_no_overlap_model_3d(bin: &Bin3, items: &[Item3]) -> NoOverlapModel
                 NoOverlapDisjunct3::RightBeforeLeftZ,
                 &mut exact_comparisons,
             );
-            if disjuncts.is_empty() {
+            if disjuncts.is_empty() && !uncertain_axis {
                 status = ModelExportStatus3::Infeasible;
                 facts.push(format!(
                     "{} and {} have no feasible separating-axis disjunction",
+                    left.id.as_str(),
+                    right.id.as_str()
+                ));
+            } else if uncertain_axis && status != ModelExportStatus3::Infeasible {
+                status = ModelExportStatus3::Unknown;
+                facts.push(format!(
+                    "{} and {} have an axis extent that could not be certified",
                     left.id.as_str(),
                     right.id.as_str()
                 ));
@@ -376,11 +400,16 @@ fn push_axis_disjuncts(
     forward: NoOverlapDisjunct3,
     reverse: NoOverlapDisjunct3,
     exact_comparisons: &mut usize,
-) {
+) -> bool {
     *exact_comparisons += 1;
-    if leq(&combined_extent, bin_extent).unwrap_or(false) {
-        disjuncts.push(forward);
-        disjuncts.push(reverse);
+    match leq(&combined_extent, bin_extent) {
+        Some(true) => {
+            disjuncts.push(forward);
+            disjuncts.push(reverse);
+            false
+        }
+        Some(false) => false,
+        None => true,
     }
 }
 
@@ -391,23 +420,25 @@ fn push_axis_disjuncts_2d(
     forward: NoOverlapDisjunct2,
     reverse: NoOverlapDisjunct2,
     exact_comparisons: &mut usize,
-) {
+) -> bool {
     *exact_comparisons += 1;
-    if leq(&combined_extent, bin_extent).unwrap_or(false) {
-        disjuncts.push(forward);
-        disjuncts.push(reverse);
+    match leq(&combined_extent, bin_extent) {
+        Some(true) => {
+            disjuncts.push(forward);
+            disjuncts.push(reverse);
+            false
+        }
+        Some(false) => false,
+        None => true,
     }
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative | RealSign::Zero => Some(true),
-        RealSign::Positive => Some(false),
-    }
+    Some(!crate::predicate::compare(left, right)?.is_gt())
 }
 
 fn nonnegative(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Negative => Some(false),
         RealSign::Zero | RealSign::Positive => Some(true),
     }

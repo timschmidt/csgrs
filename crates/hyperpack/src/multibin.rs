@@ -250,7 +250,7 @@ pub fn verify_multi_bin_packing_3d(
 }
 
 fn negative(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Negative => Some(true),
         RealSign::Zero | RealSign::Positive => Some(false),
     }

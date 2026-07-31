@@ -6,7 +6,7 @@
 //! state use exact signs; uncertain signs stay explicit rather than being
 //! rounded into a Boolean.
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
 use crate::{Bin3, Item3, ItemId, SheetBin2, SheetItem2};
 
@@ -401,8 +401,5 @@ pub fn pair_incompatibilities_2d(
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative | RealSign::Zero => Some(true),
-        RealSign::Positive => Some(false),
-    }
+    Some(!crate::predicate::compare(left, right)?.is_gt())
 }

@@ -185,9 +185,7 @@ pub fn skyline_bottom_left_2d(
                     trace.exact_comparisons += 1;
                     let lower_y = lt(&y, best_y).unwrap_or(false);
                     trace.exact_comparisons += 1;
-                    let same_y_lower_x =
-                        matches!((&y - best_y).refine_sign_until(-64), Some(RealSign::Zero))
-                            && lt(&x, best_x).unwrap_or(false);
+                    let same_y_lower_x = exact_eq(&y, best_y) && lt(&x, best_x).unwrap_or(false);
                     if lower_y || same_y_lower_x {
                         best = Some((x, y, point_index));
                     }
@@ -294,10 +292,7 @@ pub fn skyline_minimum_waste_2d(
                     trace.exact_comparisons += 1;
                     let lower_waste = lt(&choice.waste, &current.waste).unwrap_or(false);
                     trace.exact_comparisons += 1;
-                    let same_waste = matches!(
-                        (&choice.waste - &current.waste).refine_sign_until(-64),
-                        Some(RealSign::Zero)
-                    );
+                    let same_waste = exact_eq(&choice.waste, &current.waste);
                     if lower_waste
                         || (same_waste && skyline_bottom_left_better(&choice, current, &mut trace))
                     {
@@ -995,10 +990,7 @@ fn score_pair_better(
     trace.exact_comparisons += 1;
     let better_primary = lt(left_primary, right_primary).unwrap_or(false);
     trace.exact_comparisons += 1;
-    let same_primary = matches!(
-        (left_primary - right_primary).refine_sign_until(-64),
-        Some(RealSign::Zero)
-    );
+    let same_primary = exact_eq(left_primary, right_primary);
     trace.exact_comparisons += 1;
     let better_secondary = lt(left_secondary, right_secondary).unwrap_or(false);
     better_primary || (same_primary && better_secondary)
@@ -1163,10 +1155,8 @@ fn skyline_bottom_left_better(
     trace.exact_comparisons += 1;
     let lower_y = lt(&candidate.y, &current.y).unwrap_or(false);
     trace.exact_comparisons += 1;
-    let same_y_lower_x = matches!(
-        (&candidate.y - &current.y).refine_sign_until(-64),
-        Some(RealSign::Zero)
-    ) && lt(&candidate.x, &current.x).unwrap_or(false);
+    let same_y_lower_x =
+        exact_eq(&candidate.y, &current.y) && lt(&candidate.x, &current.x).unwrap_or(false);
     lower_y || same_y_lower_x
 }
 
@@ -1260,40 +1250,27 @@ fn push_shelf_remainder(
 }
 
 fn compare_desc(left: &Real, right: &Real) -> Option<std::cmp::Ordering> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Positive => Some(std::cmp::Ordering::Less),
-        RealSign::Zero => Some(std::cmp::Ordering::Equal),
-        RealSign::Negative => Some(std::cmp::Ordering::Greater),
-    }
+    crate::predicate::compare(left, right).map(std::cmp::Ordering::reverse)
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative | RealSign::Zero => Some(true),
-        RealSign::Positive => Some(false),
-    }
+    Some(!crate::predicate::compare(left, right)?.is_gt())
 }
 
 fn lt(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative => Some(true),
-        RealSign::Zero | RealSign::Positive => Some(false),
-    }
+    Some(crate::predicate::compare(left, right)?.is_lt())
 }
 
 fn gt(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Positive => Some(true),
-        RealSign::Negative | RealSign::Zero => Some(false),
-    }
+    Some(crate::predicate::compare(left, right)?.is_gt())
 }
 
 fn exact_eq(left: &Real, right: &Real) -> bool {
-    matches!((left - right).refine_sign_until(-64), Some(RealSign::Zero))
+    crate::predicate::equal(left, right)
 }
 
 fn exact_eq_zero(value: &Real) -> bool {
-    matches!(value.refine_sign_until(-64), Some(RealSign::Zero))
+    matches!(crate::predicate::sign(value), Some(RealSign::Zero))
 }
 
 fn min_exact(left: &Real, right: &Real, trace: &mut SheetHeuristicTrace2) -> Real {
@@ -1315,7 +1292,7 @@ fn max_exact(left: &Real, right: &Real, trace: &mut SheetHeuristicTrace2) -> Rea
 }
 
 fn nonnegative(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Negative => Some(false),
         RealSign::Zero | RealSign::Positive => Some(true),
     }
@@ -1329,16 +1306,16 @@ fn rects_disjoint(
     right_y: &Real,
     right_size: &Rect2,
 ) -> Option<bool> {
-    Some(
-        leq(&(left_x.clone() + left_size.x.clone()), right_x)?
-            || leq(&(right_x.clone() + right_size.x.clone()), left_x)?
-            || leq(&(left_y.clone() + left_size.y.clone()), right_y)?
-            || leq(&(right_y.clone() + right_size.y.clone()), left_y)?,
+    crate::predicate::decide_any!(
+        leq(&(left_x.clone() + left_size.x.clone()), right_x),
+        leq(&(right_x.clone() + right_size.x.clone()), left_x),
+        leq(&(left_y.clone() + left_size.y.clone()), right_y),
+        leq(&(right_y.clone() + right_size.y.clone()), left_y),
     )
 }
 
 fn positive(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Positive => Some(true),
         RealSign::Negative | RealSign::Zero => Some(false),
     }

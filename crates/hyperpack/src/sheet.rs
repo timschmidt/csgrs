@@ -401,11 +401,11 @@ pub fn verify_oriented_packing_2d(
 }
 
 fn contains(bin: &SheetBin2, item: &SheetItem2, placement: &SheetPlacement2) -> Option<bool> {
-    Some(
-        nonnegative(&placement.x)?
-            && nonnegative(&placement.y)?
-            && leq(&(placement.x.clone() + item.size.x.clone()), &bin.size.x)?
-            && leq(&(placement.y.clone() + item.size.y.clone()), &bin.size.y)?,
+    crate::predicate::decide_all!(
+        nonnegative(&placement.x),
+        nonnegative(&placement.y),
+        leq(&(placement.x.clone() + item.size.x.clone()), &bin.size.x),
+        leq(&(placement.y.clone() + item.size.y.clone()), &bin.size.y),
     )
 }
 
@@ -415,31 +415,28 @@ fn disjoint(
     right_item: &SheetItem2,
     right: &SheetPlacement2,
 ) -> Option<bool> {
-    Some(
-        leq(&(left.x.clone() + left_item.size.x.clone()), &right.x)?
-            || leq(&(right.x.clone() + right_item.size.x.clone()), &left.x)?
-            || leq(&(left.y.clone() + left_item.size.y.clone()), &right.y)?
-            || leq(&(right.y.clone() + right_item.size.y.clone()), &left.y)?,
+    crate::predicate::decide_any!(
+        leq(&(left.x.clone() + left_item.size.x.clone()), &right.x),
+        leq(&(right.x.clone() + right_item.size.x.clone()), &left.x),
+        leq(&(left.y.clone() + left_item.size.y.clone()), &right.y),
+        leq(&(right.y.clone() + right_item.size.y.clone()), &left.y),
     )
 }
 
 fn require_positive(value: &Real) -> PackResult<()> {
-    match value.refine_sign_until(-64) {
+    match crate::predicate::sign(value) {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Negative | RealSign::Zero) | None => Err(PackError::NonPositiveDimension),
     }
 }
 
 fn nonnegative(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Negative => Some(false),
         RealSign::Zero | RealSign::Positive => Some(true),
     }
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative | RealSign::Zero => Some(true),
-        RealSign::Positive => Some(false),
-    }
+    Some(!crate::predicate::compare(left, right)?.is_gt())
 }

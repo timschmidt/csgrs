@@ -251,7 +251,7 @@ fn exact_box_from_fact(fact: &DomainBoxFact3) -> PackResult<AxisBox3> {
 }
 
 fn validate_exact(value: &Real) -> PackResult<()> {
-    match value.refine_sign_until(-64) {
+    match crate::predicate::sign(value) {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Zero | RealSign::Negative) | None => Err(PackError::NonPositiveDimension),
     }

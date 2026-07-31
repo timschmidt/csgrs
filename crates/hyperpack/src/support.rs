@@ -43,7 +43,7 @@ pub struct SupportEvidence3 {
     pub footprint_area: Real,
     /// Exact base area supported by floor or item top faces.
     pub supported_area: Real,
-    /// Whether the item rests directly on the bin floor.
+    /// True when direct contact with the bin floor was certified.
     pub on_floor: bool,
     /// Support item ids contributing positive exact contact area.
     pub supporters: Vec<ItemId>,
@@ -183,7 +183,8 @@ pub fn verify_support_3d(
             .ok_or(PackError::MissingItem)?;
         let footprint_area = item.size.x.clone() * item.size.y.clone();
         exact_comparisons += 1;
-        let on_floor = exact_eq_zero(&placement.z);
+        let floor_relation = exact_eq_zero(&placement.z);
+        let on_floor = floor_relation == Some(true);
         let mut supported_area = if on_floor {
             footprint_area.clone()
         } else {
@@ -191,6 +192,8 @@ pub fn verify_support_3d(
         };
         let mut supporters = Vec::new();
         let mut center_projected = on_floor.then_some(true);
+        let mut uncertain_support = floor_relation.is_none();
+        let mut patches = Vec::new();
 
         if !on_floor {
             for support in placements {
@@ -199,44 +202,59 @@ pub fn verify_support_3d(
                 }
                 let support_item = item_map.get(&support.item).ok_or(PackError::MissingItem)?;
                 exact_comparisons += 1;
-                if !exact_eq(
+                match exact_eq(
                     &(support.z.clone() + support_item.size.z.clone()),
                     &placement.z,
                 ) {
-                    continue;
+                    Some(true) => {}
+                    Some(false) => continue,
+                    None => {
+                        uncertain_support = true;
+                        continue;
+                    }
                 }
-                let Some(patch) = xy_overlap_patch(
+                let patch = match xy_overlap_patch(
                     item,
                     placement,
                     support_item,
                     support,
                     &mut exact_comparisons,
-                ) else {
-                    continue;
+                ) {
+                    PatchRelation::Contact(patch) => patch,
+                    PatchRelation::Disjoint => continue,
+                    PatchRelation::Unknown => {
+                        uncertain_support = true;
+                        continue;
+                    }
                 };
-                if center_projected.is_none()
-                    && center_inside_patch(item, placement, &patch, &mut exact_comparisons)
-                        == Some(true)
-                {
-                    center_projected = Some(true);
+                match center_inside_patch(item, placement, &patch, &mut exact_comparisons) {
+                    Some(true) => center_projected = Some(true),
+                    Some(false) => {}
+                    None => uncertain_support = true,
                 }
-                if positive(&patch.area).unwrap_or(false) {
-                    supported_area += patch.area;
-                    supporters.push(support.item.clone());
-                }
+                supporters.push(support.item.clone());
+                patches.push(patch);
             }
-            if center_projected.is_none() {
-                center_projected = Some(false);
+            match rectangle_union_area(&patches, &mut exact_comparisons) {
+                Some(area) => supported_area = area,
+                None => uncertain_support = true,
+            }
+            if center_projected != Some(true) {
+                center_projected = (!uncertain_support).then_some(false);
             }
         }
 
-        let supported = support_satisfies_policy(
-            &policy,
-            &footprint_area,
-            &supported_area,
-            center_projected,
-            &mut exact_comparisons,
-        );
+        let supported = if uncertain_support && policy != SupportPolicy3::None {
+            None
+        } else {
+            support_satisfies_policy(
+                &policy,
+                &footprint_area,
+                &supported_area,
+                center_projected,
+                &mut exact_comparisons,
+            )
+        };
         match supported {
             Some(true) => {}
             Some(false) => {
@@ -331,19 +349,39 @@ pub fn verify_direct_stack_load_3d(
             }
             let carried_item = item_map.get(&carried.item).ok_or(PackError::MissingItem)?;
             exact_comparisons += 1;
-            if !exact_eq(&(placement.z.clone() + item.size.z.clone()), &carried.z) {
-                continue;
+            match exact_eq(&(placement.z.clone() + item.size.z.clone()), &carried.z) {
+                Some(true) => {}
+                Some(false) => continue,
+                None => {
+                    direct_supported_weight = None;
+                    status = status_unknown_unless_violated(status);
+                    facts.push(format!(
+                        "{} contact with {} could not be certified",
+                        carried.item.as_str(),
+                        placement.item.as_str()
+                    ));
+                    continue;
+                }
             }
-            if xy_overlap_patch(
+            match xy_overlap_patch(
                 carried_item,
                 carried,
                 item,
                 placement,
                 &mut exact_comparisons,
-            )
-            .is_none()
-            {
-                continue;
+            ) {
+                PatchRelation::Contact(_) => {}
+                PatchRelation::Disjoint => continue,
+                PatchRelation::Unknown => {
+                    direct_supported_weight = None;
+                    status = status_unknown_unless_violated(status);
+                    facts.push(format!(
+                        "{} footprint contact with {} could not be certified",
+                        carried.item.as_str(),
+                        placement.item.as_str()
+                    ));
+                    continue;
+                }
             }
             supported_items.push(carried.item.clone());
             match (
@@ -457,7 +495,18 @@ struct SupportPatch3 {
     x1: Real,
     y0: Real,
     y1: Real,
-    area: Real,
+}
+
+enum PatchRelation {
+    Disjoint,
+    Contact(SupportPatch3),
+    Unknown,
+}
+
+enum AxisOverlap {
+    Disjoint,
+    Interval(Real, Real),
+    Unknown,
 }
 
 fn xy_overlap_patch(
@@ -466,30 +515,28 @@ fn xy_overlap_patch(
     support_item: &Item3,
     support: &Placement3,
     exact_comparisons: &mut usize,
-) -> Option<SupportPatch3> {
-    let x0 = max_exact(&placement.x, &support.x, exact_comparisons);
-    let x1 = min_exact(
+) -> PatchRelation {
+    let x = axis_overlap(
+        &placement.x,
         &(placement.x.clone() + item.size.x.clone()),
+        &support.x,
         &(support.x.clone() + support_item.size.x.clone()),
         exact_comparisons,
     );
-    let y0 = max_exact(&placement.y, &support.y, exact_comparisons);
-    let y1 = min_exact(
+    let y = axis_overlap(
+        &placement.y,
         &(placement.y.clone() + item.size.y.clone()),
+        &support.y,
         &(support.y.clone() + support_item.size.y.clone()),
         exact_comparisons,
     );
-    let x_overlap = positive_length(&x0, &x1, exact_comparisons);
-    let y_overlap = positive_length(&y0, &y1, exact_comparisons);
-    let area = x_overlap * y_overlap;
-    *exact_comparisons += 1;
-    positive(&area).unwrap_or(false).then_some(SupportPatch3 {
-        x0,
-        x1,
-        y0,
-        y1,
-        area,
-    })
+    match (x, y) {
+        (AxisOverlap::Disjoint, _) | (_, AxisOverlap::Disjoint) => PatchRelation::Disjoint,
+        (AxisOverlap::Interval(x0, x1), AxisOverlap::Interval(y0, y1)) => {
+            PatchRelation::Contact(SupportPatch3 { x0, x1, y0, y1 })
+        }
+        _ => PatchRelation::Unknown,
+    }
 }
 
 fn center_inside_patch(
@@ -506,66 +553,115 @@ fn center_inside_patch(
     let patch_y0_twice = patch.y0.clone() * two.clone();
     let patch_y1_twice = patch.y1.clone() * two;
     *exact_comparisons += 4;
-    Some(
-        leq(&patch_x0_twice, &center_x_twice)?
-            && leq(&center_x_twice, &patch_x1_twice)?
-            && leq(&patch_y0_twice, &center_y_twice)?
-            && leq(&center_y_twice, &patch_y1_twice)?,
+    crate::predicate::decide_all!(
+        leq(&patch_x0_twice, &center_x_twice),
+        leq(&center_x_twice, &patch_x1_twice),
+        leq(&patch_y0_twice, &center_y_twice),
+        leq(&center_y_twice, &patch_y1_twice),
     )
 }
 
-fn positive_length(start: &Real, end: &Real, exact_comparisons: &mut usize) -> Real {
-    let length = end.clone() - start.clone();
+fn axis_overlap(
+    left_start: &Real,
+    left_end: &Real,
+    right_start: &Real,
+    right_end: &Real,
+    exact_comparisons: &mut usize,
+) -> AxisOverlap {
+    *exact_comparisons += 2;
+    let start = match crate::predicate::compare(left_start, right_start) {
+        Some(std::cmp::Ordering::Less) => right_start.clone(),
+        Some(_) => left_start.clone(),
+        None => return AxisOverlap::Unknown,
+    };
+    let end = match crate::predicate::compare(left_end, right_end) {
+        Some(std::cmp::Ordering::Greater) => right_end.clone(),
+        Some(_) => left_end.clone(),
+        None => return AxisOverlap::Unknown,
+    };
     *exact_comparisons += 1;
-    if positive(&length).unwrap_or(false) {
-        length
-    } else {
-        Real::zero()
+    match crate::predicate::compare(&start, &end) {
+        Some(std::cmp::Ordering::Less) => AxisOverlap::Interval(start, end),
+        Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => AxisOverlap::Disjoint,
+        None => AxisOverlap::Unknown,
     }
 }
 
-fn min_exact(left: &Real, right: &Real, exact_comparisons: &mut usize) -> Real {
-    *exact_comparisons += 1;
-    if leq(left, right).unwrap_or(false) {
-        left.clone()
-    } else {
-        right.clone()
+fn rectangle_union_area(patches: &[SupportPatch3], exact_comparisons: &mut usize) -> Option<Real> {
+    let mut xs = Vec::with_capacity(patches.len() * 2);
+    let mut ys = Vec::with_capacity(patches.len() * 2);
+    for patch in patches {
+        insert_coordinate(&mut xs, patch.x0.clone(), exact_comparisons)?;
+        insert_coordinate(&mut xs, patch.x1.clone(), exact_comparisons)?;
+        insert_coordinate(&mut ys, patch.y0.clone(), exact_comparisons)?;
+        insert_coordinate(&mut ys, patch.y1.clone(), exact_comparisons)?;
     }
-}
 
-fn max_exact(left: &Real, right: &Real, exact_comparisons: &mut usize) -> Real {
-    *exact_comparisons += 1;
-    if leq(left, right).unwrap_or(false) {
-        right.clone()
-    } else {
-        left.clone()
+    let mut area = Real::zero();
+    for x in xs.windows(2) {
+        for y in ys.windows(2) {
+            let mut covered = false;
+            let mut uncertain_cell = false;
+            for patch in patches {
+                *exact_comparisons += 4;
+                match crate::predicate::decide_all!(
+                    leq(&patch.x0, &x[0]),
+                    leq(&x[1], &patch.x1),
+                    leq(&patch.y0, &y[0]),
+                    leq(&y[1], &patch.y1),
+                ) {
+                    Some(true) => {
+                        covered = true;
+                        break;
+                    }
+                    Some(false) => {}
+                    None => uncertain_cell = true,
+                }
+            }
+            if covered {
+                area += (x[1].clone() - x[0].clone()) * (y[1].clone() - y[0].clone());
+            } else if uncertain_cell {
+                return None;
+            }
+        }
     }
+    Some(area)
 }
 
-fn exact_eq(left: &Real, right: &Real) -> bool {
-    matches!((left - right).refine_sign_until(-64), Some(RealSign::Zero))
+fn insert_coordinate(
+    coordinates: &mut Vec<Real>,
+    value: Real,
+    exact_comparisons: &mut usize,
+) -> Option<()> {
+    for index in 0..coordinates.len() {
+        *exact_comparisons += 1;
+        match crate::predicate::compare(&value, &coordinates[index])? {
+            std::cmp::Ordering::Less => {
+                coordinates.insert(index, value);
+                return Some(());
+            }
+            std::cmp::Ordering::Equal => return Some(()),
+            std::cmp::Ordering::Greater => {}
+        }
+    }
+    coordinates.push(value);
+    Some(())
 }
 
-fn exact_eq_zero(value: &Real) -> bool {
-    matches!(value.refine_sign_until(-64), Some(RealSign::Zero))
+fn exact_eq(left: &Real, right: &Real) -> Option<bool> {
+    Some(crate::predicate::compare(left, right)?.is_eq())
+}
+
+fn exact_eq_zero(value: &Real) -> Option<bool> {
+    Some(matches!(crate::predicate::sign(value)?, RealSign::Zero))
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
-    match (left - right).refine_sign_until(-64)? {
-        RealSign::Negative | RealSign::Zero => Some(true),
-        RealSign::Positive => Some(false),
-    }
-}
-
-fn positive(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
-        RealSign::Positive => Some(true),
-        RealSign::Negative | RealSign::Zero => Some(false),
-    }
+    Some(!crate::predicate::compare(left, right)?.is_gt())
 }
 
 fn negative(value: &Real) -> Option<bool> {
-    match value.refine_sign_until(-64)? {
+    match crate::predicate::sign(value)? {
         RealSign::Negative => Some(true),
         RealSign::Zero | RealSign::Positive => Some(false),
     }

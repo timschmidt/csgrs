@@ -23,6 +23,7 @@ pub mod multibin;
 pub mod objective;
 pub mod orientation;
 pub mod portfolio;
+mod predicate;
 pub mod replay;
 pub mod search;
 pub mod sheet;
