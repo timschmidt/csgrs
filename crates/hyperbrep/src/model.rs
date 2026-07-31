@@ -790,7 +790,7 @@ enum FaceSplitEndpointLocation {
     Edge {
         edge: EdgeId,
         parameter: Real,
-        pcurve_split: Option<(EdgeUseId, CurvePoint2, Point3)>,
+        pcurve_split: Option<Box<(EdgeUseId, CurvePoint2, Point3)>>,
     },
 }
 
@@ -3868,8 +3868,11 @@ impl Model {
                 parameter,
                 pcurve_split,
             } => {
-                let (staged, split) =
-                    self.split_edge_with_pcurve_parameter(edge, parameter, pcurve_split)?;
+                let (staged, split) = self.split_edge_with_pcurve_parameter(
+                    edge,
+                    parameter,
+                    pcurve_split.map(|witness| *witness),
+                )?;
                 Ok((staged, split.vertex, Some(split)))
             }
         }
@@ -4007,7 +4010,11 @@ impl Model {
                 Ok(FaceSplitEndpointLocation::Edge {
                     edge: *edge,
                     parameter: parameter.clone(),
-                    pcurve_split: Some((*edge_use, pcurve_point.clone(), spatial_point.clone())),
+                    pcurve_split: Some(Box::new((
+                        *edge_use,
+                        pcurve_point.clone(),
+                        spatial_point.clone(),
+                    ))),
                 })
             }
             [] => Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary {
