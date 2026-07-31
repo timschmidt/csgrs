@@ -1,0 +1,127 @@
+schema = 1
+date = "2026-07-31"
+host = "AMD Ryzen 7 5800X3D"
+kernel = "Linux 7.0.4-100.fc43.x86_64"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+implementation_revision = "bf9a792e6a3160f4bb40ba6c55d421f93b733095"
+direct_parent_revision = "de99ec16f88bffbf82bce7a74f9b2334f8a9984a"
+hyperreal_revision = "63b2538bc5e2efd4c679d8770722dcda05ccc591"
+hyperlattice_revision = "53fbdf6fd35e08b9d696f1e2c3c5e742ea261a96"
+hyperlimit_revision = "54316d1e77ba477b3e72d6382c4f5b7eb9c38406"
+
+[correctness]
+feature_power_configurations = 256
+all_feature_runtime_tests = 113
+all_feature_doctests = 4
+multi_constraint_cases_per_property = 20000
+multi_constraint_properties = 2
+policies_per_multi_constraint_case = 2
+fixed_supertriangle_parent_complete = false
+nonconvex_cavity_parent_supported = false
+
+[runtime.delaunay_400_located]
+historical_median_ns = 39026000
+july_policy_checkpoint_median_ns = 17575000
+direct_parent_median_ns = 16387000
+current_median_ns = 16390000
+current_lower_ns = 16276000
+current_upper_ns = 16517000
+
+[runtime.cdt_crossing_constraint_split]
+direct_parent_median_ns = 20123
+current_median_ns = 20298
+current_lower_ns = 20239
+current_upper_ns = 20355
+
+[runtime.cdt_separated_cycles_general_pslg]
+direct_parent_median_ns = 44059
+current_median_ns = 43046
+current_lower_ns = 42693
+current_upper_ns = 43471
+
+[runtime.cdt_nonconvex_cavity_recovery]
+direct_parent_supported = false
+current_median_ns = 38539
+current_lower_ns = 38318
+current_upper_ns = 38803
+
+[runtime.delaunay_supertriangle_expansion]
+direct_parent_complete = false
+current_median_ns = 28796
+current_lower_ns = 28685
+current_upper_ns = 28942
+
+[size.release.cdt.direct_parent]
+native_file_bytes = 1522856
+native_text_bytes = 1114206
+wasm_file_bytes = 916219
+wasm_opt_oz_bytes = 687376
+
+[size.release.cdt.current]
+native_file_bytes = 1536040
+native_text_bytes = 1125510
+wasm_file_bytes = 930466
+wasm_opt_oz_bytes = 699243
+
+[size.size.cdt.direct_parent]
+native_file_bytes = 861568
+native_text_bytes = 641887
+wasm_file_bytes = 396000
+wasm_opt_oz_bytes = 335399
+
+[size.size.cdt.current]
+native_file_bytes = 871824
+native_text_bytes = 651615
+wasm_file_bytes = 404255
+wasm_opt_oz_bytes = 340340
+
+[size.release.all.direct_parent]
+native_file_bytes = 1744488
+native_text_bytes = 1310541
+wasm_file_bytes = 1057177
+wasm_opt_oz_bytes = 795219
+
+[size.release.all.current]
+native_file_bytes = 1773408
+native_text_bytes = 1337242
+wasm_file_bytes = 1173337
+wasm_opt_oz_bytes = 811688
+
+[size.size.all.direct_parent]
+native_file_bytes = 950192
+native_text_bytes = 726571
+wasm_file_bytes = 470178
+wasm_opt_oz_bytes = 400677
+
+[size.size.all.current]
+native_file_bytes = 958304
+native_text_bytes = 734155
+wasm_file_bytes = 479737
+wasm_opt_oz_bytes = 406414
+
+[callgraph.five_crate_current]
+nodes = 19477
+edges = 38894
+hypertri_to_hyperlimit_edges = 27
+
+[callgraph.hypertri_direct_parent]
+nodes = 1233
+edges = 1738
+
+[callgraph.hypertri_current]
+nodes = 1311
+edges = 1885
+
+[source.implementation_commit]
+insertions = 971
+deletions = 199
+production_net_lines = 634
+
+[rejected.cold_cavity]
+runtime_regression_detected = false
+release_all_native_file_before = 1773408
+release_all_native_file_after = 1776568
+release_all_wasm_file_before = 1173337
+release_all_wasm_file_after = 1179321
+retained = false
