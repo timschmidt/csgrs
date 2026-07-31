@@ -13,7 +13,12 @@ fn complex_zero_and_unknown_norms_are_rejected_by_checked_division() {
     );
 
     let unknown = Complex::new(unknown_zero(), r(0));
-    assert_eq!(numerator.div_checked(unknown), Err(Problem::UnknownZero));
+    assert_eq!(
+        numerator.div_checked(unknown.clone()),
+        Err(Problem::UnknownZero)
+    );
+    assert_eq!(unknown.clone().powi(0), Err(Problem::UnknownZero));
+    assert_eq!(unknown.powi_checked(0), Err(Problem::UnknownZero));
 }
 
 #[test]

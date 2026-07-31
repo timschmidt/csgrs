@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use hyperlattice::{Matrix3, Matrix4, Real, SharedScaleVec, Vector3, Vector4, sqrt};
+use hyperlattice::{Complex, Matrix3, Matrix4, Real, SharedScaleVec, Vector3, Vector4, sqrt};
 use std::hint::black_box;
 
 fn r(value: i32) -> Real {
@@ -29,6 +29,11 @@ fn bench_regression_sentinels(c: &mut Criterion) {
     c.bench_function("sentinel/scalar/sqrt2_minus_convergent_sign", |b| {
         let value = sqrt(r(2)).unwrap() - frac(99, 70);
         b.iter(|| value.refine_sign_until(-128))
+    });
+
+    c.bench_function("sentinel/complex/powi_zero_known_nonzero", |b| {
+        let value = Complex::new(r(3), r(4));
+        b.iter(|| black_box(value.clone()).powi(0).unwrap())
     });
 
     c.bench_function("sentinel/vector/dot_sparse_symbolic", |b| {
