@@ -7199,6 +7199,63 @@ layouts, size evidence, caller status, and the 22,742-node/39,129-edge call
 graph are in
 [`2026-07-31-spline-edit-policy.json`](benchmarks/checkpoints/2026-07-31-spline-edit-policy.json).
 
+## Hypersolve interpolation policy bridge checkpoint (2026-07-31)
+
+The remaining spline boundary is closed at Hypercurve `9b7c3ab`, Hypersolve
+`c1348d7`/`5cbce32`, and the controlled Hypercircuit caller `265a38e`.
+Hypersolve's dense solve and residual-replay APIs now require an explicit
+`PredicatePolicy`; the returned certainty includes pivot selection,
+determinant construction, and residual replay. The common path remains bounded
+fraction-free Bareiss elimination. An unresolved pivot can be extended only by
+the caller's selected policy. If exact construction still cannot use that
+pivot, an exact pivot-free Faddeev--LeVerrier determinant and Cramer fallback
+preserve the strict path without installing geometry policy in Hypersolve.
+
+Hypercurve now has one interpolation solve chain for rational and symbolic
+inputs. The local non-rational Cramer fork is deleted, and the Hypersolve
+multi-right-hand-side residual rows are the authoritative proof of the exact
+homogenized authored-point constraints. Certified nonzero row denominators
+complete the equivalence to public point interpolation, so production no
+longer repeats the same expensive point evaluation after exact residual
+replay. The retained uniform-system cache also drops its unused parameter
+slice, and dense replay rows no longer duplicate each `Real` residual.
+
+The public symbolic regression uses authored points containing `pi`, `e`, and
+`pi + e`. STRICT returns a typed `Interpolation/Predicate` blocker.
+APPROXIMATE_512 returns the exact NURBS carrier, reports
+`Approximate512Consumed`, and all authored points compare equal under the same
+terminal policy. No coordinate, knot, weight, or returned curve is replaced by
+a finite approximation.
+
+Eleven CPU-pinned release processes measured exact uniform interpolation at a
+median 8.479 us per curve, 40.80% faster than the 14.322 us historical
+checkpoint. Symbolic centripetal interpolation measures 1.481 ms, 5.37x the
+historical 275.7 us lane. Those symbolic contracts are not equivalent: the
+historical local Cramer branch skipped residual equality, whereas the current
+lane performs the requested 512-bit terminal proof and records its
+consumption.
+
+Direct Hypersolve Criterion measurements put a two-by-two exact rational dense
+solve at 1.469 us, the new pivot-free terminal determinant at 2.639 us, and an
+APPROXIMATE_512 symbolic solve plus residual replay at 7.141 us. The terminal
+lanes are new correctness coverage and do not replace the rational fast path.
+
+A new competitive interpolation group gives Hypercurve and Curvo identical
+chord parameters on four collinear integer points. Hypercurve's exact STRICT
+construction and certification measures 16.84 us; Curvo's `f64` numeric solve
+measures 844.6 ns, a 19.94x gap. This is an explicit optimization target under
+unequal exactness contracts, not a parity claim.
+
+The default-feature `bspline` artifact is 4,076 loadable bytes and 1,616
+stripped file bytes smaller than the previous spline checkpoint. The final
+22,733-node/39,116-edge call graph contains one interpolation path into the
+Hypersolve multi-RHS solver and no local Cramer node. Full Hypercurve and
+Hypersolve feature suites, warning-denied Clippy and rustdoc gates, the seven
+generated region corpora, and all 268 pathological exact Booleans pass.
+Hypermesh was neither searched for policy callers nor modified. Complete
+machine-readable evidence is in
+[`2026-07-31-hypersolve-interpolation-policy-bridge.json`](benchmarks/checkpoints/2026-07-31-hypersolve-interpolation-policy-bridge.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
