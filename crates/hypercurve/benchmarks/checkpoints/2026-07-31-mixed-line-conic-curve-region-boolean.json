@@ -1,0 +1,181 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "mixed-line-circular-conic-curve-region-boolean",
+  "source_revision": "3f47edeabc3deba68f242154279f34139d7c438a",
+  "matched_behavior_control_revision": "0a3d4955637c34e3ba19ff79e2d1eda2903a5ca2",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "canonical_batch": "CurveRegion2::boolean_regions whenever every operand carrier is either a retained affine line or a retained circular conic",
+    "historical_control": "four independent CurveRegion2::boolean_region calls through the native line/arc engine",
+    "single_operation_contract": "unchanged native fast path",
+    "pair_matrix": "affine/affine native dispatch, circular-conic/circular-conic shared support dispatch, and both orders of affine/circular-conic exact rational dispatch inside one arrangement"
+  },
+  "semantic_evidence": {
+    "all_four_operations_share_one_candidate_schedule": true,
+    "all_four_operations_share_one_split_graph": true,
+    "all_four_operations_share_propagated_fragment_classifications": true,
+    "capsule_shared_matches_native_dense_half_grid": true,
+    "degeneracy_matrix": [
+      "transverse line/conic contacts",
+      "tangent line/conic contact",
+      "disjoint supports",
+      "strict containment without boundary contacts",
+      "coincident line runs",
+      "arc endpoint contacts",
+      "shifted mixed capsules"
+    ],
+    "historical_fragment_counts": {
+      "union": 10,
+      "intersection": 6,
+      "difference": 6,
+      "xor": 12
+    },
+    "shared_fragment_counts": {
+      "union": 10,
+      "intersection": 6,
+      "difference": 6,
+      "xor": 12
+    },
+    "empty_result_fix": "zero-chain certified arrangements now reuse the canonical process-shared CurveRegion2 empty carrier instead of creating a zero-loop object without retained role evidence"
+  },
+  "policy_evidence": {
+    "strict_symbolic_line_conic_contact": "typed blocker",
+    "approximate_512_symbolic_line_conic_contact": "exact returned regions with Approximate512Consumed",
+    "finite_coordinate_replacement": false,
+    "terminal_observed_once_by_outer_operation": true,
+    "canonical_empty_reusable_under_strict_queries": true
+  },
+  "paired_release_benchmark": {
+    "command": "taskset -c 9 HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=capsules HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=500 target/release/deps/curve_region_boolean_batch-*",
+    "method": "fifteen processes; historical-control-first and shared-first order alternated; both public contracts measured in the same release executable",
+    "iterations_per_process_per_contract": 500,
+    "historical_four_independent_ns_per_batch": [
+      1570133,
+      1576928,
+      1559942,
+      1569819,
+      1570071,
+      1650012,
+      1644367,
+      1598222,
+      1618663,
+      1618091,
+      1619369,
+      1565248,
+      1558975,
+      1568794,
+      1571417
+    ],
+    "shared_arrangement_ns_per_batch": [
+      522402,
+      521641,
+      530930,
+      532001,
+      524561,
+      532902,
+      550108,
+      536550,
+      546783,
+      572413,
+      536390,
+      543740,
+      526116,
+      531502,
+      533873
+    ],
+    "historical_median_ns_per_batch": 1571417,
+    "shared_median_ns_per_batch": 532902,
+    "median_change_percent": -66.0878,
+    "speedup": 2.94879,
+    "interpretation": "one exact mixed arrangement is nearly three times faster than rebuilding native topology four times and publishes the same compact 34-fragment aggregate"
+  },
+  "heaptrack": {
+    "command": "HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=capsules HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=100 HYPERCURVE_CURVE_REGION_BATCH_MODE={independent,shared} heaptrack --record-only target/release/deps/curve_region_boolean_batch-*",
+    "measured_batches": 100,
+    "historical_allocation_calls": 1378632,
+    "shared_allocation_calls": 571534,
+    "eliminated_allocation_calls": 807098,
+    "allocation_change_percent": -58.5434,
+    "eliminated_allocation_calls_per_batch": 8070.98,
+    "historical_temporary_allocations": 10558,
+    "shared_temporary_allocations": 21558,
+    "temporary_allocation_delta": 11000,
+    "temporary_allocation_change_percent": 104.186,
+    "temporary_allocation_delta_per_batch": 110,
+    "peak_heap_historical": "208.80K",
+    "peak_heap_shared": "209.44K",
+    "peak_rss_historical": "11.18M",
+    "peak_rss_shared": "10.44M",
+    "instrumented_historical_ns_per_batch": 6810743,
+    "instrumented_shared_ns_per_batch": 2504241,
+    "interpretation": "total allocator traffic falls by 58.54 percent even though the arrangement performs 110 more short-lived allocations per batch; compact operation-local arenas remain a direct memory and latency target"
+  },
+  "competitive_capsule_batch": {
+    "command": "taskset -c 9 HYPERCURVE_COMPARE_GROUP=line_arc_boolean/capsules_all_four HYPERCURVE_COMPARE_SAMPLES=15 HYPERCURVE_COMPARE_ITERS=500 target/release/deps/comparative-*",
+    "contract": "all four operations on two overlapping native capsules; Hypercurve exact STRICT versus Cavalier binary64",
+    "hypercurve_exact_median_ns": 541725.7,
+    "cavalier_four_calls_median_ns": 8740.9,
+    "hypercurve_to_cavalier_ratio": 61.976,
+    "interpretation": "the finite competitor is much faster under unequal scalar, degeneracy, and policy guarantees; the gap is an explicit hot-path target rather than an exactness-equivalent comparison"
+  },
+  "matched_release_pathological_binary": {
+    "command": "cargo bench --bench pathological_regions --no-run; size; strip --strip-all",
+    "control_debug_file_bytes": 6994432,
+    "candidate_debug_file_bytes": 6994416,
+    "debug_file_delta_bytes": -16,
+    "control_stripped_file_bytes": 5561792,
+    "candidate_stripped_file_bytes": 5561744,
+    "stripped_file_delta_bytes": -48,
+    "stripped_file_delta_percent": -0.000863,
+    "control_size": {
+      "text": 5291881,
+      "data": 266032,
+      "bss": 2096,
+      "total_loadable": 5560009
+    },
+    "candidate_size": {
+      "text": 5291825,
+      "data": 266032,
+      "bss": 2144,
+      "total_loadable": 5560001
+    },
+    "total_loadable_delta_bytes": -8,
+    "total_loadable_delta_percent": -0.000144,
+    "interpretation": "the broader authoritative selection and canonical-empty repair slightly shrink the linked image"
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-mixed-line-conic-boolean-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22918,
+    "edges": 39450,
+    "previous_checkpoint_nodes": 22894,
+    "previous_checkpoint_edges": 39361,
+    "node_delta": 24,
+    "edge_delta": 89,
+    "artifact": "/tmp/hypercurve-mixed-line-conic-boolean-callgraph/callgraph.json",
+    "canonical_batch_node_present": true,
+    "mixed_carrier_gate_present": true,
+    "native_affine_pair_dispatch_present": true,
+    "shared_circle_support_dispatch_present": true
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": "266/266 pass",
+    "focused_curve_region_boolean_tests": "14/14 pass",
+    "generated_curve_region_boolean_tests": "7/7 pass",
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "hypermesh_modified": false
+  },
+  "next_boundary": {
+    "phase": "unified CurveRegion2 arrangement",
+    "next_interactions": "line/general, circular-conic/general, and general/general pair matrices",
+    "memory": "replace short-lived per-pair vectors with compact operation-local storage where profiling proves a win",
+    "legacy_deletion": "remove historical batch machinery after all curve families and degeneracies use the canonical arrangement",
+    "offset_fillet_chamfer": "pending on the authoritative arrangement and exact parallel-curve substrate"
+  }
+}

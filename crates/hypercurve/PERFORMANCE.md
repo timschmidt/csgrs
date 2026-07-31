@@ -7346,6 +7346,46 @@ and all 268 pathological Booleans pass. Hypermesh was not modified. Complete
 machine-readable evidence is in
 [`2026-07-31-circular-conic-curve-region-boolean.json`](benchmarks/checkpoints/2026-07-31-circular-conic-curve-region-boolean.json).
 
+## Mixed line/circular-conic `CurveRegion2` checkpoint (2026-07-31)
+
+The all-four canonical arrangement now accepts every combination of retained
+affine-line and circular-conic carriers. Affine pairs retain native line
+dispatch, conic pairs reuse their exact circle-support relation, and both
+line/conic orders use the existing exact rational specialization. The ordinary
+single-operation API continues through the native line/arc fast path.
+
+Native-vs-shared differentials cover shifted capsules, transverse and tangent
+line/conic contacts, disjoint supports, containment, coincident line runs, and
+arc endpoint contacts. Both routes publish identical capsule fragment counts:
+10 union, 6 intersection, 6 difference, and 12 XOR. The matrix also exposed a
+zero-loop construction defect. Certified empty traversals now return the
+process-shared canonical empty region, so role and point queries remain valid.
+
+A symbolic circle-center displacement blocks the mixed operation under STRICT.
+APPROXIMATE_512 completes the exact authored geometry and reports
+`Approximate512Consumed`; no coordinate or carrier is replaced by a finite
+value.
+
+Fifteen alternating-order CPU-pinned processes with 500 batches per contract
+measured 532.902 us for one canonical all-four capsule arrangement and 1.571
+ms for four historical native calls: the shared route is 66.09% faster, a
+2.95x speedup, with identical compact output. Heaptrack over 100 batches
+records 571,534 allocation calls versus 1,378,632, eliminating 8,071 calls per
+batch. It also exposes 110 additional short-lived allocations per batch,
+which makes compact operation-local arenas a concrete next memory target.
+
+The new curved competitive lane measures the same all-four capsule workload at
+541.726 us for exact STRICT Hypercurve and 8.741 us for four Cavalier binary64
+calls, a 61.98x gap under unequal exactness and degeneracy contracts. This is
+an explicit optimization target, not an equivalence claim.
+
+The matched pathological executable shrinks by eight loadable bytes and 48
+stripped bytes. The call graph contains 22,918 nodes and 39,450 edges. All 266
+unit tests, 14 focused region Boolean tests, seven generated Boolean corpora,
+268 pathological operations, both warning-denied Clippy feature matrices, and
+the no-default build pass. Hypermesh was not modified. Complete evidence is in
+[`2026-07-31-mixed-line-conic-curve-region-boolean.json`](benchmarks/checkpoints/2026-07-31-mixed-line-conic-curve-region-boolean.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
