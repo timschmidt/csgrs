@@ -1037,8 +1037,9 @@ impl Shape {
 
     pub fn from_curve_region(region: &CurveRegion2) -> Result<Option<Self>, String> {
         let paths = match region
-            .materialized_boundary_paths()
+            .materialized_boundary_paths(&CurveContext::STRICT)
             .map_err(|error| error.to_string())?
+            .into_value()
         {
             Classification::Decided(paths) => paths,
             Classification::Uncertain(_) => match region

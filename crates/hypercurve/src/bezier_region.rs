@@ -3690,10 +3690,16 @@ impl CurveRegion2 {
                 };
                 curves.push(Curve2::from(curve.clone()));
             }
-            paths.push(
-                CurvePath2::try_new_with_policy(curves, policy)
-                    .map_err(|error| error.with_operation(operation))?,
-            );
+            let path = CurvePath2::try_new_with_policy(curves, policy)
+                .map_err(|error| error.with_operation(operation))?;
+            match crate::curve::validate_closed_curve_path_connectivity(&path, policy)
+                .map_err(|error| error.with_operation(operation))?
+            {
+                Classification::Decided(()) => paths.push(path),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
         }
         Ok(Classification::Decided(paths))
     }
@@ -3705,12 +3711,16 @@ impl CurveRegion2 {
     /// still contains an algebraic endpoint that cannot be represented by a
     /// public [`Curve2`] return explicit `Unsupported` uncertainty rather than
     /// segmenting the boundary. This is the lossless interchange counterpart
-    /// to [`CurveRegion2::project_to_finite_profiles`].
-    pub fn materialized_boundary_paths(&self) -> ExactCurveResult<Classification<Vec<CurvePath2>>> {
-        self.materialized_boundary_paths_for_edit(
-            CurveOperation2::NativeTopology,
-            &CurveContext::STRICT,
-        )
+    /// to [`CurveRegion2::project_to_finite_profiles`]. The returned
+    /// [`CurveOutcome`] records whether validating exact joins consumed the
+    /// `APPROXIMATE_512` terminal.
+    pub fn materialized_boundary_paths(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Classification<Vec<CurvePath2>>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.materialized_boundary_paths_for_edit(CurveOperation2::NativeTopology, attempt)
+        })
     }
 
     fn rebuild_after_materialized_path_edit(

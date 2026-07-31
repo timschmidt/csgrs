@@ -1182,6 +1182,68 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn materialized_boundary_paths_obey_terminal_policy_once() {
+    let start = Point2::new(Real::pi() + Real::e(), Real::zero());
+    let end = Point2::new(Real::e() + Real::pi(), Real::zero());
+    let path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
+        start,
+        p(0, 1),
+        end,
+    ))])
+    .expect("one-curve path construction has no adjacency decision");
+    let constructed =
+        CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::APPROXIMATE_512)
+            .expect("the authorized terminal must construct the symbolic loop");
+    assert_eq!(
+        constructed.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    let region = constructed.into_value();
+
+    let strict = region
+        .materialized_boundary_paths(&CurveContext::STRICT)
+        .expect("strict materialization must preserve the symbolic closing seam uncertainty");
+    assert_eq!(strict.certainty, CurveCertainty::Certified);
+    assert_eq!(
+        strict.value,
+        Classification::Uncertain(hypercurve::UncertaintyReason::RealSign)
+    );
+
+    let approximate = region
+        .materialized_boundary_paths(&CurveContext::APPROXIMATE_512)
+        .expect("the authorized terminal must materialize the exact boundary");
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    let Classification::Decided(paths) = approximate.value else {
+        panic!("the symbolic boundary is exactly representable");
+    };
+    assert_eq!(paths.len(), 1);
+    assert_eq!(paths[0].curves().len(), 1);
+    assert!(matches!(
+        paths[0].curves()[0].geometry(),
+        hypercurve::CurveGeometry2::QuadraticBezier(_)
+    ));
+
+    assert_eq!(
+        region
+            .materialized_boundary_paths(&CurveContext::APPROXIMATE_512)
+            .expect("terminal replay remains authorized")
+            .certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(
+        region
+            .materialized_boundary_paths(&CurveContext::STRICT)
+            .expect("strict replay remains an explicit classification")
+            .value,
+        Classification::Uncertain(hypercurve::UncertaintyReason::RealSign)
+    );
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn higher_order_region_fillet_obeys_terminal_policy_once() {
     let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[quadratic_fillet_path()],

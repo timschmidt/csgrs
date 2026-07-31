@@ -431,7 +431,10 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
     assert_eq!(selection.traversal_view().unwrap().closed_count(), 1);
     let region = selection.region_view().unwrap();
     assert!(matches!(
-        region.materialized_boundary_paths().unwrap(),
+        region
+            .materialized_boundary_paths(&CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
         Classification::Uncertain(_)
     ));
 }

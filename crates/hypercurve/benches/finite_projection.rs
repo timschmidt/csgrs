@@ -100,6 +100,20 @@ fn main() {
         },
     );
     measure(
+        "curve_region_materialized_boundary_paths",
+        iterations.saturating_mul(5_000),
+        || match region
+            .materialized_boundary_paths(&policy)
+            .unwrap()
+            .into_value()
+        {
+            Classification::Decided(paths) => paths.iter().map(|path| path.curves().len()).sum(),
+            Classification::Uncertain(reason) => {
+                panic!("materialized boundary benchmark became uncertain: {reason:?}")
+            }
+        },
+    );
+    measure(
         "curve_region_curve_path_projection",
         iterations.saturating_mul(5_000),
         || match region
