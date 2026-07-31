@@ -1,0 +1,407 @@
+schema = 1
+date = "2026-07-31"
+direct_parent = "f7efd6f8b86ff26ea57869d21e60f57e9009f201"
+hyperreal_enclosure_implementation = "5bc2206e670998ad8adf1bd178f683242f466242"
+hyperreal_exact_normal_optimization = "af698a8ed422fd724df62b88e4d4b1eb2feed715"
+hypermesh_implementation = "5d935f9ceabf9e17984f217e803d997e69e9e8c4"
+policy = "explicit MeshContext; STRICT and APPROXIMATE_512"
+host = "AMD Ryzen 7 5800X3D 8-Core Processor"
+kernel = "Linux 7.0.4-100.fc43.x86_64"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[dependencies.hyperreal]
+commit = "af698a8ed422fd724df62b88e4d4b1eb2feed715"
+
+[dependencies.hyperlattice]
+commit = "53fbdf6fd35e08b9d696f1e2c3c5e742ea261a96"
+
+[dependencies.hyperlimit]
+commit = "54316d1e77ba477b3e72d6382c4f5b7eb9c38406"
+
+[dependencies.hypertri]
+commit = "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+
+[algorithm]
+exact_scalar = "hyperreal::Real"
+rational_enclosure_api = "Rational::to_f64_enclosure"
+enclosure_shape = "[[lower, upper]; 3]"
+finite_outward_bounds = true
+exact_binary64_zero_width = true
+least_subnormal_exact = true
+unsupported_range_returns_none = true
+disjoint_enclosures_may_certify_inequality = true
+overlap_requires_policy_predicate = true
+symbolic_uses_exact_axis_order = true
+out_of_range_uses_exact_axis_order = true
+tjunctions_exhaust_before_crossing_batch = true
+crossing_vertices_rebuild_cache = true
+hidden_pass_limit = false
+compatibility_shims = 0
+
+[correctness]
+hyperreal_default_unit_tests = 553
+hyperreal_all_feature_unit_tests = 630
+hypermesh_default_unit_tests = 1050
+hypermesh_no_default_unit_tests = 1050
+hypermesh_all_feature_unit_tests = 1051
+hyperlimit_all_feature_unit_tests = 147
+hypertri_all_feature_unit_tests = 66
+strict_and_approximate_path_regressions = true
+symbolic_fallback_regression = true
+out_of_range_fallback_regression = true
+binary64_collapse_regressions = true
+mixed_fixed_point_regression = true
+all_measured_results_certified = true
+
+[fixture.retained]
+sha256 = "5f1ac8a2f8bf2b0c67ce95dc8146cc783155dc9c34eeee164f03446a0830886c"
+input_triangles = 4524
+output_vertices = 625
+output_triangles = 1246
+
+[fixture.large_boxes]
+input_triangles = 6144
+output_vertices = 27
+output_triangles = 50
+
+[fixture.generated_yeahright8]
+input_triangles = 13452
+output_vertices = 154
+output_triangles = 304
+
+[scalar_benchmark.hyperreal_enclosure]
+time_ns = 33.274
+
+[scalar_benchmark.gmp_mpfr_enclosure]
+time_ns = 130.86
+hyperreal_speedup = 3.9328
+precision_bits = 53
+rounding = "Round::Down and Round::Up"
+
+[runtime.large_boxes_parent_strict]
+repetitions = 201
+task_clock_ms = 5.94
+cycles = 14632116
+instructions = 35925604
+branches = 6579193
+branch_misses = 66397
+cache_misses = 115805
+certainty = "Certified"
+
+[runtime.large_boxes_candidate_strict]
+repetitions = 201
+task_clock_ms = 5.92
+task_clock_movement_percent = -0.3367
+cycles = 14503150
+cycles_movement_percent = -0.8814
+instructions = 35897755
+instructions_movement_percent = -0.0775
+branches = 6574944
+branches_movement_percent = -0.0646
+branch_misses = 65584
+branch_misses_movement_percent = -1.2245
+cache_misses = 107613
+cache_misses_movement_percent = -7.0740
+certainty = "Certified"
+
+[runtime.retained_parent_strict]
+repetitions = 61
+interleaved_pairs = true
+task_clock_ms = 93.009
+cycles = 363207049.148
+instructions = 1071842548.705
+branches = 181157968.967
+branch_misses = 1474661.574
+cache_misses = 1510597.836
+certainty = "Certified"
+
+[runtime.retained_candidate_strict]
+repetitions = 61
+interleaved_pairs = true
+task_clock_ms = 93.404
+task_clock_movement_percent = 0.4247
+cycles = 364503615.721
+cycles_movement_percent = 0.3570
+instructions = 1070602897.705
+instructions_movement_percent = -0.1157
+branches = 180761965.475
+branches_movement_percent = -0.2186
+branch_misses = 1458498.344
+branch_misses_movement_percent = -1.0961
+cache_misses = 1502717.443
+cache_misses_movement_percent = -0.5217
+certainty = "Certified"
+
+[runtime.retained_parent_approximate_512]
+repetitions = 61
+task_clock_ms = 93.65
+cycles = 365626338
+instructions = 1071851266
+branches = 181160133
+branch_misses = 1481300
+cache_misses = 1548906
+certainty = "Certified"
+
+[runtime.retained_candidate_approximate_512]
+repetitions = 61
+task_clock_ms = 92.80
+task_clock_movement_percent = -0.9076
+cycles = 363068583
+cycles_movement_percent = -0.6996
+instructions = 1070599496
+instructions_movement_percent = -0.1168
+branches = 180761058
+branches_movement_percent = -0.2203
+branch_misses = 1461079
+branch_misses_movement_percent = -1.3651
+cache_misses = 1512861
+cache_misses_movement_percent = -2.3271
+certainty = "Certified"
+
+[runtime.generated_yeahright8_parent_strict]
+repetitions = 61
+task_clock_ms = 80.08
+cycles = 286531056
+instructions = 672318092
+branches = 102462232
+branch_misses = 866020
+cache_misses = 1877696
+certainty = "Certified"
+
+[runtime.generated_yeahright8_candidate_strict]
+repetitions = 61
+task_clock_ms = 79.80
+task_clock_movement_percent = -0.3497
+cycles = 286018738
+cycles_movement_percent = -0.1788
+instructions = 671876556
+instructions_movement_percent = -0.0657
+branches = 102373458
+branches_movement_percent = -0.0866
+branch_misses = 867010
+branch_misses_movement_percent = 0.1143
+cache_misses = 1885791
+cache_misses_movement_percent = 0.4311
+certainty = "Certified"
+
+[runtime.generated_yeahright8_parent_approximate_512]
+repetitions = 61
+task_clock_ms = 80.14
+cycles = 286241011
+instructions = 672299346
+branches = 102457443
+branch_misses = 866085
+cache_misses = 1869339
+certainty = "Certified"
+
+[runtime.generated_yeahright8_candidate_approximate_512]
+repetitions = 61
+task_clock_ms = 79.55
+task_clock_movement_percent = -0.7362
+cycles = 285858686
+cycles_movement_percent = -0.1336
+instructions = 671867285
+instructions_movement_percent = -0.0643
+branches = 102371105
+branches_movement_percent = -0.0843
+branch_misses = 866848
+branch_misses_movement_percent = 0.0881
+cache_misses = 1889965
+cache_misses_movement_percent = 1.1034
+certainty = "Certified"
+
+[memory.retained_parent]
+both_policies_identical = true
+allocations = 1254723
+temporary_allocations = 173192
+peak_heap_mib = 12.70
+heaptrack_rss_mib = 22.63
+
+[memory.retained_candidate_strict]
+allocations = 1254715
+allocation_movement_percent = -0.000638
+temporary_allocations = 173184
+temporary_movement_percent = -0.004619
+peak_heap_mib = 12.70
+heaptrack_rss_mib = 22.35
+
+[memory.retained_candidate_approximate_512]
+allocations = 1254715
+temporary_allocations = 173184
+peak_heap_mib = 12.70
+heaptrack_rss_mib = 22.32
+
+[memory.large_boxes_parent]
+both_policies_identical = true
+allocations = 27214
+temporary_allocations = 85
+peak_heap_mib = 4.70
+
+[memory.large_boxes_candidate]
+both_policies_identical = true
+allocations = 27211
+allocation_movement_percent = -0.011024
+temporary_allocations = 81
+temporary_movement_percent = -4.705882
+peak_heap_mib = 4.70
+
+[memory.generated_yeahright8_parent]
+both_policies_identical = true
+allocations = 304574
+temporary_allocations = 27064
+peak_heap_mib = 11.66
+
+[memory.generated_yeahright8_candidate]
+both_policies_identical = true
+allocations = 304568
+allocation_movement_percent = -0.001970
+temporary_allocations = 27058
+temporary_movement_percent = -0.022170
+peak_heap_mib = 11.66
+
+[historical.retained]
+runtime_ms = 944.8
+peak_heap_mib = 67.74
+allocations = 5020891
+peak_rss_mib = 82.5
+current_strict_runtime_movement_percent = -90.1139
+current_peak_heap_movement_percent = -81.2518
+current_allocation_movement_percent = -75.0101
+comparison_note = "directional; historical polygon output differs"
+
+[competitive.small_box_union_current]
+hypermesh_ns = 5501.2
+boolmesh_ns = 68242
+manifold_rust_ns = 64656
+hypermesh_over_boolmesh_speedup = 12.4049
+hypermesh_over_manifold_speedup = 11.7531
+
+[competitive.large_box_union_current]
+triangles_per_operand = 3072
+hypermesh_ns = 1939800
+boolmesh_ns = 7670900
+manifold_rust_ns = 4436100
+hypermesh_over_boolmesh_speedup = 3.9545
+hypermesh_over_manifold_speedup = 2.2869
+
+[competitive.generated_yeahright_union_current]
+hull_triangles = 840
+box_triangles = 12
+hypermesh_ns = 13813000
+boolmesh_ns = 807480
+manifold_rust_ns = 696250
+boolmesh_is_faster_by = 17.1063
+manifold_rust_is_faster_by = 19.8391
+
+[competitive.small_box_union_prior]
+hypermesh_ns = 5082.6
+boolmesh_ns = 65829
+manifold_rust_ns = 57834
+
+[competitive.large_box_union_prior]
+hypermesh_ns = 1846400
+boolmesh_ns = 7455700
+manifold_rust_ns = 4351300
+
+[competitive.generated_yeahright_union_prior]
+hypermesh_ns = 13160000
+boolmesh_ns = 756790
+manifold_rust_ns = 665670
+
+[size.default_general_release_native]
+parent_bytes = 4018964
+current_bytes = 4020108
+movement_percent = 0.028465
+
+[size.default_general_release_wasm]
+parent_bytes = 2695477
+current_bytes = 2696430
+movement_percent = 0.035356
+
+[size.default_immediate_release_native]
+parent_bytes = 4052596
+current_bytes = 4053724
+movement_percent = 0.027834
+
+[size.default_immediate_release_wasm]
+parent_bytes = 2710454
+current_bytes = 2711466
+movement_percent = 0.037337
+
+[size.default_general_size_native]
+parent_bytes = 1844306
+current_bytes = 1845258
+movement_percent = 0.051618
+
+[size.default_general_size_wasm]
+parent_bytes = 1143465
+current_bytes = 1144334
+movement_percent = 0.075997
+
+[size.default_immediate_size_native]
+parent_bytes = 1856806
+current_bytes = 1857758
+movement_percent = 0.051271
+
+[size.default_immediate_size_wasm]
+parent_bytes = 1154872
+current_bytes = 1155297
+movement_percent = 0.036801
+
+[size.direct_probe]
+parent_text_bytes = 4031287
+current_text_bytes = 4031335
+text_movement_bytes = 48
+text_movement_percent = 0.001191
+parent_file_bytes = 6326272
+current_file_bytes = 6322120
+file_movement_bytes = -4152
+file_movement_percent = -0.0656
+
+[callgraph.parent_isolated]
+nodes = 7950
+edges = 19555
+
+[callgraph.current_isolated]
+nodes = 7953
+edges = 19563
+node_movement = 3
+edge_movement = 8
+
+[callgraph.parent_five_crates]
+nodes = 19503
+edges = 38951
+
+[callgraph.current_five_crates]
+nodes = 19531
+edges = 39025
+node_movement = 28
+edge_movement = 74
+
+[source.hyperreal_enclosure]
+added_lines = 203
+removed_lines = 9
+files_changed = 3
+
+[source.hyperreal_exact_normal_optimization]
+added_lines = 11
+removed_lines = 2
+files_changed = 1
+
+[source.hypermesh]
+added_lines = 162
+removed_lines = 67
+files_changed = 1
+
+[rejected.packed_edge_bounds]
+reason = "saved only tens of linked-code KiB and added about 0.37 million retained-fixture instructions"
+
+[rejected.cached_f64_feature]
+reason = "retained instructions improved about 0.25 percent, but box instructions rose about 1.7 percent and cycles about 4.5 percent"
+
+[rejected.generic_dyadic_enclosure]
+reason = "regressed the dominant small-mesh path; direct dyadic construction and exact-normal proof recovered it"
+
+[rejected.exact_rational_affine_key]
+reason = "saved a small number of allocations but was slower than the retained modular projective inequality filter"
