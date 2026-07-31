@@ -18,20 +18,7 @@ pub fn classify_real_sign_with_policy(
     value: &Real,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
-    match resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement) {
-        decided @ PredicateOutcome::Decided { .. } => decided,
-        PredicateOutcome::Unknown { needed, stage } => {
-            let Some(rational) = value.exact_rational_normal_form() else {
-                return PredicateOutcome::unknown(needed, stage);
-            };
-            crate::trace_dispatch!("hyperlimit", "classify_real_sign", "exact-normal-form");
-            PredicateOutcome::decided(
-                exact_rational_sign(&rational),
-                Certainty::Exact,
-                Escalation::Exact,
-            )
-        }
-    }
+    resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement)
 }
 
 /// Construct a reciprocal after deciding nonzero status through the supplied
@@ -151,39 +138,15 @@ pub fn compare_reals_with_policy(
         }
         CertifiedRealOrdering::Unknown { .. } => {
             let difference = sub_ref(left, right);
-            if let Some(rational) = difference.exact_rational_normal_form() {
-                crate::trace_dispatch!("hyperlimit", "compare_reals", "exact-normal-form");
-                return PredicateOutcome::decided(
-                    rational
-                        .partial_cmp(&Rational::zero())
-                        .expect("exact rational ordering is total"),
-                    Certainty::Exact,
-                    Escalation::Exact,
-                );
-            }
-            let Some(precision) = policy.final_approximation_precision() else {
-                crate::trace_dispatch!("hyperlimit", "compare_reals", "unknown");
-                return PredicateOutcome::unknown(
-                    RefinementNeed::RealRefinement,
-                    Escalation::Undecided,
-                );
-            };
-            crate::trace_dispatch!("hyperlimit", "compare_reals", "policy-final-approximation");
-            let Some([lower, upper]) = difference.certified_dyadic_interval(precision) else {
-                return PredicateOutcome::unknown(
-                    RefinementNeed::RealRefinement,
-                    Escalation::Undecided,
-                );
-            };
-            let zero = Rational::zero();
-            let ordering = if upper < zero {
-                Ordering::Less
-            } else if lower > zero {
-                Ordering::Greater
-            } else {
-                Ordering::Equal
-            };
-            PredicateOutcome::decided(ordering, Certainty::Approximate, Escalation::Refined)
+            crate::trace_dispatch!("hyperlimit", "compare_reals", "difference-sign-cascade");
+            map_outcome(
+                classify_real_sign_with_policy(&difference, policy),
+                |sign| match sign {
+                    Sign::Negative => Ordering::Less,
+                    Sign::Zero => Ordering::Equal,
+                    Sign::Positive => Ordering::Greater,
+                },
+            )
         }
     }
 }
@@ -564,6 +527,33 @@ mod tests {
         assert_eq!(
             classify_real_sign_with_policy(&(contact - domain), PredicatePolicy::STRICT).value(),
             Some(Sign::Zero)
+        );
+    }
+
+    #[test]
+    fn exact_normal_form_precedes_terminal_approximate_equality() {
+        let root_two = real(2).sqrt().unwrap();
+        let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();
+        let half = (real(1) / real(2)).unwrap();
+        let shared_offset = root_two.clone() * real(3) + half;
+        let contact = (((root_two.clone() * real(4) - shared_offset.clone()) * Real::pi())
+            * root_two_over_pi.clone()
+            / real(4))
+        .unwrap();
+        let domain = (((root_two * real(2) - shared_offset) * Real::pi()) * root_two_over_pi
+            / real(4))
+        .unwrap()
+            + real(1);
+        let tiny = real(2).powi_i64(-600).unwrap();
+        let positive = contact - domain + tiny;
+
+        assert_eq!(
+            classify_real_sign_with_policy(&positive, APPROX),
+            PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
+        );
+        assert_eq!(
+            compare_reals_with_policy(&positive, &Real::zero(), APPROX),
+            PredicateOutcome::decided(Ordering::Greater, Certainty::Exact, Escalation::Exact)
         );
     }
 

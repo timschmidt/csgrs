@@ -95,6 +95,23 @@ pub(crate) fn resolve_real_sign_direct(
             PredicateOutcome::decided(map_real_sign(sign), Certainty::Exact, stage)
         }
         CertifiedRealSign::Unknown { .. } => {
+            if let Some(rational) = value.exact_rational_normal_form() {
+                let zero = hyperreal::Rational::zero();
+                let sign = match rational
+                    .partial_cmp(&zero)
+                    .expect("exact rational ordering is total")
+                {
+                    core::cmp::Ordering::Less => Sign::Negative,
+                    core::cmp::Ordering::Equal => Sign::Zero,
+                    core::cmp::Ordering::Greater => Sign::Positive,
+                };
+                crate::trace_dispatch!(
+                    "hyperlimit",
+                    "resolve_real_sign_direct",
+                    "exact-normal-form"
+                );
+                return PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact);
+            }
             approximate_real_sign(value, policy).unwrap_or_else(|| {
                 crate::trace_dispatch!("hyperlimit", "resolve_real_sign_direct", "unknown");
                 PredicateOutcome::unknown(unknown_need, Escalation::Undecided)

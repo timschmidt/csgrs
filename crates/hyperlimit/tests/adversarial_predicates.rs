@@ -68,6 +68,83 @@ fn strict_predicates_decide_scalar_signs_and_ordering() {
 }
 
 #[test]
+fn scalar_ordering_accounts_for_inverse_atan_argument_signs() {
+    let negative_argument = Real::from(2).sqrt().unwrap() - Real::from(2);
+    let eighth_pi = (Real::pi() / Real::from(8)).unwrap();
+    let value = Real::from(-2) * negative_argument.atan().unwrap() - eighth_pi;
+
+    assert_eq!(
+        compare_reals(&value, &Real::zero(), APPROX).value(),
+        Some(core::cmp::Ordering::Greater)
+    );
+}
+
+#[test]
+fn scalar_ordering_does_not_treat_scaled_binade_estimates_as_exact() {
+    let radius = rational(225, 8).sqrt().unwrap();
+    let difference = &radius - &Real::from(4);
+    let [lower, _] = difference.certified_dyadic_interval(-128).unwrap();
+    assert!(lower > hyperreal::Rational::zero());
+
+    assert_eq!(
+        compare_reals(&radius, &Real::from(4), APPROX).value(),
+        Some(core::cmp::Ordering::Greater)
+    );
+}
+
+#[test]
+fn scalar_comparison_cascade_matches_separated_full_evaluation_corpus() {
+    fn evaluated_order(left: &Real, right: &Real) -> Option<core::cmp::Ordering> {
+        let difference = left - right;
+        let [lower, upper] = difference.certified_dyadic_interval(-256)?;
+        let zero = hyperreal::Rational::zero();
+        if upper < zero {
+            Some(core::cmp::Ordering::Less)
+        } else if lower > zero {
+            Some(core::cmp::Ordering::Greater)
+        } else {
+            None
+        }
+    }
+
+    let pi = Real::pi();
+    let root_two = Real::from(2).sqrt().unwrap();
+    let atan_third = rational(1, 3).atan().unwrap();
+    let values = [
+        Real::zero(),
+        Real::one(),
+        -Real::one(),
+        pi.clone(),
+        -pi.clone(),
+        Real::e(),
+        -Real::e(),
+        root_two.clone(),
+        -root_two,
+        pi.clone() + Real::one(),
+        pi.clone() - Real::one(),
+        -pi.clone() + Real::one(),
+        -pi - Real::one(),
+        atan_third.clone(),
+        -atan_third,
+        rational(225, 8).sqrt().unwrap(),
+        Real::from(4),
+    ];
+
+    for left in &values {
+        for right in &values {
+            let Some(expected) = evaluated_order(left, right) else {
+                continue;
+            };
+            assert_eq!(
+                compare_reals(left, right, APPROX).value(),
+                Some(expected),
+                "predicate comparison disagreed with separated full evaluation"
+            );
+        }
+    }
+}
+
+#[test]
 fn point_shared_scale_views_preserve_coordinate_facts_without_storage_leaks() {
     let point2 = Point2::new(rational(1, 5), rational(-2, 5));
     let view2 = point2
