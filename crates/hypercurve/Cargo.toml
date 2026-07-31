@@ -72,6 +72,10 @@ name = "bezier_region"
 harness = false
 
 [[bench]]
+name = "curve_region_boolean_batch"
+harness = false
+
+[[bench]]
 name = "bezier_split_materialization"
 harness = false
 

@@ -410,12 +410,25 @@ impl CurveRegion2 {
             BooleanOp::Difference,
             BooleanOp::Xor,
         ];
-        let immediate = [
-            boolean_region_without_general_context(self, other, operations[0], policy)?,
-            boolean_region_without_general_context(self, other, operations[1], policy)?,
-            boolean_region_without_general_context(self, other, operations[2], policy)?,
-            boolean_region_without_general_context(self, other, operations[3], policy)?,
-        ];
+        // Four separate native line Booleans repeat the same intersections and
+        // splits. Degree-elevated affine-line carriers now retain native pair
+        // dispatch inside the canonical arrangement, so the shared topology
+        // route is both the single authority and the faster batch path.
+        let shared_affine_line_arrangement = !self.is_empty()
+            && !other.is_empty()
+            && self != other
+            && region_has_only_affine_line_carriers(self)
+            && region_has_only_affine_line_carriers(other);
+        let immediate = if shared_affine_line_arrangement {
+            [None, None, None, None]
+        } else {
+            [
+                boolean_region_without_general_context(self, other, operations[0], policy)?,
+                boolean_region_without_general_context(self, other, operations[1], policy)?,
+                boolean_region_without_general_context(self, other, operations[2], policy)?,
+                boolean_region_without_general_context(self, other, operations[3], policy)?,
+            ]
+        };
         if immediate.iter().all(Option::is_some) {
             return Ok(CurveRegionBooleanResults2 {
                 regions: Box::new(
@@ -1142,6 +1155,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
 
+        let affine_line_output = !arrangement_fragments.is_empty()
+            && arrangement_fragments
+                .iter()
+                .all(|fragment| split_fragment_is_affine_line(fragment.fragment()));
+
         let graph = BezierArrangementGraph2::from_certified_fragments(arrangement_fragments);
         let certified_successors = certified_boolean_successors(
             &graph,
@@ -1182,7 +1200,70 @@ impl<'a> CurveRegionBooleanContext<'a> {
         region = region
             .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
             .map_err(|cause| self.invalid(0, cause))?;
-        Ok(region)
+        if affine_line_output {
+            self.compact_affine_line_result(region)
+        } else {
+            Ok(region)
+        }
+    }
+
+    fn compact_affine_line_result(&self, region: CurveRegion2) -> ExactCurveResult<CurveRegion2> {
+        let mut material = Vec::new();
+        let mut holes = Vec::new();
+        let mut reduced_fragment_count = false;
+        for boundary in region.boundary_loops() {
+            let segments = boundary
+                .fragments()
+                .iter()
+                .map(|fragment| {
+                    let BezierSplitFragment2::Materialized {
+                        curve: BezierSubcurve2::Quadratic(curve),
+                        ..
+                    } = fragment
+                    else {
+                        unreachable!("affine-line result was checked before compaction")
+                    };
+                    crate::Segment2::Line(
+                        curve
+                            .retained_exact_line_image()
+                            .expect("affine-line result retains its exact line image")
+                            .clone(),
+                    )
+                })
+                .collect();
+            let contour =
+                crate::Contour2::from_validated_closed_segments(segments, FillRule::NonZero);
+            let contour = match contour
+                .merge_adjacent_collinear_lines(&self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?
+            {
+                Classification::Decided(contour) => contour,
+                Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
+            };
+            reduced_fragment_count |= contour.len() < boundary.len();
+            let area = contour
+                .signed_area()
+                .map_err(|cause| self.invalid(0, cause))?
+                .expect("line contours always have an exact signed area");
+            match crate::classify::compare_reals(&area, &crate::Real::zero(), &self.data.policy) {
+                Some(Ordering::Greater) => material.push(contour),
+                Some(Ordering::Less) => holes.push(contour),
+                Some(Ordering::Equal) => {
+                    return Err(self.invalid(
+                        0,
+                        CurveError::Topology(
+                            "regularized Boolean emitted a zero-area affine line loop".into(),
+                        ),
+                    ));
+                }
+                None => return Err(self.blocked(0, UncertaintyReason::RealSign)),
+            }
+        }
+        if !reduced_fragment_count {
+            return Ok(region);
+        }
+        CurveRegion2::from_certified_oriented_line_contours(material, holes)
+            .map_err(|cause| self.invalid(0, cause))
     }
 
     fn fragment_location(
@@ -1310,6 +1391,24 @@ fn region_carrier_count(region: &CurveRegion2) -> usize {
         .iter()
         .map(|boundary| boundary.fragments().len())
         .sum()
+}
+
+fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
+    matches!(
+        fragment,
+        BezierSplitFragment2::Materialized {
+            curve: BezierSubcurve2::Quadratic(curve),
+            ..
+        } if curve.retained_exact_line_image().is_some()
+    )
+}
+
+fn region_has_only_affine_line_carriers(region: &CurveRegion2) -> bool {
+    region
+        .boundary_loops()
+        .iter()
+        .flat_map(|boundary| boundary.fragments())
+        .all(split_fragment_is_affine_line)
 }
 
 fn boolean_region_without_general_context(
@@ -2357,8 +2456,8 @@ const fn boolean_operation_index(operation: BooleanOp) -> usize {
 mod certified_successor_tests {
     use super::*;
     use crate::{
-        BezierAlgebraicParameter2, Point2, RationalBezier2, RationalBezierAlgebraicPointImage2,
-        Real,
+        BezierAlgebraicParameter2, CurvePath2, LineSeg2, Point2, RationalBezier2,
+        RationalBezierAlgebraicPointImage2, Real,
     };
 
     fn decided<T>(classification: Classification<T>) -> T {
@@ -2401,6 +2500,83 @@ mod certified_successor_tests {
             vec![Real::one(); 2],
         )
         .expect("valid rational line")
+    }
+
+    fn square_region(min_x: i8, min_y: i8, max_x: i8, max_y: i8) -> CurveRegion2 {
+        let points = [
+            Point2::from_values(min_x, min_y),
+            Point2::from_values(max_x, min_y),
+            Point2::from_values(max_x, max_y),
+            Point2::from_values(min_x, max_y),
+        ];
+        let curves = (0..points.len())
+            .map(|index| {
+                Curve2::from(
+                    LineSeg2::try_new(
+                        points[index].clone(),
+                        points[(index + 1) % points.len()].clone(),
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect();
+        CurveRegion2::try_from_boundary_paths(
+            &[CurvePath2::try_new(curves).unwrap()],
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value()
+    }
+
+    #[test]
+    fn native_region_fast_path_matches_forced_general_arrangement() {
+        let first = square_region(0, 0, 4, 4);
+        let second = square_region(2, 0, 6, 4);
+        let policy = CurveContext::STRICT;
+        let operations = [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ];
+        let fast = operations.map(|operation| {
+            first
+                .boolean_region_raw(&second, operation, &policy)
+                .unwrap()
+        });
+
+        let general = CurveRegionBooleanContext::try_new(&first, &second, &policy)
+            .unwrap()
+            .build_boolean_regions([None, None, None, None])
+            .unwrap();
+        assert!(general.candidate_carrier_pair_count() > 0);
+        assert!(general.topology_fragment_count() > 0);
+        for (operation, fast_region) in operations.into_iter().zip(&fast) {
+            let general_region = general.region(operation);
+            assert_eq!(
+                decided(fast_region.signed_area(&policy).unwrap().into_value()),
+                decided(general_region.signed_area(&policy).unwrap().into_value())
+            );
+            for x_numerator in -2_i8..=14 {
+                for y_numerator in -2_i8..=10 {
+                    let point = Point2::new(
+                        (Real::from(x_numerator) / Real::from(2_i8)).unwrap(),
+                        (Real::from(y_numerator) / Real::from(2_i8)).unwrap(),
+                    );
+                    assert_eq!(
+                        fast_region
+                            .classify_point(&point, &policy)
+                            .unwrap()
+                            .into_value(),
+                        general_region
+                            .classify_point(&point, &policy)
+                            .unwrap()
+                            .into_value(),
+                        "forced-general {operation:?} differs at {point:?}"
+                    );
+                }
+            }
+        }
     }
 
     fn direction(

@@ -77,7 +77,7 @@ fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLo
 }
 
 #[test]
-fn curved_regions_immediate_batch_reuses_pair_topology() {
+fn affine_line_batch_reuses_the_authoritative_arrangement_topology() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);
     let policy = CurveContext::STRICT;
@@ -105,23 +105,36 @@ fn curved_regions_immediate_batch_reuses_pair_topology() {
         contacts.authored_carrier_pair_count(),
         results.authored_carrier_pair_count()
     );
-    assert_eq!(results.candidate_carrier_pair_count(), 0);
-    assert_eq!(results.topology_fragment_count(), 0);
-    assert_eq!(results.topology_point_classification_count(), 0);
+    assert!(results.candidate_carrier_pair_count() > 0);
+    assert!(results.topology_fragment_count() > 0);
+    assert!(
+        results.topology_point_classification_count() < results.topology_fragment_count(),
+        "all four operations must share propagated fragment classifications"
+    );
     let union = results.union();
+    assert_eq!(union.boundary_loops()[0].len(), 4);
     assert_location(union, point(1, 2), RegionPointLocation::Inside);
     assert_location(union, point(3, 2), RegionPointLocation::Inside);
     assert_location(union, point(5, 2), RegionPointLocation::Inside);
 
     let intersection = results.intersection();
+    assert_eq!(intersection.boundary_loops()[0].len(), 4);
     assert_location(intersection, point(1, 2), RegionPointLocation::Outside);
     assert_location(intersection, point(3, 2), RegionPointLocation::Inside);
 
     let difference = results.difference();
+    assert_eq!(difference.boundary_loops()[0].len(), 4);
     assert_location(difference, point(1, 2), RegionPointLocation::Inside);
     assert_location(difference, point(3, 2), RegionPointLocation::Outside);
 
     let xor = results.xor();
+    assert_eq!(
+        xor.boundary_loops()
+            .iter()
+            .map(|loop_| loop_.len())
+            .sum::<usize>(),
+        8
+    );
     assert_location(xor, point(1, 2), RegionPointLocation::Inside);
     assert_location(xor, point(3, 2), RegionPointLocation::Outside);
     assert_location(xor, point(5, 2), RegionPointLocation::Inside);
@@ -150,6 +163,23 @@ fn curved_region_boolean_output_can_feed_another_boolean() {
 }
 
 #[test]
+fn affine_line_batch_preserves_material_and_hole_roles() {
+    let policy = CurveContext::STRICT;
+    let frame = square(0, 0, 10, 10)
+        .boolean_region(&square(3, 3, 7, 7), BooleanOp::Difference, &policy)
+        .unwrap()
+        .into_value();
+    let inset = square(1, 1, 9, 9);
+    let results = frame.boolean_regions(&inset, &policy).unwrap().into_value();
+    let intersection = results.intersection();
+
+    assert_eq!(intersection.boundary_loops().len(), 2);
+    assert_location(intersection, point(2, 2), RegionPointLocation::Inside);
+    assert_location(intersection, point(5, 5), RegionPointLocation::Outside);
+    assert_location(intersection, point(0, 0), RegionPointLocation::Outside);
+}
+
+#[test]
 #[cfg(feature = "predicates")]
 fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact() {
     let first = symbolic_rectangle(Real::pi() + Real::e());
@@ -165,6 +195,20 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
     assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
     assert_location(
         &outcome.value,
+        Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap()),
+        RegionPointLocation::Inside,
+    );
+
+    assert!(matches!(
+        first.boolean_regions(&second, &CurveContext::STRICT),
+        Err(hypercurve::ExactCurveError::Blocked(_))
+    ));
+    let batch = first
+        .boolean_regions(&second, &CurveContext::APPROXIMATE_512)
+        .expect("the shared arrangement must obey the authorized 512-bit terminal");
+    assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
+    assert_location(
+        batch.value.union(),
         Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap()),
         RegionPointLocation::Inside,
     );

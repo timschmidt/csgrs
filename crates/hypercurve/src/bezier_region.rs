@@ -2295,6 +2295,74 @@ impl CurveRegion2 {
         Ok(promoted)
     }
 
+    /// Materializes already-certified, filled-left affine-line loops without
+    /// replaying path construction or loop nesting.
+    ///
+    /// This is the compact output boundary for the authoritative Boolean
+    /// arrangement. The traversal has already certified closure, face side,
+    /// and material/hole role; every input contour has already merged adjacent
+    /// codirected line runs. Keeping this constructor private to the crate
+    /// prevents unproved authored contours from bypassing ordinary validation.
+    pub(crate) fn from_certified_oriented_line_contours(
+        material_contours: Vec<Contour2>,
+        hole_contours: Vec<Contour2>,
+    ) -> CurveResult<Self> {
+        if material_contours.is_empty() && hole_contours.is_empty() {
+            return Ok(Self::default());
+        }
+
+        let mut boundary_loops =
+            Vec::with_capacity(material_contours.len().saturating_add(hole_contours.len()));
+        for contour in material_contours.iter().chain(&hole_contours) {
+            let fragments = contour
+                .segments()
+                .iter()
+                .map(|segment| {
+                    let Segment2::Line(line) = segment else {
+                        return Err(CurveError::Topology(
+                            "certified affine-line Boolean output contains a nonlinear segment"
+                                .into(),
+                        ));
+                    };
+                    Ok(BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                            line.clone(),
+                        )),
+                    })
+                })
+                .collect::<CurveResult<Vec<_>>>()?;
+            boundary_loops.push(CurveRegionBoundaryLoop2 {
+                fragments,
+                arrangement_sources: None,
+            });
+        }
+
+        let loop_count = boundary_loops.len();
+        let roles = std::iter::repeat_n(CurveRegionLoopRole::Material, material_contours.len())
+            .chain(std::iter::repeat_n(
+                CurveRegionLoopRole::Hole,
+                hole_contours.len(),
+            ))
+            .collect::<Arc<[_]>>();
+        let fill_rules = material_contours
+            .iter()
+            .chain(&hole_contours)
+            .map(Contour2::fill_rule)
+            .collect::<Arc<[_]>>();
+        let mut data = CurveRegionData2::new(boundary_loops);
+        data.certified_loop_roles = Some(roles);
+        data.certified_loop_fill_rules = Some(fill_rules);
+        data.filled_side_is_left
+            .certify(Arc::from(vec![true; loop_count]));
+        data.line_image_region
+            .certify(Some(LineArcRegion2::new(material_contours, hole_contours)));
+        Ok(Self {
+            data: Arc::new(data),
+        })
+    }
+
     /// Constructs a unified region whose native contours are all material.
     pub fn try_from_native_material_contours(
         material_contours: Vec<Contour2>,
