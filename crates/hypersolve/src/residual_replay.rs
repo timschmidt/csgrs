@@ -11,6 +11,7 @@
 
 use std::collections::BTreeMap;
 
+use hyperlimit::{Certainty as PredicateCertainty, PredicateOutcome, PredicatePolicy, Sign};
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 
 /// Error returned by dense residual replay.
@@ -43,10 +44,10 @@ pub enum SparseResidualReplayError {
 pub struct DenseResidualReplayRow {
     /// Row index in the source dense system.
     pub row_index: usize,
-    /// Exact residual value `A[row] * x - b[row]`.
-    pub residual: Real,
     /// Certified residual sign.
     pub sign: RealSign,
+    /// Evidence strength for the residual sign decision.
+    pub certainty: PredicateCertainty,
 }
 
 /// One exact sparse coefficient in a linear residual system.
@@ -85,6 +86,8 @@ pub struct DenseResidualReplayReport {
     pub rows: Vec<DenseResidualReplayRow>,
     /// True when every residual was certified zero.
     pub accepted: bool,
+    /// Weakest residual-sign evidence consumed by the replay.
+    pub certainty: PredicateCertainty,
 }
 
 /// Exact residual replay report for a sparse linear system.
@@ -270,14 +273,17 @@ impl SparseResidualBatchReport {
 /// Replays a candidate solution through dense exact residuals.
 ///
 /// The function validates matrix/vector dimensions, computes every residual
-/// exactly as a `Real`, and asks `Real::certified_sign_until` to prove each
-/// sign. Nonzero residuals produce a rejected report, not an error; an error
-/// means the input shape is invalid or exact sign certification did not decide.
+/// exactly as a `Real`, and first asks `Real::certified_sign_until` to prove
+/// each sign within the caller's fast refinement bound. If that bound is
+/// exhausted, the selected predicate policy owns the terminal decision.
+/// Nonzero residuals produce a rejected report, not an error; an error means
+/// the input shape is invalid or the selected policy did not decide.
 pub fn replay_dense_linear_residuals(
     matrix: &[Vec<Real>],
     rhs: &[Real],
     candidate: &[Real],
     min_precision: i32,
+    policy: PredicatePolicy,
 ) -> Result<DenseResidualReplayReport, DenseResidualReplayError> {
     if matrix.len() != rhs.len() || matrix.iter().any(|row| row.len() != candidate.len()) {
         return Err(DenseResidualReplayError::DimensionMismatch);
@@ -296,22 +302,19 @@ pub fn replay_dense_linear_residuals(
         .collect::<Vec<_>>();
 
     let mut accepted = true;
+    let mut certainty = PredicateCertainty::Exact;
     let mut rows = Vec::with_capacity(residuals.len());
     for (row_index, residual) in residuals.iter().enumerate() {
-        let sign = match residual.certified_sign_until(min_precision) {
-            CertifiedRealSign::Known { sign, .. } => sign,
-            CertifiedRealSign::Unknown { .. } => {
-                return Err(DenseResidualReplayError::UnknownResidual);
-            }
-        };
+        let (sign, row_certainty) = dense_residual_sign(residual, min_precision, policy)?;
+        certainty = weaker_certainty(certainty, row_certainty);
         match sign {
             RealSign::Zero => {}
             RealSign::Negative | RealSign::Positive => accepted = false,
         }
         rows.push(DenseResidualReplayRow {
             row_index,
-            residual: residual.clone(),
             sign,
+            certainty: row_certainty,
         });
     }
 
@@ -319,7 +322,48 @@ pub fn replay_dense_linear_residuals(
         residuals,
         rows,
         accepted,
+        certainty,
     })
+}
+
+fn dense_residual_sign(
+    residual: &Real,
+    min_precision: i32,
+    policy: PredicatePolicy,
+) -> Result<(RealSign, PredicateCertainty), DenseResidualReplayError> {
+    if let CertifiedRealSign::Known { sign, .. } = residual.certified_sign_until(min_precision) {
+        return Ok((sign, PredicateCertainty::Exact));
+    }
+
+    match hyperlimit::classify_real_sign(residual, policy) {
+        PredicateOutcome::Decided {
+            value, certainty, ..
+        } => Ok((real_sign(value), certainty)),
+        PredicateOutcome::Unknown { .. } => Err(DenseResidualReplayError::UnknownResidual),
+    }
+}
+
+const fn real_sign(sign: Sign) -> RealSign {
+    match sign {
+        Sign::Negative => RealSign::Negative,
+        Sign::Zero => RealSign::Zero,
+        Sign::Positive => RealSign::Positive,
+    }
+}
+
+pub(crate) const fn weaker_certainty(
+    left: PredicateCertainty,
+    right: PredicateCertainty,
+) -> PredicateCertainty {
+    match (left, right) {
+        (PredicateCertainty::Approximate, _) | (_, PredicateCertainty::Approximate) => {
+            PredicateCertainty::Approximate
+        }
+        (PredicateCertainty::Filtered, _) | (_, PredicateCertainty::Filtered) => {
+            PredicateCertainty::Filtered
+        }
+        (PredicateCertainty::Exact, PredicateCertainty::Exact) => PredicateCertainty::Exact,
+    }
 }
 
 /// Replays a candidate solution through sparse exact residuals.
@@ -477,6 +521,7 @@ mod tests {
             &[real(5), real(1)],
             &[real(2), real(1)],
             -64,
+            PredicatePolicy::STRICT,
         )
         .unwrap();
 
@@ -488,8 +533,14 @@ mod tests {
 
     #[test]
     fn dense_replay_rejects_nonzero_residual_without_hiding_sign() {
-        let report =
-            replay_dense_linear_residuals(&[vec![real(3)]], &[real(7)], &[real(2)], -64).unwrap();
+        let report = replay_dense_linear_residuals(
+            &[vec![real(3)]],
+            &[real(7)],
+            &[real(2)],
+            -64,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap();
 
         assert!(!report.accepted);
         assert_eq!(report.residuals, vec![real(-1)]);
@@ -499,14 +550,60 @@ mod tests {
     #[test]
     fn dense_replay_rejects_bad_shapes_antagonistically() {
         assert_eq!(
-            replay_dense_linear_residuals(&[vec![real(1), real(2)]], &[real(1)], &[real(1)], -64)
-                .unwrap_err(),
+            replay_dense_linear_residuals(
+                &[vec![real(1), real(2)]],
+                &[real(1)],
+                &[real(1)],
+                -64,
+                PredicatePolicy::STRICT,
+            )
+            .unwrap_err(),
             DenseResidualReplayError::DimensionMismatch
         );
         assert_eq!(
-            replay_dense_linear_residuals(&[vec![real(1)]], &[real(1), real(2)], &[real(1)], -64)
-                .unwrap_err(),
+            replay_dense_linear_residuals(
+                &[vec![real(1)]],
+                &[real(1), real(2)],
+                &[real(1)],
+                -64,
+                PredicatePolicy::STRICT,
+            )
+            .unwrap_err(),
             DenseResidualReplayError::DimensionMismatch
+        );
+    }
+
+    #[test]
+    fn dense_replay_obeys_terminal_equality_policy_and_retains_certainty() {
+        let matrix = [vec![real(1), real(1)]];
+        let rhs = [Real::pi() + Real::e()];
+        let candidate = [Real::e(), Real::pi()];
+
+        assert_eq!(
+            replay_dense_linear_residuals(
+                &matrix,
+                &rhs,
+                &candidate,
+                -128,
+                PredicatePolicy::STRICT,
+            )
+            .unwrap_err(),
+            DenseResidualReplayError::UnknownResidual
+        );
+
+        let approximate = replay_dense_linear_residuals(
+            &matrix,
+            &rhs,
+            &candidate,
+            -128,
+            PredicatePolicy::APPROXIMATE_512,
+        )
+        .unwrap();
+        assert!(approximate.accepted);
+        assert_eq!(approximate.certainty, PredicateCertainty::Approximate);
+        assert_eq!(
+            approximate.rows[0].certainty,
+            PredicateCertainty::Approximate
         );
     }
 
@@ -725,6 +822,7 @@ mod tests {
                 &[real(a * x), real(b * y)],
                 &[real(x), real(y)],
                 -64,
+                PredicatePolicy::STRICT,
             ).unwrap();
 
             prop_assert!(report.accepted);

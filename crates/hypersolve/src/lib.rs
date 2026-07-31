@@ -112,8 +112,8 @@ pub use alpha::{
 };
 pub use analysis::{ConstraintFacts, ProblemAnalysis, ProblemFacts, facts_depend_on_symbol};
 pub use bareiss::{
-    BareissDeterminantReport, BareissError, BareissMultiRhsSolveReport, BareissPivot,
-    BareissSolveReport, SparseBareissError, SparseBareissSolveReport,
+    BareissDeterminantMethod, BareissDeterminantReport, BareissError, BareissMultiRhsSolveReport,
+    BareissPivot, BareissSolveReport, SparseBareissError, SparseBareissSolveReport,
     SparseMinimumDegreeBareissSolveReport, SparsePatternPreservingBareissSolveReport,
     determinant_bareiss, solve_dense_linear_system_bareiss,
     solve_dense_linear_system_bareiss_multi_rhs, solve_sparse_linear_system_bareiss,
@@ -198,6 +198,7 @@ pub use failed_constraints::{
     search_failed_constraint_set_removals_with_config, search_failed_constraint_single_removals,
     search_failed_constraint_single_removals_with_config,
 };
+pub use hyperlimit::{Certainty as PredicateCertainty, PredicatePolicy};
 pub use interval::{
     AffineIntervalError, AffineKrawczykReport, AffineKrawczykStatus, AffineKrawczykVariableStep,
     IntervalBoxCertificationPackage, IntervalBoxCertificationReport,

@@ -126,7 +126,10 @@ blocks before an algorithm is selected.
   supported one-row or square affine systems.
 - `determinant_bareiss`, `solve_dense_linear_system_bareiss`, and the sparse,
   multi-right-hand-side, pattern-preserving, and minimum-degree Bareiss
-  variants provide exact fraction-free linear algebra with reports.
+  variants provide exact fraction-free linear algebra with reports. Dense
+  solves take an explicit `PredicatePolicy`, fall back to a pivot-free exact
+  determinant construction when a fast pivot is unresolved, and retain the
+  weakest determinant/residual certainty in their reports.
 - `analyze_exact_affine_rank` reports exact rank evidence.
 - `find_equality_substitutions`, `validate_equality_substitutions`,
   `equality_substitution_classes`, `apply_equality_substitutions`,
@@ -166,8 +169,10 @@ blocks before an algorithm is selected.
   uniqueness evidence.
 - `certify_candidate_batch` and `schedule_candidate_batch_predicates` reuse
   predicate schedules across candidates.
-- `replay_dense_linear_residuals` is the shared exact replay helper for domain
-  crates that generate small dense systems.
+- `replay_dense_linear_residuals` is the shared policy-explicit exact replay
+  helper for domain crates that generate small dense systems. Its residuals
+  are retained once, while row evidence records sign and certainty without
+  duplicating each `Real`.
 - `project_origin_onto_simplex` returns exact closest-point, squared-distance,
   barycentric, and ordering evidence for small convex hulls.
 

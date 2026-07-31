@@ -6865,6 +6865,7 @@ proptest! {
             ],
             &[Real::from(a * x), Real::from(b * y)],
             -64,
+            hyperlimit::PredicatePolicy::STRICT,
         ).unwrap();
 
         prop_assert_eq!(report.solution, vec![Real::from(x), Real::from(y)]);

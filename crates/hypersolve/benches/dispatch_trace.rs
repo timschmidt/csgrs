@@ -170,6 +170,7 @@ fn trace_direct_and_fraction_free_linear() -> hyperreal::dispatch_trace::TraceSn
                 &[vec![r(2), r(1)], vec![r(1), r(-1)]],
                 &[r(5), r(1)],
                 -64,
+                hyperlimit::PredicatePolicy::STRICT,
             )
             .expect("trace dense system should be nonsingular"),
         );
@@ -178,6 +179,7 @@ fn trace_direct_and_fraction_free_linear() -> hyperreal::dispatch_trace::TraceSn
                 &[vec![r(2), r(1)], vec![r(1), r(-1)]],
                 &[vec![r(5), r(1)], vec![r(0), r(3)]],
                 -64,
+                hyperlimit::PredicatePolicy::STRICT,
             )
             .expect("trace multi-right-hand-side system should be nonsingular"),
         );

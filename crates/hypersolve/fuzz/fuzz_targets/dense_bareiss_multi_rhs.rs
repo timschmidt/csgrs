@@ -1,7 +1,10 @@
 #![no_main]
 
 use hyperreal::Real;
-use hypersolve::{solve_dense_linear_system_bareiss, solve_dense_linear_system_bareiss_multi_rhs};
+use hypersolve::{
+    PredicatePolicy, solve_dense_linear_system_bareiss,
+    solve_dense_linear_system_bareiss_multi_rhs,
+};
 use libfuzzer_sys::fuzz_target;
 
 fn real(value: i64) -> Real {
@@ -27,8 +30,13 @@ fuzz_target!(|data: &[u8]| {
         vec![real(a * second[0] + b * second[1]), real(c * second[1])],
     ];
 
-    let report = solve_dense_linear_system_bareiss_multi_rhs(&matrix, &right_hand_sides, -64)
-        .expect("generated triangular system is nonsingular");
+    let report = solve_dense_linear_system_bareiss_multi_rhs(
+        &matrix,
+        &right_hand_sides,
+        -64,
+        PredicatePolicy::STRICT,
+    )
+    .expect("generated triangular system is nonsingular");
     assert_eq!(
         report.solutions,
         vec![
@@ -39,8 +47,9 @@ fuzz_target!(|data: &[u8]| {
     assert!(report.residual_replays.iter().all(|replay| replay.accepted));
 
     for (index, rhs) in right_hand_sides.iter().enumerate() {
-        let single = solve_dense_linear_system_bareiss(&matrix, rhs, -64)
-            .expect("generated triangular system is nonsingular");
+        let single =
+            solve_dense_linear_system_bareiss(&matrix, rhs, -64, PredicatePolicy::STRICT)
+                .expect("generated triangular system is nonsingular");
         assert_eq!(report.solutions[index], single.solution);
         assert_eq!(report.numerators[index], single.numerators);
         assert_eq!(report.residual_replays[index], single.residual_replay);

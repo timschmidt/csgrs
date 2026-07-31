@@ -9,12 +9,13 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperreal::{CertifiedRealSign, Real, RealSign};
+use hyperlimit::{Certainty as PredicateCertainty, PredicateOutcome, PredicatePolicy, Sign};
+use hyperreal::{CertifiedRealSign, Rational, Real, RealSign};
 
 use crate::residual_replay::{
     DenseResidualReplayReport, SparseResidualReplayError, SparseResidualReplayReport,
     SparseResidualTerm, replay_assembled_sparse_rows, replay_dense_linear_residuals,
-    replay_sparse_linear_residuals,
+    replay_sparse_linear_residuals, weaker_certainty,
 };
 use crate::sparse_pattern::{
     SparsePatternEntryStatus, SparsePatternError, SymbolicSparseFactorizationReport,
@@ -105,6 +106,16 @@ pub struct BareissPivot {
     pub value: Real,
 }
 
+/// Exact determinant construction selected after shape validation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BareissDeterminantMethod {
+    /// Fraction-free Bareiss elimination completed with certified pivots.
+    FractionFree,
+    /// A pivot-free Faddeev-LeVerrier construction handled an unresolved pivot
+    /// or unsupported fraction-free intermediate.
+    PivotFreeFaddeevLeverrier,
+}
+
 /// Exact determinant report produced by fraction-free Bareiss elimination.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BareissDeterminantReport {
@@ -114,6 +125,8 @@ pub struct BareissDeterminantReport {
     pub swaps: usize,
     /// Certified pivots used before the final determinant value.
     pub pivots: Vec<BareissPivot>,
+    /// Exact construction used to produce the determinant expression.
+    pub method: BareissDeterminantMethod,
 }
 
 /// Exact dense linear solve report built from Bareiss determinants.
@@ -127,6 +140,8 @@ pub struct BareissSolveReport {
     pub numerators: Vec<Real>,
     /// Exact replay of `A*x-b` for the returned solution.
     pub residual_replay: DenseResidualReplayReport,
+    /// Weakest predicate evidence consumed by determinant and residual decisions.
+    pub certainty: PredicateCertainty,
 }
 
 /// Exact dense linear solve report for several right-hand sides sharing one matrix.
@@ -140,6 +155,8 @@ pub struct BareissMultiRhsSolveReport {
     pub numerators: Vec<Vec<Real>>,
     /// Independent exact `A*x-b` replay for each solution vector.
     pub residual_replays: Vec<DenseResidualReplayReport>,
+    /// Weakest predicate evidence consumed by all determinant and residual decisions.
+    pub certainty: PredicateCertainty,
 }
 
 /// Exact sparse-input linear solve report.
@@ -228,7 +245,13 @@ fn bareiss_quotient(numerator: Real, previous_pivot: &Real) -> Option<Real> {
     {
         return Some(Real::from(quotient));
     }
-    (numerator / previous_pivot.clone()).ok()
+    match numerator.clone() / previous_pivot.clone() {
+        Ok(quotient) => Some(quotient),
+        Err(_) => previous_pivot
+            .inverse_ref_assuming_nonzero()
+            .ok()
+            .map(|inverse| numerator * inverse),
+    }
 }
 
 fn bareiss_update(
@@ -256,13 +279,70 @@ fn bareiss_update(
     bareiss_quotient(numerator, previous_pivot)
 }
 
+fn pivot_free_determinant(matrix: &[Vec<Real>]) -> BareissDeterminantReport {
+    let n = matrix.len();
+    if n == 0 {
+        return BareissDeterminantReport {
+            determinant: Real::one(),
+            swaps: 0,
+            pivots: Vec::new(),
+            method: BareissDeterminantMethod::PivotFreeFaddeevLeverrier,
+        };
+    }
+
+    // Faddeev-LeVerrier constructs the characteristic coefficients without a
+    // data-dependent division. Its only scale is the exact rational -1/k, so
+    // an unresolved matrix pivot cannot block determinant construction.
+    let mut coefficient_matrix = vec![vec![Real::zero(); n]; n];
+    for (index, row) in coefficient_matrix.iter_mut().enumerate() {
+        row[index] = Real::one();
+    }
+
+    for step in 1..=n {
+        let mut product = vec![vec![Real::zero(); n]; n];
+        for (row_index, row) in product.iter_mut().enumerate() {
+            for (column, value) in row.iter_mut().enumerate() {
+                *value = (0..n).fold(Real::zero(), |sum, inner| {
+                    sum + &matrix[row_index][inner] * &coefficient_matrix[inner][column]
+                });
+            }
+        }
+        let trace = (0..n).fold(Real::zero(), |sum, index| sum + &product[index][index]);
+        let denominator = u64::try_from(step).expect("an allocated matrix dimension fits u64");
+        let scale = Real::from(
+            Rational::fraction(-1, denominator).expect("Faddeev-LeVerrier step is nonzero"),
+        );
+        let coefficient = trace * scale;
+        if step == n {
+            let determinant = if n.is_multiple_of(2) {
+                coefficient
+            } else {
+                -coefficient
+            };
+            return BareissDeterminantReport {
+                determinant,
+                swaps: 0,
+                pivots: Vec::new(),
+                method: BareissDeterminantMethod::PivotFreeFaddeevLeverrier,
+            };
+        }
+        for (index, row) in product.iter_mut().enumerate() {
+            row[index] += coefficient.clone();
+        }
+        coefficient_matrix = product;
+    }
+
+    unreachable!("a nonempty determinant construction executes at least one step")
+}
+
 /// Computes an exact determinant with Bareiss fraction-free elimination.
 ///
 /// Pivot choices are certified through [`Real::certified_sign_until`]. A
 /// certified zero determinant is returned as a successful report with
-/// `determinant == 0`; undecidable pivot signs and unsupported exact divisions
-/// are explicit errors because they would otherwise blur the exact decision
-/// boundary.
+/// `determinant == 0`. If a pivot cannot be certified within the fast bound,
+/// or a fraction-free intermediate is unavailable, a pivot-free exact
+/// Faddeev-LeVerrier construction completes the determinant without making a
+/// topology decision.
 pub fn determinant_bareiss(
     matrix: &[Vec<Real>],
     min_precision: i32,
@@ -277,6 +357,7 @@ pub fn determinant_bareiss(
             determinant: Real::one(),
             swaps: 0,
             pivots: Vec::new(),
+            method: BareissDeterminantMethod::FractionFree,
         });
     }
     if n == 1 {
@@ -284,6 +365,7 @@ pub fn determinant_bareiss(
             determinant: matrix[0][0].clone(),
             swaps: 0,
             pivots: Vec::new(),
+            method: BareissDeterminantMethod::FractionFree,
         });
     }
 
@@ -293,12 +375,19 @@ pub fn determinant_bareiss(
     let mut previous_pivot = Real::one();
 
     for pivot in 0..(n - 1) {
-        let pivot_row = select_pivot_row(&work, pivot, min_precision)?;
+        let pivot_row = match select_pivot_row(&work, pivot, min_precision) {
+            Ok(pivot_row) => pivot_row,
+            Err(BareissError::UndecidedPivot { .. }) => {
+                return Ok(pivot_free_determinant(matrix));
+            }
+            Err(error) => return Err(error),
+        };
         let Some(pivot_row) = pivot_row else {
             return Ok(BareissDeterminantReport {
                 determinant: Real::zero(),
                 swaps,
                 pivots,
+                method: BareissDeterminantMethod::FractionFree,
             });
         };
 
@@ -317,14 +406,16 @@ pub fn determinant_bareiss(
 
         for row in work.iter_mut().take(n).skip(pivot + 1) {
             for column in (pivot + 1)..n {
-                row[column] = bareiss_update(
+                let Some(updated) = bareiss_update(
                     &pivot_value,
                     &row[column],
                     &row[pivot],
                     &pivot_work_row[column],
                     &previous_pivot,
-                )
-                .ok_or(BareissError::UnsupportedDivision { pivot })?;
+                ) else {
+                    return Ok(pivot_free_determinant(matrix));
+                };
+                row[column] = updated;
             }
         }
 
@@ -343,6 +434,7 @@ pub fn determinant_bareiss(
         determinant,
         swaps,
         pivots,
+        method: BareissDeterminantMethod::FractionFree,
     })
 }
 
@@ -359,6 +451,7 @@ pub fn solve_dense_linear_system_bareiss(
     matrix: &[Vec<Real>],
     rhs: &[Real],
     min_precision: i32,
+    policy: PredicatePolicy,
 ) -> Result<BareissSolveReport, BareissError> {
     if matrix.len() != rhs.len() || matrix.iter().any(|row| row.len() != matrix.len()) {
         return Err(BareissError::DimensionMismatch);
@@ -372,7 +465,19 @@ pub fn solve_dense_linear_system_bareiss(
     let mut previous_pivot = Real::one();
 
     for pivot in 0..n.saturating_sub(1) {
-        let Some(pivot_row) = select_pivot_row(&work, pivot, min_precision)? else {
+        let pivot_row = match select_pivot_row(&work, pivot, min_precision) {
+            Ok(pivot_row) => pivot_row,
+            Err(BareissError::UndecidedPivot { .. }) => {
+                return solve_dense_linear_system_bareiss_cramer(
+                    matrix,
+                    rhs,
+                    min_precision,
+                    policy,
+                );
+            }
+            Err(error) => return Err(error),
+        };
+        let Some(pivot_row) = pivot_row else {
             return Err(BareissError::Singular {
                 pivot: n.saturating_sub(1),
             });
@@ -395,14 +500,21 @@ pub fn solve_dense_linear_system_bareiss(
         for row in (pivot + 1)..n {
             let eliminand = work[row][pivot].clone();
             for column in (pivot + 1)..n {
-                work[row][column] = bareiss_update(
+                let Some(updated) = bareiss_update(
                     &pivot_value,
                     &work[row][column],
                     &eliminand,
                     &pivot_work_row[column],
                     &previous_pivot,
-                )
-                .ok_or(BareissError::UnsupportedDivision { pivot })?;
+                ) else {
+                    return solve_dense_linear_system_bareiss_cramer(
+                        matrix,
+                        rhs,
+                        min_precision,
+                        policy,
+                    );
+                };
+                work[row][column] = updated;
             }
             rhs_work[row] = match bareiss_update(
                 &pivot_value,
@@ -413,7 +525,12 @@ pub fn solve_dense_linear_system_bareiss(
             ) {
                 Some(value) => value,
                 None => {
-                    return solve_dense_linear_system_bareiss_cramer(matrix, rhs, min_precision);
+                    return solve_dense_linear_system_bareiss_cramer(
+                        matrix,
+                        rhs,
+                        min_precision,
+                        policy,
+                    );
                 }
             };
             work[row][pivot] = Real::zero();
@@ -429,18 +546,17 @@ pub fn solve_dense_linear_system_bareiss(
     if swaps % 2 == 1 {
         determinant_value = -determinant_value;
     }
-    match certified_sign(&determinant_value, min_precision)? {
-        RealSign::Zero => {
-            return Err(BareissError::Singular {
-                pivot: n.saturating_sub(1),
-            });
-        }
-        RealSign::Negative | RealSign::Positive => {}
-    }
+    let determinant_certainty = nonzero_determinant_certainty(
+        &determinant_value,
+        min_precision,
+        policy,
+        n.saturating_sub(1),
+    )?;
     let determinant = BareissDeterminantReport {
         determinant: determinant_value,
         swaps,
         pivots,
+        method: BareissDeterminantMethod::FractionFree,
     };
 
     let mut solution = vec![Real::zero(); n];
@@ -448,33 +564,26 @@ pub fn solve_dense_linear_system_bareiss(
         let trailing_sum = ((row + 1)..n).fold(Real::zero(), |sum, column| {
             sum + work[row][column].clone() * solution[column].clone()
         });
-        solution[row] = match (rhs_work[row].clone() - trailing_sum) / work[row][row].clone() {
-            Ok(value) => value,
-            Err(_) => {
-                return solve_dense_linear_system_bareiss_cramer(matrix, rhs, min_precision);
-            }
-        };
+        solution[row] =
+            quotient_after_nonzero(rhs_work[row].clone() - trailing_sum, &work[row][row])
+                .map_err(|_| BareissError::UnsupportedSolutionDivision { column: row })?;
     }
     let numerators = solution
         .iter()
         .map(|value| value.clone() * determinant.determinant.clone())
         .collect::<Vec<_>>();
 
-    let residual_replay = replay_dense_linear_residuals(matrix, rhs, &solution, min_precision)
-        .map_err(|error| match error {
-            crate::residual_replay::DenseResidualReplayError::DimensionMismatch => {
-                BareissError::DimensionMismatch
-            }
-            crate::residual_replay::DenseResidualReplayError::UnknownResidual => {
-                BareissError::UnknownResidual
-            }
-        })?;
+    let residual_replay =
+        replay_dense_linear_residuals(matrix, rhs, &solution, min_precision, policy)
+            .map_err(map_dense_replay_error)?;
+    let certainty = weaker_certainty(determinant_certainty, residual_replay.certainty);
 
     Ok(BareissSolveReport {
         solution,
         determinant,
         numerators,
         residual_replay,
+        certainty,
     })
 }
 
@@ -490,6 +599,7 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
     matrix: &[Vec<Real>],
     right_hand_sides: &[Vec<Real>],
     min_precision: i32,
+    policy: PredicatePolicy,
 ) -> Result<BareissMultiRhsSolveReport, BareissError> {
     if matrix.iter().any(|row| row.len() != matrix.len())
         || right_hand_sides.iter().any(|rhs| rhs.len() != matrix.len())
@@ -505,7 +615,19 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
     let mut previous_pivot = Real::one();
 
     for pivot in 0..n.saturating_sub(1) {
-        let Some(pivot_row) = select_pivot_row(&work, pivot, min_precision)? else {
+        let pivot_row = match select_pivot_row(&work, pivot, min_precision) {
+            Ok(pivot_row) => pivot_row,
+            Err(BareissError::UndecidedPivot { .. }) => {
+                return solve_dense_linear_system_bareiss_multi_rhs_cramer(
+                    matrix,
+                    right_hand_sides,
+                    min_precision,
+                    policy,
+                );
+            }
+            Err(error) => return Err(error),
+        };
+        let Some(pivot_row) = pivot_row else {
             return Err(BareissError::Singular {
                 pivot: n.saturating_sub(1),
             });
@@ -533,14 +655,21 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
         for row in (pivot + 1)..n {
             let eliminand = work[row][pivot].clone();
             for column in (pivot + 1)..n {
-                work[row][column] = bareiss_update(
+                let Some(updated) = bareiss_update(
                     &pivot_value,
                     &work[row][column],
                     &eliminand,
                     &pivot_work_row[column],
                     &previous_pivot,
-                )
-                .ok_or(BareissError::UnsupportedDivision { pivot })?;
+                ) else {
+                    return solve_dense_linear_system_bareiss_multi_rhs_cramer(
+                        matrix,
+                        right_hand_sides,
+                        min_precision,
+                        policy,
+                    );
+                };
+                work[row][column] = updated;
             }
             for (rhs_index, rhs) in rhs_work.iter_mut().enumerate() {
                 rhs[row] = match bareiss_update(
@@ -556,6 +685,7 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
                             matrix,
                             right_hand_sides,
                             min_precision,
+                            policy,
                         );
                     }
                 };
@@ -573,18 +703,17 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
     if swaps % 2 == 1 {
         determinant_value = -determinant_value;
     }
-    match certified_sign(&determinant_value, min_precision)? {
-        RealSign::Zero => {
-            return Err(BareissError::Singular {
-                pivot: n.saturating_sub(1),
-            });
-        }
-        RealSign::Negative | RealSign::Positive => {}
-    }
+    let determinant_certainty = nonzero_determinant_certainty(
+        &determinant_value,
+        min_precision,
+        policy,
+        n.saturating_sub(1),
+    )?;
     let determinant = BareissDeterminantReport {
         determinant: determinant_value,
         swaps,
         pivots,
+        method: BareissDeterminantMethod::FractionFree,
     };
 
     let mut solutions = Vec::with_capacity(rhs_work.len());
@@ -594,16 +723,9 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
             let trailing_sum = ((row + 1)..n).fold(Real::zero(), |sum, column| {
                 sum + work[row][column].clone() * solution[column].clone()
             });
-            solution[row] = match (rhs[row].clone() - trailing_sum) / work[row][row].clone() {
-                Ok(value) => value,
-                Err(_) => {
-                    return solve_dense_linear_system_bareiss_multi_rhs_cramer(
-                        matrix,
-                        right_hand_sides,
-                        min_precision,
-                    );
-                }
-            };
+            solution[row] =
+                quotient_after_nonzero(rhs[row].clone() - trailing_sum, &work[row][row])
+                    .map_err(|_| BareissError::UnsupportedSolutionDivision { column: row })?;
         }
         solutions.push(solution);
     }
@@ -620,24 +742,22 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
         .iter()
         .zip(&solutions)
         .map(|(rhs, solution)| {
-            replay_dense_linear_residuals(matrix, rhs, solution, min_precision).map_err(|error| {
-                match error {
-                    crate::residual_replay::DenseResidualReplayError::DimensionMismatch => {
-                        BareissError::DimensionMismatch
-                    }
-                    crate::residual_replay::DenseResidualReplayError::UnknownResidual => {
-                        BareissError::UnknownResidual
-                    }
-                }
-            })
+            replay_dense_linear_residuals(matrix, rhs, solution, min_precision, policy)
+                .map_err(map_dense_replay_error)
         })
         .collect::<Result<Vec<_>, _>>()?;
+    let certainty = residual_replays
+        .iter()
+        .fold(determinant_certainty, |certainty, replay| {
+            weaker_certainty(certainty, replay.certainty)
+        });
 
     Ok(BareissMultiRhsSolveReport {
         solutions,
         determinant,
         numerators,
         residual_replays,
+        certainty,
     })
 }
 
@@ -645,43 +765,50 @@ fn solve_dense_linear_system_bareiss_multi_rhs_cramer(
     matrix: &[Vec<Real>],
     right_hand_sides: &[Vec<Real>],
     min_precision: i32,
+    policy: PredicatePolicy,
 ) -> Result<BareissMultiRhsSolveReport, BareissError> {
-    if right_hand_sides.is_empty() {
-        let determinant = determinant_bareiss(matrix, min_precision)?;
-        match certified_sign(&determinant.determinant, min_precision)? {
-            RealSign::Zero => {
-                return Err(BareissError::Singular {
-                    pivot: matrix.len().saturating_sub(1),
-                });
-            }
-            RealSign::Negative | RealSign::Positive => {}
-        }
+    let determinant = determinant_bareiss(matrix, min_precision)?;
+    let determinant_certainty = nonzero_determinant_certainty(
+        &determinant.determinant,
+        min_precision,
+        policy,
+        matrix.len().saturating_sub(1),
+    )?;
+    let Some(inverse) = (!right_hand_sides.is_empty())
+        .then(|| determinant.determinant.inverse_ref_assuming_nonzero())
+        .transpose()
+        .map_err(|_| BareissError::UnsupportedSolutionDivision { column: 0 })?
+    else {
         return Ok(BareissMultiRhsSolveReport {
             solutions: Vec::new(),
             determinant,
             numerators: Vec::new(),
             residual_replays: Vec::new(),
+            certainty: determinant_certainty,
         });
+    };
+
+    let mut solutions = Vec::with_capacity(right_hand_sides.len());
+    let mut numerators = Vec::with_capacity(right_hand_sides.len());
+    let mut residual_replays = Vec::with_capacity(right_hand_sides.len());
+    let mut certainty = determinant_certainty;
+    for rhs in right_hand_sides {
+        let (solution, rhs_numerators) =
+            solve_cramer_coordinates(matrix, rhs, &inverse, min_precision)?;
+        let replay = replay_dense_linear_residuals(matrix, rhs, &solution, min_precision, policy)
+            .map_err(map_dense_replay_error)?;
+        certainty = weaker_certainty(certainty, replay.certainty);
+        solutions.push(solution);
+        numerators.push(rhs_numerators);
+        residual_replays.push(replay);
     }
 
-    let reports = right_hand_sides
-        .iter()
-        .map(|rhs| solve_dense_linear_system_bareiss_cramer(matrix, rhs, min_precision))
-        .collect::<Result<Vec<_>, _>>()?;
     Ok(BareissMultiRhsSolveReport {
-        determinant: reports[0].determinant.clone(),
-        solutions: reports
-            .iter()
-            .map(|report| report.solution.clone())
-            .collect(),
-        numerators: reports
-            .iter()
-            .map(|report| report.numerators.clone())
-            .collect(),
-        residual_replays: reports
-            .into_iter()
-            .map(|report| report.residual_replay)
-            .collect(),
+        determinant,
+        solutions,
+        numerators,
+        residual_replays,
+        certainty,
     })
 }
 
@@ -689,45 +816,56 @@ fn solve_dense_linear_system_bareiss_cramer(
     matrix: &[Vec<Real>],
     rhs: &[Real],
     min_precision: i32,
+    policy: PredicatePolicy,
 ) -> Result<BareissSolveReport, BareissError> {
     let determinant = determinant_bareiss(matrix, min_precision)?;
-    match certified_sign(&determinant.determinant, min_precision)? {
-        RealSign::Zero => {
-            return Err(BareissError::Singular {
-                pivot: matrix.len().saturating_sub(1),
-            });
-        }
-        RealSign::Negative | RealSign::Positive => {}
-    }
+    let determinant_certainty = nonzero_determinant_certainty(
+        &determinant.determinant,
+        min_precision,
+        policy,
+        matrix.len().saturating_sub(1),
+    )?;
+    let inverse = determinant
+        .determinant
+        .inverse_ref_assuming_nonzero()
+        .map_err(|_| BareissError::UnsupportedSolutionDivision { column: 0 })?;
+    let (solution, numerators) = solve_cramer_coordinates(matrix, rhs, &inverse, min_precision)?;
 
-    let mut numerators = Vec::with_capacity(matrix.len());
-    let mut solution = Vec::with_capacity(matrix.len());
-    for column in 0..matrix.len() {
-        let replaced = replace_column(matrix, rhs, column);
-        let numerator_report = determinant_bareiss(&replaced, min_precision)?;
-        let numerator = numerator_report.determinant;
-        let value = (numerator.clone() / determinant.determinant.clone())
-            .map_err(|_| BareissError::UnsupportedSolutionDivision { column })?;
-        numerators.push(numerator);
-        solution.push(value);
-    }
-
-    let residual_replay = replay_dense_linear_residuals(matrix, rhs, &solution, min_precision)
-        .map_err(|error| match error {
-            crate::residual_replay::DenseResidualReplayError::DimensionMismatch => {
-                BareissError::DimensionMismatch
-            }
-            crate::residual_replay::DenseResidualReplayError::UnknownResidual => {
-                BareissError::UnknownResidual
-            }
-        })?;
+    let residual_replay =
+        replay_dense_linear_residuals(matrix, rhs, &solution, min_precision, policy)
+            .map_err(map_dense_replay_error)?;
+    let certainty = weaker_certainty(determinant_certainty, residual_replay.certainty);
 
     Ok(BareissSolveReport {
         solution,
         determinant,
         numerators,
         residual_replay,
+        certainty,
     })
+}
+
+fn solve_cramer_coordinates(
+    matrix: &[Vec<Real>],
+    rhs: &[Real],
+    determinant_inverse: &Real,
+    min_precision: i32,
+) -> Result<(Vec<Real>, Vec<Real>), BareissError> {
+    let mut replaced = matrix.to_vec();
+    let mut numerators = Vec::with_capacity(matrix.len());
+    let mut solution = Vec::with_capacity(matrix.len());
+    for column in 0..matrix.len() {
+        for (row, value) in rhs.iter().enumerate() {
+            replaced[row][column] = value.clone();
+        }
+        let numerator = determinant_bareiss(&replaced, min_precision)?.determinant;
+        solution.push(numerator.clone() * determinant_inverse.clone());
+        numerators.push(numerator);
+        for (row, coefficients) in matrix.iter().enumerate() {
+            replaced[row][column] = coefficients[column].clone();
+        }
+    }
+    Ok((solution, numerators))
 }
 
 /// Solves a square sparse linear system with exact Bareiss materialization.
@@ -762,8 +900,13 @@ pub fn solve_sparse_linear_system_bareiss(
             dense_matrix[term.row][term.column].clone() + term.coefficient.clone();
     }
 
-    let dense_solve = solve_dense_linear_system_bareiss(&dense_matrix, rhs, min_precision)
-        .map_err(SparseBareissError::DenseSolve)?;
+    let dense_solve = solve_dense_linear_system_bareiss(
+        &dense_matrix,
+        rhs,
+        min_precision,
+        PredicatePolicy::STRICT,
+    )
+    .map_err(SparseBareissError::DenseSolve)?;
     let sparse_residual_replay = replay_sparse_linear_residuals(
         row_count,
         column_count,
@@ -1184,12 +1327,58 @@ fn certified_sign(value: &Real, min_precision: i32) -> Result<RealSign, BareissE
     }
 }
 
-fn replace_column(matrix: &[Vec<Real>], rhs: &[Real], column: usize) -> Vec<Vec<Real>> {
-    let mut replaced = matrix.to_vec();
-    for (row, value) in rhs.iter().enumerate() {
-        replaced[row][column] = value.clone();
+fn certified_sign_with_policy(
+    value: &Real,
+    min_precision: i32,
+    policy: PredicatePolicy,
+) -> Result<(RealSign, PredicateCertainty), BareissError> {
+    if let CertifiedRealSign::Known { sign, .. } = value.certified_sign_until(min_precision) {
+        return Ok((sign, PredicateCertainty::Exact));
     }
-    replaced
+    match hyperlimit::classify_real_sign(value, policy) {
+        PredicateOutcome::Decided {
+            value, certainty, ..
+        } => Ok((
+            match value {
+                Sign::Negative => RealSign::Negative,
+                Sign::Zero => RealSign::Zero,
+                Sign::Positive => RealSign::Positive,
+            },
+            certainty,
+        )),
+        PredicateOutcome::Unknown { .. } => Err(BareissError::UndecidedPivot { pivot: 0 }),
+    }
+}
+
+fn nonzero_determinant_certainty(
+    determinant: &Real,
+    min_precision: i32,
+    policy: PredicatePolicy,
+    pivot: usize,
+) -> Result<PredicateCertainty, BareissError> {
+    match certified_sign_with_policy(determinant, min_precision, policy) {
+        Ok((RealSign::Zero, _)) => Err(BareissError::Singular { pivot }),
+        Ok((RealSign::Negative | RealSign::Positive, certainty)) => Ok(certainty),
+        Err(BareissError::UndecidedPivot { .. }) => Err(BareissError::UndecidedPivot { pivot }),
+        Err(error) => Err(error),
+    }
+}
+
+fn quotient_after_nonzero(numerator: Real, denominator: &Real) -> Result<Real, hyperreal::Problem> {
+    denominator
+        .inverse_ref_assuming_nonzero()
+        .map(|inverse| numerator * inverse)
+}
+
+fn map_dense_replay_error(error: crate::residual_replay::DenseResidualReplayError) -> BareissError {
+    match error {
+        crate::residual_replay::DenseResidualReplayError::DimensionMismatch => {
+            BareissError::DimensionMismatch
+        }
+        crate::residual_replay::DenseResidualReplayError::UnknownResidual => {
+            BareissError::UnknownResidual
+        }
+    }
 }
 
 #[cfg(test)]
@@ -1265,11 +1454,99 @@ mod tests {
     }
 
     #[test]
+    fn pivot_free_determinant_matches_closed_forms_through_order_three() {
+        assert_eq!(pivot_free_determinant(&[]).determinant, real(1));
+        assert_eq!(
+            pivot_free_determinant(&[vec![real(7)]]).determinant,
+            real(7)
+        );
+        assert_eq!(
+            pivot_free_determinant(&[vec![real(2), real(3)], vec![real(5), real(7)]]).determinant,
+            real(-1)
+        );
+        assert_eq!(
+            pivot_free_determinant(&[
+                vec![real(1), real(2), real(3)],
+                vec![real(0), real(4), real(5)],
+                vec![real(1), real(0), real(6)],
+            ])
+            .determinant,
+            real(22)
+        );
+    }
+
+    #[test]
+    fn bareiss_determinant_uses_pivot_free_exact_fallback_before_policy_decision() {
+        let [_lower, upper] = Real::pi()
+            .certified_dyadic_interval(-256)
+            .expect("pi exposes certified dyadic intervals");
+        let delayed_positive = Real::from(upper) - Real::pi();
+        assert!(matches!(
+            delayed_positive.certified_sign_until(-128),
+            CertifiedRealSign::Unknown { .. }
+        ));
+        let matrix = [
+            vec![delayed_positive.clone(), Real::zero()],
+            vec![Real::zero(), Real::one()],
+        ];
+
+        let determinant = determinant_bareiss(&matrix, -128).unwrap();
+        assert_eq!(
+            determinant.method,
+            BareissDeterminantMethod::PivotFreeFaddeevLeverrier
+        );
+        let solve = solve_dense_linear_system_bareiss(
+            &matrix,
+            &[Real::zero(), Real::zero()],
+            -128,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap();
+        assert!(solve.residual_replay.accepted);
+        assert_eq!(solve.certainty, PredicateCertainty::Exact);
+        assert_eq!(
+            solve.determinant.method,
+            BareissDeterminantMethod::PivotFreeFaddeevLeverrier
+        );
+        assert_eq!(solve.solution, vec![Real::zero(), Real::zero()]);
+        assert!(matches!(
+            hyperlimit::classify_real_sign(&determinant.determinant, PredicatePolicy::STRICT),
+            PredicateOutcome::Decided {
+                value: Sign::Positive,
+                certainty: PredicateCertainty::Exact,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn bareiss_solve_obeys_terminal_residual_policy() {
+        let matrix = [vec![real(1), real(1)], vec![real(0), real(1)]];
+        let rhs = [Real::pi() + Real::e(), Real::pi()];
+        assert_eq!(
+            solve_dense_linear_system_bareiss(&matrix, &rhs, -128, PredicatePolicy::STRICT,)
+                .unwrap_err(),
+            BareissError::UnknownResidual
+        );
+
+        let approximate = solve_dense_linear_system_bareiss(
+            &matrix,
+            &rhs,
+            -128,
+            PredicatePolicy::APPROXIMATE_512,
+        )
+        .unwrap();
+        assert!(approximate.residual_replay.accepted);
+        assert_eq!(approximate.certainty, PredicateCertainty::Approximate);
+    }
+
+    #[test]
     fn bareiss_solve_replays_exact_solution() {
         let report = solve_dense_linear_system_bareiss(
             &[vec![real(2), real(1)], vec![real(1), real(-1)]],
             &[real(5), real(1)],
             -64,
+            PredicatePolicy::STRICT,
         )
         .unwrap();
 
@@ -1283,6 +1560,7 @@ mod tests {
                 &[vec![real(2), real(1)], vec![real(1), real(-1)]],
                 &[real(5), real(1)],
                 -64,
+                PredicatePolicy::STRICT,
             )
             .unwrap()
         );
@@ -1294,6 +1572,7 @@ mod tests {
             &[vec![real(0), real(2)], vec![real(3), real(4)]],
             &[real(4), real(11)],
             -64,
+            PredicatePolicy::STRICT,
         )
         .unwrap();
 
@@ -1308,8 +1587,13 @@ mod tests {
     fn bareiss_multi_rhs_solve_shares_elimination_and_replays_each_solution() {
         let matrix = [vec![real(2), real(1)], vec![real(1), real(-1)]];
         let right_hand_sides = [vec![real(5), real(1)], vec![real(0), real(3)]];
-        let report =
-            solve_dense_linear_system_bareiss_multi_rhs(&matrix, &right_hand_sides, -64).unwrap();
+        let report = solve_dense_linear_system_bareiss_multi_rhs(
+            &matrix,
+            &right_hand_sides,
+            -64,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap();
 
         assert_eq!(
             report.solutions,
@@ -1322,7 +1606,9 @@ mod tests {
         );
         assert!(report.residual_replays.iter().all(|replay| replay.accepted));
         for (index, rhs) in right_hand_sides.iter().enumerate() {
-            let single = solve_dense_linear_system_bareiss(&matrix, rhs, -64).unwrap();
+            let single =
+                solve_dense_linear_system_bareiss(&matrix, rhs, -64, PredicatePolicy::STRICT)
+                    .unwrap();
             assert_eq!(report.solutions[index], single.solution);
             assert_eq!(report.numerators[index], single.numerators);
             assert_eq!(report.residual_replays[index], single.residual_replay);
@@ -1335,6 +1621,7 @@ mod tests {
             &[vec![real(0), real(2)], vec![real(3), real(4)]],
             &[vec![real(4), real(11)], vec![real(6), real(15)]],
             -64,
+            PredicatePolicy::STRICT,
         )
         .unwrap();
 
@@ -1353,8 +1640,13 @@ mod tests {
             BareissError::DimensionMismatch
         );
         assert_eq!(
-            solve_dense_linear_system_bareiss(&[vec![real(1)]], &[real(1), real(2)], -64)
-                .unwrap_err(),
+            solve_dense_linear_system_bareiss(
+                &[vec![real(1)]],
+                &[real(1), real(2)],
+                -64,
+                PredicatePolicy::STRICT,
+            )
+            .unwrap_err(),
             BareissError::DimensionMismatch
         );
         assert_eq!(
@@ -1362,6 +1654,7 @@ mod tests {
                 &[vec![real(1)]],
                 &[vec![real(1), real(2)]],
                 -64,
+                PredicatePolicy::STRICT,
             )
             .unwrap_err(),
             BareissError::DimensionMismatch
@@ -1371,6 +1664,7 @@ mod tests {
                 &[vec![real(1), real(2)], vec![real(2), real(4)]],
                 &[real(1), real(2)],
                 -64,
+                PredicatePolicy::STRICT,
             )
             .unwrap_err(),
             BareissError::Singular { pivot: 1 }
@@ -1636,6 +1930,7 @@ mod tests {
                 &[vec![real(a), Real::zero()], vec![Real::zero(), real(b)]],
                 &[real(a * x), real(b * y)],
                 -64,
+                PredicatePolicy::STRICT,
             ).unwrap();
 
             prop_assert_eq!(report.solution, vec![real(x), real(y)]);
@@ -1664,6 +1959,7 @@ mod tests {
                 &[vec![real(a), real(b)], vec![real(c), real(d)]],
                 &[real(a * x + b * y), real(c * x + d * y)],
                 -64,
+                PredicatePolicy::STRICT,
             ).unwrap();
 
             prop_assert_eq!(report.solution, vec![real(x), real(y)]);

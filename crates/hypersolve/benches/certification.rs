@@ -4034,12 +4034,33 @@ fn certification(c: &mut Criterion) {
     c.bench_function("determinant_bareiss", |b| {
         b.iter(|| determinant_bareiss(&[vec![r(2), r(1)], vec![r(1), r(-1)]], -64))
     });
+    let terminal_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let pivot_free_matrix = [
+        vec![terminal_zero, Real::zero()],
+        vec![Real::zero(), Real::one()],
+    ];
+    c.bench_function("determinant_bareiss_pivot_free_terminal_2", |b| {
+        b.iter(|| determinant_bareiss(&pivot_free_matrix, -128))
+    });
     c.bench_function("solve_dense_linear_system_bareiss", |b| {
         b.iter(|| {
             solve_dense_linear_system_bareiss(
                 &[vec![r(2), r(1)], vec![r(1), r(-1)]],
                 &[r(5), r(1)],
                 -64,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    let terminal_solve_matrix = [vec![r(1), r(1)], vec![r(0), r(1)]];
+    let terminal_solve_rhs = [Real::pi() + Real::e(), Real::pi()];
+    c.bench_function("solve_dense_bareiss_approximate_terminal_replay", |b| {
+        b.iter(|| {
+            solve_dense_linear_system_bareiss(
+                &terminal_solve_matrix,
+                &terminal_solve_rhs,
+                -128,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4052,11 +4073,13 @@ fn certification(c: &mut Criterion) {
                     &dense_multi_rhs_matrix,
                     &dense_multi_rhs[0],
                     -64,
+                    hyperlimit::PredicatePolicy::STRICT,
                 ),
                 solve_dense_linear_system_bareiss(
                     &dense_multi_rhs_matrix,
                     &dense_multi_rhs[1],
                     -64,
+                    hyperlimit::PredicatePolicy::STRICT,
                 ),
             )
         })
@@ -4067,6 +4090,7 @@ fn certification(c: &mut Criterion) {
                 &dense_multi_rhs_matrix,
                 &dense_multi_rhs,
                 -64,
+                hyperlimit::PredicatePolicy::STRICT,
             )
         })
     });
@@ -4096,7 +4120,14 @@ fn certification(c: &mut Criterion) {
         })
         .collect::<Vec<_>>();
     c.bench_function("solve_dense_linear_system_bareiss_tridiagonal_8", |b| {
-        b.iter(|| solve_dense_linear_system_bareiss(&dense_bareiss_matrix, &dense_bareiss_rhs, -64))
+        b.iter(|| {
+            solve_dense_linear_system_bareiss(
+                &dense_bareiss_matrix,
+                &dense_bareiss_rhs,
+                -64,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
     });
     c.bench_function("solve_sparse_linear_system_bareiss", |b| {
         b.iter(|| {
@@ -4456,6 +4487,7 @@ fn certification(c: &mut Criterion) {
                 &[r(5), r(1)],
                 &[r(2), r(1)],
                 -64,
+                hyperlimit::PredicatePolicy::STRICT,
             )
         })
     });

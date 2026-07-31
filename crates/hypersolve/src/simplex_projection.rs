@@ -10,7 +10,7 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign};
 
-use crate::{BareissError, solve_dense_linear_system_bareiss};
+use crate::{BareissError, PredicatePolicy, solve_dense_linear_system_bareiss};
 
 /// Configuration for exact small-simplex projection.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -203,7 +203,12 @@ fn solve_face(vertices: &[Vec<Real>], indices: &[usize], min_precision: i32) -> 
     }
     let mut rhs = vec![Real::zero(); count + 1];
     rhs[count] = Real::one();
-    let solution = match solve_dense_linear_system_bareiss(&matrix, &rhs, min_precision) {
+    let solution = match solve_dense_linear_system_bareiss(
+        &matrix,
+        &rhs,
+        min_precision,
+        PredicatePolicy::STRICT,
+    ) {
         Ok(report) => report.solution,
         Err(BareissError::Singular { .. }) => return FaceSolve::Singular,
         Err(
