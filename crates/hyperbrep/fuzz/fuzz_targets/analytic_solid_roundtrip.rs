@@ -452,7 +452,7 @@ fuzz_target!(|bytes: &[u8]| {
             boolean::difference(&frustum, frustum_solid, &cutter, cutter_solid)
         };
         let Ok(boolean::BooleanResult::Solid { model, solid }) = result else {
-            panic!("certified axial frustum Boolean did not retain one solid");
+            panic!("certified axial frustum Boolean did not retain one solid: {result:?}");
         };
         let expected = (Real::from(21) * Real::pi() / Real::from(2)).unwrap();
         assert_eq!(

@@ -1532,11 +1532,23 @@ pub struct SurfaceIntersectionCurve {
 pub(crate) struct SurfaceIntersectionBoundaryContact {
     curve: Curve3,
     parameter: Real,
+    pcurve_point: CurvePoint2,
+    spatial_point: Point3,
 }
 
 impl SurfaceIntersectionBoundaryContact {
-    pub(crate) fn new(curve: Curve3, parameter: Real) -> Self {
-        Self { curve, parameter }
+    pub(crate) fn new(
+        curve: Curve3,
+        parameter: Real,
+        pcurve_point: CurvePoint2,
+        spatial_point: Point3,
+    ) -> Self {
+        Self {
+            curve,
+            parameter,
+            pcurve_point,
+            spatial_point,
+        }
     }
 
     pub(crate) const fn curve(&self) -> &Curve3 {
@@ -1545,6 +1557,14 @@ impl SurfaceIntersectionBoundaryContact {
 
     pub(crate) const fn parameter(&self) -> &Real {
         &self.parameter
+    }
+
+    pub(crate) const fn pcurve_point(&self) -> &CurvePoint2 {
+        &self.pcurve_point
+    }
+
+    pub(crate) const fn spatial_point(&self) -> &Point3 {
+        &self.spatial_point
     }
 }
 

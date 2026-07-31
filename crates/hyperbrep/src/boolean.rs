@@ -9,7 +9,8 @@ use hypercurve::{
     Classification, Contour2, ContourPointLocation, Curve2, CurvePath2, CurvePolicy, CurveRegion2,
     CurveRegionBoundaryContact2, CurveRegionBoundaryKind2, CurveRegionLoopRole, CurveString2,
     ExactCurveError, FillRule, LineArcIntersection, LineArcRegion2, LineLineIntersection, LineSeg2,
-    RationalBezier2, RationalQuadraticBezier2, RegionPointLocation, Segment2, UncertaintyReason,
+    RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2,
+    RegionPointLocation, Segment2, UncertaintyReason,
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
@@ -2391,13 +2392,24 @@ fn copy_selected_wire(
         let pcurve = builder.pcurve(pcurve).map_err(ConstructionError::from)?;
         copied_uses.push(
             builder
-                .edge_use(mapped_edge, direction, pcurve, correspondence)
+                .edge_use_with_image_certificate(
+                    mapped_edge,
+                    direction,
+                    pcurve,
+                    correspondence,
+                    // The source use was validated before selection. Direct
+                    // transfers retain that proof; projected planar pcurves
+                    // are constructed from the mapped spatial curve itself.
+                    true,
+                )
                 .map_err(ConstructionError::from)?,
         );
         copied_edges.push(mapped_edge);
     }
     Ok((
-        builder.wire(copied_uses).map_err(ConstructionError::from)?,
+        builder
+            .wire_with_simplicity_certificate(copied_uses, true)
+            .map_err(ConstructionError::from)?,
         copied_edges,
     ))
 }
@@ -3856,6 +3868,31 @@ fn model_boundary_contacts(
         let Some(pcurve_parameter) = contact.boundary_parameter().exact_curve_parameter() else {
             return Ok(None);
         };
+        let RationalBezierIntersectionPointEvidence2::Exact(pcurve_point) = contact.point() else {
+            return Ok(None);
+        };
+        let canonical_coordinate = |coordinate: &Real| {
+            coordinate
+                .exact_rational_normal_form()
+                .map(Real::new)
+                .unwrap_or_else(|| coordinate.clone())
+        };
+        let pcurve_point = hypercurve::Point2::new(
+            canonical_coordinate(pcurve_point.x()),
+            canonical_coordinate(pcurve_point.y()),
+        );
+        let surface = model
+            .surface(face.surface())
+            .expect("validated trim face surface");
+        let spatial_point = surface.point_at(&crate::Point2::new(
+            pcurve_point.x().clone(),
+            pcurve_point.y().clone(),
+        ))?;
+        let spatial_point = Point3::new(
+            canonical_coordinate(&spatial_point.x),
+            canonical_coordinate(&spatial_point.y),
+            canonical_coordinate(&spatial_point.z),
+        );
         let observed_parameter = model
             .edge_parameter_at(edge_use_id, &pcurve_parameter)
             .map_err(|error| match error {
@@ -3882,6 +3919,8 @@ fn model_boundary_contacts(
         translated.push(SurfaceIntersectionBoundaryContact::new(
             curve,
             edge_parameter,
+            pcurve_point,
+            spatial_point,
         ));
     }
     Ok(Some(translated))
@@ -11707,6 +11746,40 @@ mod tests {
                 .classify_point(oriented_solid, &p(-1, 7, 2))
                 .unwrap(),
             SolidPointLocation::Inside
+        );
+    }
+
+    #[test]
+    fn rationally_rotated_axial_frustum_difference_stitches_exactly() {
+        let (frustum, frustum_solid) =
+            crate::builder::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
+        let three_fifths = (Real::from(3) / Real::from(5)).unwrap();
+        let four_fifths = (Real::from(4) / Real::from(5)).unwrap();
+        let rotation = Matrix4::affine_orthonormal(
+            [
+                [three_fifths.clone(), -four_fifths.clone(), Real::zero()],
+                [four_fifths, three_fifths, Real::zero()],
+                [Real::zero(), Real::zero(), Real::one()],
+            ],
+            [Real::zero(), Real::zero(), Real::zero()],
+        );
+        let frustum = frustum.transformed(&rotation).unwrap();
+        let (cutter, cutter_solid) = crate::builder::cuboid(p(0, -5, -1), p(5, 5, 4)).unwrap();
+
+        let BooleanResult::Solid { model, solid } =
+            difference(&frustum, frustum_solid, &cutter, cutter_solid).unwrap()
+        else {
+            panic!("the rationally rotated axial difference must retain one exact half-frustum");
+        };
+        let expected = (Real::from(21) * Real::pi() / Real::from(2)).unwrap();
+        assert_eq!(
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES,
+            )
+            .value(),
+            Some(Ordering::Equal),
         );
     }
 

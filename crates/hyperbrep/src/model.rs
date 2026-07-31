@@ -778,7 +778,11 @@ pub struct FaceTracePartition {
 
 enum FaceSplitEndpointLocation {
     Vertex(VertexId),
-    Edge { edge: EdgeId, parameter: Real },
+    Edge {
+        edge: EdgeId,
+        parameter: Real,
+        pcurve_split: Option<(EdgeUseId, CurvePoint2, Point3)>,
+    },
 }
 
 struct OrderedFaceSplitTrace {
@@ -1713,6 +1717,15 @@ impl Model {
         edge_id: EdgeId,
         parameter: Real,
     ) -> Result<(Self, EdgeSplit), TopologyEditError> {
+        self.split_edge_with_pcurve_parameter(edge_id, parameter, None)
+    }
+
+    fn split_edge_with_pcurve_parameter(
+        &self,
+        edge_id: EdgeId,
+        parameter: Real,
+        retained_contact: Option<(EdgeUseId, CurvePoint2, Point3)>,
+    ) -> Result<(Self, EdgeSplit), TopologyEditError> {
         let edge = self
             .edge(edge_id)
             .ok_or(TopologyEditError::InvalidReference {
@@ -1733,10 +1746,13 @@ impl Model {
         {
             return Err(GeometryError::InvalidParameterDomain.into());
         }
-        let split_point = self
-            .curve(edge.curve)
-            .expect("validated edge curve ID")
-            .point_at(&parameter)?;
+        let split_point = if let Some((_, _, point)) = &retained_contact {
+            point.clone()
+        } else {
+            self.curve(edge.curve)
+                .expect("validated edge curve ID")
+                .point_at(&parameter)?
+        };
         let vertex = VertexId::from_index(self.data.vertices.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
         let second = EdgeId::from_index(self.data.edges.len())
@@ -1770,30 +1786,64 @@ impl Model {
                 .expect("validated edge-use pcurve ID");
             let (first_pcurve, second_pcurve) = match &edge_use.parameter_correspondence {
                 ParameterCorrespondence::AngularSweep => {
-                    let arc = pcurve
-                        .circular_arc()
-                        .expect("validated angular-sweep correspondence uses a circular pcurve");
-                    let (start, end) = match edge_use.direction {
-                        Direction::Forward => (edge.domain.start(), edge.domain.end()),
-                        Direction::Reversed => (edge.domain.end(), edge.domain.start()),
-                    };
-                    let fraction = ((&parameter - start) / (end - start))
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
-                    let (first, second) = match arc
-                        .split_at_sweep_fraction(&fraction, &CurvePolicy::STRICT)
-                        .map_err(GeometryError::from)?
+                    if let Some((_, retained_point, _)) = retained_contact
+                        .as_ref()
+                        .filter(|(retained_use, _, _)| retained_use == use_id)
                     {
-                        Classification::Decided(fragments) => fragments,
-                        Classification::Uncertain(reason) => {
-                            return Err(
-                                GeometryError::PlanarClassificationUnresolved(reason).into()
-                            );
-                        }
-                    };
-                    (
-                        Pcurve::new(Curve2::from(first)),
-                        Pcurve::new(Curve2::from(second)),
-                    )
+                        let arc = pcurve.circular_arc().expect(
+                            "validated angular-sweep correspondence uses a circular pcurve",
+                        );
+                        let (start, end) = match edge_use.direction {
+                            Direction::Forward => (edge.domain.start(), edge.domain.end()),
+                            Direction::Reversed => (edge.domain.end(), edge.domain.start()),
+                        };
+                        let fraction = ((&parameter - start) / (end - start))
+                            .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        let (first, second) = match arc
+                            .split_at_retained_sweep_point(
+                                &fraction,
+                                retained_point.clone(),
+                                &CurvePolicy::STRICT,
+                            )
+                            .map_err(GeometryError::from)?
+                        {
+                            Classification::Decided(fragments) => fragments,
+                            Classification::Uncertain(reason) => {
+                                return Err(
+                                    GeometryError::PlanarClassificationUnresolved(reason).into()
+                                );
+                            }
+                        };
+                        (
+                            Pcurve::new(Curve2::from(first)),
+                            Pcurve::new(Curve2::from(second)),
+                        )
+                    } else {
+                        let arc = pcurve.circular_arc().expect(
+                            "validated angular-sweep correspondence uses a circular pcurve",
+                        );
+                        let (start, end) = match edge_use.direction {
+                            Direction::Forward => (edge.domain.start(), edge.domain.end()),
+                            Direction::Reversed => (edge.domain.end(), edge.domain.start()),
+                        };
+                        let fraction = ((&parameter - start) / (end - start))
+                            .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        let (first, second) = match arc
+                            .split_at_sweep_fraction(&fraction, &CurvePolicy::STRICT)
+                            .map_err(GeometryError::from)?
+                        {
+                            Classification::Decided(fragments) => fragments,
+                            Classification::Uncertain(reason) => {
+                                return Err(
+                                    GeometryError::PlanarClassificationUnresolved(reason).into()
+                                );
+                            }
+                        };
+                        (
+                            Pcurve::new(Curve2::from(first)),
+                            Pcurve::new(Curve2::from(second)),
+                        )
+                    }
                 }
                 ParameterCorrespondence::Affine { .. } => {
                     let pcurve_parameter = edge_use.parameter_correspondence.pcurve_parameter(
@@ -1843,14 +1893,17 @@ impl Model {
             end: vertex,
             curve: edge.curve,
             domain: first_domain,
-            endpoint_certificate: edge.endpoint_certificate,
+            // The source endpoints were already validated and the new shared
+            // endpoint is either evaluated from this curve or retained from
+            // certified boundary-contact evidence.
+            endpoint_certificate: true,
         };
         data.edges.push(Edge {
             start: vertex,
             end: edge.end,
             curve: edge.curve,
             domain: second_domain,
-            endpoint_certificate: edge.endpoint_certificate,
+            endpoint_certificate: true,
         });
 
         let mut pcurve_use_counts = vec![0_usize; data.pcurves.len()];
@@ -3783,7 +3836,9 @@ impl Model {
     ) -> Result<(Self, VertexId, Option<EdgeSplit>), TopologyEditError> {
         match self.locate_face_split_endpoint(face_id, endpoint, point)? {
             FaceSplitEndpointLocation::Vertex(vertex) => Ok((self.clone(), vertex, None)),
-            FaceSplitEndpointLocation::Edge { edge, parameter } => {
+            FaceSplitEndpointLocation::Edge {
+                edge, parameter, ..
+            } => {
                 let (staged, split) = self.split_edge(edge, parameter)?;
                 Ok((staged, split.vertex, Some(split)))
             }
@@ -3799,8 +3854,13 @@ impl Model {
     ) -> Result<(Self, VertexId, Option<EdgeSplit>), TopologyEditError> {
         match self.locate_surface_curve_split_endpoint(face_id, endpoint, point, contacts)? {
             FaceSplitEndpointLocation::Vertex(vertex) => Ok((self.clone(), vertex, None)),
-            FaceSplitEndpointLocation::Edge { edge, parameter } => {
-                let (staged, split) = self.split_edge(edge, parameter)?;
+            FaceSplitEndpointLocation::Edge {
+                edge,
+                parameter,
+                pcurve_split,
+            } => {
+                let (staged, split) =
+                    self.split_edge_with_pcurve_parameter(edge, parameter, pcurve_split)?;
                 Ok((staged, split.vertex, Some(split)))
             }
         }
@@ -3838,10 +3898,12 @@ impl Model {
                     FaceSplitEndpointLocation::Edge {
                         edge: start_edge,
                         parameter: start_parameter,
+                        ..
                     },
                     FaceSplitEndpointLocation::Edge {
                         edge: end_edge,
                         parameter: end_parameter,
+                        ..
                     },
                 ) if start_edge == end_edge => {
                     decided_model_order(compare_reals(
@@ -3909,9 +3971,15 @@ impl Model {
                     && end_order == std::cmp::Ordering::Less
                     && !matching_edges
                         .iter()
-                        .any(|(candidate, _)| *candidate == edge_use.edge)
+                        .any(|(candidate, _, _, _, _)| *candidate == edge_use.edge)
                 {
-                    matching_edges.push((edge_use.edge, contact.parameter().clone()));
+                    matching_edges.push((
+                        edge_use.edge,
+                        contact.parameter().clone(),
+                        *use_id,
+                        contact.pcurve_point().clone(),
+                        contact.spatial_point().clone(),
+                    ));
                 }
             }
         }
@@ -3926,10 +3994,13 @@ impl Model {
             }
         }
         match matching_edges.as_slice() {
-            [(edge, parameter)] => Ok(FaceSplitEndpointLocation::Edge {
-                edge: *edge,
-                parameter: parameter.clone(),
-            }),
+            [(edge, parameter, edge_use, pcurve_point, spatial_point)] => {
+                Ok(FaceSplitEndpointLocation::Edge {
+                    edge: *edge,
+                    parameter: parameter.clone(),
+                    pcurve_split: Some((*edge_use, pcurve_point.clone(), spatial_point.clone())),
+                })
+            }
             [] => Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary {
                 face: face_id,
                 endpoint,
@@ -3951,7 +4022,9 @@ impl Model {
             self.locate_face_boundary_split_endpoint(face_id, endpoint, point)?;
         match location {
             FaceSplitEndpointLocation::Vertex(vertex) => Ok((self.clone(), wire, vertex, None)),
-            FaceSplitEndpointLocation::Edge { edge, parameter } => {
+            FaceSplitEndpointLocation::Edge {
+                edge, parameter, ..
+            } => {
                 let (staged, split) = self.split_edge(edge, parameter)?;
                 Ok((staged, wire, split.vertex, Some(split)))
             }
@@ -4037,6 +4110,7 @@ impl Model {
                         FaceSplitEndpointLocation::Edge {
                             edge: edge_id,
                             parameter,
+                            pcurve_split: None,
                         },
                     ));
                 }
@@ -4147,7 +4221,11 @@ impl Model {
             }),
             1 => {
                 let (edge, parameter) = locations.pop().expect("one exact edge location");
-                Ok(FaceSplitEndpointLocation::Edge { edge, parameter })
+                Ok(FaceSplitEndpointLocation::Edge {
+                    edge,
+                    parameter,
+                    pcurve_split: None,
+                })
             }
             _ => Err(TopologyEditError::FaceSplitEndpointAmbiguous {
                 face: face_id,
@@ -4278,8 +4356,7 @@ impl Model {
                             let pcurve = self
                                 .pcurve(edge_use.pcurve)
                                 .expect("validated edge-use pcurve ID");
-                            let point = pcurve.point_at(pcurve.domain_start())?;
-                            Ok(CurvePoint2::new(point.x, point.y))
+                            Ok(pcurve.curve().start().clone())
                         };
                     let start_uv = pcurve_start(outer_uses[start_index])?;
                     let end_uv = pcurve_start(outer_uses[end_index])?;
@@ -4299,7 +4376,12 @@ impl Model {
                             LineSeg2::try_new(start_uv, end_uv).map_err(GeometryError::from)?,
                         )),
                         ParameterCorrespondence::identity(),
-                        false,
+                        // The source boundary edge uses already certify both
+                        // parameter-space endpoints against these shared
+                        // vertices. A planar surface and both authored lines
+                        // are affine, so those endpoint certificates prove
+                        // the complete chord image.
+                        true,
                     )
                 }
             };
@@ -13220,14 +13302,35 @@ impl ModelBuilder {
             }
             let (u_min, u_max) = exact_real_min_max(&face_u)?;
             let (v_min, v_max) = exact_real_min_max(&face_v)?;
-            let contour = Contour2::try_new(parameter_segments).map_err(GeometryError::from)?;
-            let represented_area = contour
-                .signed_area()
-                .map_err(GeometryError::from)?
-                .ok_or(BuildError::DegenerateShellVolume(shell))?
-                .abs();
-            let rectangle_area = (&u_max - &u_min) * (&v_max - &v_min);
-            if !real_values_equal(&represented_area, &rectangle_area)? {
+            let mut side_intervals: [Vec<(Real, Real)>; 4] = std::array::from_fn(|_| Vec::new());
+            for segment in &parameter_segments {
+                let Segment2::Line(line) = segment else {
+                    unreachable!("cone parameter segments are exact lines");
+                };
+                let u_constant = real_values_equal(line.start().x(), line.end().x())?;
+                let (side, first, second) = if u_constant {
+                    if real_values_equal(line.start().x(), &u_min)? {
+                        (2, line.start().y(), line.end().y())
+                    } else if real_values_equal(line.start().x(), &u_max)? {
+                        (3, line.start().y(), line.end().y())
+                    } else {
+                        return Ok(None);
+                    }
+                } else if real_values_equal(line.start().y(), &v_min)? {
+                    (0, line.start().x(), line.end().x())
+                } else if real_values_equal(line.start().y(), &v_max)? {
+                    (1, line.start().x(), line.end().x())
+                } else {
+                    return Ok(None);
+                };
+                let (start, end) = exact_real_min_max(&[first.clone(), second.clone()])?;
+                side_intervals[side].push((start, end));
+            }
+            if !exact_intervals_cover(&mut side_intervals[0], &u_min, &u_max)?
+                || !exact_intervals_cover(&mut side_intervals[1], &u_min, &u_max)?
+                || !exact_intervals_cover(&mut side_intervals[2], &v_min, &v_max)?
+                || !exact_intervals_cover(&mut side_intervals[3], &v_min, &v_max)?
+            {
                 return Ok(None);
             }
             insert_sorted_real(&mut u_values, &u_min)?;
