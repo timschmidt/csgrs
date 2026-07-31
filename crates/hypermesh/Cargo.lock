@@ -347,6 +347,7 @@ dependencies = [
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
+ "hypertri",
  "manifold-rust",
  "proptest",
  "three-d-asset",
@@ -358,6 +359,14 @@ name = "hyperreal"
 version = "0.13.1"
 dependencies = [
  "num",
+]
+
+[[package]]
+name = "hypertri"
+version = "0.4.1"
+dependencies = [
+ "hyperlimit",
+ "hyperreal",
 ]
 
 [[package]]

@@ -3,7 +3,7 @@
 use std::borrow::Borrow;
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::context::{DecisionContext, MeshContext, MeshOutcome};
+use crate::context::{DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, classify_real, compare_real_decision};
 use crate::mesh::{OutputVertex, PolygonSoup, Triangle, TriangleMesh};
@@ -28,6 +28,11 @@ impl SplitEdgeChain {
             .windows(2)
             .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
     }
+}
+
+enum SplitEdgeSearch<'a> {
+    Approximate(&'a [[f64; 3]]),
+    AxisOrder(&'a [Vec<usize>; 3]),
 }
 
 /// Polygon plus its boolean output classification.
@@ -940,11 +945,11 @@ where
                     }
                 })?
             } else if let Some(approximate_vertices) = &approximate_vertices {
-                split_segment_subedges_exact_precomputed_f64_scan(
+                split_segment_subedges_exact(
                     decisions,
                     &mut split_edge_cache,
                     &vertices,
-                    approximate_vertices,
+                    SplitEdgeSearch::Approximate(approximate_vertices),
                     canonical,
                 )?
             } else {
@@ -952,9 +957,11 @@ where
                     decisions,
                     &mut split_edge_cache,
                     &vertices,
-                    axis_order
-                        .as_ref()
-                        .expect("axis order exists without an approximate scan"),
+                    SplitEdgeSearch::AxisOrder(
+                        axis_order
+                            .as_ref()
+                            .expect("axis order exists without an approximate scan"),
+                    ),
                     canonical,
                 )?
             };
@@ -1862,7 +1869,7 @@ fn polygon_edge_counts(
                 decisions,
                 &mut split_edge_cache,
                 vertices,
-                axis_order,
+                SplitEdgeSearch::AxisOrder(axis_order),
                 canonical_edge,
             )?
             .subedges()
@@ -1890,46 +1897,16 @@ fn split_segment_subedges_exact<'a>(
     decisions: &DecisionContext,
     cache: &'a mut SplitEdgeCache,
     vertices: &[OutputVertex],
-    axis_order: &[Vec<usize>; 3],
+    search: SplitEdgeSearch<'_>,
     edge: [usize; 2],
 ) -> HypermeshResult<&'a SplitEdgeChain> {
     let edge = sorted_edge(edge);
-    if let std::collections::hash_map::Entry::Vacant(e) = cache.entry(edge) {
-        let axis = dominant_segment_axis(decisions, &vertices[edge[0]], &vertices[edge[1]])?;
-        let bounds = exact_edge_bounds(decisions, edge, vertices)?;
-        let mut on_edge = Vec::new();
-        let (start, end) =
-            candidate_vertex_index_range_for_edge(decisions, axis_order, vertices, edge, axis)?;
-        for &vertex_index in &axis_order[axis][start..end] {
-            if vertex_index == edge[0] || vertex_index == edge[1] {
-                continue;
-            }
-            if point_within_edge_bounds_except_axis_exact(
-                decisions,
-                &vertices[vertex_index],
-                &bounds,
-                vertices,
-                axis,
-            )? && point_collinear_with_segment_exact(
-                decisions,
-                &vertices[vertex_index],
-                &vertices[edge[0]],
-                &vertices[edge[1]],
-            )? {
-                on_edge.push(vertex_index);
-            }
+    match cache.entry(edge) {
+        std::collections::hash_map::Entry::Occupied(entry) => Ok(entry.into_mut()),
+        std::collections::hash_map::Entry::Vacant(entry) => {
+            Ok(entry.insert(build_split_edge_chain(decisions, vertices, search, edge)?))
         }
-
-        let mut chain = Vec::with_capacity(on_edge.len() + 2);
-        chain.push(edge[0]);
-        chain.extend(sort_along_segment(
-            decisions, &on_edge, edge[0], edge[1], vertices,
-        )?);
-        chain.push(edge[1]);
-
-        e.insert(SplitEdgeChain(chain));
     }
-    Ok(cache.get(&edge).expect("cached edge was just inserted"))
 }
 
 fn split_segment_subedges_exact_candidates<'a>(
@@ -1943,89 +1920,93 @@ fn split_segment_subedges_exact_candidates<'a>(
     filter_recovery_candidates: bool,
 ) -> HypermeshResult<&'a SplitEdgeChain> {
     let edge = sorted_edge(edge);
-    if let std::collections::hash_map::Entry::Vacant(entry) = cache.entry(edge) {
-        let axis =
-            inexpensive_nonzero_segment_axis(decisions, &vertices[edge[0]], &vertices[edge[1]])
-                .inspect_err(|error| {
-                    if cfg!(debug_assertions) {
-                        eprintln!("[DEBUG] construction edge axis failed: {error}");
-                    }
-                })?;
-        let projection_filters = filter_recovery_candidates
-            .then(|| {
-                let queries = rational_vertex_queries?;
-                let from = queries.get(edge[0])?.as_ref()?;
-                let to = queries.get(edge[1])?.as_ref()?;
-                (0..3)
-                    .filter(|&other_axis| other_axis != axis)
-                    .map(|other_axis| {
-                        Some((
-                            other_axis,
-                            RationalLine2Filter::from_point3(from, to, [axis, other_axis])?,
-                        ))
-                    })
-                    .collect::<Option<Vec<(usize, RationalLine2Filter)>>>()
-            })
-            .flatten();
-        let mut on_edge = Vec::new();
-        for &vertex_index in &candidates.collinear {
-            if vertex_index == edge[0] || vertex_index == edge[1] {
-                continue;
-            }
-            if point_on_segment_exact(
-                decisions,
-                &vertices[vertex_index],
-                &vertices[edge[0]],
-                &vertices[edge[1]],
-            )? {
-                on_edge.push(vertex_index);
-            }
-        }
-        for &vertex_index in recovery_vertices
-            .iter()
-            .take(if filter_recovery_candidates {
-                usize::MAX
-            } else {
-                0
-            })
-        {
-            if vertex_index == edge[0] || vertex_index == edge[1] || on_edge.contains(&vertex_index)
-            {
-                continue;
-            }
-            if projection_filters.as_ref().is_some_and(|filters| {
-                let Some(point) = rational_vertex_queries
-                    .and_then(|queries| queries.get(vertex_index))
-                    .and_then(Option::as_ref)
-                else {
-                    return false;
-                };
-                filters.iter().any(|(other_axis, filter)| {
-                    filter.sign_point3(point, [axis, *other_axis]).is_some()
+    match cache.entry(edge) {
+        std::collections::hash_map::Entry::Occupied(entry) => Ok(entry.into_mut()),
+        std::collections::hash_map::Entry::Vacant(entry) => {
+            let axis =
+                inexpensive_nonzero_segment_axis(decisions, &vertices[edge[0]], &vertices[edge[1]])
+                    .inspect_err(|error| {
+                        if cfg!(debug_assertions) {
+                            eprintln!("[DEBUG] construction edge axis failed: {error}");
+                        }
+                    })?;
+            let projection_filters = filter_recovery_candidates
+                .then(|| {
+                    let queries = rational_vertex_queries?;
+                    let from = queries.get(edge[0])?.as_ref()?;
+                    let to = queries.get(edge[1])?.as_ref()?;
+                    (0..3)
+                        .filter(|&other_axis| other_axis != axis)
+                        .map(|other_axis| {
+                            Some((
+                                other_axis,
+                                RationalLine2Filter::from_point3(from, to, [axis, other_axis])?,
+                            ))
+                        })
+                        .collect::<Option<Vec<(usize, RationalLine2Filter)>>>()
                 })
-            }) {
-                continue;
+                .flatten();
+            let mut on_edge = Vec::new();
+            for &vertex_index in &candidates.collinear {
+                if vertex_index == edge[0] || vertex_index == edge[1] {
+                    continue;
+                }
+                if point_on_segment_exact(
+                    decisions,
+                    &vertices[vertex_index],
+                    &vertices[edge[0]],
+                    &vertices[edge[1]],
+                )? {
+                    on_edge.push(vertex_index);
+                }
             }
-            if point_on_segment_exact(
-                decisions,
-                &vertices[vertex_index],
-                &vertices[edge[0]],
-                &vertices[edge[1]],
-            )? {
-                on_edge.push(vertex_index);
+            for &vertex_index in recovery_vertices
+                .iter()
+                .take(if filter_recovery_candidates {
+                    usize::MAX
+                } else {
+                    0
+                })
+            {
+                if vertex_index == edge[0]
+                    || vertex_index == edge[1]
+                    || on_edge.contains(&vertex_index)
+                {
+                    continue;
+                }
+                if projection_filters.as_ref().is_some_and(|filters| {
+                    let Some(point) = rational_vertex_queries
+                        .and_then(|queries| queries.get(vertex_index))
+                        .and_then(Option::as_ref)
+                    else {
+                        return false;
+                    };
+                    filters.iter().any(|(other_axis, filter)| {
+                        filter.sign_point3(point, [axis, *other_axis]).is_some()
+                    })
+                }) {
+                    continue;
+                }
+                if point_on_segment_exact(
+                    decisions,
+                    &vertices[vertex_index],
+                    &vertices[edge[0]],
+                    &vertices[edge[1]],
+                )? {
+                    on_edge.push(vertex_index);
+                }
             }
+            on_edge.sort_unstable();
+            on_edge.dedup();
+            let mut chain = Vec::with_capacity(on_edge.len() + 2);
+            chain.push(edge[0]);
+            chain.extend(sort_along_segment_on_axis(
+                decisions, &on_edge, edge[0], edge[1], vertices, axis,
+            )?);
+            chain.push(edge[1]);
+            Ok(entry.insert(SplitEdgeChain(chain)))
         }
-        on_edge.sort_unstable();
-        on_edge.dedup();
-        let mut chain = Vec::with_capacity(on_edge.len() + 2);
-        chain.push(edge[0]);
-        chain.extend(sort_along_segment_on_axis(
-            decisions, &on_edge, edge[0], edge[1], vertices, axis,
-        )?);
-        chain.push(edge[1]);
-        entry.insert(SplitEdgeChain(chain));
     }
-    Ok(cache.get(&edge).expect("candidate edge was just cached"))
 }
 
 fn exact_output_vertices_f64(vertices: &[OutputVertex]) -> Option<Vec<[f64; 3]>> {
@@ -2050,43 +2031,69 @@ fn exact_output_vertices_f64(vertices: &[OutputVertex]) -> Option<Vec<[f64; 3]>>
         .collect()
 }
 
-fn split_segment_subedges_exact_precomputed_f64_scan<'a>(
+fn build_split_edge_chain(
     decisions: &DecisionContext,
-    cache: &'a mut SplitEdgeCache,
     vertices: &[OutputVertex],
-    approximate_vertices: &[[f64; 3]],
+    search: SplitEdgeSearch<'_>,
     edge: [usize; 2],
-) -> HypermeshResult<&'a SplitEdgeChain> {
+) -> HypermeshResult<SplitEdgeChain> {
     let edge = sorted_edge(edge);
-    if let std::collections::hash_map::Entry::Vacant(entry) = cache.entry(edge) {
-        let start = approximate_vertices[edge[0]];
-        let end = approximate_vertices[edge[1]];
-        let mut on_edge = Vec::new();
-        for (vertex_index, point) in approximate_vertices.iter().enumerate() {
-            if vertex_index == edge[0] || vertex_index == edge[1] {
-                continue;
-            }
-            if (0..3).all(|axis| {
-                point[axis] >= start[axis].min(end[axis])
-                    && point[axis] <= start[axis].max(end[axis])
-            }) && point_on_segment_exact(
-                decisions,
-                &vertices[vertex_index],
-                &vertices[edge[0]],
-                &vertices[edge[1]],
-            )? {
-                on_edge.push(vertex_index);
+    let mut on_edge = Vec::new();
+    match search {
+        SplitEdgeSearch::Approximate(approximate_vertices) => {
+            let start = approximate_vertices[edge[0]];
+            let end = approximate_vertices[edge[1]];
+            for (vertex_index, point) in approximate_vertices.iter().enumerate() {
+                if vertex_index == edge[0] || vertex_index == edge[1] {
+                    continue;
+                }
+                if (0..3).all(|axis| {
+                    point[axis] >= start[axis].min(end[axis])
+                        && point[axis] <= start[axis].max(end[axis])
+                }) && point_on_segment_exact(
+                    decisions,
+                    &vertices[vertex_index],
+                    &vertices[edge[0]],
+                    &vertices[edge[1]],
+                )? {
+                    on_edge.push(vertex_index);
+                }
             }
         }
-        let mut chain = Vec::with_capacity(on_edge.len() + 2);
-        chain.push(edge[0]);
-        chain.extend(sort_along_segment(
-            decisions, &on_edge, edge[0], edge[1], vertices,
-        )?);
-        chain.push(edge[1]);
-        entry.insert(SplitEdgeChain(chain));
+        SplitEdgeSearch::AxisOrder(axis_order) => {
+            let axis = dominant_segment_axis(decisions, &vertices[edge[0]], &vertices[edge[1]])?;
+            let bounds = exact_edge_bounds(decisions, edge, vertices)?;
+            let (start, end) =
+                candidate_vertex_index_range_for_edge(decisions, axis_order, vertices, edge, axis)?;
+            for &vertex_index in &axis_order[axis][start..end] {
+                if vertex_index == edge[0] || vertex_index == edge[1] {
+                    continue;
+                }
+                if point_within_edge_bounds_except_axis_exact(
+                    decisions,
+                    &vertices[vertex_index],
+                    &bounds,
+                    vertices,
+                    axis,
+                )? && point_collinear_with_segment_exact(
+                    decisions,
+                    &vertices[vertex_index],
+                    &vertices[edge[0]],
+                    &vertices[edge[1]],
+                )? {
+                    on_edge.push(vertex_index);
+                }
+            }
+        }
     }
-    Ok(cache.get(&edge).expect("scanned edge was just cached"))
+
+    let mut chain = Vec::with_capacity(on_edge.len() + 2);
+    chain.push(edge[0]);
+    chain.extend(sort_along_segment(
+        decisions, &on_edge, edge[0], edge[1], vertices,
+    )?);
+    chain.push(edge[1]);
+    Ok(SplitEdgeChain(chain))
 }
 
 fn sorted_vertex_indices_by_axis(
@@ -2244,9 +2251,9 @@ fn triangulate_polygons(
 
 /// Resolves exact duplicate vertices, duplicate faces, and exact T-junctions.
 ///
-/// This pass deliberately uses no tolerance and no primitive floating-point
-/// arithmetic. It only merges or splits when exact hyperreal predicates prove
-/// equality, collinearity, and segment containment.
+/// This pass deliberately uses no tolerance. Primitive floating-point values
+/// only schedule or conservatively reject candidates; exact hyperreal
+/// predicates prove every merge, split, crossing, and containment decision.
 pub(crate) fn resolve_tjunctions(
     decisions: &DecisionContext,
     input: &BooleanMesh,
@@ -2435,6 +2442,14 @@ fn split_one_tjunction_pass(
     soup: &mut BooleanMesh,
 ) -> HypermeshResult<bool> {
     let directed_uses = triangle_edge_counts(&soup.triangles);
+    if directed_uses.values().all(|uses| uses.is_balanced()) {
+        return Ok(false);
+    }
+    let approximate_vertices = exact_output_vertices_f64(&soup.vertices);
+    let axis_order = approximate_vertices
+        .is_none()
+        .then(|| sorted_vertex_indices_by_axis(decisions, &soup.vertices))
+        .transpose()?;
     let mut edge_faces: BTreeMap<[usize; 2], Vec<usize>> = BTreeMap::new();
     for (face_index, triangle) in soup.triangles.iter().enumerate() {
         for edge in triangle_edges(*triangle) {
@@ -2459,21 +2474,21 @@ fn split_one_tjunction_pass(
         {
             continue;
         }
-        let mut on_edge = Vec::new();
-        for vertex_index in 0..soup.vertices.len() {
-            if vertex_index == edge[0] || vertex_index == edge[1] {
-                continue;
-            }
-            if point_on_segment_exact(
-                decisions,
-                &soup.vertices[vertex_index],
-                &soup.vertices[edge[0]],
-                &soup.vertices[edge[1]],
-            )? {
-                on_edge.push(vertex_index);
-            }
-        }
-        if on_edge.is_empty() {
+        let chain = build_split_edge_chain(
+            decisions,
+            &soup.vertices,
+            if let Some(approximate_vertices) = &approximate_vertices {
+                SplitEdgeSearch::Approximate(approximate_vertices)
+            } else {
+                SplitEdgeSearch::AxisOrder(
+                    axis_order
+                        .as_ref()
+                        .expect("axis order exists without an approximate scan"),
+                )
+            },
+            edge,
+        )?;
+        if chain.0.len() <= 2 {
             continue;
         }
 
@@ -2491,18 +2506,19 @@ fn split_one_tjunction_pass(
                     continue;
                 }
 
-                let mut chain = Vec::with_capacity(on_edge.len() + 2);
-                chain.push(ea);
-                chain.extend(sort_along_segment(
-                    decisions,
-                    &on_edge,
-                    ea,
-                    eb,
-                    &soup.vertices,
-                )?);
-                chain.push(eb);
-
-                for pair in chain.windows(2) {
+                let follows_canonical_edge = ea == edge[0];
+                let subedge_count = chain.0.len() - 1;
+                for offset in 0..subedge_count {
+                    let index = if follows_canonical_edge {
+                        offset
+                    } else {
+                        subedge_count - offset - 1
+                    };
+                    let pair = if follows_canonical_edge {
+                        [chain.0[index], chain.0[index + 1]]
+                    } else {
+                        [chain.0[index + 1], chain.0[index]]
+                    };
                     if pair[0] != pair[1] && pair[0] != ec && pair[1] != ec {
                         new_triangles.push(([pair[0], pair[1], ec], soup.sources[face_index]));
                     }
@@ -2563,33 +2579,65 @@ fn split_edge_crossing_events(
         .into_iter()
         .map(|edge| exact_edge_bounds(decisions, edge, &soup.vertices))
         .collect::<HypermeshResult<Vec<_>>>()?;
-    for index in 1..bounded_edges.len() {
-        let mut current = index;
-        while current > 0 {
-            let ordering = compare_real_decision(
-                decisions,
-                vertex_axis(&soup.vertices[bounded_edges[current - 1].min[0]], 0),
-                vertex_axis(&soup.vertices[bounded_edges[current].min[0]], 0),
-            )?
-            .then_with(|| {
-                bounded_edges[current - 1]
-                    .edge
-                    .cmp(&bounded_edges[current].edge)
-            });
-            if !ordering.is_gt() {
-                break;
+    let approximate_vertices = exact_output_vertices_f64(&soup.vertices);
+    if let Some(approximate_vertices) = &approximate_vertices {
+        bounded_edges.sort_unstable_by(|left, right| {
+            approximate_edge_min(approximate_vertices, left.edge, 0)
+                .total_cmp(&approximate_edge_min(approximate_vertices, right.edge, 0))
+                .then_with(|| {
+                    vertex_axis(&soup.vertices[left.min[0]], 0)
+                        .exact_rational_ref()
+                        .expect("the approximate sweep contains exact rationals")
+                        .partial_cmp(
+                            vertex_axis(&soup.vertices[right.min[0]], 0)
+                                .exact_rational_ref()
+                                .expect("the approximate sweep contains exact rationals"),
+                        )
+                        .expect("rational ordering is total")
+                })
+                .then_with(|| left.edge.cmp(&right.edge))
+        });
+    } else {
+        for index in 1..bounded_edges.len() {
+            let mut current = index;
+            while current > 0 {
+                let ordering = compare_real_decision(
+                    decisions,
+                    vertex_axis(&soup.vertices[bounded_edges[current - 1].min[0]], 0),
+                    vertex_axis(&soup.vertices[bounded_edges[current].min[0]], 0),
+                )?
+                .then_with(|| {
+                    bounded_edges[current - 1]
+                        .edge
+                        .cmp(&bounded_edges[current].edge)
+                });
+                if !ordering.is_gt() {
+                    break;
+                }
+                bounded_edges.swap(current - 1, current);
+                current -= 1;
             }
-            bounded_edges.swap(current - 1, current);
-            current -= 1;
         }
     }
 
-    let mut vertex_interner = None;
+    let mut interner = None;
     let mut events = Vec::new();
     for left_index in 0..bounded_edges.len() {
         let left = &bounded_edges[left_index];
         for right in &bounded_edges[(left_index + 1)..] {
-            if compare_real_decision(
+            if let Some(approximate_vertices) = &approximate_vertices {
+                // Rational-to-f64 rounding is monotone: rounded separation
+                // proves exact separation, while every survivor is checked
+                // against the exact bounds below.
+                if approximate_edge_min(approximate_vertices, right.edge, 0)
+                    > approximate_edge_max(approximate_vertices, left.edge, 0)
+                {
+                    break;
+                }
+                if !approximate_edge_bounds_overlap(approximate_vertices, left.edge, right.edge) {
+                    continue;
+                }
+            } else if compare_real_decision(
                 decisions,
                 vertex_axis(&soup.vertices[right.min[0]], 0),
                 vertex_axis(&soup.vertices[left.max[0]], 0),
@@ -2598,55 +2646,1336 @@ fn split_edge_crossing_events(
             {
                 break;
             }
-            if !edge_bounds_overlap_exact(decisions, left, right, &soup.vertices)? {
+            let left_edge = left.edge;
+            let right_edge = right.edge;
+            if left_edge.iter().any(|vertex| right_edge.contains(vertex)) {
                 continue;
             }
-            let left = left.edge;
-            let right = right.edge;
-            if left.iter().any(|vertex| right.contains(vertex)) {
+            if !edge_bounds_overlap_exact(
+                decisions,
+                left,
+                right,
+                &soup.vertices,
+                usize::from(approximate_vertices.is_none()),
+            )? {
                 continue;
             }
 
-            let Some(point) = proper_segment_intersection_after_bounds_overlap(
+            let Some(projection_axis) = proper_segment_intersection_after_bounds_overlap(
                 decisions,
-                &soup.vertices[left[0]],
-                &soup.vertices[left[1]],
-                &soup.vertices[right[0]],
-                &soup.vertices[right[1]],
+                &soup.vertices[left_edge[0]],
+                &soup.vertices[left_edge[1]],
+                &soup.vertices[right_edge[0]],
+                &soup.vertices[right_edge[1]],
+                approximate_vertices.as_ref().and_then(|vertices| {
+                    approximate_projection_axis(vertices, left_edge, right_edge)
+                }),
             )?
             else {
                 continue;
             };
-            if vertex_interner.is_none() {
+            let point = proper_output_segment_intersection_point(
+                decisions,
+                &soup.vertices,
+                left_edge,
+                right_edge,
+                projection_axis,
+            )?;
+            if interner.is_none() {
                 let exact_only = soup
                     .vertices
                     .iter()
                     .all(PointCoordinates::has_exact_rational_coordinates);
-                vertex_interner = Some(PointInterner::<()>::try_from_unique(
+                interner = Some(PointInterner::<()>::try_from_unique(
                     &soup.vertices,
                     exact_only,
                 )?);
             }
-            let new_index = vertex_interner
+            let vertex = interner
                 .as_mut()
-                .expect("the output vertex interner was initialized")
+                .expect("the crossing point interner was initialized")
                 .intern_owned(decisions, &mut soup.vertices, point, None)?;
             events
                 .try_reserve(1)
                 .map_err(|_| HypermeshError::CapacityOverflow {
                     operation: "output edge crossing events",
                 })?;
-            events.push((left, right, new_index));
+            events.push(OutputCrossingEvent {
+                left_edge,
+                right_edge,
+                vertex,
+            });
         }
     }
-
     if events.is_empty() {
         return Ok(false);
     }
-    for (left, right, new_index) in events {
-        split_edges_at_vertex(soup, &[left, right], new_index);
+
+    let mut repairs: Vec<CoplanarOutputRepair> = Vec::new();
+    for event in &events {
+        for edge in [event.left_edge, event.right_edge] {
+            for triangle in soup.triangles.iter().copied().filter(|triangle| {
+                triangle_edges(*triangle)
+                    .into_iter()
+                    .map(sorted_edge)
+                    .any(|candidate| candidate == edge)
+            }) {
+                let [a, b, c] = triangle.map(|vertex| output_vertex_point3(&soup.vertices[vertex]));
+                let plane = Plane::from_points(&a, &b, &c);
+                let mut matching_repair = None;
+                for (index, repair) in repairs.iter().enumerate() {
+                    if output_triangle_on_plane(decisions, &repair.plane, &soup.vertices, triangle)?
+                    {
+                        matching_repair = Some(index);
+                        break;
+                    }
+                }
+                let repair_index = match matching_repair {
+                    Some(index) => index,
+                    None => {
+                        repairs
+                            .try_reserve(1)
+                            .map_err(|_| HypermeshError::CapacityOverflow {
+                                operation: "coplanar output repairs",
+                            })?;
+                        repairs.push(CoplanarOutputRepair {
+                            plane,
+                            event_vertices: BTreeSet::new(),
+                        });
+                        repairs.len() - 1
+                    }
+                };
+                repairs[repair_index].event_vertices.insert(event.vertex);
+            }
+        }
+    }
+    if repairs.is_empty() {
+        return Err(HypermeshError::OutputPlanarizationFailed {
+            reason: "proper crossing edges have no incident triangles",
+        });
+    }
+    if std::env::var_os("HYPERMESH_OUTPUT_DIAGNOSTIC").is_some() {
+        eprintln!(
+            "output crossing batch: events={}, planes={}",
+            events.len(),
+            repairs.len()
+        );
+    }
+    for repair in repairs {
+        retriangulate_coplanar_output_plane(
+            decisions,
+            soup,
+            &repair.plane,
+            &repair.event_vertices,
+        )?;
     }
     Ok(true)
+}
+
+#[derive(Clone, Copy)]
+struct OutputCrossingEvent {
+    left_edge: [usize; 2],
+    right_edge: [usize; 2],
+    vertex: usize,
+}
+
+struct CoplanarOutputRepair {
+    plane: Plane,
+    event_vertices: BTreeSet<usize>,
+}
+
+#[derive(Clone, Copy)]
+struct PlanarCoverageTriangle {
+    vertices: [usize; 3],
+    source: TriangleSource,
+    orientation: i8,
+}
+
+fn retriangulate_coplanar_output_plane(
+    decisions: &DecisionContext,
+    soup: &mut BooleanMesh,
+    plane: &Plane,
+    event_vertices: &BTreeSet<usize>,
+) -> HypermeshResult<()> {
+    let diagnostic = std::env::var_os("HYPERMESH_OUTPUT_DIAGNOSTIC").is_some();
+    let started = std::time::Instant::now();
+    if soup.triangles.len() != soup.sources.len() {
+        return Err(HypermeshError::TriangleSourceCountMismatch {
+            triangles: soup.triangles.len(),
+            sources: soup.sources.len(),
+        });
+    }
+    let projection_axis = output_plane_projection_axis(decisions, plane)?;
+    let [u_axis, v_axis] =
+        projection_axes(projection_axis).ok_or(HypermeshError::OutputPlanarizationFailed {
+            reason: "crossing projection axis is invalid",
+        })?;
+
+    let mut group = Vec::new();
+    group
+        .try_reserve(soup.triangles.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "coplanar output triangle group",
+        })?;
+    for (index, triangle) in soup.triangles.iter().enumerate() {
+        if output_triangle_on_plane(decisions, plane, &soup.vertices, *triangle)? {
+            group.push(index);
+        }
+    }
+    if group.is_empty() {
+        return Err(HypermeshError::OutputPlanarizationFailed {
+            reason: "crossing repair plane has no coplanar triangles",
+        });
+    }
+
+    let mut global_to_local = vec![usize::MAX; soup.vertices.len()];
+    let mut local_to_global = Vec::new();
+    let mut constraints = BTreeSet::new();
+    for &triangle_index in &group {
+        let triangle = soup.triangles[triangle_index];
+        let local = triangle
+            .map(|global| local_output_vertex(global, &mut global_to_local, &mut local_to_global));
+        for edge in triangle_edges(local) {
+            if edge[0] != edge[1] {
+                constraints.insert(sorted_edge(edge));
+            }
+        }
+    }
+    for &global in event_vertices {
+        if global >= soup.vertices.len() {
+            return Err(HypermeshError::VertexIndexOutOfBounds {
+                index: global,
+                vertex_count: soup.vertices.len(),
+            });
+        }
+        if !output_vertex_on_plane(decisions, plane, &soup.vertices[global])? {
+            return Err(HypermeshError::OutputPlanarizationFailed {
+                reason: "crossing event does not lie on an incident triangle plane",
+            });
+        }
+        local_output_vertex(global, &mut global_to_local, &mut local_to_global);
+    }
+    let mut output_edges = BTreeSet::new();
+    for triangle in &soup.triangles {
+        output_edges.extend(triangle_edges(*triangle).map(sorted_edge));
+    }
+    for edge in output_edges {
+        if output_vertex_on_plane(decisions, plane, &soup.vertices[edge[0]])?
+            && output_vertex_on_plane(decisions, plane, &soup.vertices[edge[1]])?
+        {
+            constraints.insert(sorted_edge(edge.map(|global| {
+                local_output_vertex(global, &mut global_to_local, &mut local_to_global)
+            })));
+        }
+    }
+
+    let mut points = local_to_global
+        .iter()
+        .map(|&global| {
+            let vertex = &soup.vertices[global];
+            hypertri::ExactPoint::new(
+                vertex_axis(vertex, u_axis).clone(),
+                vertex_axis(vertex, v_axis).clone(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let mut point_to_global = local_to_global;
+    let planar_edges = planarize_output_constraints(
+        decisions,
+        soup,
+        plane,
+        projection_axis,
+        [u_axis, v_axis],
+        &mut points,
+        &mut point_to_global,
+        &constraints.into_iter().collect::<Vec<_>>(),
+    )?;
+    if diagnostic {
+        eprintln!(
+            "output planarize: {:?}, group={}, points={}, edges={}",
+            started.elapsed(),
+            group.len(),
+            points.len(),
+            planar_edges.len()
+        );
+    }
+    let mut coverage = Vec::new();
+    for &triangle_index in &group {
+        let vertices = soup.triangles[triangle_index].map(|global| global_to_local[global]);
+        let orientation = match planar_orientation(
+            decisions,
+            &points[vertices[0]],
+            &points[vertices[1]],
+            &points[vertices[2]],
+        )? {
+            Classification::Negative => -1,
+            Classification::Positive => 1,
+            Classification::On => {
+                return Err(HypermeshError::OutputPlanarizationFailed {
+                    reason: "coplanar output group contains a degenerate triangle",
+                });
+            }
+        };
+        coverage.push(PlanarCoverageTriangle {
+            vertices,
+            source: soup.sources[triangle_index],
+            orientation,
+        });
+    }
+    let faces = bounded_planar_faces(decisions, &points, &planar_edges)?;
+    if diagnostic {
+        eprintln!(
+            "output planar faces: {:?}, triangles={}, faces={}",
+            started.elapsed(),
+            group.len(),
+            faces.len()
+        );
+    }
+    let approximate_points = exact_planar_points_f64(&points);
+    let approximate_bounds = approximate_points.as_ref().map(|points| {
+        coverage
+            .iter()
+            .map(|triangle| approximate_planar_triangle_bounds(points, triangle.vertices))
+            .collect::<Vec<_>>()
+    });
+
+    let mut replacement_triangles = Vec::new();
+    let mut replacement_sources = Vec::new();
+    for (face_index, face) in faces.into_iter().enumerate() {
+        let face_triangles = match triangulate_planar_face(decisions, &points, &face) {
+            Ok(triangles) => triangles,
+            Err(error) => {
+                if diagnostic {
+                    eprintln!(
+                        "output planar face failure: index={face_index}, vertices={}, unique={}, face={face:?}, error={error:?}",
+                        face.len(),
+                        face.iter().copied().collect::<BTreeSet<_>>().len(),
+                    );
+                }
+                return Err(error);
+            }
+        };
+        let Some(&sample_triangle) = face_triangles.first() else {
+            continue;
+        };
+        let sample = planar_triangle_centroid(&points, sample_triangle)?;
+        let approximate_sample = approximate_points.as_ref().and_then(|_| {
+            let [Some(u), Some(v)] = [sample.x.to_f64_lossy(), sample.y.to_f64_lossy()] else {
+                return None;
+            };
+            (u.is_finite() && v.is_finite()).then_some([u, v])
+        });
+        let mut winding = 0_i32;
+        let mut positive_source = None;
+        let mut negative_source = None;
+        for (coverage_index, candidate) in coverage.iter().enumerate() {
+            if approximate_sample.is_some_and(|sample| {
+                !approximate_point_within_planar_bounds(
+                    sample,
+                    approximate_bounds
+                        .as_ref()
+                        .expect("approximate points have triangle bounds")[coverage_index],
+                )
+            }) {
+                continue;
+            }
+            if !planar_triangle_contains_point(
+                decisions,
+                &points,
+                candidate.vertices,
+                candidate.orientation,
+                &sample,
+            )? {
+                continue;
+            }
+            winding = winding
+                .checked_add(i32::from(candidate.orientation))
+                .ok_or(HypermeshError::WindingOverflow)?;
+            if candidate.orientation > 0 {
+                positive_source.get_or_insert(candidate.source);
+            } else {
+                negative_source.get_or_insert(candidate.source);
+            }
+        }
+        let source = if winding > 0 {
+            positive_source.ok_or(HypermeshError::OutputPlanarizationFailed {
+                reason: "positive planar coverage has no source triangle",
+            })?
+        } else if winding < 0 {
+            negative_source.ok_or(HypermeshError::OutputPlanarizationFailed {
+                reason: "negative planar coverage has no source triangle",
+            })?
+        } else {
+            continue;
+        };
+        for mut triangle in face_triangles {
+            match planar_orientation(
+                decisions,
+                &points[triangle[0]],
+                &points[triangle[1]],
+                &points[triangle[2]],
+            )? {
+                Classification::Negative => triangle.swap(1, 2),
+                Classification::Positive => {}
+                Classification::On => {
+                    return Err(HypermeshError::OutputPlanarizationFailed {
+                        reason: "planar face triangulation emitted a degenerate triangle",
+                    });
+                }
+            }
+            if winding < 0 {
+                triangle.swap(1, 2);
+            }
+            replacement_triangles.push(triangle.map(|vertex| point_to_global[vertex]));
+            replacement_sources.push(source);
+        }
+    }
+
+    let mut in_group = vec![false; soup.triangles.len()];
+    for index in group {
+        in_group[index] = true;
+    }
+    let retained = soup.triangles.len() - in_group.iter().filter(|member| **member).count();
+    let capacity = retained.checked_add(replacement_triangles.len()).ok_or(
+        HypermeshError::CapacityOverflow {
+            operation: "planarized output soup",
+        },
+    )?;
+    let mut triangles = Vec::with_capacity(capacity);
+    let mut sources = Vec::with_capacity(capacity);
+    for (index, (&triangle, &source)) in soup.triangles.iter().zip(&soup.sources).enumerate() {
+        if !in_group[index] {
+            triangles.push(triangle);
+            sources.push(source);
+        }
+    }
+    triangles.extend(replacement_triangles);
+    sources.extend(replacement_sources);
+    soup.triangles = triangles;
+    soup.sources = sources;
+    if diagnostic {
+        eprintln!(
+            "output planar replacement: {:?}, triangles={}",
+            started.elapsed(),
+            soup.triangles.len()
+        );
+    }
+    Ok(())
+}
+
+fn local_output_vertex(
+    global: usize,
+    global_to_local: &mut [usize],
+    local_to_global: &mut Vec<usize>,
+) -> usize {
+    let local = global_to_local[global];
+    if local != usize::MAX {
+        local
+    } else {
+        let local = local_to_global.len();
+        global_to_local[global] = local;
+        local_to_global.push(global);
+        local
+    }
+}
+
+fn planarize_output_constraints(
+    decisions: &DecisionContext,
+    soup: &mut BooleanMesh,
+    plane: &Plane,
+    projection_axis: usize,
+    axes: [usize; 2],
+    points: &mut Vec<hypertri::ExactPoint>,
+    point_to_global: &mut Vec<usize>,
+    constraints: &[[usize; 2]],
+) -> HypermeshResult<BTreeSet<[usize; 2]>> {
+    let diagnostic = std::env::var_os("HYPERMESH_OUTPUT_DIAGNOSTIC").is_some();
+    let started = std::time::Instant::now();
+    let approximate_points = exact_planar_points_f64(points);
+    let mut ordered = constraints.to_vec();
+    if let Some(approximate_points) = &approximate_points {
+        ordered.sort_unstable_by(|left, right| {
+            approximate_planar_edge_min(approximate_points, *left, 0)
+                .total_cmp(&approximate_planar_edge_min(approximate_points, *right, 0))
+                .then_with(|| left.cmp(right))
+        });
+    }
+
+    let mut interner = None;
+    let mut crossing_count = 0_usize;
+    let mut existing_intersection_count = 0_usize;
+    for left_index in 0..ordered.len() {
+        let left = ordered[left_index];
+        for &right in &ordered[(left_index + 1)..] {
+            if left.iter().any(|vertex| right.contains(vertex)) {
+                continue;
+            }
+            if let Some(approximate_points) = &approximate_points {
+                if approximate_planar_edge_min(approximate_points, right, 0)
+                    > approximate_planar_edge_max(approximate_points, left, 0)
+                {
+                    break;
+                }
+                if !approximate_planar_edge_bounds_overlap(approximate_points, left, right) {
+                    continue;
+                }
+            } else if !planar_edge_bounds_overlap_exact(decisions, points, left, right)? {
+                continue;
+            }
+            if !planar_segments_properly_cross(decisions, points, left, right)? {
+                continue;
+            }
+            crossing_count += 1;
+
+            let intersection = decisions
+                .decide(
+                    hyperlimit::proper_segment_intersection_point(
+                        &hyperlimit_planar_point(&points[left[0]]),
+                        &hyperlimit_planar_point(&points[left[1]]),
+                        &hyperlimit_planar_point(&points[right[0]]),
+                        &hyperlimit_planar_point(&points[right[1]]),
+                        decisions.policy(),
+                    ),
+                    "proper planar output edge intersection",
+                )?
+                .ok_or(HypermeshError::OutputPlanarizationFailed {
+                    reason: "proper output edge crossing has no intersection point",
+                })?;
+            let intersection = hypertri::ExactPoint::new(intersection.x, intersection.y);
+            if planar_point_index(decisions, points, &intersection)?.is_some() {
+                existing_intersection_count += 1;
+                continue;
+            }
+
+            if interner.is_none() {
+                let exact_only = soup
+                    .vertices
+                    .iter()
+                    .all(PointCoordinates::has_exact_rational_coordinates);
+                interner = Some(PointInterner::<()>::try_from_unique(
+                    &soup.vertices,
+                    exact_only,
+                )?);
+            }
+            let lifted = lift_planar_point(&intersection, plane, projection_axis, axes)?;
+            let global = interner
+                .as_mut()
+                .expect("the planar point interner was initialized")
+                .intern_owned(decisions, &mut soup.vertices, lifted, None)?;
+            points
+                .try_reserve(1)
+                .map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "planar output intersection points",
+                })?;
+            point_to_global
+                .try_reserve(1)
+                .map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "planar output point mapping",
+                })?;
+            points.push(intersection);
+            point_to_global.push(global);
+        }
+    }
+
+    if diagnostic {
+        eprintln!(
+            "output planar crossings: {:?}, crossings={}, existing={}, points={}",
+            started.elapsed(),
+            crossing_count,
+            existing_intersection_count,
+            points.len()
+        );
+    }
+    let approximate_points = exact_planar_points_f64(points);
+    let mut planar_edges = BTreeSet::new();
+    let mut split_constraint_count = 0_usize;
+    let mut max_constraint_points = 0_usize;
+    for &constraint in constraints {
+        let mut on_segment = Vec::new();
+        for point in 0..points.len() {
+            if approximate_points.as_ref().is_some_and(|points| {
+                !approximate_planar_point_within_edge_bounds(points, constraint, point)
+            }) {
+                continue;
+            }
+            if planar_point_on_segment(decisions, points, constraint, point)? {
+                on_segment.push(point);
+            }
+        }
+        split_constraint_count += usize::from(on_segment.len() > 2);
+        max_constraint_points = max_constraint_points.max(on_segment.len());
+        sort_planar_indices_on_segment(decisions, points, constraint, &mut on_segment)?;
+        for pair in on_segment.windows(2) {
+            if pair[0] != pair[1] {
+                planar_edges.insert(sorted_edge([pair[0], pair[1]]));
+            }
+        }
+    }
+    if diagnostic {
+        eprintln!(
+            "output planar split constraints: {:?}, split={}, max_points={}, edges={}",
+            started.elapsed(),
+            split_constraint_count,
+            max_constraint_points,
+            planar_edges.len()
+        );
+    }
+    Ok(planar_edges)
+}
+
+fn hyperlimit_planar_point(point: &hypertri::ExactPoint) -> hyperlimit::Point2 {
+    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
+}
+
+fn planar_point_index(
+    decisions: &DecisionContext,
+    points: &[hypertri::ExactPoint],
+    point: &hypertri::ExactPoint,
+) -> HypermeshResult<Option<usize>> {
+    for (index, candidate) in points.iter().enumerate() {
+        if let ([Some(cx), Some(cy)], [Some(px), Some(py)]) = (
+            [
+                candidate.x.exact_rational_ref(),
+                candidate.y.exact_rational_ref(),
+            ],
+            [point.x.exact_rational_ref(), point.y.exact_rational_ref()],
+        ) {
+            if cx == px && cy == py {
+                return Ok(Some(index));
+            }
+            continue;
+        }
+        if compare_real_decision(decisions, &candidate.x, &point.x)?.is_eq()
+            && compare_real_decision(decisions, &candidate.y, &point.y)?.is_eq()
+        {
+            return Ok(Some(index));
+        }
+    }
+    Ok(None)
+}
+
+fn planar_segments_properly_cross(
+    decisions: &DecisionContext,
+    points: &[hypertri::ExactPoint],
+    left: [usize; 2],
+    right: [usize; 2],
+) -> HypermeshResult<bool> {
+    let opposite = |first, second| {
+        matches!(
+            (first, second),
+            (Classification::Negative, Classification::Positive)
+                | (Classification::Positive, Classification::Negative)
+        )
+    };
+    let right_from = planar_orientation(
+        decisions,
+        &points[left[0]],
+        &points[left[1]],
+        &points[right[0]],
+    )?;
+    let right_to = planar_orientation(
+        decisions,
+        &points[left[0]],
+        &points[left[1]],
+        &points[right[1]],
+    )?;
+    if !opposite(right_from, right_to) {
+        return Ok(false);
+    }
+    let left_from = planar_orientation(
+        decisions,
+        &points[right[0]],
+        &points[right[1]],
+        &points[left[0]],
+    )?;
+    let left_to = planar_orientation(
+        decisions,
+        &points[right[0]],
+        &points[right[1]],
+        &points[left[1]],
+    )?;
+    Ok(opposite(left_from, left_to))
+}
+
+fn planar_edge_bounds_overlap_exact(
+    decisions: &DecisionContext,
+    points: &[hypertri::ExactPoint],
+    left: [usize; 2],
+    right: [usize; 2],
+) -> HypermeshResult<bool> {
+    for axis in 0..2 {
+        let left_order = compare_real_decision(
+            decisions,
+            planar_coordinate(&points[left[0]], axis),
+            planar_coordinate(&points[left[1]], axis),
+        )?;
+        let right_order = compare_real_decision(
+            decisions,
+            planar_coordinate(&points[right[0]], axis),
+            planar_coordinate(&points[right[1]], axis),
+        )?;
+        let (left_min, left_max) = if left_order.is_gt() {
+            (left[1], left[0])
+        } else {
+            (left[0], left[1])
+        };
+        let (right_min, right_max) = if right_order.is_gt() {
+            (right[1], right[0])
+        } else {
+            (right[0], right[1])
+        };
+        if compare_real_decision(
+            decisions,
+            planar_coordinate(&points[left_max], axis),
+            planar_coordinate(&points[right_min], axis),
+        )?
+        .is_lt()
+            || compare_real_decision(
+                decisions,
+                planar_coordinate(&points[right_max], axis),
+                planar_coordinate(&points[left_min], axis),
+            )?
+            .is_lt()
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn planar_point_on_segment(
+    decisions: &DecisionContext,
+    points: &[hypertri::ExactPoint],
+    edge: [usize; 2],
+    point: usize,
+) -> HypermeshResult<bool> {
+    if planar_orientation(
+        decisions,
+        &points[edge[0]],
+        &points[edge[1]],
+        &points[point],
+    )? != Classification::On
+    {
+        return Ok(false);
+    }
+    for axis in 0..2 {
+        let from = planar_coordinate(&points[edge[0]], axis);
+        let to = planar_coordinate(&points[edge[1]], axis);
+        let point = planar_coordinate(&points[point], axis);
+        let (min, max) = if compare_real_decision(decisions, from, to)?.is_gt() {
+            (to, from)
+        } else {
+            (from, to)
+        };
+        if compare_real_decision(decisions, point, min)?.is_lt()
+            || compare_real_decision(decisions, point, max)?.is_gt()
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn planar_coordinate(point: &hypertri::ExactPoint, axis: usize) -> &Real {
+    if axis == 0 { &point.x } else { &point.y }
+}
+
+fn sort_planar_indices_on_segment(
+    decisions: &DecisionContext,
+    points: &[hypertri::ExactPoint],
+    edge: [usize; 2],
+    indices: &mut [usize],
+) -> HypermeshResult<()> {
+    let use_x = !compare_real_decision(decisions, &points[edge[0]].x, &points[edge[1]].x)?.is_eq();
+    for index in 1..indices.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            let ordering = if use_x {
+                compare_real_decision(
+                    decisions,
+                    &points[indices[cursor]].x,
+                    &points[indices[cursor - 1]].x,
+                )?
+            } else {
+                compare_real_decision(
+                    decisions,
+                    &points[indices[cursor]].y,
+                    &points[indices[cursor - 1]].y,
+                )?
+            };
+            if !ordering.is_lt() {
+                break;
+            }
+            indices.swap(cursor, cursor - 1);
+            cursor -= 1;
+        }
+    }
+    Ok(())
+}
+
+fn approximate_planar_edge_min(points: &[[f64; 2]], edge: [usize; 2], axis: usize) -> f64 {
+    points[edge[0]][axis].min(points[edge[1]][axis])
+}
+
+fn approximate_planar_edge_max(points: &[[f64; 2]], edge: [usize; 2], axis: usize) -> f64 {
+    points[edge[0]][axis].max(points[edge[1]][axis])
+}
+
+fn approximate_planar_edge_bounds_overlap(
+    points: &[[f64; 2]],
+    left: [usize; 2],
+    right: [usize; 2],
+) -> bool {
+    (0..2).all(|axis| {
+        approximate_planar_edge_max(points, left, axis)
+            >= approximate_planar_edge_min(points, right, axis)
+            && approximate_planar_edge_max(points, right, axis)
+                >= approximate_planar_edge_min(points, left, axis)
+    })
+}
+
+fn approximate_planar_point_within_edge_bounds(
+    points: &[[f64; 2]],
+    edge: [usize; 2],
+    point: usize,
+) -> bool {
+    (0..2).all(|axis| {
+        points[point][axis] >= approximate_planar_edge_min(points, edge, axis)
+            && points[point][axis] <= approximate_planar_edge_max(points, edge, axis)
+    })
+}
+
+fn bounded_planar_faces(
+    decisions: &DecisionContext,
+    points: &[hypertri::ExactPoint],
+    edges: &BTreeSet<[usize; 2]>,
+) -> HypermeshResult<Vec<Vec<usize>>> {
+    let mut adjacency = vec![Vec::new(); points.len()];
+    for &[from, to] in edges {
+        adjacency[from].push(to);
+        adjacency[to].push(from);
+    }
+    for origin in 0..adjacency.len() {
+        for index in 1..adjacency[origin].len() {
+            let mut cursor = index;
+            while cursor > 0
+                && compare_planar_directions(
+                    decisions,
+                    points,
+                    origin,
+                    adjacency[origin][cursor],
+                    adjacency[origin][cursor - 1],
+                )?
+                .is_lt()
+            {
+                adjacency[origin].swap(cursor, cursor - 1);
+                cursor -= 1;
+            }
+        }
+    }
+
+    let mut visited = BTreeSet::new();
+    let mut faces = Vec::new();
+    let halfedge_count = edges
+        .len()
+        .checked_mul(2)
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "planar output half-edges",
+        })?;
+    for &[a, b] in edges {
+        for start in [(a, b), (b, a)] {
+            if visited.contains(&start) {
+                continue;
+            }
+            let mut face = Vec::new();
+            let mut edge = start;
+            for _ in 0..=halfedge_count {
+                if edge == start && !face.is_empty() {
+                    break;
+                }
+                if !visited.insert(edge) {
+                    return Err(HypermeshError::OutputPlanarizationFailed {
+                        reason: "planar face traversal revisited a foreign half-edge",
+                    });
+                }
+                face.push(edge.0);
+                let neighbors = &adjacency[edge.1];
+                let reverse = neighbors
+                    .iter()
+                    .position(|&vertex| vertex == edge.0)
+                    .ok_or(HypermeshError::OutputPlanarizationFailed {
+                        reason: "planar face traversal found a missing reverse edge",
+                    })?;
+                let next = neighbors[(reverse + neighbors.len() - 1) % neighbors.len()];
+                edge = (edge.1, next);
+            }
+            if edge != start {
+                return Err(HypermeshError::OutputPlanarizationFailed {
+                    reason: "planar face traversal did not close",
+                });
+            }
+            if face.len() >= 3
+                && planar_polygon_area_classification(decisions, points, &face)?
+                    == Classification::Positive
+            {
+                faces.push(face);
+            }
+        }
+    }
+    Ok(faces)
+}
+
+fn compare_planar_directions(
+    decisions: &DecisionContext,
+    points: &[hypertri::ExactPoint],
+    origin: usize,
+    left: usize,
+    right: usize,
+) -> HypermeshResult<std::cmp::Ordering> {
+    let left_half = planar_direction_half(decisions, &points[origin], &points[left])?;
+    let right_half = planar_direction_half(decisions, &points[origin], &points[right])?;
+    if left_half != right_half {
+        return Ok(left_half.cmp(&right_half));
+    }
+    Ok(
+        match planar_orientation(decisions, &points[origin], &points[left], &points[right])? {
+            Classification::Positive => std::cmp::Ordering::Less,
+            Classification::Negative => std::cmp::Ordering::Greater,
+            Classification::On => left.cmp(&right),
+        },
+    )
+}
+
+fn planar_direction_half(
+    decisions: &DecisionContext,
+    origin: &hypertri::ExactPoint,
+    point: &hypertri::ExactPoint,
+) -> HypermeshResult<u8> {
+    Ok(
+        match compare_real_decision(decisions, &point.y, &origin.y)? {
+            std::cmp::Ordering::Greater => 0,
+            std::cmp::Ordering::Less => 1,
+            std::cmp::Ordering::Equal => {
+                u8::from(compare_real_decision(decisions, &point.x, &origin.x)?.is_lt())
+            }
+        },
+    )
+}
+
+fn planar_polygon_area_classification(
+    decisions: &DecisionContext,
+    points: &[hypertri::ExactPoint],
+    polygon: &[usize],
+) -> HypermeshResult<Classification> {
+    if points.iter().all(|point| {
+        point.x.exact_rational_ref().is_some() && point.y.exact_rational_ref().is_some()
+    }) {
+        let mut signs = Vec::with_capacity(polygon.len() * 2);
+        let mut terms = Vec::with_capacity(polygon.len() * 2);
+        for index in 0..polygon.len() {
+            let from = &points[polygon[index]];
+            let to = &points[polygon[(index + 1) % polygon.len()]];
+            signs.extend([true, false]);
+            terms.push([
+                from.x
+                    .exact_rational_ref()
+                    .expect("the polygon coordinates are exact rationals"),
+                to.y.exact_rational_ref()
+                    .expect("the polygon coordinates are exact rationals"),
+            ]);
+            terms.push([
+                from.y
+                    .exact_rational_ref()
+                    .expect("the polygon coordinates are exact rationals"),
+                to.x.exact_rational_ref()
+                    .expect("the polygon coordinates are exact rationals"),
+            ]);
+        }
+        return Ok(classification_from_ordering(
+            Rational::signed_product_sum2_ordering_slice(&signs, &terms),
+        ));
+    }
+
+    let mut twice_area = Real::zero();
+    for index in 0..polygon.len() {
+        let from = &points[polygon[index]];
+        let to = &points[polygon[(index + 1) % polygon.len()]];
+        twice_area = twice_area
+            + Real::signed_product_sum([true, false], [[&from.x, &to.y], [&from.y, &to.x]]);
+    }
+    classify_real(decisions, &twice_area)
+}
+
+fn triangulate_planar_face(
+    decisions: &DecisionContext,
+    points: &[hypertri::ExactPoint],
+    face: &[usize],
+) -> HypermeshResult<Vec<[usize; 3]>> {
+    if let &[a, b, c] = face {
+        return Ok(vec![[a, b, c]]);
+    }
+    let vertices = face
+        .iter()
+        .map(|&vertex| points[vertex].clone())
+        .collect::<Vec<_>>();
+    let context = hypertri::TriangulationContext::new(decisions.policy());
+    let outcome =
+        hypertri::earcut(&context, &vertices, &[]).map_err(map_planar_triangulation_error)?;
+    decisions.absorb(match outcome.certainty {
+        hypertri::TriangulationCertainty::Certified => MeshCertainty::Certified,
+        hypertri::TriangulationCertainty::Approximate512Consumed => {
+            MeshCertainty::Approximate512Consumed
+        }
+    });
+    if !outcome.value.len().is_multiple_of(3) {
+        return Err(HypermeshError::OutputPlanarizationFailed {
+            reason: "planar face triangulation returned an incomplete index triple",
+        });
+    }
+    outcome
+        .value
+        .chunks_exact(3)
+        .map(|triangle| {
+            let [a, b, c] = *triangle else {
+                unreachable!("chunks_exact returned a non-triple")
+            };
+            let [Some(a), Some(b), Some(c)] = [face.get(a), face.get(b), face.get(c)] else {
+                return Err(HypermeshError::OutputPlanarizationFailed {
+                    reason: "planar face triangulation index is out of bounds",
+                });
+            };
+            Ok([*a, *b, *c])
+        })
+        .collect()
+}
+
+fn projection_axes(projection_axis: usize) -> Option<[usize; 2]> {
+    match projection_axis {
+        0 => Some([1, 2]),
+        1 => Some([0, 2]),
+        2 => Some([0, 1]),
+        _ => None,
+    }
+}
+
+fn output_plane_projection_axis(
+    decisions: &DecisionContext,
+    plane: &Plane,
+) -> HypermeshResult<usize> {
+    let normal = [&plane.normal.x, &plane.normal.y, &plane.normal.z];
+    if let Some(axis) = normal.iter().position(|component| {
+        component
+            .exact_rational_ref()
+            .is_some_and(|value| !value.is_zero())
+    }) {
+        return Ok(axis);
+    }
+    for (axis, component) in normal.into_iter().enumerate() {
+        if classify_real(decisions, component)? != Classification::On {
+            return Ok(axis);
+        }
+    }
+    Err(HypermeshError::OutputPlanarizationFailed {
+        reason: "crossing repair plane has a zero normal",
+    })
+}
+
+fn proper_output_segment_intersection_point(
+    decisions: &DecisionContext,
+    vertices: &[OutputVertex],
+    left: [usize; 2],
+    right: [usize; 2],
+    projection_axis: usize,
+) -> HypermeshResult<OutputVertex> {
+    let [u_axis, v_axis] =
+        projection_axes(projection_axis).ok_or(HypermeshError::OutputPlanarizationFailed {
+            reason: "crossing projection axis is invalid",
+        })?;
+    let point = |index| {
+        hyperlimit::Point2::new(
+            vertex_axis(&vertices[index], u_axis).clone(),
+            vertex_axis(&vertices[index], v_axis).clone(),
+        )
+    };
+    let intersection = decisions
+        .decide(
+            hyperlimit::proper_segment_intersection_point(
+                &point(left[0]),
+                &point(left[1]),
+                &point(right[0]),
+                &point(right[1]),
+                decisions.policy(),
+            ),
+            "proper output edge intersection",
+        )?
+        .ok_or(HypermeshError::OutputPlanarizationFailed {
+            reason: "proper output edge crossing has no intersection point",
+        })?;
+    let plane = Plane::from_points(
+        &output_vertex_point3(&vertices[left[0]]),
+        &output_vertex_point3(&vertices[left[1]]),
+        &output_vertex_point3(&vertices[right[0]]),
+    );
+    let intersection = lift_planar_point(
+        &hypertri::ExactPoint::new(intersection.x, intersection.y),
+        &plane,
+        projection_axis,
+        [u_axis, v_axis],
+    )?;
+    if !point_on_segment_exact(
+        decisions,
+        &intersection,
+        &vertices[left[0]],
+        &vertices[left[1]],
+    )? || !point_on_segment_exact(
+        decisions,
+        &intersection,
+        &vertices[right[0]],
+        &vertices[right[1]],
+    )? {
+        return Err(HypermeshError::OutputPlanarizationFailed {
+            reason: "constructed crossing point is not on both output edges",
+        });
+    }
+    Ok(intersection)
+}
+
+fn output_vertex_point3(vertex: &OutputVertex) -> Point3 {
+    Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
+}
+
+fn output_triangle_on_plane(
+    decisions: &DecisionContext,
+    plane: &Plane,
+    vertices: &[OutputVertex],
+    triangle: [usize; 3],
+) -> HypermeshResult<bool> {
+    triangle.iter().try_fold(true, |on_plane, &vertex| {
+        Ok(on_plane && output_vertex_on_plane(decisions, plane, &vertices[vertex])?)
+    })
+}
+
+fn output_vertex_on_plane(
+    decisions: &DecisionContext,
+    plane: &Plane,
+    point: &OutputVertex,
+) -> HypermeshResult<bool> {
+    if let [
+        Some(nx),
+        Some(ny),
+        Some(nz),
+        Some(offset),
+        Some(x),
+        Some(y),
+        Some(z),
+    ] = [
+        plane.normal.x.exact_rational_ref(),
+        plane.normal.y.exact_rational_ref(),
+        plane.normal.z.exact_rational_ref(),
+        plane.offset.exact_rational_ref(),
+        point.x.exact_rational_ref(),
+        point.y.exact_rational_ref(),
+        point.z.exact_rational_ref(),
+    ] {
+        let one = Rational::one();
+        return Ok(Rational::signed_product_sum_ordering(
+            [true; 4],
+            [[nx, x], [ny, y], [nz, z], [offset, &one]],
+        )
+        .is_eq());
+    }
+    let one = Real::one();
+    Ok(classify_real(
+        decisions,
+        &Real::signed_product_sum(
+            [true; 4],
+            [
+                [&plane.normal.x, &point.x],
+                [&plane.normal.y, &point.y],
+                [&plane.normal.z, &point.z],
+                [&plane.offset, &one],
+            ],
+        ),
+    )? == Classification::On)
+}
+
+fn planar_orientation(
+    decisions: &DecisionContext,
+    from: &hypertri::ExactPoint,
+    to: &hypertri::ExactPoint,
+    point: &hypertri::ExactPoint,
+) -> HypermeshResult<Classification> {
+    orientation2(
+        decisions, &from.x, &from.y, &to.x, &to.y, &point.x, &point.y,
+    )
+}
+
+fn exact_planar_points_f64(points: &[hypertri::ExactPoint]) -> Option<Vec<[f64; 2]>> {
+    points
+        .iter()
+        .map(|point| {
+            if point.x.exact_rational_ref().is_none() || point.y.exact_rational_ref().is_none() {
+                return None;
+            }
+            let [Some(x), Some(y)] = [point.x.to_f64_lossy(), point.y.to_f64_lossy()] else {
+                return None;
+            };
+            (x.is_finite() && y.is_finite()).then_some([x, y])
+        })
+        .collect()
+}
+
+fn approximate_planar_triangle_bounds(points: &[[f64; 2]], triangle: [usize; 3]) -> [f64; 4] {
+    let [a, b, c] = triangle.map(|vertex| points[vertex]);
+    [
+        a[0].min(b[0]).min(c[0]),
+        a[1].min(b[1]).min(c[1]),
+        a[0].max(b[0]).max(c[0]),
+        a[1].max(b[1]).max(c[1]),
+    ]
+}
+
+fn approximate_point_within_planar_bounds(point: [f64; 2], bounds: [f64; 4]) -> bool {
+    point[0] >= bounds[0] && point[1] >= bounds[1] && point[0] <= bounds[2] && point[1] <= bounds[3]
+}
+
+fn planar_triangle_centroid(
+    points: &[hypertri::ExactPoint],
+    triangle: [usize; 3],
+) -> HypermeshResult<hypertri::ExactPoint> {
+    let [a, b, c] = triangle.map(|vertex| &points[vertex]);
+    Ok(hypertri::ExactPoint::new(
+        mean_real3([&a.x, &b.x, &c.x])?,
+        mean_real3([&a.y, &b.y, &c.y])?,
+    ))
+}
+
+fn mean_real3(values: [&Real; 3]) -> HypermeshResult<Real> {
+    if let [Some(a), Some(b), Some(c)] = values.map(Real::exact_rational_ref) {
+        return Ok(Real::from(Rational::mean3_refs([a, b, c])));
+    }
+    (Real::sum_refs(values) / Real::from(3_u8)).map_err(|_| {
+        HypermeshError::OutputPlanarizationFailed {
+            reason: "could not construct a planar triangle interior sample",
+        }
+    })
+}
+
+fn planar_triangle_contains_point(
+    decisions: &DecisionContext,
+    points: &[hypertri::ExactPoint],
+    triangle: [usize; 3],
+    orientation: i8,
+    point: &hypertri::ExactPoint,
+) -> HypermeshResult<bool> {
+    for edge in triangle_edges(triangle) {
+        let side = planar_orientation(decisions, &points[edge[0]], &points[edge[1]], point)?;
+        if (orientation > 0 && side == Classification::Negative)
+            || (orientation < 0 && side == Classification::Positive)
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn lift_planar_point(
+    point: &hypertri::ExactPoint,
+    plane: &Plane,
+    projection_axis: usize,
+    [u_axis, v_axis]: [usize; 2],
+) -> HypermeshResult<OutputVertex> {
+    let normal = [&plane.normal.x, &plane.normal.y, &plane.normal.z];
+    let one = Real::one();
+    let numerator = Real::signed_product_sum(
+        [false; 3],
+        [
+            [normal[u_axis], &point.x],
+            [normal[v_axis], &point.y],
+            [&plane.offset, &one],
+        ],
+    );
+    let dropped = (numerator / normal[projection_axis]).map_err(|_| {
+        HypermeshError::OutputPlanarizationFailed {
+            reason: "crossing plane has a zero projection coefficient",
+        }
+    })?;
+    Ok(match projection_axis {
+        0 => OutputVertex {
+            x: dropped,
+            y: point.x.clone(),
+            z: point.y.clone(),
+        },
+        1 => OutputVertex {
+            x: point.x.clone(),
+            y: dropped,
+            z: point.y.clone(),
+        },
+        2 => OutputVertex {
+            x: point.x.clone(),
+            y: point.y.clone(),
+            z: dropped,
+        },
+        _ => {
+            return Err(HypermeshError::OutputPlanarizationFailed {
+                reason: "crossing projection axis is invalid",
+            });
+        }
+    })
+}
+
+fn map_planar_triangulation_error(error: hypertri::Error) -> HypermeshError {
+    match error {
+        hypertri::Error::PredicateUndecided { predicate } => {
+            HypermeshError::PredicateUndecided { predicate }
+        }
+        hypertri::Error::InvalidInput { reason } => {
+            HypermeshError::OutputPlanarizationFailed { reason }
+        }
+        hypertri::Error::NoEarFound => HypermeshError::OutputPlanarizationFailed {
+            reason: "no planar triangulation ear was found",
+        },
+        hypertri::Error::UnsupportedFeature { feature } => {
+            HypermeshError::OutputPlanarizationFailed { reason: feature }
+        }
+    }
+}
+
+fn approximate_edge_min(vertices: &[[f64; 3]], edge: [usize; 2], axis: usize) -> f64 {
+    vertices[edge[0]][axis].min(vertices[edge[1]][axis])
+}
+
+fn approximate_edge_max(vertices: &[[f64; 3]], edge: [usize; 2], axis: usize) -> f64 {
+    vertices[edge[0]][axis].max(vertices[edge[1]][axis])
+}
+
+fn approximate_edge_bounds_overlap(
+    vertices: &[[f64; 3]],
+    left: [usize; 2],
+    right: [usize; 2],
+) -> bool {
+    (0..3).all(|axis| {
+        approximate_edge_max(vertices, left, axis) >= approximate_edge_min(vertices, right, axis)
+            && approximate_edge_max(vertices, right, axis)
+                >= approximate_edge_min(vertices, left, axis)
+    })
+}
+
+fn approximate_projection_axis(
+    vertices: &[[f64; 3]],
+    left: [usize; 2],
+    right: [usize; 2],
+) -> Option<usize> {
+    let left = [0, 1, 2].map(|axis| vertices[left[1]][axis] - vertices[left[0]][axis]);
+    let right = [0, 1, 2].map(|axis| vertices[right[1]][axis] - vertices[right[0]][axis]);
+    let normal = [
+        left[1] * right[2] - left[2] * right[1],
+        left[2] * right[0] - left[0] * right[2],
+        left[0] * right[1] - left[1] * right[0],
+    ];
+    (0..3)
+        .filter(|&axis| normal[axis].is_finite() && normal[axis] != 0.0)
+        .max_by(|&left, &right| normal[left].abs().total_cmp(&normal[right].abs()))
 }
 
 struct ExactEdgeBounds {
@@ -2682,8 +4011,9 @@ fn edge_bounds_overlap_exact(
     left: &ExactEdgeBounds,
     right: &ExactEdgeBounds,
     vertices: &[OutputVertex],
+    first_axis: usize,
 ) -> HypermeshResult<bool> {
-    for axis in 1..3 {
+    for axis in first_axis..3 {
         if compare_real_decision(
             decisions,
             vertex_axis(&vertices[left.max[axis]], axis),
@@ -2709,90 +4039,215 @@ fn proper_segment_intersection_after_bounds_overlap(
     b: &OutputVertex,
     c: &OutputVertex,
     d: &OutputVertex,
-) -> HypermeshResult<Option<OutputVertex>> {
-    let ab = sub_vertex(b, a);
-    let cd = sub_vertex(d, c);
-    let normal = cross_arrays(&ab, &cd);
-    let Some(projection_axis) = certified_nonzero_component_axis(decisions, &normal)? else {
-        return Ok(None);
-    };
-
-    let ac = sub_vertex(c, a);
-    if classify_real(decisions, &dot_arrays(&ac, &normal))? != Classification::On {
-        return Ok(None);
+    preferred_projection_axis: Option<usize>,
+) -> HypermeshResult<Option<usize>> {
+    let mut projections = [[1, 2], [0, 2], [0, 1]];
+    if let Some(axis) = preferred_projection_axis {
+        projections.swap(0, axis);
     }
-
-    let (u_axis, v_axis) = match projection_axis {
-        0 => (1, 2),
-        1 => (0, 2),
-        2 => (0, 1),
-        _ => unreachable!("axis must be in 0..3"),
-    };
-    let denom = Real::signed_product_sum(
-        [true, false],
-        [[&ab[u_axis], &cd[v_axis]], [&ab[v_axis], &cd[u_axis]]],
-    );
-    if classify_real(decisions, &denom)? == Classification::On {
-        return Ok(None);
-    }
-    let t_num = Real::signed_product_sum(
-        [true, false],
-        [[&ac[u_axis], &cd[v_axis]], [&ac[v_axis], &cd[u_axis]]],
-    );
-    let t = (t_num / denom).map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
-    let point = OutputVertex {
-        x: &a.x + &(t.clone() * &ab[0]),
-        y: &a.y + &(t.clone() * &ab[1]),
-        z: &a.z + &(t * &ab[2]),
-    };
-
-    for endpoint in [a, b, c, d] {
-        if output_vertices_equal(decisions, &point, endpoint)? {
-            return Ok(None);
+    let mut projection = None;
+    let mut saw_unknown = false;
+    for [u_axis, v_axis] in projections {
+        match projected_segment_crossing(decisions, a, b, c, d, [u_axis, v_axis]) {
+            Ok(Some(true)) => {
+                projection = Some((u_axis, v_axis));
+                break;
+            }
+            Ok(Some(false)) => return Ok(None),
+            Ok(None) => {}
+            Err(
+                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
+            ) => saw_unknown = true,
+            Err(error) => return Err(error),
         }
     }
-    if point_on_segment_exact(decisions, &point, a, b)?
-        && point_on_segment_exact(decisions, &point, c, d)?
+    let (u_axis, v_axis) = match projection {
+        Some(projection) => projection,
+        None if saw_unknown => {
+            return Err(HypermeshError::PredicateUndecided {
+                predicate: "proper projected edge crossing",
+            });
+        }
+        None => return Ok(None),
+    };
+
+    let ab = sub_vertex(b, a);
+    let cd = sub_vertex(d, c);
+    let ac = sub_vertex(c, a);
+    if !vectors_are_coplanar(decisions, &ab, &cd, &ac)? {
+        return Ok(None);
+    }
+    Ok(Some(3 - u_axis - v_axis))
+}
+
+fn vectors_are_coplanar(
+    decisions: &DecisionContext,
+    left: &[Real; 3],
+    right: &[Real; 3],
+    third: &[Real; 3],
+) -> HypermeshResult<bool> {
+    let exact = [left, right, third].map(|vector| vector.each_ref().map(Real::exact_rational_ref));
+    if let (
+        [Some(lx), Some(ly), Some(lz)],
+        [Some(rx), Some(ry), Some(rz)],
+        [Some(tx), Some(ty), Some(tz)],
+    ) = (exact[0], exact[1], exact[2])
     {
-        Ok(Some(point))
+        return Ok(Rational::signed_product_sum_ordering(
+            [true, true, true, false, false, false],
+            [
+                [lx, ry, tz],
+                [ly, rz, tx],
+                [lz, rx, ty],
+                [lz, ry, tx],
+                [ly, rx, tz],
+                [lx, rz, ty],
+            ],
+        )
+        .is_eq());
+    }
+
+    Ok(classify_real(
+        decisions,
+        &Real::signed_product_sum(
+            [true, true, true, false, false, false],
+            [
+                [&left[0], &right[1], &third[2]],
+                [&left[1], &right[2], &third[0]],
+                [&left[2], &right[0], &third[1]],
+                [&left[2], &right[1], &third[0]],
+                [&left[1], &right[0], &third[2]],
+                [&left[0], &right[2], &third[1]],
+            ],
+        ),
+    )? == Classification::On)
+}
+
+fn projected_segment_crossing(
+    decisions: &DecisionContext,
+    a: &OutputVertex,
+    b: &OutputVertex,
+    c: &OutputVertex,
+    d: &OutputVertex,
+    axes: [usize; 2],
+) -> HypermeshResult<Option<bool>> {
+    let opposite = |left, right| {
+        matches!(
+            (left, right),
+            (Classification::Negative, Classification::Positive)
+                | (Classification::Positive, Classification::Negative)
+        )
+    };
+    let same_side = |left, right| {
+        matches!(
+            (left, right),
+            (Classification::Negative, Classification::Negative)
+                | (Classification::Positive, Classification::Positive)
+        )
+    };
+
+    let c_side = projected_orientation(decisions, a, b, c, axes)?;
+    let d_side = projected_orientation(decisions, a, b, d, axes)?;
+    if same_side(c_side, d_side) {
+        return Ok(Some(false));
+    }
+    let a_side = projected_orientation(decisions, c, d, a, axes)?;
+    let b_side = projected_orientation(decisions, c, d, b, axes)?;
+    if same_side(a_side, b_side) {
+        return Ok(Some(false));
+    }
+    if opposite(c_side, d_side) && opposite(a_side, b_side) {
+        Ok(Some(true))
     } else {
         Ok(None)
     }
 }
 
-fn split_edges_at_vertex(soup: &mut BooleanMesh, edges: &[[usize; 2]], vertex: usize) {
-    let mut new_triangles = Vec::new();
-    let mut new_sources = Vec::new();
-    let mut kept = Vec::new();
-    let mut kept_sources = Vec::new();
-    for (face_index, triangle) in soup.triangles.iter().enumerate() {
-        let mut split = false;
-        for edge_index in 0..3 {
-            let ea = triangle[edge_index];
-            let eb = triangle[(edge_index + 1) % 3];
-            let ec = triangle[(edge_index + 2) % 3];
-            if edges.contains(&sorted_edge([ea, eb]))
-                && vertex != ea
-                && vertex != eb
-                && vertex != ec
-            {
-                new_triangles.push([ea, vertex, ec]);
-                new_triangles.push([vertex, eb, ec]);
-                new_sources.push(soup.sources[face_index]);
-                new_sources.push(soup.sources[face_index]);
-                split = true;
-                break;
-            }
+fn projected_orientation(
+    decisions: &DecisionContext,
+    from: &OutputVertex,
+    to: &OutputVertex,
+    point: &OutputVertex,
+    [u_axis, v_axis]: [usize; 2],
+) -> HypermeshResult<Classification> {
+    let [from_u, from_v, to_u, to_v, point_u, point_v] = [
+        vertex_axis(from, u_axis),
+        vertex_axis(from, v_axis),
+        vertex_axis(to, u_axis),
+        vertex_axis(to, v_axis),
+        vertex_axis(point, u_axis),
+        vertex_axis(point, v_axis),
+    ];
+    orientation2(decisions, from_u, from_v, to_u, to_v, point_u, point_v)
+}
+
+fn orientation2(
+    decisions: &DecisionContext,
+    from_u: &Real,
+    from_v: &Real,
+    to_u: &Real,
+    to_v: &Real,
+    point_u: &Real,
+    point_v: &Real,
+) -> HypermeshResult<Classification> {
+    if let [
+        Some(from_u),
+        Some(from_v),
+        Some(to_u),
+        Some(to_v),
+        Some(point_u),
+        Some(point_v),
+    ] = [
+        from_u.exact_rational_ref(),
+        from_v.exact_rational_ref(),
+        to_u.exact_rational_ref(),
+        to_v.exact_rational_ref(),
+        point_u.exact_rational_ref(),
+        point_v.exact_rational_ref(),
+    ] {
+        if let Some(sign) =
+            Real::certified_rational_line2_sign([from_u, from_v], [to_u, to_v], [point_u, point_v])
+        {
+            return Ok(match sign {
+                RealSign::Negative => Classification::Negative,
+                RealSign::Zero => Classification::On,
+                RealSign::Positive => Classification::Positive,
+            });
         }
-        if !split {
-            kept.push(*triangle);
-            kept_sources.push(soup.sources[face_index]);
-        }
+        return Ok(classification_from_ordering(
+            Rational::signed_product_sum_ordering(
+                [true, true, true, false, false, false],
+                [
+                    [to_u, point_v],
+                    [from_u, to_v],
+                    [from_v, point_u],
+                    [from_v, to_u],
+                    [to_v, point_u],
+                    [from_u, point_v],
+                ],
+            ),
+        ));
     }
-    kept.extend(new_triangles);
-    kept_sources.extend(new_sources);
-    soup.triangles = kept;
-    soup.sources = kept_sources;
+
+    let direction_u = to_u - from_u;
+    let direction_v = to_v - from_v;
+    let point_u = point_u - from_u;
+    let point_v = point_v - from_v;
+    classify_real(
+        decisions,
+        &Real::signed_product_sum(
+            [true, false],
+            [[&direction_u, &point_v], [&direction_v, &point_u]],
+        ),
+    )
+}
+
+fn classification_from_ordering(ordering: std::cmp::Ordering) -> Classification {
+    match ordering {
+        std::cmp::Ordering::Less => Classification::Negative,
+        std::cmp::Ordering::Equal => Classification::On,
+        std::cmp::Ordering::Greater => Classification::Positive,
+    }
 }
 
 fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
@@ -3025,30 +4480,6 @@ fn dominant_segment_axis(
     Ok(best)
 }
 
-fn certified_nonzero_component_axis(
-    decisions: &DecisionContext,
-    values: &[Real; 3],
-) -> HypermeshResult<Option<usize>> {
-    let mut saw_unknown = false;
-    for (axis, value) in values.iter().enumerate() {
-        match classify_real(decisions, value) {
-            Ok(Classification::Negative | Classification::Positive) => return Ok(Some(axis)),
-            Ok(Classification::On) => {}
-            Err(
-                HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification,
-            ) => saw_unknown = true,
-            Err(error) => return Err(error),
-        }
-    }
-    if saw_unknown {
-        Err(HypermeshError::PredicateUndecided {
-            predicate: "nonzero vector component",
-        })
-    } else {
-        Ok(None)
-    }
-}
-
 fn certify_positive_signed_volume(
     decisions: &DecisionContext,
     soup: &BooleanMesh,
@@ -3103,17 +4534,6 @@ fn cross_arrays(left: &[Real; 3], right: &[Real; 3]) -> [Real; 3] {
     ]
 }
 
-fn dot_arrays(left: &[Real; 3], right: &[Real; 3]) -> Real {
-    Real::signed_product_sum(
-        [true; 3],
-        [
-            [&left[0], &right[0]],
-            [&left[1], &right[1]],
-            [&left[2], &right[2]],
-        ],
-    )
-}
-
 fn vertex_axis(vertex: &OutputVertex, axis: usize) -> &Real {
     match axis {
         0 => &vertex.x,
@@ -3144,6 +4564,24 @@ mod tests {
             x: r(x),
             y: r(y),
             z: r(z),
+        }
+    }
+
+    fn ovx(x: Real, y: i32, z: i32) -> OutputVertex {
+        OutputVertex {
+            x,
+            y: r(y),
+            z: r(z),
+        }
+    }
+
+    fn for_each_policy(mut test: impl FnMut(&DecisionContext)) {
+        for policy in [
+            crate::PredicatePolicy::STRICT,
+            crate::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            test(&DecisionContext::new(&context));
         }
     }
 
@@ -3440,6 +4878,57 @@ mod tests {
     }
 
     #[test]
+    fn tjunction_scan_keeps_exact_points_collapsed_by_f64_and_reverses_the_chain() {
+        let base = Real::from(1_i64 << 60);
+        let soup = BooleanMesh {
+            vertices: vec![
+                ovx(base.clone(), 0, 0),
+                ovx(&base + &Real::from(2), 0, 0),
+                ovx(base.clone(), 1, 0),
+                ovx(&base + &Real::one(), 0, 0),
+            ],
+            triangles: vec![[1, 0, 2]],
+            sources: vec![TriangleSource::default()],
+        };
+        let approximate = exact_output_vertices_f64(&soup.vertices).unwrap();
+        assert_eq!(approximate[0][0], approximate[1][0]);
+        assert_eq!(approximate[0][0], approximate[3][0]);
+
+        for_each_policy(|decisions| {
+            let mut resolved = soup.clone();
+
+            assert!(split_one_tjunction_pass(decisions, &mut resolved).unwrap());
+            assert_eq!(resolved.triangles, vec![[1, 3, 2], [3, 0, 2]]);
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
+    }
+
+    #[test]
+    fn tjunction_chain_uses_policy_aware_axis_order_without_rational_coordinates() {
+        let sqrt_two = Real::from(2).sqrt().unwrap();
+        let vertices = vec![
+            ov(0, 0, 0),
+            ovx(&sqrt_two * &Real::from(2), 0, 0),
+            ovx(sqrt_two, 0, 0),
+        ];
+        assert!(exact_output_vertices_f64(&vertices).is_none());
+
+        for_each_policy(|decisions| {
+            let axis_order = sorted_vertex_indices_by_axis(decisions, &vertices).unwrap();
+            let chain = build_split_edge_chain(
+                decisions,
+                &vertices,
+                SplitEdgeSearch::AxisOrder(&axis_order),
+                [0, 1],
+            )
+            .unwrap();
+
+            assert_eq!(chain.subedges().collect::<Vec<_>>(), vec![[0, 2], [2, 1]]);
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
+    }
+
+    #[test]
     fn internal_resolution_runs_until_the_finite_event_set_is_empty() {
         let soup = BooleanMesh {
             vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
@@ -3455,7 +4944,7 @@ mod tests {
 
     #[test]
     fn crossing_discovery_batches_independent_events() {
-        let mut soup = BooleanMesh {
+        let soup = BooleanMesh {
             vertices: vec![
                 ov(-2, 0, 0),
                 ov(2, 0, 0),
@@ -3474,12 +4963,66 @@ mod tests {
             sources: vec![TriangleSource::default(); 4],
         };
 
-        assert!(
-            split_edge_crossing_events(&crate::test_support::approximate_decisions(), &mut soup)
-                .unwrap()
-        );
-        assert!(soup.vertices.contains(&ov(0, 0, 0)));
-        assert!(soup.vertices.contains(&ov(10, 0, 0)));
+        for_each_policy(|decisions| {
+            let mut resolved = soup.clone();
+            assert!(split_edge_crossing_events(decisions, &mut resolved).unwrap());
+            assert!(resolved.vertices.contains(&ov(0, 0, 0)));
+            assert!(resolved.vertices.contains(&ov(10, 0, 0)));
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
+    }
+
+    #[test]
+    fn crossing_discovery_keeps_exact_events_collapsed_by_f64() {
+        let base = Real::from(1_i64 << 60);
+        let soup = BooleanMesh {
+            vertices: vec![
+                ovx(base.clone(), 0, 0),
+                ovx(&base + &Real::from(2), 0, 0),
+                ovx(base.clone(), -1, 0),
+                ovx(&base + &Real::one(), -1, 0),
+                ovx(&base + &Real::one(), 1, 0),
+                ovx(&base + &Real::from(2), -1, 0),
+            ],
+            triangles: vec![[0, 1, 2], [3, 4, 5]],
+            sources: vec![TriangleSource::default(); 2],
+        };
+        let approximate = exact_output_vertices_f64(&soup.vertices).unwrap();
+        assert_eq!(approximate[0][0], approximate[1][0]);
+        assert_eq!(approximate[0][0], approximate[3][0]);
+
+        for_each_policy(|decisions| {
+            let mut resolved = soup.clone();
+            assert!(split_edge_crossing_events(decisions, &mut resolved).unwrap());
+            let expected = ovx(&base + &Real::one(), 0, 0);
+            assert!(
+                resolved
+                    .vertices
+                    .iter()
+                    .any(|vertex| { output_vertices_equal(decisions, vertex, &expected).unwrap() })
+            );
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
+    }
+
+    #[test]
+    fn projected_crossing_rejects_skew_symbolic_edges_under_both_policies() {
+        let sqrt_two = Real::from(2).sqrt().unwrap();
+        let [a, b, c, d] = [
+            ovx(-sqrt_two.clone(), 0, 0),
+            ovx(sqrt_two, 0, 0),
+            ov(0, -1, -1),
+            ov(0, 1, 2),
+        ];
+
+        for_each_policy(|decisions| {
+            assert!(
+                proper_segment_intersection_after_bounds_overlap(decisions, &a, &b, &c, &d, None,)
+                    .unwrap()
+                    .is_none()
+            );
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
     }
 
     #[test]
@@ -3891,7 +5434,7 @@ mod tests {
             &crate::test_support::approximate_decisions(),
             &mut cache,
             &vertices,
-            &axis_order,
+            SplitEdgeSearch::AxisOrder(&axis_order),
             [0, 1],
         )
         .unwrap()
@@ -3901,7 +5444,7 @@ mod tests {
             &crate::test_support::approximate_decisions(),
             &mut cache,
             &vertices,
-            &axis_order,
+            SplitEdgeSearch::AxisOrder(&axis_order),
             [1, 0],
         )
         .unwrap()

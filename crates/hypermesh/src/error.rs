@@ -121,6 +121,11 @@ pub enum HypermeshError {
         /// Number of undirected edges used by more than two triangles.
         non_manifold_edges: usize,
     },
+    /// Exact planar subdivision of overlapping coplanar output faces failed.
+    OutputPlanarizationFailed {
+        /// Planar triangulation stage that could not be completed.
+        reason: &'static str,
+    },
     /// A homogeneous point had zero or unknown homogeneous scale.
     PointAtInfinity,
 }
@@ -205,6 +210,9 @@ impl fmt::Display for HypermeshError {
                 f,
                 "output has boundary: {boundary_edges} singleton edges, {unbalanced_edges} directed edge imbalances, {non_manifold_edges} non-manifold edges"
             ),
+            Self::OutputPlanarizationFailed { reason } => {
+                write!(f, "could not planarize coplanar output faces: {reason}")
+            }
             Self::PointAtInfinity => f.write_str("homogeneous point is at infinity"),
         }
     }

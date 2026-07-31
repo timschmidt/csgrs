@@ -944,6 +944,7 @@ fn is_retryable_boolean_path_error(error: &HypermeshError) -> bool {
             | HypermeshError::ReferencePropagationFailed
             | HypermeshError::SubdivisionDepthLimit { .. }
             | HypermeshError::OpenOutput { .. }
+            | HypermeshError::OutputPlanarizationFailed { .. }
             | HypermeshError::PointAtInfinity
     )
 }
@@ -953,7 +954,12 @@ fn retry_boolean_path<T>(
     fallback: impl FnOnce() -> HypermeshResult<T>,
 ) -> HypermeshResult<T> {
     match result {
-        Err(error) if is_retryable_boolean_path_error(&error) => fallback(),
+        Err(error) if is_retryable_boolean_path_error(&error) => {
+            if std::env::var_os("HYPERMESH_OUTPUT_DIAGNOSTIC").is_some() {
+                eprintln!("retrying boolean path after: {error:?}");
+            }
+            fallback()
+        }
         result => result,
     }
 }

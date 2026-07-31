@@ -14,6 +14,7 @@ categories = ["mathematics", "graphics", "algorithms"]
 hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
 hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
+hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut"] }
 
 [dev-dependencies]
 boolmesh = "=0.1.9"
