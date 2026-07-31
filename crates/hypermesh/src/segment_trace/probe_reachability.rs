@@ -7,7 +7,7 @@ use super::probe_cache::{
     cached_optional_halfspace_feasibility_report_with, cached_surface_query_with,
 };
 use super::{
-    AXIS_ORDERINGS, DefinitionCycleGuardReachabilityCache,
+    AXIS_ORDERINGS, AdjacentCellQueryCaches, DefinitionCycleGuardReachabilityCache,
     DefinitionCycleGuardReachabilityCacheEntry, DefinitionReachabilityBucket,
     DefinitionReachabilityCache, DefinitionReachabilityCacheEntry, DetourArrangementCellState,
     DetourPathPointBuckets, DetourTarget, DetourTargetFamilyCache, DetourTargetFamilyCacheEntry,
@@ -523,48 +523,14 @@ pub(super) fn probe_reaches_adjacent_cell_from_interior(
     host_support: &Plane,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    let mut surface_cache = Vec::new();
-    let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
-    let mut plane_replacement_reachability_paths = PlaneReplacementReachabilityPathCache::default();
-    let mut plane_replacement_reachability_steps = PlaneReplacementReachabilityStepCache::default();
-    let mut plane_replacement_no_nested_ordering_warmups =
-        PlaneReplacementNoNestedOrderingWarmupCache::default();
-    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
-    let mut definition_cycle_guard_reachability = DefinitionCycleGuardReachabilityCache::default();
-    let mut definition_no_step_detour_reachability = DefinitionReachabilityCache::default();
-    let mut definition_no_plane_replacement_cycle_guard =
-        DefinitionCycleGuardReachabilityCache::default();
-    let mut definition_no_plane_replacement_reachability = DefinitionReachabilityCache::default();
-    let mut halfspace_reports = Vec::new();
-    let mut halfspace_seed_families = Vec::new();
-    let mut no_step_detour_target_families = DetourTargetFamilyCache::default();
-    let mut definition_full_no_detour_reachability = DefinitionReachabilityCache::default();
-    let mut definition_no_detour_reachability = DefinitionReachabilityCache::default();
-    let mut direct_probe_reachability = Vec::new();
-    let mut detour_target_families = DetourTargetFamilyCache::default();
+    let mut caches = AdjacentCellQueryCaches::default();
     probe_reaches_adjacent_cell_from_interior_with_caches(
         decisions,
         interior,
         probe,
         host_support,
         polygons,
-        &mut surface_cache,
-        &mut plane_replacement_affine,
-        &mut plane_replacement_reachability_paths,
-        &mut plane_replacement_reachability_steps,
-        &mut plane_replacement_no_nested_ordering_warmups,
-        &mut interior_box_axis_intervals,
-        &mut definition_cycle_guard_reachability,
-        &mut definition_no_step_detour_reachability,
-        &mut definition_no_plane_replacement_cycle_guard,
-        &mut definition_no_plane_replacement_reachability,
-        &mut halfspace_reports,
-        &mut halfspace_seed_families,
-        &mut no_step_detour_target_families,
-        &mut definition_full_no_detour_reachability,
-        &mut definition_no_detour_reachability,
-        &mut direct_probe_reachability,
-        &mut detour_target_families,
+        &mut caches,
         None,
     )
 }
@@ -575,23 +541,7 @@ pub(super) fn probe_reaches_adjacent_cell_from_interior_with_caches(
     probe: &ProbePoint,
     host_support: &Plane,
     polygons: &[ConvexPolygon],
-    surface_cache: &mut Vec<SurfaceCacheEntry>,
-    plane_replacement_affine: &mut PlaneReplacementAffineCache,
-    plane_replacement_reachability_paths: &mut PlaneReplacementReachabilityPathCache,
-    plane_replacement_reachability_steps: &mut PlaneReplacementReachabilityStepCache,
-    plane_replacement_no_nested_ordering_warmups: &mut PlaneReplacementNoNestedOrderingWarmupCache,
-    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
-    definition_cycle_guard_reachability: &mut DefinitionCycleGuardReachabilityCache,
-    definition_no_step_detour_reachability: &mut DefinitionReachabilityCache,
-    definition_no_plane_replacement_cycle_guard: &mut DefinitionCycleGuardReachabilityCache,
-    definition_no_plane_replacement_reachability: &mut DefinitionReachabilityCache,
-    halfspace_reports: &mut Vec<HalfspaceReportCacheEntry>,
-    halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
-    no_step_detour_target_families: &mut DetourTargetFamilyCache,
-    definition_full_no_detour_reachability: &mut DefinitionReachabilityCache,
-    definition_no_detour_reachability: &mut DefinitionReachabilityCache,
-    direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
-    detour_target_families: &mut DetourTargetFamilyCache,
+    caches: &mut AdjacentCellQueryCaches,
     trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
     if !point_is_inside_optional_trace_bounds(decisions, &interior.point, trace_bounds)?
@@ -602,6 +552,25 @@ pub(super) fn probe_reaches_adjacent_cell_from_interior_with_caches(
     let start_family = endpoint_definition_family(&interior.point, &interior.planes)?;
     let end_family = endpoint_definition_family(&probe.point, &probe.planes)?;
     let saw_unknown = start_family.saw_unknown || end_family.saw_unknown;
+    let AdjacentCellQueryCaches {
+        halfspace_reports,
+        halfspace_seed_families,
+        probe_surface: surface_cache,
+        direct_probe_reachability,
+        interior_box_axis_intervals,
+        plane_replacement_affine,
+        plane_replacement_reachability_paths,
+        plane_replacement_reachability_steps,
+        plane_replacement_no_nested_ordering_warmups,
+        definition_cycle_guard_reachability,
+        definition_no_step_detour_reachability,
+        definition_no_plane_replacement_cycle_guard,
+        definition_no_plane_replacement_reachability,
+        no_step_detour_target_families,
+        definition_full_no_detour_reachability,
+        definition_no_detour_reachability,
+        detour_target_families,
+    } = caches;
 
     let result = probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
         decisions,

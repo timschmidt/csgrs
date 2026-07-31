@@ -634,7 +634,7 @@ fn raw_from_manifold(manifold: &ManifoldRs) -> RawMesh {
     }
 }
 
-fn box_mesh(min: [f64; 3], max: [f64; 3]) -> RawMesh {
+pub fn box_mesh(min: [f64; 3], max: [f64; 3]) -> RawMesh {
     RawMesh {
         positions: vec![
             [min[0], min[1], min[2]],
@@ -752,7 +752,7 @@ fn subdivide_raw_midpoints(mesh: &RawMesh) -> RawMesh {
     }
 }
 
-fn parse_triangle_obj(source: &str) -> RawMesh {
+pub fn parse_triangle_obj(source: &str) -> RawMesh {
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
 

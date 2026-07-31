@@ -3132,14 +3132,18 @@ fn trace_probe_winding_with_query_caches_reuses_lower_trace_state_for_core_leaf_
     .expect("leaf should have a positive-side probe");
     let mut query_caches = LeafProbeQueryCaches::default();
     let LeafProbeQueryCaches {
-        probe_surface,
         axis_ordered_segment_traces,
-        plane_replacement_affine,
         plane_replacement_trace_steps,
         definition_no_detour_trace,
-        detour_target_families,
+        adjacent_cell,
         ..
     } = &mut query_caches;
+    let AdjacentCellQueryCaches {
+        probe_surface,
+        plane_replacement_affine,
+        detour_target_families,
+        ..
+    } = adjacent_cell;
 
     let first = trace_probe_winding_with_caches(
         &crate::test_support::approximate_decisions(),
@@ -3223,26 +3227,23 @@ fn probe_reachability_with_query_caches_reuses_lower_trace_state_for_core_leaf_w
     .find(|probe| probe.side == Classification::Positive)
     .expect("leaf should have a positive-side probe");
     let mut query_caches = LeafProbeQueryCaches::default();
-    let LeafProbeQueryCaches {
-        probe_surface,
-        plane_replacement_affine,
-        plane_replacement_reachability_paths,
-        plane_replacement_reachability_steps,
-        plane_replacement_no_nested_ordering_warmups,
-        interior_box_axis_intervals,
-        definition_cycle_guard_reachability,
-        definition_no_step_detour_reachability,
-        definition_no_plane_replacement_cycle_guard,
-        definition_no_plane_replacement_reachability,
-        halfspace_reports,
-        halfspace_seed_families,
-        no_step_detour_target_families,
-        definition_full_no_detour_reachability,
-        definition_no_detour_reachability,
-        direct_probe_reachability,
-        detour_target_families,
-        ..
-    } = &mut query_caches;
+    let cache_lengths = |caches: &AdjacentCellQueryCaches| {
+        [
+            caches.probe_surface.len(),
+            caches.plane_replacement_affine.len(),
+            caches.plane_replacement_reachability_paths.len(),
+            caches.plane_replacement_reachability_steps.len(),
+            caches.plane_replacement_no_nested_ordering_warmups.len(),
+            caches.interior_box_axis_intervals.len(),
+            caches.definition_no_step_detour_reachability.len(),
+            caches.definition_no_plane_replacement_reachability.len(),
+            caches.no_step_detour_target_families.len(),
+            caches.definition_full_no_detour_reachability.len(),
+            caches.definition_no_detour_reachability.len(),
+            caches.direct_probe_reachability.len(),
+            caches.detour_target_families.len(),
+        ]
+    };
 
     let first = probe_reaches_adjacent_cell_from_interior_with_caches(
         &crate::test_support::approximate_decisions(),
@@ -3250,41 +3251,11 @@ fn probe_reachability_with_query_caches_reuses_lower_trace_state_for_core_leaf_w
         &probe,
         &support,
         &[wall.clone()],
-        probe_surface,
-        plane_replacement_affine,
-        plane_replacement_reachability_paths,
-        plane_replacement_reachability_steps,
-        plane_replacement_no_nested_ordering_warmups,
-        interior_box_axis_intervals,
-        definition_cycle_guard_reachability,
-        definition_no_step_detour_reachability,
-        definition_no_plane_replacement_cycle_guard,
-        definition_no_plane_replacement_reachability,
-        halfspace_reports,
-        halfspace_seed_families,
-        no_step_detour_target_families,
-        definition_full_no_detour_reachability,
-        definition_no_detour_reachability,
-        direct_probe_reachability,
-        detour_target_families,
+        &mut query_caches.adjacent_cell,
         Some(&bounds),
     )
     .unwrap();
-    let after_first = [
-        probe_surface.len(),
-        plane_replacement_affine.len(),
-        plane_replacement_reachability_paths.len(),
-        plane_replacement_reachability_steps.len(),
-        plane_replacement_no_nested_ordering_warmups.len(),
-        interior_box_axis_intervals.len(),
-        definition_no_step_detour_reachability.len(),
-        definition_no_plane_replacement_reachability.len(),
-        no_step_detour_target_families.len(),
-        definition_full_no_detour_reachability.len(),
-        definition_no_detour_reachability.len(),
-        direct_probe_reachability.len(),
-        detour_target_families.len(),
-    ];
+    let after_first = cache_lengths(&query_caches.adjacent_cell);
 
     let second = probe_reaches_adjacent_cell_from_interior_with_caches(
         &crate::test_support::approximate_decisions(),
@@ -3292,41 +3263,11 @@ fn probe_reachability_with_query_caches_reuses_lower_trace_state_for_core_leaf_w
         &probe,
         &support,
         &[wall],
-        probe_surface,
-        plane_replacement_affine,
-        plane_replacement_reachability_paths,
-        plane_replacement_reachability_steps,
-        plane_replacement_no_nested_ordering_warmups,
-        interior_box_axis_intervals,
-        definition_cycle_guard_reachability,
-        definition_no_step_detour_reachability,
-        definition_no_plane_replacement_cycle_guard,
-        definition_no_plane_replacement_reachability,
-        halfspace_reports,
-        halfspace_seed_families,
-        no_step_detour_target_families,
-        definition_full_no_detour_reachability,
-        definition_no_detour_reachability,
-        direct_probe_reachability,
-        detour_target_families,
+        &mut query_caches.adjacent_cell,
         Some(&bounds),
     )
     .unwrap();
-    let after_second = [
-        probe_surface.len(),
-        plane_replacement_affine.len(),
-        plane_replacement_reachability_paths.len(),
-        plane_replacement_reachability_steps.len(),
-        plane_replacement_no_nested_ordering_warmups.len(),
-        interior_box_axis_intervals.len(),
-        definition_no_step_detour_reachability.len(),
-        definition_no_plane_replacement_reachability.len(),
-        no_step_detour_target_families.len(),
-        definition_full_no_detour_reachability.len(),
-        definition_no_detour_reachability.len(),
-        direct_probe_reachability.len(),
-        detour_target_families.len(),
-    ];
+    let after_second = cache_lengths(&query_caches.adjacent_cell);
 
     assert_eq!(first, second);
     assert_eq!(after_first, after_second);

@@ -1,18 +1,14 @@
 //! Leaf classification and certified adjacent-probe search.
 
 use super::probe_cache::{
-    DirectProbeReachabilityCacheEntry, HalfspaceReportCacheEntry, HalfspaceSeedFamilyCacheEntry,
     SurfaceCacheEntry, cached_direct_probe_reachability_with,
     cached_halfspace_cell_seed_families_from_optional_report_with,
     cached_optional_halfspace_feasibility_report_with, cached_surface_query_with,
 };
 use super::{
-    AxisOrderedSegmentTraceCacheEntry, AxisProbeStopCacheEntry,
-    DefinitionCycleGuardReachabilityCache, DefinitionNoDetourTraceCacheEntry,
-    DefinitionReachabilityCache, DetourTargetFamilyCache, InteriorBoxAxisIntervalsCache,
-    InteriorLeafPoint, LeafProbeQueryCaches, NormalProbeStopCacheEntry,
-    PlaneReplacementAffineCache, PlaneReplacementNoNestedOrderingWarmupCache,
-    PlaneReplacementReachabilityPathCache, PlaneReplacementReachabilityStepCache,
+    AdjacentCellQueryCaches, AxisOrderedSegmentTraceCacheEntry, AxisProbeStopCacheEntry,
+    DefinitionNoDetourTraceCacheEntry, DetourTargetFamilyCache, InteriorLeafPoint,
+    LeafProbeQueryCaches, NormalProbeStopCacheEntry, PlaneReplacementAffineCache,
     PlaneReplacementStepCacheEntry, ProbePoint, ProbeReachabilityCacheEntry,
     ProbeWindingCacheEntry, active_planes_from_optional_report,
     adjacent_axis_probe_stop_values_with_queries, adjacent_normal_probe_stop_values_with_queries,
@@ -447,7 +443,6 @@ fn search_adjacent_normal_probe_winding_with_queries(
             if let Some(winding) = try_leaf_probe_family_with_queries(
                 decisions,
                 point,
-                positive_side,
                 Ok(vec![direct_probe]),
                 support,
                 ref_point,
@@ -512,7 +507,6 @@ fn search_adjacent_normal_probe_winding_with_queries(
             if let Some(winding) = try_leaf_probe_family_with_queries(
                 decisions,
                 point,
-                positive_side,
                 probes,
                 support,
                 ref_point,
@@ -579,7 +573,6 @@ fn search_adjacent_normal_probe_winding_with_queries(
         if let Some(winding) = try_leaf_probe_family_with_queries(
             decisions,
             point,
-            positive_side,
             probes,
             support,
             ref_point,
@@ -769,14 +762,18 @@ fn trace_certified_adjacent_probe_winding(
     let LeafProbeQueryCaches {
         trace_bounds,
         probe_winding,
-        probe_surface,
         axis_ordered_segment_traces,
-        plane_replacement_affine,
         plane_replacement_trace_steps,
         definition_no_detour_trace,
-        detour_target_families,
+        adjacent_cell,
         ..
     } = probe_query_caches;
+    let AdjacentCellQueryCaches {
+        probe_surface,
+        plane_replacement_affine,
+        detour_target_families,
+        ..
+    } = adjacent_cell;
     let trace_bounds = trace_bounds
         .as_ref()
         .ok_or(HypermeshError::UnknownClassification)?;
@@ -831,7 +828,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
     let mut local_unknown = false;
     let report = cached_optional_halfspace_feasibility_report_with(
         decisions,
-        &mut probe_query_caches.halfspace_reports,
+        &mut probe_query_caches.adjacent_cell.halfspace_reports,
         &halfspaces,
         &mut local_unknown,
     )?;
@@ -848,7 +845,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         cached_halfspace_cell_seed_families_from_optional_report_with(
             decisions,
-            &mut probe_query_caches.halfspace_seed_families,
+            &mut probe_query_caches.adjacent_cell.halfspace_seed_families,
             corridor,
             &halfspaces,
             report.as_ref(),
@@ -865,66 +862,38 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
      -> HypermeshResult<Option<WindingNumberVector>> {
         saw_any_probe = true;
         let probe_fallback = probe.uncertified_definition_fallback;
-        let LeafProbeQueryCaches {
-            trace_bounds,
-            probe_winding,
-            probe_surface,
-            probe_reachability,
-            axis_ordered_segment_traces,
-            plane_replacement_affine,
-            plane_replacement_trace_steps,
-            plane_replacement_reachability_paths,
-            plane_replacement_reachability_steps,
-            plane_replacement_no_nested_ordering_warmups,
-            interior_box_axis_intervals,
-            definition_cycle_guard_reachability,
-            definition_no_step_detour_reachability,
-            definition_no_plane_replacement_cycle_guard,
-            definition_no_plane_replacement_reachability,
-            halfspace_reports,
-            halfspace_seed_families,
-            no_step_detour_target_families,
-            definition_full_no_detour_reachability,
-            definition_no_detour_trace,
-            definition_no_detour_reachability,
-            direct_probe_reachability,
-            detour_target_families,
-            ..
-        } = probe_query_caches;
-        let trace_bounds = trace_bounds
-            .as_ref()
-            .ok_or(HypermeshError::UnknownClassification)?;
-
-        if cached_surface_query_with(probe_surface, &probe.point, || {
-            point_lies_on_traced_surface(decisions, &probe.point, polygons)
-        })? {
+        if cached_surface_query_with(
+            &mut probe_query_caches.adjacent_cell.probe_surface,
+            &probe.point,
+            || point_lies_on_traced_surface(decisions, &probe.point, polygons),
+        )? {
             if point.uncertified_definition_fallback || probe_fallback {
                 *local_unknown = true;
             }
             return Ok(None);
         }
 
-        let no_step_result =
+        let no_step_result = {
+            let trace_bounds = probe_query_caches
+                .trace_bounds
+                .as_ref()
+                .ok_or(HypermeshError::UnknownClassification)?;
             probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
                 decisions,
                 point,
                 &probe,
                 support,
                 polygons,
-                plane_replacement_affine,
-                plane_replacement_reachability_paths,
-                plane_replacement_reachability_steps,
-                definition_no_step_detour_reachability,
-                direct_probe_reachability,
+                &mut probe_query_caches.adjacent_cell,
                 trace_bounds,
-            );
+            )
+        };
         match no_step_result {
             Ok(true) => {
                 for deferred in deferred_probes.drain(..) {
                     if let Some(winding) = evaluate_leaf_probe_with_query_caches(
                         decisions,
                         point,
-                        positive_side,
                         deferred,
                         support,
                         ref_point,
@@ -932,29 +901,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                         ref_wnv,
                         polygons,
                         host_delta_w,
-                        probe_surface,
-                        probe_reachability,
-                        probe_winding,
-                        axis_ordered_segment_traces,
-                        plane_replacement_affine,
-                        plane_replacement_trace_steps,
-                        plane_replacement_reachability_paths,
-                        plane_replacement_reachability_steps,
-                        plane_replacement_no_nested_ordering_warmups,
-                        interior_box_axis_intervals,
-                        definition_cycle_guard_reachability,
-                        definition_no_step_detour_reachability,
-                        definition_no_plane_replacement_cycle_guard,
-                        definition_no_plane_replacement_reachability,
-                        halfspace_reports,
-                        halfspace_seed_families,
-                        no_step_detour_target_families,
-                        definition_full_no_detour_reachability,
-                        definition_no_detour_trace,
-                        definition_no_detour_reachability,
-                        direct_probe_reachability,
-                        detour_target_families,
-                        trace_bounds,
+                        probe_query_caches,
                         saw_unknown,
                     )? {
                         return Ok(Some(winding));
@@ -964,7 +911,6 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                     if let Some(winding) = evaluate_leaf_probe_with_query_caches(
                         decisions,
                         point,
-                        positive_side,
                         probe,
                         support,
                         ref_point,
@@ -972,29 +918,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                         ref_wnv,
                         polygons,
                         host_delta_w,
-                        probe_surface,
-                        probe_reachability,
-                        probe_winding,
-                        axis_ordered_segment_traces,
-                        plane_replacement_affine,
-                        plane_replacement_trace_steps,
-                        plane_replacement_reachability_paths,
-                        plane_replacement_reachability_steps,
-                        plane_replacement_no_nested_ordering_warmups,
-                        interior_box_axis_intervals,
-                        definition_cycle_guard_reachability,
-                        definition_no_step_detour_reachability,
-                        definition_no_plane_replacement_cycle_guard,
-                        definition_no_plane_replacement_reachability,
-                        halfspace_reports,
-                        halfspace_seed_families,
-                        no_step_detour_target_families,
-                        definition_full_no_detour_reachability,
-                        definition_no_detour_trace,
-                        definition_no_detour_reachability,
-                        direct_probe_reachability,
-                        detour_target_families,
-                        trace_bounds,
+                        probe_query_caches,
                         saw_unknown,
                     )? {
                         return Ok(Some(winding));
@@ -1179,7 +1103,6 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
     try_leaf_probe_family_with_queries(
         decisions,
         point,
-        positive_side,
         Ok(probes),
         support,
         ref_point,
@@ -1217,7 +1140,7 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
 
     let report = cached_optional_halfspace_feasibility_report_with(
         decisions,
-        &mut probe_query_caches.halfspace_reports,
+        &mut probe_query_caches.adjacent_cell.halfspace_reports,
         &halfspaces,
         saw_unknown,
     )?;
@@ -1249,7 +1172,6 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
     try_leaf_probe_family_with_queries(
         decisions,
         point,
-        positive_side,
         probe_result,
         support,
         ref_point,
@@ -1288,7 +1210,7 @@ fn try_strict_normal_seed_winding_with_queries(
 
     let report = cached_optional_halfspace_feasibility_report_with(
         decisions,
-        &mut probe_query_caches.halfspace_reports,
+        &mut probe_query_caches.adjacent_cell.halfspace_reports,
         &halfspaces,
         saw_unknown,
     )?;
@@ -1304,7 +1226,7 @@ fn try_strict_normal_seed_winding_with_queries(
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         cached_halfspace_cell_seed_families_from_optional_report_with(
             decisions,
-            &mut probe_query_caches.halfspace_seed_families,
+            &mut probe_query_caches.adjacent_cell.halfspace_seed_families,
             corridor,
             &halfspaces,
             report.as_ref(),
@@ -1345,7 +1267,6 @@ fn try_strict_normal_seed_winding_with_queries(
         if let Some(winding) = try_leaf_probe_family_with_queries(
             decisions,
             point,
-            positive_side,
             Ok(vec![probe]),
             support,
             ref_point,
@@ -1410,7 +1331,6 @@ fn try_strict_normal_seed_winding_with_queries(
             if let Some(winding) = try_leaf_probe_family_with_queries(
                 decisions,
                 point,
-                positive_side,
                 Ok(vec![probe]),
                 support,
                 ref_point,
@@ -1497,7 +1417,6 @@ fn try_strict_normal_seed_winding_with_queries(
                 if let Some(winding) = try_leaf_probe_family_with_queries(
                     decisions,
                     point,
-                    positive_side,
                     Ok(vec![probe]),
                     support,
                     ref_point,
@@ -1599,7 +1518,6 @@ fn search_adjacent_axis_probe_winding_with_queries(
             if let Some(winding) = try_leaf_probe_family_with_queries(
                 decisions,
                 point,
-                positive_side,
                 strict_axis_probe_targets(
                     decisions,
                     point,
@@ -1643,7 +1561,6 @@ fn search_adjacent_axis_probe_winding_with_queries(
         if let Some(winding) = try_leaf_probe_family_with_queries(
             decisions,
             point,
-            positive_side,
             strict_axis_probe_targets(
                 decisions,
                 point,
@@ -1694,7 +1611,7 @@ fn try_strict_axis_seed_winding_with_queries(
 
     let report = cached_optional_halfspace_feasibility_report_with(
         decisions,
-        &mut probe_query_caches.halfspace_reports,
+        &mut probe_query_caches.adjacent_cell.halfspace_reports,
         &halfspaces,
         saw_unknown,
     )?;
@@ -1708,7 +1625,7 @@ fn try_strict_axis_seed_winding_with_queries(
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         cached_halfspace_cell_seed_families_from_optional_report_with(
             decisions,
-            &mut probe_query_caches.halfspace_seed_families,
+            &mut probe_query_caches.adjacent_cell.halfspace_seed_families,
             corridor,
             &halfspaces,
             report.as_ref(),
@@ -1749,7 +1666,6 @@ fn try_strict_axis_seed_winding_with_queries(
         if let Some(winding) = try_leaf_probe_family_with_queries(
             decisions,
             point,
-            positive_side,
             Ok(vec![probe]),
             support,
             ref_point,
@@ -1810,7 +1726,6 @@ fn try_strict_axis_seed_winding_with_queries(
                 if let Some(winding) = try_leaf_probe_family_with_queries(
                     decisions,
                     point,
-                    positive_side,
                     Ok(vec![probe]),
                     support,
                     ref_point,
@@ -1833,7 +1748,6 @@ fn try_strict_axis_seed_winding_with_queries(
 fn try_leaf_probe_family_with_queries(
     decisions: &DecisionContext,
     point: &InteriorLeafPoint,
-    positive_side: bool,
     probes: HypermeshResult<Vec<ProbePoint>>,
     support: &Plane,
     ref_point: &Point3,
@@ -1844,35 +1758,6 @@ fn try_leaf_probe_family_with_queries(
     probe_query_caches: &mut LeafProbeQueryCaches,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
-    let LeafProbeQueryCaches {
-        trace_bounds,
-        probe_winding,
-        probe_surface,
-        probe_reachability,
-        axis_ordered_segment_traces,
-        plane_replacement_affine,
-        plane_replacement_trace_steps,
-        plane_replacement_reachability_paths,
-        plane_replacement_reachability_steps,
-        plane_replacement_no_nested_ordering_warmups,
-        interior_box_axis_intervals,
-        definition_cycle_guard_reachability,
-        definition_no_step_detour_reachability,
-        definition_no_plane_replacement_cycle_guard,
-        definition_no_plane_replacement_reachability,
-        halfspace_reports,
-        halfspace_seed_families,
-        no_step_detour_target_families,
-        definition_full_no_detour_reachability,
-        definition_no_detour_trace,
-        definition_no_detour_reachability,
-        direct_probe_reachability,
-        detour_target_families,
-        ..
-    } = probe_query_caches;
-    let trace_bounds = trace_bounds
-        .as_ref()
-        .ok_or(HypermeshError::UnknownClassification)?;
     let probes = match probes {
         Ok(probes) => probes,
         Err(HypermeshError::PredicateUndecided { .. } | HypermeshError::UnknownClassification) => {
@@ -1888,34 +1773,38 @@ fn try_leaf_probe_family_with_queries(
     let mut deferred_probes: Vec<ProbePoint> = Vec::new();
     for probe in probes {
         let probe_fallback = probe.uncertified_definition_fallback;
-        if cached_surface_query_with(probe_surface, &probe.point, || {
-            point_lies_on_traced_surface(decisions, &probe.point, polygons)
-        })? {
+        if cached_surface_query_with(
+            &mut probe_query_caches.adjacent_cell.probe_surface,
+            &probe.point,
+            || point_lies_on_traced_surface(decisions, &probe.point, polygons),
+        )? {
             if point.uncertified_definition_fallback || probe_fallback {
                 *saw_unknown = true;
             }
             continue;
         }
 
-        match probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
-            decisions,
-            point,
-            &probe,
-            support,
-            polygons,
-            plane_replacement_affine,
-            plane_replacement_reachability_paths,
-            plane_replacement_reachability_steps,
-            definition_no_step_detour_reachability,
-            direct_probe_reachability,
-            trace_bounds,
-        ) {
+        let no_step_result = {
+            let trace_bounds = probe_query_caches
+                .trace_bounds
+                .as_ref()
+                .ok_or(HypermeshError::UnknownClassification)?;
+            probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
+                decisions,
+                point,
+                &probe,
+                support,
+                polygons,
+                &mut probe_query_caches.adjacent_cell,
+                trace_bounds,
+            )
+        };
+        match no_step_result {
             Ok(true) => {
                 for deferred in deferred_probes.drain(..) {
                     if let Some(winding) = evaluate_leaf_probe_with_query_caches(
                         decisions,
                         point,
-                        positive_side,
                         deferred,
                         support,
                         ref_point,
@@ -1923,29 +1812,7 @@ fn try_leaf_probe_family_with_queries(
                         ref_wnv,
                         polygons,
                         host_delta_w,
-                        probe_surface,
-                        probe_reachability,
-                        probe_winding,
-                        axis_ordered_segment_traces,
-                        plane_replacement_affine,
-                        plane_replacement_trace_steps,
-                        plane_replacement_reachability_paths,
-                        plane_replacement_reachability_steps,
-                        plane_replacement_no_nested_ordering_warmups,
-                        interior_box_axis_intervals,
-                        definition_cycle_guard_reachability,
-                        definition_no_step_detour_reachability,
-                        definition_no_plane_replacement_cycle_guard,
-                        definition_no_plane_replacement_reachability,
-                        halfspace_reports,
-                        halfspace_seed_families,
-                        no_step_detour_target_families,
-                        definition_full_no_detour_reachability,
-                        definition_no_detour_trace,
-                        definition_no_detour_reachability,
-                        direct_probe_reachability,
-                        detour_target_families,
-                        trace_bounds,
+                        probe_query_caches,
                         saw_unknown,
                     )? {
                         return Ok(Some(winding));
@@ -1968,7 +1835,6 @@ fn try_leaf_probe_family_with_queries(
         if let Some(winding) = evaluate_leaf_probe_with_query_caches(
             decisions,
             point,
-            positive_side,
             probe,
             support,
             ref_point,
@@ -1976,29 +1842,7 @@ fn try_leaf_probe_family_with_queries(
             ref_wnv,
             polygons,
             host_delta_w,
-            probe_surface,
-            probe_reachability,
-            probe_winding,
-            axis_ordered_segment_traces,
-            plane_replacement_affine,
-            plane_replacement_trace_steps,
-            plane_replacement_reachability_paths,
-            plane_replacement_reachability_steps,
-            plane_replacement_no_nested_ordering_warmups,
-            interior_box_axis_intervals,
-            definition_cycle_guard_reachability,
-            definition_no_step_detour_reachability,
-            definition_no_plane_replacement_cycle_guard,
-            definition_no_plane_replacement_reachability,
-            halfspace_reports,
-            halfspace_seed_families,
-            no_step_detour_target_families,
-            definition_full_no_detour_reachability,
-            definition_no_detour_trace,
-            definition_no_detour_reachability,
-            direct_probe_reachability,
-            detour_target_families,
-            trace_bounds,
+            probe_query_caches,
             saw_unknown,
         )? {
             return Ok(Some(winding));
@@ -2011,7 +1855,6 @@ fn try_leaf_probe_family_with_queries(
 fn evaluate_leaf_probe_with_query_caches(
     decisions: &DecisionContext,
     point: &InteriorLeafPoint,
-    _positive_side: bool,
     probe: ProbePoint,
     support: &Plane,
     ref_point: &Point3,
@@ -2019,90 +1862,52 @@ fn evaluate_leaf_probe_with_query_caches(
     ref_wnv: &[i32],
     polygons: &[ConvexPolygon],
     host_delta_w: &[i32],
-    probe_surface: &mut Vec<SurfaceCacheEntry>,
-    probe_reachability: &mut Vec<ProbeReachabilityCacheEntry>,
-    probe_winding: &mut Vec<ProbeWindingCacheEntry>,
-    axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
-    plane_replacement_affine: &mut PlaneReplacementAffineCache,
-    plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
-    plane_replacement_reachability_paths: &mut PlaneReplacementReachabilityPathCache,
-    plane_replacement_reachability_steps: &mut PlaneReplacementReachabilityStepCache,
-    plane_replacement_no_nested_ordering_warmups: &mut PlaneReplacementNoNestedOrderingWarmupCache,
-    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
-    definition_cycle_guard_reachability: &mut DefinitionCycleGuardReachabilityCache,
-    definition_no_step_detour_reachability: &mut DefinitionReachabilityCache,
-    definition_no_plane_replacement_cycle_guard: &mut DefinitionCycleGuardReachabilityCache,
-    definition_no_plane_replacement_reachability: &mut DefinitionReachabilityCache,
-    halfspace_reports: &mut Vec<HalfspaceReportCacheEntry>,
-    halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
-    no_step_detour_target_families: &mut DetourTargetFamilyCache,
-    definition_full_no_detour_reachability: &mut DefinitionReachabilityCache,
-    definition_no_detour_trace: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
-    definition_no_detour_reachability: &mut DefinitionReachabilityCache,
-    direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
-    detour_target_families: &mut DetourTargetFamilyCache,
-    trace_bounds: &Aabb,
+    probe_query_caches: &mut LeafProbeQueryCaches,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let probe_fallback = probe.uncertified_definition_fallback;
-    let winding = if cached_surface_query_with(probe_surface, &probe.point, || {
-        point_lies_on_traced_surface(decisions, &probe.point, polygons)
-    })? {
+    let winding = if cached_surface_query_with(
+        &mut probe_query_caches.adjacent_cell.probe_surface,
+        &probe.point,
+        || point_lies_on_traced_surface(decisions, &probe.point, polygons),
+    )? {
         None
     } else {
-        let reaches = cached_probe_reachability_with(probe_reachability, point, &probe, || {
-            probe_reaches_adjacent_cell_from_interior_with_caches(
-                decisions,
-                point,
-                &probe,
-                support,
-                polygons,
-                probe_surface,
-                plane_replacement_affine,
-                plane_replacement_reachability_paths,
-                plane_replacement_reachability_steps,
-                plane_replacement_no_nested_ordering_warmups,
-                interior_box_axis_intervals,
-                definition_cycle_guard_reachability,
-                definition_no_step_detour_reachability,
-                definition_no_plane_replacement_cycle_guard,
-                definition_no_plane_replacement_reachability,
-                halfspace_reports,
-                halfspace_seed_families,
-                no_step_detour_target_families,
-                definition_full_no_detour_reachability,
-                definition_no_detour_reachability,
-                direct_probe_reachability,
-                detour_target_families,
-                Some(trace_bounds),
-            )
-        })?;
+        let reaches = {
+            let LeafProbeQueryCaches {
+                trace_bounds,
+                probe_reachability,
+                adjacent_cell,
+                ..
+            } = probe_query_caches;
+            let trace_bounds = trace_bounds
+                .as_ref()
+                .ok_or(HypermeshError::UnknownClassification)?;
+            cached_probe_reachability_with(probe_reachability, point, &probe, || {
+                probe_reaches_adjacent_cell_from_interior_with_caches(
+                    decisions,
+                    point,
+                    &probe,
+                    support,
+                    polygons,
+                    adjacent_cell,
+                    Some(trace_bounds),
+                )
+            })
+        }?;
         if !reaches {
             None
         } else {
-            let winding_trace_bounds =
-                trace_bounds_including_point(decisions, trace_bounds, ref_point)?;
-            let mut winding = cached_probe_winding_with(probe_winding, &probe, || {
-                trace_probe_winding_with_caches(
-                    decisions,
-                    ref_point,
-                    ref_definitions,
-                    &probe,
-                    ref_wnv,
-                    polygons,
-                    probe_surface,
-                    axis_ordered_segment_traces,
-                    plane_replacement_affine,
-                    plane_replacement_trace_steps,
-                    definition_no_detour_trace,
-                    detour_target_families,
-                    Some(&winding_trace_bounds),
-                )
-            })?;
-            if probe.side == Classification::Negative {
-                apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
-            }
-            Some(winding)
+            Some(trace_certified_adjacent_probe_winding(
+                decisions,
+                &probe,
+                ref_point,
+                ref_definitions,
+                ref_wnv,
+                polygons,
+                host_delta_w,
+                probe_query_caches,
+            )?)
         }
     };
 
@@ -2127,11 +1932,7 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
     probe: &ProbePoint,
     host_support: &Plane,
     polygons: &[ConvexPolygon],
-    plane_replacement_affine: &mut PlaneReplacementAffineCache,
-    plane_replacement_reachability_paths: &mut PlaneReplacementReachabilityPathCache,
-    plane_replacement_reachability_steps: &mut PlaneReplacementReachabilityStepCache,
-    no_step_cache: &mut DefinitionReachabilityCache,
-    direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
+    caches: &mut AdjacentCellQueryCaches,
     trace_bounds: &Aabb,
 ) -> HypermeshResult<bool> {
     if !trace_bounds.contains_point_decision(decisions, &interior.point)?
@@ -2142,6 +1943,14 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
     let start_family = endpoint_definition_family(&interior.point, &interior.planes)?;
     let end_family = endpoint_definition_family(&probe.point, &probe.planes)?;
     let saw_unknown = start_family.saw_unknown || end_family.saw_unknown;
+    let AdjacentCellQueryCaches {
+        direct_probe_reachability,
+        plane_replacement_affine,
+        plane_replacement_reachability_paths,
+        plane_replacement_reachability_steps,
+        definition_no_step_detour_reachability: no_step_cache,
+        ..
+    } = caches;
 
     let result = cached_definition_reachability_with(
         no_step_cache,

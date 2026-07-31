@@ -274,6 +274,27 @@ struct AxisProbeFamilyCacheEntry {
 }
 
 #[derive(Default)]
+struct AdjacentCellQueryCaches {
+    halfspace_reports: Vec<HalfspaceReportCacheEntry>,
+    halfspace_seed_families: Vec<HalfspaceSeedFamilyCacheEntry>,
+    probe_surface: Vec<SurfaceCacheEntry>,
+    direct_probe_reachability: Vec<DirectProbeReachabilityCacheEntry>,
+    interior_box_axis_intervals: InteriorBoxAxisIntervalsCache,
+    plane_replacement_affine: PlaneReplacementAffineCache,
+    plane_replacement_reachability_paths: PlaneReplacementReachabilityPathCache,
+    plane_replacement_reachability_steps: PlaneReplacementReachabilityStepCache,
+    plane_replacement_no_nested_ordering_warmups: PlaneReplacementNoNestedOrderingWarmupCache,
+    definition_cycle_guard_reachability: DefinitionCycleGuardReachabilityCache,
+    definition_no_step_detour_reachability: DefinitionReachabilityCache,
+    definition_no_plane_replacement_cycle_guard: DefinitionCycleGuardReachabilityCache,
+    definition_no_plane_replacement_reachability: DefinitionReachabilityCache,
+    no_step_detour_target_families: DetourTargetFamilyCache,
+    definition_full_no_detour_reachability: DefinitionReachabilityCache,
+    definition_no_detour_reachability: DefinitionReachabilityCache,
+    detour_target_families: DetourTargetFamilyCache,
+}
+
+#[derive(Default)]
 pub(crate) struct LeafProbeQueryCaches {
     trace_bounds: Option<Aabb>,
     certified_convex_mesh_supports: Option<Vec<Vec<Plane>>>,
@@ -289,28 +310,12 @@ pub(crate) struct LeafProbeQueryCaches {
     probe_families: Vec<ProbePointFamilyCacheEntry>,
     normal_probe_stop_values: Vec<NormalProbeStopCacheEntry>,
     axis_probe_stop_values: Vec<AxisProbeStopCacheEntry>,
-    halfspace_reports: Vec<HalfspaceReportCacheEntry>,
-    halfspace_seed_families: Vec<HalfspaceSeedFamilyCacheEntry>,
+    adjacent_cell: AdjacentCellQueryCaches,
     probe_winding: Vec<ProbeWindingCacheEntry>,
-    probe_surface: Vec<SurfaceCacheEntry>,
     probe_reachability: Vec<ProbeReachabilityCacheEntry>,
-    direct_probe_reachability: Vec<DirectProbeReachabilityCacheEntry>,
-    interior_box_axis_intervals: InteriorBoxAxisIntervalsCache,
     axis_ordered_segment_traces: Vec<AxisOrderedSegmentTraceCacheEntry>,
-    plane_replacement_affine: PlaneReplacementAffineCache,
     plane_replacement_trace_steps: Vec<PlaneReplacementStepCacheEntry>,
-    plane_replacement_reachability_paths: PlaneReplacementReachabilityPathCache,
-    plane_replacement_reachability_steps: PlaneReplacementReachabilityStepCache,
-    plane_replacement_no_nested_ordering_warmups: PlaneReplacementNoNestedOrderingWarmupCache,
-    definition_cycle_guard_reachability: DefinitionCycleGuardReachabilityCache,
-    definition_no_step_detour_reachability: DefinitionReachabilityCache,
-    definition_no_plane_replacement_cycle_guard: DefinitionCycleGuardReachabilityCache,
-    definition_no_plane_replacement_reachability: DefinitionReachabilityCache,
-    no_step_detour_target_families: DetourTargetFamilyCache,
-    definition_full_no_detour_reachability: DefinitionReachabilityCache,
     definition_no_detour_trace: Vec<DefinitionNoDetourTraceCacheEntry>,
-    definition_no_detour_reachability: DefinitionReachabilityCache,
-    detour_target_families: DetourTargetFamilyCache,
 }
 
 impl LeafProbeQueryCaches {

@@ -954,7 +954,7 @@ pub(super) fn strict_normal_probe_targets_with_query_caches(
     let mut local_unknown = false;
     let report = cached_optional_halfspace_feasibility_report_with(
         decisions,
-        &mut probe_query_caches.halfspace_reports,
+        &mut probe_query_caches.adjacent_cell.halfspace_reports,
         &halfspaces,
         &mut local_unknown,
     )?;
@@ -970,7 +970,7 @@ pub(super) fn strict_normal_probe_targets_with_query_caches(
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         cached_halfspace_cell_seed_families_from_optional_report_with(
             decisions,
-            &mut probe_query_caches.halfspace_seed_families,
+            &mut probe_query_caches.adjacent_cell.halfspace_seed_families,
             corridor,
             &halfspaces,
             report.as_ref(),

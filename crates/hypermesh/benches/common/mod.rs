@@ -87,7 +87,7 @@ pub fn cube_pair() -> [TriangleMesh; 2] {
     ]
 }
 
-fn subdivide_triangles(mut mesh: TriangleMesh, levels: usize) -> TriangleMesh {
+pub fn subdivide_triangles(mut mesh: TriangleMesh, levels: usize) -> TriangleMesh {
     for _ in 0..levels {
         let mut positions = mesh.positions.to_vec();
         let mut edge_midpoints = BTreeMap::new();
