@@ -1865,7 +1865,7 @@ mod tests {
     }
 
     #[test]
-    fn inverse_atan_linear_sign_includes_the_argument_sign() {
+fn inverse_atan_linear_sign_includes_the_argument_sign() {
         let negative_argument = Computable::sqrt_rational(Rational::new(2))
             .add(Computable::rational(Rational::new(-2)));
         assert_eq!(negative_argument.exact_sign(), Some(Sign::Minus));
@@ -2164,4 +2164,14 @@ mod tests {
             assert_eq!(value.msd(-128), Some(-3));
         }
     }
+}
+
+#[test]
+fn inverse_trig_presence_survives_bound_cache_updates() {
+    let angle = Computable::rational(Rational::fraction(3, 4).unwrap()).atan();
+    let expression = angle.add(Computable::one());
+
+    assert!(expression.internal.contains_inverse_trig_or_pi());
+    let _ = expression.cheap_bound();
+    assert!(expression.internal.contains_inverse_trig_or_pi());
 }

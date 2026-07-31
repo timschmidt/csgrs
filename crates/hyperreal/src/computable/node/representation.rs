@@ -30,11 +30,42 @@ impl Node {
         bound: BoundCache,
         exact_sign: ExactSignCache,
     ) -> Self {
+        let contains_inverse_trig_or_pi =
+            Self::approximation_contains_inverse_trig_or_pi(&approximation);
         Self {
-            facts: AtomicFacts::new(bound, exact_sign),
+            facts: AtomicFacts::new(bound, exact_sign, contains_inverse_trig_or_pi),
             approximation,
             cache: ApproximationCache::new(),
         }
+    }
+
+    fn approximation_contains_inverse_trig_or_pi(approximation: &Approximation) -> bool {
+        match approximation {
+            Approximation::Constant(SharedConstant::Pi)
+            | Approximation::AtanRational(_)
+            | Approximation::PrescaledAtan(_)
+            | Approximation::AtanDeferred(_)
+            | Approximation::AcosPositive(_)
+            | Approximation::AcosPositiveRational(_)
+            | Approximation::AcosNegativeRational(_) => true,
+            Approximation::Negate(child) | Approximation::Offset(child, _) => {
+                child.internal.contains_inverse_trig_or_pi()
+            }
+            Approximation::Add(left, right) | Approximation::Multiply(left, right) => {
+                left.internal.contains_inverse_trig_or_pi()
+                    || right.internal.contains_inverse_trig_or_pi()
+            }
+            _ => false,
+        }
+    }
+
+    pub(crate) fn contains_inverse_trig_or_pi(&self) -> bool {
+        if let Some(value) = self.facts.contains_inverse_trig_or_pi() {
+            return value;
+        }
+        let value = Self::approximation_contains_inverse_trig_or_pi(&self.approximation);
+        self.facts.store_contains_inverse_trig_or_pi(value);
+        value
     }
 
     pub(crate) fn cached_at_precision(&self, p: Precision) -> Option<BigInt> {
@@ -194,7 +225,7 @@ struct AtomicFacts(std::sync::atomic::AtomicU64);
 
 impl Default for AtomicFacts {
     fn default() -> Self {
-        Self::new(BoundCache::Invalid, ExactSignCache::Invalid)
+        Self(std::sync::atomic::AtomicU64::new(0))
     }
 }
 
@@ -208,12 +239,44 @@ impl AtomicFacts {
     const EXACT_MSD: u64 = 1 << 5;
     const EXACT_SIGN_SHIFT: u32 = 6;
     const EXACT_SIGN_MASK: u64 = 0b111 << Self::EXACT_SIGN_SHIFT;
+    const INVERSE_TRIG_OR_PI_KNOWN: u64 = 1 << 9;
+    const CONTAINS_INVERSE_TRIG_OR_PI: u64 = 1 << 10;
+    const NON_BOUND_MASK: u64 = Self::EXACT_SIGN_MASK
+        | Self::INVERSE_TRIG_OR_PI_KNOWN
+        | Self::CONTAINS_INVERSE_TRIG_OR_PI;
     const MSD_SHIFT: u32 = 32;
 
-    fn new(bound: BoundCache, exact_sign: ExactSignCache) -> Self {
+    fn new(
+        bound: BoundCache,
+        exact_sign: ExactSignCache,
+        contains_inverse_trig_or_pi: bool,
+    ) -> Self {
         Self(std::sync::atomic::AtomicU64::new(
-            Self::encode_bound(bound) | Self::encode_exact_sign(exact_sign),
+            Self::encode_bound(bound)
+                | Self::encode_exact_sign(exact_sign)
+                | Self::INVERSE_TRIG_OR_PI_KNOWN
+                | if contains_inverse_trig_or_pi {
+                    Self::CONTAINS_INVERSE_TRIG_OR_PI
+                } else {
+                    0
+                },
         ))
+    }
+
+    fn contains_inverse_trig_or_pi(&self) -> Option<bool> {
+        let bits = self.0.load(std::sync::atomic::Ordering::Relaxed);
+        (bits & Self::INVERSE_TRIG_OR_PI_KNOWN != 0)
+            .then_some(bits & Self::CONTAINS_INVERSE_TRIG_OR_PI != 0)
+    }
+
+    fn store_contains_inverse_trig_or_pi(&self, value: bool) {
+        let bits = Self::INVERSE_TRIG_OR_PI_KNOWN
+            | if value {
+                Self::CONTAINS_INVERSE_TRIG_OR_PI
+            } else {
+                0
+            };
+        self.0.fetch_or(bits, std::sync::atomic::Ordering::Relaxed);
     }
 
     fn encode_bound(value: BoundCache) -> u64 {
@@ -288,7 +351,7 @@ impl AtomicFacts {
         let encoded = Self::encode_bound(value);
         let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
         loop {
-            let updated = (current & Self::EXACT_SIGN_MASK) | encoded;
+            let updated = (current & Self::NON_BOUND_MASK) | encoded;
             match self.0.compare_exchange_weak(
                 current,
                 updated,
@@ -308,7 +371,7 @@ impl AtomicFacts {
             if current & 0b11 != Self::TAG_INVALID {
                 return;
             }
-            let updated = (current & Self::EXACT_SIGN_MASK) | encoded;
+            let updated = (current & Self::NON_BOUND_MASK) | encoded;
             match self.0.compare_exchange_weak(
                 current,
                 updated,
@@ -329,7 +392,7 @@ impl AtomicFacts {
             if tag != Self::TAG_INVALID && tag != Self::TAG_UNKNOWN {
                 return;
             }
-            let updated = (current & Self::EXACT_SIGN_MASK) | encoded;
+            let updated = (current & Self::NON_BOUND_MASK) | encoded;
             match self.0.compare_exchange_weak(
                 current,
                 updated,

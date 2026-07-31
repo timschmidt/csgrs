@@ -894,9 +894,11 @@ impl Computable {
             memo: &mut Option<Vec<(usize, QuadraticSurd)>>,
         ) -> Option<QuadraticSurd> {
             let key = Arc::as_ptr(&node.internal) as usize;
-            if let Some((_, value)) = memo
-                .as_ref()
-                .and_then(|memo| memo.iter().find(|(candidate, _)| *candidate == key))
+            let shared = Arc::strong_count(&node.internal) > 1;
+            if shared
+                && let Some((_, value)) = memo
+                    .as_ref()
+                    .and_then(|memo| memo.iter().find(|(candidate, _)| *candidate == key))
             {
                 return Some(value.clone());
             }
@@ -969,7 +971,7 @@ impl Computable {
                 }
                 _ => None,
             };
-            if let Some(value) = &result {
+            if shared && let Some(value) = &result {
                 memo.get_or_insert_with(|| Vec::with_capacity(8))
                     .push((key, value.clone()));
             }

@@ -356,86 +356,96 @@ impl Computable {
         &self,
         budget: usize,
     ) -> Option<PiQuadraticLaurentPolynomial> {
+        let mut memo = None;
+        self.pi_laurent_polynomial_with_memo(budget, &mut memo)
+    }
+
+    fn pi_laurent_polynomial_with_memo(
+        &self,
+        budget: usize,
+        memo: &mut Option<Vec<(usize, usize, Option<PiQuadraticLaurentPolynomial>)>>,
+    ) -> Option<PiQuadraticLaurentPolynomial> {
+        let key = Arc::as_ptr(&self.internal) as usize;
+        let shared = Arc::strong_count(&self.internal) > 1;
+        if shared
+            && let Some((_, _, value)) = memo.as_ref().and_then(|memo| {
+                memo.iter().find(|(candidate, candidate_budget, _)| {
+                    *candidate == key && *candidate_budget == budget
+                })
+            })
+        {
+            return value.clone();
+        }
         if budget == 0 {
             return None;
         }
-        if let Some(rational) = self.exact_rational() {
-            return Some(PiQuadraticLaurentPolynomial::monomial(
+        let result = if let Some(rational) = self.exact_rational() {
+            Some(PiQuadraticLaurentPolynomial::monomial(
                 0,
                 QuadraticCoefficient::rational(rational),
                 None,
-            ));
-        }
-        match self.shared_constant_kind() {
-            Some(SharedConstant::Pi) => {
-                return Some(PiQuadraticLaurentPolynomial::monomial(
+            ))
+        } else if let Some(polynomial) = match self.shared_constant_kind() {
+            Some(SharedConstant::Pi) => Some(PiQuadraticLaurentPolynomial::monomial(
                     1,
                     QuadraticCoefficient::rational(Rational::one()),
                     None,
-                ));
-            }
-            Some(SharedConstant::InvPi) => {
-                return Some(PiQuadraticLaurentPolynomial::monomial(
+                )),
+            Some(SharedConstant::InvPi) => Some(PiQuadraticLaurentPolynomial::monomial(
                     -1,
                     QuadraticCoefficient::rational(Rational::one()),
                     None,
-                ));
-            }
-            Some(SharedConstant::Tau) => {
-                return Some(PiQuadraticLaurentPolynomial::monomial(
+                )),
+            Some(SharedConstant::Tau) => Some(PiQuadraticLaurentPolynomial::monomial(
                     1,
                     QuadraticCoefficient::rational(Rational::new(2)),
                     None,
-                ));
-            }
-            Some(SharedConstant::Sqrt2) => {
-                return Some(PiQuadraticLaurentPolynomial::monomial(
+                )),
+            Some(SharedConstant::Sqrt2) => Some(PiQuadraticLaurentPolynomial::monomial(
                     0,
                     QuadraticCoefficient::radical(Rational::one()),
                     Some(Rational::new(2)),
-                ));
-            }
-            Some(SharedConstant::Sqrt3) => {
-                return Some(PiQuadraticLaurentPolynomial::monomial(
+                )),
+            Some(SharedConstant::Sqrt3) => Some(PiQuadraticLaurentPolynomial::monomial(
                     0,
                     QuadraticCoefficient::radical(Rational::one()),
                     Some(Rational::new(3)),
-                ));
-            }
-            _ => {}
-        }
-        if self.atan_argument().is_some()
+                )),
+            _ => None,
+        } {
+            Some(polynomial)
+        } else if self.atan_argument().is_some()
             || self.asin_argument().is_some()
             || self.acos_argument().is_some()
         {
-            return Some(PiQuadraticLaurentPolynomial::monomial(
+            Some(PiQuadraticLaurentPolynomial::monomial(
                 0,
                 QuadraticCoefficient::atom(self.clone()),
                 None,
-            ));
-        }
-        match &self.internal.approximation {
+            ))
+        } else {
+            match &self.internal.approximation {
             Approximation::Add(left, right) => left
-                .pi_laurent_polynomial(budget - 1)?
-                .add(right.pi_laurent_polynomial(budget - 1)?),
+                .pi_laurent_polynomial_with_memo(budget - 1, memo)?
+                .add(right.pi_laurent_polynomial_with_memo(budget - 1, memo)?),
             Approximation::Multiply(left, right) => left
-                .pi_laurent_polynomial(budget - 1)?
-                .multiply(right.pi_laurent_polynomial(budget - 1)?),
+                .pi_laurent_polynomial_with_memo(budget - 1, memo)?
+                .multiply(right.pi_laurent_polynomial_with_memo(budget - 1, memo)?),
             Approximation::Negate(child) => Some(
                 child
-                    .pi_laurent_polynomial(budget - 1)?
+                    .pi_laurent_polynomial_with_memo(budget - 1, memo)?
                     .scaled(Rational::new(-1)),
             ),
             Approximation::Offset(child, shift) => Some(
                 child
-                    .pi_laurent_polynomial(budget - 1)?
+                    .pi_laurent_polynomial_with_memo(budget - 1, memo)?
                     .scaled(Self::power_of_two_rational(*shift)),
             ),
             Approximation::Inverse(child) => child
-                .pi_laurent_polynomial(budget - 1)?
+                .pi_laurent_polynomial_with_memo(budget - 1, memo)?
                 .inverse_monomial(),
             Approximation::Square(child) => {
-                let child = child.pi_laurent_polynomial(budget - 1)?;
+                let child = child.pi_laurent_polynomial_with_memo(budget - 1, memo)?;
                 child.clone().multiply(child)
             }
             Approximation::Sqrt(child) => {
@@ -447,7 +457,13 @@ impl Computable {
                 ))
             }
             _ => None,
+            }
+        };
+        if shared {
+            memo.get_or_insert_with(|| Vec::with_capacity(8))
+                .push((key, budget, result.clone()));
         }
+        result
     }
 
     pub(crate) fn bounded_laurent_rational(&self) -> Option<Rational> {
@@ -786,7 +802,9 @@ impl Computable {
         &self,
         other: &Computable,
     ) -> Option<Rational> {
-        if !self.contains_inverse_trig_or_pi(32) && !other.contains_inverse_trig_or_pi(32) {
+        if !self.internal.contains_inverse_trig_or_pi()
+            && !other.internal.contains_inverse_trig_or_pi()
+        {
             return None;
         }
         if let (Some(left), Some(right)) = (
@@ -810,29 +828,6 @@ impl Computable {
             return Some(form.constant);
         }
         None
-    }
-
-    fn contains_inverse_trig_or_pi(&self, budget: usize) -> bool {
-        if budget == 0 {
-            return false;
-        }
-        match &self.internal.approximation {
-            Approximation::Constant(SharedConstant::Pi)
-            | Approximation::AtanRational(_)
-            | Approximation::PrescaledAtan(_)
-            | Approximation::AtanDeferred(_)
-            | Approximation::AcosPositive(_)
-            | Approximation::AcosPositiveRational(_)
-            | Approximation::AcosNegativeRational(_) => true,
-            Approximation::Negate(child) | Approximation::Offset(child, _) => {
-                child.contains_inverse_trig_or_pi(budget - 1)
-            }
-            Approximation::Add(left, right) | Approximation::Multiply(left, right) => {
-                left.contains_inverse_trig_or_pi(budget - 1)
-                    || right.contains_inverse_trig_or_pi(budget - 1)
-            }
-            _ => false,
-        }
     }
 
     pub(crate) fn inverse_trig_linear_sign(&self) -> Option<Sign> {
