@@ -1318,26 +1318,30 @@ pub(crate) fn process_arc_winding(
     point: &Point2,
     policy: &CurveContext,
 ) -> Option<i32> {
-    let sweep_kind = crate::arc_bezier::classify_sweep(arc).ok()?;
+    let Classification::Decided(sweep_kind) =
+        crate::arc_bezier::classify_sweep_with_policy(arc, policy).ok()?
+    else {
+        return None;
+    };
     if matches!(
         sweep_kind,
         crate::arc_bezier::ArcSweepKind::Major | crate::arc_bezier::ArcSweepKind::FullCircle
     ) {
-        let midpoint = match arc.retained_representative_point().as_ref().ok()? {
+        let midpoint = match arc.representative_point(policy).ok()? {
             Classification::Decided(midpoint) => midpoint,
             Classification::Uncertain(_) => return None,
         };
         return Some(
             process_minor_arc_winding(
                 arc.start(),
-                midpoint,
+                &midpoint,
                 arc.center(),
                 arc.radius_squared_ref(),
                 arc.is_clockwise(),
                 point,
                 policy,
             )? + process_minor_arc_winding(
-                midpoint,
+                &midpoint,
                 arc.end(),
                 arc.center(),
                 arc.radius_squared_ref(),

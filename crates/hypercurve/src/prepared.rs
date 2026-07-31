@@ -195,8 +195,11 @@ impl<'a> PreparedCircularArc2<'a> {
     ) -> Classification<bool> {
         #[cfg(feature = "predicates")]
         if !policy.is_edge_preview() {
-            let sweep_kind = match crate::arc_bezier::classify_sweep(self.arc) {
-                Ok(kind) => kind,
+            let sweep_kind = match crate::arc_bezier::classify_sweep_with_policy(self.arc, policy) {
+                Ok(Classification::Decided(kind)) => kind,
+                Ok(Classification::Uncertain(reason)) => {
+                    return Classification::Uncertain(reason);
+                }
                 Err(crate::ExactCurveError::Blocked(blocker)) => {
                     return Classification::Uncertain(blocker.reason());
                 }

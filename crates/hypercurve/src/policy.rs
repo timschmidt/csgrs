@@ -298,6 +298,7 @@ impl CurveContext {
 /// `OnceLock`s permit independently obtained certified construction evidence
 /// to upgrade the cache without replacing or synchronizing mutable carrier
 /// state.
+#[derive(Debug)]
 pub(crate) struct PolicyClassificationCache<T> {
     certified: OnceLock<T>,
     approximate_512: OnceLock<(T, UncertaintyReason)>,
@@ -332,6 +333,7 @@ impl<T> PolicyClassificationCache<T> {
 /// terminal and preserves the strict blocker in the same `OnceLock`. Unlike
 /// [`PolicyClassificationCache`], this carrier cannot later be upgraded by
 /// independent certified evidence.
+#[derive(Debug)]
 pub(crate) struct PolicyEvaluationCache<T> {
     resolved: OnceLock<(T, Option<UncertaintyReason>)>,
 }

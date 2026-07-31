@@ -1620,11 +1620,15 @@ fn same_circle_minor_arcs_decided_axis_separated(
     policy: &CurveContext,
 ) -> bool {
     if !matches!(
-        crate::arc_bezier::classify_sweep(first),
-        Ok(crate::arc_bezier::ArcSweepKind::Minor)
+        crate::arc_bezier::classify_sweep_with_policy(first, policy),
+        Ok(Classification::Decided(
+            crate::arc_bezier::ArcSweepKind::Minor
+        ))
     ) || !matches!(
-        crate::arc_bezier::classify_sweep(second),
-        Ok(crate::arc_bezier::ArcSweepKind::Minor)
+        crate::arc_bezier::classify_sweep_with_policy(second, policy),
+        Ok(Classification::Decided(
+            crate::arc_bezier::ArcSweepKind::Minor
+        ))
     ) {
         return false;
     }

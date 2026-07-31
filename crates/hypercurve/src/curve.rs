@@ -6,11 +6,15 @@ use std::sync::OnceLock;
 use hyperreal::{RealSign, ZeroKnowledge};
 
 use crate::arc_bezier::decompose_circular_arc;
+use crate::policy::{
+    PolicyEvaluationCache, resolve_cached_evaluation, resolve_certified_operation,
+};
 use crate::{
     Aabb2, BezierBoundaryLoop2, BezierSubcurve2, CircularArc2, Classification,
-    ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2, ExactCurveError,
-    ExactCurveResult, LineSeg2, LineSide, NurbsCurve2, ParamRange, Point2, PolynomialSplineCurve2,
-    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, Similarity2,
+    ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2, CurveOutcome,
+    ExactCurveError, ExactCurveResult, LineSeg2, LineSide, NurbsCurve2, ParamRange, Point2,
+    PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
+    Similarity2,
 };
 
 /// Exact planar curve family.
@@ -132,8 +136,8 @@ struct CurveData2 {
     geometry: CurveGeometry2,
     lineage: CurveParameterLineage2,
     parameter_domain: OnceLock<CurveParameterDomain2>,
-    native_bezier_fragments: OnceLock<ExactCurveResult<Vec<NativeBezierFragment2>>>,
-    rational_evaluators: OnceLock<ExactCurveResult<Vec<RationalBezier2>>>,
+    native_bezier_fragments: PolicyEvaluationCache<Vec<NativeBezierFragment2>>,
+    rational_evaluators: PolicyEvaluationCache<Vec<RationalBezier2>>,
     bounds: OnceLock<ExactCurveResult<Aabb2>>,
 }
 
@@ -192,7 +196,7 @@ pub struct CurvePath2 {
 #[derive(Debug)]
 struct CurvePathData2 {
     curves: Vec<Curve2>,
-    native_bezier_fragments: OnceLock<ExactCurveResult<Vec<NativeBezierFragment2>>>,
+    native_bezier_fragments: PolicyEvaluationCache<Vec<NativeBezierFragment2>>,
     bezier_boundary_loop: OnceLock<ExactCurveResult<NativeBezierBoundaryLoop2>>,
     bounds: OnceLock<ExactCurveResult<Aabb2>>,
 }
@@ -277,8 +281,8 @@ impl Curve2 {
                 geometry,
                 lineage,
                 parameter_domain: OnceLock::new(),
-                native_bezier_fragments: OnceLock::new(),
-                rational_evaluators: OnceLock::new(),
+                native_bezier_fragments: PolicyEvaluationCache::new(),
+                rational_evaluators: PolicyEvaluationCache::new(),
                 bounds: OnceLock::new(),
             }),
         }
@@ -541,7 +545,13 @@ impl Curve2 {
     /// Curve family and public parameter mapping are preserved.
     pub fn split_at(&self, parameter: Real) -> ExactCurveResult<(Self, Self)> {
         let domain = self.parameter_domain();
-        validate_strict_split_parameter(domain.start(), &parameter, domain.end(), self.family())?;
+        validate_strict_split_parameter(
+            domain.start(),
+            &parameter,
+            domain.end(),
+            self.family(),
+            &CurveContext::STRICT,
+        )?;
         match self.geometry() {
             CurveGeometry2::PolynomialBSpline(curve) => {
                 let (left, right) = curve.split_at(parameter.clone())?;
@@ -574,20 +584,35 @@ impl Curve2 {
     /// result curves are reparameterized to `[0, 1]`; spline results retain the
     /// requested authored knot range. Curve family and source are preserved.
     pub fn subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
+        self.subcurve_with_policy(start, end, &CurveContext::STRICT)
+    }
+
+    pub(crate) fn subcurve_with_policy(
+        &self,
+        start: Real,
+        end: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         let domain = self.parameter_domain();
         if &start == domain.start() && &end == domain.end() {
             return Ok(self.clone());
         }
-        validate_subcurve_range(domain.start(), &start, &end, domain.end(), self.family())?;
-        let policy = CurveContext::STRICT;
-        if crate::classify::compare_reals(&start, domain.start(), &policy)
+        validate_subcurve_range(
+            domain.start(),
+            &start,
+            &end,
+            domain.end(),
+            self.family(),
+            policy,
+        )?;
+        if crate::classify::compare_reals(&start, domain.start(), policy)
             == Some(std::cmp::Ordering::Equal)
-            && crate::classify::compare_reals(&end, domain.end(), &policy)
+            && crate::classify::compare_reals(&end, domain.end(), policy)
                 == Some(std::cmp::Ordering::Equal)
         {
             return Ok(self.clone());
         }
-        self.retain_root_image_injectivity(&policy);
+        self.retain_root_image_injectivity(policy);
         let lineage = self.lineage_subrange(&start, &end)?;
         let geometry = match self.geometry() {
             CurveGeometry2::Line(curve) => CurveGeometry2::Line(
@@ -596,10 +621,10 @@ impl Curve2 {
             ),
             CurveGeometry2::CircularArc(curve) => {
                 let sub_start = self
-                    .point_at(&start)
+                    .point_at_side_with_policy(&start, CurveParameterSide2::Automatic, policy)
                     .map_err(|error| remap_operation(error, CurveOperation2::Subdivision))?;
                 let sub_end = self
-                    .point_at(&end)
+                    .point_at_side_with_policy(&end, CurveParameterSide2::Automatic, policy)
                     .map_err(|error| remap_operation(error, CurveOperation2::Subdivision))?;
                 let constructor = if curve.endpoints_on_stored_circle_are_certified() {
                     CircularArc2::new_with_certified_radius
@@ -617,24 +642,24 @@ impl Curve2 {
             }
             CurveGeometry2::QuadraticBezier(curve) => CurveGeometry2::QuadraticBezier(
                 curve
-                    .subcurve_between_exact(&start, &end, &policy)
+                    .subcurve_between_exact(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?,
             ),
             CurveGeometry2::CubicBezier(curve) => CurveGeometry2::CubicBezier(
                 curve
-                    .subcurve_between_exact(&start, &end, &policy)
+                    .subcurve_between_exact(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?,
             ),
             CurveGeometry2::RationalQuadraticBezier(curve) => {
                 CurveGeometry2::RationalQuadraticBezier(
                     curve
-                        .subcurve_between_exact(&start, &end, &policy)
+                        .subcurve_between_exact(&start, &end, policy)
                         .map_err(|cause| self.subdivision_error(cause))?,
                 )
             }
             CurveGeometry2::RationalBezier(curve) => CurveGeometry2::RationalBezier(
                 match curve
-                    .subcurve_between_exact(&start, &end, &policy)
+                    .subcurve_between_exact(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?
                 {
                     Classification::Decided(curve) => curve,
@@ -668,7 +693,14 @@ impl Curve2 {
     /// exact subdivision.
     pub fn clamped_subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
         let domain = self.parameter_domain();
-        validate_subcurve_range(domain.start(), &start, &end, domain.end(), self.family())?;
+        validate_subcurve_range(
+            domain.start(),
+            &start,
+            &end,
+            domain.end(),
+            self.family(),
+            &CurveContext::STRICT,
+        )?;
         let lineage = self.lineage_subrange(&start, &end)?;
         match self.geometry() {
             CurveGeometry2::PolynomialBSpline(curve) => self.with_lineage(
@@ -693,8 +725,8 @@ impl Curve2 {
                 geometry,
                 lineage,
                 parameter_domain: OnceLock::new(),
-                native_bezier_fragments: OnceLock::new(),
-                rational_evaluators: OnceLock::new(),
+                native_bezier_fragments: PolicyEvaluationCache::new(),
+                rational_evaluators: PolicyEvaluationCache::new(),
                 bounds: OnceLock::new(),
             }),
         })
@@ -747,7 +779,8 @@ impl Curve2 {
         if !covers_root_domain {
             return;
         }
-        let Ok(evaluators) = self.rational_evaluators() else {
+        let Ok(Classification::Decided(evaluators)) = self.rational_evaluators_with_policy(policy)
+        else {
             return;
         };
         if evaluators.len() == 1 && evaluators[0].has_certified_injective_axis(policy) {
@@ -783,24 +816,46 @@ impl Curve2 {
         parameter: &Real,
         side: CurveParameterSide2,
     ) -> ExactCurveResult<Point2> {
+        self.point_at_side_with_policy(parameter, side, &CurveContext::STRICT)
+    }
+
+    pub(crate) fn point_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Point2> {
         match self.geometry() {
-            CurveGeometry2::PolynomialBSpline(curve) => curve.point_at_side(parameter, side),
-            CurveGeometry2::Nurbs(curve) => curve.point_at_side(parameter, side),
+            CurveGeometry2::PolynomialBSpline(curve) => {
+                curve.point_at_side_with_policy(parameter, side, policy)
+            }
+            CurveGeometry2::Nurbs(curve) => {
+                curve.point_at_side_with_policy(parameter, side, policy)
+            }
             geometry => {
-                let policy = CurveContext::STRICT;
-                let location = validate_unit_parameter(parameter, geometry.family(), &policy)?;
-                if let Some(endpoint) = retained_native_endpoint(geometry, location, &policy) {
+                let location = validate_unit_parameter(parameter, geometry.family(), policy)?;
+                if let Some(endpoint) = retained_native_endpoint(geometry, location, policy) {
                     return Ok(endpoint);
                 }
                 match geometry {
                     CurveGeometry2::Line(curve) => Ok(curve.point_at(parameter.clone())),
                     CurveGeometry2::CircularArc(_) => {
-                        evaluate_promoted_arc(self.native_bezier_fragments()?, parameter)
+                        let fragments = match self.native_bezier_fragments_with_policy(policy)? {
+                            Classification::Decided(fragments) => fragments,
+                            Classification::Uncertain(reason) => {
+                                return Err(ExactCurveError::blocked(
+                                    CurveOperation2::Evaluation,
+                                    CurveFamily2::CircularArc,
+                                    reason,
+                                ));
+                            }
+                        };
+                        evaluate_promoted_arc(fragments, parameter, policy)
                     }
                     CurveGeometry2::QuadraticBezier(curve) => Ok(curve.point_at(parameter.clone())),
                     CurveGeometry2::CubicBezier(curve) => Ok(curve.point_at(parameter.clone())),
                     CurveGeometry2::RationalQuadraticBezier(curve) => {
-                        match curve.point_at(parameter.clone(), &policy) {
+                        match curve.point_at(parameter.clone(), policy) {
                             Classification::Decided(point) => Ok(point),
                             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                                 CurveOperation2::Evaluation,
@@ -810,7 +865,7 @@ impl Curve2 {
                         }
                     }
                     CurveGeometry2::RationalBezier(curve) => {
-                        match curve.point_at_classified(parameter, &policy) {
+                        match curve.point_at_classified(parameter, policy) {
                             Classification::Decided(point) => Ok(point),
                             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                                 CurveOperation2::Evaluation,
@@ -866,7 +921,16 @@ impl Curve2 {
         parameter: &Real,
         side: CurveParameterSide2,
     ) -> ExactCurveResult<CurveDerivative2> {
-        let mut derivatives = self.derivatives_at_side(parameter, 1, side)?;
+        self.derivative_at_side_with_policy(parameter, side, &CurveContext::STRICT)
+    }
+
+    pub(crate) fn derivative_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveDerivative2> {
+        let mut derivatives = self.derivatives_at_side_with_policy(parameter, 1, side, policy)?;
         Ok(derivatives.pop().expect("one derivative requested"))
     }
 
@@ -904,26 +968,47 @@ impl Curve2 {
         max_order: usize,
         side: CurveParameterSide2,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
+        self.derivatives_at_side_with_policy(parameter, max_order, side, &CurveContext::STRICT)
+    }
+
+    fn derivatives_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         match self.geometry() {
             CurveGeometry2::PolynomialBSpline(curve) => {
-                return curve.derivatives_at_side(parameter, max_order, side);
+                return curve.derivatives_at_side_with_policy(parameter, max_order, side, policy);
             }
             CurveGeometry2::Nurbs(curve) => {
-                return curve.derivatives_at_side(parameter, max_order, side);
+                return curve.derivatives_at_side_with_policy(parameter, max_order, side, policy);
             }
             _ => {}
         }
-        let fragments = self.native_bezier_fragments()?;
-        let (first, last) = select_native_fragments(fragments, parameter, self.family())?;
-        let first_derivatives = self.derivatives_on_native_fragment(first, parameter, max_order)?;
+        let fragments = match self.native_bezier_fragments_with_policy(policy)? {
+            Classification::Decided(fragments) => fragments,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Evaluation,
+                    self.family(),
+                    reason,
+                ));
+            }
+        };
+        let (first, last) = select_native_fragments(fragments, parameter, self.family(), policy)?;
+        let first_derivatives =
+            self.derivatives_on_native_fragment(first, parameter, max_order, policy)?;
         if first == last || side == CurveParameterSide2::Left {
             return Ok(first_derivatives);
         }
-        let last_derivatives = self.derivatives_on_native_fragment(last, parameter, max_order)?;
+        let last_derivatives =
+            self.derivatives_on_native_fragment(last, parameter, max_order, policy)?;
         if side == CurveParameterSide2::Right {
             return Ok(last_derivatives);
         }
-        certify_matching_derivatives(first_derivatives, last_derivatives, self.family())
+        certify_matching_derivatives(first_derivatives, last_derivatives, self.family(), policy)
     }
 
     /// Evaluates periodic derivatives through `max_order` at any wrappable parameter.
@@ -962,20 +1047,40 @@ impl Curve2 {
         fragment_index: usize,
         parameter: &Real,
         max_order: usize,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        let fragments = self.native_bezier_fragments()?;
+        let fragments = match self.native_bezier_fragments_with_policy(policy)? {
+            Classification::Decided(fragments) => fragments,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Evaluation,
+                    self.family(),
+                    reason,
+                ));
+            }
+        };
         let (start, end) = fragments[fragment_index].parameter_range();
         let width = end - start;
         let local = ((parameter - start) / &width).map_err(|cause| {
             ExactCurveError::invalid(CurveOperation2::Evaluation, self.family(), cause.into())
         })?;
-        let evaluator = &self.rational_evaluators()?[fragment_index];
+        let evaluators = match self.rational_evaluators_with_policy(policy)? {
+            Classification::Decided(evaluators) => evaluators,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Evaluation,
+                    self.family(),
+                    reason,
+                ));
+            }
+        };
+        let evaluator = &evaluators[fragment_index];
         let local_derivatives = match if max_order == 1 {
             evaluator
-                .derivative_at_classified(&local, &crate::CurveContext::STRICT)
+                .derivative_at_classified(&local, policy)
                 .map(|derivative| vec![derivative])
         } else {
-            evaluator.derivatives_at_classified(&local, max_order, &crate::CurveContext::STRICT)
+            evaluator.derivatives_at_classified(&local, max_order, policy)
         } {
             Classification::Decided(derivatives) => derivatives,
             Classification::Uncertain(reason) => {
@@ -1013,26 +1118,67 @@ impl Curve2 {
     /// spline, and native NURBS spans preserve their source span index and
     /// exact parameter interval.
     pub fn native_bezier_fragments(&self) -> ExactCurveResult<&[NativeBezierFragment2]> {
-        match self
-            .data
-            .native_bezier_fragments
-            .get_or_init(|| promote_native_bezier_fragments(self))
-        {
-            Ok(fragments) => Ok(fragments),
-            Err(error) => Err(error.clone()),
+        match self.native_bezier_fragments_with_policy(&CurveContext::STRICT)? {
+            Classification::Decided(fragments) => Ok(fragments),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::NativeTopology,
+                self.family(),
+                reason,
+            )),
         }
     }
 
+    pub(crate) fn native_bezier_fragments_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<&[NativeBezierFragment2]>> {
+        Ok(
+            match resolve_cached_evaluation(
+                &self.data.native_bezier_fragments,
+                policy,
+                |attempt| promote_native_bezier_fragments(self, attempt),
+            )? {
+                Classification::Decided(fragments) => Classification::Decided(fragments.as_slice()),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
     pub(crate) fn rational_evaluators(&self) -> ExactCurveResult<&[RationalBezier2]> {
-        match self.data.rational_evaluators.get_or_init(|| {
-            self.native_bezier_fragments()?
-                .iter()
-                .map(|fragment| rationalize_subcurve(fragment.curve(), self.family()))
-                .collect()
-        }) {
-            Ok(evaluators) => Ok(evaluators),
-            Err(error) => Err(error.clone()),
+        match self.rational_evaluators_with_policy(&CurveContext::STRICT)? {
+            Classification::Decided(evaluators) => Ok(evaluators),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::Evaluation,
+                self.family(),
+                reason,
+            )),
         }
+    }
+
+    fn rational_evaluators_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<&[RationalBezier2]>> {
+        Ok(
+            match resolve_cached_evaluation(&self.data.rational_evaluators, policy, |attempt| {
+                let fragments = match self.native_bezier_fragments_with_policy(attempt)? {
+                    Classification::Decided(fragments) => fragments,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                fragments
+                    .iter()
+                    .map(|fragment| rationalize_subcurve(fragment.curve(), self.family()))
+                    .collect::<ExactCurveResult<Vec<_>>>()
+                    .map(Classification::Decided)
+            })? {
+                Classification::Decided(evaluators) => {
+                    Classification::Decided(evaluators.as_slice())
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 }
 
@@ -1204,7 +1350,7 @@ impl CurvePath2 {
         Self {
             data: Arc::new(CurvePathData2 {
                 curves,
-                native_bezier_fragments: OnceLock::new(),
+                native_bezier_fragments: PolicyEvaluationCache::new(),
                 bezier_boundary_loop: OnceLock::new(),
                 bounds: OnceLock::new(),
             }),
@@ -1223,6 +1369,13 @@ impl CurvePath2 {
 
     /// Constructs a nonempty ordered path with exactly connected endpoints.
     pub fn try_new(curves: Vec<Curve2>) -> ExactCurveResult<Self> {
+        Self::try_new_with_policy(curves, &CurveContext::STRICT)
+    }
+
+    pub(crate) fn try_new_with_policy(
+        curves: Vec<Curve2>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         if curves.is_empty() {
             return Err(ExactCurveError::invalid(
                 CurveOperation2::Construction,
@@ -1236,7 +1389,7 @@ impl CurvePath2 {
             }
             match crate::classify::is_zero(
                 &adjacent[0].end().distance_squared(adjacent[1].start()),
-                &CurveContext::STRICT,
+                policy,
             ) {
                 Some(true) => {}
                 Some(false) => {
@@ -1292,7 +1445,7 @@ impl CurvePath2 {
             .rev()
             .map(Curve2::reversed)
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        Self::try_new(curves).map_err(|error| remap_operation(error, CurveOperation2::Reversal))
+        Ok(Self::from_connected_curves(curves))
     }
 
     /// Applies an exact planar similarity to every curve in the connected path.
@@ -1302,8 +1455,7 @@ impl CurvePath2 {
             .iter()
             .map(|curve| curve.transform_similarity(transform))
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        Self::try_new(curves)
-            .map_err(|error| remap_operation(error, CurveOperation2::Transformation))
+        Ok(Self::from_connected_curves(curves))
     }
 
     /// Replaces one path vertex with an exact line chamfer.
@@ -1313,34 +1465,63 @@ impl CurvePath2 {
     /// start/end seam of an exactly closed path. Both parameters must be
     /// strictly interior to their adjacent curves' public parameter domains.
     /// Every retained curve keeps its family and parameter mapping; only the
-    /// inserted chamfer is a new line.
+    /// inserted chamfer is a new line. The returned [`CurveOutcome`] records
+    /// whether this complete edit consumed the `APPROXIMATE_512` terminal.
     pub fn chamfer_vertex_by_parameters(
         &self,
         vertex_index: usize,
         previous_parameter: Real,
         next_parameter: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.chamfer_vertex_by_parameters_raw(
+                vertex_index,
+                previous_parameter,
+                next_parameter,
+                attempt,
+            )
+        })
+    }
+
+    pub(crate) fn chamfer_vertex_by_parameters_raw(
+        &self,
+        vertex_index: usize,
+        previous_parameter: Real,
+        next_parameter: Real,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let (previous_index, next_index) =
-            self.corner_curve_indices(vertex_index, CurveOperation2::Chamfer)?;
+            self.corner_curve_indices(vertex_index, CurveOperation2::Chamfer, policy)?;
         let previous = &self.data.curves[previous_index];
         let next = &self.data.curves[next_index];
-        validate_corner_parameter(previous, &previous_parameter, CurveOperation2::Chamfer)?;
-        validate_corner_parameter(next, &next_parameter, CurveOperation2::Chamfer)?;
+        validate_corner_parameter(
+            previous,
+            &previous_parameter,
+            CurveOperation2::Chamfer,
+            policy,
+        )?;
+        validate_corner_parameter(next, &next_parameter, CurveOperation2::Chamfer, policy)?;
 
         let previous_cut = previous
-            .point_at_side(&previous_parameter, CurveParameterSide2::Left)
+            .point_at_side_with_policy(&previous_parameter, CurveParameterSide2::Left, policy)
             .map_err(|error| remap_operation(error, CurveOperation2::Chamfer))?;
         let next_cut = next
-            .point_at_side(&next_parameter, CurveParameterSide2::Right)
+            .point_at_side_with_policy(&next_parameter, CurveParameterSide2::Right, policy)
             .map_err(|error| remap_operation(error, CurveOperation2::Chamfer))?;
         let previous_trim = previous
-            .subcurve(
+            .subcurve_with_policy(
                 previous.parameter_domain().start().clone(),
                 previous_parameter,
+                policy,
             )
             .map_err(|error| remap_operation(error, CurveOperation2::Chamfer))?;
         let next_trim = next
-            .subcurve(next_parameter, next.parameter_domain().end().clone())
+            .subcurve_with_policy(
+                next_parameter,
+                next.parameter_domain().end().clone(),
+                policy,
+            )
             .map_err(|error| remap_operation(error, CurveOperation2::Chamfer))?;
         let chamfer = LineSeg2::try_new(previous_cut, next_cut)
             .map(Curve2::from)
@@ -1356,6 +1537,7 @@ impl CurvePath2 {
             chamfer,
             next_trim,
             CurveOperation2::Chamfer,
+            policy,
         )
     }
 
@@ -1366,7 +1548,9 @@ impl CurvePath2 {
     /// `clockwise` define the inserted circular arc. Hypercurve certifies a
     /// nonzero common radius, tangency, and traversal-direction agreement using
     /// [`Real`] predicates before materializing the result. Index zero edits
-    /// the seam of an exactly closed path.
+    /// the seam of an exactly closed path. The returned [`CurveOutcome`]
+    /// records whether this complete edit consumed the `APPROXIMATE_512`
+    /// terminal.
     pub fn fillet_vertex_by_parameters(
         &self,
         vertex_index: usize,
@@ -1374,22 +1558,50 @@ impl CurvePath2 {
         next_parameter: Real,
         center: &Point2,
         clockwise: bool,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.fillet_vertex_by_parameters_raw(
+                vertex_index,
+                previous_parameter,
+                next_parameter,
+                center,
+                clockwise,
+                attempt,
+            )
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn fillet_vertex_by_parameters_raw(
+        &self,
+        vertex_index: usize,
+        previous_parameter: Real,
+        next_parameter: Real,
+        center: &Point2,
+        clockwise: bool,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let (previous_index, next_index) =
-            self.corner_curve_indices(vertex_index, CurveOperation2::Fillet)?;
+            self.corner_curve_indices(vertex_index, CurveOperation2::Fillet, policy)?;
         let previous = &self.data.curves[previous_index];
         let next = &self.data.curves[next_index];
-        validate_corner_parameter(previous, &previous_parameter, CurveOperation2::Fillet)?;
-        validate_corner_parameter(next, &next_parameter, CurveOperation2::Fillet)?;
+        validate_corner_parameter(
+            previous,
+            &previous_parameter,
+            CurveOperation2::Fillet,
+            policy,
+        )?;
+        validate_corner_parameter(next, &next_parameter, CurveOperation2::Fillet, policy)?;
 
         let previous_point = previous
-            .point_at_side(&previous_parameter, CurveParameterSide2::Left)
+            .point_at_side_with_policy(&previous_parameter, CurveParameterSide2::Left, policy)
             .map_err(|error| remap_operation(error, CurveOperation2::Fillet))?;
         let next_point = next
-            .point_at_side(&next_parameter, CurveParameterSide2::Right)
+            .point_at_side_with_policy(&next_parameter, CurveParameterSide2::Right, policy)
             .map_err(|error| remap_operation(error, CurveOperation2::Fillet))?;
         let radius_squared =
-            validate_fillet_radius(previous, &previous_point, &next_point, center)?;
+            validate_fillet_radius(previous, &previous_point, &next_point, center, policy)?;
         validate_curve_fillet_tangent(
             previous,
             &previous_parameter,
@@ -1397,6 +1609,7 @@ impl CurvePath2 {
             &previous_point,
             center,
             clockwise,
+            policy,
         )?;
         validate_curve_fillet_tangent(
             next,
@@ -1405,16 +1618,22 @@ impl CurvePath2 {
             &next_point,
             center,
             clockwise,
+            policy,
         )?;
 
         let previous_trim = previous
-            .subcurve(
+            .subcurve_with_policy(
                 previous.parameter_domain().start().clone(),
                 previous_parameter,
+                policy,
             )
             .map_err(|error| remap_operation(error, CurveOperation2::Fillet))?;
         let next_trim = next
-            .subcurve(next_parameter, next.parameter_domain().end().clone())
+            .subcurve_with_policy(
+                next_parameter,
+                next.parameter_domain().end().clone(),
+                policy,
+            )
             .map_err(|error| remap_operation(error, CurveOperation2::Fillet))?;
         let fillet = Curve2::from(CircularArc2::new_with_certified_radius(
             previous_point,
@@ -1433,6 +1652,7 @@ impl CurvePath2 {
             fillet,
             next_trim,
             CurveOperation2::Fillet,
+            policy,
         )
     }
 
@@ -1440,6 +1660,7 @@ impl CurvePath2 {
         &self,
         vertex_index: usize,
         operation: CurveOperation2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<(usize, usize)> {
         let curve_count = self.data.curves.len();
         if vertex_index >= curve_count {
@@ -1450,7 +1671,7 @@ impl CurvePath2 {
             ));
         }
         if vertex_index == 0 {
-            certify_closed_path(self, operation)?;
+            certify_closed_path(self, operation, policy)?;
             return Ok((curve_count - 1, 0));
         }
         Ok((vertex_index - 1, vertex_index))
@@ -1466,6 +1687,7 @@ impl CurvePath2 {
         inserted: Curve2,
         next_trim: Curve2,
         operation: CurveOperation2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let mut curves = Vec::with_capacity(self.data.curves.len() + 1);
         if vertex_index == 0 {
@@ -1486,7 +1708,7 @@ impl CurvePath2 {
             curves.push(next_trim);
             curves.extend(self.data.curves[next_index + 1..].iter().cloned());
         }
-        Self::try_new(curves).map_err(|error| remap_operation(error, operation))
+        Self::try_new_with_policy(curves, policy).map_err(|error| remap_operation(error, operation))
     }
 
     /// Borrows conservative exact bounds computed once across all path curves.
@@ -1555,21 +1777,51 @@ impl CurvePath2 {
 
     /// Promotes this path once and borrows exact native Bezier fragments in traversal order.
     pub fn native_bezier_fragments(&self) -> ExactCurveResult<&[NativeBezierFragment2]> {
-        match self.data.native_bezier_fragments.get_or_init(|| {
-            let capacity = self.data.curves.iter().try_fold(0_usize, |count, curve| {
-                curve
-                    .native_bezier_fragments()
-                    .map(|fragments| count + fragments.len())
-            })?;
-            let mut fragments = Vec::with_capacity(capacity);
-            for curve in &self.data.curves {
-                fragments.extend_from_slice(curve.native_bezier_fragments()?);
-            }
-            Ok(fragments)
-        }) {
-            Ok(fragments) => Ok(fragments),
-            Err(error) => Err(error.clone()),
+        match self.native_bezier_fragments_with_policy(&CurveContext::STRICT)? {
+            Classification::Decided(fragments) => Ok(fragments),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::NativeTopology,
+                self.data.curves[0].family(),
+                reason,
+            )),
         }
+    }
+
+    pub(crate) fn native_bezier_fragments_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<&[NativeBezierFragment2]>> {
+        Ok(
+            match resolve_cached_evaluation(
+                &self.data.native_bezier_fragments,
+                policy,
+                |attempt| {
+                    let mut capacity = 0_usize;
+                    for curve in &self.data.curves {
+                        let native = match curve.native_bezier_fragments_with_policy(attempt)? {
+                            Classification::Decided(native) => native,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        capacity += native.len();
+                    }
+                    let mut fragments = Vec::with_capacity(capacity);
+                    for curve in &self.data.curves {
+                        let Classification::Decided(native) =
+                            curve.native_bezier_fragments_with_policy(attempt)?
+                        else {
+                            unreachable!("the capacity pass decided every shared curve promotion");
+                        };
+                        fragments.extend_from_slice(native);
+                    }
+                    Ok(Classification::Decided(fragments))
+                },
+            )? {
+                Classification::Decided(fragments) => Classification::Decided(fragments.as_slice()),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 
     /// Builds a closed native Bezier boundary once and borrows the retained result.
@@ -1743,8 +1995,7 @@ impl<'a> CurvePathView2<'a> {
             .rev()
             .map(Curve2::reversed)
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        CurvePath2::try_new(curves)
-            .map_err(|error| remap_operation(error, CurveOperation2::Reversal))
+        Ok(CurvePath2::from_connected_curves(curves))
     }
 
     /// Applies an exact planar similarity to the borrowed connected path.
@@ -1754,25 +2005,35 @@ impl<'a> CurvePathView2<'a> {
             .iter()
             .map(|curve| curve.transform_similarity(transform))
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        CurvePath2::try_new(curves)
-            .map_err(|error| remap_operation(error, CurveOperation2::Transformation))
+        Ok(CurvePath2::from_connected_curves(curves))
     }
 
     /// Replaces one borrowed path vertex with an exact line chamfer.
+    ///
+    /// The returned [`CurveOutcome`] covers materialization and the complete
+    /// edit, so the selected terminal is consumed at most once.
     pub fn chamfer_vertex_by_parameters(
         self,
         vertex_index: usize,
         previous_parameter: Real,
         next_parameter: Real,
-    ) -> ExactCurveResult<CurvePath2> {
-        CurvePath2::try_new(self.curves.to_vec())?.chamfer_vertex_by_parameters(
-            vertex_index,
-            previous_parameter,
-            next_parameter,
-        )
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurvePath2>> {
+        resolve_certified_operation(policy, |attempt| {
+            CurvePath2::try_new_with_policy(self.curves.to_vec(), attempt)?
+                .chamfer_vertex_by_parameters_raw(
+                    vertex_index,
+                    previous_parameter,
+                    next_parameter,
+                    attempt,
+                )
+        })
     }
 
     /// Replaces one borrowed path vertex with an exact tangent circular fillet.
+    ///
+    /// The returned [`CurveOutcome`] covers materialization and the complete
+    /// edit, so the selected terminal is consumed at most once.
     pub fn fillet_vertex_by_parameters(
         self,
         vertex_index: usize,
@@ -1780,14 +2041,19 @@ impl<'a> CurvePathView2<'a> {
         next_parameter: Real,
         center: &Point2,
         clockwise: bool,
-    ) -> ExactCurveResult<CurvePath2> {
-        CurvePath2::try_new(self.curves.to_vec())?.fillet_vertex_by_parameters(
-            vertex_index,
-            previous_parameter,
-            next_parameter,
-            center,
-            clockwise,
-        )
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurvePath2>> {
+        resolve_certified_operation(policy, |attempt| {
+            CurvePath2::try_new_with_policy(self.curves.to_vec(), attempt)?
+                .fillet_vertex_by_parameters_raw(
+                    vertex_index,
+                    previous_parameter,
+                    next_parameter,
+                    center,
+                    clockwise,
+                    attempt,
+                )
+        })
     }
 }
 
@@ -1964,15 +2230,15 @@ fn select_native_fragments(
     fragments: &[NativeBezierFragment2],
     parameter: &Real,
     family: CurveFamily2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<(usize, usize)> {
-    let policy = crate::CurveContext::STRICT;
     let mut first = None;
     let mut last = None;
     for (index, fragment) in fragments.iter().enumerate() {
         let (start, end) = fragment.parameter_range();
         match (
-            crate::classify::compare_reals(start, parameter, &policy),
-            crate::classify::compare_reals(parameter, end, &policy),
+            crate::classify::compare_reals(start, parameter, policy),
+            crate::classify::compare_reals(parameter, end, policy),
         ) {
             (
                 Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
@@ -2004,13 +2270,13 @@ fn certify_matching_derivatives(
     first: Vec<CurveDerivative2>,
     second: Vec<CurveDerivative2>,
     family: CurveFamily2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<CurveDerivative2>> {
     debug_assert_eq!(first.len(), second.len());
-    let policy = crate::CurveContext::STRICT;
     for (first_derivative, second_derivative) in first.iter().zip(&second) {
         match (
-            crate::classify::compare_reals(first_derivative.dx(), second_derivative.dx(), &policy),
-            crate::classify::compare_reals(first_derivative.dy(), second_derivative.dy(), &policy),
+            crate::classify::compare_reals(first_derivative.dx(), second_derivative.dx(), policy),
+            crate::classify::compare_reals(first_derivative.dy(), second_derivative.dy(), policy),
         ) {
             (Some(std::cmp::Ordering::Equal), Some(std::cmp::Ordering::Equal)) => {}
             (Some(_), Some(_)) => {
@@ -2093,7 +2359,10 @@ fn rationalize_subcurve(
     .map_err(|cause| ExactCurveError::invalid(CurveOperation2::NativeTopology, family, cause))
 }
 
-fn promote_native_bezier_fragments(curve: &Curve2) -> ExactCurveResult<Vec<NativeBezierFragment2>> {
+fn promote_native_bezier_fragments(
+    curve: &Curve2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<Vec<NativeBezierFragment2>>> {
     let native = |native_curve, parameter_start: Real, parameter_end: Real| NativeBezierFragment2 {
         curve: native_curve,
         span_range: CurveSpanRange2 {
@@ -2105,83 +2374,91 @@ fn promote_native_bezier_fragments(curve: &Curve2) -> ExactCurveResult<Vec<Nativ
     match curve.geometry() {
         CurveGeometry2::Line(line) => {
             let (start, end) = unit();
-            Ok(vec![native(
+            Ok(Classification::Decided(vec![native(
                 BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line.clone())),
                 start,
                 end,
-            )])
+            )]))
         }
-        CurveGeometry2::CircularArc(value) => Ok(decompose_circular_arc(value)?
-            .spans()
-            .iter()
-            .map(|span| {
-                let (start, end) = span.parameter_range();
-                native(
-                    BezierSubcurve2::RationalQuadratic(span.curve().clone()),
-                    start.clone(),
-                    end.clone(),
-                )
-            })
-            .collect()),
+        CurveGeometry2::CircularArc(value) => {
+            Ok(decompose_circular_arc(value, policy)?.map(|decomposition| {
+                decomposition
+                    .spans()
+                    .iter()
+                    .map(|span| {
+                        let (start, end) = span.parameter_range();
+                        native(
+                            BezierSubcurve2::RationalQuadratic(span.curve().clone()),
+                            start.clone(),
+                            end.clone(),
+                        )
+                    })
+                    .collect()
+            }))
+        }
         CurveGeometry2::QuadraticBezier(value) => {
             let (start, end) = unit();
-            Ok(vec![native(
+            Ok(Classification::Decided(vec![native(
                 BezierSubcurve2::Quadratic(value.clone()),
                 start,
                 end,
-            )])
+            )]))
         }
         CurveGeometry2::CubicBezier(value) => {
             let (start, end) = unit();
-            Ok(vec![native(
+            Ok(Classification::Decided(vec![native(
                 BezierSubcurve2::Cubic(value.clone()),
                 start,
                 end,
-            )])
+            )]))
         }
         CurveGeometry2::RationalQuadraticBezier(value) => {
             let (start, end) = unit();
-            Ok(vec![native(
+            Ok(Classification::Decided(vec![native(
                 BezierSubcurve2::RationalQuadratic(value.clone()),
                 start,
                 end,
-            )])
+            )]))
         }
         CurveGeometry2::RationalBezier(value) => {
             let (start, end) = unit();
-            Ok(vec![native(
+            Ok(Classification::Decided(vec![native(
                 BezierSubcurve2::Rational(value.clone()),
                 start,
                 end,
-            )])
+            )]))
         }
-        CurveGeometry2::PolynomialBSpline(value) => Ok(value
-            .bezier_spans()?
-            .map(|span| {
-                let (start, end) = span.knot_interval();
-                native(span.curve().clone(), start.clone(), end.clone())
-            })
-            .collect()),
-        CurveGeometry2::Nurbs(value) => Ok(value
-            .native_spans()?
-            .map(|span| {
-                let source_span = span.source_span();
-                let (start, end) = source_span.knot_interval();
-                native(span.curve().clone(), start.clone(), end.clone())
-            })
-            .collect()),
+        CurveGeometry2::PolynomialBSpline(value) => Ok(Classification::Decided(
+            value
+                .bezier_spans()?
+                .map(|span| {
+                    let (start, end) = span.knot_interval();
+                    native(span.curve().clone(), start.clone(), end.clone())
+                })
+                .collect(),
+        )),
+        CurveGeometry2::Nurbs(value) => Ok(Classification::Decided(
+            value
+                .native_spans()?
+                .map(|span| {
+                    let source_span = span.source_span();
+                    let (start, end) = source_span.knot_interval();
+                    native(span.curve().clone(), start.clone(), end.clone())
+                })
+                .collect(),
+        )),
     }
 }
 
 fn evaluate_promoted_arc(
     fragments: &[NativeBezierFragment2],
     parameter: &Real,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Point2> {
-    let policy = crate::CurveContext::STRICT;
     for fragment in fragments {
         let (start, end) = fragment.parameter_range();
-        let lower = crate::classify::compare_reals(start, parameter, &policy);
-        let upper = crate::classify::compare_reals(parameter, end, &policy);
+        let lower = crate::classify::compare_reals(start, parameter, policy);
+        let upper = crate::classify::compare_reals(parameter, end, policy);
         match (lower, upper) {
             (
                 Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
@@ -2203,7 +2480,7 @@ fn evaluate_promoted_arc(
                         ),
                     ));
                 };
-                return match curve.point_at(local, &policy) {
+                return match curve.point_at(local, policy) {
                     Classification::Decided(point) => Ok(point),
                     Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                         CurveOperation2::Evaluation,
@@ -2288,25 +2565,28 @@ fn validate_corner_parameter(
     curve: &Curve2,
     parameter: &Real,
     operation: CurveOperation2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
     validate_strict_split_parameter(
         curve.parameter_domain().start(),
         parameter,
         curve.parameter_domain().end(),
         curve.family(),
+        policy,
     )
     .map_err(|error| remap_operation(error, operation))
 }
 
-fn certify_closed_path(path: &CurvePath2, operation: CurveOperation2) -> ExactCurveResult<()> {
+fn certify_closed_path(
+    path: &CurvePath2,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<()> {
     if path.start() == path.end() {
         return Ok(());
     }
     let first = &path.data.curves[0];
-    match crate::classify::is_zero(
-        &path.start().distance_squared(path.end()),
-        &CurveContext::STRICT,
-    ) {
+    match crate::classify::is_zero(&path.start().distance_squared(path.end()), policy) {
         Some(true) => Ok(()),
         Some(false) => Err(ExactCurveError::invalid(
             operation,
@@ -2326,10 +2606,10 @@ fn validate_fillet_radius(
     previous_point: &Point2,
     next_point: &Point2,
     center: &Point2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Real> {
-    let policy = CurveContext::STRICT;
     let radius_squared = previous_point.distance_squared(center);
-    match crate::classify::is_zero(&radius_squared, &policy) {
+    match crate::classify::is_zero(&radius_squared, policy) {
         Some(false) => {}
         Some(true) => {
             return Err(ExactCurveError::invalid(
@@ -2348,7 +2628,7 @@ fn validate_fillet_radius(
     }
 
     let radius_delta = &radius_squared - next_point.distance_squared(center);
-    match crate::classify::is_zero(&radius_delta, &policy) {
+    match crate::classify::is_zero(&radius_delta, policy) {
         Some(true) => Ok(radius_squared),
         Some(false) => Err(ExactCurveError::invalid(
             CurveOperation2::Fillet,
@@ -2370,6 +2650,7 @@ fn validate_curve_fillet_tangent(
     tangent_point: &Point2,
     center: &Point2,
     clockwise: bool,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
     let (source_dx, source_dy, source_zero_status) = match curve.geometry() {
         CurveGeometry2::CircularArc(arc) => {
@@ -2384,7 +2665,7 @@ fn validate_curve_fillet_tangent(
         }
         _ => {
             let derivative = curve
-                .derivative_at_side(parameter, side)
+                .derivative_at_side_with_policy(parameter, side, policy)
                 .map_err(|error| remap_operation(error, CurveOperation2::Fillet))?;
             (
                 derivative.dx().clone(),
@@ -2393,6 +2674,7 @@ fn validate_curve_fillet_tangent(
             )
         }
     };
+    let source_norm_squared = &source_dx * &source_dx + &source_dy * &source_dy;
     match source_zero_status {
         ZeroKnowledge::NonZero => {}
         ZeroKnowledge::Zero => {
@@ -2402,13 +2684,23 @@ fn validate_curve_fillet_tangent(
                 CurveError::InvalidFilletTangency,
             ));
         }
-        ZeroKnowledge::Unknown => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                curve.family(),
-                crate::UncertaintyReason::RealSign,
-            ));
-        }
+        ZeroKnowledge::Unknown => match crate::classify::is_zero(&source_norm_squared, policy) {
+            Some(false) => {}
+            Some(true) => {
+                return Err(ExactCurveError::invalid(
+                    CurveOperation2::Fillet,
+                    curve.family(),
+                    CurveError::InvalidFilletTangency,
+                ));
+            }
+            None => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    curve.family(),
+                    crate::UncertaintyReason::RealSign,
+                ));
+            }
+        },
     }
 
     let (radius_dx, radius_dy) = tangent_point.delta_from(center);
@@ -2418,8 +2710,7 @@ fn validate_curve_fillet_tangent(
         (-radius_dy, radius_dx)
     };
     let tangent_cross = &source_dx * &fillet_dy - &source_dy * &fillet_dx;
-    let policy = CurveContext::STRICT;
-    match crate::classify::is_zero(&tangent_cross, &policy) {
+    match crate::classify::is_zero(&tangent_cross, policy) {
         Some(true) => {}
         Some(false) => {
             return Err(ExactCurveError::invalid(
@@ -2438,7 +2729,7 @@ fn validate_curve_fillet_tangent(
     }
 
     let direction_dot = &source_dx * &fillet_dx + &source_dy * &fillet_dy;
-    match crate::classify::real_sign(&direction_dot, &policy) {
+    match crate::classify::real_sign(&direction_dot, policy) {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Zero | RealSign::Negative) => Err(ExactCurveError::invalid(
             CurveOperation2::Fillet,
@@ -2458,11 +2749,11 @@ fn validate_strict_split_parameter(
     parameter: &Real,
     domain_end: &Real,
     family: CurveFamily2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
-    let policy = CurveContext::STRICT;
     match (
-        crate::classify::compare_reals(domain_start, parameter, &policy),
-        crate::classify::compare_reals(parameter, domain_end, &policy),
+        crate::classify::compare_reals(domain_start, parameter, policy),
+        crate::classify::compare_reals(parameter, domain_end, policy),
     ) {
         (Some(std::cmp::Ordering::Less), Some(std::cmp::Ordering::Less)) => Ok(()),
         (Some(_), Some(_)) => Err(ExactCurveError::invalid(
@@ -2484,12 +2775,12 @@ fn validate_subcurve_range(
     end: &Real,
     domain_end: &Real,
     family: CurveFamily2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
-    let policy = CurveContext::STRICT;
     match (
-        crate::classify::compare_reals(domain_start, start, &policy),
-        crate::classify::compare_reals(start, end, &policy),
-        crate::classify::compare_reals(end, domain_end, &policy),
+        crate::classify::compare_reals(domain_start, start, policy),
+        crate::classify::compare_reals(start, end, policy),
+        crate::classify::compare_reals(end, domain_end, policy),
     ) {
         (
             Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),

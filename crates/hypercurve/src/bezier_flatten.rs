@@ -164,7 +164,12 @@ impl Curve2 {
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CertifiedCurvePolyline2>> {
-        segment_native_fragments(self.native_bezier_fragments()?, options, policy)
+        match self.native_bezier_fragments_with_policy(policy)? {
+            Classification::Decided(fragments) => {
+                segment_native_fragments(fragments, options, policy)
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
     }
 }
 
@@ -175,7 +180,12 @@ impl CurvePath2 {
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CertifiedCurvePolyline2>> {
-        segment_native_fragments(self.native_bezier_fragments()?, options, policy)
+        match self.native_bezier_fragments_with_policy(policy)? {
+            Classification::Decided(fragments) => {
+                segment_native_fragments(fragments, options, policy)
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
     }
 }
 

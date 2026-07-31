@@ -373,9 +373,17 @@ impl CurvePath2 {
                     )
                 })?
         };
-        let fragments = self
-            .native_bezier_fragments()
-            .map_err(|error| CurveError::Topology(error.to_string()))?;
+        let fragments = match self
+            .native_bezier_fragments_with_policy(policy)
+            .map_err(|error| CurveError::Topology(error.to_string()))?
+        {
+            Classification::Decided(fragments) => fragments,
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::Topology(format!(
+                    "finite path projection was blocked by {reason:?}"
+                )));
+            }
+        };
         let mut points = Vec::with_capacity(fragments.len() + 1);
         for fragment in fragments {
             append_bezier_subcurve_samples(&mut points, fragment.curve(), options, policy, 0)?;

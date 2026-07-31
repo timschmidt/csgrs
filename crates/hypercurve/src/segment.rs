@@ -467,11 +467,12 @@ pub(crate) struct CircularArcRetainedFacts2 {
     clockwise: bool,
     source_bulge: Option<Real>,
     structural_facts: OnceLock<Box<crate::CircularArc2Facts>>,
-    pub(crate) sweep_kind: OnceLock<crate::ExactCurveResult<crate::arc_bezier::ArcSweepKind>>,
+    pub(crate) sweep_kind:
+        crate::policy::PolicyClassificationCache<crate::arc_bezier::ArcSweepKind>,
     pub(crate) bezier_decomposition:
-        OnceLock<crate::ExactCurveResult<crate::CircularArcBezierDecomposition2>>,
-    representative_point: OnceLock<CurveResult<Classification<Point2>>>,
-    directed_sweep_angle: OnceLock<CurveResult<Classification<Real>>>,
+        crate::policy::PolicyEvaluationCache<crate::CircularArcBezierDecomposition2>,
+    representative_point: crate::policy::PolicyEvaluationCache<Point2>,
+    directed_sweep_angle: crate::policy::PolicyClassificationCache<Real>,
     parameter_lineage: OnceLock<Box<CircularArcParameterLineage2>>,
     parameter_witnesses: OnceLock<Box<Mutex<Vec<CircularArcParameterWitness2>>>>,
     fragments: OnceLock<Box<Mutex<Vec<CircularArcFragmentWitness2>>>>,
@@ -496,10 +497,10 @@ impl CircularArcRetainedFacts2 {
             clockwise,
             source_bulge,
             structural_facts: OnceLock::new(),
-            sweep_kind: OnceLock::new(),
-            bezier_decomposition: OnceLock::new(),
-            representative_point: OnceLock::new(),
-            directed_sweep_angle: OnceLock::new(),
+            sweep_kind: crate::policy::PolicyClassificationCache::new(),
+            bezier_decomposition: crate::policy::PolicyEvaluationCache::new(),
+            representative_point: crate::policy::PolicyEvaluationCache::new(),
+            directed_sweep_angle: crate::policy::PolicyClassificationCache::new(),
             parameter_lineage: OnceLock::new(),
             parameter_witnesses: OnceLock::new(),
             fragments: OnceLock::new(),
@@ -721,14 +722,12 @@ impl CircularArc2 {
             return Classification::Decided(true);
         }
 
-        let sweep_kind = match crate::arc_bezier::classify_sweep(self) {
-            Ok(kind) => kind,
-            Err(crate::ExactCurveError::Blocked(blocker)) => {
-                return Classification::Uncertain(blocker.reason());
+        let sweep_kind = match crate::arc_bezier::classify_sweep_with_policy(self, policy) {
+            Ok(Classification::Decided(kind)) => kind,
+            Ok(Classification::Uncertain(reason)) => {
+                return Classification::Uncertain(reason);
             }
-            Err(crate::ExactCurveError::Invalid { .. }) => {
-                return Classification::Uncertain(crate::UncertaintyReason::Predicate);
-            }
+            Err(_) => return Classification::Uncertain(crate::UncertaintyReason::Predicate),
         };
         if sweep_kind == crate::arc_bezier::ArcSweepKind::FullCircle {
             return Classification::Decided(true);
@@ -800,31 +799,35 @@ impl CircularArc2 {
     /// point without rebuilding nested trigonometric rotations.
     pub fn representative_point(
         &self,
-        _policy: &CurveContext,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
-        match self.retained_representative_point() {
-            Ok(Classification::Decided(point)) => Ok(Classification::Decided(point.clone())),
-            Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(*reason)),
-            Err(error) => Err(error.clone()),
-        }
+        crate::policy::resolve_cached_evaluation(
+            &self.retained_facts.representative_point,
+            policy,
+            |attempt| self.compute_representative_point(attempt),
+        )
+        .map(|classification| classification.map(Clone::clone))
     }
 
-    pub(crate) fn retained_representative_point(&self) -> &CurveResult<Classification<Point2>> {
-        self.retained_facts
-            .representative_point
-            .get_or_init(|| self.compute_representative_point())
-    }
-
-    fn compute_representative_point(&self) -> CurveResult<Classification<Point2>> {
+    fn compute_representative_point(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Point2>> {
         let half = (Real::one() / Real::from(2_i8))?;
         if self.retained_facts.parameter_lineage.get().is_some() {
-            return self.point_at_sweep_fraction(&half, &CurveContext::STRICT);
+            return self.point_at_sweep_fraction(&half, policy);
         }
-        match self
-            .rational_bezier_decomposition()
-            .and_then(|decomposition| decomposition.point_at(&half))
-        {
-            Ok(point) => Ok(Classification::Decided(point)),
+        match self.rational_bezier_decomposition_with_policy(policy) {
+            Ok(Classification::Decided(decomposition)) => {
+                match decomposition.point_at_with_policy(&half, policy) {
+                    Ok(point) => Ok(Classification::Decided(point)),
+                    Err(crate::ExactCurveError::Invalid { cause, .. }) => Err(cause),
+                    Err(crate::ExactCurveError::Blocked(blocker)) => {
+                        Ok(Classification::Uncertain(blocker.reason()))
+                    }
+                }
+            }
+            Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
             Err(crate::ExactCurveError::Invalid { cause, .. }) => Err(cause),
             Err(crate::ExactCurveError::Blocked(blocker)) => {
                 Ok(Classification::Uncertain(blocker.reason()))
@@ -897,12 +900,11 @@ impl CircularArc2 {
             return Ok(Classification::Decided(point));
         }
 
-        let sweep_angle = match self.retained_directed_sweep_angle() {
-            Ok(Classification::Decided(angle)) => angle,
-            Ok(Classification::Uncertain(reason)) => {
-                return Ok(Classification::Uncertain(*reason));
+        let sweep_angle = match self.retained_directed_sweep_angle(policy)? {
+            Classification::Decided(angle) => angle,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
-            Err(error) => return Err(error.clone()),
         };
         let (radial, traversal_angle) =
             if let Some(lineage) = self.retained_facts.parameter_lineage.get() {
@@ -1042,8 +1044,11 @@ impl CircularArc2 {
                 ));
             }
         }
-        let decomposition = match self.rational_bezier_decomposition() {
-            Ok(decomposition) => decomposition,
+        let decomposition = match self.rational_bezier_decomposition_with_policy(policy) {
+            Ok(Classification::Decided(decomposition)) => decomposition,
+            Ok(Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
             Err(crate::ExactCurveError::Invalid { cause, .. }) => return Err(cause),
             Err(crate::ExactCurveError::Blocked(blocker)) => {
                 return Ok(Classification::Uncertain(blocker.reason()));
@@ -1103,13 +1108,26 @@ impl CircularArc2 {
     /// Full circles report `tau`. The result is retained with the arc and is
     /// the angular measure used by [`CircularArc2::sweep_fraction`].
     pub fn directed_sweep_angle(&self) -> CurveResult<Classification<Real>> {
-        self.retained_directed_sweep_angle().clone()
+        self.directed_sweep_angle_with_policy(&CurveContext::STRICT)
     }
 
-    fn retained_directed_sweep_angle(&self) -> &CurveResult<Classification<Real>> {
-        self.retained_facts
-            .directed_sweep_angle
-            .get_or_init(|| self.compute_directed_sweep_angle())
+    pub(crate) fn directed_sweep_angle_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Real>> {
+        self.retained_directed_sweep_angle(policy)
+            .map(|classification| classification.map(Clone::clone))
+    }
+
+    fn retained_directed_sweep_angle(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<&Real>> {
+        crate::policy::resolve_cached_classification(
+            &self.retained_facts.directed_sweep_angle,
+            policy,
+            |attempt| self.compute_directed_sweep_angle(attempt),
+        )
     }
 
     fn retained_parameter_witness(&self, parameter: &Real) -> Option<Point2> {
@@ -1142,9 +1160,15 @@ impl CircularArc2 {
         });
     }
 
-    fn compute_directed_sweep_angle(&self) -> CurveResult<Classification<Real>> {
-        let sweep_kind = match crate::arc_bezier::classify_sweep(self) {
-            Ok(kind) => kind,
+    fn compute_directed_sweep_angle(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Real>> {
+        let sweep_kind = match crate::arc_bezier::classify_sweep_with_policy(self, policy) {
+            Ok(Classification::Decided(kind)) => kind,
+            Ok(Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
             Err(crate::ExactCurveError::Invalid { cause, .. }) => return Err(cause),
             Err(crate::ExactCurveError::Blocked(blocker)) => {
                 return Ok(Classification::Uncertain(blocker.reason()));
@@ -1153,7 +1177,7 @@ impl CircularArc2 {
         if sweep_kind == crate::arc_bezier::ArcSweepKind::FullCircle {
             return Ok(Classification::Decided(Real::tau()));
         }
-        directed_radial_angle(self, self.end(), &CurveContext::STRICT)
+        directed_radial_angle(self, self.end(), policy)
     }
 
     pub(crate) fn fragment_between_sweep_range(
@@ -1174,12 +1198,11 @@ impl CircularArc2 {
                     lineage.root_range.clone(),
                 )
             } else {
-                let source_sweep = match self.retained_directed_sweep_angle() {
-                    Ok(Classification::Decided(angle)) => angle.clone(),
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Ok(Classification::Uncertain(*reason));
+                let source_sweep = match self.retained_directed_sweep_angle(policy)? {
+                    Classification::Decided(angle) => angle.clone(),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
                     }
-                    Err(error) => return Err(error.clone()),
                 };
                 (
                     self.start().clone(),
@@ -1210,12 +1233,12 @@ impl CircularArc2 {
                     root_sweep_angle,
                     root_range,
                 }));
-        let _ = fragment
+        fragment
             .retained_facts
             .directed_sweep_angle
-            .set(Ok(Classification::Decided(fragment_sweep.clone())));
+            .certify(fragment_sweep.clone());
         if let Some(kind) = sweep_kind_from_directed_angle(&fragment_sweep, policy) {
-            let _ = fragment.retained_facts.sweep_kind.set(Ok(kind));
+            fragment.retained_facts.sweep_kind.certify(kind);
         }
         self.retain_fragment(source_range, &start, &end, &fragment);
         Ok(Classification::Decided(fragment))
@@ -1293,12 +1316,11 @@ impl CircularArc2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let total_angle = match self.retained_directed_sweep_angle() {
-            Ok(Classification::Decided(angle)) => angle.clone(),
-            Ok(Classification::Uncertain(reason)) => {
-                return Ok(Classification::Uncertain(*reason));
+        let total_angle = match self.retained_directed_sweep_angle(policy)? {
+            Classification::Decided(angle) => angle.clone(),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
-            Err(error) => return Err(error.clone()),
         };
         let parameter = (point_angle / total_angle).map_err(CurveError::from)?;
         self.retain_parameter_witness(&parameter, point);
@@ -1422,11 +1444,17 @@ impl Segment2 {
         }
         match self {
             Self::Line(line) => Ok(Classification::Decided(line.point_at(parameter.clone()))),
-            Self::Arc(arc) => match arc
-                .rational_bezier_decomposition()
-                .and_then(|decomposition| decomposition.point_at(parameter))
-            {
-                Ok(point) => Ok(Classification::Decided(point)),
+            Self::Arc(arc) => match arc.rational_bezier_decomposition_with_policy(policy) {
+                Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
+                Ok(Classification::Decided(decomposition)) => {
+                    match decomposition.point_at_with_policy(parameter, policy) {
+                        Ok(point) => Ok(Classification::Decided(point)),
+                        Err(crate::ExactCurveError::Invalid { cause, .. }) => Err(cause),
+                        Err(crate::ExactCurveError::Blocked(blocker)) => {
+                            Ok(Classification::Uncertain(blocker.reason()))
+                        }
+                    }
+                }
                 Err(crate::ExactCurveError::Invalid { cause, .. }) => Err(cause),
                 Err(crate::ExactCurveError::Blocked(blocker)) => {
                     Ok(Classification::Uncertain(blocker.reason()))

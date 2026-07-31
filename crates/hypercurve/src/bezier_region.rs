@@ -2517,11 +2517,30 @@ impl CurveRegion2 {
                     }
                 }
             }
-            let fragment_capacity = path.native_bezier_fragments()?.len();
+            let fragment_capacity = match path.native_bezier_fragments_with_policy(policy)? {
+                Classification::Decided(fragments) => fragments.len(),
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Construction,
+                        path.curves()[0].family(),
+                        reason,
+                    ));
+                }
+            };
             let mut fragments = Vec::with_capacity(fragment_capacity);
             let mut arrangement_sources = Vec::with_capacity(fragment_capacity);
             for curve in path.curves() {
-                for native in curve.native_bezier_fragments()? {
+                let native_fragments = match curve.native_bezier_fragments_with_policy(policy)? {
+                    Classification::Decided(fragments) => fragments,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Construction,
+                            curve.family(),
+                            reason,
+                        ));
+                    }
+                };
+                for native in native_fragments {
                     let arrangement_fragment_index = next_arrangement_fragment_index;
                     next_arrangement_fragment_index += 1;
                     fragments.push(BezierSplitFragment2::Materialized {
@@ -3500,18 +3519,25 @@ impl CurveRegion2 {
                 Classification::Decided(edit) => edit,
                 Classification::Uncertain(UncertaintyReason::Unsupported) => {
                     let mut paths = match self
-                        .materialized_boundary_paths_for_edit(CurveOperation2::Chamfer)?
+                        .materialized_boundary_paths_for_edit(CurveOperation2::Chamfer, policy)?
                     {
                         Classification::Decided(paths) => paths,
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
                         }
                     };
-                    paths[loop_index] = paths[loop_index].chamfer_vertex_by_parameters(
+                    paths[loop_index] = match paths[loop_index].chamfer_vertex_by_parameters_raw(
                         vertex_index,
                         previous_param,
                         next_param,
-                    )?;
+                        policy,
+                    ) {
+                        Ok(path) => path,
+                        Err(ExactCurveError::Blocked(blocker)) => {
+                            return Ok(Classification::Uncertain(blocker.reason()));
+                        }
+                        Err(error) => return Err(error),
+                    };
                     return self.rebuild_after_materialized_path_edit(
                         paths,
                         CurveOperation2::Chamfer,
@@ -3583,20 +3609,28 @@ impl CurveRegion2 {
             match self.native_region_loop_for_edit(loop_index, CurveOperation2::Fillet, policy)? {
                 Classification::Decided(edit) => edit,
                 Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                    let mut paths =
-                        match self.materialized_boundary_paths_for_edit(CurveOperation2::Fillet)? {
-                            Classification::Decided(paths) => paths,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
-                    paths[loop_index] = paths[loop_index].fillet_vertex_by_parameters(
+                    let mut paths = match self
+                        .materialized_boundary_paths_for_edit(CurveOperation2::Fillet, policy)?
+                    {
+                        Classification::Decided(paths) => paths,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    paths[loop_index] = match paths[loop_index].fillet_vertex_by_parameters_raw(
                         vertex_index,
                         previous_param,
                         next_param,
                         center,
                         clockwise,
-                    )?;
+                        policy,
+                    ) {
+                        Ok(path) => path,
+                        Err(ExactCurveError::Blocked(blocker)) => {
+                            return Ok(Classification::Uncertain(blocker.reason()));
+                        }
+                        Err(error) => return Err(error),
+                    };
                     return self.rebuild_after_materialized_path_edit(
                         paths,
                         CurveOperation2::Fillet,
@@ -3634,6 +3668,7 @@ impl CurveRegion2 {
     fn materialized_boundary_paths_for_edit(
         &self,
         operation: CurveOperation2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Vec<CurvePath2>>> {
         let mut paths = Vec::with_capacity(self.data.boundary_loops.len());
         for boundary_loop in &self.data.boundary_loops {
@@ -3645,7 +3680,8 @@ impl CurveRegion2 {
                 curves.push(Curve2::from(curve.clone()));
             }
             paths.push(
-                CurvePath2::try_new(curves).map_err(|error| error.with_operation(operation))?,
+                CurvePath2::try_new_with_policy(curves, policy)
+                    .map_err(|error| error.with_operation(operation))?,
             );
         }
         Ok(Classification::Decided(paths))
@@ -3660,7 +3696,10 @@ impl CurveRegion2 {
     /// segmenting the boundary. This is the lossless interchange counterpart
     /// to [`CurveRegion2::project_to_finite_profiles`].
     pub fn materialized_boundary_paths(&self) -> ExactCurveResult<Classification<Vec<CurvePath2>>> {
-        self.materialized_boundary_paths_for_edit(CurveOperation2::NativeTopology)
+        self.materialized_boundary_paths_for_edit(
+            CurveOperation2::NativeTopology,
+            &CurveContext::STRICT,
+        )
     }
 
     fn rebuild_after_materialized_path_edit(
@@ -3719,7 +3758,9 @@ impl CurveRegion2 {
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CurveRegionCertifiedSegmentationResult2>> {
-        let paths = match self.materialized_boundary_paths()? {
+        let paths = match self
+            .materialized_boundary_paths_for_edit(CurveOperation2::Subdivision, policy)?
+        {
             Classification::Decided(paths) => paths,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -4201,12 +4242,13 @@ impl CurveRegion2 {
             }
         }
 
-        let paths = match self.materialized_boundary_paths()? {
-            Classification::Decided(paths) => paths,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let paths =
+            match self.materialized_boundary_paths_for_edit(CurveOperation2::Offset, policy)? {
+                Classification::Decided(paths) => paths,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let roles = match self
             .loop_roles_raw(policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?

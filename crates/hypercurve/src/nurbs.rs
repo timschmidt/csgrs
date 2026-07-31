@@ -893,19 +893,30 @@ impl NurbsCurve2 {
         parameter: &Real,
         side: CurveParameterSide2,
     ) -> ExactCurveResult<Point2> {
-        if self.is_periodic_seam_parameter(parameter)? {
+        self.point_at_side_with_policy(parameter, side, &CurveContext::STRICT)
+    }
+
+    pub(crate) fn point_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Point2> {
+        if self.is_periodic_seam_parameter(parameter, policy)? {
             let (domain_start, domain_end) = self.parameter_domain();
-            let left = self.point_at_canonical_side(domain_end, CurveParameterSide2::Left)?;
+            let left =
+                self.point_at_canonical_side(domain_end, CurveParameterSide2::Left, policy)?;
             if side == CurveParameterSide2::Left {
                 return Ok(left);
             }
-            let right = self.point_at_canonical_side(domain_start, CurveParameterSide2::Right)?;
+            let right =
+                self.point_at_canonical_side(domain_start, CurveParameterSide2::Right, policy)?;
             if side == CurveParameterSide2::Right {
                 return Ok(right);
             }
-            return matching_nurbs_point(left, right);
+            return matching_nurbs_point(left, right, policy);
         }
-        self.point_at_canonical_side(parameter, side)
+        self.point_at_canonical_side(parameter, side, policy)
     }
 
     /// Evaluates a periodic NURBS at any exactly wrappable parameter.
@@ -935,18 +946,19 @@ impl NurbsCurve2 {
         &self,
         parameter: &Real,
         side: CurveParameterSide2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
         let decomposition = self.bezier_decomposition()?;
-        let (first, last) = select_span_indices(decomposition.spans(), parameter)?;
-        let first_point = self.point_on_span(first.index, parameter, first.location)?;
+        let (first, last) = select_span_indices(decomposition.spans(), parameter, policy)?;
+        let first_point = self.point_on_span(first.index, parameter, first.location, policy)?;
         if first.index == last.index || side == CurveParameterSide2::Left {
             return Ok(first_point);
         }
-        let last_point = self.point_on_span(last.index, parameter, last.location)?;
+        let last_point = self.point_on_span(last.index, parameter, last.location, policy)?;
         if side == CurveParameterSide2::Right {
             return Ok(last_point);
         }
-        matching_nurbs_point(first_point, last_point)
+        matching_nurbs_point(first_point, last_point, policy)
     }
 
     fn point_on_span(
@@ -954,6 +966,7 @@ impl NurbsCurve2 {
         span_index: usize,
         parameter: &Real,
         location: NurbsSpanParameterLocation,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
         let curve = &self.rational_spans()?[span_index];
         match location {
@@ -964,7 +977,7 @@ impl NurbsCurve2 {
         let decomposition = self.bezier_decomposition()?;
         let local = local_span_parameter(&decomposition.spans()[span_index], parameter)?;
         exact_classification(
-            curve.point_at_classified(&local, &CurveContext::STRICT),
+            curve.point_at_classified(&local, policy),
             CurveOperation2::Evaluation,
         )
     }
@@ -980,7 +993,8 @@ impl NurbsCurve2 {
         parameter: &Real,
         side: CurveParameterSide2,
     ) -> ExactCurveResult<CurveDerivative2> {
-        let mut derivatives = self.derivatives_at_side(parameter, 1, side)?;
+        let mut derivatives =
+            self.derivatives_at_side_with_policy(parameter, 1, side, &CurveContext::STRICT)?;
         Ok(derivatives.pop().expect("one derivative requested"))
     }
 
@@ -1019,12 +1033,23 @@ impl NurbsCurve2 {
         max_order: usize,
         side: CurveParameterSide2,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
-        if self.is_periodic_seam_parameter(parameter)? {
+        self.derivatives_at_side_with_policy(parameter, max_order, side, &CurveContext::STRICT)
+    }
+
+    pub(crate) fn derivatives_at_side_with_policy(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<CurveDerivative2>> {
+        if self.is_periodic_seam_parameter(parameter, policy)? {
             let (domain_start, domain_end) = self.parameter_domain();
             let left = self.derivatives_at_canonical_side(
                 domain_end,
                 max_order,
                 CurveParameterSide2::Left,
+                policy,
             )?;
             if side == CurveParameterSide2::Left {
                 return Ok(left);
@@ -1033,13 +1058,14 @@ impl NurbsCurve2 {
                 domain_start,
                 max_order,
                 CurveParameterSide2::Right,
+                policy,
             )?;
             if side == CurveParameterSide2::Right {
                 return Ok(right);
             }
-            return matching_nurbs_derivatives(left, right);
+            return matching_nurbs_derivatives(left, right, policy);
         }
-        self.derivatives_at_canonical_side(parameter, max_order, side)
+        self.derivatives_at_canonical_side(parameter, max_order, side, policy)
     }
 
     /// Evaluates periodic derivatives through `max_order` at any wrappable parameter.
@@ -1075,20 +1101,21 @@ impl NurbsCurve2 {
         parameter: &Real,
         max_order: usize,
         side: CurveParameterSide2,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition = self.bezier_decomposition()?;
-        let (first, last) = select_span_indices(decomposition.spans(), parameter)?;
+        let (first, last) = select_span_indices(decomposition.spans(), parameter, policy)?;
         let first_derivatives =
-            self.derivatives_on_span(first.index, parameter, max_order, first.location)?;
+            self.derivatives_on_span(first.index, parameter, max_order, first.location, policy)?;
         if first.index == last.index || side == CurveParameterSide2::Left {
             return Ok(first_derivatives);
         }
         let last_derivatives =
-            self.derivatives_on_span(last.index, parameter, max_order, last.location)?;
+            self.derivatives_on_span(last.index, parameter, max_order, last.location, policy)?;
         if side == CurveParameterSide2::Right {
             return Ok(last_derivatives);
         }
-        matching_nurbs_derivatives(first_derivatives, last_derivatives)
+        matching_nurbs_derivatives(first_derivatives, last_derivatives, policy)
     }
 
     fn derivatives_on_span(
@@ -1097,6 +1124,7 @@ impl NurbsCurve2 {
         parameter: &Real,
         max_order: usize,
         location: NurbsSpanParameterLocation,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition = self.bezier_decomposition()?;
         let span = &decomposition.spans()[span_index];
@@ -1108,12 +1136,12 @@ impl NurbsCurve2 {
         let rational_span = &self.rational_spans()?[span_index];
         let local_derivatives = if max_order == 1 {
             vec![exact_classification(
-                rational_span.derivative_at_classified(&local, &CurveContext::STRICT),
+                rational_span.derivative_at_classified(&local, policy),
                 CurveOperation2::Evaluation,
             )?]
         } else {
             exact_classification(
-                rational_span.derivatives_at_classified(&local, max_order, &CurveContext::STRICT),
+                rational_span.derivatives_at_classified(&local, max_order, policy),
                 CurveOperation2::Evaluation,
             )?
         };
@@ -1181,15 +1209,18 @@ impl NurbsCurve2 {
         }
     }
 
-    fn is_periodic_seam_parameter(&self, parameter: &Real) -> ExactCurveResult<bool> {
+    fn is_periodic_seam_parameter(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
         if !self.periodicity().is_periodic() {
             return Ok(false);
         }
         let (start, end) = self.parameter_domain();
-        let policy = CurveContext::STRICT;
         match (
-            crate::classify::compare_reals(parameter, start, &policy),
-            crate::classify::compare_reals(parameter, end, &policy),
+            crate::classify::compare_reals(parameter, start, policy),
+            crate::classify::compare_reals(parameter, end, policy),
         ) {
             (Some(std::cmp::Ordering::Equal), _) | (_, Some(std::cmp::Ordering::Equal)) => Ok(true),
             (Some(_), Some(_)) => Ok(false),
@@ -1520,14 +1551,14 @@ enum NurbsSpanParameterLocation {
 fn select_span_indices(
     spans: &[RationalBezierSpan2],
     parameter: &Real,
+    policy: &CurveContext,
 ) -> ExactCurveResult<(SelectedNurbsSpan, SelectedNurbsSpan)> {
-    let policy = CurveContext::STRICT;
     let mut first = None;
     let mut last = None;
     for (span_index, span) in spans.iter().enumerate() {
         let (start, end) = span.knot_interval();
-        let lower = crate::classify::compare_reals(start, parameter, &policy);
-        let upper = crate::classify::compare_reals(parameter, end, &policy);
+        let lower = crate::classify::compare_reals(start, parameter, policy);
+        let upper = crate::classify::compare_reals(parameter, end, policy);
         match (lower, upper) {
             (
                 Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
@@ -1568,13 +1599,13 @@ fn select_span_indices(
 fn matching_nurbs_derivatives(
     first: Vec<CurveDerivative2>,
     second: Vec<CurveDerivative2>,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<CurveDerivative2>> {
     debug_assert_eq!(first.len(), second.len());
-    let policy = CurveContext::STRICT;
     for (first_derivative, second_derivative) in first.iter().zip(&second) {
         match (
-            crate::classify::compare_reals(first_derivative.dx(), second_derivative.dx(), &policy),
-            crate::classify::compare_reals(first_derivative.dy(), second_derivative.dy(), &policy),
+            crate::classify::compare_reals(first_derivative.dx(), second_derivative.dx(), policy),
+            crate::classify::compare_reals(first_derivative.dy(), second_derivative.dy(), policy),
         ) {
             (Some(std::cmp::Ordering::Equal), Some(std::cmp::Ordering::Equal)) => {}
             (Some(_), Some(_)) => {
@@ -1596,11 +1627,14 @@ fn matching_nurbs_derivatives(
     Ok(first)
 }
 
-fn matching_nurbs_point(first: Point2, second: Point2) -> ExactCurveResult<Point2> {
-    let policy = CurveContext::STRICT;
+fn matching_nurbs_point(
+    first: Point2,
+    second: Point2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Point2> {
     match (
-        crate::classify::compare_reals(first.x(), second.x(), &policy),
-        crate::classify::compare_reals(first.y(), second.y(), &policy),
+        crate::classify::compare_reals(first.x(), second.x(), policy),
+        crate::classify::compare_reals(first.y(), second.y(), policy),
     ) {
         (Some(std::cmp::Ordering::Equal), Some(std::cmp::Ordering::Equal)) => Ok(first),
         (Some(_), Some(_)) => Err(ExactCurveError::blocked(

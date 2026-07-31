@@ -4,6 +4,7 @@ use std::cmp::Ordering;
 
 use hyperreal::RealSign;
 
+use crate::policy::{resolve_cached_classification, resolve_cached_evaluation};
 use crate::{
     CircularArc2, Classification, CurveContext, CurveError, CurveFamily2, CurveOperation2,
     ExactCurveError, ExactCurveResult, Point2, RationalQuadraticBezier2, Real, UncertaintyReason,
@@ -41,14 +42,25 @@ impl CircularArc2 {
     pub fn rational_bezier_decomposition(
         &self,
     ) -> ExactCurveResult<&CircularArcBezierDecomposition2> {
-        match self
-            .retained_facts
-            .bezier_decomposition
-            .get_or_init(|| compute_circular_arc_decomposition(self))
-        {
-            Ok(decomposition) => Ok(decomposition),
-            Err(error) => Err(error.clone()),
+        match self.rational_bezier_decomposition_with_policy(&CurveContext::STRICT)? {
+            Classification::Decided(decomposition) => Ok(decomposition),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::BezierDecomposition,
+                CurveFamily2::CircularArc,
+                reason,
+            )),
         }
+    }
+
+    pub(crate) fn rational_bezier_decomposition_with_policy(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<&CircularArcBezierDecomposition2>> {
+        resolve_cached_evaluation(
+            &self.retained_facts.bezier_decomposition,
+            policy,
+            |attempt| compute_circular_arc_decomposition(self, attempt),
+        )
     }
 }
 
@@ -60,7 +72,15 @@ impl CircularArcBezierDecomposition2 {
 
     /// Evaluates the piecewise-rational arc parameterization on `[0, 1]`.
     pub fn point_at(&self, parameter: &Real) -> ExactCurveResult<Point2> {
-        evaluate_decomposition(self, parameter)
+        evaluate_decomposition(self, parameter, &CurveContext::STRICT)
+    }
+
+    pub(crate) fn point_at_with_policy(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Point2> {
+        evaluate_decomposition(self, parameter, policy)
     }
 }
 
@@ -78,17 +98,26 @@ impl CircularArcBezierSpan2 {
 
 pub(crate) fn decompose_circular_arc(
     arc: &CircularArc2,
-) -> ExactCurveResult<CircularArcBezierDecomposition2> {
-    arc.rational_bezier_decomposition()
-        .cloned()
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<CircularArcBezierDecomposition2>> {
+    arc.rational_bezier_decomposition_with_policy(policy)
+        .map(|classification| classification.map(Clone::clone))
         .map_err(contextualize_arc_error)
 }
 
 fn compute_circular_arc_decomposition(
     arc: &CircularArc2,
-) -> ExactCurveResult<CircularArcBezierDecomposition2> {
-    validate_radius(arc)?;
-    let kind = classify_sweep(arc)?;
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<CircularArcBezierDecomposition2>> {
+    if let Classification::Uncertain(reason) = validate_radius(arc, policy)? {
+        return Ok(Classification::Uncertain(reason));
+    }
+    let kind = match classify_sweep_with_policy(arc, policy)? {
+        Classification::Decided(kind) => kind,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
     let points = match kind {
         ArcSweepKind::Minor => vec![arc.start().clone(), arc.end().clone()],
         ArcSweepKind::Semicircle => vec![
@@ -113,17 +142,19 @@ fn compute_circular_arc_decomposition(
             parameter_end,
         });
     }
-    Ok(CircularArcBezierDecomposition2 { spans })
+    Ok(Classification::Decided(CircularArcBezierDecomposition2 {
+        spans,
+    }))
 }
 
 pub(crate) fn evaluate_decomposition(
     decomposition: &CircularArcBezierDecomposition2,
     parameter: &Real,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Point2> {
-    let policy = CurveContext::STRICT;
     for span in &decomposition.spans {
-        let lower = crate::classify::compare_reals(&span.parameter_start, parameter, &policy);
-        let upper = crate::classify::compare_reals(parameter, &span.parameter_end, &policy);
+        let lower = crate::classify::compare_reals(&span.parameter_start, parameter, policy);
+        let upper = crate::classify::compare_reals(parameter, &span.parameter_end, policy);
         match (lower, upper) {
             (Some(Ordering::Less | Ordering::Equal), Some(Ordering::Less | Ordering::Equal)) => {
                 if lower == Some(Ordering::Equal) {
@@ -135,7 +166,7 @@ pub(crate) fn evaluate_decomposition(
                 let width = &span.parameter_end - &span.parameter_start;
                 let local = ((parameter - &span.parameter_start) / width)
                     .map_err(|cause| arc_error(CurveOperation2::Evaluation, cause.into()))?;
-                return match span.curve.point_at(local, &policy) {
+                return match span.curve.point_at(local, policy) {
                     Classification::Decided(point) => Ok(point),
                     Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                         CurveOperation2::Evaluation,
@@ -160,8 +191,11 @@ pub(crate) fn evaluate_decomposition(
     ))
 }
 
-fn validate_radius(arc: &CircularArc2) -> ExactCurveResult<()> {
-    match crate::classify::is_zero(arc.radius_squared_ref(), &CurveContext::STRICT) {
+fn validate_radius(
+    arc: &CircularArc2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<()>> {
+    match crate::classify::is_zero(arc.radius_squared_ref(), policy) {
         Some(false) => {}
         Some(true) => {
             return Err(arc_error(
@@ -169,90 +203,82 @@ fn validate_radius(arc: &CircularArc2) -> ExactCurveResult<()> {
                 CurveError::ZeroRadiusArc,
             ));
         }
-        None => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::BezierDecomposition,
-                CurveFamily2::CircularArc,
-                UncertaintyReason::RealSign,
-            ));
-        }
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
     if arc.endpoints_on_stored_circle_are_certified() {
-        return Ok(());
+        return Ok(Classification::Decided(()));
     }
     let mismatch =
         arc.start().distance_squared(arc.center()) - arc.end().distance_squared(arc.center());
-    match crate::classify::is_zero(&mismatch, &CurveContext::STRICT) {
-        Some(true) => Ok(()),
+    match crate::classify::is_zero(&mismatch, policy) {
+        Some(true) => Ok(Classification::Decided(())),
         Some(false) => Err(arc_error(
             CurveOperation2::BezierDecomposition,
             CurveError::RadiusMismatch,
         )),
-        None => Err(ExactCurveError::blocked(
-            CurveOperation2::BezierDecomposition,
-            CurveFamily2::CircularArc,
-            UncertaintyReason::RealSign,
-        )),
+        None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
 }
 
 pub(crate) fn classify_sweep(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKind> {
-    arc.retained_facts
-        .sweep_kind
-        .get_or_init(|| classify_sweep_uncached(arc))
-        .clone()
-        .map_err(contextualize_arc_error)
+    match classify_sweep_with_policy(arc, &CurveContext::STRICT)? {
+        Classification::Decided(kind) => Ok(kind),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::BezierDecomposition,
+            CurveFamily2::CircularArc,
+            reason,
+        )),
+    }
 }
 
-fn classify_sweep_uncached(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKind> {
-    let policy = CurveContext::STRICT;
+pub(crate) fn classify_sweep_with_policy(
+    arc: &CircularArc2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<ArcSweepKind>> {
+    resolve_cached_classification(&arc.retained_facts.sweep_kind, policy, |attempt| {
+        classify_sweep_uncached(arc, attempt)
+    })
+    .map(|classification| classification.map(|kind| *kind))
+    .map_err(contextualize_arc_error)
+}
+
+fn classify_sweep_uncached(
+    arc: &CircularArc2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<ArcSweepKind>> {
     let endpoint_distance = arc.start().distance_squared(arc.end());
-    match crate::classify::is_zero(&endpoint_distance, &policy) {
-        Some(true) => return Ok(ArcSweepKind::FullCircle),
+    match crate::classify::is_zero(&endpoint_distance, policy) {
+        Some(true) => return Ok(Classification::Decided(ArcSweepKind::FullCircle)),
         Some(false) => {}
-        None => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::BezierDecomposition,
-                CurveFamily2::CircularArc,
-                UncertaintyReason::RealSign,
-            ));
-        }
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
 
     let start = arc.start().delta_from(arc.center());
     let end = arc.end().delta_from(arc.center());
     let cross = (&start.0 * &end.1) - (&start.1 * &end.0);
-    let sign = crate::classify::real_sign(&cross, &policy).ok_or_else(|| {
-        ExactCurveError::blocked(
-            CurveOperation2::BezierDecomposition,
-            CurveFamily2::CircularArc,
-            UncertaintyReason::RealSign,
-        )
-    })?;
+    let Some(sign) = crate::classify::real_sign(&cross, policy) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+    };
     match sign {
-        RealSign::Positive => Ok(if arc.is_clockwise() {
+        RealSign::Positive => Ok(Classification::Decided(if arc.is_clockwise() {
             ArcSweepKind::Major
         } else {
             ArcSweepKind::Minor
-        }),
-        RealSign::Negative => Ok(if arc.is_clockwise() {
+        })),
+        RealSign::Negative => Ok(Classification::Decided(if arc.is_clockwise() {
             ArcSweepKind::Minor
         } else {
             ArcSweepKind::Major
-        }),
+        })),
         RealSign::Zero => {
             let dot = (&start.0 * &end.0) + (&start.1 * &end.1);
-            match crate::classify::real_sign(&dot, &policy) {
-                Some(RealSign::Negative) => Ok(ArcSweepKind::Semicircle),
+            match crate::classify::real_sign(&dot, policy) {
+                Some(RealSign::Negative) => Ok(Classification::Decided(ArcSweepKind::Semicircle)),
                 Some(_) => Err(arc_error(
                     CurveOperation2::BezierDecomposition,
                     CurveError::InvalidArcSweep,
                 )),
-                None => Err(ExactCurveError::blocked(
-                    CurveOperation2::BezierDecomposition,
-                    CurveFamily2::CircularArc,
-                    UncertaintyReason::RealSign,
-                )),
+                None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             }
         }
     }
@@ -359,12 +385,12 @@ mod tests {
             CircularArc2::try_from_center(point(5, 0), point(0, 5), point(0, 0), false).unwrap();
         let clone = arc.clone();
 
-        assert!(arc.retained_facts.sweep_kind.get().is_none());
-        assert!(arc.retained_facts.bezier_decomposition.get().is_none());
+        assert!(arc.retained_facts.sweep_kind.is_empty());
+        assert!(arc.retained_facts.bezier_decomposition.is_empty());
         arc.rational_bezier_decomposition().unwrap();
 
         assert!(Arc::ptr_eq(&arc.retained_facts, &clone.retained_facts));
-        assert!(clone.retained_facts.sweep_kind.get().is_some());
-        assert!(clone.retained_facts.bezier_decomposition.get().is_some());
+        assert!(!clone.retained_facts.sweep_kind.is_empty());
+        assert!(!clone.retained_facts.bezier_decomposition.is_empty());
     }
 }

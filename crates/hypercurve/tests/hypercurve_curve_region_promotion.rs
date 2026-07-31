@@ -1180,6 +1180,58 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
     }
 }
 
+#[cfg(feature = "predicates")]
+#[test]
+fn higher_order_region_fillet_obeys_terminal_policy_once() {
+    let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        &[quadratic_fillet_path()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let center = Point2::new(Real::from(3) + undecidable_zero, Real::one());
+
+    let strict = region
+        .fillet_loop_vertex_by_parameters(
+            0,
+            1,
+            q(3, 4),
+            q(1, 2),
+            &center,
+            false,
+            &CurveContext::STRICT,
+        )
+        .unwrap();
+    assert_eq!(strict.certainty, CurveCertainty::Certified);
+    assert_eq!(
+        strict.value,
+        Classification::Uncertain(hypercurve::UncertaintyReason::RealSign)
+    );
+
+    let approximate = region
+        .fillet_loop_vertex_by_parameters(
+            0,
+            1,
+            q(3, 4),
+            q(1, 2),
+            &center,
+            false,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap();
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    let Classification::Decided(filleted) = approximate.value else {
+        panic!("the authorized terminal must complete the higher-order region fillet");
+    };
+    assert_eq!(filleted.boundary_loops()[0].len(), 7);
+}
+
 #[test]
 fn unified_region_offset_expands_material_and_contracts_holes() {
     let policy = CurveContext::STRICT;

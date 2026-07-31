@@ -3,9 +3,10 @@ use std::time::Instant;
 
 use hypercurve::{
     BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveRegion2,
-    CurveResult, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule,
-    LineArcRegion2, LineSeg2, Point2, Real, Segment2,
+    CurveRegionLoopRole, CurveResult, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2,
+    FillRule, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, Real, Segment2,
 };
+use hypercurve::{Curve2, CurvePath2};
 
 fn s(value: i32) -> Real {
     value.into()
@@ -46,6 +47,17 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
         vertex(xmin, ymax, 0),
     ])
     .unwrap()
+}
+
+fn higher_order_fillet_path() -> CurvePath2 {
+    CurvePath2::try_new(vec![
+        Curve2::from(line(0, 0, 4, 0)),
+        Curve2::from(QuadraticBezier2::new(p(4, 0), p(3, 4), p(2, 0))),
+        Curve2::from(line(2, 0, 2, -2)),
+        Curve2::from(line(2, -2, 0, -2)),
+        Curve2::from(line(0, -2, 0, 0)),
+    ])
+    .expect("higher-order editing benchmark path must be connected")
 }
 
 fn subdivided_rectangle(edge_steps: i32) -> Contour2 {
@@ -765,6 +777,85 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_higher_order_curve_edits(iterations: u32) {
+    let policy = CurveContext::STRICT;
+    let path = higher_order_fillet_path();
+    let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        std::slice::from_ref(&path),
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &policy,
+    )
+    .expect("higher-order editing benchmark region must promote")
+    .into_value();
+
+    let started = Instant::now();
+    let mut path_chamfer_curves = 0_usize;
+    for _ in 0..iterations {
+        let chamfered = path
+            .chamfer_vertex_by_parameters(1, q(3, 4), q(1, 2), &policy)
+            .expect("higher-order path chamfer must remain exact")
+            .into_value();
+        path_chamfer_curves += black_box(chamfered.curves().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_path_higher_order_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={path_chamfer_curves}",
+        elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut path_fillet_curves = 0_usize;
+    for _ in 0..iterations {
+        let filleted = path
+            .fillet_vertex_by_parameters(1, q(3, 4), q(1, 2), &p(3, 1), false, &policy)
+            .expect("higher-order path fillet must remain exact")
+            .into_value();
+        path_fillet_curves += black_box(filleted.curves().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_path_higher_order_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={path_fillet_curves}",
+        elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut region_chamfer_loops = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(chamfered) = region
+            .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 2), &policy)
+            .expect("higher-order region chamfer must remain exact")
+            .into_value()
+        else {
+            panic!("higher-order region chamfer benchmark became uncertain");
+        };
+        region_chamfer_loops += black_box(chamfered.boundary_loops().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_higher_order_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={region_chamfer_loops}",
+        elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut region_fillet_loops = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(filleted) = region
+            .fillet_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 2), &p(3, 1), false, &policy)
+            .expect("higher-order region fillet must remain exact")
+            .into_value()
+        else {
+            panic!("higher-order region fillet benchmark became uncertain");
+        };
+        region_fillet_loops += black_box(filleted.boundary_loops().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_higher_order_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={region_fillet_loops}",
+        elapsed / iterations
+    );
+}
+
 fn main() -> CurveResult<()> {
     let iterations = 10_000;
     bench_parameter_trim(iterations)?;
@@ -777,6 +868,7 @@ fn main() -> CurveResult<()> {
     bench_line_fillet(iterations)?;
     bench_arc_fillet(iterations)?;
     bench_curve_region_mutations(iterations)?;
+    bench_higher_order_curve_edits(iterations);
     bench_arc_extension(iterations)?;
     bench_curve_string_line_merge_evidence(iterations)?;
     bench_curve_string_reversed_duplicate_evidence(iterations)?;
