@@ -6502,6 +6502,66 @@ Machine-readable semantic evidence, samples, caller validation, binary size,
 and the 22,341-node/38,191-edge call graph are in
 [`2026-07-31-curve-region-mutation-outcomes.json`](benchmarks/checkpoints/2026-07-31-curve-region-mutation-outcomes.json).
 
+## Finite projection outcome checkpoint
+
+Finite projection now follows the same explicit policy/outcome contract as
+authoritative construction, queries, measurements, and mutation.
+`CurvePath2::project_to_finite_polyline`, the three `CurveRegion2` projection
+families, and the retained line/arc and borrowed-region adapters receive a
+`CurveContext` and return `CurveOutcome<T>`. Private raw kernels keep nested
+projection one-pass. Rational weight signs, algebraic split parameters, and
+materialized loop joins are all decided under the selected policy.
+
+Two terminal regressions prove the boundary. A symbolically closed quadratic
+path cannot certify endpoint closure under `STRICT`, while `APPROXIMATE_512`
+completes the explicitly finite boundary projection and reports consumption.
+A region constructed under Approximate-512 from symbolically equal
+materialized endpoints is rechecked when projected: a later strict request
+cannot inherit the earlier terminal decision, while a permitted approximate
+request completes and marks the terminal. Materialized circular paths retain
+their exact rational-conic carrier and circular provenance rather than being
+reconstructed or chordized. Finite polylines and profiles remain deliberately
+lossy output adapters and never feed authoritative topology.
+
+The persistent focused benchmark compares the policy-unaware parent to the
+final source with seven alternating release pairs:
+
+| Finite projection | Parent median | Policy-explicit median | Change |
+| --- | ---: | ---: | ---: |
+| Degree-four rational path to polyline | 2.796 ms | 2.831 ms | +1.23% |
+| Exact CurveRegion profiles | 576.046 us | 567.718 us | -1.45% |
+| Native CurveRegion curve paths | 595.629 ns | 494.088 ns | -17.05% |
+
+The rational ranges overlap and the 1.23% movement is treated as neutral. The
+native path win comes from retaining already-authoritative materialized
+carriers, avoiding reconstruction and duplicate connectivity validation.
+Strict operations also avoid installing Approximate-512 observation state.
+
+Seven final-source pathological processes retained 67 cells, 603 candidate
+pairs, 3,248 fragments, 134 point classifications, all 268 decided
+operations, zero blockers, and checksum 6. Their Boolean median was
+465.624 ms, within 0.35% of the preceding checkpoint and 1.24% below the
+frozen baseline. Construction improved 0.56% to 73.051 ms and median observed
+RSS delta remained 34.6 MiB.
+
+The broad competitive lane remained stable: its largest movement was a 4.07%
+rectangle improvement and every other exact Hypercurve row remained within
+3.7% of the preceding checkpoint. The stripped pathological executable grew
+2,056 bytes to 5,514,328 bytes and remains 16,965 bytes below the frozen
+baseline.
+
+Validation passed the complete all-feature suite with 257 unit tests, the
+166.04-second exact CurveRegion2 corpus, and all pathological operations;
+warning-denied all-target all-feature and no-default matrices; every fuzz
+target; and warning-denied rustdoc. CSGRS removed its whole-operation
+strict-then-approximate replay at `59c86ec`, consumes Hypercurve's outcome
+once, and passes its all-feature compile/Clippy and focused terminal-policy
+regression against the final source. Hypermesh was not modified.
+
+Machine-readable samples, semantic evidence, caller validation, binary size,
+and the 22,408-node/38,297-edge call graph are in
+[`2026-07-31-finite-projection-outcomes.json`](benchmarks/checkpoints/2026-07-31-finite-projection-outcomes.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

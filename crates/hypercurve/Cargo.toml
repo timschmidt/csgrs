@@ -126,6 +126,10 @@ harness = false
 required-features = ["triangulation"]
 
 [[bench]]
+name = "finite_projection"
+harness = false
+
+[[bench]]
 name = "comparative"
 harness = false
 required-features = ["comparative-benchmarks"]
