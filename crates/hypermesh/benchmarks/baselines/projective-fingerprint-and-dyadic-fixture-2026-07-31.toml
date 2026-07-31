@@ -1,0 +1,330 @@
+schema = 1
+date = "2026-07-31"
+direct_parent = "5fe308f0b6325577ab702eae51bc9bc0838f9844"
+core_implementation = "a384d6ec12dc5d105d8e7e1c506acfdd2ec89b83"
+nested_caller_migration = "3e05079adfa83aa6eb1eeac28dca2e653bf71f56"
+policy = "explicit MeshContext; STRICT and APPROXIMATE_512"
+host = "AMD Ryzen 7 5800X3D 8-Core Processor"
+kernel = "Linux 7.0.4-100.fc43.x86_64"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[dependencies.hyperreal]
+commit = "63b2538bc5e2efd4c679d8770722dcda05ccc591"
+
+[dependencies.hyperlattice]
+commit = "53fbdf6fd35e08b9d696f1e2c3c5e742ea261a96"
+
+[dependencies.hyperlimit]
+commit = "54316d1e77ba477b3e72d6382c4f5b7eb9c38406"
+
+[dependencies.hypertri]
+commit = "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+
+[algorithm]
+modulus = 2305843009213693951
+modulus_expression = "2^61 - 1"
+different_fingerprints_prove_rational_inequality = true
+matching_fingerprints_require_policy_equality = true
+unkeyed_points_retain_all_pairs = true
+compatibility_shims = 0
+
+[correctness]
+default_executed_tests = 1167
+no_default_executed_tests = 1167
+all_feature_executed_tests = 1169
+regular_ignored_tests = 7
+ui_executed_tests = 8
+opt_in_yeahright_tests = 4
+strict_and_approximate_collision_tests = 2
+all_results_certified = true
+
+[fixture.retained]
+sha256 = "5f1ac8a2f8bf2b0c67ce95dc8146cc783155dc9c34eeee164f03446a0830886c"
+base_hull_facets = 1128
+box_facets = 12
+input_triangles_after_exact_subdivision = 4524
+output_vertices = 625
+output_triangles = 1246
+
+[fixture.generated]
+control_hull_vertices = 107
+control_hull_triangles = 210
+dyadic_grid_power = -40
+maximum_absolute_coordinate = 512
+maximum_subdivision_segments = 8
+stress_hull_triangles = [3360, 13440]
+largest_total_input_triangles = 13452
+largest_output_vertices = 154
+largest_output_triangles = 304
+
+[runtime.retained_parent]
+perf_repetitions = 11
+task_clock_ms = 298.74
+cycles = 1231409536
+instructions = 3814408751
+branches = 710945009
+branch_misses = 2293051
+cache_misses = 3022310
+
+[runtime.retained_candidate_approximate_512]
+perf_repetitions = 11
+task_clock_ms = 90.27
+task_clock_movement_percent = -69.7831
+cycles = 353858020
+cycles_movement_percent = -71.2640
+instructions = 1071384751
+instructions_movement_percent = -71.9122
+branches = 181216551
+branches_movement_percent = -74.5105
+branch_misses = 1435872
+branch_misses_movement_percent = -37.3816
+cache_misses = 1432070
+cache_misses_movement_percent = -52.6167
+certainty = "Certified"
+
+[runtime.retained_candidate_strict]
+perf_repetitions = 11
+task_clock_ms = 90.27
+cycles = 354955991
+instructions = 1071399344
+branches = 181220029
+branch_misses = 1436503
+cache_misses = 1440299
+certainty = "Certified"
+
+[runtime.exact_rational_key_rejected]
+task_clock_ms = 93.31
+cycles = 359100000
+instructions = 1078090000
+allocations = 1253295
+reason = "modular candidate is about 2 percent faster; performance has priority"
+
+[runtime.large_boxes_parent]
+perf_repetitions = 31
+task_clock_ms = 6.00
+cycles = 14827666
+instructions = 37678847
+branches = 6885732
+branch_misses = 66979
+cache_misses = 115005
+
+[runtime.large_boxes_candidate_strict]
+perf_repetitions = 31
+task_clock_ms = 5.83
+cycles = 14255492
+instructions = 35894595
+branches = 6579057
+branch_misses = 65598
+cache_misses = 107959
+certainty = "Certified"
+
+[runtime.generated_yeahright8_strict]
+perf_repetitions = 11
+task_clock_ms = 80.46
+cycles = 286707049
+instructions = 670023595
+branches = 102367836
+branch_misses = 858475
+cache_misses = 1964594
+certainty = "Certified"
+
+[runtime.generated_yeahright8_approximate_512]
+perf_repetitions = 11
+task_clock_ms = 79.86
+cycles = 287401262
+instructions = 669979318
+branches = 102356596
+branch_misses = 858176
+cache_misses = 1975488
+certainty = "Certified"
+
+[memory.retained_parent]
+allocations = 7122814
+temporary_allocations = 409198
+peak_heap_mib = 12.70
+heaptrack_rss_mib = 22.65
+
+[memory.retained_candidate_strict]
+allocations = 1254723
+allocation_movement_percent = -82.3844
+temporary_allocations = 173192
+temporary_movement_percent = -57.6753
+peak_heap_mib = 12.70
+heaptrack_rss_mib = 23.03
+
+[memory.retained_candidate_approximate_512]
+allocations = 1254723
+temporary_allocations = 173192
+peak_heap_mib = 12.70
+heaptrack_rss_mib = 22.52
+
+[memory.large_boxes_strict]
+input_triangles = 6144
+allocations = 27214
+temporary_allocations = 85
+peak_heap_mib = 4.70
+heaptrack_rss_mib = 13.02
+
+[memory.large_boxes_approximate_512]
+input_triangles = 6144
+allocations = 27214
+temporary_allocations = 85
+peak_heap_mib = 4.70
+heaptrack_rss_mib = 13.09
+
+[memory.generated_yeahright8_strict]
+input_triangles = 13452
+allocations = 304575
+temporary_allocations = 27065
+peak_heap_mib = 11.66
+heaptrack_rss_mib = 23.65
+
+[memory.generated_yeahright8_approximate_512]
+input_triangles = 13452
+allocations = 304575
+temporary_allocations = 27065
+peak_heap_mib = 11.66
+heaptrack_rss_mib = 23.77
+
+[memory.combined_stress]
+description = "two retained generated cases plus every competitor adapter"
+allocations = 2499547
+temporary_allocations = 284833
+peak_heap_mib = 81.35
+heaptrack_rss_mib = 115.16
+runtime_seconds = 8.512
+
+[historical.yeahright]
+runtime_ms = 944.8
+peak_heap_mib = 67.74
+allocations = 5020891
+peak_rss_mib = 82.5
+comparison_note = "directional; historical polygon output differs"
+
+[competitive.small_box_union]
+hypermesh_ns = 5082.606
+hypermesh_lower_ns = 5069.016
+hypermesh_upper_ns = 5099.245
+boolmesh_ns = 65828.764
+manifold_rust_ns = 57834.364
+boolmesh_speedup = 12.952
+manifold_rust_speedup = 11.379
+frozen_hypermesh_ns = 4917
+frozen_movement_percent = 3.368
+
+[competitive.large_box_union]
+triangles_per_operand = 3072
+hypermesh_ns = 1846389.042
+boolmesh_ns = 7455739.218
+manifold_rust_ns = 4351300.098
+boolmesh_speedup = 4.038
+manifold_rust_speedup = 2.357
+
+[competitive.generated_yeahright_union]
+hull_triangles = 840
+box_triangles = 12
+hypermesh_ns = 13159568.686
+boolmesh_ns = 756789.372
+manifold_rust_ns = 665674.923
+boolmesh_is_faster_by = 17.389
+manifold_rust_is_faster_by = 19.769
+
+[callgraph.parent]
+nodes = 7924
+edges = 19498
+
+[callgraph.current_isolated]
+nodes = 7950
+edges = 19555
+node_movement = 26
+edge_movement = 57
+
+[callgraph.current_five_crates]
+nodes = 19503
+edges = 38951
+
+[source]
+added_lines = 351
+removed_lines = 56
+files_changed = 9
+
+[size.default_general_release_native]
+parent_bytes = 4011916
+current_bytes = 4019124
+movement_percent = 0.1797
+
+[size.default_general_release_wasm]
+parent_bytes = 2694255
+current_bytes = 2698772
+movement_percent = 0.1677
+
+[size.default_immediate_release_native]
+parent_bytes = 4045532
+current_bytes = 4052740
+movement_percent = 0.1782
+
+[size.default_immediate_release_wasm]
+parent_bytes = 2709293
+current_bytes = 2713870
+movement_percent = 0.1689
+
+[size.default_general_size_native]
+parent_bytes = 1838682
+current_bytes = 1843786
+movement_percent = 0.2776
+
+[size.default_general_size_wasm]
+parent_bytes = 1139247
+current_bytes = 1143391
+movement_percent = 0.3637
+
+[size.default_immediate_size_native]
+parent_bytes = 1851166
+current_bytes = 1856270
+movement_percent = 0.2757
+
+[size.default_immediate_size_wasm]
+parent_bytes = 1150212
+current_bytes = 1154361
+movement_percent = 0.3607
+
+[size.all_general_release_native]
+parent_bytes = 4161441
+current_bytes = 4168689
+movement_percent = 0.1742
+
+[size.all_general_release_wasm]
+parent_bytes = 2777507
+current_bytes = 2782113
+movement_percent = 0.1658
+
+[size.all_immediate_release_native]
+parent_bytes = 4195321
+current_bytes = 4202553
+movement_percent = 0.1724
+
+[size.all_immediate_release_wasm]
+parent_bytes = 2792926
+current_bytes = 2797532
+movement_percent = 0.1649
+
+[size.all_general_size_native]
+parent_bytes = 1838938
+current_bytes = 1844090
+movement_percent = 0.2802
+
+[size.all_general_size_wasm]
+parent_bytes = 1169182
+current_bytes = 1173778
+movement_percent = 0.3931
+
+[size.all_immediate_size_native]
+parent_bytes = 1851350
+current_bytes = 1856486
+movement_percent = 0.2774
+
+[size.all_immediate_size_wasm]
+parent_bytes = 1180380
+current_bytes = 1184552
+movement_percent = 0.3534
