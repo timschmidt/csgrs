@@ -20,6 +20,7 @@ pub(crate) const ARRANGEMENT_CLASSIFICATION: i8 = 2;
 
 type SplitEdgeCache = StorageHashMap<[usize; 2], SplitEdgeChain>;
 type ApproximateOutputVertex = [[f64; 2]; 3];
+const MIN_ADAPTIVE_CROSSING_SWEEP_EDGES: usize = 256;
 
 struct SplitEdgeChain(Vec<usize>);
 
@@ -2580,20 +2581,33 @@ fn split_edge_crossing_events(
         .into_iter()
         .map(|edge| exact_edge_bounds(decisions, edge, &soup.vertices, approximate_vertices))
         .collect::<HypermeshResult<Vec<_>>>()?;
+    let approximate_sweep_axis = approximate_vertices
+        .map(|vertices| approximate_crossing_sweep_axis(vertices, &bounded_edges))
+        .unwrap_or(0);
     if let Some(approximate_vertices) = approximate_vertices {
         bounded_edges.sort_unstable_by(|left, right| {
-            approximate_edge_min(approximate_vertices, left.edge, 0)
-                .total_cmp(&approximate_edge_min(approximate_vertices, right.edge, 0))
+            approximate_edge_min(approximate_vertices, left.edge, approximate_sweep_axis)
+                .total_cmp(&approximate_edge_min(
+                    approximate_vertices,
+                    right.edge,
+                    approximate_sweep_axis,
+                ))
                 .then_with(|| {
-                    vertex_axis(&soup.vertices[left.min[0]], 0)
-                        .exact_rational_ref()
-                        .expect("the approximate sweep contains exact rationals")
-                        .partial_cmp(
-                            vertex_axis(&soup.vertices[right.min[0]], 0)
-                                .exact_rational_ref()
-                                .expect("the approximate sweep contains exact rationals"),
+                    vertex_axis(
+                        &soup.vertices[left.min[approximate_sweep_axis]],
+                        approximate_sweep_axis,
+                    )
+                    .exact_rational_ref()
+                    .expect("the approximate sweep contains exact rationals")
+                    .partial_cmp(
+                        vertex_axis(
+                            &soup.vertices[right.min[approximate_sweep_axis]],
+                            approximate_sweep_axis,
                         )
-                        .expect("rational ordering is total")
+                        .exact_rational_ref()
+                        .expect("the approximate sweep contains exact rationals"),
+                    )
+                    .expect("rational ordering is total")
                 })
                 .then_with(|| left.edge.cmp(&right.edge))
         });
@@ -2628,8 +2642,8 @@ fn split_edge_crossing_events(
             if let Some(approximate_vertices) = approximate_vertices {
                 // Disjoint outward-rounded enclosures prove exact separation;
                 // every survivor is checked against the exact bounds below.
-                if approximate_edge_min(approximate_vertices, right.edge, 0)
-                    > approximate_edge_max(approximate_vertices, left.edge, 0)
+                if approximate_edge_min(approximate_vertices, right.edge, approximate_sweep_axis)
+                    > approximate_edge_max(approximate_vertices, left.edge, approximate_sweep_axis)
                 {
                     break;
                 }
@@ -4096,6 +4110,53 @@ fn approximate_edge_bounds_overlap(
     })
 }
 
+// Every axis is exactness-equivalent because the sweep rejects a pair only
+// after outward intervals prove separation. Sampling changes work order and
+// candidate volume only; all survivors still take the exact predicate path.
+fn least_sampled_interval_overlap_axis(
+    vertices: &[ApproximateOutputVertex],
+    edges: &[ExactEdgeBounds],
+) -> usize {
+    const MAX_SAMPLED_EDGES: usize = 32;
+
+    let sample_count = edges.len().min(MAX_SAMPLED_EDGES);
+    let mut overlap_counts = [0_u16; 3];
+    for left_sample in 0..sample_count {
+        let left = edges[left_sample.saturating_mul(edges.len()) / sample_count].edge;
+        for right_sample in (left_sample + 1)..sample_count {
+            let right = edges[right_sample.saturating_mul(edges.len()) / sample_count].edge;
+            for (axis, overlap_count) in overlap_counts.iter_mut().enumerate() {
+                if approximate_edge_max(vertices, left, axis)
+                    >= approximate_edge_min(vertices, right, axis)
+                    && approximate_edge_max(vertices, right, axis)
+                        >= approximate_edge_min(vertices, left, axis)
+                {
+                    *overlap_count += 1;
+                }
+            }
+        }
+    }
+
+    (1..3).fold(0, |best, axis| {
+        if overlap_counts[axis] < overlap_counts[best] {
+            axis
+        } else {
+            best
+        }
+    })
+}
+
+fn approximate_crossing_sweep_axis(
+    vertices: &[ApproximateOutputVertex],
+    edges: &[ExactEdgeBounds],
+) -> usize {
+    if edges.len() < MIN_ADAPTIVE_CROSSING_SWEEP_EDGES {
+        0
+    } else {
+        least_sampled_interval_overlap_axis(vertices, edges)
+    }
+}
+
 fn approximate_projection_axis(
     vertices: &[ApproximateOutputVertex],
     left: [usize; 2],
@@ -5152,6 +5213,30 @@ mod tests {
             assert!(resolved.vertices.contains(&ov(10, 0, 0)));
             assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
         });
+    }
+
+    #[test]
+    fn adaptive_crossing_sweep_selects_the_least_overlapping_sampled_axis() {
+        let mut vertices = Vec::with_capacity(MIN_ADAPTIVE_CROSSING_SWEEP_EDGES * 2);
+        let mut edges = Vec::with_capacity(MIN_ADAPTIVE_CROSSING_SWEEP_EDGES);
+        for index in 0..MIN_ADAPTIVE_CROSSING_SWEEP_EDGES {
+            let coordinate = index as f64;
+            let start = vertices.len();
+            vertices.push([[0.0, 0.0], [coordinate, coordinate], [0.0, 0.0]]);
+            vertices.push([[1.0, 1.0], [coordinate, coordinate], [0.0, 0.0]]);
+            edges.push(ExactEdgeBounds {
+                edge: [start, start + 1],
+                min: [start; 3],
+                max: [start + 1; 3],
+            });
+        }
+
+        assert_eq!(least_sampled_interval_overlap_axis(&vertices, &edges), 1);
+        assert_eq!(
+            approximate_crossing_sweep_axis(&vertices, &edges[..edges.len() - 1]),
+            0,
+        );
+        assert_eq!(approximate_crossing_sweep_axis(&vertices, &edges), 1);
     }
 
     #[test]
