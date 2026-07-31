@@ -2960,6 +2960,7 @@ mod tests {
     fn curve_path_carrier_keeps_compact_policy_aware_boundary_storage() {
         assert_eq!(core::mem::size_of::<CurvePath2>(), 8);
         assert_eq!(core::mem::size_of::<CurvePathData2>(), 160);
+        assert_eq!(core::mem::size_of::<NativeBezierBoundaryLoop2>(), 24);
     }
 
     #[test]

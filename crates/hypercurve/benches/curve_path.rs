@@ -89,9 +89,10 @@ fn main() {
     first
         .bezier_boundary_loop(&policy)
         .expect("benchmark boundary materialization is exact");
+    let boundary_cache_iterations = 2_000_000_u32;
     let started = Instant::now();
     let mut boundary_checksum = 0_usize;
-    for _ in 0..promotion_iterations {
+    for _ in 0..boundary_cache_iterations {
         boundary_checksum ^= black_box(
             first
                 .bezier_boundary_loop(&policy)
@@ -102,11 +103,11 @@ fn main() {
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_cached_boundary_loop: {promotion_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={boundary_checksum}",
-        elapsed / promotion_iterations
+        "curve_path_cached_boundary_loop: {boundary_cache_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={boundary_checksum}",
+        elapsed / boundary_cache_iterations
     );
 
-    let boundary_build_iterations = 2_000_u32;
+    let boundary_build_iterations = 20_000_u32;
     let rectangle_curves = first.curves().to_vec();
     let started = Instant::now();
     let mut boundary_build_checksum = 0_usize;
@@ -127,9 +128,10 @@ fn main() {
     );
 
     let query = p(1, 1);
+    let classification_iterations = 50_000_u32;
     let started = Instant::now();
     let mut classification_checksum = 0_usize;
-    for _ in 0..promotion_iterations {
+    for _ in 0..classification_iterations {
         let classification = first
             .classify_point(black_box(&query), &policy)
             .expect("benchmark path classification is exact")
@@ -141,8 +143,8 @@ fn main() {
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_cached_point_classification: {promotion_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={classification_checksum}",
-        elapsed / promotion_iterations
+        "curve_path_cached_point_classification: {classification_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={classification_checksum}",
+        elapsed / classification_iterations
     );
 
     let native = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0)));

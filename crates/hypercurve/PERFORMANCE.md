@@ -6704,6 +6704,74 @@ samples, semantic evidence, binary size, caller status, and the
 22,495-node/38,527-edge call graph are in
 [`2026-07-31-curve-intersection-policy.json`](benchmarks/checkpoints/2026-07-31-curve-intersection-policy.json).
 
+## Closed curve-path policy checkpoint
+
+Closed `CurvePath2` topology now follows the active policy through public
+boundary materialization and point classification. Boundary construction
+checks every authored adjacency, the closing seam, and the complete promoted
+native-fragment cycle. Paths whose authored joins were already structurally or
+strictly certified skip redundant predicates; a path admitted through an
+Approximate-512 nonstructural join retains that fact and is revalidated for
+every later policy. Region construction and closed-path fillet/chamfer
+certification use the same connectivity validator.
+
+The terminal regression uses symbolically equivalent `(pi + e)` and
+`(e + pi)` seam coordinates. Approximate-512 returns an exact boundary and an
+exact Inside classification while reporting `Approximate512Consumed`; a
+later strict boundary request still returns an `Arrangement/RealSign`
+blocker. Strict classification preserves that uncertainty inside one
+certified outer outcome. A separately approximately joined internal path is
+also rejected by later strict `CurveRegion2` construction and accepted only
+when Approximate-512 is explicitly selected.
+
+The native boundary carrier no longer duplicates the path's promoted fragment
+vector. `NativeBezierBoundaryLoop2` is 24 bytes instead of 48 and retains only
+the validated `BezierBoundaryLoop2`; `CurvePathData2` is 160 bytes instead of
+168. This removes one retained vector buffer per materialized boundary. The
+obsolete fragment-copy accessors were deleted without a compatibility shim.
+
+Eleven interleaved release parent/candidate pairs measured:
+
+| Exact closed-path operation | Parent median | Policy-explicit median | Change |
+| --- | ---: | ---: | ---: |
+| Cached boundary reference | 2.680 ns | 3.174 ns | +18.45% (+0.494 ns) |
+| Fresh boundary materialization | 880.854 ns | 628.167 ns | -28.69% |
+| Cached point classification | 7.633 us | 7.639 us | +0.08% |
+
+The cached reference now replays policy certainty and pays a visible
+percentage on a sub-four-nanosecond accessor. Fresh construction benefits from
+removing duplicate fragment retention, while classification is neutral.
+Seven complete `curve_path` instruction controls improved 0.542%.
+
+Seven matched pathological runs retained 67 cells, 603 candidate pairs, 3,248
+fragments, 134 point classifications, all 268 operations decided, zero
+blockers, and checksum 6. Boolean execution improved 1.60% by paired geometric
+mean; construction added 1.18%, and process-scale RSS moved from 34.4 to
+34.6 MiB. The stripped executable grew 6,128 bytes but remains 26,645 bytes
+below the frozen consolidation baseline.
+
+The broad competitive matrix stayed within 1.3% of the parent except for one
+noisy 64-vertex star process. Five matched 11-sample controls rejected that
+apparent regression: the median moved only +0.07% and the paired geometric
+mean improved 0.66%. The 256- and 1,024-vertex exact lanes remain faster than
+the measured finite competitors.
+
+Validation passed the complete all-feature suite with 260 unit tests, the
+163.81-second generated CurveRegion2 Boolean corpus, every integration suite
+other than the two explicitly ignored release-scale PCB corpora, all 268
+pathological Booleans, both warning-denied Clippy feature matrices, the
+no-default all-target check, every fuzz-target build, warning-denied rustdoc,
+formatting, and diff checks. CSGRS still passes its all-feature check;
+Hypercurve UI passes all-target check and warning-denied Clippy. Hypermesh was
+not modified.
+
+The next policy cut is the public native-fragment and directed-sweep surface,
+followed by `CurveRegion2` materialized boundary paths and spline
+subcurve/reconstruction propagation. Machine-readable samples, layouts,
+semantic evidence, caller status, binary size, and the
+22,539-node/38,601-edge call graph are in
+[`2026-07-31-closed-curve-path-policy.json`](benchmarks/checkpoints/2026-07-31-closed-curve-path-policy.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
