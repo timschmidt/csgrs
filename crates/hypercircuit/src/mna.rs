@@ -3,7 +3,7 @@
 use std::collections::BTreeMap;
 
 use hyperreal::{Real, ZeroKnowledge};
-use hypersolve::{DenseResidualReplayError, replay_dense_linear_residuals};
+use hypersolve::{DenseResidualReplayError, PredicatePolicy, replay_dense_linear_residuals};
 
 use crate::{BranchId, CircuitError, CircuitResult, ComponentId, NetId, PartRef};
 
@@ -222,13 +222,17 @@ impl LinearMnaSystem {
             return Err(CircuitError::CandidateLengthMismatch);
         }
 
-        let report = replay_dense_linear_residuals(&self.matrix, &self.rhs, candidate, -64)
-            .map_err(|error| match error {
-                DenseResidualReplayError::DimensionMismatch => {
-                    CircuitError::CandidateLengthMismatch
-                }
-                DenseResidualReplayError::UnknownResidual => CircuitError::UnknownResidual,
-            })?;
+        let report = replay_dense_linear_residuals(
+            &self.matrix,
+            &self.rhs,
+            candidate,
+            -64,
+            PredicatePolicy::STRICT,
+        )
+        .map_err(|error| match error {
+            DenseResidualReplayError::DimensionMismatch => CircuitError::CandidateLengthMismatch,
+            DenseResidualReplayError::UnknownResidual => CircuitError::UnknownResidual,
+        })?;
 
         Ok(ResidualReplayReport {
             residuals: report.residuals,
