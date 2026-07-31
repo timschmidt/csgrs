@@ -2,8 +2,8 @@
 
 use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
 use crate::{
-    BezierParameter2, BezierSplitFragment2, Classification, Curve2,
-    CurveIntersectionPairBlockerKind2, CurveIntersectionParameter2, CurveOperation2, CurvePolicy,
+    BezierParameter2, BezierSplitFragment2, Classification, Curve2, CurveContext,
+    CurveIntersectionPairBlockerKind2, CurveIntersectionParameter2, CurveOperation2,
     CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcRegion2,
     RationalBezierIntersectionPointEvidence2, Real, RegionPointLocation, Segment2,
     UncertaintyReason,
@@ -129,7 +129,7 @@ impl Curve2 {
     pub fn trim_inside_region(
         &self,
         region: &LineArcRegion2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
         self.trim_inside_region_with_parameters(region, policy)
             .map(|fragments| {
@@ -151,7 +151,7 @@ impl Curve2 {
     pub fn trim_inside_region_with_parameters(
         &self,
         region: &LineArcRegion2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveRegionTrimFragment2>> {
         if region.is_empty() {
             return Ok(Vec::new());
@@ -298,7 +298,7 @@ fn boundary_contacts_at(
     promoted_span_index: usize,
     parameter: &BezierParameter2,
     source: &Curve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<CurveRegionBoundaryContact2>> {
     let mut matched = Vec::new();
     for pending in contacts
@@ -330,7 +330,7 @@ fn boundary_contacts_at(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CircularArc2, Contour2, CurvePolicy, LineSeg2, Point2, Real};
+    use crate::{CircularArc2, Contour2, CurveContext, LineSeg2, Point2, Real};
 
     fn p(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
@@ -368,18 +368,18 @@ mod tests {
         let region = LineArcRegion2::new(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
         let line = Curve2::from(LineSeg2::try_new(p(-1, 2), p(7, 2)).unwrap());
         let fragments = line
-            .trim_inside_region(&region, &CurvePolicy::STRICT)
+            .trim_inside_region(&region, &CurveContext::STRICT)
             .unwrap();
         assert_eq!(fragments.len(), 2);
         assert_eq!(
             fragments[0]
-                .representative_point(&CurvePolicy::STRICT)
+                .representative_point(&CurveContext::STRICT)
                 .unwrap(),
             Classification::Decided(p(1, 2))
         );
         assert_eq!(
             fragments[1]
-                .representative_point(&CurvePolicy::STRICT)
+                .representative_point(&CurveContext::STRICT)
                 .unwrap(),
             Classification::Decided(p(5, 2))
         );
@@ -390,7 +390,7 @@ mod tests {
         let region = LineArcRegion2::new(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
         let line = Curve2::from(LineSeg2::try_new(p(-1, 2), p(7, 2)).unwrap());
         let fragments = line
-            .trim_inside_region_with_parameters(&region, &CurvePolicy::STRICT)
+            .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
             .unwrap();
 
         assert_eq!(fragments.len(), 2);
@@ -429,17 +429,18 @@ mod tests {
         let circle =
             Curve2::from(CircularArc2::try_from_center(p(2, 0), p(2, 0), p(0, 0), false).unwrap());
         let fragments = circle
-            .trim_inside_region(&region, &CurvePolicy::STRICT)
+            .trim_inside_region(&region, &CurveContext::STRICT)
             .unwrap();
         assert_eq!(fragments.len(), 2);
         for fragment in fragments {
-            let Classification::Decided(point) =
-                fragment.representative_point(&CurvePolicy::STRICT).unwrap()
+            let Classification::Decided(point) = fragment
+                .representative_point(&CurveContext::STRICT)
+                .unwrap()
             else {
                 panic!("retained conic fragment must have an exact representative");
             };
             assert!(matches!(
-                region.classify_point(&point, &CurvePolicy::STRICT),
+                region.classify_point(&point, &CurveContext::STRICT),
                 Classification::Decided(RegionPointLocation::Inside)
             ));
         }
@@ -456,7 +457,7 @@ mod tests {
         )
         .unwrap();
         let fragments = curve
-            .trim_inside_region_with_parameters(&region, &CurvePolicy::STRICT)
+            .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
             .unwrap();
         assert_eq!(fragments.len(), 1);
         assert_eq!(fragments[0].promoted_span_index(), 0);
@@ -464,11 +465,11 @@ mod tests {
             .represented_parameter_range()
             .expect("linear boundary roots are represented exactly");
         assert_eq!(
-            crate::classify::compare_reals(&start, &q(9, 4), &CurvePolicy::STRICT),
+            crate::classify::compare_reals(&start, &q(9, 4), &CurveContext::STRICT),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
-            crate::classify::compare_reals(&end, &q(13, 4), &CurvePolicy::STRICT),
+            crate::classify::compare_reals(&end, &q(13, 4), &CurveContext::STRICT),
             Some(std::cmp::Ordering::Equal)
         );
     }

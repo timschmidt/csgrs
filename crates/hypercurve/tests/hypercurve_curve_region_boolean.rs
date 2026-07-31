@@ -1,5 +1,5 @@
 use hypercurve::{
-    BooleanOp, Classification, Curve2, CurveCertainty, CurvePath2, CurvePolicy, CurveRegion2,
+    BooleanOp, Classification, Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2,
     LineSeg2, Point2, Real, RegionPointLocation,
 };
 #[cfg(feature = "predicates")]
@@ -58,7 +58,9 @@ fn symbolic_rectangle(width: Real) -> CurveRegion2 {
 
 fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLocation) {
     assert_eq!(
-        region.classify_point(&point, &CurvePolicy::STRICT).unwrap(),
+        region
+            .classify_point(&point, &CurveContext::STRICT)
+            .unwrap(),
         Classification::Decided(expected)
     );
 }
@@ -67,7 +69,7 @@ fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLo
 fn curved_regions_immediate_batch_reuses_pair_topology() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let contacts = first.intersect_region(&second, &policy).unwrap();
     assert_eq!(contacts.certainty, CurveCertainty::Certified);
     let contacts = contacts.value;
@@ -119,7 +121,7 @@ fn curved_region_boolean_output_can_feed_another_boolean() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);
     let third = square(4, 0, 8, 4);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
 
     let first_union = first
         .boolean_region(&second, BooleanOp::Union, &policy)
@@ -143,11 +145,11 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
     let second = symbolic_rectangle(Real::e() + Real::pi());
 
     assert!(matches!(
-        first.boolean_region(&second, BooleanOp::Union, &CurvePolicy::STRICT),
+        first.boolean_region(&second, BooleanOp::Union, &CurveContext::STRICT),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
     let outcome = first
-        .boolean_region(&second, BooleanOp::Union, &CurvePolicy::APPROXIMATE_512)
+        .boolean_region(&second, BooleanOp::Union, &CurveContext::APPROXIMATE_512)
         .expect("the authorized 512-bit terminal should complete equal symbolic boundaries");
     assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
     assert_location(
@@ -164,11 +166,11 @@ fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
     let distance = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
 
     assert!(matches!(
-        source.offset(distance.clone(), &CurvePolicy::STRICT),
+        source.offset(distance.clone(), &CurveContext::STRICT),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
     let outcome = source
-        .offset(distance, &CurvePolicy::APPROXIMATE_512)
+        .offset(distance, &CurveContext::APPROXIMATE_512)
         .expect("the authorized 512-bit terminal should decide symbolic zero offset");
     assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(outcome.value, source);
@@ -182,7 +184,7 @@ fn curved_region_boolean_respects_nested_hole_roles() {
     ])
     .unwrap();
     let island = square(4, 4, 6, 6);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
 
     let union = ring
         .boolean_region(&island, BooleanOp::Union, &policy)
@@ -212,7 +214,7 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     ])
     .unwrap();
     let cutter_path = square_path(-3, 2, 3, 5);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let algebraic = curved
         .boolean_region(
             &cutter_path,
@@ -273,7 +275,7 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
         Curve2::from(LineSeg2::try_new(point(2, 4), point(-2, 4)).unwrap()),
     ])
     .unwrap();
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let narrow = curved
         .boolean_region(
             &square_path(-3, -1, 3, 2),

@@ -35,10 +35,10 @@ use crate::{
     BezierParameter2, BezierRetainedLinearOverlapTraversal2,
     BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveError, CurveFamily2, CurveGeometry2,
+    CurveBoundaryInteriorSide2, CurveContext, CurveError, CurveFamily2, CurveGeometry2,
     CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
-    CurvePathIntersectionContact2, CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult,
-    FillRule, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    CurvePathIntersectionContact2, CurveResult, ExactCurveError, ExactCurveResult, FillRule,
+    LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
     RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
     RegionArrangementSummary2, RegionPointLocation, RetainedTopologyStatus, Segment2,
     UncertaintyReason,
@@ -845,7 +845,7 @@ impl CurveRegionLineRoleEvidence2 {
     }
 
     /// Builds the unified owned region represented by this exact role evidence.
-    pub fn try_to_curve_region(&self, policy: &CurvePolicy) -> ExactCurveResult<CurveRegion2> {
+    pub fn try_to_curve_region(&self, policy: &CurveContext) -> ExactCurveResult<CurveRegion2> {
         let mut material = Vec::new();
         let mut holes = Vec::new();
         for (contour, role) in self
@@ -1111,7 +1111,7 @@ impl BezierBoundaryLoop2 {
     pub fn classify_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<ContourPointLocation>> {
         classify_point_against_native_loop(self, point, policy)
     }
@@ -1235,7 +1235,7 @@ fn validate_native_boundary_loop(fragments: &[BezierSubcurve2]) -> CurveResult<(
         ));
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     for (left, right) in fragments
         .iter()
         .zip(fragments.iter().cycle().skip(1))
@@ -1250,7 +1250,7 @@ fn validate_native_boundary_loop(fragments: &[BezierSubcurve2]) -> CurveResult<(
     Ok(())
 }
 
-fn certified_points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> bool {
+fn certified_points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> bool {
     left == right
         || (is_zero(&(left.x() - right.x()), policy) == Some(true)
             && is_zero(&(left.y() - right.y()), policy) == Some(true))
@@ -1307,7 +1307,7 @@ impl CurveRegionBoundaryLoop2 {
                 "certified arrangement chain has inconsistent retained fragments".into(),
             ));
         }
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         for fragment in &fragments {
             validate_retained_fragment_provenance(fragment, &policy)?;
         }
@@ -1414,14 +1414,14 @@ fn validate_retained_boundary_loop(fragments: &[BezierSplitFragment2]) -> CurveR
         ));
     }
     for fragment in fragments {
-        validate_retained_fragment_provenance(fragment, &CurvePolicy::STRICT)?;
+        validate_retained_fragment_provenance(fragment, &CurveContext::STRICT)?;
     }
-    validate_retained_boundary_loop_connectivity(fragments, &CurvePolicy::STRICT)
+    validate_retained_boundary_loop_connectivity(fragments, &CurveContext::STRICT)
 }
 
 fn validate_retained_fragment_provenance(
     fragment: &BezierSplitFragment2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match fragment {
         BezierSplitFragment2::Materialized { start, end, .. } => {
@@ -1461,7 +1461,7 @@ fn validate_retained_fragment_provenance(
 fn validate_retained_fragment_parameter_order(
     start: &BezierParameter2,
     end: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match start.cmp_by_refinement(end, policy)? {
         Classification::Decided(std::cmp::Ordering::Less) => Ok(()),
@@ -1480,7 +1480,7 @@ fn validate_retained_source_endpoint_image(
     boundary: &BezierParameter2,
     source_curve: &Option<BezierSubcurve2>,
     image: Option<&crate::BezierAlgebraicEndpointImage2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match boundary {
         BezierParameter2::Exact(_) => {
@@ -1585,7 +1585,7 @@ enum RetainedEndpointEquality {
 
 fn validate_retained_boundary_loop_connectivity(
     fragments: &[BezierSplitFragment2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     for (left, right) in fragments
         .iter()
@@ -1616,7 +1616,7 @@ fn validate_retained_boundary_loop_connectivity(
 fn validate_retained_arrangement_chain_connectivity(
     graph: &BezierArrangementGraph2,
     fragment_indices: &[usize],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     for (&left_index, &right_index) in fragment_indices
         .iter()
@@ -1662,7 +1662,7 @@ fn validate_retained_arrangement_chain_connectivity(
 fn retained_fragment_endpoint_evidence(
     fragment: &BezierSplitFragment2,
     start_endpoint: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<RetainedEndpointEvidence> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => {
@@ -1728,7 +1728,7 @@ fn retained_endpoint_point_evidence(
     parameter: &BezierParameter2,
     image: Option<&crate::BezierAlgebraicEndpointImage2>,
     source_curve: &Option<BezierSubcurve2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Point2>> {
     if let Some(image) = image
         && let Some(point) = exact_rational_point_from_image(image.point())
@@ -1753,7 +1753,7 @@ fn retained_endpoint_point_evidence(
 fn retained_endpoint_equality(
     left: &RetainedEndpointEvidence,
     right: &RetainedEndpointEvidence,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> RetainedEndpointEquality {
     if let (Some(left), Some(right)) = (&left.point, &right.point) {
         return match is_zero(&left.distance_squared(right), policy) {
@@ -1848,7 +1848,7 @@ fn curve_region_promotion_error(cause: CurveError) -> ExactCurveError {
 
 fn promote_native_region_arrangement(
     arrangement: RegionArrangement2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<CurveRegionArrangement2> {
     let (region, workspace, summary) = arrangement.into_region_with_facts();
     let region = region
@@ -1915,7 +1915,7 @@ fn push_native_offset_component(
 fn regularize_native_offset_regions(
     mut material_components: Vec<LineArcRegion2>,
     void_components: Vec<LineArcRegion2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Classification<LineArcRegion2>> {
     if material_components.len() == 1 && void_components.is_empty() {
         return Ok(Classification::Decided(
@@ -2007,7 +2007,7 @@ impl CurveRegion2 {
     pub fn arrange_unordered_segments(
         source_segments: Vec<Segment2>,
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegionArrangement2> {
         let arrangement =
             LineArcRegion2::arrange_unordered_segments(source_segments, fill_rule, policy)
@@ -2019,7 +2019,7 @@ impl CurveRegion2 {
     pub fn arrange_unordered_segments_borrowed(
         source_segments: &[Segment2],
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegionArrangement2> {
         let arrangement =
             LineArcRegion2::arrange_unordered_segments_borrowed(source_segments, fill_rule, policy)
@@ -2031,7 +2031,7 @@ impl CurveRegion2 {
     pub fn arrange_unordered_line_segments(
         source_segments: Vec<LineSeg2>,
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegionArrangement2> {
         let arrangement =
             LineArcRegion2::arrange_unordered_line_segments(source_segments, fill_rule, policy)
@@ -2043,7 +2043,7 @@ impl CurveRegion2 {
     pub fn arrange_unordered_line_segments_borrowed(
         source_segments: &[LineSeg2],
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegionArrangement2> {
         let arrangement = LineArcRegion2::arrange_unordered_line_segments_borrowed(
             source_segments,
@@ -2063,7 +2063,7 @@ impl CurveRegion2 {
     pub fn try_from_native_contours(
         material_contours: Vec<Contour2>,
         hole_contours: Vec<Contour2>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         if material_contours.is_empty() && hole_contours.is_empty() {
             return Ok(Self::default());
@@ -2101,7 +2101,7 @@ impl CurveRegion2 {
     /// Constructs a unified region whose native contours are all material.
     pub fn try_from_native_material_contours(
         material_contours: Vec<Contour2>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         Self::try_from_native_contours(material_contours, Vec::new(), policy)
     }
@@ -2113,7 +2113,7 @@ impl CurveRegion2 {
     /// otherwise uncertifiable boundaries remain an explicit uncertainty.
     pub fn try_from_native_boundary_contours(
         contours: Vec<Contour2>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
         Self::try_from_native_boundary_contours_with_evidence(contours, policy)
             .map(CurveRegionBoundaryContourBuildResult2::into_region_classification)
@@ -2122,7 +2122,7 @@ impl CurveRegion2 {
     /// Borrowed counterpart to [`Self::try_from_native_boundary_contours`].
     pub fn try_from_native_boundary_contours_borrowed(
         contours: &[Contour2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
         Self::try_from_native_boundary_contours(contours.to_vec(), policy)
     }
@@ -2135,7 +2135,7 @@ impl CurveRegion2 {
     /// own or inspect the transient [`LineArcRegion2`] result.
     pub(crate) fn try_from_native_boundary_contours_with_evidence(
         contours: Vec<Contour2>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegionBoundaryContourBuildResult2> {
         let built = LineArcRegion2::from_boundary_contours_with_evidence(contours, policy)
             .map_err(curve_region_promotion_error)?;
@@ -2159,7 +2159,7 @@ impl CurveRegion2 {
     /// authoritative unified carrier.
     pub fn try_from_regularized_native_contour(
         contour: &Contour2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
         match contour
             .regularize_self_intersections_native(policy)
@@ -2182,7 +2182,7 @@ impl CurveRegion2 {
     #[doc(hidden)]
     pub fn try_from_line_arc_region(
         region: &LineArcRegion2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         Self::try_from_native_contours(
             region.material_contours().to_vec(),
@@ -2202,7 +2202,7 @@ impl CurveRegion2 {
         paths: &[CurvePath2],
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         Self::try_from_boundary_paths_with_loop_semantics_and_policy(
             paths, roles, fill_rules, policy, None,
@@ -2220,7 +2220,7 @@ impl CurveRegion2 {
         paths: &[CurvePath2],
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let mut region =
             Self::try_from_boundary_paths_with_loop_semantics(paths, roles, fill_rules, policy)?;
@@ -2242,7 +2242,7 @@ impl CurveRegion2 {
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
         interior_sides: &[CurveBoundaryInteriorSide2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         if paths.len() != interior_sides.len() {
             let family = paths
@@ -2274,7 +2274,7 @@ impl CurveRegion2 {
         paths: &[CurvePath2],
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         certified_filled_sides: Option<Vec<bool>>,
     ) -> ExactCurveResult<Self> {
         if paths.len() != roles.len() || paths.len() != fill_rules.len() {
@@ -2375,7 +2375,7 @@ impl CurveRegion2 {
         m11: &Real,
         tx: &Real,
         ty: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let determinant = m00 * m11 - m01 * m10;
         let orientation_reversing = match real_sign(&determinant, policy) {
@@ -2490,7 +2490,7 @@ impl CurveRegion2 {
 
     pub fn filled_side_is_left(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<&[bool]>> {
         let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
         self.filled_side_is_left_with_area_cache(policy, &mut rational_quadratic_cache)
@@ -2498,7 +2498,7 @@ impl CurveRegion2 {
 
     pub(crate) fn filled_side_is_left_with_area_cache(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
     ) -> CurveResult<Classification<&[bool]>> {
         resolve_cached_classification(&self.filled_side_is_left, policy, |attempt| {
@@ -2509,7 +2509,7 @@ impl CurveRegion2 {
 
     fn compute_filled_side_is_left_with_area_cache(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
     ) -> CurveResult<Classification<Arc<[bool]>>> {
         if let Some(roles) = self.certified_loop_roles.as_deref() {
@@ -2623,7 +2623,7 @@ impl CurveRegion2 {
                 && validate_retained_arrangement_chain_connectivity(
                     graph,
                     chain.fragment_indices(),
-                    &CurvePolicy::STRICT,
+                    &CurveContext::STRICT,
                 )
                 .is_err()
             {
@@ -2699,7 +2699,7 @@ impl CurveRegion2 {
     /// fragments, boundary-touching loops, and uncertain predicate signs.
     pub fn line_image_role_evidence(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveRegionLineRoleEvidence2>> {
         let mut contours = Vec::with_capacity(self.boundary_loops.len());
         let mut materialized_fragment_count = 0_usize;
@@ -2739,7 +2739,7 @@ impl CurveRegion2 {
     /// when exact line-image nesting is required.
     pub fn signed_area_role_evidence(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveRegionSignedAreaRoleEvidence2>> {
         let mut roles = Vec::with_capacity(self.boundary_loops.len());
         let mut signed_areas = Vec::with_capacity(self.boundary_loops.len());
@@ -2775,7 +2775,7 @@ impl CurveRegion2 {
     /// topology instead of by their authored orientation.
     pub fn curved_nesting_role_evidence(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveRegionNestingRoleEvidence2>> {
         let Some(native_loops) = self.native_boundary_loops() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -2855,7 +2855,7 @@ impl CurveRegion2 {
     /// subsets that do not support the full curved evidence.
     pub fn loop_roles(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<CurveRegionLoopRole>>> {
         if let Some(roles) = &self.certified_loop_roles {
             return Ok(Classification::Decided(roles.to_vec()));
@@ -2883,7 +2883,7 @@ impl CurveRegion2 {
     /// [`LineArcRegion2`] projection is required.
     pub fn loop_role_counts(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<(usize, usize)>> {
         self.loop_roles(policy).map(|roles| {
             roles.map(|roles| {
@@ -2913,7 +2913,7 @@ impl CurveRegion2 {
     /// without a represented point remains explicit uncertainty.
     pub fn boundary_profiles(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<CurveRegionProfile2<'_>>>> {
         let roles = match self.loop_roles(policy)? {
             Classification::Decided(roles) => roles,
@@ -3084,7 +3084,7 @@ impl CurveRegion2 {
     /// Returns the certified internal line/arc accelerator when this region has one.
     pub(crate) fn native_line_arc_region(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<&LineArcRegion2>> {
         let cached = resolve_cached_classification(
             &self.line_image_region,
@@ -3130,7 +3130,7 @@ impl CurveRegion2 {
     /// remains explicit `Unsupported` uncertainty and is never segmented.
     pub fn native_contours_fast_path(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveRegionNativeContourView2<'_>>> {
         self.native_line_arc_region(policy).map(|native| {
             native.map(|native| CurveRegionNativeContourView2 {
@@ -3154,7 +3154,7 @@ impl CurveRegion2 {
         vertex_index: usize,
         previous_param: Real,
         next_param: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
         let (region, role, ordinal) =
             match self.native_region_loop_for_edit(loop_index, CurveOperation2::Chamfer, policy)? {
@@ -3214,7 +3214,7 @@ impl CurveRegion2 {
         next_param: Real,
         center: &Point2,
         clockwise: bool,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
         let (region, role, ordinal) =
             match self.native_region_loop_for_edit(loop_index, CurveOperation2::Fillet, policy)? {
@@ -3304,7 +3304,7 @@ impl CurveRegion2 {
         &self,
         paths: Vec<CurvePath2>,
         operation: CurveOperation2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
         let roles = match self
             .loop_roles(policy)
@@ -3342,7 +3342,7 @@ impl CurveRegion2 {
     pub fn segment_certified(
         &self,
         options: &BezierFlatteningOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CurveRegionCertifiedSegmentationResult2>> {
         let paths = match self.materialized_boundary_paths()? {
             Classification::Decided(paths) => paths,
@@ -3438,7 +3438,7 @@ impl CurveRegion2 {
     pub fn offset(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         crate::policy::resolve_certified_operation(policy, |attempt| {
             match self.offset_raw(distance.clone(), attempt)? {
@@ -3455,7 +3455,7 @@ impl CurveRegion2 {
     fn offset_raw(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
         if is_zero(&distance, policy) == Some(true) {
             return Ok(Classification::Decided(self.clone()));
@@ -3703,7 +3703,7 @@ impl CurveRegion2 {
         &self,
         distance: Real,
         options: &BezierFlatteningOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CurveRegionSegmentedOffsetResult2>> {
         match self.offset_raw(distance.clone(), policy)? {
             Classification::Decided(region) => {
@@ -3766,7 +3766,7 @@ impl CurveRegion2 {
         parallel_options: &BezierParallelVerificationOptions,
         output_flattening: &BezierFlatteningOptions,
         fallback_source_flattening: &BezierFlatteningOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CurveRegionCertifiedParallelOffsetResult2>> {
         match self.offset_raw(distance.clone(), policy)? {
             Classification::Decided(region) => {
@@ -3966,7 +3966,7 @@ impl CurveRegion2 {
         &self,
         loop_index: usize,
         operation: CurveOperation2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<(LineArcRegion2, CurveRegionLoopRole, usize)>> {
         if loop_index >= self.boundary_loops.len() {
             return Err(curve_region_edit_error(
@@ -4013,7 +4013,7 @@ impl CurveRegion2 {
 
     fn certified_line_image_region(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<LineArcRegion2>> {
         let Some(roles) = self.certified_loop_roles.as_deref() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -4082,7 +4082,7 @@ impl CurveRegion2 {
     pub fn classify_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RegionPointLocation>> {
         if !self.signed_loop_composition {
             match self.native_line_arc_region(policy)? {
@@ -4180,7 +4180,7 @@ impl CurveRegion2 {
     pub fn signed_depth(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
         if !self.signed_loop_composition {
             match self.native_line_arc_region(policy)? {
@@ -4196,7 +4196,7 @@ impl CurveRegion2 {
     fn signed_depth_from_boundaries(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
         let roles = match self.loop_roles(policy)? {
             Classification::Decided(roles) => roles,
@@ -4342,7 +4342,7 @@ impl CurveRegion2 {
     /// self-contact analysis cannot certify a non-repeated loop as simple, the
     /// query remains explicitly uncertain instead of treating traversal
     /// multiplicity as filled-set area.
-    pub fn filled_area(&self, policy: &CurvePolicy) -> CurveResult<Classification<Option<Real>>> {
+    pub fn filled_area(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Real>>> {
         let mut magnitudes = Vec::with_capacity(self.boundary_loops.len());
         if self
             .certified_loop_fill_rules
@@ -4444,7 +4444,7 @@ impl CurveRegion2 {
         }
     }
 
-    fn native_boundary_bounds(&self, policy: &CurvePolicy) -> Option<&[Aabb2]> {
+    fn native_boundary_bounds(&self, policy: &CurveContext) -> Option<&[Aabb2]> {
         let native_loops = self.native_boundary_loops()?;
         let bounds =
             resolve_cached_classification(&self.native_boundary_bounds, policy, |attempt| {
@@ -4473,7 +4473,7 @@ fn curve_region_loop_filled_area_magnitude(
     boundary_loop: &CurveRegionBoundaryLoop2,
     signed_area: Real,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Real>>> {
     if let Some(period) = repeated_boundary_fragment_period(boundary_loop.fragments()) {
         let base_loop =
@@ -4515,7 +4515,7 @@ fn repeated_boundary_fragment_period(fragments: &[BezierSplitFragment2]) -> Opti
     })
 }
 
-fn absolute_nonzero_area(area: Real, policy: &CurvePolicy) -> CurveResult<Classification<Real>> {
+fn absolute_nonzero_area(area: Real, policy: &CurveContext) -> CurveResult<Classification<Real>> {
     Ok(match real_sign(&area, policy) {
         Some(RealSign::Negative) => Classification::Decided(Real::zero() - area),
         Some(RealSign::Positive) => Classification::Decided(area),
@@ -4526,7 +4526,7 @@ fn absolute_nonzero_area(area: Real, policy: &CurvePolicy) -> CurveResult<Classi
 
 fn materialized_boundary_loop_is_simple(
     boundary_loop: &CurveRegionBoundaryLoop2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let mut curves = Vec::with_capacity(boundary_loop.fragments().len());
     for fragment in boundary_loop.fragments() {
@@ -4598,7 +4598,7 @@ fn materialized_boundary_loop_is_simple(
 
 fn materialized_subcurve_has_injective_axis(
     curve: &BezierSubcurve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let mut uncertainty = None;
     for axis in [Axis2::X, Axis2::Y] {
@@ -4640,7 +4640,7 @@ fn materialized_subcurve_has_injective_axis(
 fn curve_path_contact_is_ordinary_adjacent_endpoint(
     path: &CurvePath2,
     contact: &CurvePathIntersectionContact2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let first_index = contact.first_curve_index();
     let second_index = contact.second_curve_index();
@@ -4702,7 +4702,7 @@ fn transform_retained_region_fragment(
     m11: &Real,
     tx: &Real,
     ty: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
     match fragment {
         BezierSplitFragment2::Materialized { start, end, curve } => {
@@ -4743,7 +4743,7 @@ fn transform_retained_region_fragment(
 fn transform_region_endpoint_image(
     parameter: &BezierParameter2,
     source: &BezierSubcurve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<BezierAlgebraicEndpointImage2>> {
     match parameter {
         BezierParameter2::Exact(_) => Ok(None),
@@ -4847,7 +4847,7 @@ fn retained_loop_fragment_counts(boundary_loops: &[CurveRegionBoundaryLoop2]) ->
 fn filled_sides_from_roles_and_areas(
     roles: &[CurveRegionLoopRole],
     signed_areas: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Vec<bool>> {
     if roles.len() != signed_areas.len() {
         return Err(CurveError::Topology(
@@ -4995,7 +4995,7 @@ fn validate_signed_area_roles(
     roles: &[CurveRegionLoopRole],
     signed_areas: &[Real],
 ) -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     for (role, signed_area) in roles.iter().zip(signed_areas) {
         let expected = match real_sign(signed_area, &policy) {
             Some(RealSign::Negative) => CurveRegionLoopRole::Material,
@@ -5018,7 +5018,7 @@ fn validate_signed_area_roles(
 }
 
 fn validate_nonzero_signed_area_evidence(signed_areas: &[Real]) -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     for signed_area in signed_areas {
         match real_sign(signed_area, &policy) {
             Some(RealSign::Positive | RealSign::Negative) => {}
@@ -5081,7 +5081,7 @@ fn validate_line_loop_arrangement_source_counts(
 
 fn retained_line_loop_to_contour(
     boundary_loop: &CurveRegionBoundaryLoop2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<RetainedLineLoopContour>> {
     let mut segments = Vec::with_capacity(boundary_loop.fragments().len());
     let mut materialized_fragment_count = 0_usize;
@@ -5132,7 +5132,7 @@ enum RetainedLineFragmentSource {
 /// parameterizations whose image is still exactly one line segment.
 fn retained_line_fragment_endpoints(
     fragment: &BezierSplitFragment2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<RetainedLineFragmentEndpoints>> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => {
@@ -5194,7 +5194,7 @@ fn retained_line_fragment_endpoints(
 
 fn subcurve_fit_exact_line_image(
     curve: &BezierSubcurve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
     match curve {
         BezierSubcurve2::Quadratic(curve) => curve.fit_exact_line_image(policy),
@@ -5208,7 +5208,7 @@ fn retained_line_endpoint_point(
     parameter: &BezierParameter2,
     image: Option<&crate::BezierAlgebraicEndpointImage2>,
     source_curve: &Option<BezierSubcurve2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Point2> {
     match parameter {
         BezierParameter2::Exact(value) => {
@@ -5265,7 +5265,7 @@ struct RetainedLoopRoleDecision {
 
 fn retained_line_loop_roles(
     contours: &[Contour2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<RetainedLoopRoleDecision>> {
     let mut roles = Vec::with_capacity(contours.len());
     let mut nesting_depths = Vec::with_capacity(contours.len());
@@ -5317,7 +5317,7 @@ fn retained_loop_to_native(
 
 fn native_loop_sample_point(
     boundary_loop: &BezierBoundaryLoop2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Point2> {
     let Some(fragment) = boundary_loop.fragments().first() else {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
@@ -5331,7 +5331,7 @@ fn native_loop_sample_point(
 
 fn retained_loop_sample_point(
     boundary_loop: &CurveRegionBoundaryLoop2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Point2>> {
     let Some(fragment) = boundary_loop.fragments().first() else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -5378,7 +5378,7 @@ fn retained_loop_sample_point(
 fn subcurve_control_hull_contains_point(
     curve: &BezierSubcurve2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let bounds = match curve {
         BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points(), policy),
@@ -5402,7 +5402,7 @@ fn subcurve_control_hull_contains_point(
 fn classify_point_against_native_loop(
     boundary_loop: &BezierBoundaryLoop2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
     if let Classification::Decided(bounds) = native_loop_bounds(boundary_loop, policy)
         && let Classification::Decided(false) = bounds.contains_point(point, policy)
@@ -5415,7 +5415,7 @@ fn classify_point_against_native_loop(
 fn classify_point_against_native_loop_after_bounds(
     boundary_loop: &BezierBoundaryLoop2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
     classify_point_against_native_loop_after_bounds_with_fill_rule(
         boundary_loop,
@@ -5429,7 +5429,7 @@ fn classify_point_against_native_loop_after_bounds_with_fill_rule(
     boundary_loop: &BezierBoundaryLoop2,
     point: &Point2,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
     for fragment in boundary_loop.fragments() {
         if matches!(
@@ -5462,7 +5462,7 @@ fn classify_point_against_retained_loops(
     boundary_loops: &[CurveRegionBoundaryLoop2],
     evaluators: &[Vec<Option<RationalBezier2>>],
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     roles: Option<&[CurveRegionLoopRole]>,
     fill_rules: Option<&[FillRule]>,
 ) -> CurveResult<Classification<RegionPointLocation>> {
@@ -5520,7 +5520,7 @@ fn classify_point_against_retained_loop(
     boundary_loop: &CurveRegionBoundaryLoop2,
     evaluators: &[Option<RationalBezier2>],
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
     classify_point_against_retained_loop_with_fill_rule(
         boundary_loop,
@@ -5536,7 +5536,7 @@ fn classify_point_against_retained_loop_with_fill_rule(
     evaluators: &[Option<RationalBezier2>],
     point: &Point2,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
     if boundary_loop.fragments().len() != evaluators.len() {
         return Err(CurveError::Topology(
@@ -5575,7 +5575,7 @@ fn retained_fragment_contains_point(
     fragment: &BezierSplitFragment2,
     evaluator: Option<&RationalBezier2>,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => {
@@ -5630,7 +5630,7 @@ fn classify_point_with_retained_ray(
     point: &Point2,
     ray: &BezierRay2,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
     let direction_x = &ray.direction_x;
     let direction_y = &ray.direction_y;
@@ -5778,7 +5778,7 @@ fn retained_parameter_contains(
     end: &BezierParameter2,
     half_open: bool,
     reversed: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let start_order = match parameter.cmp_by_refinement(start, policy)? {
         Classification::Decided(order) => order,
@@ -5841,7 +5841,7 @@ fn rationalize_retained_subcurve(curve: &BezierSubcurve2) -> CurveResult<Rationa
 
 fn native_loop_bounds(
     boundary_loop: &BezierBoundaryLoop2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Aabb2> {
     let Some(first) = boundary_loop.fragments().first() else {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
@@ -5868,7 +5868,7 @@ fn classify_point_with_ray(
     point: &Point2,
     ray: &BezierRay2,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
     let direction_x = &ray.direction_x;
     let direction_y = &ray.direction_y;
@@ -5984,7 +5984,7 @@ fn control_points_may_be_ahead<'a>(
     origin: &Point2,
     direction_x: &Real,
     direction_y: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     controls.into_iter().any(|control| {
         let delta_x = control.x() - origin.x();
@@ -5999,7 +5999,7 @@ fn control_points_strict_order<'a>(
     origin: &Point2,
     direction_x: &Real,
     direction_y: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<std::cmp::Ordering> {
     let mut order = None;
     for control in controls {
@@ -6024,7 +6024,7 @@ fn subcurve_control_hull_may_be_ahead(
     origin: &Point2,
     direction_x: &Real,
     direction_y: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     match curve {
         BezierSubcurve2::Quadratic(curve) => control_points_may_be_ahead(
@@ -6060,7 +6060,7 @@ fn subcurve_control_hull_strict_order(
     origin: &Point2,
     direction_x: &Real,
     direction_y: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<std::cmp::Ordering> {
     match curve {
         BezierSubcurve2::Quadratic(curve) => control_points_strict_order(
@@ -6118,7 +6118,7 @@ fn algebraic_contact_order_along_ray(
     origin: &Point2,
     direction_x: &Real,
     direction_y: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<std::cmp::Ordering>> {
     let (use_x, origin_coordinate, direction_sign) = match real_sign(direction_x, policy) {
         Some(RealSign::Positive) => (true, origin.x(), RealSign::Positive),
@@ -6170,7 +6170,7 @@ fn polynomial_image_coordinate_order(
     image: &crate::BezierAlgebraicPointImage2,
     use_x: bool,
     origin: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<std::cmp::Ordering> {
     let coordinate = if use_x { image.x() } else { image.y() };
     coordinate.map_or(
@@ -6183,7 +6183,7 @@ fn rational_image_coordinate_order(
     image: &crate::RationalBezierAlgebraicPointImage2,
     use_x: bool,
     origin: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<std::cmp::Ordering> {
     let coordinate = if use_x { image.x() } else { image.y() };
     coordinate.map_or(
@@ -6232,7 +6232,7 @@ fn ray_candidates(point: &Point2) -> Vec<BezierRay2> {
 /// Tight extrema are unnecessary here: polynomial control hulls contain their
 /// entire curves, as do rational control hulls after a common nonzero weight
 /// sign is certified.
-fn subcurve_query_bounds(curve: &BezierSubcurve2, policy: &CurvePolicy) -> Classification<Aabb2> {
+fn subcurve_query_bounds(curve: &BezierSubcurve2, policy: &CurveContext) -> Classification<Aabb2> {
     match curve {
         BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points(), policy),
         BezierSubcurve2::Cubic(curve) => Aabb2::from_points(curve.control_points(), policy),
@@ -6249,7 +6249,7 @@ fn subcurve_query_bounds(curve: &BezierSubcurve2, policy: &CurvePolicy) -> Class
 fn subcurve_point_at(
     curve: &BezierSubcurve2,
     parameter: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Point2> {
     match curve {
         BezierSubcurve2::Quadratic(curve) => Classification::Decided(curve.point_at(parameter)),
@@ -6262,7 +6262,7 @@ fn subcurve_point_at(
 fn subcurve_contains_point(
     curve: &BezierSubcurve2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     match curve {
         BezierSubcurve2::Quadratic(curve) => curve.contains_point(point, policy),
@@ -6283,7 +6283,7 @@ fn subcurve_relation_to_line_with_contacts(
     curve: &BezierSubcurve2,
     line: &LineSeg2,
     direction: Option<(&Real, &Real)>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierLineContactRelation> {
     match curve {
         BezierSubcurve2::Quadratic(curve) => direction.map_or_else(
@@ -6383,7 +6383,7 @@ fn rational_line_signed_area_contribution(curve: &RationalBezier2) -> CurveResul
         return Ok(None);
     };
     if !matches!(
-        curve.relation_to_line_with_contacts(&line, &CurvePolicy::STRICT),
+        curve.relation_to_line_with_contacts(&line, &CurveContext::STRICT),
         Classification::Decided(BezierLineContactRelation::OnSupportingLine)
     ) {
         return Ok(None);
@@ -6400,7 +6400,7 @@ fn rational_line_area_moments_contribution(
         return Ok(None);
     };
     if !matches!(
-        subcurve_relation_to_line_with_contacts(curve, &line, None, &CurvePolicy::STRICT),
+        subcurve_relation_to_line_with_contacts(curve, &line, None, &CurveContext::STRICT),
         Classification::Decided(BezierLineContactRelation::OnSupportingLine)
     ) {
         return Ok(None);
@@ -6490,7 +6490,7 @@ mod tests {
 
     #[test]
     fn single_loop_filled_side_uses_area_without_constructing_nesting_bounds() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         for (clockwise, expected) in [(false, true), (true, false)] {
             let region = single_quadratic_loop_region(clockwise);
             assert!(region.native_boundary_bounds.is_empty());
@@ -6504,7 +6504,7 @@ mod tests {
 
     #[test]
     fn native_query_bounds_use_exact_conservative_control_hulls() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let cubic = CubicBezier2::new(p(0, 0), p(0, 6), p(4, 6), p(4, 0));
         let curve = BezierSubcurve2::Cubic(cubic.clone());
         let query_bounds = match subcurve_query_bounds(&curve, &policy) {
@@ -6542,7 +6542,7 @@ mod tests {
 
     #[test]
     fn independent_region_orientations_share_equal_conic_area_kernels() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let first = single_rational_quadratic_loop_region();
         let second = single_rational_quadratic_loop_region();
         let mut cache = RationalQuadraticAreaIntegralCache::default();
@@ -6573,14 +6573,14 @@ mod tests {
         let subcurve = BezierSubcurve2::RationalQuadratic(conic);
 
         assert_eq!(
-            subcurve_contains_point(&subcurve, &p(100, 0), &CurvePolicy::STRICT),
+            subcurve_contains_point(&subcurve, &p(100, 0), &CurveContext::STRICT),
             Classification::Uncertain(UncertaintyReason::Boundary)
         );
     }
 
     #[test]
     fn irrational_weight_semicircle_region_classifies_without_native_accelerator() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let upper =
             Curve2::from(CircularArc2::try_from_center(p(0, 0), p(2, 0), p(1, 0), true).unwrap());
         let lower =
@@ -6658,7 +6658,7 @@ mod tests {
             .unwrap()
         }
 
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let region = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
             &[rectangle(-3, 3), rectangle(1, 7)],
             &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],

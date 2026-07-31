@@ -3,7 +3,7 @@
 use hypercurve::{
     BezierArrangementFragment2, BezierArrangementGraph2, BezierParameter2,
     BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    CubicBezier2, CurveContext, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -49,7 +49,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut materializations = Vec::new();
     for chunk in data.chunks(8).take(8) {
         if chunk.len() < 8 {

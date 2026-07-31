@@ -13,7 +13,7 @@ use crate::contour::{Contour2, FillRule};
 use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
 use crate::{
-    Classification, CurveError, CurvePolicy, CurveResult, LineArcRegion2, LineSide, Point2,
+    Classification, CurveContext, CurveError, CurveResult, LineArcRegion2, LineSide, Point2,
     UncertaintyReason,
 };
 
@@ -71,7 +71,7 @@ impl CircularArc2 {
     pub fn offset_left(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         let radius = self.radius_squared().sqrt()?;
         let offset_radius = if self.is_clockwise() {
@@ -110,7 +110,7 @@ impl Segment2 {
     pub fn offset_left(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match self {
             Self::Line(line) => line
@@ -139,7 +139,7 @@ impl CurveString2 {
     pub fn offset_left_with_line_joins(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if is_zero(&distance, policy) == Some(true) {
             return Ok(Classification::Decided(self.clone()));
@@ -168,7 +168,7 @@ impl CurveString2 {
     pub fn offset_left_checked(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         let offset = match self.offset_left_with_line_joins(distance, policy)? {
             Classification::Decided(offset) => offset,
@@ -197,7 +197,7 @@ impl CurveString2 {
         &self,
         distance: Real,
         cap: OffsetCap,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Contour2>> {
         checked_outline(self, distance, cap, policy)
     }
@@ -214,7 +214,7 @@ impl CurveString2 {
     pub fn offset_outline_round_caps(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Contour2>> {
         self.offset_outline(distance, OffsetCap::Round, policy)
     }
@@ -230,7 +230,7 @@ impl CurveString2 {
     pub fn offset_outline_butt_caps(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Contour2>> {
         self.offset_outline(distance, OffsetCap::Butt, policy)
     }
@@ -247,7 +247,7 @@ impl CurveString2 {
     pub fn offset_outline_square_caps(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Contour2>> {
         self.offset_outline(distance, OffsetCap::Square, policy)
     }
@@ -265,7 +265,7 @@ impl Contour2 {
     pub(crate) fn offset_left_orthogonal_line_erosion(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<LineArcRegion2>> {
         let Some(area) = self.signed_area()? else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -412,7 +412,7 @@ impl Contour2 {
     pub(crate) fn offset_left_convex_line_erosion(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Self>>> {
         let orientation = match certified_convex_line_orientation(self, policy)? {
             Classification::Decided(Some(orientation)) => orientation,
@@ -502,7 +502,7 @@ impl Contour2 {
     pub fn offset_left_with_line_joins(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if is_zero(&distance, policy) == Some(true) {
             return Ok(Classification::Decided(self.clone()));
@@ -532,7 +532,7 @@ impl Contour2 {
     pub fn offset_left_checked(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         let offset = match self.offset_left_with_line_joins(distance, policy)? {
             Classification::Decided(offset) => offset,
@@ -548,7 +548,7 @@ impl Contour2 {
     }
 }
 
-fn sort_dedup_exact_reals(values: Vec<Real>, policy: &CurvePolicy) -> Classification<Vec<Real>> {
+fn sort_dedup_exact_reals(values: Vec<Real>, policy: &CurveContext) -> Classification<Vec<Real>> {
     let mut sorted = Vec::<Real>::new();
     for value in values {
         let mut insertion = sorted.len();
@@ -578,7 +578,7 @@ fn orthogonal_erosion_coordinates(
     minimum: &Real,
     maximum: &Real,
     radius: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<Real>> {
     let mut candidates = Vec::with_capacity(source.len() * 3);
     for coordinate in source {
@@ -609,7 +609,7 @@ fn point_is_at_least_orthogonal_boundary_distance(
     point: &Point2,
     contour: &Contour2,
     radius: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     for segment in contour.segments() {
         let Segment2::Line(line) = segment else {
@@ -643,7 +643,7 @@ fn distance_to_exact_interval(
     value: &Real,
     first: &Real,
     second: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Real> {
     let (minimum, maximum) = match compare_reals(first, second, policy) {
         Some(Ordering::Less | Ordering::Equal) => (first, second),
@@ -681,7 +681,7 @@ fn axis_aligned_offset_cell(
 
 fn certified_convex_line_orientation(
     contour: &Contour2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<RealSign>>> {
     if contour
         .segments()
@@ -732,7 +732,7 @@ fn point_satisfies_convex_half_planes(
     lines: &[LineSeg2],
     supporting_lines: [usize; 2],
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     for (index, line) in lines.iter().enumerate() {
         // The candidate was constructed as the exact intersection of these
@@ -758,7 +758,7 @@ fn point_satisfies_convex_half_planes(
 fn push_distinct_exact_point(
     points: &mut Vec<Point2>,
     candidate: Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<()> {
     for point in points.iter() {
         match is_zero(&point.distance_squared(&candidate), policy) {
@@ -771,7 +771,10 @@ fn push_distinct_exact_point(
     Classification::Decided(())
 }
 
-fn exact_convex_hull(mut points: Vec<Point2>, policy: &CurvePolicy) -> Classification<Vec<Point2>> {
+fn exact_convex_hull(
+    mut points: Vec<Point2>,
+    policy: &CurveContext,
+) -> Classification<Vec<Point2>> {
     for index in 1..points.len() {
         let mut cursor = index;
         while cursor > 0 {
@@ -817,7 +820,7 @@ fn exact_convex_hull(mut points: Vec<Point2>, policy: &CurvePolicy) -> Classific
 fn append_convex_hull_point(
     hull: &mut Vec<Point2>,
     point: Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<()> {
     while hull.len() >= 2 {
         match classify_oriented_line(&hull[hull.len() - 2], &hull[hull.len() - 1], &point, policy) {
@@ -835,7 +838,7 @@ fn append_convex_hull_point(
 fn compare_points_lexicographically(
     first: &Point2,
     second: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Ordering> {
     match compare_reals(first.x(), second.x(), policy)? {
         Ordering::Equal => compare_reals(first.y(), second.y(), policy),
@@ -847,7 +850,7 @@ fn checked_outline(
     source: &CurveString2,
     distance: Real,
     cap: OffsetCap,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Contour2>> {
     match real_sign(&distance, policy) {
         Some(RealSign::Positive) => {}
@@ -895,7 +898,7 @@ fn outline_segments_for_cap(
     offsets: OutlineOffsets,
     distance: Real,
     cap: OffsetCap,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Segment2>>> {
     match cap {
         OffsetCap::Round => outline_segments_with_round_caps(offsets, distance, policy),
@@ -907,7 +910,7 @@ fn outline_segments_for_cap(
 fn outline_segments_with_round_caps(
     offsets: OutlineOffsets,
     distance: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Segment2>>> {
     let OutlineOffsets {
         left,
@@ -1060,7 +1063,7 @@ struct OutlineOffsets {
 
 fn checked_outline_contour(
     segments: Vec<Segment2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Contour2>> {
     let outline = match Contour2::try_new(segments) {
         Ok(outline) => outline,
@@ -1169,7 +1172,7 @@ fn unit_tangent_for_line(line: &LineSeg2) -> CurveResult<(Real, Real)> {
 }
 
 fn unit_direction_for_delta(dx: &Real, dy: &Real) -> CurveResult<(Real, Real)> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let dx_sign = real_sign(dx, &policy);
     let dy_sign = real_sign(dy, &policy);
     if is_zero(&(dx * dx - dy * dy), &policy) == Some(true)
@@ -1201,7 +1204,7 @@ fn unit_tangent_for_arc_at_point(arc: &CircularArc2, point: &Point2) -> CurveRes
 fn offset_segments_left(
     segments: &[Segment2],
     distance: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Segment2>>> {
     let mut offsets = Vec::with_capacity(segments.len());
     for segment in segments {
@@ -1223,7 +1226,7 @@ fn joined_offset_segments(
     source: &[Segment2],
     offsets: &[Segment2],
     closed: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Segment2>>> {
     if offsets.is_empty() {
         return Err(CurveError::EmptyCurveString);
@@ -1286,7 +1289,7 @@ fn classify_offset_join(
     source_next: &Segment2,
     offset_previous: &Segment2,
     offset_next: &Segment2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<OffsetJoin>> {
     match (offset_previous, offset_next) {
         (Segment2::Line(previous), Segment2::Line(next)) => {
@@ -1318,7 +1321,7 @@ fn round_join(previous: &Segment2, next: &Segment2) -> OffsetJoin {
 fn line_support_intersection(
     previous: &LineSeg2,
     next: &LineSeg2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Point2>>> {
     let (rx, ry) = previous.delta();
     let (sx, sy) = next.delta();
@@ -1394,7 +1397,7 @@ fn append_round_join_if_needed(
     from: &Point2,
     to: &Point2,
     center: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
     let distance = from.distance_squared(to);
     match is_zero(&distance, policy) {
@@ -1421,7 +1424,7 @@ fn round_cap_arc(
     to: &Point2,
     center: &Point2,
     radius_squared: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<CircularArc2>> {
     match is_zero(&from.distance_squared(to), policy) {
         Some(true) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
@@ -1482,7 +1485,7 @@ fn round_join_clockwise(
     center: &Point2,
     from: &Point2,
     to: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let from_radius = from.delta_from(center);
     let to_radius = to.delta_from(center);

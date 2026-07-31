@@ -4,7 +4,7 @@ use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierRegion2,
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierSplitFragment2,
-    Classification, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2,
+    Classification, CurveContext, CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2,
     RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -25,7 +25,7 @@ fn point(x: u8, y: u8) -> Point2 {
     Point2::new(real_from_byte(x), real_from_byte(y))
 }
 
-fn algebraic_sqrt_half(policy: &CurvePolicy) -> Option<BezierParameter2> {
+fn algebraic_sqrt_half(policy: &CurveContext) -> Option<BezierParameter2> {
     let polynomial = match BezierParameterPolynomial::try_new_power_basis(
         vec![Real::from(-1_i32), Real::from(0_i32), Real::from(2_i32)],
         policy,
@@ -48,7 +48,7 @@ fn algebraic_sqrt_half(policy: &CurvePolicy) -> Option<BezierParameter2> {
     Some(BezierParameter2::algebraic(parameter))
 }
 
-fn algebraic_sqrt_eighth(policy: &CurvePolicy) -> Option<BezierParameter2> {
+fn algebraic_sqrt_eighth(policy: &CurveContext) -> Option<BezierParameter2> {
     let polynomial = match BezierParameterPolynomial::try_new_power_basis(
         vec![Real::from(-1_i32), Real::from(0_i32), Real::from(8_i32)],
         policy,
@@ -71,7 +71,7 @@ fn algebraic_sqrt_eighth(policy: &CurvePolicy) -> Option<BezierParameter2> {
     Some(BezierParameter2::algebraic(parameter))
 }
 
-fn algebraic_midpoint_root(policy: &CurvePolicy) -> Option<BezierAlgebraicParameter2> {
+fn algebraic_midpoint_root(policy: &CurveContext) -> Option<BezierAlgebraicParameter2> {
     let polynomial = match BezierParameterPolynomial::try_new_power_basis(
         vec![Real::from(-1_i32), Real::from(2_i32)],
         policy,
@@ -94,7 +94,7 @@ fn algebraic_midpoint_root(policy: &CurvePolicy) -> Option<BezierAlgebraicParame
 
 fn constant_point_image(
     point: Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierAlgebraicEndpointImage2> {
     let curve = QuadraticBezier2::new(point.clone(), point.clone(), point);
     BezierAlgebraicEndpointImage2::quadratic(&curve, &algebraic_midpoint_root(policy)?, policy).ok()
@@ -103,7 +103,7 @@ fn constant_point_image(
 fn algebraic_line_fragment(
     start: Point2,
     end: Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierSplitFragment2> {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_root(policy)?);
     Some(BezierSplitFragment2::AlgebraicEndpointImages {
@@ -121,7 +121,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut materializations = Vec::new();
     for chunk in data.chunks(8).take(8) {
         if chunk.len() < 8 {

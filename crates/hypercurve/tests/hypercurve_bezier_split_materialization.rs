@@ -6,7 +6,7 @@ use hypercurve::{
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2,
-    Classification, CubicBezier2, CurveError, CurvePolicy, Point2, QuadraticBezier2,
+    Classification, CubicBezier2, CurveContext, CurveError, Point2, QuadraticBezier2,
     RationalQuadraticBezier2, Real,
 };
 use proptest::prelude::*;
@@ -23,8 +23,8 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {

@@ -13,7 +13,7 @@ use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, real_sign};
 use crate::{
-    Classification, Contour2, ContourPointLocation, CurvePolicy, CurveResult, LineSeg2, Point2,
+    Classification, Contour2, ContourPointLocation, CurveContext, CurveResult, LineSeg2, Point2,
     Segment2,
 };
 
@@ -96,7 +96,7 @@ impl TranslationObstacle2 {
     pub fn classify_translation(
         &self,
         translation: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<ContourPointLocation>> {
         Ok(self.boundary.classify_point(translation, policy))
     }
@@ -154,7 +154,7 @@ impl TranslationObstacleEvidence2 {
 pub fn translation_obstacle_convex(
     fixed: &Contour2,
     moving: &Contour2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<TranslationObstacleEvidence2> {
     let source_fixed_segment_count = fixed.segments().len();
     let source_moving_segment_count = moving.segments().len();
@@ -210,7 +210,7 @@ pub fn translation_obstacle_convex(
 fn normalized_convex_vertices(
     contour: &Contour2,
     operand: TranslationObstacleOperand2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<Point2>, TranslationObstacleBlocker2>> {
     let mut vertices = Vec::with_capacity(contour.segments().len());
     for (segment_index, segment) in contour.segments().iter().enumerate() {
@@ -287,7 +287,7 @@ fn normalized_convex_vertices(
 
 fn remove_collinear_vertices(
     mut vertices: Vec<Point2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<Vec<Point2>, ()> {
     loop {
         if vertices.len() <= 3 {
@@ -314,7 +314,7 @@ fn remove_collinear_vertices(
     }
 }
 
-fn rotate_to_lowest(vertices: &mut [Point2], policy: &CurvePolicy) -> Result<(), ()> {
+fn rotate_to_lowest(vertices: &mut [Point2], policy: &CurveContext) -> Result<(), ()> {
     let mut lowest = 0usize;
     for index in 1..vertices.len() {
         let y_order = compare_reals(vertices[index].y(), vertices[lowest].y(), policy).ok_or(())?;
@@ -333,7 +333,7 @@ fn rotate_to_lowest(vertices: &mut [Point2], policy: &CurvePolicy) -> Result<(),
 fn merge_convex_minkowski(
     mut first: Vec<Point2>,
     mut second: Vec<Point2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<Point2>, TranslationObstacleBlocker2>> {
     if rotate_to_lowest(&mut first, policy).is_err()
         || rotate_to_lowest(&mut second, policy).is_err()
@@ -433,13 +433,13 @@ mod tests {
     fn rectangle_translation_obstacle_is_exact_expanded_rectangle() {
         let fixed = contour(&[(0, 0), (2, 0), (2, 2), (0, 2)]);
         let moving = contour(&[(0, 0), (1, 0), (1, 1), (0, 1)]);
-        let evidence = translation_obstacle_convex(&fixed, &moving, &CurvePolicy::STRICT).unwrap();
+        let evidence = translation_obstacle_convex(&fixed, &moving, &CurveContext::STRICT).unwrap();
         let obstacle = evidence.obstacle().unwrap();
         assert_eq!(obstacle.merged_edge_count(), 4);
         assert_eq!(
             decided(
                 obstacle
-                    .classify_translation(&Point2::new(r(0), r(0)), &CurvePolicy::STRICT)
+                    .classify_translation(&Point2::new(r(0), r(0)), &CurveContext::STRICT)
                     .unwrap()
             ),
             ContourPointLocation::Inside
@@ -447,7 +447,7 @@ mod tests {
         assert_eq!(
             decided(
                 obstacle
-                    .classify_translation(&Point2::new(r(2), r(0)), &CurvePolicy::STRICT)
+                    .classify_translation(&Point2::new(r(2), r(0)), &CurveContext::STRICT)
                     .unwrap()
             ),
             ContourPointLocation::Boundary
@@ -455,7 +455,7 @@ mod tests {
         assert_eq!(
             decided(
                 obstacle
-                    .classify_translation(&Point2::new(r(3), r(0)), &CurvePolicy::STRICT)
+                    .classify_translation(&Point2::new(r(3), r(0)), &CurveContext::STRICT)
                     .unwrap()
             ),
             ContourPointLocation::Outside
@@ -467,7 +467,7 @@ mod tests {
     fn clockwise_inputs_normalize_without_changing_forbidden_set() {
         let fixed = contour(&[(0, 0), (0, 2), (2, 2), (2, 0)]);
         let moving = contour(&[(0, 0), (0, 1), (1, 1), (1, 0)]);
-        let evidence = translation_obstacle_convex(&fixed, &moving, &CurvePolicy::STRICT).unwrap();
+        let evidence = translation_obstacle_convex(&fixed, &moving, &CurveContext::STRICT).unwrap();
         assert_eq!(
             evidence
                 .obstacle()
@@ -483,7 +483,7 @@ mod tests {
     fn concave_operand_requires_exact_convex_decomposition() {
         let fixed = contour(&[(0, 0), (3, 0), (3, 1), (1, 1), (1, 3), (0, 3)]);
         let moving = contour(&[(0, 0), (1, 0), (1, 1), (0, 1)]);
-        let evidence = translation_obstacle_convex(&fixed, &moving, &CurvePolicy::STRICT).unwrap();
+        let evidence = translation_obstacle_convex(&fixed, &moving, &CurveContext::STRICT).unwrap();
         assert!(evidence.obstacle().is_none());
         assert!(matches!(
             evidence.blocker(),

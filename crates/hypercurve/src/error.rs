@@ -250,6 +250,8 @@ pub enum CurveError {
     InvalidBezierOffsetOptions,
     /// Finite projection options contain non-finite or unsupported values.
     InvalidFiniteProjectionOptions,
+    /// Edge-preview tolerances are negative or non-finite.
+    InvalidPreviewOptions,
     /// Retained import record metadata is inconsistent or non-finite.
     InvalidImportRecord,
     /// A finite affine transform is not a nonsingular planar similarity.
@@ -346,6 +348,7 @@ impl fmt::Display for CurveError {
             Self::InvalidFiniteProjectionOptions => {
                 write!(f, "finite projection options are invalid")
             }
+            Self::InvalidPreviewOptions => write!(f, "curve preview options are invalid"),
             Self::InvalidImportRecord => write!(f, "retained import record is invalid"),
             Self::InvalidSimilarityTransform => {
                 write!(f, "affine transform is not a planar similarity")

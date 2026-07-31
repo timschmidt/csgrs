@@ -8,7 +8,7 @@
 
 use geo::{BooleanOps as _, Contains as _, Coord, LineString, MultiPolygon, Point, Polygon};
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, IntersectionKind,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, FillRule, IntersectionKind,
     LineArcRegion2, LineLineIntersection, LineSeg2, Point2, Real, RegionPointLocation,
 };
 
@@ -29,8 +29,8 @@ fn vertex(x: f64, y: f64) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(0.0))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn contour(coords: &[(f64, f64)]) -> HContour {

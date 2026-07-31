@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierParameterRange2, Classification, CurveError, CurvePolicy,
+    BezierParameterPolynomial, BezierParameterRange2, Classification, CurveContext, CurveError,
     Real, UncertaintyReason,
 };
 use proptest::prelude::*;
@@ -15,8 +15,8 @@ fn q(numerator: i32, denominator: i32) -> Real {
     (Real::from(numerator) / Real::from(denominator)).unwrap()
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn decided<T>(classification: Classification<T>) -> T {

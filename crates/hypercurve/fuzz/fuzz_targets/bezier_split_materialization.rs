@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierSplitFragment2, Classification, CurvePolicy, Point2,
+    BezierParameterPolynomial, BezierSplitFragment2, Classification, CurveContext, Point2,
     QuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -24,7 +24,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let curve = QuadraticBezier2::new(
         point(data[0], data[1]),
         point(data[2], data[3]),

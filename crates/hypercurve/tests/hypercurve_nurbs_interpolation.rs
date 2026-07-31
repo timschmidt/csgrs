@@ -1,4 +1,4 @@
-use hypercurve::{CurvePolicy, NurbsCurve2, Point2, RationalBezier2, Real};
+use hypercurve::{CurveContext, NurbsCurve2, Point2, RationalBezier2, Real};
 use proptest::prelude::*;
 
 fn r(value: i32) -> Real {
@@ -37,7 +37,7 @@ fn fixed_weight_rational_nurbs_interpolation_recovers_exact_control_net() {
         .iter()
         .map(|parameter| {
             source_curve
-                .point_at(parameter, &CurvePolicy::STRICT)
+                .point_at(parameter, &CurveContext::STRICT)
                 .unwrap()
         })
         .collect::<Vec<_>>();
@@ -89,7 +89,7 @@ proptest! {
             .iter()
             .map(|parameter| {
                 source_curve
-                    .point_at(parameter, &CurvePolicy::STRICT)
+                    .point_at(parameter, &CurveContext::STRICT)
                     .unwrap()
             })
             .collect::<Vec<_>>();

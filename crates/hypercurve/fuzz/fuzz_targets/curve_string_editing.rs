@@ -1,7 +1,7 @@
 #![no_main]
 
 use hypercurve::{
-    BulgeVertex2, Classification, CurvePolicy, CurveString2, CurveStringEndpoint2,
+    BulgeVertex2, Classification, CurveContext, CurveString2, CurveStringEndpoint2,
     CurveStringTrimPoint2, FillRule, LineArcRegion2, Point2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -53,7 +53,7 @@ fn rectangle_region(origin: Point2, width: u8, height: u8) -> Option<LineArcRegi
     .map(|contour| LineArcRegion2::from_material_contours(vec![contour]))
 }
 
-fn touch_curve(curve: &CurveString2, policy: &CurvePolicy, data: &[u8]) {
+fn touch_curve(curve: &CurveString2, policy: &CurveContext, data: &[u8]) {
     let _ = curve.merge_adjacent_collinear_lines(policy);
     let _ = curve.remove_adjacent_reversed_duplicates();
 
@@ -79,7 +79,7 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 16 {
         return;
     }
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let points = data
         .chunks(2)
         .take(6)

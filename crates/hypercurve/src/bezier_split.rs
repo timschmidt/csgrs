@@ -24,7 +24,7 @@ use hyperreal::{Real, RealSign};
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierParameter2, Classification,
-    CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalBezier2,
+    CubicBezier2, CurveContext, CurveError, CurveResult, Point2, QuadraticBezier2, RationalBezier2,
     RationalQuadraticBezier2, UncertaintyReason,
 };
 
@@ -168,7 +168,7 @@ impl BezierSubcurve2 {
     }
 
     /// Evaluates this native subcurve at an exact local parameter.
-    pub fn point_at(&self, parameter: &Real, policy: &CurvePolicy) -> Classification<Point2> {
+    pub fn point_at(&self, parameter: &Real, policy: &CurveContext) -> Classification<Point2> {
         match self {
             Self::Quadratic(curve) => Classification::Decided(curve.point_at(parameter.clone())),
             Self::Cubic(curve) => Classification::Decided(curve.point_at(parameter.clone())),
@@ -180,7 +180,7 @@ impl BezierSubcurve2 {
     pub(crate) fn split_at_parameters(
         &self,
         parameters: &[BezierParameter2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
         match self {
             Self::Quadratic(curve) => curve.split_at_parameters(parameters, policy),
@@ -193,7 +193,7 @@ impl BezierSubcurve2 {
     pub(crate) fn split_at_parameters_refined(
         &self,
         parameters: &[BezierParameter2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
         match self {
             Self::Quadratic(curve) => split_curve_at_parameters(
@@ -280,7 +280,7 @@ impl BezierSubcurve2 {
         &self,
         start: &Real,
         end: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match self {
             Self::Quadratic(curve) => Ok(Classification::Decided(Self::Quadratic(
@@ -332,7 +332,7 @@ impl BezierSubcurve2 {
                     curve.end_weight().clone(),
                     curve.control_weight().clone(),
                     curve.start_weight().clone(),
-                    curve.common_nonzero_weight_sign(&CurvePolicy::STRICT),
+                    curve.common_nonzero_weight_sign(&CurveContext::STRICT),
                     curve.retained_implicit_quadratic_conic().cloned(),
                     curve.retained_circular_conic().cloned(),
                 )
@@ -356,7 +356,7 @@ impl BezierSplitFragment2 {
     /// the represented parameter lies strictly between the exact boundaries.
     pub fn representative_point(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
         match self {
             Self::Materialized { curve, .. } => {
@@ -429,7 +429,7 @@ fn validate_bezier_split_fragments(fragments: &[BezierSplitFragment2]) -> CurveR
         ));
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     validate_bezier_split_coverage(fragments, &policy)?;
     for (left_index, left) in fragments.iter().enumerate() {
         validate_bezier_split_fragment(left, &policy)?;
@@ -450,7 +450,7 @@ fn validate_bezier_split_fragments(fragments: &[BezierSplitFragment2]) -> CurveR
 
 fn validate_bezier_split_coverage(
     fragments: &[BezierSplitFragment2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     let (first_start, _) = bezier_split_fragment_range(&fragments[0]);
     let (_, last_end) = bezier_split_fragment_range(&fragments[fragments.len() - 1]);
@@ -462,7 +462,7 @@ fn validate_bezier_split_coverage(
 fn validate_bezier_boundary_equals(
     actual: &BezierParameter2,
     expected: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match actual.cmp_by_interval(expected, policy)? {
         Classification::Decided(Ordering::Equal) => Ok(()),
@@ -477,7 +477,7 @@ fn validate_bezier_boundary_equals(
 
 fn validate_bezier_split_fragment(
     fragment: &BezierSplitFragment2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     let (start, end) = bezier_split_fragment_range(fragment);
     validate_parameter(start, policy)?;
@@ -555,7 +555,7 @@ fn validate_adjacent_bezier_split_fragments(
     {
         let left_endpoint = left_curve.end_point();
         let right_endpoint = right_curve.start_point();
-        if !certified_split_points_equal(&left_endpoint, &right_endpoint, &CurvePolicy::STRICT) {
+        if !certified_split_points_equal(&left_endpoint, &right_endpoint, &CurveContext::STRICT) {
             return Err(CurveError::Topology(
                 "adjacent materialized Bezier split fragments must be endpoint-connected".into(),
             ));
@@ -564,7 +564,7 @@ fn validate_adjacent_bezier_split_fragments(
     Ok(())
 }
 
-fn certified_split_points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> bool {
+fn certified_split_points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> bool {
     is_zero(&left.distance_squared(right), policy) == Some(true)
 }
 
@@ -581,7 +581,7 @@ fn bezier_split_fragment_range(
 fn validate_bezier_parameter_order(
     start: &BezierParameter2,
     end: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match start.cmp_by_interval(end, policy)? {
         Classification::Decided(Ordering::Less) => Ok(()),
@@ -599,7 +599,7 @@ fn validate_algebraic_endpoint_image_boundary(
     boundary: &BezierParameter2,
     image: Option<&BezierAlgebraicEndpointImage2>,
     source_curve: &BezierSubcurve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match (boundary, image) {
         (BezierParameter2::Exact(_), None) => Ok(()),
@@ -637,7 +637,7 @@ impl QuadraticBezier2 {
     pub fn split_at_parameters(
         &self,
         parameters: &[BezierParameter2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
         split_curve_at_parameters(
             parameters,
@@ -660,7 +660,7 @@ impl QuadraticBezier2 {
         &self,
         start: &Real,
         end: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<QuadraticBezier2> {
         validate_exact_range(start, end, policy)?;
         if compare_reals(start, end, policy) == Some(Ordering::Equal) {
@@ -726,7 +726,7 @@ impl CubicBezier2 {
     pub fn split_at_parameters(
         &self,
         parameters: &[BezierParameter2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
         split_curve_at_parameters(
             parameters,
@@ -749,7 +749,7 @@ impl CubicBezier2 {
         &self,
         start: &Real,
         end: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<CubicBezier2> {
         validate_exact_range(start, end, policy)?;
         if compare_reals(start, end, policy) == Some(Ordering::Equal) {
@@ -808,7 +808,7 @@ impl RationalQuadraticBezier2 {
     pub fn split_at_parameters(
         &self,
         parameters: &[BezierParameter2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
         split_curve_at_parameters(
             parameters,
@@ -836,7 +836,7 @@ impl RationalQuadraticBezier2 {
         &self,
         start: &Real,
         end: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RationalQuadraticBezier2> {
         validate_exact_range(start, end, policy)?;
         if compare_reals(start, end, policy) == Some(Ordering::Equal) {
@@ -881,7 +881,7 @@ impl RationalQuadraticBezier2 {
     pub fn split_at_exact(
         &self,
         t: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<(RationalQuadraticBezier2, RationalQuadraticBezier2)> {
         let retained_common_weight_sign = if in_closed_unit_interval(&t, policy) == Some(true) {
             self.common_nonzero_weight_sign(policy)
@@ -923,7 +923,7 @@ impl RationalBezier2 {
     pub fn split_at_parameters(
         &self,
         parameters: &[BezierParameter2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
         split_curve_at_parameters(
             parameters,
@@ -950,7 +950,7 @@ impl RationalBezier2 {
 
 fn split_curve_at_parameters<F, G, H>(
     parameters: &[BezierParameter2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     refine_ordering: bool,
     promote_rational_roots: bool,
     mut exact_boundary_is_regular: H,
@@ -1049,7 +1049,7 @@ where
     }
 }
 
-fn validate_parameter(parameter: &BezierParameter2, policy: &CurvePolicy) -> CurveResult<()> {
+fn validate_parameter(parameter: &BezierParameter2, policy: &CurveContext) -> CurveResult<()> {
     match parameter.known_interval(policy)? {
         Classification::Decided(_) => Ok(()),
         Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
@@ -1061,7 +1061,7 @@ fn validate_parameter(parameter: &BezierParameter2, policy: &CurvePolicy) -> Cur
 fn push_boundary(
     boundaries: &mut Vec<BezierParameter2>,
     candidate: BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     refine_ordering: bool,
 ) -> CurveResult<()> {
     for existing in boundaries.iter() {
@@ -1077,7 +1077,7 @@ fn push_boundary(
 
 fn sort_boundaries(
     boundaries: &mut [BezierParameter2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     refine_ordering: bool,
 ) -> CurveResult<Classification<()>> {
     for index in 1..boundaries.len() {
@@ -1104,7 +1104,7 @@ fn sort_boundaries(
 fn compare_boundary_parameters(
     first: &BezierParameter2,
     second: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     refine_ordering: bool,
 ) -> CurveResult<Classification<Ordering>> {
     if refine_ordering {
@@ -1114,7 +1114,7 @@ fn compare_boundary_parameters(
     }
 }
 
-fn validate_exact_range(start: &Real, end: &Real, policy: &CurvePolicy) -> CurveResult<()> {
+fn validate_exact_range(start: &Real, end: &Real, policy: &CurveContext) -> CurveResult<()> {
     match (
         in_closed_unit_interval(start, policy),
         in_closed_unit_interval(end, policy),
@@ -1187,7 +1187,7 @@ fn lerp_homogeneous(
 
 fn rational_from_homogeneous(
     controls: &[HomogeneousControl],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     retained_common_weight_sign: Option<RealSign>,
 ) -> CurveResult<RationalQuadraticBezier2> {
     let mut points = Vec::with_capacity(controls.len());

@@ -11,7 +11,7 @@ use hyperreal::{Rational, Real, RealSign};
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
 use crate::{
-    ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy,
+    ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveContext, CurveError,
     CurveResult, LineArcIntersection, LineArcOrder, LineArcRegion2, LineLineIntersection, LineSeg2,
     LineSide, ParamRange, Point2, RegionPointLocation, Segment2, SegmentIntersection, SegmentKind,
     UncertaintyReason,
@@ -107,7 +107,7 @@ impl CurveString2 {
                     return Err(CurveError::DisconnectedCurveString);
                 }
                 hyperreal::ZeroKnowledge::Unknown => {
-                    match is_zero(&distance, &CurvePolicy::STRICT) {
+                    match is_zero(&distance, &CurveContext::STRICT) {
                         Some(true) => {}
                         Some(false) => return Err(CurveError::DisconnectedCurveString),
                         None => return Err(CurveError::AmbiguousCurveStringConnection),
@@ -173,7 +173,7 @@ impl CurveString2 {
         other: &Self,
         first_endpoint: CurveStringEndpoint2,
         second_endpoint: CurveStringEndpoint2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         Ok(self
             .classify_endpoint_pair(other, first_endpoint, second_endpoint, policy)?
@@ -184,7 +184,7 @@ impl CurveString2 {
     pub fn link_connected_endpoints(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CurveString2>>> {
         let pairs = self.endpoint_link_pairs(other, policy)?;
         let mut exact_kind = None;
@@ -214,7 +214,7 @@ impl CurveString2 {
     /// Links an ordered sequence of open curve strings by certified endpoints.
     pub fn link_ordered_connected_endpoints(
         curve_strings: Vec<Self>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let mut iter = curve_strings.into_iter();
         let Some(mut accumulated) = iter.next() else {
@@ -237,7 +237,7 @@ impl CurveString2 {
     /// Borrowed counterpart to the ordered endpoint-link operation.
     pub fn link_ordered_connected_endpoints_borrowed(
         curve_strings: &[Self],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         Self::link_ordered_connected_endpoints(curve_strings.to_vec(), policy)
     }
@@ -246,7 +246,7 @@ impl CurveString2 {
     pub fn connect_end_to_start_with_line(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         self.connect_endpoints_with_line(other, CurveStringLinkKind2::FirstEndToSecondStart, policy)
     }
@@ -256,7 +256,7 @@ impl CurveString2 {
         &self,
         other: &Self,
         kind: CurveStringLinkKind2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         match self.endpoint_pair_for_kind(other, kind, policy)?.connection {
             Classification::Decided(true) => {
@@ -274,7 +274,7 @@ impl CurveString2 {
     pub fn connect_nearest_endpoints_with_line(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let mut best: Option<(CurveStringLinkKind2, Real)> = None;
         let mut best_is_tied = false;
@@ -325,7 +325,7 @@ impl CurveString2 {
     /// evidence instead of guessing a merge boundary.
     pub fn merge_adjacent_collinear_lines(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let mut merged_segments = Vec::with_capacity(self.len());
         let mut current_segment = self
@@ -387,7 +387,7 @@ impl CurveString2 {
         &self,
         start: CurveStringTrimPoint2,
         end: CurveStringTrimPoint2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         validate_trim_point(self, &start, policy)?;
         validate_trim_point(self, &end, policy)?;
@@ -436,7 +436,7 @@ impl CurveString2 {
         &self,
         start_point: &Point2,
         end_point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let start = match locate_trim_point(self, start_point, policy)? {
             Classification::Decided(point) => point,
@@ -461,7 +461,7 @@ impl CurveString2 {
         &self,
         start_cutter: &Self,
         end_cutter: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let source_boxes = self
             .segments
@@ -507,7 +507,7 @@ impl CurveString2 {
     pub fn trim_inside_region(
         &self,
         region: &LineArcRegion2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<CurveString2>>> {
         trim_curve_string_inside_region(self, region, policy)
     }
@@ -518,7 +518,7 @@ impl CurveString2 {
         vertex_index: usize,
         previous_param: Real,
         next_param: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         if vertex_index == 0 || vertex_index >= self.len() {
             return Err(CurveError::InvalidCurveRange);
@@ -607,7 +607,7 @@ impl CurveString2 {
         vertex_index: usize,
         previous_point: &Point2,
         next_point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         if vertex_index == 0 || vertex_index >= self.len() {
             return Err(CurveError::InvalidCurveRange);
@@ -634,7 +634,7 @@ impl CurveString2 {
         next_param: Real,
         center: &Point2,
         clockwise: bool,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         if vertex_index == 0 || vertex_index >= self.len() {
             return Err(CurveError::InvalidCurveRange);
@@ -670,7 +670,7 @@ impl CurveString2 {
         next_point: &Point2,
         center: &Point2,
         clockwise: bool,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         if vertex_index == 0 || vertex_index >= self.len() {
             return Err(CurveError::InvalidCurveRange);
@@ -708,7 +708,7 @@ impl CurveString2 {
         next_point: &Point2,
         center: &Point2,
         clockwise: bool,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let previous_segment_index = vertex_index - 1;
         let next_segment_index = vertex_index;
@@ -810,7 +810,7 @@ impl CurveString2 {
         &self,
         endpoint: CurveStringEndpoint2,
         target_point: Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         self.extend_endpoint_to_point(endpoint, target_point, policy)
     }
@@ -820,7 +820,7 @@ impl CurveString2 {
         &self,
         endpoint: CurveStringEndpoint2,
         target_point: Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let source_segment_index = match endpoint {
             CurveStringEndpoint2::Start => 0,
@@ -857,7 +857,7 @@ impl CurveString2 {
         source_segment_index: usize,
         line: &LineSeg2,
         target_point: Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         match line.classify_point(&target_point, policy) {
             Classification::Decided(crate::LineSide::On) => {}
@@ -897,7 +897,7 @@ impl CurveString2 {
         source_segment_index: usize,
         arc: &CircularArc2,
         target_point: Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let radius_delta = target_point.distance_squared(arc.center()) - arc.radius_squared();
         match is_zero(&radius_delta, policy) {
@@ -966,7 +966,7 @@ impl CurveString2 {
         &self,
         start_events: Vec<CurveStringIntersection>,
         end_events: Vec<CurveStringIntersection>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let start_extraction = extract_curve_trim_hits(&start_events);
         let end_extraction = extract_curve_trim_hits(&end_events);
@@ -987,7 +987,7 @@ impl CurveString2 {
         &self,
         start: LocatedTrimPoint2,
         end: LocatedTrimPoint2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let mut trimmed_segments = Vec::new();
         for source_segment_index in start.trim_point.segment_index..=end.trim_point.segment_index {
@@ -1046,7 +1046,7 @@ impl CurveString2 {
     pub fn intersect_curve_string(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Vec<CurveStringIntersection>> {
         let self_boxes = self
             .segments
@@ -1066,7 +1066,7 @@ impl CurveString2 {
     /// The fact pass visits the segments once and does not expose its temporary
     /// broad-phase storage. Exact predicates remain authoritative for later
     /// topology operations.
-    pub fn structural_facts(&self, policy: &CurvePolicy) -> crate::CurveStringFacts {
+    pub fn structural_facts(&self, policy: &CurveContext) -> crate::CurveStringFacts {
         crate::prepared::curve_string_facts(self, policy)
     }
 
@@ -1082,7 +1082,7 @@ impl CurveString2 {
         other: &Self,
         first_endpoint: CurveStringEndpoint2,
         second_endpoint: CurveStringEndpoint2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<(Real, Classification<bool>)> {
         let first_point = self.endpoint(first_endpoint)?;
         let second_point = other.endpoint(second_endpoint)?;
@@ -1097,7 +1097,7 @@ impl CurveString2 {
     fn endpoint_link_pairs(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<[CurveStringEndpointPair2; 4]> {
         Ok([
             self.endpoint_pair_for_kind(
@@ -1123,7 +1123,7 @@ impl CurveString2 {
         &self,
         other: &Self,
         kind: CurveStringLinkKind2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<CurveStringEndpointPair2> {
         let (first_endpoint, second_endpoint) = match kind {
             CurveStringLinkKind2::FirstEndToSecondStart => {
@@ -1208,7 +1208,7 @@ struct CurveStringEndpointPair2 {
 fn trim_curve_string_inside_region(
     curve_string: &CurveString2,
     region: &LineArcRegion2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<CurveString2>>> {
     let mut boundary_hits = Vec::new();
     if let Some(blocker) =
@@ -1225,7 +1225,7 @@ fn trim_curve_string_inside_region(
 fn trim_curve_string_inside_region_with_hits(
     curve_string: &CurveString2,
     boundary_hits: Vec<RegionTrimHit2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     mut classify_point: impl FnMut(&Point2) -> Classification<RegionPointLocation>,
 ) -> CurveResult<Classification<Vec<CurveString2>>> {
     let mut output_segments: Vec<Vec<Segment2>> = Vec::new();
@@ -1300,7 +1300,7 @@ fn trim_curve_string_inside_region_with_hits(
 fn collect_region_trim_boundary_hits(
     curve_string: &CurveString2,
     region: &LineArcRegion2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     hits: &mut Vec<RegionTrimHit2>,
 ) -> CurveResult<Option<UncertaintyReason>> {
     let source_segment_boxes: Vec<_> = curve_string
@@ -1337,7 +1337,7 @@ fn collect_region_trim_contour_hits(
     curve_string: &CurveString2,
     source_segment_boxes: &[Option<crate::Aabb2>],
     contour: &crate::Contour2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     hits: &mut Vec<RegionTrimHit2>,
 ) -> CurveResult<Option<UncertaintyReason>> {
     let region_segment_boxes: Vec<_> = contour
@@ -1376,7 +1376,7 @@ fn append_region_trim_hits_from_relation(
     source_segment_index: usize,
     source_segment: &Segment2,
     relation: SegmentIntersection,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<UncertaintyReason>> {
     match relation {
         SegmentIntersection::LineLine(LineLineIntersection::None)
@@ -1467,7 +1467,7 @@ fn line_arc_region_trim_source_param(
     source_segment: &Segment2,
     order: LineArcOrder,
     hit: &crate::LineArcIntersectionPoint,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Real, UncertaintyReason>> {
     match order {
         LineArcOrder::LineThenArc => Ok(Ok(hit.line_param.clone())),
@@ -1478,7 +1478,7 @@ fn line_arc_region_trim_source_param(
 fn region_trim_source_param(
     source_segment: &Segment2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Real, UncertaintyReason>> {
     match segment_point_parameter(source_segment, point, policy)? {
         Classification::Decided(param) => Ok(Ok(param)),
@@ -1490,7 +1490,7 @@ fn region_trim_split_points_for_segment(
     source_segment_index: usize,
     source_segment: &Segment2,
     hits: &[RegionTrimHit2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<RegionTrimSplitPoint2>>> {
     let mut split_points = vec![RegionTrimSplitPoint2 {
         trim_point: CurveStringTrimPoint2::new(source_segment_index, Real::zero()),
@@ -1533,7 +1533,7 @@ fn region_trim_split_points_for_segment(
 fn insert_region_trim_split_point(
     split_points: &mut Vec<RegionTrimSplitPoint2>,
     point: RegionTrimSplitPoint2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<()> {
     for index in 0..split_points.len() {
         let ordering = match compare_reals(
@@ -1639,7 +1639,7 @@ fn single_curve_trim_hit(extraction: &CurveTrimHitExtraction) -> Result<Point2, 
 pub(crate) fn merge_adjacent_line_segments(
     current: &Segment2,
     next: &Segment2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<LineSeg2>>> {
     let (Segment2::Line(current), Segment2::Line(next)) = (current, next) else {
         return Ok(Classification::Decided(None));
@@ -1667,7 +1667,7 @@ pub(crate) fn merge_adjacent_line_segments(
 fn validate_trim_point(
     curve_string: &CurveString2,
     point: &CurveStringTrimPoint2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     if point.segment_index >= curve_string.len() {
         return Err(CurveError::InvalidCurveRange);
@@ -1682,7 +1682,7 @@ fn validate_trim_point(
 fn compare_trim_points(
     start: &CurveStringTrimPoint2,
     end: &CurveStringTrimPoint2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Ordering> {
     match start.segment_index.cmp(&end.segment_index) {
         Ordering::Less => Some(Ordering::Less),
@@ -1694,7 +1694,7 @@ fn compare_trim_points(
 fn trim_segment_by_range(
     source_segment: &Segment2,
     source_range: &ParamRange,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<SegmentTrimMaterialization> {
     let ordering = match compare_reals(source_range.start(), source_range.end(), policy) {
         Some(ordering) => ordering,
@@ -1739,7 +1739,7 @@ fn trim_line_segment_by_range(
 fn trim_arc_segment_by_range(
     arc: &CircularArc2,
     source_range: &ParamRange,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<SegmentTrimMaterialization> {
     let start = match arc.point_at_sweep_fraction(source_range.start(), policy)? {
         Classification::Decided(point) => point,
@@ -1766,7 +1766,7 @@ fn trim_segment_by_point_range(
     source_range: &ParamRange,
     start_point: &Point2,
     end_point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<SegmentTrimMaterialization> {
     let ordering = match compare_reals(source_range.start(), source_range.end(), policy) {
         Some(ordering) => ordering,
@@ -1797,7 +1797,7 @@ fn trim_arc_segment_by_point_range(
     source_range: &ParamRange,
     start_point: &Point2,
     end_point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<SegmentTrimMaterialization> {
     match (
         source_arc.contains_point(start_point, policy),
@@ -1832,7 +1832,7 @@ fn trim_arc_segment_by_point_range(
     }
 }
 
-fn trim_range_is_full(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> {
+fn trim_range_is_full(range: &ParamRange, policy: &CurveContext) -> Option<bool> {
     let start_is_zero = compare_reals(range.start(), &Real::zero(), policy)? == Ordering::Equal;
     let end_is_one = compare_reals(range.end(), &Real::one(), policy)? == Ordering::Equal;
     Some(start_is_zero && end_is_one)
@@ -1841,7 +1841,7 @@ fn trim_range_is_full(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> 
 fn locate_trim_point(
     curve_string: &CurveString2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<LocatedTrimPoint2>> {
     let mut located = Vec::new();
     for (segment_index, segment) in curve_string.segments().iter().enumerate() {
@@ -1871,7 +1871,7 @@ fn locate_trim_point(
 
 fn canonical_located_trim_point(
     mut located: Vec<LocatedTrimPoint2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<LocatedTrimPoint2> {
     match located.len() {
         0 => None,
@@ -1901,7 +1901,7 @@ fn canonical_located_trim_point(
 fn adjacent_vertex_duplicate(
     left: &LocatedTrimPoint2,
     right: &LocatedTrimPoint2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     if left.trim_point.segment_index + 1 != right.trim_point.segment_index {
         return false;
@@ -1914,7 +1914,7 @@ fn adjacent_vertex_duplicate(
 fn segment_point_parameter(
     segment: &Segment2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
     match segment {
         Segment2::Line(line) => line_point_parameter(line, point, policy),
@@ -1925,7 +1925,7 @@ fn segment_point_parameter(
 fn segment_point_at_trim_parameter(
     segment: &Segment2,
     parameter: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Point2>> {
     match segment {
         Segment2::Line(line) => Ok(Classification::Decided(line.point_at(parameter.clone()))),
@@ -1938,7 +1938,7 @@ fn materialize_strict_native_range(
     start: &Point2,
     end: &Point2,
     source_range: &ParamRange,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Segment2>> {
     match source {
         Segment2::Line(_) => LineSeg2::try_new(start.clone(), end.clone())
@@ -1953,7 +1953,7 @@ fn materialize_strict_native_range(
 fn segment_chamfer_point_parameter(
     segment: &Segment2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
     match segment.contains_point(point, policy) {
         Classification::Decided(true) => segment_point_parameter(segment, point, policy),
@@ -1967,7 +1967,7 @@ fn segment_chamfer_point_parameter(
 fn line_point_parameter(
     line: &LineSeg2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
     let (dx, dy) = line.delta();
     let delta = point.delta_from(line.start());
@@ -1993,7 +1993,7 @@ fn segment_fillet_validation_blocker(
     tangent_point: &Point2,
     center: &Point2,
     clockwise: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<UncertaintyReason> {
     let (source_dx, source_dy) = match segment {
         Segment2::Line(line) => line.delta(),
@@ -2030,7 +2030,7 @@ fn segment_fillet_validation_blocker(
 fn arc_sweep_parameter(
     arc: &CircularArc2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
     arc.sweep_fraction_for_incident_point(point, policy)
 }
@@ -2182,7 +2182,7 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs(
     second: &CurveString2,
     first_segment_boxes: &[Option<Aabb2>],
     second_segment_boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Vec<CurveStringIntersection>> {
     let mut intersections = Vec::new();
     let x_overlap_schedule =

@@ -10,14 +10,14 @@ use hyperreal::RealSign;
 
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
-    Aabb2, BooleanOp, Classification, Contour2, ContourIntersection, CurveError, CurvePolicy,
+    Aabb2, BooleanOp, Classification, Contour2, ContourIntersection, CurveContext, CurveError,
     CurveResult, FillRule, IntersectionKind, LineArcRegion2, Point2, Segment2, UncertaintyReason,
 };
 
 impl Contour2 {
     pub(crate) fn regularize_self_intersections_native(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<LineArcRegion2>> {
         let intersections = self.intersect_self(policy)?;
         if let Some(reason) = intersections.events().iter().find_map(|event| match event {
@@ -55,7 +55,7 @@ impl Contour2 {
     /// makes pruning exact and avoids choosing an epsilon-sized interior sample.
     pub(crate) fn regularize_contracting_line_offset_native(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<LineArcRegion2>> {
         let intersections = self.intersect_self(policy)?;
         if let Some(reason) = intersections.events().iter().find_map(|event| match event {
@@ -104,7 +104,7 @@ impl Contour2 {
 
 fn contour_follows_regular_offset_branch(
     contour: &Contour2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     for segment in contour.segments() {
         let Segment2::Line(line) = segment else {
@@ -122,7 +122,7 @@ fn contour_follows_regular_offset_branch(
 fn decompose_closed_walk(
     fragments: &[crate::ContourFragment],
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
     let Some(first) = fragments.first() else {
         return Err(CurveError::EmptyCurveString);
@@ -183,7 +183,7 @@ fn decompose_closed_walk(
 fn find_vertex(
     vertices: &[Point2],
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<usize>> {
     for (index, candidate) in vertices.iter().enumerate() {
         match points_equal(candidate, point, policy) {
@@ -195,7 +195,7 @@ fn find_vertex(
     Classification::Decided(None)
 }
 
-fn points_equal(first: &Point2, second: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+fn points_equal(first: &Point2, second: &Point2, policy: &CurveContext) -> Classification<bool> {
     match is_zero(&first.distance_squared(second), policy) {
         Some(equal) => Classification::Decided(equal),
         None => Classification::Uncertain(UncertaintyReason::RealSign),
@@ -205,7 +205,7 @@ fn points_equal(first: &Point2, second: &Point2, policy: &CurvePolicy) -> Classi
 fn regularize_cycles(
     cycles: Vec<Contour2>,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<LineArcRegion2>> {
     match fill_rule {
         FillRule::EvenOdd => regularize_even_odd_cycles(cycles, policy),
@@ -215,7 +215,7 @@ fn regularize_cycles(
 
 fn regularize_even_odd_cycles(
     cycles: Vec<Contour2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<LineArcRegion2>> {
     let mut result = LineArcRegion2::empty();
     for cycle in cycles {
@@ -232,7 +232,7 @@ fn regularize_even_odd_cycles(
 
 fn regularize_nonzero_cycles(
     cycles: Vec<Contour2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<LineArcRegion2>> {
     // Each retained region is one disjoint integer-winding layer. The implicit
     // unbounded layer has winding zero and never needs materialization.
@@ -272,7 +272,7 @@ fn add_winding_cycle(
     layers: Vec<(i32, LineArcRegion2)>,
     cycle: LineArcRegion2,
     delta: i32,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<(i32, LineArcRegion2)>>> {
     let mut remaining = cycle;
     let mut output = Vec::<(i32, LineArcRegion2)>::new();
@@ -314,7 +314,7 @@ fn merge_layer(
     layers: &mut Vec<(i32, LineArcRegion2)>,
     winding: i32,
     region: LineArcRegion2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
     if winding == 0 || region.is_empty() {
         return Ok(Classification::Decided(()));
@@ -339,7 +339,7 @@ fn boolean(
     first: &LineArcRegion2,
     second: &LineArcRegion2,
     operation: BooleanOp,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<LineArcRegion2>> {
     if certified_interior_disjoint(first, second, policy)? {
         return Ok(Classification::Decided(match operation {
@@ -354,7 +354,7 @@ fn boolean(
 fn certified_interior_disjoint(
     first: &LineArcRegion2,
     second: &LineArcRegion2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<bool> {
     if first.is_empty() || second.is_empty() {
         return Ok(true);

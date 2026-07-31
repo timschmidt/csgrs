@@ -13,8 +13,8 @@ use hyperreal::Real;
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::compare_reals;
 use crate::{
-    Classification, ContourIntersection, ContourIntersectionSet, ContourOperand, CurveError,
-    CurvePolicy, CurveResult, RegionView2, SegmentKind, SegmentKindCounts,
+    Classification, ContourIntersection, ContourIntersectionSet, ContourOperand, CurveContext,
+    CurveError, CurveResult, RegionView2, SegmentKind, SegmentKindCounts,
 };
 
 /// Which region side a contour key belongs to.
@@ -118,7 +118,7 @@ impl RegionPointEndpointContactIndex {
 
     pub(crate) fn from_intersections(
         intersections: &RegionIntersectionSet,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Self {
         let mut index = Self::default();
         for pair in intersections.pairs() {
@@ -153,7 +153,7 @@ impl RegionPointEndpointContactIndex {
         key: RegionContourKey,
         segment_index: usize,
         parameter: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) {
         let mask = match compare_reals(parameter, &Real::zero(), policy) {
             Some(std::cmp::Ordering::Equal) => Self::START,
@@ -175,7 +175,7 @@ impl RegionPointEndpointContactIndex {
         segment_index: usize,
         segment_count: usize,
         parameter: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> bool {
         match compare_reals(parameter, &Real::zero(), policy) {
             Some(std::cmp::Ordering::Equal) => {
@@ -356,7 +356,7 @@ impl RegionIntersectionSet {
         &self,
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<crate::RegionFragmentSet>> {
         crate::region_fragments::split_region_views_at_intersections(first, second, self, policy)
     }
@@ -365,7 +365,7 @@ impl RegionIntersectionSet {
 pub(crate) fn intersect_region_views(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<RegionIntersectionSet> {
     intersect_region_views_impl::<false>(first, second, policy)
 }
@@ -373,7 +373,7 @@ pub(crate) fn intersect_region_views(
 pub(crate) fn intersect_region_views_point_only(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<RegionIntersectionSet> {
     intersect_region_views_impl::<true>(first, second, policy)
 }
@@ -381,7 +381,7 @@ pub(crate) fn intersect_region_views_point_only(
 fn intersect_region_views_impl<const POINT_ONLY: bool>(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<RegionIntersectionSet> {
     let mut pairs = Vec::new();
     let mut workload = RegionIntersectionWorkload::default();
@@ -452,7 +452,7 @@ struct ContourIntersectionAabbs {
 }
 
 impl ContourIntersectionAabbs {
-    fn is_disjoint(&self, other: &Self, policy: &CurvePolicy) -> bool {
+    fn is_disjoint(&self, other: &Self, policy: &CurveContext) -> bool {
         match (self.exact.as_ref(), other.exact.as_ref()) {
             (Some(first), Some(second)) => first.contour.is_disjoint(second.contour),
             _ => match (self.contour.as_ref(), other.contour.as_ref()) {
@@ -465,7 +465,7 @@ impl ContourIntersectionAabbs {
     fn segments<'a>(
         &'a self,
         contour: &crate::Contour2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> &'a [Option<Aabb2>] {
         self.segments.get_or_init(|| {
             contour
@@ -479,7 +479,7 @@ impl ContourIntersectionAabbs {
 
 fn contour_intersection_aabbs(
     contours: &[&crate::Contour2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Vec<ContourIntersectionAabbs> {
     contours
         .iter()
@@ -558,7 +558,7 @@ fn collect_role_pairs<const POINT_ONLY: bool>(
     second_contours: &[&crate::Contour2],
     second_boxes: &[ContourIntersectionAabbs],
     second_role: RegionContourRole,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     for (first_index, first_contour) in first_contours.iter().enumerate() {
         for (second_index, second_contour) in second_contours.iter().enumerate() {
@@ -657,7 +657,7 @@ mod tests {
         assert!(
             RegionPointEndpointContactIndex::from_intersections(
                 &intersections,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .vertex_masks
             .is_empty()
@@ -667,7 +667,7 @@ mod tests {
     #[test]
     fn endpoint_contact_index_checks_both_incident_segments() {
         let key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let mut index = RegionPointEndpointContactIndex::default();
         index
             .vertex_masks

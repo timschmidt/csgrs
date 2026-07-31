@@ -34,7 +34,7 @@ use num::{BigInt, BigUint, Integer, One, Signed, ToPrimitive};
 
 use crate::classify::{compare_reals, in_closed_unit_interval};
 use crate::{
-    Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
+    Classification, CubicBezier2, CurveContext, CurveError, CurveResult, Point2, QuadraticBezier2,
     RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 
@@ -49,7 +49,7 @@ impl RationalQuadraticAreaIntegralCache {
         &mut self,
         denominator: &[Real; 3],
         delta: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<Real>> {
         if let Some((_, integral)) = self
             .inverse_quadratic_integrals
@@ -73,7 +73,7 @@ impl RationalQuadraticAreaIntegralCache {
         denominator: &[Real; 3],
         delta: &Real,
         power: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<Real>> {
         if power == 0 {
             return Err(CurveError::InvalidBezierPolynomial);
@@ -365,7 +365,7 @@ impl QuadraticBezier2 {
     pub fn prefix_signed_area_contribution(
         &self,
         t: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
         prefix_signed_area_for_controls(
             self.control_points().into_iter().cloned().collect(),
@@ -378,7 +378,7 @@ impl QuadraticBezier2 {
     pub fn prefix_area_moments_contribution(
         &self,
         t: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAreaMoments2>> {
         prefix_area_moments_for_controls(
             self.control_points().into_iter().cloned().collect(),
@@ -403,7 +403,7 @@ impl CubicBezier2 {
     pub fn prefix_signed_area_contribution(
         &self,
         t: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
         prefix_signed_area_for_controls(
             self.control_points().into_iter().cloned().collect(),
@@ -416,7 +416,7 @@ impl CubicBezier2 {
     pub fn prefix_area_moments_contribution(
         &self,
         t: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAreaMoments2>> {
         prefix_area_moments_for_controls(
             self.control_points().into_iter().cloned().collect(),
@@ -458,7 +458,7 @@ impl RationalQuadraticBezier2 {
         if weights.iter().all(|weight| *weight == weights[0]) {
             return area_moments_for_controls(&self.control_points()).map(Some);
         }
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         if self.common_nonzero_weight_sign(&policy).is_none() {
             return Ok(None);
         }
@@ -573,7 +573,7 @@ impl RationalBezier2 {
 fn rational_quadratic_specialization(
     curve: &RationalBezier2,
 ) -> CurveResult<Option<RationalQuadraticBezier2>> {
-    match curve.retained_quadratic_representative(&CurvePolicy::STRICT)? {
+    match curve.retained_quadratic_representative(&CurveContext::STRICT)? {
         Classification::Decided(representative) => Ok(representative),
         Classification::Uncertain(_) => Ok(None),
     }
@@ -582,7 +582,7 @@ fn rational_quadratic_specialization(
 fn rational_bezier_quadratic_weight_signed_area(
     curve: &RationalBezier2,
 ) -> CurveResult<Option<Real>> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let Some((nx, ny, w)) = rational_bezier_supported_weight_power_coordinates(curve, &policy)?
     else {
         return Ok(None);
@@ -605,7 +605,7 @@ fn rational_bezier_quadratic_weight_signed_area(
 fn rational_bezier_quadratic_weight_area_moments(
     curve: &RationalBezier2,
 ) -> CurveResult<Option<BezierAreaMoments2>> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let Some((nx, ny, w)) = rational_bezier_supported_weight_power_coordinates(curve, &policy)?
     else {
         return Ok(None);
@@ -663,7 +663,7 @@ fn rational_bezier_quadratic_weight_area_moments(
 
 fn rational_bezier_supported_weight_power_coordinates(
     curve: &RationalBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<(Vec<Real>, Vec<Real>, Vec<Real>)>> {
     let Some(first_sign) = compare_reals(&curve.weights()[0], &Real::zero(), policy) else {
         return Ok(None);
@@ -714,7 +714,7 @@ fn rational_bezier_supported_weight_power_coordinates(
 fn prefix_signed_area_for_controls(
     controls: Vec<Point2>,
     t: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
     match in_closed_unit_interval(&t, policy) {
         Some(true) => {}
@@ -729,7 +729,7 @@ fn prefix_signed_area_for_controls(
 fn prefix_area_moments_for_controls(
     controls: Vec<Point2>,
     t: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAreaMoments2>> {
     match in_closed_unit_interval(&t, policy) {
         Some(true) => {}
@@ -820,7 +820,7 @@ fn rational_quadratic_signed_area_contribution(
     curve: &RationalQuadraticBezier2,
     cache: Option<&mut RationalQuadraticAreaIntegralCache>,
 ) -> CurveResult<Option<Real>> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     if curve.common_nonzero_weight_sign(&policy).is_none() {
         return Ok(None);
     }
@@ -860,7 +860,7 @@ fn quadratic_bernstein_power_coefficients(values: [Real; 3]) -> [Real; 3] {
 fn integrate_quadratic_over_quadratic_square(
     numerator: &[Real],
     denominator: &[Real; 3],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: Option<&mut RationalQuadraticAreaIntegralCache>,
 ) -> CurveResult<Option<Real>> {
     let m0 = coefficient(numerator, 0);
@@ -921,7 +921,7 @@ fn integrate_quadratic_over_linear_square(
     m2: &Real,
     b: &Real,
     c: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Real>> {
     if compare_reals(b, &Real::zero(), policy) == Some(std::cmp::Ordering::Equal) {
         let denominator = c * c;
@@ -1025,7 +1025,7 @@ fn integrate_polynomial_over_low_degree_weight_power(
     numerator: &[Real],
     denominator: &[Real],
     power: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     match denominator.len() {
@@ -1066,7 +1066,7 @@ fn integrate_polynomial_over_low_degree_weight_power(
 fn integrate_polynomial_over_quadratic_square(
     numerator: &[Real],
     denominator: &[Real; 3],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let c = &denominator[0];
@@ -1099,7 +1099,7 @@ fn integrate_polynomial_over_square_free_quadratic_square(
     numerator: &[Real],
     denominator: &[Real; 3],
     delta: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let q = denominator.to_vec();
@@ -1169,7 +1169,7 @@ fn integrate_polynomial_over_square_free_quadratic_square(
 fn integrate_polynomial_over_quadratic_fourth(
     numerator: &[Real],
     denominator: &[Real; 3],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let c = &denominator[0];
@@ -1202,7 +1202,7 @@ fn integrate_polynomial_over_square_free_quadratic_fourth(
     numerator: &[Real],
     denominator: &[Real; 3],
     delta: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let q = denominator.to_vec();
@@ -1300,7 +1300,7 @@ fn integrate_polynomial_over_cubic_power(
     numerator: &[Real],
     denominator: &[Real],
     power: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     if denominator.len() != 4 || !matches!(power, 2 | 4) {
@@ -1424,7 +1424,7 @@ fn integrate_polynomial_over_cubic_power(
 fn integrate_quadratic_over_cubic(
     numerator: &[Real],
     denominator: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let c = &denominator[1];
@@ -1498,7 +1498,7 @@ fn integrate_polynomial_over_repeated_cubic_power(
     numerator: &[Real],
     denominator: &[Real],
     power: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let Some(factors) = repeated_cubic_linear_factors(denominator, policy)? else {
@@ -1552,7 +1552,7 @@ fn integrate_polynomial_over_factored_power(
     denominator: &[Real],
     power: usize,
     factors: &[ExactPolynomialFactor],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let denominator_degree = denominator
@@ -1684,7 +1684,7 @@ fn integrate_polynomial_over_factored_power(
     Ok(Some(integral))
 }
 
-fn polynomial_is_certified_zero(polynomial: &[Real], policy: &CurvePolicy) -> bool {
+fn polynomial_is_certified_zero(polynomial: &[Real], policy: &CurveContext) -> bool {
     polynomial.iter().all(|coefficient| {
         compare_reals(coefficient, &Real::zero(), policy) == Some(std::cmp::Ordering::Equal)
     })
@@ -1692,7 +1692,7 @@ fn polynomial_is_certified_zero(polynomial: &[Real], policy: &CurvePolicy) -> bo
 
 fn repeated_cubic_linear_factors(
     denominator: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Vec<(Real, usize)>>> {
     let (p, depressed_q, discriminant) = cubic_cardano_data(denominator)?;
     if compare_reals(&discriminant, &Real::zero(), policy) != Some(std::cmp::Ordering::Equal) {
@@ -1722,7 +1722,7 @@ fn repeated_cubic_linear_factors(
 fn integrate_inverse_linear_factor(
     root: &Real,
     power: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Real>> {
     let lower = Real::zero() - root;
     let upper = Real::one() - root;
@@ -1751,7 +1751,7 @@ fn integrate_linear_over_irreducible_quadratic_power(
     linear: &Real,
     denominator: &[Real; 3],
     power: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let delta =
@@ -1785,7 +1785,7 @@ fn integrate_linear_over_irreducible_quadratic_power(
 
 fn exact_rational_polynomial_factors(
     polynomial: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Vec<ExactPolynomialFactor>>> {
     if polynomial.len() < 2 {
         return Err(CurveError::InvalidBezierPolynomial);
@@ -1842,7 +1842,7 @@ fn exact_rational_polynomial_factors(
 
 fn exact_repeated_irreducible_quadratic_factor(
     polynomial: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<ExactPolynomialFactor>> {
     let degree = polynomial
         .len()
@@ -1889,7 +1889,7 @@ fn exact_repeated_irreducible_quadratic_factor(
 
 fn exact_irreducible_quadratic_pair_factors(
     polynomial: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Vec<ExactPolynomialFactor>>> {
     if polynomial.len() != 5 {
         return Ok(None);
@@ -1944,7 +1944,7 @@ fn irreducible_quadratic_pair_from_resolvent_root(
     leading: &Real,
     normalized: &[Real; 4],
     sum: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Vec<ExactPolynomialFactor>>> {
     let [a, b, c, d] = normalized;
     let difference_squared = a * a - Real::from(4_i8) * b + Real::from(4_i8) * sum;
@@ -2093,7 +2093,7 @@ fn integrate_quadratic_over_linear_quadratic_factor(
     numerator: &[Real],
     denominator: &[Real],
     root: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let quadratic = [
@@ -2134,7 +2134,7 @@ fn integrate_polynomial_over_linear_power(
     b: &Real,
     c: &Real,
     power: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Real>> {
     match compare_reals(b, &Real::zero(), policy) {
         Some(std::cmp::Ordering::Equal) => {
@@ -2179,7 +2179,7 @@ fn integrate_polynomial_over_repeated_quadratic_power(
     a: &Real,
     b: &Real,
     power: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Real>> {
     let r = match (Real::zero() - b) / &(Real::from(2_i8) * a) {
         Ok(value) => value,
@@ -2256,7 +2256,7 @@ fn integrate_laurent_polynomial(
 
 fn solve_exact_linear_system(
     mut augmented: Vec<Vec<Real>>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Vec<Real>>> {
     let dimension = augmented.len();
     for column in 0..dimension {
@@ -2318,7 +2318,7 @@ fn polynomial_difference(first: &[Real], second: &[Real]) -> Vec<Real> {
 fn polynomial_division(
     numerator: &[Real],
     divisor: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<(Vec<Real>, Vec<Real>)>> {
     let Some(leading) = divisor.last() else {
         return Err(CurveError::InvalidBezierPolynomial);
@@ -2382,7 +2382,7 @@ fn integrate_inverse_quadratic(
     a: &Real,
     b: &Real,
     delta: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<Real>> {
     match compare_reals(delta, &Real::zero(), policy) {
         Some(std::cmp::Ordering::Greater) => {
@@ -2612,13 +2612,13 @@ mod tests {
             .unwrap()
             .expect("the rational signed area has an exact symbolic reduction");
         assert_eq!(
-            compare_reals(&signed_area, whole.signed_area(), &CurvePolicy::STRICT),
+            compare_reals(&signed_area, whole.signed_area(), &CurveContext::STRICT),
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
             .split_at_exact(
                 &((Real::one() / Real::from(2_i8)).unwrap()),
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
         else {
@@ -2643,7 +2643,7 @@ mod tests {
             // This assertion explicitly permits Hyperlimit's terminal
             // approximate-512 equality; topology above remains strict.
             assert_eq!(
-                compare_reals(actual, expected, &CurvePolicy::APPROXIMATE_512),
+                compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
                 Some(std::cmp::Ordering::Equal)
             );
         }
@@ -2744,7 +2744,7 @@ mod tests {
             .unwrap()
             .expect("linear weight denominator first moments are symbolically integrable");
         assert_eq!(
-            compare_reals(&signed_area, moments.signed_area(), &CurvePolicy::STRICT),
+            compare_reals(&signed_area, moments.signed_area(), &CurveContext::STRICT),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -2789,13 +2789,13 @@ mod tests {
             .unwrap()
             .expect("square-free cubic weight signed area has an exact Cardano reduction");
         assert_eq!(
-            compare_reals(&signed_area, whole.signed_area(), &CurvePolicy::STRICT),
+            compare_reals(&signed_area, whole.signed_area(), &CurveContext::STRICT),
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
             .split_at_exact(
                 &((Real::one() / Real::from(2_i8)).unwrap()),
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
         else {
@@ -2817,7 +2817,7 @@ mod tests {
             (parts.y_moment(), whole.y_moment()),
         ] {
             assert_eq!(
-                compare_reals(actual, expected, &CurvePolicy::APPROXIMATE_512),
+                compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
                 Some(std::cmp::Ordering::Equal)
             );
         }
@@ -2845,13 +2845,13 @@ mod tests {
             .unwrap()
             .expect("three-root cubic weight signed area has an exact reduction");
         assert_eq!(
-            compare_reals(&signed_area, whole.signed_area(), &CurvePolicy::STRICT),
+            compare_reals(&signed_area, whole.signed_area(), &CurveContext::STRICT),
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
             .split_at_exact(
                 &((Real::one() / Real::from(2_i8)).unwrap()),
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
         else {
@@ -2873,7 +2873,7 @@ mod tests {
             (parts.y_moment(), whole.y_moment()),
         ] {
             assert_eq!(
-                compare_reals(actual, expected, &CurvePolicy::APPROXIMATE_512),
+                compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
                 Some(std::cmp::Ordering::Equal)
             );
         }
@@ -3054,13 +3054,13 @@ mod tests {
             .unwrap()
             .expect("quadratic weight polynomial signed area is exact");
         assert_eq!(
-            compare_reals(&signed_area, whole.signed_area(), &CurvePolicy::STRICT),
+            compare_reals(&signed_area, whole.signed_area(), &CurveContext::STRICT),
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
             .split_at_exact(
                 &((Real::one() / Real::from(2_i8)).unwrap()),
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
         else {
@@ -3082,7 +3082,7 @@ mod tests {
             (parts.y_moment(), whole.y_moment()),
         ] {
             assert_eq!(
-                compare_reals(actual, expected, &CurvePolicy::APPROXIMATE_512),
+                compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
                 Some(std::cmp::Ordering::Equal)
             );
         }
@@ -3158,7 +3158,7 @@ mod tests {
             compare_reals(
                 moments.signed_area(),
                 &((Real::pi() / Real::from(4_i8)).unwrap()),
-                &CurvePolicy::APPROXIMATE_512,
+                &CurveContext::APPROXIMATE_512,
             ),
             Some(std::cmp::Ordering::Equal)
         );
@@ -3166,7 +3166,7 @@ mod tests {
             compare_reals(
                 moments.x_moment(),
                 &((Real::one() / Real::from(3_i8)).unwrap()),
-                &CurvePolicy::APPROXIMATE_512,
+                &CurveContext::APPROXIMATE_512,
             ),
             Some(std::cmp::Ordering::Equal)
         );
@@ -3174,7 +3174,7 @@ mod tests {
             compare_reals(
                 moments.y_moment(),
                 &((Real::one() / Real::from(3_i8)).unwrap()),
-                &CurvePolicy::APPROXIMATE_512,
+                &CurveContext::APPROXIMATE_512,
             ),
             Some(std::cmp::Ordering::Equal)
         );
@@ -3219,7 +3219,7 @@ mod tests {
             (reconstructed_moments.y_moment(), moments.y_moment()),
         ] {
             assert_eq!(
-                compare_reals(actual, expected, &CurvePolicy::APPROXIMATE_512),
+                compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
                 Some(std::cmp::Ordering::Equal)
             );
         }
@@ -3277,7 +3277,7 @@ mod tests {
             forward.y_moment() + backward.y_moment(),
         ] {
             assert_eq!(
-                compare_reals(&sum, &Real::zero(), &CurvePolicy::STRICT),
+                compare_reals(&sum, &Real::zero(), &CurveContext::STRICT),
                 Some(std::cmp::Ordering::Equal)
             );
         }
@@ -3301,7 +3301,7 @@ mod tests {
             )
             .unwrap();
             let (left, right) = curve
-                .split_at_exact(half.clone(), &CurvePolicy::STRICT)
+                .split_at_exact(half.clone(), &CurveContext::STRICT)
                 .unwrap();
             let whole = curve
                 .area_moments_contribution()
@@ -3323,7 +3323,7 @@ mod tests {
                 (parts.y_moment(), whole.y_moment()),
             ] {
                 assert_eq!(
-                    compare_reals(actual, expected, &CurvePolicy::APPROXIMATE_512),
+                    compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
                     Some(std::cmp::Ordering::Equal)
                 );
             }

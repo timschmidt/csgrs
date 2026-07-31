@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     ArcArcIntersection, BulgeVertex2, CircleCircleRelation, CircularArc2, Classification, Contour2,
-    CurvePolicy, CurveResult, CurveString2, LineArcRegion2, LineCircleRelation, LineSeg2, Point2,
+    CurveContext, CurveResult, CurveString2, LineArcRegion2, LineCircleRelation, LineSeg2, Point2,
     Real, Segment2,
 };
 
@@ -43,7 +43,7 @@ fn bench_arc_arc_case(
     second: &CircularArc2,
     iterations: u32,
 ) -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_weight = 0_usize;
 
@@ -71,7 +71,7 @@ fn bench_arc_arc_case(
 fn bench_line_circle_relation(iterations: u32) -> CurveResult<()> {
     let line = LineSeg2::try_new(p(-100, 0), p(100, 0))?;
     let circle = arc(p(25, 0), p(-25, 0), p(0, 0), false);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_weight = 0_usize;
 
@@ -98,7 +98,7 @@ fn bench_line_circle_relation(iterations: u32) -> CurveResult<()> {
 fn bench_circle_circle_relation(iterations: u32) -> CurveResult<()> {
     let first = arc(p(4, 3), p(4, -3), p(0, 0), true);
     let second = arc(p(4, -3), p(4, 3), p(8, 0), true);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_weight = 0_usize;
 
@@ -134,7 +134,7 @@ fn bench_sparse_curve_self_contacts(segment_count: i32, iterations: u32) -> Curv
     }
 
     let curve = CurveString2::try_new(segments)?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut decided_false_count = 0_usize;
 
@@ -172,7 +172,7 @@ fn bench_sparse_curve_string_intersections(segment_count: i32, iterations: u32) 
 
     let curve = CurveString2::try_new(segments)?;
     let cutter = CurveString2::try_new(vec![line_segment(p(241, -2), p(241, 3))])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_events = 0_usize;
 
@@ -200,7 +200,7 @@ fn bench_sparse_region_events(contour_count: i32, iterations: u32) -> CurveResul
     }
     let region = LineArcRegion2::from_material_contours(contours);
     let cutter = LineArcRegion2::from_material_contours(vec![rectangle(12, -1, 18, 5)]);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_pairs = 0_usize;
 

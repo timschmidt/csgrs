@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb};
 use crate::classify::compare_reals;
 use crate::{
-    Classification, Contour2, ContourPointLocation, CurvePolicy, CurveResult, Point2, Real,
+    Classification, Contour2, ContourPointLocation, CurveContext, CurveResult, Point2, Real,
     UncertaintyReason,
 };
 
@@ -95,7 +95,7 @@ impl LineArcRegion2 {
     pub fn classify_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<RegionPointLocation> {
         self.as_view().classify_point(point, policy)
     }
@@ -104,18 +104,18 @@ impl LineArcRegion2 {
     pub fn classify_points(
         &self,
         points: &[Point2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Vec<Classification<RegionPointLocation>> {
         self.as_view().classify_points(points, policy)
     }
 
     /// Returns conservative structural facts for this region immediately.
-    pub fn structural_facts(&self, policy: &CurvePolicy) -> crate::RegionFacts {
+    pub fn structural_facts(&self, policy: &CurveContext) -> crate::RegionFacts {
         self.as_view().structural_facts(policy)
     }
 
     /// Returns signed containment depth for non-boundary points.
-    pub fn signed_depth(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
+    pub fn signed_depth(&self, point: &Point2, policy: &CurveContext) -> Classification<i32> {
         self.as_view().signed_depth(point, policy)
     }
 
@@ -130,7 +130,7 @@ impl LineArcRegion2 {
     ///
     /// Returns `Decided(None)` when a contour contains a segment whose exact
     /// area contribution is not implemented by the current object model.
-    pub fn filled_area(&self, policy: &CurvePolicy) -> CurveResult<Classification<Option<Real>>> {
+    pub fn filled_area(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Real>>> {
         self.as_view().filled_area(policy)
     }
 
@@ -141,7 +141,7 @@ impl LineArcRegion2 {
     /// classification and keeps finite export outside the topology decision.
     pub fn contour_profiles(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<RegionContourProfile<'_>>> {
         contour_profiles_from_iter(
             self.material_contours.iter(),
@@ -154,7 +154,7 @@ impl LineArcRegion2 {
     pub fn intersect_region(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> crate::CurveResult<crate::RegionIntersectionSet> {
         self.as_view().intersect_region(&other.as_view(), policy)
     }
@@ -204,7 +204,7 @@ impl<'a> RegionView2<'a> {
     pub fn classify_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<RegionPointLocation> {
         let depth = match self.signed_depth(point, policy) {
             Classification::Decided(depth) => depth,
@@ -228,7 +228,7 @@ impl<'a> RegionView2<'a> {
     pub fn classify_points(
         &self,
         points: &[Point2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Vec<Classification<RegionPointLocation>> {
         let index = crate::prepared::RegionQuery2::from_region_view(self, policy);
         points
@@ -238,7 +238,7 @@ impl<'a> RegionView2<'a> {
     }
 
     /// Returns conservative structural facts for this borrowed region immediately.
-    pub fn structural_facts(&self, policy: &CurvePolicy) -> crate::RegionFacts {
+    pub fn structural_facts(&self, policy: &CurveContext) -> crate::RegionFacts {
         crate::prepared::region_view_facts(self, policy)
     }
 
@@ -250,7 +250,7 @@ impl<'a> RegionView2<'a> {
     /// skip exact contour classification; this keeps the standard
     /// boundary-first winding structure from boundary-first winding classification, while avoiding work for
     /// sparse material/hole bins.
-    pub fn signed_depth(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
+    pub fn signed_depth(&self, point: &Point2, policy: &CurveContext) -> Classification<i32> {
         if let Ok(Classification::Decided(region_bbox)) = Aabb2::from_region_view(self, policy)
             && aabb_decided_misses_point(&region_bbox, point, policy)
         {
@@ -297,7 +297,7 @@ impl<'a> RegionView2<'a> {
     /// Material contours add their certified absolute area and hole contours
     /// subtract theirs. This mirrors [`LineArcRegion2::filled_area`] for borrowed
     /// region data without cloning contour bins.
-    pub fn filled_area(&self, policy: &CurvePolicy) -> CurveResult<Classification<Option<Real>>> {
+    pub fn filled_area(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Real>>> {
         let mut material_area = Real::zero();
         let mut hole_area = Real::zero();
 
@@ -329,7 +329,7 @@ impl<'a> RegionView2<'a> {
     /// is returned to the caller rather than assigning a hole arbitrarily.
     pub fn contour_profiles(
         &'a self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<RegionContourProfile<'a>>> {
         contour_profiles_from_iter(
             self.material_contours.iter().copied(),
@@ -342,13 +342,13 @@ impl<'a> RegionView2<'a> {
     pub fn intersect_region(
         &self,
         other: &RegionView2<'_>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> crate::CurveResult<crate::RegionIntersectionSet> {
         crate::region_events::intersect_region_views(self, other, policy)
     }
 }
 
-fn contour_aabb_misses_point(contour: &Contour2, point: &Point2, policy: &CurvePolicy) -> bool {
+fn contour_aabb_misses_point(contour: &Contour2, point: &Point2, policy: &CurveContext) -> bool {
     decided_contour_aabb(contour, policy)
         .as_ref()
         .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
@@ -357,7 +357,7 @@ fn contour_aabb_misses_point(contour: &Contour2, point: &Point2, policy: &CurveP
 fn contour_profiles_from_iter<'a>(
     material_contours: impl IntoIterator<Item = &'a Contour2>,
     hole_contours: impl IntoIterator<Item = &'a Contour2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<RegionContourProfile<'a>>> {
     let mut profiles = material_contours
         .into_iter()
@@ -405,7 +405,7 @@ fn contour_profiles_from_iter<'a>(
 
 fn contour_role_area(
     contour: &Contour2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Real>>> {
     let Some(area) = contour.signed_area()? else {
         return Ok(Classification::Decided(None));
@@ -417,7 +417,7 @@ fn contour_role_area(
     }
 }
 
-fn certified_absolute_area(area: Real, policy: &CurvePolicy) -> CurveResult<Classification<Real>> {
+fn certified_absolute_area(area: Real, policy: &CurveContext) -> CurveResult<Classification<Real>> {
     match compare_reals(&area, &Real::zero(), policy) {
         Some(Ordering::Less) => Ok(Classification::Decided(Real::zero() - &area)),
         Some(Ordering::Equal | Ordering::Greater) => Ok(Classification::Decided(area)),

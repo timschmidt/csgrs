@@ -5,7 +5,7 @@ use hypercurve::{
 };
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
-    CurveGeometry2, CurvePath2, CurvePathOverlapAction2, CurvePolicy, LineSeg2, Point2,
+    CurveContext, CurveGeometry2, CurvePath2, CurvePathOverlapAction2, LineSeg2, Point2,
     RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
     Real,
 };
@@ -56,7 +56,7 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
     ));
 
     let topology = first
-        .intersection_topology(&second, &CurvePolicy::STRICT)
+        .intersection_topology(&second, &CurveContext::STRICT)
         .unwrap();
     let evidence = topology.result();
     assert_eq!(evidence.span_pair_count(), 1);
@@ -100,7 +100,7 @@ fn top_level_intersection_retains_implicit_conic_transversality() {
     );
 
     let result = conic
-        .intersect_curve(&cubic_line, &CurvePolicy::STRICT)
+        .intersect_curve(&cubic_line, &CurveContext::STRICT)
         .unwrap();
     assert_eq!(result.contacts().len(), 1);
     assert!(result.contacts()[0].is_certified_transverse());
@@ -118,7 +118,7 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
     let line = Curve2::from(LineSeg2::try_new(p(0, 1), p(2, 1)).unwrap());
 
     let topology = spline
-        .intersection_topology(&line, &CurvePolicy::STRICT)
+        .intersection_topology(&line, &CurveContext::STRICT)
         .unwrap();
     let evidence = topology.result();
     assert_eq!(evidence.span_pair_count(), 2);
@@ -137,7 +137,7 @@ fn top_level_shared_component_retains_certified_overlap() {
     let first = Curve2::from(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap());
     let second = first.clone();
     let topology = first
-        .intersection_topology(&second, &CurvePolicy::STRICT)
+        .intersection_topology(&second, &CurveContext::STRICT)
         .unwrap();
     let evidence = topology.result();
 
@@ -153,7 +153,7 @@ fn top_level_shared_component_retains_certified_overlap() {
     let graph = topology.arrangement_graph().unwrap();
     assert_eq!(graph.len(), 2);
     let traversal =
-        decided(graph.traverse_retained_deduplicating_materialized_overlaps(&CurvePolicy::STRICT));
+        decided(graph.traverse_retained_deduplicating_materialized_overlaps(&CurveContext::STRICT));
     assert_eq!(traversal.shadowed_fragment_indices(), &[1]);
     assert_eq!(traversal.traversal().len(), 1);
 }
@@ -172,7 +172,7 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
     let second = Curve2::from(independent);
 
     let evidence = first
-        .intersect_curve(&second, &CurvePolicy::STRICT)
+        .intersect_curve(&second, &CurveContext::STRICT)
         .unwrap();
 
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
@@ -189,7 +189,7 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
 
 #[test]
 fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let source = RationalBezier2::try_new(
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
         vec![r(1), r(2), r(3), r(4)],
@@ -245,7 +245,7 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
     ));
 
     let topology = first
-        .intersection_topology(&second, &CurvePolicy::STRICT)
+        .intersection_topology(&second, &CurveContext::STRICT)
         .unwrap();
     let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
@@ -266,7 +266,7 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
     let first_path = CurvePath2::try_new(vec![first]).unwrap();
     let second_path = CurvePath2::try_new(vec![second]).unwrap();
     let path_topology = first_path
-        .intersection_topology(&second_path, &CurvePolicy::STRICT)
+        .intersection_topology(&second_path, &CurveContext::STRICT)
         .unwrap();
     assert_eq!(
         path_topology.first()[0].materializations()[0]
@@ -314,7 +314,7 @@ fn path_boolean_consumes_algebraic_line_image_overlap_boundary() {
             &second,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
     let evidence = selections.result();
@@ -378,7 +378,7 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
             &second,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
     let evidence = selections.result();
@@ -411,7 +411,7 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
     let second = source.subcurve(q(1, 4), Real::one()).unwrap();
 
     let topology = first
-        .intersection_topology(&second, &CurvePolicy::STRICT)
+        .intersection_topology(&second, &CurveContext::STRICT)
         .unwrap();
     let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
@@ -425,7 +425,7 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
 
     let reversed = second.reversed().unwrap();
     let reversed_evidence = first
-        .intersect_curve(&reversed, &CurvePolicy::STRICT)
+        .intersect_curve(&reversed, &CurveContext::STRICT)
         .unwrap();
     assert!(reversed_evidence.is_complete());
     assert_eq!(reversed_evidence.overlaps().len(), 1);
@@ -444,7 +444,7 @@ fn top_level_disjoint_curves_produce_a_complete_empty_evidence() {
     let first = Curve2::from(LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap());
     let second = Curve2::from(LineSeg2::try_new(p(0, 2), p(1, 2)).unwrap());
     let evidence = first
-        .intersect_curve(&second, &CurvePolicy::STRICT)
+        .intersect_curve(&second, &CurveContext::STRICT)
         .unwrap();
 
     assert!(evidence.is_complete());
@@ -460,7 +460,7 @@ fn top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters(
     let second =
         Curve2::from(CircularArc2::try_from_center(p(3, 0), p(13, 0), p(8, 0), true).unwrap());
     let topology = first
-        .intersection_topology(&second, &CurvePolicy::STRICT)
+        .intersection_topology(&second, &CurveContext::STRICT)
         .unwrap();
     let evidence = topology.result();
     assert_eq!(evidence.span_pair_count(), 4);
@@ -482,7 +482,7 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
     let line = Curve2::from(LineSeg2::try_new(p(4, -4), p(4, 4)).unwrap());
     let arc =
         Curve2::from(CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap());
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
 
     let topology = line.intersection_topology(&arc, &policy).unwrap();
     let evidence = topology.result();
@@ -524,7 +524,7 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
         Curve2::from(CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap());
     let second =
         Curve2::from(CircularArc2::try_from_center(p(4, 3), p(0, 5), p(0, 0), false).unwrap());
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let topology = first.intersection_topology(&second, &policy).unwrap();
     let evidence = topology.result();
 
@@ -589,7 +589,7 @@ fn path_boolean_selection_resolves_partial_same_circle_arc_boundaries() {
             &second,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
     let evidence = selections.result();
@@ -654,7 +654,7 @@ fn closed_under_curve(curve: Curve2, lower_y: i32) -> CurvePath2 {
 
 #[test]
 fn path_boolean_consumes_partial_nonlinear_shared_boundary() {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let source = Curve2::new(CurveGeometry2::CubicBezier(CubicBezier2::new(
         p(0, 0),
         p(1, 3),
@@ -711,7 +711,7 @@ fn path_pair_immediate_topology_splits_each_authored_curve_once() {
     let first = rectangle(0, 0, 2, 2);
     let second = rectangle(1, -1, 3, 1);
     let topology = first
-        .intersection_topology(&second, &CurvePolicy::STRICT)
+        .intersection_topology(&second, &CurveContext::STRICT)
         .unwrap();
     let evidence = topology.result();
     assert_eq!(evidence.authored_curve_pair_count(), 16);
@@ -755,7 +755,7 @@ fn path_overlap_ownership_uses_exact_orientation_and_boolean_side_logic() {
         LineSeg2::try_new(p(2, 0), p(0, 0)).unwrap(),
     )])
     .unwrap();
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let same_evidence = first.intersect_path(&same, &policy).unwrap();
     let reversed_evidence = first.intersect_path(&reversed, &policy).unwrap();
 
@@ -807,7 +807,7 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
     let first = Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap());
     let second = Curve2::from(LineSeg2::try_new(p(2, 0), p(6, 0)).unwrap());
     let topology = first
-        .intersection_topology(&second, &CurvePolicy::STRICT)
+        .intersection_topology(&second, &CurveContext::STRICT)
         .unwrap();
     let evidence = topology.result();
 
@@ -829,7 +829,7 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
 
     let reversed = Curve2::from(LineSeg2::try_new(p(6, 0), p(2, 0)).unwrap());
     let reversed_evidence = first
-        .intersect_curve(&reversed, &CurvePolicy::STRICT)
+        .intersect_curve(&reversed, &CurveContext::STRICT)
         .unwrap();
     let reversed_overlap = &reversed_evidence.overlaps()[0];
     assert_eq!(reversed_overlap.second_range().start(), &r(1));
@@ -849,7 +849,7 @@ fn path_boolean_selection_resolves_partial_reversed_shared_line_boundaries() {
             &second,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
     let evidence = selections.result();
@@ -885,7 +885,7 @@ fn path_boolean_selection_resolves_partial_reversed_shared_line_boundaries() {
 fn path_boolean_selection_materializes_exact_regularized_operation_matrix() {
     let first = rectangle(0, 0, 2, 2);
     let second = rectangle(1, -1, 3, 1);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let selections = first
         .boolean_selections(
             &second,
@@ -937,7 +937,7 @@ fn path_boolean_selection_consumes_complete_shared_boundaries() {
             &second,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
     let cases = [
@@ -987,7 +987,7 @@ fn path_boolean_selection_preserves_disjoint_exact_conic_boundaries() {
             &second,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
 
@@ -1021,7 +1021,7 @@ fn path_boolean_selection_traverses_overlapping_circles_with_exact_radical_split
             &second,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
     let evidence = selections.result();
@@ -1069,7 +1069,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
             &second,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
     let evidence = selections.result();
@@ -1106,21 +1106,21 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
         assert!(region.has_algebraic_fragments());
         assert_eq!(
             region
-                .classify_point(&p(0, 1), &CurvePolicy::STRICT)
+                .classify_point(&p(0, 1), &CurveContext::STRICT)
                 .unwrap(),
             Classification::Decided(RegionPointLocation::Inside),
             "{operation:?} retained algebraic interior"
         );
         assert_eq!(
             region
-                .classify_point(&p(0, 3), &CurvePolicy::STRICT)
+                .classify_point(&p(0, 3), &CurveContext::STRICT)
                 .unwrap(),
             Classification::Decided(RegionPointLocation::Outside),
             "{operation:?} retained algebraic overlap interior"
         );
         assert_eq!(
             region
-                .classify_point(&p(0, 0), &CurvePolicy::STRICT)
+                .classify_point(&p(0, 0), &CurveContext::STRICT)
                 .unwrap(),
             Classification::Decided(RegionPointLocation::Boundary),
             "{operation:?} retained algebraic boundary"
@@ -1133,7 +1133,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
                 &r(3),
                 &r(7),
                 &r(-1),
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap_or_else(|error| panic!("{operation:?} affine transform: {error:?}"));
         assert!(transformed.has_algebraic_fragments());
@@ -1144,7 +1144,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
         ] {
             assert_eq!(
                 transformed
-                    .classify_point(&point, &CurvePolicy::STRICT)
+                    .classify_point(&point, &CurveContext::STRICT)
                     .unwrap(),
                 Classification::Decided(expected),
                 "{operation:?} transformed algebraic classification"
@@ -1224,7 +1224,7 @@ fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
 #[cfg(feature = "predicates")]
 fn equivalent_top_level_families_complete_independent_region_booleans() {
     let cutter = rectangle(-3, 2, 3, 5);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     for (family, curve) in equivalent_parabola_curves() {
         let source = CurvePath2::try_new(vec![
             curve,

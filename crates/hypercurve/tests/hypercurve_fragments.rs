@@ -2,9 +2,9 @@
 
 use hypercurve::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, Contour2, ContourFragment,
-    ContourFragmentSet, ContourIntersection, ContourOperand, ContourSplitMarkers, CurveError,
-    CurvePolicy, LineArcIntersection, LineLineIntersection, LineSeg2, ParamRange, Point2, Real,
-    Segment2, SegmentIntersection, SegmentSplitMarker,
+    ContourFragmentSet, ContourIntersection, ContourOperand, ContourSplitMarkers, CurveContext,
+    CurveError, CurvePreviewOptions, LineArcIntersection, LineLineIntersection, LineSeg2,
+    ParamRange, Point2, Real, Segment2, SegmentIntersection, SegmentSplitMarker,
 };
 use proptest::prelude::*;
 
@@ -46,12 +46,14 @@ fn arc_overlap_cutter() -> Contour2 {
     .unwrap()
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
-fn approx_policy() -> CurvePolicy {
-    CurvePolicy::edge_preview_strict(1e-7, 1e-7)
+fn preview<T>(evaluate: impl FnOnce(&CurveContext) -> T) -> T {
+    CurvePreviewOptions::try_strict(1e-7, 1e-7)
+        .unwrap()
+        .evaluate(evaluate)
 }
 
 fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
@@ -410,7 +412,8 @@ fn approximate_arc_fragment_uses_source_radius_for_policy_on_circle_split_points
     .unwrap();
 
     let Classification::Decided(fragments) =
-        ContourFragmentSet::from_split_markers(&contour, &markers, &approx_policy()).unwrap()
+        preview(|context| ContourFragmentSet::from_split_markers(&contour, &markers, context))
+            .unwrap()
     else {
         panic!("policy-on-circle split points should produce decided fragments");
     };
@@ -524,16 +527,15 @@ fn edge_preview_retains_rotated_arc_arc_event_regression() {
         0.0,
         0.0,
     );
-    let policy = approx_policy();
-    let direct = first.segments()[0]
-        .intersect_segment(&second.segments()[0], &policy)
-        .unwrap();
+    let direct =
+        preview(|context| first.segments()[0].intersect_segment(&second.segments()[0], context))
+            .unwrap();
     assert!(
         relation_has_evidenceable_intersection(&direct),
         "direct arc-arc relation should retain the preview hit: {direct:?}"
     );
 
-    let events = first.intersect_contour(&second, &policy).unwrap();
+    let events = preview(|context| first.intersect_contour(&second, context)).unwrap();
     assert!(
         events
             .events()
@@ -563,8 +565,7 @@ proptest! {
     ) {
         let first = approx_radial_contour(vertex_count, &first_radii, &first_bulges, 0.0, 0.0, 0.0);
         let second = approx_radial_contour(vertex_count, &second_radii, &second_bulges, dx, dy, angle_shift);
-        let policy = approx_policy();
-        let events = match first.intersect_contour(&second, &policy) {
+        let events = match preview(|context| first.intersect_contour(&second, context)) {
             Ok(events) => events,
             Err(error) => {
                 prop_assert!(!matches!(error, CurveError::RadiusMismatch));
@@ -576,7 +577,9 @@ proptest! {
             (&first, ContourOperand::First),
             (&second, ContourOperand::Second),
         ] {
-            let split = contour.split_at_intersections(&events, operand, &policy);
+            let split = preview(|context| {
+                contour.split_at_intersections(&events, operand, context)
+            });
             prop_assert!(
                 !matches!(split, Err(CurveError::RadiusMismatch)),
                 "split returned RadiusMismatch for {operand:?}"
@@ -598,15 +601,14 @@ proptest! {
             radius * top_scale,
             -radius * bottom_scale,
         );
-        let policy = approx_policy();
-        let events = contour.intersect_self(&policy).unwrap();
+        let events = preview(|context| contour.intersect_self(context)).unwrap();
 
         prop_assert!(
             events.events().iter().any(|event| point_event_on_pair(event, 0, 3)),
             "expected a retained self line-arc point between arc segment 0 and line segment 3"
         );
 
-        let split = contour.split_at_self_intersections(&events, &policy);
+        let split = preview(|context| contour.split_at_self_intersections(&events, context));
         prop_assert!(
             !matches!(split, Err(CurveError::RadiusMismatch)),
             "self split returned RadiusMismatch"
@@ -622,15 +624,14 @@ proptest! {
     #[test]
     fn self_line_arc_slices_fuzz_adjacent_crossings(radius in 0.75_f64..30.0) {
         let contour = approx_adjacent_self_line_arc_contour(radius);
-        let policy = approx_policy();
-        let events = contour.intersect_self(&policy).unwrap();
+        let events = preview(|context| contour.intersect_self(context)).unwrap();
 
         prop_assert!(
             events.events().iter().any(|event| point_event_on_pair(event, 0, 1)),
             "expected the interior adjacent line-arc crossing to remain after endpoint filtering"
         );
 
-        let split = contour.split_at_self_intersections(&events, &policy);
+        let split = preview(|context| contour.split_at_self_intersections(&events, context));
         prop_assert!(
             !matches!(split, Err(CurveError::RadiusMismatch)),
             "adjacent self split returned RadiusMismatch"
@@ -672,15 +673,14 @@ proptest! {
             tx,
             ty,
         );
-        let policy = approx_policy();
-        let events = contour.intersect_self(&policy).unwrap();
+        let events = preview(|context| contour.intersect_self(context)).unwrap();
 
         prop_assert!(
             events.events().iter().any(|event| point_event_on_pair(event, 0, 3)),
             "expected a retained rotated line-arc self-slice event on arc 0 and cutter 3"
         );
 
-        let split = contour.split_at_self_intersections(&events, &policy);
+        let split = preview(|context| contour.split_at_self_intersections(&events, context));
         prop_assert!(
             !matches!(split, Err(CurveError::RadiusMismatch)),
             "rotated self split returned RadiusMismatch"
@@ -714,20 +714,24 @@ proptest! {
             tx,
             ty,
         );
-        let policy = approx_policy();
-        let events = arc_contour.intersect_contour(&cutter_contour, &policy).unwrap();
+        let events =
+            preview(|context| arc_contour.intersect_contour(&cutter_contour, context)).unwrap();
 
         prop_assert!(
             events.events().iter().any(|event| point_event_on_pair(event, 0, 0)),
             "expected a retained rotated line-arc pair-slice event on arc 0 and cutter 0"
         );
 
-        let first_split = arc_contour.split_at_intersections(&events, ContourOperand::First, &policy);
+        let first_split = preview(|context| {
+            arc_contour.split_at_intersections(&events, ContourOperand::First, context)
+        });
         prop_assert!(
             !matches!(first_split, Err(CurveError::RadiusMismatch)),
             "rotated pair split returned RadiusMismatch for first contour"
         );
-        let second_split = cutter_contour.split_at_intersections(&events, ContourOperand::Second, &policy);
+        let second_split = preview(|context| {
+            cutter_contour.split_at_intersections(&events, ContourOperand::Second, context)
+        });
         prop_assert!(
             !matches!(second_split, Err(CurveError::RadiusMismatch)),
             "rotated pair split returned RadiusMismatch for second contour"
@@ -785,17 +789,17 @@ proptest! {
             tx,
             ty,
         );
-        let policy = approx_policy();
-        let direct = first.segments()[0]
-            .intersect_segment(&second.segments()[0], &policy)
-            .unwrap();
+        let direct = preview(|context| {
+            first.segments()[0].intersect_segment(&second.segments()[0], context)
+        })
+        .unwrap();
 
         prop_assert!(
             relation_has_evidenceable_intersection(&direct),
             "mixed pair generator should place a direct segment hit: {direct:?}"
         );
 
-        let events = first.intersect_contour(&second, &policy).unwrap();
+        let events = preview(|context| first.intersect_contour(&second, context)).unwrap();
         prop_assert!(
             events.events().iter().any(|event| event_on_pair(event, 0, 0)),
             "contour event pipeline lost a direct mixed segment hit: {direct:?}"
@@ -835,23 +839,23 @@ proptest! {
             tx,
             ty,
         );
-        let policy = approx_policy();
-        let direct = contour.segments()[0]
-            .intersect_segment(&contour.segments()[3], &policy)
-            .unwrap();
+        let direct = preview(|context| {
+            contour.segments()[0].intersect_segment(&contour.segments()[3], context)
+        })
+        .unwrap();
 
         prop_assert!(
             relation_has_evidenceable_intersection(&direct),
             "mixed self generator should place a direct segment hit: {direct:?}"
         );
 
-        let events = contour.intersect_self(&policy).unwrap();
+        let events = preview(|context| contour.intersect_self(context)).unwrap();
         prop_assert!(
             events.events().iter().any(|event| event_on_pair(event, 0, 3)),
             "self event pipeline lost a direct mixed segment hit: {direct:?}"
         );
 
-        let split = contour.split_at_self_intersections(&events, &policy);
+        let split = preview(|context| contour.split_at_self_intersections(&events, context));
         prop_assert!(
             !matches!(split, Err(CurveError::RadiusMismatch)),
             "mixed self split returned RadiusMismatch"

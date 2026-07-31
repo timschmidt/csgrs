@@ -15,7 +15,7 @@ use crate::classify::{
 };
 use crate::{
     Classification, Contour2, ContourIntersection, ContourIntersectionSet, ContourOperand,
-    CurveError, CurvePolicy, CurveResult, Point2, UncertaintyReason,
+    CurveContext, CurveError, CurveResult, Point2, UncertaintyReason,
 };
 
 /// A local split parameter on one contour segment.
@@ -91,7 +91,7 @@ impl ContourSplitMarkers {
         contour: &Contour2,
         intersections: &ContourIntersectionSet,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Self> {
         let mut markers = Self::with_contour_endpoints(contour);
         match markers.merge_intersections(intersections, operand, policy) {
@@ -108,7 +108,7 @@ impl ContourSplitMarkers {
     pub fn from_self_intersections(
         contour: &Contour2,
         intersections: &ContourIntersectionSet,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Self> {
         let mut markers = Self::with_contour_endpoints(contour);
         match markers.merge_self_intersections(intersections, policy) {
@@ -148,7 +148,7 @@ impl ContourSplitMarkers {
         &mut self,
         intersections: &ContourIntersectionSet,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<()> {
         for event in intersections.events() {
             match self.merge_event(event, operand, policy) {
@@ -165,7 +165,7 @@ impl ContourSplitMarkers {
         contour: &Contour2,
         intersections: &ContourIntersectionSet,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<()> {
         let mut marker_counts = vec![0_usize; self.segment_markers.len()];
         for event in intersections.events() {
@@ -216,7 +216,7 @@ impl ContourSplitMarkers {
     pub fn merge_self_intersections(
         &mut self,
         intersections: &ContourIntersectionSet,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<()> {
         for event in intersections.events() {
             match self.merge_event(event, ContourOperand::First, policy) {
@@ -247,7 +247,7 @@ impl ContourSplitMarkers {
         &mut self,
         event: &ContourIntersection,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<(), UncertaintyReason> {
         match event {
             ContourIntersection::Point(point) => {
@@ -304,7 +304,7 @@ impl ContourSplitMarkers {
     fn insert_marker(
         &mut self,
         marker: SegmentSplitMarker,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         strictly_interior: bool,
     ) -> Result<(), UncertaintyReason> {
         let Some(markers) = self.segment_markers.get_mut(marker.segment_index) else {
@@ -350,7 +350,7 @@ impl ContourSplitMap {
         segment_count: usize,
         intersections: &ContourIntersectionSet,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Self> {
         let mut map = Self::with_segment_count(segment_count);
         match map.merge_intersections(intersections, operand, policy) {
@@ -386,7 +386,7 @@ impl ContourSplitMap {
         &mut self,
         intersections: &ContourIntersectionSet,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<()> {
         for event in intersections.events() {
             match self.merge_event(event, operand, policy) {
@@ -416,7 +416,7 @@ impl ContourSplitMap {
         &mut self,
         event: &ContourIntersection,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<(), UncertaintyReason> {
         match event {
             ContourIntersection::Point(point) => {
@@ -450,7 +450,7 @@ impl ContourSplitMap {
         &mut self,
         segment_index: usize,
         param: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<(), UncertaintyReason> {
         let Some(params) = self.segment_splits.get_mut(segment_index) else {
             return Err(UncertaintyReason::Unsupported);
@@ -463,7 +463,7 @@ impl ContourSplitMap {
 fn insert_unique_sorted(
     params: &mut Vec<Real>,
     param: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<(), UncertaintyReason> {
     for index in 0..params.len() {
         match compare_reals_for_split_ordering(&param, &params[index], policy) {
@@ -484,7 +484,7 @@ fn insert_unique_sorted(
 fn insert_unique_sorted_marker(
     markers: &mut Vec<SegmentSplitMarker>,
     marker: SegmentSplitMarker,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     range: std::ops::Range<usize>,
 ) -> Result<(), UncertaintyReason> {
     let insert_at_end = range.end;
@@ -564,7 +564,7 @@ fn validate_split_param_sequence<'a>(
         ));
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     if compare_reals(params[0], &Real::zero(), &policy) != Some(Ordering::Equal)
         || compare_reals(params[params.len() - 1], &Real::one(), &policy) != Some(Ordering::Equal)
     {

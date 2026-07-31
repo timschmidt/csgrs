@@ -2,8 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurvePath2,
-    CurvePolicy, LineSeg2, Point2, QuadraticBezier2, Real,
+    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
+    CurvePath2, LineSeg2, Point2, QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -62,7 +62,7 @@ fn closed_under_cubic(curve: CubicBezier2, lower_y: i32) -> CurvePath2 {
 }
 
 fn main() {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let first = rectangle(0, 0, 2, 2);
     let second = rectangle(1, -1, 3, 1);
 

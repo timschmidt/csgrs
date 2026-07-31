@@ -25,7 +25,9 @@ use hypersolve::{
 };
 
 use crate::classify::compare_reals;
-use crate::{BezierAlgebraicImageStatus, BezierEndpointTangentImage2, Classification, CurvePolicy};
+use crate::{
+    BezierAlgebraicImageStatus, BezierEndpointTangentImage2, Classification, CurveContext,
+};
 
 /// A represented algebraic tangent vector with exact coordinate evidence.
 #[derive(Clone, Debug, PartialEq)]
@@ -221,7 +223,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
     base: &BezierAlgebraicTangentVector2,
     first: &BezierAlgebraicTangentVector2,
     second: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierAlgebraicTangentOrderEvidence> {
     compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, true, false)
 }
@@ -230,7 +232,7 @@ pub(crate) fn compare_algebraic_tangent_turn_from_base_sign_only(
     base: &BezierAlgebraicTangentVector2,
     first: &BezierAlgebraicTangentVector2,
     second: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierAlgebraicTangentOrderEvidence> {
     compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, false, false)
 }
@@ -239,7 +241,7 @@ pub(crate) fn compare_algebraic_tangent_filled_left_face_sign_only(
     base: &BezierAlgebraicTangentVector2,
     first: &BezierAlgebraicTangentVector2,
     second: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierAlgebraicTangentOrderEvidence> {
     compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, false, true)
 }
@@ -247,7 +249,7 @@ pub(crate) fn compare_algebraic_tangent_filled_left_face_sign_only(
 pub(crate) fn algebraic_endpoint_tangents_are_transverse(
     first: &BezierEndpointTangentImage2,
     second: &BezierEndpointTangentImage2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let first = BezierAlgebraicTangentVector2::from_endpoint_image(first);
     let second = BezierAlgebraicTangentVector2::from_endpoint_image(second);
@@ -271,7 +273,7 @@ fn compare_algebraic_tangent_turn_from_base_impl(
     base: &BezierAlgebraicTangentVector2,
     first: &BezierAlgebraicTangentVector2,
     second: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     retain_scalar: bool,
     reverse_within_half: bool,
 ) -> Classification<BezierAlgebraicTangentOrderEvidence> {
@@ -462,7 +464,7 @@ pub fn compare_algebraic_same_tangent_second_order(
     first_second_derivative: &BezierAlgebraicTangentVector2,
     second_tangent: &BezierAlgebraicTangentVector2,
     second_second_derivative: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierAlgebraicSameTangentOrderEvidence> {
     for tangent in [first_tangent, second_tangent] {
         match tangent_nonzero(tangent, policy) {
@@ -591,7 +593,7 @@ pub fn compare_algebraic_same_tangent_third_order(
     first_third_derivative: &BezierAlgebraicTangentVector2,
     second_tangent: &BezierAlgebraicTangentVector2,
     second_third_derivative: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierAlgebraicSameTangentOrderEvidence> {
     for tangent in [first_tangent, second_tangent] {
         match tangent_nonzero(tangent, policy) {
@@ -731,7 +733,7 @@ enum AlgebraicHalfTurn {
 
 fn tangent_nonzero(
     tangent: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> AlgebraicTangentNonzero {
     if [tangent.dx(), tangent.dy()].into_iter().any(|coordinate| {
         representation_sign(coordinate, policy).is_some_and(|sign| sign != Ordering::Equal)
@@ -752,7 +754,7 @@ fn tangent_nonzero(
 fn turn_half(
     base: &BezierAlgebraicTangentVector2,
     candidate: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     retain_scalar: bool,
 ) -> AlgebraicHalfTurn {
     let cross = cross_sign(base, candidate, policy, retain_scalar);
@@ -779,7 +781,7 @@ fn turn_half(
 fn cross_sign(
     left: &BezierAlgebraicTangentVector2,
     right: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     retain_scalar: bool,
 ) -> BezierAlgebraicScalarSignEvidence {
     if !retain_scalar
@@ -814,7 +816,7 @@ fn cross_sign(
 fn dot_sign(
     left: &BezierAlgebraicTangentVector2,
     right: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     retain_scalar: bool,
 ) -> BezierAlgebraicScalarSignEvidence {
     if !retain_scalar
@@ -848,7 +850,7 @@ fn dot_sign(
 
 fn norm_squared_sign(
     vector: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> BezierAlgebraicScalarSignEvidence {
     let dx_squared = multiply(vector.dx(), vector.dx());
     let dy_squared = multiply(vector.dy(), vector.dy());
@@ -890,7 +892,7 @@ fn interval_scalar_sign_evidence(
 
 fn representation_sign(
     representation: &AlgebraicRootRepresentation,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Ordering> {
     if !representation.is_valid() {
         return None;
@@ -908,7 +910,7 @@ fn interval_bilinear_sign(
     second_left: &AlgebraicRootRepresentation,
     second_right: &AlgebraicRootRepresentation,
     add_products: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Ordering> {
     if [first_left, first_right, second_left, second_right]
         .iter()
@@ -929,7 +931,7 @@ fn interval_bilinear_sign(
 fn interval_product(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<(Real, Real)> {
     let products = [
         &left.interval.lower * &right.interval.lower,
@@ -950,7 +952,7 @@ fn interval_product(
     Some((lower, upper))
 }
 
-fn interval_sign(lower: &Real, upper: &Real, policy: &CurvePolicy) -> Option<Ordering> {
+fn interval_sign(lower: &Real, upper: &Real, policy: &CurveContext) -> Option<Ordering> {
     let lower_sign = compare_reals(lower, &Real::zero(), policy)?;
     let upper_sign = compare_reals(upper, &Real::zero(), policy)?;
     if lower_sign == Ordering::Greater {
@@ -969,7 +971,7 @@ fn compare_algebraic_same_side_curvature_magnitude(
     first_cross: BezierAlgebraicScalarSignEvidence,
     second_tangent: &BezierAlgebraicTangentVector2,
     second_cross: BezierAlgebraicScalarSignEvidence,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierAlgebraicSameTangentOrderEvidence> {
     compare_algebraic_same_side_magnitude(
         first_tangent,
@@ -989,7 +991,7 @@ fn compare_algebraic_same_side_magnitude(
     second_cross: BezierAlgebraicScalarSignEvidence,
     speed_power: usize,
     witness_name: &str,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierAlgebraicSameTangentOrderEvidence> {
     let first_speed = norm_squared_sign(first_tangent, policy);
     let second_speed = norm_squared_sign(second_tangent, policy);
@@ -1070,7 +1072,7 @@ fn same_side_magnitude_difference(
     first_speed: &BezierAlgebraicScalarSignEvidence,
     second_speed: &BezierAlgebraicScalarSignEvidence,
     speed_power: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> BezierAlgebraicScalarSignEvidence {
     let Some(first_cross_scalar) = first_cross.scalar.as_ref() else {
         return scalar_sign_evidence(
@@ -1282,7 +1284,7 @@ fn missing_operand_evidence(
 
 fn scalar_sign_evidence(
     arithmetic: Vec<AlgebraicRootArithmeticReport>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> BezierAlgebraicScalarSignEvidence {
     let Some(last) = arithmetic.last() else {
         return BezierAlgebraicScalarSignEvidence {
@@ -1330,7 +1332,10 @@ fn scalar_sign_evidence(
     }
 }
 
-fn represented_sign(value: &AlgebraicRootRepresentation, policy: &CurvePolicy) -> Option<Ordering> {
+fn represented_sign(
+    value: &AlgebraicRootRepresentation,
+    policy: &CurveContext,
+) -> Option<Ordering> {
     if let Some(witness) = value.exact_rational_witness() {
         return compare_reals(witness, &Real::zero(), policy);
     }
@@ -1348,14 +1353,14 @@ fn represented_sign(value: &AlgebraicRootRepresentation, policy: &CurvePolicy) -
 #[cfg(feature = "predicates")]
 fn refined_represented_sign(
     value: &AlgebraicRootRepresentation,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Ordering> {
     let zero = exact_value_representation(&Real::zero());
     let evidence = compare_algebraic_root_representations_by_difference(
         value,
         &zero,
         AlgebraicRootRefinementComparisonConfig {
-            policy: policy.predicate_policy,
+            policy: policy.predicate_policy(),
             ..AlgebraicRootRefinementComparisonConfig::default()
         },
     );
@@ -1367,7 +1372,7 @@ fn refined_represented_sign(
 #[cfg(not(feature = "predicates"))]
 fn refined_represented_sign(
     _value: &AlgebraicRootRepresentation,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> Option<Ordering> {
     None
 }

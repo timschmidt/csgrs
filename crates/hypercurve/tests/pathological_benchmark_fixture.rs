@@ -3,7 +3,7 @@ mod pathological_fixture;
 
 use std::collections::HashSet;
 
-use hypercurve::{BooleanOp, Classification, CurveFamily2, CurvePolicy, FillRule};
+use hypercurve::{BooleanOp, Classification, CurveContext, CurveFamily2, FillRule};
 use pathological_fixture::build_native_cell;
 #[cfg(feature = "predicates")]
 use pathological_fixture::{MemoryTier, NativeDataset};
@@ -76,7 +76,7 @@ fn pathological_cell_covers_every_curve_and_real_representation_family() {
 #[test]
 fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans() {
     let cell = build_native_cell(0);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     #[cfg(feature = "predicates")]
     {
         let evidence = cell
@@ -132,7 +132,7 @@ fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
     // root isolation but blocked while forcing the Real-coefficient roots
     // through the rational-coefficient algebraic-number image package.
     let cell = build_native_cell(2);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let evidence = cell
         .source
         .intersect_region(&cell.rotated, &policy)
@@ -159,7 +159,7 @@ fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
 #[cfg(feature = "predicates")]
 fn full_pathological_native_workload_decides_all_268_exact_booleans() {
     let dataset = NativeDataset::build(MemoryTier::Mib100);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let operations = [
         BooleanOp::Union,
         BooleanOp::Intersection,

@@ -11,9 +11,9 @@
 use hyperreal::{Real, RealSign};
 
 use crate::{
-    CircularArc2, Classification, Contour2, CurveError, CurveFamily2, CurveOperation2, CurvePolicy,
-    CurveRegion2, CurveResult, CurveString2, ExactCurveError, ExactCurveResult, LineArcRegion2,
-    LineSeg2, Point2, Segment2,
+    CircularArc2, Classification, Contour2, CurveContext, CurveError, CurveFamily2,
+    CurveOperation2, CurveRegion2, CurveResult, CurveString2, ExactCurveError, ExactCurveResult,
+    LineArcRegion2, LineSeg2, Point2, Segment2,
 };
 
 /// A 2D affine transform whose linear part is a nonsingular similarity.
@@ -43,7 +43,7 @@ impl Similarity2 {
     ) -> CurveResult<Self> {
         let first_len_squared = a.clone() * a.clone() + d.clone() * d.clone();
         let second_len_squared = b.clone() * b.clone() + e.clone() * e.clone();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let equal_scale =
             crate::classify::real_sign(&(first_len_squared - second_len_squared), &policy);
         let orthogonal =
@@ -266,7 +266,7 @@ impl CurveRegion2 {
     pub fn transform_similarity(
         &self,
         transform: &Similarity2,
-        policy: &crate::CurvePolicy,
+        policy: &crate::CurveContext,
     ) -> ExactCurveResult<Self> {
         if let Classification::Decided(native) =
             self.native_line_arc_region(policy).map_err(|cause| {

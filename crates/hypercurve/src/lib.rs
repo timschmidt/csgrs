@@ -237,7 +237,7 @@ pub use nurbs::{
 };
 pub use offset::OffsetCap;
 pub use point::Point2;
-pub use policy::{CurveCertainty, CurveOutcome, CurvePolicy};
+pub use policy::{CurveCertainty, CurveContext, CurveOutcome, CurvePreviewOptions};
 pub use polynomial_spline::{
     PolynomialSplineBezierDecomposition2, PolynomialSplineBezierSpanView2, PolynomialSplineCurve2,
 };
@@ -319,8 +319,8 @@ mod tests {
         Point2::new(s(x), s(y))
     }
 
-    fn topology_policy() -> CurvePolicy {
-        CurvePolicy::STRICT
+    fn topology_policy() -> CurveContext {
+        CurveContext::STRICT
     }
 
     #[test]

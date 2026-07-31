@@ -23,7 +23,7 @@ use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
     Aabb2, BezierArrangementChain2, BezierArrangementGraph2, BezierArrangementTraversal2,
     BezierCurveRelation, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CurveError, CurvePolicy, CurveResult, LineLineIntersection,
+    BezierSubcurve2, Classification, CurveContext, CurveError, CurveResult, LineLineIntersection,
     LineSeg2, ParamRange, Point2, RationalBezier2, RationalBezierIntersectionContacts2,
     RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2, UncertaintyReason,
 };
@@ -108,7 +108,7 @@ fn validate_positive_unit_overlap_ranges(
     second_range: &ParamRange,
     extent: BezierRetainedOverlapExtent2,
 ) -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     validate_positive_unit_overlap_range(first_range)?;
     validate_positive_unit_overlap_range(second_range)?;
     let expected = line_overlap_extent(first_range, second_range, &policy).ok_or_else(|| {
@@ -125,7 +125,7 @@ fn validate_positive_unit_overlap_ranges(
 }
 
 fn validate_positive_unit_overlap_range(range: &ParamRange) -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     if in_closed_unit_interval(range.start(), &policy) != Some(true)
         || in_closed_unit_interval(range.end(), &policy) != Some(true)
     {
@@ -146,7 +146,7 @@ fn validate_positive_unit_overlap_range(range: &ParamRange) -> CurveResult<()> {
 }
 
 fn validate_refined_fragment_local_range(range: &ParamRange) -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     if in_closed_unit_interval(range.start(), &policy) != Some(true)
         || in_closed_unit_interval(range.end(), &policy) != Some(true)
     {
@@ -193,7 +193,7 @@ fn validate_overlap_relation_evidence(
 }
 
 fn validate_line_overlap_segment_geometry(segment: &LineSeg2) -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     match is_zero(&segment.length_squared(), &policy) {
         Some(false) => Ok(()),
         Some(true) => Err(CurveError::Topology(
@@ -713,7 +713,7 @@ fn validate_linear_overlap_refinement_provenance(
         }
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let refined_fragment_count = graph.len();
     for resolved in resolved_overlaps {
         validate_resolved_overlap_refined_index(
@@ -858,7 +858,7 @@ fn overlap_evidence_has_linear_split(
             && segment == split.overlap_segment()
             && a_range == split.first_bezier_range()
             && b_range == split.second_bezier_range()
-            && line_overlap_extent(a_range, b_range, &CurvePolicy::STRICT) == Some(split.extent())
+            && line_overlap_extent(a_range, b_range, &CurveContext::STRICT) == Some(split.extent())
     })
 }
 
@@ -873,7 +873,7 @@ fn overlap_evidence_has_rational_split(
             return false;
         };
         let Classification::Decided(Some((first_range, second_range))) =
-            rational_overlap_exact_ranges(rational, &CurvePolicy::STRICT)
+            rational_overlap_exact_ranges(rational, &CurveContext::STRICT)
         else {
             return false;
         };
@@ -882,7 +882,7 @@ fn overlap_evidence_has_rational_split(
             && &first_range == split.first_bezier_range()
             && &second_range == split.second_bezier_range()
             && rational.orientation() == split.orientation()
-            && line_overlap_extent(&first_range, &second_range, &CurvePolicy::STRICT)
+            && line_overlap_extent(&first_range, &second_range, &CurveContext::STRICT)
                 == Some(split.extent())
     })
 }
@@ -1342,7 +1342,7 @@ impl BezierArrangementGraph2 {
     /// slice.
     pub fn traverse_retained_deduplicating_materialized_overlaps(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierRetainedOverlapTraversal2> {
         let overlap_evidence = match BezierRetainedOverlapEvidence2::from_graph(self, policy) {
             Classification::Decided(evidence) => evidence,
@@ -1397,7 +1397,7 @@ impl BezierArrangementGraph2 {
     /// explicit uncertainty.
     pub fn split_retained_linear_overlaps(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierRetainedLinearOverlapSplitGraph2> {
         let overlap_evidence = match BezierRetainedOverlapEvidence2::from_graph(self, policy) {
             Classification::Decided(evidence) => evidence,
@@ -1469,7 +1469,7 @@ impl BezierArrangementGraph2 {
     /// uncertainty.
     pub fn traverse_retained_splitting_linear_overlaps(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierRetainedLinearOverlapTraversal2> {
         let refinement = match self.split_retained_linear_overlaps(policy) {
             Classification::Decided(refinement) => refinement,
@@ -1502,7 +1502,7 @@ impl BezierArrangementGraph2 {
     /// uncertainty because materializing them would otherwise demote exactness.
     pub fn split_retained_rational_overlaps(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierRetainedRationalOverlapSplitGraph2> {
         let overlap_evidence = match BezierRetainedOverlapEvidence2::from_graph(self, policy) {
             Classification::Decided(evidence) => evidence,
@@ -1561,7 +1561,7 @@ impl BezierArrangementGraph2 {
     /// every split range, and the refined-fragment ownership decisions.
     pub fn traverse_retained_splitting_rational_overlaps(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierRetainedRationalOverlapTraversal2> {
         let refinement = match self.split_retained_rational_overlaps(policy) {
             Classification::Decided(refinement) => refinement,
@@ -1644,9 +1644,9 @@ impl BezierRetainedOverlapEvidence2 {
     /// as a no-overlap proof.
     pub fn from_graph(
         graph: &BezierArrangementGraph2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Self> {
-        let cacheable = *policy == CurvePolicy::STRICT;
+        let cacheable = *policy == CurveContext::STRICT;
         if cacheable && let Some(evidence) = graph.cached_certified_overlap_evidence() {
             return evidence;
         }
@@ -1657,7 +1657,7 @@ impl BezierRetainedOverlapEvidence2 {
         evidence
     }
 
-    fn scan_graph(graph: &BezierArrangementGraph2, policy: &CurvePolicy) -> Classification<Self> {
+    fn scan_graph(graph: &BezierArrangementGraph2, policy: &CurveContext) -> Classification<Self> {
         let needs_rational_dispatch = graph.fragments().iter().any(|fragment| {
             matches!(
                 fragment.fragment(),
@@ -1766,7 +1766,7 @@ impl BezierRetainedOverlapEvidence2 {
     /// [`BezierRetainedOverlapRelation2::LineSegmentOverlap`] contributes.
     pub fn line_overlap_splits(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<BezierRetainedLineOverlapSplit2>> {
         let mut splits = Vec::new();
         for overlap in self.overlaps.iter() {
@@ -1813,7 +1813,7 @@ impl BezierRetainedOverlapEvidence2 {
     pub fn linear_bezier_overlap_splits(
         &self,
         graph: &BezierArrangementGraph2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<BezierRetainedLinearOverlapSplit2>> {
         let line_splits = match self.line_overlap_splits(policy) {
             Classification::Decided(splits) => splits,
@@ -1884,7 +1884,7 @@ impl BezierRetainedOverlapEvidence2 {
     /// values and therefore replay directly through de Casteljau subdivision.
     pub fn rational_bezier_overlap_splits(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<BezierRetainedRationalOverlapSplit2>> {
         let mut splits = Vec::new();
         for retained in self.overlaps.iter() {
@@ -1925,7 +1925,7 @@ impl BezierRetainedOverlapEvidence2 {
 
 fn rational_overlap_exact_ranges(
     overlap: &RationalBezierIntersectionOverlap2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<(ParamRange, ParamRange)>> {
     let first = match overlap
         .first_range()
@@ -1978,7 +1978,7 @@ fn retained_line_overlap_range_matches_fragment(
     fragment_index: usize,
     range: &ParamRange,
     segment: &LineSeg2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let Some(fragment) = graph.fragments().get(fragment_index) else {
         return Classification::Decided(false);
@@ -2008,7 +2008,7 @@ fn retained_line_overlap_range_matches_fragment(
 fn retained_overlap_subcurve_point_at(
     curve: &BezierSubcurve2,
     parameter: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Point2> {
     match curve {
         BezierSubcurve2::Quadratic(curve) => Classification::Decided(curve.point_at(parameter)),
@@ -2021,7 +2021,7 @@ fn retained_overlap_subcurve_point_at(
 fn fragment_is_linearly_parameterized(
     graph: &BezierArrangementGraph2,
     fragment_index: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let Some(fragment) = graph.fragments().get(fragment_index) else {
         return Classification::Decided(false);
@@ -2085,7 +2085,7 @@ fn linear_control(
     ))
 }
 
-fn point_coordinates_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<bool> {
+fn point_coordinates_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> Option<bool> {
     Some(
         compare_reals(left.x(), right.x(), policy)? == std::cmp::Ordering::Equal
             && compare_reals(left.y(), right.y(), policy)? == std::cmp::Ordering::Equal,
@@ -2095,7 +2095,7 @@ fn point_coordinates_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) 
 fn line_overlap_extent(
     first: &ParamRange,
     second: &ParamRange,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierRetainedOverlapExtent2> {
     let first_full = unit_range(first, policy)?;
     let second_full = unit_range(second, policy)?;
@@ -2110,7 +2110,7 @@ fn line_overlap_extent(
 fn linear_overlap_boundaries(
     fragment_count: usize,
     overlap_splits: &[BezierRetainedLinearOverlapSplit2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<Vec<Real>>> {
     let mut boundaries = vec![vec![Real::zero(), Real::one()]; fragment_count];
     for split in overlap_splits {
@@ -2164,7 +2164,7 @@ fn unchanged_refined_fragments(
 fn rational_overlap_boundaries(
     fragment_count: usize,
     overlap_splits: &[BezierRetainedRationalOverlapSplit2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<Vec<Real>>> {
     let mut boundaries = vec![vec![Real::zero(), Real::one()]; fragment_count];
     for split in overlap_splits {
@@ -2205,7 +2205,7 @@ fn push_boundary(
     boundaries: &mut [Vec<Real>],
     fragment_index: usize,
     boundary: Real,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> bool {
     let Some(fragment_boundaries) = boundaries.get_mut(fragment_index) else {
         return false;
@@ -2214,7 +2214,7 @@ fn push_boundary(
     true
 }
 
-fn sort_and_dedup_boundaries(boundaries: &mut Vec<Real>, policy: &CurvePolicy) -> Option<()> {
+fn sort_and_dedup_boundaries(boundaries: &mut Vec<Real>, policy: &CurveContext) -> Option<()> {
     for index in 1..boundaries.len() {
         let mut cursor = index;
         while cursor > 0 {
@@ -2244,7 +2244,7 @@ fn sort_and_dedup_boundaries(boundaries: &mut Vec<Real>, policy: &CurvePolicy) -
 fn refine_graph_at_boundaries(
     graph: &BezierArrangementGraph2,
     boundaries: &[Vec<Real>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<(
     BezierArrangementGraph2,
     Vec<BezierRetainedOverlapRefinedFragment2>,
@@ -2355,7 +2355,7 @@ fn resolved_linear_overlap_spans(
     graph: &BezierArrangementGraph2,
     refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
     overlap_splits: &[BezierRetainedLinearOverlapSplit2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<BezierRetainedResolvedLinearOverlap2>> {
     let mut resolved = Vec::with_capacity(overlap_splits.len());
     for split in overlap_splits {
@@ -2408,7 +2408,7 @@ fn resolved_linear_overlap_spans(
 fn resolved_rational_overlap_spans(
     refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
     overlap_splits: &[BezierRetainedRationalOverlapSplit2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<BezierRetainedResolvedRationalOverlap2>> {
     let mut resolved = Vec::with_capacity(overlap_splits.len());
     for split in overlap_splits {
@@ -2452,7 +2452,7 @@ fn find_refined_fragment_for_range(
     refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
     original_fragment_index: usize,
     target_range: &ParamRange,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<usize> {
     refined_fragments
         .iter()
@@ -2468,7 +2468,7 @@ fn find_refined_fragment_for_range(
 fn ranges_match_even_if_reversed(
     refined_range: &ParamRange,
     target_range: &ParamRange,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let (target_start, target_end) = normalized_range_bounds(target_range, policy)?;
     Some(
@@ -2479,7 +2479,7 @@ fn ranges_match_even_if_reversed(
 
 fn normalized_range_bounds<'a>(
     range: &'a ParamRange,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<(&'a Real, &'a Real)> {
     match compare_reals(range.start(), range.end(), policy)? {
         std::cmp::Ordering::Less | std::cmp::Ordering::Equal => Some((range.start(), range.end())),
@@ -2491,7 +2491,7 @@ fn refined_overlap_orientation(
     graph: &BezierArrangementGraph2,
     first_index: usize,
     second_index: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierRetainedOverlapOrientation2> {
     let first = match graph.fragments().get(first_index) {
         Some(fragment) => match materialized_endpoints(fragment.fragment()) {
@@ -2537,7 +2537,7 @@ fn subcurve_between_local(
     curve: &BezierSubcurve2,
     start: &Real,
     end: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierSubcurve2> {
     let result = match curve {
         BezierSubcurve2::Quadratic(curve) => curve
@@ -2569,7 +2569,7 @@ fn compose_source_parameter(source_start: &Real, source_end: &Real, local: &Real
     source_start + (&(source_end - source_start) * local)
 }
 
-fn unit_range(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> {
+fn unit_range(range: &ParamRange, policy: &CurveContext) -> Option<bool> {
     let forward = crate::classify::compare_reals(range.start(), &hyperreal::Real::zero(), policy)?
         == std::cmp::Ordering::Equal
         && crate::classify::compare_reals(range.end(), &hyperreal::Real::one(), policy)?
@@ -2584,7 +2584,7 @@ fn unit_range(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> {
 fn duplicate_shadow_indices(
     graph: &BezierArrangementGraph2,
     evidence: &BezierRetainedOverlapEvidence2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<usize>> {
     let mut shadowed = vec![false; graph.len()];
     for overlap in evidence.overlaps() {
@@ -2619,7 +2619,7 @@ fn duplicate_shadow_indices(
 
 fn traverse_consuming_resolved_linear_overlaps(
     refinement: &BezierRetainedLinearOverlapSplitGraph2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierRetainedOverlapTraversal2> {
     traverse_consuming_scanned_overlaps(refinement.graph(), refinement.overlap_evidence(), policy)
 }
@@ -2627,7 +2627,7 @@ fn traverse_consuming_resolved_linear_overlaps(
 fn traverse_consuming_scanned_overlaps(
     graph: &BezierArrangementGraph2,
     overlap_evidence: &BezierRetainedOverlapEvidence2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierRetainedOverlapTraversal2> {
     let consumed_fragment_indices = match refined_overlap_consumed_indices(graph, policy) {
         Classification::Decided(indices) => indices,
@@ -2640,7 +2640,7 @@ fn traverse_after_consuming_indices(
     graph: &BezierArrangementGraph2,
     overlap_evidence: &BezierRetainedOverlapEvidence2,
     consumed_fragment_indices: Vec<usize>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierRetainedOverlapTraversal2> {
     if consumed_fragment_indices.is_empty() {
         return Classification::Uncertain(UncertaintyReason::Boundary);
@@ -2669,7 +2669,7 @@ fn traverse_after_consuming_indices(
 
 fn traverse_consuming_resolved_rational_overlaps(
     refinement: &BezierRetainedRationalOverlapSplitGraph2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierRetainedOverlapTraversal2> {
     let mut consumed = vec![false; refinement.graph().len()];
     for overlap in refinement.resolved_overlaps() {
@@ -2698,7 +2698,7 @@ fn traverse_consuming_resolved_rational_overlaps(
 
 fn refined_overlap_consumed_indices(
     graph: &BezierArrangementGraph2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<usize>> {
     let evidence = match BezierRetainedOverlapEvidence2::from_graph(graph, policy) {
         Classification::Decided(evidence) => evidence,
@@ -2770,7 +2770,7 @@ fn oriented_materialized_endpoints_equal(
     graph: &BezierArrangementGraph2,
     first_index: usize,
     second_index: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let first = materialized_endpoints(graph.fragments().get(first_index)?.fragment())?;
     let second = materialized_endpoints(graph.fragments().get(second_index)?.fragment())?;
@@ -2785,7 +2785,7 @@ fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Po
     }
 }
 
-fn points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<bool> {
+fn points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> Option<bool> {
     is_zero(&left.distance_squared(right), policy)
 }
 
@@ -2828,7 +2828,7 @@ fn remap_traversal_indices(
 
 fn materialized_control_hull(
     fragment: &BezierSplitFragment2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Aabb2> {
     let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
         return None;
@@ -2850,7 +2850,7 @@ fn materialized_control_hull(
 
 fn control_hull_candidate_pairs(
     hulls: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Vec<(usize, usize)>> {
     const MAX_SPARSE_PAIRS: usize = 262_144;
 
@@ -2945,7 +2945,7 @@ fn materialized_overlap_relation(
     second: &BezierSplitFragment2,
     first_rational: Option<&RationalBezier2>,
     second_rational: Option<&RationalBezier2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<BezierRetainedOverlapRelation2>> {
     let (
         BezierSplitFragment2::Materialized { curve: first, .. },
@@ -3052,7 +3052,7 @@ fn rationalize_materialized_fragment(
 
 fn rational_overlap_covers_both_fragments(
     overlap: &RationalBezierIntersectionOverlap2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     parameter_range_covers_unit_interval(overlap.first_range(), policy)
         && parameter_range_covers_unit_interval(overlap.second_range(), policy)
@@ -3060,7 +3060,7 @@ fn rational_overlap_covers_both_fragments(
 
 fn parameter_range_covers_unit_interval(
     range: &BezierParameterRange2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     let Some((start, end)) = range.exact_endpoints() else {
         return false;
@@ -3075,7 +3075,7 @@ fn parameter_range_covers_unit_interval(
 fn subcurve_relation(
     first: &BezierSubcurve2,
     second: &BezierSubcurve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierCurveRelation> {
     match (first, second) {
         (BezierSubcurve2::Quadratic(first), BezierSubcurve2::Quadratic(second)) => {
@@ -3119,7 +3119,7 @@ mod tests {
 
     #[test]
     fn control_hull_sweep_matches_complete_exact_pair_scan() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let mut state = 0x9e37_79b9_7f4a_7c15_u64;
         let mut next = || {
             state = state

@@ -1,5 +1,5 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2, LineSeg2,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveString2, LineSeg2,
     OffsetCap, Point2, Real, Segment2, UncertaintyReason,
 };
 
@@ -31,8 +31,8 @@ fn assert_line(segment: &Segment2, start: Point2, end: Point2) {
     assert_eq!(line.end(), &end);
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 #[test]

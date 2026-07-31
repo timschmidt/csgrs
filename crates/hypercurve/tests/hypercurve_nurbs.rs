@@ -1,6 +1,6 @@
 use hypercurve::{
-    BezierSubcurve2, Curve2, CurveError, CurveFamily2, CurveOperation2, CurveParameterSide2,
-    CurvePolicy, ExactCurveError, NurbsCurve2, Point2, Real, SplinePeriodicity2,
+    BezierSubcurve2, Curve2, CurveContext, CurveError, CurveFamily2, CurveOperation2,
+    CurveParameterSide2, ExactCurveError, NurbsCurve2, Point2, Real, SplinePeriodicity2,
 };
 
 fn r(value: i32) -> Real {
@@ -359,7 +359,9 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
         for local in [r(0), q(1, 2), r(1)] {
             let source_parameter = start + &local * (end - start);
             assert_eq!(
-                span.curve().point_at(&local, &CurvePolicy::STRICT).unwrap(),
+                span.curve()
+                    .point_at(&local, &CurveContext::STRICT)
+                    .unwrap(),
                 curve
                     .point_at_side(
                         &source_parameter,
@@ -861,7 +863,7 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
             .first()
             .unwrap()
             .curve()
-            .point_at(&Real::zero(), &CurvePolicy::STRICT)
+            .point_at(&Real::zero(), &CurveContext::STRICT)
             .unwrap(),
         curve.start().clone()
     );
@@ -871,7 +873,7 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
             .last()
             .unwrap()
             .curve()
-            .point_at(&Real::one(), &CurvePolicy::STRICT)
+            .point_at(&Real::one(), &CurveContext::STRICT)
             .unwrap(),
         curve.end().clone()
     );

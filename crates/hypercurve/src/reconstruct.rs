@@ -15,7 +15,7 @@ use std::f64::consts::PI;
 use hyperreal::Real;
 
 use crate::{
-    BulgeVertex2, Contour2, CurveError, CurveFamily2, CurveOperation2, CurvePolicy, CurveRegion2,
+    BulgeVertex2, Contour2, CurveContext, CurveError, CurveFamily2, CurveOperation2, CurveRegion2,
     CurveResult, CurveString2, ExactCurveError, ExactCurveResult, FillRule, FinitePolyline2,
     FiniteRegionProfile2, LineSeg2, Point2, Segment2,
 };
@@ -338,7 +338,7 @@ impl CurveRegion2 {
     pub fn recover_from_finite_profiles(
         profiles: &[FiniteRegionProfile2],
         options: PolylineReconstructionOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let mut material_contours = Vec::with_capacity(profiles.len());
         let hole_count = profiles.iter().map(|profile| profile.holes().len()).sum();

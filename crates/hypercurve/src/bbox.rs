@@ -12,8 +12,8 @@ use hyperreal::Real;
 
 use crate::classify::compare_reals;
 use crate::{
-    CircularArc2, Classification, Contour2, CurvePolicy, CurveResult, CurveString2, LineArcRegion2,
-    LineSeg2, Point2, RegionView2, Segment2, UncertaintyReason,
+    CircularArc2, Classification, Contour2, CurveContext, CurveResult, CurveString2,
+    LineArcRegion2, LineSeg2, Point2, RegionView2, Segment2, UncertaintyReason,
 };
 
 /// An axis-aligned bounding box for two-dimensional curve geometry.
@@ -49,7 +49,7 @@ impl Aabb2 {
     ///
     /// Empty input is reported as unsupported because there is no neutral finite
     /// bounding box for an empty point set in this crate's Real model.
-    pub fn from_points<'a, I>(points: I, policy: &CurvePolicy) -> Classification<Self>
+    pub fn from_points<'a, I>(points: I, policy: &CurveContext) -> Classification<Self>
     where
         I: IntoIterator<Item = &'a Point2>,
     {
@@ -78,7 +78,7 @@ impl Aabb2 {
     }
 
     /// Constructs the bounding box of a finite line segment.
-    pub fn from_line(line: &LineSeg2, policy: &CurvePolicy) -> Classification<Self> {
+    pub fn from_line(line: &LineSeg2, policy: &CurveContext) -> Classification<Self> {
         Self::from_points([line.start(), line.end()], policy)
     }
 
@@ -90,7 +90,10 @@ impl Aabb2 {
     /// cardinal point is uncertain, that point is included conservatively. A
     /// looser box is safe for broad-phase filtering while omitting an uncertain
     /// extremum could hide a true intersection.
-    pub fn from_arc(arc: &CircularArc2, policy: &CurvePolicy) -> CurveResult<Classification<Self>> {
+    pub fn from_arc(
+        arc: &CircularArc2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
         let mut bbox = match Self::from_points([arc.start(), arc.end()], policy) {
             Classification::Decided(bbox) => bbox,
             Classification::Uncertain(reason) => {
@@ -104,7 +107,7 @@ impl Aabb2 {
             }
         };
 
-        if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+        if policy.is_edge_preview() {
             // Preview topology prefers conservative candidate retention over a
             // tight arc box. Cardinal sweep tests contain radicals after
             // rotation; keeping the full circle envelope prevents broad-phase
@@ -175,7 +178,7 @@ impl Aabb2 {
     /// Constructs the bounding box of a native line or circular-arc segment.
     pub fn from_segment(
         segment: &Segment2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match segment {
             Segment2::Line(line) => Ok(Self::from_line(line, policy)),
@@ -186,7 +189,7 @@ impl Aabb2 {
     /// Constructs the bounding box of an open curve string.
     pub fn from_curve_string(
         curve: &CurveString2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if curve
             .segments()
@@ -234,7 +237,7 @@ impl Aabb2 {
     /// Constructs the bounding box of a closed contour.
     pub fn from_contour(
         contour: &Contour2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if contour
             .segments()
@@ -259,7 +262,7 @@ impl Aabb2 {
     /// containment proof.
     pub fn from_region(
         region: &LineArcRegion2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         Self::from_region_view(&region.as_view(), policy)
     }
@@ -271,7 +274,7 @@ impl Aabb2 {
     /// fast paths should handle emptiness before asking for a box.
     pub fn from_region_view(
         region: &RegionView2<'_>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         let mut contours = region
             .material_contours()
@@ -335,7 +338,7 @@ impl Aabb2 {
     ///
     /// This certifies boxes that entered through [`Self::new_unchecked`] before
     /// they are retained as provenance-bearing evidence.
-    pub fn has_valid_ordering(&self, policy: &CurvePolicy) -> Classification<bool> {
+    pub fn has_valid_ordering(&self, policy: &CurveContext) -> Classification<bool> {
         let Some(x_order) = compare_reals(self.min_x(), self.max_x(), policy) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
@@ -348,7 +351,7 @@ impl Aabb2 {
     }
 
     /// Expands this box so it contains `point`.
-    pub fn include_point(&mut self, point: &Point2, policy: &CurvePolicy) -> Classification<()> {
+    pub fn include_point(&mut self, point: &Point2, policy: &CurveContext) -> Classification<()> {
         let mut min_x = self.min.x().clone();
         let mut min_y = self.min.y().clone();
         let mut max_x = self.max.x().clone();
@@ -366,7 +369,7 @@ impl Aabb2 {
     }
 
     /// Returns the smallest box containing both inputs.
-    pub fn union(&self, other: &Self, policy: &CurvePolicy) -> Classification<Self> {
+    pub fn union(&self, other: &Self, policy: &CurveContext) -> Classification<Self> {
         let mut merged = self.clone();
         match merged.include_point(other.min(), policy) {
             Classification::Decided(()) => {}
@@ -379,14 +382,14 @@ impl Aabb2 {
     }
 
     /// Classifies whether this closed box contains `point`.
-    pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         #[cfg(feature = "predicates")]
-        if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+        if !policy.is_edge_preview() {
             return match policy.consume_predicate(hyperlimit::point_in_ordered_aabb2_coordinates(
                 [self.min_x(), self.min_y()],
                 [self.max_x(), self.max_y()],
                 [point.x(), point.y()],
-                policy.predicate_policy,
+                policy.predicate_policy(),
             )) {
                 Some(value) => Classification::Decided(value),
                 None => Classification::Uncertain(UncertaintyReason::Ordering),
@@ -410,15 +413,15 @@ impl Aabb2 {
     ///
     /// Edge and corner contacts count as overlap. This inclusive convention is
     /// necessary for tangent, endpoint, and shared-boundary curve topology.
-    pub fn overlaps(&self, other: &Self, policy: &CurvePolicy) -> Classification<bool> {
+    pub fn overlaps(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
         #[cfg(feature = "predicates")]
-        if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+        if !policy.is_edge_preview() {
             return match policy.consume_predicate(hyperlimit::ordered_aabb2s_intersect_coordinates(
                 [self.min_x(), self.min_y()],
                 [self.max_x(), self.max_y()],
                 [other.min_x(), other.min_y()],
                 [other.max_x(), other.max_y()],
-                policy.predicate_policy,
+                policy.predicate_policy(),
             )) {
                 Some(value) => Classification::Decided(value),
                 None => Classification::Uncertain(UncertaintyReason::Ordering),
@@ -473,7 +476,7 @@ impl Aabb2 {
     pub fn singleton_intersection(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Option<Point2>> {
         let x = match singleton_interval_intersection(
             self.min_x(),
@@ -504,7 +507,7 @@ fn singleton_interval_intersection(
     first_max: &Real,
     second_min: &Real,
     second_max: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<Real>> {
     let lower = match compare_reals(first_min, second_min, policy) {
         Some(Ordering::Less) => second_min,
@@ -523,21 +526,21 @@ fn singleton_interval_intersection(
     }
 }
 
-pub(crate) fn decided_segment_aabb(segment: &Segment2, policy: &CurvePolicy) -> Option<Aabb2> {
+pub(crate) fn decided_segment_aabb(segment: &Segment2, policy: &CurveContext) -> Option<Aabb2> {
     match Aabb2::from_segment(segment, policy) {
         Ok(Classification::Decided(bbox)) => Some(bbox),
         Ok(Classification::Uncertain(_)) | Err(_) => None,
     }
 }
 
-pub(crate) fn decided_contour_aabb(contour: &Contour2, policy: &CurvePolicy) -> Option<Aabb2> {
+pub(crate) fn decided_contour_aabb(contour: &Contour2, policy: &CurveContext) -> Option<Aabb2> {
     match Aabb2::from_contour(contour, policy) {
         Ok(Classification::Decided(bbox)) => Some(bbox),
         Ok(Classification::Uncertain(_)) | Err(_) => None,
     }
 }
 
-pub(crate) fn aabbs_decided_disjoint(first: &Aabb2, second: &Aabb2, policy: &CurvePolicy) -> bool {
+pub(crate) fn aabbs_decided_disjoint(first: &Aabb2, second: &Aabb2, policy: &CurveContext) -> bool {
     matches!(
         first.overlaps(second, policy),
         Classification::Decided(false)
@@ -547,7 +550,7 @@ pub(crate) fn aabbs_decided_disjoint(first: &Aabb2, second: &Aabb2, policy: &Cur
 pub(crate) fn aabb_decided_misses_point(
     bbox: &Aabb2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     matches!(
         bbox.contains_point(point, policy),
@@ -558,7 +561,7 @@ pub(crate) fn aabb_decided_misses_point(
 pub(crate) fn aabb_decided_strictly_right_of_point(
     bbox: &Aabb2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     matches!(
         compare_reals(bbox.min_x(), point.x(), policy),
@@ -570,9 +573,9 @@ fn include_coordinate(
     min: &mut Real,
     max: &mut Real,
     value: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<()> {
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+    if policy.is_edge_preview()
         && let (Some(value_approx), Some(min_approx), Some(max_approx)) =
             (value.to_f64_lossy(), min.to_f64_lossy(), max.to_f64_lossy())
         && value_approx.is_finite()
@@ -597,13 +600,13 @@ fn include_coordinate(
     Some(())
 }
 
-fn real_less(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+fn real_less(left: &Real, right: &Real, policy: &CurveContext) -> Option<bool> {
+    if policy.is_edge_preview()
         && let (Some(left), Some(right)) = (left.to_f64_lossy(), right.to_f64_lossy())
         && left.is_finite()
         && right.is_finite()
     {
-        return Some(left < right - edge_preview_tolerance(policy));
+        return Some(left < right - edge_preview_tolerance());
     }
 
     Some(matches!(
@@ -612,15 +615,15 @@ fn real_less(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
     ))
 }
 
-fn real_between(value: &Real, min: &Real, max: &Real, policy: &CurvePolicy) -> Option<bool> {
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+fn real_between(value: &Real, min: &Real, max: &Real, policy: &CurveContext) -> Option<bool> {
+    if policy.is_edge_preview()
         && let (Some(value), Some(min), Some(max)) =
             (value.to_f64_lossy(), min.to_f64_lossy(), max.to_f64_lossy())
         && value.is_finite()
         && min.is_finite()
         && max.is_finite()
     {
-        let tolerance = edge_preview_tolerance(policy);
+        let tolerance = edge_preview_tolerance();
         return Some(value >= min - tolerance && value <= max + tolerance);
     }
 
@@ -653,9 +656,8 @@ fn real_between(value: &Real, min: &Real, max: &Real, policy: &CurvePolicy) -> O
     Some(!matches!(upper, Ordering::Greater))
 }
 
-fn edge_preview_tolerance(policy: &CurvePolicy) -> f64 {
-    policy
-        .preview_tolerance
+fn edge_preview_tolerance() -> f64 {
+    crate::policy::preview_tolerance()
         .map(|tolerance| tolerance.absolute.max(tolerance.relative))
         .unwrap_or(1e-12)
 }

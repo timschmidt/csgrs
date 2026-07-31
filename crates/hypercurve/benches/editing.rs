@@ -2,7 +2,7 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveResult,
+    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveResult,
     CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineArcRegion2, LineSeg2,
     Point2, Real, Segment2,
 };
@@ -63,7 +63,7 @@ fn bench_parameter_trim(iterations: u32) -> CurveResult<()> {
         line_segment(10, 0, 10, 6),
         line_segment(10, 6, 16, 6),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -91,7 +91,7 @@ fn bench_point_arc_trim(iterations: u32) -> CurveResult<()> {
         p(2, 0),
         s(1),
     )?)])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -118,7 +118,7 @@ fn bench_parameter_arc_trim(iterations: u32) -> CurveResult<()> {
         p(2, 0),
         s(1),
     )?)])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let start = CurveStringTrimPoint2::new(0, q(1, 7));
     let end = CurveStringTrimPoint2::new(0, q(5, 7));
     let started = Instant::now();
@@ -142,7 +142,7 @@ fn bench_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 10, 0)])?;
     let start_cutter = CurveString2::try_new(vec![line_segment(2, -1, 2, 1)])?;
     let end_cutter = CurveString2::try_new(vec![line_segment(8, -1, 8, 1)])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -167,7 +167,7 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)])?;
     let region =
         LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)]);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_outputs = 0_usize;
 
@@ -191,7 +191,7 @@ fn bench_line_chamfer(iterations: u32) -> CurveResult<()> {
         line_segment(4, 0, 4, 4),
         line_segment(4, 4, 8, 4),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -216,7 +216,7 @@ fn bench_arc_chamfer(iterations: u32) -> CurveResult<()> {
         Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1))?),
         Segment2::Arc(CircularArc2::from_bulge(p(2, 0), p(4, 0), s(1))?),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -242,7 +242,7 @@ fn bench_line_fillet(iterations: u32) -> CurveResult<()> {
         line_segment(4, 0, 4, 4),
         line_segment(4, 4, 8, 4),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -276,7 +276,7 @@ fn bench_arc_fillet(iterations: u32) -> CurveResult<()> {
         Point2::new(q(13, 2), s(1)),
         true,
     )?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let Classification::Decided(previous_param) = previous_arc.sweep_fraction(&p(3, 0), &policy)?
     else {
         panic!("previous arc fillet parameter must be decided");
@@ -318,7 +318,7 @@ fn bench_arc_extension(iterations: u32) -> CurveResult<()> {
         p(0, 0),
         false,
     )?)])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -346,7 +346,7 @@ fn bench_curve_string_line_merge_evidence(iterations: u32) -> CurveResult<()> {
         line_segment(5, 0, 5, 3),
         line_segment(5, 3, 5, 7),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_spans = 0_usize;
 
@@ -395,7 +395,7 @@ fn bench_curve_string_reversed_duplicate_evidence(iterations: u32) -> CurveResul
 fn bench_curve_string_pair_link_evidence(iterations: u32) -> CurveResult<()> {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)])?;
     let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -422,7 +422,7 @@ fn bench_curve_string_ordered_link_evidence(iterations: u32) -> CurveResult<()> 
         CurveString2::try_new(vec![line_segment(1, 0, 2, 0)])?,
         CurveString2::try_new(vec![line_segment(2, 0, 3, 0)])?,
     ];
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -443,7 +443,7 @@ fn bench_curve_string_ordered_link_evidence(iterations: u32) -> CurveResult<()> 
 fn bench_curve_string_connect_evidence(iterations: u32) -> CurveResult<()> {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)])?;
     let second = CurveString2::try_new(vec![line_segment(3, 1, 4, 1)])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -465,7 +465,7 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     let material = rectangle(0, 0, 10, 10);
     let hole = rectangle(2, 2, 8, 8);
     let island = rectangle(4, 4, 6, 6);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_roles = 0_usize;
 
@@ -495,7 +495,7 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
         line(0, 0, 0, 10),
         line(10, 0, 10, 10),
     ];
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_request_sources = 0_usize;
     let mut total_evidence_counts = 0_usize;
@@ -550,7 +550,7 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
         Segment2::Line(line(4, 0, 0, 0)),
         Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(4, 0), s(1))?),
     ];
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_request_sources = 0_usize;
     let mut total_evidence_counts = 0_usize;
@@ -601,7 +601,7 @@ fn bench_region_arrangement_immediate_replay(iterations: u32) -> CurveResult<()>
         line(10, 10, 0, 10),
         line(0, 10, 0, 0),
     ];
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let result =
         LineArcRegion2::arrange_unordered_line_segments(lines, FillRule::NonZero, &policy)?;
     let started = Instant::now();
@@ -630,7 +630,7 @@ fn bench_contour_line_merge_evidence(iterations: u32) -> CurveResult<()> {
         vertex(5, 7, 0),
         vertex(0, 7, 0),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_spans = 0_usize;
 
@@ -653,7 +653,7 @@ fn bench_contour_line_merge_evidence(iterations: u32) -> CurveResult<()> {
 fn bench_region_boolean(iterations: u32) -> CurveResult<()> {
     let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_boundary_contours = 0_usize;
 

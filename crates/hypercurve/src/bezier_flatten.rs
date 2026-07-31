@@ -13,7 +13,7 @@ use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, is_zero, orient2_real_expr, real_sign};
 use crate::{
-    BezierSubcurve2, Classification, CubicBezier2, Curve2, CurveError, CurvePath2, CurvePolicy,
+    BezierSubcurve2, Classification, CubicBezier2, Curve2, CurveContext, CurveError, CurvePath2,
     CurveResult, ExactCurveResult, Point2, QuadraticBezier2, UncertaintyReason,
 };
 
@@ -26,7 +26,7 @@ pub struct BezierFlatteningOptions {
 
 impl BezierFlatteningOptions {
     /// Constructs flattening options after certifying a positive error budget.
-    pub fn try_new(max_error: Real, max_depth: usize, policy: &CurvePolicy) -> CurveResult<Self> {
+    pub fn try_new(max_error: Real, max_depth: usize, policy: &CurveContext) -> CurveResult<Self> {
         if max_depth == 0 {
             return Err(CurveError::InvalidFlatteningOptions);
         }
@@ -126,7 +126,7 @@ impl QuadraticBezier2 {
     pub fn flatten_certified(
         &self,
         options: &BezierFlatteningOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<CertifiedBezierPolyline2> {
         flatten_curve(self.clone(), options, policy)
     }
@@ -137,7 +137,7 @@ impl CubicBezier2 {
     pub fn flatten_certified(
         &self,
         options: &BezierFlatteningOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<CertifiedBezierPolyline2> {
         flatten_curve(self.clone(), options, policy)
     }
@@ -151,7 +151,7 @@ impl BezierSubcurve2 {
     pub fn flatten_certified(
         &self,
         options: &BezierFlatteningOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<CertifiedBezierPolyline2> {
         flatten_curve(self.clone(), options, policy)
     }
@@ -162,7 +162,7 @@ impl Curve2 {
     pub fn segment_certified(
         &self,
         options: &BezierFlatteningOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CertifiedCurvePolyline2>> {
         segment_native_fragments(self.native_bezier_fragments()?, options, policy)
     }
@@ -173,7 +173,7 @@ impl CurvePath2 {
     pub fn segment_certified(
         &self,
         options: &BezierFlatteningOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CertifiedCurvePolyline2>> {
         segment_native_fragments(self.native_bezier_fragments()?, options, policy)
     }
@@ -183,8 +183,8 @@ trait FlattenableBezier: Clone {
     fn start(&self) -> &Point2;
     fn end(&self) -> &Point2;
     fn controls(&self) -> Vec<&Point2>;
-    fn split_half(&self, policy: &CurvePolicy) -> Result<(Self, Self), UncertaintyReason>;
-    fn certify_convex_hull(&self, _policy: &CurvePolicy) -> Result<(), UncertaintyReason> {
+    fn split_half(&self, policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason>;
+    fn certify_convex_hull(&self, _policy: &CurveContext) -> Result<(), UncertaintyReason> {
         Ok(())
     }
 }
@@ -202,7 +202,7 @@ impl FlattenableBezier for QuadraticBezier2 {
         self.control_points().into_iter().collect()
     }
 
-    fn split_half(&self, _policy: &CurvePolicy) -> Result<(Self, Self), UncertaintyReason> {
+    fn split_half(&self, _policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason> {
         Ok(self.split_at_exact(half()?))
     }
 }
@@ -220,7 +220,7 @@ impl FlattenableBezier for CubicBezier2 {
         self.control_points().into_iter().collect()
     }
 
-    fn split_half(&self, _policy: &CurvePolicy) -> Result<(Self, Self), UncertaintyReason> {
+    fn split_half(&self, _policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason> {
         Ok(self.split_at_exact(half()?))
     }
 }
@@ -243,7 +243,7 @@ impl FlattenableBezier for BezierSubcurve2 {
         }
     }
 
-    fn split_half(&self, policy: &CurvePolicy) -> Result<(Self, Self), UncertaintyReason> {
+    fn split_half(&self, policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason> {
         let half = half()?;
         let left = match self.subcurve_between_exact(&Real::zero(), &half, policy) {
             Ok(Classification::Decided(curve)) => curve,
@@ -258,7 +258,7 @@ impl FlattenableBezier for BezierSubcurve2 {
         Ok((left, right))
     }
 
-    fn certify_convex_hull(&self, policy: &CurvePolicy) -> Result<(), UncertaintyReason> {
+    fn certify_convex_hull(&self, policy: &CurveContext) -> Result<(), UncertaintyReason> {
         let weights = match self {
             Self::Quadratic(_) | Self::Cubic(_) => return Ok(()),
             Self::RationalQuadratic(curve) => curve.weights().into_iter().collect::<Vec<_>>(),
@@ -284,7 +284,7 @@ impl FlattenableBezier for BezierSubcurve2 {
 fn flatten_curve<C>(
     curve: C,
     options: &BezierFlatteningOptions,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<CertifiedBezierPolyline2>
 where
     C: FlattenableBezier,
@@ -320,7 +320,7 @@ where
 fn segment_native_fragments(
     fragments: &[crate::NativeBezierFragment2],
     options: &BezierFlatteningOptions,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Classification<CertifiedCurvePolyline2>> {
     let mut points = Vec::new();
     let mut max_depth = 0_usize;
@@ -355,7 +355,7 @@ fn flatten_recursive<C>(
     max_error_squared: &Real,
     max_depth: usize,
     depth: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     points: &mut Vec<Point2>,
     max_depth_used: &mut usize,
 ) -> Result<(), UncertaintyReason>
@@ -394,7 +394,7 @@ where
 fn curve_is_flat<C>(
     curve: &C,
     max_error_squared: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<bool, UncertaintyReason>
 where
     C: FlattenableBezier,
@@ -426,7 +426,7 @@ fn squared_distance_within(
     point: &Point2,
     center: &Point2,
     max_error_squared: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<bool, UncertaintyReason> {
     match compare_reals(&point.distance_squared(center), max_error_squared, policy) {
         Some(Ordering::Less | Ordering::Equal) => Ok(true),
@@ -450,7 +450,7 @@ mod tests {
     #[test]
     fn cubic_half_split_keeps_exact_de_casteljau_values() {
         let curve = CubicBezier2::new(point(0, 0), point(2, 0), point(4, 0), point(6, 0));
-        let (left, right) = curve.split_half(&CurvePolicy::STRICT).unwrap();
+        let (left, right) = curve.split_half(&CurveContext::STRICT).unwrap();
 
         let left_controls = left
             .control_points()
@@ -474,7 +474,7 @@ mod tests {
 
     #[test]
     fn flatten_certificate_evidence_actual_depth_used() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let options = BezierFlatteningOptions::try_new(Real::one(), 8, &policy).unwrap();
         let curve = QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 0));
 

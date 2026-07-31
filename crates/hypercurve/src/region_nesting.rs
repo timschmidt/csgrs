@@ -13,8 +13,8 @@ use crate::bbox::{
 };
 use crate::classify::{compare_reals, real_sign};
 use crate::{
-    ArcArcIntersection, CircularArc2, Classification, Contour2, ContourPointLocation, CurveError,
-    CurvePolicy, CurveResult, FillRule, LineArcIntersection, LineArcOrder, LineArcRegion2,
+    ArcArcIntersection, CircularArc2, Classification, Contour2, ContourPointLocation, CurveContext,
+    CurveError, CurveResult, FillRule, LineArcIntersection, LineArcOrder, LineArcRegion2,
     LineLineIntersection, LineSeg2, ParamRange, Point2, RetainedTopologyStatus, Segment2,
     SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
@@ -1225,7 +1225,7 @@ enum BoundaryContourNestingOutcome {
 fn evaluate_unordered_line_segments_region_result(
     segments: &[LineSeg2],
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
     if segments.is_empty() {
         return Err(CurveError::EmptyCurveString);
@@ -1402,7 +1402,7 @@ fn evaluate_unordered_line_segments_region_result(
 fn evaluate_unordered_segments_region_result(
     segments: &[Segment2],
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
     if segments.is_empty() {
         return Err(CurveError::EmptyCurveString);
@@ -1579,7 +1579,7 @@ impl LineArcRegion2 {
     pub fn arrange_unordered_segments(
         source_segments: Vec<Segment2>,
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RegionArrangement2> {
         evaluate_exact_curve_arrangement(
             ExactCurveArrangementRequest2::from_unordered_segments(source_segments, fill_rule),
@@ -1591,7 +1591,7 @@ impl LineArcRegion2 {
     pub fn arrange_unordered_segments_borrowed(
         source_segments: &[Segment2],
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RegionArrangement2> {
         evaluate_exact_curve_arrangement(
             ExactCurveArrangementRequest2::from_borrowed_unordered_segments(
@@ -1606,7 +1606,7 @@ impl LineArcRegion2 {
     pub fn arrange_unordered_line_segments(
         source_segments: Vec<LineSeg2>,
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RegionArrangement2> {
         evaluate_exact_curve_arrangement(
             ExactCurveArrangementRequest2::from_unordered_line_segments(source_segments, fill_rule),
@@ -1618,7 +1618,7 @@ impl LineArcRegion2 {
     pub fn arrange_unordered_line_segments_borrowed(
         source_segments: &[LineSeg2],
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RegionArrangement2> {
         evaluate_exact_curve_arrangement(
             ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
@@ -1637,7 +1637,7 @@ impl LineArcRegion2 {
     /// output loops.
     pub fn from_boundary_contours(
         contours: Vec<Contour2>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         Ok(match contour_nesting_depths(&contours, policy)? {
             BoundaryContourNestingOutcome::Decided { nesting, .. } => {
@@ -1651,7 +1651,7 @@ impl LineArcRegion2 {
 
     pub(crate) fn from_validated_boundary_contours(
         contours: Vec<Contour2>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if contours.len() <= 1 {
             return Ok(Classification::Decided(Self::from_material_contours(
@@ -1672,7 +1672,7 @@ impl LineArcRegion2 {
 
     pub(crate) fn from_directed_boolean_boundary_contours(
         contours: Vec<Contour2>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if contours.len() <= 1 {
             return Ok(Classification::Decided(Self::from_material_contours(
@@ -1711,7 +1711,7 @@ impl LineArcRegion2 {
     /// [`LineArcRegion2::from_boundary_contours`].
     pub fn from_boundary_contours_borrowed(
         contours: &[Contour2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         Self::from_boundary_contours(contours.to_vec(), policy)
     }
@@ -1725,7 +1725,7 @@ impl LineArcRegion2 {
     /// region is materialized and the evidence carries the blocker.
     pub(crate) fn from_boundary_contours_with_evidence(
         contours: Vec<Contour2>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RegionBoundaryContourBuildResult2> {
         let source_contour_count = contours.len();
         let source_segment_count = contours
@@ -2120,7 +2120,7 @@ impl ExactCurveWorkspace2 {
     /// Builds retained workspace facts for a canonical arrangement request.
     pub fn from_request(
         request: ExactCurveArrangementRequest2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         let source_segment_kind_counts = segment_kind_counts(&request.source_segments);
         let source_segment_aabbs = source_segment_aabbs(&request.source_segments, policy)?;
@@ -6930,7 +6930,7 @@ impl RegionArrangementSummary2 {
 
 fn evaluate_exact_curve_arrangement(
     request: ExactCurveArrangementRequest2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<RegionArrangement2> {
     let staging_result = if let Some(source_line_segments) = request.source_line_segments.as_ref() {
         evaluate_unordered_line_segments_region_result(
@@ -8807,7 +8807,7 @@ struct ArrangedLineEndpoint {
 
 fn validate_arranged_line_endpoint_graph(
     segments: &[ArrangedLineSegment],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<
     (
         LineSegmentEndpointGraphEvidenceParts,
@@ -8938,7 +8938,7 @@ fn arranged_line_endpoint_point(
 
 fn validate_arranged_native_endpoint_graph(
     segments: &[ArrangedNativeSegment],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<
     (
         LineSegmentEndpointGraphEvidenceParts,
@@ -9050,7 +9050,7 @@ fn arranged_native_endpoint_point(
 
 fn arrange_line_segments_at_point_intersections(
     segments: &[LineSeg2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<ArrangedLineSegments, (LineSegmentSplitEvidenceParts, UncertaintyReason)>> {
     let mut evidence = LineSegmentSplitEvidenceParts {
         predicate_path: Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine),
@@ -9209,7 +9209,7 @@ fn arrange_line_segments_at_point_intersections(
 fn insert_line_split_marker(
     markers: &mut Vec<LineSegmentSplitMarker>,
     param: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<()> {
     for marker in markers.iter() {
         if compare_reals(&marker.param, &param, policy)? == Ordering::Equal {
@@ -9222,7 +9222,7 @@ fn insert_line_split_marker(
 
 fn sort_line_split_markers(
     markers: &mut [LineSegmentSplitMarker],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<()> {
     let mut failed = false;
     markers.sort_by(|left, right| {
@@ -9259,7 +9259,7 @@ fn set_split_blocker_pair(
 
 fn arrange_native_segments_at_point_intersections(
     segments: &[Segment2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<ArrangedNativeSegments, (LineSegmentSplitEvidenceParts, UncertaintyReason)>>
 {
     let mut evidence = LineSegmentSplitEvidenceParts {
@@ -9457,7 +9457,7 @@ enum NativeSegmentIntersectionMarkers {
 fn native_segment_intersection_split_markers(
     first: &Segment2,
     second: &Segment2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<NativeSegmentIntersectionMarkers> {
     match first.intersect_segment(second, policy)? {
         SegmentIntersection::LineLine(LineLineIntersection::None) => {
@@ -9554,7 +9554,7 @@ fn native_arc_arc_intersection_split_markers(
 fn insert_native_split_marker(
     markers: &mut Vec<NativeSegmentSplitMarker>,
     marker: NativeSegmentSplitMarker,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<()> {
     for existing in markers.iter() {
         if compare_reals(&existing.param, &marker.param, policy)? == Ordering::Equal {
@@ -9573,7 +9573,7 @@ fn insert_native_split_marker(
 
 fn sort_native_split_markers(
     markers: &mut [NativeSegmentSplitMarker],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<()> {
     let mut failed = false;
     markers.sort_by(|left, right| {
@@ -9595,7 +9595,7 @@ fn materialize_native_segment_between_markers(
     source_segment: &Segment2,
     start: &NativeSegmentSplitMarker,
     end: &NativeSegmentSplitMarker,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<NativeSegmentMaterialization> {
     match crate::classify::is_zero(&start.point.distance_squared(&end.point), policy) {
         Some(true) => return Ok(NativeSegmentMaterialization::SkippedEmpty),
@@ -9621,7 +9621,7 @@ fn materialize_arc_between_markers(
     source_arc: &CircularArc2,
     start: &Point2,
     end: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<NativeSegmentMaterialization> {
     match (
         source_arc.contains_point(start, policy),
@@ -9650,7 +9650,7 @@ fn materialize_arc_between_markers(
 
 fn assemble_unordered_line_segment_rings(
     segments: &[ArrangedLineSegment],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<
     Result<LineSegmentRingAssembly, (LineSegmentRingAssemblyEvidenceParts, UncertaintyReason)>,
 > {
@@ -9771,7 +9771,7 @@ fn unique_next_line_segment(
     target: &Point2,
     segments: &[ArrangedLineSegment],
     used: &[bool],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     counts: &mut LineSegmentRingAssemblyCounts,
 ) -> Classification<Option<NextLineSegment>> {
     let mut selected = None;
@@ -9812,7 +9812,7 @@ struct NativeSegmentRingAssembly {
 
 fn assemble_unordered_native_segment_rings(
     segments: &[ArrangedNativeSegment],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<
     Result<NativeSegmentRingAssembly, (LineSegmentRingAssemblyEvidenceParts, UncertaintyReason)>,
 > {
@@ -9917,7 +9917,7 @@ fn unique_next_native_segment(
     target: &Point2,
     segments: &[ArrangedNativeSegment],
     used: &[bool],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     counts: &mut LineSegmentRingAssemblyCounts,
 ) -> Classification<Option<NextLineSegment>> {
     let mut selected = None;
@@ -9951,7 +9951,7 @@ fn unique_next_native_segment(
 fn exact_points_match(
     left: &Point2,
     right: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     counts: &mut LineSegmentRingAssemblyCounts,
 ) -> Classification<bool> {
     counts.attempted_endpoint_connection_count += 1;
@@ -10089,7 +10089,7 @@ fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
 
 fn source_segment_aabbs(
     segments: &[Segment2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Vec<Option<Aabb2>>> {
     segments
         .iter()
@@ -10160,7 +10160,7 @@ fn add_source_endpoint_bucket_ref(
 
 fn split_schedule_cache(
     source_segment_aabbs: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveArrangementSplitScheduleCache2 {
     let candidate_pair_count = source_segment_aabbs
         .len()
@@ -10319,7 +10319,7 @@ fn add_arranged_endpoint_bucket_ref(
     }
 }
 
-fn union_decided_aabbs(segment_aabbs: &[Option<Aabb2>], policy: &CurvePolicy) -> Option<Aabb2> {
+fn union_decided_aabbs(segment_aabbs: &[Option<Aabb2>], policy: &CurveContext) -> Option<Aabb2> {
     if segment_aabbs.iter().any(Option::is_none) {
         return None;
     }
@@ -10526,14 +10526,17 @@ fn retained_status_for_boundary_contour_blocker(
     }
 }
 
-fn line_contour_directed_orientation(contour: &Contour2, policy: &CurvePolicy) -> Option<RealSign> {
+fn line_contour_directed_orientation(
+    contour: &Contour2,
+    policy: &CurveContext,
+) -> Option<RealSign> {
     line_contour_direction_winding_orientation(contour, policy)
         .or_else(|| line_contour_extreme_vertex_orientation(contour, policy))
 }
 
 fn line_contour_extreme_vertex_orientation(
     contour: &Contour2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<RealSign> {
     let segments = contour.segments();
     let Segment2::Line(first) = segments.first()? else {
@@ -10576,7 +10579,7 @@ fn line_contour_extreme_vertex_orientation(
 
 fn line_contour_direction_winding_orientation(
     contour: &Contour2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<RealSign> {
     // The tangent map of a simple closed polyline has rotation index +1 or -1,
     // matching the contour orientation. Connecting consecutive nonzero edge
@@ -10613,7 +10616,7 @@ fn accumulate_direction_winding(
     previous: &(Real, Real),
     next: &(Real, Real),
     winding: &mut i32,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<()> {
     let previous_y = real_sign(&previous.1, policy)?;
     let next_y = real_sign(&next.1, policy)?;
@@ -10660,7 +10663,7 @@ fn accumulate_direction_winding(
 
 fn contour_aabb_overlap_neighbors(
     contour_boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Vec<Vec<usize>>> {
     const MIN_RETAINED_NEIGHBOR_COUNT: usize = 4_096;
     const RETAINED_NEIGHBORS_PER_CONTOUR: usize = 32;
@@ -10735,7 +10738,7 @@ fn contour_aabb_overlap_neighbors(
     Some(neighbors)
 }
 
-fn aabb_may_contain(outer: &Aabb2, inner: &Aabb2, policy: &CurvePolicy) -> bool {
+fn aabb_may_contain(outer: &Aabb2, inner: &Aabb2, policy: &CurveContext) -> bool {
     let mut predicates = [
         (
             outer
@@ -10786,14 +10789,14 @@ fn aabb_may_contain(outer: &Aabb2, inner: &Aabb2, policy: &CurvePolicy) -> bool 
 
 fn contour_nesting_depths(
     contours: &[Contour2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<BoundaryContourNestingOutcome> {
     contour_nesting_depths_impl(contours, policy, true)
 }
 
 fn contour_nesting_depths_impl(
     contours: &[Contour2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     validate_intersections: bool,
 ) -> CurveResult<BoundaryContourNestingOutcome> {
     let candidate_pair_count = contours
@@ -11043,7 +11046,7 @@ mod tests {
     };
     use crate::{
         BulgeVertex2, Contour2, ContourIntersection, ContourIntersectionSet,
-        ContourPointIntersection, ContourUncertainIntersection, CurvePolicy, IntersectionKind,
+        ContourPointIntersection, ContourUncertainIntersection, CurveContext, IntersectionKind,
         LineSeg2, Point2, Segment2, SegmentKind, UncertaintyReason,
     };
     use hyperreal::{Real, RealSign};
@@ -11104,7 +11107,7 @@ mod tests {
         let points = [(0, 0), (4, 0), (4, 4), (2, 2), (0, 4)];
         let forward = line_contour(&points);
         let reverse = line_contour(&points.into_iter().rev().collect::<Vec<_>>());
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         assert_eq!(
             line_contour_directed_orientation(&forward, &policy),
@@ -11118,7 +11121,7 @@ mod tests {
 
     #[test]
     fn direction_winding_matches_extreme_vertex_on_simple_concave_contours() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         for points in [
             vec![(0, 0), (8, 0), (8, 8), (4, 4), (0, 8)],
             vec![
@@ -11152,7 +11155,7 @@ mod tests {
     #[test]
     fn direction_winding_tracks_reversed_retained_fragment_supports() {
         let points = [(0, 0), (8, 0), (8, 8), (4, 4), (0, 8)];
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let forward = retained_split_line_contour(&points, false);
         let reverse = retained_split_line_contour(&points, true);
 
@@ -11182,7 +11185,7 @@ mod tests {
                 &(Real::one(), Real::zero()),
                 &(-Real::one(), Real::zero()),
                 &mut winding,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             ),
             None
         );
@@ -11198,7 +11201,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            line_contour_directed_orientation(&contour, &CurvePolicy::STRICT),
+            line_contour_directed_orientation(&contour, &CurveContext::STRICT),
             None
         );
     }

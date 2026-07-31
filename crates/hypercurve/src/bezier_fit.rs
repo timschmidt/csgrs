@@ -11,7 +11,7 @@ use hyperreal::{Real, RealSign};
 use crate::classify::{classify_oriented_line, is_zero, real_sign};
 use crate::{
     Aabb2, BezierFlatteningCertificate, CertifiedBezierPolyline2, Classification, CubicBezier2,
-    CurveError, CurvePolicy, CurveResult, LineSeg2, LineSide, Point2, QuadraticBezier2,
+    CurveContext, CurveError, CurveResult, LineSeg2, LineSide, Point2, QuadraticBezier2,
     RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 
@@ -37,7 +37,7 @@ pub struct BezierFitCertificate {
     fit_error_bound: Real,
     source_flattening_error: Option<Real>,
     source_flattening_max_depth: Option<usize>,
-    construction_policy: CurvePolicy,
+    construction_policy: CurveContext,
     metric: BezierFitErrorMetric,
     bound_kind: BezierFitBoundKind,
 }
@@ -138,7 +138,7 @@ impl BezierFitCertificate {
         source_end: usize,
         source_flattening_error: Option<Real>,
         source_flattening_max_depth: Option<usize>,
-        construction_policy: &CurvePolicy,
+        construction_policy: &CurveContext,
     ) -> Self {
         Self {
             source_start,
@@ -146,7 +146,7 @@ impl BezierFitCertificate {
             fit_error_bound: Real::zero(),
             source_flattening_error,
             source_flattening_max_depth,
-            construction_policy: construction_policy.clone(),
+            construction_policy: *construction_policy,
             metric: BezierFitErrorMetric::ExactEuclideanDistance,
             bound_kind: BezierFitBoundKind::ProvenExact,
         }
@@ -178,7 +178,7 @@ impl BezierFitCertificate {
     }
 
     /// Returns the policy used to prove this fit.
-    pub const fn construction_policy(&self) -> &CurvePolicy {
+    pub const fn construction_policy(&self) -> &CurveContext {
         &self.construction_policy
     }
 
@@ -345,7 +345,7 @@ impl QuadraticBezier2 {
     /// Fits this quadratic Bezier to one exact point when possible.
     pub fn fit_exact_point_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierPointImageFitRelation>> {
         fit_control_polygon_point_image(&self.control_points(), policy)
     }
@@ -353,7 +353,7 @@ impl QuadraticBezier2 {
     /// Fits this quadratic Bezier to its exact endpoint line image when possible.
     pub fn fit_exact_line_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
         if let Some(line) = self.retained_exact_line_image() {
             return Ok(Classification::Decided(BezierLineImageFitRelation::Fit(
@@ -372,7 +372,7 @@ impl CubicBezier2 {
     /// Fits this cubic Bezier to one exact point when possible.
     pub fn fit_exact_point_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierPointImageFitRelation>> {
         fit_control_polygon_point_image(&self.control_points(), policy)
     }
@@ -380,7 +380,7 @@ impl CubicBezier2 {
     /// Fits this cubic Bezier to its exact endpoint line image when possible.
     pub fn fit_exact_line_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
         fit_control_polygon_line_image(&self.control_points(), policy)
     }
@@ -390,7 +390,7 @@ impl RationalQuadraticBezier2 {
     /// Fits this rational quadratic conic to one exact affine point when possible.
     pub fn fit_exact_point_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierPointImageFitRelation>> {
         match weights_known_same_nonzero_sign(self.weights().as_slice(), policy) {
             Some(true) => fit_control_polygon_point_image(&self.control_points(), policy),
@@ -402,7 +402,7 @@ impl RationalQuadraticBezier2 {
     /// Fits this rational quadratic conic to its exact endpoint line image when possible.
     pub fn fit_exact_line_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
         match weights_known_same_nonzero_sign(self.weights().as_slice(), policy) {
             Some(true) => fit_control_polygon_line_image(&self.control_points(), policy),
@@ -416,7 +416,7 @@ impl RationalBezier2 {
     /// Fits this rational Bezier to its exact endpoint line image when possible.
     pub fn fit_exact_line_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
         if let Some(line) = self.retained_exact_line_image() {
             return Ok(Classification::Decided(BezierLineImageFitRelation::Fit(
@@ -449,7 +449,7 @@ impl CertifiedBezierPolyline2 {
     /// Fits this certified polyline to one exact point when the fit has zero error.
     pub fn fit_exact_point(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierPointFitRelation>> {
         let Some(point) = self.points().first() else {
             return Err(CurveError::InsufficientVertices);
@@ -482,7 +482,7 @@ impl CertifiedBezierPolyline2 {
     /// Fits this certified polyline to one exact line when the fit has zero error.
     pub fn fit_exact_line(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineFitRelation>> {
         let Some(start) = self.points().first() else {
             return Err(CurveError::InsufficientVertices);
@@ -530,7 +530,7 @@ impl CertifiedBezierPolyline2 {
     }
 }
 
-fn weights_known_same_nonzero_sign(weights: &[&Real], policy: &CurvePolicy) -> Option<bool> {
+fn weights_known_same_nonzero_sign(weights: &[&Real], policy: &CurveContext) -> Option<bool> {
     let mut expected = None;
     for weight in weights {
         let sign = real_sign(weight, policy)?;
@@ -552,7 +552,7 @@ fn weights_known_same_nonzero_sign(weights: &[&Real], policy: &CurvePolicy) -> O
 
 fn fit_control_polygon_point_image(
     controls: &[&Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<BezierPointImageFitRelation>> {
     let Some(point) = controls.first().copied() else {
         return Err(CurveError::InsufficientVertices);
@@ -586,7 +586,7 @@ fn fit_control_polygon_point_image(
 
 fn fit_control_polygon_line_image(
     controls: &[&Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
     let Some(start) = controls.first().copied() else {
         return Err(CurveError::InsufficientVertices);
@@ -641,7 +641,7 @@ fn point_on_line_interval(
     end: &Point2,
     envelope: &Aabb2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     match classify_oriented_line(start, end, point, policy) {
         Classification::Decided(LineSide::On) => {}

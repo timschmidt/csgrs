@@ -28,7 +28,7 @@ use crate::intersect::{
     certified_line_segment_support_relation_with_exact_dyadic_f64_filter,
 };
 use crate::{
-    ArcArcIntersection, Classification, Contour2, CurveError, CurvePolicy, CurveResult,
+    ArcArcIntersection, Classification, Contour2, CurveContext, CurveError, CurveResult,
     IntersectionKind, LineArcIntersection, LineArcOrder, LineLineIntersection, ParamRange, Point2,
     Segment2, SegmentIntersection, SegmentKind, UncertaintyReason,
 };
@@ -137,7 +137,7 @@ impl CertifiedLineCrossingEvent {
         &self,
         other: &Self,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<Ordering> {
         match (&self.parameters, &other.parameters) {
             (
@@ -197,7 +197,7 @@ impl CertifiedLineCrossingEvent {
         &self,
         other: &Self,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<Ordering> {
         self.compare_parameter_impl::<false>(other, operand, policy)
     }
@@ -208,7 +208,7 @@ impl CertifiedLineCrossingEvent {
         &self,
         other: &Self,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<Ordering> {
         self.compare_parameter_impl::<true>(other, operand, policy)
     }
@@ -271,7 +271,7 @@ impl PartialEq for ContourIntersectionSet {
 impl ContourIntersectionSet {
     /// Constructs an event set from already-normalized events.
     pub fn new(events: Vec<ContourIntersection>) -> CurveResult<Self> {
-        validate_contour_intersection_events(&events, &CurvePolicy::STRICT)?;
+        validate_contour_intersection_events(&events, &CurveContext::STRICT)?;
         Ok(Self {
             storage: ContourIntersectionStorage::Materialized(events),
             certified_positive_line_crossings: None,
@@ -414,7 +414,7 @@ impl ContourIntersectionSet {
         &'a self,
         operand: ContourOperand,
         segment_index: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<&'a ContourIntersection>> {
         let mut sorted: Vec<(&ContourIntersection, Real)> = Vec::new();
 
@@ -444,7 +444,7 @@ impl ContourIntersectionSet {
 
 fn validate_contour_intersection_events(
     events: &[ContourIntersection],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     for (left_index, left) in events.iter().enumerate() {
         validate_contour_intersection_event(left, policy)?;
@@ -459,7 +459,7 @@ fn validate_contour_intersection_events(
 
 fn validate_contour_intersection_event(
     event: &ContourIntersection,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match event {
         ContourIntersection::Point(point) => {
@@ -478,7 +478,7 @@ fn validate_contour_intersection_event(
 
 fn validate_point_event_kind(
     point: &ContourPointIntersection,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     let Some(a_endpoint) = at_unit_interval_endpoint(&point.a_param, policy) else {
         return Err(CurveError::Topology(
@@ -511,7 +511,7 @@ fn validate_point_event_kind(
 
 fn validate_event_unit_parameter(
     parameter: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     name: &str,
 ) -> CurveResult<()> {
     if in_closed_unit_interval(parameter, policy) != Some(true) {
@@ -524,7 +524,7 @@ fn validate_event_unit_parameter(
 
 fn validate_event_unit_range(
     range: &ParamRange,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     name: &str,
 ) -> CurveResult<()> {
     validate_event_unit_parameter(range.start(), policy, name)?;
@@ -540,7 +540,7 @@ fn validate_event_unit_range(
     }
 }
 
-fn validate_overlap_event_geometry(segment: &Segment2, policy: &CurvePolicy) -> CurveResult<()> {
+fn validate_overlap_event_geometry(segment: &Segment2, policy: &CurveContext) -> CurveResult<()> {
     let value = match segment {
         Segment2::Line(line) => line.length_squared(),
         Segment2::Arc(arc) => arc.radius_squared(),
@@ -608,7 +608,7 @@ impl ContourIntersection {
     fn order_param(
         &self,
         operand: ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<Real, UncertaintyReason> {
         match self {
             Self::Point(event) => Ok(match operand {
@@ -686,7 +686,7 @@ pub struct ContourUncertainIntersection {
 pub(crate) fn intersect_contours(
     a: &Contour2,
     b: &Contour2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
     if let (Some(a_boxes), Some(b_boxes)) = (
         a.exact_dyadic_line_aabbs(policy),
@@ -727,7 +727,7 @@ pub(crate) fn intersect_contours_with_exact_dyadic_line_aabbs(
     b: &Contour2,
     a_boxes: &crate::contour::ExactDyadicLineAabbs,
     b_boxes: &crate::contour::ExactDyadicLineAabbs,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
     const MIN_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 256;
     const MAX_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 4_194_304;
@@ -748,7 +748,7 @@ pub(crate) fn intersect_contours_with_exact_dyadic_line_aabbs_point_only(
     b: &Contour2,
     a_boxes: &crate::contour::ExactDyadicLineAabbs,
     b_boxes: &crate::contour::ExactDyadicLineAabbs,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
     const MIN_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 256;
     const MAX_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 4_194_304;
@@ -769,7 +769,7 @@ fn intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
     b: &Contour2,
     a_boxes: &crate::contour::ExactDyadicLineAabbs,
     b_boxes: &crate::contour::ExactDyadicLineAabbs,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
     if matches!(
         a.retained_offset_relation(b, policy),
@@ -824,7 +824,7 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
     b: &Contour2,
     a_boxes: &crate::contour::ExactDyadicLineAabbs,
     b_boxes: &crate::contour::ExactDyadicLineAabbs,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
     if matches!(
         a.retained_offset_relation(b, policy),
@@ -1036,7 +1036,7 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
 
 pub(crate) fn intersect_contour_self(
     contour: &Contour2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
     let segment_boxes: Vec<_> = contour
         .segments()
@@ -1055,7 +1055,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     a_segment_boxes: &[Option<Aabb2>],
     b_segment_boxes: &[Option<Aabb2>],
     b_x_index: Option<&SegmentAabbXIndex>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
     if matches!(
         a.retained_offset_relation(b, policy),
@@ -1140,7 +1140,7 @@ impl SegmentAabbXIndex {
     pub(crate) fn try_new(
         boxes: &[Option<Aabb2>],
         segment_count: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<Self> {
         let mut ordered: Vec<_> = (0..segment_count)
             .filter(|index| boxes.get(*index).and_then(Option::as_ref).is_some())
@@ -1168,7 +1168,7 @@ impl SegmentAabbXIndex {
     pub(crate) fn prepare_interval_queries(
         &mut self,
         boxes: &[Option<Aabb2>],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> bool {
         self.subtree_maxima.resize(self.ordered.len(), 0);
         if !self.ordered.is_empty()
@@ -1199,7 +1199,7 @@ impl SegmentAabbXIndex {
         &self,
         boxes: &[Option<Aabb2>],
         query: &Aabb2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         candidates: &mut Vec<usize>,
     ) {
         self.collect_range(boxes, 0, self.ordered.len(), query, policy, candidates);
@@ -1209,7 +1209,7 @@ impl SegmentAabbXIndex {
         &self,
         boxes: &[Option<Aabb2>],
         query: &Aabb2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         candidates: &mut Vec<usize>,
     ) {
         candidates.extend(self.unknown.iter().copied());
@@ -1228,7 +1228,7 @@ impl SegmentAabbXIndex {
         start: usize,
         end: usize,
         query: &Aabb2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         candidates: &mut Vec<usize>,
     ) {
         if start == end
@@ -1268,7 +1268,7 @@ impl SegmentAabbXIndex {
 
 pub(crate) type BoxCoordinate = for<'a> fn(&'a Aabb2) -> &'a Real;
 
-fn compare_box(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Ordering> {
+fn compare_box(left: &Real, right: &Real, policy: &CurveContext) -> Option<Ordering> {
     if std::ptr::eq(left, right) {
         return Some(Ordering::Equal);
     }
@@ -1296,7 +1296,7 @@ pub(crate) fn sort_segment_indices_by_certified_box_coordinate(
     ordered: &mut [usize],
     boxes: &[Option<Aabb2>],
     segment_count: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     coordinate: BoxCoordinate,
 ) -> bool {
     let mut preview = vec![0.0; segment_count];
@@ -1333,7 +1333,7 @@ pub(crate) fn sort_segment_indices_by_certified_box_coordinate(
 fn sort_segment_indices_by_exact_box_coordinate(
     ordered: &mut [usize],
     boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     coordinate: BoxCoordinate,
 ) {
     ordered.sort_unstable_by(|left, right| {
@@ -1350,7 +1350,7 @@ fn sort_segment_indices_by_exact_box_coordinate(
 fn segment_box_coordinate_order_is_certified(
     ordered: &[usize],
     boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     coordinate: BoxCoordinate,
 ) -> bool {
     !ordered.windows(2).any(|window| {
@@ -1377,9 +1377,9 @@ impl DenseAabbRankSchedule {
         first_segment_count: usize,
         second_segment_count: usize,
         second_index: &SegmentAabbXIndex,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<Self> {
-        if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+        if policy.is_edge_preview() {
             return None;
         }
         u32::try_from(second_segment_count).ok()?;
@@ -1441,7 +1441,7 @@ fn sorted_box_coordinate_partition(
     ordered: &[usize],
     boxes: &[Option<Aabb2>],
     query: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     coordinate: BoxCoordinate,
     include_equal_in_lower_partition: bool,
 ) -> Option<usize> {
@@ -1465,7 +1465,7 @@ fn visit_swept_segment_pair_candidates<F>(
     first_segment_count: usize,
     second_segment_count: usize,
     prepared_second_index: Option<&SegmentAabbXIndex>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     mut visit: F,
 ) -> Option<CurveResult<()>>
 where
@@ -1585,7 +1585,7 @@ fn sampled_x_overlap_is_dense(
     first: &[Option<Aabb2>],
     second_boxes: &[Option<Aabb2>],
     second_index: &SegmentAabbXIndex,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     const SAMPLE_COUNT: usize = 8;
 
@@ -1627,7 +1627,7 @@ fn build_x_interval_index(
     maxima: &mut [usize],
     start: usize,
     end: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<usize> {
     let middle = start + (end - start) / 2;
     let mut maximum = middle;
@@ -1659,7 +1659,7 @@ fn build_x_interval_index(
 pub(crate) fn intersect_contour_self_with_cached_aabbs(
     contour: &Contour2,
     segment_boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
     let segments = contour.segments();
     let mut events = Vec::new();
@@ -1720,7 +1720,7 @@ fn append_segment_relation_events(
     a_segment: &Segment2,
     b_segment: &Segment2,
     relation: SegmentIntersection,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match relation {
         SegmentIntersection::LineLine(LineLineIntersection::None) => {}
@@ -1856,7 +1856,7 @@ fn append_line_arc_events(
     b_segment: &Segment2,
     order: LineArcOrder,
     result: LineArcIntersection,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match result {
         LineArcIntersection::None => {}
@@ -1917,7 +1917,7 @@ fn append_line_arc_hit(
     b_segment: &Segment2,
     order: LineArcOrder,
     hit: crate::LineArcIntersectionPoint,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     let (a_param, b_param) = match order {
         LineArcOrder::LineThenArc => (hit.line_param, hit.arc_param),
@@ -1950,7 +1950,7 @@ fn append_certified_point_event(
     a_param: Real,
     b_param: Real,
     kind: IntersectionKind,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) {
     if in_closed_unit_interval(&a_param, policy) == Some(true)
         && in_closed_unit_interval(&b_param, policy) == Some(true)
@@ -2001,7 +2001,7 @@ fn is_contour_connectivity_event(
     segments: &[Segment2],
     first_index: usize,
     second_index: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     match event {
         ContourIntersection::Point(point) => {
@@ -2024,18 +2024,20 @@ fn is_contour_connectivity_event(
 fn points_match_for_connectivity(
     point: &Point2,
     expected: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let distance = point.distance_squared(expected);
     match is_zero(&distance, policy) {
         Some(equal) => return Classification::Decided(equal),
-        None if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) => {
+        None if !policy.is_edge_preview() => {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         }
         None => {}
     }
 
-    if let (Some(distance), Some(tolerance)) = (distance.to_f64_lossy(), policy.preview_tolerance) {
+    if let (Some(distance), Some(tolerance)) =
+        (distance.to_f64_lossy(), crate::policy::preview_tolerance())
+    {
         let tolerance = tolerance.absolute.max(tolerance.relative);
         if distance.is_finite() {
             return Classification::Decided(distance <= tolerance * tolerance);
@@ -2065,7 +2067,7 @@ fn combine_connectivity_match(
 fn insertion_index(
     sorted: &[(&ContourIntersection, Real)],
     order_param: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<usize> {
     for (index, (_, existing_param)) in sorted.iter().enumerate() {
         match compare_reals(order_param, existing_param, policy)? {
@@ -2155,7 +2157,7 @@ mod tests {
 
     #[test]
     fn exact_dyadic_line_sweep_matches_exact_box_sweep() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let first = rectangle(0, 0, 8, 6);
         let second = rectangle(3, -2, 11, 4);
         let first_box = decided_contour_aabb(&first, &policy);
@@ -2188,7 +2190,7 @@ mod tests {
 
     #[test]
     fn retained_line_candidates_match_unreserved_dense_sweep() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let first = star(64, (0.0, 0.0), (100.0, 72.0), 0.0);
         let second = star(64, (18.0, 7.0), (96.0, 68.0), std::f64::consts::PI / 64.0);
         let first_boxes = first.exact_dyadic_line_aabbs(&policy).unwrap();
@@ -2248,7 +2250,7 @@ mod tests {
     fn flat_candidates(
         first: &[Option<Aabb2>],
         second: &[Option<Aabb2>],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Vec<(usize, usize)> {
         let mut candidates = Vec::new();
         for (first_index, first_box) in first.iter().enumerate() {
@@ -2265,7 +2267,7 @@ mod tests {
 
     #[test]
     fn indexed_sweep_candidates_match_flat_decided_aabb_filter() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let first: Vec<_> = (0..128)
             .map(|index| Some(bbox(index * 3, -1, index * 3 + 2, 1)))
             .collect();
@@ -2314,7 +2316,7 @@ mod tests {
 
     #[test]
     fn dense_ranked_candidates_match_flat_decided_aabb_filter() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let first: Vec<_> = (0..64)
             .map(|index| Some(bbox(0, index * 3, 10, index * 3 + 2)))
             .collect();
@@ -2354,7 +2356,7 @@ mod tests {
 
     #[test]
     fn preview_min_x_sort_recovers_from_rounded_ties() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let one = Real::one();
         let epsilon = (Real::one() / Real::from(1_u128 << 100)).unwrap();
         let larger = &one + epsilon;

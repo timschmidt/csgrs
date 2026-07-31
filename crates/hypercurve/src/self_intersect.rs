@@ -3,14 +3,14 @@
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::classify::is_zero;
 use crate::{
-    ArcArcIntersection, Classification, Contour2, CurvePolicy, CurveResult, CurveString2,
+    ArcArcIntersection, Classification, Contour2, CurveContext, CurveResult, CurveString2,
     LineArcIntersection, LineLineIntersection, Point2, Segment2, SegmentIntersection,
     UncertaintyReason,
 };
 
 impl CurveString2 {
     /// Classifies whether this open curve string has non-adjacent self contacts.
-    pub fn has_self_contacts(&self, policy: &CurvePolicy) -> CurveResult<Classification<bool>> {
+    pub fn has_self_contacts(&self, policy: &CurveContext) -> CurveResult<Classification<bool>> {
         let boxes = self
             .segments()
             .iter()
@@ -22,7 +22,7 @@ impl CurveString2 {
 
 impl Contour2 {
     /// Classifies whether this contour has non-adjacent self contacts.
-    pub fn has_self_contacts(&self, policy: &CurvePolicy) -> CurveResult<Classification<bool>> {
+    pub fn has_self_contacts(&self, policy: &CurveContext) -> CurveResult<Classification<bool>> {
         let boxes = self
             .segments()
             .iter()
@@ -36,7 +36,7 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs(
     segments: &[Segment2],
     boxes: &[Option<Aabb2>],
     closed: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let x_overlap_schedule = self_contact_x_overlap_schedule(boxes, policy);
 
@@ -76,7 +76,7 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs(
 
 fn self_contact_x_overlap_schedule(
     boxes: &[Option<Aabb2>],
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> Option<SelfContactXSchedule> {
     const ENCLOSURE_PRECISION: i32 = -32;
 
@@ -171,7 +171,7 @@ fn connected_segments_vertex(
 fn segment_relation_has_contact(
     relation: &SegmentIntersection,
     connectivity_point: Option<&Point2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     match relation {
         SegmentIntersection::LineLine(result) => {
@@ -189,7 +189,7 @@ fn segment_relation_has_contact(
 fn line_line_has_contact(
     result: &LineLineIntersection,
     connectivity_point: Option<&Point2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     match result {
         LineLineIntersection::None => Classification::Decided(false),
@@ -204,7 +204,7 @@ fn line_line_has_contact(
 fn line_arc_has_contact(
     result: &LineArcIntersection,
     connectivity_point: Option<&Point2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     match result {
         LineArcIntersection::None => Classification::Decided(false),
@@ -222,7 +222,7 @@ fn line_arc_has_contact(
 fn arc_arc_has_contact(
     result: &ArcArcIntersection,
     connectivity_point: Option<&Point2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     match result {
         ArcArcIntersection::None => Classification::Decided(false),
@@ -241,7 +241,7 @@ fn arc_arc_has_contact(
 fn contact_is_non_connectivity(
     point: &Point2,
     connectivity_point: Option<&Point2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let Some(connectivity_point) = connectivity_point else {
         return Classification::Decided(true);
@@ -250,13 +250,15 @@ fn contact_is_non_connectivity(
     let distance = point.distance_squared(connectivity_point);
     match is_zero(&distance, policy) {
         Some(equal) => return Classification::Decided(!equal),
-        None if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) => {
+        None if !policy.is_edge_preview() => {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         }
         None => {}
     }
 
-    if let (Some(distance), Some(tolerance)) = (distance.to_f64_lossy(), policy.preview_tolerance) {
+    if let (Some(distance), Some(tolerance)) =
+        (distance.to_f64_lossy(), crate::policy::preview_tolerance())
+    {
         let tolerance = tolerance.absolute.max(tolerance.relative);
         if distance.is_finite() {
             return Classification::Decided(distance > tolerance * tolerance);

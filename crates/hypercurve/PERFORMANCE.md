@@ -6165,6 +6165,47 @@ production repeated-fact consumer; general rational Bezier, spline, NURBS,
 top-level curve/path, and curved-region owners already retain the expensive
 derived evidence their algorithms use.
 
+### One-byte curve context and explicit preview boundary
+
+The predicate-only `CurveContext` replaces `CurvePolicy` throughout the
+crate, tests, benchmarks, fuzz targets, examples, and standalone UI. There is
+no compatibility alias. `CurveContext` is a one-byte transparent value whose
+public states map exactly to Hyperlimit `STRICT` and `APPROXIMATE_512`.
+Lossy display tolerances moved into validated `CurvePreviewOptions`, which
+scopes preview-only evidence to one synchronous closure and cannot be used as
+certified topology or construction provenance.
+
+An initial implementation consulted thread-local preview state at every
+predicate site. Repeated pathological runs exposed a roughly 3% strict-path
+regression, so that design was rejected. The final representation carries a
+private preview tag in the otherwise unused context bits and only enters the
+cold, non-inlined thread-local tolerance lookup when the tag is present.
+
+Nine final-source pre-change/candidate pairs were run interleaved, reversing
+execution order on alternate pairs. The complete mixed-family, mixed-`Real`
+100 MiB Boolean workload produced identical topology in every run: 67
+completed cells, 603 candidate carrier pairs, 3,248 fragments, 134 point
+classifications, 268 decided operations, no blockers, and checksum 6.
+
+| Pathological all-operation Boolean | Pre-change | One-byte context | Change |
+| --- | ---: | ---: | ---: |
+| Range | 470.718--493.192 ms | 469.766--494.102 ms | overlapping |
+| Median | 480.842 ms | 481.742 ms | +0.2% |
+
+The standalone comparative benchmark also showed no repeatable small-rectangle
+regression: 32,768-iteration interleaved controls measured 4,910.7 and
+4,865.5 ns, while candidates measured 4,875.5 and 4,693.3 ns. The release
+pathological executable grew from 5,523,105 to 5,535,425 bytes (+12,320,
+0.22%) relative to the immediately preceding checkpoint, and by 4,132 bytes
+(0.075%) relative to the frozen consolidation baseline. This temporary Phase
+1 size debt is recorded for repayment when the superseded policy and legacy
+engines are deleted.
+
+Validation covered the complete all-feature suite (including the 170-second
+exact CurveRegion2 fuzz corpus and all 268 pathological operations), all-target
+Clippy with warnings denied, no-default-feature compilation, every fuzz
+target, the standalone UI, formatting, and diff whitespace checks.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

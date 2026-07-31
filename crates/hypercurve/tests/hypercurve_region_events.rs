@@ -1,6 +1,6 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourIntersection, ContourIntersectionSet,
-    ContourOperand, ContourSplitMap, CurvePolicy, LineArcRegion2, Real, RegionContourIntersection,
+    ContourOperand, ContourSplitMap, CurveContext, LineArcRegion2, Real, RegionContourIntersection,
     RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionSide, SegmentKindCounts,
 };
 
@@ -29,8 +29,8 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     ])
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {

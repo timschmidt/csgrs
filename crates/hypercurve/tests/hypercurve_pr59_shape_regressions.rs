@@ -7,7 +7,7 @@
 //! material contours, hole contours, and boolean membership semantics.
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, LineArcRegion2,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, FillRule, LineArcRegion2,
     Point2, Real, RegionPointLocation,
 };
 
@@ -29,8 +29,8 @@ fn vertex(x: f64, y: f64) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(0.0))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn rectangle((xmin, ymin, xmax, ymax): Rect) -> HContour {

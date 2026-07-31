@@ -9,7 +9,7 @@ use std::{
 use crate::classify::{
     LineSide, classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, real_sign,
 };
-use crate::{Classification, CurveError, CurvePolicy, CurveResult, ParamRange, Point2};
+use crate::{Classification, CurveContext, CurveError, CurveResult, ParamRange, Point2};
 use std::cmp::Ordering;
 
 /// A finite line segment.
@@ -191,7 +191,7 @@ impl LineSeg2 {
     pub(crate) fn retained_support_intervals_decided_disjoint(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<bool> {
         if !self.has_retained_support || !other.has_retained_support {
             return None;
@@ -241,7 +241,7 @@ impl LineSeg2 {
     pub(crate) fn retained_offset_relation(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<RetainedLineRelation2> {
         let first = self.offset_provenance.as_ref()?;
         let second = other.offset_provenance.as_ref()?;
@@ -272,7 +272,7 @@ impl LineSeg2 {
     /// post-collapse cycles without using a floating-point distance sample.
     pub(crate) fn retained_offset_direction_matches_source(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         let Some(provenance) = self.offset_provenance.as_ref() else {
             return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
@@ -399,14 +399,18 @@ impl LineSeg2 {
     }
 
     /// Classifies a point relative to this oriented line segment's supporting line.
-    pub fn classify_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<LineSide> {
+    pub fn classify_point(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<LineSide> {
         let support_start = self.support_start();
         let support_end = self.support.get().map_or(&self.end, |support| &support.end);
         classify_oriented_line(support_start, support_end, point, policy)
     }
 
     /// Classifies whether a point lies on this finite line segment.
-    pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         let side = match self.classify_point(point, policy) {
             Classification::Decided(side) => side,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -418,7 +422,7 @@ impl LineSeg2 {
         &self,
         point: &Point2,
         side: LineSide,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         if side != LineSide::On {
             return Classification::Decided(false);
@@ -711,7 +715,7 @@ impl CircularArc2 {
     pub fn contains_sweep_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         if point_matches_arc_endpoint(self, point, policy) == Some(true) {
             return Classification::Decided(true);
@@ -765,7 +769,7 @@ impl CircularArc2 {
     }
 
     /// Classifies whether a point lies on this finite circular arc.
-    pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         if point_matches_arc_endpoint(self, point, policy) == Some(true) {
             return Classification::Decided(true);
         }
@@ -796,7 +800,7 @@ impl CircularArc2 {
     /// point without rebuilding nested trigonometric rotations.
     pub fn representative_point(
         &self,
-        _policy: &CurvePolicy,
+        _policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
         match self.retained_representative_point() {
             Ok(Classification::Decided(point)) => Ok(Classification::Decided(point.clone())),
@@ -814,7 +818,7 @@ impl CircularArc2 {
     fn compute_representative_point(&self) -> CurveResult<Classification<Point2>> {
         let half = (Real::one() / Real::from(2_i8))?;
         if self.retained_facts.parameter_lineage.get().is_some() {
-            return self.point_at_sweep_fraction(&half, &CurvePolicy::STRICT);
+            return self.point_at_sweep_fraction(&half, &CurveContext::STRICT);
         }
         match self
             .rational_bezier_decomposition()
@@ -838,7 +842,7 @@ impl CircularArc2 {
     pub fn sweep_fraction(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
         match self.contains_point(point, policy) {
             Classification::Decided(true) => self.sweep_fraction_for_incident_point(point, policy),
@@ -860,7 +864,7 @@ impl CircularArc2 {
     pub fn point_at_sweep_fraction(
         &self,
         fraction: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
         match in_closed_unit_interval(fraction, policy) {
             Some(true) => {}
@@ -936,7 +940,7 @@ impl CircularArc2 {
     pub fn split_at_sweep_fraction(
         &self,
         fraction: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<(Self, Self)>> {
         let middle = match self.point_at_sweep_fraction(fraction, policy)? {
             Classification::Decided(point) => point,
@@ -959,7 +963,7 @@ impl CircularArc2 {
         &self,
         fraction: &Real,
         point: Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<(Self, Self)>> {
         match compare_reals(fraction, &Real::zero(), policy) {
             Some(Ordering::Greater) => {}
@@ -1016,7 +1020,7 @@ impl CircularArc2 {
     pub fn parameter_at_sweep_fraction(
         &self,
         fraction: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
         match compare_reals(fraction, &Real::zero(), policy) {
             Some(Ordering::Equal) => return Ok(Classification::Decided(Real::zero())),
@@ -1149,7 +1153,7 @@ impl CircularArc2 {
         if sweep_kind == crate::arc_bezier::ArcSweepKind::FullCircle {
             return Ok(Classification::Decided(Real::tau()));
         }
-        directed_radial_angle(self, self.end(), &CurvePolicy::STRICT)
+        directed_radial_angle(self, self.end(), &CurveContext::STRICT)
     }
 
     pub(crate) fn fragment_between_sweep_range(
@@ -1157,7 +1161,7 @@ impl CircularArc2 {
         start: Point2,
         end: Point2,
         source_range: &ParamRange,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if let Some(fragment) = self.retained_fragment(source_range, &start, &end) {
             return Ok(Classification::Decided(fragment));
@@ -1262,7 +1266,7 @@ impl CircularArc2 {
     pub(crate) fn sweep_fraction_for_incident_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
         match points_equal(point, self.start(), policy) {
             Some(true) => return Ok(Classification::Decided(Real::zero())),
@@ -1380,7 +1384,7 @@ impl Segment2 {
     }
 
     /// Classifies whether a point lies on this finite segment.
-    pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         match self {
             Self::Line(line) => line.contains_point(point, policy),
             Self::Arc(arc) => arc.contains_point(point, policy),
@@ -1395,7 +1399,7 @@ impl Segment2 {
     /// Returns a point in the interior of this segment.
     pub fn representative_point(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
         let half = (Real::one() / Real::from(2_i8))?;
         self.point_at(&half, policy)
@@ -1405,7 +1409,7 @@ impl Segment2 {
     pub fn point_at(
         &self,
         parameter: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
         match in_closed_unit_interval(parameter, policy) {
             Some(true) => {}
@@ -1453,7 +1457,7 @@ enum ParameterOnLine {
     Uncertain(crate::UncertaintyReason),
 }
 
-fn parameter_on_line(line: &LineSeg2, point: &Point2, policy: &CurvePolicy) -> ParameterOnLine {
+fn parameter_on_line(line: &LineSeg2, point: &Point2, policy: &CurveContext) -> ParameterOnLine {
     let (dx, dy) = line.delta();
     let delta = point.delta_from(line.start());
 
@@ -1488,7 +1492,7 @@ fn clockwise_from_bulge(bulge: &Real) -> CurveResult<bool> {
 
     // Bulge sign chooses the arc sweep orientation, so route it through the
     // shared predicate policy used by the rest of curve topology.
-    match crate::classify::real_sign(bulge, &CurvePolicy::STRICT) {
+    match crate::classify::real_sign(bulge, &CurveContext::STRICT) {
         Some(RealSign::Negative) => Ok(true),
         Some(RealSign::Positive) => Ok(false),
         Some(RealSign::Zero) => Err(CurveError::AmbiguousBulge),
@@ -1499,7 +1503,7 @@ fn clockwise_from_bulge(bulge: &Real) -> CurveResult<bool> {
 fn point_matches_arc_endpoint(
     arc: &CircularArc2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let start_distance = point.distance_squared(arc.start());
     if crate::classify::is_zero(&start_distance, policy)? {
@@ -1512,7 +1516,7 @@ fn point_matches_arc_endpoint(
 fn ordered_line_endpoints<'a>(
     line: &'a LineSeg2,
     use_x: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<(&'a Real, &'a Real)> {
     let (start, end) = if use_x {
         (line.start().x(), line.end().x())
@@ -1525,7 +1529,7 @@ fn ordered_line_endpoints<'a>(
     }
 }
 
-fn points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<bool> {
+fn points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> Option<bool> {
     if left == right {
         return Some(true);
     }
@@ -1535,7 +1539,7 @@ fn points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<b
 fn directed_radial_angle(
     arc: &CircularArc2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
     let start = arc.start().delta_from(arc.center());
     let radial = point.delta_from(arc.center());
@@ -1568,7 +1572,7 @@ fn directed_radial_angle(
 
 fn sweep_kind_from_directed_angle(
     angle: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<crate::arc_bezier::ArcSweepKind> {
     match compare_reals(angle, &Real::tau(), policy)? {
         Ordering::Equal => return Some(crate::arc_bezier::ArcSweepKind::FullCircle),

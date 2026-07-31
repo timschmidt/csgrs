@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelVerificationOptions, BulgeVertex2, CircularArc2,
-    Classification, Contour2, CubicBezier2, Curve2, CurvePath2, CurvePolicy, CurveRegion2,
+    Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
     CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2, OffsetCap, Point2,
     QuadraticBezier2, Real, Segment2,
 };
@@ -47,7 +47,7 @@ fn bench_line_offset(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_arc_offset(name: &str, segment: &Segment2, iterations: u32) -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut checksum = 0_usize;
 
@@ -72,7 +72,7 @@ fn bench_curve_string_joined_offset(iterations: u32) -> CurveResult<()> {
         line_segment(4, 0, 4, 3),
         line_segment(4, 3, 7, 3),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -98,7 +98,7 @@ fn bench_curve_string_round_join_offset(iterations: u32) -> CurveResult<()> {
         line_segment(2, 0, 4, 0),
         line_segment(4, 0, 4, 3),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -124,7 +124,7 @@ fn bench_curve_string_checked_offset(iterations: u32) -> CurveResult<()> {
         line_segment(4, 0, 4, 3),
         line_segment(4, 3, 7, 3),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -149,7 +149,7 @@ fn bench_curve_string_checked_offset_evidence(iterations: u32) -> CurveResult<()
         line_segment(4, 0, 4, 3),
         line_segment(4, 3, 7, 3),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -174,7 +174,7 @@ fn bench_curve_string_round_cap_outline(iterations: u32) -> CurveResult<()> {
         line_segment(4, 0, 4, 3),
         line_segment(4, 3, 7, 3),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -200,7 +200,7 @@ fn bench_curve_string_round_cap_outline_evidence(iterations: u32) -> CurveResult
         line_segment(4, 0, 4, 3),
         line_segment(4, 3, 7, 3),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -226,7 +226,7 @@ fn bench_curve_string_butt_cap_outline(iterations: u32) -> CurveResult<()> {
         line_segment(4, 0, 4, 3),
         line_segment(4, 3, 7, 3),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -252,7 +252,7 @@ fn bench_curve_string_square_cap_outline(iterations: u32) -> CurveResult<()> {
         line_segment(4, 0, 4, 3),
         line_segment(4, 3, 7, 3),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -280,7 +280,7 @@ fn bench_contour_joined_offset(iterations: u32) -> CurveResult<()> {
         vertex(10, 7, 0),
         vertex(0, 7, 0),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -307,7 +307,7 @@ fn bench_contour_checked_offset(iterations: u32) -> CurveResult<()> {
         vertex(10, 7, 0),
         vertex(0, 7, 0),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -333,7 +333,7 @@ fn bench_contour_checked_offset_evidence(iterations: u32) -> CurveResult<()> {
         vertex(10, 7, 0),
         vertex(0, 7, 0),
     ])?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
@@ -355,7 +355,7 @@ fn bench_contour_checked_offset_evidence(iterations: u32) -> CurveResult<()> {
 fn bench_exact_bezier_parallel_evaluation(iterations: u32) -> CurveResult<()> {
     let source = CubicBezier2::new(p(0, 0), p(1, 2), p(3, -1), p(4, 0));
     let parallel = source.parallel_left(q(1, 10))?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let parameter = q(7, 13);
     let started = Instant::now();
     let mut checksum = 0_usize;
@@ -376,7 +376,7 @@ fn bench_exact_bezier_parallel_evaluation(iterations: u32) -> CurveResult<()> {
 fn bench_bezier_parallel_cusp_isolation(iterations: u32) -> CurveResult<()> {
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), s(0)), p(1, 1));
     let parallel = source.parallel_left(s(1))?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut roots = 0_usize;
     for _ in 0..iterations {
@@ -401,7 +401,7 @@ fn bench_exact_ph_offset_construction(iterations: u32) -> CurveResult<()> {
         Point2::new(q(2, 3), s(1)),
     );
     let parallel = source.parallel_left(q(1, 5))?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut degree = 0_usize;
     for _ in 0..iterations {
@@ -422,7 +422,7 @@ fn bench_exact_ph_offset_construction(iterations: u32) -> CurveResult<()> {
 
 fn bench_certified_bezier_parallel_construction(iterations: u32) -> CurveResult<()> {
     let source = CubicBezier2::new(p(0, 0), p(1, 2), p(2, -1), p(4, 0));
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let options = BezierParallelVerificationOptions::try_new(q(1, 20), 14, &policy)?;
     let started = Instant::now();
     let mut spans = 0_usize;
@@ -457,9 +457,9 @@ fn bench_curve_region_bezier_offset_lanes(
         &[source_path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::EvenOdd],
-        &CurvePolicy::STRICT,
+        &CurveContext::STRICT,
     )?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let verification = BezierParallelVerificationOptions::try_new(q(1, 20), 16, &policy)?;
     let flattening = BezierFlatteningOptions::try_new(q(1, 20), 16, &policy)?;
 
@@ -510,7 +510,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let counter_clockwise_right_offset =
         Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1))?);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let started = Instant::now();
     let iterations = 100_000;
     let mut checksum = 0_usize;

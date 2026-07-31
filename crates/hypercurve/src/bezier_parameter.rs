@@ -30,7 +30,7 @@ use num::{BigInt, BigRational, BigUint, Integer, One, ToPrimitive, Zero};
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
 use crate::{
-    BezierMonotoneSpan, Classification, CurveError, CurvePolicy, CurveResult, UncertaintyReason,
+    BezierMonotoneSpan, Classification, CurveContext, CurveError, CurveResult, UncertaintyReason,
 };
 
 /// Power-basis polynomial used to define an algebraic Bezier parameter.
@@ -145,7 +145,7 @@ pub enum BezierParameter2 {
 pub(crate) struct BezierParameterRefinement2<'a> {
     parameter: BezierParameter2,
     completed_steps: usize,
-    policy: &'a CurvePolicy,
+    policy: &'a CurveContext,
 }
 
 /// Oriented positive-length range in a Bezier segment's `[0, 1]` domain.
@@ -163,7 +163,7 @@ impl BezierParameterPolynomial {
     /// Constructs a nonzero power-basis polynomial.
     pub fn try_new_power_basis(
         coefficients: Vec<Real>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match normalize_coefficients(coefficients, policy)? {
             Classification::Decided(Some(coefficients)) => {
@@ -177,7 +177,7 @@ impl BezierParameterPolynomial {
     /// Constructs a nonzero polynomial from Bernstein-basis coefficients.
     pub fn try_new_bernstein_basis(
         coefficients: Vec<Real>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         let coefficients = bernstein_to_power_coefficients(coefficients)?;
         Self::try_new_power_basis(coefficients, policy)
@@ -206,7 +206,7 @@ impl BezierParameterPolynomial {
     pub(crate) fn reduce_power_basis(
         &self,
         coefficients: Vec<Real>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<Real>>> {
         match polynomial_remainder(coefficients, &self.coefficients, policy)? {
             Classification::Decided(Some(remainder)) => Ok(Classification::Decided(remainder)),
@@ -224,7 +224,7 @@ impl BezierParameterPolynomial {
     pub fn root_count_in_interval(
         &self,
         interval: &BezierParameterInterval,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<usize>> {
         let sequence = match sturm_sequence(&self.coefficients, policy)? {
             Classification::Decided(sequence) => sequence,
@@ -237,7 +237,7 @@ impl BezierParameterPolynomial {
         &self,
         interval: &BezierParameterInterval,
         sequence: &[Vec<Real>],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<usize>> {
         let start_variations = sign_variations_at(sequence, interval.start(), policy)?;
         let end_variations = sign_variations_at(sequence, interval.end(), policy)?;
@@ -255,7 +255,7 @@ impl BezierParameterPolynomial {
     pub fn greatest_common_divisor(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Self>>> {
         let mut first = self.coefficients.clone();
         let mut second = other.coefficients.clone();
@@ -293,7 +293,7 @@ impl BezierParameterPolynomial {
     /// Isolates every distinct root in `[0, 1]` as an exact parameter carrier.
     pub fn isolate_unit_interval_roots(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
         Ok(self
             .isolate_unit_interval_roots_with_trace(policy)?
@@ -303,7 +303,7 @@ impl BezierParameterPolynomial {
     /// Isolates every distinct root in `[0, 1]` and evidence exact work counts.
     pub fn isolate_unit_interval_roots_with_trace(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierRootIsolationResult2>> {
         isolate_unit_roots(self.coefficients.clone(), policy)
     }
@@ -317,7 +317,7 @@ impl BezierParameterPolynomial {
     pub fn changes_sign_at_root(
         &self,
         parameter: &BezierParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         match parameter {
             BezierParameter2::Exact(root) => {
@@ -380,7 +380,7 @@ impl BezierParameterPolynomial {
     pub(crate) fn simple_root_classifications(
         &self,
         parameters: &[BezierParameter2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Vec<Classification<bool>>> {
         enum RepeatedRootEvidence {
             NoDerivative,
@@ -564,7 +564,7 @@ impl BezierParameterPolynomial {
     pub(crate) fn sign_after_crossing_root(
         &self,
         parameter: &BezierParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<RealSign>>> {
         match parameter {
             BezierParameter2::Exact(root) => {
@@ -671,7 +671,7 @@ impl BezierParameterInterval {
     pub fn try_new(
         start: Real,
         end: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         let in_start = in_closed_unit_interval(&start, policy);
         let in_end = in_closed_unit_interval(&end, policy);
@@ -691,7 +691,7 @@ impl BezierParameterInterval {
     /// Converts an existing monotone span into a validated parameter interval.
     pub fn from_monotone_span(
         span: &BezierMonotoneSpan,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         Self::try_new(span.start().clone(), span.end().clone(), policy)
     }
@@ -712,7 +712,7 @@ impl BezierAlgebraicParameter2 {
     pub fn try_isolate(
         polynomial: BezierParameterPolynomial,
         interval: BezierParameterInterval,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         let count = match polynomial.root_count_in_interval(&interval, policy)? {
             Classification::Decided(count) => count,
@@ -794,7 +794,7 @@ impl BezierAlgebraicParameter2 {
 
     fn retained_sturm_sequence(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Arc<[Vec<Real>]>>> {
         if let Some(sequence) = self.data.shared.sturm_sequence.get() {
             return Ok(Classification::Decided(Arc::clone(sequence)));
@@ -1026,7 +1026,7 @@ impl BezierAlgebraicParameter2 {
     #[inline]
     pub fn represented_rational_root(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Real>>> {
         if let Some(root) = self.data.shared.represented_rational_root.get() {
             return Ok(Classification::Decided(root.clone()));
@@ -1036,7 +1036,7 @@ impl BezierAlgebraicParameter2 {
 
     fn compute_represented_rational_root(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Real>>> {
         let result = if self.data.polynomial.degree() == 1 {
             self.represented_linear_root(policy)?
@@ -1063,7 +1063,7 @@ impl BezierAlgebraicParameter2 {
 
     fn represented_rational_root_with_sequence(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         denominator_bound: BigUint,
         sequence: &[Vec<Real>],
         mut trace: Option<&mut BezierRootIsolationTrace2>,
@@ -1143,7 +1143,7 @@ impl BezierAlgebraicParameter2 {
 
     fn represented_rational_root_with_cached_sequence(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         denominator_bound: Option<&BigUint>,
         sequence: &[Vec<Real>],
         trace: Option<&mut BezierRootIsolationTrace2>,
@@ -1187,7 +1187,7 @@ impl BezierAlgebraicParameter2 {
 
     fn represented_linear_root(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Real>>> {
         let constant = &self.data.polynomial.coefficients()[0];
         let slope = &self.data.polynomial.coefficients()[1];
@@ -1220,7 +1220,7 @@ impl BezierAlgebraicParameter2 {
 
 impl BezierParameter2 {
     /// Constructs a represented exact Bezier parameter.
-    pub fn exact(value: Real, policy: &CurvePolicy) -> CurveResult<Classification<Self>> {
+    pub fn exact(value: Real, policy: &CurveContext) -> CurveResult<Classification<Self>> {
         match in_closed_unit_interval(&value, policy) {
             Some(true) => Ok(Classification::Decided(Self::Exact(value))),
             Some(false) => Err(CurveError::InvalidBezierParameter),
@@ -1252,7 +1252,7 @@ impl BezierParameter2 {
     /// Promotion occurs only through exact reconstruction and polynomial replay.
     pub fn promote_represented_rational_root(
         self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match self {
             Self::Exact(_) => Ok(Classification::Decided(self)),
@@ -1271,7 +1271,7 @@ impl BezierParameter2 {
     /// Returns the known enclosing interval.
     pub fn known_interval(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameterInterval>> {
         match self {
             Self::Exact(value) => {
@@ -1284,7 +1284,7 @@ impl BezierParameter2 {
     pub(crate) fn strict_rational_between(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
         let left = match self.known_interval(policy)? {
             Classification::Decided(interval) => interval,
@@ -1310,7 +1310,7 @@ impl BezierParameter2 {
     pub(crate) fn strict_rational_between_ordered(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
         let left = match self.known_interval(policy)? {
             Classification::Decided(interval) => interval,
@@ -1347,7 +1347,7 @@ fn strict_rational_between_known_order(
     right_parameter: &BezierParameter2,
     left: &BezierParameterInterval,
     right: &BezierParameterInterval,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
     match (left_parameter, right_parameter) {
         (BezierParameter2::Algebraic(parameter), _) => {
@@ -1366,7 +1366,7 @@ impl BezierParameter2 {
     #[cfg(feature = "predicates")]
     pub(crate) fn from_algebraic_root_representation(
         representation: &AlgebraicRootRepresentation,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if !representation.is_valid() || representation.interval.distinct_root_count != 1 {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
@@ -1402,7 +1402,7 @@ impl BezierParameter2 {
     pub(crate) fn refined_isolating_interval(
         self,
         max_refinement_steps: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Self {
         let Self::Algebraic(algebraic) = self else {
             return self;
@@ -1444,7 +1444,7 @@ impl BezierParameter2 {
     pub(crate) fn refined_isolating_interval(
         self,
         _max_refinement_steps: usize,
-        _policy: &CurvePolicy,
+        _policy: &CurveContext,
     ) -> Self {
         self
     }
@@ -1456,7 +1456,7 @@ impl BezierParameter2 {
     pub fn cmp_by_interval(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Ordering>> {
         if self == other {
             return Ok(Classification::Decided(Ordering::Equal));
@@ -1510,7 +1510,7 @@ impl BezierParameter2 {
     pub fn cmp_by_refinement(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Ordering>> {
         match self.cmp_by_interval(other, policy)? {
             Classification::Decided(ordering) => {
@@ -1531,7 +1531,7 @@ impl BezierParameter2 {
     pub(crate) fn same_value(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         if self == other
             || matches!(
@@ -1621,7 +1621,7 @@ impl BezierParameter2 {
 }
 
 impl<'a> BezierParameterRefinement2<'a> {
-    pub(crate) fn new(parameter: &BezierParameter2, policy: &'a CurvePolicy) -> Self {
+    pub(crate) fn new(parameter: &BezierParameter2, policy: &'a CurveContext) -> Self {
         Self {
             parameter: parameter.clone(),
             completed_steps: 0,
@@ -1652,7 +1652,7 @@ impl<'a> BezierParameterRefinement2<'a> {
 fn refine_algebraic_sign_change(
     algebraic: &BezierAlgebraicParameter2,
     max_refinement_steps: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierParameter2> {
     let polynomial = algebraic.polynomial();
     let mut start = algebraic.interval().start().clone();
@@ -1701,7 +1701,7 @@ enum RefinedParameter<'a> {
 impl<'a> RefinedParameter<'a> {
     fn from_parameter(
         parameter: &'a BezierParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match parameter {
             BezierParameter2::Exact(value) => {
@@ -1730,7 +1730,7 @@ impl<'a> RefinedParameter<'a> {
         }
     }
 
-    fn refine_once(self, policy: &CurvePolicy) -> CurveResult<Classification<Self>> {
+    fn refine_once(self, policy: &CurveContext) -> CurveResult<Classification<Self>> {
         let Self::Algebraic {
             parameter,
             interval,
@@ -1784,7 +1784,7 @@ impl<'a> RefinedParameter<'a> {
 fn compare_distinct_parameters(
     first: &BezierParameter2,
     second: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Ordering>> {
     const MAX_ORDERING_REFINEMENTS: usize = 64;
 
@@ -1856,7 +1856,7 @@ fn compare_distinct_parameters(
 fn refine_algebraic_upper_gap(
     parameter: &BezierAlgebraicParameter2,
     upper_bound: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
     let sequence = match parameter.retained_sturm_sequence(policy)? {
         Classification::Decided(sequence) => sequence,
@@ -1911,7 +1911,7 @@ fn refine_algebraic_upper_gap(
 fn refine_algebraic_lower_gap(
     parameter: &BezierAlgebraicParameter2,
     lower_bound: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
     let sequence = match parameter.retained_sturm_sequence(policy)? {
         Classification::Decided(sequence) => sequence,
@@ -1972,7 +1972,7 @@ impl BezierParameterRange2 {
     pub fn try_new(
         start: BezierParameter2,
         end: BezierParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         for boundary in [&start, &end] {
             if let Classification::Uncertain(reason) = boundary.known_interval(policy)? {
@@ -2018,7 +2018,7 @@ impl BezierParameterRange2 {
     /// endpoint representation changes.
     pub fn promote_represented_rational_endpoints(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         let start = match self
             .start
@@ -2169,7 +2169,7 @@ fn reconstruct_rational_root(
     interval: &BezierParameterInterval,
     approximation: BigRational,
     denominator_bound: &BigInt,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Real>>> {
     let Some(interval_start) = real_as_big_rational(interval.start()) else {
         return Ok(Classification::Decided(None));
@@ -2217,7 +2217,7 @@ fn reconstruct_rational_root(
 
 fn sturm_sequence(
     coefficients: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Vec<Real>>>> {
     if let Some(sequence) = primitive_integer_sturm_sequence(coefficients) {
         return Ok(Classification::Decided(sequence));
@@ -2295,7 +2295,7 @@ fn primitive_integer_sturm_sequence(coefficients: &[Real]) -> Option<Vec<Vec<Rea
 fn sign_variations_at(
     sequence: &[Vec<Real>],
     parameter: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<usize>> {
     match sturm_point_evidence(sequence, parameter, policy)? {
         Classification::Decided(SturmPointEvidence::Root) => {
@@ -2316,7 +2316,7 @@ enum SturmPointEvidence {
 fn sturm_point_evidence(
     sequence: &[Vec<Real>],
     parameter: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<SturmPointEvidence>> {
     let mut previous = None;
     let mut variations = 0_usize;
@@ -2421,7 +2421,7 @@ fn rational_signed_numerator_i128(value: &HyperRational) -> Option<i128> {
 fn scale_invariant_polynomial_remainder(
     dividend: Vec<Real>,
     divisor: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Vec<Real>>>> {
     if let Some(remainder) = primitive_integer_pseudo_remainder(&dividend, divisor) {
         return Ok(Classification::Decided(
@@ -2510,7 +2510,7 @@ fn primitive_bigint_coefficients(mut coefficients: Vec<BigInt>) -> Vec<BigInt> {
 fn polynomial_remainder(
     mut remainder: Vec<Real>,
     divisor: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Vec<Real>>>> {
     let mut divisor_len = divisor.len();
     while divisor_len != 0 {
@@ -2549,7 +2549,7 @@ fn polynomial_remainder(
 
 fn normalize_coefficients(
     mut coefficients: Vec<Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Vec<Real>>>> {
     while let Some(last) = coefficients.last() {
         match is_zero(last, policy) {
@@ -2704,7 +2704,7 @@ fn quartic_bernstein_basis_sign(
     coefficients: &[Real],
     coefficient_intervals: &QuarticCoefficientIntervals,
     weights: &[HyperRational; 5],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<RealSign> {
     let zero = HyperRational::zero();
     if weights.iter().any(|weight| weight < &zero) {
@@ -2743,7 +2743,7 @@ fn quartic_bernstein_sign_variations(
     controls: &QuarticBernsteinBasis,
     start_sign: RealSign,
     end_sign: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<usize> {
     debug_assert!(start_sign != RealSign::Zero);
     debug_assert!(end_sign != RealSign::Zero);
@@ -2810,7 +2810,7 @@ fn subdivide_quartic_bernstein_half(
 
 fn exact_nonrational_quartic_unit_roots(
     polynomial: &BezierParameterPolynomial,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     trace: &mut BezierRootIsolationTrace2,
 ) -> CurveResult<Option<Vec<BezierParameter2>>> {
     if polynomial.degree() != 4
@@ -2945,7 +2945,7 @@ fn exact_nonrational_quartic_unit_roots(
 
 fn isolate_unit_roots(
     mut coefficients: Vec<Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<BezierRootIsolationResult2>> {
     let mut trace = BezierRootIsolationTrace2::default();
     let mut tried_nonrational_quartic = false;
@@ -3053,7 +3053,7 @@ fn isolate_unit_roots(
 fn ordered_root_isolation_result(
     represented: Vec<BezierParameter2>,
     trace: BezierRootIsolationTrace2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<BezierRootIsolationResult2>> {
     let mut ordered = Vec::with_capacity(represented.len());
     for parameter in represented {
@@ -3068,7 +3068,7 @@ fn ordered_root_isolation_result(
 fn search_unit_roots(
     polynomial: &BezierParameterPolynomial,
     represented_roots: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     trace: &mut BezierRootIsolationTrace2,
 ) -> CurveResult<Classification<UnitRootSearch>> {
     let sequence = match sturm_sequence(polynomial.coefficients(), policy)? {
@@ -3211,7 +3211,7 @@ fn search_unit_roots(
 fn insert_parameter_ordered(
     parameters: &mut Vec<BezierParameter2>,
     parameter: BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     let mut insert_at = parameters.len();
     for (index, existing) in parameters.iter().enumerate() {
@@ -3350,7 +3350,7 @@ mod conversion_tests {
     fn polynomial(coefficients: &[i32]) -> BezierParameterPolynomial {
         match BezierParameterPolynomial::try_new_power_basis(
             coefficients.iter().copied().map(Real::from).collect(),
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         {
@@ -3362,7 +3362,7 @@ mod conversion_tests {
     }
 
     fn algebraic_parameter(polynomial: &BezierParameterPolynomial) -> BezierParameter2 {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let interval =
             match BezierParameterInterval::try_new(rational(1, 2), Real::one(), &policy).unwrap() {
                 Classification::Decided(interval) => interval,
@@ -3382,7 +3382,7 @@ mod conversion_tests {
     fn simple_root_classification(
         polynomial: &BezierParameterPolynomial,
         parameter: &BezierParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         polynomial
             .simple_root_classifications(std::slice::from_ref(parameter), policy)
@@ -3405,7 +3405,7 @@ mod conversion_tests {
 
     fn ordinary_field_sturm_sequence(
         coefficients: &[Real],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Vec<Vec<Real>> {
         let p0 = coefficients.to_vec();
         let p1 =
@@ -3455,7 +3455,7 @@ mod conversion_tests {
 
     #[test]
     fn primitive_pseudo_remainder_is_positive_field_remainder_scale() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         for (dividend, divisor) in [
             (
                 vec![
@@ -3502,7 +3502,7 @@ mod conversion_tests {
 
     #[test]
     fn primitive_integer_sturm_matches_field_sequence_variations() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let polynomials = [
             vec![rational(-1, 3), rational(0, 1), rational(2, 5)],
             vec![
@@ -3560,7 +3560,7 @@ mod conversion_tests {
 
     #[test]
     fn carried_sturm_variations_match_partition_root_counts() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         // (2t² - 1)(3t² - 1) has two irrational roots in (1/2, 3/4).
         let defining = polynomial(&[1, 0, -5, 0, 6]);
         let sequence = match sturm_sequence(defining.coefficients(), &policy).unwrap() {
@@ -3621,7 +3621,7 @@ mod conversion_tests {
 
     #[test]
     fn bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let pi = Real::pi();
         let defining = BezierParameterPolynomial::try_new_power_basis(
             vec![
@@ -3716,11 +3716,11 @@ mod conversion_tests {
                     &nonrational_coefficients,
                     &intervals,
                     &control,
-                    &CurvePolicy::STRICT,
+                    &CurveContext::STRICT,
                 ),
                 real_sign(
                     &quartic_bernstein_basis_value(&nonrational_coefficients, &control),
-                    &CurvePolicy::STRICT,
+                    &CurveContext::STRICT,
                 ),
             );
         }
@@ -3728,7 +3728,7 @@ mod conversion_tests {
 
     #[test]
     fn simple_root_certificate_distinguishes_exact_multiplicity() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let root = BezierParameter2::Exact(rational(1, 2));
 
         assert_eq!(
@@ -3743,7 +3743,7 @@ mod conversion_tests {
 
     #[test]
     fn simple_root_certificate_distinguishes_algebraic_multiplicity() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let simple = polynomial(&[-1, 0, 2]);
         let simple_root = algebraic_parameter(&simple);
         let repeated = polynomial(&[1, 0, -4, 0, 4]);
@@ -3761,7 +3761,7 @@ mod conversion_tests {
 
     #[test]
     fn simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         // t(2t² - 1) has a represented endpoint root and one nonrational
         // interior root. Isolation deflates t before retaining the algebraic
         // carrier, without changing the interior root's multiplicity.
@@ -3796,7 +3796,7 @@ mod conversion_tests {
 
     #[test]
     fn retained_sturm_certificate_classifies_mixed_root_multiplicity() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         // (2t² - 1)²(8t² - 1) has one simple and one repeated root in
         // the unit interval, neither representable as a rational scalar.
         let polynomial = polynomial(&[-1, 0, 12, 0, -36, 0, 32]);
@@ -3832,7 +3832,7 @@ mod conversion_tests {
     #[cfg(feature = "predicates")]
     #[test]
     fn retained_refinement_matches_square_free_reference_and_shares_sturm_work() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         for (defining, expects_sturm_fallback) in [
             (polynomial(&[-1, 0, 2]), false),
             (polynomial(&[1, 0, -4, 0, 4]), true),
@@ -3852,7 +3852,7 @@ mod conversion_tests {
                     distinct_root_count: 1,
                 },
                 hypersolve::RootIsolationConfig {
-                    policy: policy.predicate_policy,
+                    policy: policy.predicate_policy(),
                     max_interval_width: None,
                     max_refinement_steps: 3,
                 },
@@ -3891,7 +3891,7 @@ mod conversion_tests {
     #[cfg(feature = "predicates")]
     #[test]
     fn progressive_refinement_matches_one_pass_proof_budget() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let source = algebraic_parameter(&polynomial(&[-1, 0, 2]));
         let direct = source.clone().refined_isolating_interval(8, &policy);
         let mut progressive = BezierParameterRefinement2::new(&source, &policy);
@@ -3948,7 +3948,7 @@ mod conversion_tests {
 
     #[test]
     fn integer_polynomial_sign_matches_exact_rational_evaluation() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let wide = (BigInt::one() << 200_usize) + BigInt::from(123_456_789_u64);
         let polynomials = [
             vec![rational(-2, 1), rational(0, 1), rational(1, 1)],
@@ -4027,7 +4027,7 @@ mod conversion_tests {
                 .collect(),
         )
         .unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         assert_eq!(coefficients.len(), degree + 1);
         assert_eq!(

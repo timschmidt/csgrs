@@ -12,7 +12,7 @@ use hyperreal::{Real, RealSign};
 use crate::classify::{compare_reals, real_sign};
 use crate::events::CertifiedLineCrossingEvent;
 use crate::{
-    ContourIntersection, ContourOperand, CurvePolicy, IntersectionKind, Point2, RegionContourKey,
+    ContourIntersection, ContourOperand, CurveContext, IntersectionKind, Point2, RegionContourKey,
     RegionContourRole, RegionIntersectionSet, RegionSide, RegionView2, Segment2, SegmentKind,
 };
 
@@ -57,7 +57,7 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
         intersections: &'a RegionIntersectionSet,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<Self> {
         if first.material_contours().len() != 1
             || second.material_contours().len() != 1
@@ -329,7 +329,7 @@ fn segment_crossing_offsets(
 fn sort_and_validate_unique(
     crossings: &mut [RegionLineCrossing<'_>],
     certified: Option<&[CertifiedLineCrossingEvent]>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     // A lossy preview is only an ordering hint. The exact adjacent check below
     // certifies the candidate order; ambiguity falls back to an all-exact sort.
@@ -382,7 +382,7 @@ fn sort_and_validate_unique(
 fn sort_segment_groups_and_validate_unique_normalized(
     crossings: &mut [RegionLineCrossing<'_>],
     certified: Option<&[CertifiedLineCrossingEvent]>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     segment_count: usize,
 ) -> Option<Vec<usize>> {
     crossings.sort_unstable_by_key(|crossing| crossing.segment_index);
@@ -437,7 +437,7 @@ fn compare_crossing_parameters(
     left: &RegionLineCrossing<'_>,
     right: &RegionLineCrossing<'_>,
     certified: Option<&[CertifiedLineCrossingEvent]>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<std::cmp::Ordering> {
     match (&left.parameter, &right.parameter) {
         (
@@ -465,7 +465,7 @@ fn compare_crossing_parameters_normalized(
     left: &RegionLineCrossing<'_>,
     right: &RegionLineCrossing<'_>,
     certified: Option<&[CertifiedLineCrossingEvent]>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<std::cmp::Ordering> {
     match (&left.parameter, &right.parameter) {
         (
@@ -488,7 +488,7 @@ fn compare_crossing_parameters_normalized(
 fn crossing_order_is_certified(
     crossings: &[RegionLineCrossing<'_>],
     certified: Option<&[CertifiedLineCrossingEvent]>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     crossings.windows(2).all(|window| {
         window[0].segment_index < window[1].segment_index
@@ -517,7 +517,7 @@ mod tests {
 
     #[test]
     fn lossy_crossing_order_is_exactly_certified_and_rejects_duplicates() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let point = Point2::new(Real::zero(), Real::zero());
         let large = 1_i128 << 100;
         let lower = Real::from(large);
@@ -546,7 +546,7 @@ mod tests {
 
     #[test]
     fn grouped_crossing_sort_builds_offsets_and_certifies_local_order() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let point = Point2::new(Real::zero(), Real::zero());
         let lower = Real::from(1_i8);
         let upper = Real::from(2_i8);
@@ -575,7 +575,7 @@ mod tests {
 
     #[test]
     fn grouped_crossing_sort_bounds_dense_segment_insertion_work() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let point = Point2::new(Real::zero(), Real::zero());
         let parameters = (0..32).map(Real::from).collect::<Vec<_>>();
         let mut crossings = parameters

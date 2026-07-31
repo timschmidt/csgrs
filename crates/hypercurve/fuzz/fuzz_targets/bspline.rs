@@ -1,7 +1,7 @@
 #![no_main]
 
 use hypercurve::{
-    Classification, CurvePolicy, Point2, PolynomialBSplineCurve2, RationalBSplineCurve2,
+    Classification, CurveContext, Point2, PolynomialBSplineCurve2, RationalBSplineCurve2,
     RationalQuadraticBSplineCurve2, Real, RetainedBSplineSpanFactEvidence2,
 };
 use libfuzzer_sys::fuzz_target;
@@ -34,7 +34,7 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 10 {
         return;
     }
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let degree = if data[0] & 1 == 0 { 2 } else { 3 };
     let control_count = degree + 3;
     let mut controls = Vec::new();

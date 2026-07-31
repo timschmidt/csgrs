@@ -2,9 +2,10 @@ use hypercurve::{
     BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
     BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
     BooleanFragmentSelection, BooleanOp, BulgeVertex2, Classification, Contour2, ContourFragment,
-    ContourFragmentSet, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, LineArcRegion2,
-    LineSeg2, ParamRange, Real, RegionContourFragments, RegionContourKey, RegionContourRole,
-    RegionFragmentSet, RegionPointLocation, RegionSide, Segment2, UncertaintyReason,
+    ContourFragmentSet, CurveContext, CurveError, DirectedBooleanFragment, FillRule,
+    LineArcRegion2, LineSeg2, ParamRange, Real, RegionContourFragments, RegionContourKey,
+    RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide, Segment2,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -84,8 +85,8 @@ fn assert_exact_boolean_matrix(
     }
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 #[test]

@@ -14,7 +14,7 @@ use std::hash::{BuildHasherDefault, Hasher};
 
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
-    Classification, Contour2, CurveError, CurvePolicy, CurveResult, FillRule, ParamRange, Point2,
+    Classification, Contour2, CurveContext, CurveError, CurveResult, FillRule, ParamRange, Point2,
     Real, RegionContourKey, RegionContourRole, RegionSide, Segment2, UncertaintyReason,
 };
 
@@ -112,7 +112,10 @@ impl BooleanBoundaryFragmentSet {
     /// traversal selects the smallest certified counter-clockwise turn from the
     /// incoming tangent. Unresolved overlaps and indistinguishable tangent
     /// continuations remain uncertainty rather than using an arbitrary successor.
-    pub fn assemble_chains(&self, policy: &CurvePolicy) -> Classification<BooleanBoundaryChainSet> {
+    pub fn assemble_chains(
+        &self,
+        policy: &CurveContext,
+    ) -> Classification<BooleanBoundaryChainSet> {
         match self.assemble_chains_impl(policy) {
             Ok(chains) => Classification::Decided(chains),
             Err(reason) => Classification::Uncertain(reason),
@@ -121,7 +124,7 @@ impl BooleanBoundaryFragmentSet {
 
     pub(crate) fn into_assembled_chains(
         self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BooleanBoundaryChainSet> {
         if !self.unresolved_boundaries.is_empty() {
             return Classification::Uncertain(UncertaintyReason::Boundary);
@@ -146,7 +149,7 @@ impl BooleanBoundaryFragmentSet {
     pub(crate) fn into_assembled_contours(
         self,
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<Contour2>>> {
         if !self.unresolved_boundaries.is_empty() {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -184,7 +187,7 @@ impl BooleanBoundaryFragmentSet {
 
     fn assemble_chains_impl(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<BooleanBoundaryChainSet, UncertaintyReason> {
         if !self.unresolved_boundaries.is_empty() {
             return Err(UncertaintyReason::Boundary);
@@ -626,7 +629,7 @@ fn validate_directed_boolean_fragment_geometry(
     fragments: &[DirectedBooleanFragment],
     owner: &str,
 ) -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     for fragment in fragments {
         match is_zero(
             &fragment
@@ -713,7 +716,7 @@ fn certified_endpoint_match(
     right: &DirectedBooleanFragment,
     owner: &str,
 ) -> CurveResult<bool> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     match points_match(left.segment.end(), right.segment.start(), &policy) {
         Classification::Decided(matches) => Ok(matches),
         Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
@@ -813,7 +816,7 @@ fn decided_boolean_boundary_chain(
 
 fn endpoint_adjacency(
     fragments: &[impl BooleanBoundaryEdge],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<EndpointAdjacency> {
     let mut successors = vec![None; fragments.len()];
     let mut predecessors = vec![None; fragments.len()];
@@ -889,7 +892,7 @@ enum BoundaryTurnOrdering {
 
 fn tangent_ordered_chains(
     fragments: &[DirectedBooleanFragment],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BooleanBoundaryChainSet> {
     let outgoing = match boundary_outgoing_adjacency(fragments, policy) {
         Classification::Decided(outgoing) => outgoing,
@@ -938,7 +941,7 @@ fn tangent_ordered_chains(
 
 fn boundary_outgoing_adjacency(
     fragments: &[DirectedBooleanFragment],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<Vec<usize>>> {
     let mut outgoing = vec![Vec::new(); fragments.len()];
     for (left_index, left) in fragments.iter().enumerate() {
@@ -961,7 +964,7 @@ fn follow_tangent_ordered_chain(
     fragments: &[DirectedBooleanFragment],
     outgoing: &[Vec<usize>],
     used: &mut [bool],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BooleanBoundaryChain> {
     let first_start = fragments[start].segment.start().clone();
     let mut current = start;
@@ -1002,7 +1005,7 @@ fn choose_boundary_tangent_successor(
     current: usize,
     candidates: &[usize],
     fragments: &[DirectedBooleanFragment],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<usize>> {
     if candidates.is_empty() {
         return Classification::Decided(None);
@@ -1073,7 +1076,7 @@ fn segment_tangent_at(segment: &Segment2, point: &Point2) -> BoundaryTangent {
     }
 }
 
-fn boundary_tangent_is_nonzero(tangent: &BoundaryTangent, policy: &CurvePolicy) -> bool {
+fn boundary_tangent_is_nonzero(tangent: &BoundaryTangent, policy: &CurveContext) -> bool {
     !matches!(
         is_zero(&boundary_dot(tangent, tangent), policy),
         Some(true) | None
@@ -1084,7 +1087,7 @@ fn compare_boundary_turn_from_base(
     base: &BoundaryTangent,
     first: &BoundaryTangent,
     second: &BoundaryTangent,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BoundaryTurnOrdering> {
     let first_half = match boundary_turn_half(base, first, policy) {
         Some(half) => half,
@@ -1117,7 +1120,7 @@ fn compare_boundary_turn_from_base(
 fn boundary_turn_half(
     base: &BoundaryTangent,
     candidate: &BoundaryTangent,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<u8> {
     match real_sign(&boundary_cross(base, candidate), policy)? {
         RealSign::Positive => Some(0),
@@ -1140,7 +1143,7 @@ fn boundary_dot(left: &BoundaryTangent, right: &BoundaryTangent) -> Real {
 
 pub(crate) fn endpoint_chain_indices(
     fragments: &[impl BooleanBoundaryEdge],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<Option<BooleanBoundaryChainIndices>, UncertaintyReason> {
     let (successors, predecessors) = match endpoint_adjacency(fragments, policy) {
         Classification::Decided(adjacency) => adjacency,
@@ -1248,7 +1251,7 @@ fn follow_chain_indices(
 fn points_match(
     left: &crate::Point2,
     right: &crate::Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     if left == right {
         return Classification::Decided(true);

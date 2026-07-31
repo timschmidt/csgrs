@@ -3,7 +3,7 @@
 use hypercurve::{
     BezierAlgebraicParameter2, BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
     BezierEndpointTangentImage2, BezierParameterInterval, BezierParameterPolynomial,
-    Classification, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    Classification, CurveContext, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
     compare_algebraic_tangent_turn_from_base,
 };
@@ -20,7 +20,7 @@ fn point(x: u8, y: u8) -> Point2 {
 fn vector_from_curve(
     curve: &QuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierAlgebraicTangentVector2> {
     let tangent = curve
         .tangent_at_algebraic_parameter(parameter, policy)
@@ -34,7 +34,7 @@ fn vector_from_curve(
 fn second_vector_from_curve(
     curve: &QuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierAlgebraicTangentVector2> {
     let tangent = curve
         .second_derivative_at_algebraic_parameter(parameter, policy)
@@ -48,7 +48,7 @@ fn second_vector_from_curve(
 fn second_vector_from_rational_curve(
     curve: &RationalQuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierAlgebraicTangentVector2> {
     let tangent = curve
         .second_derivative_at_algebraic_parameter(parameter, policy)
@@ -64,7 +64,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let Ok(Classification::Decided(polynomial)) = BezierParameterPolynomial::try_new_power_basis(
         vec![Real::from(-1), Real::from(2)],
         &policy,

@@ -1,5 +1,5 @@
 use hypercurve::{
-    Aabb2, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2,
+    Aabb2, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveString2,
     LineArcRegion2, LineSeg2, Point2, Real, Segment2, UncertaintyReason,
 };
 
@@ -19,8 +19,8 @@ fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 
     Segment2::Line(line(start_x, start_y, end_x, end_y))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn assert_bbox(bbox: &Aabb2, min: Point2, max: Point2) {

@@ -1,6 +1,6 @@
 use hypercurve::{
     BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurvePolicy, Point2, QuadraticBezier2,
+    BezierParameterPolynomial, Classification, CurveContext, Point2, QuadraticBezier2,
     RationalQuadraticBezier2, Real,
 };
 #[cfg(feature = "predicates")]
@@ -17,8 +17,8 @@ fn q(numerator: i32, denominator: i32) -> Real {
     (Real::from(numerator) / Real::from(denominator)).unwrap()
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn p(x: i32, y: i32) -> Point2 {

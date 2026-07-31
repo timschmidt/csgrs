@@ -11,7 +11,9 @@ use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 use std::cmp::Ordering;
 
 use crate::classify::{compare_reals, is_zero};
-use crate::{Aabb2, Classification, CurvePolicy, CurveResult, LineSeg2, Point2, UncertaintyReason};
+use crate::{
+    Aabb2, Classification, CurveContext, CurveResult, LineSeg2, Point2, UncertaintyReason,
+};
 
 /// An endpoint of a parametric Bezier segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -166,7 +168,7 @@ impl QuadraticBezier2 {
         t: Real,
         point: Point2,
         end: Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if let Some(blocker) = quadratic_interpolation_parameter_blocker(&t, policy) {
             return Ok(Classification::Uncertain(blocker));
@@ -198,8 +200,13 @@ impl QuadraticBezier2 {
     pub fn interpolate_midpoint(start: Point2, midpoint: Point2, end: Point2) -> CurveResult<Self> {
         let two = Real::from(2_i8);
         let half = (Real::one() / two.clone())?;
-        let Classification::Decided(curve) =
-            Self::interpolate_point_at_parameter(start, half, midpoint, end, &CurvePolicy::STRICT)?
+        let Classification::Decided(curve) = Self::interpolate_point_at_parameter(
+            start,
+            half,
+            midpoint,
+            end,
+            &CurveContext::STRICT,
+        )?
         else {
             unreachable!("the exact half parameter is strictly interior")
         };
@@ -264,7 +271,7 @@ impl QuadraticBezier2 {
         &self,
         point: &Point2,
         t: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         point_equals_at_parameter(self.point_at(t), point, policy)
     }
@@ -274,7 +281,7 @@ impl QuadraticBezier2 {
     /// A Bezier segment lies inside the convex hull of its control polygon.
     /// The box is therefore a broad-phase envelope, not a topology decision.
     /// Predicate code must still certify actual intersections or containment.
-    pub fn control_hull_box(&self, policy: &CurvePolicy) -> Classification<Aabb2> {
+    pub fn control_hull_box(&self, policy: &CurveContext) -> Classification<Aabb2> {
         Aabb2::from_points(self.control_points(), policy)
     }
 
@@ -451,13 +458,13 @@ impl CubicBezier2 {
         &self,
         point: &Point2,
         t: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         point_equals_at_parameter(self.point_at(t), point, policy)
     }
 
     /// Returns a conservative convex-hull box for the control polygon.
-    pub fn control_hull_box(&self, policy: &CurvePolicy) -> Classification<Aabb2> {
+    pub fn control_hull_box(&self, policy: &CurveContext) -> Classification<Aabb2> {
         Aabb2::from_points(self.control_points(), policy)
     }
 
@@ -485,7 +492,7 @@ impl CubicBezier2 {
 fn point_equals_at_parameter(
     curve_point: Point2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let distance_squared = curve_point.distance_squared(point);
     is_zero(&distance_squared, policy)
@@ -497,7 +504,7 @@ fn point_equals_at_parameter(
 
 fn quadratic_interpolation_parameter_blocker(
     t: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<UncertaintyReason> {
     let zero = Real::zero();
     let one = Real::one();

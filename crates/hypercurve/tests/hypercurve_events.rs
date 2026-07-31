@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourIntersection,
     ContourIntersectionSet, ContourOperand, ContourOverlapIntersection, ContourPointIntersection,
-    CurveError, CurvePolicy, IntersectionKind, LineSeg2, ParamRange, Real, Segment2, SegmentKind,
+    CurveContext, CurveError, IntersectionKind, LineSeg2, ParamRange, Real, Segment2, SegmentKind,
 };
 
 fn s(value: i32) -> Real {
@@ -33,8 +33,8 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     ])
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn point_event_point(event: &ContourIntersection) -> hypercurve::Point2 {

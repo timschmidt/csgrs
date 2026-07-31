@@ -22,7 +22,7 @@ use crate::classify::{
 use crate::{
     Aabb2, Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
     BezierLineContactRelation, BezierLineRelation, BezierMonotoneGraphOrder, BezierMonotoneSpan,
-    Classification, CubicBezier2, CurveError, CurvePolicy, LineSeg2, LineSide, Point2,
+    Classification, CubicBezier2, CurveContext, CurveError, LineSeg2, LineSide, Point2,
     QuadraticBezier2, RationalBezier2, UncertaintyReason,
 };
 
@@ -170,7 +170,7 @@ impl RationalQuadraticBezier2 {
         }
         let classified_common_weight_sign = common_weight_sign_for_values(
             [&start_weight, &control_weight, &end_weight],
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         );
         debug_assert!(
             classified_common_weight_sign.is_none()
@@ -266,7 +266,7 @@ impl RationalQuadraticBezier2 {
         [&self.start_weight, &self.control_weight, &self.end_weight]
     }
 
-    pub(crate) fn common_nonzero_weight_sign(&self, policy: &CurvePolicy) -> Option<RealSign> {
+    pub(crate) fn common_nonzero_weight_sign(&self, policy: &CurveContext) -> Option<RealSign> {
         self.common_weight_sign
             .or_else(|| common_weight_sign_for_values(self.weights(), policy))
     }
@@ -277,7 +277,7 @@ impl RationalQuadraticBezier2 {
     /// form: `(sum B_i(t) w_i P_i) / (sum B_i(t) w_i)`. A zero denominator is
     /// a projective boundary, so this API returns explicit uncertainty instead
     /// of inventing an affine point.
-    pub fn point_at(&self, t: Real, policy: &CurvePolicy) -> Classification<Point2> {
+    pub fn point_at(&self, t: Real, policy: &CurveContext) -> Classification<Point2> {
         let one_minus_t = Real::one() - &t;
         let two = Real::from(2_i8);
         // Conjugating can eliminate a non-rational middle weight. When that
@@ -335,7 +335,7 @@ impl RationalQuadraticBezier2 {
         t: &Real,
         one_minus_t: &Real,
         two: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<Classification<Point2>> {
         let u_squared = one_minus_t * one_minus_t;
         let t_squared = t * t;
@@ -378,7 +378,7 @@ impl RationalQuadraticBezier2 {
         &self,
         point: &Point2,
         t: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         let curve_point = match self.point_at(t, policy) {
             Classification::Decided(point) => point,
@@ -401,7 +401,7 @@ impl RationalQuadraticBezier2 {
     pub fn parameters_for_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<Real>> {
         rational_parameters_for_point(self, point, policy)
     }
@@ -411,7 +411,7 @@ impl RationalQuadraticBezier2 {
     /// Denominator boundaries are reported as uncertainty instead of being
     /// projected into affine space. Use [`Self::parameters_for_point`] when the
     /// certified parameters themselves are needed by downstream topology.
-    pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         self.parameters_for_point(point, policy)
             .map(|parameters| !parameters.is_empty())
     }
@@ -427,7 +427,7 @@ impl RationalQuadraticBezier2 {
     pub fn relation_to_line(
         &self,
         line: &LineSeg2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierLineRelation> {
         let controls = self.control_points();
         let weights = self.weights();
@@ -525,7 +525,7 @@ impl RationalQuadraticBezier2 {
     pub fn relation_to_line_with_contacts(
         &self,
         line: &LineSeg2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierLineContactRelation> {
         match self.weights_known_same_nonzero_sign(policy) {
             Some(true) => {}
@@ -580,7 +580,7 @@ impl RationalQuadraticBezier2 {
     pub fn axis_monotone_parameters(
         &self,
         axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<Real>> {
         let weight_products = self.derivative_weight_products();
         let denominator = self.weight_power_basis();
@@ -592,7 +592,7 @@ impl RationalQuadraticBezier2 {
         axis: Axis2,
         weight_products: &(Real, Real, Real),
         denominator: &(Real, Real, Real),
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<Real>> {
         // After removing the irrelevant common factor two, the quotient
         // derivative has these quadratic Bernstein controls:
@@ -630,7 +630,7 @@ impl RationalQuadraticBezier2 {
     }
 
     /// Decomposes the conic at all certified x/y quotient-derivative roots.
-    pub fn monotone_spans(&self, policy: &CurvePolicy) -> Classification<Vec<BezierMonotoneSpan>> {
+    pub fn monotone_spans(&self, policy: &CurveContext) -> Classification<Vec<BezierMonotoneSpan>> {
         let weight_products = self.derivative_weight_products();
         let denominator = self.weight_power_basis();
         crate::bezier_topology::monotone_spans_from_parameters(
@@ -659,7 +659,7 @@ impl RationalQuadraticBezier2 {
     /// sign-normalized to the positive case, preserving the rational Bezier
     /// convex-hull guarantee when algebraic extrema are present while still
     /// avoiding topology decisions from approximate samples.
-    pub fn certified_bounds(&self, policy: &CurvePolicy) -> Classification<Aabb2> {
+    pub fn certified_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
         let mut samples = vec![self.start.clone(), self.end.clone()];
         if self.weights_known_same_nonzero_sign(policy) == Some(true)
             && self.weights_equal(policy) == Some(false)
@@ -696,7 +696,7 @@ impl RationalQuadraticBezier2 {
     pub fn relation_to_rational_quadratic(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierCurveRelation> {
         match self.same_homogeneous_controls(other, policy) {
             Some(true) => return Classification::Decided(BezierCurveRelation::SameControlPolygon),
@@ -883,7 +883,7 @@ impl RationalQuadraticBezier2 {
         &self,
         other: &RationalQuadraticBezier2,
         shared_axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierMonotoneGraphOrder> {
         matching_weight_rational_graph_order(self, other, shared_axis, policy)
     }
@@ -906,7 +906,7 @@ impl RationalQuadraticBezier2 {
         &self,
         other: &QuadraticBezier2,
         shared_axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierMonotoneGraphOrder> {
         match self.equal_weight_polynomial_quadratic_image(policy) {
             Classification::Decided(Some(curve)) => {
@@ -936,7 +936,7 @@ impl RationalQuadraticBezier2 {
         &self,
         other: &CubicBezier2,
         shared_axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierMonotoneGraphOrder> {
         match self.equal_weight_polynomial_quadratic_image(policy) {
             Classification::Decided(Some(curve)) => {
@@ -961,7 +961,7 @@ impl RationalQuadraticBezier2 {
     pub fn relation_to_quadratic(
         &self,
         other: &QuadraticBezier2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierCurveRelation> {
         relation_to_polynomial_bezier(self, other.control_points().as_slice(), policy)
     }
@@ -975,13 +975,13 @@ impl RationalQuadraticBezier2 {
     pub fn relation_to_cubic(
         &self,
         other: &CubicBezier2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierCurveRelation> {
         relation_to_polynomial_bezier(self, other.control_points().as_slice(), policy)
     }
 
     /// Classifies the represented conic family from the homogeneous weights.
-    pub fn conic_kind(&self, policy: &CurvePolicy) -> Classification<RationalQuadraticConicKind> {
+    pub fn conic_kind(&self, policy: &CurveContext) -> Classification<RationalQuadraticConicKind> {
         let discriminant =
             (&self.control_weight * &self.control_weight) - (&self.start_weight * &self.end_weight);
         match real_sign(&discriminant, policy) {
@@ -1044,7 +1044,7 @@ impl RationalQuadraticBezier2 {
         ])
     }
 
-    fn weights_known_same_nonzero_sign(&self, policy: &CurvePolicy) -> Option<bool> {
+    fn weights_known_same_nonzero_sign(&self, policy: &CurveContext) -> Option<bool> {
         if self.common_weight_sign.is_some() {
             return Some(true);
         }
@@ -1067,7 +1067,7 @@ impl RationalQuadraticBezier2 {
         Some(expected.is_some())
     }
 
-    fn weights_equal(&self, policy: &CurvePolicy) -> Option<bool> {
+    fn weights_equal(&self, policy: &CurveContext) -> Option<bool> {
         [
             &self.start_weight - &self.control_weight,
             &self.control_weight - &self.end_weight,
@@ -1077,7 +1077,7 @@ impl RationalQuadraticBezier2 {
         .try_fold(true, |same, item| item.map(|item| same && item))
     }
 
-    fn same_homogeneous_controls(&self, other: &Self, policy: &CurvePolicy) -> Option<bool> {
+    fn same_homogeneous_controls(&self, other: &Self, policy: &CurveContext) -> Option<bool> {
         let same_points = self
             .control_points()
             .iter()
@@ -1096,7 +1096,7 @@ impl RationalQuadraticBezier2 {
     fn same_projective_homogeneous_controls(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<bool> {
         let same_points = self
             .control_points()
@@ -1128,7 +1128,7 @@ impl RationalQuadraticBezier2 {
     fn same_reversed_projective_homogeneous_controls(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<bool> {
         let same_reversed_points = self
             .control_points()
@@ -1160,7 +1160,7 @@ impl RationalQuadraticBezier2 {
     fn same_polynomial_quadratic_controls(
         &self,
         polynomial_controls: &[&Point2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<bool> {
         let same_points = self
             .control_points()
@@ -1174,7 +1174,7 @@ impl RationalQuadraticBezier2 {
 
     fn equal_weight_polynomial_quadratic_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Option<QuadraticBezier2>> {
         equal_weight_polynomial_quadratic_image(self, policy)
     }
@@ -1183,7 +1183,7 @@ impl RationalQuadraticBezier2 {
         &self,
         other: &QuadraticBezier2,
         shared_axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierMonotoneGraphOrder> {
         rational_quadratic_graph_order_to_quadratic(self, other, shared_axis, policy)
     }
@@ -1192,7 +1192,7 @@ impl RationalQuadraticBezier2 {
         &self,
         other: &CubicBezier2,
         shared_axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierMonotoneGraphOrder> {
         rational_quadratic_graph_order_to_cubic(self, other, shared_axis, policy)
     }
@@ -1253,7 +1253,7 @@ enum RationalQuadraticRootCover {
 fn rational_parameters_for_point(
     curve: &RationalQuadraticBezier2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<Real>> {
     let x_roots = match rational_axis_point_root_set(curve, point, Axis2::X, policy) {
         Classification::Decided(roots) => roots,
@@ -1270,7 +1270,7 @@ fn rational_axis_point_root_set(
     curve: &RationalQuadraticBezier2,
     point: &Point2,
     axis: Axis2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<RationalPointRootSet> {
     let target = coordinate(point, axis);
     let controls = curve.control_points();
@@ -1296,7 +1296,7 @@ fn rational_point_parameters_from_root_sets(
     point: &Point2,
     x_roots: RationalPointRootSet,
     y_roots: RationalPointRootSet,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<Real>> {
     let candidates = match (&x_roots, &y_roots) {
         (RationalPointRootSet::All, RationalPointRootSet::All) => vec![Real::zero()],
@@ -1325,13 +1325,13 @@ fn rational_point_parameters_from_root_sets(
     Classification::Decided(parameters)
 }
 
-fn is_unit_endpoint(value: &Real, policy: &CurvePolicy) -> bool {
+fn is_unit_endpoint(value: &Real, policy: &CurveContext) -> bool {
     is_zero(value, policy) == Some(true) || is_zero(&(value - &Real::one()), policy) == Some(true)
 }
 
 fn equal_weight_polynomial_quadratic_image(
     rational: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<QuadraticBezier2>> {
     match rational.weights_equal(policy) {
         Some(true) => {}
@@ -1356,7 +1356,7 @@ fn collapsed_graph_order_to_quadratic(
     collapsed: &QuadraticBezier2,
     other: &QuadraticBezier2,
     shared_axis: Axis2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierMonotoneGraphOrder> {
     collapsed.graph_order_to_quadratic_over_axis(other, shared_axis, policy)
 }
@@ -1365,7 +1365,7 @@ fn rational_quadratic_graph_order_to_quadratic(
     rational: &RationalQuadraticBezier2,
     polynomial: &QuadraticBezier2,
     shared_axis: Axis2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierMonotoneGraphOrder> {
     // For non-equal weights, the supported mixed graph shortcut is deliberately
     // narrower than a full rational/polynomial intersection solver. If one
@@ -1469,7 +1469,7 @@ fn rational_quadratic_graph_order_to_cubic(
     rational: &RationalQuadraticBezier2,
     polynomial: &CubicBezier2,
     shared_axis: Axis2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierMonotoneGraphOrder> {
     // This is the cubic partner of the degree-4 mixed graph shortcut above.
     // When one coordinate is shared, strict order is the sign of the degree-5
@@ -1719,7 +1719,7 @@ fn divide_by_positive_integer(numerator: Real, denominator: i8) -> Result<Real, 
     (numerator / Real::from(denominator)).map_err(|_| UncertaintyReason::Unsupported)
 }
 
-fn degree4_controls_all_zero(controls: &[Real; 5], policy: &CurvePolicy) -> Classification<bool> {
+fn degree4_controls_all_zero(controls: &[Real; 5], policy: &CurveContext) -> Classification<bool> {
     let mut all_zero = true;
     for control in controls {
         match is_zero(control, policy) {
@@ -1731,7 +1731,7 @@ fn degree4_controls_all_zero(controls: &[Real; 5], policy: &CurvePolicy) -> Clas
     Classification::Decided(all_zero)
 }
 
-fn degree5_controls_all_zero(controls: &[Real; 6], policy: &CurvePolicy) -> Classification<bool> {
+fn degree5_controls_all_zero(controls: &[Real; 6], policy: &CurveContext) -> Classification<bool> {
     let mut all_zero = true;
     for control in controls {
         match is_zero(control, policy) {
@@ -1754,7 +1754,7 @@ enum RationalPolynomialRootCover {
 
 fn degree4_root_cover(
     controls: [Real; 5],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<RationalPolynomialRootCover, UncertaintyReason> {
     match degree4_controls_all_zero(&controls, policy) {
         Classification::Decided(true) => return Ok(RationalPolynomialRootCover::All),
@@ -1778,7 +1778,7 @@ fn degree4_root_cover(
 
 fn degree5_root_cover(
     controls: [Real; 6],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<RationalPolynomialRootCover, UncertaintyReason> {
     match degree5_controls_all_zero(&controls, policy) {
         Classification::Decided(true) => return Ok(RationalPolynomialRootCover::All),
@@ -1805,7 +1805,7 @@ pub(crate) fn isolate_scalar_bernstein_roots(
     start: Real,
     end: Real,
     depth: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     exact_parameters: &mut Vec<Real>,
     spans: &mut Vec<BezierMonotoneSpan>,
 ) -> Result<(), UncertaintyReason> {
@@ -1875,7 +1875,7 @@ pub(crate) fn isolate_scalar_bernstein_roots(
 fn strict_rational_graph_order_from_degree4_weighted_signs(
     values: &[Real; 5],
     weight_sign: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierMonotoneGraphOrder> {
     let mut common = None;
     for value in values {
@@ -1893,7 +1893,7 @@ fn strict_rational_graph_order_from_degree4_weighted_signs(
 fn strict_rational_graph_order_from_degree5_weighted_signs(
     values: &[Real; 6],
     weight_sign: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierMonotoneGraphOrder> {
     let mut common = None;
     for value in values {
@@ -1927,7 +1927,7 @@ impl QuadraticBezier2 {
     pub fn relation_to_rational_quadratic(
         &self,
         other: &RationalQuadraticBezier2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierCurveRelation> {
         other.relation_to_quadratic(self, policy)
     }
@@ -1945,7 +1945,7 @@ impl QuadraticBezier2 {
         &self,
         other: &RationalQuadraticBezier2,
         shared_axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierMonotoneGraphOrder> {
         match other.equal_weight_polynomial_quadratic_image(policy) {
             Classification::Decided(Some(curve)) => {
@@ -1964,7 +1964,7 @@ impl CubicBezier2 {
     pub fn relation_to_rational_quadratic(
         &self,
         other: &RationalQuadraticBezier2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierCurveRelation> {
         other.relation_to_cubic(self, policy)
     }
@@ -1982,7 +1982,7 @@ impl CubicBezier2 {
         &self,
         other: &RationalQuadraticBezier2,
         shared_axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierMonotoneGraphOrder> {
         match other.equal_weight_polynomial_quadratic_image(policy) {
             Classification::Decided(Some(curve)) => {
@@ -1999,7 +1999,7 @@ impl CubicBezier2 {
 fn relation_to_polynomial_bezier(
     rational: &RationalQuadraticBezier2,
     polynomial_controls: &[&Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierCurveRelation> {
     if polynomial_controls.is_empty() {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
@@ -2207,7 +2207,7 @@ const RATIONAL_POLYNOMIAL_DYADIC_CANDIDATE_DENOMINATOR: i16 = 512;
 fn same_parameter_dyadic_rational_polynomial_relation(
     rational: &RationalQuadraticBezier2,
     polynomial_controls: &[&Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<BezierCurveRelation>> {
     let denominator = Real::from(RATIONAL_POLYNOMIAL_DYADIC_CANDIDATE_DENOMINATOR);
     let mut points = Vec::new();
@@ -2251,7 +2251,7 @@ fn same_parameter_dyadic_rational_polynomial_relation(
 fn polynomial_relation_for_equal_weight_rationals(
     first: &RationalQuadraticBezier2,
     second: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<BezierCurveRelation>> {
     match (first.weights_equal(policy), second.weights_equal(policy)) {
         (Some(true), Some(true)) => {
@@ -2276,7 +2276,7 @@ fn polynomial_relation_for_equal_weight_rationals(
 fn polynomial_relation_for_equal_weight_rational(
     rational: &RationalQuadraticBezier2,
     polynomial_controls: &[&Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<BezierCurveRelation>> {
     match rational.weights_equal(policy) {
         Some(true) => {
@@ -2307,7 +2307,7 @@ fn polynomial_relation_for_equal_weight_rational(
 fn polynomial_relation_for_strict_mixed_graph_order(
     rational: &RationalQuadraticBezier2,
     polynomial_controls: &[&Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<BezierCurveRelation>> {
     // Once one coordinate is certified identical and injective, the remaining
     // homogeneous numerator is a complete same-parameter graph predicate:
@@ -2353,7 +2353,7 @@ fn polynomial_relation_for_strict_mixed_graph_order(
 fn relation_from_mixed_graph_order(
     rational: &RationalQuadraticBezier2,
     order: BezierMonotoneGraphOrder,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<Option<BezierCurveRelation>, UncertaintyReason> {
     match order {
         BezierMonotoneGraphOrder::FirstLess | BezierMonotoneGraphOrder::FirstGreater => {
@@ -2401,7 +2401,7 @@ fn polynomial_quadratic_from_rational_controls(
 
 fn rational_line_segment_image(
     curve: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<LineSeg2>> {
     if curve.weights_known_same_nonzero_sign(policy) != Some(true) {
         return Classification::Decided(None);
@@ -2411,7 +2411,7 @@ fn rational_line_segment_image(
 
 fn rational_point_image(
     curve: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<Point2>> {
     if curve.weights_known_same_nonzero_sign(policy) != Some(true) {
         return Classification::Decided(None);
@@ -2421,7 +2421,7 @@ fn rational_point_image(
 
 fn point_image_from_controls(
     controls: &[&Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<Point2>> {
     let Some(point) = controls.first().copied() else {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
@@ -2438,7 +2438,7 @@ fn point_image_from_controls(
 
 fn line_segment_image_from_controls(
     controls: &[&Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<LineSeg2>> {
     // Same-sign rational Bezier weights can be homogeneous-sign-normalized to
     // the positive case, preserving the Euclidean convex-hull property, while
@@ -2484,7 +2484,7 @@ fn line_segment_image_from_controls(
 fn line_segment_intersection_relation(
     first: &LineSeg2,
     second: &LineSeg2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierCurveRelation> {
     match first.intersect_line(second, policy) {
         Ok(intersection) => {
@@ -2498,7 +2498,7 @@ fn line_segment_intersection_relation(
 fn rational_rational_endpoint_intersections(
     first: &RationalQuadraticBezier2,
     second: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<BezierCurveIntersectionPoint>> {
     let mut points = Vec::new();
     for endpoint in [first.start(), first.end()] {
@@ -2525,7 +2525,7 @@ fn rational_rational_endpoint_intersections(
 fn merge_endpoint_points_into_relation(
     relation: BezierCurveRelation,
     endpoint_points: &[BezierCurveIntersectionPoint],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> BezierCurveRelation {
     if endpoint_points.is_empty() {
         return relation;
@@ -2556,7 +2556,7 @@ fn merge_endpoint_points_into_relation(
 fn endpoint_points_are_shared_only(
     endpoint_points: &[BezierCurveIntersectionPoint],
     shared_endpoint_points: &[BezierCurveIntersectionPoint],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     !endpoint_points.is_empty()
         && endpoint_points.iter().all(|endpoint| {
@@ -2569,7 +2569,7 @@ fn endpoint_points_are_shared_only(
 fn same_parameter_matching_weight_rational_relation(
     first: &RationalQuadraticBezier2,
     second: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<BezierCurveRelation>> {
     match matching_rational_weights(first, second, policy) {
         Some(true) => {}
@@ -2630,7 +2630,7 @@ fn same_parameter_matching_weight_rational_relation(
 fn matching_weight_rational_graph_relation(
     first: &RationalQuadraticBezier2,
     second: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<BezierCurveRelation>> {
     if first.weights_known_same_nonzero_sign(policy) != Some(true) {
         return Classification::Decided(None);
@@ -2668,7 +2668,7 @@ fn matching_weight_rational_graph_order(
     first: &RationalQuadraticBezier2,
     second: &RationalQuadraticBezier2,
     shared_axis: Axis2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierMonotoneGraphOrder> {
     match matching_rational_weights(first, second, policy) {
         Some(true) => {}
@@ -2742,7 +2742,7 @@ fn matching_weight_rational_graph_order(
 fn matching_weight_rational_same_parameter_is_complete(
     first: &RationalQuadraticBezier2,
     second: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     // Matching weights give both rational quadratics one common homogeneous
     // denominator. If one Euclidean coordinate is also certified identical and
@@ -2782,7 +2782,7 @@ fn rational_matching_axis_equal(
     first: &RationalQuadraticBezier2,
     second: &RationalQuadraticBezier2,
     axis: Axis2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     first
         .control_points()
@@ -2794,7 +2794,7 @@ fn rational_matching_axis_equal(
 fn rational_axis_strictly_monotone(
     curve: &RationalQuadraticBezier2,
     axis: Axis2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let roots = match curve.axis_monotone_parameters(axis, policy) {
         Classification::Decided(roots) => roots,
@@ -2813,7 +2813,7 @@ fn rational_axis_strictly_monotone(
 fn matching_rational_weights(
     first: &RationalQuadraticBezier2,
     second: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     first
         .weights()
@@ -2825,12 +2825,12 @@ fn matching_rational_weights(
 
 fn common_rational_weight_sign(
     curve: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<RealSign> {
     curve.common_nonzero_weight_sign(policy)
 }
 
-fn common_weight_sign_for_values(weights: [&Real; 3], policy: &CurvePolicy) -> Option<RealSign> {
+fn common_weight_sign_for_values(weights: [&Real; 3], policy: &CurveContext) -> Option<RealSign> {
     let mut common = None;
     for weight in weights {
         let sign = real_sign(weight, policy)?;
@@ -2847,7 +2847,7 @@ fn common_weight_sign_for_values(weights: [&Real; 3], policy: &CurvePolicy) -> O
 fn strict_rational_graph_order_from_weighted_signs(
     values: &[Real; 3],
     weight_sign: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierMonotoneGraphOrder> {
     let mut common = None;
     for value in values {
@@ -2881,7 +2881,7 @@ fn matching_weight_axis_difference_root_set(
     first: &RationalQuadraticBezier2,
     second: &RationalQuadraticBezier2,
     axis: Axis2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<RationalPointRootSet>> {
     let values = matching_weight_axis_difference_values(first, second, axis);
     if values
@@ -2913,7 +2913,7 @@ fn matching_weight_axis_difference_root_cover(
     first: &RationalQuadraticBezier2,
     second: &RationalQuadraticBezier2,
     axis: Axis2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<RationalQuadraticRootCover>> {
     let values = matching_weight_axis_difference_values(first, second, axis);
     if values
@@ -2976,7 +2976,7 @@ fn matching_weight_axis_difference_values(
 
 fn isolate_rational_quadratic_line_roots(
     weighted_distances: [Real; 3],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierLineRelation> {
     // The signed distance numerator of a same-sign rational quadratic Bezier
     // has a denominator that cannot vanish on the affine segment, so its line
@@ -3022,7 +3022,7 @@ fn isolate_rational_quadratic_line_roots(
 fn same_parameter_candidates_from_root_sets(
     x_roots: RationalPointRootSet,
     y_roots: RationalPointRootSet,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<Real>> {
     let mut candidates = Vec::new();
     match (&x_roots, &y_roots) {
@@ -3053,7 +3053,7 @@ fn same_parameter_candidates_from_root_sets(
 fn relation_from_matching_weight_graph_root_cover(
     curve: &RationalQuadraticBezier2,
     cover: RationalQuadraticRootCover,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<BezierCurveRelation, UncertaintyReason> {
     match cover {
         RationalQuadraticRootCover::All => Ok(BezierCurveRelation::SameCurveImage),
@@ -3091,7 +3091,7 @@ fn isolate_scalar_quadratic_roots(
     start: Real,
     end: Real,
     depth: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     exact_parameters: &mut Vec<Real>,
     spans: &mut Vec<BezierMonotoneSpan>,
 ) -> Result<(), UncertaintyReason> {
@@ -3174,7 +3174,7 @@ fn subdivide_scalar_quadratic_half(
 pub(crate) fn push_unique_graph_parameter(
     values: &mut Vec<Real>,
     value: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<(), UncertaintyReason> {
     let mut insert_at = values.len();
     for (index, existing) in values.iter().enumerate() {
@@ -3195,7 +3195,7 @@ pub(crate) fn push_unique_graph_parameter(
 pub(crate) fn push_unique_graph_region_span(
     spans: &mut Vec<BezierMonotoneSpan>,
     span: BezierMonotoneSpan,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<(), UncertaintyReason> {
     let mut insert_at = spans.len();
     for (index, existing) in spans.iter().enumerate() {
@@ -3224,7 +3224,7 @@ pub(crate) fn push_unique_graph_region_span(
 fn rational_polynomial_endpoint_intersections(
     rational: &RationalQuadraticBezier2,
     polynomial_controls: &[&Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<BezierCurveIntersectionPoint>> {
     let mut points = Vec::new();
     for endpoint in [
@@ -3260,7 +3260,7 @@ fn rational_polynomial_endpoint_intersections(
 fn point_image_rational_intersections(
     point: &Point2,
     rational: &RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<BezierCurveIntersectionPoint>> {
     // Once a rational conic is certified to collapse to one affine point, the
     // curve/curve predicate reduces to the other conic's homogeneous
@@ -3281,7 +3281,7 @@ fn point_image_rational_intersections(
 fn point_image_polynomial_intersections(
     point: &Point2,
     controls: &[&Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<Vec<BezierCurveIntersectionPoint>>> {
     // Polynomial quadratic point queries are complete low-degree Bernstein
     // solves; cubic point queries currently remain a finite dyadic promotion
@@ -3330,7 +3330,7 @@ fn line_image_rational_relation(
     line: &LineSeg2,
     rational: &RationalQuadraticBezier2,
     line_is_first: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<BezierCurveRelation>> {
     // A line-image curve turns one side of the curve/curve problem into a
     // finite segment containment predicate. The rational side still uses its
@@ -3378,7 +3378,7 @@ fn line_image_polynomial_relation(
     line: &LineSeg2,
     controls: &[&Point2],
     line_is_first: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<BezierCurveRelation>> {
     // For polynomial quadratics, the supporting-line distance is an exact
     // quadratic Bernstein polynomial. Solving it before falling back to
@@ -3449,7 +3449,7 @@ fn zero_width_span(parameter: Real) -> Result<BezierMonotoneSpan, UncertaintyRea
 fn polynomial_relation_to_line(
     controls: &[&Point2],
     line: &LineSeg2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierLineRelation> {
     match controls {
         [start, control, end] => {
@@ -3484,7 +3484,7 @@ fn polynomial_point_at(controls: &[&Point2], t: Real) -> Option<Point2> {
 fn push_unique_intersection_point(
     points: &mut Vec<BezierCurveIntersectionPoint>,
     point: Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) {
     if points
         .iter()
@@ -3498,7 +3498,7 @@ fn push_unique_intersection_point(
 fn push_unique_real(
     values: &mut Vec<Real>,
     value: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<()> {
     if values
         .iter()
@@ -3510,7 +3510,7 @@ fn push_unique_real(
     Classification::Decided(())
 }
 
-fn point_coordinates_equal(a: &Point2, b: &Point2, policy: &CurvePolicy) -> Option<bool> {
+fn point_coordinates_equal(a: &Point2, b: &Point2, policy: &CurveContext) -> Option<bool> {
     let same_x = is_zero(&(a.x() - b.x()), policy)?;
     let same_y = is_zero(&(a.y() - b.y()), policy)?;
     Some(same_x && same_y)
@@ -3553,11 +3553,11 @@ impl RationalSubdivisionNode {
         })
     }
 
-    fn control_box(&self, policy: &CurvePolicy) -> Classification<Aabb2> {
+    fn control_box(&self, policy: &CurveContext) -> Classification<Aabb2> {
         Aabb2::from_points(self.controls.iter(), policy)
     }
 
-    fn split_half(&self, policy: &CurvePolicy) -> Result<(Self, Self), UncertaintyReason> {
+    fn split_half(&self, policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason> {
         let (left_controls, left_weights, right_controls, right_weights) =
             match self.weights.as_ref() {
                 Some(weights) => split_rational_controls_half(&self.controls, weights, policy)?,
@@ -3583,7 +3583,7 @@ impl RationalSubdivisionNode {
 fn isolate_curve_regions(
     first: RationalSubdivisionNode,
     second: RationalSubdivisionNode,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierCurveRelation> {
     let mut regions = Vec::new();
     if let Err(reason) = isolate_curve_regions_recursive(first, second, 0, policy, &mut regions) {
@@ -3600,7 +3600,7 @@ fn isolate_curve_regions_recursive(
     first: RationalSubdivisionNode,
     second: RationalSubdivisionNode,
     depth: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     regions: &mut Vec<BezierCurveIntersectionRegion>,
 ) -> Result<(), UncertaintyReason> {
     // Positive-weight rational Beziers preserve the convex-hull property in
@@ -3649,7 +3649,7 @@ type RationalSplit = (
 fn split_rational_controls_half(
     controls: &[Point2],
     weights: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<RationalSplit, UncertaintyReason> {
     if controls.is_empty() {
         return Err(UncertaintyReason::Unsupported);
@@ -3751,7 +3751,7 @@ fn midpoint_homogeneous(
 
 fn project_homogeneous_controls(
     controls: &[HomogeneousControl],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<(Vec<Point2>, Vec<Real>), UncertaintyReason> {
     let mut points = Vec::with_capacity(controls.len());
     let mut weights = Vec::with_capacity(controls.len());
@@ -3780,7 +3780,7 @@ fn midpoint_real(first: &Real, second: &Real) -> Result<Real, UncertaintyReason>
     divide_by_positive_integer(first + second, 2)
 }
 
-fn point_equal(a: &Point2, b: &Point2, policy: &CurvePolicy) -> Option<bool> {
+fn point_equal(a: &Point2, b: &Point2, policy: &CurveContext) -> Option<bool> {
     is_zero(&a.distance_squared(b), policy)
 }
 
@@ -3805,7 +3805,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            relation_to_polynomial_bezier(&rational, &[], &CurvePolicy::STRICT),
+            relation_to_polynomial_bezier(&rational, &[], &CurveContext::STRICT),
             Classification::Uncertain(UncertaintyReason::Unsupported)
         );
         assert_eq!(polynomial_point_at(&[], Real::zero()), None);
@@ -3919,7 +3919,7 @@ mod tests {
         let relation = same_parameter_dyadic_rational_polynomial_relation(
             &rational,
             &controls,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         );
 
         match relation {

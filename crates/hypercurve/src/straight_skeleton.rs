@@ -22,8 +22,8 @@ use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
-    BezierLineImageFitRelation, Classification, Contour2, CurveFamily2, CurveGeometry2, CurvePath2,
-    CurvePolicy, CurveResult, Point2, Segment2,
+    BezierLineImageFitRelation, Classification, Contour2, CurveContext, CurveFamily2,
+    CurveGeometry2, CurvePath2, CurveResult, Point2, Segment2,
 };
 
 /// Native straight-skeleton support advertised for one exact curve family.
@@ -1071,7 +1071,7 @@ impl Contour2 {
     /// vertex. No tessellation or finite sampling participates in this API.
     pub fn straight_skeleton_vertex_trajectories(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<StraightSkeletonVertexTrajectory2>>> {
         let Some(area) = self.signed_area()? else {
             return Ok(Classification::Uncertain(
@@ -1129,7 +1129,7 @@ impl Contour2 {
     /// validity is intentionally separate from this local queue.
     pub fn straight_skeleton_local_arc_events(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<StraightSkeletonLocalArcEvent2>>> {
         let Some(area) = self.signed_area()? else {
             return Ok(Classification::Uncertain(
@@ -1271,7 +1271,7 @@ impl Contour2 {
     /// event queue, not by this per-class predictor.
     pub fn straight_skeleton_splice_events(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<StraightSkeletonSpliceEvent2>>> {
         let Some(area) = self.signed_area()? else {
             return Ok(Classification::Uncertain(
@@ -1433,7 +1433,7 @@ impl Contour2 {
     /// evolution window used by the arc-polygon event algorithm.
     pub fn straight_skeleton_global_contact_events(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<StraightSkeletonGlobalContactEvent2>>> {
         let Some(area) = self.signed_area()? else {
             return Ok(Classification::Uncertain(
@@ -1751,7 +1751,7 @@ impl Contour2 {
     /// approximation. Generic concave input uses exact reflex split events;
     /// unresolved algebraic orderings and non-general-position event clusters
     /// remain explicit blockers.
-    pub fn straight_skeleton(&self, policy: &CurvePolicy) -> CurveResult<StraightSkeletonResult2> {
+    pub fn straight_skeleton(&self, policy: &CurveContext) -> CurveResult<StraightSkeletonResult2> {
         let source_edge_count = self.segments().len();
         let blocked = |stage, blocker| StraightSkeletonResult2 {
             stage,
@@ -1925,7 +1925,7 @@ impl Contour2 {
 
     fn co_circular_shape_preserving_skeleton(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<StraightSkeletonResult2>> {
         let Some(Segment2::Arc(first)) = self.segments().first() else {
             return Ok(None);
@@ -2019,7 +2019,7 @@ impl Contour2 {
 
     fn two_edge_line_arc_straight_skeleton(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<StraightSkeletonResult2>> {
         if self.segments().len() != 2 {
             return Ok(None);
@@ -2200,7 +2200,7 @@ impl Contour2 {
 
     fn shape_preserving_arc_straight_skeleton(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<StraightSkeletonResult2>> {
         if self.segments().len() < 3
             || !self
@@ -2434,7 +2434,7 @@ fn general_shape_preserving_straight_skeleton_evidence(
     supports: &[ShapePreservingSupport2],
     source_points: &[Point2],
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<StraightSkeletonResult2> {
     let source_edge_count = supports.len();
     let result = build_general_shape_preserving_straight_skeleton(
@@ -2475,7 +2475,7 @@ impl CurvePath2 {
     /// circular-conic reductions; every other instance returns a typed
     /// capability blocker with its curve index. No flattening or tolerance
     /// substitution is performed.
-    pub fn straight_skeleton(&self, policy: &CurvePolicy) -> CurveResult<StraightSkeletonResult2> {
+    pub fn straight_skeleton(&self, policy: &CurveContext) -> CurveResult<StraightSkeletonResult2> {
         let source_edge_count = self.curves().len();
         let mut segments = Vec::with_capacity(source_edge_count);
         for (curve_index, curve) in self.curves().iter().enumerate() {
@@ -2689,7 +2689,7 @@ impl CurvePath2 {
 
 fn rational_bezier_circular_arc(
     curve: &crate::RationalBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<crate::CircularArc2>>> {
     let reduction = rational_bezier_quadratic_reduction(curve, policy)?;
     let conic = match reduction {
@@ -2702,7 +2702,7 @@ fn rational_bezier_circular_arc(
 
 fn rational_bezier_quadratic_reduction(
     curve: &crate::RationalBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<crate::RationalQuadraticBezier2>>> {
     match curve.retained_quadratic_representative(policy)? {
         Classification::Decided(Some(conic)) => {
@@ -2800,7 +2800,7 @@ fn rational_bezier_quadratic_reduction(
 
 fn nurbs_single_span_circular_arc(
     curve: &crate::NurbsCurve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<crate::CircularArc2>>> {
     let decomposition = match curve.bezier_decomposition() {
         Ok(decomposition) => decomposition,
@@ -2819,7 +2819,7 @@ fn nurbs_single_span_circular_arc(
 
 fn rational_quadratic_circular_arc(
     curve: &crate::RationalQuadraticBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<crate::CircularArc2>>> {
     if curve.common_nonzero_weight_sign(policy).is_none() {
         return Ok(Classification::Uncertain(
@@ -2913,7 +2913,7 @@ fn control_net_line_image(
     end: &Point2,
     controls: &[Point2],
     weights: Option<&[Real]>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<crate::LineSeg2>>> {
     if let Some(weights) = weights {
         let mut common_sign = None;
@@ -2997,7 +2997,7 @@ fn blocked_shape_preserving_evidence(
 
 fn summarize_shape_preserving_event_times(
     mut events: Vec<(Real, usize)>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<(usize, usize), StraightSkeletonBlocker2> {
     for index in 1..events.len() {
         let mut cursor = index;
@@ -3038,7 +3038,7 @@ fn build_general_shape_preserving_straight_skeleton(
     supports: &[ShapePreservingSupport2],
     source_points: &[Point2],
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(StraightSkeleton2, usize, usize), SkeletonBuildBlock>> {
     if supports.len() != source_points.len() || supports.len() < 3 {
         return Ok(Err((
@@ -3138,7 +3138,7 @@ fn certified_single_bubble_reduction(
     supports: &[ShapePreservingSupport2],
     orientation: RealSign,
     reflex_vertices: &[usize],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Option<CertifiedBubbleReduction2>, StraightSkeletonBlocker2>> {
     let arc_indices = contour
         .segments()
@@ -3400,7 +3400,7 @@ fn build_convex_shape_preserving_straight_skeleton(
     supports: &[ShapePreservingSupport2],
     source_points: &[Point2],
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(StraightSkeleton2, usize, usize), SkeletonBuildBlock>> {
     let source_edge_count = supports.len();
     let mut nodes = source_points
@@ -3822,7 +3822,7 @@ fn add_shape_preserving_arc(
     pair: (usize, usize),
     supports: &[ShapePreservingSupport2],
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(), StraightSkeletonBlocker2>> {
     if start_node == end_node
         || arcs.iter().any(|arc| {
@@ -3873,7 +3873,7 @@ fn add_recorded_shape_preserving_arc(
     pair: (usize, usize),
     supports: &[ShapePreservingSupportRecord2],
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(), StraightSkeletonBlocker2>> {
     let left = &supports[pair.0];
     let right = &supports[pair.1];
@@ -3938,7 +3938,7 @@ fn materialize_recorded_splice_topology_transition_with_kind(
     event: &RecordedSpliceEvent2,
     kind: StraightSkeletonNodeKind2,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(usize, usize), StraightSkeletonBlocker2>> {
     let pair = (event.left_support, event.right_support);
     let Some(start_node) = active.pair_start.get(&pair).copied() else {
@@ -3986,7 +3986,7 @@ fn materialize_recorded_splice_topology_transition(
     active: &mut ActiveShapePreservingCycle2,
     event: &RecordedSpliceEvent2,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(usize, usize), StraightSkeletonBlocker2>> {
     let left = support_records[event.left_support].provenance.clone();
     let right = support_records[event.right_support].provenance.clone();
@@ -4037,7 +4037,7 @@ fn materialize_splice_topology_transition(
     active: &mut ActiveShapePreservingCycle2,
     event: &StraightSkeletonSpliceEvent2,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(usize, usize), StraightSkeletonBlocker2>> {
     let recorded = RecordedSpliceEvent2 {
         left_support: event.left_source_edge,
@@ -4122,7 +4122,7 @@ fn materialize_shape_preserving_split_transition(
     active: &ActiveShapePreservingCycle2,
     event: &StraightSkeletonGlobalContactEvent2,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(usize, [ActiveShapePreservingCycle2; 2]), StraightSkeletonBlocker2>> {
     let StraightSkeletonGlobalContactKind2::Split {
         left_source_edge,
@@ -4170,7 +4170,7 @@ fn materialize_recorded_shape_preserving_split_transition(
     active: &ActiveShapePreservingCycle2,
     event: &RecordedSplitEvent2,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(usize, [ActiveShapePreservingCycle2; 2]), StraightSkeletonBlocker2>> {
     let Some(right_position) = active
         .supports
@@ -4281,7 +4281,7 @@ fn materialize_shape_preserving_squeeze_transition(
     active: &ActiveShapePreservingCycle2,
     event: &StraightSkeletonGlobalContactEvent2,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(usize, [ActiveShapePreservingCycle2; 2]), StraightSkeletonBlocker2>> {
     let StraightSkeletonGlobalContactKind2::Squeeze {
         first_source_edge,
@@ -4326,7 +4326,7 @@ fn recorded_squeeze_child_branch_hint(
     witness_pair: (usize, usize),
     event: &RecordedSqueezeEvent2,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<RealSign, StraightSkeletonBlocker2>> {
     let Some(start_node) = active.pair_start.get(&witness_pair).copied() else {
         return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
@@ -4365,7 +4365,7 @@ fn materialize_recorded_shape_preserving_squeeze_transition(
     active: &ActiveShapePreservingCycle2,
     event: &RecordedSqueezeEvent2,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(usize, [ActiveShapePreservingCycle2; 2]), StraightSkeletonBlocker2>> {
     let Some(first_position) = active
         .supports
@@ -4460,7 +4460,7 @@ fn recorded_three_support_candidate_is_live(
     supports: &[&ShapePreservingSupportRecord2],
     orientation: RealSign,
     time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<bool, StraightSkeletonBlocker2> {
     let (orientation_scalar, generated_live_sign) = match orientation {
         RealSign::Positive => (Real::one(), RealSign::Negative),
@@ -4495,7 +4495,7 @@ fn tracked_recorded_three_support_event(
     pair_starts: &[(&Point2, &Real, Option<RealSign>)],
     orientation: RealSign,
     current_time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Option<(Real, Point2)>, StraightSkeletonBlocker2>> {
     debug_assert!(matches!(pair_starts.len(), 2 | 3));
     let geometries = supports
@@ -4553,7 +4553,7 @@ fn shape_preserving_edge_event_candidate(
     active_index: usize,
     current_time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Option<EdgeEventCandidate2>, StraightSkeletonBlocker2>> {
     if active.supports.len() < 3 || active_index >= active.supports.len() {
         return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
@@ -4671,7 +4671,7 @@ fn shape_preserving_three_edge_terminal_candidates(
     nodes: &[StraightSkeletonNode2],
     current_time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<EdgeEventCandidate2>, StraightSkeletonBlocker2>> {
     if active.supports.len() != 3 {
         return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
@@ -4769,7 +4769,7 @@ fn trim_shape_preserving_coincident_line_overlaps(
     active: &mut ActiveShapePreservingCycle2,
     time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<(usize, usize)>, StraightSkeletonBlocker2>> {
     let mut trimmed = Vec::new();
     let mut event_nodes = Vec::new();
@@ -5011,7 +5011,7 @@ fn apply_shape_preserving_edge_collapses(
     active: &mut ActiveShapePreservingCycle2,
     collapsing: &[EdgeEventCandidate2],
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<ShapePreservingEdgeAdvance2, StraightSkeletonBlocker2>> {
     let Some(first) = collapsing.first() else {
         return Ok(Err(StraightSkeletonBlocker2::MissingFutureEvent));
@@ -5130,7 +5130,7 @@ fn next_shape_preserving_edge_collapses(
     active: &ActiveShapePreservingCycle2,
     current_time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<EdgeEventCandidate2>, StraightSkeletonBlocker2>> {
     let candidates = if active.supports.len() == 3 {
         match shape_preserving_three_edge_terminal_candidates(
@@ -5257,7 +5257,7 @@ fn advance_shape_preserving_cycle_to_next_edge_event(
     active: &mut ActiveShapePreservingCycle2,
     current_time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<ShapePreservingEdgeAdvance2, StraightSkeletonBlocker2>> {
     let collapsing = match next_shape_preserving_edge_collapses(
         support_records,
@@ -5329,7 +5329,7 @@ fn apply_independent_shape_preserving_events(
     topology: &[RecordedTopologyEvent2],
     collapsing: &[EdgeEventCandidate2],
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<ActiveShapePreservingCycle2>, StraightSkeletonBlocker2>> {
     let mut stable_edges = Vec::with_capacity(collapsing.len());
     for candidate in collapsing {
@@ -5522,7 +5522,7 @@ fn complete_shape_preserving_edge_cycles(
     cycles: &mut Vec<ActiveShapePreservingCycle2>,
     current_time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<ShapePreservingCompletion2, StraightSkeletonBlocker2>> {
     let mut maximum_time = current_time.clone();
     let mut events = Vec::new();
@@ -5801,7 +5801,7 @@ fn shape_preserving_pair_terminal_event(
     second: &ShapePreservingSupport2,
     orientation: RealSign,
     current_time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Option<(Real, Point2)>, StraightSkeletonBlocker2>> {
     let orientation_scalar = match orientation {
         RealSign::Positive => Real::one(),
@@ -5917,7 +5917,7 @@ fn support_pair_future_tangencies(
     second: &ShapePreservingSupport2,
     orientation: RealSign,
     current_time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<(Real, Point2)>, StraightSkeletonBlocker2>> {
     let orientation_scalar = match orientation {
         RealSign::Positive => Real::one(),
@@ -6098,7 +6098,7 @@ fn tangency_time_is_live(
     time: &Real,
     current_time: &Real,
     circular_lifetimes: &[(&Real, &Real)],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
     match compare_reals(time, current_time, policy) {
         Some(Ordering::Greater) => {}
@@ -6125,7 +6125,7 @@ fn tangency_time_is_live(
     Ok(Ok(true))
 }
 
-fn sort_splice_events(events: &mut [StraightSkeletonSpliceEvent2], policy: &CurvePolicy) -> bool {
+fn sort_splice_events(events: &mut [StraightSkeletonSpliceEvent2], policy: &CurveContext) -> bool {
     for index in 1..events.len() {
         let mut cursor = index;
         while cursor > 0 {
@@ -6140,7 +6140,11 @@ fn sort_splice_events(events: &mut [StraightSkeletonSpliceEvent2], policy: &Curv
     true
 }
 
-fn update_minimum_real(minimum: &mut Option<Real>, candidate: &Real, policy: &CurvePolicy) -> bool {
+fn update_minimum_real(
+    minimum: &mut Option<Real>,
+    candidate: &Real,
+    policy: &CurveContext,
+) -> bool {
     let Some(current) = minimum else {
         *minimum = Some(candidate.clone());
         return true;
@@ -6155,7 +6159,7 @@ fn update_minimum_real(minimum: &mut Option<Real>, candidate: &Real, policy: &Cu
 
 fn sort_global_contact_events(
     events: &mut [StraightSkeletonGlobalContactEvent2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     for index in 1..events.len() {
         let mut cursor = index;
@@ -6176,7 +6180,7 @@ fn tracked_three_support_event(
     pair_starts: &[(&Point2, &Real)],
     orientation: RealSign,
     current_time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Option<(Real, Point2)>, StraightSkeletonBlocker2>> {
     debug_assert_eq!(supports.len(), 3);
     debug_assert!(matches!(pair_starts.len(), 2 | 3));
@@ -6229,7 +6233,7 @@ fn three_support_candidate_is_live(
     supports: &[ShapePreservingSupport2],
     orientation: RealSign,
     time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
     let orientation = match orientation {
         RealSign::Positive => Real::one(),
@@ -6265,7 +6269,7 @@ fn tracked_support_pair_branch_matches(
     candidate_time: &Real,
     orientation: RealSign,
     branch_hint: Option<RealSign>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<bool, StraightSkeletonBlocker2> {
     match compare_reals(candidate_time, start_time, policy) {
         Some(Ordering::Greater) => {}
@@ -6315,7 +6319,7 @@ fn support_pair_is_tangent_at_time(
     second: &ShapePreservingSupport2,
     time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     let orientation = match orientation {
         RealSign::Positive => Real::one(),
@@ -6415,7 +6419,7 @@ fn support_pair_points_at_time(
     second: &ShapePreservingSupport2,
     orientation: RealSign,
     time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<Point2>, StraightSkeletonBlocker2>> {
     let orientation_scalar = match orientation {
         RealSign::Positive => Real::one(),
@@ -6577,7 +6581,7 @@ fn tracked_support_pair_point_at_time(
     time: &Real,
     orientation: RealSign,
     branch_hint: Option<RealSign>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Option<Point2>, StraightSkeletonBlocker2>> {
     let points = match support_pair_points_at_time(first, second, orientation, time, policy)? {
         Ok(points) => points,
@@ -6616,7 +6620,7 @@ fn active_shape_preserving_edge_endpoints_at_time(
     active_index: usize,
     time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Option<(Point2, Point2)>, StraightSkeletonBlocker2>> {
     if active.supports.len() < 2 || active_index >= active.supports.len() {
         return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
@@ -6671,7 +6675,7 @@ fn active_shape_preserving_edge_contains_point_at_time(
     point: &Point2,
     time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
     active_shape_preserving_edge_contains_point_at_time_impl(
         active,
@@ -6695,7 +6699,7 @@ fn active_shape_preserving_edge_contains_point_at_time_impl(
     point: &Point2,
     time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     carrier_is_certified: bool,
 ) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
     let Some((start, end)) = (match active_shape_preserving_edge_endpoints_at_time(
@@ -6821,7 +6825,7 @@ fn active_shape_preserving_edge_strictly_contains_point_at_time(
     point: &Point2,
     time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
     let contains = match active_shape_preserving_edge_contains_point_at_time_impl(
         active,
@@ -6875,7 +6879,7 @@ fn shape_preserving_support_tangent_at_point(
     point: &Point2,
     time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<(Real, Real), StraightSkeletonBlocker2> {
     match support {
         ShapePreservingSupport2::Line {
@@ -6920,7 +6924,7 @@ fn active_shape_preserving_vertex_is_reflex(
     right_position: usize,
     current_time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
     let count = active.supports.len();
     let left = active.supports[(right_position + count - 1) % count];
@@ -7004,7 +7008,7 @@ fn next_shape_preserving_cycle_split_before_or_at(
     current_time: &Real,
     upper_time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<RecordedSplitEvent2>, StraightSkeletonBlocker2>> {
     let count = active.supports.len();
     let mut earliest = Vec::new();
@@ -7114,7 +7118,7 @@ fn next_shape_preserving_cycle_splice_before_or_at(
     current_time: &Real,
     upper_time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<RecordedSpliceEvent2>, StraightSkeletonBlocker2>> {
     let count = active.supports.len();
     let mut earliest = Vec::new();
@@ -7206,7 +7210,7 @@ fn next_shape_preserving_cycle_squeeze_before_or_at(
     current_time: &Real,
     upper_time: &Real,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<RecordedSqueezeEvent2>, StraightSkeletonBlocker2>> {
     let count = active.supports.len();
     let mut earliest = Vec::new();
@@ -7303,7 +7307,7 @@ fn tracked_vertex_target_events(
     start_time: &Real,
     orientation: RealSign,
     current_time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<(Real, Point2)>, StraightSkeletonBlocker2>> {
     let supports = vec![left.clone(), right.clone(), target.clone()];
     let candidates = match three_support_events(&supports, orientation, current_time, policy)? {
@@ -7340,7 +7344,7 @@ fn three_support_events(
     supports: &[ShapePreservingSupport2],
     orientation_sign: RealSign,
     current_time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<(Real, Point2)>, StraightSkeletonBlocker2>> {
     debug_assert_eq!(supports.len(), 3);
     let orientation = match orientation_sign {
@@ -7676,7 +7680,7 @@ fn quadratic_real_roots(
     quadratic: &Real,
     linear: &Real,
     constant: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Vec<Real>, StraightSkeletonBlocker2>> {
     let exact_sign = |value: &Real| {
         if is_zero(value, policy) == Some(true) {
@@ -7777,7 +7781,7 @@ fn shape_preserving_vertex_trajectory(
     left: &ShapePreservingSupport2,
     right: &ShapePreservingSupport2,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<StraightSkeletonVertexTrajectory2>> {
     let orientation_scalar = match orientation {
         RealSign::Positive => Real::one(),
@@ -8062,7 +8066,7 @@ fn retain_earliest_general_line_event(
     minimum_time: &mut Option<Real>,
     events: &mut Vec<GeneralLineEvent2>,
     candidate: GeneralLineEvent2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<(), StraightSkeletonBlocker2> {
     match minimum_time
         .as_ref()
@@ -8111,7 +8115,7 @@ fn build_general_line_straight_skeleton(
     supports: &[MovingSupport2],
     source_lines: &[&crate::LineSeg2],
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(StraightSkeleton2, usize, usize), SkeletonBuildBlock>> {
     let source_edge_count = supports.len();
     let mut initial_cycle = ActiveWavefrontCycle2 {
@@ -8445,7 +8449,7 @@ fn topological_event_cycles_are_terminal_after_edge_collapses(
     events: &[GeneralLineEvent2],
     supports: &[MovingSupport2],
     time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let event_cycles = events
         .iter()
@@ -8484,7 +8488,7 @@ fn terminal_support_set(
     source_edges: &[usize],
     supports: &[MovingSupport2],
     time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     if source_edges.len() <= 1 {
         return Some(true);
@@ -8515,7 +8519,7 @@ fn supports_are_opposed_and_coincident(
     first: &MovingSupport2,
     second: &MovingSupport2,
     time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let normal_x_sum = &first.normal_x + &second.normal_x;
     let normal_y_sum = &first.normal_y + &second.normal_y;
@@ -8563,7 +8567,7 @@ fn apply_independent_simultaneous_events(
     arcs: &mut Vec<StraightSkeletonArc2>,
     events: &[GeneralLineEvent2],
     supports: &[MovingSupport2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(), StraightSkeletonBlocker2>> {
     let mut splits = Vec::new();
     let mut vertices = Vec::new();
@@ -8809,7 +8813,7 @@ fn active_vertex_is_reflex(
     source_lines: &[&crate::LineSeg2],
     vertex: usize,
     orientation: RealSign,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let previous =
         cycle.source_edges[(vertex + cycle.source_edges.len() - 1) % cycle.source_edges.len()];
@@ -8829,7 +8833,7 @@ fn general_split_candidate(
     vertex: usize,
     target_edge: usize,
     current_time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Option<SplitCandidate2>, StraightSkeletonBlocker2>> {
     let count = cycle.source_edges.len();
     let previous_source = cycle.source_edges[(vertex + count - 1) % count];
@@ -8895,7 +8899,7 @@ fn vertex_collision_candidate(
     first_vertex: usize,
     second_vertex: usize,
     current_time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Option<VertexCandidate2>, StraightSkeletonBlocker2>> {
     let count = cycle.source_edges.len();
     let trajectory = |vertex: usize| {
@@ -8956,7 +8960,7 @@ fn active_vertex_point(
     cycle: &ActiveWavefrontCycle2,
     vertex: usize,
     time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Point2, StraightSkeletonBlocker2>> {
     let count = cycle.source_edges.len();
     let previous = cycle.source_edges[(vertex + count - 1) % count];
@@ -8973,7 +8977,7 @@ fn apply_general_vertex_cluster(
     arcs: &mut Vec<StraightSkeletonArc2>,
     candidate: &VertexClusterCandidate2,
     supports: &[MovingSupport2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(), StraightSkeletonBlocker2>> {
     let cycle = cycles.remove(candidate.cycle);
     let count = cycle.source_edges.len();
@@ -9059,7 +9063,7 @@ fn apply_general_vertex_cluster(
 fn merge_codirected_coincident_edges(
     cycle: &mut ActiveWavefrontCycle2,
     supports: &[MovingSupport2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let mut changed = false;
     loop {
@@ -9096,7 +9100,7 @@ fn merge_codirected_coincident_edges(
 fn supports_are_codirected_and_coincident(
     first: &MovingSupport2,
     second: &MovingSupport2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let normal_x_difference = &first.normal_x - &second.normal_x;
     let normal_y_difference = &first.normal_y - &second.normal_y;
@@ -9196,7 +9200,7 @@ fn apply_general_edge_events(
     events: &[GeneralLineEvent2],
     time: &Real,
     supports: &[MovingSupport2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(), StraightSkeletonBlocker2>> {
     let mut by_cycle = BTreeMap::<usize, Vec<EdgeEventCandidate2>>::new();
     for event in events {
@@ -9299,7 +9303,7 @@ fn finish_terminal_cycles(
     arcs: &mut Vec<StraightSkeletonArc2>,
     time: &Real,
     supports: &[MovingSupport2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(), StraightSkeletonBlocker2>> {
     for cycle_index in (0..cycles.len()).rev() {
         match finish_terminal_parallel_cycle(
@@ -9332,7 +9336,7 @@ fn finish_terminal_parallel_cycle(
     nodes: &mut Vec<StraightSkeletonNode2>,
     arcs: &mut Vec<StraightSkeletonArc2>,
     time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
     let count = cycle.source_edges.len();
     match terminal_support_set(&cycle.source_edges, supports, time, policy) {
@@ -9479,7 +9483,7 @@ fn finish_terminal_parallel_cycle(
 fn build_convex_straight_skeleton(
     supports: &[MovingSupport2],
     source_lines: &[&crate::LineSeg2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<(StraightSkeleton2, usize, usize), SkeletonBuildBlock>> {
     let source_edge_count = supports.len();
     let mut nodes = source_lines
@@ -9688,7 +9692,7 @@ fn build_convex_straight_skeleton(
 fn vertex_trajectory(
     first: &MovingSupport2,
     second: &MovingSupport2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<VertexTrajectory2, StraightSkeletonBlocker2>> {
     let determinant = &first.normal_x * &second.normal_y - &first.normal_y * &second.normal_x;
     match real_sign(&determinant, policy) {
@@ -9721,7 +9725,7 @@ fn edge_event_candidate(
     active: &[usize],
     active_index: usize,
     current_time: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Result<Option<EdgeEventCandidate2>, StraightSkeletonBlocker2>> {
     let previous = active[(active_index + active.len() - 1) % active.len()];
     let edge = active[active_index];
@@ -9785,7 +9789,7 @@ enum CollisionCoordinate {
 fn solve_collision_coordinate(
     origin: &Real,
     velocity: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<CollisionCoordinate> {
     match real_sign(velocity, policy) {
         Some(RealSign::Positive | RealSign::Negative) => {
@@ -9967,7 +9971,7 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let evidence = path.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+        let evidence = path.straight_skeleton(&CurveContext::STRICT).unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
 
         let line_start = Point2::new(r(0), r(0));
@@ -10040,7 +10044,7 @@ mod tests {
                 ),
             ])
             .unwrap();
-            let evidence = path.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+            let evidence = path.straight_skeleton(&CurveContext::STRICT).unwrap();
             assert_eq!(
                 evidence.stage(),
                 StraightSkeletonStage2::Complete,
@@ -10097,7 +10101,7 @@ mod tests {
             ])
             .unwrap();
             let evidence = rational_sector
-                .straight_skeleton(&CurvePolicy::STRICT)
+                .straight_skeleton(&CurveContext::STRICT)
                 .unwrap();
             assert_eq!(
                 evidence.stage(),
@@ -10115,7 +10119,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            rational_bezier_circular_arc(&noncircular_rational, &CurvePolicy::STRICT).unwrap(),
+            rational_bezier_circular_arc(&noncircular_rational, &CurveContext::STRICT).unwrap(),
             Classification::Decided(None)
         );
 
@@ -10134,7 +10138,9 @@ mod tests {
             )),
         ])
         .unwrap();
-        let evidence = unsupported.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+        let evidence = unsupported
+            .straight_skeleton(&CurveContext::STRICT)
+            .unwrap();
         assert_eq!(
             evidence.blocker(),
             Some(&StraightSkeletonBlocker2::UnsupportedCurveFamily {
@@ -10162,7 +10168,7 @@ mod tests {
         ])
         .unwrap();
         let Classification::Decided(trajectories) = source
-            .straight_skeleton_vertex_trajectories(&CurvePolicy::STRICT)
+            .straight_skeleton_vertex_trajectories(&CurveContext::STRICT)
             .unwrap()
         else {
             panic!("mixed line/arc trajectories must be decided");
@@ -10177,7 +10183,7 @@ mod tests {
                 panic!("line/circle vertex must retain a conic");
             };
             assert_eq!(
-                real_sign(&conic.evaluate(trajectory.start()), &CurvePolicy::STRICT),
+                real_sign(&conic.evaluate(trajectory.start()), &CurveContext::STRICT),
                 Some(RealSign::Zero)
             );
             assert_eq!(
@@ -10223,7 +10229,7 @@ mod tests {
                 ),
             ])
             .unwrap();
-            let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+            let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
             assert_eq!(
                 evidence.stage(),
                 StraightSkeletonStage2::Complete,
@@ -10256,7 +10262,7 @@ mod tests {
                 assert_eq!(
                     real_sign(
                         &branch.equation().evaluate(terminal.point()),
-                        &CurvePolicy::STRICT
+                        &CurveContext::STRICT
                     ),
                     Some(RealSign::Zero)
                 );
@@ -10290,7 +10296,7 @@ mod tests {
                 Segment2::Line(LineSeg2::try_new(first_line_end, second_line_end).unwrap()),
             ])
             .unwrap();
-            let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+            let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
             assert_eq!(
                 evidence.stage(),
                 StraightSkeletonStage2::Complete,
@@ -10322,7 +10328,7 @@ mod tests {
                         assert_eq!(
                             real_sign(
                                 &branch.equation().evaluate(source_node.point()),
-                                &CurvePolicy::STRICT
+                                &CurveContext::STRICT
                             ),
                             Some(RealSign::Zero)
                         );
@@ -10351,7 +10357,7 @@ mod tests {
         ])
         .unwrap();
         let Classification::Decided(events) = sector
-            .straight_skeleton_local_arc_events(&CurvePolicy::STRICT)
+            .straight_skeleton_local_arc_events(&CurveContext::STRICT)
             .unwrap()
         else {
             panic!("sector local event must be decided");
@@ -10374,7 +10380,7 @@ mod tests {
         ])
         .unwrap();
         let bubble_events = bubble_source
-            .straight_skeleton_local_arc_events(&CurvePolicy::STRICT)
+            .straight_skeleton_local_arc_events(&CurveContext::STRICT)
             .unwrap();
         let Classification::Decided(events) = bubble_events else {
             panic!("bubble local event must be decided: {bubble_events:?}");
@@ -10382,7 +10388,7 @@ mod tests {
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].kind(), StraightSkeletonLocalArcEventKind2::Bubble);
         let Classification::Decided(splices) = bubble_source
-            .straight_skeleton_splice_events(&CurvePolicy::STRICT)
+            .straight_skeleton_splice_events(&CurveContext::STRICT)
             .unwrap()
         else {
             panic!("bubble fixture splice candidates must be decided");
@@ -10394,7 +10400,7 @@ mod tests {
                 .all(|event| [1, 2].contains(&event.source_vertex()))
         );
         let evidence = bubble_source
-            .straight_skeleton(&CurvePolicy::STRICT)
+            .straight_skeleton(&CurveContext::STRICT)
             .unwrap();
         assert_eq!(
             evidence.stage(),
@@ -10405,7 +10411,7 @@ mod tests {
         let skeleton = evidence.skeleton().unwrap();
         assert!(skeleton.nodes().len() > bubble_source.segments().len());
         assert!(matches!(
-            compare_reals(skeleton.maximum_time(), &r(1), &CurvePolicy::STRICT),
+            compare_reals(skeleton.maximum_time(), &r(1), &CurveContext::STRICT),
             Some(Ordering::Equal | Ordering::Greater)
         ));
         let bubble_node = skeleton
@@ -10437,7 +10443,7 @@ mod tests {
             ),
         ])
         .unwrap();
-        let evidence = clockwise.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+        let evidence = clockwise.straight_skeleton(&CurveContext::STRICT).unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -10465,7 +10471,7 @@ mod tests {
         ])
         .unwrap();
         let Classification::Decided(events) = contour
-            .straight_skeleton_local_arc_events(&CurvePolicy::STRICT)
+            .straight_skeleton_local_arc_events(&CurveContext::STRICT)
             .unwrap()
         else {
             panic!("branch validation must be decided");
@@ -10496,16 +10502,16 @@ mod tests {
         assert_eq!(
             real_sign(
                 &source.signed_area().unwrap().unwrap(),
-                &CurvePolicy::STRICT
+                &CurveContext::STRICT
             ),
             Some(RealSign::Positive)
         );
         assert_eq!(
-            source.has_self_contacts(&CurvePolicy::STRICT).unwrap(),
+            source.has_self_contacts(&CurveContext::STRICT).unwrap(),
             Classification::Decided(false)
         );
         let Classification::Decided(splices) = source
-            .straight_skeleton_splice_events(&CurvePolicy::STRICT)
+            .straight_skeleton_splice_events(&CurveContext::STRICT)
             .unwrap()
         else {
             panic!("splice fixture must be decided");
@@ -10530,7 +10536,7 @@ mod tests {
             &mut cycles,
             &Real::zero(),
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -10580,7 +10586,7 @@ mod tests {
             .expect("coincident anti-parallel overlap must terminate exactly");
         assert!(arcs.iter().any(|arc| arc.end_node() == overlap_node
             && arc.kind() == &StraightSkeletonArcKind2::TerminalRidge));
-        let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+        let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -10656,7 +10662,7 @@ mod tests {
                 &mut active,
                 &event,
                 orientation,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
             .unwrap();
@@ -10723,7 +10729,7 @@ mod tests {
                 (3, generated),
                 &records,
                 orientation,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
             .unwrap();
@@ -10743,7 +10749,7 @@ mod tests {
                 (generated, 0),
                 &records,
                 orientation,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
             .unwrap();
@@ -10815,7 +10821,7 @@ mod tests {
             &r(4),
             &r(8),
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap()
@@ -10835,7 +10841,7 @@ mod tests {
             &mut active,
             &event,
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -10987,7 +10993,7 @@ mod tests {
             &topology,
             &collapsing,
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11118,7 +11124,7 @@ mod tests {
             &topology,
             &[],
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11203,7 +11209,7 @@ mod tests {
             &mut active,
             &splice,
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11229,7 +11235,7 @@ mod tests {
             &active,
             &split,
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11315,7 +11321,7 @@ mod tests {
             &mut active,
             &splice,
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11331,7 +11337,7 @@ mod tests {
             bottom_position,
             splice.time(),
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap()
@@ -11346,7 +11352,7 @@ mod tests {
             &mut active,
             &[candidate],
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11441,7 +11447,7 @@ mod tests {
             0,
             &half,
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap()
@@ -11457,7 +11463,7 @@ mod tests {
                 &Point2::new(r(1), half.clone()),
                 &half,
                 RealSign::Positive,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
             .unwrap()
@@ -11471,7 +11477,7 @@ mod tests {
                 &Point2::new(r(3), half.clone()),
                 &half,
                 RealSign::Positive,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
             .unwrap()
@@ -11483,7 +11489,7 @@ mod tests {
             &mut active,
             &Real::zero(),
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -11526,7 +11532,7 @@ mod tests {
                 )
             }));
             let source = Contour2::try_new(segments).unwrap();
-            let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+            let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
             assert_eq!(
                 evidence.stage(),
                 StraightSkeletonStage2::Complete,
@@ -11583,7 +11589,7 @@ mod tests {
                 ),
             ])
             .unwrap();
-            let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+            let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
             assert_eq!(
                 evidence.stage(),
                 StraightSkeletonStage2::Complete,
@@ -11599,7 +11605,7 @@ mod tests {
 
     #[test]
     fn circle_support_pairs_classify_exact_conic_families() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let root_two = r(2).sqrt().unwrap();
         let opposite = shape_preserving_vertex_trajectory(
             0,
@@ -11678,7 +11684,7 @@ mod tests {
 
     #[test]
     fn exact_three_support_solver_handles_two_and_three_circle_events() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let first_circle = ShapePreservingSupport2::Circle {
             center: Point2::new(r(-2), r(0)),
             signed_radius: r(3),
@@ -11741,7 +11747,7 @@ mod tests {
 
     #[test]
     fn exact_curved_pair_solver_handles_line_and_circle_tangencies() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let line = ShapePreservingSupport2::Line {
             normal_x: r(0),
             normal_y: r(-1),
@@ -11810,7 +11816,7 @@ mod tests {
 
     #[test]
     fn tracked_support_pairs_evaluate_exact_points_during_local_evolution() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let horizontal = ShapePreservingSupport2::Line {
             normal_x: r(0),
             normal_y: r(1),
@@ -11926,7 +11932,7 @@ mod tests {
                 &Point2::new(radial.clone(), radial),
                 &time,
                 RealSign::Positive,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
             .unwrap()
@@ -11940,7 +11946,7 @@ mod tests {
                 &Point2::new(-(r(3) / r(4)).unwrap(), r(0)),
                 &time,
                 RealSign::Positive,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap()
             .unwrap()
@@ -11950,7 +11956,7 @@ mod tests {
     #[test]
     fn square_collapses_to_one_exact_center_event() {
         let evidence = contour(&[(0, 0), (2, 0), (2, 2), (0, 2)])
-            .straight_skeleton(&CurvePolicy::STRICT)
+            .straight_skeleton(&CurveContext::STRICT)
             .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.event_count(), 1);
@@ -11966,7 +11972,7 @@ mod tests {
     #[test]
     fn rectangle_retains_the_terminal_ridge() {
         let evidence = contour(&[(0, 0), (4, 0), (4, 2), (0, 2)])
-            .straight_skeleton(&CurvePolicy::STRICT)
+            .straight_skeleton(&CurveContext::STRICT)
             .unwrap();
         let skeleton = evidence.skeleton().unwrap();
         assert_eq!(skeleton.nodes().len(), 6);
@@ -11983,7 +11989,7 @@ mod tests {
     #[test]
     fn clockwise_square_has_the_same_exact_collapse() {
         let evidence = contour(&[(0, 0), (0, 2), (2, 2), (2, 0)])
-            .straight_skeleton(&CurvePolicy::STRICT)
+            .straight_skeleton(&CurveContext::STRICT)
             .unwrap();
         let skeleton = evidence.skeleton().unwrap();
         assert_eq!(
@@ -11999,7 +12005,7 @@ mod tests {
             &[(0, 2), (2, 2), (2, 0), (1, 0), (0, 0)][..],
         ] {
             let evidence = contour(points)
-                .straight_skeleton(&CurvePolicy::STRICT)
+                .straight_skeleton(&CurveContext::STRICT)
                 .unwrap();
             assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
             assert_eq!(evidence.source_edge_count(), 5);
@@ -12010,7 +12016,7 @@ mod tests {
     #[test]
     fn non_general_position_l_shape_materializes_terminal_vertex_event() {
         let evidence = contour(&[(0, 0), (3, 0), (3, 1), (1, 1), (1, 3), (0, 3)])
-            .straight_skeleton(&CurvePolicy::STRICT)
+            .straight_skeleton(&CurveContext::STRICT)
             .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.vertex_event_count(), 1);
@@ -12047,7 +12053,7 @@ mod tests {
             (0, 24),
         ]);
         let global_contacts = source
-            .straight_skeleton_global_contact_events(&CurvePolicy::STRICT)
+            .straight_skeleton_global_contact_events(&CurveContext::STRICT)
             .unwrap();
         let Classification::Decided(global_contacts) = global_contacts else {
             panic!("line split candidates must be decided: {global_contacts:?}");
@@ -12061,7 +12067,7 @@ mod tests {
                 ..
             }
         )));
-        let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+        let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.split_event_count(), 1);
         let skeleton = evidence.skeleton().unwrap();
@@ -12121,7 +12127,7 @@ mod tests {
         ));
         let source = Contour2::try_new(segments).unwrap();
         let contacts = source
-            .straight_skeleton_global_contact_events(&CurvePolicy::STRICT)
+            .straight_skeleton_global_contact_events(&CurveContext::STRICT)
             .unwrap();
         let Classification::Decided(contacts) = contacts else {
             panic!("mixed split queue must be decided: {contacts:?}");
@@ -12162,7 +12168,7 @@ mod tests {
             &active,
             split,
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -12182,7 +12188,7 @@ mod tests {
             &mut cycles,
             split.time(),
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
         let completion = completion.unwrap();
@@ -12200,7 +12206,7 @@ mod tests {
             &mut scheduled_cycles,
             &Real::zero(),
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
         assert!(scheduled_nodes.iter().any(|node| matches!(
@@ -12211,7 +12217,7 @@ mod tests {
                 hit_source_edge: 0,
             }
         )));
-        let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+        let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -12247,11 +12253,11 @@ mod tests {
         ])
         .unwrap();
         assert_eq!(
-            source.has_self_contacts(&CurvePolicy::STRICT).unwrap(),
+            source.has_self_contacts(&CurveContext::STRICT).unwrap(),
             Classification::Decided(false)
         );
         let contacts = source
-            .straight_skeleton_global_contact_events(&CurvePolicy::STRICT)
+            .straight_skeleton_global_contact_events(&CurveContext::STRICT)
             .unwrap();
         let Classification::Decided(contacts) = contacts else {
             panic!("squeeze queue must be decided: {contacts:?}");
@@ -12276,7 +12282,7 @@ mod tests {
             &active,
             squeeze,
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap()
         .unwrap();
@@ -12308,7 +12314,7 @@ mod tests {
             &mut scheduled_cycles,
             &Real::zero(),
             RealSign::Positive,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .unwrap();
         assert!(scheduled.is_ok(), "{scheduled:?}");
@@ -12317,7 +12323,7 @@ mod tests {
                 .iter()
                 .any(|node| matches!(node.kind(), StraightSkeletonNodeKind2::SqueezeEvent { .. }))
         );
-        let evidence = source.straight_skeleton(&CurvePolicy::STRICT).unwrap();
+        let evidence = source.straight_skeleton(&CurveContext::STRICT).unwrap();
         assert_eq!(
             evidence.stage(),
             StraightSkeletonStage2::Complete,
@@ -12337,7 +12343,7 @@ mod tests {
             (30, 0),
             (0, 0),
         ])
-        .straight_skeleton(&CurvePolicy::STRICT)
+        .straight_skeleton(&CurveContext::STRICT)
         .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.split_event_count(), 1);
@@ -12406,7 +12412,7 @@ mod tests {
         ];
         for (name, points) in fixtures {
             let evidence = contour(points)
-                .straight_skeleton(&CurvePolicy::STRICT)
+                .straight_skeleton(&CurveContext::STRICT)
                 .unwrap();
             assert_eq!(
                 evidence.stage(),
@@ -12439,7 +12445,7 @@ mod tests {
             (4, 4),
             (0, 4),
         ])
-        .straight_skeleton(&CurvePolicy::STRICT)
+        .straight_skeleton(&CurveContext::STRICT)
         .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.vertex_event_count(), 2);
@@ -12468,7 +12474,7 @@ mod tests {
             (4, 0),
             (0, 0),
         ])
-        .straight_skeleton(&CurvePolicy::STRICT)
+        .straight_skeleton(&CurveContext::STRICT)
         .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.vertex_event_count(), 2);
@@ -12506,7 +12512,7 @@ mod tests {
             (5, 4),
             (4, 4),
         ])
-        .straight_skeleton(&CurvePolicy::STRICT)
+        .straight_skeleton(&CurveContext::STRICT)
         .unwrap();
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
         assert_eq!(evidence.vertex_event_count(), 5);

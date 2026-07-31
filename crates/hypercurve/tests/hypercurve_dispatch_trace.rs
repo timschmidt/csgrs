@@ -1,7 +1,7 @@
 #![cfg(feature = "dispatch-trace")]
 
 use hypercurve::{
-    BulgeVertex2, Contour2, CurvePolicy, LineSeg2, Point2, Real, StraightSkeletonStage2,
+    BulgeVertex2, Contour2, CurveContext, LineSeg2, Point2, Real, StraightSkeletonStage2,
 };
 
 fn p(x: i32, y: i32) -> Point2 {
@@ -15,7 +15,7 @@ fn public_curve_query_emits_correlated_exact_path_trace() {
 
     hyperreal::dispatch_trace::reset();
     let relation = hyperreal::dispatch_trace::with_recording(|| {
-        horizontal.intersect_line(&vertical, &CurvePolicy::STRICT)
+        horizontal.intersect_line(&vertical, &CurveContext::STRICT)
     })
     .unwrap();
     assert!(!matches!(relation, hypercurve::LineLineIntersection::None));
@@ -60,7 +60,7 @@ fn public_straight_skeleton_emits_correlated_exact_path_trace() {
 
     hyperreal::dispatch_trace::reset();
     let evidence = hyperreal::dispatch_trace::with_recording(|| {
-        contour.straight_skeleton(&CurvePolicy::STRICT)
+        contour.straight_skeleton(&CurveContext::STRICT)
     })
     .unwrap();
     assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);

@@ -6,8 +6,8 @@ use hypercurve::{
     BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierRegion2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    BulgeVertex2, Classification, Contour2, Curve2, CurveBoundaryInteriorSide2, CurveError,
-    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2, CurveResult, LineArcRegion2,
+    BulgeVertex2, Classification, Contour2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
+    CurveError, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2, CurveResult, LineArcRegion2,
     LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
@@ -104,7 +104,7 @@ fn algebraic_polynomial_parameter(
     coefficients: Vec<Real>,
     interval_start: Real,
     interval_end: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<BezierParameter2> {
     let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
         coefficients,
@@ -120,7 +120,7 @@ fn algebraic_polynomial_parameter(
     )))
 }
 
-fn algebraic_midpoint_root(policy: &CurvePolicy) -> CurveResult<BezierAlgebraicParameter2> {
+fn algebraic_midpoint_root(policy: &CurveContext) -> CurveResult<BezierAlgebraicParameter2> {
     let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
         vec![r(-1), r(2)],
         policy,
@@ -133,7 +133,7 @@ fn algebraic_midpoint_root(policy: &CurvePolicy) -> CurveResult<BezierAlgebraicP
 
 fn algebraic_constant_point_image(
     point: Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<BezierAlgebraicEndpointImage2> {
     let curve = QuadraticBezier2::new(point.clone(), point.clone(), point);
     BezierAlgebraicEndpointImage2::quadratic(&curve, &algebraic_midpoint_root(policy)?, policy)
@@ -142,7 +142,7 @@ fn algebraic_constant_point_image(
 fn retained_algebraic_line_fragment(
     start: Point2,
     end: Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<BezierSplitFragment2> {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_root(policy)?);
     Ok(BezierSplitFragment2::AlgebraicEndpointImages {
@@ -156,7 +156,7 @@ fn retained_algebraic_line_fragment(
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let moment_curve = hypercurve::CubicBezier2::new(p(0, 0), p(1, 3), p(3, -2), p(4, 0));
     let moment_iterations = 20_000_u32;
     let started = Instant::now();

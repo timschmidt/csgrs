@@ -4,7 +4,7 @@ use hypercurve::{
     BezierParameterPolynomial, BezierRegion2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
     BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CurveError, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionFragmentSource2,
+    CurveContext, CurveError, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionFragmentSource2,
     CurveRegionLineRoleEvidence2, CurveRegionLoopRole, CurveRegionNestingRoleEvidence2,
     CurveRegionSignedAreaRoleEvidence2, Point2, QuadraticBezier2, RationalBezier2,
     RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
@@ -23,8 +23,8 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn decided<T>(classification: Classification<T>) -> T {

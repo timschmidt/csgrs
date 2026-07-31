@@ -7,10 +7,10 @@ use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
 use crate::{
     BezierArrangementFragment2, BezierArrangementGraph2, BezierArrangementTraversal2,
     BezierParameter2, BezierSplitFragment2, BezierSplitMaterialization2, BooleanOp,
-    CircleCircleRelation, Classification, ContourPointLocation, Curve2, CurveFamily2,
+    CircleCircleRelation, Classification, ContourPointLocation, Curve2, CurveContext, CurveFamily2,
     CurveGeometry2, CurveIntersectionContact2, CurveIntersectionOverlap2,
     CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2,
-    CurvePolicy, CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
+    CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
     RationalBezierOverlapOrientation2, UncertaintyReason,
 };
 
@@ -89,7 +89,7 @@ pub struct CurvePathBooleanSelection2 {
 #[derive(Debug)]
 struct CurvePathBooleanSelectionData {
     operation: BooleanOp,
-    policy: CurvePolicy,
+    policy: CurveContext,
     first_interior_side: CurveBoundaryInteriorSide2,
     second_interior_side: CurveBoundaryInteriorSide2,
     fragments: Arc<[CurvePathBooleanFragment2]>,
@@ -170,7 +170,7 @@ pub struct CurvePathBooleanSelections2 {
 struct CurvePathIntersectionContext<'a> {
     first: &'a CurvePath2,
     second: &'a CurvePath2,
-    policy: CurvePolicy,
+    policy: CurveContext,
     authored_curve_pair_count: usize,
     pairs: Vec<CurvePathPair>,
 }
@@ -185,7 +185,7 @@ struct CurvePathPair {
 fn curve_pair_bounds_decided_disjoint(
     first: &Curve2,
     second: &Curve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     let (Ok(first_bounds), Ok(second_bounds)) = (first.bounds(), second.bounds()) else {
         return false;
@@ -201,7 +201,7 @@ impl CurvePath2 {
     pub fn intersect_path(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurvePathIntersectionResult2> {
         CurvePathIntersectionContext::try_new(self, other, policy)?.build_evidence()
     }
@@ -210,7 +210,7 @@ impl CurvePath2 {
     pub fn intersection_topology(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurvePathIntersectionTopology2> {
         CurvePathIntersectionContext::try_new(self, other, policy)?.build_topology()
     }
@@ -222,7 +222,7 @@ impl CurvePath2 {
         operation: BooleanOp,
         first_interior_side: CurveBoundaryInteriorSide2,
         second_interior_side: CurveBoundaryInteriorSide2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurvePathBooleanSelection2> {
         let context = CurvePathIntersectionContext::try_new(self, other, policy)?;
         let topology = context.build_topology()?;
@@ -243,7 +243,7 @@ impl CurvePath2 {
         other: &Self,
         first_interior_side: CurveBoundaryInteriorSide2,
         second_interior_side: CurveBoundaryInteriorSide2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurvePathBooleanSelections2> {
         let context = CurvePathIntersectionContext::try_new(self, other, policy)?;
         let topology = context.build_topology()?;
@@ -278,7 +278,7 @@ impl CurvePath2 {
         operation: BooleanOp,
         first_interior_side: CurveBoundaryInteriorSide2,
         second_interior_side: CurveBoundaryInteriorSide2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegion2> {
         self.boolean_selection(
             other,
@@ -340,7 +340,7 @@ impl<'a> CurvePathIntersectionContext<'a> {
     fn try_new(
         first_path: &'a CurvePath2,
         second_path: &'a CurvePath2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let authored_curve_pair_count = first_path
             .curves()
@@ -369,7 +369,7 @@ impl<'a> CurvePathIntersectionContext<'a> {
         Ok(Self {
             first: first_path,
             second: second_path,
-            policy: policy.clone(),
+            policy: *policy,
             authored_curve_pair_count,
             pairs,
         })
@@ -574,7 +574,7 @@ impl<'a> CurvePathIntersectionContext<'a> {
         Ok(CurvePathBooleanSelection2 {
             data: Arc::new(CurvePathBooleanSelectionData {
                 operation,
-                policy: self.policy.clone(),
+                policy: self.policy,
                 first_interior_side,
                 second_interior_side,
                 fragments: fragments.into(),
@@ -1017,7 +1017,7 @@ impl CurvePathIntersectionTopology2 {
 fn split_path(
     path: &CurvePath2,
     parameters: impl Iterator<Item = (usize, usize, BezierParameter2)>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<CurvePathSplit2>> {
     let mut by_curve = vec![Vec::new(); path.curves().len()];
     for (curve_index, span_index, parameter) in parameters {
@@ -1050,7 +1050,7 @@ fn append_boolean_fragments(
     overlaps: &[CurvePathOverlapResolution2],
     path_bounds_disjoint: bool,
     source_offset: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
     let mut local_source_index = 0_usize;
     for split in splits {
@@ -1198,7 +1198,7 @@ fn classify_retained_same_circle_fragment(
     curve: &crate::Curve2,
     other_path: &CurvePath2,
     representative: &crate::Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<Classification<ContourPointLocation>>> {
     let CurveGeometry2::CircularArc(source_arc) = curve.geometry() else {
         return Ok(None);
@@ -1316,7 +1316,7 @@ fn overlap_action_for_fragment(
     fragment_start: &BezierParameter2,
     fragment_end: &BezierParameter2,
     overlaps: &[CurvePathOverlapResolution2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<CurvePathBooleanFragmentAction2>>> {
     for resolution in overlaps {
         let overlap = resolution.overlap();

@@ -27,7 +27,7 @@ use hypersolve::{
 
 use crate::classify::compare_reals;
 use crate::{
-    Aabb2, BezierAlgebraicParameter2, Classification, CubicBezier2, CurvePolicy, CurveResult,
+    Aabb2, BezierAlgebraicParameter2, Classification, CubicBezier2, CurveContext, CurveResult,
     QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
 };
 use std::cmp::Ordering;
@@ -96,7 +96,7 @@ impl BezierAlgebraicRationalCoordinateImage {
     pub fn compare_to_real(
         &self,
         value: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> crate::Classification<Ordering> {
         let Some(representation) = self.representation() else {
             return crate::Classification::Uncertain(crate::UncertaintyReason::Unsupported);
@@ -113,7 +113,7 @@ impl BezierAlgebraicCoordinateImage {
     pub fn compare_to_real(
         &self,
         value: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> crate::Classification<Ordering> {
         let Some(representation) = self.representation() else {
             return crate::Classification::Uncertain(crate::UncertaintyReason::Unsupported);
@@ -125,7 +125,7 @@ impl BezierAlgebraicCoordinateImage {
 fn compare_root_representation_to_real(
     representation: &AlgebraicRootRepresentation,
     value: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> crate::Classification<Ordering> {
     if let Some(exact) = representation.exact_rational_witness() {
         return compare_reals(exact, value, policy)
@@ -141,14 +141,14 @@ fn compare_root_representation_to_real(
 fn compare_algebraic_representation_to_real(
     representation: &AlgebraicRootRepresentation,
     value: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> crate::Classification<Ordering> {
     let exact = exact_real_algebraic_representation(value);
     let evidence = compare_algebraic_root_representations_by_difference(
         representation,
         &exact,
         AlgebraicRootRefinementComparisonConfig {
-            policy: policy.predicate_policy,
+            policy: policy.predicate_policy(),
             ..AlgebraicRootRefinementComparisonConfig::default()
         },
     );
@@ -165,7 +165,7 @@ fn compare_algebraic_representation_to_real(
 fn compare_algebraic_representation_to_real(
     _representation: &AlgebraicRootRepresentation,
     _value: &Real,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> crate::Classification<Ordering> {
     crate::Classification::Uncertain(crate::UncertaintyReason::Unsupported)
 }
@@ -299,7 +299,7 @@ impl RationalBezierAlgebraicPointImage2 {
     pub(crate) fn from_parametric_source(
         curve: RationalBezier2,
         parameter: BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Self {
         Self {
             data: Arc::new(RationalBezierAlgebraicPointImageData {
@@ -319,7 +319,7 @@ impl RationalBezierAlgebraicPointImage2 {
     }
 
     #[inline(never)]
-    pub(crate) fn resolved(&self, policy: &CurvePolicy) -> Option<&Self> {
+    pub(crate) fn resolved(&self, policy: &CurveContext) -> Option<&Self> {
         let Some(source) = &self.data.parametric_source else {
             return Some(self);
         };
@@ -336,7 +336,7 @@ impl RationalBezierAlgebraicPointImage2 {
 
     pub(crate) fn parametric_source_bounds(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<Classification<Aabb2>> {
         self.data
             .parametric_source
@@ -347,7 +347,7 @@ impl RationalBezierAlgebraicPointImage2 {
     pub(crate) fn same_injective_parametric_source_point(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<Classification<bool>> {
         let (Some(first), Some(second)) = (
             self.data.parametric_source.as_ref(),
@@ -537,7 +537,7 @@ impl QuadraticBezier2 {
     pub fn point_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<BezierAlgebraicPointImage2> {
         point_image(parameter, quadratic_point_coefficients(self), policy)
     }
@@ -550,7 +550,7 @@ impl QuadraticBezier2 {
     pub fn tangent_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<BezierAlgebraicTangentImage2> {
         tangent_image(parameter, quadratic_tangent_coefficients(self), policy)
     }
@@ -565,7 +565,7 @@ impl QuadraticBezier2 {
     pub fn second_derivative_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<BezierAlgebraicTangentImage2> {
         tangent_image(
             parameter,
@@ -585,7 +585,7 @@ impl CubicBezier2 {
     pub fn point_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<BezierAlgebraicPointImage2> {
         point_image(parameter, cubic_point_coefficients(self), policy)
     }
@@ -595,7 +595,7 @@ impl CubicBezier2 {
     pub fn tangent_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<BezierAlgebraicTangentImage2> {
         tangent_image(parameter, cubic_tangent_coefficients(self), policy)
     }
@@ -610,7 +610,7 @@ impl CubicBezier2 {
     pub fn second_derivative_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<BezierAlgebraicTangentImage2> {
         tangent_image(
             parameter,
@@ -628,7 +628,7 @@ impl CubicBezier2 {
     pub fn third_derivative_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<BezierAlgebraicTangentImage2> {
         tangent_image(
             parameter,
@@ -654,7 +654,7 @@ impl RationalQuadraticBezier2 {
     pub fn point_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
         if let Some(image) = parameter.cached_rational_quadratic_point_image(self) {
             return Ok(image);
@@ -676,7 +676,7 @@ impl RationalQuadraticBezier2 {
     pub fn tangent_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
         if let Some(images) = parameter.cached_rational_quadratic_derivative_images(self, 1) {
             return Ok(images
@@ -702,7 +702,7 @@ impl RationalQuadraticBezier2 {
     pub fn second_derivative_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
         rational_tangent_image(
             parameter,
@@ -720,7 +720,7 @@ impl RationalQuadraticBezier2 {
         &self,
         parameter: &BezierAlgebraicParameter2,
         max_order: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {
         if let Some(images) = parameter.cached_rational_quadratic_derivative_images(self, max_order)
         {
@@ -748,7 +748,7 @@ impl RationalQuadraticBezier2 {
 fn point_image(
     parameter: &BezierAlgebraicParameter2,
     coefficients: CoordinatePolynomials,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<BezierAlgebraicPointImage2> {
     let parameter_root = parameter_representation(parameter, policy);
     if !parameter_root.is_valid() {
@@ -790,7 +790,7 @@ fn point_image(
 fn rational_point_image(
     parameter: &BezierAlgebraicParameter2,
     coefficients: RationalCoordinatePolynomials,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
     let parameter_root = parameter_representation(parameter, policy);
     if !parameter_root.is_valid() {
@@ -855,7 +855,7 @@ pub(crate) fn rational_point_image_from_power_basis(
     x_numerator: Vec<Real>,
     y_numerator: Vec<Real>,
     denominator: Vec<Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
     let x_numerator = reduce_algebraic_image_polynomial(parameter, x_numerator, policy)?;
     let y_numerator = reduce_algebraic_image_polynomial(parameter, y_numerator, policy)?;
@@ -876,7 +876,7 @@ pub(crate) fn rational_derivative_images_from_power_basis(
     mut x_numerator: Vec<Real>,
     mut y_numerator: Vec<Real>,
     denominator: Vec<Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     max_order: usize,
 ) -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {
     let denominator_derivative = derivative_coefficients(&denominator);
@@ -921,7 +921,7 @@ pub(crate) fn rational_derivative_images_from_power_basis(
 fn reduce_algebraic_image_polynomial(
     parameter: &BezierAlgebraicParameter2,
     coefficients: Vec<Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Vec<Real>> {
     match parameter
         .polynomial()
@@ -935,7 +935,7 @@ fn reduce_algebraic_image_polynomial(
 fn tangent_image(
     parameter: &BezierAlgebraicParameter2,
     coefficients: CoordinatePolynomials,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<BezierAlgebraicTangentImage2> {
     let parameter_root = parameter_representation(parameter, policy);
     if !parameter_root.is_valid() {
@@ -977,7 +977,7 @@ fn tangent_image(
 fn rational_tangent_image(
     parameter: &BezierAlgebraicParameter2,
     coefficients: RationalTangentPolynomials,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
     let parameter_root = parameter_representation(parameter, policy);
     if !parameter_root.is_valid() {
@@ -1026,7 +1026,7 @@ fn rational_tangent_image(
 fn coordinate_image(
     parameter: &AlgebraicRootRepresentation,
     coefficients: Vec<Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierAlgebraicCoordinateImage> {
     if let Some(parameter_value) = parameter.exact_rational_witness() {
         let value = evaluate_power_polynomial(&coefficients, parameter_value);
@@ -1062,7 +1062,7 @@ fn rational_coordinate_image_pair(
     first_numerator_coefficients: Vec<Real>,
     second_numerator_coefficients: Vec<Real>,
     denominator_coefficients: Vec<Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> (
     Option<BezierAlgebraicRationalCoordinateImage>,
     Option<BezierAlgebraicRationalCoordinateImage>,
@@ -1074,7 +1074,7 @@ fn rational_coordinate_image_pair(
             second_numerator_coefficients.as_slice(),
         ],
         &denominator_coefficients,
-        policy.predicate_policy,
+        policy.predicate_policy(),
     );
     if first_evidence.status != AlgebraicRootRationalImageStatus::Transformed {
         return (None, None);
@@ -1099,7 +1099,7 @@ fn rational_coordinate_image_pair(
     _first_numerator_coefficients: Vec<Real>,
     _second_numerator_coefficients: Vec<Real>,
     _denominator_coefficients: Vec<Real>,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> (
     Option<BezierAlgebraicRationalCoordinateImage>,
     Option<BezierAlgebraicRationalCoordinateImage>,
@@ -1111,12 +1111,12 @@ fn rational_coordinate_image_pair(
 fn coordinate_image_from_replay(
     parameter: &AlgebraicRootRepresentation,
     coefficients: Vec<Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierAlgebraicCoordinateImage> {
     let evidence = transform_algebraic_root_polynomial_image(
         parameter,
         &coefficients,
-        policy.predicate_policy,
+        policy.predicate_policy(),
     );
     (evidence.status == AlgebraicRootPolynomialImageStatus::Transformed).then_some(
         BezierAlgebraicCoordinateImage {
@@ -1130,7 +1130,7 @@ fn coordinate_image_from_replay(
 fn coordinate_image_from_replay(
     _parameter: &AlgebraicRootRepresentation,
     _coefficients: Vec<Real>,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> Option<BezierAlgebraicCoordinateImage> {
     None
 }
@@ -1166,7 +1166,7 @@ fn evaluate_power_polynomial(coefficients: &[Real], parameter: &Real) -> Real {
 
 pub(crate) fn parameter_representation(
     parameter: &BezierAlgebraicParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> AlgebraicRootRepresentation {
     let interval = parameter.interval();
     let exact_root = linear_parameter_witness(parameter, policy);
@@ -1198,22 +1198,22 @@ pub(crate) fn parameter_representation(
 #[cfg(feature = "predicates")]
 fn validate_parameter_representation(
     representation: &mut AlgebraicRootRepresentation,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) {
     representation.validation =
-        validate_algebraic_root_representation(representation, policy.predicate_policy);
+        validate_algebraic_root_representation(representation, policy.predicate_policy());
 }
 
 #[cfg(not(feature = "predicates"))]
 fn validate_parameter_representation(
     _representation: &mut AlgebraicRootRepresentation,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) {
 }
 
 fn linear_parameter_witness(
     parameter: &BezierAlgebraicParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Real> {
     let coefficients = parameter.polynomial().coefficients();
     if coefficients.len() != 2 {

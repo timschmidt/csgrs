@@ -15,7 +15,7 @@ use std::{sync::Arc, sync::OnceLock};
 
 use crate::{
     BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierAlgebraicPointImage2,
-    BezierAlgebraicTangentImage2, BezierSubcurve2, CubicBezier2, CurvePolicy, CurveResult,
+    BezierAlgebraicTangentImage2, BezierSubcurve2, CubicBezier2, CurveContext, CurveResult,
     QuadraticBezier2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalQuadraticBezier2,
 };
@@ -88,7 +88,7 @@ enum BezierAlgebraicEndpointImageData {
     LazyFirstOrder {
         parameter: BezierAlgebraicParameter2,
         curve: Box<BezierSubcurve2>,
-        policy: CurvePolicy,
+        policy: CurveContext,
         point: OnceLock<CurveResult<BezierEndpointPointImage2>>,
         tangent: OnceLock<CurveResult<BezierEndpointTangentImage2>>,
     },
@@ -110,7 +110,7 @@ impl BezierAlgebraicEndpointImage2 {
     pub fn from_source_curve(
         source_curve: &BezierSubcurve2,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         match source_curve {
             BezierSubcurve2::Quadratic(curve) => Self::quadratic(curve, parameter, policy),
@@ -126,7 +126,7 @@ impl BezierAlgebraicEndpointImage2 {
     pub fn quadratic(
         curve: &QuadraticBezier2,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         Ok(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
@@ -149,7 +149,7 @@ impl BezierAlgebraicEndpointImage2 {
     pub fn cubic(
         curve: &CubicBezier2,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         Ok(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
@@ -174,7 +174,7 @@ impl BezierAlgebraicEndpointImage2 {
     pub fn rational_quadratic(
         curve: &RationalQuadraticBezier2,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         let mut derivatives = curve
             .derivatives_at_algebraic_parameter(parameter, 3, policy)?
@@ -200,13 +200,13 @@ impl BezierAlgebraicEndpointImage2 {
     pub(crate) fn rational_quadratic_first_order(
         curve: &RationalQuadraticBezier2,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         Ok(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter: parameter.clone(),
                 curve: Box::new(BezierSubcurve2::RationalQuadratic(curve.clone())),
-                policy: policy.clone(),
+                policy: *policy,
                 point: OnceLock::new(),
                 tangent: OnceLock::new(),
             }),
@@ -217,7 +217,7 @@ impl BezierAlgebraicEndpointImage2 {
     pub fn rational(
         curve: &crate::RationalBezier2,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         let mut derivatives = curve
             .derivatives_at_algebraic_parameter(parameter, 3, policy)?
@@ -243,13 +243,13 @@ impl BezierAlgebraicEndpointImage2 {
     pub(crate) fn rational_first_order(
         curve: &crate::RationalBezier2,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         Ok(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter: parameter.clone(),
                 curve: Box::new(BezierSubcurve2::Rational(curve.clone())),
-                policy: policy.clone(),
+                policy: *policy,
                 point: OnceLock::new(),
                 tangent: OnceLock::new(),
             }),
@@ -259,13 +259,13 @@ impl BezierAlgebraicEndpointImage2 {
     pub(crate) fn quadratic_first_order(
         curve: &QuadraticBezier2,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         Ok(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter: parameter.clone(),
                 curve: Box::new(BezierSubcurve2::Quadratic(curve.clone())),
-                policy: policy.clone(),
+                policy: *policy,
                 point: OnceLock::new(),
                 tangent: OnceLock::new(),
             }),
@@ -275,13 +275,13 @@ impl BezierAlgebraicEndpointImage2 {
     pub(crate) fn cubic_first_order(
         curve: &CubicBezier2,
         parameter: &BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         Ok(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter: parameter.clone(),
                 curve: Box::new(BezierSubcurve2::Cubic(curve.clone())),
-                policy: policy.clone(),
+                policy: *policy,
                 point: OnceLock::new(),
                 tangent: OnceLock::new(),
             }),

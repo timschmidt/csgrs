@@ -12,7 +12,7 @@ use crate::classify::real_sign;
 use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
 use crate::region_fragments::CompactLineRegionFragmentSet;
 use crate::{
-    Classification, CurveError, CurvePolicy, CurveResult, FillRule, Point2, RegionContourKey,
+    Classification, CurveContext, CurveError, CurveResult, FillRule, Point2, RegionContourKey,
     RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide, RegionView2, Segment2,
     UncertaintyReason,
 };
@@ -140,7 +140,7 @@ impl BooleanFragmentSelection {
     pub(crate) fn endpoint_chain_indices_from_certified_split(
         &self,
         fragments: &RegionFragmentSet,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BooleanBoundaryChainIndices>>> {
         let mut sources = fragments.contours().iter().flat_map(|contour| {
             let key = contour.key;
@@ -243,7 +243,7 @@ impl BooleanFragmentSelection {
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
         crossing_windings: &RegionLineCrossingWindingIndex<'_>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BooleanBoundaryChainIndices>>> {
         let mut sources = fragments.contours().iter().flat_map(|contour| {
             let key = contour.key;
@@ -644,7 +644,7 @@ impl CompactLineRegionFragmentSet {
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
         op: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         endpoint_contacts: &crate::region_events::RegionPointEndpointContactIndex,
         crossing_windings: &RegionLineCrossingWindingIndex<'_>,
         mut classify_opposite_winding: F,
@@ -852,7 +852,7 @@ pub(crate) fn source_contour_filled_side_is_left(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     key: RegionContourKey,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let contour = source_contour_for_key(first, second, key)?;
     let Some(area) = contour.signed_area()? else {
@@ -994,7 +994,7 @@ impl RegionFragmentSet {
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
         op: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BooleanFragmentSelection>> {
         self.classify_for_boolean_with_point_classifier(
             first,
@@ -1016,7 +1016,7 @@ impl RegionFragmentSet {
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
         op: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         endpoint_contacts: &crate::region_events::RegionPointEndpointContactIndex,
         crossing_windings: &RegionLineCrossingWindingIndex<'_>,
         classify_opposite_winding: F,
@@ -1040,7 +1040,7 @@ impl RegionFragmentSet {
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
         op: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         endpoint_contacts: Option<&crate::region_events::RegionPointEndpointContactIndex>,
         classify_opposite: F,
     ) -> CurveResult<Classification<BooleanFragmentSelection>>
@@ -1062,7 +1062,7 @@ impl RegionFragmentSet {
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
         op: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         mut classify_opposite: F,
     ) -> CurveResult<Classification<BooleanFragmentSelection>>
     where
@@ -1083,7 +1083,7 @@ impl RegionFragmentSet {
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
         op: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         endpoint_contacts: &crate::region_events::RegionPointEndpointContactIndex,
         crossing_windings: &RegionLineCrossingWindingIndex<'_>,
         mut classify_opposite_winding: F,
@@ -1198,7 +1198,7 @@ impl RegionFragmentSet {
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
         op: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         endpoint_contacts: Option<&crate::region_events::RegionPointEndpointContactIndex>,
         mut classify_opposite: F,
     ) -> CurveResult<Classification<BooleanFragmentSelection>>
@@ -1281,7 +1281,7 @@ fn certified_fragment_endpoint(
     source_segment_index: usize,
     source_range_start: &Real,
     source_range_end: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<CertifiedFragmentEndpoint> {
     if !contacts.parameter_is_contact(
         key,
@@ -1336,7 +1336,7 @@ fn classify_fragment_interior<T, F>(
     segment: &Segment2,
     certified_endpoint: Option<CertifiedFragmentEndpoint>,
     fractions: &[Real; 3],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     classify: F,
 ) -> CurveResult<FragmentInteriorClassification<T>>
 where
@@ -1450,7 +1450,7 @@ mod tests {
         let second = rectangle(2, -1, 6, 2);
         let first_view = first.as_view();
         let second_view = second.as_view();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let events = first_view.intersect_region(&second_view, &policy).unwrap();
         let fragments = match events
             .split_regions(&first_view, &second_view, &policy)

@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, Classification,
-    CurveError, CurvePolicy, Real,
+    CurveError, CurveContext, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -19,7 +19,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let polynomial = match BezierParameterPolynomial::try_new_power_basis(
         vec![
             real_from_byte(data[0]),

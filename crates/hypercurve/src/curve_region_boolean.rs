@@ -11,11 +11,11 @@ use crate::policy::resolve_certified_operation;
 use crate::{
     Aabb2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
     BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    Classification, Curve2, CurveError, CurveFamily2, CurveIntersectionContact2,
+    Classification, Curve2, CurveContext, CurveError, CurveFamily2, CurveIntersectionContact2,
     CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
-    CurvePathBooleanOperand2, CurvePolicy, CurveRegion2, ExactCurveError, ExactCurveResult,
-    FillRule, RationalBezier2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RegionPointLocation, UncertaintyReason,
+    CurvePathBooleanOperand2, CurveRegion2, ExactCurveError, ExactCurveResult, FillRule,
+    RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    RegionPointLocation, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -89,7 +89,7 @@ struct CurveRegionBooleanContext<'a> {
 struct CurveRegionBooleanContextData<'a> {
     first: &'a CurveRegion2,
     second: &'a CurveRegion2,
-    policy: CurvePolicy,
+    policy: CurveContext,
     carriers: Vec<RegionCarrier>,
     first_carrier_count: usize,
     authored_carrier_pair_count: usize,
@@ -367,7 +367,7 @@ impl CurveRegion2 {
         &self,
         other: &Self,
         operation: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
             self.boolean_region_raw(other, operation, attempt)
@@ -378,7 +378,7 @@ impl CurveRegion2 {
         &self,
         other: &Self,
         operation: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         if let Some(region) =
             boolean_region_without_general_context(self, other, operation, policy)?
@@ -394,7 +394,7 @@ impl CurveRegion2 {
     pub fn boolean_regions(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveRegionBooleanResults2>> {
         resolve_certified_operation(policy, |attempt| self.boolean_regions_raw(other, attempt))
     }
@@ -402,7 +402,7 @@ impl CurveRegion2 {
     pub(crate) fn boolean_regions_raw(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegionBooleanResults2> {
         let operations = [
             BooleanOp::Union,
@@ -436,7 +436,7 @@ impl CurveRegion2 {
     pub fn intersect_region(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveRegionIntersectionResult2>> {
         resolve_certified_operation(policy, |attempt| self.intersect_region_raw(other, attempt))
     }
@@ -444,7 +444,7 @@ impl CurveRegion2 {
     pub(crate) fn intersect_region_raw(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
         CurveRegionBooleanContext::try_new(self, other, policy)?.build_intersection_evidence()
     }
@@ -454,7 +454,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
     fn try_new(
         first: &'a CurveRegion2,
         second: &'a CurveRegion2,
-        policy: &'a CurvePolicy,
+        policy: &'a CurveContext,
     ) -> ExactCurveResult<Self> {
         let mut rational_quadratic_area_cache = RationalQuadraticAreaIntegralCache::default();
         let first_carriers = build_region_carriers(
@@ -502,7 +502,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             data: CurveRegionBooleanContextData {
                 first,
                 second,
-                policy: policy.clone(),
+                policy: *policy,
                 carriers,
                 first_carrier_count,
                 authored_carrier_pair_count,
@@ -1315,7 +1315,7 @@ fn boolean_region_without_general_context(
     first: &CurveRegion2,
     second: &CurveRegion2,
     operation: BooleanOp,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<CurveRegion2>> {
     if first.is_empty() || second.is_empty() {
         return empty_operand_result(first, second, operation).map(Some);
@@ -1349,7 +1349,7 @@ fn boolean_region_without_general_context(
     Ok(None)
 }
 
-fn carrier_bounds_decided_disjoint(first: &Curve2, second: &Curve2, policy: &CurvePolicy) -> bool {
+fn carrier_bounds_decided_disjoint(first: &Curve2, second: &Curve2, policy: &CurveContext) -> bool {
     let (Ok(first_bounds), Ok(second_bounds)) = (first.bounds(), second.bounds()) else {
         return false;
     };
@@ -1359,7 +1359,7 @@ fn carrier_bounds_decided_disjoint(first: &Curve2, second: &Curve2, policy: &Cur
     )
 }
 
-fn subcurve_has_certified_injective_axis(curve: &BezierSubcurve2, policy: &CurvePolicy) -> bool {
+fn subcurve_has_certified_injective_axis(curve: &BezierSubcurve2, policy: &CurveContext) -> bool {
     let rational = match curve {
         BezierSubcurve2::Quadratic(curve) => RationalBezier2::try_new(
             curve.control_points().into_iter().cloned().collect(),
@@ -1380,7 +1380,7 @@ fn subcurve_has_certified_injective_axis(curve: &BezierSubcurve2, policy: &Curve
 
 fn subcurve_certified_outer_bounds(
     curve: &BezierSubcurve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Aabb2> {
     match curve {
         BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(policy),
@@ -1393,7 +1393,7 @@ fn subcurve_certified_outer_bounds(
 fn build_region_carriers(
     region: &CurveRegion2,
     operand: CurvePathBooleanOperand2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     rational_quadratic_area_cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> ExactCurveResult<Vec<RegionCarrier>> {
     if region.is_empty() {
@@ -1462,7 +1462,7 @@ fn build_region_carriers(
 fn split_carrier(
     carrier: &RegionCarrier,
     events: &[CarrierEvent],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
     // Most retained events need very little isolator separation. Preserve the
     // former eight-step proof budget for close roots or endpoint images whose
@@ -1481,7 +1481,7 @@ fn split_carrier_with_refinement(
     carrier: &RegionCarrier,
     events: &[CarrierEvent],
     max_refinement_steps: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
     let parameters = events
         .iter()
@@ -1696,7 +1696,7 @@ fn certified_direction_cross(
 fn certified_transverse_contact_vertices(
     split_fragments: &[Vec<SplitCarrierFragment>],
     candidates: &[Option<TransitionContactCandidate>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Vec<bool> {
     candidates
         .iter()
@@ -1768,7 +1768,7 @@ fn push_carrier_event(
     events: &mut Vec<CarrierEvent>,
     parameter: BezierParameter2,
     topology_vertex: Option<usize>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
     for event in events.iter_mut() {
         match parameter
@@ -1807,7 +1807,7 @@ fn seed_loop_topology_vertices(
     carriers: &[RegionCarrier],
     events: &mut [Vec<CarrierEvent>],
     next_topology_vertex: &mut usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
     let mut loop_start = 0_usize;
     while loop_start < carriers.len() {
@@ -1865,7 +1865,7 @@ fn carrier_traversal_end(carrier: &RegionCarrier) -> &BezierParameter2 {
 fn existing_event_vertex(
     events: &[CarrierEvent],
     parameter: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<usize>> {
     for event in events {
         match decided_parameter_cmp(parameter, &event.parameter, policy)? {
@@ -1899,7 +1899,7 @@ fn contacts_decided_distinct_from_carriers(
     carrier_indices: [usize; 2],
     parameters: [&BezierParameter2; 2],
     carriers: &[RegionCarrier],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     for existing_carrier in existing.carrier_indices {
         for current_carrier in carrier_indices {
@@ -1946,7 +1946,7 @@ fn contacts_decided_distinct_from_carriers(
 fn event_vertex(
     events: &[CarrierEvent],
     parameter: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<Option<usize>, CurveError> {
     for event in events {
         match parameter.cmp_by_refinement(&event.parameter, policy)? {
@@ -1992,7 +1992,7 @@ const fn action_from_result_sides(left: bool, right: bool) -> RegionFragmentActi
 fn parameter_in_carrier(
     parameter: &BezierParameter2,
     carrier: &RegionCarrier,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     parameter_between(parameter, &carrier.start, &carrier.end, policy)
 }
@@ -2000,7 +2000,7 @@ fn parameter_in_carrier(
 fn parameter_strictly_inside_carrier(
     parameter: &BezierParameter2,
     carrier: &RegionCarrier,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     matches!(
         (
@@ -2015,7 +2015,7 @@ fn parameter_between(
     parameter: &BezierParameter2,
     start: &BezierParameter2,
     end: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let lower = decided_parameter_cmp(parameter, start, policy)?;
     let upper = decided_parameter_cmp(parameter, end, policy)?;
@@ -2026,7 +2026,7 @@ fn parameter_range_inside_carrier(
     start: &BezierParameter2,
     end: &BezierParameter2,
     carrier: &RegionCarrier,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<bool, CurveError> {
     let start_cmp = start.cmp_by_refinement(&carrier.start, policy)?;
     let end_cmp = end.cmp_by_refinement(&carrier.end, policy)?;
@@ -2045,7 +2045,7 @@ fn parameter_range_inside_carrier(
 fn ranges_intersect(
     range: &BezierParameterRange2,
     carrier: &RegionCarrier,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let (start, end) = ascending_range(range, policy)?;
     Ok(!decided_parameter_cmp(end, &carrier.start, policy)?.is_lt()
@@ -2055,7 +2055,7 @@ fn ranges_intersect(
 fn range_inside_carrier(
     range: &BezierParameterRange2,
     carrier: &RegionCarrier,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let (start, end) = ascending_range(range, policy)?;
     Ok(
@@ -2070,7 +2070,7 @@ fn clip_identity_parameter_overlap(
     orientation: RationalBezierOverlapOrientation2,
     first_carrier: &RegionCarrier,
     second_carrier: &RegionCarrier,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<(BezierParameterRange2, BezierParameterRange2)>> {
     if !identity_parameter_correspondence(
         first_range,
@@ -2106,7 +2106,7 @@ fn identity_parameter_correspondence(
     orientation: RationalBezierOverlapOrientation2,
     first_carrier: &RegionCarrier,
     second_carrier: &RegionCarrier,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     if orientation != RationalBezierOverlapOrientation2::Same
         || first_carrier.curve != second_carrier.curve
@@ -2123,7 +2123,7 @@ fn identity_parameter_correspondence(
 
 fn maximum_parameter<const N: usize>(
     parameters: [&BezierParameter2; N],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<BezierParameter2> {
     let mut maximum = parameters[0];
     for parameter in &parameters[1..] {
@@ -2136,7 +2136,7 @@ fn maximum_parameter<const N: usize>(
 
 fn minimum_parameter<const N: usize>(
     parameters: [&BezierParameter2; N],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<BezierParameter2> {
     let mut minimum = parameters[0];
     for parameter in &parameters[1..] {
@@ -2151,7 +2151,7 @@ fn range_contains_fragment(
     range: &BezierParameterRange2,
     fragment_start: &BezierParameter2,
     fragment_end: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let (range_start, range_end) = ascending_range(range, policy)?;
     Ok(
@@ -2162,7 +2162,7 @@ fn range_contains_fragment(
 
 fn ascending_range<'a>(
     range: &'a BezierParameterRange2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<(&'a BezierParameter2, &'a BezierParameter2)> {
     match decided_parameter_cmp(range.start(), range.end(), policy)? {
         Ordering::Less => Ok((range.start(), range.end())),
@@ -2178,7 +2178,7 @@ fn ascending_range<'a>(
 fn decided_parameter_cmp(
     first: &BezierParameter2,
     second: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Ordering> {
     match first.cmp_by_refinement(second, policy).map_err(|cause| {
         ExactCurveError::invalid(
@@ -2216,7 +2216,7 @@ const fn subcurve_family(curve: &BezierSubcurve2) -> CurveFamily2 {
 fn same_contact_point(
     first: &RationalBezierIntersectionPointEvidence2,
     second: &RationalBezierIntersectionPointEvidence2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     match (first, second) {
         (
@@ -2369,7 +2369,7 @@ mod certified_successor_tests {
         }
     }
 
-    fn sqrt_half_parameter(policy: &CurvePolicy) -> BezierAlgebraicParameter2 {
+    fn sqrt_half_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {
         let polynomial = decided(
             crate::BezierParameterPolynomial::try_new_power_basis(
                 vec![(-1).into(), 0.into(), 2.into()],
@@ -2497,7 +2497,7 @@ mod certified_successor_tests {
 
     #[test]
     fn contact_point_bounds_reject_disjoint_lazy_sources() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let parameter = sqrt_half_parameter(&policy);
         let first_curve = rational_line(0, 1);
         let second_curve = rational_line(2, 3);
@@ -2544,7 +2544,7 @@ mod certified_successor_tests {
 
     #[test]
     fn identical_injective_source_parameters_compare_without_materialization() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let parameter = sqrt_half_parameter(&policy);
         let curve = rational_line(0, 1);
         let first = RationalBezierIntersectionPointEvidence2::Algebraic(

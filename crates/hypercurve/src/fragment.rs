@@ -16,7 +16,7 @@ use crate::classify::{
 use crate::region_crossing_winding::{RegionLineCrossing, RegionLineCrossingWindingIndex};
 use crate::segment::LineSupport2;
 use crate::{
-    CircularArc2, Classification, Contour2, ContourSplitMarkers, CurveError, CurvePolicy,
+    CircularArc2, Classification, Contour2, ContourSplitMarkers, CurveContext, CurveError,
     CurveResult, LineSeg2, ParamRange, Point2, RegionContourKey, Segment2, SegmentSplitMarker,
     UncertaintyReason,
 };
@@ -232,10 +232,13 @@ pub struct ContourFragmentSet {
 impl ContourFragmentSet {
     /// Constructs a fragment set from already-built fragments.
     pub fn new(fragments: Vec<ContourFragment>) -> CurveResult<Self> {
-        Self::new_with_policy(fragments, &CurvePolicy::STRICT)
+        Self::new_with_policy(fragments, &CurveContext::STRICT)
     }
 
-    fn new_with_policy(fragments: Vec<ContourFragment>, policy: &CurvePolicy) -> CurveResult<Self> {
+    fn new_with_policy(
+        fragments: Vec<ContourFragment>,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
         validate_contour_fragments(&fragments, policy)?;
         Ok(Self { fragments })
     }
@@ -244,7 +247,7 @@ impl ContourFragmentSet {
     pub fn from_split_markers(
         contour: &Contour2,
         markers: &ContourSplitMarkers,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if contour.len() != markers.segment_count() {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -322,7 +325,7 @@ pub(crate) fn compact_line_contour_fragments_from_crossing_windings(
     contour: &Contour2,
     key: RegionContourKey,
     crossing_windings: &RegionLineCrossingWindingIndex<'_>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<CompactLineContourFragment>>> {
     let fragment_capacity = contour.len() + crossing_windings.crossing_count(key);
     let mut fragments = Vec::with_capacity(fragment_capacity);
@@ -365,7 +368,7 @@ fn append_compact_line_split_fragments(
     source_segment_index: usize,
     crossings: &[RegionLineCrossing<'_>],
     crossing_windings: &RegionLineCrossingWindingIndex<'_>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     markers_are_distinct: bool,
 ) -> Classification<()> {
     let Ok(source_segment_index) = u32::try_from(source_segment_index) else {
@@ -414,7 +417,7 @@ fn append_compact_line_split_fragments(
 
 fn validate_contour_fragments(
     fragments: &[ContourFragment],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     for fragment in fragments {
         validate_contour_fragment_source_range(fragment, policy)?;
@@ -438,7 +441,7 @@ fn validate_contour_fragments(
 
 fn validate_contour_fragment_source_range(
     fragment: &ContourFragment,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     if in_closed_unit_interval(fragment.source_range.start(), policy) != Some(true)
         || in_closed_unit_interval(fragment.source_range.end(), policy) != Some(true)
@@ -469,7 +472,7 @@ fn validate_contour_fragment_source_range(
 fn validate_contour_fragment_source_ranges_disjoint(
     left: &ContourFragment,
     right: &ContourFragment,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     if left.source_segment_index != right.source_segment_index {
         return Ok(());
@@ -512,7 +515,7 @@ fn validate_contour_fragment_source_ranges_disjoint(
 fn validate_split_markers_against_contour(
     contour: &Contour2,
     markers: &ContourSplitMarkers,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
     for (segment_index, source_segment) in contour.segments().iter().enumerate() {
         let Some(segment_markers) = markers.markers_for_segment(segment_index) else {
@@ -536,7 +539,7 @@ fn validate_split_markers_against_contour(
 fn split_marker_matches_source_segment(
     source_segment: &Segment2,
     marker: &SegmentSplitMarker,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
     match source_segment {
         Segment2::Line(line) => {
@@ -544,7 +547,7 @@ fn split_marker_matches_source_segment(
             let distance = marker.point.distance_squared(&expected);
             match point_distance_is_zero(&distance, &marker.point, &expected, policy) {
                 Some(true) => Ok(Classification::Decided(())),
-                Some(false) if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) => {
+                Some(false) if policy.is_edge_preview() => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
                 Some(false) => Err(CurveError::Topology(
@@ -561,13 +564,13 @@ fn point_distance_is_zero(
     distance_squared: &Real,
     left: &crate::Point2,
     right: &crate::Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     if is_zero(distance_squared, policy) == Some(true) {
         return Some(true);
     }
 
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+    if policy.is_edge_preview()
         && let (Some(distance_squared), Some(left_scale), Some(right_scale)) = (
             distance_squared.to_f64_lossy(),
             point_coordinate_scale(left),
@@ -575,8 +578,7 @@ fn point_distance_is_zero(
         )
         && distance_squared.is_finite()
     {
-        let (absolute, relative) = policy
-            .preview_tolerance
+        let (absolute, relative) = crate::policy::preview_tolerance()
             .map(|tolerance| (tolerance.absolute, tolerance.relative))
             .unwrap_or((1e-12, 1e-12));
         let scale = left_scale.max(right_scale).max(1.0);
@@ -600,13 +602,13 @@ fn point_coordinate_scale(point: &crate::Point2) -> Option<f64> {
 fn split_marker_matches_source_arc(
     source_arc: &CircularArc2,
     marker: &SegmentSplitMarker,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
     let radius_squared = source_arc.radius_squared();
     let radius_delta = marker.point.distance_squared(source_arc.center()) - &radius_squared;
     match radius_delta_is_zero(&radius_delta, &radius_squared, policy) {
         Some(true) => {}
-        Some(false) if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) => {
+        Some(false) if policy.is_edge_preview() => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         Some(false) => {
@@ -619,9 +621,7 @@ fn split_marker_matches_source_arc(
 
     match source_arc.contains_sweep_point(&marker.point, policy) {
         Classification::Decided(true) => {}
-        Classification::Decided(false)
-            if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) =>
-        {
+        Classification::Decided(false) if policy.is_edge_preview() => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         Classification::Decided(false) => {
@@ -639,7 +639,7 @@ fn split_marker_matches_source_arc(
         };
     match compare_reals(&marker.param, &expected_param, policy) {
         Some(Ordering::Equal) => Ok(Classification::Decided(())),
-        Some(_) if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) => {
+        Some(_) if policy.is_edge_preview() => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
         Some(_) => Err(CurveError::Topology(
@@ -653,7 +653,7 @@ pub(crate) fn split_contour_at_intersections(
     contour: &Contour2,
     intersections: &crate::ContourIntersectionSet,
     operand: crate::ContourOperand,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ContourFragmentSet>> {
     validate_contour_intersection_evidence_against_contour(contour, intersections, &[operand])?;
 
@@ -669,7 +669,7 @@ pub(crate) fn split_contour_at_intersections(
 pub(crate) fn split_contour_at_self_intersections(
     contour: &Contour2,
     intersections: &crate::ContourIntersectionSet,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ContourFragmentSet>> {
     validate_contour_intersection_evidence_against_contour(
         contour,
@@ -713,7 +713,7 @@ fn append_segment_fragments(
     source_segment: &Segment2,
     segment_index: usize,
     markers: &[SegmentSplitMarker],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
     // A validated marker lies at its parameter on the source. Affine line
     // parameters are injective when the source endpoints are already proven
@@ -771,7 +771,7 @@ fn build_fragment_segment(
     end: &SegmentSplitMarker,
     unsplit_source_segment: bool,
     line_support: Option<&Arc<LineSupport2>>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Segment2>> {
     // Every ContourSplitMarkers constructor certifies a strict sequence from
     // zero to one, and incidence was checked before this call. Two markers
@@ -804,14 +804,17 @@ fn build_fragment_segment(
     }
 }
 
-fn radius_delta_is_zero(delta: &Real, radius_squared: &Real, policy: &CurvePolicy) -> Option<bool> {
+fn radius_delta_is_zero(
+    delta: &Real,
+    radius_squared: &Real,
+    policy: &CurveContext,
+) -> Option<bool> {
     if is_zero(delta, policy) == Some(true) {
         return Some(true);
     }
 
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
-        let (absolute, relative) = policy
-            .preview_tolerance
+    if policy.is_edge_preview() {
+        let (absolute, relative) = crate::policy::preview_tolerance()
             .map(|tolerance| (tolerance.absolute, tolerance.relative))
             .unwrap_or((1e-12, 1e-12));
         let radius_scale = radius_squared
@@ -868,7 +871,7 @@ mod tests {
             point: point(coordinate),
         };
         let markers = [marker(0, 0), marker(2, 1), marker(4, 2), marker(6, 3)];
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let mut fragments = Vec::new();
 
         assert!(matches!(
@@ -930,7 +933,7 @@ mod tests {
         );
 
         assert_eq!(
-            first.retained_support_intervals_decided_disjoint(&last, &CurvePolicy::STRICT),
+            first.retained_support_intervals_decided_disjoint(&last, &CurveContext::STRICT),
             Some(true)
         );
     }

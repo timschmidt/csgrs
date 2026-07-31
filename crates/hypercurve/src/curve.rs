@@ -8,7 +8,7 @@ use hyperreal::{RealSign, ZeroKnowledge};
 use crate::arc_bezier::decompose_circular_arc;
 use crate::{
     Aabb2, BezierBoundaryLoop2, BezierSubcurve2, CircularArc2, Classification,
-    ContourPointLocation, CubicBezier2, CurveError, CurveOperation2, CurvePolicy, ExactCurveError,
+    ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2, ExactCurveError,
     ExactCurveResult, LineSeg2, LineSide, NurbsCurve2, ParamRange, Point2, PolynomialSplineCurve2,
     QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, Similarity2,
 };
@@ -431,7 +431,7 @@ impl Curve2 {
                         curve.end_weight().clone(),
                         curve.control_weight().clone(),
                         curve.start_weight().clone(),
-                        curve.common_nonzero_weight_sign(&CurvePolicy::STRICT),
+                        curve.common_nonzero_weight_sign(&CurveContext::STRICT),
                         curve.retained_implicit_quadratic_conic().cloned(),
                         curve.retained_circular_conic().cloned(),
                     )
@@ -579,7 +579,7 @@ impl Curve2 {
             return Ok(self.clone());
         }
         validate_subcurve_range(domain.start(), &start, &end, domain.end(), self.family())?;
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         if crate::classify::compare_reals(&start, domain.start(), &policy)
             == Some(std::cmp::Ordering::Equal)
             && crate::classify::compare_reals(&end, domain.end(), &policy)
@@ -724,7 +724,7 @@ impl Curve2 {
             + &local * (self.data.lineage.range.end() - self.data.lineage.range.start()))
     }
 
-    fn retain_root_image_injectivity(&self, policy: &CurvePolicy) {
+    fn retain_root_image_injectivity(&self, policy: &CurveContext) {
         let root = &self.data.lineage.root;
         if root.image_is_injective.get().is_some()
             || !matches!(
@@ -787,7 +787,7 @@ impl Curve2 {
             CurveGeometry2::PolynomialBSpline(curve) => curve.point_at_side(parameter, side),
             CurveGeometry2::Nurbs(curve) => curve.point_at_side(parameter, side),
             geometry => {
-                let policy = CurvePolicy::STRICT;
+                let policy = CurveContext::STRICT;
                 let location = validate_unit_parameter(parameter, geometry.family(), &policy)?;
                 if let Some(endpoint) = retained_native_endpoint(geometry, location, &policy) {
                     return Ok(endpoint);
@@ -972,10 +972,10 @@ impl Curve2 {
         let evaluator = &self.rational_evaluators()?[fragment_index];
         let local_derivatives = match if max_order == 1 {
             evaluator
-                .derivative_at_classified(&local, &crate::CurvePolicy::STRICT)
+                .derivative_at_classified(&local, &crate::CurveContext::STRICT)
                 .map(|derivative| vec![derivative])
         } else {
-            evaluator.derivatives_at_classified(&local, max_order, &crate::CurvePolicy::STRICT)
+            evaluator.derivatives_at_classified(&local, max_order, &crate::CurveContext::STRICT)
         } {
             Classification::Decided(derivatives) => derivatives,
             Classification::Uncertain(reason) => {
@@ -1215,7 +1215,7 @@ impl CurvePath2 {
             }
             match crate::classify::is_zero(
                 &adjacent[0].end().distance_squared(adjacent[1].start()),
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             ) {
                 Some(true) => {}
                 Some(false) => {
@@ -1479,7 +1479,7 @@ impl CurvePath2 {
     pub fn bounds(&self) -> ExactCurveResult<&Aabb2> {
         match self.data.bounds.get_or_init(|| {
             let mut bounds = self.data.curves[0].bounds()?.clone();
-            let policy = crate::CurvePolicy::STRICT;
+            let policy = crate::CurveContext::STRICT;
             for curve in &self.data.curves[1..] {
                 bounds = decided_bounds(bounds.union(curve.bounds()?, &policy), curve.family())?;
             }
@@ -1497,7 +1497,7 @@ impl CurvePath2 {
     pub fn classify_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<ContourPointLocation>> {
         if let [curve] = self.curves()
             && let CurveGeometry2::CircularArc(arc) = curve.geometry()
@@ -1564,7 +1564,7 @@ impl CurvePath2 {
             if self.start() != self.end() {
                 match crate::classify::is_zero(
                     &self.start().distance_squared(self.end()),
-                    &CurvePolicy::STRICT,
+                    &CurveContext::STRICT,
                 ) {
                     Some(true) => {}
                     Some(false) => {
@@ -1631,7 +1631,7 @@ fn classify_native_arc_chord_path(
     arc: &CircularArc2,
     chord: &LineSeg2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Classification<ContourPointLocation>> {
     let radial_delta = point.distance_squared(arc.center()) - arc.radius_squared_ref();
     match crate::classify::real_sign(&radial_delta, policy) {
@@ -1864,7 +1864,7 @@ impl NativeBezierFragment2 {
     /// A `false` result is deliberately only a missing certificate; callers
     /// that require simple-path topology must retain that distinction instead
     /// of assuming the fragment self-intersects.
-    pub fn has_certified_injective_axis(&self, policy: &CurvePolicy) -> ExactCurveResult<bool> {
+    pub fn has_certified_injective_axis(&self, policy: &CurveContext) -> ExactCurveResult<bool> {
         Ok(
             rationalize_subcurve(&self.curve, CurveFamily2::RationalBezier)?
                 .has_certified_injective_axis(policy),
@@ -1895,7 +1895,7 @@ impl NativeBezierBoundaryLoop2 {
 }
 
 fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
-    let policy = crate::CurvePolicy::STRICT;
+    let policy = crate::CurveContext::STRICT;
     match curve.geometry() {
         CurveGeometry2::Line(line) => {
             decided_bounds(Aabb2::from_line(line, &policy), curve.family())
@@ -1923,7 +1923,7 @@ fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
 fn decided_subcurve_bounds(
     curve: &BezierSubcurve2,
     family: CurveFamily2,
-    policy: &crate::CurvePolicy,
+    policy: &crate::CurveContext,
 ) -> ExactCurveResult<Aabb2> {
     let bounds = match curve {
         BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(policy),
@@ -1950,7 +1950,7 @@ fn select_native_fragments(
     parameter: &Real,
     family: CurveFamily2,
 ) -> ExactCurveResult<(usize, usize)> {
-    let policy = crate::CurvePolicy::STRICT;
+    let policy = crate::CurveContext::STRICT;
     let mut first = None;
     let mut last = None;
     for (index, fragment) in fragments.iter().enumerate() {
@@ -1991,7 +1991,7 @@ fn certify_matching_derivatives(
     family: CurveFamily2,
 ) -> ExactCurveResult<Vec<CurveDerivative2>> {
     debug_assert_eq!(first.len(), second.len());
-    let policy = crate::CurvePolicy::STRICT;
+    let policy = crate::CurveContext::STRICT;
     for (first_derivative, second_derivative) in first.iter().zip(&second) {
         match (
             crate::classify::compare_reals(first_derivative.dx(), second_derivative.dx(), &policy),
@@ -2162,7 +2162,7 @@ fn evaluate_promoted_arc(
     fragments: &[NativeBezierFragment2],
     parameter: &Real,
 ) -> ExactCurveResult<Point2> {
-    let policy = crate::CurvePolicy::STRICT;
+    let policy = crate::CurveContext::STRICT;
     for fragment in fragments {
         let (start, end) = fragment.parameter_range();
         let lower = crate::classify::compare_reals(start, parameter, &policy);
@@ -2217,7 +2217,7 @@ fn evaluate_promoted_arc(
 fn validate_unit_parameter(
     parameter: &Real,
     family: CurveFamily2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<crate::classify::ClosedUnitIntervalLocation> {
     use crate::classify::ClosedUnitIntervalLocation;
 
@@ -2239,7 +2239,7 @@ fn validate_unit_parameter(
 fn retained_native_endpoint(
     geometry: &CurveGeometry2,
     location: crate::classify::ClosedUnitIntervalLocation,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Point2> {
     use crate::classify::ClosedUnitIntervalLocation;
 
@@ -2290,7 +2290,7 @@ fn certify_closed_path(path: &CurvePath2, operation: CurveOperation2) -> ExactCu
     let first = &path.data.curves[0];
     match crate::classify::is_zero(
         &path.start().distance_squared(path.end()),
-        &CurvePolicy::STRICT,
+        &CurveContext::STRICT,
     ) {
         Some(true) => Ok(()),
         Some(false) => Err(ExactCurveError::invalid(
@@ -2312,7 +2312,7 @@ fn validate_fillet_radius(
     next_point: &Point2,
     center: &Point2,
 ) -> ExactCurveResult<Real> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let radius_squared = previous_point.distance_squared(center);
     match crate::classify::is_zero(&radius_squared, &policy) {
         Some(false) => {}
@@ -2403,7 +2403,7 @@ fn validate_curve_fillet_tangent(
         (-radius_dy, radius_dx)
     };
     let tangent_cross = &source_dx * &fillet_dy - &source_dy * &fillet_dx;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     match crate::classify::is_zero(&tangent_cross, &policy) {
         Some(true) => {}
         Some(false) => {
@@ -2444,7 +2444,7 @@ fn validate_strict_split_parameter(
     domain_end: &Real,
     family: CurveFamily2,
 ) -> ExactCurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     match (
         crate::classify::compare_reals(domain_start, parameter, &policy),
         crate::classify::compare_reals(parameter, domain_end, &policy),
@@ -2470,7 +2470,7 @@ fn validate_subcurve_range(
     domain_end: &Real,
     family: CurveFamily2,
 ) -> ExactCurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     match (
         crate::classify::compare_reals(domain_start, start, &policy),
         crate::classify::compare_reals(start, end, &policy),

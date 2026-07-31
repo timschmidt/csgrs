@@ -3,7 +3,7 @@ use std::f64::consts::TAU;
 use egui::{CentralPanel, ScrollArea, SidePanel, Slider};
 use egui_plot::{Plot, PlotBounds};
 use hypercurve::{
-    BooleanOp, Curve2, CurvePath2, CurvePolicy, CurveRegion2, LineSeg2, Point2, Real,
+    BooleanOp, Curve2, CurvePath2, CurveContext, CurveRegion2, LineSeg2, Point2, Real,
 };
 use serde::{Deserialize, Serialize};
 
@@ -462,9 +462,10 @@ fn boolean_pair(
                 BooleanMode::Difference => BooleanOp::Difference,
                 BooleanMode::Xor => BooleanOp::Xor,
             },
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| error.to_string())?
+        .value;
     Shape::from_curve_region(&region).map(|display| display.map(|display| (region, display)))
 }
 

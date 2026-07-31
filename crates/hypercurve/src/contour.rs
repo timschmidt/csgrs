@@ -8,7 +8,7 @@ use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decide
 use crate::classify::{classify_oriented_line, compare_reals, is_zero, real_sign};
 use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
-    BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2, LineSeg2,
+    BulgeVertex2, Classification, CurveContext, CurveError, CurveResult, CurveString2, LineSeg2,
     LineSide, Point2, Segment2, UncertaintyReason,
 };
 
@@ -191,7 +191,7 @@ impl Contour2 {
         mut self,
         source: &Self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Self {
         // A simple raw offset can re-expand after a collapse while remaining
         // self-contact free. Retain nesting only on the regular branch where
@@ -245,7 +245,7 @@ impl Contour2 {
     pub(crate) fn retained_offset_relation(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<RetainedContourOffsetRelation2> {
         let (Some(first), Some(second)) = (
             self.offset_provenance.as_ref(),
@@ -341,7 +341,7 @@ impl Contour2 {
     /// predicate is unresolved, no contour is materialized.
     pub fn merge_adjacent_collinear_lines(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Contour2>> {
         let source_segment_count = self.segments().len();
         let mut adjacency = Vec::with_capacity(source_segment_count);
@@ -407,7 +407,7 @@ impl Contour2 {
         vertex_index: usize,
         previous_param: Real,
         next_param: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Contour2>> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
@@ -432,7 +432,7 @@ impl Contour2 {
         vertex_index: usize,
         previous_point: &Point2,
         next_point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Contour2>> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
@@ -455,7 +455,7 @@ impl Contour2 {
         next_param: Real,
         center: &Point2,
         clockwise: bool,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Contour2>> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
@@ -491,7 +491,7 @@ impl Contour2 {
         next_point: &Point2,
         center: &Point2,
         clockwise: bool,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Contour2>> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
@@ -564,9 +564,9 @@ impl Contour2 {
 
     pub(crate) fn exact_dyadic_line_aabbs(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<Arc<ExactDyadicLineAabbs>> {
-        if policy != &CurvePolicy::STRICT {
+        if policy != &CurveContext::STRICT {
             return None;
         }
         self.exact_dyadic_line_aabbs_cache
@@ -590,7 +590,7 @@ impl Contour2 {
     /// number is not well-defined there. A decided bounding-box miss returns
     /// zero before boundary and winding scans; otherwise this follows
     /// boundary-first winding classification, extended to native circular arcs.
-    pub fn winding_number(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
+    pub fn winding_number(&self, point: &Point2, policy: &CurveContext) -> Classification<i32> {
         let contour_box = decided_contour_aabb(self, policy);
         let segment_boxes = decided_segment_boxes(self.segments(), policy);
         contour_winding_number_with_cached_aabbs(
@@ -611,7 +611,7 @@ impl Contour2 {
     pub fn classify_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<ContourPointLocation> {
         let contour_box = decided_contour_aabb(self, policy);
         let segment_boxes = decided_segment_boxes(self.segments(), policy);
@@ -631,7 +631,7 @@ impl Contour2 {
     pub fn classify_points(
         &self,
         points: &[Point2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Vec<Classification<ContourPointLocation>> {
         let index = crate::prepared::ContourQuery2::from_contour(self, policy);
         points
@@ -641,7 +641,7 @@ impl Contour2 {
     }
 
     /// Returns conservative structural facts for this contour immediately.
-    pub fn structural_facts(&self, policy: &CurvePolicy) -> crate::CurveStringFacts {
+    pub fn structural_facts(&self, policy: &CurveContext) -> crate::CurveStringFacts {
         crate::prepared::contour_facts(self, policy)
     }
 
@@ -650,7 +650,7 @@ impl Contour2 {
     /// Segment boxes are used only to skip decided misses. A box hit or
     /// uncertain ordering still falls back to exact segment containment so edge
     /// and vertex boundary cases remain explicit.
-    pub fn point_on_boundary(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+    pub fn point_on_boundary(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         let contour_box = decided_contour_aabb(self, policy);
         let segment_boxes = decided_segment_boxes(self.segments(), policy);
         point_on_contour_boundary_with_cached_aabbs(
@@ -666,7 +666,7 @@ impl Contour2 {
     pub fn intersect_contour(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<crate::ContourIntersectionSet> {
         crate::events::intersect_contours(self, other, policy)
     }
@@ -680,7 +680,7 @@ impl Contour2 {
     /// with the bounding-box candidate pruning pattern described by sweep-line scheduling.
     pub fn intersect_self(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<crate::ContourIntersectionSet> {
         crate::events::intersect_contour_self(self, policy)
     }
@@ -691,7 +691,7 @@ impl Contour2 {
         &self,
         intersections: &crate::ContourIntersectionSet,
         operand: crate::ContourOperand,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<crate::ContourFragmentSet>> {
         crate::fragment::split_contour_at_intersections(self, intersections, operand, policy)
     }
@@ -701,7 +701,7 @@ impl Contour2 {
     pub fn split_at_self_intersections(
         &self,
         intersections: &crate::ContourIntersectionSet,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<crate::ContourFragmentSet>> {
         crate::fragment::split_contour_at_self_intersections(self, intersections, policy)
     }
@@ -712,7 +712,7 @@ pub(crate) fn classify_contour_point_with_cached_aabbs(
     point: &Point2,
     contour_box: Option<&Aabb2>,
     segment_boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<ContourPointLocation> {
     // Keep the boundary-first point-in-polygon structure. Cached boxes only
     // reject decided misses; they never replace exact segment-boundary checks
@@ -763,7 +763,7 @@ pub(crate) fn contour_winding_number_with_cached_aabbs(
     point: &Point2,
     contour_box: Option<&Aabb2>,
     segment_boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<i32> {
     if contour_box_misses_point(contour_box, point, policy) {
         return Classification::Decided(0);
@@ -797,7 +797,7 @@ pub(crate) fn point_on_contour_boundary_with_cached_aabbs(
     point: &Point2,
     contour_box: Option<&Aabb2>,
     segment_boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     if contour_box_misses_point(contour_box, point, policy) {
         return Classification::Decided(false);
@@ -833,7 +833,7 @@ fn contour_winding_number_unchecked_with_cached_aabb(
     point: &Point2,
     contour_box: Option<&Aabb2>,
     segment_boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<i32> {
     if contour_box_misses_point(contour_box, point, policy) {
         return Classification::Decided(0);
@@ -872,7 +872,7 @@ fn contour_winding_number_unchecked_with_cached_aabb(
 pub(crate) fn line_contour_winding_assuming_off_boundary(
     contour: &Contour2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<i32> {
     let mut winding = 0;
     for segment in contour.segments() {
@@ -891,12 +891,12 @@ pub(crate) fn line_contour_winding_assuming_off_boundary(
 fn contour_box_misses_point(
     contour_box: Option<&Aabb2>,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     contour_box.is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
 }
 
-fn decided_segment_boxes(segments: &[Segment2], policy: &CurvePolicy) -> Vec<Option<Aabb2>> {
+fn decided_segment_boxes(segments: &[Segment2], policy: &CurveContext) -> Vec<Option<Aabb2>> {
     segments
         .iter()
         .map(|segment| decided_segment_aabb(segment, policy))
@@ -1235,7 +1235,7 @@ fn closure_status_from_distance(distance_squared: &Real) -> Classification<()> {
     match distance_squared.zero_status() {
         ZeroStatus::Zero => Classification::Decided(()),
         ZeroStatus::NonZero => Classification::Uncertain(UncertaintyReason::Boundary),
-        ZeroStatus::Unknown => match is_zero(distance_squared, &CurvePolicy::STRICT) {
+        ZeroStatus::Unknown => match is_zero(distance_squared, &CurveContext::STRICT) {
             Some(true) => Classification::Decided(()),
             Some(false) => Classification::Uncertain(UncertaintyReason::Boundary),
             None => Classification::Uncertain(UncertaintyReason::RealSign),
@@ -1279,7 +1279,7 @@ fn process_line_winding(
     end: &Point2,
     segment_box: Option<&Aabb2>,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<i32> {
     if le_real(start.y(), point.y(), policy)? {
         if !gt_real(end.y(), point.y(), policy)? {
@@ -1310,7 +1310,7 @@ fn process_line_winding(
 pub(crate) fn process_arc_winding(
     arc: &crate::CircularArc2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<i32> {
     let sweep_kind = crate::arc_bezier::classify_sweep(arc).ok()?;
     if matches!(
@@ -1360,7 +1360,7 @@ fn process_minor_arc_winding(
     radius_squared: &Real,
     clockwise: bool,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<i32> {
     // Arc winding is the circular-arc extension of the boundary-first winding
     // classifier used for polygon point containment. The tests below split the
@@ -1441,7 +1441,7 @@ fn point_inside_circle(
     center: &Point2,
     radius_squared: &Real,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let distance_squared = point.distance_squared(center);
     Some(matches!(
@@ -1450,7 +1450,7 @@ fn point_inside_circle(
     ))
 }
 
-fn is_left(start: &Point2, end: &Point2, point: &Point2, policy: &CurvePolicy) -> Option<bool> {
+fn is_left(start: &Point2, end: &Point2, point: &Point2, policy: &CurveContext) -> Option<bool> {
     match classify_oriented_line(start, end, point, policy) {
         Classification::Decided(side) => Some(side == LineSide::Left),
         Classification::Uncertain(_) => None,
@@ -1461,7 +1461,7 @@ fn is_left_or_equal(
     start: &Point2,
     end: &Point2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     match classify_oriented_line(start, end, point, policy) {
         Classification::Decided(side) => Some(matches!(side, LineSide::Left | LineSide::On)),
@@ -1469,21 +1469,21 @@ fn is_left_or_equal(
     }
 }
 
-fn le_real(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
+fn le_real(left: &Real, right: &Real, policy: &CurveContext) -> Option<bool> {
     Some(!matches!(
         compare_reals(left, right, policy)?,
         Ordering::Greater
     ))
 }
 
-fn lt_real(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
+fn lt_real(left: &Real, right: &Real, policy: &CurveContext) -> Option<bool> {
     Some(matches!(
         compare_reals(left, right, policy)?,
         Ordering::Less
     ))
 }
 
-fn gt_real(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
+fn gt_real(left: &Real, right: &Real, policy: &CurveContext) -> Option<bool> {
     Some(matches!(
         compare_reals(left, right, policy)?,
         Ordering::Greater
@@ -1542,7 +1542,7 @@ mod tests {
         ] {
             assert!(
                 contour
-                    .intersect_self(&CurvePolicy::STRICT)
+                    .intersect_self(&CurveContext::STRICT)
                     .unwrap()
                     .is_empty()
             );
@@ -1685,7 +1685,7 @@ mod tests {
         ])
         .unwrap();
         let bounds = contour
-            .exact_dyadic_line_aabbs(&CurvePolicy::STRICT)
+            .exact_dyadic_line_aabbs(&CurveContext::STRICT)
             .unwrap();
 
         assert_eq!(size_of::<ExactF64Aabb>(), 32);
@@ -1704,7 +1704,9 @@ mod tests {
         assert_eq!(bounds.segment_endpoints(2), [[3.0, 4.0], [-2.0, 4.0]]);
         assert_eq!(bounds.segment_endpoints(3), [[-2.0, 4.0], [-2.0, 0.0]]);
         let clone = contour.clone();
-        let replay = clone.exact_dyadic_line_aabbs(&CurvePolicy::STRICT).unwrap();
+        let replay = clone
+            .exact_dyadic_line_aabbs(&CurveContext::STRICT)
+            .unwrap();
         assert!(Arc::ptr_eq(&bounds, &replay));
     }
 
@@ -1718,7 +1720,7 @@ mod tests {
         ])
         .unwrap();
         let bounds = contour
-            .exact_dyadic_line_aabbs(&CurvePolicy::STRICT)
+            .exact_dyadic_line_aabbs(&CurveContext::STRICT)
             .unwrap();
         let packed = bounds.min_x_order_with_prefix_max.as_deref().unwrap();
 

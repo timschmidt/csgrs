@@ -19,7 +19,7 @@ mod exact;
 
 use crate::{
     Aabb2, BezierSubcurve2, BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2,
-    CurveGeometry2, CurveOperation2, CurvePath2, CurvePolicy, CurveRegion2, CurveString2,
+    CurveContext, CurveGeometry2, CurveOperation2, CurvePath2, CurveRegion2, CurveString2,
     ExactCurveError, FillRule, FiniteProjectionOptions, LineSeg2, NurbsCurve2, Point2,
     PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
     RealSign, Segment2, Similarity2,
@@ -29,7 +29,7 @@ use std::fmt::{self, Write};
 const EXACT_PATH_ATTRIBUTE: &str = "data-hypercurve-path";
 
 fn svg_real_sign(value: &Real) -> Option<RealSign> {
-    crate::classify::real_sign(value, &CurvePolicy::STRICT)
+    crate::classify::real_sign(value, &CurveContext::STRICT)
 }
 
 /// Error produced by strict SVG geometry import or export.
@@ -218,7 +218,7 @@ impl SvgGeometry2 {
         } else if !other.region.is_empty() {
             self.region = self
                 .region
-                .boolean_region_raw(&other.region, BooleanOp::Union, &CurvePolicy::STRICT)
+                .boolean_region_raw(&other.region, BooleanOp::Union, &CurveContext::STRICT)
                 .map_err(svg_geometry_error)?;
         }
         self.wires.append(&mut other.wires);
@@ -1167,7 +1167,7 @@ fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<Cur
     if paths.is_empty() {
         return Ok(CurveRegion2::empty());
     }
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let preliminary = CurveRegion2::try_from_boundary_paths(paths).map_err(svg_geometry_error)?;
     let roles = match preliminary
         .loop_roles(&policy)
@@ -1465,7 +1465,7 @@ pub fn export_svg_document_with_options(
     if !geometry.region.is_empty() {
         let profiles = match geometry
             .region
-            .project_to_finite_profiles(&projection, &CurvePolicy::STRICT)
+            .project_to_finite_profiles(&projection, &CurveContext::STRICT)
             .map_err(svg_geometry_error)?
         {
             Classification::Decided(profiles) => profiles,
@@ -1562,7 +1562,7 @@ fn append_native_path(
                 match crate::arc_bezier::classify_sweep(arc).map_err(svg_geometry_error)? {
                     crate::arc_bezier::ArcSweepKind::FullCircle => {
                         let midpoint = match arc
-                            .representative_point(&CurvePolicy::STRICT)
+                            .representative_point(&CurveContext::STRICT)
                             .map_err(svg_geometry_error)?
                         {
                             Classification::Decided(point) => point,
@@ -1690,7 +1690,7 @@ fn finite_point(point: &Point2) -> SvgResult<[f64; 2]> {
 }
 
 fn exact_finite_bounds(geometry: &SvgGeometry2) -> SvgResult<[f64; 4]> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut bounds = if geometry.region.is_empty() {
         None
     } else {
@@ -1746,7 +1746,7 @@ fn exact_finite_bounds(geometry: &SvgGeometry2) -> SvgResult<[f64; 4]> {
     .map(|bounds| [bounds[0], bounds[1], bounds[2], bounds[3]])
 }
 
-fn merge_bounds(bounds: &mut Option<Aabb2>, next: Aabb2, policy: &CurvePolicy) -> SvgResult<()> {
+fn merge_bounds(bounds: &mut Option<Aabb2>, next: Aabb2, policy: &CurveContext) -> SvgResult<()> {
     *bounds = Some(match bounds.take() {
         Some(current) => match current.union(&next, policy) {
             Classification::Decided(bounds) => bounds,

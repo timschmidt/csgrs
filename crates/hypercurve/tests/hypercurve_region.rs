@@ -1,5 +1,5 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError, CurveString2,
     FillRule, FiniteProjectionOptions, LineArcRegion2, Real, RegionArrangement2,
     RegionBoundaryContourRole2, RegionLineSegmentRegionBuildStage2, RegionPointLocation,
     RegionView2, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
@@ -56,14 +56,14 @@ fn reversed_rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     .unwrap()
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn evaluate_unordered_line_segments(
     segments: Vec<hypercurve::LineSeg2>,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> hypercurve::CurveResult<RegionArrangement2> {
     LineArcRegion2::arrange_unordered_line_segments(segments, fill_rule, policy)
 }
@@ -71,7 +71,7 @@ fn evaluate_unordered_line_segments(
 fn evaluate_borrowed_unordered_line_segments(
     segments: &[hypercurve::LineSeg2],
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> hypercurve::CurveResult<RegionArrangement2> {
     LineArcRegion2::arrange_unordered_line_segments_borrowed(segments, fill_rule, policy)
 }
@@ -79,7 +79,7 @@ fn evaluate_borrowed_unordered_line_segments(
 fn evaluate_unordered_segments(
     segments: Vec<Segment2>,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> hypercurve::CurveResult<RegionArrangement2> {
     LineArcRegion2::arrange_unordered_segments(segments, fill_rule, policy)
 }
@@ -87,7 +87,7 @@ fn evaluate_unordered_segments(
 fn evaluate_borrowed_unordered_segments(
     segments: &[Segment2],
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> hypercurve::CurveResult<RegionArrangement2> {
     LineArcRegion2::arrange_unordered_segments_borrowed(segments, fill_rule, policy)
 }

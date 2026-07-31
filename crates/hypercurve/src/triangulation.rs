@@ -8,7 +8,7 @@
 
 use crate::finite_projection::normalize_finite_ring_vertices;
 use crate::{
-    CurveCertainty, CurveError, CurveOutcome, CurvePolicy, CurveResult, FiniteRegionProfile2, Real,
+    CurveCertainty, CurveContext, CurveError, CurveOutcome, CurveResult, FiniteRegionProfile2, Real,
 };
 
 /// A finite triangle emitted from a projected region profile.
@@ -29,7 +29,7 @@ pub type FiniteTriangle2 = [[f64; 2]; 3];
 pub fn triangulate_finite_rings(
     material: &[[f64; 2]],
     holes: &[&[[f64; 2]]],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<CurveOutcome<Vec<FiniteTriangle2>>> {
     fn push_ring(
         ring: &[[f64; 2]],
@@ -134,7 +134,7 @@ impl FiniteRegionProfile2 {
     /// the module documentation.
     pub fn triangulate(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Vec<FiniteTriangle2>>> {
         let hole_refs = self
             .holes()

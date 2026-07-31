@@ -6,8 +6,8 @@ use std::sync::OnceLock;
 
 use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
-    BezierSubcurve2, Classification, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2,
-    CurveParameterSide2, CurvePolicy, ExactCurveError, ExactCurveResult, NurbsCurve2, Point2,
+    BezierSubcurve2, Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
+    CurveOperation2, CurveParameterSide2, ExactCurveError, ExactCurveResult, NurbsCurve2, Point2,
     PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBezier2, Real,
     Similarity2, SplinePeriodicity2, UncertaintyReason,
 };
@@ -135,7 +135,7 @@ impl PolynomialSplineCurve2 {
                 control_points,
                 knots,
                 periodicity,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             ),
             CurveOperation2::Construction,
         )?;
@@ -148,7 +148,7 @@ impl PolynomialSplineCurve2 {
             SplineEndpoints2::AuthoredControls
         } else {
             let extraction = exact_value(
-                retained.extract_bezier_spans(&CurvePolicy::STRICT),
+                retained.extract_bezier_spans(&CurveContext::STRICT),
                 CurveOperation2::Construction,
             )?;
             let intervals = source_intervals(&extraction)?;
@@ -340,7 +340,7 @@ impl PolynomialSplineCurve2 {
             let extraction = exact_value(
                 self.data
                     .retained
-                    .extract_bezier_spans(&CurvePolicy::STRICT),
+                    .extract_bezier_spans(&CurveContext::STRICT),
                 CurveOperation2::BezierDecomposition,
             )?;
             let intervals = source_intervals(&extraction)?;
@@ -585,13 +585,13 @@ impl PolynomialSplineCurve2 {
         let evaluator = &self.rational_spans()?[span_index];
         let local_derivatives = if max_order == 1 {
             vec![exact_classification(
-                evaluator.derivative_at_classified(&local, &CurvePolicy::STRICT),
+                evaluator.derivative_at_classified(&local, &CurveContext::STRICT),
             )?]
         } else {
             exact_classification(evaluator.derivatives_at_classified(
                 &local,
                 max_order,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             ))?
         };
         let inverse_width = (Real::one() / (&interval.1 - &interval.0)).map_err(|cause| {
@@ -652,7 +652,7 @@ impl PolynomialSplineCurve2 {
         if !self.periodicity().is_periodic() {
             return Ok(());
         }
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         match (
             crate::classify::compare_reals(self.start().x(), self.end().x(), &policy),
             crate::classify::compare_reals(self.start().y(), self.end().y(), &policy),
@@ -676,7 +676,7 @@ impl PolynomialSplineCurve2 {
             return Ok(false);
         }
         let (start, end) = self.parameter_domain();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         match (
             crate::classify::compare_reals(parameter, start, &policy),
             crate::classify::compare_reals(parameter, end, &policy),
@@ -750,7 +750,7 @@ impl<'a> PolynomialSplineBezierSpanView2<'a> {
 fn source_intervals(
     extraction: &PolynomialBSplineBezierExtraction2,
 ) -> ExactCurveResult<Vec<(Real, Real)>> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let degree = extraction.degree();
     let knots = extraction.refined_knots();
     let end = knots.len().saturating_sub(degree + 1);
@@ -792,7 +792,7 @@ fn has_clamped_endpoints(
     degree: usize,
     control_count: usize,
 ) -> ExactCurveResult<bool> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     match (
         crate::classify::compare_reals(&knots[0], &knots[degree], &policy),
         crate::classify::compare_reals(
@@ -834,7 +834,7 @@ fn evaluate_span(
         BezierSubcurve2::Quadratic(curve) => Ok(curve.point_at(local)),
         BezierSubcurve2::Cubic(curve) => Ok(curve.point_at(local)),
         BezierSubcurve2::RationalQuadratic(curve) => {
-            match curve.point_at(local, &CurvePolicy::STRICT) {
+            match curve.point_at(local, &CurveContext::STRICT) {
                 Classification::Decided(point) => Ok(point),
                 Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
@@ -844,7 +844,7 @@ fn evaluate_span(
             }
         }
         BezierSubcurve2::Rational(curve) => {
-            match curve.point_at_classified(&local, &CurvePolicy::STRICT) {
+            match curve.point_at_classified(&local, &CurveContext::STRICT) {
                 Classification::Decided(point) => Ok(point),
                 Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
@@ -898,7 +898,7 @@ fn select_span_indices(
     intervals: &[(Real, Real)],
     parameter: &Real,
 ) -> ExactCurveResult<(SelectedSpan, SelectedSpan)> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut first = None;
     let mut last = None;
     for (span_index, (start, end)) in intervals.iter().enumerate() {
@@ -964,7 +964,7 @@ fn matching_spline_derivatives(
     second: Vec<CurveDerivative2>,
 ) -> ExactCurveResult<Vec<CurveDerivative2>> {
     debug_assert_eq!(first.len(), second.len());
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     for (first_derivative, second_derivative) in first.iter().zip(&second) {
         match (
             crate::classify::compare_reals(first_derivative.dx(), second_derivative.dx(), &policy),
@@ -991,7 +991,7 @@ fn matching_spline_derivatives(
 }
 
 fn matching_spline_point(first: Point2, second: Point2) -> ExactCurveResult<Point2> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     match (
         crate::classify::compare_reals(first.x(), second.x(), &policy),
         crate::classify::compare_reals(first.y(), second.y(), &policy),

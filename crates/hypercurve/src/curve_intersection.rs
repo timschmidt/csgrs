@@ -11,7 +11,7 @@ use crate::rational_bezier_general::RationalBezierIntersectionContext;
 use crate::{
     ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
     BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
-    CurveError, CurveGeometry2, CurveOperation2, CurvePolicy, CurveResult, CurveSpanRange2,
+    CurveContext, CurveError, CurveGeometry2, CurveOperation2, CurveResult, CurveSpanRange2,
     ExactCurveError, ExactCurveResult, LineArcIntersection, LineArcIntersectionPoint, LineArcOrder,
     LineLineIntersection, ParamRange, Point2, RationalBezier2,
     RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
@@ -105,7 +105,7 @@ pub(crate) struct CurveIntersectionContext {
 struct CurveIntersectionContextData {
     first: Curve2,
     second: Curve2,
-    policy: CurvePolicy,
+    policy: CurveContext,
     span_pair_count: usize,
     dispatch: CurveIntersectionDispatch,
     result: OnceLock<ExactCurveResult<CurveIntersectionResult2>>,
@@ -152,7 +152,7 @@ fn build_span_pairs(
     second_curve: &Curve2,
     first_evaluators: &[RationalBezier2],
     second_evaluators: &[RationalBezier2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<CurveSpanPair>> {
     let first_fragments = first_curve.native_bezier_fragments()?;
     let second_fragments = second_curve.native_bezier_fragments()?;
@@ -231,7 +231,7 @@ fn build_span_pairs(
 fn certified_singleton_aabb_endpoint_contact(
     first: &Curve2,
     second: &Curve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<CurveIntersectionContact2>> {
     let (Ok(first_bounds), Ok(second_bounds)) = (first.bounds(), second.bounds()) else {
         return Ok(None);
@@ -257,7 +257,7 @@ fn certified_singleton_aabb_endpoint_contact(
 fn endpoint_parameter(
     curve: &Curve2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<CurveIntersectionParameter2>> {
     let fragments = curve.native_bezier_fragments()?;
     let (promoted_span_index, local_parameter) =
@@ -280,7 +280,7 @@ fn endpoint_parameter(
 fn native_line_intersection(
     first: &Curve2,
     second: &Curve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<LineLineIntersection>> {
     let (CurveGeometry2::Line(first_line), CurveGeometry2::Line(second_line)) =
         (first.geometry(), second.geometry())
@@ -298,7 +298,7 @@ fn native_line_intersection(
 fn native_line_arc_intersection(
     first: &Curve2,
     second: &Curve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<(LineArcOrder, LineArcIntersection)>> {
     let (order, relation) = match (first.geometry(), second.geometry()) {
         (CurveGeometry2::Line(line), CurveGeometry2::CircularArc(arc)) => {
@@ -320,7 +320,7 @@ fn build_native_line_evidence(
     first: &Curve2,
     second: &Curve2,
     relation: &LineLineIntersection,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let first_fragment = &first.native_bezier_fragments()?[0];
@@ -432,7 +432,7 @@ fn build_native_line_arc_evidence(
     second: &Curve2,
     order: LineArcOrder,
     relation: &LineArcIntersection,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let mut contacts = Vec::new();
@@ -479,7 +479,7 @@ fn append_native_line_arc_contact(
     second: &Curve2,
     order: LineArcOrder,
     hit: &LineArcIntersectionPoint,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
     let (line, arc_curve, arc) = match order {
         LineArcOrder::LineThenArc => {
@@ -551,7 +551,7 @@ fn append_native_line_arc_contact(
 fn parameter_range_covers_unit(
     range: &ParamRange,
     curve: &Curve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let (lower, upper) = match compare_reals(range.start(), range.end(), policy) {
         Some(std::cmp::Ordering::Less) => (range.start(), range.end()),
@@ -574,7 +574,7 @@ fn parameter_range_covers_unit(
 fn native_arc_intersection(
     first: &Curve2,
     second: &Curve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<NativeArcIntersectionDispatch>> {
     let (CurveGeometry2::CircularArc(first_arc), CurveGeometry2::CircularArc(second_arc)) =
         (first.geometry(), second.geometry())
@@ -623,7 +623,7 @@ fn build_native_arc_evidence(
     first: &Curve2,
     second: &Curve2,
     points: &[Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let (CurveGeometry2::CircularArc(first_arc), CurveGeometry2::CircularArc(second_arc)) =
@@ -700,7 +700,7 @@ fn build_native_arc_evidence(
 fn build_native_coincident_arc_evidence(
     first: &Curve2,
     second: &Curve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let (CurveGeometry2::CircularArc(first_arc), CurveGeometry2::CircularArc(second_arc)) =
@@ -869,7 +869,7 @@ fn append_native_arc_span_contact(
     first_span_index: usize,
     second_span_index: usize,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
     let first_fragments = first.native_bezier_fragments()?;
     let second_fragments = second.native_bezier_fragments()?;
@@ -917,7 +917,7 @@ fn native_arc_overlap_range(
     curve: &Curve2,
     evaluator: &RationalBezier2,
     overlap: &CircularArc2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<BezierParameterRange2> {
     let start = native_arc_span_parameter(curve, evaluator, overlap.start(), policy)?;
     let end = native_arc_span_parameter(curve, evaluator, overlap.end(), policy)?;
@@ -936,7 +936,7 @@ fn native_arc_overlap_range(
 fn bezier_parameter_range_covers_unit(
     range: &BezierParameterRange2,
     curve: &Curve2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let order = range
         .start()
@@ -974,7 +974,7 @@ fn arc_span_indices_for_point(
     curve: &Curve2,
     arc: &CircularArc2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<usize>> {
     let fragments = curve.native_bezier_fragments()?;
     let mut indices = Vec::new();
@@ -1007,7 +1007,7 @@ fn native_arc_span_parameter(
     curve: &Curve2,
     span: &RationalBezier2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<BezierParameter2> {
     if span.control_points().len() != 3 || span.weights().len() != 3 {
         return Err(ExactCurveError::invalid(
@@ -1049,7 +1049,7 @@ impl Curve2 {
     pub fn intersect_curve(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveIntersectionResult2> {
         CurveIntersectionContext::try_new(self, other, policy)?.result()
     }
@@ -1058,7 +1058,7 @@ impl Curve2 {
     pub fn intersection_topology(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveIntersectionTopology2> {
         CurveIntersectionContext::try_new(self, other, policy)?.topology()
     }
@@ -1068,7 +1068,7 @@ impl CurveIntersectionContext {
     pub(crate) fn try_new(
         first: &Curve2,
         second: &Curve2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let (span_pair_count, dispatch) = match native_line_intersection(first, second, policy)? {
             Some(relation) => (1, CurveIntersectionDispatch::NativeLine(relation)),
@@ -1129,7 +1129,7 @@ impl CurveIntersectionContext {
             data: CurveIntersectionContextData {
                 first: first.clone(),
                 second: second.clone(),
-                policy: policy.clone(),
+                policy: *policy,
                 span_pair_count,
                 dispatch,
                 result: OnceLock::new(),
@@ -1578,7 +1578,7 @@ impl CurveIntersectionTopology2 {
 pub(crate) fn split_curve_spans(
     curve: &Curve2,
     parameters: impl Iterator<Item = (usize, BezierParameter2)>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Vec<BezierSplitMaterialization2>> {
     let native_fragments = curve.native_bezier_fragments()?;
     let mut by_span = vec![Vec::new(); native_fragments.len()];
@@ -1613,7 +1613,7 @@ fn append_unique_contacts(
     second_span_range: &CurveSpanRange2,
     first_span_index: usize,
     second_span_index: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<()> {
     let original_len = output.len();
     for contact in contacts {
@@ -1650,7 +1650,7 @@ fn append_unique_contacts(
 fn matching_contact_index(
     contacts: &[CurveIntersectionContact2],
     candidate: &CurveIntersectionContact2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<usize>> {
     for (index, existing) in contacts.iter().enumerate() {
         match same_contact(existing, candidate, policy) {
@@ -1665,7 +1665,7 @@ fn matching_contact_index(
 fn same_contact(
     first: &CurveIntersectionContact2,
     second: &CurveIntersectionContact2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let first_parameter = same_curve_parameter(&first.first, &second.first, policy);
     if first_parameter == Classification::Decided(false) {
@@ -1688,7 +1688,7 @@ fn same_contact(
 fn same_curve_parameter(
     first: &CurveIntersectionParameter2,
     second: &CurveIntersectionParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     if first == second {
         return Classification::Decided(true);

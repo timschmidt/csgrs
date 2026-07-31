@@ -11,7 +11,7 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
-use crate::{CurvePolicy, Point2};
+use crate::{CurveContext, Point2};
 
 /// Result of a classification step.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -94,9 +94,9 @@ pub(crate) fn classify_oriented_line(
     from: &Point2,
     to: &Point2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<LineSide> {
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+    if policy.is_edge_preview() {
         // Preview mode is a display/editing classifier. Use the current Real
         // approximation consistently here instead of sending rotated radical
         // expressions into the certified predicate path, otherwise arc sweep
@@ -120,7 +120,7 @@ pub(crate) fn classify_oriented_line(
             &predicate_point(from),
             &predicate_point(to),
             &predicate_point(point),
-            policy.predicate_policy,
+            policy.predicate_policy(),
         );
         match policy.consume_predicate(predicate_outcome) {
             Some(value) => Classification::Decided(LineSide::from_predicate_sign(value)),
@@ -152,12 +152,12 @@ pub(crate) fn orient2_real_expr(from: &Point2, to: &Point2, point: &Point2) -> R
     (&abx * &acy) - (&aby * &acx)
 }
 
-pub(crate) fn real_sign(value: &Real, policy: &CurvePolicy) -> Option<RealSign> {
+pub(crate) fn real_sign(value: &Real, policy: &CurveContext) -> Option<RealSign> {
     if value.zero_status() == ZeroStatus::Zero {
         return Some(RealSign::Zero);
     }
 
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+    if policy.is_edge_preview()
         && let Some(value) = value.to_f64_lossy()
         && value.is_finite()
     {
@@ -179,7 +179,7 @@ pub(crate) fn real_sign(value: &Real, policy: &CurvePolicy) -> Option<RealSign> 
         policy
             .consume_predicate(hyperlimit::classify_real_sign(
                 value,
-                policy.predicate_policy,
+                policy.predicate_policy(),
             ))
             .map(|sign| match sign {
                 hyperlimit::Sign::Negative => RealSign::Negative,
@@ -195,7 +195,7 @@ pub(crate) fn real_sign(value: &Real, policy: &CurvePolicy) -> Option<RealSign> 
         .or_else(|| value.refine_sign_until(-512))
 }
 
-pub(crate) fn is_zero(value: &Real, policy: &CurvePolicy) -> Option<bool> {
+pub(crate) fn is_zero(value: &Real, policy: &CurveContext) -> Option<bool> {
     match value.zero_status() {
         ZeroStatus::Zero => Some(true),
         ZeroStatus::NonZero => Some(false),
@@ -203,7 +203,7 @@ pub(crate) fn is_zero(value: &Real, policy: &CurvePolicy) -> Option<bool> {
     }
 }
 
-pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Ordering> {
+pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurveContext) -> Option<Ordering> {
     if std::ptr::eq(left, right) {
         return Some(Ordering::Equal);
     }
@@ -212,7 +212,7 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> 
     }
 
     #[cfg(feature = "predicates")]
-    if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+    if !policy.is_edge_preview() {
         // Curve parameter ordering is a topology predicate: it decides whether
         // an intersection root lies on a segment, whether two split markers
         // coincide, and how degenerate overlaps are classified. Route the sign
@@ -223,7 +223,7 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> 
         if let Some(ordering) = policy.consume_predicate(hyperlimit::compare_reals(
             left,
             right,
-            policy.predicate_policy,
+            policy.predicate_policy(),
         )) {
             return Some(ordering);
         }
@@ -240,9 +240,9 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> 
 pub(crate) fn compare_reals_for_split_ordering(
     left: &Real,
     right: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Ordering> {
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+    if policy.is_edge_preview()
         && let (Some(left), Some(right)) = (left.to_f64_lossy(), right.to_f64_lossy())
         && left.is_finite()
         && right.is_finite()
@@ -259,21 +259,21 @@ pub(crate) fn compare_reals_for_split_ordering(
     compare_reals(left, right, policy)
 }
 
-pub(crate) fn sort_pair(a: Real, b: Real, policy: &CurvePolicy) -> Option<(Real, Real)> {
+pub(crate) fn sort_pair(a: Real, b: Real, policy: &CurveContext) -> Option<(Real, Real)> {
     match compare_reals(&a, &b, policy)? {
         Ordering::Greater => Some((b, a)),
         Ordering::Less | Ordering::Equal => Some((a, b)),
     }
 }
 
-pub(crate) fn max_real(a: Real, b: Real, policy: &CurvePolicy) -> Option<Real> {
+pub(crate) fn max_real(a: Real, b: Real, policy: &CurveContext) -> Option<Real> {
     match compare_reals(&a, &b, policy)? {
         Ordering::Less => Some(b),
         Ordering::Equal | Ordering::Greater => Some(a),
     }
 }
 
-pub(crate) fn min_real(a: Real, b: Real, policy: &CurvePolicy) -> Option<Real> {
+pub(crate) fn min_real(a: Real, b: Real, policy: &CurveContext) -> Option<Real> {
     match compare_reals(&a, &b, policy)? {
         Ordering::Greater => Some(b),
         Ordering::Less | Ordering::Equal => Some(a),
@@ -290,16 +290,15 @@ pub(crate) enum ClosedUnitIntervalLocation {
 
 pub(crate) fn closed_unit_interval_location(
     value: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<ClosedUnitIntervalLocation> {
     // Edge-preview f64 parameters are candidate filters only: decisively
     // out-of-range values cannot represent finite segment hits, while
     // near-boundary values still fall through to exact comparison.
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+    if policy.is_edge_preview()
         && let Some(approx) = value.to_f64_lossy()
     {
-        let tolerance = policy
-            .preview_tolerance
+        let tolerance = crate::policy::preview_tolerance()
             .map(|tolerance| tolerance.absolute.max(tolerance.relative))
             .unwrap_or(1e-12);
         if approx.is_finite() && (approx < -tolerance || approx > 1.0 + tolerance) {
@@ -324,12 +323,12 @@ pub(crate) fn closed_unit_interval_location(
     )
 }
 
-pub(crate) fn in_closed_unit_interval(value: &Real, policy: &CurvePolicy) -> Option<bool> {
+pub(crate) fn in_closed_unit_interval(value: &Real, policy: &CurveContext) -> Option<bool> {
     closed_unit_interval_location(value, policy)
         .map(|location| location != ClosedUnitIntervalLocation::Outside)
 }
 
-pub(crate) fn at_unit_interval_endpoint(value: &Real, policy: &CurvePolicy) -> Option<bool> {
+pub(crate) fn at_unit_interval_endpoint(value: &Real, policy: &CurveContext) -> Option<bool> {
     closed_unit_interval_location(value, policy).map(|location| {
         matches!(
             location,

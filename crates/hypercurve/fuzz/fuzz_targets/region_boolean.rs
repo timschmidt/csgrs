@@ -1,7 +1,7 @@
 #![no_main]
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, LineArcRegion2,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, FillRule, LineArcRegion2,
     Point2, Real, RegionPointLocation,
 };
 use libfuzzer_sys::fuzz_target;
@@ -55,7 +55,7 @@ fuzz_target!(|data: &[u8]| {
 
     let first = rectangle(data[0], data[1], data[2], data[3]);
     let second = rectangle(data[4], data[5], data[6], data[7]);
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let first_view = first.as_view();
     let second_view = second.as_view();
     let query = Point2::new(r(data[8] as i32 - 128), r(data[9] as i32 - 128));

@@ -7,7 +7,7 @@ use hypercurve::{
     BezierRetainedOverlap2, BezierRetainedOverlapEvidence2, BezierRetainedOverlapExtent2,
     BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
     BezierRetainedOverlapRelation2, BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, IntersectionKind,
+    BezierSubcurve2, Classification, CubicBezier2, CurveContext, CurveError, IntersectionKind,
     LineLineIntersection, LineSeg2, ParamRange, Point2, QuadraticBezier2, RationalBezier2,
     RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
@@ -42,8 +42,8 @@ fn partial_line_overlap_graph() -> BezierArrangementGraph2 {
     ])
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn decided<T>(classification: Classification<T>) -> T {

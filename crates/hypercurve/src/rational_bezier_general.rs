@@ -38,7 +38,7 @@ use crate::{
     Aabb2, Axis2, BezierArrangementGraph2, BezierLineContactKind, BezierLineContactRelation,
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
     BezierParameterPolynomial, BezierParameterRange2, BezierSplitMaterialization2, Classification,
-    CurveDerivative2, CurveError, CurveFamily2, CurveOperation2, CurvePolicy, CurveResult,
+    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2, CurveResult,
     ExactCurveError, ExactCurveResult, LineSeg2, LineSide, ParamRange, Point2,
     RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalQuadraticBezier2, UncertaintyReason,
@@ -319,7 +319,7 @@ pub(crate) struct RationalBezierIntersectionContext {
 struct RationalBezierIntersectionContextData {
     first: RationalBezier2,
     second: RationalBezier2,
-    policy: CurvePolicy,
+    policy: CurveContext,
     candidates: RationalBezierIntersectionCandidates2,
     contacts: OnceLock<CurveResult<Classification<RationalBezierIntersectionContacts2>>>,
 }
@@ -328,7 +328,7 @@ impl RationalBezierIntersectionContext {
     pub(crate) fn try_new(
         first: &RationalBezier2,
         second: &RationalBezier2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         match first.intersection_context_classified(second, policy) {
             Ok(Classification::Decided(context)) => Ok(context),
@@ -624,7 +624,7 @@ impl RationalBezier2 {
             return Ok(self.clone());
         }
         if source_degree == 2 {
-            self.retain_quadratic_conic_parameter_frame(&CurvePolicy::STRICT);
+            self.retain_quadratic_conic_parameter_frame(&CurveContext::STRICT);
         }
         let elevation_count = target_degree.checked_sub(source_degree).ok_or_else(|| {
             ExactCurveError::invalid(
@@ -702,7 +702,7 @@ impl RationalBezier2 {
         }
         homogeneous.push(source[source.len() - 1].clone());
 
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let mut control_points = Vec::with_capacity(homogeneous.len());
         let mut weights = Vec::with_capacity(homogeneous.len());
         for point in homogeneous {
@@ -746,7 +746,7 @@ impl RationalBezier2 {
     /// The basis is constructed exactly once from the Bernstein controls. Horner
     /// evaluation then avoids allocating and mutating a de Casteljau work vector
     /// on every repeated point query.
-    pub fn point_at(&self, parameter: &Real, policy: &CurvePolicy) -> ExactCurveResult<Point2> {
+    pub fn point_at(&self, parameter: &Real, policy: &CurveContext) -> ExactCurveResult<Point2> {
         match self.point_at_classified(parameter, policy) {
             Classification::Decided(point) => Ok(point),
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
@@ -760,7 +760,7 @@ impl RationalBezier2 {
     pub(crate) fn point_at_classified(
         &self,
         parameter: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Point2> {
         if in_closed_unit_interval(parameter, policy) != Some(true) {
             return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -789,7 +789,7 @@ impl RationalBezier2 {
     fn homogeneous_bernstein_value(
         &self,
         parameter: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<HomogeneousPoint2> {
         if is_zero(parameter, policy) == Some(true) {
             return Classification::Decided(self.homogeneous_controls()[0].clone());
@@ -851,7 +851,7 @@ impl RationalBezier2 {
     pub fn derivative_at(
         &self,
         parameter: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<CurveDerivative2> {
         match self.derivative_at_classified(parameter, policy) {
             Classification::Decided(derivative) => Ok(derivative),
@@ -866,7 +866,7 @@ impl RationalBezier2 {
     pub(crate) fn derivative_at_classified(
         &self,
         parameter: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<CurveDerivative2> {
         if in_closed_unit_interval(parameter, policy) != Some(true) {
             return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -907,7 +907,7 @@ impl RationalBezier2 {
         &self,
         parameter: &Real,
         max_order: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         match self.derivatives_at_classified(parameter, max_order, policy) {
             Classification::Decided(derivatives) => Ok(derivatives),
@@ -923,7 +923,7 @@ impl RationalBezier2 {
         &self,
         parameter: &Real,
         max_order: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<CurveDerivative2>> {
         match self.affine_derivative_values_at(parameter, max_order, policy) {
             Classification::Decided(values) => Classification::Decided(
@@ -946,7 +946,7 @@ impl RationalBezier2 {
     pub fn point_at_algebraic_parameter(
         &self,
         parameter: &crate::BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
         if let Some(image) = parameter.cached_rational_bezier_point_image(self) {
             return Ok(image);
@@ -969,7 +969,7 @@ impl RationalBezier2 {
     pub fn tangent_at_algebraic_parameter(
         &self,
         parameter: &crate::BezierAlgebraicParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
         Ok(self
             .derivatives_at_algebraic_parameter(parameter, 1, policy)?
@@ -988,7 +988,7 @@ impl RationalBezier2 {
         &self,
         parameter: &crate::BezierAlgebraicParameter2,
         max_order: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {
         if let Some(images) = parameter.cached_rational_bezier_derivative_images(self, max_order) {
             return Ok(images);
@@ -1012,7 +1012,7 @@ impl RationalBezier2 {
     }
 
     /// Returns a conservative exact control-hull bound when all weights share a sign.
-    pub fn certified_bounds(&self, policy: &CurvePolicy) -> ExactCurveResult<Aabb2> {
+    pub fn certified_bounds(&self, policy: &CurveContext) -> ExactCurveResult<Aabb2> {
         match self.certified_bounds_classified(policy) {
             Classification::Decided(bounds) => Ok(bounds),
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
@@ -1025,7 +1025,7 @@ impl RationalBezier2 {
 
     pub(crate) fn certified_bounds_classified(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Aabb2> {
         match self.common_weight_sign(policy) {
             Classification::Decided(_) => Aabb2::from_points(self.control_points().iter(), policy),
@@ -1041,7 +1041,7 @@ impl RationalBezier2 {
     /// isolation: an odd-multiplicity interior derivative root proves an
     /// extremum, while endpoint roots and even-multiplicity stationary points
     /// do not change monotonicity.
-    pub fn axis_is_monotone(&self, axis: Axis2, policy: &CurvePolicy) -> ExactCurveResult<bool> {
+    pub fn axis_is_monotone(&self, axis: Axis2, policy: &CurveContext) -> ExactCurveResult<bool> {
         match self.axis_monotonicity_classified(axis, policy) {
             Ok(Classification::Decided(monotone)) => Ok(monotone),
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
@@ -1060,7 +1060,7 @@ impl RationalBezier2 {
     pub(crate) fn axis_monotonicity_classified(
         &self,
         axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         let cache = match axis {
             Axis2::X => &self.data.x_axis_monotonicity,
@@ -1079,7 +1079,7 @@ impl RationalBezier2 {
     fn compute_axis_is_monotone(
         &self,
         axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
             return Ok(Classification::Uncertain(reason));
@@ -1154,7 +1154,7 @@ impl RationalBezier2 {
     pub fn relation_to_line_with_contacts(
         &self,
         line: &LineSeg2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierLineContactRelation> {
         if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
             return Classification::Uncertain(reason);
@@ -1329,7 +1329,7 @@ impl RationalBezier2 {
     pub fn point_incidence(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<RationalBezierPointIncidence2> {
         match self.point_incidence_classified(point, policy) {
             Ok(Classification::Decided(incidence)) => Ok(incidence),
@@ -1349,7 +1349,7 @@ impl RationalBezier2 {
     fn point_incidence_classified(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierPointIncidence2>> {
         if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
             return Ok(Classification::Uncertain(reason));
@@ -1407,7 +1407,7 @@ impl RationalBezier2 {
     }
 
     /// Classifies whether `point` lies on this finite rational Bezier.
-    pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> ExactCurveResult<bool> {
+    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> ExactCurveResult<bool> {
         self.point_incidence(point, policy)
             .map(|incidence| match incidence {
                 RationalBezierPointIncidence2::EntireCurve => true,
@@ -1418,7 +1418,7 @@ impl RationalBezier2 {
     pub(crate) fn contains_point_classified(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         match self.point_incidence_classified(point, policy) {
             Ok(classification) => classification.map(|incidence| match incidence {
@@ -1439,7 +1439,7 @@ impl RationalBezier2 {
     pub fn intersection_candidates(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<RationalBezierIntersectionCandidates2> {
         match self.intersection_candidates_classified(other, policy) {
             Ok(Classification::Decided(candidates)) => Ok(candidates),
@@ -1460,7 +1460,7 @@ impl RationalBezier2 {
     pub fn intersection_topology(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<RationalBezierIntersectionTopology2> {
         RationalBezierIntersectionContext::try_new(self, other, policy)?.try_topology()
     }
@@ -1468,7 +1468,7 @@ impl RationalBezier2 {
     fn intersection_context_classified(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContext>> {
         if self == other {
             let overlap = RationalBezierIntersectionOverlap2 {
@@ -1490,7 +1490,7 @@ impl RationalBezier2 {
                 data: RationalBezierIntersectionContextData {
                     first: self.clone(),
                     second: other.clone(),
-                    policy: policy.clone(),
+                    policy: *policy,
                     candidates,
                     contacts: contact_cache,
                 },
@@ -1522,7 +1522,7 @@ impl RationalBezier2 {
                 data: RationalBezierIntersectionContextData {
                     first: self.clone(),
                     second: other.clone(),
-                    policy: policy.clone(),
+                    policy: *policy,
                     candidates,
                     contacts: contact_cache,
                 },
@@ -1537,7 +1537,7 @@ impl RationalBezier2 {
                 data: RationalBezierIntersectionContextData {
                     first: self.clone(),
                     second: other.clone(),
-                    policy: policy.clone(),
+                    policy: *policy,
                     candidates: RationalBezierIntersectionCandidates2::NoIntersection,
                     contacts,
                 },
@@ -1557,7 +1557,7 @@ impl RationalBezier2 {
                 data: RationalBezierIntersectionContextData {
                     first: self.clone(),
                     second: other.clone(),
-                    policy: policy.clone(),
+                    policy: *policy,
                     candidates,
                     contacts: contact_cache,
                 },
@@ -1577,7 +1577,7 @@ impl RationalBezier2 {
                 data: RationalBezierIntersectionContextData {
                     first: self.clone(),
                     second: other.clone(),
-                    policy: policy.clone(),
+                    policy: *policy,
                     candidates,
                     contacts: contact_cache,
                 },
@@ -1594,7 +1594,7 @@ impl RationalBezier2 {
                 data: RationalBezierIntersectionContextData {
                     first: self.clone(),
                     second: other.clone(),
-                    policy: policy.clone(),
+                    policy: *policy,
                     candidates,
                     contacts: contact_cache,
                 },
@@ -1651,7 +1651,7 @@ impl RationalBezier2 {
                 data: RationalBezierIntersectionContextData {
                     first: self.clone(),
                     second: other.clone(),
-                    policy: policy.clone(),
+                    policy: *policy,
                     candidates,
                     contacts: contact_cache,
                 },
@@ -1677,7 +1677,7 @@ impl RationalBezier2 {
                         data: RationalBezierIntersectionContextData {
                             first: self.clone(),
                             second: other.clone(),
-                            policy: policy.clone(),
+                            policy: *policy,
                             candidates,
                             contacts: contact_cache,
                         },
@@ -1704,7 +1704,7 @@ impl RationalBezier2 {
                 data: RationalBezierIntersectionContextData {
                     first: self.clone(),
                     second: other.clone(),
-                    policy: policy.clone(),
+                    policy: *policy,
                     candidates,
                     contacts: contact_cache,
                 },
@@ -1719,7 +1719,7 @@ impl RationalBezier2 {
                     data: RationalBezierIntersectionContextData {
                         first: self.clone(),
                         second: other.clone(),
-                        policy: policy.clone(),
+                        policy: *policy,
                         candidates,
                         contacts: OnceLock::new(),
                     },
@@ -1732,7 +1732,7 @@ impl RationalBezier2 {
     fn retained_linear_image_contacts(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
         let (Some(first), Some(second)) = (
             self.exact_linear_parameterization_line(),
@@ -1772,7 +1772,7 @@ impl RationalBezier2 {
     pub fn intersection_contacts(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<RationalBezierIntersectionContacts2> {
         match self.intersection_contacts_classified(other, policy) {
             Ok(Classification::Decided(contacts)) => Ok(contacts),
@@ -1792,7 +1792,7 @@ impl RationalBezier2 {
     pub(crate) fn intersection_contacts_classified(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         if self.certified_bounds_are_disjoint(other, policy) {
             return Ok(Classification::Decided(
@@ -1887,7 +1887,7 @@ impl RationalBezier2 {
     fn implicit_conic_intersection_contacts(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
         let conic = match self.implicit_quadratic_conic(policy) {
             Classification::Decided(Some(conic)) => conic,
@@ -2016,7 +2016,7 @@ impl RationalBezier2 {
 
     fn exact_linear_homogeneous_representative(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<Self>> {
         if self.degree() <= 1
             || self
@@ -2049,7 +2049,7 @@ impl RationalBezier2 {
     fn exact_line_image_intersection_contacts(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
         let line = match other.fit_exact_line_image(policy)? {
             Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => fit,
@@ -2414,7 +2414,7 @@ impl RationalBezier2 {
     fn circular_conic_intersection_contacts(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
         if self.degree() != 2 || other.degree() != 2 {
             return Ok(None);
@@ -2520,7 +2520,7 @@ impl RationalBezier2 {
         &self,
         other: &Self,
         candidates: &RationalBezierIntersectionCandidates2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         match candidates {
             RationalBezierIntersectionCandidates2::NoIntersection => Ok(Classification::Decided(
@@ -2580,7 +2580,7 @@ impl RationalBezier2 {
     fn intersection_candidates_classified(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
         // Same-sign control-hull bounds are only a rejection accelerator. An
         // unavailable sign or ordering certificate must fall through to the
@@ -2595,7 +2595,7 @@ impl RationalBezier2 {
         self.intersection_candidates_after_bounds_check(other, policy)
     }
 
-    fn certified_bounds_are_disjoint(&self, other: &Self, policy: &CurvePolicy) -> bool {
+    fn certified_bounds_are_disjoint(&self, other: &Self, policy: &CurveContext) -> bool {
         let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
             self.certified_bounds_classified(policy),
             other.certified_bounds_classified(policy),
@@ -2611,7 +2611,7 @@ impl RationalBezier2 {
     fn intersection_candidates_after_bounds_check(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
         match self.lineage_overlap(other, policy) {
             Classification::Decided(Some(_)) => {
@@ -2674,7 +2674,7 @@ impl RationalBezier2 {
     pub fn split_at_exact(
         &self,
         parameter: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<(Self, Self)>> {
         if in_closed_unit_interval(parameter, policy) != Some(true) {
             return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
@@ -2735,7 +2735,7 @@ impl RationalBezier2 {
         &self,
         start: &Real,
         end: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if in_closed_unit_interval(start, policy) != Some(true)
             || in_closed_unit_interval(end, policy) != Some(true)
@@ -2792,7 +2792,7 @@ impl RationalBezier2 {
         &self,
         at_end: bool,
         max_order: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<(Real, Real)>> {
         let parameter = if at_end { Real::one() } else { Real::zero() };
         self.affine_derivative_values_at_with_endpoint(&parameter, max_order, Some(at_end), policy)
@@ -2802,7 +2802,7 @@ impl RationalBezier2 {
         &self,
         parameter: &Real,
         max_order: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<(Real, Real)>> {
         self.affine_derivative_values_at_with_endpoint(parameter, max_order, None, policy)
     }
@@ -2812,7 +2812,7 @@ impl RationalBezier2 {
         parameter: &Real,
         max_order: usize,
         endpoint: Option<bool>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Vec<(Real, Real)>> {
         if in_closed_unit_interval(parameter, policy) != Some(true) {
             return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -2992,7 +2992,7 @@ impl RationalBezier2 {
         &self,
         target: &Real,
         axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParameterPolynomial>>> {
         let power_basis = self.homogeneous_power_basis()?;
         let coordinate = match axis {
@@ -3019,7 +3019,7 @@ impl RationalBezier2 {
         other: &Self,
         first_parameters: &[BezierParameter2],
         second_parameters: &[BezierParameter2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         if let Some(contacts) =
             self.replay_candidates_through_polynomial_graph(other, first_parameters, policy)?
@@ -3145,7 +3145,7 @@ impl RationalBezier2 {
         &self,
         other: &Self,
         first_parameters: &[BezierParameter2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<Vec<RationalBezierIntersectionContact2>>> {
         if first_parameters.is_empty() {
             return Ok(None);
@@ -3219,7 +3219,7 @@ impl RationalBezier2 {
     fn candidate_point_replay(
         &self,
         parameter: &BezierParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Option<CandidatePointReplay>> {
         match parameter {
             BezierParameter2::Exact(parameter) => {
@@ -3264,7 +3264,7 @@ impl RationalBezier2 {
         other: &Self,
         first: &BezierParameter2,
         second: &BezierParameter2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         let (point, curve, target) = match (first.as_exact(), second.as_exact()) {
             (Some(parameter), _) => {
@@ -3310,7 +3310,7 @@ impl RationalBezier2 {
         }
     }
 
-    fn common_weight_sign(&self, policy: &CurvePolicy) -> Classification<RealSign> {
+    fn common_weight_sign(&self, policy: &CurveContext) -> Classification<RealSign> {
         let Some(first) = real_sign(&self.weights()[0], policy) else {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         };
@@ -3334,7 +3334,7 @@ impl RationalBezier2 {
         &self,
         other: &Self,
         reversed: bool,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Option<bool> {
         if self.degree() != other.degree() {
             return Some(false);
@@ -3362,7 +3362,7 @@ impl RationalBezier2 {
         &self,
         other: &Self,
         reversed: bool,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         let comparison = match self.degree().cmp(&other.degree()) {
             std::cmp::Ordering::Equal => self.same_projective_control_net(other, reversed, policy),
@@ -3402,7 +3402,7 @@ impl RationalBezier2 {
     fn image_overlap(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<RationalBezierSharedComponentReplay> {
         match self.lineage_overlap(other, policy) {
             Classification::Decided(Some(overlap)) => {
@@ -3442,7 +3442,7 @@ impl RationalBezier2 {
     fn lineage_overlap(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Option<RationalBezierIntersectionOverlap2>> {
         if !Arc::ptr_eq(&self.data.lineage.root, &other.data.lineage.root) {
             return Classification::Decided(None);
@@ -3473,7 +3473,7 @@ impl RationalBezier2 {
             })
     }
 
-    fn retain_root_image_injectivity(&self, policy: &CurvePolicy) {
+    fn retain_root_image_injectivity(&self, policy: &CurveContext) {
         if self.data.lineage.root.image_is_injective.get().is_some() {
             return;
         }
@@ -3493,7 +3493,7 @@ impl RationalBezier2 {
     fn partial_image_overlap(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<RationalBezierSharedComponentReplay> {
         let shared_quadratic_conic = match self.shares_implicit_quadratic_conic(other, policy) {
             Classification::Decided(shared) => shared,
@@ -3692,7 +3692,7 @@ impl RationalBezier2 {
     fn certified_line_image_overlap(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Option<RationalBezierIntersectionOverlap2>> {
         let (first_line, second_line) = match (
             self.fit_exact_line_image(policy),
@@ -3785,7 +3785,7 @@ impl RationalBezier2 {
         }))
     }
 
-    pub(crate) fn has_certified_injective_axis(&self, policy: &CurvePolicy) -> bool {
+    pub(crate) fn has_certified_injective_axis(&self, policy: &CurveContext) -> bool {
         if self.data.lineage.root.image_is_injective.get() == Some(&true) {
             return true;
         }
@@ -3798,7 +3798,7 @@ impl RationalBezier2 {
         injective
     }
 
-    fn has_certified_injective_axis_on(&self, axis: Axis2, policy: &CurvePolicy) -> bool {
+    fn has_certified_injective_axis_on(&self, axis: Axis2, policy: &CurveContext) -> bool {
         let (start, end) = match axis {
             Axis2::X => (self.start().x(), self.end().x()),
             Axis2::Y => (self.start().y(), self.end().y()),
@@ -3819,7 +3819,7 @@ impl RationalBezier2 {
         compare_reals(start, end, policy).is_some_and(|ordering| !ordering.is_eq())
     }
 
-    fn control_polygon_certifies_axis_monotone(&self, axis: Axis2, policy: &CurvePolicy) -> bool {
+    fn control_polygon_certifies_axis_monotone(&self, axis: Axis2, policy: &CurveContext) -> bool {
         if !matches!(self.common_weight_sign(policy), Classification::Decided(_)) {
             return false;
         }
@@ -3850,7 +3850,7 @@ impl RationalBezier2 {
     fn certified_polynomial_graph_component(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         for (base, candidate) in [(self, other), (other, self)] {
             for axis in [Axis2::X, Axis2::Y] {
@@ -3881,7 +3881,7 @@ impl RationalBezier2 {
     fn shares_implicit_quadratic_conic(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         if let (Some(first), Some(second)) = (
             self.data.lineage.root.circular_conic.get(),
@@ -3927,7 +3927,10 @@ impl RationalBezier2 {
         }
     }
 
-    fn implicit_quadratic_conic(&self, policy: &CurvePolicy) -> Classification<Option<&[Real; 6]>> {
+    fn implicit_quadratic_conic(
+        &self,
+        policy: &CurveContext,
+    ) -> Classification<Option<&[Real; 6]>> {
         if self.degree() != 2 {
             return Classification::Decided(None);
         }
@@ -3977,7 +3980,7 @@ impl RationalBezier2 {
         ))
     }
 
-    fn retain_quadratic_conic_parameter_frame(&self, policy: &CurvePolicy) {
+    fn retain_quadratic_conic_parameter_frame(&self, policy: &CurveContext) {
         let root = &self.data.lineage.root;
         if self.degree() != 2 || root.quadratic_conic_parameter_frame.get().is_some() {
             return;
@@ -4011,7 +4014,7 @@ impl RationalBezier2 {
 
     pub(crate) fn retained_quadratic_representative(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<RationalQuadraticBezier2>>> {
         if self.degree() == 2 {
             self.retain_quadratic_conic_parameter_frame(policy);
@@ -4074,7 +4077,7 @@ impl RationalBezier2 {
     fn polynomial_graph(
         &self,
         axis: Axis2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<PolynomialGraph2>>> {
         if let Some(line) = self.exact_linear_parameterization_line() {
             let (axis_start, axis_end, dependent_start, dependent_end) = match axis {
@@ -4162,7 +4165,7 @@ impl RationalBezier2 {
         other: &Self,
         first_contact: &(BezierParameter2, BezierParameter2),
         second_contact: &(BezierParameter2, BezierParameter2),
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<Option<RationalBezierIntersectionOverlap2>> {
         let (
             Some(first_exact),
@@ -4247,7 +4250,7 @@ impl PolynomialGraph2 {
     fn contains_curve(
         &self,
         curve: &RationalBezier2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         if !matches!(curve.common_weight_sign(policy), Classification::Decided(_)) {
             return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
@@ -4303,7 +4306,7 @@ fn shared_conic_endpoint_parameters(
     source: &RationalBezier2,
     source_parameter: &Real,
     target: &RationalBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<Vec<BezierParameter2>>> {
     if source.degree() != 2 || target.degree() != 2 {
         return Classification::Decided(None);
@@ -4334,7 +4337,7 @@ fn shared_conic_endpoint_parameters(
 fn quadratic_conic_point_parameters(
     point: &Point2,
     target: &RationalBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<Vec<BezierParameter2>>> {
     quadratic_conic_homogeneous_point_parameters(
         &[point.x().clone(), point.y().clone(), Real::one()],
@@ -4346,7 +4349,7 @@ fn quadratic_conic_point_parameters(
 fn quadratic_conic_homogeneous_point_parameters(
     homogeneous_point: &[Real; 3],
     target: &RationalBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<Vec<BezierParameter2>>> {
     let controls = quadratic_conic_parameter_frame(target);
     let first = homogeneous_control_vector(&controls[0]);
@@ -4431,7 +4434,7 @@ fn push_unique_parameter_overlap_contact(
 
 fn overlap_from_parameter_contacts(
     contacts: &[(BezierParameter2, BezierParameter2)],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<RationalBezierIntersectionOverlap2>> {
     let [first, second] = contacts else {
         return Classification::Decided(None);
@@ -4530,7 +4533,7 @@ fn add_power_polynomials(left: &[Real], right: &[Real]) -> Vec<Real> {
 
 fn parameter_root_representation(
     parameter: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> AlgebraicRootRepresentation {
     match parameter {
         BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
@@ -4561,7 +4564,7 @@ struct ConicParameterCandidate2 {
 fn conic_parameter_map(
     conic: &RationalBezier2,
     curve: &RationalBezier2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ConicParameterMap2>> {
     let controls = quadratic_conic_parameter_frame(conic);
     let first = homogeneous_control_vector(&controls[0]);
@@ -4607,7 +4610,7 @@ fn conic_parameter_from_curve_parameter(
     source_polynomial: &[Real],
     curve_parameter: &BezierParameter2,
     prefer_exact_image_polynomial: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     #[cfg(feature = "predicates")]
     if prefer_exact_image_polynomial {
@@ -4696,7 +4699,7 @@ fn localize_conic_parameter_candidate(
 fn conic_parameter_from_candidates(
     candidates: &[ConicParameterCandidate2],
     curve_parameter: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     #[cfg(feature = "predicates")]
     if curve_parameter.as_exact().is_some() {
@@ -4776,7 +4779,7 @@ fn rational_map_image_polynomial(
     source_polynomial: &[Real],
     numerator: &[Real],
     denominator: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<BezierParameterPolynomial> {
     if let Some(coefficients) = quotient_ring_rational_map_image_polynomial(
         source_polynomial,
@@ -4827,7 +4830,7 @@ fn quotient_ring_rational_map_image_polynomial(
     source: &[Real],
     numerator: &[Real],
     denominator: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Vec<Real>> {
     let degree = source.len().checked_sub(1)?;
     if degree == 0
@@ -4956,7 +4959,7 @@ fn multiply_power_polynomial_by_linear_factor(polynomial: Vec<Real>, constant: R
 fn real_coefficient_rational_image_parameter(
     source_parameter: &BezierParameter2,
     candidate: &ConicParameterCandidate2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     if let Some(source) = source_parameter.as_exact() {
         let numerator = evaluate_power_polynomial(&candidate.numerator, source);
@@ -5060,7 +5063,7 @@ fn real_coefficient_rational_image_parameter(
 fn real_coefficient_rational_image_parameter(
     _source_parameter: &BezierParameter2,
     _candidate: &ConicParameterCandidate2,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
 }
@@ -5077,7 +5080,7 @@ fn evaluate_rational_map_interval(
     numerator: &[Real],
     denominator: &[Real],
     parameter: &ExactRealInterval,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<ExactRealInterval> {
     let numerator = evaluate_power_polynomial_interval(numerator, parameter, policy)?;
     let denominator = evaluate_power_polynomial_interval(denominator, parameter, policy)?;
@@ -5089,7 +5092,7 @@ fn evaluate_rational_map_interval(
 fn evaluate_power_polynomial_interval(
     coefficients: &[Real],
     parameter: &ExactRealInterval,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<ExactRealInterval> {
     let mut value = ExactRealInterval {
         lower: Real::zero(),
@@ -5106,7 +5109,7 @@ fn evaluate_power_polynomial_interval(
 #[cfg(feature = "predicates")]
 fn reciprocal_interval(
     interval: &ExactRealInterval,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<ExactRealInterval> {
     let lower_sign = compare_reals(&interval.lower, &Real::zero(), policy)?;
     let upper_sign = compare_reals(&interval.upper, &Real::zero(), policy)?;
@@ -5128,7 +5131,7 @@ fn reciprocal_interval(
 fn multiply_intervals(
     left: &ExactRealInterval,
     right: &ExactRealInterval,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<ExactRealInterval> {
     let mut products = [
         &left.lower * &right.lower,
@@ -5144,7 +5147,7 @@ fn multiply_intervals(
 }
 
 #[cfg(feature = "predicates")]
-fn sort_reals(values: &mut [Real], policy: &CurvePolicy) -> Option<()> {
+fn sort_reals(values: &mut [Real], policy: &CurveContext) -> Option<()> {
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 {
@@ -5161,7 +5164,7 @@ fn sort_reals(values: &mut [Real], policy: &CurvePolicy) -> Option<()> {
 fn exact_contact_point_evidence(
     curve: &RationalBezier2,
     parameter: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<RationalBezierIntersectionPointEvidence2>> {
     match parameter {
         BezierParameter2::Exact(parameter) => {
@@ -5194,7 +5197,7 @@ fn exact_contact_point_evidence(
 fn conic_parameter_candidate(
     source_polynomial: &[Real],
     candidate: &(Vec<Real>, Vec<Real>),
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ConicParameterCandidate2>> {
     let mut numerator = match trim_power_polynomial(candidate.0.clone(), policy) {
         Classification::Decided(numerator) => numerator,
@@ -5242,7 +5245,7 @@ fn conic_parameter_candidate(
                 source_polynomial,
                 &numerator,
                 &denominator,
-                policy.predicate_policy,
+                policy.predicate_policy(),
             ),
             numerator,
             denominator,
@@ -5261,7 +5264,7 @@ fn conic_parameter_candidate(
 fn rational_image_parameter(
     source: &AlgebraicRootRepresentation,
     candidate: &ConicParameterCandidate2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     let zero = Real::zero();
     let one = Real::one();
@@ -5335,7 +5338,7 @@ fn rational_image_parameter(
 fn rational_image_parameter(
     _source: &AlgebraicRootRepresentation,
     _candidate: &ConicParameterCandidate2,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
 }
@@ -5428,7 +5431,7 @@ fn intersection_candidates_from_contacts(
 
 fn trim_power_polynomial(
     mut coefficients: Vec<Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<Real>> {
     while coefficients.len() > 1 {
         match is_zero(coefficients.last().expect("nonempty polynomial"), policy) {
@@ -5495,7 +5498,7 @@ fn power_polynomial_sequence(base: &[Real], max_power: usize) -> Option<Vec<Vec<
 fn unique_point_incidence_parameter(
     curve: &RationalBezier2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<BezierParameter2>> {
     if point == curve.start() {
         return Classification::Decided(Some(BezierParameter2::Exact(Real::zero())));
@@ -5535,7 +5538,7 @@ fn unique_point_incidence_parameter(
 fn candidate_points_equal(
     first: &CandidatePointReplay,
     second: &CandidatePointReplay,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     match algebraic_coordinates_equal(&first.x, &second.x, policy) {
         Some(false) => return Some(false),
@@ -5548,7 +5551,7 @@ fn candidate_points_equal(
 fn candidate_point_representations_disjoint(
     first: &CandidatePointReplay,
     second: &CandidatePointReplay,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     represented_root_intervals_disjoint(&first.x, &second.x, policy)
         || represented_root_intervals_disjoint(&first.y, &second.y, policy)
@@ -5557,7 +5560,7 @@ fn candidate_point_representations_disjoint(
 fn represented_root_intervals_disjoint(
     first: &AlgebraicRootRepresentation,
     second: &AlgebraicRootRepresentation,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     compare_reals(&first.interval.upper, &second.interval.lower, policy)
         .is_some_and(|ordering| ordering.is_lt())
@@ -5567,7 +5570,7 @@ fn represented_root_intervals_disjoint(
 
 fn candidate_parameter_is_simple_root(
     parameter: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<bool> {
     let BezierParameter2::Algebraic(algebraic) = parameter else {
         return Ok(false);
@@ -5584,7 +5587,7 @@ fn candidate_parameter_is_simple_root(
 fn algebraic_coordinates_equal(
     first: &AlgebraicRootRepresentation,
     second: &AlgebraicRootRepresentation,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     if let (Some(first), Some(second)) = (
         first.exact_rational_witness(),
@@ -5599,13 +5602,13 @@ fn algebraic_coordinates_equal(
 fn compare_algebraic_coordinates(
     first: &AlgebraicRootRepresentation,
     second: &AlgebraicRootRepresentation,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let evidence = compare_algebraic_root_representations_by_difference(
         first,
         second,
         AlgebraicRootRefinementComparisonConfig {
-            policy: policy.predicate_policy,
+            policy: policy.predicate_policy(),
             ..AlgebraicRootRefinementComparisonConfig::default()
         },
     );
@@ -5619,14 +5622,14 @@ fn compare_algebraic_coordinates(
 fn compare_algebraic_coordinates(
     _first: &AlgebraicRootRepresentation,
     _second: &AlgebraicRootRepresentation,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> Option<bool> {
     None
 }
 
 fn resultant_parameter_projection(
     evidence: CurveIntersectionResultantReport,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {
     match evidence.status {
         CurveIntersectionResultantStatus::Constructed => {}
@@ -5796,7 +5799,7 @@ fn exact_binomial_product(
 
 fn exact_quadratic_homogeneous_reduction(
     source: &[HomogeneousPoint2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<[HomogeneousPoint2; 3]>> {
     let reduced = match exact_homogeneous_degree_reduction(source, 3, policy) {
         Classification::Decided(Some(reduced)) => reduced,
@@ -5812,7 +5815,7 @@ fn exact_quadratic_homogeneous_reduction(
 
 fn exact_linear_homogeneous_reduction(
     source: &[HomogeneousPoint2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<[HomogeneousPoint2; 2]>> {
     let reduced = match exact_homogeneous_degree_reduction(source, 2, policy) {
         Classification::Decided(Some(reduced)) => reduced,
@@ -5829,7 +5832,7 @@ fn exact_linear_homogeneous_reduction(
 fn exact_homogeneous_degree_reduction(
     source: &[HomogeneousPoint2],
     target_control_count: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<Vec<HomogeneousPoint2>>> {
     if target_control_count < 2 || source.len() < target_control_count {
         return Classification::Decided(None);
@@ -5959,7 +5962,7 @@ fn real_nonnegative_integer_power(base: &Real, mut exponent: usize) -> Real {
     result
 }
 
-fn project_homogeneous(point: &HomogeneousPoint2, policy: &CurvePolicy) -> Classification<Point2> {
+fn project_homogeneous(point: &HomogeneousPoint2, policy: &CurveContext) -> Classification<Point2> {
     match is_zero(&point.weight, policy) {
         Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
         Some(false) => {}
@@ -5977,7 +5980,7 @@ fn project_homogeneous(point: &HomogeneousPoint2, policy: &CurvePolicy) -> Class
 fn from_homogeneous(
     controls: Vec<HomogeneousPoint2>,
     lineage: RationalBezierLineage,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezier2>> {
     let mut points = Vec::with_capacity(controls.len());
     let mut weights = Vec::with_capacity(controls.len());
@@ -6018,7 +6021,7 @@ mod tests {
             vec![Real::one(); 4],
         )
         .unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let reduced = elevated
             .exact_linear_homogeneous_representative(&policy)
             .unwrap()
@@ -6062,7 +6065,7 @@ mod tests {
             vec![Real::one(); 4],
         )
         .unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         let contacts = conic
             .implicit_conic_intersection_contacts(&cubic, &policy)
@@ -6102,7 +6105,7 @@ mod tests {
             vec![Real::one(); 4],
         )
         .unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let contacts = first.intersection_contacts(&second, &policy).unwrap();
         let RationalBezierIntersectionContacts2::Contacts(contacts) = contacts else {
             panic!("shared cubic pair should produce complete contacts");
@@ -6135,7 +6138,7 @@ mod tests {
             vec![Real::one(); 3],
         )
         .unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         let contacts = conic.intersection_contacts(&line, &policy).unwrap();
         let RationalBezierIntersectionContacts2::Contacts(ref contacts) = contacts else {
@@ -6175,7 +6178,7 @@ mod tests {
             vec![Real::one(); 3],
         )
         .unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         let contacts = conic.intersection_contacts(&line, &policy).unwrap();
         let RationalBezierIntersectionContacts2::Contacts(ref contacts) = contacts else {
@@ -6201,7 +6204,7 @@ mod tests {
         assert!(curve.data.x_derivative_numerator_bernstein.get().is_none());
         assert!(curve.data.x_axis_monotonicity.get().is_none());
         assert!(matches!(
-            clone.axis_is_monotone(Axis2::X, &CurvePolicy::STRICT),
+            clone.axis_is_monotone(Axis2::X, &CurveContext::STRICT),
             Ok(true)
         ));
         assert!(curve.data.x_derivative_numerator_bernstein.get().is_some());
@@ -6224,7 +6227,7 @@ mod tests {
             vec![2.into(), 3.into(), 5.into(), 7.into()],
         )
         .unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         for (at_end, parameter) in [(false, Real::zero()), (true, Real::one())] {
             assert_eq!(
@@ -6245,7 +6248,7 @@ mod tests {
             vec![2.into(), 3.into(), 5.into()],
         )
         .unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let Classification::Decided(parameter_map) =
             conic_parameter_map(&curve, &curve, &policy).unwrap()
         else {
@@ -6265,7 +6268,7 @@ mod tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn conic_parameter_primary_map_defers_fallback_image_polynomial() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
             vec![-half, Real::zero(), Real::one()],
@@ -6313,7 +6316,7 @@ mod tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn conic_parameter_refines_primary_map_before_constructing_fallback() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
             vec![-half.clone(), Real::zero(), Real::one()],
@@ -6361,7 +6364,7 @@ mod tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn quotient_ring_rational_image_retains_nonrational_source_coefficients() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let pi = Real::pi();
         let coefficients = quotient_ring_rational_map_image_polynomial(
             &[-pi.clone(), Real::zero(), Real::one()],
@@ -6384,7 +6387,7 @@ mod tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn quotient_ring_rational_image_reuses_nonrational_source_scale() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let pi = Real::pi();
         let numerator = [Real::zero(), Real::one()];
         let denominator = [Real::one(), Real::one()];
@@ -6416,7 +6419,7 @@ mod tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn quotient_ring_rational_image_matches_exact_resultant_samples() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let source = [Real::from(-2_i8), Real::zero(), Real::zero(), Real::one()];
         let numerator = [Real::one(), Real::zero(), Real::one()];
         let denominator = [Real::from(2_i8), Real::one()];
@@ -6474,7 +6477,7 @@ mod tests {
         )
         .unwrap();
 
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let Some(Classification::Decided(RationalBezierIntersectionContacts2::Contacts(contacts))) =
             conic
                 .implicit_conic_intersection_contacts(&line, &policy)
@@ -6542,7 +6545,7 @@ mod tests {
             vec![1.into(), Real::from(2_i8) * weight, 4.into()],
         )
         .unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         let shared = first.shares_implicit_quadratic_conic(&second, &policy);
         assert!(
@@ -6689,7 +6692,7 @@ mod tests {
         )
         .unwrap();
         let parameter = (Real::one() / Real::from(2_u8)).unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         let point = curve.point_at(&parameter, &policy).unwrap();
         let expected_x = (Real::from(u64::try_from(degree).unwrap()) / Real::from(2_u8)).unwrap();
@@ -6718,7 +6721,7 @@ mod tests {
         )
         .unwrap();
         let parameter = (Real::one() / Real::from(3_u8)).unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         let actual = curve.point_at(&parameter, &policy).unwrap();
         let expected = match curve.homogeneous_de_casteljau_value(&parameter) {

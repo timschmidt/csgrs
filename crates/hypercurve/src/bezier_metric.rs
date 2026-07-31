@@ -13,8 +13,8 @@ use std::cmp::Ordering;
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
-    BezierMonotoneSpan, Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2,
-    QuadraticBezier2, UncertaintyReason,
+    BezierMonotoneSpan, Classification, CubicBezier2, CurveContext, CurveError, CurveResult,
+    Point2, QuadraticBezier2, UncertaintyReason,
 };
 
 /// Exact lower and upper bounds for a Bezier segment's arc length.
@@ -135,7 +135,7 @@ impl QuadraticBezier2 {
     pub fn prefix_length_bounds(
         &self,
         t: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLengthBounds2>> {
         prefix_length_bounds_for_controls(
             self.control_points().into_iter().cloned().collect(),
@@ -153,7 +153,7 @@ impl QuadraticBezier2 {
         &self,
         t: Real,
         max_depth: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLengthBounds2>> {
         prefix_length_bounds_for_controls(
             self.control_points().into_iter().cloned().collect(),
@@ -179,7 +179,7 @@ impl QuadraticBezier2 {
         target_length: Real,
         search_depth: usize,
         metric_depth: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierArcLengthParameterRegion2>> {
         inverse_length_parameter_region_for_controls(
             self.control_points().into_iter().cloned().collect(),
@@ -223,7 +223,7 @@ impl CubicBezier2 {
     pub fn prefix_length_bounds(
         &self,
         t: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLengthBounds2>> {
         prefix_length_bounds_for_controls(
             self.control_points().into_iter().cloned().collect(),
@@ -238,7 +238,7 @@ impl CubicBezier2 {
         &self,
         t: Real,
         max_depth: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLengthBounds2>> {
         prefix_length_bounds_for_controls(
             self.control_points().into_iter().cloned().collect(),
@@ -259,7 +259,7 @@ impl CubicBezier2 {
         target_length: Real,
         search_depth: usize,
         metric_depth: usize,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierArcLengthParameterRegion2>> {
         inverse_length_parameter_region_for_controls(
             self.control_points().into_iter().cloned().collect(),
@@ -298,7 +298,7 @@ fn prefix_length_bounds_for_controls(
     controls: Vec<Point2>,
     t: Real,
     max_depth: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<BezierLengthBounds2>> {
     match in_closed_unit_interval(&t, policy) {
         Some(true) => {}
@@ -314,7 +314,7 @@ fn inverse_length_parameter_region_for_controls(
     target_length: Real,
     search_depth: usize,
     metric_depth: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<BezierArcLengthParameterRegion2>> {
     match compare_reals(&target_length, &Real::zero(), policy) {
         Some(Ordering::Less) => return Err(CurveError::InvalidBezierArcLengthTarget),
@@ -395,7 +395,7 @@ fn inverse_length_parameter_region_for_controls(
 fn exact_linear_parameter_inverse_length_region(
     controls: &[Point2],
     target_length: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierArcLengthParameterRegion2>>> {
     match controls_are_degree_elevated_linear_parameterization(controls, policy) {
         Classification::Decided(true) => {}
@@ -436,7 +436,7 @@ fn arc_length_span(start: Real, end: Real) -> Result<BezierMonotoneSpan, Uncerta
 
 fn controls_are_degree_elevated_linear_parameterization(
     controls: &[Point2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let Some(start) = controls.first() else {
         return Classification::Decided(false);
@@ -598,7 +598,7 @@ mod tests {
         let curve = linear_quadratic();
         let region = decided(
             curve
-                .inverse_length_parameter_region(Real::zero(), 4, 2, &CurvePolicy::STRICT)
+                .inverse_length_parameter_region(Real::zero(), 4, 2, &CurveContext::STRICT)
                 .unwrap(),
         );
 
@@ -613,7 +613,7 @@ mod tests {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let region = decided(
             curve
-                .inverse_length_parameter_region(Real::one(), 4, 2, &CurvePolicy::STRICT)
+                .inverse_length_parameter_region(Real::one(), 4, 2, &CurveContext::STRICT)
                 .unwrap(),
         );
 
@@ -639,7 +639,7 @@ mod tests {
     fn degree_elevated_linear_certificate_checks_parameters_exactly() {
         let linear = vec![point(0, 0), point(1, 0), point(2, 0), point(3, 0)];
         assert_eq!(
-            controls_are_degree_elevated_linear_parameterization(&linear, &CurvePolicy::STRICT),
+            controls_are_degree_elevated_linear_parameterization(&linear, &CurveContext::STRICT),
             Classification::Decided(true)
         );
 
@@ -647,7 +647,7 @@ mod tests {
         assert_eq!(
             controls_are_degree_elevated_linear_parameterization(
                 &nonlinear_speed,
-                &CurvePolicy::STRICT
+                &CurveContext::STRICT
             ),
             Classification::Decided(false)
         );

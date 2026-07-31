@@ -1,6 +1,6 @@
 use hypercurve::{
-    Aabb2, BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError,
-    CurvePolicy, Point2, PolynomialBSplineCurve2, QuadraticBezier2, RationalBSplineCurve2,
+    Aabb2, BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveContext,
+    CurveError, Point2, PolynomialBSplineCurve2, QuadraticBezier2, RationalBSplineCurve2,
     RationalBSplineNativeTopologyEvidence2, RationalBezier2, RationalBezierSpanTopologyEvidence2,
     RationalBezierSpanTopologyPath2, RationalQuadraticBSplineCurve2, Real,
     RetainedBSplineSpanFactEvidence2, RetainedBSplineSpanFacts2, RetainedSpanAxisMonotonicity,
@@ -19,8 +19,8 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn decided<T>(classification: Classification<T>) -> T {

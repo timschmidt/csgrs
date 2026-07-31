@@ -5,24 +5,20 @@ use std::sync::OnceLock;
 
 use crate::{Classification, UncertaintyReason};
 
-/// Numeric policy for a curve operation.
+/// Immutable predicate policy for a curve operation.
 ///
-/// [`CurvePolicy::STRICT`] accepts only exact or certified-refinement
-/// predicate decisions. [`CurvePolicy::APPROXIMATE_512`] additionally permits
-/// Hyperlimit's terminal 512-bit interpretation. The named edge-preview
-/// constructors permit lossy finite views only at rendering and diagnostics
-/// boundaries.
+/// [`CurveContext::STRICT`] accepts only exact or certified-refinement
+/// predicate decisions. [`CurveContext::APPROXIMATE_512`] additionally permits
+/// Hyperlimit's terminal 512-bit interpretation.
 ///
-/// The representation is intentionally closed: callers cannot combine a
-/// certified operation with preview tolerances or request preview behavior
-/// without tolerances.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurvePolicy {
-    pub(crate) mode: NumericMode,
-    #[cfg(feature = "predicates")]
-    pub(crate) predicate_policy: hyperlimit::PredicatePolicy,
-    pub(crate) preview_tolerance: Option<PreviewTolerance>,
-}
+/// Rendering tolerances are intentionally absent. Lossy inspection uses
+/// [`CurvePreviewOptions`] and cannot enlarge the topology context.
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct CurveContext(u8);
+
+const APPROXIMATE_512_CONTEXT: u8 = 1 << 0;
+const EDGE_PREVIEW_CONTEXT: u8 = 1 << 1;
 
 std::thread_local! {
     /// Certainty observation for the innermost composite operation on this thread.
@@ -32,6 +28,9 @@ std::thread_local! {
     /// Predicate work is currently synchronous; parallel kernels must carry
     /// the observation frame explicitly rather than relying on this scope.
     static APPROXIMATE_512_CONSUMED: Cell<bool> = const { Cell::new(false) };
+
+    /// Lossy tolerances scoped to an explicit preview adapter.
+    static ACTIVE_PREVIEW_TOLERANCE: Cell<Option<PreviewTolerance>> = const { Cell::new(None) };
 }
 
 struct OperationObservation {
@@ -72,6 +71,33 @@ impl Drop for OperationObservation {
     }
 }
 
+struct PreviewFrame {
+    prior: Option<PreviewTolerance>,
+    active: bool,
+}
+
+impl PreviewFrame {
+    fn begin(tolerance: PreviewTolerance) -> Self {
+        Self {
+            prior: ACTIVE_PREVIEW_TOLERANCE.with(|active| active.replace(Some(tolerance))),
+            active: true,
+        }
+    }
+
+    fn restore(&mut self) {
+        if self.active {
+            ACTIVE_PREVIEW_TOLERANCE.with(|active| active.set(self.prior));
+            self.active = false;
+        }
+    }
+}
+
+impl Drop for PreviewFrame {
+    fn drop(&mut self) {
+        self.restore();
+    }
+}
+
 /// Aggregate certainty consumed by a completed curve operation.
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -108,81 +134,132 @@ impl<T> CurveOutcome<T> {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) enum NumericMode {
-    EdgePreview,
-    Certified,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct PreviewTolerance {
     pub(crate) absolute: f64,
     pub(crate) relative: f64,
 }
 
-impl CurvePolicy {
-    /// Topology accepts only certified predicate decisions.
-    pub const STRICT: Self = Self {
-        mode: NumericMode::Certified,
-        #[cfg(feature = "predicates")]
-        predicate_policy: hyperlimit::PredicatePolicy::STRICT,
-        preview_tolerance: None,
-    };
+/// Explicit lossy edge-preview adapter.
+///
+/// Preview tolerances may recover finite display evidence from rounded input,
+/// but they never authorize exact topology or replacement geometry. The
+/// adapter scopes its tolerances only for the synchronous operation passed to
+/// [`Self::evaluate`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct CurvePreviewOptions {
+    context: CurveContext,
+    tolerance: PreviewTolerance,
+}
 
-    /// Topology may consume Hyperlimit's terminal 512-bit interpretation.
-    pub const APPROXIMATE_512: Self = Self {
-        mode: NumericMode::Certified,
-        #[cfg(feature = "predicates")]
-        predicate_policy: hyperlimit::PredicatePolicy::APPROXIMATE_512,
-        preview_tolerance: None,
-    };
-
-    /// Strict-predicate edge preview for diagnostics and exploratory rendering.
-    ///
-    /// The tolerances are available only to named curve-local preview
-    /// operations.
-    pub const fn edge_preview_strict(absolute_tolerance: f64, relative_tolerance: f64) -> Self {
-        Self {
-            mode: NumericMode::EdgePreview,
-            #[cfg(feature = "predicates")]
-            predicate_policy: hyperlimit::PredicatePolicy::STRICT,
-            preview_tolerance: Some(PreviewTolerance {
-                absolute: absolute_tolerance,
-                relative: relative_tolerance,
-            }),
-        }
-    }
-
-    /// Approximate-512-predicate edge preview for diagnostics and rendering.
-    pub const fn edge_preview_approximate_512(
+impl CurvePreviewOptions {
+    /// Construct validated preview options around an immutable topology context.
+    pub fn try_new(
+        context: CurveContext,
         absolute_tolerance: f64,
         relative_tolerance: f64,
-    ) -> Self {
-        Self {
-            mode: NumericMode::EdgePreview,
-            #[cfg(feature = "predicates")]
-            predicate_policy: hyperlimit::PredicatePolicy::APPROXIMATE_512,
-            preview_tolerance: Some(PreviewTolerance {
+    ) -> crate::CurveResult<Self> {
+        if !absolute_tolerance.is_finite()
+            || !relative_tolerance.is_finite()
+            || absolute_tolerance < 0.0
+            || relative_tolerance < 0.0
+        {
+            return Err(crate::CurveError::InvalidPreviewOptions);
+        }
+        Ok(Self {
+            context,
+            tolerance: PreviewTolerance {
                 absolute: absolute_tolerance,
                 relative: relative_tolerance,
-            }),
-        }
+            },
+        })
     }
+
+    /// Construct strict-predicate preview options.
+    pub fn try_strict(
+        absolute_tolerance: f64,
+        relative_tolerance: f64,
+    ) -> crate::CurveResult<Self> {
+        Self::try_new(CurveContext::STRICT, absolute_tolerance, relative_tolerance)
+    }
+
+    /// Construct Approximate-512-predicate preview options.
+    pub fn try_approximate_512(
+        absolute_tolerance: f64,
+        relative_tolerance: f64,
+    ) -> crate::CurveResult<Self> {
+        Self::try_new(
+            CurveContext::APPROXIMATE_512,
+            absolute_tolerance,
+            relative_tolerance,
+        )
+    }
+
+    /// Return the immutable predicate context used by this adapter.
+    pub const fn context(self) -> CurveContext {
+        self.context
+    }
+
+    /// Return the absolute finite preview tolerance.
+    pub const fn absolute_tolerance(self) -> f64 {
+        self.tolerance.absolute
+    }
+
+    /// Return the relative finite preview tolerance.
+    pub const fn relative_tolerance(self) -> f64 {
+        self.tolerance.relative
+    }
+
+    /// Evaluate one synchronous lossy preview operation.
+    ///
+    /// The returned value is preview evidence. It must not be retained as
+    /// certified topology or exact construction provenance.
+    pub fn evaluate<T>(&self, evaluate: impl FnOnce(&CurveContext) -> T) -> T {
+        let _frame = PreviewFrame::begin(self.tolerance);
+        evaluate(&self.context.with_edge_preview())
+    }
+}
+
+#[cold]
+#[inline(never)]
+pub(crate) fn preview_tolerance() -> Option<PreviewTolerance> {
+    ACTIVE_PREVIEW_TOLERANCE.with(Cell::get)
+}
+
+impl CurveContext {
+    /// Topology accepts only certified predicate decisions.
+    pub const STRICT: Self = Self(0);
+
+    /// Topology may consume Hyperlimit's terminal 512-bit interpretation.
+    pub const APPROXIMATE_512: Self = Self(APPROXIMATE_512_CONTEXT);
 
     /// Return the selected Hyperlimit predicate policy.
     #[cfg(feature = "predicates")]
-    pub const fn predicate_policy(&self) -> hyperlimit::PredicatePolicy {
-        self.predicate_policy
+    pub const fn predicate_policy(self) -> hyperlimit::PredicatePolicy {
+        if self.0 & APPROXIMATE_512_CONTEXT == 0 {
+            hyperlimit::PredicatePolicy::STRICT
+        } else {
+            hyperlimit::PredicatePolicy::APPROXIMATE_512
+        }
     }
 
     pub(crate) fn permits_approximate_512(&self) -> bool {
         #[cfg(feature = "predicates")]
         {
-            self.predicate_policy == hyperlimit::PredicatePolicy::APPROXIMATE_512
+            self.0 & APPROXIMATE_512_CONTEXT != 0
         }
         #[cfg(not(feature = "predicates"))]
         {
             false
         }
+    }
+
+    const fn with_edge_preview(self) -> Self {
+        Self(self.0 | EDGE_PREVIEW_CONTEXT)
+    }
+
+    #[inline]
+    pub(crate) fn is_edge_preview(&self) -> bool {
+        self.0 & EDGE_PREVIEW_CONTEXT != 0 && preview_tolerance().is_some()
     }
 
     fn observe_approximate_512(&self) {
@@ -208,13 +285,7 @@ impl CurvePolicy {
     }
 
     pub(crate) const fn strict_counterpart(&self) -> Self {
-        match (self.mode, self.preview_tolerance) {
-            (NumericMode::Certified, _) => Self::STRICT,
-            (NumericMode::EdgePreview, Some(tolerance)) => {
-                Self::edge_preview_strict(tolerance.absolute, tolerance.relative)
-            }
-            (NumericMode::EdgePreview, None) => Self::STRICT,
-        }
+        Self(self.0 & EDGE_PREVIEW_CONTEXT)
     }
 }
 
@@ -255,8 +326,8 @@ impl<T> PolicyClassificationCache<T> {
 
 pub(crate) fn resolve_cached_classification<'a, T, E>(
     cache: &'a PolicyClassificationCache<T>,
-    policy: &CurvePolicy,
-    mut evaluate: impl FnMut(&CurvePolicy) -> Result<Classification<T>, E>,
+    policy: &CurveContext,
+    mut evaluate: impl FnMut(&CurveContext) -> Result<Classification<T>, E>,
 ) -> Result<Classification<&'a T>, E> {
     if let Some(value) = cache.certified.get() {
         return Ok(Classification::Decided(value));
@@ -317,11 +388,25 @@ pub(crate) fn resolve_cached_classification<'a, T, E>(
 /// certified pipeline before any terminal interpretation, and only a terminal
 /// decision actually consumed by the operation weakens the returned certainty.
 pub(crate) fn resolve_certified_operation<T>(
-    policy: &CurvePolicy,
-    mut evaluate: impl FnMut(&CurvePolicy) -> crate::ExactCurveResult<T>,
+    policy: &CurveContext,
+    mut evaluate: impl FnMut(&CurveContext) -> crate::ExactCurveResult<T>,
 ) -> crate::ExactCurveResult<CurveOutcome<T>> {
     let observation = OperationObservation::begin();
     evaluate(policy).map(|value| CurveOutcome::new(value, observation.finish()))
+}
+
+#[cfg(test)]
+mod layout_tests {
+    use super::{CurveCertainty, CurveContext};
+
+    #[test]
+    fn curve_context_and_certainty_are_one_byte() {
+        fn assert_send_sync<T: Send + Sync>() {}
+
+        assert_send_sync::<CurveContext>();
+        assert_eq!(core::mem::size_of::<CurveContext>(), 1);
+        assert_eq!(core::mem::size_of::<CurveCertainty>(), 1);
+    }
 }
 
 #[cfg(all(test, feature = "predicates"))]
@@ -331,41 +416,85 @@ mod tests {
     use hyperreal::{Real, RealSign};
 
     use super::{
-        CurveCertainty, CurvePolicy, PolicyClassificationCache, resolve_cached_classification,
-        resolve_certified_operation,
+        CurveCertainty, CurveContext, CurvePreviewOptions, PolicyClassificationCache,
+        preview_tolerance, resolve_cached_classification, resolve_certified_operation,
     };
     use crate::{Classification, UncertaintyReason};
 
     #[test]
     fn curve_modes_name_both_hyperlimit_policies() {
-        fn assert_send_sync<T: Send + Sync>() {}
+        assert_eq!(
+            CurveContext::STRICT.predicate_policy(),
+            hyperlimit::PredicatePolicy::STRICT
+        );
+        assert_eq!(
+            CurveContext::APPROXIMATE_512.predicate_policy(),
+            hyperlimit::PredicatePolicy::APPROXIMATE_512
+        );
 
-        assert_send_sync::<CurvePolicy>();
-        assert_eq!(core::mem::size_of::<CurvePolicy>(), 32);
-        assert_eq!(core::mem::size_of::<super::CurveCertainty>(), 1);
+        let strict_preview = CurvePreviewOptions::try_strict(1.0e-6, 2.0e-6).unwrap();
         assert_eq!(
-            CurvePolicy::STRICT.predicate_policy,
+            strict_preview.context().predicate_policy(),
             hyperlimit::PredicatePolicy::STRICT
         );
+        assert_eq!(preview_tolerance(), None);
+        let escaped = strict_preview.evaluate(|context| {
+            assert!(context.is_edge_preview());
+            assert_eq!(
+                context.predicate_policy(),
+                hyperlimit::PredicatePolicy::STRICT
+            );
+            assert_eq!(preview_tolerance().unwrap().absolute, 1.0e-6);
+            assert_eq!(preview_tolerance().unwrap().relative, 2.0e-6);
+            *context
+        });
+        assert_eq!(preview_tolerance(), None);
+        assert!(!escaped.is_edge_preview());
+
         assert_eq!(
-            CurvePolicy::APPROXIMATE_512.predicate_policy,
+            CurvePreviewOptions::try_approximate_512(1.0e-6, 1.0e-6)
+                .unwrap()
+                .context()
+                .predicate_policy(),
             hyperlimit::PredicatePolicy::APPROXIMATE_512
         );
         assert_eq!(
-            CurvePolicy::edge_preview_strict(1.0e-6, 1.0e-6).predicate_policy,
-            hyperlimit::PredicatePolicy::STRICT
+            CurvePreviewOptions::try_strict(f64::NAN, 0.0),
+            Err(crate::CurveError::InvalidPreviewOptions)
         );
-        assert_eq!(
-            CurvePolicy::edge_preview_approximate_512(1.0e-6, 1.0e-6).predicate_policy,
-            hyperlimit::PredicatePolicy::APPROXIMATE_512
-        );
+    }
+
+    #[test]
+    fn preview_tolerances_are_nested_and_unwind_safe() {
+        let outer = CurvePreviewOptions::try_strict(1.0e-6, 2.0e-6).unwrap();
+        let inner = CurvePreviewOptions::try_strict(3.0e-6, 4.0e-6).unwrap();
+
+        outer.evaluate(|outer_context| {
+            assert!(outer_context.is_edge_preview());
+            assert_eq!(preview_tolerance().unwrap().absolute, 1.0e-6);
+            inner.evaluate(|inner_context| {
+                assert!(inner_context.is_edge_preview());
+                assert_eq!(preview_tolerance().unwrap().absolute, 3.0e-6);
+            });
+            assert_eq!(preview_tolerance().unwrap().absolute, 1.0e-6);
+        });
+        assert_eq!(preview_tolerance(), None);
+
+        let panic = std::panic::catch_unwind(|| {
+            outer.evaluate(|context| {
+                assert!(context.is_edge_preview());
+                panic!("preview unwind sentinel");
+            });
+        });
+        assert!(panic.is_err());
+        assert_eq!(preview_tolerance(), None);
     }
 
     #[test]
     fn approximate_operation_runs_once_and_records_only_a_consumed_terminal() {
         let calls = Cell::new(0_u8);
         let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
-        let outcome = resolve_certified_operation(&CurvePolicy::APPROXIMATE_512, |operation| {
+        let outcome = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |operation| {
             calls.set(calls.get() + 1);
             assert_eq!(
                 crate::classify::real_sign(&undecidable_zero, operation),
@@ -377,7 +506,7 @@ mod tests {
         assert_eq!(calls.get(), 1);
         assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
 
-        let certified = resolve_certified_operation(&CurvePolicy::APPROXIMATE_512, |operation| {
+        let certified = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |operation| {
             assert_eq!(
                 crate::classify::real_sign(&Real::one(), operation),
                 Some(RealSign::Positive)
@@ -387,13 +516,13 @@ mod tests {
         .unwrap();
         assert_eq!(certified.certainty, CurveCertainty::Certified);
 
-        let nested = resolve_certified_operation(&CurvePolicy::APPROXIMATE_512, |outer_policy| {
+        let nested = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |outer_policy| {
             assert_eq!(
                 crate::classify::real_sign(&undecidable_zero, outer_policy),
                 Some(RealSign::Zero)
             );
             let inner =
-                resolve_certified_operation(&CurvePolicy::APPROXIMATE_512, |inner_policy| {
+                resolve_certified_operation(&CurveContext::APPROXIMATE_512, |inner_policy| {
                     assert_eq!(
                         crate::classify::real_sign(&Real::one(), inner_policy),
                         Some(RealSign::Positive)
@@ -407,9 +536,9 @@ mod tests {
         assert_eq!(nested.certainty, CurveCertainty::Approximate512Consumed);
 
         let propagated =
-            resolve_certified_operation(&CurvePolicy::APPROXIMATE_512, |_outer_policy| {
+            resolve_certified_operation(&CurveContext::APPROXIMATE_512, |_outer_policy| {
                 let inner =
-                    resolve_certified_operation(&CurvePolicy::APPROXIMATE_512, |inner_policy| {
+                    resolve_certified_operation(&CurveContext::APPROXIMATE_512, |inner_policy| {
                         assert_eq!(
                             crate::classify::real_sign(&undecidable_zero, inner_policy),
                             Some(RealSign::Zero)
@@ -427,8 +556,8 @@ mod tests {
     fn approximate_cached_classification_never_answers_strict() {
         let cache = PolicyClassificationCache::new();
         let approximate =
-            resolve_cached_classification(&cache, &CurvePolicy::APPROXIMATE_512, |policy| {
-                Ok::<_, ()>(if policy == &CurvePolicy::STRICT {
+            resolve_cached_classification(&cache, &CurveContext::APPROXIMATE_512, |policy| {
+                Ok::<_, ()>(if policy == &CurveContext::STRICT {
                     Classification::Uncertain(UncertaintyReason::Predicate)
                 } else {
                     Classification::Decided(7_u8)
@@ -439,7 +568,7 @@ mod tests {
 
         let strict = resolve_cached_classification(
             &cache,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
             |_| -> Result<Classification<u8>, ()> {
                 panic!("the retained strict blocker should be reused")
             },
@@ -453,7 +582,7 @@ mod tests {
         cache.certify(8);
         let upgraded = resolve_cached_classification(
             &cache,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
             |_| -> Result<Classification<u8>, ()> {
                 panic!("explicit certified evidence should supersede the approximate fact")
             },

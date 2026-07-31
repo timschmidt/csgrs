@@ -1,5 +1,5 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurvePolicy, CurveString2, FillRule,
+    BulgeVertex2, Classification, Contour2, CurveContext, CurveString2, FillRule,
     LineLineIntersection, LineSeg2, Point2, Real, Segment2, SegmentKind, SymbolicDependencyMask,
 };
 
@@ -15,8 +15,8 @@ fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), r(bulge))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 #[test]
@@ -89,7 +89,7 @@ fn curve_query_facts_summarize_segment_families_and_dependencies() {
         assert!(facts.has_decided_curve_box);
 
         let approximate_facts =
-            hypercurve::CurveString2::structural_facts(&curve, &CurvePolicy::APPROXIMATE_512);
+            hypercurve::CurveString2::structural_facts(&curve, &CurveContext::APPROXIMATE_512);
         assert_eq!(approximate_facts.decided_segment_box_count, 2);
         assert!(approximate_facts.has_decided_curve_box);
     }

@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, CubicBezier2, Curve2,
-    CurveFamily2, CurvePath2, CurvePolicy, LineSeg2, NurbsCurve2, Point2, PolynomialSplineCurve2,
+    CurveContext, CurveFamily2, CurvePath2, LineSeg2, NurbsCurve2, Point2, PolynomialSplineCurve2,
     QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, Segment2, Similarity2,
     SvgError, SvgGeometry2, SvgOptions, export_svg_document, import_svg_document,
     import_svg_document_with_options, parse_svg_path_data,
@@ -119,7 +119,7 @@ fn document_import_preserves_cubic_fills_and_strokes() {
     assert_eq!(
         geometry
             .region()
-            .loop_role_counts(&CurvePolicy::STRICT)
+            .loop_role_counts(&CurveContext::STRICT)
             .unwrap(),
         Classification::Decided((1, 0))
     );
@@ -186,7 +186,7 @@ fn document_import_applies_inherited_styles_and_all_affine_transform_forms() {
     assert_eq!(
         geometry
             .region()
-            .loop_role_counts(&CurvePolicy::STRICT)
+            .loop_role_counts(&CurveContext::STRICT)
             .unwrap(),
         Classification::Decided((1, 0))
     );
@@ -206,7 +206,7 @@ fn document_import_unions_filled_shapes_and_skips_transparent_geometry() {
     assert_eq!(
         geometry
             .region()
-            .loop_role_counts(&CurvePolicy::STRICT)
+            .loop_role_counts(&CurveContext::STRICT)
             .unwrap(),
         Classification::Decided((2, 0))
     );

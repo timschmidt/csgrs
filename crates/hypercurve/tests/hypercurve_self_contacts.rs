@@ -1,5 +1,5 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurvePolicy, CurveString2, LineSeg2, Point2, Real,
+    BulgeVertex2, Classification, Contour2, CurveContext, CurveString2, LineSeg2, Point2, Real,
     Segment2,
 };
 
@@ -23,8 +23,8 @@ fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 
     Segment2::Line(LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap())
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 #[test]
 fn curve_string_self_contact_detector_does_not_ignore_closing_endpoint() {

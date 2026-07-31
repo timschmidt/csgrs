@@ -1,5 +1,5 @@
 use hypercurve::{
-    Classification, CurvePolicy, FillRule, LineArcRegion2, LineSeg2, Point2, RegionPointLocation,
+    Classification, CurveContext, FillRule, LineArcRegion2, LineSeg2, Point2, RegionPointLocation,
 };
 use hyperreal::Real;
 
@@ -12,7 +12,7 @@ fn line(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> hypercurve::Curve
 }
 
 fn main() -> hypercurve::CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let boundary = vec![
         line(0, 0, 4, 0)?,
         line(4, 0, 4, 4)?,

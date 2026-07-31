@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierArrangementFragment2, BezierArrangementGraph2, BezierParameter2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
+    BezierSubcurve2, Classification, CurveContext, CurveResult, Point2, QuadraticBezier2,
     RationalBezier2, Real,
 };
 
@@ -44,7 +44,7 @@ fn line_fragment(
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let rational_curve =
         RationalBezier2::try_new(vec![p(0, 0), p(2, 2), p(4, 0)], vec![r(1), r(1), r(1)])?;
     let rational_tail = decided(rational_curve.subcurve_between_exact(&q(1, 2), &r(1), &policy)?);

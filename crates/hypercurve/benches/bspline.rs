@@ -2,8 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Classification, Curve2, CurvePolicy, CurveResult, NurbsCurve2, Point2, PolynomialBSplineCurve2,
-    PolynomialSplineCurve2, RationalBSplineCurve2, RationalQuadraticBSplineCurve2, Real,
+    Classification, Curve2, CurveContext, CurveResult, NurbsCurve2, Point2,
+    PolynomialBSplineCurve2, PolynomialSplineCurve2, RationalBSplineCurve2,
+    RationalQuadraticBSplineCurve2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -104,7 +105,7 @@ fn main() -> CurveResult<()> {
         return Ok(());
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let spline = decided(PolynomialBSplineCurve2::try_new(
         3,
         vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],

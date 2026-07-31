@@ -6,8 +6,9 @@ use hypercurve::{
     BooleanOp as HBooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2,
     ContourFragmentSet, ContourIntersection, ContourIntersectionSet, ContourOperand,
     ContourSplitMarkers, CubicBezier2, Curve2, CurveGeometry2, CurveIntersectionPairBlockerKind2,
-    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, CurveString2, FillRule, LineSeg2,
-    OffsetCap, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, Segment2,
+    CurveContext, CurvePath2, CurvePreviewOptions, CurveRegion2, CurveRegionLoopRole, CurveString2,
+    FillRule, LineSeg2, OffsetCap, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    Segment2,
 };
 use serde::{Deserialize, Serialize};
 
@@ -669,8 +670,7 @@ impl Polyline {
     pub fn offset_checked(&self, distance: f64) -> Result<Option<Self>, String> {
         let contour = self.to_contour()?;
         let distance = real_checked(distance, "offset distance")?;
-        match contour
-            .offset_left_checked(distance, &policy())
+        match preview(|context| contour.offset_left_checked(distance, context))
             .map_err(|e| e.to_string())?
         {
             Classification::Decided(contour) => Ok(Some(Self::from_contour(&contour))),
@@ -700,8 +700,7 @@ impl Polyline {
         let distance = real_checked(distance, "offset distance")?;
         if self.is_closed {
             let contour = self.to_contour()?;
-            match contour
-                .offset_left_with_line_joins(distance, &policy())
+            match preview(|context| contour.offset_left_with_line_joins(distance, context))
                 .map_err(|e| e.to_string())?
             {
                 Classification::Decided(contour) => Ok(Some(Self::from_contour(&contour))),
@@ -709,8 +708,7 @@ impl Polyline {
             }
         } else {
             let curve = self.to_curve_string()?;
-            match curve
-                .offset_left_with_line_joins(distance, &policy())
+            match preview(|context| curve.offset_left_with_line_joins(distance, context))
                 .map_err(|e| e.to_string())?
             {
                 Classification::Decided(curve) => {
@@ -724,8 +722,7 @@ impl Polyline {
     pub fn outline(&self, distance: f64, cap: OffsetCap) -> Result<Option<Self>, String> {
         let curve = self.to_curve_string()?;
         let distance = real_checked(distance, "outline distance")?;
-        match curve
-            .offset_outline(distance, cap, &policy())
+        match preview(|context| curve.offset_outline(distance, cap, context))
             .map_err(|e| e.to_string())?
         {
             Classification::Decided(contour) => Ok(Some(Self::from_contour(&contour))),
@@ -742,8 +739,7 @@ impl Polyline {
         };
         let mut out = Vec::new();
         for segment in segments {
-            match segment
-                .offset_left(distance.clone(), &policy())
+            match preview(|context| segment.offset_left(distance.clone(), context))
                 .map_err(|e| e.to_string())?
             {
                 Classification::Decided(offset) => out.push(Self::from_segments(&[offset], false)),
@@ -1033,7 +1029,7 @@ impl Shape {
             &paths,
             &roles,
             &fill_rules,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
             .map_err(|error| error.to_string())
     }
@@ -1045,7 +1041,7 @@ impl Shape {
         {
             Classification::Decided(paths) => paths,
             Classification::Uncertain(_) => match region
-                .project_to_finite_curve_paths(&CurvePolicy::STRICT)
+                .project_to_finite_curve_paths(&CurveContext::STRICT)
                 .map_err(|error| error.to_string())?
             {
                 Classification::Decided(paths) => paths,
@@ -1056,7 +1052,7 @@ impl Shape {
             return Ok(Some(Self::default()));
         }
         let roles = match region
-            .loop_roles(&CurvePolicy::STRICT)
+            .loop_roles(&CurveContext::STRICT)
             .map_err(|error| error.to_string())?
         {
             Classification::Decided(roles) => Some(roles),
@@ -1064,7 +1060,7 @@ impl Shape {
         };
         let filled_sides = if roles.is_none() {
             match region
-                .filled_side_is_left(&CurvePolicy::STRICT)
+                .filled_side_is_left(&CurveContext::STRICT)
                 .map_err(|error| error.to_string())?
             {
                 Classification::Decided(sides) => Some(sides),
@@ -1123,12 +1119,12 @@ impl Shape {
 
         let first = self.to_curve_region()?;
         let second = other.to_curve_region()?;
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let result = first.boolean_region(&second, op, &policy).map_err(|error| {
             first
                 .intersect_region(&second, &policy)
                 .ok()
-                .and_then(|result| result.blockers().first().cloned())
+                .and_then(|result| result.value.blockers().first().cloned())
                 .map_or_else(
                     || error.to_string(),
                     |blocker| {
@@ -1155,7 +1151,7 @@ impl Shape {
                     },
                 )
         })?;
-        Self::from_curve_region(&result)
+        Self::from_curve_region(&result.value)
     }
 
     pub fn offset_once(&self, distance: f64) -> Self {
@@ -1190,13 +1186,15 @@ pub enum BooleanMode {
     Xor,
 }
 
-pub fn policy() -> CurvePolicy {
+fn preview<T>(evaluate: impl FnOnce(&CurveContext) -> T) -> T {
     // The test article is an interactive rendering boundary, so it uses
-    // `EdgePreview` for curve-local display tolerances. Hypercurve's
-    // predicate policy inside this value remains strict, and the UI must not
+    // explicit preview options for curve-local display tolerances. The
+    // predicate context remains strict, and the UI must not
     // treat sampled `f64`/Geo fallback output as exact topology provenance.
     // Finite output remains useful only with explicit boundary handling.
-    CurvePolicy::edge_preview_strict(1e-7, 1e-7)
+    CurvePreviewOptions::try_strict(1e-7, 1e-7)
+        .expect("the fixed UI preview tolerances are valid")
+        .evaluate(evaluate)
 }
 
 pub fn boolean_polylines(
@@ -1214,8 +1212,7 @@ pub fn contour_intersections(
 ) -> Result<(Vec<[f64; 2]>, Vec<Polyline>), String> {
     let first = first.to_contour()?;
     let second = second.to_contour()?;
-    let events = first
-        .intersect_contour(&second, &policy())
+    let events = preview(|context| first.intersect_contour(&second, context))
         .map_err(|e| e.to_string())?;
     let mut points = Vec::new();
     let mut overlaps = Vec::new();
@@ -1240,8 +1237,7 @@ pub fn contour_slices(
 ) -> Result<(Vec<Polyline>, Vec<Polyline>), String> {
     let first_contour = first.to_contour()?;
     let second_contour = second.to_contour()?;
-    let events = first_contour
-        .intersect_contour(&second_contour, &policy())
+    let events = preview(|context| first_contour.intersect_contour(&second_contour, context))
         .map_err(|e| e.to_string())?;
     let first_fragments = split_contour_for_slices(&first_contour, &events, ContourOperand::First)?;
     let second_fragments =
@@ -1281,27 +1277,28 @@ fn split_contour_for_slices(
     // fallback to source fragments is intentionally local to the UI boundary;
     // exact library booleans still propagate uncertainty. Keeping finite output
     // separate avoids presenting a broken branch graph as exact topology.
-    let policy = policy();
-    let self_events = contour
-        .intersect_self(&policy)
-        .map_err(|error| error.to_string())?;
-    let mut markers = ContourSplitMarkers::with_contour_endpoints(contour);
+    preview(|context| {
+        let self_events = contour
+            .intersect_self(context)
+            .map_err(|error| error.to_string())?;
+        let mut markers = ContourSplitMarkers::with_contour_endpoints(contour);
 
-    match markers.merge_intersections(pair_events, operand, &policy) {
-        Classification::Decided(()) => {}
-        Classification::Uncertain(_) => return source_contour_fragments(contour),
-    }
-    match markers.merge_self_intersections(&self_events, &policy) {
-        Classification::Decided(()) => {}
-        Classification::Uncertain(_) => return source_contour_fragments(contour),
-    }
+        match markers.merge_intersections(pair_events, operand, context) {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(_) => return source_contour_fragments(contour),
+        }
+        match markers.merge_self_intersections(&self_events, context) {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(_) => return source_contour_fragments(contour),
+        }
 
-    match ContourFragmentSet::from_split_markers(contour, &markers, &policy)
-        .map_err(|error| error.to_string())?
-    {
-        Classification::Decided(fragments) => Ok(fragments),
-        Classification::Uncertain(_) => source_contour_fragments(contour),
-    }
+        match ContourFragmentSet::from_split_markers(contour, &markers, context)
+            .map_err(|error| error.to_string())?
+        {
+            Classification::Decided(fragments) => Ok(fragments),
+            Classification::Uncertain(_) => source_contour_fragments(contour),
+        }
+    })
 }
 
 fn source_contour_fragments(contour: &HContour) -> Result<ContourFragmentSet, String> {
@@ -1633,10 +1630,12 @@ fn sample_rational_quadratic_vertices(
 ) -> Vec<Vertex> {
     (0..=steps)
         .filter_map(|index| {
-            match curve.point_at(
-                Real::try_from(index as f64 / steps as f64).unwrap(),
-                &policy(),
-            ) {
+            match preview(|context| {
+                curve.point_at(
+                    Real::try_from(index as f64 / steps as f64).unwrap(),
+                    context,
+                )
+            }) {
                 Classification::Decided(point) => Some(vertex_from_point(point)),
                 Classification::Uncertain(_) => None,
             }
@@ -2258,17 +2257,13 @@ mod tests {
     fn contour_has_slice_events(first: &Polyline, second: &Polyline) -> Result<bool, String> {
         let first = first.to_contour()?;
         let second = second.to_contour()?;
-        let policy = policy();
-        Ok(!first
-            .intersect_contour(&second, &policy)
+        Ok(!preview(|context| first.intersect_contour(&second, context))
             .map_err(|error| error.to_string())?
             .is_empty()
-            || !first
-                .intersect_self(&policy)
+            || !preview(|context| first.intersect_self(context))
                 .map_err(|error| error.to_string())?
                 .is_empty()
-            || !second
-                .intersect_self(&policy)
+            || !preview(|context| second.intersect_self(context))
                 .map_err(|error| error.to_string())?
                 .is_empty())
     }

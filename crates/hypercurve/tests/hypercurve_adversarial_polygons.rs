@@ -1,5 +1,5 @@
 use hypercurve::{
-    Aabb2, BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule,
+    Aabb2, BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, FillRule,
     LineArcRegion2, Point2, PolylineReconstructionOptions, Real, Segment2,
 };
 use proptest::prelude::*;
@@ -33,8 +33,8 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     contour_from_points(&[(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)])
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn reconstruction_options() -> PolylineReconstructionOptions {

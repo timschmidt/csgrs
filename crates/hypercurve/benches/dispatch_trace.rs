@@ -1,7 +1,7 @@
 #[cfg(feature = "triangulation")]
 use hypercurve::triangulate_finite_rings;
 use hypercurve::{
-    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveResult,
+    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveResult,
     CurveString2, FillRule, LineArcRegion2, LineSeg2, NurbsCurve2, Point2, QuadraticBezier2, Real,
     Segment2, Similarity2, StraightSkeletonStage2,
 };
@@ -63,7 +63,7 @@ fn trace<T>(name: &str, workload: impl FnOnce() -> CurveResult<T>) {
 }
 
 fn main() {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let horizontal = LineSeg2::try_new(p(-4, 0), p(4, 0)).expect("line is valid");
     let vertical = LineSeg2::try_new(p(0, -4), p(0, 4)).expect("line is valid");
     trace("line_line_intersection", || {

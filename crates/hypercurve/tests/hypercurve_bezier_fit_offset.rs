@@ -2,7 +2,7 @@ use hypercurve::{
     BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierFlatteningOptions,
     BezierLineImageFitRelation, BezierOffsetCandidate2, BezierParallelApproximationCurve2,
     BezierParallelVerificationOptions, BezierParameter2, Classification, CubicBezier2, Curve2,
-    CurveError, CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, FillRule, Point2,
+    CurveContext, CurveError, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, Point2,
     QuadraticBezier2, Rational, RationalQuadraticBezier2, Real,
 };
 use num::bigint::{BigInt, BigUint};
@@ -16,8 +16,8 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn q(numerator: i32, denominator: i32) -> Real {

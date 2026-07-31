@@ -1,6 +1,6 @@
 use hypercurve::{
-    CircularArc2, Classification, CubicBezier2, Curve2, CurveError, CurveFamily2, CurveGeometry2,
-    CurveOperation2, CurvePath2, CurvePolicy, CurveRegion2, ExactCurveError, LineSeg2, Point2,
+    CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveError, CurveFamily2,
+    CurveGeometry2, CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2,
     QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation,
 };
 use proptest::prelude::*;
@@ -118,15 +118,15 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
         .expect("degree-two rational boundary contributions are exact");
     assert_eq!(clone.signed_area(), Ok(Some(signed_area)));
     assert_eq!(
-        region.classify_point(&p(8, -1), &CurvePolicy::STRICT),
+        region.classify_point(&p(8, -1), &CurveContext::STRICT),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
     assert_eq!(
-        clone.classify_point(&p(8, -4), &CurvePolicy::STRICT),
+        clone.classify_point(&p(8, -4), &CurveContext::STRICT),
         Ok(Classification::Decided(RegionPointLocation::Outside))
     );
     assert_eq!(
-        clone.classify_point(&p(0, 0), &CurvePolicy::STRICT),
+        clone.classify_point(&p(0, 0), &CurveContext::STRICT),
         Ok(Classification::Decided(RegionPointLocation::Boundary))
     );
     let debug = format!("{region:?}");
@@ -143,11 +143,11 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
     let bounded = CurveRegion2::try_from_boundary_paths(&[square]).unwrap();
     let bounded_clone = bounded.clone();
     assert_eq!(
-        bounded.classify_point(&p(1, 1), &CurvePolicy::STRICT),
+        bounded.classify_point(&p(1, 1), &CurveContext::STRICT),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
     assert_eq!(
-        bounded_clone.classify_point(&p(1, 1), &CurvePolicy::STRICT),
+        bounded_clone.classify_point(&p(1, 1), &CurveContext::STRICT),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
 }
@@ -227,7 +227,7 @@ fn top_level_curve_reuses_retained_native_endpoints() {
     assert_eq!(
         top_level.point_at(&(r(1) / r(2)).unwrap()).unwrap(),
         rational
-            .point_at(&(r(1) / r(2)).unwrap(), &CurvePolicy::STRICT)
+            .point_at(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
             .unwrap()
     );
 }
@@ -353,7 +353,7 @@ fn mixed_curve_path_fillet_accepts_every_non_arc_family_pair() {
 fn mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency() {
     let source_arc = CircularArc2::try_from_center(p(5, 0), p(5, 2), p(5, 1), true).unwrap();
     let Classification::Decided(next_parameter) = source_arc
-        .sweep_fraction(&p(4, 1), &CurvePolicy::STRICT)
+        .sweep_fraction(&p(4, 1), &CurveContext::STRICT)
         .unwrap()
     else {
         panic!("arc tangent point should have an exact source parameter");
@@ -386,7 +386,7 @@ fn mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency() {
 
     let previous_arc = CircularArc2::try_from_center(p(5, 2), p(5, 0), p(5, 1), false).unwrap();
     let Classification::Decided(previous_parameter) = previous_arc
-        .sweep_fraction(&p(4, 1), &CurvePolicy::STRICT)
+        .sweep_fraction(&p(4, 1), &CurveContext::STRICT)
         .unwrap()
     else {
         panic!("previous arc tangent point should have an exact source parameter");

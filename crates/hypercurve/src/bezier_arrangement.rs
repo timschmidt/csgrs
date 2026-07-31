@@ -40,7 +40,7 @@ use crate::{
     BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierEndpoint,
     BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierParameter2,
     BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSplitMaterialization2,
-    BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurveError, CurvePolicy,
+    BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurveContext, CurveError,
     CurveResult, Point2, UncertaintyReason, ZeroStatus,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
 };
@@ -230,7 +230,7 @@ impl BezierArrangementGraph2 {
     /// Traverses branch-free materialized fragments into endpoint-connected chains.
     pub fn traverse_branch_free(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierArrangementTraversal2> {
         let mut endpoints = Vec::with_capacity(self.fragments.len());
         for fragment in &self.fragments {
@@ -281,7 +281,7 @@ impl BezierArrangementGraph2 {
     /// explicit uncertainty in the exactness model's sense.
     pub fn traverse_with_tangent_order(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierArrangementTraversal2> {
         let mut endpoints = Vec::with_capacity(self.fragments.len());
         for fragment in &self.fragments {
@@ -342,7 +342,7 @@ impl BezierArrangementGraph2 {
     /// standard arrangement algorithms.
     pub fn traverse_retained_with_tangent_order(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierArrangementTraversal2> {
         self.traverse_retained_with_certified_successors(&[], policy)
     }
@@ -350,7 +350,7 @@ impl BezierArrangementGraph2 {
     pub(crate) fn traverse_retained_with_certified_successors(
         &self,
         certified_successors: &[Option<usize>],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierArrangementTraversal2> {
         self.traverse_retained_with_successor_rule(certified_successors, false, policy)
     }
@@ -358,7 +358,7 @@ impl BezierArrangementGraph2 {
     pub(crate) fn traverse_retained_filled_left_faces_with_certified_successors(
         &self,
         certified_successors: &[Option<usize>],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierArrangementTraversal2> {
         self.traverse_retained_with_successor_rule(certified_successors, true, policy)
     }
@@ -367,7 +367,7 @@ impl BezierArrangementGraph2 {
         &self,
         certified_successors: &[Option<usize>],
         filled_left_faces: bool,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<BezierArrangementTraversal2> {
         let defer_tangent_order_evidence = !certified_successors.is_empty();
         let complete_topology_vertices = defer_tangent_order_evidence
@@ -491,7 +491,7 @@ impl BezierArrangementGraph2 {
 fn validate_arrangement_fragment_provenance(
     fragments: &[BezierArrangementFragment2],
 ) -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     for (index, fragment) in fragments.iter().enumerate() {
         validate_arrangement_fragment_source_range(fragment, &policy)?;
         for other in &fragments[index + 1..] {
@@ -507,7 +507,7 @@ fn validate_arrangement_fragment_provenance(
 
 fn validate_arrangement_fragment_source_range(
     fragment: &BezierArrangementFragment2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match fragment.fragment() {
         BezierSplitFragment2::Materialized { start, end, .. }
@@ -568,7 +568,7 @@ fn validate_arrangement_algebraic_endpoint_image(
     boundary: &BezierParameter2,
     image: Option<&BezierAlgebraicEndpointImage2>,
     source_curve: Option<&BezierSubcurve2>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     match (boundary, image) {
         (BezierParameter2::Exact(_), None) => Ok(()),
@@ -609,7 +609,7 @@ fn validate_arrangement_algebraic_endpoint_image(
 fn validate_reused_source_fragment_ranges(
     first: &BezierArrangementFragment2,
     second: &BezierArrangementFragment2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<()> {
     let (first_start, first_end) = arrangement_fragment_source_range(first.fragment());
     let (second_start, second_end) = arrangement_fragment_source_range(second.fragment());
@@ -1014,7 +1014,7 @@ struct RetainedAlgebraicDerivativeSource {
 
 fn materialized_endpoint_data(
     fragment: &BezierSplitFragment2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Classification<EndpointData>> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => Some(curve.endpoint_data(policy)),
@@ -1043,7 +1043,7 @@ fn retained_topology_endpoint_data(
 fn retained_endpoint_data(
     arrangement_fragment: &BezierArrangementFragment2,
     scope: RetainedEndpointScope,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Classification<RetainedEndpointData>> {
     let fragment = arrangement_fragment.fragment();
     match fragment {
@@ -1173,7 +1173,7 @@ fn retained_endpoint_side_data(
     source_curve: Option<&BezierSubcurve2>,
     topology_vertex: Option<usize>,
     scope: RetainedEndpointScope,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<RetainedEndpointSideData>> {
     if let Some(image) = image {
         let derivative_source = (scope == RetainedEndpointScope::TangentOrder)
@@ -1264,7 +1264,7 @@ fn retained_exact_source_endpoint_side_data(
     source_curve: &BezierSubcurve2,
     parameter: &Real,
     include_higher_derivatives: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<RetainedEndpointSideData> {
     let at_source_end = match compare_reals(parameter, &Real::one(), policy) {
         Some(ordering) => ordering == std::cmp::Ordering::Equal,
@@ -1461,7 +1461,7 @@ type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
 
 fn endpoint_adjacency(
     endpoints: &[(Point2, Point2)],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<EndpointAdjacency> {
     let mut successors = vec![None; endpoints.len()];
     let mut predecessors = vec![None; endpoints.len()];
@@ -1506,7 +1506,7 @@ fn follow_chain(
     successors: &[Option<usize>],
     endpoints: &[(Point2, Point2)],
     used: &mut [bool],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierArrangementChain2> {
     let first_start = endpoints[start].0.clone();
     let mut current = start;
@@ -1539,7 +1539,7 @@ type TangentAdjacency = (Vec<Vec<usize>>, Vec<usize>);
 
 fn tangent_adjacency(
     endpoints: &[EndpointData],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TangentAdjacency> {
     let mut outgoing = vec![Vec::new(); endpoints.len()];
     let mut predecessors = vec![0_usize; endpoints.len()];
@@ -1578,7 +1578,7 @@ fn tangent_adjacency(
 
 fn retained_tangent_adjacency(
     endpoints: &[RetainedEndpointData],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TangentAdjacency> {
     let mut outgoing = vec![Vec::new(); endpoints.len()];
     let mut predecessors = vec![0_usize; endpoints.len()];
@@ -1660,7 +1660,7 @@ mod endpoint_adjacency_tests {
     fn sqrt_half_parameter() -> crate::BezierAlgebraicParameter2 {
         let polynomial = match crate::BezierParameterPolynomial::try_new_power_basis(
             vec![Real::from(-1), Real::zero(), Real::from(2)],
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .expect("valid parameter polynomial")
         {
@@ -1672,7 +1672,7 @@ mod endpoint_adjacency_tests {
         let interval = match crate::BezierParameterInterval::try_new(
             Real::from(Rational::fraction(2, 3).expect("nonzero denominator")),
             Real::from(Rational::fraction(3, 4).expect("nonzero denominator")),
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .expect("valid parameter interval")
         {
@@ -1684,7 +1684,7 @@ mod endpoint_adjacency_tests {
         match crate::BezierAlgebraicParameter2::try_isolate(
             polynomial,
             interval,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .expect("isolated parameter")
         {
@@ -1698,7 +1698,7 @@ mod endpoint_adjacency_tests {
     #[test]
     #[cfg(feature = "predicates")]
     fn lazy_polynomial_endpoint_derivatives_match_eager_images() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let parameter = sqrt_half_parameter();
         let curve = crate::CubicBezier2::new(
             point(0),
@@ -1750,7 +1750,7 @@ mod endpoint_adjacency_tests {
         endpoints[4].start_topology_vertex = Some(9);
 
         let Classification::Decided((outgoing, predecessors)) =
-            retained_tangent_adjacency(&endpoints, &CurvePolicy::STRICT)
+            retained_tangent_adjacency(&endpoints, &CurveContext::STRICT)
         else {
             panic!("indexed retained adjacency should remain exact");
         };
@@ -1790,7 +1790,7 @@ mod endpoint_adjacency_tests {
             ),
         ])
         .expect("valid branch graph");
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         assert_eq!(
             graph.traverse_retained_with_certified_successors(&[None], &policy),
@@ -1816,7 +1816,7 @@ mod endpoint_adjacency_tests {
             },
         )])
         .expect("valid branch-free graph");
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         assert!(matches!(
             graph.traverse_retained_with_tangent_order(&policy),
@@ -1853,7 +1853,7 @@ mod endpoint_adjacency_tests {
         };
         let first = fragment(0, 0, 1, point2(0, 0), point2(1, 0));
         let second = fragment(1, 1, 2, point2(100, 0), point2(101, 0));
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let first_endpoints = retained_topology_endpoint_data(&first);
 
         assert!(first_endpoints.start.is_none());
@@ -1877,7 +1877,7 @@ fn follow_retained_tangent_ordered_chain(
     certified_successors: &[Option<usize>],
     filled_left_faces: bool,
     used: &mut [bool],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierArrangementChain2> {
     let first_start = endpoints[start].start.clone();
     let first_start_topology_vertex = endpoints[start].start_topology_vertex;
@@ -1931,7 +1931,7 @@ fn choose_retained_tangent_successor(
     endpoints: &[RetainedEndpointData],
     certified_successor: Option<usize>,
     filled_left_faces: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<usize>> {
     if candidates.is_empty() {
         return Classification::Decided(None);
@@ -2017,7 +2017,7 @@ fn follow_tangent_ordered_chain(
     outgoing: &[Vec<usize>],
     endpoints: &[EndpointData],
     used: &mut [bool],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<BezierArrangementChain2> {
     let first_start = endpoints[start].start.clone();
     let mut current = start;
@@ -2055,7 +2055,7 @@ fn choose_tangent_successor(
     current: usize,
     candidates: &[usize],
     endpoints: &[EndpointData],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<usize>> {
     if candidates.is_empty() {
         return Classification::Decided(None);
@@ -2128,7 +2128,7 @@ fn compare_filled_left_face_turn_from_base(
     base: &TangentVector,
     first: &TangentVector,
     second: &TangentVector,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
     let first_half = match turn_half(base, first, policy) {
         Some(half) => half,
@@ -2157,7 +2157,7 @@ fn compare_turn_from_base(
     base: &TangentVector,
     first: &TangentVector,
     second: &TangentVector,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
     let first_half = match turn_half(base, first, policy) {
         Some(half) => half,
@@ -2188,7 +2188,7 @@ fn compare_retained_turn_from_base(
     first: &RetainedTangentVector,
     second: &RetainedTangentVector,
     filled_left_faces: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
     match (base, first, second) {
         (
@@ -2252,7 +2252,7 @@ fn retained_tangent_as_algebraic(tangent: &RetainedTangentVector) -> BezierAlgeb
 fn compare_retained_same_tangent_second_order(
     first: &RetainedEndpointData,
     second: &RetainedEndpointData,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
     let first_tangent = match retained_algebraic_derivative(
         first.start_tangent.as_ref(),
@@ -2353,7 +2353,7 @@ fn compare_retained_algebraic_same_tangent_third_order(
     second: &RetainedEndpointData,
     first_tangent: &BezierAlgebraicTangentVector2,
     second_tangent: &BezierAlgebraicTangentVector2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
     let first_third_derivative = match retained_algebraic_higher_derivative(first, 3, policy) {
         Classification::Decided(derivative) => derivative,
@@ -2391,7 +2391,7 @@ fn compare_retained_algebraic_same_tangent_third_order(
 fn retained_algebraic_higher_derivative(
     endpoint: &RetainedEndpointData,
     order: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<RetainedTangentVector>> {
     let retained = match order {
         2 => &endpoint.start_second_derivative,
@@ -2410,7 +2410,7 @@ fn retained_algebraic_derivative(
     retained: Option<&RetainedTangentVector>,
     source: Option<&RetainedAlgebraicDerivativeSource>,
     order: usize,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<RetainedTangentVector>> {
     if retained.is_some() {
         return Classification::Decided(retained.cloned());
@@ -2525,7 +2525,7 @@ fn compare_same_tangent_second_order(
     second_tangent: &TangentVector,
     second_second_derivative: Option<&TangentVector>,
     second_third_derivative: Option<&TangentVector>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
     let Some(first_second_derivative) = first_second_derivative else {
         return Classification::Decided(TurnOrdering::SameDirection);
@@ -2586,7 +2586,7 @@ fn compare_same_tangent_third_order(
     first_third_derivative: Option<&TangentVector>,
     second_tangent: &TangentVector,
     second_third_derivative: Option<&TangentVector>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
     let Some(first_third_derivative) = first_third_derivative else {
         return Classification::Decided(TurnOrdering::SameDirection);
@@ -2639,7 +2639,7 @@ fn compare_same_side_curvature_magnitude(
     first_cross: &Real,
     second_tangent: &TangentVector,
     second_cross: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
     let first_speed_sq = speed_squared(first_tangent);
     let second_speed_sq = speed_squared(second_tangent);
@@ -2663,7 +2663,7 @@ fn compare_same_side_third_order_magnitude(
     first_cross: &Real,
     second_tangent: &TangentVector,
     second_cross: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
     let first_speed_sq = speed_squared(first_tangent);
     let second_speed_sq = speed_squared(second_tangent);
@@ -2682,7 +2682,7 @@ fn compare_same_side_third_order_magnitude(
     }
 }
 
-fn turn_half(base: &TangentVector, candidate: &TangentVector, policy: &CurvePolicy) -> Option<u8> {
+fn turn_half(base: &TangentVector, candidate: &TangentVector, policy: &CurveContext) -> Option<u8> {
     match real_sign(&cross_vectors(base, candidate), policy)? {
         RealSign::Positive => Some(0),
         RealSign::Negative => Some(1),
@@ -2694,7 +2694,7 @@ fn turn_half(base: &TangentVector, candidate: &TangentVector, policy: &CurvePoli
     }
 }
 
-fn points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<bool> {
+fn points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> Option<bool> {
     if left.identity() == right.identity() {
         return Some(true);
     }
@@ -2709,7 +2709,7 @@ fn retained_endpoints_equal(
     left: Option<&RetainedEndpointKey>,
     right_topology_vertex: Option<usize>,
     right: Option<&RetainedEndpointKey>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     if let (Some(left), Some(right)) = (left_topology_vertex, right_topology_vertex) {
         return Some(left == right);
@@ -2742,14 +2742,14 @@ fn retained_endpoints_equal(
     }
 }
 
-fn compare_reals_equal(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
+fn compare_reals_equal(left: &Real, right: &Real, policy: &CurveContext) -> Option<bool> {
     Some(crate::classify::compare_reals(left, right, policy)? == std::cmp::Ordering::Equal)
 }
 
 pub(crate) fn represented_roots_equal(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     if left == right {
         return Some(true);
@@ -2772,13 +2772,13 @@ pub(crate) fn represented_roots_equal(
 fn compare_represented_roots_by_difference(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<bool> {
     let comparison = compare_algebraic_root_representations_by_difference(
         left,
         right,
         AlgebraicRootRefinementComparisonConfig {
-            policy: policy.predicate_policy,
+            policy: policy.predicate_policy(),
             ..AlgebraicRootRefinementComparisonConfig::default()
         },
     );
@@ -2796,7 +2796,7 @@ fn compare_represented_roots_by_difference(
 fn compare_represented_roots_by_difference(
     _left: &AlgebraicRootRepresentation,
     _right: &AlgebraicRootRepresentation,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> Option<bool> {
     None
 }
@@ -2822,13 +2822,13 @@ impl BezierSubcurve2 {
         self.endpoints().1
     }
 
-    fn endpoint_data(&self, policy: &CurvePolicy) -> Classification<EndpointData> {
+    fn endpoint_data(&self, policy: &CurveContext) -> Classification<EndpointData> {
         self.endpoint_data_with_higher_derivatives(policy, true)
     }
 
     fn endpoint_data_with_higher_derivatives(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         include_higher_derivatives: bool,
     ) -> Classification<EndpointData> {
         let (start, end) = self.endpoints();
@@ -2961,7 +2961,7 @@ fn rational_quadratic_endpoint_derivative_jet(
     curve: &crate::RationalQuadraticBezier2,
     at_end: bool,
     higher_orders: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<RationalQuadraticEndpointDerivativeJet> {
     let (point0, point1, point2, weight0, weight1, weight2) = if at_end {
         (
@@ -3062,7 +3062,7 @@ mod rational_quadratic_endpoint_derivative_tests {
 
     #[test]
     fn polynomial_endpoint_tangent_keeps_its_structural_zero_evidence() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         for (dx, expected_status, expected_nonzero) in [
             (Real::zero(), ZeroStatus::Zero, false),
             (Real::from(7_i8), ZeroStatus::NonZero, true),
@@ -3080,7 +3080,7 @@ mod rational_quadratic_endpoint_derivative_tests {
 
     #[test]
     fn specialized_endpoint_jets_match_general_rational_quotient_derivatives() {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         for (weight_case, (start_weight, control_weight, end_weight)) in [
             (Real::one(), Real::one(), Real::one()),
@@ -3163,7 +3163,7 @@ impl TangentVector {
     fn is_nonzero_with_status(
         &self,
         zero_status: Option<ZeroStatus>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> bool {
         match zero_status {
             Some(ZeroStatus::NonZero) => true,
@@ -3172,7 +3172,7 @@ impl TangentVector {
         }
     }
 
-    fn is_nonzero(&self, policy: &CurvePolicy) -> bool {
+    fn is_nonzero(&self, policy: &CurveContext) -> bool {
         let length_squared = &self.dx * &self.dx + &self.dy * &self.dy;
         match length_squared.zero_status() {
             ZeroStatus::NonZero => true,
@@ -3230,7 +3230,7 @@ fn square(value: &Real) -> Real {
     value * value
 }
 
-fn definitely_nonzero(value: &Real, policy: &CurvePolicy) -> bool {
+fn definitely_nonzero(value: &Real, policy: &CurveContext) -> bool {
     match value.zero_status() {
         ZeroStatus::NonZero => true,
         ZeroStatus::Zero => false,

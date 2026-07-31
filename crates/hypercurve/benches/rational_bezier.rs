@@ -2,7 +2,7 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Axis2, BezierParameter2, Classification, CurvePolicy, Point2, RationalBezier2,
+    Axis2, BezierParameter2, Classification, CurveContext, Point2, RationalBezier2,
     RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
     RationalBezierPointIncidence2, Real,
 };
@@ -57,7 +57,7 @@ fn large_rational_inputs(control_count: usize) -> (Vec<Point2>, Vec<Real>) {
 }
 
 fn bench_large_rational_bezier() {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let control_count = large_rational_control_count();
     let iterations = large_rational_iterations();
     let (controls, weights) = large_rational_inputs(control_count);
@@ -119,7 +119,7 @@ fn main() {
         return;
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let curve = RationalBezier2::try_new(
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
         vec![r(1), r(2), r(3), r(4)],

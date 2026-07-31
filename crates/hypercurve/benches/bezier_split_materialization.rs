@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierFlatteningOptions, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CubicBezier2, CurvePolicy, CurveResult, Point2,
+    BezierParameterPolynomial, Classification, CubicBezier2, CurveContext, CurveResult, Point2,
     RationalQuadraticBezier2, Real,
 };
 
@@ -27,7 +27,7 @@ fn decided<T>(classification: Classification<T>) -> T {
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let curve = CubicBezier2::new(p(0, 0), p(2, 6), p(6, -2), p(8, 0));
     let parameters = [
         decided(BezierParameter2::exact(q(1, 4), &policy)?),

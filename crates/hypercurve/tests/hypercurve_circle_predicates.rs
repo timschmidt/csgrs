@@ -1,5 +1,5 @@
 use hypercurve::{
-    ArcArcIntersection, CircleCircleRelation, CircularArc2, CurvePolicy, LineArcIntersection,
+    ArcArcIntersection, CircleCircleRelation, CircularArc2, CurveContext, LineArcIntersection,
     LineCircleRelation, LineSeg2, Point2, Real,
 };
 
@@ -11,8 +11,8 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn circle_arc() -> CircularArc2 {

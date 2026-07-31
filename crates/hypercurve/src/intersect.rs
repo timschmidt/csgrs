@@ -17,8 +17,8 @@ use crate::classify::{
 };
 use crate::segment::RetainedLineRelation2;
 use crate::{
-    CircularArc2, Classification, CurveError, CurvePolicy, CurveResult, LineSeg2, Point2, Segment2,
-    UncertaintyReason,
+    CircularArc2, Classification, CurveContext, CurveError, CurveResult, LineSeg2, Point2,
+    Segment2, UncertaintyReason,
 };
 
 /// Parameter range on a segment.
@@ -55,7 +55,7 @@ pub(crate) struct OrientedParamRangeOverlap {
 pub(crate) fn oriented_param_range_overlap(
     first: &ParamRange,
     second: &ParamRange,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Option<OrientedParamRangeOverlap>> {
     let first_direction = match compare_reals(first.start(), first.end(), policy) {
         Some(Ordering::Equal) => return Classification::Decided(None),
@@ -428,7 +428,7 @@ impl Segment2 {
     pub fn intersect_segment(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<SegmentIntersection> {
         self.intersect_segment_impl(other, policy, false)
     }
@@ -436,7 +436,7 @@ impl Segment2 {
     pub(crate) fn intersect_segment_with_certified_aabb_overlap(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<SegmentIntersection> {
         self.intersect_segment_impl(other, policy, true)
     }
@@ -444,7 +444,7 @@ impl Segment2 {
     fn intersect_segment_impl(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         aabb_overlap_certified: bool,
     ) -> CurveResult<SegmentIntersection> {
         match (self, other) {
@@ -476,7 +476,7 @@ impl LineSeg2 {
     pub fn intersect_line(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<LineLineIntersection> {
         self.intersect_line_impl(other, policy, false)
     }
@@ -484,7 +484,7 @@ impl LineSeg2 {
     pub(crate) fn intersect_line_with_certified_exact_dyadic_proper_crossing(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<LineLineIntersection> {
         debug_assert!(matches!(
             certified_line_segment_support_relation(self, other),
@@ -563,7 +563,7 @@ impl LineSeg2 {
     fn intersect_line_impl(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
         aabb_overlap_certified: bool,
     ) -> CurveResult<LineLineIntersection> {
         if !aabb_overlap_certified && line_segments_decided_axis_separated(self, other, policy) {
@@ -576,9 +576,7 @@ impl LineSeg2 {
         // crossed its measured 4,096-pair threshold. Reuse that crossover for
         // a bounded orientation filter; small/public pairs retain their lean
         // exact path, and preview tolerance semantics remain unchanged.
-        let certified_support_relation = if !aabb_overlap_certified
-            || matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
-        {
+        let certified_support_relation = if !aabb_overlap_certified || policy.is_edge_preview() {
             CertifiedLineSegmentSupportRelation::Unknown
         } else {
             certified_line_segment_support_relation(self, other)
@@ -686,9 +684,9 @@ impl LineSeg2 {
     pub fn intersect_arc(
         &self,
         arc: &CircularArc2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<LineArcIntersection> {
-        if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+        if policy.is_edge_preview()
             && let Some(result) = intersect_line_arc_edge_preview(self, arc, policy)?
         {
             return Ok(result);
@@ -734,7 +732,7 @@ impl LineSeg2 {
     pub fn supporting_line_circle_relation(
         &self,
         arc: &CircularArc2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<LineCircleRelation> {
         let (dx, dy) = self.delta();
         let start_from_center = self.start().delta_from(arc.center());
@@ -791,7 +789,7 @@ impl LineSeg2 {
 fn intersect_line_arc_edge_preview(
     line: &LineSeg2,
     arc: &CircularArc2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<LineArcIntersection>> {
     let data = [
         line.start().x().to_f64_lossy(),
@@ -841,8 +839,7 @@ fn intersect_line_arc_edge_preview(
         .into_iter()
         .map(f64::abs)
         .fold(1.0_f64, f64::max);
-    let epsilon = policy
-        .preview_tolerance
+    let epsilon = crate::policy::preview_tolerance()
         .map(|tolerance| tolerance.relative.max(tolerance.absolute / length_scale))
         .unwrap_or(1e-12);
     let discriminant_tolerance = epsilon * half_b.mul_add(half_b, (a * c).abs()).abs().max(1.0);
@@ -1036,12 +1033,12 @@ pub(crate) fn certified_line_crossing_winding_delta(
 fn line_segments_decided_axis_separated(
     first: &LineSeg2,
     second: &LineSeg2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     fn endpoints_strictly_before(
         first: [&Real; 2],
         second: [&Real; 2],
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> bool {
         first.into_iter().all(|left| {
             second
@@ -1076,7 +1073,7 @@ impl CircularArc2 {
     pub fn circle_relation(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<CircleCircleRelation> {
         let center_delta = other.center().delta_from(self.center());
         let center_distance_squared = dot(
@@ -1119,7 +1116,7 @@ impl CircularArc2 {
     pub fn intersect_arc(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<ArcArcIntersection> {
         let center_delta = other.center().delta_from(self.center());
         let center_distance_squared = dot(
@@ -1148,7 +1145,7 @@ impl CircularArc2 {
 fn intersect_non_parallel(
     a: &LineSeg2,
     b: &LineSeg2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     rx: &Real,
     ry: &Real,
     sx: &Real,
@@ -1353,7 +1350,7 @@ fn line_intersection_point_at(
 fn line_point_at_unit_endpoint(
     line: &LineSeg2,
     parameter: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Point2> {
     match compare_reals(parameter, &Real::zero(), policy)? {
         Ordering::Equal => Some(line.start().clone()),
@@ -1366,7 +1363,7 @@ fn line_point_at_unit_endpoint(
 fn non_parallel_endpoint_intersection(
     a: &LineSeg2,
     b: &LineSeg2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<LineLineIntersection>> {
     for (a_point, a_param) in [(a.start(), Real::zero()), (a.end(), Real::one())] {
         for (b_point, b_param) in [(b.start(), Real::zero()), (b.end(), Real::one())] {
@@ -1406,7 +1403,7 @@ fn non_parallel_endpoint_intersection(
 fn intersect_parallel(
     a: &LineSeg2,
     b: &LineSeg2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     rx: &Real,
     ry: &Real,
     qmp: (Real, Real),
@@ -1424,7 +1421,7 @@ fn intersect_parallel(
 fn intersect_collinear(
     a: &LineSeg2,
     b: &LineSeg2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<LineLineIntersection> {
     let t0 = parameter_on_line(a, b.start(), policy)?;
     let t1 = parameter_on_line(a, b.end(), policy)?;
@@ -1472,7 +1469,7 @@ fn intersect_collinear(
     }
 }
 
-fn parameter_on_line(line: &LineSeg2, point: &Point2, policy: &CurvePolicy) -> CurveResult<Real> {
+fn parameter_on_line(line: &LineSeg2, point: &Point2, policy: &CurveContext) -> CurveResult<Real> {
     let (dx, dy) = line.delta();
     let delta = point.delta_from(line.start());
 
@@ -1505,7 +1502,7 @@ fn line_arc_two_candidates(
     arc: &CircularArc2,
     t0: Real,
     t1: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<LineArcIntersection> {
     let ordered = match compare_reals(&t0, &t1, policy) {
         Some(Ordering::Greater) => (t1, t0),
@@ -1538,7 +1535,7 @@ fn line_arc_two_candidates(
 fn intersect_concentric_arcs(
     a: &CircularArc2,
     b: &CircularArc2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ArcArcIntersection> {
     let radius_delta = a.radius_squared() - b.radius_squared();
     match is_zero(&radius_delta, policy) {
@@ -1560,7 +1557,7 @@ struct SameCircleArcCandidate {
 fn intersect_same_circle_arcs(
     a: &CircularArc2,
     b: &CircularArc2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ArcArcIntersection> {
     if same_circle_minor_arcs_decided_axis_separated(a, b, policy) {
         return Ok(ArcArcIntersection::None);
@@ -1620,7 +1617,7 @@ fn intersect_same_circle_arcs(
 fn same_circle_minor_arcs_decided_axis_separated(
     first: &CircularArc2,
     second: &CircularArc2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> bool {
     if !matches!(
         crate::arc_bezier::classify_sweep(first),
@@ -1684,7 +1681,7 @@ fn insert_same_circle_candidate(
     a: &CircularArc2,
     b: &CircularArc2,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<UncertaintyReason>> {
     match a.contains_sweep_point(point, policy) {
         Classification::Decided(true) => {}
@@ -1723,7 +1720,7 @@ fn insert_same_circle_candidate(
 
 fn sort_same_circle_candidates(
     candidates: &mut [SameCircleArcCandidate],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<UncertaintyReason> {
     for index in 1..candidates.len() {
         let mut cursor = index;
@@ -1748,7 +1745,7 @@ fn same_circle_overlap_interval(
     a: &CircularArc2,
     b: &CircularArc2,
     candidates: &[SameCircleArcCandidate],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<ArcArcIntersection>> {
     let mut overlap = None;
 
@@ -1805,9 +1802,9 @@ fn intersect_distinct_circle_arcs(
     b: &CircularArc2,
     center_delta: (Real, Real),
     center_distance_squared: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ArcArcIntersection> {
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+    if policy.is_edge_preview()
         && let Some(result) = intersect_distinct_circle_arcs_edge_preview(a, b, policy)?
     {
         return Ok(result);
@@ -1839,7 +1836,7 @@ fn circle_relation_for_distinct_centers(
     b: &CircularArc2,
     center_delta: (Real, Real),
     center_distance_squared: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<CircleCircleRelation> {
     let radius_a_squared = a.radius_squared();
     let radius_b_squared = b.radius_squared();
@@ -1880,7 +1877,7 @@ fn circle_relation_for_distinct_centers(
 fn intersect_distinct_circle_arcs_edge_preview(
     a: &CircularArc2,
     b: &CircularArc2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Option<ArcArcIntersection>> {
     let Some([ax, ay, bx, by, radius_a_squared, radius_b_squared]) = preview_circle_data(a, b)
     else {
@@ -1896,7 +1893,7 @@ fn intersect_distinct_circle_arcs_edge_preview(
     let dx = bx - ax;
     let dy = by - ay;
     let center_distance_squared = dx.mul_add(dx, dy * dy);
-    let tolerance = preview_length_tolerance(policy, [ax, ay, bx, by, radius_a, radius_b]);
+    let tolerance = preview_length_tolerance([ax, ay, bx, by, radius_a, radius_b]);
     if center_distance_squared <= tolerance * tolerance {
         return Ok(None);
     }
@@ -1951,10 +1948,9 @@ fn preview_circle_data(a: &CircularArc2, b: &CircularArc2) -> Option<[f64; 6]> {
     data.iter().all(|value| value.is_finite()).then_some(data)
 }
 
-fn preview_length_tolerance(policy: &CurvePolicy, values: [f64; 6]) -> f64 {
+fn preview_length_tolerance(values: [f64; 6]) -> f64 {
     let scale = values.into_iter().map(f64::abs).fold(1.0_f64, f64::max);
-    policy
-        .preview_tolerance
+    crate::policy::preview_tolerance()
         .map(|tolerance| tolerance.absolute.max(tolerance.relative) * scale)
         .unwrap_or(1e-12 * scale)
 }
@@ -1964,7 +1960,7 @@ fn arc_arc_two_candidates(
     b: &CircularArc2,
     first: Point2,
     second: Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ArcArcIntersection> {
     let first = arc_arc_hit_candidate(a, b, first, IntersectionKind::Crossing, policy)?;
     let second = arc_arc_hit_candidate(a, b, second, IntersectionKind::Crossing, policy)?;
@@ -1994,7 +1990,7 @@ fn arc_arc_hit_candidate(
     b: &CircularArc2,
     point: Point2,
     base_kind: IntersectionKind,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<ArcArcCandidate> {
     match a.contains_sweep_point(&point, policy) {
         Classification::Decided(false) => return Ok(ArcArcCandidate::Miss),
@@ -2047,7 +2043,7 @@ fn line_arc_hit_candidate(
     arc: &CircularArc2,
     line_param: Real,
     base_kind: IntersectionKind,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<LineArcCandidate> {
     let in_line_range = in_closed_unit_interval(&line_param, policy);
     if in_line_range == Some(false) {
@@ -2093,9 +2089,9 @@ fn line_arc_hit_candidate(
 fn line_point_at_for_policy(
     line: &LineSeg2,
     line_param: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Point2> {
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+    if policy.is_edge_preview()
         && let (Some(t), Some(start_x), Some(start_y), Some(end_x), Some(end_y)) = (
             line_param.to_f64_lossy(),
             line.start().x().to_f64_lossy(),
@@ -2129,7 +2125,11 @@ fn line_point_at_for_policy(
     Ok(line.point_at(parameter))
 }
 
-fn point_on_arc_endpoint(arc: &CircularArc2, point: &Point2, policy: &CurvePolicy) -> Option<bool> {
+fn point_on_arc_endpoint(
+    arc: &CircularArc2,
+    point: &Point2,
+    policy: &CurveContext,
+) -> Option<bool> {
     let start = point.distance_squared(arc.start());
     if is_zero(&start, policy)? {
         return Some(true);
@@ -2225,7 +2225,7 @@ mod tests {
     fn certified_aabb_line_kernel_matches_public_fallback() {
         let point = |x, y| Point2::new(Real::from(x), Real::from(y));
         let line = |start, end| Segment2::Line(LineSeg2::try_new(start, end).unwrap());
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         for (first, second) in [
             (
@@ -2257,7 +2257,7 @@ mod tests {
         let point =
             |x: f64, y: f64| Point2::new(Real::try_from(x).unwrap(), Real::try_from(y).unwrap());
         let line = |start, end| LineSeg2::try_new(start, end).unwrap();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         for (first, second) in [
             (
                 line(point(-7.25, -2.5), point(9.5, 6.75)),

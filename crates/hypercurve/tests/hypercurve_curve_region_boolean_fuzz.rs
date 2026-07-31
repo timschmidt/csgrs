@@ -6,8 +6,8 @@ mod pathological_fixture;
 use std::collections::HashSet;
 
 use hypercurve::{
-    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurvePath2,
-    CurvePolicy, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2,
+    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
+    CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2,
     RationalBezier2, RationalQuadraticBezier2, Real,
 };
 use proptest::prelude::*;
@@ -244,7 +244,7 @@ fn generated_region(specification: &GeneratedRegion) -> CurveRegion2 {
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
         &[CurveBoundaryInteriorSide2::Left],
-        &CurvePolicy::STRICT,
+        &CurveContext::STRICT,
     )
     .expect("outward graph curves form a simple exact region")
 }
@@ -316,7 +316,7 @@ fn exact_boolean_results(
     second: &CurveRegion2,
     compare_individual_calls: bool,
 ) -> Result<(), String> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let evidence = first
         .intersect_region(second, &policy)
         .map_err(|error| format!("{label}: exact intersection failed: {error}"))?
@@ -806,7 +806,7 @@ fn exact_circle_region(start_quarter: usize, reversed: bool) -> CurveRegion2 {
         } else {
             CurveBoundaryInteriorSide2::Left
         }],
-        &CurvePolicy::STRICT,
+        &CurveContext::STRICT,
     )
     .unwrap()
 }
@@ -849,7 +849,7 @@ fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
         &[capsule, via],
         &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material],
         &[FillRule::NonZero, FillRule::NonZero],
-        &CurvePolicy::STRICT,
+        &CurveContext::STRICT,
     )
     .unwrap();
     RetiredFailureCase {
@@ -863,7 +863,7 @@ fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
                 &fraction(1, 5),
                 &Real::zero(),
                 &Real::zero(),
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap(),
     }
@@ -893,7 +893,7 @@ fn retired_thermal_spoke_circular_subtraction_case() -> RetiredFailureCase {
         weight_denominator: 1,
     });
     let first = horizontal
-        .boolean_region(&vertical, BooleanOp::Union, &CurvePolicy::STRICT)
+        .boolean_region(&vertical, BooleanOp::Union, &CurveContext::STRICT)
         .unwrap()
         .value;
     RetiredFailureCase {
@@ -907,7 +907,7 @@ fn retired_thermal_spoke_circular_subtraction_case() -> RetiredFailureCase {
                 &fraction(1, 5),
                 &Real::zero(),
                 &Real::zero(),
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .unwrap(),
     }
@@ -925,7 +925,7 @@ fn retired_transformed_degree_elevated_line_case() -> RetiredFailureCase {
         .collect();
     let source =
         CurveRegion2::try_from_boundary_paths(&[CurvePath2::try_new(curves).unwrap()]).unwrap();
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let transformed = source
         .transform_affine(
             &Real::zero(),
@@ -989,7 +989,7 @@ fn retired_circular_line_endpoint_case() -> RetiredFailureCase {
 }
 
 fn retired_distinct_circular_conic_contacts_case() -> RetiredFailureCase {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let translated = exact_circle_region(1, false)
         .transform_affine(
             &Real::one(),
@@ -1100,7 +1100,7 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
             &[],
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .is_err(),
         "interior-side evidence count must match the authored loops"
@@ -1110,7 +1110,7 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
         &[CurveBoundaryInteriorSide2::Left],
-        &CurvePolicy::STRICT,
+        &CurveContext::STRICT,
     )
     .unwrap();
     let reversed_path = forward_path.reversed().unwrap();
@@ -1119,7 +1119,7 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
         &[CurveBoundaryInteriorSide2::Right],
-        &CurvePolicy::STRICT,
+        &CurveContext::STRICT,
     )
     .unwrap();
     exact_boolean_results(

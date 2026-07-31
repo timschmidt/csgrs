@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
+    BezierParameterPolynomial, Classification, CurveContext, CurveResult, Point2, QuadraticBezier2,
     RationalQuadraticBezier2, Real,
 };
 
@@ -24,7 +24,7 @@ fn decided<T>(classification: Classification<T>) -> T {
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let bernstein_coefficients = (0..=32).map(|index| r((index % 7) - 3)).collect::<Vec<_>>();
     let conversion_iterations = 20_000_u32;
     let started = Instant::now();

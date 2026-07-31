@@ -5,7 +5,7 @@ use hypercurve::{
     BezierAlgebraicParameter2, BezierArrangementFragment2, BezierArrangementGraph2,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
     BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CubicBezier2, CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    CubicBezier2, CurveContext, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2,
     Real,
 };
 
@@ -67,7 +67,7 @@ fn line_fragment(
 }
 
 fn main() -> CurveResult<()> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let split = [decided(BezierParameter2::exact(q(1, 2), &policy)?)];
     let mut materializations = Vec::new();
     let curve_count = benchmark_curve_count();

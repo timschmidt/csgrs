@@ -22,9 +22,9 @@ use crate::{
     BezierCuspClassification, BezierDegree, BezierEndpoint, BezierInflectionClassification,
     BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, CertifiedBezierLineImageOffset2, Classification, CubicBezier2,
-    Curve2, CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2, CurvePath2, CurvePolicy,
-    CurveResult, ExactCurveError, ExactCurveResult, Point2, QuadraticBezier2, RationalBezier2,
-    RationalQuadraticBezier2, Real, UncertaintyReason,
+    Curve2, CurveContext, CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2,
+    CurvePath2, CurveResult, ExactCurveError, ExactCurveResult, Point2, QuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 
 /// Polynomial Bezier source retained by an exact parallel evaluator.
@@ -155,7 +155,7 @@ pub struct BezierParallelVerificationOptions {
 
 impl BezierParallelVerificationOptions {
     /// Constructs verification options after certifying a positive tolerance and recursion budget.
-    pub fn try_new(max_error: Real, max_depth: usize, policy: &CurvePolicy) -> CurveResult<Self> {
+    pub fn try_new(max_error: Real, max_depth: usize, policy: &CurveContext) -> CurveResult<Self> {
         if max_depth == 0 || real_sign(&max_error, policy) != Some(RealSign::Positive) {
             return Err(CurveError::InvalidBezierOffsetOptions);
         }
@@ -470,7 +470,7 @@ impl BezierParallel2 {
     pub fn point_at(
         &self,
         parameter: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
         match in_closed_unit_interval(parameter, policy) {
             Some(true) => {}
@@ -508,7 +508,7 @@ impl BezierParallel2 {
     pub fn derivative_at(
         &self,
         parameter: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveDerivative2>> {
         match in_closed_unit_interval(parameter, policy) {
             Some(true) => {}
@@ -555,7 +555,7 @@ impl BezierParallel2 {
     /// the opposite-sign roots introduced by squaring.
     pub fn singularity_analysis(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelSingularityAnalysis2>> {
         let speed_squared = polynomial_add(
             &polynomial_multiply(&self.derivative_x, &self.derivative_x),
@@ -646,7 +646,7 @@ impl BezierParallel2 {
     /// remain explicit [`Classification::Uncertain`].
     pub fn exact_pythagorean_hodograph_offset(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
         let speed_squared = polynomial_add(
             &polynomial_multiply(&self.derivative_x, &self.derivative_x),
@@ -740,7 +740,7 @@ impl BezierParallel2 {
     /// [`Self::verify_polynomial_candidate`].
     pub fn levien_cubic_candidate(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<LevienCubicOffsetCandidate2>> {
         let zero = Real::zero();
         let one = Real::one();
@@ -837,7 +837,7 @@ impl BezierParallel2 {
         &self,
         candidate: BezierParallelApproximationCurve2,
         options: &BezierParallelVerificationOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CertifiedBezierParallelApproximation2>> {
         let analysis = match self.singularity_analysis(policy)? {
             Classification::Decided(analysis) => analysis,
@@ -984,7 +984,7 @@ impl PolynomialBezierNode2 {
     fn exact_parallel_midpoint(
         &self,
         distance: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
         let source = match self {
             Self::Quadratic(curve) => curve.parallel_left(distance.clone())?,
@@ -1006,7 +1006,7 @@ fn verify_parallel_node(
     candidate: PolynomialBezierNode2,
     distance: &Real,
     options: &BezierParallelVerificationOptions,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     depth: usize,
     trace: &mut ParallelVerificationTrace,
 ) -> CurveResult<Classification<()>> {
@@ -1072,7 +1072,7 @@ fn subdivide_parallel_verification(
     candidate: PolynomialBezierNode2,
     distance: &Real,
     options: &BezierParallelVerificationOptions,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     depth: usize,
     trace: &mut ParallelVerificationTrace,
 ) -> CurveResult<Classification<()>> {
@@ -1152,7 +1152,7 @@ fn elevate_vector_bernstein(
 
 fn derivative_hull_minimum_speed(
     controls: &[(Real, Real)],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Real>>> {
     if controls.is_empty() {
         return Ok(Classification::Decided(None));
@@ -1188,7 +1188,7 @@ fn derivative_hull_minimum_speed(
 
 fn coordinate_extrema<'a>(
     mut values: impl Iterator<Item = &'a Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<(Real, Real)>> {
     let first = values
         .next()
@@ -1213,7 +1213,7 @@ fn coordinate_extrema<'a>(
 fn interval_minimum_absolute(
     minimum: &Real,
     maximum: &Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Real> {
     match (real_sign(minimum, policy), real_sign(maximum, policy)) {
         (Some(RealSign::Positive), Some(_)) => Classification::Decided(minimum.clone()),
@@ -1261,7 +1261,7 @@ pub struct BezierOffsetPreflight2 {
     end_tangent_status: ZeroStatus,
     endpoint_coincidence: ZeroStatus,
     risks: Vec<BezierOffsetRisk>,
-    construction_policy: CurvePolicy,
+    construction_policy: CurveContext,
 }
 
 /// Result of a staged Bezier/conic offset attempt.
@@ -1333,7 +1333,7 @@ impl BezierOffsetPreflight2 {
     }
 
     /// Returns the policy used to prove this preflight.
-    pub const fn construction_policy(&self) -> &CurvePolicy {
+    pub const fn construction_policy(&self) -> &CurveContext {
         &self.construction_policy
     }
 }
@@ -1403,7 +1403,7 @@ impl QuadraticBezier2 {
     pub fn blend2d_offset_left_candidate(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Blend2dQuadraticOffsetCandidate2>> {
         if real_sign(&distance, policy) == Some(RealSign::Zero) {
             return Ok(Classification::Decided(Blend2dQuadraticOffsetCandidate2 {
@@ -1500,7 +1500,7 @@ impl QuadraticBezier2 {
     pub fn blend2d_offset_right_candidate(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Blend2dQuadraticOffsetCandidate2>> {
         self.blend2d_offset_left_candidate(-distance, policy)
     }
@@ -1510,7 +1510,7 @@ impl QuadraticBezier2 {
         &self,
         distance: Real,
         options: &BezierParallelVerificationOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CertifiedBezierParallelPath2>> {
         let analysis = match self
             .parallel_left(distance.clone())?
@@ -1546,7 +1546,10 @@ impl QuadraticBezier2 {
     }
 
     /// Runs exact source analysis for later offset adapters.
-    pub fn offset_preflight(&self, policy: &CurvePolicy) -> Classification<BezierOffsetPreflight2> {
+    pub fn offset_preflight(
+        &self,
+        policy: &CurveContext,
+    ) -> Classification<BezierOffsetPreflight2> {
         let cusp_classification = match self.cusp_classification(policy) {
             Classification::Decided(classification) => classification,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -1570,7 +1573,7 @@ impl QuadraticBezier2 {
     pub fn offset_left_staged(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierOffsetCandidate2>> {
         staged_offset_left(self, distance, policy)
     }
@@ -1579,7 +1582,7 @@ impl QuadraticBezier2 {
     pub fn offset_right_staged(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierOffsetCandidate2>> {
         staged_offset_left(self, -distance, policy)
     }
@@ -1635,7 +1638,7 @@ impl CubicBezier2 {
         &self,
         distance: Real,
         options: &BezierParallelVerificationOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<CertifiedBezierParallelPath2>> {
         let analysis = match self
             .parallel_left(distance.clone())?
@@ -1671,7 +1674,10 @@ impl CubicBezier2 {
     }
 
     /// Runs exact source analysis for later offset adapters.
-    pub fn offset_preflight(&self, policy: &CurvePolicy) -> Classification<BezierOffsetPreflight2> {
+    pub fn offset_preflight(
+        &self,
+        policy: &CurveContext,
+    ) -> Classification<BezierOffsetPreflight2> {
         let cusp_classification = match self.cusp_classification(policy) {
             Classification::Decided(classification) => classification,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -1698,7 +1704,7 @@ impl CubicBezier2 {
     pub fn offset_left_staged(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierOffsetCandidate2>> {
         staged_offset_left(self, distance, policy)
     }
@@ -1707,7 +1713,7 @@ impl CubicBezier2 {
     pub fn offset_right_staged(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierOffsetCandidate2>> {
         staged_offset_left(self, -distance, policy)
     }
@@ -1715,7 +1721,10 @@ impl CubicBezier2 {
 
 impl RationalQuadraticBezier2 {
     /// Runs exact source analysis for later rational-conic offset adapters.
-    pub fn offset_preflight(&self, policy: &CurvePolicy) -> Classification<BezierOffsetPreflight2> {
+    pub fn offset_preflight(
+        &self,
+        policy: &CurveContext,
+    ) -> Classification<BezierOffsetPreflight2> {
         let denominator_risk =
             match weights_known_same_nonzero_sign(self.weights().as_slice(), policy) {
                 Some(true) => false,
@@ -1751,7 +1760,7 @@ impl RationalQuadraticBezier2 {
     pub fn offset_left_staged(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierOffsetCandidate2>> {
         staged_offset_left(self, distance, policy)
     }
@@ -1760,7 +1769,7 @@ impl RationalQuadraticBezier2 {
     pub fn offset_right_staged(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierOffsetCandidate2>> {
         staged_offset_left(self, -distance, policy)
     }
@@ -1779,7 +1788,7 @@ impl CurvePath2 {
         &self,
         distance: Real,
         options: &BezierParallelVerificationOptions,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CertifiedCurvePathParallel2>> {
         let source_curve_count = self.curves().len();
         if real_sign(&distance, policy) == Some(RealSign::Zero) {
@@ -1918,7 +1927,7 @@ impl CurvePath2 {
 fn append_polynomial_parallel<F>(
     parallel: BezierParallel2,
     approximate: F,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     output: &mut Vec<Curve2>,
     verification_leaf_count: &mut usize,
 ) -> CurveResult<Classification<bool>>
@@ -1973,29 +1982,29 @@ fn parallel_path_error(source: &Curve2, cause: CurveError) -> ExactCurveError {
 }
 
 trait StagedBezierOffset {
-    fn offset_preflight(&self, policy: &CurvePolicy) -> Classification<BezierOffsetPreflight2>;
+    fn offset_preflight(&self, policy: &CurveContext) -> Classification<BezierOffsetPreflight2>;
     fn fit_exact_line_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>>;
 
     fn exact_pythagorean_hodograph_offset(
         &self,
         _distance: Real,
-        _policy: &CurvePolicy,
+        _policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
         Ok(Classification::Decided(None))
     }
 }
 
 impl StagedBezierOffset for QuadraticBezier2 {
-    fn offset_preflight(&self, policy: &CurvePolicy) -> Classification<BezierOffsetPreflight2> {
+    fn offset_preflight(&self, policy: &CurveContext) -> Classification<BezierOffsetPreflight2> {
         QuadraticBezier2::offset_preflight(self, policy)
     }
 
     fn fit_exact_line_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
         QuadraticBezier2::fit_exact_line_image(self, policy)
     }
@@ -2003,7 +2012,7 @@ impl StagedBezierOffset for QuadraticBezier2 {
     fn exact_pythagorean_hodograph_offset(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
         self.parallel_left(distance)?
             .exact_pythagorean_hodograph_offset(policy)
@@ -2011,13 +2020,13 @@ impl StagedBezierOffset for QuadraticBezier2 {
 }
 
 impl StagedBezierOffset for CubicBezier2 {
-    fn offset_preflight(&self, policy: &CurvePolicy) -> Classification<BezierOffsetPreflight2> {
+    fn offset_preflight(&self, policy: &CurveContext) -> Classification<BezierOffsetPreflight2> {
         CubicBezier2::offset_preflight(self, policy)
     }
 
     fn fit_exact_line_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
         CubicBezier2::fit_exact_line_image(self, policy)
     }
@@ -2025,7 +2034,7 @@ impl StagedBezierOffset for CubicBezier2 {
     fn exact_pythagorean_hodograph_offset(
         &self,
         distance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
         self.parallel_left(distance)?
             .exact_pythagorean_hodograph_offset(policy)
@@ -2033,13 +2042,13 @@ impl StagedBezierOffset for CubicBezier2 {
 }
 
 impl StagedBezierOffset for RationalQuadraticBezier2 {
-    fn offset_preflight(&self, policy: &CurvePolicy) -> Classification<BezierOffsetPreflight2> {
+    fn offset_preflight(&self, policy: &CurveContext) -> Classification<BezierOffsetPreflight2> {
         RationalQuadraticBezier2::offset_preflight(self, policy)
     }
 
     fn fit_exact_line_image(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
         RationalQuadraticBezier2::fit_exact_line_image(self, policy)
     }
@@ -2048,7 +2057,7 @@ impl StagedBezierOffset for RationalQuadraticBezier2 {
 fn staged_offset_left<C>(
     curve: &C,
     distance: Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<BezierOffsetCandidate2>>
 where
     C: StagedBezierOffset,
@@ -2113,7 +2122,7 @@ fn rational_collapsed_point_status(curve: &RationalQuadraticBezier2) -> ZeroStat
     }
 }
 
-fn weights_known_same_nonzero_sign(weights: &[&Real], policy: &CurvePolicy) -> Option<bool> {
+fn weights_known_same_nonzero_sign(weights: &[&Real], policy: &CurveContext) -> Option<bool> {
     let mut expected = None;
     for weight in weights {
         let sign = real_sign(weight, policy)?;
@@ -2140,7 +2149,7 @@ fn build_preflight(
     start_tangent_status: ZeroStatus,
     end_tangent_status: ZeroStatus,
     endpoint_coincidence: ZeroStatus,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> BezierOffsetPreflight2 {
     let mut risks = Vec::new();
     match &cusp_classification {
@@ -2172,7 +2181,7 @@ fn build_preflight(
         end_tangent_status,
         endpoint_coincidence,
         risks,
-        construction_policy: policy.clone(),
+        construction_policy: *policy,
     }
 }
 
@@ -2211,7 +2220,7 @@ fn construct_quadratic_parallel_spans(
     source_end: Real,
     distance: &Real,
     options: &BezierParallelVerificationOptions,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     depth: usize,
     trace: &mut ParallelPathConstructionTrace,
 ) -> CurveResult<Classification<()>> {
@@ -2272,7 +2281,7 @@ fn construct_cubic_parallel_spans(
     source_end: Real,
     distance: &Real,
     options: &BezierParallelVerificationOptions,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     depth: usize,
     trace: &mut ParallelPathConstructionTrace,
 ) -> CurveResult<Classification<()>> {
@@ -2345,7 +2354,7 @@ fn construct_cubic_reduced_half(
     source_end: Real,
     distance: &Real,
     options: &BezierParallelVerificationOptions,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     depth: usize,
     trace: &mut ParallelPathConstructionTrace,
 ) -> CurveResult<Classification<()>> {
@@ -2451,7 +2460,7 @@ fn polynomial_power(coefficients: &[Real], exponent: usize) -> Vec<Real> {
 
 fn polynomial_square_root(
     coefficients: &[Real],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Vec<Real>>>> {
     let mut normalized = coefficients.to_vec();
     while let Some(coefficient) = normalized.last() {
@@ -2513,7 +2522,7 @@ fn polynomial_square_root(
 
 fn polynomial_from_coefficients(
     coefficients: Vec<Real>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameterPolynomial>>> {
     match BezierParameterPolynomial::try_new_power_basis(coefficients, policy) {
         Ok(Classification::Decided(polynomial)) => Ok(Classification::Decided(Some(polynomial))),
@@ -2526,7 +2535,7 @@ fn polynomial_from_coefficients(
 fn parameter_matches_any(
     candidate: &BezierParameter2,
     parameters: &[BezierParameter2],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<bool> {
     for parameter in parameters {
         match candidate.cmp_by_interval(parameter, policy)? {
@@ -2545,7 +2554,7 @@ fn parameter_matches_any(
 fn signed_polynomial_at_root(
     polynomial: Option<&BezierParameterPolynomial>,
     parameter: &BezierParameter2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     let Some(polynomial) = polynomial else {
         return Ok(Classification::Decided(RealSign::Zero));
@@ -2571,7 +2580,7 @@ fn signed_polynomial_on_isolating_interval(
     filter: &BezierParameterPolynomial,
     defining: &BezierParameterPolynomial,
     interval: &BezierParameterInterval,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     depth: usize,
 ) -> CurveResult<Classification<RealSign>> {
     let count = match filter.root_count_in_interval(interval, policy) {
@@ -2635,7 +2644,7 @@ mod conversion_tests {
         let coefficients =
             power_to_bernstein_coefficients(&[Real::zero(), Real::one()], degree).unwrap();
         let degree_real = Real::from(u64::try_from(degree).unwrap());
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         assert_eq!(coefficients.len(), degree + 1);
         for (index, coefficient) in coefficients.iter().enumerate() {

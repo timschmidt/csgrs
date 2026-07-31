@@ -5,7 +5,7 @@ use hypercurve::{
     BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
     BezierAlgebraicTangentVector2, BezierAlgebraicTangentVectorEvidence,
     BezierAlgebraicTangentVectorStatus, BezierEndpointTangentImage2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierTangentTurnOrdering2, Classification, CurvePolicy, Point2,
+    BezierParameterPolynomial, BezierTangentTurnOrdering2, Classification, CurveContext, Point2,
     QuadraticBezier2, RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
     compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
@@ -26,8 +26,8 @@ fn pi(x: i32, y: i32) -> Point2 {
     p(r(x), r(y))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn decided<T>(classification: Classification<T>) -> T {

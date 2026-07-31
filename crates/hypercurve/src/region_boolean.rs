@@ -11,7 +11,7 @@ use crate::region_fragments::split_single_material_line_regions_compact;
 use crate::{
     Aabb2, BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
     BooleanFragmentSelection, BooleanOp, BulgeVertex2, Classification, Contour2,
-    ContourIntersection, CurveError, CurvePolicy, CurveResult, FillRule, IntersectionKind,
+    ContourIntersection, CurveContext, CurveError, CurveResult, FillRule, IntersectionKind,
     LineArcRegion2, Point2, Real, RegionFragmentSet, RegionIntersectionSet, RegionPointLocation,
     RegionSide, RegionView2, Segment2, UncertaintyReason,
 };
@@ -50,7 +50,7 @@ struct AxisRect {
 impl AxisRect {
     fn from_view(
         region: &RegionView2<'_>,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Self>>> {
         if region.material_contours().len() != 1 || !region.hole_contours().is_empty() {
             return Ok(Classification::Decided(None));
@@ -86,25 +86,25 @@ impl AxisRect {
     }
 }
 
-fn real_eq(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
+fn real_eq(left: &Real, right: &Real, policy: &CurveContext) -> Option<bool> {
     compare_reals(left, right, policy).map(|ordering| ordering == Ordering::Equal)
 }
 
-fn real_min(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Real> {
+fn real_min(left: &Real, right: &Real, policy: &CurveContext) -> Option<Real> {
     match compare_reals(left, right, policy)? {
         Ordering::Less | Ordering::Equal => Some(left.clone()),
         Ordering::Greater => Some(right.clone()),
     }
 }
 
-fn real_max(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Real> {
+fn real_max(left: &Real, right: &Real, policy: &CurveContext) -> Option<Real> {
     match compare_reals(left, right, policy)? {
         Ordering::Less | Ordering::Equal => Some(right.clone()),
         Ordering::Greater => Some(left.clone()),
     }
 }
 
-fn real_lt(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
+fn real_lt(left: &Real, right: &Real, policy: &CurveContext) -> Option<bool> {
     compare_reals(left, right, policy).map(|ordering| ordering == Ordering::Less)
 }
 
@@ -130,7 +130,7 @@ pub(crate) fn coextensive_axis_rect_region_boolean(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<LineArcRegion2>>> {
     let first = match AxisRect::from_view(first, policy)? {
         Classification::Decided(Some(rect)) => rect,
@@ -194,7 +194,7 @@ fn strip_boolean_region(
     cross_max: Real,
     horizontal: bool,
     op: BooleanOp,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<LineArcRegion2> {
     let overlap_min = real_max(&first_min, &second_min, policy).ok_or(UncertaintyReason::Ordering);
     let Ok(overlap_min) = overlap_min else {
@@ -348,7 +348,7 @@ fn strip_difference_contours(
     cross_min: Real,
     cross_max: Real,
     horizontal: bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<Vec<Contour2>> {
     let mut contours = Vec::new();
     let left_kept = real_lt(&first_min, &second_min, policy).ok_or(UncertaintyReason::Ordering);
@@ -422,7 +422,7 @@ impl LineArcRegion2 {
         &self,
         other: &Self,
         op: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
         self.as_view()
             .boolean_boundary_loops(&other.as_view(), op, policy)
@@ -438,7 +438,7 @@ impl LineArcRegion2 {
         other: &Self,
         op: BooleanOp,
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<Contour2>>> {
         self.as_view()
             .boolean_boundary_contours(&other.as_view(), op, fill_rule, policy)
@@ -454,7 +454,7 @@ impl LineArcRegion2 {
         other: &Self,
         op: BooleanOp,
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         self.as_view()
             .boolean_region(&other.as_view(), op, fill_rule, policy)
@@ -475,7 +475,7 @@ impl RegionView2<'_> {
         &self,
         other: &RegionView2<'_>,
         op: BooleanOp,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
         boolean_boundary_loops_between(self, other, op, policy)
     }
@@ -489,7 +489,7 @@ impl RegionView2<'_> {
         other: &RegionView2<'_>,
         op: BooleanOp,
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<Contour2>>> {
         boolean_boundary_contours_between(self, other, op, fill_rule, policy)
     }
@@ -505,7 +505,7 @@ impl RegionView2<'_> {
         other: &RegionView2<'_>,
         op: BooleanOp,
         fill_rule: FillRule,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<LineArcRegion2>> {
         boolean_region_between(self, other, op, fill_rule, policy)
     }
@@ -515,7 +515,7 @@ pub(crate) fn boolean_boundary_loops_between(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
     match boolean_boundary_between(
         first,
@@ -540,7 +540,7 @@ pub(crate) fn boolean_boundary_contours_between(
     second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
     match boolean_boundary_between(
         first,
@@ -563,7 +563,7 @@ fn xor_boundary_contours_by_region(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
     // The checked-contour API can express the boundary loops of a symmetric
     // difference, but it cannot attach material/hole roles to them. Build the
@@ -584,7 +584,7 @@ pub(crate) fn boolean_region_between(
     second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<LineArcRegion2>> {
     boolean_region_between_impl(first, second, op, fill_rule, policy)
 }
@@ -594,7 +594,7 @@ fn boolean_region_between_impl(
     second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<LineArcRegion2>> {
     if let Some(region) = coincident_hole_component_boolean(first, second, op) {
         return Ok(Classification::Decided(region));
@@ -674,7 +674,7 @@ pub(crate) fn retained_offset_region_boolean(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<LineArcRegion2> {
     use crate::contour::RetainedContourOffsetRelation2::{
         FirstContainsSecond, SecondContainsFirst,
@@ -767,7 +767,7 @@ pub(crate) fn boolean_boundary_between(
     op: BooleanOp,
     fill_rule: FillRule,
     known_boundary_events: Option<&RegionIntersectionSet>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     output_kind: BooleanBoundaryOutputKind,
 ) -> CurveResult<Classification<BooleanBoundaryOutput>> {
     if same_region_view(first, second) {
@@ -1146,7 +1146,7 @@ fn boundary_contact_resolution_from_intersections(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     intersections: &RegionIntersectionSet,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BoundaryContactResolution>>> {
     if intersections.is_empty() {
         return Ok(Classification::Decided(None));
@@ -1244,7 +1244,7 @@ fn split_contact_interiors_are_disjoint(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     intersections: &crate::RegionIntersectionSet,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let fragments = match intersections.split_regions(first, second, policy)? {
         Classification::Decided(fragments) => fragments,
@@ -1297,7 +1297,7 @@ fn split_contact_interiors_are_disjoint(
 fn unsplit_contact_interiors_are_disjoint(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let mut first_has_outside_sample = false;
     let mut second_has_outside_sample = false;
@@ -1352,7 +1352,7 @@ fn scan_unsplit_contact_samples(
     contours: &[&Contour2],
     opposite: &RegionView2<'_>,
     has_outside_sample: &mut bool,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let mut blocker = None;
     for contour in contours {
@@ -1388,7 +1388,7 @@ fn scan_unsplit_contact_samples(
 fn boundary_contact_containment_relation(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BoundaryContainmentRelation>>> {
     let first_contains_second =
         match region_contains_region_boundary_samples(first, second, policy)? {
@@ -1414,7 +1414,7 @@ fn boundary_contact_containment_relation(
 fn region_contains_region_boundary_samples(
     container: &RegionView2<'_>,
     candidate: &RegionView2<'_>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     boundary_contours_inside_or_on_region(
         candidate
@@ -1430,7 +1430,7 @@ fn region_contains_region_boundary_samples(
 pub(crate) fn boundary_contours_inside_or_on_region<'a, I, F>(
     contours: I,
     mut classify_point: F,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<bool>>
 where
     I: IntoIterator<Item = &'a Contour2>,
@@ -1525,7 +1525,7 @@ fn containment_difference_boundary_contours(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
     let intersections = first.intersect_region(second, policy)?;
     let fragments = match intersections.split_regions(first, second, policy)? {
@@ -1552,7 +1552,7 @@ fn boundary_contact_boundary_contours(
     second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     kind: BoundaryContactKind,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
     // Boundary-only contacts carry no filled area. The degenerate-intersection
@@ -1581,7 +1581,7 @@ fn boundary_overlap_union_contours(
     second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
     let intersections = first.intersect_region(second, policy)?;
     let fragments = match intersections.split_regions(first, second, policy)? {
@@ -1601,7 +1601,7 @@ pub(crate) fn boundary_contours_resolving_shared_boundaries(
     selection: &BooleanFragmentSelection,
     op: BooleanOp,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
     let selection = match resolve_shared_boundary_selection(fragments, selection, op)? {
         Classification::Decided(selection) => selection,
@@ -1791,7 +1791,7 @@ fn xor_region_by_difference_union(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     fill_rule: FillRule,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> CurveResult<Classification<LineArcRegion2>> {
     // Region XOR is the symmetric difference `(A - B) union (B - A)`. Using
     // the set identity lets the region-level API reuse the better-tested difference and
@@ -2004,7 +2004,7 @@ mod tests {
         let hole = rectangle_at(1, 1, 3, 3);
         let ring = LineArcRegion2::new(vec![outer], vec![hole.clone()]);
         let plug = LineArcRegion2::from_material_contours(vec![hole]);
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
 
         let intersection = decided_region(ring.boolean_region(
             &plug,
@@ -2095,7 +2095,7 @@ mod tests {
                 real(0),
                 true,
                 BooleanOp::Union,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             ),
             Classification::Uncertain(UncertaintyReason::Unsupported)
         );

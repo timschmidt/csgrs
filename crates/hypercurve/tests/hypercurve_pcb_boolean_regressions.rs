@@ -6,7 +6,9 @@
 //! severe performance cliff in the unified region kernel. Keep both a routine
 //! reduced case and the original Easyduino-scale topology in the corpus.
 
-use hypercurve::{BulgeVertex2, Classification, Contour2, CurvePolicy, CurveRegion2, Point2, Real};
+use hypercurve::{
+    BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, Point2, Real,
+};
 
 fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
@@ -79,7 +81,7 @@ fn pcb_containment_fixture(
         .take(subject_count)
         .map(|(x, y)| subdivided_square(x, y, 28, 14))
         .collect::<Vec<_>>();
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     (
         CurveRegion2::try_from_native_contours(cover, Vec::new(), &policy)
             .expect("disjoint cover components form an exact region"),
@@ -94,7 +96,7 @@ fn assert_exact_containment_difference_is_empty(cover_count: usize, subject_coun
         .boolean_region(
             &cover,
             hypercurve::BooleanOp::Difference,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .expect("PCB containment difference must decide exactly")
         .value;
@@ -103,7 +105,7 @@ fn assert_exact_containment_difference_is_empty(cover_count: usize, subject_coun
     for point in [point(0, 0), point(100, 0)] {
         assert_eq!(
             cover
-                .classify_point(&point, &CurvePolicy::STRICT)
+                .classify_point(&point, &CurveContext::STRICT)
                 .expect("cover point classification must decide"),
             Classification::Decided(hypercurve::RegionPointLocation::Inside),
         );
@@ -149,7 +151,7 @@ fn easyduino_uno_scale_process_image_with_holes_corpus() {
         .take(136)
         .map(|(x, y)| subdivided_square(x, y, 28, 14))
         .collect::<Vec<_>>();
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let cover = CurveRegion2::try_from_native_contours(materials, holes, &policy)
         .expect("holed front-copper corpus forms an exact region");
     let subject = CurveRegion2::try_from_native_contours(subjects, Vec::new(), &policy)
@@ -178,11 +180,11 @@ fn pcb_process_image_hole_ownership_culls_sparse_materials() {
         .take(128)
         .map(|(x, y)| subdivided_square(x, y, 10, 10))
         .collect::<Vec<_>>();
-    let region = CurveRegion2::try_from_native_contours(materials, holes, &CurvePolicy::STRICT)
+    let region = CurveRegion2::try_from_native_contours(materials, holes, &CurveContext::STRICT)
         .expect("sparse material and hole loops form an exact region");
 
     let profiles = region
-        .boundary_profiles(&CurvePolicy::STRICT)
+        .boundary_profiles(&CurveContext::STRICT)
         .expect("PCB profile ownership must complete exactly");
     let Classification::Decided(profiles) = profiles else {
         panic!("PCB profile ownership must decide");

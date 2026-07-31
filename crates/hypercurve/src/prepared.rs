@@ -15,7 +15,7 @@ use crate::bbox::{
 use crate::events::SegmentAabbXIndex;
 use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::{
-    CircularArc2, Classification, Contour2, ContourPointLocation, CurvePolicy, CurveString2,
+    CircularArc2, Classification, Contour2, ContourPointLocation, CurveContext, CurveString2,
     FillRule, LineSeg2, LineSide, Point2, RegionPointLocation, RegionView2, Segment2,
     UncertaintyReason,
 };
@@ -87,9 +87,13 @@ impl<'a> PreparedLineSeg2<'a> {
     }
 
     /// Classifies a point relative to this segment's oriented supporting line.
-    pub fn classify_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<LineSide> {
+    pub fn classify_point(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<LineSide> {
         #[cfg(feature = "predicates")]
-        if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+        if !policy.is_edge_preview() {
             // Reuse the fixed endpoint conversion and orientation evidence, then let
             // hyperlimit select the exact determinant schedule. This is the
             // certified orientation predicate at the curve-object
@@ -187,10 +191,10 @@ impl<'a> PreparedCircularArc2<'a> {
     pub fn contains_sweep_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<bool> {
         #[cfg(feature = "predicates")]
-        if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+        if !policy.is_edge_preview() {
             let sweep_kind = match crate::arc_bezier::classify_sweep(self.arc) {
                 Ok(kind) => kind,
                 Err(crate::ExactCurveError::Blocked(blocker)) => {
@@ -233,7 +237,7 @@ impl<'a> PreparedCircularArc2<'a> {
     }
 
     /// Classifies whether a point lies on this finite circular arc.
-    pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         let radius_delta = point.distance_squared(self.arc.center()) - self.arc.radius_squared();
         match crate::classify::is_zero(&radius_delta, policy) {
             Some(false) => Classification::Decided(false),
@@ -268,7 +272,7 @@ impl<'a> PreparedSegment2<'a> {
     }
 
     /// Classifies whether a point lies on this finite query segment.
-    pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+    pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         match self {
             Self::Line(line) => {
                 let side = match line.classify_point(point, policy) {
@@ -285,7 +289,7 @@ impl<'a> PreparedSegment2<'a> {
     }
 }
 
-pub(crate) fn curve_string_facts(curve: &CurveString2, policy: &CurvePolicy) -> CurveStringFacts {
+pub(crate) fn curve_string_facts(curve: &CurveString2, policy: &CurveContext) -> CurveStringFacts {
     let segment_boxes = decided_segment_boxes(curve.segments(), policy);
     let curve_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
     crate::facts::curve_string_facts(
@@ -295,7 +299,7 @@ pub(crate) fn curve_string_facts(curve: &CurveString2, policy: &CurvePolicy) -> 
     )
 }
 
-pub(crate) fn contour_facts(contour: &Contour2, policy: &CurvePolicy) -> CurveStringFacts {
+pub(crate) fn contour_facts(contour: &Contour2, policy: &CurveContext) -> CurveStringFacts {
     let segment_boxes = decided_segment_boxes(contour.segments(), policy);
     let contour_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
     crate::facts::contour_facts(
@@ -305,7 +309,7 @@ pub(crate) fn contour_facts(contour: &Contour2, policy: &CurvePolicy) -> CurveSt
     )
 }
 
-pub(crate) fn region_view_facts(region: &RegionView2<'_>, policy: &CurvePolicy) -> RegionFacts {
+pub(crate) fn region_view_facts(region: &RegionView2<'_>, policy: &CurveContext) -> RegionFacts {
     let contour_boxes = region
         .material_contours()
         .iter()
@@ -352,7 +356,7 @@ struct PreparedLineWindingIndex {
 
 impl<'a> ContourQuery2<'a> {
     /// Builds a borrowed query for a contour.
-    pub fn from_contour(contour: &'a Contour2, policy: &CurvePolicy) -> Self {
+    pub fn from_contour(contour: &'a Contour2, policy: &CurveContext) -> Self {
         // Structural-dispatch note: contour query construction can preserve ring-level
         // facts such as convexity, orientation certainty, y-monotonicity, and
         // hole/material provenance for future triangulation and Boolean-region
@@ -403,7 +407,7 @@ impl<'a> ContourQuery2<'a> {
     pub fn classify_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<ContourPointLocation> {
         if self
             .contour_box
@@ -442,7 +446,7 @@ impl<'a> ContourQuery2<'a> {
     pub(crate) fn classify_point_assuming_off_boundary(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<ContourPointLocation> {
         if self
             .contour_box
@@ -484,7 +488,7 @@ pub(crate) struct RegionQuery2<'a> {
 
 impl<'a> RegionQuery2<'a> {
     /// Builds a query view from a borrowed region view.
-    pub fn from_region_view(region: &RegionView2<'a>, policy: &CurvePolicy) -> Self {
+    pub fn from_region_view(region: &RegionView2<'a>, policy: &CurveContext) -> Self {
         let material_prepared_contours: Vec<_> = region
             .material_contours()
             .iter()
@@ -513,7 +517,7 @@ impl<'a> RegionQuery2<'a> {
     pub fn classify_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<RegionPointLocation> {
         let depth = match self.signed_depth(point, policy) {
             Classification::Decided(depth) => depth,
@@ -533,7 +537,7 @@ impl<'a> RegionQuery2<'a> {
     pub(crate) fn classify_point_assuming_off_boundary(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Classification<RegionPointLocation> {
         // Complete split-marker construction can prove that an interior
         // fragment sample is not on the opposite boundary. Preserve that
@@ -580,7 +584,7 @@ impl<'a> RegionQuery2<'a> {
     /// [`RegionView2::signed_depth`]. Decided cached-box misses are skipped, then
     /// candidate contours are classified with the boundary-first winding
     /// structure described by boundary-first winding classification, with this crate's circular-arc extension.
-    pub fn signed_depth(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
+    pub fn signed_depth(&self, point: &Point2, policy: &CurveContext) -> Classification<i32> {
         if self
             .region_box
             .as_ref()
@@ -607,7 +611,10 @@ impl<'a> RegionQuery2<'a> {
     }
 }
 
-fn decided_segment_boxes(segments: &[crate::Segment2], policy: &CurvePolicy) -> Vec<Option<Aabb2>> {
+fn decided_segment_boxes(
+    segments: &[crate::Segment2],
+    policy: &CurveContext,
+) -> Vec<Option<Aabb2>> {
     segments
         .iter()
         .map(|segment| decided_segment_aabb(segment, policy))
@@ -624,7 +631,7 @@ fn prepared_segments(segments: &[Segment2]) -> Vec<PreparedSegment2<'_>> {
 fn prepared_point_on_contour_boundary(
     contour: &ContourQuery2<'_>,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     if let Some(index) = contour.segment_x_index.as_ref() {
         let mut candidates = Vec::new();
@@ -654,7 +661,7 @@ fn prepared_point_on_contour_boundary_candidates(
     contour: &ContourQuery2<'_>,
     candidates: impl Iterator<Item = usize>,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<bool> {
     let mut blocker = None;
     for index in candidates {
@@ -684,7 +691,7 @@ fn prepared_point_on_contour_boundary_candidates(
 fn prepared_contour_winding_number_unchecked(
     contour: &ContourQuery2<'_>,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<i32> {
     if let Some(index) = contour.line_winding_index.as_ref()
         && let Some((max_x_start, min_y_end, max_y_start)) =
@@ -726,7 +733,7 @@ fn accumulate_prepared_contour_winding(
     contour: &ContourQuery2<'_>,
     segment_indices: impl Iterator<Item = usize>,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<i32> {
     let mut winding = 0;
     for index in segment_indices {
@@ -748,9 +755,9 @@ fn accumulate_prepared_contour_winding(
 
 fn segment_indices_sorted_by_max_x(
     segment_boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<Vec<usize>> {
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+    if policy.is_edge_preview() {
         return None;
     }
     segment_indices_sorted_by_box_coordinate(segment_boxes, policy, Aabb2::max_x)
@@ -760,12 +767,10 @@ fn prepared_line_winding_index(
     segments: &[Segment2],
     segment_boxes: &[Option<Aabb2>],
     segment_indices_by_max_x: Option<&[usize]>,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<PreparedLineWindingIndex> {
     const MIN_INDEXED_LINE_SEGMENTS: usize = 8;
-    if segments.len() < MIN_INDEXED_LINE_SEGMENTS
-        || matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
-    {
+    if segments.len() < MIN_INDEXED_LINE_SEGMENTS || policy.is_edge_preview() {
         return None;
     }
     let segment_indices_by_max_x = segment_indices_by_max_x?.to_vec();
@@ -800,7 +805,7 @@ fn prepared_line_winding_index(
 
 fn segment_indices_sorted_by_box_coordinate(
     segment_boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     coordinate: crate::events::BoxCoordinate,
 ) -> Option<Vec<usize>> {
     if segment_boxes.iter().any(Option::is_none) {
@@ -829,7 +834,7 @@ fn line_winding_candidate_cuts(
     contour: &ContourQuery2<'_>,
     index: &PreparedLineWindingIndex,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<(usize, usize, usize)> {
     let max_x_start = sorted_box_coordinate_partition(
         &index.segment_indices_by_max_x,
@@ -862,11 +867,11 @@ fn sorted_box_coordinate_partition(
     indices: &[usize],
     segment_boxes: &[Option<Aabb2>],
     query: &crate::Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     coordinate: for<'a> fn(&'a Aabb2) -> &'a crate::Real,
     include_equal_in_lower_partition: bool,
 ) -> Option<usize> {
-    if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+    if !policy.is_edge_preview()
         && let Some(query_preview) = query.to_f64_lossy().filter(|value| value.is_finite())
     {
         let mut preview_start = 0;
@@ -921,7 +926,7 @@ fn partition_boundary_is_certified(
     indices: &[usize],
     segment_boxes: &[Option<Aabb2>],
     query: &crate::Real,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
     coordinate: for<'a> fn(&'a Aabb2) -> &'a crate::Real,
     include_equal_in_lower_partition: bool,
     partition: usize,
@@ -952,7 +957,7 @@ fn partition_boundary_is_certified(
 fn sorted_winding_candidate_indices<'a>(
     contour: &'a ContourQuery2<'_>,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<&'a [usize]> {
     let indices = contour.winding_segment_indices_by_max_x.as_deref()?;
     let mut start = 0;
@@ -973,7 +978,7 @@ fn prepared_line_winding(
     line: &PreparedLineSeg2<'_>,
     segment_box: Option<&Aabb2>,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<i32> {
     let source = line.line_segment();
     let start_at_or_below = !matches!(
@@ -1007,7 +1012,7 @@ fn prepared_line_crossing_winding(
     segment_box: Option<&Aabb2>,
     point: &Point2,
     direction: i32,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Option<i32> {
     // The y tests or retained interval index prove one ray crossing. If the
     // complete line box is strictly right of the query, that crossing is on
@@ -1031,7 +1036,7 @@ fn accumulate_indexed_line_winding(
     index: &PreparedLineWindingIndex,
     segment_indices: impl Iterator<Item = usize>,
     point: &Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<i32> {
     let mut winding = 0;
     for segment_index in segment_indices {
@@ -1067,14 +1072,14 @@ fn classify_oriented_line(
     to: &hyperlimit::Point2,
     orientation: &hyperlimit::Line2Orientation,
     point: &hyperlimit::Point2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<LineSide> {
     match policy.consume_predicate(hyperlimit::classify_point_line_with_orientation(
         from,
         to,
         point,
         orientation,
-        policy.predicate_policy,
+        policy.predicate_policy(),
     )) {
         Some(value) => Classification::Decided(line_side_from_hyperlimit(value)),
         None => Classification::Uncertain(UncertaintyReason::Predicate),
@@ -1090,7 +1095,7 @@ const fn line_side_from_hyperlimit(side: hyperlimit::LineSide) -> LineSide {
     }
 }
 
-fn union_all_decided_boxes<'a, I>(boxes: I, policy: &CurvePolicy) -> Option<Aabb2>
+fn union_all_decided_boxes<'a, I>(boxes: I, policy: &CurveContext) -> Option<Aabb2>
 where
     I: IntoIterator<Item = Option<&'a Aabb2>>,
 {
@@ -1114,7 +1119,7 @@ fn accumulate_depth(
     contours: &[ContourQuery2<'_>],
     point: &Point2,
     sign: i32,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<()> {
     for contour in contours {
         if contour
@@ -1142,7 +1147,7 @@ fn accumulate_depth_assuming_off_boundary(
     contours: &[ContourQuery2<'_>],
     point: &Point2,
     sign: i32,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Classification<()> {
     for contour in contours {
         if contour

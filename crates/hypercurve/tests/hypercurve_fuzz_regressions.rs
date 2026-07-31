@@ -1,5 +1,5 @@
 use hypercurve::{
-    CurvePolicy, LineArcIntersection, LineSeg2, Point2, Real, Segment2, SegmentIntersection,
+    CurveContext, LineArcIntersection, LineSeg2, Point2, Real, Segment2, SegmentIntersection,
 };
 
 fn s(value: i32) -> Real {
@@ -10,8 +10,8 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 #[test]

@@ -1,5 +1,5 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, LineArcRegion2, Real,
+    BulgeVertex2, Classification, Contour2, CurveContext, CurveError, LineArcRegion2, Real,
     RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentSet, RegionSide,
 };
 
@@ -28,8 +28,8 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     ])
 }
 
-fn policy() -> CurvePolicy {
-    CurvePolicy::STRICT
+fn policy() -> CurveContext {
+    CurveContext::STRICT
 }
 
 fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
