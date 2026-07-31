@@ -1539,8 +1539,9 @@ fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, B
         .map(|curve| curve.start().clone())
         .collect::<Vec<_>>();
     let mut candidates = Vec::with_capacity(vertices.len() + 60);
-    if let Some(average) = average_planar_points(&vertices)? {
-        candidates.push(average);
+    let vertex_average = average_planar_points(&vertices)?;
+    if let Some(average) = &vertex_average {
+        candidates.push(average.clone());
     }
     if vertices.len() >= 3 {
         for index in 0..vertices.len() {
@@ -1554,23 +1555,51 @@ fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, B
             );
         }
     }
-    let bounds = outer.bounds().map_err(GeometryError::from)?;
-    for denominator_value in [2_u64, 4, 8] {
-        let denominator = Real::from(denominator_value);
-        for u_index in 1..denominator_value {
-            for v_index in 1..denominator_value {
-                let u_fraction = (Real::from(u_index) / &denominator)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
-                let v_fraction = (Real::from(v_index) / &denominator)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
-                candidates.push(hypercurve::Point2::new(
-                    bounds.min_x() + (bounds.max_x() - bounds.min_x()) * u_fraction,
-                    bounds.min_y() + (bounds.max_y() - bounds.min_y()) * v_fraction,
-                ));
+    let mut last_reason = None;
+    let grid_bounds = match outer.bounds() {
+        Ok(bounds) => Some((
+            bounds.min_x().clone(),
+            bounds.max_x().clone(),
+            bounds.min_y().clone(),
+            bounds.max_y().clone(),
+        )),
+        Err(ExactCurveError::Blocked(blocker)) => {
+            last_reason = Some(blocker.reason());
+            append_curved_boundary_witness_candidates(
+                model,
+                &outer,
+                face_record.inner(),
+                &vertices,
+                &vertex_average,
+                &mut candidates,
+            )?;
+            match (
+                finite_surface_parameter_bounds(surface.domain().u()),
+                finite_surface_parameter_bounds(surface.domain().v()),
+            ) {
+                (Some((min_x, max_x)), Some((min_y, max_y))) => Some((min_x, max_x, min_y, max_y)),
+                _ => None,
+            }
+        }
+        Err(error) => return Err(GeometryError::from(error).into()),
+    };
+    if let Some((min_x, max_x, min_y, max_y)) = grid_bounds {
+        for denominator_value in [2_u64, 4, 8] {
+            let denominator = Real::from(denominator_value);
+            for u_index in 1..denominator_value {
+                for v_index in 1..denominator_value {
+                    let u_fraction = (Real::from(u_index) / &denominator)
+                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    let v_fraction = (Real::from(v_index) / &denominator)
+                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    candidates.push(hypercurve::Point2::new(
+                        &min_x + (&max_x - &min_x) * u_fraction,
+                        &min_y + (&max_y - &min_y) * v_fraction,
+                    ));
+                }
             }
         }
     }
-    let mut last_reason = None;
     let mut witnesses = Vec::new();
     for candidate in candidates {
         match model.classify_surface_parameter_on_face(face, &candidate)? {
@@ -1599,6 +1628,65 @@ fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, B
     }
 }
 
+fn append_curved_boundary_witness_candidates(
+    model: &Model,
+    outer: &CurvePath2,
+    inner_wires: &[crate::WireId],
+    vertices: &[hypercurve::Point2],
+    vertex_average: &Option<hypercurve::Point2>,
+    candidates: &mut Vec<hypercurve::Point2>,
+) -> Result<(), GeometryError> {
+    let half = (Real::one() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let mut outer_boundary_probes = vertices.to_vec();
+    for curve in outer.curves() {
+        let midpoint = curve.point_at(&half).map_err(GeometryError::from)?;
+        outer_boundary_probes.push(midpoint.clone());
+        candidates.push(
+            average_planar_points(&[curve.start().clone(), midpoint.clone(), curve.end().clone()])?
+                .expect("three curve points are nonempty"),
+        );
+        if let Some(average) = vertex_average {
+            candidates.push(
+                average_planar_points(&[midpoint, average.clone()])?
+                    .expect("two curve points are nonempty"),
+            );
+        }
+    }
+    for inner_wire in inner_wires {
+        let inner_wire = model.wire(*inner_wire).expect("validated inner wire");
+        let inner_curves = inner_wire
+            .edge_uses()
+            .iter()
+            .map(|edge_use| {
+                let edge_use = model.edge_use(*edge_use).expect("validated edge use");
+                model
+                    .pcurve(edge_use.pcurve())
+                    .expect("validated pcurve")
+                    .curve()
+                    .clone()
+            })
+            .collect::<Vec<_>>();
+        let inner = CurvePath2::try_new(inner_curves).map_err(GeometryError::from)?;
+        let mut inner_boundary_probes = inner
+            .curves()
+            .iter()
+            .map(|curve| curve.start().clone())
+            .collect::<Vec<_>>();
+        for curve in inner.curves() {
+            inner_boundary_probes.push(curve.point_at(&half).map_err(GeometryError::from)?);
+        }
+        for outer_probe in &outer_boundary_probes {
+            for inner_probe in &inner_boundary_probes {
+                candidates.push(
+                    average_planar_points(&[outer_probe.clone(), inner_probe.clone()])?
+                        .expect("two boundary probes are nonempty"),
+                );
+            }
+        }
+    }
+    Ok(())
+}
+
 fn surface_parameter_witness(
     domain: &crate::SurfaceParameterDomain,
 ) -> Result<Real, GeometryError> {
@@ -1611,6 +1699,19 @@ fn surface_parameter_witness(
             Ok(start + (period / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?)
         }
         crate::SurfaceParameterDomain::LowerBounded { start } => Ok(start + Real::one()),
+    }
+}
+
+fn finite_surface_parameter_bounds(domain: &crate::SurfaceParameterDomain) -> Option<(Real, Real)> {
+    match domain {
+        crate::SurfaceParameterDomain::Closed(domain) => {
+            Some((domain.start().clone(), domain.end().clone()))
+        }
+        crate::SurfaceParameterDomain::Periodic { start, period } => {
+            Some((start.clone(), start + period))
+        }
+        crate::SurfaceParameterDomain::Unbounded
+        | crate::SurfaceParameterDomain::LowerBounded { .. } => None,
     }
 }
 
