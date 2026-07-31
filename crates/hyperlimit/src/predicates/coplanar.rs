@@ -224,6 +224,20 @@ pub fn classify_triangle3_degeneracy_with_policy(
     }
     for (index, (a, b, c)) in projections.iter().copied().enumerate() {
         if signs[index].is_none()
+            && let Some(sign) = super::orient::orient2d_certified_rational_filter(a, b, c)
+        {
+            if sign != Sign::Zero {
+                return PredicateOutcome::decided(
+                    TriangleDegeneracy::NonDegenerate,
+                    Certainty::Exact,
+                    Escalation::Exact,
+                );
+            }
+            signs[index] = Some(Sign::Zero);
+        }
+    }
+    for (index, (a, b, c)) in projections.iter().copied().enumerate() {
+        if signs[index].is_none()
             && let Some(sign) = super::exact::orient2d_coordinates(a, b, c)
         {
             if sign != Sign::Zero {
@@ -774,6 +788,7 @@ fn unknown_with_projection(
 mod tests {
     use super::*;
     use crate::Real;
+    use hyperreal::Rational;
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
@@ -798,6 +813,28 @@ mod tests {
         let degenerate =
             crate::classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 1, 1), &p3(2, 2, 2), APPROX);
         assert_eq!(degenerate.value(), Some(TriangleDegeneracy::Degenerate));
+    }
+
+    #[test]
+    fn triangle3_degeneracy_filters_rationals_beyond_word_kernel_exactly() {
+        let word = Rational::new(i64::MAX);
+        let square = &word * &word;
+        let wide = Real::from(&square * &Rational::new(8));
+        let zero = Real::zero();
+        let a = Point3::new(zero.clone(), zero.clone(), zero.clone());
+        let b = Point3::new(wide.clone(), zero.clone(), zero.clone());
+        let c = Point3::new(zero.clone(), wide, zero);
+
+        for policy in [PredicatePolicy::STRICT, APPROX] {
+            assert_eq!(
+                crate::classify_triangle3_degeneracy(&a, &b, &c, policy),
+                PredicateOutcome::decided(
+                    TriangleDegeneracy::NonDegenerate,
+                    Certainty::Exact,
+                    Escalation::Exact
+                )
+            );
+        }
     }
 
     #[test]

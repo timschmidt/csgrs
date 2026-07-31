@@ -44,6 +44,10 @@ pub(crate) fn orient2d_coordinates_with_policy(
         return PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact);
     }
 
+    if let Some(sign) = orient2d_certified_rational_filter(a, b, c) {
+        return PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact);
+    }
+
     // Structural-dispatch note: when callers carry integer-grid scale,
     // affine-transform conditioning, or dyadic denominator facts, this
     // predicate can choose a faster exact determinant expansion before building
@@ -111,6 +115,21 @@ pub(crate) fn orient2d_exact_word_filter(
 ) -> Option<Sign> {
     let sign = Real::exact_rational_affine_det2_word_sign(a, b, c)?;
     crate::trace_dispatch!("hyperlimit", "orient2d", "exact-word-rational-det2-filter");
+    Some(crate::real::map_real_sign(sign))
+}
+
+#[inline]
+pub(crate) fn orient2d_certified_rational_filter(
+    a: [&Real; 2],
+    b: [&Real; 2],
+    c: [&Real; 2],
+) -> Option<Sign> {
+    let sign = Real::certified_rational_line2_sign(
+        [a[0].exact_rational_ref()?, a[1].exact_rational_ref()?],
+        [b[0].exact_rational_ref()?, b[1].exact_rational_ref()?],
+        [c[0].exact_rational_ref()?, c[1].exact_rational_ref()?],
+    )?;
+    crate::trace_dispatch!("hyperlimit", "orient2d", "certified-rational-det2-filter");
     Some(crate::real::map_real_sign(sign))
 }
 
@@ -1565,6 +1584,64 @@ mod tests {
             trace.path_count("hyperlimit", "exact_orient2d", "rational-det2"),
             0
         );
+    }
+
+    fn rational_beyond_i128() -> Rational {
+        let word = Rational::new(i64::MAX);
+        let square = &word * &word;
+        &square * &Rational::new(8)
+    }
+
+    #[test]
+    fn orient2d_certified_rational_filter_handles_values_beyond_word_kernel() {
+        let zero = Real::zero();
+        let wide = Real::from(rational_beyond_i128());
+        let a = [&zero, &zero];
+        let b = [&wide, &zero];
+        let c = [&zero, &wide];
+
+        assert_eq!(orient2d_exact_word_filter(a, b, c), None);
+        assert_eq!(
+            orient2d_certified_rational_filter(a, b, c),
+            Some(Sign::Positive)
+        );
+
+        let a = Point2::new(zero.clone(), zero.clone());
+        let b = Point2::new(wide.clone(), zero.clone());
+        let c = Point2::new(zero, wide);
+        for policy in [PredicatePolicy::STRICT, APPROX] {
+            assert_eq!(
+                orient2d_with_policy(&a, &b, &c, policy),
+                PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
+            );
+        }
+    }
+
+    #[test]
+    fn orient2d_certified_rational_filter_falls_through_on_exact_boundary() {
+        let zero = Real::zero();
+        let wide = rational_beyond_i128();
+        let two_wide = &wide * &Rational::new(2);
+        let four_wide = &wide * &Rational::new(4);
+        let wide = Real::from(wide);
+        let two_wide = Real::from(two_wide);
+        let four_wide = Real::from(four_wide);
+        let a = [&zero, &zero];
+        let b = [&wide, &two_wide];
+        let c = [&two_wide, &four_wide];
+
+        assert_eq!(orient2d_exact_word_filter(a, b, c), None);
+        assert_eq!(orient2d_certified_rational_filter(a, b, c), None);
+
+        let a = Point2::new(zero.clone(), zero);
+        let b = Point2::new(wide, two_wide.clone());
+        let c = Point2::new(two_wide, four_wide);
+        for policy in [PredicatePolicy::STRICT, APPROX] {
+            assert_eq!(
+                orient2d_with_policy(&a, &b, &c, policy),
+                PredicateOutcome::decided(Sign::Zero, Certainty::Exact, Escalation::Exact)
+            );
+        }
     }
 
     #[cfg(feature = "dispatch-trace")]
