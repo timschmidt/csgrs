@@ -716,12 +716,7 @@ fuzz_target!(|bytes: &[u8]| {
             bilinear_controls.clone(),
             bilinear_weights.clone(),
             vec![Real::from(2), Real::from(2), Real::from(5), Real::from(5)],
-            vec![
-                Real::from(-3),
-                Real::from(-3),
-                Real::from(7),
-                Real::from(7),
-            ],
+            vec![Real::from(-3), Real::from(-3), Real::from(7), Real::from(7)],
         )
     } else {
         Surface::rational_bezier(bilinear_controls.clone(), bilinear_weights.clone())
@@ -752,12 +747,7 @@ fuzz_target!(|bytes: &[u8]| {
                     bilinear_controls,
                     bilinear_weights,
                     vec![Real::from(2), Real::from(2), Real::from(5), Real::from(5)],
-                    vec![
-                        Real::from(-3),
-                        Real::from(-3),
-                        Real::from(7),
-                        Real::from(7),
-                    ],
+                    vec![Real::from(-3), Real::from(-3), Real::from(7), Real::from(7)],
                 )
             } else {
                 builder::rational_bezier_patch(bilinear_controls, bilinear_weights)
@@ -766,7 +756,7 @@ fuzz_target!(|bytes: &[u8]| {
                 return;
             };
             if let Ok((split, _)) =
-                patch.split_face_by_surface_curve(face, curve.curve(), curve.first_pcurve())
+                patch.split_face_by_surface_curve(face, &curve, SurfaceIntersectionOperand::First)
             {
                 let Ok(json) = split.to_json() else {
                     return;
@@ -971,8 +961,8 @@ fuzz_target!(|bytes: &[u8]| {
             graph_surface.intersect_surface(&oblique_plane)
             && let Ok((split, _)) = graph_patch.split_face_by_surface_curve(
                 graph_face,
-                curve.curve(),
-                curve.first_pcurve(),
+                &curve,
+                SurfaceIntersectionOperand::First,
             )
         {
             let Ok(json) = split.to_json() else {
@@ -1027,8 +1017,8 @@ fuzz_target!(|bytes: &[u8]| {
             nurbs_graph_surface.intersect_surface(&oblique_plane)
             && let Ok((split, _)) = nurbs_graph_patch.split_face_by_surface_curve(
                 nurbs_graph_face,
-                curve.curve(),
-                curve.first_pcurve(),
+                &curve,
+                SurfaceIntersectionOperand::First,
             )
         {
             let Ok(json) = split.to_json() else {
@@ -1083,8 +1073,8 @@ fuzz_target!(|bytes: &[u8]| {
             v_nurbs_graph_surface.intersect_surface(&oblique_plane)
             && let Ok((split, _)) = v_nurbs_graph_patch.split_face_by_surface_curve(
                 v_nurbs_graph_face,
-                curve.curve(),
-                curve.first_pcurve(),
+                &curve,
+                SurfaceIntersectionOperand::First,
             )
         {
             let Ok(json) = split.to_json() else {
@@ -1627,8 +1617,8 @@ fuzz_target!(|bytes: &[u8]| {
             let _ = fragment.second_pcurve().point_at(&parameter);
             let _ = patch.split_face_by_surface_curve(
                 patch_face,
-                fragment.curve(),
-                fragment.first_pcurve(),
+                fragment,
+                SurfaceIntersectionOperand::First,
             );
         }
     }

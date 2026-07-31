@@ -418,18 +418,8 @@ fuzz_target!(|bytes: &[u8]| {
                 1,
                 tensor_controls,
                 tensor_weights,
-                vec![
-                    Real::from(2),
-                    Real::from(2),
-                    Real::from(5),
-                    Real::from(5),
-                ],
-                vec![
-                    Real::from(-3),
-                    Real::from(-3),
-                    Real::from(7),
-                    Real::from(7),
-                ],
+                vec![Real::from(2), Real::from(2), Real::from(5), Real::from(5)],
+                vec![Real::from(-3), Real::from(-3), Real::from(7), Real::from(7)],
             )
         } else {
             builder::rational_bezier_patch(tensor_controls, tensor_weights)
