@@ -6840,6 +6840,76 @@ reconstruction propagation. Machine-readable samples, competitive medians,
 binary size, caller status, and the 22,564-node/38,642-edge call graph are in
 [`2026-07-31-native-curve-topology-policy.json`](benchmarks/checkpoints/2026-07-31-native-curve-topology-policy.json).
 
+## Materialized boundary policy checkpoint
+
+`CurveRegion2::materialized_boundary_paths` now accepts the caller's
+`CurveContext` and returns
+`CurveOutcome<Classification<Vec<CurvePath2>>>`. Its private edit/materialize
+kernel remains beneath one outer observation frame. Every representable
+fragment preserves its exact carrier and parameterization; an algebraic
+endpoint that cannot inhabit a public `Curve2` remains explicit `Unsupported`
+uncertainty rather than becoming sampled geometry.
+
+The terminal regression constructs a one-quadratic loop whose closing points
+are symbolically equivalent `(pi + e)` and `(e + pi)`. The loop is admitted
+only by Approximate-512. Later strict materialization returns a certified outer
+operation containing `Classification::Uncertain(RealSign)`;
+Approximate-512 returns the exact quadratic path and reports
+`Approximate512Consumed`. Repeated approximate replay reports consumption
+again, while subsequent strict replay remains uncertain.
+
+Path and region carriers now retain whether cyclic materialized connectivity
+was structurally strict. Both flags occupy existing alignment padding:
+`CurvePathData2` remains 160 bytes and `CurveRegionData2` remains 424 bytes.
+The one-word public handles are unchanged and no cache buffer or heap
+allocation was added. Strictly certified regions materialize with no endpoint
+predicate; approximate-derived loops take the complete shared path validator.
+The same cyclic certificate removes a duplicate seam check from finite
+curve-path projection.
+
+Eleven interleaved default-feature parent/candidate pairs pinned to one CPU
+measured:
+
+| Operation | Parent median | Policy-explicit median | Change |
+| --- | ---: | ---: | ---: |
+| Rational path finite projection | 2.792 ms | 2.817 ms | +0.91% |
+| Exact region-profile projection | 572.428 us | 573.664 us | +0.22% |
+| Exact materialized boundary paths | 560 ns | 479 ns | -14.46% |
+| Exact finite curve-path projection | 509 ns | 503 ns | -1.18% |
+
+The paired geometric-mean changes were +1.25%, +0.47%, -15.30%, and -1.21%.
+Seven complete `finite_projection` instruction controls fell from a median
+24,399,568,052 to 22,938,568,096 instructions, a 5.99% reduction.
+
+After a warm-up pair, eight matched pathological runs retained 67 cells, 603
+candidate pairs, 3,248 fragments, 134 point classifications, all 268
+operations decided, zero blockers, and checksum 6. Exact Boolean execution
+moved -0.09% at the median and -0.14% by paired geometric mean. Construction
+moved +0.26% at the median; process-scale RSS remained 34.5 MiB.
+
+The broad competitive matrix kept every exact Hypercurve lane within 4% of
+the matched parent. The 256- and 1,024-vertex exact intersections remain
+faster than Cavalier, i_overlay, and Geo in this harness; finite offset and
+NURBS peers retain explicitly different guarantees. The matched pathological
+artifact adds only 8 loadable bytes. Its stripped file adds 848 bytes and
+remains 28,280 bytes below the frozen stripped baseline.
+
+Validation passed the complete all-feature suite with 260 unit tests, the
+163.01-second generated `CurveRegion2` Boolean corpus, every integration suite
+other than the two explicitly ignored release-scale PCB corpora, all 268
+pathological Booleans, both warning-denied Clippy feature matrices, both
+all-target checks, every fuzz target, warning-denied rustdoc, formatting, and
+diff checks. CSGRS and the Hypercurve UI remain warning-clean. Hypermesh was
+not modified.
+
+Four zero-argument materialized-boundary calls remain in Hypercircuit. Their
+breaking caller cutover remains deferred until the final Phase 1 policy
+surfaces stabilize; no compatibility shim was added. The next cut is spline
+subcurve and reconstruction policy propagation. Machine-readable samples,
+layout evidence, binary size, caller status, and the 22,575-node/38,676-edge
+call graph are in
+[`2026-07-31-materialized-boundary-policy.json`](benchmarks/checkpoints/2026-07-31-materialized-boundary-policy.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
