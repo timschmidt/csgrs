@@ -398,7 +398,11 @@ impl Curve2 {
     ///
     /// The public parameter mapping is retained.
     /// Parameters map as `u -> start + end - u`.
-    pub fn reversed(&self) -> ExactCurveResult<Self> {
+    pub fn reversed(&self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
+    }
+
+    pub(crate) fn reversed_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
         let geometry = match self.geometry() {
             CurveGeometry2::Line(curve) => CurveGeometry2::Line(curve.reversed()),
             CurveGeometry2::CircularArc(curve) => CurveGeometry2::CircularArc(curve.reversed()),
@@ -440,7 +444,7 @@ impl Curve2 {
                         curve.end_weight().clone(),
                         curve.control_weight().clone(),
                         curve.start_weight().clone(),
-                        curve.common_nonzero_weight_sign(&CurveContext::STRICT),
+                        curve.common_nonzero_weight_sign(policy),
                         curve.retained_implicit_quadratic_conic().cloned(),
                         curve.retained_circular_conic().cloned(),
                     )
@@ -457,15 +461,29 @@ impl Curve2 {
                 CurveGeometry2::RationalBezier(curve.reversed())
             }
             CurveGeometry2::PolynomialBSpline(curve) => {
-                CurveGeometry2::PolynomialBSpline(curve.reversed()?)
+                CurveGeometry2::PolynomialBSpline(curve.reversed_raw(policy)?)
             }
-            CurveGeometry2::Nurbs(curve) => CurveGeometry2::Nurbs(curve.reversed()?),
+            CurveGeometry2::Nurbs(curve) => CurveGeometry2::Nurbs(curve.reversed_raw(policy)?),
         };
         self.with_lineage(geometry, self.data.lineage.reversed())
     }
 
     /// Applies an exact planar similarity while preserving curve family and source.
-    pub fn transform_similarity(&self, transform: &Similarity2) -> ExactCurveResult<Self> {
+    pub fn transform_similarity(
+        &self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.transform_similarity_raw(transform, attempt)
+        })
+    }
+
+    pub(crate) fn transform_similarity_raw(
+        &self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         let transform_points = |points: &[Point2]| {
             points
                 .iter()
@@ -533,11 +551,11 @@ impl Curve2 {
                 )
                 .map_err(|cause| self.transform_error(cause))?,
             ),
-            CurveGeometry2::PolynomialBSpline(curve) => {
-                CurveGeometry2::PolynomialBSpline(curve.transform_similarity(transform)?)
-            }
+            CurveGeometry2::PolynomialBSpline(curve) => CurveGeometry2::PolynomialBSpline(
+                curve.transform_similarity_raw(transform, policy)?,
+            ),
             CurveGeometry2::Nurbs(curve) => {
-                CurveGeometry2::Nurbs(curve.transform_similarity(transform)?)
+                CurveGeometry2::Nurbs(curve.transform_similarity_raw(transform, policy)?)
             }
         };
         self.with_lineage(geometry, self.data.lineage.clone())
@@ -1369,13 +1387,17 @@ impl<'a> CurveView2<'a> {
     }
 
     /// Returns an owned curve with traversal direction reversed.
-    pub fn reversed(self) -> ExactCurveResult<Curve2> {
-        self.curve.reversed()
+    pub fn reversed(self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Curve2>> {
+        self.curve.reversed(policy)
     }
 
     /// Applies an exact planar similarity without cloning the source carrier first.
-    pub fn transform_similarity(self, transform: &Similarity2) -> ExactCurveResult<Curve2> {
-        self.curve.transform_similarity(transform)
+    pub fn transform_similarity(
+        self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Curve2>> {
+        self.curve.transform_similarity(transform, policy)
     }
 
     /// Splits this curve exactly at a strict interior public parameter.
@@ -1643,12 +1665,16 @@ impl CurvePath2 {
     }
 
     /// Returns the same connected path with traversal direction reversed.
-    pub fn reversed(&self) -> ExactCurveResult<Self> {
+    pub fn reversed(&self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
+    }
+
+    pub(crate) fn reversed_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
         let curves = self
             .curves()
             .iter()
             .rev()
-            .map(Curve2::reversed)
+            .map(|curve| curve.reversed_raw(policy))
             .collect::<ExactCurveResult<Vec<_>>>()?;
         Ok(Self::from_connected_curves(
             curves,
@@ -1658,11 +1684,25 @@ impl CurvePath2 {
     }
 
     /// Applies an exact planar similarity to every curve in the connected path.
-    pub fn transform_similarity(&self, transform: &Similarity2) -> ExactCurveResult<Self> {
+    pub fn transform_similarity(
+        &self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.transform_similarity_raw(transform, attempt)
+        })
+    }
+
+    pub(crate) fn transform_similarity_raw(
+        &self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         let curves = self
             .curves()
             .iter()
-            .map(|curve| curve.transform_similarity(transform))
+            .map(|curve| curve.transform_similarity_raw(transform, policy))
             .collect::<ExactCurveResult<Vec<_>>>()?;
         Ok(Self::from_connected_curves(
             curves,
@@ -2333,13 +2373,17 @@ impl<'a> CurvePathView2<'a> {
     }
 
     /// Returns an owned path with traversal direction reversed.
-    pub fn reversed(self) -> ExactCurveResult<CurvePath2> {
+    pub fn reversed(self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<CurvePath2>> {
+        resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
+    }
+
+    fn reversed_raw(self, policy: &CurveContext) -> ExactCurveResult<CurvePath2> {
         let strict_closure_certified = self.end() == self.start();
         let curves = self
             .curves
             .iter()
             .rev()
-            .map(Curve2::reversed)
+            .map(|curve| curve.reversed_raw(policy))
             .collect::<ExactCurveResult<Vec<_>>>()?;
         Ok(CurvePath2::from_connected_curves(
             curves,
@@ -2349,12 +2393,26 @@ impl<'a> CurvePathView2<'a> {
     }
 
     /// Applies an exact planar similarity to the borrowed connected path.
-    pub fn transform_similarity(self, transform: &Similarity2) -> ExactCurveResult<CurvePath2> {
+    pub fn transform_similarity(
+        self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurvePath2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.transform_similarity_raw(transform, attempt)
+        })
+    }
+
+    fn transform_similarity_raw(
+        self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurvePath2> {
         let strict_closure_certified = self.end() == self.start();
         let curves = self
             .curves
             .iter()
-            .map(|curve| curve.transform_similarity(transform))
+            .map(|curve| curve.transform_similarity_raw(transform, policy))
             .collect::<ExactCurveResult<Vec<_>>>()?;
         Ok(CurvePath2::from_connected_curves(
             curves,

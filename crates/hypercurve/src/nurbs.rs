@@ -1,10 +1,10 @@
 //! Retained NURBS carrier with policy-isolated exact decomposition caches.
 
-use std::sync::Arc;
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, OnceLock};
 
 use crate::policy::{
-    PolicyEvaluationCache, resolve_cached_evaluation, resolve_certified_operation,
+    BoundedPolicyResultCache, PolicyEvaluationCache, resolve_bounded_cached_result,
+    resolve_cached_evaluation, resolve_certified_operation,
 };
 use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
@@ -14,7 +14,6 @@ use crate::{
     Real, Similarity2, SplinePeriodicity2, UncertaintyReason,
 };
 
-type Cached<T> = Result<T, ExactCurveError>;
 const MAX_RETAINED_KNOT_REFINEMENTS: usize = 8;
 const MAX_RETAINED_KNOT_REMOVALS: usize = 8;
 const MAX_RETAINED_DEGREE_ELEVATIONS: usize = 8;
@@ -26,10 +25,10 @@ struct NurbsData2 {
     decomposition: PolicyEvaluationCache<NurbsBezierDecomposition2>,
     native_subcurves: PolicyEvaluationCache<Vec<BezierSubcurve2>>,
     rational_spans: PolicyEvaluationCache<Vec<RationalBezier2>>,
-    knot_refinements: OnceLock<Mutex<Vec<(Vec<Real>, Cached<NurbsCurve2>)>>>,
-    knot_removals: OnceLock<Mutex<Vec<(Real, Cached<Option<NurbsCurve2>>)>>>,
-    degree_elevations: OnceLock<Mutex<Vec<(usize, Cached<NurbsDegreeElevation2>)>>>,
-    elevated_curves: OnceLock<Mutex<Vec<(usize, Cached<NurbsCurve2>)>>>,
+    knot_refinements: BoundedPolicyResultCache<Vec<Real>, NurbsCurve2>,
+    knot_removals: BoundedPolicyResultCache<Real, Option<NurbsCurve2>>,
+    degree_elevations: BoundedPolicyResultCache<usize, NurbsDegreeElevation2>,
+    elevated_curves: BoundedPolicyResultCache<usize, NurbsCurve2>,
 }
 
 #[derive(Debug)]
@@ -188,23 +187,6 @@ impl NurbsCurve2 {
         )
     }
 
-    fn try_new_expanded(
-        degree: usize,
-        control_points: Vec<Point2>,
-        weights: Vec<Real>,
-        knots: Vec<Real>,
-        periodicity: SplinePeriodicity2,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded_with_policy(
-            degree,
-            control_points,
-            weights,
-            knots,
-            periodicity,
-            &CurveContext::STRICT,
-        )
-    }
-
     fn try_new_expanded_with_policy(
         degree: usize,
         control_points: Vec<Point2>,
@@ -256,7 +238,14 @@ impl NurbsCurve2 {
         knots: Vec<Real>,
         periodicity: SplinePeriodicity2,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded(degree, control_points, weights, knots, periodicity)
+        Self::try_new_expanded_with_policy(
+            degree,
+            control_points,
+            weights,
+            knots,
+            periodicity,
+            &CurveContext::STRICT,
+        )
     }
 
     pub(crate) fn try_new_expanded_with_periodicity_and_policy(
@@ -376,8 +365,12 @@ impl NurbsCurve2 {
     /// The curve image, parameterization, and endpoints are preserved. If an
     /// interior knot already has full Bezier multiplicity, this returns a clone
     /// sharing the original carrier and caches.
-    pub fn insert_knot(&self, knot: Real) -> ExactCurveResult<Self> {
-        self.insert_knots(vec![knot])
+    pub fn insert_knot(
+        &self,
+        knot: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        self.insert_knots(vec![knot], policy)
     }
 
     /// Inserts an ordered batch of exact knots in one homogeneous refinement pass.
@@ -385,43 +378,37 @@ impl NurbsCurve2 {
     /// The working control net is projected and validated only once. Exact
     /// periodicity, endpoints, and parameterization are preserved. Repeated
     /// equal requests from any clone reuse a bounded retained result.
-    pub fn insert_knots(&self, knots: Vec<Real>) -> ExactCurveResult<Self> {
+    pub fn insert_knots(
+        &self,
+        knots: Vec<Real>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
         if knots.is_empty() {
-            return Ok(self.clone());
+            return Ok(CurveOutcome::new(
+                self.clone(),
+                crate::CurveCertainty::Certified,
+            ));
         }
-        let refinements = self
-            .data
-            .knot_refinements
-            .get_or_init(|| Mutex::new(Vec::new()));
-        if let Some((_, result)) = refinements
-            .lock()
-            .expect("NURBS knot refinement cache mutex poisoned")
-            .iter()
-            .find(|(retained_knots, _)| retained_knots == &knots)
-        {
-            return result.clone();
-        }
-        let result = self.insert_knots_uncached(knots.clone());
-        let mut refinements = refinements
-            .lock()
-            .expect("NURBS knot refinement cache mutex poisoned");
-        if refinements.len() == MAX_RETAINED_KNOT_REFINEMENTS {
-            let _ = refinements.remove(0);
-        }
-        refinements.push((knots, result.clone()));
-        result
+        resolve_certified_operation(policy, |attempt| {
+            self.insert_knots_with_policy(knots, attempt)
+        })
     }
 
-    fn insert_knots_with_policy(
+    pub(crate) fn insert_knots_with_policy(
         &self,
         knots: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        if policy.permits_approximate_512() {
-            self.insert_knots_uncached_with_policy(knots, policy)
-        } else {
-            self.insert_knots(knots)
+        if knots.is_empty() {
+            return Ok(self.clone());
         }
+        resolve_bounded_cached_result(
+            &self.data.knot_refinements,
+            knots.clone(),
+            MAX_RETAINED_KNOT_REFINEMENTS,
+            policy,
+            |attempt| self.insert_knots_uncached_with_policy(knots.clone(), attempt),
+        )
     }
 
     /// Removes one exact interior knot occurrence when that preserves the curve.
@@ -431,29 +418,31 @@ impl NurbsCurve2 {
     /// every authored homogeneous control and knot. `None` means the requested
     /// knot is absent or is not exactly removable. Results are retained across
     /// clones, including negative results and blockers.
-    pub fn remove_knot(&self, knot: Real) -> ExactCurveResult<Option<Self>> {
-        validate_strict_interior_knot(self, &knot)?;
-        let removals = self
-            .data
-            .knot_removals
-            .get_or_init(|| Mutex::new(Vec::new()));
-        if let Some((_, result)) = removals
-            .lock()
-            .expect("NURBS knot removal cache mutex poisoned")
-            .iter()
-            .find(|(retained_knot, _)| retained_knot == &knot)
-        {
-            return result.clone();
-        }
-        let result = self.remove_knot_uncached(knot.clone());
-        let mut removals = removals
-            .lock()
-            .expect("NURBS knot removal cache mutex poisoned");
-        if removals.len() == MAX_RETAINED_KNOT_REMOVALS {
-            let _ = removals.remove(0);
-        }
-        removals.push((knot, result.clone()));
-        result
+    pub fn remove_knot(
+        &self,
+        knot: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Option<Self>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.remove_knot_with_policy(knot, attempt)
+        })
+    }
+
+    fn remove_knot_with_policy(
+        &self,
+        knot: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Self>> {
+        resolve_bounded_cached_result(
+            &self.data.knot_removals,
+            knot.clone(),
+            MAX_RETAINED_KNOT_REMOVALS,
+            policy,
+            |attempt| {
+                validate_strict_interior(self, &knot, CurveOperation2::KnotRemoval, attempt)?;
+                self.remove_knot_uncached_with_policy(knot.clone(), attempt)
+            },
+        )
     }
 
     /// Elevates every exact rational Bezier knot span to `target_degree`.
@@ -465,6 +454,17 @@ impl NurbsCurve2 {
     pub fn degree_elevation(
         &self,
         target_degree: usize,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<NurbsDegreeElevation2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.degree_elevation_with_policy(target_degree, attempt)
+        })
+    }
+
+    fn degree_elevation_with_policy(
+        &self,
+        target_degree: usize,
+        policy: &CurveContext,
     ) -> ExactCurveResult<NurbsDegreeElevation2> {
         if target_degree < self.degree() {
             return Err(ExactCurveError::invalid(
@@ -473,27 +473,13 @@ impl NurbsCurve2 {
                 CurveError::InvalidDegreeElevation,
             ));
         }
-        let elevations = self
-            .data
-            .degree_elevations
-            .get_or_init(|| Mutex::new(Vec::new()));
-        if let Some((_, result)) = elevations
-            .lock()
-            .expect("NURBS degree elevation cache mutex poisoned")
-            .iter()
-            .find(|(retained_degree, _)| *retained_degree == target_degree)
-        {
-            return result.clone();
-        }
-        let result = self.degree_elevation_uncached(target_degree);
-        let mut elevations = elevations
-            .lock()
-            .expect("NURBS degree elevation cache mutex poisoned");
-        if elevations.len() == MAX_RETAINED_DEGREE_ELEVATIONS {
-            let _ = elevations.remove(0);
-        }
-        elevations.push((target_degree, result.clone()));
-        result
+        resolve_bounded_cached_result(
+            &self.data.degree_elevations,
+            target_degree,
+            MAX_RETAINED_DEGREE_ELEVATIONS,
+            policy,
+            |attempt| self.degree_elevation_uncached(target_degree, attempt),
+        )
     }
 
     /// Returns an exact NURBS carrier elevated to `target_degree`.
@@ -504,7 +490,11 @@ impl NurbsCurve2 {
     /// NURBS preserves the authored parameter domain, periodicity, source, and
     /// parameterized image. Equal requests and blockers are retained across
     /// clones.
-    pub fn elevated_to_degree(&self, target_degree: usize) -> ExactCurveResult<Self> {
+    pub fn elevated_to_degree(
+        &self,
+        target_degree: usize,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
         if target_degree < self.degree() {
             return Err(ExactCurveError::invalid(
                 CurveOperation2::DegreeElevation,
@@ -513,43 +503,42 @@ impl NurbsCurve2 {
             ));
         }
         if target_degree == self.degree() {
+            return Ok(CurveOutcome::new(
+                self.clone(),
+                crate::CurveCertainty::Certified,
+            ));
+        }
+        resolve_certified_operation(policy, |attempt| {
+            self.elevated_to_degree_with_policy(target_degree, attempt)
+        })
+    }
+
+    fn elevated_to_degree_with_policy(
+        &self,
+        target_degree: usize,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        if target_degree == self.degree() {
             return Ok(self.clone());
         }
-        let elevated_curves = self
-            .data
-            .elevated_curves
-            .get_or_init(|| Mutex::new(Vec::new()));
-        if let Some((_, result)) = elevated_curves
-            .lock()
-            .expect("NURBS elevated curve cache mutex poisoned")
-            .iter()
-            .find(|(retained_degree, _)| *retained_degree == target_degree)
-        {
-            return result.clone();
-        }
-        let result = self.elevated_to_degree_uncached(target_degree);
-        let mut elevated_curves = elevated_curves
-            .lock()
-            .expect("NURBS elevated curve cache mutex poisoned");
-        if elevated_curves.len() == MAX_RETAINED_DEGREE_ELEVATIONS {
-            let _ = elevated_curves.remove(0);
-        }
-        elevated_curves.push((target_degree, result.clone()));
-        result
+        resolve_bounded_cached_result(
+            &self.data.elevated_curves,
+            target_degree,
+            MAX_RETAINED_DEGREE_ELEVATIONS,
+            policy,
+            |attempt| self.elevated_to_degree_uncached(target_degree, attempt),
+        )
     }
 
     fn degree_elevation_uncached(
         &self,
         target_degree: usize,
+        policy: &CurveContext,
     ) -> ExactCurveResult<NurbsDegreeElevation2> {
-        let decomposition = self.bezier_decomposition_for_operation(
-            &CurveContext::STRICT,
-            CurveOperation2::DegreeElevation,
-        )?;
-        let rational_spans = self.rational_spans_for_operation(
-            &CurveContext::STRICT,
-            CurveOperation2::DegreeElevation,
-        )?;
+        let decomposition =
+            self.bezier_decomposition_for_operation(policy, CurveOperation2::DegreeElevation)?;
+        let rational_spans =
+            self.rational_spans_for_operation(policy, CurveOperation2::DegreeElevation)?;
         let spans = decomposition
             .spans()
             .iter()
@@ -575,19 +564,28 @@ impl NurbsCurve2 {
         })
     }
 
-    fn elevated_to_degree_uncached(&self, target_degree: usize) -> ExactCurveResult<Self> {
-        let elevation = self.degree_elevation(target_degree)?;
+    fn elevated_to_degree_uncached(
+        &self,
+        target_degree: usize,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        let elevation = self.degree_elevation_with_policy(target_degree, policy)?;
         let (mut elevated, removable_knots) =
-            self.piecewise_elevated_curve(&elevation, target_degree)?;
+            self.piecewise_elevated_curve(&elevation, target_degree, policy)?;
         for (knot, removal_count) in removable_knots {
             for _ in 0..removal_count {
-                elevated = elevated.remove_knot(knot.clone())?.ok_or_else(|| {
-                    ExactCurveError::invalid(
-                        CurveOperation2::DegreeElevation,
-                        CurveFamily2::Nurbs,
-                        CurveError::InvalidDegreeElevation,
-                    )
-                })?;
+                elevated = elevated
+                    .remove_knot_with_policy(knot.clone(), policy)
+                    .map_err(|error| {
+                        remap_nurbs_operation(error, CurveOperation2::DegreeElevation)
+                    })?
+                    .ok_or_else(|| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::DegreeElevation,
+                            CurveFamily2::Nurbs,
+                            CurveError::InvalidDegreeElevation,
+                        )
+                    })?;
             }
         }
         Ok(elevated)
@@ -597,6 +595,7 @@ impl NurbsCurve2 {
         &self,
         elevation: &NurbsDegreeElevation2,
         target_degree: usize,
+        policy: &CurveContext,
     ) -> ExactCurveResult<(Self, Vec<(Real, usize)>)> {
         let spans = elevation.spans();
         let mut span_weights = spans
@@ -610,12 +609,14 @@ impl NurbsCurve2 {
                 self.knots(),
                 &knot,
                 CurveOperation2::DegreeElevation,
+                policy,
             )?;
             if multiplicity <= self.degree() {
                 exact_points_equal(
                     spans[span_index - 1].curve().end(),
                     spans[span_index].curve().start(),
                     CurveOperation2::DegreeElevation,
+                    policy,
                 )?;
                 let scale = (span_weights[span_index - 1]
                     .last()
@@ -674,19 +675,16 @@ impl NurbsCurve2 {
             .parameter_end
             .clone();
         knots.extend(std::iter::repeat_n(domain_end, target_degree + 1));
-        let curve = Self::try_new_expanded(
+        let curve = Self::try_new_expanded_with_policy(
             target_degree,
             control_points,
             weights,
             knots,
             self.periodicity().clone(),
+            policy,
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::DegreeElevation))?;
         Ok((curve, removable_knots))
-    }
-
-    fn insert_knots_uncached(&self, knots: Vec<Real>) -> ExactCurveResult<Self> {
-        self.insert_knots_uncached_with_policy(knots, &CurveContext::STRICT)
     }
 
     fn insert_knots_uncached_with_policy(
@@ -708,9 +706,13 @@ impl NurbsCurve2 {
         )
     }
 
-    fn remove_knot_uncached(&self, knot: Real) -> ExactCurveResult<Option<Self>> {
+    fn remove_knot_uncached_with_policy(
+        &self,
+        knot: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Self>> {
         let retained = exact_value(
-            self.data.retained.remove_knot(knot, &CurveContext::STRICT),
+            self.data.retained.remove_knot(knot, policy),
             CurveOperation2::KnotRemoval,
         )?;
         retained
@@ -718,7 +720,7 @@ impl NurbsCurve2 {
                 Self::from_retained(
                     retained,
                     Some((self.start().clone(), self.end().clone())),
-                    &CurveContext::STRICT,
+                    policy,
                 )
                 .map_err(|error| remap_nurbs_operation(error, CurveOperation2::KnotRemoval))
             })
@@ -943,7 +945,11 @@ impl NurbsCurve2 {
     ///
     /// Controls and weights are reversed, while knots are reflected through
     /// the parameter-domain midpoint. The parameter domain is preserved exactly.
-    pub fn reversed(&self) -> ExactCurveResult<Self> {
+    pub fn reversed(&self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
+    }
+
+    pub(crate) fn reversed_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
         let (start, end) = self.parameter_domain();
         let knot_sum = start + end;
         let mut control_points = self.control_points().to_vec();
@@ -956,19 +962,34 @@ impl NurbsCurve2 {
             .rev()
             .map(|knot| &knot_sum - knot)
             .collect();
-        Self::try_new_expanded(
+        Self::try_new_expanded_with_policy(
             self.degree(),
             control_points,
             weights,
             knots,
             self.periodicity().clone(),
+            policy,
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Reversal))
     }
 
     /// Applies an exact planar similarity while retaining periodicity.
-    pub fn transform_similarity(&self, transform: &Similarity2) -> ExactCurveResult<Self> {
-        Self::try_new_expanded(
+    pub fn transform_similarity(
+        &self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.transform_similarity_raw(transform, attempt)
+        })
+    }
+
+    pub(crate) fn transform_similarity_raw(
+        &self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        Self::try_new_expanded_with_policy(
             self.degree(),
             self.control_points()
                 .iter()
@@ -977,6 +998,7 @@ impl NurbsCurve2 {
             self.weights().to_vec(),
             self.knots().to_vec(),
             self.periodicity().clone(),
+            policy,
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Transformation))
     }
@@ -1751,15 +1773,6 @@ fn validate_strict_interior_parameter(
     validate_strict_interior(curve, parameter, CurveOperation2::Subdivision, policy)
 }
 
-fn validate_strict_interior_knot(curve: &NurbsCurve2, knot: &Real) -> ExactCurveResult<()> {
-    validate_strict_interior(
-        curve,
-        knot,
-        CurveOperation2::KnotRemoval,
-        &CurveContext::STRICT,
-    )
-}
-
 fn validate_strict_interior(
     curve: &NurbsCurve2,
     parameter: &Real,
@@ -1844,11 +1857,11 @@ fn exact_nurbs_knot_multiplicity(
     knots: &[Real],
     knot: &Real,
     operation: CurveOperation2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<usize> {
-    let policy = CurveContext::STRICT;
     let mut multiplicity = 0;
     for candidate in knots {
-        match crate::classify::compare_reals(candidate, knot, &policy) {
+        match crate::classify::compare_reals(candidate, knot, policy) {
             Some(std::cmp::Ordering::Equal) => multiplicity += 1,
             Some(_) => {}
             None => {
@@ -1867,11 +1880,11 @@ fn exact_points_equal(
     first: &Point2,
     second: &Point2,
     operation: CurveOperation2,
+    policy: &CurveContext,
 ) -> ExactCurveResult<()> {
-    let policy = CurveContext::STRICT;
     match (
-        crate::classify::compare_reals(first.x(), second.x(), &policy),
-        crate::classify::compare_reals(first.y(), second.y(), &policy),
+        crate::classify::compare_reals(first.x(), second.x(), policy),
+        crate::classify::compare_reals(first.y(), second.y(), policy),
     ) {
         (Some(std::cmp::Ordering::Equal), Some(std::cmp::Ordering::Equal)) => Ok(()),
         (Some(_), Some(_)) => Err(ExactCurveError::invalid(

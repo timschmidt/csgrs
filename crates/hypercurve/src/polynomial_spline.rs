@@ -125,21 +125,6 @@ impl PolynomialSplineCurve2 {
         )
     }
 
-    fn try_new_expanded(
-        degree: usize,
-        control_points: Vec<Point2>,
-        knots: Vec<Real>,
-        periodicity: SplinePeriodicity2,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded_with_policy(
-            degree,
-            control_points,
-            knots,
-            periodicity,
-            &CurveContext::STRICT,
-        )
-    }
-
     fn try_new_expanded_with_policy(
         degree: usize,
         control_points: Vec<Point2>,
@@ -232,7 +217,13 @@ impl PolynomialSplineCurve2 {
         knots: Vec<Real>,
         periodicity: SplinePeriodicity2,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded(degree, control_points, knots, periodicity)
+        Self::try_new_expanded_with_policy(
+            degree,
+            control_points,
+            knots,
+            periodicity,
+            &CurveContext::STRICT,
+        )
     }
 
     /// Returns the polynomial degree.
@@ -291,21 +282,30 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Inserts one exact knot without changing the polynomial spline image.
-    pub fn insert_knot(&self, knot: Real) -> ExactCurveResult<Self> {
+    pub fn insert_knot(
+        &self,
+        knot: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| self.insert_knot_raw(knot, attempt))
+    }
+
+    pub(crate) fn insert_knot_raw(
+        &self,
+        knot: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         let refined = self
-            .as_unit_weight_nurbs(&CurveContext::STRICT)?
-            .insert_knot(knot)
+            .as_unit_weight_nurbs(policy)
+            .map_err(|error| remap_spline_family_operation(error, CurveOperation2::KnotInsertion))?
+            .insert_knots_with_policy(vec![knot], policy)
             .map_err(|error| {
                 remap_spline_family_operation(error, CurveOperation2::KnotInsertion)
             })?;
         if refined.control_points().len() == self.control_points().len() {
             return Ok(self.clone());
         }
-        Self::from_unit_weight_nurbs(
-            refined,
-            CurveOperation2::KnotInsertion,
-            &CurveContext::STRICT,
-        )
+        Self::from_unit_weight_nurbs(refined, CurveOperation2::KnotInsertion, policy)
     }
 
     /// Splits this polynomial spline exactly at a strict interior parameter.
@@ -404,7 +404,11 @@ impl PolynomialSplineCurve2 {
     ///
     /// The control net is reversed and the knot vector is reflected through
     /// the authored domain midpoint, preserving both the domain and source.
-    pub fn reversed(&self) -> ExactCurveResult<Self> {
+    pub fn reversed(&self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
+    }
+
+    pub(crate) fn reversed_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
         let (start, end) = self.parameter_domain();
         let knot_sum = start + end;
         let mut control_points = self.control_points().to_vec();
@@ -415,18 +419,33 @@ impl PolynomialSplineCurve2 {
             .rev()
             .map(|knot| &knot_sum - knot)
             .collect();
-        Self::try_new_expanded(
+        Self::try_new_expanded_with_policy(
             self.degree(),
             control_points,
             knots,
             self.periodicity().clone(),
+            policy,
         )
         .map_err(|error| remap_spline_operation(error, CurveOperation2::Reversal))
     }
 
     /// Applies an exact planar similarity while retaining periodicity and source.
-    pub fn transform_similarity(&self, transform: &Similarity2) -> ExactCurveResult<Self> {
-        Self::try_new_expanded(
+    pub fn transform_similarity(
+        &self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.transform_similarity_raw(transform, attempt)
+        })
+    }
+
+    pub(crate) fn transform_similarity_raw(
+        &self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        Self::try_new_expanded_with_policy(
             self.degree(),
             self.control_points()
                 .iter()
@@ -434,6 +453,7 @@ impl PolynomialSplineCurve2 {
                 .collect(),
             self.knots().to_vec(),
             self.periodicity().clone(),
+            policy,
         )
         .map_err(|error| remap_spline_operation(error, CurveOperation2::Transformation))
     }

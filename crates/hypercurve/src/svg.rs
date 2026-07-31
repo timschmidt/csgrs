@@ -888,8 +888,8 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
         CurveGeometry2::CircularArc(_) => {
             if let Some(similarity) = transform.similarity() {
                 return curve
-                    .transform_similarity(&similarity)
-                    .map(|curve| vec![curve])
+                    .transform_similarity(&similarity, &CurveContext::STRICT)
+                    .map(|curve| vec![curve.into_value()])
                     .map_err(svg_geometry_error);
             }
             curve

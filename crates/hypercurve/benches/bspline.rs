@@ -451,8 +451,9 @@ fn main() -> CurveResult<()> {
     for curve in &cold_batch_inputs {
         batch_refinement_checksum ^= black_box(
             curve
-                .insert_knots(vec![r(1), r(1)])
+                .insert_knots(vec![r(1), r(1)], &policy)
                 .unwrap()
+                .into_value()
                 .control_points()
                 .len(),
         );
@@ -471,10 +472,12 @@ fn main() -> CurveResult<()> {
     for curve in &cold_sequential_inputs {
         sequential_refinement_checksum ^= black_box(
             curve
-                .insert_knot(r(1))
+                .insert_knot(r(1), &policy)
                 .unwrap()
-                .insert_knot(r(1))
+                .into_value()
+                .insert_knot(r(1), &policy)
                 .unwrap()
+                .into_value()
                 .control_points()
                 .len(),
         );
@@ -486,14 +489,17 @@ fn main() -> CurveResult<()> {
     );
 
     let retained_refinement = refinement_source();
-    retained_refinement.insert_knots(vec![r(1), r(1)]).unwrap();
+    retained_refinement
+        .insert_knots(vec![r(1), r(1)], &policy)
+        .unwrap();
     let started = Instant::now();
     let mut retained_refinement_checksum = 0_usize;
     for _ in 0..iterations {
         retained_refinement_checksum ^= black_box(
             retained_refinement
-                .insert_knots(vec![r(1), r(1)])
+                .insert_knots(vec![r(1), r(1)], &policy)
                 .unwrap()
+                .into_value()
                 .control_points()
                 .len(),
         );
@@ -507,8 +513,9 @@ fn main() -> CurveResult<()> {
     let removal_knot = q(1, 2);
     let removal_source = || {
         refinement_source()
-            .insert_knot(removal_knot.clone())
+            .insert_knot(removal_knot.clone(), &policy)
             .expect("removal benchmark refinement remains exact")
+            .into_value()
     };
     let removal_inputs = (0..refinement_iterations)
         .map(|_| removal_source())
@@ -518,8 +525,9 @@ fn main() -> CurveResult<()> {
     for curve in &removal_inputs {
         removal_checksum ^= black_box(
             curve
-                .remove_knot(removal_knot.clone())
+                .remove_knot(removal_knot.clone(), &policy)
                 .unwrap()
+                .into_value()
                 .expect("inserted benchmark knot is removable")
                 .control_points()
                 .len(),
@@ -533,16 +541,18 @@ fn main() -> CurveResult<()> {
 
     let retained_removal = removal_source();
     retained_removal
-        .remove_knot(removal_knot.clone())
+        .remove_knot(removal_knot.clone(), &policy)
         .unwrap()
+        .into_value()
         .expect("inserted benchmark knot is removable");
     let started = Instant::now();
     let mut retained_removal_checksum = 0_usize;
     for _ in 0..iterations {
         retained_removal_checksum ^= black_box(
             retained_removal
-                .remove_knot(removal_knot.clone())
+                .remove_knot(removal_knot.clone(), &policy)
                 .unwrap()
+                .into_value()
                 .expect("retained benchmark knot is removable")
                 .control_points()
                 .len(),
@@ -569,7 +579,7 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut elevation_checksum = 0_usize;
     for curve in &elevation_inputs {
-        let elevated = curve.degree_elevation(6).unwrap();
+        let elevated = curve.degree_elevation(6, &policy).unwrap().into_value();
         elevation_checksum ^= black_box(elevated.spans().len() + elevated.target_degree());
     }
     let elapsed = started.elapsed();
@@ -580,11 +590,14 @@ fn main() -> CurveResult<()> {
     );
 
     let retained_elevation = elevation_source();
-    retained_elevation.degree_elevation(6).unwrap();
+    retained_elevation.degree_elevation(6, &policy).unwrap();
     let started = Instant::now();
     let mut retained_elevation_checksum = 0_usize;
     for _ in 0..iterations {
-        let elevated = retained_elevation.degree_elevation(6).unwrap();
+        let elevated = retained_elevation
+            .degree_elevation(6, &policy)
+            .unwrap()
+            .into_value();
         retained_elevation_checksum ^= black_box(elevated.spans().len() + elevated.target_degree());
     }
     let elapsed = started.elapsed();
@@ -597,7 +610,7 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut elevated_curve_checksum = 0_usize;
     for curve in &elevated_curve_inputs {
-        let elevated = curve.elevated_to_degree(6).unwrap();
+        let elevated = curve.elevated_to_degree(6, &policy).unwrap().into_value();
         elevated_curve_checksum ^=
             black_box(elevated.control_points().len() + elevated.knots().len() + elevated.degree());
     }
@@ -609,11 +622,16 @@ fn main() -> CurveResult<()> {
     );
 
     let retained_elevated_curve = elevation_source();
-    retained_elevated_curve.elevated_to_degree(6).unwrap();
+    retained_elevated_curve
+        .elevated_to_degree(6, &policy)
+        .unwrap();
     let started = Instant::now();
     let mut retained_elevated_curve_checksum = 0_usize;
     for _ in 0..iterations {
-        let elevated = retained_elevated_curve.elevated_to_degree(6).unwrap();
+        let elevated = retained_elevated_curve
+            .elevated_to_degree(6, &policy)
+            .unwrap()
+            .into_value();
         retained_elevated_curve_checksum ^= black_box(elevated.control_points().len());
     }
     let elapsed = started.elapsed();

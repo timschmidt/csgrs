@@ -546,7 +546,7 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert_eq!(topology.second()[0].fragments().len(), 2);
 
-    let reversed = second.reversed().unwrap();
+    let reversed = second.reversed(&CurveContext::STRICT).unwrap().into_value();
     let reversed_evidence = first
         .intersect_curve(&reversed, &CurveContext::STRICT)
         .unwrap()

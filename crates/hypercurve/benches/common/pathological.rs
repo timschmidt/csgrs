@@ -307,8 +307,9 @@ pub fn build_native_cell(index: usize) -> NativeCell {
     let source_path = all_family_path(origin_x, origin_y, &representations);
     let transform = cell_rotation(origin_x, origin_y);
     let rotated_path = source_path
-        .transform_similarity(&transform)
-        .expect("pathological rotation remains exact");
+        .transform_similarity(&transform, &CurveContext::STRICT)
+        .expect("pathological rotation remains exact")
+        .into_value();
     let source = CurveRegion2::try_from_boundary_paths(
         std::slice::from_ref(&source_path),
         &CurveContext::STRICT,
@@ -338,8 +339,9 @@ pub fn rotated_region(path: &CurvePath2, index: usize) -> CurveRegion2 {
     let origin_x = i64::try_from(index % 1024).expect("cell column fits i64") * 96;
     let origin_y = i64::try_from(index / 1024).expect("cell row fits i64") * 48;
     let rotated = path
-        .transform_similarity(&cell_rotation(origin_x, origin_y))
-        .expect("pathological rotation remains exact");
+        .transform_similarity(&cell_rotation(origin_x, origin_y), &CurveContext::STRICT)
+        .expect("pathological rotation remains exact")
+        .into_value();
     CurveRegion2::try_from_boundary_paths(&[rotated], &CurveContext::STRICT)
         .expect("pathological rotated region is valid")
         .into_value()

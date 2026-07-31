@@ -1,9 +1,11 @@
 //! Predicate-controlled topology and explicit edge-preview policy.
 
 use std::cell::Cell;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
-use crate::{Classification, UncertaintyReason};
+use crate::{
+    Classification, ExactCurveBlocker, ExactCurveError, ExactCurveResult, UncertaintyReason,
+};
 
 /// Immutable predicate policy for a curve operation.
 ///
@@ -265,7 +267,7 @@ impl CurveContext {
         self.0 & EDGE_PREVIEW_CONTEXT != 0 && preview_tolerance().is_some()
     }
 
-    fn observe_approximate_512(&self) {
+    pub(crate) fn observe_approximate_512(&self) {
         APPROXIMATE_512_CONSUMED.with(|consumed| consumed.set(true));
     }
 
@@ -289,6 +291,147 @@ impl CurveContext {
 
     pub(crate) const fn strict_counterpart(&self) -> Self {
         Self(self.0 & EDGE_PREVIEW_CONTEXT)
+    }
+}
+
+/// One retained result from a bounded, policy-aware operation cache.
+///
+/// A strict blocker may later be paired with an approximate result. Certified
+/// values and invalid inputs need only one slot because they answer both
+/// policies identically.
+#[derive(Clone, Debug)]
+pub(crate) enum PolicyResultCacheEntry<T> {
+    Decided(T),
+    Invalid(Box<ExactCurveError>),
+    StrictBlocked(ExactCurveBlocker),
+    Approximate512(Box<ApproximateResult<T>>),
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct ApproximateResult<T> {
+    strict_blocker: ExactCurveBlocker,
+    result: ExactCurveResult<T>,
+}
+
+pub(crate) type BoundedPolicyResultCache<K, T> =
+    OnceLock<Mutex<Vec<(K, PolicyResultCacheEntry<T>)>>>;
+
+/// Resolve and retain one exact operation result in a small keyed cache.
+///
+/// Expensive evaluation runs outside the cache mutex. Approximate requests
+/// first preserve the strict result; only a strict blocker authorizes the
+/// approximate evaluation. Preview-derived contexts bypass retained state.
+pub(crate) fn resolve_bounded_cached_result<K, T>(
+    cache: &BoundedPolicyResultCache<K, T>,
+    key: K,
+    capacity: usize,
+    policy: &CurveContext,
+    mut evaluate: impl FnMut(&CurveContext) -> ExactCurveResult<T>,
+) -> ExactCurveResult<T>
+where
+    K: Clone + PartialEq,
+    T: Clone,
+{
+    debug_assert!(capacity > 0);
+    if policy.is_edge_preview() {
+        return evaluate(policy);
+    }
+
+    let entries = cache.get_or_init(|| Mutex::new(Vec::new()));
+    let cached = entries
+        .lock()
+        .expect("policy result cache mutex poisoned")
+        .iter()
+        .find(|(retained_key, _)| retained_key == &key)
+        .map(|(_, entry)| entry.clone());
+
+    let resolved = match cached {
+        Some(PolicyResultCacheEntry::StrictBlocked(strict_blocker))
+            if policy.permits_approximate_512() =>
+        {
+            let result = evaluate(policy);
+            PolicyResultCacheEntry::Approximate512(Box::new(ApproximateResult {
+                strict_blocker,
+                result,
+            }))
+        }
+        Some(entry) => return replay_cached_result(entry, policy),
+        None if policy.permits_approximate_512() => {
+            let strict = evaluate(&policy.strict_counterpart());
+            match strict {
+                Err(ExactCurveError::Blocked(strict_blocker)) => {
+                    let result = evaluate(policy);
+                    PolicyResultCacheEntry::Approximate512(Box::new(ApproximateResult {
+                        strict_blocker,
+                        result,
+                    }))
+                }
+                result => retain_strict_result(result),
+            }
+        }
+        None => retain_strict_result(evaluate(policy)),
+    };
+
+    let retained = {
+        let mut entries = entries.lock().expect("policy result cache mutex poisoned");
+        if let Some((_, entry)) = entries
+            .iter_mut()
+            .find(|(retained_key, _)| retained_key == &key)
+        {
+            if matches!(
+                (&*entry, &resolved),
+                (
+                    PolicyResultCacheEntry::StrictBlocked(_),
+                    PolicyResultCacheEntry::Approximate512(_)
+                )
+            ) {
+                *entry = resolved;
+            }
+            entry.clone()
+        } else {
+            if entries.len() == capacity {
+                let _ = entries.remove(0);
+            }
+            entries.push((key, resolved));
+            entries
+                .last()
+                .expect("a policy result was retained")
+                .1
+                .clone()
+        }
+    };
+    replay_cached_result(retained, policy)
+}
+
+#[inline]
+fn retain_strict_result<T>(result: ExactCurveResult<T>) -> PolicyResultCacheEntry<T> {
+    match result {
+        Ok(value) => PolicyResultCacheEntry::Decided(value),
+        Err(error @ ExactCurveError::Invalid { .. }) => {
+            PolicyResultCacheEntry::Invalid(Box::new(error))
+        }
+        Err(ExactCurveError::Blocked(blocker)) => PolicyResultCacheEntry::StrictBlocked(blocker),
+    }
+}
+
+#[inline]
+fn replay_cached_result<T: Clone>(
+    entry: PolicyResultCacheEntry<T>,
+    policy: &CurveContext,
+) -> ExactCurveResult<T> {
+    match entry {
+        PolicyResultCacheEntry::Decided(value) => Ok(value),
+        PolicyResultCacheEntry::Invalid(error) => Err(*error),
+        PolicyResultCacheEntry::StrictBlocked(blocker) => Err(ExactCurveError::Blocked(blocker)),
+        PolicyResultCacheEntry::Approximate512(resolved) if policy.permits_approximate_512() => {
+            if resolved.result.is_ok() {
+                policy.observe_approximate_512();
+            }
+            resolved.result
+        }
+        PolicyResultCacheEntry::Approximate512(resolved) => {
+            Err(ExactCurveError::Blocked(resolved.strict_blocker))
+        }
     }
 }
 
@@ -540,7 +683,8 @@ pub(crate) fn resolve_certified_value<T>(
 
 #[cfg(test)]
 mod layout_tests {
-    use super::{CurveCertainty, CurveContext};
+    use super::{CurveCertainty, CurveContext, PolicyResultCacheEntry};
+    use crate::ExactCurveResult;
 
     #[test]
     fn curve_context_and_certainty_are_one_byte() {
@@ -549,6 +693,10 @@ mod layout_tests {
         assert_send_sync::<CurveContext>();
         assert_eq!(core::mem::size_of::<CurveContext>(), 1);
         assert_eq!(core::mem::size_of::<CurveCertainty>(), 1);
+        assert!(
+            core::mem::size_of::<PolicyResultCacheEntry<usize>>()
+                <= core::mem::size_of::<ExactCurveResult<usize>>()
+        );
     }
 }
 

@@ -51,7 +51,46 @@ fn span_topology_evidence(
         status,
         decision_path,
         native_subcurve,
+        &policy(),
     )
+    .map(decided)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn retained_span_facts(
+    span_index: usize,
+    knot_start: Real,
+    knot_end: Real,
+    bounds: Aabb2,
+    x_monotonicity: RetainedSpanAxisMonotonicity,
+    y_monotonicity: RetainedSpanAxisMonotonicity,
+    topology_status: RetainedTopologyStatus,
+    weight_domain: Option<RetainedSpanWeightDomainEvidence2>,
+) -> Result<RetainedBSplineSpanFacts2, CurveError> {
+    RetainedBSplineSpanFacts2::new(
+        span_index,
+        knot_start,
+        knot_end,
+        bounds,
+        x_monotonicity,
+        y_monotonicity,
+        topology_status,
+        weight_domain,
+        &policy(),
+    )
+    .map(decided)
+}
+
+fn retained_span_fact_evidence(
+    span_facts: Vec<RetainedBSplineSpanFacts2>,
+) -> Result<RetainedBSplineSpanFactEvidence2, CurveError> {
+    RetainedBSplineSpanFactEvidence2::new(span_facts, &policy()).map(decided)
+}
+
+fn rational_bspline_topology_evidence(
+    span_evidence: Vec<RationalBezierSpanTopologyEvidence2>,
+) -> Result<RationalBSplineNativeTopologyEvidence2, CurveError> {
+    RationalBSplineNativeTopologyEvidence2::new(span_evidence, &policy()).map(decided)
 }
 
 fn general_rational_cubic() -> BezierSubcurve2 {
@@ -648,8 +687,8 @@ fn retained_span_weight_evidence_rejects_inconsistent_counts() {
 fn retained_span_fact_constructors_reject_forged_evidence() {
     let bounds = Aabb2::from_point(p(0, 0));
 
-    assert_topology_error(RetainedBSplineSpanFactEvidence2::new(Vec::new()));
-    assert_topology_error(RetainedBSplineSpanFacts2::new(
+    assert_topology_error(retained_span_fact_evidence(Vec::new()));
+    assert_topology_error(retained_span_facts(
         0,
         r(0),
         r(1),
@@ -659,7 +698,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::Unsupported,
         Some(RetainedSpanWeightDomainEvidence2::new(3, 3, true).unwrap()),
     ));
-    assert_topology_error(RetainedBSplineSpanFacts2::new(
+    assert_topology_error(retained_span_facts(
         0,
         r(0),
         r(1),
@@ -669,7 +708,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::Unresolved,
         Some(RetainedSpanWeightDomainEvidence2::new(3, 2, false).unwrap()),
     ));
-    assert_topology_error(RetainedBSplineSpanFacts2::new(
+    assert_topology_error(retained_span_facts(
         0,
         r(0),
         r(1),
@@ -679,7 +718,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::Unsupported,
         None,
     ));
-    assert_topology_error(RetainedBSplineSpanFacts2::new(
+    assert_topology_error(retained_span_facts(
         0,
         r(0),
         r(1),
@@ -694,7 +733,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::DisplayOrExport,
         RetainedTopologyStatus::ImportedLossy,
     ] {
-        assert_topology_error(RetainedBSplineSpanFacts2::new(
+        assert_topology_error(retained_span_facts(
             0,
             r(0),
             r(1),
@@ -705,7 +744,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
             Some(RetainedSpanWeightDomainEvidence2::new(3, 3, true).unwrap()),
         ));
     }
-    assert_topology_error(RetainedBSplineSpanFacts2::new(
+    assert_topology_error(retained_span_facts(
         0,
         r(0),
         r(1),
@@ -715,7 +754,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::NativeExact,
         None,
     ));
-    assert_topology_error(RetainedBSplineSpanFacts2::new(
+    assert_topology_error(retained_span_facts(
         0,
         r(0),
         r(1),
@@ -725,7 +764,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::NativeExact,
         Some(RetainedSpanWeightDomainEvidence2::new(3, 3, true).unwrap()),
     ));
-    assert_topology_error(RetainedBSplineSpanFacts2::new(
+    assert_topology_error(retained_span_facts(
         0,
         r(0),
         r(1),
@@ -735,7 +774,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::NativeExact,
         Some(RetainedSpanWeightDomainEvidence2::new(3, 2, false).unwrap()),
     ));
-    assert_topology_error(RetainedBSplineSpanFacts2::new(
+    assert_topology_error(retained_span_facts(
         0,
         r(1),
         r(1),
@@ -745,7 +784,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::NativeExact,
         None,
     ));
-    assert_topology_error(RetainedBSplineSpanFacts2::new(
+    assert_topology_error(retained_span_facts(
         0,
         r(2),
         r(1),
@@ -755,7 +794,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::NativeExact,
         None,
     ));
-    assert_topology_error(RetainedBSplineSpanFacts2::new(
+    assert_topology_error(retained_span_facts(
         0,
         r(0),
         r(1),
@@ -766,7 +805,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         None,
     ));
 
-    let first_fact = RetainedBSplineSpanFacts2::new(
+    let first_fact = retained_span_facts(
         0,
         r(0),
         r(1),
@@ -777,7 +816,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         None,
     )
     .unwrap();
-    let gapped_fact = RetainedBSplineSpanFacts2::new(
+    let gapped_fact = retained_span_facts(
         1,
         r(2),
         r(3),
@@ -788,12 +827,9 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         None,
     )
     .unwrap();
-    assert_topology_error(RetainedBSplineSpanFactEvidence2::new(vec![
-        first_fact,
-        gapped_fact,
-    ]));
+    assert_topology_error(retained_span_fact_evidence(vec![first_fact, gapped_fact]));
 
-    let skipped_index = RetainedBSplineSpanFacts2::new(
+    let skipped_index = retained_span_facts(
         1,
         r(0),
         r(1),
@@ -804,12 +840,12 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         None,
     )
     .unwrap();
-    assert_topology_error(RetainedBSplineSpanFactEvidence2::new(vec![skipped_index]));
+    assert_topology_error(retained_span_fact_evidence(vec![skipped_index]));
 }
 
 #[test]
 fn retained_rational_span_topology_evidence_reject_forged_native_evidence() {
-    assert_topology_error(RationalBSplineNativeTopologyEvidence2::new(Vec::new()));
+    assert_topology_error(rational_bspline_topology_evidence(Vec::new()));
     assert_topology_error(span_topology_evidence(
         0,
         1,
@@ -895,9 +931,7 @@ fn retained_rational_span_topology_evidence_reject_forged_native_evidence() {
         Some(general_rational_cubic()),
     )
     .unwrap();
-    assert_topology_error(RationalBSplineNativeTopologyEvidence2::new(vec![
-        skipped_index,
-    ]));
+    assert_topology_error(rational_bspline_topology_evidence(vec![skipped_index]));
 
     let first_evidence = span_topology_evidence(
         0,
@@ -919,7 +953,7 @@ fn retained_rational_span_topology_evidence_reject_forged_native_evidence() {
         None,
     )
     .unwrap();
-    assert_topology_error(RationalBSplineNativeTopologyEvidence2::new(vec![
+    assert_topology_error(rational_bspline_topology_evidence(vec![
         first_evidence.clone(),
         gapped_evidence,
     ]));
@@ -934,10 +968,132 @@ fn retained_rational_span_topology_evidence_reject_forged_native_evidence() {
         Some(general_rational_cubic()),
     )
     .unwrap();
-    assert_topology_error(RationalBSplineNativeTopologyEvidence2::new(vec![
+    assert_topology_error(rational_bspline_topology_evidence(vec![
         first_evidence,
         mixed_degree_evidence,
     ]));
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn retained_bspline_evidence_constructors_obey_terminal_policy() {
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let ambiguous_bounds =
+        Aabb2::new_unchecked(Point2::new(undecidable_zero, r(0)), Point2::new(r(0), r(0)));
+    let strict_fact = RetainedBSplineSpanFacts2::new(
+        0,
+        r(0),
+        r(1),
+        ambiguous_bounds.clone(),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedTopologyStatus::NativeExact,
+        None,
+        &CurveContext::STRICT,
+    )
+    .unwrap();
+    assert!(matches!(strict_fact, Classification::Uncertain(_)));
+    let approximate_fact = RetainedBSplineSpanFacts2::new(
+        0,
+        r(0),
+        r(1),
+        ambiguous_bounds,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedTopologyStatus::NativeExact,
+        None,
+        &CurveContext::APPROXIMATE_512,
+    )
+    .unwrap();
+    assert!(matches!(approximate_fact, Classification::Decided(_)));
+
+    let symbolic_join = r(1) + ((Real::pi() + Real::e()) - (Real::e() + Real::pi()));
+    let first_fact = decided(
+        RetainedBSplineSpanFacts2::new(
+            0,
+            r(0),
+            symbolic_join.clone(),
+            Aabb2::from_point(p(0, 0)),
+            RetainedSpanAxisMonotonicity::CertifiedMonotone,
+            RetainedSpanAxisMonotonicity::CertifiedMonotone,
+            RetainedTopologyStatus::NativeExact,
+            None,
+            &CurveContext::STRICT,
+        )
+        .unwrap(),
+    );
+    let second_fact = retained_span_facts(
+        1,
+        r(1),
+        r(2),
+        Aabb2::from_point(p(1, 0)),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedTopologyStatus::NativeExact,
+        None,
+    )
+    .unwrap();
+    assert!(matches!(
+        RetainedBSplineSpanFactEvidence2::new(
+            vec![first_fact.clone(), second_fact.clone()],
+            &CurveContext::STRICT,
+        )
+        .unwrap(),
+        Classification::Uncertain(_)
+    ));
+    let fact_evidence = decided(
+        RetainedBSplineSpanFactEvidence2::new(
+            vec![first_fact, second_fact],
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap(),
+    );
+    assert_eq!(fact_evidence.span_facts().len(), 2);
+    assert_eq!(
+        fact_evidence.span_facts()[0].knot_interval().1,
+        &symbolic_join
+    );
+
+    let first_topology = span_topology_evidence(
+        0,
+        2,
+        r(0),
+        symbolic_join.clone(),
+        RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
+        None,
+    )
+    .unwrap();
+    let second_topology = span_topology_evidence(
+        1,
+        2,
+        r(1),
+        r(2),
+        RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
+        None,
+    )
+    .unwrap();
+    assert!(matches!(
+        RationalBSplineNativeTopologyEvidence2::new(
+            vec![first_topology.clone(), second_topology.clone()],
+            &CurveContext::STRICT,
+        )
+        .unwrap(),
+        Classification::Uncertain(_)
+    ));
+    let topology = decided(
+        RationalBSplineNativeTopologyEvidence2::new(
+            vec![first_topology, second_topology],
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap(),
+    );
+    assert_eq!(topology.span_evidence().len(), 2);
+    assert_eq!(
+        topology.span_evidence()[0].knot_interval().1,
+        &symbolic_join
+    );
 }
 
 #[test]

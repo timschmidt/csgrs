@@ -415,7 +415,10 @@ fn exact_extension_obeys_svg_transforms_without_family_demotion() {
         Real::from(4),
     )
     .unwrap();
-    let expected = source.transform_similarity(&transform).unwrap();
+    let expected = source
+        .transform_similarity(&transform, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 
     let imported = import_svg_document(&document).unwrap();
     let imported_curve = single_imported_curve(&imported);

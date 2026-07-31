@@ -3,7 +3,7 @@ use hypercurve::{
     Point2, PolynomialSplineCurve2, Real, SplinePeriodicity2,
 };
 #[cfg(feature = "predicates")]
-use hypercurve::{Curve2, CurveParameterSide2};
+use hypercurve::{Curve2, CurveParameterSide2, Similarity2};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -26,6 +26,30 @@ fn two_span_cubic() -> PolynomialSplineCurve2 {
     )
     .unwrap()
     .into_value()
+}
+
+#[cfg(feature = "predicates")]
+fn terminal_polynomial_spline() -> (PolynomialSplineCurve2, Real) {
+    let half = q(1, 2);
+    let symbolic_half = &half + ((Real::pi() + Real::e()) - (Real::e() + Real::pi()));
+    let curve = PolynomialSplineCurve2::try_new(
+        2,
+        vec![p(0, 0), p(1, 2), p(2, 0), p(3, -2), p(4, 0)],
+        vec![
+            r(0),
+            r(0),
+            r(0),
+            half,
+            symbolic_half.clone(),
+            r(1),
+            r(1),
+            r(1),
+        ],
+        &CurveContext::APPROXIMATE_512,
+    )
+    .expect("the terminal policy must retain the symbolically repeated knot")
+    .into_value();
+    (curve, symbolic_half)
 }
 
 #[cfg(feature = "predicates")]
@@ -197,6 +221,88 @@ fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
     ));
 }
 
+#[cfg(feature = "predicates")]
+#[test]
+fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
+    let (curve, symbolic_half) = terminal_polynomial_spline();
+    let knot = q(3, 4);
+
+    let strict_insertion = curve
+        .insert_knot(knot.clone(), &CurveContext::STRICT)
+        .unwrap_err();
+    assert!(matches!(
+        strict_insertion,
+        ExactCurveError::Blocked(blocker)
+            if blocker.operation() == CurveOperation2::KnotInsertion
+                && blocker.family() == CurveFamily2::PolynomialBSpline
+    ));
+    let inserted = curve
+        .insert_knot(knot, &CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must refine the polynomial carrier");
+    assert_eq!(
+        inserted.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(inserted.value.control_points().len(), 6);
+    assert!(
+        inserted
+            .value
+            .knots()
+            .iter()
+            .any(|value| value == &symbolic_half)
+    );
+    assert_eq!(
+        curve
+            .insert_knot(q(3, 4), &CurveContext::STRICT)
+            .unwrap_err(),
+        strict_insertion
+    );
+
+    assert!(matches!(
+        curve.reversed(&CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Reversal
+                && blocker.family() == CurveFamily2::PolynomialBSpline
+    ));
+    let reversed = curve
+        .reversed(&CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must validate reflected polynomial knots");
+    assert_eq!(
+        reversed.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(reversed.value.start(), curve.end());
+    assert_eq!(reversed.value.end(), curve.start());
+
+    let transform = Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        r(5),
+        r(-2),
+    )
+    .unwrap();
+    assert!(matches!(
+        curve.transform_similarity(&transform, &CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Transformation
+                && blocker.family() == CurveFamily2::PolynomialBSpline
+    ));
+    let transformed = Curve2::from(curve.clone())
+        .transform_similarity(&transform, &CurveContext::APPROXIMATE_512)
+        .expect("Curve2 must propagate the policy through polynomial reconstruction");
+    assert_eq!(
+        transformed.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert!(matches!(
+        Curve2::from(curve).reversed(&CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Reversal
+    ));
+}
+
 #[test]
 fn linear_polynomial_spline_evaluates_elevated_spans() {
     let curve = PolynomialSplineCurve2::try_new(
@@ -357,7 +463,7 @@ fn unclamped_polynomial_spline_retains_exact_active_domain_endpoints() {
         curve.end().clone()
     );
 
-    let reversed = curve.reversed().unwrap();
+    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
     assert_eq!(reversed.start(), curve.end());
     assert_eq!(reversed.end(), curve.start());
     assert_eq!(
@@ -472,7 +578,7 @@ fn polynomial_spline_interior_knot_uses_retained_span_boundary() {
 #[test]
 fn polynomial_spline_reversal_preserves_domain_source_and_image() {
     let curve = two_span_cubic();
-    let reversed = curve.reversed().unwrap();
+    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
 
     assert_eq!(reversed.parameter_domain(), curve.parameter_domain());
     assert_eq!(reversed.start(), curve.end());
@@ -487,7 +593,13 @@ fn polynomial_spline_reversal_preserves_domain_source_and_image() {
             .unwrap()
             .into_value()
     );
-    assert_eq!(reversed.reversed().unwrap(), curve);
+    assert_eq!(
+        reversed
+            .reversed(&CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+    );
 }
 
 #[test]
@@ -517,7 +629,10 @@ fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
         })
         .collect::<Vec<_>>();
 
-    let inserted = curve.insert_knot(r(1)).unwrap();
+    let inserted = curve
+        .insert_knot(r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(
         inserted.control_points().len(),
         curve.control_points().len() + 1
@@ -723,7 +838,10 @@ fn periodic_polynomial_editing_preserves_only_whole_curve_periodicity() {
     .unwrap()
     .into_value();
 
-    let inserted = curve.insert_knot(q(1, 2)).unwrap();
+    let inserted = curve
+        .insert_knot(q(1, 2), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(inserted.period(), curve.period());
     assert_eq!(
         inserted
@@ -736,7 +854,7 @@ fn periodic_polynomial_editing_preserves_only_whole_curve_periodicity() {
             .into_value()
     );
 
-    let reversed = curve.reversed().unwrap();
+    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
     assert_eq!(reversed.period(), curve.period());
     assert_eq!(
         reversed

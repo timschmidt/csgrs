@@ -1,3 +1,5 @@
+#[cfg(feature = "predicates")]
+use hypercurve::Similarity2;
 use hypercurve::{
     BezierSubcurve2, Curve2, CurveContext, CurveError, CurveFamily2, CurveOperation2,
     CurveParameterSide2, ExactCurveError, NurbsCurve2, Point2, Real, SplinePeriodicity2,
@@ -25,6 +27,31 @@ fn quadratic_nurbs() -> NurbsCurve2 {
     )
     .unwrap()
     .into_value()
+}
+
+#[cfg(feature = "predicates")]
+fn terminal_nurbs() -> (NurbsCurve2, Real) {
+    let half = q(1, 2);
+    let symbolic_half = &half + ((Real::pi() + Real::e()) - (Real::e() + Real::pi()));
+    let curve = NurbsCurve2::try_new(
+        2,
+        vec![p(0, 0), p(1, 2), p(2, 0), p(3, -2), p(4, 0)],
+        vec![Real::one(); 5],
+        vec![
+            r(0),
+            r(0),
+            r(0),
+            half,
+            symbolic_half.clone(),
+            r(1),
+            r(1),
+            r(1),
+        ],
+        &CurveContext::APPROXIMATE_512,
+    )
+    .expect("the terminal policy must retain the symbolically repeated knot")
+    .into_value();
+    (curve, symbolic_half)
 }
 
 #[cfg(feature = "predicates")]
@@ -282,6 +309,182 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
     ));
 }
 
+#[cfg(feature = "predicates")]
+#[test]
+fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
+    let (curve, symbolic_half) = terminal_nurbs();
+    let knot = q(3, 4);
+
+    let strict_insertion = curve
+        .insert_knot(knot.clone(), &CurveContext::STRICT)
+        .unwrap_err();
+    assert!(matches!(
+        strict_insertion,
+        ExactCurveError::Blocked(blocker)
+            if blocker.operation() == CurveOperation2::KnotInsertion
+    ));
+    let inserted = curve
+        .insert_knot(knot.clone(), &CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must refine the exact symbolic carrier");
+    assert_eq!(
+        inserted.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(inserted.value.control_points().len(), 6);
+    assert!(
+        inserted
+            .value
+            .knots()
+            .iter()
+            .any(|value| value == &symbolic_half)
+    );
+    let inserted_replay = curve
+        .insert_knot(knot.clone(), &CurveContext::APPROXIMATE_512)
+        .expect("the retained terminal refinement must replay");
+    assert_eq!(
+        inserted_replay.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert!(std::ptr::eq(
+        inserted.value.control_points(),
+        inserted_replay.value.control_points()
+    ));
+    assert_eq!(
+        curve
+            .insert_knot(knot.clone(), &CurveContext::STRICT)
+            .unwrap_err(),
+        strict_insertion
+    );
+    let approximate_first_knot = q(7, 8);
+    let approximate_first = curve
+        .insert_knot(
+            approximate_first_knot.clone(),
+            &CurveContext::APPROXIMATE_512,
+        )
+        .expect("an approximate-first cache entry must preserve its strict blocker");
+    assert_eq!(
+        approximate_first.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert!(matches!(
+        curve.insert_knot(approximate_first_knot, &CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::KnotInsertion
+    ));
+
+    let strict_removal = inserted
+        .value
+        .remove_knot(knot.clone(), &CurveContext::STRICT)
+        .unwrap_err();
+    let removed = inserted
+        .value
+        .remove_knot(knot, &CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must certify inverse knot removal");
+    assert_eq!(
+        removed.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    let removed_curve = removed
+        .value
+        .as_ref()
+        .expect("the inserted knot must remain exactly removable");
+    assert_eq!(removed_curve.degree(), curve.degree());
+    assert_eq!(removed_curve.knots(), curve.knots());
+    assert_eq!(removed_curve.start(), curve.start());
+    assert_eq!(removed_curve.end(), curve.end());
+    assert_eq!(
+        inserted
+            .value
+            .remove_knot(q(3, 4), &CurveContext::STRICT)
+            .unwrap_err(),
+        strict_removal
+    );
+
+    let strict_spans = curve
+        .degree_elevation(3, &CurveContext::STRICT)
+        .unwrap_err();
+    let spans = curve
+        .degree_elevation(3, &CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must elevate every exact symbolic span");
+    assert_eq!(
+        spans.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    let span_replay = curve
+        .degree_elevation(3, &CurveContext::APPROXIMATE_512)
+        .expect("the retained span elevation must replay");
+    assert!(std::ptr::eq(
+        spans.value.spans().as_ptr(),
+        span_replay.value.spans().as_ptr()
+    ));
+    assert_eq!(
+        curve
+            .degree_elevation(3, &CurveContext::STRICT)
+            .unwrap_err(),
+        strict_spans
+    );
+
+    let strict_carrier = curve
+        .elevated_to_degree(3, &CurveContext::STRICT)
+        .unwrap_err();
+    let elevated = curve
+        .elevated_to_degree(3, &CurveContext::APPROXIMATE_512)
+        .expect("the terminal policy must reconstruct the elevated carrier");
+    assert_eq!(
+        elevated.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(elevated.value.degree(), 3);
+    let elevated_replay = curve
+        .elevated_to_degree(3, &CurveContext::APPROXIMATE_512)
+        .expect("the retained elevated carrier must replay");
+    assert!(std::ptr::eq(
+        elevated.value.control_points(),
+        elevated_replay.value.control_points()
+    ));
+    assert_eq!(
+        curve
+            .elevated_to_degree(3, &CurveContext::STRICT)
+            .unwrap_err(),
+        strict_carrier
+    );
+
+    let reversed = curve
+        .reversed(&CurveContext::APPROXIMATE_512)
+        .expect("reversal must validate exact reflected symbolic knots");
+    assert_eq!(
+        reversed.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert!(matches!(
+        curve.reversed(&CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Reversal
+    ));
+
+    let transform = Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        r(2),
+        r(3),
+    )
+    .unwrap();
+    let transformed = Curve2::from(curve.clone())
+        .transform_similarity(&transform, &CurveContext::APPROXIMATE_512)
+        .expect("Curve2 transformation must preserve the terminal policy");
+    assert_eq!(
+        transformed.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    assert!(matches!(
+        Curve2::from(curve).transform_similarity(&transform, &CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Transformation
+    ));
+}
+
 #[test]
 fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
     let curve = NurbsCurve2::try_new(
@@ -519,8 +722,14 @@ fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache
         })
         .collect::<Vec<_>>();
 
-    let once = curve.insert_knot(r(1)).unwrap();
-    let twice = once.insert_knot(r(1)).unwrap();
+    let once = curve
+        .insert_knot(r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    let twice = once
+        .insert_knot(r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(
         once.control_points().len(),
         curve.control_points().len() + 1
@@ -548,7 +757,10 @@ fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache
         .bezier_decomposition(&CurveContext::STRICT)
         .unwrap()
         .into_value();
-    let no_op = twice.insert_knot(r(1)).unwrap();
+    let no_op = twice
+        .insert_knot(r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert!(std::ptr::eq(
         cached,
         no_op
@@ -573,8 +785,17 @@ fn nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result() {
     let clone = curve.clone();
     let request = vec![r(1), r(1)];
 
-    let batch = curve.insert_knots(request.clone()).unwrap();
-    let sequential = curve.insert_knot(r(1)).unwrap().insert_knot(r(1)).unwrap();
+    let batch = curve
+        .insert_knots(request.clone(), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    let sequential = curve
+        .insert_knot(r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .insert_knot(r(1), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(batch, sequential);
     for parameter in [r(0), q(1, 2), r(1), q(3, 2), r(2)] {
         assert_eq!(
@@ -587,7 +808,10 @@ fn nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result() {
         .bezier_decomposition(&CurveContext::STRICT)
         .unwrap()
         .into_value();
-    let replay = clone.insert_knots(request).unwrap();
+    let replay = clone
+        .insert_knots(request, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert!(std::ptr::eq(
         retained,
         replay
@@ -603,10 +827,17 @@ fn nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_sourc
     let source_control_count = curve.control_points().len();
     let request = vec![r(1), r(3)];
 
-    let first = curve.insert_knots(request.clone()).unwrap_err();
+    let first = curve
+        .insert_knots(request.clone(), &CurveContext::STRICT)
+        .unwrap_err();
     assert_eq!(first.operation(), CurveOperation2::KnotInsertion);
     assert_eq!(first.family(), CurveFamily2::Nurbs);
-    assert_eq!(curve.insert_knots(request).unwrap_err(), first);
+    assert_eq!(
+        curve
+            .insert_knots(request, &CurveContext::STRICT)
+            .unwrap_err(),
+        first
+    );
     assert_eq!(curve.control_points().len(), source_control_count);
 }
 
@@ -622,10 +853,17 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
     .unwrap()
     .into_value();
     let knot = q(3, 4);
-    let refined = curve.insert_knot(knot.clone()).unwrap();
+    let refined = curve
+        .insert_knot(knot.clone(), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let clone = refined.clone();
 
-    let removed = refined.remove_knot(knot.clone()).unwrap().unwrap();
+    let removed = refined
+        .remove_knot(knot.clone(), &CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .unwrap();
     assert_eq!(removed.degree(), curve.degree());
     assert_eq!(removed.knots(), curve.knots());
     assert_eq!(removed.control_points(), curve.control_points());
@@ -641,7 +879,11 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
         .bezier_decomposition(&CurveContext::STRICT)
         .unwrap()
         .into_value();
-    let replay = clone.remove_knot(knot).unwrap().unwrap();
+    let replay = clone
+        .remove_knot(knot, &CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .unwrap();
     assert!(std::ptr::eq(
         retained,
         replay
@@ -655,11 +897,23 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
 fn nurbs_knot_removal_retains_exact_negative_result_and_contextual_domain_errors() {
     let curve = quadratic_nurbs();
     let clone = curve.clone();
-    assert!(curve.remove_knot(r(1)).unwrap().is_none());
-    assert!(clone.remove_knot(r(1)).unwrap().is_none());
+    assert!(
+        curve
+            .remove_knot(r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+            .is_none()
+    );
+    assert!(
+        clone
+            .remove_knot(r(1), &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+            .is_none()
+    );
 
     for knot in [r(-1), r(0), r(2), r(3)] {
-        let error = curve.remove_knot(knot).unwrap_err();
+        let error = curve.remove_knot(knot, &CurveContext::STRICT).unwrap_err();
         assert_eq!(error.operation(), CurveOperation2::KnotRemoval);
         assert_eq!(error.family(), CurveFamily2::Nurbs);
         assert!(matches!(
@@ -684,8 +938,15 @@ fn periodic_nurbs_knot_removal_preserves_period_and_wrapped_image() {
     .unwrap()
     .into_value();
     let knot = q(5, 2);
-    let refined = curve.insert_knot(knot.clone()).unwrap();
-    let removed = refined.remove_knot(knot).unwrap().unwrap();
+    let refined = curve
+        .insert_knot(knot.clone(), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    let removed = refined
+        .remove_knot(knot, &CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .unwrap();
 
     assert_eq!(removed.period(), curve.period());
     assert_eq!(removed.start(), removed.end());
@@ -710,7 +971,10 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
     .into_value();
     let clone = curve.clone();
 
-    let elevation = curve.degree_elevation(4).unwrap();
+    let elevation = curve
+        .degree_elevation(4, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(elevation.source_degree(), 2);
     assert_eq!(elevation.target_degree(), 4);
     assert_eq!(elevation.spans().len(), 2);
@@ -738,7 +1002,10 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
             );
         }
     }
-    let replay = clone.degree_elevation(4).unwrap();
+    let replay = clone
+        .degree_elevation(4, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert!(std::ptr::eq(
         elevation.spans().as_ptr(),
         replay.spans().as_ptr()
@@ -758,7 +1025,10 @@ fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
     .into_value();
     let clone = curve.clone();
 
-    let elevated = curve.elevated_to_degree(4).unwrap();
+    let elevated = curve
+        .elevated_to_degree(4, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(elevated.degree(), 4);
     assert_eq!(elevated.parameter_domain(), curve.parameter_domain());
     assert_eq!(
@@ -786,7 +1056,10 @@ fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
         .bezier_decomposition(&CurveContext::STRICT)
         .unwrap()
         .into_value();
-    let replay = clone.elevated_to_degree(4).unwrap();
+    let replay = clone
+        .elevated_to_degree(4, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert!(std::ptr::eq(
         retained,
         replay
@@ -807,7 +1080,10 @@ fn nurbs_elevated_carrier_preserves_discontinuous_knot_sides() {
     )
     .unwrap()
     .into_value();
-    let elevated = curve.elevated_to_degree(4).unwrap();
+    let elevated = curve
+        .elevated_to_degree(4, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 
     assert_eq!(elevated.degree(), 4);
     assert_eq!(
@@ -844,7 +1120,10 @@ fn periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives() {
     )
     .unwrap()
     .into_value();
-    let elevated = curve.elevated_to_degree(3).unwrap();
+    let elevated = curve
+        .elevated_to_degree(3, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 
     assert_eq!(elevated.degree(), 3);
     assert_eq!(elevated.period(), curve.period());
@@ -864,7 +1143,9 @@ fn periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives() {
 #[test]
 fn nurbs_degree_elevation_retains_contextual_invalid_target_and_projective_blocker() {
     let curve = quadratic_nurbs();
-    let invalid = curve.degree_elevation(1).unwrap_err();
+    let invalid = curve
+        .degree_elevation(1, &CurveContext::STRICT)
+        .unwrap_err();
     assert_eq!(invalid.operation(), CurveOperation2::DegreeElevation);
     assert_eq!(invalid.family(), CurveFamily2::Nurbs);
 
@@ -877,16 +1158,23 @@ fn nurbs_degree_elevation_retains_contextual_invalid_target_and_projective_block
     )
     .unwrap()
     .into_value();
-    let blocked = singular.degree_elevation(2).unwrap_err();
+    let blocked = singular
+        .degree_elevation(2, &CurveContext::STRICT)
+        .unwrap_err();
     assert_eq!(blocked.operation(), CurveOperation2::DegreeElevation);
     assert_eq!(blocked.family(), CurveFamily2::Nurbs);
-    assert_eq!(singular.degree_elevation(2).unwrap_err(), blocked);
+    assert_eq!(
+        singular
+            .degree_elevation(2, &CurveContext::STRICT)
+            .unwrap_err(),
+        blocked
+    );
 }
 
 #[test]
 fn out_of_domain_nurbs_knot_insertion_has_contextual_error() {
     let curve = quadratic_nurbs();
-    let error = curve.insert_knot(r(3)).unwrap_err();
+    let error = curve.insert_knot(r(3), &CurveContext::STRICT).unwrap_err();
 
     assert_eq!(error.operation(), CurveOperation2::KnotInsertion);
     assert_eq!(error.family(), CurveFamily2::Nurbs);
@@ -972,7 +1260,7 @@ fn nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image() {
 #[test]
 fn nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping() {
     let curve = quadratic_nurbs();
-    let reversed = curve.reversed().unwrap();
+    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
 
     assert_eq!(reversed.parameter_domain(), curve.parameter_domain());
     assert_eq!(reversed.start(), curve.end());
@@ -997,7 +1285,13 @@ fn nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping() {
         .into_value();
     assert_eq!(reverse_derivative.dx(), &(-forward_derivative.dx()));
     assert_eq!(reverse_derivative.dy(), &(-forward_derivative.dy()));
-    assert_eq!(reversed.reversed().unwrap(), curve);
+    assert_eq!(
+        reversed
+            .reversed(&CurveContext::STRICT)
+            .unwrap()
+            .into_value(),
+        curve
+    );
 }
 
 #[test]
@@ -1245,7 +1539,10 @@ fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
         p(3, 4)
     );
 
-    let inserted = curve.insert_knot(r(3)).unwrap();
+    let inserted = curve
+        .insert_knot(r(3), &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(inserted.start(), curve.start());
     assert_eq!(inserted.end(), curve.end());
     assert_eq!(
@@ -1267,7 +1564,7 @@ fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
     assert_eq!(right.start(), &p(3, 4));
     assert_eq!(right.end(), curve.end());
 
-    let reversed = curve.reversed().unwrap();
+    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
     assert_eq!(reversed.start(), curve.end());
     assert_eq!(reversed.end(), curve.start());
     assert_eq!(
@@ -1488,7 +1785,10 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
     .unwrap()
     .into_value();
 
-    let inserted = curve.insert_knots(vec![q(1, 2), q(3, 2)]).unwrap();
+    let inserted = curve
+        .insert_knots(vec![q(1, 2), q(3, 2)], &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(inserted.period(), curve.period());
     assert_eq!(
         inserted
@@ -1501,7 +1801,10 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
             .into_value()
     );
 
-    let elevated = curve.degree_elevation(3).unwrap();
+    let elevated = curve
+        .degree_elevation(3, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     assert_eq!(elevated.source_degree(), 2);
     assert_eq!(elevated.target_degree(), 3);
     assert_eq!(
@@ -1533,7 +1836,7 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
         curve.end().clone()
     );
 
-    let reversed = curve.reversed().unwrap();
+    let reversed = curve.reversed(&CurveContext::STRICT).unwrap().into_value();
     assert_eq!(reversed.period(), curve.period());
     assert_eq!(reversed.start(), reversed.end());
     assert_eq!(

@@ -933,7 +933,7 @@ impl RationalBSplineBezierExtraction2 {
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
-        RationalBSplineNativeTopologyEvidence2::new_with_policy(span_evidence, policy)
+        RationalBSplineNativeTopologyEvidence2::new(span_evidence, policy)
     }
 
     /// Returns how many knots were inserted to produce Bezier form.
@@ -994,7 +994,7 @@ impl RationalBSplineBezierExtraction2 {
                         RetainedSpanAxisMonotonicity::Unsupported,
                     )
                 };
-            let fact = match RetainedBSplineSpanFacts2::new_with_policy(
+            let fact = match RetainedBSplineSpanFacts2::new(
                 span_index,
                 span.knot_start.clone(),
                 span.knot_end.clone(),
@@ -1012,7 +1012,7 @@ impl RationalBSplineBezierExtraction2 {
             };
             facts.push(fact);
         }
-        RetainedBSplineSpanFactEvidence2::new_with_policy(facts, policy)
+        RetainedBSplineSpanFactEvidence2::new(facts, policy)
     }
 }
 
@@ -1055,33 +1055,6 @@ impl RetainedBSplineSpanFacts2 {
     /// Constructs one span-local facts record.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        span_index: usize,
-        knot_start: Real,
-        knot_end: Real,
-        bounds: Aabb2,
-        x_monotonicity: RetainedSpanAxisMonotonicity,
-        y_monotonicity: RetainedSpanAxisMonotonicity,
-        topology_status: RetainedTopologyStatus,
-        weight_domain: Option<RetainedSpanWeightDomainEvidence2>,
-    ) -> CurveResult<Self> {
-        require_strict_evidence(
-            Self::new_with_policy(
-                span_index,
-                knot_start,
-                knot_end,
-                bounds,
-                x_monotonicity,
-                y_monotonicity,
-                topology_status,
-                weight_domain,
-                &CurveContext::STRICT,
-            )?,
-            "retained span facts require strict mathematical evidence",
-        )
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn new_with_policy(
         span_index: usize,
         knot_start: Real,
         knot_end: Real,
@@ -1155,14 +1128,7 @@ impl RetainedBSplineSpanFacts2 {
 
 impl RetainedBSplineSpanFactEvidence2 {
     /// Constructs a span-local fact evidence.
-    pub fn new(span_facts: Vec<RetainedBSplineSpanFacts2>) -> CurveResult<Self> {
-        require_strict_evidence(
-            Self::new_with_policy(span_facts, &CurveContext::STRICT)?,
-            "retained span fact collection requires strict mathematical evidence",
-        )
-    }
-
-    fn new_with_policy(
+    pub fn new(
         span_facts: Vec<RetainedBSplineSpanFacts2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
@@ -1180,14 +1146,7 @@ impl RetainedBSplineSpanFactEvidence2 {
 
 impl RationalBSplineNativeTopologyEvidence2 {
     /// Constructs a rational B-spline topology evidence from per-span evidence.
-    pub fn new(span_evidence: Vec<RationalBezierSpanTopologyEvidence2>) -> CurveResult<Self> {
-        require_strict_evidence(
-            Self::new_with_policy(span_evidence, &CurveContext::STRICT)?,
-            "retained span topology collection requires strict mathematical evidence",
-        )
-    }
-
-    fn new_with_policy(
+    pub fn new(
         span_evidence: Vec<RationalBezierSpanTopologyEvidence2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
@@ -1225,31 +1184,6 @@ impl RationalBSplineNativeTopologyEvidence2 {
 impl RationalBezierSpanTopologyEvidence2 {
     /// Constructs one retained span topology evidence.
     pub fn new(
-        span_index: usize,
-        degree: usize,
-        knot_start: Real,
-        knot_end: Real,
-        status: RetainedTopologyStatus,
-        decision_path: RationalBezierSpanTopologyPath2,
-        native_subcurve: Option<BezierSubcurve2>,
-    ) -> CurveResult<Self> {
-        require_strict_evidence(
-            Self::new_with_policy(
-                span_index,
-                degree,
-                knot_start,
-                knot_end,
-                status,
-                decision_path,
-                native_subcurve,
-                &CurveContext::STRICT,
-            )?,
-            "retained rational span topology requires strict mathematical evidence",
-        )
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn new_with_policy(
         span_index: usize,
         degree: usize,
         knot_start: Real,
@@ -1329,15 +1263,6 @@ fn validate_weight_domain_evidence(
         ));
     }
     Ok(())
-}
-
-fn require_strict_evidence<T>(classification: Classification<T>, message: &str) -> CurveResult<T> {
-    match classification {
-        Classification::Decided(value) => Ok(value),
-        Classification::Uncertain(reason) => {
-            Err(CurveError::Topology(format!("{message}: {reason:?}")))
-        }
-    }
 }
 
 fn validate_span_fact_evidence(
@@ -1633,7 +1558,7 @@ impl RationalBezierSpan2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierSpanTopologyEvidence2>> {
         if self.control_points.len() != self.degree + 1 || self.weights.len() != self.degree + 1 {
-            return RationalBezierSpanTopologyEvidence2::new_with_policy(
+            return RationalBezierSpanTopologyEvidence2::new(
                 span_index,
                 self.degree,
                 self.knot_start.clone(),
@@ -1648,7 +1573,7 @@ impl RationalBezierSpan2 {
             1 => {
                 let weight_sum = &self.weights[0] + &self.weights[1];
                 match is_zero(&weight_sum, policy) {
-                    Some(true) => RationalBezierSpanTopologyEvidence2::new_with_policy(
+                    Some(true) => RationalBezierSpanTopologyEvidence2::new(
                         span_index,
                         self.degree,
                         self.knot_start.clone(),
@@ -1675,7 +1600,7 @@ impl RationalBezierSpan2 {
                             middle_weight,
                             self.weights[1].clone(),
                         )?;
-                        RationalBezierSpanTopologyEvidence2::new_with_policy(
+                        RationalBezierSpanTopologyEvidence2::new(
                             span_index,
                             self.degree,
                             self.knot_start.clone(),
@@ -1698,7 +1623,7 @@ impl RationalBezierSpan2 {
                     self.weights[1].clone(),
                     self.weights[2].clone(),
                 )?;
-                RationalBezierSpanTopologyEvidence2::new_with_policy(
+                RationalBezierSpanTopologyEvidence2::new(
                     span_index,
                     self.degree,
                     self.knot_start.clone(),
@@ -1710,23 +1635,21 @@ impl RationalBezierSpan2 {
                 )
             }
             3 => match weights_are_all_equal(&self.weights, policy) {
-                Classification::Decided(true) => {
-                    RationalBezierSpanTopologyEvidence2::new_with_policy(
-                        span_index,
-                        self.degree,
-                        self.knot_start.clone(),
-                        self.knot_end.clone(),
-                        RetainedTopologyStatus::NativeExact,
-                        RationalBezierSpanTopologyPath2::NativeEqualWeightCubicSpan,
-                        Some(BezierSubcurve2::Cubic(CubicBezier2::new(
-                            self.control_points[0].clone(),
-                            self.control_points[1].clone(),
-                            self.control_points[2].clone(),
-                            self.control_points[3].clone(),
-                        ))),
-                        policy,
-                    )
-                }
+                Classification::Decided(true) => RationalBezierSpanTopologyEvidence2::new(
+                    span_index,
+                    self.degree,
+                    self.knot_start.clone(),
+                    self.knot_end.clone(),
+                    RetainedTopologyStatus::NativeExact,
+                    RationalBezierSpanTopologyPath2::NativeEqualWeightCubicSpan,
+                    Some(BezierSubcurve2::Cubic(CubicBezier2::new(
+                        self.control_points[0].clone(),
+                        self.control_points[1].clone(),
+                        self.control_points[2].clone(),
+                        self.control_points[3].clone(),
+                    ))),
+                    policy,
+                ),
                 Classification::Decided(false) | Classification::Uncertain(_) => {
                     general_rational_span_topology_evidence(self, span_index, policy)
                 }
@@ -1742,7 +1665,7 @@ fn general_rational_span_topology_evidence(
     policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezierSpanTopologyEvidence2>> {
     let curve = crate::RationalBezier2::try_new(span.control_points.clone(), span.weights.clone())?;
-    RationalBezierSpanTopologyEvidence2::new_with_policy(
+    RationalBezierSpanTopologyEvidence2::new(
         span_index,
         span.degree,
         span.knot_start.clone(),
@@ -2013,7 +1936,7 @@ fn native_span_fact_evidence(
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let fact = match RetainedBSplineSpanFacts2::new_with_policy(
+        let fact = match RetainedBSplineSpanFacts2::new(
             span_index,
             refined_knots[knot_index].clone(),
             refined_knots[knot_index + 1].clone(),
@@ -2041,7 +1964,7 @@ fn native_span_fact_evidence(
     if span_index != spans.len() {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
-    RetainedBSplineSpanFactEvidence2::new_with_policy(facts, policy)
+    RetainedBSplineSpanFactEvidence2::new(facts, policy)
 }
 
 fn subcurve_certified_bounds(

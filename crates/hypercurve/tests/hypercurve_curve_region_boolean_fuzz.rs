@@ -808,8 +808,9 @@ fn exact_circle_region(start_quarter: usize, reversed: bool) -> CurveRegion2 {
     if reversed {
         curves = CurvePath2::try_new(curves)
             .unwrap()
-            .reversed()
+            .reversed(&CurveContext::STRICT)
             .unwrap()
+            .into_value()
             .curves()
             .to_vec();
     }
@@ -1141,7 +1142,10 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
     )
     .unwrap()
     .into_value();
-    let reversed_path = forward_path.reversed().unwrap();
+    let reversed_path = forward_path
+        .reversed(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
     let reversed = CurveRegion2::try_from_boundary_paths_with_loop_topology(
         &[reversed_path],
         &[CurveRegionLoopRole::Material],
