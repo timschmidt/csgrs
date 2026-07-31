@@ -2,7 +2,7 @@
 
 use std::cell::Cell;
 
-use hypercurve::{Classification, CurveCertainty, CurveContext, CurveOutcome, CurveResult};
+use hypercurve::{CurveCertainty, CurveContext, CurveOutcome};
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
 use hypermesh::{MeshCertainty, MeshContext, MeshOutcome};
 
@@ -165,38 +165,6 @@ impl GeometryDecisions {
                 "{predicate} is undecided under {:?}",
                 self.context.predicate_policy()
             ))),
-        }
-    }
-
-    pub(crate) fn classify_curve<T>(
-        &self,
-        operation: &'static str,
-        mut evaluate: impl FnMut(&CurveContext) -> CurveResult<Classification<T>>,
-    ) -> Result<T, ValidationError> {
-        let resolve = |classification| match classification {
-            Classification::Decided(value) => Ok(value),
-            Classification::Uncertain(reason) => Err(ValidationError::Geometry(format!(
-                "{operation} is uncertain: {reason:?}"
-            ))),
-        };
-
-        if self.context.predicate_policy() != PredicatePolicy::APPROXIMATE_512 {
-            return evaluate(self.curve_policy())
-                .map_err(|error| ValidationError::Geometry(error.to_string()))
-                .and_then(resolve);
-        }
-
-        match evaluate(&CurveContext::STRICT)
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?
-        {
-            Classification::Decided(value) => Ok(value),
-            Classification::Uncertain(_) => {
-                let value = evaluate(&self.curve_policy)
-                    .map_err(|error| ValidationError::Geometry(error.to_string()))
-                    .and_then(resolve)?;
-                self.observe(GeometryCertainty::Approximate512Consumed);
-                Ok(value)
-            },
         }
     }
 }

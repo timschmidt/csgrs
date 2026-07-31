@@ -181,7 +181,10 @@ fuzz_target!(|bytes: &[u8]| {
             ) {
                 let options =
                     FiniteProjectionOptions::try_new(1.0e-3).expect("positive tolerance");
-                if let Ok(polyline) = path.project_to_finite_polyline(&options) {
+                if let Ok(polyline) = path
+                    .project_to_finite_polyline(&options, &CurveContext::STRICT)
+                    .map(|outcome| outcome.into_value())
+                {
                     for point in polyline.points() {
                         assert!(point[0].is_finite());
                         assert!(point[1].is_finite());

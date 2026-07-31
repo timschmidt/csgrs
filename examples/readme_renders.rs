@@ -502,13 +502,15 @@ fn render_curve(name: &str, region: &CurveRegion2) {
     let profiles = expect_decided(
         region
             .project_to_finite_profiles_exact(&projection, &CurveContext::STRICT)
-            .expect("project exact CurveRegion2 profiles"),
+            .expect("project exact CurveRegion2 profiles")
+            .into_value(),
         "exact CurveRegion2 profile topology",
     );
     let edge_paths = expect_decided(
         region
             .project_to_finite_curve_paths(&CurveContext::STRICT)
-            .expect("project exact CurveRegion2 edge paths"),
+            .expect("project exact CurveRegion2 edge paths")
+            .into_value(),
         "exact CurveRegion2 edge topology",
     );
     let Some(bounds) = curve_bounds(&profiles) else {
@@ -579,8 +581,9 @@ fn render_open_curves(name: &str, paths: &[CurvePath2], strings: &[CurveString2]
     let mut polylines = paths
         .iter()
         .map(|path| {
-            path.project_to_finite_polyline(&projection)
+            path.project_to_finite_polyline(&projection, &CurveContext::STRICT)
                 .expect("project exact open CurvePath2")
+                .into_value()
                 .points()
                 .to_vec()
         })
@@ -721,8 +724,9 @@ fn project_edge_paths(
     paths
         .iter()
         .map(|path| {
-            path.project_to_finite_polyline(projection)
+            path.project_to_finite_polyline(projection, &CurveContext::STRICT)
                 .expect("rasterize exact CurveRegion2 edge path")
+                .into_value()
                 .points()
                 .to_vec()
         })
@@ -1227,7 +1231,8 @@ mod tests {
         let projected_paths = expect_decided(
             region
                 .project_to_finite_curve_paths(&CurveContext::STRICT)
-                .expect("project circular boundary"),
+                .expect("project circular boundary")
+                .into_value(),
             "circular boundary projection",
         );
         let projected_vertices = projected_paths
