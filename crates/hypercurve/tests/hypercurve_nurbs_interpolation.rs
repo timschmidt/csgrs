@@ -15,6 +15,63 @@ fn p(x: i32, y: i32) -> Point2 {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn symbolic_interpolation_solve_and_replay_obey_terminal_policy() {
+    let pi = Real::pi();
+    let e = Real::e();
+    let points = vec![
+        Point2::new(pi.clone(), r(0)),
+        Point2::new(e.clone(), r(0)),
+        Point2::new(pi + e, r(0)),
+    ];
+    let parameters = vec![r(0), q(1, 2), r(1)];
+
+    assert!(matches!(
+        NurbsCurve2::interpolate_global(
+            2,
+            points.clone(),
+            parameters.clone(),
+            &CurveContext::STRICT,
+        ),
+        Err(hypercurve::ExactCurveError::Blocked(blocker))
+            if blocker.operation() == hypercurve::CurveOperation2::Interpolation
+                && blocker.reason() == hypercurve::UncertaintyReason::Predicate
+    ));
+
+    let approximate = NurbsCurve2::interpolate_global(
+        2,
+        points.clone(),
+        parameters.clone(),
+        &CurveContext::APPROXIMATE_512,
+    )
+    .expect("the terminal policy must close symbolic solve and authored-point replay");
+    assert_eq!(
+        approximate.certainty,
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    for (parameter, expected) in parameters.iter().zip(points) {
+        let actual = approximate
+            .value
+            .point_at(parameter, &CurveContext::APPROXIMATE_512)
+            .unwrap()
+            .into_value();
+        for (actual, expected) in [(actual.x(), expected.x()), (actual.y(), expected.y())] {
+            assert!(matches!(
+                hyperlimit::compare_reals(
+                    actual,
+                    expected,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                ),
+                hyperlimit::PredicateOutcome::Decided {
+                    value: std::cmp::Ordering::Equal,
+                    ..
+                }
+            ));
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn explicit_interpolation_obeys_terminal_policy_and_retains_symbolic_domain() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
     let symbolic_end = r(1) + undecidable_zero;

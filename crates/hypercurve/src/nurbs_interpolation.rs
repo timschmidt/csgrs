@@ -1,6 +1,8 @@
 //! Exact global interpolation for planar NURBS curves.
 
-use hypersolve::{BareissError, determinant_bareiss, solve_dense_linear_system_bareiss_multi_rhs};
+use hypersolve::{
+    BareissError, PredicateCertainty, PredicatePolicy, solve_dense_linear_system_bareiss_multi_rhs,
+};
 use std::cmp::Ordering;
 use std::sync::{Arc, Mutex, OnceLock};
 
@@ -22,15 +24,9 @@ enum DistanceParameterization {
     Centripetal,
 }
 
-struct InterpolationCoordinateSolve {
-    solution: Vec<Real>,
-    residual_replayed: bool,
-}
-
 struct InterpolationSystem {
     degree: usize,
     point_count: usize,
-    parameters: Arc<[Real]>,
     control_weights: Arc<[Real]>,
     knots: Arc<[Real]>,
     coefficient_matrix: Arc<[Vec<Real>]>,
@@ -77,7 +73,6 @@ impl NurbsCurve2 {
             interpolate_with_precomputed_system(
                 degree,
                 data_points,
-                &system.parameters,
                 system.control_weights.iter().cloned().collect(),
                 system.knots.iter().cloned().collect(),
                 &system.coefficient_matrix,
@@ -123,9 +118,10 @@ impl NurbsCurve2 {
     ///
     /// The fixed control weights make this a linear homogeneous interpolation
     /// problem. Every solved coordinate is replayed against the coefficient
-    /// matrix by `hypersolve`, then every constructed curve point is replayed
-    /// against its authored interpolation constraint. The outcome records any
-    /// selected terminal consumed along that complete path.
+    /// matrix by `hypersolve`. Those rows are the exact homogenized authored
+    /// point constraints; together with certified nonzero row denominators,
+    /// their residual reports are the authoritative interpolation proof. The
+    /// outcome records any selected terminal consumed along that complete path.
     pub fn interpolate_with_parameters_and_knots(
         degree: usize,
         data_points: Vec<Point2>,
@@ -175,7 +171,6 @@ fn interpolate_with_inputs(
     interpolate_with_precomputed_system(
         degree,
         data_points,
-        &parameters,
         control_weights,
         knots,
         &coefficient_matrix,
@@ -224,7 +219,6 @@ fn interpolation_denominators(
 fn interpolate_with_precomputed_system(
     degree: usize,
     data_points: Vec<Point2>,
-    parameters: &[Real],
     control_weights: Vec<Real>,
     knots: Vec<Real>,
     coefficient_matrix: &[Vec<Real>],
@@ -239,51 +233,16 @@ fn interpolate_with_precomputed_system(
         rhs_x.push(point.x() * denominator);
         rhs_y.push(point.y() * denominator);
     }
-    let replay_residuals = coefficient_matrix
-        .iter()
-        .flatten()
-        .chain(&rhs_x)
-        .chain(&rhs_y)
-        .all(|value| value.exact_rational_ref().is_some());
-    let (x_solve, y_solve) = if replay_residuals {
-        solve_interpolation_coordinates_bareiss(coefficient_matrix, &[rhs_x, rhs_y])?
-    } else {
-        let determinant = interpolation_determinant(coefficient_matrix, policy)?;
-        let x_solve = solve_interpolation_coordinate_cramer_identity(
-            coefficient_matrix,
-            &rhs_x,
-            &determinant,
-        )?;
-        let y_solve = solve_interpolation_coordinate_cramer_identity(
-            coefficient_matrix,
-            &rhs_y,
-            &determinant,
-        )?;
-        (x_solve, y_solve)
-    };
-    let control_points = x_solve
-        .solution
+    let [x_solution, y_solution] =
+        solve_interpolation_coordinates_bareiss(coefficient_matrix, &[rhs_x, rhs_y], policy)?;
+    let control_points = x_solution
         .iter()
         .cloned()
-        .zip(y_solve.solution.iter().cloned())
+        .zip(y_solution.iter().cloned())
         .map(|(x, y)| Point2::new(x, y))
         .collect::<Vec<_>>();
     let curve = NurbsCurve2::try_new_raw(degree, control_points, control_weights, knots, policy)
         .map_err(remap_interpolation_error)?;
-    if x_solve.residual_replayed && y_solve.residual_replayed {
-        for (parameter, expected) in parameters.iter().zip(&data_points) {
-            let actual = curve
-                .point_at_side_with_policy(parameter, crate::CurveParameterSide2::Automatic, policy)
-                .map_err(remap_interpolation_error)?;
-            match exact_point_equal(&actual, expected, policy) {
-                Ok(()) => {}
-                Err(ExactCurveError::Blocked(_)) => {
-                    break;
-                }
-                Err(error) => return Err(error),
-            }
-        }
-    }
     Ok(curve)
 }
 
@@ -326,7 +285,6 @@ fn uniform_interpolation_system(
     let system = Arc::new(InterpolationSystem {
         degree,
         point_count,
-        parameters: parameters.into(),
         control_weights: control_weights.into(),
         knots: knots.into(),
         coefficient_matrix: coefficient_matrix.into(),
@@ -349,35 +307,21 @@ fn uniform_interpolation_system(
     Ok(system)
 }
 
-fn interpolation_determinant(
-    coefficient_matrix: &[Vec<Real>],
-    policy: &CurveContext,
-) -> ExactCurveResult<Real> {
-    let evidence = determinant_bareiss(coefficient_matrix, INTERPOLATION_SOLVE_PRECISION)
-        .map_err(interpolation_solve_error)?;
-    match crate::classify::compare_reals(&evidence.determinant, &Real::zero(), policy) {
-        Some(Ordering::Less | Ordering::Greater) => Ok(evidence.determinant),
-        Some(Ordering::Equal) => Err(ExactCurveError::invalid(
-            CurveOperation2::Interpolation,
-            CurveFamily2::Nurbs,
-            CurveError::SingularNurbsInterpolation {
-                pivot: coefficient_matrix.len().saturating_sub(1),
-            },
-        )),
-        None => Err(blocked_interpolation(UncertaintyReason::RealSign)),
-    }
-}
-
 fn solve_interpolation_coordinates_bareiss(
     coefficient_matrix: &[Vec<Real>],
     right_hand_sides: &[Vec<Real>; 2],
-) -> ExactCurveResult<(InterpolationCoordinateSolve, InterpolationCoordinateSolve)> {
+    policy: &CurveContext,
+) -> ExactCurveResult<[Vec<Real>; 2]> {
     let evidence = solve_dense_linear_system_bareiss_multi_rhs(
         coefficient_matrix,
         right_hand_sides,
         INTERPOLATION_SOLVE_PRECISION,
+        interpolation_predicate_policy(policy),
     )
     .map_err(interpolation_solve_error)?;
+    if evidence.certainty == PredicateCertainty::Approximate {
+        policy.observe_approximate_512();
+    }
     for replay in &evidence.residual_replays {
         if !replay.accepted {
             let row = replay
@@ -392,53 +336,22 @@ fn solve_interpolation_coordinates_bareiss(
             ));
         }
     }
-    let mut solutions = evidence.solutions.into_iter();
-    let x_solve = InterpolationCoordinateSolve {
-        solution: solutions
-            .next()
-            .expect("two right-hand sides were supplied"),
-        residual_replayed: true,
-    };
-    let y_solve = InterpolationCoordinateSolve {
-        solution: solutions
-            .next()
-            .expect("two right-hand sides were supplied"),
-        residual_replayed: true,
-    };
-    Ok((x_solve, y_solve))
+    Ok(evidence
+        .solutions
+        .try_into()
+        .expect("two right-hand sides were supplied"))
 }
 
-fn solve_interpolation_coordinate_cramer_identity(
-    coefficient_matrix: &[Vec<Real>],
-    rhs: &[Real],
-    determinant: &Real,
-) -> ExactCurveResult<InterpolationCoordinateSolve> {
-    let mut replaced = coefficient_matrix.to_vec();
-    let mut solution = Vec::with_capacity(coefficient_matrix.len());
-    for column in 0..coefficient_matrix.len() {
-        for (row, value) in rhs.iter().enumerate() {
-            replaced[row][column] = value.clone();
-        }
-        let numerator = determinant_bareiss(&replaced, INTERPOLATION_SOLVE_PRECISION)
-            .map_err(interpolation_solve_error)?
-            .determinant;
-        let value = (numerator.clone() / determinant.clone()).map_err(|_| {
-            ExactCurveError::invalid(
-                CurveOperation2::Interpolation,
-                CurveFamily2::Nurbs,
-                CurveError::UnsupportedNurbsInterpolationDivision { index: column },
-            )
-        })?;
-        solution.push(value);
-        for (row, coefficients) in coefficient_matrix.iter().enumerate() {
-            replaced[row][column] = coefficients[column].clone();
-        }
+fn interpolation_predicate_policy(policy: &CurveContext) -> PredicatePolicy {
+    #[cfg(feature = "predicates")]
+    {
+        policy.predicate_policy()
     }
-
-    Ok(InterpolationCoordinateSolve {
-        solution,
-        residual_replayed: false,
-    })
+    #[cfg(not(feature = "predicates"))]
+    {
+        let _ = policy;
+        PredicatePolicy::STRICT
+    }
 }
 
 fn interpolate_distance_parameterized(
@@ -698,23 +611,6 @@ fn interpolation_span(
     Err(invalid_interpolation())
 }
 
-fn exact_scalar_equal(first: &Real, second: &Real, policy: &CurveContext) -> ExactCurveResult<()> {
-    match crate::classify::compare_reals(first, second, policy) {
-        Some(Ordering::Equal) => Ok(()),
-        Some(_) => Err(invalid_interpolation()),
-        None => Err(blocked_interpolation(UncertaintyReason::RealSign)),
-    }
-}
-
-fn exact_point_equal(
-    first: &Point2,
-    second: &Point2,
-    policy: &CurveContext,
-) -> ExactCurveResult<()> {
-    exact_scalar_equal(first.x(), second.x(), policy)?;
-    exact_scalar_equal(first.y(), second.y(), policy)
-}
-
 fn interpolation_solve_error(error: BareissError) -> ExactCurveError {
     match error {
         BareissError::DimensionMismatch => invalid_interpolation(),
@@ -792,12 +688,13 @@ mod tests {
             NurbsCurve2::interpolate_uniform(3, second_points.clone(), &CurveContext::STRICT)
                 .unwrap()
                 .into_value();
-        for (parameter, expected) in first_system.parameters.iter().zip(second_points) {
+        let parameters = uniform_interpolation_parameters(second_points.len()).unwrap();
+        for (parameter, expected) in parameters.iter().zip(second_points) {
             let actual = curve
                 .point_at(parameter, &CurveContext::STRICT)
                 .unwrap()
                 .into_value();
-            exact_point_equal(&actual, &expected, &CurveContext::STRICT).unwrap();
+            assert_eq!(actual, expected);
         }
     }
 }

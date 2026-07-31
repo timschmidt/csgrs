@@ -2,7 +2,7 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Classification, Curve2, CurveContext, CurveResult, NurbsCurve2, Point2,
+    Classification, Curve2, CurveCertainty, CurveContext, CurveResult, NurbsCurve2, Point2,
     PolynomialBSplineCurve2, PolynomialSplineCurve2, RationalBSplineCurve2,
     RationalQuadraticBSplineCurve2, Real,
 };
@@ -659,14 +659,28 @@ fn main() -> CurveResult<()> {
     );
 
     let symbolic_interpolation_points = vec![p(0, 0), p(1, 0), p(3, 0), p(6, 0)];
+    let symbolic_policy = CurveContext::APPROXIMATE_512;
+    let symbolic_preflight = NurbsCurve2::interpolate_centripetal(
+        2,
+        symbolic_interpolation_points.clone(),
+        &symbolic_policy,
+    )
+    .unwrap();
+    assert_eq!(
+        symbolic_preflight.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
     let symbolic_interpolation_count = 100_u32;
     let started = Instant::now();
     let mut symbolic_interpolation_checksum = 0_usize;
     for _ in 0..symbolic_interpolation_count {
-        let curve =
-            NurbsCurve2::interpolate_centripetal(2, symbolic_interpolation_points.clone(), &policy)
-                .unwrap()
-                .into_value();
+        let curve = NurbsCurve2::interpolate_centripetal(
+            2,
+            symbolic_interpolation_points.clone(),
+            &symbolic_policy,
+        )
+        .unwrap()
+        .into_value();
         symbolic_interpolation_checksum ^= black_box(curve.control_points().len());
     }
     let elapsed = started.elapsed();
