@@ -114,7 +114,7 @@ fn render_readme_meshes() {
     );
 
     render_mesh("inverse", &solid::inverse(&solid::sphere(r(1.0), 32, 16)));
-    render_mesh("csg", &cube_with_square_bore());
+    render_mesh("csg", &cube_minus_translated_sphere());
     render_mesh(
         "convex_hull",
         &solid::convex_hull(&solid::cube(r(1.2))).expect("convex hull"),
@@ -162,10 +162,19 @@ fn render_tpms_meshes() {
     );
 }
 
-fn cube_with_square_bore() -> TriangleMesh {
+fn cube_minus_translated_sphere() -> TriangleMesh {
     let cube = solid::cube(r(2.0));
-    let bore = solid::cuboid(r(0.8), r(0.8), r(3.0)).translated(r(0.6), r(0.6), r(-0.5));
-    cube.try_difference(&bore).expect("square-bore difference")
+    let sphere = solid::sphere(r(1.25), 16, 8).translated(r(1.0), r(1.0), r(1.0));
+    let context = hypermesh::MeshContext::new(hypermesh::PredicatePolicy::APPROXIMATE_512);
+    hypermesh::boolean_triangle_meshes(
+        &context,
+        &cube,
+        &sphere,
+        hypermesh::BooleanOp::Difference,
+        hypermesh::EmberConfig::default(),
+    )
+    .expect("translated-sphere difference")
+    .into_value()
 }
 
 fn render_curve(name: &str, region: &CurveRegion2) {
