@@ -889,6 +889,9 @@ pub fn involute_gear(
 }
 
 /// Cycloidal gear region.
+///
+/// Returns an empty region when the requested first-lobe flanks would meet or
+/// cross before reaching the addendum circle or the neighboring root gap.
 pub fn cycloidal_gear(
     module: Real,
     teeth: usize,
@@ -930,7 +933,8 @@ pub fn involute_rack(
     {
         return empty();
     }
-    let Some(point_capacity) = teeth.checked_mul(6) else {
+    let Some(point_capacity) = teeth.checked_mul(6).and_then(|count| count.checked_add(2))
+    else {
         return empty();
     };
     let pressure_angle = (pressure_angle_degrees * Real::pi() / Real::from(180_u16))
@@ -979,6 +983,11 @@ pub fn involute_rack(
             points.push([next_left - root_slant.clone(), root.clone()]);
         }
     }
+    let left = points.first().expect("validated rack has a left root")[0].clone();
+    let right = points.last().expect("validated rack has a right root")[0].clone();
+    let backing = root - module;
+    points.push([right, backing.clone()]);
+    points.push([left, backing]);
     region_from_ring(&points)
 }
 
@@ -999,7 +1008,8 @@ pub fn cycloidal_rack(
     let half = (Real::one() / Real::from(2_u8)).expect("two is nonzero");
     let generating_radius = module.clone() * half.clone();
     let pitch = Real::pi() * module.clone();
-    let root = -(module * (Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero")
+    let root = -(module.clone()
+        * (Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero")
         + clearance);
     let left = -half.clone() * pitch.clone();
     let right = (Real::from(teeth as u64) - half.clone()) * pitch.clone();
@@ -1033,13 +1043,16 @@ pub fn cycloidal_rack(
             top.push([tooth_left.clone() + point[0].clone(), point[1].clone()]);
         }
     }
-    let Some(point_capacity) = top.len().checked_add(2) else {
+    let Some(point_capacity) = top.len().checked_add(4) else {
         return empty();
     };
     let mut points = Vec::with_capacity(point_capacity);
-    points.push([left, root.clone()]);
-    points.push([right, root]);
+    let backing = root.clone() - module;
+    points.push([left.clone(), backing.clone()]);
+    points.push([right.clone(), backing]);
+    points.push([right, root.clone()]);
     points.extend(top.into_iter().rev());
+    points.push([left, root]);
     region_from_ring(&points)
 }
 
@@ -1308,8 +1321,8 @@ fn sampled_cycloidal_gear(
         let angular_pitch = (Real::tau() / Real::from(teeth as u64)).ok()?;
         let pitch_half_thickness = (angular_pitch.clone() / Real::from(4_u8)).ok()?;
         let epicycloid = |parameter: Real| {
-            let carrier = parameter.clone() + pitch_half_thickness.clone();
-            let rolling = epicycle_ratio.clone() * parameter + pitch_half_thickness.clone();
+            let carrier = parameter.clone();
+            let rolling = epicycle_ratio.clone() * parameter;
             [
                 epicycle_radius.clone() * carrier.clone().cos()
                     - generating_radius.clone() * rolling.clone().cos(),
@@ -1318,8 +1331,8 @@ fn sampled_cycloidal_gear(
             ]
         };
         let hypocycloid = |parameter: Real| {
-            let carrier = parameter.clone() + pitch_half_thickness.clone();
-            let rolling = hypocycle_ratio.clone() * parameter - pitch_half_thickness.clone();
+            let carrier = parameter.clone();
+            let rolling = hypocycle_ratio.clone() * parameter;
             [
                 hypocycle_radius.clone() * carrier.clone().cos()
                     + generating_radius.clone() * rolling.clone().cos(),
@@ -1333,24 +1346,54 @@ fn sampled_cycloidal_gear(
         for sample in 0..=segments_per_flank {
             let fraction = exact_ratio(sample, segments_per_flank)?;
             epi.push(epicycloid(tip_parameter.clone() * fraction.clone()));
-            hypo.push(hypocycloid(root_parameter.clone() * fraction));
+            hypo.push(hypocycloid(-(root_parameter.clone() * fraction)));
         }
-        let tip_argument = (-generating_radius.clone() * tip_phase.clone().sin())
-            .atan2(epicycle_radius.clone() - generating_radius.clone() * tip_phase.cos());
-        let root_argument = (-generating_radius.clone() * root_phase.clone().sin())
-            .atan2(hypocycle_radius.clone() + generating_radius.clone() * root_phase.cos());
-        let right_tip = -(tip_parameter + tip_argument + pitch_half_thickness.clone());
-        let right_root = -(root_parameter + root_argument + pitch_half_thickness.clone());
-        let left_tip = -right_tip.clone();
-        let left_root = -right_root.clone();
-        if real_cmp(&right_tip, &left_tip)? != Ordering::Less
-            || real_cmp(&right_root, &left_root)? != Ordering::Less
+
+        let limit_sine = pitch_half_thickness.clone().sin();
+        let limit_cosine = pitch_half_thickness.clone().cos();
+        let precedes_tooth_bisector = |[x, y]: &[Real; 2]| {
+            real_cmp(
+                &(y.clone() * limit_cosine.clone() - x.clone() * limit_sine.clone()),
+                &Real::zero(),
+            ) == Some(Ordering::Less)
+        };
+        let negative_root_endpoint = hypo.last()?;
+        let positive_root_endpoint = [
+            negative_root_endpoint[0].clone(),
+            -negative_root_endpoint[1].clone(),
+        ];
+        if !precedes_tooth_bisector(epi.last()?)
+            || !precedes_tooth_bisector(&positive_root_endpoint)
         {
             return None;
         }
-        let mut tooth = Vec::with_capacity(segments_per_flank.checked_mul(6)?);
-        tooth.extend(hypo.iter().rev().map(|[x, y]| [x.clone(), -y.clone()]));
-        tooth.extend(epi.iter().skip(1).map(|[x, y]| [x.clone(), -y.clone()]));
+
+        let flank_rotation = -pitch_half_thickness;
+        let flank_sine = flank_rotation.clone().sin();
+        let flank_cosine = flank_rotation.cos();
+        let rotate = |[x, y]: &[Real; 2]| {
+            [
+                x.clone() * flank_cosine.clone() - y.clone() * flank_sine.clone(),
+                x.clone() * flank_sine.clone() + y.clone() * flank_cosine.clone(),
+            ]
+        };
+        let right_epi = epi.iter().map(rotate).collect::<Vec<_>>();
+        let right_hypo = hypo.iter().map(rotate).collect::<Vec<_>>();
+        let right_tip_point = right_epi.last()?;
+        let right_root_point = right_hypo.last()?;
+        let right_tip = right_tip_point[1].clone().atan2(right_tip_point[0].clone());
+        let right_root = right_root_point[1].clone().atan2(right_root_point[0].clone());
+        let left_tip = -right_tip.clone();
+        let left_root = -right_root.clone();
+        let next_right_root = angular_pitch.clone() + right_root.clone();
+        let mut tooth = Vec::with_capacity(segments_per_flank.checked_mul(6)?.checked_add(2)?);
+        let has_root_transition =
+            real_cmp(&flank_root_radius, &root_radius)? == Ordering::Greater;
+        if has_root_transition {
+            tooth.push(exact_polar(&root_radius, right_root.clone()));
+        }
+        tooth.extend(right_hypo.iter().rev().cloned());
+        tooth.extend(right_epi.iter().skip(1).cloned());
         for sample in 1..=segments_per_flank {
             let fraction = exact_ratio(sample, segments_per_flank)?;
             tooth.push(exact_polar(
@@ -1358,9 +1401,21 @@ fn sampled_cycloidal_gear(
                 right_tip.clone() + fraction * (left_tip.clone() - right_tip.clone()),
             ));
         }
-        tooth.extend(epi[..segments_per_flank].iter().rev().cloned());
-        tooth.extend(hypo.iter().skip(1).cloned());
-        let next_right_root = angular_pitch + right_root;
+        tooth.extend(
+            right_epi[..segments_per_flank]
+                .iter()
+                .rev()
+                .map(|[x, y]| [x.clone(), -y.clone()]),
+        );
+        tooth.extend(
+            right_hypo
+                .iter()
+                .skip(1)
+                .map(|[x, y]| [x.clone(), -y.clone()]),
+        );
+        if has_root_transition {
+            tooth.push(exact_polar(&root_radius, left_root.clone()));
+        }
         for sample in 1..segments_per_flank {
             let fraction = exact_ratio(sample, segments_per_flank)?;
             tooth.push(exact_polar(
@@ -2969,14 +3024,14 @@ mod tests {
         assert!(!involute_25.is_empty());
         assert_ne!(involute_20, involute_25);
 
-        let cycloidal_a = cycloidal_gear(
+        let cycloidal_a = cycloidal_gear(Real::one(), 16, Real::one(), Real::zero(), 4);
+        let cycloidal_b = cycloidal_gear(
             Real::one(),
             16,
-            (Real::from(3_u8) / Real::from(4_u8)).unwrap(),
+            (Real::from(5_u8) / Real::from(4_u8)).unwrap(),
             Real::zero(),
             4,
         );
-        let cycloidal_b = cycloidal_gear(Real::one(), 16, Real::one(), Real::zero(), 4);
         assert!(!cycloidal_a.is_empty());
         assert!(!cycloidal_b.is_empty());
         assert_ne!(cycloidal_a, cycloidal_b);
@@ -3005,6 +3060,98 @@ mod tests {
         assert!(!symmetric.is_empty());
         assert!(!cambered.is_empty());
         assert_ne!(symmetric, cambered);
+    }
+
+    #[test]
+    fn gear_and_rack_profiles_form_one_hole_free_material_component() {
+        let cycloidal = cycloidal_gear(
+            Real::one(),
+            16,
+            (Real::from(5_u8) / Real::from(4_u8)).unwrap(),
+            Real::zero(),
+            8,
+        );
+        let involute =
+            involute_rack(Real::one(), 6, Real::from(20_u8), Real::zero(), Real::zero());
+        let cycloidal_rack_profile = cycloidal_rack(Real::one(), 6, Real::zero(), 12);
+        let readme_cycloidal = cycloidal_gear(
+            Real::try_from(0.22).unwrap(),
+            14,
+            Real::try_from(0.275).unwrap(),
+            Real::try_from(0.02).unwrap(),
+            8,
+        );
+        assert!(
+            cycloidal_gear(
+                Real::one(),
+                16,
+                (Real::from(3_u8) / Real::from(4_u8)).unwrap(),
+                Real::zero(),
+                8,
+            )
+            .is_empty(),
+            "overlapping neighboring cycloidal root flanks must be rejected"
+        );
+        let projection =
+            FiniteProjectionOptions::try_new(1.0e-3).expect("positive projection tolerance");
+
+        for (name, region) in [
+            ("cycloidal gear", cycloidal),
+            ("README cycloidal gear", readme_cycloidal),
+            ("involute rack", involute),
+            ("cycloidal rack", cycloidal_rack_profile),
+        ] {
+            let profiles = match region
+                .project_to_finite_profiles_exact(&projection, &CurvePolicy::STRICT)
+                .unwrap_or_else(|error| panic!("{name} profile projection failed: {error}"))
+            {
+                Classification::Decided(profiles) => profiles,
+                Classification::Uncertain(reason) => {
+                    panic!("{name} profile topology is uncertain: {reason:?}")
+                },
+            };
+            assert_eq!(
+                profiles.len(),
+                1,
+                "{name} must be one connected material component"
+            );
+            assert!(
+                profiles[0].holes().is_empty(),
+                "{name} must not acquire holes from a self-intersecting boundary"
+            );
+            let paths = match region
+                .project_to_finite_curve_paths(&CurvePolicy::STRICT)
+                .unwrap_or_else(|error| panic!("{name} edge projection failed: {error}"))
+            {
+                Classification::Decided(paths) => paths,
+                Classification::Uncertain(reason) => {
+                    panic!("{name} edge topology is uncertain: {reason:?}")
+                },
+            };
+            assert_eq!(
+                paths.len(),
+                1,
+                "{name} must expose one simple closed edge path"
+            );
+        }
+
+        for (name, rack) in [
+            (
+                "involute rack",
+                involute_rack(Real::one(), 6, Real::from(20_u8), Real::zero(), Real::zero()),
+            ),
+            (
+                "cycloidal rack",
+                cycloidal_rack(Real::one(), 6, Real::zero(), 12),
+            ),
+        ] {
+            let bounds = try_bounding_box(&rack)
+                .unwrap_or_else(|error| panic!("{name} bounds failed: {error}"));
+            assert!(
+                bounds.mins.y < -Real::one(),
+                "{name} must include backing below its tooth-root line"
+            );
+        }
     }
 
     #[test]
@@ -3160,7 +3307,7 @@ mod tests {
                 Real::zero(),
                 4,
             ),
-            cycloidal_gear(one.clone(), 16, three_quarters, Real::zero(), 4),
+            cycloidal_gear(one.clone(), 16, one.clone(), Real::zero(), 4),
             involute_rack(one.clone(), 4, Real::from(20_u8), Real::zero(), Real::zero()),
             cycloidal_rack(one.clone(), 4, Real::zero(), 8),
             airfoil_naca4(Real::from(2_u8), Real::from(4_u8), Real::from(12_u8), one, 20),

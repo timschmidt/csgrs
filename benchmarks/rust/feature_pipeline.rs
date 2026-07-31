@@ -125,7 +125,7 @@ fn main() {
             .expect("involute extrusion")
             .into_value(),
             curve::try_extrude(
-                &curve::cycloidal_gear(Real::from(2), 12, Real::from(1), Real::zero(), 4),
+                &curve::cycloidal_gear(Real::from(2), 12, Real::from(2), Real::zero(), 4),
                 Real::from(2),
                 &GeometryContext::STRICT,
             )

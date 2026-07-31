@@ -198,7 +198,7 @@ fn main() {
         )
     });
     run_profile(&config, "cycloidal_gear", 1, || {
-        curve::cycloidal_gear(Real::from(2), 12, Real::from(1), Real::zero(), 4)
+        curve::cycloidal_gear(Real::from(2), 12, Real::from(2), Real::zero(), 4)
     });
     run_profile(&config, "involute_rack", 2, || {
         curve::involute_rack(Real::from(2), 4, Real::from(20), Real::zero(), Real::zero())

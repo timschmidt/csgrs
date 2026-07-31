@@ -2328,7 +2328,7 @@ mod tests {
                 spur_gear_cycloid(
                     one.clone(),
                     16,
-                    (Real::from(3_u8) / Real::from(4_u8)).unwrap(),
+                    Real::one(),
                     Real::zero(),
                     3,
                     one.clone(),
