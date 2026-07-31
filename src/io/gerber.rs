@@ -206,7 +206,9 @@ pub fn export_gerber_with_options(
             .map_err(|error| IoError::Geometry {
                 format: "Gerber",
                 detail: format!("native region projection failed: {error}"),
-            })? {
+            })?
+            .into_value()
+        {
             Classification::Decided(region_profiles) => {
                 emit_region_profiles(&region_profiles, &mut commands, options)?;
             },

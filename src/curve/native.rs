@@ -1761,9 +1761,16 @@ fn try_finite_profiles_with(
 ) -> Result<Vec<FiniteRegionProfile2>, ValidationError> {
     let options = FiniteProjectionOptions::try_new(1.0e-3)
         .expect("positive finite projection tolerance");
-    decisions.classify_curve("finite curve projection", |policy| {
-        input.project_to_finite_profiles_exact(&options, policy)
-    })
+    match decisions.consume_curve(
+        input
+            .project_to_finite_profiles_exact(&options, decisions.curve_policy())
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    ) {
+        Classification::Decided(profiles) => Ok(profiles),
+        Classification::Uncertain(reason) => Err(ValidationError::Geometry(format!(
+            "finite curve projection is uncertain: {reason:?}"
+        ))),
+    }
 }
 
 /// Linear extrusion that reports invalid or uncertain geometry.
@@ -2751,6 +2758,9 @@ pub fn translated_solid(mesh: &TriangleMesh, x: Real, y: Real, z: Real) -> Trian
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hypercurve::{
+        BezierParameter2, BezierSplitFragment2, BezierSubcurve2, CurveRegionBoundaryLoop2,
+    };
 
     fn signed_volume(mesh: &TriangleMesh) -> f64 {
         mesh.triangles
@@ -2778,6 +2788,58 @@ mod tests {
                 .into_value(),
             "{label} is not an exact geometric two-manifold"
         );
+    }
+
+    #[test]
+    fn finite_profiles_consume_curve_projection_policy_once() {
+        let point = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let fragment = |start, control, end| BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
+        };
+        let symbolic_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let rational = RationalBezier2::try_new(
+            vec![
+                point(1, 1),
+                Point2::new(Real::from(2), Real::one() + &symbolic_zero),
+                Point2::new(Real::from(3), Real::one() + &symbolic_zero),
+                Point2::new(Real::from(4), Real::one() + &symbolic_zero),
+                point(5, 1),
+            ],
+            vec![
+                Real::one(),
+                Real::from(2),
+                Real::from(3),
+                Real::from(5),
+                Real::from(10),
+            ],
+        )
+        .unwrap();
+        let boundary = CurveRegionBoundaryLoop2::new(
+            vec![
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Rational(rational),
+                },
+                fragment(point(5, 1), point(5, 2), point(5, 3)),
+                fragment(point(5, 3), point(3, 3), point(1, 3)),
+                fragment(point(1, 3), point(1, 2), point(1, 1)),
+            ],
+            &CurveContext::STRICT,
+        )
+        .unwrap();
+        let region = CurveRegion2::new(vec![boundary]).unwrap();
+
+        assert!(try_finite_profiles(&region, &GeometryContext::STRICT).is_err());
+        let approximate =
+            try_finite_profiles(&region, &GeometryContext::APPROXIMATE_512).unwrap();
+        assert_eq!(
+            approximate.certainty,
+            crate::GeometryCertainty::Approximate512Consumed
+        );
+        assert_eq!(approximate.value.len(), 1);
     }
 
     #[test]
@@ -3167,6 +3229,7 @@ mod tests {
         let paths = match rack
             .project_to_finite_curve_paths(&CurveContext::STRICT)
             .expect("cycloidal rack edge projection")
+            .into_value()
         {
             Classification::Decided(paths) => paths,
             Classification::Uncertain(reason) => {
@@ -3240,6 +3303,7 @@ mod tests {
             let profiles = match region
                 .project_to_finite_profiles_exact(&projection, &CurveContext::STRICT)
                 .unwrap_or_else(|error| panic!("{name} profile projection failed: {error}"))
+                .into_value()
             {
                 Classification::Decided(profiles) => profiles,
                 Classification::Uncertain(reason) => {
@@ -3258,6 +3322,7 @@ mod tests {
             let paths = match region
                 .project_to_finite_curve_paths(&CurveContext::STRICT)
                 .unwrap_or_else(|error| panic!("{name} edge projection failed: {error}"))
+                .into_value()
             {
                 Classification::Decided(paths) => paths,
                 Classification::Uncertain(reason) => {

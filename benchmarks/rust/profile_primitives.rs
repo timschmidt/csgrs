@@ -237,8 +237,9 @@ fn main() {
         8,
         || {
             let polyline = black_box(&cubic_wire)
-                .project_to_finite_polyline(&projection)
-                .expect("finite Bezier projection");
+                .project_to_finite_polyline(&projection, &CurveContext::STRICT)
+                .expect("finite Bezier projection")
+                .into_value();
             let points = polyline.points().len();
             Measurement::new(1, points as u64, points as u64)
         },
