@@ -6259,6 +6259,38 @@ defect.
 Machine-readable samples and provenance are in
 [`2026-07-31-compact-curve-region-carrier.json`](benchmarks/checkpoints/2026-07-31-compact-curve-region-carrier.json).
 
+### Policy-explicit `CurveRegion2` construction
+
+Boundary-path promotion, native/retained loop validation, retained arrangement
+materialization, and signed-area/nesting evidence now receive the caller's
+`CurveContext`. The authoritative `CurveRegion2` boundary-path constructor no
+longer enters the policy-free cached Bezier boundary path. A symbolic closure
+whose endpoints differ structurally as `pi + e` and `e + pi` is therefore a
+typed `Construction/RealSign` blocker under `STRICT`; `APPROXIMATE_512`
+decides the same terminal equality and the operation observation records
+`Approximate512Consumed`. No compatibility overload preserves the old
+policy-free surface.
+
+The complete all-feature suite passed with 251 unit tests, the 167.01-second
+exact CurveRegion2 Boolean corpus, and all 268 pathological operations. The
+all-feature/no-default warning-denied matrices, fuzz targets, rustdoc, and the
+affected standalone UI paths also pass.
+
+Five release pathological processes retained exactly 67 cells, 603 candidate
+pairs, 3,248 fragments, 134 point classifications, 268 decided operations, no
+blockers, and checksum 6. The all-four Boolean median was 470.731 ms versus
+473.041 ms at the immediately preceding checkpoint (-0.49%, overlapping
+ranges). The release executable fell from 5,531,345 to 5,523,149 bytes
+(-8,196 bytes, -0.15%).
+
+Two production `STRICT` references remain in `bezier_region.rs`: both are
+conservative rational-line symbolic-area capability probes. They do not admit
+topology or construct `CurveRegion2`; they belong to the forthcoming
+policy-explicit measurement/evaluation API cutover.
+
+Machine-readable samples and provenance are in
+[`2026-07-31-policy-explicit-curve-region-construction.json`](benchmarks/checkpoints/2026-07-31-policy-explicit-curve-region-construction.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
