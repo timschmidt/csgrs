@@ -1455,6 +1455,48 @@ mod tests {
             Real::from(3) * latitude.sin(),
             -Real::from(5).sqrt().unwrap()
         );
+
+        let sixth = Real::new(Rational::fraction(1, 6).unwrap());
+        let shifted_acos = (-sixth.clone()).acos().unwrap() - pi_fraction(1, 2);
+        assert!(
+            shifted_acos
+                .fold_ref()
+                .signed_acos_minus_half_pi_argument()
+                .is_some()
+        );
+        let shifted_sine = shifted_acos.clone().sin();
+        assert_eq!(shifted_sine.exact_rational(), sixth.exact_rational());
+        let shifted_cosine = shifted_acos.cos();
+        assert_eq!(
+            shifted_cosine,
+            (Real::from(35).sqrt().unwrap() / Real::from(6)).unwrap()
+        );
+        let reflected_shift = pi_fraction(1, 2) - (-sixth).acos().unwrap();
+        assert_eq!(
+            reflected_shift.sin().exact_rational(),
+            Some(-Rational::fraction(1, 6).unwrap())
+        );
+        let anchored_slope = (-Real::from(35).sqrt().unwrap() / Real::from(35)).unwrap();
+        let anchored_angle = anchored_slope.atan().unwrap();
+        assert_eq!(
+            anchored_angle
+                .fold_ref()
+                .asin_argument()
+                .and_then(|argument| argument.exact_rational()),
+            Some(-Rational::fraction(1, 6).unwrap())
+        );
+        assert_eq!(
+            anchored_angle.sin().exact_rational(),
+            Some(-Rational::fraction(1, 6).unwrap())
+        );
+
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let sixth_turn = half.clone().asin().unwrap();
+        assert_eq!(
+            sixth_turn.fold_ref().pi_rational_multiple(),
+            Some(Rational::fraction(1, 6).unwrap())
+        );
+        assert_eq!(sixth_turn.sin(), half);
     }
 
     #[test]
@@ -4329,8 +4371,12 @@ mod tests {
             num::BigUint::from(1_u8) << 5000,
         )
         .unwrap();
-        let left = Computable::pi().add(Computable::rational(&tiny + &tiny));
-        let right = Computable::pi().add(Computable::rational(tiny));
+        // Keep the positive difference opaque: exact affine cancellation of
+        // shared `pi` terms is intentionally recognized by the constructor.
+        let left = Computable::pi()
+            .add(Computable::rational(&tiny + &tiny))
+            .exp();
+        let right = Computable::pi().add(Computable::rational(tiny)).exp();
         let opaque_positive = left.add(right.negate());
 
         assert_eq!(opaque_positive.sign_until(-4096), None);

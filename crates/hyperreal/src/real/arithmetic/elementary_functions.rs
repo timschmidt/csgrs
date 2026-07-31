@@ -2075,11 +2075,32 @@ impl Real {
         Some((orientation, Self::irrational_from_computable(argument)))
     }
 
+    fn retained_acos_minus_half_pi_argument(&self) -> Option<(Sign, Real)> {
+        let (orientation, argument) =
+            self.fold_ref().signed_acos_minus_half_pi_argument()?;
+        if let Some(rational) = argument.exact_rational() {
+            return Some((orientation, Self::new(rational)));
+        }
+        if let Some((scale, radicand)) = argument.exact_pure_quadratic_surd() {
+            let radical = Self::new(radicand).sqrt().ok()?;
+            return Some((orientation, radical.scaled_by_rational(&scale)));
+        }
+        Some((orientation, Self::irrational_from_computable(argument)))
+    }
+
     /// The sine of this Real.
     pub fn sin(self) -> Real {
         if self.definitely_zero() {
             crate::trace_dispatch!("real", "sin", "exact-zero");
             return Self::zero();
+        }
+        if let Some((orientation, argument)) = self.retained_acos_minus_half_pi_argument() {
+            crate::trace_dispatch!("real", "sin", "acos-minus-half-pi-rewrite");
+            return if orientation == Sign::Plus {
+                -argument
+            } else {
+                argument
+            };
         }
         if let Some(argument) = self.retained_atan_argument() {
             crate::trace_dispatch!("real", "sin", "atan-inverse-rewrite");
@@ -2129,6 +2150,10 @@ impl Real {
             }
             _ => (),
         }
+        if let Some(rational) = self.fold_ref().pi_rational_multiple() {
+            crate::trace_dispatch!("real", "sin", "retained-pi-rational-special-form");
+            return Self::sin_pi_rational(rational);
+        }
         if let Some((negate, residual)) = self.integer_pi_offset_residual() {
             crate::trace_dispatch!("real", "sin", "integer-pi-offset-rewrite");
             let reduced = Self::irrational_from_computable(Computable::sin_rational(residual));
@@ -2153,6 +2178,12 @@ impl Real {
         if self.definitely_zero() {
             crate::trace_dispatch!("real", "cos", "exact-zero-one");
             return Self::one();
+        }
+        if let Some((_, argument)) = self.retained_acos_minus_half_pi_argument() {
+            crate::trace_dispatch!("real", "cos", "acos-minus-half-pi-rewrite");
+            return (Self::one() - &argument * &argument)
+                .sqrt()
+                .expect("an exact acos argument has a nonnegative unit complement");
         }
         if let Some(argument) = self.retained_atan_argument() {
             crate::trace_dispatch!("real", "cos", "atan-inverse-rewrite");
@@ -2208,6 +2239,15 @@ impl Real {
             }
             _ => (),
         }
+        if let Some(rational) = self.fold_ref().pi_rational_multiple() {
+            crate::trace_dispatch!("real", "cos", "retained-pi-rational-special-form");
+            return match Self::reduce_cos_pi_rational(rational) {
+                CosPiRationalReduction::Exact(exact) => exact,
+                CosPiRationalReduction::SinPi { negate, reduced } => {
+                    Self::sin_pi_from_canonical_reduction(negate, reduced)
+                }
+            };
+        }
         if let Some((negate, residual)) = self.integer_pi_offset_residual() {
             crate::trace_dispatch!("real", "cos", "integer-pi-offset-rewrite");
             let reduced = Self::irrational_from_computable(Computable::cos_rational(residual));
@@ -2260,6 +2300,10 @@ impl Real {
                 return Self::tan_pi_rational(self.rational);
             }
             _ => (),
+        }
+        if let Some(rational) = self.fold_ref().pi_rational_multiple() {
+            crate::trace_dispatch!("real", "tan", "retained-pi-rational-special-form");
+            return Self::tan_pi_rational(rational);
         }
         if let Some((_negate, residual)) = self.integer_pi_offset_residual() {
             crate::trace_dispatch!("real", "tan", "integer-pi-offset-rewrite");

@@ -625,6 +625,14 @@ impl Computable {
         // the expression shape or a separated cached approximation proves the
         // sign. Unknown is cached separately so impossible structural proofs do
         // not repeat on every predicate query.
+        if matches!(self.internal.approximation, Approximation::Add(_, _))
+            && let Some(sign) = self.inverse_trig_linear_sign()
+        {
+            self.internal
+                .facts
+                .replace_exact_sign(ExactSignCache::Valid(sign));
+            return Some(sign);
+        }
         let cached_sign = self.internal.facts.exact_sign();
         match cached_sign {
             ExactSignCache::Valid(sign) => return Some(sign),
@@ -640,18 +648,6 @@ impl Computable {
             }
             ExactSignCache::Invalid => {}
         }
-        if matches!(self.internal.approximation, Approximation::Add(_, _))
-            && let Some(form) = self.pi_atan_linear_form(32)
-            && form.constant.sign() == Sign::NoSign
-            && form.pi.sign() == Sign::NoSign
-            && form.atan.sign() == Sign::NoSign
-        {
-            self.internal
-                .facts
-                .replace_exact_sign(ExactSignCache::Valid(Sign::NoSign));
-            return Some(Sign::NoSign);
-        }
-
         enum Frame<'a> {
             Eval(&'a Computable),
             FinishNegate(&'a Computable),

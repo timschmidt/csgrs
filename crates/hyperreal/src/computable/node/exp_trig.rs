@@ -465,7 +465,7 @@ impl Computable {
         self.atan_argument()?.exact_pure_quadratic_surd()
     }
 
-    fn asin_argument(&self) -> Option<Computable> {
+    pub(crate) fn asin_argument(&self) -> Option<Computable> {
         match &self.internal.approximation {
             Approximation::AsinRational(argument) => {
                 Some(Self::rational(argument.clone()))
@@ -477,7 +477,7 @@ impl Computable {
         }
     }
 
-    fn acos_argument(&self) -> Option<Computable> {
+    pub(crate) fn acos_argument(&self) -> Option<Computable> {
         match &self.internal.approximation {
             Approximation::AcosPositive(argument) => Some(argument.clone()),
             Approximation::AcosPositiveRational(argument) => {
@@ -505,6 +505,10 @@ impl Computable {
         if let Approximation::Negate(argument) = &self.internal.approximation {
             crate::trace_dispatch!("computable", "cos", "negative-even-rewrite");
             return argument.clone().cos();
+        }
+        if let Some((_, argument)) = self.signed_acos_minus_half_pi_argument() {
+            crate::trace_dispatch!("computable", "cos", "acos-minus-half-pi-rewrite");
+            return Self::unit_complement(&argument);
         }
         if let Some(argument) = self.atan_argument() {
             crate::trace_dispatch!("computable", "cos", "atan-inverse-rewrite");
@@ -592,6 +596,14 @@ impl Computable {
         if let Approximation::Negate(argument) = &self.internal.approximation {
             crate::trace_dispatch!("computable", "sin", "negative-odd-rewrite");
             return argument.clone().sin().negate();
+        }
+        if let Some((orientation, argument)) = self.signed_acos_minus_half_pi_argument() {
+            crate::trace_dispatch!("computable", "sin", "acos-minus-half-pi-rewrite");
+            return if orientation == Sign::Plus {
+                argument.negate()
+            } else {
+                argument
+            };
         }
         if let Some(argument) = self.atan_argument() {
             crate::trace_dispatch!("computable", "sin", "atan-inverse-rewrite");

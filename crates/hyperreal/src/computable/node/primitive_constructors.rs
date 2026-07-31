@@ -368,6 +368,18 @@ impl Computable {
         // Caller promises argument reduction has already happened. Keeping this
         // constructor private prevents large arguments from entering the Taylor
         // kernel directly.
+        if let Some((orientation, argument)) = value.signed_acos_minus_half_pi_argument() {
+            crate::trace_dispatch!(
+                "computable",
+                "constructor",
+                "prescaled-sin-acos-minus-half-pi"
+            );
+            return if orientation == Sign::Plus {
+                argument.negate()
+            } else {
+                argument
+            };
+        }
         crate::trace_dispatch!("computable", "constructor", "prescaled-sin");
         Self {
             internal: Arc::new(Node::new(Approximation::PrescaledSin(value), BoundCache::Invalid, ExactSignCache::Invalid)),
@@ -379,6 +391,16 @@ impl Computable {
         // Same reduced-argument contract as prescaled_sin. Cosine has exact
         // zero/one shortcuts in the public constructor, so this stays a raw
         // approximation node for already-small residuals.
+        if let Some((_, argument)) = value.signed_acos_minus_half_pi_argument() {
+            crate::trace_dispatch!(
+                "computable",
+                "constructor",
+                "prescaled-cos-acos-minus-half-pi"
+            );
+            return Self::one()
+                .add(argument.square().negate())
+                .sqrt();
+        }
         crate::trace_dispatch!("computable", "constructor", "prescaled-cos");
         Self {
             internal: Arc::new(Node::new(Approximation::PrescaledCos(value), BoundCache::Invalid, ExactSignCache::Invalid)),

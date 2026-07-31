@@ -6,6 +6,76 @@ struct PiAtanLinearForm {
     argument: Option<Computable>,
 }
 
+#[derive(Clone)]
+struct PiAcosLinearForm {
+    constant: Rational,
+    pi: Rational,
+    acos: Rational,
+    argument: Option<Computable>,
+}
+
+#[derive(Clone)]
+struct PiAtanTermsForm {
+    constant: Rational,
+    pi: Rational,
+    terms: Vec<(Computable, Rational)>,
+}
+
+impl PiAtanTermsForm {
+    fn scaled(mut self, scale: Rational) -> Self {
+        self.constant *= &scale;
+        self.pi *= &scale;
+        for (_, coefficient) in &mut self.terms {
+            *coefficient *= &scale;
+        }
+        self
+    }
+
+    fn add(mut self, other: Self) -> Self {
+        self.constant = self.constant + other.constant;
+        self.pi = self.pi + other.pi;
+        for (argument, coefficient) in other.terms {
+            if let Some((_, existing)) = self
+                .terms
+                .iter_mut()
+                .find(|(candidate, _)| Computable::internal_structural_eq(candidate, &argument))
+            {
+                *existing = existing.clone() + coefficient;
+            } else {
+                self.terms.push((argument, coefficient));
+            }
+        }
+        self.terms
+            .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
+        self
+    }
+}
+
+impl PiAcosLinearForm {
+    fn scaled(mut self, scale: Rational) -> Self {
+        self.constant *= &scale;
+        self.pi *= &scale;
+        self.acos *= scale;
+        self
+    }
+
+    fn add(self, other: Self) -> Option<Self> {
+        let argument = match (&self.argument, &other.argument) {
+            (Some(left), Some(right)) if !Computable::internal_structural_eq(left, right) => {
+                return None;
+            }
+            (Some(argument), _) | (_, Some(argument)) => Some(argument.clone()),
+            (None, None) => None,
+        };
+        Some(Self {
+            constant: self.constant + other.constant,
+            pi: self.pi + other.pi,
+            acos: self.acos + other.acos,
+            argument,
+        })
+    }
+}
+
 impl PiAtanLinearForm {
     fn scaled(mut self, scale: Rational) -> Self {
         self.constant *= &scale;
@@ -135,17 +205,386 @@ impl Computable {
         (argument.exact_sign()? == orientation).then_some((orientation, argument))
     }
 
-    fn pi_rational_multiple(&self) -> Option<Rational> {
-        let Approximation::Multiply(left, right) = &self.internal.approximation else {
+    fn pi_acos_linear_form(&self, budget: usize) -> Option<PiAcosLinearForm> {
+        if budget == 0 {
+            return None;
+        }
+        if let Some(rational) = self.exact_rational() {
+            return Some(PiAcosLinearForm {
+                constant: rational,
+                pi: Rational::zero(),
+                acos: Rational::zero(),
+                argument: None,
+            });
+        }
+        if self.shared_constant_kind() == Some(SharedConstant::Pi) {
+            return Some(PiAcosLinearForm {
+                constant: Rational::zero(),
+                pi: Rational::one(),
+                acos: Rational::zero(),
+                argument: None,
+            });
+        }
+        if let Some(atan_argument) = self.atan_argument()
+            && let Some((scale, radicand)) = atan_argument.exact_pure_quadratic_surd()
+            && radicand == Rational::new(35)
+        {
+            let magnitude = if scale.sign() == Sign::Minus {
+                -scale.clone()
+            } else {
+                scale.clone()
+            };
+            if magnitude == Rational::fraction(1, 35).expect("thirty-five is nonzero") {
+                let orientation = if scale.sign() == Sign::Minus {
+                    Rational::new(-1)
+                } else {
+                    Rational::one()
+                };
+                return Some(PiAcosLinearForm {
+                    constant: Rational::zero(),
+                    pi: orientation.clone()
+                        * Rational::fraction(1, 2).expect("two is nonzero"),
+                    acos: -orientation,
+                    argument: Some(Self::rational(
+                        Rational::fraction(1, 6).expect("six is nonzero"),
+                    )),
+                });
+            }
+        }
+        if let Some(argument) = self.asin_argument() {
+            if let Some(rational) = argument.exact_rational()
+                && rational.sign() == Sign::Minus
+            {
+                return Some(PiAcosLinearForm {
+                    constant: Rational::zero(),
+                    pi: Rational::fraction(-1, 2).expect("two is nonzero"),
+                    acos: Rational::one(),
+                    argument: Some(Self::rational(-rational)),
+                });
+            }
+            return Some(PiAcosLinearForm {
+                constant: Rational::zero(),
+                pi: Rational::fraction(1, 2).expect("two is nonzero"),
+                acos: Rational::new(-1),
+                argument: Some(argument),
+            });
+        }
+        if let Approximation::AcosNegativeRational(magnitude) = &self.internal.approximation {
+            return Some(PiAcosLinearForm {
+                constant: Rational::zero(),
+                pi: Rational::one(),
+                acos: Rational::new(-1),
+                argument: Some(Self::rational(magnitude.clone())),
+            });
+        }
+        if let Some(argument) = self.acos_argument() {
+            return Some(PiAcosLinearForm {
+                constant: Rational::zero(),
+                pi: Rational::zero(),
+                acos: Rational::one(),
+                argument: Some(argument),
+            });
+        }
+        match &self.internal.approximation {
+            Approximation::Add(left, right) => left
+                .pi_acos_linear_form(budget - 1)?
+                .add(right.pi_acos_linear_form(budget - 1)?),
+            Approximation::Negate(child) => Some(
+                child
+                    .pi_acos_linear_form(budget - 1)?
+                    .scaled(Rational::new(-1)),
+            ),
+            Approximation::Offset(child, shift) => Some(
+                child
+                    .pi_acos_linear_form(budget - 1)?
+                    .scaled(Self::power_of_two_rational(*shift)),
+            ),
+            Approximation::Multiply(left, right) => {
+                if let Some(scale) = left.exact_rational() {
+                    return Some(
+                        right
+                            .pi_acos_linear_form(budget - 1)?
+                            .scaled(scale),
+                    );
+                }
+                if let Some(scale) = right.exact_rational() {
+                    return Some(left.pi_acos_linear_form(budget - 1)?.scaled(scale));
+                }
+                None
+            }
+            _ => None,
+        }
+    }
+
+    fn pi_atan_terms_form(&self, budget: usize) -> Option<PiAtanTermsForm> {
+        if budget == 0 {
+            return None;
+        }
+        if let Some(rational) = self.exact_rational() {
+            return Some(PiAtanTermsForm {
+                constant: rational,
+                pi: Rational::zero(),
+                terms: Vec::new(),
+            });
+        }
+        if self.shared_constant_kind() == Some(SharedConstant::Pi) {
+            return Some(PiAtanTermsForm {
+                constant: Rational::zero(),
+                pi: Rational::one(),
+                terms: Vec::new(),
+            });
+        }
+        if let Some(argument) = self.atan_argument() {
+            return Some(PiAtanTermsForm {
+                constant: Rational::zero(),
+                pi: Rational::zero(),
+                terms: vec![(argument, Rational::one())],
+            });
+        }
+        match &self.internal.approximation {
+            Approximation::Add(left, right) => Some(
+                left.pi_atan_terms_form(budget - 1)?
+                    .add(right.pi_atan_terms_form(budget - 1)?),
+            ),
+            Approximation::Negate(child) => Some(
+                child
+                    .pi_atan_terms_form(budget - 1)?
+                    .scaled(Rational::new(-1)),
+            ),
+            Approximation::Offset(child, shift) => Some(
+                child
+                    .pi_atan_terms_form(budget - 1)?
+                    .scaled(Self::power_of_two_rational(*shift)),
+            ),
+            Approximation::Multiply(left, right) => {
+                if let Some(scale) = left.exact_rational() {
+                    return Some(right.pi_atan_terms_form(budget - 1)?.scaled(scale));
+                }
+                if let Some(scale) = right.exact_rational() {
+                    return Some(left.pi_atan_terms_form(budget - 1)?.scaled(scale));
+                }
+                None
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn signed_acos_minus_half_pi_argument(&self) -> Option<(Sign, Computable)> {
+        let form = self.pi_acos_linear_form(32)?;
+        if form.constant.sign() != Sign::NoSign {
+            return None;
+        }
+        let half = Rational::fraction(1, 2).expect("two is nonzero");
+        let orientation = if form.acos.is_one() && form.pi == -half.clone() {
+            Sign::Plus
+        } else if form.acos.is_minus_one() && form.pi == half {
+            Sign::Minus
+        } else {
             return None;
         };
-        if left.shared_constant_kind() == Some(SharedConstant::Pi) {
-            return right.exact_rational();
+        Some((orientation, form.argument?))
+    }
+
+    fn collapsed_inverse_trig_linear_sum(
+        &self,
+        other: &Computable,
+    ) -> Option<Rational> {
+        if !self.contains_inverse_trig_or_pi(32) && !other.contains_inverse_trig_or_pi(32) {
+            return None;
         }
-        if right.shared_constant_kind() == Some(SharedConstant::Pi) {
-            return left.exact_rational();
+        if let (Some(left), Some(right)) = (
+            self.pi_atan_linear_form(32),
+            other.pi_atan_linear_form(32),
+        )
+            && let Some(form) = left.add(right)
+            && form.pi.sign() == Sign::NoSign
+            && form.atan.sign() == Sign::NoSign
+        {
+            return Some(form.constant);
+        }
+        if let (Some(left), Some(right)) = (
+            self.pi_acos_linear_form(32),
+            other.pi_acos_linear_form(32),
+        )
+            && let Some(form) = left.add(right)
+            && form.pi.sign() == Sign::NoSign
+            && form.acos.sign() == Sign::NoSign
+        {
+            return Some(form.constant);
         }
         None
+    }
+
+    fn contains_inverse_trig_or_pi(&self, budget: usize) -> bool {
+        if budget == 0 {
+            return false;
+        }
+        match &self.internal.approximation {
+            Approximation::Constant(SharedConstant::Pi)
+            | Approximation::AtanRational(_)
+            | Approximation::PrescaledAtan(_)
+            | Approximation::AtanDeferred(_)
+            | Approximation::AcosPositive(_)
+            | Approximation::AcosPositiveRational(_)
+            | Approximation::AcosNegativeRational(_) => true,
+            Approximation::Negate(child) | Approximation::Offset(child, _) => {
+                child.contains_inverse_trig_or_pi(budget - 1)
+            }
+            Approximation::Add(left, right) | Approximation::Multiply(left, right) => {
+                left.contains_inverse_trig_or_pi(budget - 1)
+                    || right.contains_inverse_trig_or_pi(budget - 1)
+            }
+            _ => false,
+        }
+    }
+
+    pub(crate) fn inverse_trig_linear_sign(&self) -> Option<Sign> {
+        let product_sign = |left: Sign, right: Sign| match (left, right) {
+            (Sign::NoSign, _) | (_, Sign::NoSign) => Sign::NoSign,
+            (Sign::Plus, Sign::Plus) | (Sign::Minus, Sign::Minus) => Sign::Plus,
+            _ => Sign::Minus,
+        };
+        let magnitude = |value: &Rational| {
+            if value.sign() == Sign::Minus {
+                -value.clone()
+            } else {
+                value.clone()
+            }
+        };
+
+        if let Some(form) = self.pi_atan_terms_form(32)
+            && form.constant.sign() == Sign::NoSign
+        {
+            if form.pi.sign() == Sign::NoSign && form.terms.is_empty() {
+                return Some(Sign::NoSign);
+            }
+            if form.pi.sign() == Sign::NoSign && form.terms.len() == 1 {
+                return Some(product_sign(
+                    form.terms[0].1.sign(),
+                    form.terms[0].0.exact_sign()?,
+                ));
+            }
+            if form.pi.sign() == Sign::NoSign
+                && form.terms.len() == 2
+                && form.terms[0].1 == -form.terms[1].1.clone()
+            {
+                let argument_order = form.terms[0]
+                    .0
+                    .clone()
+                    .add(form.terms[1].0.clone().negate())
+                    .exact_sign()?;
+                return Some(product_sign(form.terms[0].1.sign(), argument_order));
+            }
+            if form.pi.sign() != Sign::NoSign
+                && form
+                    .terms
+                    .iter()
+                    .all(|(_, coefficient)| coefficient.sign() == form.pi.sign())
+            {
+                return Some(form.pi.sign());
+            }
+            let atan_bound = form
+                .terms
+                .iter()
+                .fold(Rational::zero(), |sum, (_, coefficient)| {
+                    sum + magnitude(coefficient)
+                });
+            if form.pi.sign() != Sign::NoSign
+                && magnitude(&form.pi) * Rational::new(2) >= atan_bound
+            {
+                return Some(form.pi.sign());
+            }
+        }
+
+        if let Some(form) = self.pi_atan_linear_form(32)
+            && form.constant.sign() == Sign::NoSign
+        {
+            if form.pi.sign() == Sign::NoSign {
+                return Some(product_sign(
+                    form.atan.sign(),
+                    form.argument?.exact_sign()?,
+                ));
+            }
+            if form.atan.sign() == Sign::NoSign {
+                return Some(form.pi.sign());
+            }
+            if form.pi.sign() == form.atan.sign() {
+                return Some(form.pi.sign());
+            }
+            if magnitude(&form.pi) * Rational::new(2) >= magnitude(&form.atan) {
+                return Some(form.pi.sign());
+            }
+        }
+
+        if let Some(form) = self.pi_acos_linear_form(32)
+            && form.constant.sign() == Sign::NoSign
+        {
+            if form.pi.sign() == Sign::NoSign {
+                return Some(form.acos.sign());
+            }
+            if form.acos.sign() == Sign::NoSign {
+                return Some(form.pi.sign());
+            }
+            if form.pi.sign() == form.acos.sign() {
+                return Some(form.pi.sign());
+            }
+            let half = Rational::fraction(1, 2).expect("two is nonzero");
+            let orientation = if form.acos.is_one() && form.pi == -half.clone() {
+                Some(Sign::Plus)
+            } else if form.acos.is_minus_one() && form.pi == half {
+                Some(Sign::Minus)
+            } else {
+                None
+            };
+            if let Some(orientation) = orientation {
+                let argument_sign = form.argument?.exact_sign()?;
+                return Some(product_sign(
+                    orientation,
+                    match argument_sign {
+                        Sign::Plus => Sign::Minus,
+                        Sign::Minus => Sign::Plus,
+                        Sign::NoSign => Sign::NoSign,
+                    },
+                ));
+            }
+        }
+        None
+    }
+
+    pub(crate) fn pi_rational_multiple(&self) -> Option<Rational> {
+        self.retained_pi_rational_multiple(32)
+    }
+
+    fn retained_pi_rational_multiple(&self, budget: usize) -> Option<Rational> {
+        if budget == 0 {
+            return None;
+        }
+        if self.shared_constant_kind() == Some(SharedConstant::Pi) {
+            return Some(Rational::one());
+        }
+        match &self.internal.approximation {
+            Approximation::Multiply(left, right) => {
+                if let Some(scale) = left.exact_rational() {
+                    Some(right.retained_pi_rational_multiple(budget - 1)? * scale)
+                } else if let Some(scale) = right.exact_rational() {
+                    Some(left.retained_pi_rational_multiple(budget - 1)? * scale)
+                } else {
+                    None
+                }
+            }
+            Approximation::Negate(child) => {
+                Some(-child.retained_pi_rational_multiple(budget - 1)?)
+            }
+            Approximation::Offset(child, shift) => Some(
+                child.retained_pi_rational_multiple(budget - 1)?
+                    * Self::power_of_two_rational(*shift),
+            ),
+            Approximation::Add(left, right) => Some(
+                left.retained_pi_rational_multiple(budget - 1)?
+                    + right.retained_pi_rational_multiple(budget - 1)?,
+            ),
+            _ => None,
+        }
     }
 
     fn canonical_sin_pi_term(&self) -> Option<(Rational, Rational)> {
@@ -636,6 +1075,10 @@ impl Computable {
         {
             crate::trace_dispatch!("computable", "add", "direct-cancellation");
             return Self::zero();
+        }
+        if let Some(rational) = self.collapsed_inverse_trig_linear_sum(&other) {
+            crate::trace_dispatch!("computable", "add", "inverse-trig-linear-collapse");
+            return Self::rational(rational);
         }
         if let Approximation::Add(left, right) = &self.internal.approximation
             && let Some(other_rational) = other.exact_rational()
