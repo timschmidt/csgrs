@@ -279,8 +279,13 @@ pub(crate) fn constrained_delaunay_inner(
     points: &[ExactPoint],
     constraints: &[Constraint],
 ) -> Result<ConstrainedDelaunayTriangulation> {
+    let diagnostic = std::env::var_os("HYPERMESH_OUTPUT_DIAGNOSTIC").is_some();
+    let started = std::time::Instant::now();
     validate_constraints(points.len(), constraints)?;
     validate_unique_points(kernel, points)?;
+    if diagnostic {
+        eprintln!("hypertri CDT unique: {:?}", started.elapsed());
+    }
 
     if constraints.is_empty() {
         let triangulation = delaunay_inner(kernel, points)?;
@@ -306,9 +311,20 @@ pub(crate) fn constrained_delaunay_inner(
     }
 
     let planar = crate::cdt_insert::planarize_constraints(kernel, points, constraints)?;
+    if diagnostic {
+        eprintln!(
+            "hypertri CDT planarize: {:?}, points={}, constraints={}",
+            started.elapsed(),
+            planar.points.len(),
+            planar.constraints.len()
+        );
+    }
     let points = planar.points;
     let internal_constraints = planar.constraints;
     validate_constraint_geometry(kernel, &points, &internal_constraints)?;
+    if diagnostic {
+        eprintln!("hypertri CDT validate PSLG: {:?}", started.elapsed());
+    }
 
     if let Some(polygon) =
         cdt_constraints::polygon_from_closed_constraints(kernel, &points, &internal_constraints)?
@@ -375,14 +391,31 @@ pub(crate) fn constrained_delaunay_inner(
     {
         return Ok(triangulation);
     }
+    if diagnostic {
+        eprintln!("hypertri CDT base probe: {:?}", started.elapsed());
+    }
 
     let base = delaunay_inner(kernel, &points)?;
+    if diagnostic {
+        eprintln!(
+            "hypertri CDT base repeat: {:?}, triangles={}",
+            started.elapsed(),
+            base.triangles().len()
+        );
+    }
     let triangles = crate::cdt_insert::insert_constraints(
         kernel,
         &points,
         base.triangles().to_vec(),
         &internal_constraints,
     )?;
+    if diagnostic {
+        eprintln!(
+            "hypertri CDT recovery: {:?}, triangles={}",
+            started.elapsed(),
+            triangles.len()
+        );
+    }
     let triangulation = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
         points,
         constraints.to_vec(),
@@ -1034,11 +1067,18 @@ fn validate_constraint_geometry(
     points: &[Point2],
     constraints: &[Constraint],
 ) -> Result<()> {
+    let approximate_points = exact_points_f64(points);
     for first in 0..constraints.len() {
         for second in first + 1..constraints.len() {
             let a = constraints[first];
             let b = constraints[second];
             if constraints_share_endpoint(a, b) {
+                continue;
+            }
+            if approximate_points
+                .as_ref()
+                .is_some_and(|points| !approximate_constraint_bounds_overlap(points, a, b))
+            {
                 continue;
             }
 
@@ -1129,8 +1169,15 @@ fn triangle_contains_edge(triangle: Triangle, first: usize, second: usize) -> bo
 }
 
 fn validate_unique_points(kernel: &ExactKernel, points: &[Point2]) -> Result<()> {
+    let approximate_points = exact_points_f64(points);
     for i in 0..points.len() {
         for j in i + 1..points.len() {
+            if approximate_points
+                .as_ref()
+                .is_some_and(|points| points[i] != points[j])
+            {
+                continue;
+            }
             if predicates::points_equal(kernel, &points[i], &points[j])? {
                 return Err(Error::InvalidInput {
                     reason: "duplicate points are not supported",
@@ -1140,6 +1187,45 @@ fn validate_unique_points(kernel: &ExactKernel, points: &[Point2]) -> Result<()>
     }
 
     Ok(())
+}
+
+pub(crate) fn exact_points_f64(points: &[Point2]) -> Option<Vec<[f64; 2]>> {
+    points
+        .iter()
+        .map(|point| {
+            if point.x.exact_rational_ref().is_none() || point.y.exact_rational_ref().is_none() {
+                return None;
+            }
+            let [Some(x), Some(y)] = [point.x.to_f64_lossy(), point.y.to_f64_lossy()] else {
+                return None;
+            };
+            (x.is_finite() && y.is_finite()).then_some([x, y])
+        })
+        .collect()
+}
+
+pub(crate) fn approximate_constraint_bounds_overlap(
+    points: &[[f64; 2]],
+    first: Constraint,
+    second: Constraint,
+) -> bool {
+    (0..2).all(|axis| {
+        points[first.from][axis].max(points[first.to][axis])
+            >= points[second.from][axis].min(points[second.to][axis])
+            && points[second.from][axis].max(points[second.to][axis])
+                >= points[first.from][axis].min(points[first.to][axis])
+    })
+}
+
+pub(crate) fn approximate_point_within_constraint_bounds(
+    points: &[[f64; 2]],
+    constraint: Constraint,
+    point: usize,
+) -> bool {
+    (0..2).all(|axis| {
+        points[point][axis] >= points[constraint.from][axis].min(points[constraint.to][axis])
+            && points[point][axis] <= points[constraint.from][axis].max(points[constraint.to][axis])
+    })
 }
 
 #[cfg(test)]

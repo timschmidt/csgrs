@@ -44,6 +44,7 @@ pub(crate) fn insert_constraints(
     // exact-rational denominator classes without changing the topology
     // contract. Useful structure stays beside exact arithmetic rather than
     // leaking scalar internals into topology code.
+    let approximate_points = crate::cdt::exact_points_f64(points);
     let mut constrained_edges = Vec::new();
     for &constraint in constraints {
         let edge = EdgeKey::new(constraint.from, constraint.to);
@@ -58,12 +59,18 @@ pub(crate) fn insert_constraints(
             &mut triangles,
             constraint,
             &constrained_edges,
+            approximate_points.as_deref(),
         )?;
         push_unique_edge(&mut constrained_edges, edge);
-        legalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges)?;
     }
 
-    legalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges)?;
+    legalize_unconstrained_edges(
+        kernel,
+        points,
+        &mut triangles,
+        &constrained_edges,
+        approximate_points.as_deref(),
+    )?;
     Ok(triangles)
 }
 
@@ -80,16 +87,21 @@ pub(crate) fn planarize_constraints(
     constraints: &[Constraint],
 ) -> Result<PlanarConstraints> {
     let mut planar_points = points.to_vec();
+    let approximate_points = crate::cdt::exact_points_f64(points);
 
-    // Structural-dispatch note: this exact O(m^2) pair scan is the conservative
-    // baseline. If constraints carry exact bounding boxes plus grid/dyadic
-    // scale facts, a sweep or spatial index can reject most pairs while still
-    // routing every surviving intersection test through exact predicates.
+    // Rational-to-binary64 rounding is monotone. Disjoint rounded bounds
+    // therefore certify disjoint exact bounds, while every survivor still
+    // reaches the exact segment predicate below.
     for first in 0..constraints.len() {
         for second in first + 1..constraints.len() {
             let a = constraints[first];
             let b = constraints[second];
             if constraints_share_endpoint(a, b) {
+                continue;
+            }
+            if approximate_points.as_ref().is_some_and(|points| {
+                !crate::cdt::approximate_constraint_bounds_overlap(points, a, b)
+            }) {
                 continue;
             }
 
@@ -108,10 +120,20 @@ pub(crate) fn planarize_constraints(
         }
     }
 
+    let approximate_planar_points = crate::cdt::exact_points_f64(&planar_points);
     let mut split = Vec::new();
     for constraint in constraints {
         let mut on_segment = Vec::new();
         for point_index in 0..planar_points.len() {
+            if approximate_planar_points.as_ref().is_some_and(|points| {
+                !crate::cdt::approximate_point_within_constraint_bounds(
+                    points,
+                    *constraint,
+                    point_index,
+                )
+            }) {
+                continue;
+            }
             if predicates::point_on_segment(
                 kernel,
                 &planar_points[constraint.from],
@@ -271,6 +293,7 @@ fn recover_constraint(
     triangles: &mut [Triangle],
     constraint: Constraint,
     constrained_edges: &[EdgeKey],
+    approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<()> {
     let target = EdgeKey::new(constraint.from, constraint.to);
     let max_flips = flip_budget(points.len(), triangles.len());
@@ -280,30 +303,19 @@ fn recover_constraint(
             return Ok(());
         }
 
-        let Some(crossing_edge) = first_edge_crossing_constraint(
+        let Some(crossing_edge) = first_flippable_edge_crossing_constraint(
             kernel,
             points,
             triangles,
             constraint,
             constrained_edges,
+            approximate_points,
         )?
         else {
             return Err(Error::UnsupportedFeature {
                 feature: "constraint recovery without a flippable crossing edge",
             });
         };
-
-        let Some([first, second]) = two_adjacent_triangles(triangles, crossing_edge)? else {
-            return Err(Error::UnsupportedFeature {
-                feature: "constraint recovery reached a boundary edge",
-            });
-        };
-        let new_edge = EdgeKey::new(first.opposite, second.opposite);
-        if !flip_preserves_constraints(kernel, points, new_edge, constrained_edges)? {
-            return Err(Error::UnsupportedFeature {
-                feature: "constraint recovery would cross a previous constraint",
-            });
-        }
 
         if !flip_edge(kernel, points, triangles, crossing_edge)? {
             return Err(Error::UnsupportedFeature {
@@ -317,15 +329,26 @@ fn recover_constraint(
     })
 }
 
-fn first_edge_crossing_constraint(
+fn first_flippable_edge_crossing_constraint(
     kernel: &ExactKernel,
     points: &[Point2],
     triangles: &[Triangle],
     constraint: Constraint,
     constrained_edges: &[EdgeKey],
+    approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<Option<EdgeKey>> {
+    let mut saw_crossing = false;
     for edge in unique_edges(triangles) {
         if edge.contains(constraint.from) || edge.contains(constraint.to) {
+            continue;
+        }
+        if approximate_points.is_some_and(|points| {
+            !crate::cdt::approximate_constraint_bounds_overlap(
+                points,
+                constraint,
+                Constraint::new(edge.from, edge.to),
+            )
+        }) {
             continue;
         }
         let intersection = predicates::segment_intersection(
@@ -336,16 +359,38 @@ fn first_edge_crossing_constraint(
             &points[edge.to],
         )?;
         if intersection.is_proper_crossing() {
+            saw_crossing = true;
             if constrained_edges.contains(&edge) {
                 return Err(Error::InvalidInput {
                     reason: "constraint crosses an existing constrained edge",
                 });
             }
+            let Some([first, second]) = two_adjacent_triangles(triangles, edge)? else {
+                continue;
+            };
+            let new_edge = EdgeKey::new(first.opposite, second.opposite);
+            if !edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
+                || !flip_preserves_constraints(
+                    kernel,
+                    points,
+                    new_edge,
+                    constrained_edges,
+                    approximate_points,
+                )?
+            {
+                continue;
+            }
             return Ok(Some(edge));
         }
     }
 
-    Ok(None)
+    if saw_crossing {
+        Err(Error::UnsupportedFeature {
+            feature: "constraint recovery across a non-convex edge cavity",
+        })
+    } else {
+        Ok(None)
+    }
 }
 
 fn legalize_unconstrained_edges(
@@ -353,6 +398,7 @@ fn legalize_unconstrained_edges(
     points: &[Point2],
     triangles: &mut [Triangle],
     constrained_edges: &[EdgeKey],
+    approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<()> {
     let max_flips = flip_budget(points.len(), triangles.len()) * 4;
 
@@ -371,7 +417,13 @@ fn legalize_unconstrained_edges(
             if !edge_is_illegal(kernel, points, edge, first.opposite, second.opposite)? {
                 continue;
             }
-            if !flip_preserves_constraints(kernel, points, new_edge, constrained_edges)? {
+            if !flip_preserves_constraints(
+                kernel,
+                points,
+                new_edge,
+                constrained_edges,
+                approximate_points,
+            )? {
                 continue;
             }
             if flip_edge(kernel, points, triangles, edge)? {
@@ -493,9 +545,19 @@ fn flip_preserves_constraints(
     points: &[Point2],
     new_edge: EdgeKey,
     constrained_edges: &[EdgeKey],
+    approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<bool> {
     for point_index in 0..points.len() {
         if new_edge.contains(point_index) {
+            continue;
+        }
+        if approximate_points.is_some_and(|points| {
+            !crate::cdt::approximate_point_within_constraint_bounds(
+                points,
+                Constraint::new(new_edge.from, new_edge.to),
+                point_index,
+            )
+        }) {
             continue;
         }
         if predicates::point_on_segment(
@@ -510,6 +572,15 @@ fn flip_preserves_constraints(
 
     for &constraint in constrained_edges {
         if new_edge == constraint {
+            continue;
+        }
+        if approximate_points.is_some_and(|points| {
+            !crate::cdt::approximate_constraint_bounds_overlap(
+                points,
+                Constraint::new(new_edge.from, new_edge.to),
+                Constraint::new(constraint.from, constraint.to),
+            )
+        }) {
             continue;
         }
 
