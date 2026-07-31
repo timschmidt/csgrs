@@ -7122,6 +7122,83 @@ Hyperlimit geometry policy. Machine-readable samples, size evidence, caller
 status, and the 22,700-node/39,003-edge call graph are in
 [`2026-07-31-spline-evaluation-decomposition-policy.json`](benchmarks/checkpoints/2026-07-31-spline-evaluation-decomposition-policy.json).
 
+## Spline exact-edit policy checkpoint
+
+NURBS knot insertion/removal, span and continuity-preserving degree elevation,
+reversal, and similarity reconstruction now receive an explicit
+`CurveContext` and return `CurveOutcome`. Polynomial-spline insertion,
+reversal, and similarity reconstruction use the same contract through their
+unit-weight NURBS carrier. `Curve2`, `CurveView2`, `CurvePath2`, and
+`CurvePathView2` propagate it without a strict compatibility overload.
+
+The retained B-spline span-fact and native-topology evidence constructors now
+return policy-aware classifications. Terminal regressions use adjacent exact
+knots at `1/2` and `1/2 + ((pi + e) - (e + pi))`. Strict operations retain a
+typed ordering blocker. Approximate-512 completes every supportable edit,
+retains the authored symbolic knots and exact reconstructed carrier, and
+reports `Approximate512Consumed`. Strict-first, approximate-first, replay, and
+clone-shared cache isolation are all covered.
+
+Four bounded NURBS edit caches retain certified values, invalid inputs, strict
+blockers, or an approximate result paired with its original strict blocker.
+Evaluation remains outside the mutex and preview contexts bypass retained
+topology state. The final hot path borrows an owned key for lookup, clones it
+only on a cache miss, and replays entries by reference. This reduced the
+preliminary retained two-knot result from roughly 74 ns to 35 ns without
+growing either spline carrier.
+
+One warm-up process per artifact followed by eleven alternating-order,
+default-feature release parent/candidate pairs pinned to one CPU measured:
+
+| Exact spline edit | Parent median | Policy-explicit median | Change | Paired mean |
+| --- | ---: | ---: | ---: | ---: |
+| Cold batch knot refinement | 4.949 us | 5.023 us | +1.49% | +1.58% |
+| Cold sequential knot refinement | 7.787 us | 7.604 us | -2.35% | -0.90% |
+| Retained batch knot refinement | 30.177 ns | 34.759 ns | +15.18% | +19.17% |
+| Cold exact knot-removal proof | 6.539 us | 6.702 us | +2.49% | +3.28% |
+| Retained knot-removal proof | 31.206 ns | 21.809 ns | -30.11% | -28.95% |
+| Cold span degree elevation | 36.884 us | 36.356 us | -1.43% | -1.39% |
+| Retained span degree elevation | 13.251 ns | 17.560 ns | +32.52% | +34.37% |
+| Cold continuity-preserving elevation | 77.481 us | 77.436 us | -0.06% | -0.31% |
+| Retained continuity-preserving elevation | 7.707 ns | 8.962 ns | +16.28% | +15.65% |
+
+The retained percentages correspond to only 1.25--4.58 ns of policy replay.
+Knot removal is faster because interior-domain validation is now part of the
+retained proof instead of running before every lookup. The cold mathematical
+kernels remain within -2.35% to +2.49% at the median.
+
+Two new competitive lanes make their unequal contracts explicit. Across
+eleven 200,000-iteration processes, retained exact Hypercurve refinement
+measured 154.0 ns versus 113.5 ns for Curvo's cloned `f64` recomputation, a
+1.36x gap on this tiny fixture. Retained exact degree elevation measured
+18.0 ns versus 1.216 us for Curvo recomputation, making the clone-shared exact
+proof 67.54x faster. These are competitive controls, not claims of numerical
+equivalence.
+
+After a warm-up pair, eight matched pathological runs retained 67 cells, 603
+candidate pairs, 3,248 fragments, 134 point classifications, all 268
+operations decided, zero blockers, and checksum 6. Exact Boolean time improved
+0.49% by paired geometric mean. Median process peak RSS moved by 80 KiB
+(+0.17%). The representative pathological executable is load-byte neutral and
+240 stripped bytes smaller than its parent; it remains 8,144 loadable and
+8,112 stripped bytes below the frozen consolidation baseline.
+
+Validation passes the complete all-feature suite after the cache hot-path
+optimization: all 262 unit tests, the 165.84-second generated `CurveRegion2`
+Boolean corpus, every integration suite other than the two explicitly ignored
+release-scale PCB corpora, and all 268 pathological Booleans. Both
+warning-denied Clippy feature matrices, no-default checking, every fuzz target
+build, warning-denied rustdoc, UI checks, formatting, and diff checks pass.
+Hypermesh was not modified.
+
+The Hypercurve spline policy audit is now complete. Exact edits require no new
+solver primitive. The remaining Phase 1 boundary is a caller-authorized
+Hypersolve Bareiss terminal-pivot proposal and exact-certification bridge;
+Hypersolve must not silently choose Hyperlimit geometry policy. Samples,
+layouts, size evidence, caller status, and the 22,742-node/39,129-edge call
+graph are in
+[`2026-07-31-spline-edit-policy.json`](benchmarks/checkpoints/2026-07-31-spline-edit-policy.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
