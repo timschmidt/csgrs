@@ -421,13 +421,22 @@ impl Rational {
 
     #[inline]
     fn is_exact_f64_with_denominator_shift(&self, denominator_shift: u64) -> bool {
+        let numerator_bits = self.numerator.bits();
+        let greatest_exponent =
+            i128::from(numerator_bits - 1) - i128::from(denominator_shift);
+        // Every normal binary value with at most 53 numerator bits fits the
+        // binary64 significand. Its least bit is no lower than 2^-1074, so no
+        // trailing-zero scan is needed on this dominant geometry path.
+        if numerator_bits <= 53 && (-1022..=1023).contains(&greatest_exponent) {
+            return true;
+        }
+
         let numerator_shift = self
             .numerator
             .trailing_zeros()
             .expect("non-zero numerator has a trailing-zero count");
-        let significand_bits = self.numerator.bits() - numerator_shift;
+        let significand_bits = numerator_bits - numerator_shift;
         let least_exponent = i128::from(numerator_shift) - i128::from(denominator_shift);
-        let greatest_exponent = least_exponent + i128::from(significand_bits - 1);
 
         // A binary64 value carries at most 53 significant bits, its greatest
         // set bit cannot exceed 2^1023, and its least set bit cannot fall below
