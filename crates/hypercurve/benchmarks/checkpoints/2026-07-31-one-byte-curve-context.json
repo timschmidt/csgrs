@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "one-byte-curve-context-and-explicit-preview",
+  "source_revision": "154be4831ddce7fb3e15ab7d0539e7c9166d8fb9",
+  "paired_control_revision": "368769c5fbd437e61db308dbcbfa90438ac50d5e",
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "curve_context_bytes": 1,
+    "curve_certainty_bytes": 1,
+    "curve_context_send_sync": true,
+    "public_predicate_states": [
+      "STRICT",
+      "APPROXIMATE_512"
+    ],
+    "hyperlimit_policy_mapping_is_direct": true,
+    "curve_policy_compatibility_alias": false,
+    "preview_options_separate_from_topology_context": true,
+    "preview_tolerances_are_validated": true,
+    "preview_scope_is_nested_and_unwind_safe": true,
+    "escaped_preview_context_is_inactive": true,
+    "approximate_operation_evaluations": 1,
+    "consumed_terminal_certainty_is_aggregated": true
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "exact_curve_region2_fuzz_seconds": 170.58,
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features_all_targets": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_check_standalone_ui": "pass",
+    "cargo_fmt_hypercurve_package": "pass",
+    "git_diff_check": "pass"
+  },
+  "pathological_curve_region2": {
+    "command": "HYPERCURVE_PATHOLOGICAL_MODE=boolean target/release/deps/pathological_regions-*",
+    "method": "nine interleaved process pairs with execution order reversed on alternate pairs",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "control_all_four_native_booleans_ms": [
+      472.760244,
+      470.718334,
+      491.021742,
+      480.841759,
+      493.191893,
+      488.225813,
+      477.288502,
+      484.984115,
+      473.051093
+    ],
+    "candidate_all_four_native_booleans_ms": [
+      473.881276,
+      482.154780,
+      481.742008,
+      478.053771,
+      489.285271,
+      469.765618,
+      494.101910,
+      488.451268,
+      478.414206
+    ],
+    "control_median_ms": 480.841759,
+    "candidate_median_ms": 481.742008,
+    "median_change_percent": 0.1872,
+    "interpretation": "overlapping ranges and a sub-percent median movement with identical deterministic topology"
+  },
+  "comparative_rectangle_union": {
+    "method": "two interleaved 32768-iteration control/candidate pairs",
+    "control_ns": [
+      4910.7,
+      4865.5
+    ],
+    "candidate_ns": [
+      4875.5,
+      4693.3
+    ],
+    "checksum_unchanged": true,
+    "interpretation": "no repeatable regression"
+  },
+  "release_pathological_binary": {
+    "control_bytes": 5523105,
+    "candidate_bytes": 5535425,
+    "delta_bytes": 12320,
+    "delta_percent": 0.2231,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": 4132,
+    "delta_from_frozen_baseline_percent": 0.0747,
+    "interpretation": "temporary Phase 1 size debt to repay while deleting superseded policy and legacy engines"
+  }
+}
