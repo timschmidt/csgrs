@@ -7304,6 +7304,48 @@ Clippy matrices, no-default build, every fuzz target, rustdoc, and all 268
 pathological Booleans pass. Evidence is in
 [`2026-07-31-affine-curve-region-boolean.json`](benchmarks/checkpoints/2026-07-31-affine-curve-region-boolean.json).
 
+## Circular-conic `CurveRegion2` shared-support checkpoint (2026-07-31)
+
+The canonical all-four arrangement now covers regions composed entirely of
+retained circular conics. A full-circle decomposition shares one implicit
+conic and one exact circle-support object across its four rational-quadratic
+spans. An operation-local intersection cache computes one
+`CircleCircleRelation` for each retained support pair and supplies that witness
+to every span-pair context. Per-span parameter filtering and coincident-overlap
+evidence remain exact and authoritative.
+
+The overlapping-circle differential matches all four historical native
+results over a dense half-grid classification matrix. A reordered symbolic
+center equality blocks under STRICT; APPROXIMATE_512 completes the exact
+regions, reports `Approximate512Consumed`, and produces empty difference and
+XOR without replacing authored coordinates. Sixteen full-circle span-pair
+contexts retain only one support relation.
+
+Fifteen alternating-order, CPU-pinned release processes with 1,000 batches
+per contract measured 1.160 ms for the shared arrangement and 1.113 ms for
+four independent native operations. The canonical route is presently 4.25%
+slower, so this is a topology-unification checkpoint rather than a speed win.
+Heaptrack over 100 batches nevertheless records 1,446,199 allocation calls
+versus 1,504,098 and 50,992 temporary allocations versus 129,892: 579 fewer
+allocations and 789 fewer temporaries per batch. Peak heap is effectively
+unchanged.
+
+The shared result currently publishes 30 exact rational-quadratic fragments
+across all four operations versus 20 native arc fragments. An experimental
+exact eager compactor could reduce that to 15, but exact role recovery and
+native re-promotion raised the batch cost to roughly 4.5--8 ms, so it was
+removed. Compact circular publication must instead reuse construction-time
+certificates or remain lazy. Per-span native arc reconstruction was also
+removed after measuring roughly 1.94 ms.
+
+The matched pathological executable changes by only four loadable bytes and
+272 stripped file bytes. The call graph contains 22,894 nodes and 39,361
+edges. The complete all-feature test suite, both warning-denied Clippy feature
+matrices, no-default checking, formatting, all seven generated region corpora,
+and all 268 pathological Booleans pass. Hypermesh was not modified. Complete
+machine-readable evidence is in
+[`2026-07-31-circular-conic-curve-region-boolean.json`](benchmarks/checkpoints/2026-07-31-circular-conic-curve-region-boolean.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
