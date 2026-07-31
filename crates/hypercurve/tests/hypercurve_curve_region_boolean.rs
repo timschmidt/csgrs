@@ -31,7 +31,11 @@ fn square_path(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurvePath2 {
 }
 
 fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurveRegion2 {
-    CurveRegion2::try_from_boundary_paths(&[square_path(min_x, min_y, max_x, max_y)]).unwrap()
+    CurveRegion2::try_from_boundary_paths(
+        &[square_path(min_x, min_y, max_x, max_y)],
+        &CurveContext::STRICT,
+    )
+    .unwrap()
 }
 
 #[cfg(feature = "predicates")]
@@ -53,7 +57,11 @@ fn symbolic_rectangle(width: Real) -> CurveRegion2 {
             )
         })
         .collect();
-    CurveRegion2::try_from_boundary_paths(&[CurvePath2::try_new(curves).unwrap()]).unwrap()
+    CurveRegion2::try_from_boundary_paths(
+        &[CurvePath2::try_new(curves).unwrap()],
+        &CurveContext::STRICT,
+    )
+    .unwrap()
 }
 
 fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLocation) {
@@ -178,10 +186,10 @@ fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
 
 #[test]
 fn curved_region_boolean_respects_nested_hole_roles() {
-    let ring = CurveRegion2::try_from_boundary_paths(&[
-        square_path(0, 0, 10, 10),
-        square_path(2, 2, 8, 8),
-    ])
+    let ring = CurveRegion2::try_from_boundary_paths(
+        &[square_path(0, 0, 10, 10), square_path(2, 2, 8, 8)],
+        &CurveContext::STRICT,
+    )
     .unwrap();
     let island = square(4, 4, 6, 6);
     let policy = CurveContext::STRICT;

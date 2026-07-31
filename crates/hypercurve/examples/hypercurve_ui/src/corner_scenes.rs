@@ -1,9 +1,9 @@
 use egui::{CentralPanel, ScrollArea, SidePanel, Slider};
 use egui_plot::{Plot, PlotPoint, Text};
 use hypercurve::{
-    CircularArc2, CubicBezier2, Curve2, CurveFamily2, CurveGeometry2, CurveParameterSide2,
-    CurvePath2, CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalQuadraticBezier2, Real, RealSign,
+    CircularArc2, CubicBezier2, Curve2, CurveContext, CurveFamily2, CurveGeometry2,
+    CurveParameterSide2, CurvePath2, CurveRegion2, LineSeg2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2, Real, RealSign,
 };
 
 use crate::geometry::{Polyline, Shape};
@@ -189,8 +189,9 @@ impl CornerScene {
         let (minimum, maximum) = operation.amount_bounds();
         let amount = amount.clamp(minimum, maximum);
         let source_paths = curve_region_paths().expect("demo region paths must be valid");
-        let source_region = CurveRegion2::try_from_boundary_paths(&source_paths)
-            .expect("demo CurveRegion2 must be valid");
+        let source_region =
+            CurveRegion2::try_from_boundary_paths(&source_paths, &CurveContext::STRICT)
+                .expect("demo CurveRegion2 must be valid");
         let source_display = display_region(&source_paths).expect("demo region must be drawable");
         Self {
             operation,
@@ -347,7 +348,8 @@ fn build_corner_result(
                 .map_err(|error| format!("boundary {boundary_index}: {error}"))
         })
         .collect::<Result<Vec<_>, _>>()?;
-    let region = CurveRegion2::try_from_boundary_paths(&result_paths).map_err(string_error)?;
+    let region = CurveRegion2::try_from_boundary_paths(&result_paths, &CurveContext::STRICT)
+        .map_err(string_error)?;
     let display = display_region(&result_paths)?;
     Ok(CornerRegionResult { region, display })
 }

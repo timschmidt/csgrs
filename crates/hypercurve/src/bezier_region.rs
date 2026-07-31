@@ -892,9 +892,13 @@ impl CurveRegionLineRoleEvidence2 {
 
 impl CurveRegionSignedAreaRoleEvidence2 {
     /// Constructs a retained signed-area role evidence.
-    pub fn new(roles: Vec<CurveRegionLoopRole>, signed_areas: Vec<Real>) -> CurveResult<Self> {
+    pub fn new(
+        roles: Vec<CurveRegionLoopRole>,
+        signed_areas: Vec<Real>,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
         validate_evidence_length(roles.len(), "signed area", signed_areas.len())?;
-        validate_signed_area_roles(&roles, &signed_areas)?;
+        validate_signed_area_roles(&roles, &signed_areas, policy)?;
         Ok(Self {
             roles,
             signed_areas,
@@ -964,12 +968,13 @@ impl CurveRegionNestingRoleEvidence2 {
         nesting_depths: Vec<usize>,
         signed_areas: Vec<Real>,
         sample_points: Vec<Point2>,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         validate_evidence_length(roles.len(), "nesting depth", nesting_depths.len())?;
         validate_evidence_length(roles.len(), "signed area", signed_areas.len())?;
         validate_evidence_length(roles.len(), "sample point", sample_points.len())?;
         validate_nesting_depth_roles(&roles, &nesting_depths)?;
-        validate_nonzero_signed_area_evidence(&signed_areas)?;
+        validate_nonzero_signed_area_evidence(&signed_areas, policy)?;
         Ok(Self {
             roles,
             nesting_depths,
@@ -1046,8 +1051,8 @@ impl CurveRegionNestingRoleEvidence2 {
 
 impl BezierBoundaryLoop2 {
     /// Constructs a closed boundary loop from native Bezier/conic fragments.
-    pub fn new(fragments: Vec<BezierSubcurve2>) -> CurveResult<Self> {
-        validate_native_boundary_loop(&fragments)?;
+    pub fn new(fragments: Vec<BezierSubcurve2>, policy: &CurveContext) -> CurveResult<Self> {
+        validate_native_boundary_loop(&fragments, policy)?;
         Ok(Self { fragments })
     }
 
@@ -1160,6 +1165,7 @@ impl BezierRegion2 {
     pub fn from_arrangement_traversal(
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
+        policy: &CurveContext,
     ) -> Classification<Self> {
         let mut loops = Vec::with_capacity(traversal.chains().len());
         for chain in traversal.chains() {
@@ -1182,7 +1188,7 @@ impl BezierRegion2 {
                     }
                 }
             }
-            let loop_ = match BezierBoundaryLoop2::new(fragments) {
+            let loop_ = match BezierBoundaryLoop2::new(fragments, policy) {
                 Ok(loop_) => loop_,
                 Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
             };
@@ -1208,8 +1214,13 @@ impl BezierRegion2 {
     /// as a resolved span on the refinement evidence.
     pub fn from_retained_linear_overlap_traversal(
         traversal: &BezierRetainedLinearOverlapTraversal2,
+        policy: &CurveContext,
     ) -> Classification<Self> {
-        Self::from_arrangement_traversal(traversal.refinement().graph(), traversal.traversal())
+        Self::from_arrangement_traversal(
+            traversal.refinement().graph(),
+            traversal.traversal(),
+            policy,
+        )
     }
 
     /// Materializes a native region from a represented rational-overlap traversal.
@@ -1218,8 +1229,13 @@ impl BezierRegion2 {
     /// keep region materialization paired with the geometry it references.
     pub fn from_retained_rational_overlap_traversal(
         traversal: &BezierRetainedRationalOverlapTraversal2,
+        policy: &CurveContext,
     ) -> Classification<Self> {
-        Self::from_arrangement_traversal(traversal.refinement().graph(), traversal.traversal())
+        Self::from_arrangement_traversal(
+            traversal.refinement().graph(),
+            traversal.traversal(),
+            policy,
+        )
     }
 
     /// Returns retained native boundary loops.
@@ -1255,20 +1271,22 @@ impl BezierRegion2 {
     }
 }
 
-fn validate_native_boundary_loop(fragments: &[BezierSubcurve2]) -> CurveResult<()> {
+fn validate_native_boundary_loop(
+    fragments: &[BezierSubcurve2],
+    policy: &CurveContext,
+) -> CurveResult<()> {
     if fragments.is_empty() {
         return Err(CurveError::Topology(
             "Bezier boundary loop requires nonempty fragments".to_owned(),
         ));
     }
 
-    let policy = CurveContext::STRICT;
     for (left, right) in fragments
         .iter()
         .zip(fragments.iter().cycle().skip(1))
         .take(fragments.len())
     {
-        if !certified_points_equal(&left.endpoints().1, &right.endpoints().0, &policy) {
+        if !certified_points_equal(&left.endpoints().1, &right.endpoints().0, policy) {
             return Err(CurveError::Topology(
                 "Bezier boundary loop fragments must be endpoint-connected and closed".to_owned(),
             ));
@@ -1299,8 +1317,8 @@ where
 
 impl CurveRegionBoundaryLoop2 {
     /// Constructs a retained boundary loop from accepted split fragments.
-    pub fn new(fragments: Vec<BezierSplitFragment2>) -> CurveResult<Self> {
-        validate_retained_boundary_loop(&fragments)?;
+    pub fn new(fragments: Vec<BezierSplitFragment2>, policy: &CurveContext) -> CurveResult<Self> {
+        validate_retained_boundary_loop(&fragments, policy)?;
         Ok(Self {
             fragments,
             arrangement_sources: None,
@@ -1311,8 +1329,9 @@ impl CurveRegionBoundaryLoop2 {
     pub fn try_new_with_arrangement_sources(
         fragments: Vec<BezierSplitFragment2>,
         arrangement_sources: Vec<CurveRegionFragmentSource2>,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
-        validate_retained_boundary_loop(&fragments)?;
+        validate_retained_boundary_loop(&fragments, policy)?;
         if fragments.len() != arrangement_sources.len() {
             return Err(CurveError::Topology(
                 "retained boundary source count does not match fragment count".to_owned(),
@@ -1328,15 +1347,15 @@ impl CurveRegionBoundaryLoop2 {
     fn try_new_from_certified_arrangement_chain(
         fragments: Vec<BezierSplitFragment2>,
         arrangement_sources: Vec<CurveRegionFragmentSource2>,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         if fragments.is_empty() || fragments.len() != arrangement_sources.len() {
             return Err(CurveError::Topology(
                 "certified arrangement chain has inconsistent retained fragments".into(),
             ));
         }
-        let policy = CurveContext::STRICT;
         for fragment in &fragments {
-            validate_retained_fragment_provenance(fragment, &policy)?;
+            validate_retained_fragment_provenance(fragment, policy)?;
         }
         validate_retained_boundary_loop_sources(&arrangement_sources)?;
         Ok(Self::from_certified_arrangement_chain(
@@ -1434,16 +1453,19 @@ impl CurveRegionBoundaryLoop2 {
     }
 }
 
-fn validate_retained_boundary_loop(fragments: &[BezierSplitFragment2]) -> CurveResult<()> {
+fn validate_retained_boundary_loop(
+    fragments: &[BezierSplitFragment2],
+    policy: &CurveContext,
+) -> CurveResult<()> {
     if fragments.is_empty() {
         return Err(CurveError::Topology(
             "retained Bezier boundary loop requires nonempty fragments".to_owned(),
         ));
     }
     for fragment in fragments {
-        validate_retained_fragment_provenance(fragment, &CurveContext::STRICT)?;
+        validate_retained_fragment_provenance(fragment, policy)?;
     }
-    validate_retained_boundary_loop_connectivity(fragments, &CurveContext::STRICT)
+    validate_retained_boundary_loop_connectivity(fragments, policy)
 }
 
 fn validate_retained_fragment_provenance(
@@ -2332,7 +2354,7 @@ impl CurveRegion2 {
                 ),
             ));
         }
-        let mut region = Self::try_from_boundary_paths(paths)?;
+        let mut region = Self::try_from_boundary_paths(paths, policy)?;
         {
             let data = region.data_mut_for_construction();
             data.certified_loop_roles = Some(Arc::from(roles));
@@ -2364,12 +2386,32 @@ impl CurveRegion2 {
     ///
     /// Every authored family is promoted through its clone-shared native
     /// topology once.
-    pub fn try_from_boundary_paths(paths: &[CurvePath2]) -> ExactCurveResult<Self> {
+    pub fn try_from_boundary_paths(
+        paths: &[CurvePath2],
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         let mut boundary_loops = Vec::with_capacity(paths.len());
         let mut next_arrangement_fragment_index = 0;
         for path in paths {
-            path.bezier_boundary_loop()
-                .map_err(|error| error.with_operation(CurveOperation2::Construction))?;
+            if path.start() != path.end() {
+                match is_zero(&path.start().distance_squared(path.end()), policy) {
+                    Some(true) => {}
+                    Some(false) => {
+                        return Err(ExactCurveError::invalid(
+                            CurveOperation2::Construction,
+                            path.curves()[0].family(),
+                            CurveError::OpenCurvePath,
+                        ));
+                    }
+                    None => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Construction,
+                            path.curves()[0].family(),
+                            UncertaintyReason::RealSign,
+                        ));
+                    }
+                }
+            }
             let fragment_capacity = path.native_bezier_fragments()?.len();
             let mut fragments = Vec::with_capacity(fragment_capacity);
             let mut arrangement_sources = Vec::with_capacity(fragment_capacity);
@@ -2392,6 +2434,7 @@ impl CurveRegion2 {
             let boundary_loop = CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
                 fragments,
                 arrangement_sources,
+                policy,
             )
             .map_err(|cause| {
                 ExactCurveError::invalid(
@@ -2457,9 +2500,10 @@ impl CurveRegion2 {
                     CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
                         fragments,
                         sources.to_vec(),
+                        policy,
                     )
                 }
-                None => CurveRegionBoundaryLoop2::new(fragments),
+                None => CurveRegionBoundaryLoop2::new(fragments, policy),
             }
             .map_err(affine_region_error)?;
             loops.push(boundary);
@@ -2618,21 +2662,22 @@ impl CurveRegion2 {
     pub fn from_retained_arrangement_traversal(
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
+        policy: &CurveContext,
     ) -> Classification<Self> {
-        Self::from_retained_arrangement_traversal_impl(graph, traversal, true)
+        Self::from_retained_arrangement_traversal_impl(graph, traversal, Some(policy))
     }
 
     pub(crate) fn from_certified_retained_arrangement_traversal(
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
     ) -> Classification<Self> {
-        Self::from_retained_arrangement_traversal_impl(graph, traversal, false)
+        Self::from_retained_arrangement_traversal_impl(graph, traversal, None)
     }
 
     fn from_retained_arrangement_traversal_impl(
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
-        validate_provenance: bool,
+        validation_policy: Option<&CurveContext>,
     ) -> Classification<Self> {
         let mut loops = Vec::with_capacity(traversal.chains().len());
         for chain in traversal.chains() {
@@ -2661,20 +2706,21 @@ impl CurveRegion2 {
                     fragment.source_fragment_index(),
                 ));
             }
-            if validate_provenance
+            if let Some(policy) = validation_policy
                 && validate_retained_arrangement_chain_connectivity(
                     graph,
                     chain.fragment_indices(),
-                    &CurveContext::STRICT,
+                    policy,
                 )
                 .is_err()
             {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             }
-            let loop_ = if validate_provenance {
+            let loop_ = if let Some(policy) = validation_policy {
                 match CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
                     fragments,
                     arrangement_sources,
+                    policy,
                 ) {
                     Ok(loop_) => loop_,
                     Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
@@ -2688,7 +2734,7 @@ impl CurveRegion2 {
             loops.push(loop_);
         }
 
-        if validate_provenance {
+        if validation_policy.is_some() {
             match Self::new(loops) {
                 Ok(region) => Classification::Decided(region),
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
@@ -2709,10 +2755,12 @@ impl CurveRegion2 {
     /// indices rather than sampling or repairing them.
     pub fn from_retained_linear_overlap_traversal(
         traversal: &BezierRetainedLinearOverlapTraversal2,
+        policy: &CurveContext,
     ) -> Classification<Self> {
         Self::from_retained_arrangement_traversal(
             traversal.refinement().graph(),
             traversal.traversal(),
+            policy,
         )
     }
 
@@ -2722,10 +2770,12 @@ impl CurveRegion2 {
     /// objects; unresolved carriers and open chains remain explicit uncertainty.
     pub fn from_retained_rational_overlap_traversal(
         traversal: &BezierRetainedRationalOverlapTraversal2,
+        policy: &CurveContext,
     ) -> Classification<Self> {
         Self::from_retained_arrangement_traversal(
             traversal.refinement().graph(),
             traversal.traversal(),
+            policy,
         )
     }
 
@@ -2802,7 +2852,7 @@ impl CurveRegion2 {
             roles.push(role);
             signed_areas.push(area);
         }
-        let evidence = CurveRegionSignedAreaRoleEvidence2::new(roles, signed_areas)?
+        let evidence = CurveRegionSignedAreaRoleEvidence2::new(roles, signed_areas, policy)?
             .with_loop_fragment_counts(retained_loop_fragment_counts(&self.data.boundary_loops))?
             .with_loop_arrangement_sources(retained_loop_arrangement_sources(
                 &self.data.boundary_loops,
@@ -2886,6 +2936,7 @@ impl CurveRegion2 {
             nesting_depths,
             signed_areas,
             sample_points,
+            policy,
         )?
         .with_loop_fragment_counts(retained_loop_fragment_counts(&self.data.boundary_loops))?
         .with_loop_arrangement_sources(retained_loop_arrangement_sources(
@@ -4547,7 +4598,7 @@ fn curve_region_loop_filled_area_magnitude(
 ) -> CurveResult<Classification<Option<Real>>> {
     if let Some(period) = repeated_boundary_fragment_period(boundary_loop.fragments()) {
         let base_loop =
-            CurveRegionBoundaryLoop2::new(boundary_loop.fragments()[..period].to_vec())?;
+            CurveRegionBoundaryLoop2::new(boundary_loop.fragments()[..period].to_vec(), policy)?;
         match materialized_boundary_loop_is_simple(&base_loop, policy)? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(None)),
@@ -5064,10 +5115,10 @@ fn validate_nesting_depth_roles(
 fn validate_signed_area_roles(
     roles: &[CurveRegionLoopRole],
     signed_areas: &[Real],
+    policy: &CurveContext,
 ) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
     for (role, signed_area) in roles.iter().zip(signed_areas) {
-        let expected = match real_sign(signed_area, &policy) {
+        let expected = match real_sign(signed_area, policy) {
             Some(RealSign::Negative) => CurveRegionLoopRole::Material,
             Some(RealSign::Positive) => CurveRegionLoopRole::Hole,
             Some(RealSign::Zero) | None => {
@@ -5087,10 +5138,12 @@ fn validate_signed_area_roles(
     Ok(())
 }
 
-fn validate_nonzero_signed_area_evidence(signed_areas: &[Real]) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
+fn validate_nonzero_signed_area_evidence(
+    signed_areas: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<()> {
     for signed_area in signed_areas {
-        match real_sign(signed_area, &policy) {
+        match real_sign(signed_area, policy) {
             Some(RealSign::Positive | RealSign::Negative) => {}
             Some(RealSign::Zero) | None => {
                 return Err(CurveError::Topology(
@@ -5382,7 +5435,7 @@ fn retained_loop_to_native(
         };
         fragments.push(curve.clone());
     }
-    BezierBoundaryLoop2::new(fragments).ok()
+    Some(BezierBoundaryLoop2 { fragments })
 }
 
 fn native_loop_sample_point(
@@ -6483,6 +6536,8 @@ mod tests {
     use super::*;
     use std::cmp::Ordering;
 
+    #[cfg(feature = "predicates")]
+    use crate::CurveCertainty;
     use crate::{
         CircularArc2, CubicBezier2, Curve2, CurvePath2, QuadraticBezier2, RationalQuadraticBezier2,
     };
@@ -6502,6 +6557,42 @@ mod tests {
         );
         assert!(Arc::ptr_eq(&first.data, &second.data));
         assert!(first.clone().into_boundary_loops().is_empty());
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn boundary_path_construction_obeys_selected_terminal_policy() {
+        let start = Point2::new(Real::pi() + Real::e(), Real::zero());
+        let end = Point2::new(Real::e() + Real::pi(), Real::zero());
+        let path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
+            start,
+            p(0, 1),
+            end,
+        ))])
+        .expect("one-curve path construction has no adjacency decision");
+
+        let strict = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            &CurveContext::STRICT,
+        )
+        .expect_err("strict construction must preserve an undecidable closure");
+        assert!(matches!(
+            strict,
+            ExactCurveError::Blocked(blocker)
+                if blocker.operation() == CurveOperation2::Construction
+                    && blocker.reason() == UncertaintyReason::RealSign
+        ));
+
+        let approximate =
+            crate::policy::resolve_certified_operation(&CurveContext::APPROXIMATE_512, |policy| {
+                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), policy)
+            })
+            .expect("the authorized terminal equality must close the path");
+        assert_eq!(
+            approximate.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(approximate.value.len(), 1);
     }
 
     fn quadratic_fragment(start: Point2, control: Point2, end: Point2) -> BezierSplitFragment2 {
@@ -6543,7 +6634,7 @@ mod tests {
             rational_quadratic_fragment(p(0, 2), p(0, 1), p(0, 0)),
         ];
         CurveRegion2::new(vec![
-            CurveRegionBoundaryLoop2::new(fragments)
+            CurveRegionBoundaryLoop2::new(fragments, &CurveContext::STRICT)
                 .expect("closed retained rational-quadratic loop"),
         ])
         .expect("one retained rational-quadratic loop")
@@ -6566,7 +6657,8 @@ mod tests {
             ]
         };
         CurveRegion2::new(vec![
-            CurveRegionBoundaryLoop2::new(fragments).expect("closed retained quadratic loop"),
+            CurveRegionBoundaryLoop2::new(fragments, &CurveContext::STRICT)
+                .expect("closed retained quadratic loop"),
         ])
         .expect("one retained loop")
     }
@@ -6685,10 +6777,10 @@ mod tests {
             Curve2::from(CircularArc2::try_from_center(p(0, 0), p(2, 0), p(1, 0), true).unwrap());
         let lower =
             Curve2::from(CircularArc2::try_from_center(p(2, 0), p(0, 0), p(1, 0), true).unwrap());
-        let region = CurveRegion2::try_from_boundary_paths(&[CurvePath2::try_new(vec![
-            upper, lower,
-        ])
-        .unwrap()])
+        let region = CurveRegion2::try_from_boundary_paths(
+            &[CurvePath2::try_new(vec![upper, lower]).unwrap()],
+            &policy,
+        )
         .unwrap();
         let point = Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap());
         assert_eq!(

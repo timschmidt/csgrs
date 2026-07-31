@@ -439,8 +439,9 @@ fn retired_algebraic_polyline_case() -> RetiredFailureCase {
 
     RetiredFailureCase {
         failure: RetiredFailure::AlgebraicPolylineContacts,
-        first: CurveRegion2::try_from_boundary_paths(&[first_path]).unwrap(),
-        second: CurveRegion2::try_from_boundary_paths(&[second_path]).unwrap(),
+        first: CurveRegion2::try_from_boundary_paths(&[first_path], &CurveContext::STRICT).unwrap(),
+        second: CurveRegion2::try_from_boundary_paths(&[second_path], &CurveContext::STRICT)
+            .unwrap(),
     }
 }
 
@@ -471,10 +472,16 @@ fn retired_uniform_weight_area_case() -> RetiredFailureCase {
     };
     RetiredFailureCase {
         failure: RetiredFailure::UniformWeightGeneralRationalArea,
-        first: CurveRegion2::try_from_boundary_paths(&[generated_path(&line_region)])
-            .expect("retired line region is valid"),
-        second: CurveRegion2::try_from_boundary_paths(&[generated_path(&rational_region)])
-            .expect("retired uniform-weight rational region is valid"),
+        first: CurveRegion2::try_from_boundary_paths(
+            &[generated_path(&line_region)],
+            &CurveContext::STRICT,
+        )
+        .expect("retired line region is valid"),
+        second: CurveRegion2::try_from_boundary_paths(
+            &[generated_path(&rational_region)],
+            &CurveContext::STRICT,
+        )
+        .expect("retired uniform-weight rational region is valid"),
     }
 }
 
@@ -923,8 +930,11 @@ fn retired_transformed_degree_elevated_line_case() -> RetiredFailureCase {
             ))
         })
         .collect();
-    let source =
-        CurveRegion2::try_from_boundary_paths(&[CurvePath2::try_new(curves).unwrap()]).unwrap();
+    let source = CurveRegion2::try_from_boundary_paths(
+        &[CurvePath2::try_new(curves).unwrap()],
+        &CurveContext::STRICT,
+    )
+    .unwrap();
     let policy = CurveContext::STRICT;
     let transformed = source
         .transform_affine(

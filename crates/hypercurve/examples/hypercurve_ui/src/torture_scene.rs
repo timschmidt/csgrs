@@ -3,7 +3,7 @@ use std::f64::consts::TAU;
 use egui::{CentralPanel, ScrollArea, SidePanel, Slider};
 use egui_plot::{Plot, PlotBounds};
 use hypercurve::{
-    BooleanOp, Curve2, CurvePath2, CurveContext, CurveRegion2, LineSeg2, Point2, Real,
+    BooleanOp, Curve2, CurveContext, CurvePath2, CurveRegion2, LineSeg2, Point2, Real,
 };
 use serde::{Deserialize, Serialize};
 
@@ -424,8 +424,8 @@ fn fuzzed_region(
         );
     }
     let path = CurvePath2::try_new(exact_curves).map_err(|error| error.to_string())?;
-    let region =
-        CurveRegion2::try_from_boundary_paths(&[path]).map_err(|error| error.to_string())?;
+    let region = CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::STRICT)
+        .map_err(|error| error.to_string())?;
     Ok(GeneratedRegion {
         region,
         display: Polyline::from_curve_data(display_curves, true),

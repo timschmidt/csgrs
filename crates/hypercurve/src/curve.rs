@@ -1589,6 +1589,7 @@ impl CurvePath2 {
                     .iter()
                     .map(|fragment| fragment.curve().clone())
                     .collect(),
+                &CurveContext::STRICT,
             )
             .map_err(|cause| {
                 ExactCurveError::invalid(

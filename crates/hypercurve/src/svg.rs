@@ -1168,7 +1168,8 @@ fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<Cur
         return Ok(CurveRegion2::empty());
     }
     let policy = CurveContext::STRICT;
-    let preliminary = CurveRegion2::try_from_boundary_paths(paths).map_err(svg_geometry_error)?;
+    let preliminary =
+        CurveRegion2::try_from_boundary_paths(paths, &policy).map_err(svg_geometry_error)?;
     let roles = match preliminary
         .loop_roles(&policy)
         .map_err(svg_geometry_error)?

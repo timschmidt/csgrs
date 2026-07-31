@@ -58,7 +58,7 @@ fn line_fragment(
 }
 
 fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveResult<CurveRegionBoundaryLoop2> {
-    CurveRegionBoundaryLoop2::new(fragments)
+    CurveRegionBoundaryLoop2::new(fragments, &CurveContext::STRICT)
 }
 
 fn square_path(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<CurvePath2> {
@@ -89,15 +89,17 @@ fn square_path(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<Cu
 }
 
 fn square_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<CurveRegion2> {
-    CurveRegion2::try_from_boundary_paths(&[square_path(min_x, min_y, max_x, max_y)?]).map_err(
-        |error| match error {
-            hypercurve::ExactCurveError::Invalid { cause, .. } => cause,
-            hypercurve::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
-                "square benchmark region blocked: {:?}",
-                blocker.reason()
-            )),
-        },
+    CurveRegion2::try_from_boundary_paths(
+        &[square_path(min_x, min_y, max_x, max_y)?],
+        &CurveContext::STRICT,
     )
+    .map_err(|error| match error {
+        hypercurve::ExactCurveError::Invalid { cause, .. } => cause,
+        hypercurve::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
+            "square benchmark region blocked: {:?}",
+            blocker.reason()
+        )),
+    })
 }
 
 fn algebraic_polynomial_parameter(
@@ -300,18 +302,21 @@ fn main() -> CurveResult<()> {
         elapsed / curved_boolean_iterations
     );
 
-    let algebraic_ray_loop = BezierBoundaryLoop2::new(vec![
-        BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-            p(0, 0),
-            Point2::new(q(1, 2), r(0)),
-            p(1, 1),
-        )),
-        BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-            p(1, 1),
-            Point2::new(q(1, 2), q(1, 2)),
-            p(0, 0),
-        )),
-    ])?;
+    let algebraic_ray_loop = BezierBoundaryLoop2::new(
+        vec![
+            BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(0, 0),
+                Point2::new(q(1, 2), r(0)),
+                p(1, 1),
+            )),
+            BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(1, 1),
+                Point2::new(q(1, 2), q(1, 2)),
+                p(0, 0),
+            )),
+        ],
+        &policy,
+    )?;
     let algebraic_ray_query = Point2::new(q(1, 2), q(3, 8));
     let classification_iterations = 2_000_u32;
     let started = Instant::now();
@@ -342,7 +347,7 @@ fn main() -> CurveResult<()> {
     let mut checksum = 0_usize;
     for _ in 0..iterations {
         let region = decided(BezierRegion2::from_arrangement_traversal(
-            &graph, &traversal,
+            &graph, &traversal, &policy,
         ));
         checksum ^= black_box(format!("{:?}", region.signed_area()?).len());
     }
@@ -356,6 +361,7 @@ fn main() -> CurveResult<()> {
     let classified_region = decided(CurveRegion2::from_retained_arrangement_traversal(
         &graph,
         &retained_traversal,
+        &policy,
     ));
     let classified_point = p(2, 0);
     decided(classified_region.classify_point(&classified_point, &policy)?);
@@ -397,6 +403,7 @@ fn main() -> CurveResult<()> {
         let region = decided(CurveRegion2::from_retained_arrangement_traversal(
             &graph,
             &retained_traversal,
+            &policy,
         ));
         retained_checksum ^= black_box(format!("{:?}", region.signed_area()?).len());
         if let Classification::Decided(envelope) =
@@ -572,10 +579,12 @@ fn main() -> CurveResult<()> {
     for _ in 0..iterations {
         let native = decided(BezierRegion2::from_retained_linear_overlap_traversal(
             &overlap_traversal,
+            &policy,
         ));
         overlap_checksum ^= black_box(format!("{:?}", native.signed_area()?).len());
         let retained = decided(CurveRegion2::from_retained_linear_overlap_traversal(
             &overlap_traversal,
+            &policy,
         ));
         overlap_checksum ^= black_box(format!("{:?}", retained.signed_area()?).len());
         if let Classification::Decided(evidence) = retained.line_image_role_evidence(&policy)? {
@@ -615,6 +624,7 @@ fn main() -> CurveResult<()> {
         let region = decided(BezierRegion2::from_arrangement_traversal(
             &conic_graph,
             &conic_traversal,
+            &policy,
         ));
         conic_checksum ^= black_box(format!("{:?}", region.signed_area()?).len());
     }

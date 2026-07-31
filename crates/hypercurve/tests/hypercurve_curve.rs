@@ -110,7 +110,9 @@ fn top_level_curve_carries_every_public_family() {
 }
 #[test]
 fn top_level_curve_region_classifies_points_and_shares_results() {
-    let region = CurveRegion2::try_from_boundary_paths(&[every_family_closed_path()]).unwrap();
+    let region =
+        CurveRegion2::try_from_boundary_paths(&[every_family_closed_path()], &CurveContext::STRICT)
+            .unwrap();
     let clone = region.clone();
     let signed_area = region
         .signed_area()
@@ -140,7 +142,7 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
         Curve2::from(LineSeg2::try_new(p(0, 2), p(0, 0)).unwrap()),
     ])
     .unwrap();
-    let bounded = CurveRegion2::try_from_boundary_paths(&[square]).unwrap();
+    let bounded = CurveRegion2::try_from_boundary_paths(&[square], &CurveContext::STRICT).unwrap();
     let bounded_clone = bounded.clone();
     assert_eq!(
         bounded.classify_point(&p(1, 1), &CurveContext::STRICT),
@@ -159,7 +161,7 @@ fn top_level_curve_region_rejects_open_boundary_paths_with_context() {
     )])
     .unwrap();
 
-    let error = CurveRegion2::try_from_boundary_paths(&[path]).unwrap_err();
+    let error = CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::STRICT).unwrap_err();
 
     assert!(matches!(
         error,
@@ -434,7 +436,7 @@ fn closed_curve_path_corner_edits_support_the_start_end_seam() {
     assert_eq!(filleted.end(), filleted.start());
     assert_eq!(filleted.curves()[0].family(), CurveFamily2::CircularArc);
     assert_eq!(filleted.curves()[0].end(), &p(1, 0));
-    CurveRegion2::try_from_boundary_paths(&[filleted]).unwrap();
+    CurveRegion2::try_from_boundary_paths(&[filleted], &CurveContext::STRICT).unwrap();
 }
 #[test]
 fn mixed_curve_path_corner_edits_reject_invalid_parameters_and_tangency() {

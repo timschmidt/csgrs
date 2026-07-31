@@ -9,9 +9,9 @@
 use std::env;
 
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Contour2, CubicBezier2, Curve2, CurveFamily2, CurvePath2,
-    CurveRegion2, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, Rational, RationalBezier2,
-    RationalQuadraticBezier2, Real, Similarity2,
+    BulgeVertex2, CircularArc2, Contour2, CubicBezier2, Curve2, CurveContext, CurveFamily2,
+    CurvePath2, CurveRegion2, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, Rational,
+    RationalBezier2, RationalQuadraticBezier2, Real, Similarity2,
 };
 use num::bigint::{BigInt, BigUint};
 
@@ -309,10 +309,16 @@ pub fn build_native_cell(index: usize) -> NativeCell {
     let rotated_path = source_path
         .transform_similarity(&transform)
         .expect("pathological rotation remains exact");
-    let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&source_path))
-        .expect("pathological source region is valid");
-    let rotated = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&rotated_path))
-        .expect("pathological rotated region is valid");
+    let source = CurveRegion2::try_from_boundary_paths(
+        std::slice::from_ref(&source_path),
+        &CurveContext::STRICT,
+    )
+    .expect("pathological source region is valid");
+    let rotated = CurveRegion2::try_from_boundary_paths(
+        std::slice::from_ref(&rotated_path),
+        &CurveContext::STRICT,
+    )
+    .expect("pathological rotated region is valid");
     let source_projection = line_region(&flatten_path(&source_path));
     let rotated_projection = line_region(&flatten_path(&rotated_path));
     NativeCell {
@@ -332,7 +338,8 @@ pub fn rotated_region(path: &CurvePath2, index: usize) -> CurveRegion2 {
     let rotated = path
         .transform_similarity(&cell_rotation(origin_x, origin_y))
         .expect("pathological rotation remains exact");
-    CurveRegion2::try_from_boundary_paths(&[rotated]).expect("pathological rotated region is valid")
+    CurveRegion2::try_from_boundary_paths(&[rotated], &CurveContext::STRICT)
+        .expect("pathological rotated region is valid")
 }
 
 fn all_family_path(

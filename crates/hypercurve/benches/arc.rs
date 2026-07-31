@@ -70,7 +70,8 @@ fn large_arc_region(arc_count: usize) -> CurveRegion2 {
         semicircle(start_x + 2, start_x, 0, true)
     }));
     let path = CurvePath2::try_new(curves).expect("benchmark arc boundary is connected");
-    CurveRegion2::try_from_boundary_paths(&[path]).expect("benchmark arc region is closed")
+    CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::STRICT)
+        .expect("benchmark arc region is closed")
 }
 
 fn bench_large_arcs() {

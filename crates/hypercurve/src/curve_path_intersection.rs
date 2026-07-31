@@ -944,7 +944,11 @@ impl CurvePathBooleanSelection2 {
         match self.data.region.get_or_init(|| {
             let graph = self.arrangement_graph_view()?;
             let traversal = self.traversal_view()?;
-            match CurveRegion2::from_retained_arrangement_traversal(graph, traversal) {
+            match CurveRegion2::from_retained_arrangement_traversal(
+                graph,
+                traversal,
+                &self.data.policy,
+            ) {
                 Classification::Decided(region) => region
                     .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
                     .map_err(|cause| {
