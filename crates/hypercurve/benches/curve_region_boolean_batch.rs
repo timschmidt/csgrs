@@ -78,7 +78,10 @@ fn clipped_region(
     .into_value()
 }
 
-fn mobius_overlap_regions(policy: &CurveContext) -> (CurveRegion2, CurveRegion2) {
+fn conic_overlap_regions(
+    reparameterize: bool,
+    policy: &CurveContext,
+) -> (CurveRegion2, CurveRegion2) {
     let start = point(-2, 4);
     let control = point(0, -4);
     let end = point(2, 4);
@@ -102,6 +105,11 @@ fn mobius_overlap_regions(policy: &CurveContext) -> (CurveRegion2, CurveRegion2)
         Curve2::from(LineSeg2::try_new(end, start).unwrap()),
     ])
     .unwrap();
+    let wide = if reparameterize {
+        &reparameterized
+    } else {
+        &quadratic
+    };
     (
         clipped_region(
             &quadratic,
@@ -110,7 +118,7 @@ fn mobius_overlap_regions(policy: &CurveContext) -> (CurveRegion2, CurveRegion2)
             policy,
         ),
         clipped_region(
-            &reparameterized,
+            wide,
             rectangle_path(-3, -1, 3, 3),
             CurveBoundaryInteriorSide2::Left,
             policy,
@@ -179,7 +187,8 @@ fn main() {
     let [first, second] = match std::env::var("HYPERCURVE_CURVE_REGION_BATCH_FIXTURE").as_deref() {
         Ok("circles") => native_regions((circle(0), circle(1))),
         Ok("capsules") => native_regions((capsule(0), capsule(2))),
-        Ok("mobius-overlap") => mobius_overlap_regions(&policy).into(),
+        Ok("aligned-conic-overlap") => conic_overlap_regions(false, &policy).into(),
+        Ok("mobius-overlap") => conic_overlap_regions(true, &policy).into(),
         Ok("nonlinear-line-overlap") => nonlinear_line_overlap_regions(&policy).into(),
         Ok(fixture) => panic!("unknown batch benchmark fixture {fixture}"),
         Err(_) => native_regions((rectangle(0, 0, 4, 4), rectangle(2, 0, 6, 4))),

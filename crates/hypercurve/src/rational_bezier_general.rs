@@ -188,9 +188,14 @@ pub struct RationalBezierIntersectionOverlap2 {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct RationalBezierOverlapParameterCorrespondence2 {
-    first: RationalBezier2,
-    second: RationalBezier2,
+pub(crate) enum RationalBezierOverlapParameterCorrespondence2 {
+    Identity,
+    UnitComplement,
+    General {
+        first: RationalBezier2,
+        second: RationalBezier2,
+        unresolved: Option<UncertaintyReason>,
+    },
 }
 
 impl RationalBezierIntersectionOverlap2 {
@@ -212,10 +217,22 @@ impl RationalBezierIntersectionOverlap2 {
 }
 
 impl RationalBezierOverlapParameterCorrespondence2 {
-    fn new(first: &RationalBezier2, second: &RationalBezier2) -> Self {
-        Self {
+    fn new(first: &RationalBezier2, second: &RationalBezier2, policy: &CurveContext) -> Self {
+        let mut unresolved = None;
+        match first.same_projective_control_net_degree_aligned(second, false, policy) {
+            Classification::Decided(true) => return Self::Identity,
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => unresolved = Some(reason),
+        }
+        match first.same_projective_control_net_degree_aligned(second, true, policy) {
+            Classification::Decided(true) => return Self::UnitComplement,
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => unresolved = Some(reason),
+        }
+        Self::General {
             first: first.clone(),
             second: second.clone(),
+            unresolved,
         }
     }
 
@@ -224,7 +241,15 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-        overlap_parameter_on_curve(&self.first, &self.second, parameter, policy)
+        match self {
+            Self::Identity => Ok(Classification::Decided(Some(parameter.clone()))),
+            Self::UnitComplement => Ok(Classification::Decided(Some(parameter.unit_complement()))),
+            Self::General {
+                first,
+                second,
+                unresolved,
+            } => overlap_parameter_on_curve(first, second, parameter, *unresolved, policy),
+        }
     }
 
     pub(crate) fn map_second_to_first(
@@ -232,7 +257,15 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-        overlap_parameter_on_curve(&self.second, &self.first, parameter, policy)
+        match self {
+            Self::Identity => Ok(Classification::Decided(Some(parameter.clone()))),
+            Self::UnitComplement => Ok(Classification::Decided(Some(parameter.unit_complement()))),
+            Self::General {
+                first,
+                second,
+                unresolved,
+            } => overlap_parameter_on_curve(second, first, parameter, *unresolved, policy),
+        }
     }
 }
 
@@ -408,7 +441,11 @@ impl RationalBezierIntersectionContext {
     pub(crate) fn overlap_parameter_correspondence(
         &self,
     ) -> RationalBezierOverlapParameterCorrespondence2 {
-        RationalBezierOverlapParameterCorrespondence2::new(&self.data.first, &self.data.second)
+        RationalBezierOverlapParameterCorrespondence2::new(
+            &self.data.first,
+            &self.data.second,
+            &self.data.policy,
+        )
     }
 
     fn try_topology(&self) -> ExactCurveResult<RationalBezierIntersectionTopology2> {
@@ -4671,26 +4708,9 @@ fn overlap_parameter_on_curve(
     source: &RationalBezier2,
     target: &RationalBezier2,
     source_parameter: &BezierParameter2,
+    mut unresolved: Option<UncertaintyReason>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    let mut unresolved = None;
-    match source.same_projective_control_net_degree_aligned(target, false, policy) {
-        Classification::Decided(true) => {
-            return Ok(Classification::Decided(Some(source_parameter.clone())));
-        }
-        Classification::Decided(false) => {}
-        Classification::Uncertain(reason) => unresolved = Some(reason),
-    }
-    match source.same_projective_control_net_degree_aligned(target, true, policy) {
-        Classification::Decided(true) => {
-            return Ok(Classification::Decided(Some(
-                source_parameter.unit_complement(),
-            )));
-        }
-        Classification::Decided(false) => {}
-        Classification::Uncertain(reason) => unresolved = Some(reason),
-    }
-
     let target_is_conic = match target.implicit_quadratic_conic(policy) {
         Classification::Decided(Some(_)) => true,
         Classification::Decided(None) => {
