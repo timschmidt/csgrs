@@ -2669,6 +2669,16 @@ fn split_edge_crossing_events(
     }
     for left_index in 0..bounded_edges.len() {
         let left = &bounded_edges[left_index];
+        let left_edge = left.edge;
+        // Certified query data depends only on this edge and its immutable
+        // enclosures. A failed construction selects the same exact fallback
+        // for every paired edge, so it is safe to reuse the result here.
+        let left_rational_queries = approximate_vertices.and_then(|vertices| {
+            Some([
+                RationalPoint3Query::from_certified_enclosures(vertices[left_edge[0]])?,
+                RationalPoint3Query::from_certified_enclosures(vertices[left_edge[1]])?,
+            ])
+        });
         let approximate_left_bounds = match (approximate_vertices, approximate_bounds.as_deref()) {
             (Some(_), Some(bounds)) => {
                 Some(ApproximateLeftBounds::Cached(bounds, &bounds[left_index]))
@@ -2714,7 +2724,6 @@ fn split_edge_crossing_events(
             {
                 break;
             }
-            let left_edge = left.edge;
             let right_edge = right.edge;
             if left_edge.iter().any(|vertex| right_edge.contains(vertex)) {
                 continue;
@@ -2731,14 +2740,17 @@ fn split_edge_crossing_events(
                 continue;
             }
 
-            let rational_queries = approximate_vertices.and_then(|vertices| {
+            let right_rational_queries = left_rational_queries.as_ref().and_then(|_| {
+                let vertices = approximate_vertices?;
                 Some([
-                    RationalPoint3Query::from_certified_enclosures(vertices[left_edge[0]])?,
-                    RationalPoint3Query::from_certified_enclosures(vertices[left_edge[1]])?,
                     RationalPoint3Query::from_certified_enclosures(vertices[right_edge[0]])?,
                     RationalPoint3Query::from_certified_enclosures(vertices[right_edge[1]])?,
                 ])
             });
+            let rational_queries = left_rational_queries
+                .as_ref()
+                .zip(right_rational_queries.as_ref())
+                .map(|(left, right)| [&left[0], &left[1], &right[0], &right[1]]);
             let Some(projection_axis) = proper_segment_intersection_after_bounds_overlap(
                 decisions,
                 &soup.vertices[left_edge[0]],
@@ -2748,7 +2760,7 @@ fn split_edge_crossing_events(
                 approximate_vertices.and_then(|vertices| {
                     approximate_projection_axis(vertices, left_edge, right_edge)
                 }),
-                rational_queries.as_ref(),
+                rational_queries,
             )?
             else {
                 continue;
@@ -4333,7 +4345,7 @@ fn proper_segment_intersection_after_bounds_overlap(
     c: &OutputVertex,
     d: &OutputVertex,
     preferred_projection_axis: Option<usize>,
-    rational_queries: Option<&[RationalPoint3Query; 4]>,
+    rational_queries: Option<[&RationalPoint3Query; 4]>,
 ) -> HypermeshResult<Option<usize>> {
     let mut projections = [[1, 2], [0, 2], [0, 1]];
     if let Some(axis) = preferred_projection_axis {
@@ -4425,7 +4437,7 @@ fn projected_segment_crossing(
     c: &OutputVertex,
     d: &OutputVertex,
     axes: [usize; 2],
-    rational_queries: Option<&[RationalPoint3Query; 4]>,
+    rational_queries: Option<[&RationalPoint3Query; 4]>,
 ) -> HypermeshResult<Option<bool>> {
     let opposite = |left, right| {
         matches!(
@@ -4443,12 +4455,12 @@ fn projected_segment_crossing(
     };
 
     let ab_filter = rational_queries
-        .and_then(|queries| RationalLine2Filter::from_point3(&queries[0], &queries[1], axes))
+        .and_then(|queries| RationalLine2Filter::from_point3(queries[0], queries[1], axes))
         .or_else(|| projected_rational_line_filter(a, b, axes));
     let ab_signs = rational_queries.and_then(|queries| {
         ab_filter
             .as_ref()
-            .map(|filter| filter.sign_point3_pair([&queries[2], &queries[3]], axes))
+            .map(|filter| filter.sign_point3_pair([queries[2], queries[3]], axes))
     });
     let c_side = projected_orientation(
         decisions,
@@ -4457,7 +4469,7 @@ fn projected_segment_crossing(
         c,
         axes,
         ab_filter.as_ref(),
-        rational_queries.map(|queries| &queries[2]),
+        rational_queries.map(|queries| queries[2]),
         ab_signs.map(|signs| signs[0]),
     )?;
     let d_side = projected_orientation(
@@ -4467,19 +4479,19 @@ fn projected_segment_crossing(
         d,
         axes,
         ab_filter.as_ref(),
-        rational_queries.map(|queries| &queries[3]),
+        rational_queries.map(|queries| queries[3]),
         ab_signs.map(|signs| signs[1]),
     )?;
     if same_side(c_side, d_side) {
         return Ok(Some(false));
     }
     let cd_filter = rational_queries
-        .and_then(|queries| RationalLine2Filter::from_point3(&queries[2], &queries[3], axes))
+        .and_then(|queries| RationalLine2Filter::from_point3(queries[2], queries[3], axes))
         .or_else(|| projected_rational_line_filter(c, d, axes));
     let cd_signs = rational_queries.and_then(|queries| {
         cd_filter
             .as_ref()
-            .map(|filter| filter.sign_point3_pair([&queries[0], &queries[1]], axes))
+            .map(|filter| filter.sign_point3_pair([queries[0], queries[1]], axes))
     });
     let a_side = projected_orientation(
         decisions,
@@ -4488,7 +4500,7 @@ fn projected_segment_crossing(
         a,
         axes,
         cd_filter.as_ref(),
-        rational_queries.map(|queries| &queries[0]),
+        rational_queries.map(|queries| queries[0]),
         cd_signs.map(|signs| signs[0]),
     )?;
     let b_side = projected_orientation(
@@ -4498,7 +4510,7 @@ fn projected_segment_crossing(
         b,
         axes,
         cd_filter.as_ref(),
-        rational_queries.map(|queries| &queries[1]),
+        rational_queries.map(|queries| queries[1]),
         cd_signs.map(|signs| signs[1]),
     )?;
     if same_side(a_side, b_side) {
@@ -5573,7 +5585,7 @@ mod tests {
                     &c,
                     &d,
                     approximate_projection_axis(&approximate, [0, 1], [2, 3]),
-                    Some(&queries),
+                    Some(queries.each_ref()),
                 )
                 .unwrap()
                 .is_none()
@@ -5655,7 +5667,7 @@ mod tests {
                     &c,
                     &d,
                     [0, 1],
-                    Some(&crossing_queries),
+                    Some(crossing_queries.each_ref()),
                 )
                 .unwrap(),
                 Some(true)
@@ -5668,7 +5680,7 @@ mod tests {
                     &same_side_start,
                     &same_side_end,
                     [0, 1],
-                    Some(&same_side_queries),
+                    Some(same_side_queries.each_ref()),
                 )
                 .unwrap(),
                 Some(false)
@@ -5681,7 +5693,7 @@ mod tests {
                     &b,
                     &c,
                     [0, 1],
-                    Some(&endpoint_queries),
+                    Some(endpoint_queries.each_ref()),
                 )
                 .unwrap(),
                 None
