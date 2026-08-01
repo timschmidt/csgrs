@@ -310,8 +310,8 @@ fn full_resolution_yeahright_reaches_and_validates_in_hypermesh() {
 }
 
 #[test]
-#[ignore = "manual 11,894-by-11,894 triangle memory-ceiling test"]
-fn full_resolution_yeahright_rotated_intersection_remains_a_hard_test() {
+#[ignore = "manual 11,894-by-11,894 certified-empty memory-ceiling test"]
+fn full_resolution_yeahright_rotated_intersection_certifies_empty() {
     let source = yeahright_control_mesh();
     let rotated = support::RawMesh {
         positions: source
@@ -323,15 +323,16 @@ fn full_resolution_yeahright_rotated_intersection_remains_a_hard_test() {
     };
     let left = to_hypermesh(&source);
     let right = to_hypermesh(&rotated);
-    let output = boolean_mesh(
+    let outcome = boolean_mesh(
         &APPROXIMATE_CONTEXT,
         &[left.as_ref(), right.as_ref()],
         BooleanOp::Intersection,
         EmberConfig::default(),
     )
-    .expect("full-resolution YeahRight intersection must remain valid")
-    .into_value();
-    assert!(!output.triangles.is_empty());
+    .expect("full-resolution YeahRight intersection must remain valid");
+    assert_eq!(outcome.certainty, hypermesh::MeshCertainty::Certified);
+    assert!(outcome.value.vertices.is_empty());
+    assert!(outcome.value.triangles.is_empty());
 }
 
 #[test]
