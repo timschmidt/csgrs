@@ -360,7 +360,7 @@ impl Rational {
             return None;
         }
 
-        let high = Self::normalized_high_u64_round_to_odd(&self.numerator)?;
+        let high = Self::normalized_high_u64_round_to_odd(&self.numerator, numerator_bits)?;
         let significand = (high as f64) * f64::from_bits((1023_u64 - 63) << 52);
         let scale_exponent = u64::try_from(exponent + 1023).ok()?;
         let value = significand * f64::from_bits(scale_exponent << 52);
@@ -368,8 +368,7 @@ impl Rational {
     }
 
     #[inline]
-    fn normalized_high_u64_round_to_odd(value: &BigUint) -> Option<u64> {
-        let bits = value.bits();
+    fn normalized_high_u64_round_to_odd(value: &BigUint, bits: u64) -> Option<u64> {
         let mut digits = value.iter_u64_digits();
         let highest = digits.next_back()?;
         if bits <= 64 {
