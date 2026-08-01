@@ -17,6 +17,11 @@
 use std::sync::{Arc, OnceLock};
 
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
+#[cfg(feature = "predicates")]
+use hypersolve::{
+    AlgebraicFiberRootCountStatus, PredicateCertainty,
+    count_bivariate_fiber_roots_at_algebraic_parameter,
+};
 use hypersolve::{
     BivariatePolynomial, CurveIntersectionFiberSubresultantReport,
     CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
@@ -26,6 +31,8 @@ use hypersolve::{
     linear_parameter_lifts_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
 };
 
+#[cfg(feature = "predicates")]
+use crate::bezier_algebraic_image::parameter_representation;
 use crate::bezier_parameter::{bernstein_to_power_coefficients, power_to_bernstein_coefficients};
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::rational_bezier_general::{
@@ -1159,9 +1166,11 @@ impl BezierParallel2 {
     /// of algebraic parameters use univariate/identity/reversal fast paths,
     /// followed by Hypersolve's exact nullity-one Sylvester lift or
     /// specialization-safe subresultant fibers for genuinely coupled systems.
-    /// Unsupported degree drops and fibers without sufficient isolator evidence
-    /// remain explicit [`BezierParallelIntersectionContacts2::Incomplete`]
-    /// results; no projected root is promoted without exact replay.
+    /// A local-field Sturm count retains even-multiplicity roots that have no
+    /// endpoint sign change. Unsupported degree drops and fibers without
+    /// sufficient isolator evidence remain explicit
+    /// [`BezierParallelIntersectionContacts2::Incomplete`] results; no
+    /// projected root is promoted without exact replay.
     pub fn intersection_contacts(
         &self,
         other: &RationalBezier2,
@@ -4421,7 +4430,7 @@ fn fiber_subresultant_has_root_in_parameter_interval(
     };
     let start = endpoint_sign(fiber_parameter.interval().start())?;
     let end = endpoint_sign(fiber_parameter.interval().end())?;
-    Ok(match (start, end) {
+    let endpoint_classification = match (start, end) {
         (
             Classification::Decided(RealSign::Positive),
             Classification::Decided(RealSign::Negative),
@@ -4434,7 +4443,46 @@ fn fiber_subresultant_has_root_in_parameter_interval(
             Classification::Uncertain(reason)
         }
         _ => Classification::Uncertain(UncertaintyReason::Predicate),
-    })
+    };
+    if endpoint_classification.is_decided() {
+        return Ok(endpoint_classification);
+    }
+
+    #[cfg(feature = "predicates")]
+    {
+        let BezierParameter2::Algebraic(retained_parameter) = retained_parameter else {
+            return Ok(endpoint_classification);
+        };
+        let report = count_bivariate_fiber_roots_at_algebraic_parameter(
+            polynomial,
+            retained_axis,
+            &parameter_representation(retained_parameter, policy),
+            fiber_parameter.interval().start(),
+            fiber_parameter.interval().end(),
+            policy.predicate_policy(),
+        );
+        if report.certainty == PredicateCertainty::Approximate {
+            policy.observe_approximate_512();
+        }
+        Ok(match report.status {
+            AlgebraicFiberRootCountStatus::Counted => match report.distinct_root_count {
+                Some(0) => Classification::Decided(false),
+                Some(_) => Classification::Decided(true),
+                None => Classification::Uncertain(UncertaintyReason::Predicate),
+            },
+            AlgebraicFiberRootCountStatus::IdenticallyZeroFiber
+            | AlgebraicFiberRootCountStatus::EndpointRoot
+            | AlgebraicFiberRootCountStatus::InvalidEvidence
+            | AlgebraicFiberRootCountStatus::InvalidInterval
+            | AlgebraicFiberRootCountStatus::UnsupportedCoefficient
+            | AlgebraicFiberRootCountStatus::Undecided => {
+                Classification::Uncertain(UncertaintyReason::Predicate)
+            }
+        })
+    }
+
+    #[cfg(not(feature = "predicates"))]
+    Ok(endpoint_classification)
 }
 
 fn signed_bivariate_on_parameter_lift(
@@ -5394,6 +5442,87 @@ mod conversion_tests {
             .unwrap(),
             Classification::Decided(None)
         );
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn fiber_subresultants_count_even_multiplicity_in_a_coupled_system() {
+        let parameter = |coefficients: Vec<Real>| {
+            let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+                coefficients,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => panic!("parameter polynomial: {reason:?}"),
+            };
+            let parameters = match polynomial
+                .isolate_unit_interval_roots(&CurveContext::STRICT)
+                .unwrap()
+            {
+                Classification::Decided(parameters) => parameters,
+                Classification::Uncertain(reason) => panic!("parameter isolation: {reason:?}"),
+            };
+            let [parameter] = parameters.as_slice() else {
+                panic!("expected one unit-interval algebraic parameter");
+            };
+            assert!(matches!(parameter, BezierParameter2::Algebraic(_)));
+            parameter.clone()
+        };
+
+        // alpha = cbrt(1/2), beta = alpha^2 = cbrt(1/4). The two equations
+        // differ by A(alpha)=2*alpha^3-1 and specialize to
+        // (beta-alpha^2)^2, so the selected fiber root has even multiplicity
+        // and cannot be recovered from endpoint sign change.
+        let alpha = parameter(vec![
+            Real::from(-1_i8),
+            Real::zero(),
+            Real::zero(),
+            Real::from(2_i8),
+        ]);
+        let beta = parameter(vec![
+            Real::from(-1_i8),
+            Real::zero(),
+            Real::zero(),
+            Real::from(4_i8),
+        ]);
+        let first = BivariatePolynomial::new(vec![
+            vec![Real::from(-1_i8), Real::zero(), Real::one()],
+            vec![],
+            vec![Real::zero(), Real::from(-2_i8)],
+            vec![Real::from(2_i8)],
+            vec![Real::one()],
+        ]);
+        let second = BivariatePolynomial::new(vec![
+            vec![Real::from(-2_i8), Real::zero(), Real::one()],
+            vec![],
+            vec![Real::zero(), Real::from(-2_i8)],
+            vec![Real::from(4_i8)],
+            vec![Real::one()],
+        ]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let mut parameter_lifts = [None, None];
+            let mut fiber_subresultants = [None, None];
+            assert_eq!(
+                replay_bivariate_parameter_pair(
+                    &first,
+                    &second,
+                    &alpha,
+                    &beta,
+                    &policy,
+                    config,
+                    &mut parameter_lifts,
+                    &mut fiber_subresultants,
+                )
+                .unwrap(),
+                Classification::Decided(BivariateParameterPairReplay::Direct)
+            );
+        }
     }
 
     #[test]
