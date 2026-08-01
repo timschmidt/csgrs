@@ -711,7 +711,7 @@ struct CandidatePointReplay {
 }
 
 #[derive(Debug)]
-enum ResultantParameterProjection {
+pub(crate) enum ResultantParameterProjection {
     Empty,
     Parameters(Vec<BezierParameter2>),
     Degenerate,
@@ -6530,7 +6530,7 @@ fn compare_algebraic_coordinates(
     None
 }
 
-fn resultant_parameter_projection(
+pub(crate) fn resultant_parameter_projection(
     evidence: CurveIntersectionResultantReport,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {

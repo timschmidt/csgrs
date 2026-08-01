@@ -1,10 +1,10 @@
 use hypercurve::{
     BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierFlatteningOptions,
     BezierLineImageFitRelation, BezierOffsetCandidate2, BezierParallelApproximationCurve2,
-    BezierParallelIncidence2, BezierParallelVerificationOptions, BezierParameter2, Classification,
-    CubicBezier2, Curve2, CurveContext, CurveError, CurvePath2, CurveRegion2, CurveRegionLoopRole,
-    FillRule, LineSeg2, Point2, QuadraticBezier2, Rational, RationalBezier2,
-    RationalQuadraticBezier2, Real,
+    BezierParallelIncidence2, BezierParallelIntersectionCandidates2,
+    BezierParallelVerificationOptions, BezierParameter2, Classification, CubicBezier2, Curve2,
+    CurveContext, CurveError, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
+    Point2, QuadraticBezier2, Rational, RationalBezier2, RationalQuadraticBezier2, Real,
 };
 use num::bigint::{BigInt, BigUint};
 use proptest::prelude::*;
@@ -1137,6 +1137,159 @@ fn supporting_line_incidence_rejects_projective_poles_and_source_singularities()
         assert_eq!(
             singular.supporting_line_incidence(&line, &policy).unwrap(),
             Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+        );
+    }
+}
+
+#[test]
+fn parallel_rational_intersection_candidates_retain_both_finite_parameters() {
+    let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
+        .parallel_left(r(1))
+        .unwrap();
+    let vertical = RationalBezier2::try_new(vec![p(1, 0), p(1, 2)], vec![r(1), r(1)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            parallel
+                .intersection_candidates(&vertical, &policy)
+                .unwrap(),
+            Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters: vec![BezierParameter2::Exact(q(1, 2))],
+                other_parameters: vec![BezierParameter2::Exact(q(1, 2))],
+            })
+        );
+    }
+}
+
+#[test]
+fn parallel_rational_intersection_candidates_retain_algebraic_projection() {
+    let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(2, 0))
+        .parallel_left(r(1))
+        .unwrap();
+    let vertical = RationalBezier2::try_new(vec![p(1, 0), p(1, 2)], vec![r(1), r(1)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
+            parallel_parameters,
+            other_parameters,
+        }) = parallel
+            .intersection_candidates(&vertical, &policy)
+            .unwrap()
+        else {
+            panic!("parallel/rational algebraic projections were not decided");
+        };
+        let [BezierParameter2::Algebraic(parameter)] = parallel_parameters.as_slice() else {
+            panic!("parallel projection did not retain its algebraic parameter");
+        };
+        assert!(parameter.polynomial().degree() >= 2);
+        assert_eq!(other_parameters, vec![BezierParameter2::Exact(q(1, 2))]);
+    }
+}
+
+#[test]
+fn parallel_rational_intersection_candidates_report_disjoint_and_shared_components() {
+    let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
+        .parallel_left(r(1))
+        .unwrap();
+    let disjoint = RationalBezier2::try_new(vec![p(10, 0), p(10, 2)], vec![r(1), r(1)]).unwrap();
+    let coincident = RationalBezier2::try_new(vec![p(0, 1), p(2, 1)], vec![r(1), r(1)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            parallel
+                .intersection_candidates(&disjoint, &policy)
+                .unwrap(),
+            Classification::Decided(BezierParallelIntersectionCandidates2::NoIntersection)
+        );
+        assert_eq!(
+            parallel
+                .intersection_candidates(&coincident, &policy)
+                .unwrap(),
+            Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+        );
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn parallel_rational_candidates_use_approximate_512_only_as_a_terminal_decision() {
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
+        .parallel_left(undecidable_zero)
+        .unwrap();
+    let vertical = RationalBezier2::try_new(vec![p(1, -1), p(1, 1)], vec![r(1), r(1)]).unwrap();
+
+    assert_eq!(
+        parallel.intersection_candidates(&vertical, &CurveContext::STRICT),
+        Ok(Classification::Uncertain(
+            hypercurve::UncertaintyReason::RealSign
+        ))
+    );
+    assert_eq!(
+        parallel.intersection_candidates(&vertical, &CurveContext::APPROXIMATE_512),
+        Ok(Classification::Decided(
+            BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters: vec![BezierParameter2::Exact(q(1, 2))],
+                other_parameters: vec![BezierParameter2::Exact(q(1, 2))],
+            }
+        ))
+    );
+}
+
+#[test]
+fn parallel_rational_candidates_reject_projective_poles_and_source_singularities() {
+    let projective_source =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 1), p(2, 0)], vec![r(1), r(-1), r(1)])
+            .unwrap()
+            .parallel_left(r(1))
+            .unwrap();
+    let singular_source = QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0))
+        .parallel_left(r(1))
+        .unwrap();
+    let projective_other =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 1), p(2, 0)], vec![r(1), r(-1), r(1)]).unwrap();
+    let finite_other = RationalBezier2::try_new(vec![p(0, 1), p(2, 1)], vec![r(1), r(1)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            projective_source
+                .intersection_candidates(&finite_other, &policy)
+                .unwrap(),
+            Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+        );
+        assert_eq!(
+            singular_source
+                .intersection_candidates(&finite_other, &policy)
+                .unwrap(),
+            Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+        );
+        assert_eq!(
+            QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
+                .parallel_left(r(1))
+                .unwrap()
+                .intersection_candidates(&projective_other, &policy)
+                .unwrap(),
+            Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+        );
+    }
+}
+
+#[test]
+fn zero_distance_parallel_candidates_keep_stationary_source_intersection() {
+    let parallel = QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0))
+        .parallel_left(r(0))
+        .unwrap();
+    let vertical = RationalBezier2::try_new(vec![p(0, -1), p(0, 1)], vec![r(1), r(1)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            parallel
+                .intersection_candidates(&vertical, &policy)
+                .unwrap(),
+            Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters: vec![BezierParameter2::Exact(r(0))],
+                other_parameters: vec![BezierParameter2::Exact(q(1, 2))],
+            })
         );
     }
 }

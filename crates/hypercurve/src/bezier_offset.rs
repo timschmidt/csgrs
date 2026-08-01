@@ -17,9 +17,16 @@
 use std::sync::{Arc, OnceLock};
 
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
+use hypersolve::{
+    BivariatePolynomial, CurveIntersectionResultantConfig, CurveResultantParameter,
+    RationalParametricCurve2, resultant_bivariate_polynomial_system,
+};
 
 use crate::bezier_parameter::{bernstein_to_power_coefficients, power_to_bernstein_coefficients};
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
+use crate::rational_bezier_general::{
+    ResultantParameterProjection, resultant_parameter_projection,
+};
 use crate::{
     Aabb2, BezierCuspClassification, BezierDegree, BezierEndpoint, BezierInflectionClassification,
     BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
@@ -166,6 +173,22 @@ pub enum BezierParallelIncidence2 {
     EntireCurve,
     /// The complete ordered set of represented or isolated algebraic parameters.
     Parameters(Vec<BezierParameter2>),
+}
+
+/// Complete resultant projections for an analytic parallel and rational Bezier pair.
+#[derive(Clone, Debug, PartialEq)]
+pub enum BezierParallelIntersectionCandidates2 {
+    /// Exact elimination proves that no finite parameter pair can intersect.
+    NoIntersection,
+    /// Both projections contain every possible finite contact parameter.
+    Candidates {
+        /// Ordered represented or algebraically isolated parallel parameters.
+        parallel_parameters: Vec<BezierParameter2>,
+        /// Ordered represented or algebraically isolated rational-curve parameters.
+        other_parameters: Vec<BezierParameter2>,
+    },
+    /// A projection vanished identically and requires shared-component replay.
+    DegenerateResultant,
 }
 
 impl std::fmt::Debug for BezierParallel2 {
@@ -970,6 +993,112 @@ impl BezierParallel2 {
         }
     }
 
+    /// Constructs complete parameter projections for intersections with a rational Bezier.
+    ///
+    /// For target `Q(u)=A(u)/B(u)`, source `P(t)=(X(t)/W(t),Y(t)/W(t))`,
+    /// homogeneous tangent numerator `H(t)`, and
+    /// `Delta=(A_x W-XB,A_y W-YB)`, every unsigned parallel contact satisfies
+    /// `Delta dot H=0` and `Delta dot Delta-d^2 W^2 B^2=0`. Hypersolve
+    /// eliminates each parameter from that one bivariate system. The returned
+    /// projections are candidate evidence: exact contact replay must still
+    /// pair roots and reject the opposite normal branch introduced by the
+    /// squared distance equation.
+    pub fn intersection_candidates(
+        &self,
+        other: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
+        let distance_sign = match real_sign(self.distance(), policy) {
+            Some(sign) => sign,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let source = self.source_power_basis()?;
+        if let Classification::Uncertain(reason) = Self::certify_finite_source(&source, policy)? {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let other_power = other.homogeneous_power_basis()?;
+        if let Classification::Uncertain(reason) =
+            Self::certify_finite_weight(Some(&other_power.weight), policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let differential = self.differential()?;
+        if distance_sign != RealSign::Zero
+            && let Classification::Uncertain(reason) =
+                Self::certify_regular_differential(differential, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+
+        let other_bounds = other.certified_bounds_classified(policy);
+        if let (Classification::Decided(parallel_bounds), Classification::Decided(other_bounds)) =
+            (self.conservative_bounds(policy)?, other_bounds)
+            && matches!(
+                parallel_bounds.overlaps(&other_bounds, policy),
+                Classification::Decided(false)
+            )
+        {
+            return Ok(Classification::Decided(
+                BezierParallelIntersectionCandidates2::NoIntersection,
+            ));
+        }
+
+        let (orthogonality, distance_relation) = parallel_rational_intersection_equations(
+            &source,
+            differential,
+            self.distance(),
+            other_power,
+        );
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let parallel = match resultant_parameter_projection(
+            resultant_bivariate_polynomial_system(
+                &orthogonality,
+                &distance_relation,
+                CurveResultantParameter::First,
+                config,
+            ),
+            policy,
+        )? {
+            Classification::Decided(projection) => projection,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let other = match resultant_parameter_projection(
+            resultant_bivariate_polynomial_system(
+                &orthogonality,
+                &distance_relation,
+                CurveResultantParameter::Second,
+                config,
+            ),
+            policy,
+        )? {
+            Classification::Decided(projection) => projection,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(match (parallel, other) {
+            (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
+                BezierParallelIntersectionCandidates2::NoIntersection
+            }
+            (ResultantParameterProjection::Degenerate, _)
+            | (_, ResultantParameterProjection::Degenerate) => {
+                BezierParallelIntersectionCandidates2::DegenerateResultant
+            }
+            (
+                ResultantParameterProjection::Parameters(parallel_parameters),
+                ResultantParameterProjection::Parameters(other_parameters),
+            ) => BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters,
+                other_parameters,
+            },
+        }))
+    }
+
     fn polynomial_power_basis(&self) -> CurveResult<&(Vec<Real>, Vec<Real>)> {
         if let Some(power_basis) = self.data.polynomial_power_basis.get() {
             return Ok(power_basis);
@@ -1020,7 +1149,14 @@ impl BezierParallel2 {
         source: &BezierParallelPowerBasisRef<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<()>> {
-        let Some(weight) = source.weight else {
+        Self::certify_finite_weight(source.weight, policy)
+    }
+
+    fn certify_finite_weight(
+        weight: Option<&[Real]>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<()>> {
+        let Some(weight) = weight else {
             return Ok(Classification::Decided(()));
         };
         let weight_polynomial = match polynomial_from_coefficients(weight.to_vec(), policy)? {
@@ -3551,6 +3687,166 @@ fn polynomial_from_coefficients(
         Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
         Err(error) => Err(error),
     }
+}
+
+const MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE: usize = 128;
+const PARALLEL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
+
+fn parallel_rational_intersection_equations(
+    source: &BezierParallelPowerBasisRef<'_>,
+    differential: &BezierParallelDifferential2,
+    distance: &Real,
+    other: &RationalParametricCurve2,
+) -> (BivariatePolynomial, BivariatePolynomial) {
+    let unit_weight = [Real::one()];
+    let source_weight = source.weight.unwrap_or(&unit_weight);
+    let delta_x = bivariate_parameter_difference(
+        source_weight,
+        &other.x_numerator,
+        source.x_numerator,
+        &other.weight,
+    );
+    let delta_y = bivariate_parameter_difference(
+        source_weight,
+        &other.y_numerator,
+        source.y_numerator,
+        &other.weight,
+    );
+    let orthogonality = bivariate_add(
+        &bivariate_multiply_first_parameter(&delta_x, &differential.tangent_x),
+        &bivariate_multiply_first_parameter(&delta_y, &differential.tangent_y),
+    );
+    let squared_delta = bivariate_add(
+        &bivariate_multiply(&delta_x, &delta_x),
+        &bivariate_multiply(&delta_y, &delta_y),
+    );
+    let weighted_distance_squared = bivariate_scale(
+        bivariate_outer_product(
+            &polynomial_multiply(source_weight, source_weight),
+            &polynomial_multiply(&other.weight, &other.weight),
+        ),
+        &(distance * distance),
+    );
+    (
+        orthogonality,
+        bivariate_subtract(&squared_delta, &weighted_distance_squared),
+    )
+}
+
+fn bivariate_parameter_difference(
+    first_left: &[Real],
+    second_left: &[Real],
+    first_right: &[Real],
+    second_right: &[Real],
+) -> BivariatePolynomial {
+    bivariate_subtract(
+        &bivariate_outer_product(first_left, second_left),
+        &bivariate_outer_product(first_right, second_right),
+    )
+}
+
+fn bivariate_outer_product(first: &[Real], second: &[Real]) -> BivariatePolynomial {
+    let mut coefficients = vec![vec![Real::zero(); second.len()]; first.len()];
+    for (first_power, first_coefficient) in first.iter().enumerate() {
+        for (second_power, second_coefficient) in second.iter().enumerate() {
+            coefficients[first_power][second_power] = first_coefficient * second_coefficient;
+        }
+    }
+    BivariatePolynomial::new(coefficients)
+}
+
+fn bivariate_add(first: &BivariatePolynomial, second: &BivariatePolynomial) -> BivariatePolynomial {
+    bivariate_combine(first, second, false)
+}
+
+fn bivariate_subtract(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+) -> BivariatePolynomial {
+    bivariate_combine(first, second, true)
+}
+
+fn bivariate_combine(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    subtract_second: bool,
+) -> BivariatePolynomial {
+    let first_count = first.coefficients.len().max(second.coefficients.len());
+    let second_count = first
+        .coefficients
+        .iter()
+        .chain(&second.coefficients)
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0);
+    let mut coefficients = vec![vec![Real::zero(); second_count]; first_count];
+    for (target, source) in coefficients.iter_mut().zip(&first.coefficients) {
+        for (target, source) in target.iter_mut().zip(source) {
+            *target += source;
+        }
+    }
+    for (target, source) in coefficients.iter_mut().zip(&second.coefficients) {
+        for (target, source) in target.iter_mut().zip(source) {
+            if subtract_second {
+                *target -= source;
+            } else {
+                *target += source;
+            }
+        }
+    }
+    BivariatePolynomial::new(coefficients)
+}
+
+fn bivariate_multiply_first_parameter(
+    polynomial: &BivariatePolynomial,
+    factor: &[Real],
+) -> BivariatePolynomial {
+    let first_count = polynomial.coefficients.len() + factor.len() - 1;
+    let second_count = polynomial
+        .coefficients
+        .iter()
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0);
+    let mut coefficients = vec![vec![Real::zero(); second_count]; first_count];
+    for (first_power, row) in polynomial.coefficients.iter().enumerate() {
+        for (factor_power, factor) in factor.iter().enumerate() {
+            for (second_power, coefficient) in row.iter().enumerate() {
+                coefficients[first_power + factor_power][second_power] += coefficient * factor;
+            }
+        }
+    }
+    BivariatePolynomial::new(coefficients)
+}
+
+fn bivariate_multiply(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+) -> BivariatePolynomial {
+    let first_second_count = first.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+    let second_second_count = second.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+    let mut coefficients = vec![
+        vec![Real::zero(); first_second_count + second_second_count - 1];
+        first.coefficients.len() + second.coefficients.len() - 1
+    ];
+    for (first_power, first_row) in first.coefficients.iter().enumerate() {
+        for (second_power, second_row) in second.coefficients.iter().enumerate() {
+            for (first_column, first_coefficient) in first_row.iter().enumerate() {
+                for (second_column, second_coefficient) in second_row.iter().enumerate() {
+                    coefficients[first_power + second_power][first_column + second_column] +=
+                        first_coefficient * second_coefficient;
+                }
+            }
+        }
+    }
+    BivariatePolynomial::new(coefficients)
+}
+
+fn bivariate_scale(mut polynomial: BivariatePolynomial, scale: &Real) -> BivariatePolynomial {
+    for coefficient in polynomial.coefficients.iter_mut().flatten() {
+        *coefficient *= scale;
+    }
+    polynomial
 }
 
 fn common_unit_polynomial_roots(
