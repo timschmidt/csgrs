@@ -379,7 +379,8 @@ pub struct BivariatePolynomialComponentReport {
     pub retained_parameter: CurveResultantParameter,
     /// Parameter lifted by the generic common fiber.
     pub lifted_parameter: CurveResultantParameter,
-    /// Conservative interpolation degree used for the selected subresultant.
+    /// Conservative interpolation degree used by the selected exact
+    /// reconstruction lane.
     pub degree_bound: usize,
     /// Rational-map numerator in ascending retained-parameter power order.
     pub numerator_coefficients: Vec<Real>,
@@ -795,11 +796,15 @@ pub fn linear_parameter_lifts_bivariate_polynomial_system(
 /// publishes a primitive rational map. Split quadratics and repeated cubics
 /// retain their smaller rational-linear fast paths. Otherwise the first
 /// nonzero higher subresultant is made primitive and monic, divided exactly
-/// from both authored equations, and returned as an implicit component. This
-/// continues through the complete lifted-degree bound rather than discarding
-/// irreducible or multivalued parameter correspondences. Callers can apply the
-/// function again to the exact residual pair. A geometry caller must still
-/// replay and decompose the finite real branches as documented by
+/// from both authored equations, and returned as an implicit component. A
+/// sampled-fiber GCD fast path first interpolates the low-degree GCD after
+/// scaling it by one authored leading coefficient; polynomial content removes
+/// that scale, and exact division of both authored equations is the authority.
+/// Any failed reconstruction falls through to the complete subresultant scan.
+/// This continues through the complete lifted-degree bound rather than
+/// discarding irreducible or multivalued parameter correspondences. Callers
+/// can apply the function again to the exact residual pair. A geometry caller
+/// must still replay and decompose the finite real branches as documented by
 /// [`BivariatePolynomialComponentReport`].
 pub fn parameter_component_bivariate_polynomial_system(
     first_equation: &BivariatePolynomial,
@@ -865,6 +870,37 @@ pub fn parameter_component_bivariate_polynomial_system(
             None,
             None,
         );
+    }
+
+    if terminal_degree >= 2 {
+        let degree_bound = (second_lifted_degree - 1) * first_retained_degree
+            + (first_lifted_degree - 1) * second_retained_degree;
+        if degree_bound > config.max_resultant_degree {
+            return component_report(
+                BivariatePolynomialComponentStatus::DegreeBoundExceeded,
+                retained_parameter,
+                lifted_parameter,
+                degree_bound,
+                Vec::new(),
+                Vec::new(),
+                None,
+                None,
+            );
+        }
+        if let Some(report) = sampled_common_fiber_component_report(
+            first_equation,
+            second_equation,
+            retained_parameter,
+            lifted_parameter,
+            first_retained_degree,
+            first_lifted_degree,
+            second_retained_degree,
+            second_lifted_degree,
+            terminal_degree,
+            config,
+        ) {
+            return report;
+        }
     }
 
     let (mut constant, mut linear, degree_bound) = if terminal_degree == 1 {
@@ -1069,6 +1105,115 @@ pub fn parameter_component_bivariate_polynomial_system(
 }
 
 #[allow(clippy::too_many_arguments)]
+fn sampled_common_fiber_component_report(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    lifted_parameter: CurveResultantParameter,
+    first_retained_degree: usize,
+    first_lifted_degree: usize,
+    second_retained_degree: usize,
+    second_lifted_degree: usize,
+    terminal_degree: usize,
+    config: CurveIntersectionResultantConfig,
+) -> Option<BivariatePolynomialComponentReport> {
+    let (scale_first, interpolation_degree) = if first_retained_degree <= second_retained_degree {
+        (true, first_retained_degree)
+    } else {
+        (false, second_retained_degree)
+    };
+    let sample_count = interpolation_degree + 1;
+    let mut samples_by_degree = (0..=terminal_degree)
+        .map(|_| Vec::new())
+        .collect::<Vec<Vec<(Real, Vec<Real>)>>>();
+    let maximum_samples = sample_count
+        .saturating_mul(4)
+        .saturating_add(terminal_degree)
+        .saturating_add(8);
+
+    for sample_index in 0..maximum_samples {
+        let parameter = Real::from(sample_index as u64);
+        let first = evaluate_bivariate_at_retained_parameter(
+            first_equation,
+            &parameter,
+            retained_parameter,
+        );
+        let second = evaluate_bivariate_at_retained_parameter(
+            second_equation,
+            &parameter,
+            retained_parameter,
+        );
+        let (Ok(Some(first_degree)), Ok(Some(second_degree))) = (
+            certified_nonzero_degree(&first, config.min_precision),
+            certified_nonzero_degree(&second, config.min_precision),
+        ) else {
+            continue;
+        };
+        if first_degree != first_lifted_degree || second_degree != second_lifted_degree {
+            continue;
+        }
+        let scale = if scale_first {
+            first.get(first_lifted_degree)?.clone()
+        } else {
+            second.get(second_lifted_degree)?.clone()
+        };
+        let gcd = polynomial_gcd(first, second, hyperlimit::PredicatePolicy::STRICT)?;
+        let Ok(Some(gcd_degree)) = certified_nonzero_degree(&gcd, config.min_precision) else {
+            continue;
+        };
+        if gcd_degree == 0 || gcd_degree > terminal_degree {
+            continue;
+        }
+        let leading = gcd.get(gcd_degree)?.clone();
+        let scaled = if leading == Real::one() {
+            gcd.into_iter()
+                .take(gcd_degree + 1)
+                .map(|coefficient| coefficient * &scale)
+                .collect()
+        } else {
+            gcd.into_iter()
+                .take(gcd_degree + 1)
+                .map(|coefficient| (coefficient * &scale / &leading).ok())
+                .collect::<Option<Vec<_>>>()?
+        };
+        let samples = &mut samples_by_degree[gcd_degree];
+        if samples.is_empty() {
+            samples.reserve(sample_count);
+        }
+        samples.push((parameter, scaled));
+        if samples.len() < sample_count {
+            continue;
+        }
+
+        let parameters = samples
+            .iter()
+            .map(|(parameter, _)| parameter.clone())
+            .collect::<Vec<_>>();
+        let coefficients = (0..=gcd_degree)
+            .map(|power| {
+                let values = samples
+                    .iter()
+                    .map(|(_, coefficients)| coefficients[power].clone())
+                    .collect::<Vec<_>>();
+                interpolate_parameter_values(&parameters, &values, config.min_precision)
+            })
+            .collect::<Option<Vec<_>>>()?;
+        if let Ok(Some(report)) = common_fiber_component_report_from_coefficients(
+            first_equation,
+            second_equation,
+            retained_parameter,
+            lifted_parameter,
+            interpolation_degree,
+            coefficients,
+        ) {
+            return Some(report);
+        }
+        return None;
+    }
+    None
+}
+
+#[allow(clippy::too_many_arguments)]
 fn higher_nullity_component_report(
     first_equation: &BivariatePolynomial,
     second_equation: &BivariatePolynomial,
@@ -1082,7 +1227,7 @@ fn higher_nullity_component_report(
 ) -> BivariatePolynomialComponentReport {
     let terminal_degree = first_lifted_degree.min(second_lifted_degree);
     for order in 2..=terminal_degree {
-        let (mut coefficients, degree_bound) = match common_fiber_subresultant_coefficients(
+        let (coefficients, degree_bound) = match common_fiber_subresultant_coefficients(
             first_equation,
             second_equation,
             retained_parameter,
@@ -1107,79 +1252,29 @@ fn higher_nullity_component_report(
                 );
             }
         };
-        while coefficients
-            .last()
-            .is_some_and(|coefficient| exact_polynomial_is_zero(coefficient))
-        {
-            coefficients.pop();
-        }
-        if coefficients.is_empty() {
-            continue;
-        }
-
-        let maps = match coefficients.len() - 1 {
-            1 => vec![(
-                scale_exact_polynomial(&coefficients[0], &Real::from(-1_i8)),
-                coefficients[1].clone(),
-            )],
-            2 => quadratic_rational_maps(
-                coefficients[0].clone(),
-                coefficients[1].clone(),
-                coefficients[2].clone(),
-            ),
-            3 => repeated_cubic_rational_maps(coefficients.clone()),
-            _ => Vec::new(),
-        };
-        if let Some((numerator, denominator, reduced_equations)) =
-            first_dividing_rational_map(first_equation, second_equation, retained_parameter, maps)
-        {
-            return component_report(
-                BivariatePolynomialComponentStatus::Rational,
-                retained_parameter,
-                lifted_parameter,
-                degree_bound,
-                numerator,
-                denominator,
-                Some(reduced_equations),
-                None,
-            );
-        }
-
-        let Some(component) = primitive_common_fiber_component(coefficients, retained_parameter)
-        else {
-            return component_report(
-                BivariatePolynomialComponentStatus::DivisionFailed,
-                retained_parameter,
-                lifted_parameter,
-                degree_bound,
-                Vec::new(),
-                Vec::new(),
-                None,
-                None,
-            );
-        };
-        let (Some(first_reduced), Some(second_reduced)) = (
-            divide_bivariate_exact(first_equation, &component),
-            divide_bivariate_exact(second_equation, &component),
-        ) else {
-            return component_report(
-                BivariatePolynomialComponentStatus::DivisionFailed,
-                retained_parameter,
-                lifted_parameter,
-                degree_bound,
-                Vec::new(),
-                Vec::new(),
-                None,
-                None,
-            );
-        };
-        return implicit_component_report(
+        match common_fiber_component_report_from_coefficients(
+            first_equation,
+            second_equation,
             retained_parameter,
             lifted_parameter,
             degree_bound,
-            component,
-            [first_reduced, second_reduced],
-        );
+            coefficients,
+        ) {
+            Ok(Some(report)) => return report,
+            Ok(None) => continue,
+            Err(()) => {
+                return component_report(
+                    BivariatePolynomialComponentStatus::DivisionFailed,
+                    retained_parameter,
+                    lifted_parameter,
+                    degree_bound,
+                    Vec::new(),
+                    Vec::new(),
+                    None,
+                    None,
+                );
+            }
+        }
     }
 
     component_report(
@@ -1192,6 +1287,66 @@ fn higher_nullity_component_report(
         None,
         None,
     )
+}
+
+fn common_fiber_component_report_from_coefficients(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    lifted_parameter: CurveResultantParameter,
+    degree_bound: usize,
+    mut coefficients: Vec<Vec<Real>>,
+) -> Result<Option<BivariatePolynomialComponentReport>, ()> {
+    while coefficients
+        .last()
+        .is_some_and(|coefficient| exact_polynomial_is_zero(coefficient))
+    {
+        coefficients.pop();
+    }
+    if coefficients.is_empty() {
+        return Ok(None);
+    }
+
+    let maps = match coefficients.len() - 1 {
+        1 => vec![(
+            scale_exact_polynomial(&coefficients[0], &Real::from(-1_i8)),
+            coefficients[1].clone(),
+        )],
+        2 => quadratic_rational_maps(
+            coefficients[0].clone(),
+            coefficients[1].clone(),
+            coefficients[2].clone(),
+        ),
+        3 => repeated_cubic_rational_maps(coefficients.clone()),
+        _ => Vec::new(),
+    };
+    if let Some((numerator, denominator, reduced_equations)) =
+        first_dividing_rational_map(first_equation, second_equation, retained_parameter, maps)
+    {
+        return Ok(Some(component_report(
+            BivariatePolynomialComponentStatus::Rational,
+            retained_parameter,
+            lifted_parameter,
+            degree_bound,
+            numerator,
+            denominator,
+            Some(reduced_equations),
+            None,
+        )));
+    }
+
+    let component = primitive_common_fiber_component(coefficients, retained_parameter).ok_or(())?;
+    let (first_reduced, second_reduced) = (
+        divide_bivariate_exact(first_equation, &component).ok_or(())?,
+        divide_bivariate_exact(second_equation, &component).ok_or(())?,
+    );
+    Ok(Some(implicit_component_report(
+        retained_parameter,
+        lifted_parameter,
+        degree_bound,
+        component,
+        [first_reduced, second_reduced],
+    )))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -2846,6 +3001,78 @@ mod tests {
             );
             assert_eq!(multiply_bivariate(&component, &reduced[0]), first);
             assert_eq!(multiply_bivariate(&component, &reduced[1]), second);
+        }
+    }
+
+    #[test]
+    fn sampled_fiber_gcd_removes_high_degree_cofactor_scale_exactly() {
+        // H(t,u)=(6-3u)(t^2+t)+2u^2-8u is irreducible in either
+        // parameter. The unrelated cofactors reproduce the bidegrees of the
+        // analytic-parallel fixture that motivated the sampled fast path:
+        // (7,6) and (8,12). Scaling each monic specialized GCD by an authored
+        // leading coefficient leaves polynomial content, which must be
+        // removed before exact two-equation division authorizes H.
+        let component = BivariatePolynomial::new(vec![
+            vec![real(0), real(-8), real(2)],
+            vec![real(6), real(-3)],
+            vec![real(6), real(-3)],
+        ]);
+        let first_cofactor = BivariatePolynomial::new(vec![
+            vec![real(1), real(0), real(0), real(0), real(1)],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![real(1)],
+        ]);
+        let second_cofactor = BivariatePolynomial::new(vec![
+            vec![
+                real(2),
+                real(0),
+                real(0),
+                real(0),
+                real(0),
+                real(0),
+                real(0),
+                real(0),
+                real(0),
+                real(0),
+                real(1),
+            ],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![real(1)],
+        ]);
+        let first = multiply_bivariate(&component, &first_cofactor);
+        let second = multiply_bivariate(&component, &second_cofactor);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: -64,
+            max_resultant_degree: 256,
+        };
+
+        for (retained_parameter, expected_interpolation_degree) in [
+            (CurveResultantParameter::First, 7),
+            (CurveResultantParameter::Second, 6),
+        ] {
+            let report = parameter_component_bivariate_polynomial_system(
+                &first,
+                &second,
+                retained_parameter,
+                config,
+            );
+            assert_eq!(report.status, BivariatePolynomialComponentStatus::Implicit);
+            assert_eq!(report.degree_bound, expected_interpolation_degree);
+            let extracted = report
+                .implicit_component
+                .expect("the sampled fiber GCD must publish its exact component");
+            let residual = report
+                .reduced_equations
+                .expect("the sampled component must retain exact residuals");
+            assert_eq!(multiply_bivariate(&extracted, &residual[0]), first);
+            assert_eq!(multiply_bivariate(&extracted, &residual[1]), second);
         }
     }
 

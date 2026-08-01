@@ -220,6 +220,77 @@ fn main() {
         elapsed / iterations
     );
 
+    let implicit_component = BivariatePolynomial::new(vec![
+        vec![r(0), r(-8), r(2)],
+        vec![r(6), r(-3)],
+        vec![r(6), r(-3)],
+    ]);
+    let first = multiply_bivariate(
+        &implicit_component,
+        &BivariatePolynomial::new(vec![
+            vec![r(1), r(0), r(0), r(0), r(1)],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![r(1)],
+        ]),
+    );
+    let second = multiply_bivariate(
+        &implicit_component,
+        &BivariatePolynomial::new(vec![
+            vec![
+                r(2),
+                r(0),
+                r(0),
+                r(0),
+                r(0),
+                r(0),
+                r(0),
+                r(0),
+                r(0),
+                r(0),
+                r(1),
+            ],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![r(1)],
+        ]),
+    );
+    let config = CurveIntersectionResultantConfig {
+        min_precision: -512,
+        max_resultant_degree: 256,
+    };
+    let started = Instant::now();
+    let mut component_checksum = 0_usize;
+    for _ in 0..iterations {
+        let report = parameter_component_bivariate_polynomial_system(
+            black_box(&first),
+            black_box(&second),
+            CurveResultantParameter::Second,
+            config,
+        );
+        assert_eq!(report.status, BivariatePolynomialComponentStatus::Implicit);
+        component_checksum += black_box(
+            report
+                .implicit_component
+                .as_ref()
+                .expect("the high-cofactor component remains explicit")
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .sum::<usize>(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "implicit_quadratic_high_cofactor: {iterations} iterations in {elapsed:?} ({:?}/iter), component_checksum={component_checksum}",
+        elapsed / iterations
+    );
+
     let repeated_component = BivariatePolynomial::new(vec![vec![r(0), r(1)], vec![r(-1)]]);
     let distinct_component = BivariatePolynomial::new(vec![vec![r(-1), r(1)], vec![r(1)]]);
     let repeated_common = multiply_bivariate(
