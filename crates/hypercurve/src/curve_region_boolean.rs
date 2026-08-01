@@ -1157,10 +1157,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
 
-        let native_line_arc_output = !arrangement_fragments.is_empty()
+        let affine_line_output = !arrangement_fragments.is_empty()
             && arrangement_fragments
                 .iter()
-                .all(|fragment| split_fragment_is_native_line_or_arc(fragment.fragment()));
+                .all(|fragment| split_fragment_is_affine_line(fragment.fragment()));
         let graph = BezierArrangementGraph2::from_certified_fragments(arrangement_fragments);
         let certified_successors = certified_boolean_successors(
             &graph,
@@ -1201,8 +1201,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         region = region
             .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
             .map_err(|cause| self.invalid(0, cause))?;
-        if native_line_arc_output || self.strict_line_image_only() {
-            self.compact_native_result(region)
+        if affine_line_output || self.strict_line_image_only() {
+            self.compact_line_image_result(region)
         } else {
             Ok(region)
         }
@@ -1217,7 +1217,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         })
     }
 
-    fn compact_native_result(&self, region: CurveRegion2) -> ExactCurveResult<CurveRegion2> {
+    fn compact_line_image_result(&self, region: CurveRegion2) -> ExactCurveResult<CurveRegion2> {
         if region.is_empty() {
             return Ok(region);
         }
@@ -1241,42 +1241,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     match crate::bezier_region::retained_line_fragment_segment(
                         fragment,
                         &self.data.policy,
-                    ) {
-                        Ok(Classification::Decided(line)) => {
-                            return Ok(crate::Segment2::Line(line));
-                        }
-                        Ok(Classification::Uncertain(UncertaintyReason::Unsupported)) => {}
-                        Ok(Classification::Uncertain(reason)) => {
-                            return Err(self.blocked(0, reason));
-                        }
-                        Err(cause) => return Err(self.invalid(0, cause)),
-                    }
-                    let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-                        return Err(self.blocked(0, UncertaintyReason::Unsupported));
-                    };
-                    let arc = match curve {
-                        BezierSubcurve2::RationalQuadratic(curve) => {
-                            crate::arc_bezier::rational_quadratic_circular_arc(
-                                curve,
-                                &self.data.policy,
-                            )
-                        }
-                        BezierSubcurve2::Rational(curve) => {
-                            crate::arc_bezier::rational_bezier_circular_arc(
-                                curve,
-                                &self.data.policy,
-                            )
-                        }
-                        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => {
-                            return Err(self.blocked(0, UncertaintyReason::Unsupported));
-                        }
-                    }
-                    .map_err(|cause| self.invalid(0, cause))?;
-                    match arc {
-                        Classification::Decided(Some(arc)) => Ok(crate::Segment2::Arc(arc)),
-                        Classification::Decided(None) => {
-                            Err(self.blocked(0, UncertaintyReason::Unsupported))
-                        }
+                    )
+                    .map_err(|cause| self.invalid(0, cause))?
+                    {
+                        Classification::Decided(line) => Ok(crate::Segment2::Line(line)),
                         Classification::Uncertain(reason) => Err(self.blocked(0, reason)),
                     }
                 })
@@ -1314,7 +1282,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return Err(self.invalid(
                         0,
                         CurveError::Topology(
-                            "regularized Boolean emitted a zero-area native loop".into(),
+                            "regularized Boolean emitted a zero-area affine line loop".into(),
                         ),
                     ));
                 }
@@ -1323,25 +1291,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
         if !reduced_fragment_count {
             let loop_count = region.len();
-            let region = match mixed_roles {
+            return match mixed_roles {
                 Some(roles) => region.with_certified_loop_roles(roles),
                 None => region.with_certified_all_material_loop_roles(loop_count),
             }
-            .map_err(|cause| self.invalid(0, cause))?;
-            return region
-                .with_certified_native_contours(material, holes)
-                .map_err(|cause| self.invalid(0, cause));
+            .map_err(|cause| self.invalid(0, cause));
         }
-        match CurveRegion2::from_certified_oriented_native_contours(
-            material,
-            holes,
-            &self.data.policy,
-        )
-        .map_err(|cause| self.invalid(0, cause))?
-        {
-            Classification::Decided(region) => Ok(region),
-            Classification::Uncertain(reason) => Err(self.blocked(0, reason)),
-        }
+        CurveRegion2::from_certified_oriented_line_contours(material, holes)
+            .map_err(|cause| self.invalid(0, cause))
     }
 
     fn fragment_location(
@@ -1471,23 +1428,14 @@ fn region_carrier_count(region: &CurveRegion2) -> usize {
         .sum()
 }
 
-fn split_fragment_is_native_line_or_arc(fragment: &BezierSplitFragment2) -> bool {
-    match fragment {
+fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
+    matches!(
+        fragment,
         BezierSplitFragment2::Materialized {
             curve: BezierSubcurve2::Quadratic(curve),
             ..
-        } => curve.retained_exact_line_image().is_some(),
-        BezierSplitFragment2::Materialized {
-            curve: BezierSubcurve2::RationalQuadratic(curve),
-            ..
-        } => curve.retained_circular_conic().is_some(),
-        BezierSplitFragment2::Materialized {
-            curve: BezierSubcurve2::Cubic(_) | BezierSubcurve2::Rational(_),
-            ..
-        }
-        | BezierSplitFragment2::AlgebraicEndpointImages { .. }
-        | BezierSplitFragment2::Unresolved { .. } => false,
-    }
+        } if curve.retained_exact_line_image().is_some()
+    )
 }
 
 fn subcurve_is_strict_line_image(curve: &BezierSubcurve2) -> bool {
@@ -1754,8 +1702,8 @@ fn compact_retained_circular_fragment(
         end,
         curve: BezierSubcurve2::Rational(curve),
     } = fragment
-        && let Some(curve) =
-            retained_circular_quadratic(&BezierSubcurve2::Rational(curve.clone()), policy)
+        && curve.retained_circular_conic().is_some()
+        && let Some(curve) = retained_circular_quadratic(curve, policy)
     {
         return BezierSplitFragment2::Materialized {
             start: start.clone(),
@@ -1766,7 +1714,7 @@ fn compact_retained_circular_fragment(
     let BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } = fragment else {
         return fragment.clone();
     };
-    let Some(curve) = retained_circular_quadratic(&carrier.curve, policy) else {
+    let Some((implicit_conic, circular_conic)) = retained_circular_support(&carrier.curve) else {
         return fragment.clone();
     };
     let Some(start_point) = exact_split_endpoint_point(
@@ -1789,12 +1737,6 @@ fn compact_retained_circular_fragment(
     ) else {
         return fragment.clone();
     };
-    let (Some(implicit_conic), Some(circular_conic)) = (
-        curve.retained_implicit_quadratic_conic(),
-        curve.retained_circular_conic(),
-    ) else {
-        return fragment.clone();
-    };
     let endpoints = [start_point, end_point];
     let Ok(curve) =
         crate::arc_bezier::rational_minor_arc_span(implicit_conic, circular_conic, &endpoints)
@@ -1809,22 +1751,36 @@ fn compact_retained_circular_fragment(
 }
 
 fn retained_circular_quadratic(
-    curve: &BezierSubcurve2,
+    curve: &RationalBezier2,
     policy: &CurveContext,
 ) -> Option<crate::RationalQuadraticBezier2> {
-    let curve = match curve {
-        BezierSubcurve2::RationalQuadratic(curve) => curve.clone(),
-        BezierSubcurve2::Rational(curve) => {
-            match curve.retained_quadratic_representative(policy).ok()? {
-                Classification::Decided(Some(curve)) => curve,
-                Classification::Decided(None) | Classification::Uncertain(_) => return None,
-            }
-        }
-        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => return None,
+    let curve = match curve.retained_quadratic_representative(policy).ok()? {
+        Classification::Decided(Some(curve)) => curve,
+        Classification::Decided(None) | Classification::Uncertain(_) => return None,
     };
     (curve.retained_implicit_quadratic_conic().is_some()
         && curve.retained_circular_conic().is_some())
     .then_some(curve)
+}
+
+fn retained_circular_support(
+    curve: &BezierSubcurve2,
+) -> Option<(
+    &Arc<[crate::Real; 6]>,
+    &Arc<crate::rational_bezier::RationalQuadraticCircle2>,
+)> {
+    let (implicit, circular) = match curve {
+        BezierSubcurve2::RationalQuadratic(curve) => (
+            curve.retained_implicit_quadratic_conic(),
+            curve.retained_circular_conic(),
+        ),
+        BezierSubcurve2::Rational(curve) => (
+            curve.retained_implicit_quadratic_conic(),
+            curve.retained_circular_conic(),
+        ),
+        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => return None,
+    };
+    Some((implicit?, circular?))
 }
 
 fn exact_split_endpoint_point(

@@ -2323,63 +2323,44 @@ impl CurveRegion2 {
         Ok(promoted)
     }
 
-    /// Materializes already-certified, filled-left native loops without
+    /// Materializes already-certified, filled-left affine-line loops without
     /// replaying path construction or loop nesting.
     ///
     /// This is the compact output boundary for the authoritative Boolean
     /// arrangement. The traversal has already certified closure, face side,
     /// and material/hole role; every input contour has already merged adjacent
-    /// codirected line runs. Circular arcs are retained as exact rational
-    /// quadratic spans. Keeping this constructor private to the crate
+    /// codirected line runs. Keeping this constructor private to the crate
     /// prevents unproved authored contours from bypassing ordinary validation.
-    pub(crate) fn from_certified_oriented_native_contours(
+    pub(crate) fn from_certified_oriented_line_contours(
         material_contours: Vec<Contour2>,
         hole_contours: Vec<Contour2>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
+    ) -> CurveResult<Self> {
         if material_contours.is_empty() && hole_contours.is_empty() {
-            return Ok(Classification::Decided(Self::default()));
+            return Ok(Self::default());
         }
 
         let mut boundary_loops =
             Vec::with_capacity(material_contours.len().saturating_add(hole_contours.len()));
         for contour in material_contours.iter().chain(&hole_contours) {
-            let mut fragments = Vec::with_capacity(contour.len());
-            for segment in contour.segments() {
-                match segment {
-                    Segment2::Line(line) => {
-                        fragments.push(BezierSplitFragment2::Materialized {
-                            start: BezierParameter2::Exact(Real::zero()),
-                            end: BezierParameter2::Exact(Real::one()),
-                            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
-                                line.clone(),
-                            )),
-                        });
-                    }
-                    Segment2::Arc(arc) => {
-                        let decomposition =
-                            match arc.rational_bezier_decomposition_with_policy(policy) {
-                                Ok(Classification::Decided(decomposition)) => decomposition,
-                                Ok(Classification::Uncertain(reason)) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                                Err(ExactCurveError::Invalid { cause, .. }) => {
-                                    return Err(cause.clone());
-                                }
-                                Err(ExactCurveError::Blocked(blocker)) => {
-                                    return Ok(Classification::Uncertain(blocker.reason()));
-                                }
-                            };
-                        fragments.extend(decomposition.spans().iter().map(|span| {
-                            BezierSplitFragment2::Materialized {
-                                start: BezierParameter2::Exact(Real::zero()),
-                                end: BezierParameter2::Exact(Real::one()),
-                                curve: BezierSubcurve2::RationalQuadratic(span.curve().clone()),
-                            }
-                        }));
-                    }
-                }
-            }
+            let fragments = contour
+                .segments()
+                .iter()
+                .map(|segment| {
+                    let Segment2::Line(line) = segment else {
+                        return Err(CurveError::Topology(
+                            "certified affine-line Boolean output contains a nonlinear segment"
+                                .into(),
+                        ));
+                    };
+                    Ok(BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                            line.clone(),
+                        )),
+                    })
+                })
+                .collect::<CurveResult<Vec<_>>>()?;
             boundary_loops.push(CurveRegionBoundaryLoop2 {
                 fragments,
                 arrangement_sources: None,
@@ -2405,27 +2386,9 @@ impl CurveRegion2 {
             .certify(Arc::from(vec![true; loop_count]));
         data.line_image_region
             .certify(Some(LineArcRegion2::new(material_contours, hole_contours)));
-        Ok(Classification::Decided(Self {
+        Ok(Self {
             data: Arc::new(data),
-        }))
-    }
-
-    pub(crate) fn with_certified_native_contours(
-        self,
-        material_contours: Vec<Contour2>,
-        hole_contours: Vec<Contour2>,
-    ) -> CurveResult<Self> {
-        if material_contours.len().saturating_add(hole_contours.len())
-            != self.data.boundary_loops.len()
-        {
-            return Err(CurveError::Topology(
-                "curved-region native contour count must match the boundary-loop count".into(),
-            ));
-        }
-        self.data
-            .line_image_region
-            .certify(Some(LineArcRegion2::new(material_contours, hole_contours)));
-        Ok(self)
+        })
     }
 
     /// Constructs a unified region whose native contours are all material.
@@ -3625,6 +3588,15 @@ impl CurveRegion2 {
             &self.data.line_image_region,
             policy,
             |attempt| -> CurveResult<Classification<Option<LineArcRegion2>>> {
+                match self.materialized_native_line_arc_region(attempt)? {
+                    Classification::Decided(region) => {
+                        return Ok(Classification::Decided(Some(region)));
+                    }
+                    Classification::Uncertain(UncertaintyReason::Unsupported) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
                 if self.data.certified_loop_roles.is_some() {
                     match self.certified_line_image_region(attempt)? {
                         Classification::Decided(region) => {
@@ -4700,6 +4672,39 @@ impl CurveRegion2 {
             }
         }
         self.region_from_line_contours(&contours, roles)
+            .map(Classification::Decided)
+    }
+
+    fn materialized_native_line_arc_region(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<LineArcRegion2>> {
+        let Some(native_loops) = self.native_boundary_loops() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let mut contours = Vec::with_capacity(native_loops.len());
+        for (loop_index, boundary_loop) in native_loops.iter().enumerate() {
+            let fill_rule = self
+                .data
+                .certified_loop_fill_rules
+                .as_deref()
+                .and_then(|rules| rules.get(loop_index))
+                .copied()
+                .unwrap_or(FillRule::NonZero);
+            match materialized_native_loop_to_contour(boundary_loop, fill_rule, policy)? {
+                Classification::Decided(contour) => contours.push(contour),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        let roles = match self.loop_roles_raw(policy)? {
+            Classification::Decided(roles) => roles,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.region_from_line_contours(&contours, &roles)
             .map(Classification::Decided)
     }
 
@@ -6099,6 +6104,72 @@ fn retained_loop_to_native(
         fragments.push(curve.clone());
     }
     Some(BezierBoundaryLoop2 { fragments })
+}
+
+fn materialized_native_loop_to_contour(
+    boundary_loop: &BezierBoundaryLoop2,
+    fill_rule: FillRule,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Contour2>> {
+    let mut segments = Vec::with_capacity(boundary_loop.len());
+    for curve in boundary_loop.fragments() {
+        match materialized_native_subcurve_segment(curve, policy)? {
+            Classification::Decided(segment) => segments.push(segment),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(
+        Contour2::from_validated_closed_segments(segments, fill_rule),
+    ))
+}
+
+fn materialized_native_subcurve_segment(
+    curve: &BezierSubcurve2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Segment2>> {
+    if let BezierSubcurve2::Quadratic(curve) = curve
+        && let Some(line) = curve.retained_exact_line_image()
+    {
+        return Ok(Classification::Decided(Segment2::Line(line.clone())));
+    }
+    if let BezierSubcurve2::RationalQuadratic(curve) = curve
+        && curve.retained_circular_conic().is_some()
+    {
+        return crate::arc_bezier::rational_quadratic_circular_arc(curve, policy).map(
+            |arc| match arc {
+                Classification::Decided(Some(arc)) => Classification::Decided(Segment2::Arc(arc)),
+                Classification::Decided(None) => {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        );
+    }
+    match subcurve_fit_exact_line_image(curve, policy)? {
+        Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
+            return Ok(Classification::Decided(Segment2::Line(fit.line().clone())));
+        }
+        Classification::Decided(BezierLineImageFitRelation::NotLine) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    let arc = match curve {
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            crate::arc_bezier::rational_quadratic_circular_arc(curve, policy)
+        }
+        BezierSubcurve2::Rational(curve) => {
+            crate::arc_bezier::rational_bezier_circular_arc(curve, policy)
+        }
+        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+    }?;
+    Ok(match arc {
+        Classification::Decided(Some(arc)) => Classification::Decided(Segment2::Arc(arc)),
+        Classification::Decided(None) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    })
 }
 
 fn native_loop_sample_point(

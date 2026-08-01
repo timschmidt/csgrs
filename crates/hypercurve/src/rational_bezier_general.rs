@@ -741,6 +741,16 @@ impl From<RationalQuadraticBezier2> for RationalBezier2 {
 }
 
 impl RationalBezier2 {
+    pub(crate) fn retained_implicit_quadratic_conic(&self) -> Option<&Arc<[Real; 6]>> {
+        self.data.lineage.root.implicit_quadratic_conic.get()
+    }
+
+    pub(crate) fn retained_circular_conic(
+        &self,
+    ) -> Option<&Arc<crate::rational_bezier::RationalQuadraticCircle2>> {
+        self.data.lineage.root.circular_conic.get()
+    }
+
     pub(crate) fn try_from_subcurve(curve: &BezierSubcurve2) -> CurveResult<Self> {
         match curve {
             BezierSubcurve2::Quadratic(curve) => {
