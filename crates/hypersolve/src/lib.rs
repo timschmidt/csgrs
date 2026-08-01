@@ -138,10 +138,10 @@ pub use certification::{
     report_lossy_adapter_only_candidate,
 };
 pub use curve_resultant::{
-    CurveIntersectionResultantConfig, CurveIntersectionResultantReport,
+    BivariatePolynomial, CurveIntersectionResultantConfig, CurveIntersectionResultantReport,
     CurveIntersectionResultantSample, CurveIntersectionResultantStatus, CurveResultantParameter,
-    PolynomialParametricCurve2, resultant_parametric_curve_intersection,
-    resultant_rational_parametric_curve_intersection,
+    PolynomialParametricCurve2, resultant_bivariate_polynomial_system,
+    resultant_parametric_curve_intersection, resultant_rational_parametric_curve_intersection,
 };
 pub use curve_substitution::{
     BezierPowerBasisSubstitutionConfig, BezierPowerBasisSubstitutionReport,

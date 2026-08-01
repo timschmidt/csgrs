@@ -46,6 +46,24 @@ impl PolynomialParametricCurve2 {
     }
 }
 
+/// Exact polynomial in two parameters.
+///
+/// `coefficients[first_power][second_power]` multiplies
+/// `first_parameter^first_power * second_parameter^second_power`. Rows may be
+/// ragged; omitted coefficients are zero.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BivariatePolynomial {
+    /// Coefficient grid in ascending powers of both parameters.
+    pub coefficients: Vec<Vec<Real>>,
+}
+
+impl BivariatePolynomial {
+    /// Constructs a bivariate polynomial from its ascending-power grid.
+    pub const fn new(coefficients: Vec<Vec<Real>>) -> Self {
+        Self { coefficients }
+    }
+}
+
 /// Configuration for bounded exact curve resultant construction.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CurveIntersectionResultantConfig {
@@ -112,32 +130,27 @@ pub struct CurveIntersectionResultantReport {
     pub resultant_error: Option<UnivariateResultantError>,
 }
 
-/// Eliminate one parameter from a pair of 2D polynomial parametric curves.
+/// Eliminates one parameter from two exact bivariate polynomial equations.
 ///
-/// For `retained_parameter == First`, this constructs
-/// `Res_u(x1(t) - x2(u), y1(t) - y2(u))`. For `Second`, the roles are swapped
-/// and the returned polynomial is in the second curve's parameter. The degree
-/// bound is the classical bidegree resultant bound
-/// `deg_u(g)*deg_t(f) + deg_u(f)*deg_t(g)`, evaluated after certified trimming.
-/// The implementation samples that many plus one exact integer parameter
-/// values and interpolates with exact Lagrange basis polynomials. Sylvester's
-/// determinant resultant supplies elimination evidence; the exact-decision discipline requires
-/// downstream exact replay before topology accepts a candidate root.
-pub fn resultant_parametric_curve_intersection(
-    first: &PolynomialParametricCurve2,
-    second: &PolynomialParametricCurve2,
+/// Both equations use [`BivariatePolynomial`]'s `(first, second)` coefficient
+/// order. The implementation certifies their bidegrees, evaluates exact
+/// univariate specializations, skips the finitely many specializations whose
+/// eliminated-variable degree drops, and reconstructs the resultant by exact
+/// interpolation. The returned polynomial is candidate evidence only; callers
+/// must replay isolated roots against their original equations and geometric
+/// branch conditions.
+pub fn resultant_bivariate_polynomial_system(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
     config: CurveIntersectionResultantConfig,
 ) -> CurveIntersectionResultantReport {
-    let (retained, eliminated, eliminated_parameter) = match retained_parameter {
-        CurveResultantParameter::First => (first, second, CurveResultantParameter::Second),
-        CurveResultantParameter::Second => (second, first, CurveResultantParameter::First),
+    let eliminated_parameter = match retained_parameter {
+        CurveResultantParameter::First => CurveResultantParameter::Second,
+        CurveResultantParameter::Second => CurveResultantParameter::First,
     };
-
-    if retained.x_coefficients.is_empty()
-        || retained.y_coefficients.is_empty()
-        || eliminated.x_coefficients.is_empty()
-        || eliminated.y_coefficients.is_empty()
+    if bivariate_polynomial_is_empty(first_equation)
+        || bivariate_polynomial_is_empty(second_equation)
     {
         return curve_resultant_report(
             CurveIntersectionResultantStatus::EmptyCoordinatePolynomial,
@@ -150,27 +163,35 @@ pub fn resultant_parametric_curve_intersection(
         );
     }
 
-    let Ok(retained_x_degree) = certified_degree(&retained.x_coefficients, config.min_precision)
+    let Ok(first_degree) = certified_bivariate_degree(first_equation, config.min_precision) else {
+        return undecided_report(retained_parameter, eliminated_parameter);
+    };
+    let Ok(second_degree) = certified_bivariate_degree(second_equation, config.min_precision)
     else {
         return undecided_report(retained_parameter, eliminated_parameter);
     };
-    let Ok(retained_y_degree) = certified_degree(&retained.y_coefficients, config.min_precision)
-    else {
-        return undecided_report(retained_parameter, eliminated_parameter);
-    };
-    let Ok(eliminated_x_degree) =
-        certified_degree(&eliminated.x_coefficients, config.min_precision)
-    else {
-        return undecided_report(retained_parameter, eliminated_parameter);
-    };
-    let Ok(eliminated_y_degree) =
-        certified_degree(&eliminated.y_coefficients, config.min_precision)
-    else {
-        return undecided_report(retained_parameter, eliminated_parameter);
-    };
-
-    let degree_bound =
-        eliminated_y_degree * retained_x_degree + eliminated_x_degree * retained_y_degree;
+    if first_degree.is_none() || second_degree.is_none() {
+        return curve_resultant_report(
+            CurveIntersectionResultantStatus::Constructed,
+            retained_parameter,
+            eliminated_parameter,
+            0,
+            vec![CurveIntersectionResultantSample {
+                parameter_value: Real::zero(),
+                resultant: Real::zero(),
+            }],
+            vec![Real::zero()],
+            None,
+        );
+    }
+    let first_degree = first_degree.expect("nonzero bivariate equation has a bidegree");
+    let second_degree = second_degree.expect("nonzero bivariate equation has a bidegree");
+    let (first_retained_degree, first_eliminated_degree) =
+        oriented_bidegree(first_degree, retained_parameter);
+    let (second_retained_degree, second_eliminated_degree) =
+        oriented_bidegree(second_degree, retained_parameter);
+    let degree_bound = second_eliminated_degree * first_retained_degree
+        + first_eliminated_degree * second_retained_degree;
     if degree_bound > config.max_resultant_degree {
         return curve_resultant_report(
             CurveIntersectionResultantStatus::DegreeBoundExceeded,
@@ -184,30 +205,60 @@ pub fn resultant_parametric_curve_intersection(
     }
 
     let mut samples = Vec::with_capacity(degree_bound + 1);
-    for index in 0..=degree_bound {
-        let parameter_value = Real::from(index as i64);
-        let x_value = eval_univariate(&retained.x_coefficients, &parameter_value);
-        let y_value = eval_univariate(&retained.y_coefficients, &parameter_value);
-        let x_difference = shifted_negative_polynomial(&eliminated.x_coefficients, x_value);
-        let y_difference = shifted_negative_polynomial(&eliminated.y_coefficients, y_value);
-        let resultant = match resultant_univariate_polynomials(
-            &x_difference,
-            &y_difference,
-            config.min_precision,
-        ) {
-            Ok(report) => report.resultant,
-            Err(error) => {
-                return curve_resultant_report(
-                    CurveIntersectionResultantStatus::ResultantError,
-                    retained_parameter,
-                    eliminated_parameter,
-                    degree_bound,
-                    samples,
-                    Vec::new(),
-                    Some(error),
-                );
-            }
+    let mut index = 0_usize;
+    while samples.len() <= degree_bound {
+        let parameter_value = Real::from(index as u64);
+        index += 1;
+        let mut first = evaluate_bivariate_at_retained_parameter(
+            first_equation,
+            &parameter_value,
+            retained_parameter,
+        );
+        let mut second = evaluate_bivariate_at_retained_parameter(
+            second_equation,
+            &parameter_value,
+            retained_parameter,
+        );
+        // Existing curve-resultant callers define both coordinate differences
+        // as retained minus eliminated. Preserve that orientation when the
+        // second authored parameter is retained.
+        if retained_parameter == CurveResultantParameter::Second {
+            first
+                .iter_mut()
+                .for_each(|coefficient| *coefficient = -coefficient.clone());
+            second
+                .iter_mut()
+                .for_each(|coefficient| *coefficient = -coefficient.clone());
+        }
+        let (Ok(first_sample_degree), Ok(second_sample_degree)) = (
+            certified_nonzero_degree(&first, config.min_precision),
+            certified_nonzero_degree(&second, config.min_precision),
+        ) else {
+            return undecided_report(retained_parameter, eliminated_parameter);
         };
+        // Specializing the retained parameter may cancel an eliminated
+        // leading coefficient. A lower-degree Sylvester determinant is not the
+        // specialization of the generic resultant, so replace that sample.
+        if first_sample_degree != Some(first_eliminated_degree)
+            || second_sample_degree != Some(second_eliminated_degree)
+        {
+            continue;
+        }
+        let resultant =
+            match resultant_univariate_polynomials(&first, &second, config.min_precision) {
+                Ok(report) => report.resultant,
+                Err(error) => {
+                    return curve_resultant_report(
+                        CurveIntersectionResultantStatus::ResultantError,
+                        retained_parameter,
+                        eliminated_parameter,
+                        degree_bound,
+                        samples,
+                        Vec::new(),
+                        Some(error),
+                    );
+                }
+            };
         samples.push(CurveIntersectionResultantSample {
             parameter_value,
             resultant,
@@ -238,7 +289,6 @@ pub fn resultant_parametric_curve_intersection(
             None,
         );
     };
-
     curve_resultant_report(
         CurveIntersectionResultantStatus::Constructed,
         retained_parameter,
@@ -247,6 +297,46 @@ pub fn resultant_parametric_curve_intersection(
         samples,
         resultant_coefficients,
         None,
+    )
+}
+
+/// Eliminate one parameter from a pair of 2D polynomial parametric curves.
+///
+/// For `retained_parameter == First`, this constructs
+/// `Res_u(x1(t) - x2(u), y1(t) - y2(u))`. For `Second`, the roles are swapped
+/// and the returned polynomial is in the second curve's parameter. The degree
+/// bound is the classical bidegree resultant bound
+/// `deg_u(g)*deg_t(f) + deg_u(f)*deg_t(g)`, evaluated after certified trimming.
+/// The implementation samples that many plus one exact integer parameter
+/// values and interpolates with exact Lagrange basis polynomials. Sylvester's
+/// determinant resultant supplies elimination evidence; the exact-decision discipline requires
+/// downstream exact replay before topology accepts a candidate root.
+pub fn resultant_parametric_curve_intersection(
+    first: &PolynomialParametricCurve2,
+    second: &PolynomialParametricCurve2,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> CurveIntersectionResultantReport {
+    if first.x_coefficients.is_empty()
+        || first.y_coefficients.is_empty()
+        || second.x_coefficients.is_empty()
+        || second.y_coefficients.is_empty()
+    {
+        return curve_resultant_report(
+            CurveIntersectionResultantStatus::EmptyCoordinatePolynomial,
+            retained_parameter,
+            opposite_parameter(retained_parameter),
+            0,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+    }
+    resultant_bivariate_polynomial_system(
+        &parametric_coordinate_difference(&first.x_coefficients, &second.x_coefficients),
+        &parametric_coordinate_difference(&first.y_coefficients, &second.y_coefficients),
+        retained_parameter,
+        config,
     )
 }
 
@@ -268,39 +358,30 @@ pub fn resultant_rational_parametric_curve_intersection(
     retained_parameter: CurveResultantParameter,
     config: CurveIntersectionResultantConfig,
 ) -> CurveIntersectionResultantReport {
-    let (retained, eliminated, eliminated_parameter) = match retained_parameter {
-        CurveResultantParameter::First => (first, second, CurveResultantParameter::Second),
-        CurveResultantParameter::Second => (second, first, CurveResultantParameter::First),
-    };
-
-    if rational_curve_has_empty_polynomial(retained)
-        || rational_curve_has_empty_polynomial(eliminated)
-    {
+    if rational_curve_has_empty_polynomial(first) || rational_curve_has_empty_polynomial(second) {
         return curve_resultant_report(
             CurveIntersectionResultantStatus::EmptyCoordinatePolynomial,
             retained_parameter,
-            eliminated_parameter,
+            opposite_parameter(retained_parameter),
             0,
             Vec::new(),
             Vec::new(),
             None,
         );
     }
-    let Ok(retained_weight_zero) =
-        is_certified_zero_polynomial(&retained.weight, config.min_precision)
+    let Ok(first_weight_zero) = is_certified_zero_polynomial(&first.weight, config.min_precision)
     else {
-        return undecided_report(retained_parameter, eliminated_parameter);
+        return undecided_report(retained_parameter, opposite_parameter(retained_parameter));
     };
-    let Ok(eliminated_weight_zero) =
-        is_certified_zero_polynomial(&eliminated.weight, config.min_precision)
+    let Ok(second_weight_zero) = is_certified_zero_polynomial(&second.weight, config.min_precision)
     else {
-        return undecided_report(retained_parameter, eliminated_parameter);
+        return undecided_report(retained_parameter, opposite_parameter(retained_parameter));
     };
-    if retained_weight_zero || eliminated_weight_zero {
+    if first_weight_zero || second_weight_zero {
         return curve_resultant_report(
             CurveIntersectionResultantStatus::InvalidHomogeneousWeight,
             retained_parameter,
-            eliminated_parameter,
+            opposite_parameter(retained_parameter),
             0,
             Vec::new(),
             Vec::new(),
@@ -308,124 +389,21 @@ pub fn resultant_rational_parametric_curve_intersection(
         );
     }
 
-    let Ok((x_retained_degree, x_eliminated_degree)) = rational_cross_equation_degrees(
-        &retained.x_numerator,
-        &retained.weight,
-        &eliminated.x_numerator,
-        &eliminated.weight,
-        config.min_precision,
-    ) else {
-        return undecided_report(retained_parameter, eliminated_parameter);
-    };
-    let Ok((y_retained_degree, y_eliminated_degree)) = rational_cross_equation_degrees(
-        &retained.y_numerator,
-        &retained.weight,
-        &eliminated.y_numerator,
-        &eliminated.weight,
-        config.min_precision,
-    ) else {
-        return undecided_report(retained_parameter, eliminated_parameter);
-    };
-    let degree_bound =
-        y_eliminated_degree * x_retained_degree + x_eliminated_degree * y_retained_degree;
-    if degree_bound > config.max_resultant_degree {
-        return curve_resultant_report(
-            CurveIntersectionResultantStatus::DegreeBoundExceeded,
-            retained_parameter,
-            eliminated_parameter,
-            degree_bound,
-            Vec::new(),
-            Vec::new(),
-            None,
-        );
-    }
-
-    let mut samples = Vec::with_capacity(degree_bound + 1);
-    let mut index = 0_usize;
-    while samples.len() <= degree_bound {
-        let parameter_value = Real::from(index as i64);
-        index += 1;
-        let x_numerator = eval_univariate(&retained.x_numerator, &parameter_value);
-        let y_numerator = eval_univariate(&retained.y_numerator, &parameter_value);
-        let weight = eval_univariate(&retained.weight, &parameter_value);
-        let x_difference = polynomial_difference(
-            scale_polynomial(&eliminated.weight, x_numerator),
-            scale_polynomial(&eliminated.x_numerator, weight.clone()),
-        );
-        let y_difference = polynomial_difference(
-            scale_polynomial(&eliminated.weight, y_numerator),
-            scale_polynomial(&eliminated.y_numerator, weight),
-        );
-        let (Ok(sample_x_degree), Ok(sample_y_degree)) = (
-            certified_degree(&x_difference, config.min_precision),
-            certified_degree(&y_difference, config.min_precision),
-        ) else {
-            return undecided_report(retained_parameter, eliminated_parameter);
-        };
-        // Specializing the retained parameter may cancel an eliminated
-        // leading coefficient. Trimming and evaluating a lower-degree
-        // Sylvester determinant at such a sample is not the specialization of
-        // the generic resultant, so skip the finitely many degree-drop points.
-        if sample_x_degree != x_eliminated_degree || sample_y_degree != y_eliminated_degree {
-            continue;
-        }
-        let resultant = match resultant_univariate_polynomials(
-            &x_difference,
-            &y_difference,
-            config.min_precision,
-        ) {
-            Ok(report) => report.resultant,
-            Err(error) => {
-                return curve_resultant_report(
-                    CurveIntersectionResultantStatus::ResultantError,
-                    retained_parameter,
-                    eliminated_parameter,
-                    degree_bound,
-                    samples,
-                    Vec::new(),
-                    Some(error),
-                );
-            }
-        };
-        samples.push(CurveIntersectionResultantSample {
-            parameter_value,
-            resultant,
-        });
-    }
-
-    let Some(resultant_coefficients) = interpolate_samples(&samples, config.min_precision) else {
-        return curve_resultant_report(
-            CurveIntersectionResultantStatus::InterpolationDivisionFailed,
-            retained_parameter,
-            eliminated_parameter,
-            degree_bound,
-            samples,
-            Vec::new(),
-            None,
-        );
-    };
-    let Ok(resultant_coefficients) =
-        trim_trailing_zeroes(resultant_coefficients, config.min_precision)
-    else {
-        return curve_resultant_report(
-            CurveIntersectionResultantStatus::UndecidedCoefficient,
-            retained_parameter,
-            eliminated_parameter,
-            degree_bound,
-            samples,
-            Vec::new(),
-            None,
-        );
-    };
-
-    curve_resultant_report(
-        CurveIntersectionResultantStatus::Constructed,
+    resultant_bivariate_polynomial_system(
+        &rational_cross_equation(
+            &first.x_numerator,
+            &first.weight,
+            &second.x_numerator,
+            &second.weight,
+        ),
+        &rational_cross_equation(
+            &first.y_numerator,
+            &first.weight,
+            &second.y_numerator,
+            &second.weight,
+        ),
         retained_parameter,
-        eliminated_parameter,
-        degree_bound,
-        samples,
-        resultant_coefficients,
-        None,
+        config,
     )
 }
 
@@ -464,18 +442,116 @@ fn undecided_report(
     )
 }
 
-fn certified_degree(coefficients: &[Real], min_precision: i32) -> Result<usize, ()> {
+#[derive(Clone, Copy)]
+struct BivariateDegree {
+    first: usize,
+    second: usize,
+}
+
+const fn opposite_parameter(parameter: CurveResultantParameter) -> CurveResultantParameter {
+    match parameter {
+        CurveResultantParameter::First => CurveResultantParameter::Second,
+        CurveResultantParameter::Second => CurveResultantParameter::First,
+    }
+}
+
+const fn oriented_bidegree(
+    degree: BivariateDegree,
+    retained_parameter: CurveResultantParameter,
+) -> (usize, usize) {
+    match retained_parameter {
+        CurveResultantParameter::First => (degree.first, degree.second),
+        CurveResultantParameter::Second => (degree.second, degree.first),
+    }
+}
+
+fn bivariate_polynomial_is_empty(polynomial: &BivariatePolynomial) -> bool {
+    polynomial.coefficients.is_empty() || polynomial.coefficients.iter().all(Vec::is_empty)
+}
+
+fn certified_bivariate_degree(
+    polynomial: &BivariatePolynomial,
+    min_precision: i32,
+) -> Result<Option<BivariateDegree>, ()> {
+    let first = certified_first_parameter_degree(polynomial, min_precision)?;
+    let second = certified_second_parameter_degree(polynomial, min_precision)?;
+    match (first, second) {
+        (Some(first), Some(second)) => Ok(Some(BivariateDegree { first, second })),
+        (None, None) => Ok(None),
+        _ => unreachable!("a nonzero bivariate polynomial has both axis degrees"),
+    }
+}
+
+fn certified_first_parameter_degree(
+    polynomial: &BivariatePolynomial,
+    min_precision: i32,
+) -> Result<Option<usize>, ()> {
+    for (index, row) in polynomial.coefficients.iter().enumerate().rev() {
+        let mut unknown = false;
+        for coefficient in row {
+            match coefficient.certified_sign_until(min_precision) {
+                CertifiedRealSign::Known {
+                    sign: RealSign::Zero,
+                    ..
+                } => {}
+                CertifiedRealSign::Known { .. } => return Ok(Some(index)),
+                CertifiedRealSign::Unknown { .. } => unknown = true,
+            }
+        }
+        if unknown {
+            return Err(());
+        }
+    }
+    Ok(None)
+}
+
+fn certified_second_parameter_degree(
+    polynomial: &BivariatePolynomial,
+    min_precision: i32,
+) -> Result<Option<usize>, ()> {
+    let coefficient_count = polynomial
+        .coefficients
+        .iter()
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0);
+    for index in (0..coefficient_count).rev() {
+        let mut unknown = false;
+        for row in &polynomial.coefficients {
+            let Some(coefficient) = row.get(index) else {
+                continue;
+            };
+            match coefficient.certified_sign_until(min_precision) {
+                CertifiedRealSign::Known {
+                    sign: RealSign::Zero,
+                    ..
+                } => {}
+                CertifiedRealSign::Known { .. } => return Ok(Some(index)),
+                CertifiedRealSign::Unknown { .. } => unknown = true,
+            }
+        }
+        if unknown {
+            return Err(());
+        }
+    }
+    Ok(None)
+}
+
+fn certified_nonzero_degree(
+    coefficients: &[Real],
+    min_precision: i32,
+) -> Result<Option<usize>, ()> {
     for (index, coefficient) in coefficients.iter().enumerate().rev() {
         match coefficient.certified_sign_until(min_precision) {
             CertifiedRealSign::Known {
                 sign: RealSign::Zero,
                 ..
             } => {}
-            CertifiedRealSign::Known { .. } => return Ok(index),
+            CertifiedRealSign::Known { .. } => return Ok(Some(index)),
             CertifiedRealSign::Unknown { .. } => return Err(()),
         }
     }
-    Ok(0)
+    Ok(None)
 }
 
 fn trim_trailing_zeroes(coefficients: Vec<Real>, min_precision: i32) -> Result<Vec<Real>, ()> {
@@ -490,15 +566,6 @@ fn trim_trailing_zeroes(coefficients: Vec<Real>, min_precision: i32) -> Result<V
         }
     }
     Ok(vec![Real::zero()])
-}
-
-fn shifted_negative_polynomial(polynomial: &[Real], shift: Real) -> Vec<Real> {
-    let mut coefficients = polynomial
-        .iter()
-        .map(|coefficient| -coefficient.clone())
-        .collect::<Vec<_>>();
-    coefficients[0] += shift;
-    coefficients
 }
 
 fn rational_curve_has_empty_polynomial(curve: &RationalParametricCurve2) -> bool {
@@ -519,57 +586,71 @@ fn is_certified_zero_polynomial(coefficients: &[Real], min_precision: i32) -> Re
     Ok(true)
 }
 
-fn rational_cross_equation_degrees(
-    retained_coordinate: &[Real],
-    retained_weight: &[Real],
-    eliminated_coordinate: &[Real],
-    eliminated_weight: &[Real],
-    min_precision: i32,
-) -> Result<(usize, usize), ()> {
-    let coefficient_count = eliminated_coordinate.len().max(eliminated_weight.len());
-    let mut retained_degree = 0_usize;
-    let mut eliminated_degree = None;
-    for eliminated_index in 0..coefficient_count {
-        let weight_coefficient = eliminated_weight
-            .get(eliminated_index)
-            .cloned()
-            .unwrap_or_else(Real::zero);
-        let coordinate_coefficient = eliminated_coordinate
-            .get(eliminated_index)
-            .cloned()
-            .unwrap_or_else(Real::zero);
-        let coefficient = polynomial_difference(
-            scale_polynomial(retained_coordinate, weight_coefficient),
-            scale_polynomial(retained_weight, coordinate_coefficient),
-        );
-        if is_certified_zero_polynomial(&coefficient, min_precision)? {
-            continue;
+fn parametric_coordinate_difference(first: &[Real], second: &[Real]) -> BivariatePolynomial {
+    let mut coefficients = vec![vec![Real::zero(); second.len()]; first.len()];
+    for (index, coefficient) in first.iter().enumerate() {
+        coefficients[index][0] += coefficient;
+    }
+    for (index, coefficient) in second.iter().enumerate() {
+        coefficients[0][index] -= coefficient;
+    }
+    BivariatePolynomial::new(coefficients)
+}
+
+fn rational_cross_equation(
+    first_coordinate: &[Real],
+    first_weight: &[Real],
+    second_coordinate: &[Real],
+    second_weight: &[Real],
+) -> BivariatePolynomial {
+    let first_count = first_coordinate.len().max(first_weight.len());
+    let second_count = second_coordinate.len().max(second_weight.len());
+    let mut coefficients = vec![vec![Real::zero(); second_count]; first_count];
+    for (first_index, first_coordinate) in first_coordinate.iter().enumerate() {
+        for (second_index, second_weight) in second_weight.iter().enumerate() {
+            coefficients[first_index][second_index] += first_coordinate * second_weight;
         }
-        retained_degree = retained_degree.max(certified_degree(&coefficient, min_precision)?);
-        eliminated_degree = Some(eliminated_index);
     }
-    eliminated_degree
-        .map(|eliminated_degree| (retained_degree, eliminated_degree))
-        .ok_or(())
+    for (first_index, first_weight) in first_weight.iter().enumerate() {
+        for (second_index, second_coordinate) in second_coordinate.iter().enumerate() {
+            coefficients[first_index][second_index] -= first_weight * second_coordinate;
+        }
+    }
+    BivariatePolynomial::new(coefficients)
 }
 
-fn scale_polynomial(polynomial: &[Real], scale: Real) -> Vec<Real> {
-    polynomial
-        .iter()
-        .map(|coefficient| coefficient.clone() * scale.clone())
-        .collect()
-}
-
-fn polynomial_difference(left: Vec<Real>, right: Vec<Real>) -> Vec<Real> {
-    let len = left.len().max(right.len());
-    let mut result = vec![Real::zero(); len];
-    for (index, coefficient) in left.into_iter().enumerate() {
-        result[index] += coefficient;
+fn evaluate_bivariate_at_retained_parameter(
+    polynomial: &BivariatePolynomial,
+    parameter: &Real,
+    retained_parameter: CurveResultantParameter,
+) -> Vec<Real> {
+    match retained_parameter {
+        CurveResultantParameter::First => {
+            let coefficient_count = polynomial
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .max()
+                .unwrap_or(0);
+            (0..coefficient_count)
+                .map(|second_power| {
+                    polynomial
+                        .coefficients
+                        .iter()
+                        .rev()
+                        .fold(Real::zero(), |value, row| {
+                            value * parameter
+                                + row.get(second_power).cloned().unwrap_or_else(Real::zero)
+                        })
+                })
+                .collect()
+        }
+        CurveResultantParameter::Second => polynomial
+            .coefficients
+            .iter()
+            .map(|row| eval_univariate(row, parameter))
+            .collect(),
     }
-    for (index, coefficient) in right.into_iter().enumerate() {
-        result[index] -= coefficient;
-    }
-    result
 }
 
 fn eval_univariate(coefficients: &[Real], value: &Real) -> Real {
@@ -682,6 +763,48 @@ mod tests {
         assert_eq!(report.retained_parameter, CurveResultantParameter::Second);
         assert_eq!(report.eliminated_parameter, CurveResultantParameter::First);
         assert_eq!(report.resultant_coefficients, vec![real(-2), real(1)]);
+    }
+
+    #[test]
+    fn bivariate_system_eliminates_either_parameter_with_the_same_root() {
+        // `u-t=0` and `u+t-1=0` meet only at `t=u=1/2`.
+        let first = BivariatePolynomial::new(vec![vec![real(0), real(1)], vec![real(-1)]]);
+        let second = BivariatePolynomial::new(vec![vec![real(-1), real(1)], vec![real(1)]]);
+
+        for retained_parameter in [
+            CurveResultantParameter::First,
+            CurveResultantParameter::Second,
+        ] {
+            let report = resultant_bivariate_polynomial_system(
+                &first,
+                &second,
+                retained_parameter,
+                CurveIntersectionResultantConfig::default(),
+            );
+            assert_eq!(report.status, CurveIntersectionResultantStatus::Constructed);
+            assert_eq!(report.degree_bound, 2);
+            assert_eq!(report.resultant_coefficients.len(), 2);
+            assert_eq!(
+                &report.resultant_coefficients[0] * real(2),
+                -report.resultant_coefficients[1].clone()
+            );
+        }
+    }
+
+    #[test]
+    fn bivariate_system_reports_an_identically_degenerate_equation() {
+        let zero = BivariatePolynomial::new(vec![vec![real(0)]]);
+        let nonzero = BivariatePolynomial::new(vec![vec![real(0), real(1)], vec![real(-1)]]);
+        let report = resultant_bivariate_polynomial_system(
+            &zero,
+            &nonzero,
+            CurveResultantParameter::First,
+            CurveIntersectionResultantConfig::default(),
+        );
+
+        assert_eq!(report.status, CurveIntersectionResultantStatus::Constructed);
+        assert_eq!(report.resultant_coefficients, vec![real(0)]);
+        assert_eq!(report.samples.len(), 1);
     }
 
     #[test]
