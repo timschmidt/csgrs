@@ -96,6 +96,7 @@ pub use algebraic_binary::{
 };
 pub use algebraic_fiber::{
     AlgebraicFiberRootCountReport, AlgebraicFiberRootCountStatus,
+    count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
 };
 pub use algebraic_mobius::{
