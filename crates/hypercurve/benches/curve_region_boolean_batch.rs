@@ -2,8 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Contour2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
-    CurvePath2, CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2, Real,
+    BooleanOp, BulgeVertex2, Contour2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
+    CurveContext, CurvePath2, CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    Real,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -158,6 +159,50 @@ fn nonlinear_line_overlap_regions(policy: &CurveContext) -> (CurveRegion2, Curve
     )
 }
 
+fn cubic_mobius_overlap_regions(policy: &CurveContext) -> (CurveRegion2, CurveRegion2) {
+    let controls = [point(0, 0), point(7, -5), point(8, -4), point(3, 3)];
+    let polynomial = CurvePath2::try_new(vec![
+        Curve2::from(CubicBezier2::new(
+            controls[0].clone(),
+            controls[1].clone(),
+            controls[2].clone(),
+            controls[3].clone(),
+        )),
+        Curve2::from(LineSeg2::try_new(controls[3].clone(), controls[0].clone()).unwrap()),
+    ])
+    .unwrap();
+    let projective = CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalBezier2::try_new(
+                controls.to_vec(),
+                vec![
+                    Real::one(),
+                    Real::from(2_i8),
+                    Real::from(4_i8),
+                    Real::from(8_i8),
+                ],
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(controls[3].clone(), controls[0].clone()).unwrap()),
+    ])
+    .unwrap();
+    (
+        clipped_region(
+            &polynomial,
+            rectangle_path(-20, -10, 20, -1),
+            CurveBoundaryInteriorSide2::Left,
+            policy,
+        ),
+        clipped_region(
+            &projective,
+            rectangle_path(-20, -10, 20, 0),
+            CurveBoundaryInteriorSide2::Left,
+            policy,
+        ),
+    )
+}
+
 fn region_weight(region: &CurveRegion2) -> usize {
     region
         .boundary_loops()
@@ -195,6 +240,7 @@ fn main() {
         }
         Ok("aligned-conic-overlap") => conic_overlap_regions(false, &policy).into(),
         Ok("mobius-overlap") => conic_overlap_regions(true, &policy).into(),
+        Ok("mobius-cubic-overlap") => cubic_mobius_overlap_regions(&policy).into(),
         Ok("nonlinear-line-overlap") => nonlinear_line_overlap_regions(&policy).into(),
         Ok(fixture) => panic!("unknown batch benchmark fixture {fixture}"),
         Err(_) => native_regions((rectangle(0, 0, 4, 4), rectangle(2, 0, 6, 4))),
