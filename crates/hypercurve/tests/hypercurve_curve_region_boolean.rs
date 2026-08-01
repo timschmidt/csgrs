@@ -703,6 +703,35 @@ fn noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
+fn elevated_circular_boolean_outputs_publish_native_boundaries() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let first = circle_with_policy(Real::zero(), &policy);
+        let second = symbolic_elevated_circle(Real::one(), &policy);
+        let batch = first
+            .boolean_regions(&second, &policy)
+            .expect("a native and degree-elevated circle must share exact circle topology")
+            .into_value();
+        for region in [
+            batch.union(),
+            batch.intersection(),
+            batch.difference(),
+            batch.xor(),
+        ] {
+            let (lines, arcs) = native_segment_counts(region, &policy);
+            assert_eq!(lines, 0);
+            assert!(arcs > 0);
+            assert!(region.boundary_loops().iter().all(|boundary| {
+                boundary
+                    .fragments()
+                    .iter()
+                    .all(|fragment| !fragment.is_algebraic_endpoint_images())
+            }));
+        }
+    }
+}
+
+#[test]
 fn mixed_line_circular_conic_degeneracy_matrix_matches_native_results() {
     let cases = [
         (capsule_at(0, 0), capsule_at(2, 1)),

@@ -15,8 +15,8 @@ use crate::rational_bezier_general::{
 use crate::{
     ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
     BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
-    CurveContext, CurveError, CurveFamily2, CurveGeometry2, CurveOperation2, CurveOutcome,
-    CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcIntersection,
+    CurveContext, CurveError, CurveGeometry2, CurveOperation2, CurveOutcome, CurveResult,
+    CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcIntersection,
     LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange, Point2,
     RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
     RationalBezierIntersectionContacts2, RationalBezierIntersectionPointEvidence2,
@@ -119,13 +119,27 @@ pub(crate) struct CurveIntersectionContext {
 #[derive(Debug, Default)]
 pub(crate) struct CurveIntersectionBatchCache {
     circular_support_relations: Vec<CircularSupportRelationCacheEntry>,
+    circular_point_parameters: Vec<CircularPointParameterCacheEntry>,
 }
 
 #[derive(Debug)]
 struct CircularSupportRelationCacheEntry {
-    first: Arc<RationalQuadraticCircle2>,
-    second: Arc<RationalQuadraticCircle2>,
+    first: RationalQuadraticCircle2,
+    second: RationalQuadraticCircle2,
     relation: CircleCircleRelation,
+}
+
+#[derive(Clone, Copy)]
+struct CircularSupportRef<'a> {
+    center: &'a Point2,
+    radius_squared: &'a Real,
+}
+
+#[derive(Debug)]
+struct CircularPointParameterCacheEntry {
+    curve: RationalBezier2,
+    point: Point2,
+    parameters: Classification<Arc<[BezierParameter2]>>,
 }
 
 impl CurveIntersectionBatchCache {
@@ -135,46 +149,123 @@ impl CurveIntersectionBatchCache {
         second_curve: &Curve2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<CircleCircleRelation>> {
-        let (
-            CurveGeometry2::RationalQuadraticBezier(first_curve),
-            CurveGeometry2::RationalQuadraticBezier(second_curve),
-        ) = (first_curve.geometry(), second_curve.geometry())
-        else {
-            return Ok(None);
-        };
         let (Some(first), Some(second)) = (
-            first_curve.retained_circular_conic(),
-            second_curve.retained_circular_conic(),
+            retained_curve_circular_support(first_curve),
+            retained_curve_circular_support(second_curve),
         ) else {
             return Ok(None);
         };
         if let Some(entry) = self.circular_support_relations.iter().find(|entry| {
-            (Arc::ptr_eq(&entry.first, first) || entry.first.as_ref() == first.as_ref())
-                && (Arc::ptr_eq(&entry.second, second) || entry.second.as_ref() == second.as_ref())
+            entry.first.center == *first.center
+                && entry.first.radius_squared == *first.radius_squared
+                && entry.second.center == *second.center
+                && entry.second.radius_squared == *second.radius_squared
         }) {
             return Ok(Some(entry.relation.clone()));
         }
         let relation = circle_relation_from_supports(
-            &first.center,
-            &first.radius_squared,
-            &second.center,
-            &second.radius_squared,
+            first.center,
+            first.radius_squared,
+            second.center,
+            second.radius_squared,
             policy,
         )
         .map_err(|cause| {
-            ExactCurveError::invalid(
-                CurveOperation2::Intersection,
-                CurveFamily2::RationalQuadraticBezier,
-                cause,
-            )
+            ExactCurveError::invalid(CurveOperation2::Intersection, first_curve.family(), cause)
         })?;
         self.circular_support_relations
             .push(CircularSupportRelationCacheEntry {
-                first: Arc::clone(first),
-                second: Arc::clone(second),
+                first: RationalQuadraticCircle2 {
+                    center: first.center.clone(),
+                    radius_squared: first.radius_squared.clone(),
+                },
+                second: RationalQuadraticCircle2 {
+                    center: second.center.clone(),
+                    radius_squared: second.radius_squared.clone(),
+                },
                 relation: relation.clone(),
             });
         Ok(Some(relation))
+    }
+
+    fn circular_point_parameters(
+        &mut self,
+        curve: &RationalBezier2,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Arc<[BezierParameter2]>>> {
+        if let Some(entry) = self.circular_point_parameters.iter().find(|entry| {
+            entry.curve.shares_retained_data(curve) && entry.point.shares_storage(point)
+        }) {
+            return Ok(entry.parameters.clone());
+        }
+        let parameters = curve
+            .retained_circle_point_parameters(point, policy)?
+            .map(Arc::<[BezierParameter2]>::from);
+        self.circular_point_parameters
+            .push(CircularPointParameterCacheEntry {
+                curve: curve.clone(),
+                point: point.clone(),
+                parameters: parameters.clone(),
+            });
+        Ok(parameters)
+    }
+
+    fn circular_parameter_table(
+        &mut self,
+        curves: &[RationalBezier2],
+        relation: &CircleCircleRelation,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Vec<Vec<Classification<Arc<[BezierParameter2]>>>>>> {
+        let mut table = Vec::with_capacity(curves.len());
+        for curve in curves {
+            let mut parameters = Vec::with_capacity(2);
+            match relation {
+                CircleCircleRelation::Tangent { point } => {
+                    parameters.push(self.circular_point_parameters(curve, point, policy)?);
+                }
+                CircleCircleRelation::Secant {
+                    first_point,
+                    second_point,
+                } => {
+                    parameters.push(self.circular_point_parameters(curve, first_point, policy)?);
+                    parameters.push(self.circular_point_parameters(curve, second_point, policy)?);
+                }
+                CircleCircleRelation::Coincident
+                | CircleCircleRelation::Disjoint
+                | CircleCircleRelation::Uncertain { .. } => return Ok(None),
+            }
+            table.push(parameters);
+        }
+        Ok(Some(table))
+    }
+}
+
+fn retained_curve_circular_support(curve: &Curve2) -> Option<CircularSupportRef<'_>> {
+    match curve.geometry() {
+        CurveGeometry2::CircularArc(curve) if curve.endpoints_on_stored_circle_are_certified() => {
+            Some(CircularSupportRef {
+                center: curve.center(),
+                radius_squared: curve.radius_squared_ref(),
+            })
+        }
+        CurveGeometry2::RationalQuadraticBezier(curve) => {
+            curve
+                .retained_circular_conic()
+                .map(|support| CircularSupportRef {
+                    center: &support.center,
+                    radius_squared: &support.radius_squared,
+                })
+        }
+        CurveGeometry2::RationalBezier(curve) => {
+            curve
+                .retained_circular_conic()
+                .map(|support| CircularSupportRef {
+                    center: &support.center,
+                    radius_squared: &support.radius_squared,
+                })
+        }
+        _ => None,
     }
 }
 
@@ -231,11 +322,32 @@ fn build_span_pairs(
     second_evaluators: &[RationalBezier2],
     policy: &CurveContext,
     circle_relation: Option<&CircleCircleRelation>,
+    mut batch_cache: Option<&mut CurveIntersectionBatchCache>,
 ) -> ExactCurveResult<Vec<CurveSpanPair>> {
     let first_fragments =
         first_curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
     let second_fragments = second_curve
         .native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+    let first_circle_parameters = match (circle_relation, batch_cache.as_deref_mut()) {
+        (Some(relation), Some(cache)) => cache
+            .circular_parameter_table(first_evaluators, relation, policy)
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Intersection, first_curve.family(), cause)
+            })?,
+        _ => None,
+    };
+    let second_circle_parameters = match (circle_relation, batch_cache) {
+        (Some(relation), Some(cache)) => cache
+            .circular_parameter_table(second_evaluators, relation, policy)
+            .map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    second_curve.family(),
+                    cause,
+                )
+            })?,
+        _ => None,
+    };
     let shares_injective_lineage = first_curve.shares_certified_parameter_lineage(second_curve);
     let mut pairs = Vec::with_capacity(first_evaluators.len() * second_evaluators.len());
     for (first_span_index, first) in first_evaluators.iter().enumerate() {
@@ -290,6 +402,12 @@ fn build_span_pairs(
                 second,
                 policy,
                 circle_relation,
+                first_circle_parameters
+                    .as_ref()
+                    .map(|parameters| parameters[first_span_index].as_slice()),
+                second_circle_parameters
+                    .as_ref()
+                    .map(|parameters| parameters[second_span_index].as_slice()),
             ) {
                 Ok(intersection) => CurveSpanPairState::Rational(intersection),
                 Err(ExactCurveError::Blocked(blocker)) => {
@@ -1228,7 +1346,7 @@ impl CurveIntersectionContext {
         first: &Curve2,
         second: &Curve2,
         policy: &CurveContext,
-        batch_cache: Option<&mut CurveIntersectionBatchCache>,
+        mut batch_cache: Option<&mut CurveIntersectionBatchCache>,
     ) -> ExactCurveResult<Self> {
         let (span_pair_count, dispatch) = match native_line_intersection(first, second, policy)? {
             Some(relation) => (1, CurveIntersectionDispatch::NativeLine(relation)),
@@ -1296,7 +1414,7 @@ impl CurveIntersectionContext {
                                 )?;
                                 let span_pair_count =
                                     first_evaluators.len() * second_evaluators.len();
-                                let circle_relation = match batch_cache {
+                                let circle_relation = match batch_cache.as_deref_mut() {
                                     Some(cache) => {
                                         cache.circular_support_relation(first, second, policy)?
                                     }
@@ -1310,6 +1428,7 @@ impl CurveIntersectionContext {
                                         second_evaluators,
                                         policy,
                                         circle_relation.as_ref(),
+                                        batch_cache,
                                     )?);
                                 (span_pair_count, dispatch)
                             }

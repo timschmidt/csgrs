@@ -2,9 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Contour2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
-    CurveContext, CurvePath2, CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
-    Real,
+    BooleanOp, BulgeVertex2, CircularArc2, Contour2, CubicBezier2, Curve2,
+    CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2, LineSeg2, Point2,
+    QuadraticBezier2, RationalBezier2, Real,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -37,6 +37,38 @@ fn capsule(center_x: i32) -> Contour2 {
         BulgeVertex2::new(point(center_x - 3, 2), Real::one()),
     ])
     .unwrap()
+}
+
+fn elevated_circle(center_x: i32, policy: &CurveContext) -> CurveRegion2 {
+    let left = point(center_x - 2, 0);
+    let right = point(center_x + 2, 0);
+    let arcs = [
+        CircularArc2::from_bulge(left.clone(), right.clone(), Real::one()).unwrap(),
+        CircularArc2::from_bulge(right, left, Real::one()).unwrap(),
+    ];
+    let mut curves = Vec::with_capacity(4);
+    for arc in &arcs {
+        for span in arc
+            .rational_bezier_decomposition(policy)
+            .unwrap()
+            .into_value()
+            .spans()
+        {
+            curves.push(Curve2::from(
+                RationalBezier2::from(span.curve().clone())
+                    .elevated_to_degree(3)
+                    .unwrap(),
+            ));
+        }
+    }
+    CurveRegion2::try_from_boundary_paths(
+        &[CurvePath2::try_new_with_policy(curves, policy)
+            .unwrap()
+            .into_value()],
+        policy,
+    )
+    .unwrap()
+    .into_value()
 }
 
 fn rectangle_path(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurvePath2 {
@@ -232,6 +264,12 @@ fn main() {
     let [first, second] = match std::env::var("HYPERCURVE_CURVE_REGION_BATCH_FIXTURE").as_deref() {
         Ok("circles") => native_regions((circle(0), circle(1))),
         Ok("capsules") => native_regions((capsule(0), capsule(2))),
+        Ok("elevated-circles") => [
+            CurveRegion2::try_from_native_material_contours(vec![circle(0)], &policy)
+                .unwrap()
+                .into_value(),
+            elevated_circle(1, &policy),
+        ],
         Ok("point-touch-rectangles") => {
             native_regions((rectangle(0, 0, 2, 2), rectangle(2, 2, 4, 4)))
         }

@@ -2658,10 +2658,15 @@ fn same_contact_point(
         (
             RationalBezierIntersectionPointEvidence2::Exact(first),
             RationalBezierIntersectionPointEvidence2::Exact(second),
-        ) => match crate::classify::is_zero(&first.distance_squared(second), policy) {
-            Some(equal) => Classification::Decided(equal),
-            None => Classification::Uncertain(UncertaintyReason::RealSign),
-        },
+        ) => {
+            if first.shares_storage(second) {
+                return Classification::Decided(true);
+            }
+            match crate::classify::is_zero(&first.distance_squared(second), policy) {
+                Some(equal) => Classification::Decided(equal),
+                None => Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+        }
         (
             RationalBezierIntersectionPointEvidence2::Algebraic(first),
             RationalBezierIntersectionPointEvidence2::Algebraic(second),

@@ -550,7 +550,7 @@ impl RationalBezierIntersectionContext {
         second: &RationalBezier2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_with_circle_relation(first, second, policy, None)
+        Self::try_new_with_circle_relation(first, second, policy, None, None, None)
     }
 
     pub(crate) fn try_new_with_circle_relation(
@@ -558,8 +558,16 @@ impl RationalBezierIntersectionContext {
         second: &RationalBezier2,
         policy: &CurveContext,
         circle_relation: Option<&CircleCircleRelation>,
+        first_circle_parameters: Option<&[Classification<Arc<[BezierParameter2]>>]>,
+        second_circle_parameters: Option<&[Classification<Arc<[BezierParameter2]>>]>,
     ) -> ExactCurveResult<Self> {
-        match first.intersection_context_classified(second, policy, circle_relation) {
+        match first.intersection_context_classified(
+            second,
+            policy,
+            circle_relation,
+            first_circle_parameters,
+            second_circle_parameters,
+        ) {
             Ok(Classification::Decided(context)) => Ok(context),
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
@@ -741,6 +749,10 @@ impl From<RationalQuadraticBezier2> for RationalBezier2 {
 }
 
 impl RationalBezier2 {
+    pub(crate) fn shares_retained_data(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data)
+    }
+
     pub(crate) fn retained_implicit_quadratic_conic(&self) -> Option<&Arc<[Real; 6]>> {
         self.data.lineage.root.implicit_quadratic_conic.get()
     }
@@ -749,6 +761,49 @@ impl RationalBezier2 {
         &self,
     ) -> Option<&Arc<crate::rational_bezier::RationalQuadraticCircle2>> {
         self.data.lineage.root.circular_conic.get()
+    }
+
+    pub(crate) fn retained_circle_point_parameters(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        if let Classification::Decided(bounds) = self.certified_bounds_classified(policy)
+            && matches!(
+                bounds.contains_point(point, policy),
+                Classification::Decided(false)
+            )
+        {
+            return Ok(Classification::Decided(Vec::new()));
+        }
+        if self.degree() == 2
+            || self
+                .data
+                .lineage
+                .root
+                .quadratic_conic_parameter_frame
+                .get()
+                .is_some()
+        {
+            return Ok(
+                match quadratic_conic_point_parameters(point, self, policy) {
+                    Classification::Decided(Some(parameters)) => {
+                        Classification::Decided(parameters)
+                    }
+                    Classification::Decided(None) => Classification::Decided(Vec::new()),
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                },
+            );
+        }
+        Ok(match self.point_incidence_classified(point, policy)? {
+            Classification::Decided(RationalBezierPointIncidence2::Parameters(parameters)) => {
+                Classification::Decided(parameters)
+            }
+            Classification::Decided(RationalBezierPointIncidence2::EntireCurve) => {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        })
     }
 
     pub(crate) fn try_from_subcurve(curve: &BezierSubcurve2) -> CurveResult<Self> {
@@ -1761,6 +1816,8 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurveContext,
         circle_relation: Option<&CircleCircleRelation>,
+        first_circle_parameters: Option<&[Classification<Arc<[BezierParameter2]>>]>,
+        second_circle_parameters: Option<&[Classification<Arc<[BezierParameter2]>>]>,
     ) -> CurveResult<Classification<RationalBezierIntersectionContext>> {
         if self == other {
             let overlap = RationalBezierIntersectionOverlap2 {
@@ -1835,9 +1892,13 @@ impl RationalBezier2 {
                 },
             }));
         }
-        if let Some(contacts) =
-            self.circular_conic_intersection_contacts(other, policy, circle_relation)?
-        {
+        if let Some(contacts) = self.circular_conic_intersection_contacts(
+            other,
+            policy,
+            circle_relation,
+            first_circle_parameters,
+            second_circle_parameters,
+        )? {
             let contacts = match contacts {
                 Classification::Decided(contacts) => contacts,
                 Classification::Uncertain(reason) => {
@@ -1910,7 +1971,7 @@ impl RationalBezier2 {
                 }
                 Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
             };
-            return elevated.intersection_context_classified(other, policy, None);
+            return elevated.intersection_context_classified(other, policy, None, None, None);
         }
         if other.degree() < self.degree()
             && matches!(
@@ -1925,7 +1986,7 @@ impl RationalBezier2 {
                 }
                 Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
             };
-            return self.intersection_context_classified(&elevated, policy, None);
+            return self.intersection_context_classified(&elevated, policy, None, None, None);
         }
 
         let line_image_contacts =
@@ -2773,10 +2834,9 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurveContext,
         circle_relation: Option<&CircleCircleRelation>,
+        first_circle_parameters: Option<&[Classification<Arc<[BezierParameter2]>>]>,
+        second_circle_parameters: Option<&[Classification<Arc<[BezierParameter2]>>]>,
     ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
-        if self.degree() != 2 || other.degree() != 2 {
-            return Ok(None);
-        }
         let (Some(first), Some(second)) = (
             self.data.lineage.root.circular_conic.get(),
             other.data.lineage.root.circular_conic.get(),
@@ -2814,23 +2874,41 @@ impl RationalBezier2 {
             }
         };
         let mut contacts = Vec::with_capacity(points.len());
-        for point in points {
-            let first_parameters = match quadratic_conic_point_parameters(&point, self, policy) {
-                Classification::Decided(Some(parameters)) => parameters,
-                Classification::Decided(None) => continue,
-                Classification::Uncertain(reason) => {
-                    return Ok(Some(Classification::Uncertain(reason)));
-                }
-            };
-            let second_parameters = match quadratic_conic_point_parameters(&point, other, policy) {
-                Classification::Decided(Some(parameters)) => parameters,
-                Classification::Decided(None) => continue,
-                Classification::Uncertain(reason) => {
-                    return Ok(Some(Classification::Uncertain(reason)));
-                }
-            };
-            for first_parameter in &first_parameters {
-                for second_parameter in &second_parameters {
+        for (point_index, point) in points.into_iter().enumerate() {
+            let first_parameters =
+                match first_circle_parameters.and_then(|parameters| parameters.get(point_index)) {
+                    Some(Classification::Decided(parameters)) => Arc::clone(parameters),
+                    Some(Classification::Uncertain(reason)) => {
+                        return Ok(Some(Classification::Uncertain(*reason)));
+                    }
+                    None => match self.retained_circle_point_parameters(&point, policy)? {
+                        Classification::Decided(parameters) => Arc::from(parameters),
+                        Classification::Uncertain(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
+                        }
+                    },
+                };
+            if first_parameters.is_empty() {
+                continue;
+            }
+            let second_parameters =
+                match second_circle_parameters.and_then(|parameters| parameters.get(point_index)) {
+                    Some(Classification::Decided(parameters)) => Arc::clone(parameters),
+                    Some(Classification::Uncertain(reason)) => {
+                        return Ok(Some(Classification::Uncertain(*reason)));
+                    }
+                    None => match other.retained_circle_point_parameters(&point, policy)? {
+                        Classification::Decided(parameters) => Arc::from(parameters),
+                        Classification::Uncertain(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
+                        }
+                    },
+                };
+            if second_parameters.is_empty() {
+                continue;
+            }
+            for first_parameter in first_parameters.iter() {
+                for second_parameter in second_parameters.iter() {
                     contacts.push(RationalBezierIntersectionContact2 {
                         first_parameter: first_parameter.clone(),
                         second_parameter: second_parameter.clone(),
