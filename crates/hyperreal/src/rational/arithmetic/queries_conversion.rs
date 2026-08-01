@@ -302,7 +302,12 @@ impl Rational {
 
     #[inline]
     pub(crate) fn to_f64_lossy(&self) -> Option<f64> {
-        if self.is_internally_unreduced() {
+        // The unreduced bit is immutable and learned dyadic facts are
+        // monotonic, so one relaxed snapshot covers both decisions.
+        let retained = self
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        if retained & RETAINED_UNREDUCED_INTERNAL != 0 {
             return self.canonicalized_ref().to_f64_lossy();
         }
         // Fast borrowed approximate conversion for modest rationals. If either
@@ -315,7 +320,7 @@ impl Rational {
         // Exact binary inputs dominate geometric filters. Combine the
         // numerator and denominator exponents before scaling so normal results
         // avoid an exact shifted-magnitude comparison, `powi`, and division.
-        if let Some(denominator_shift) = self.dyadic_denominator_shift()
+        if let Some(denominator_shift) = self.dyadic_denominator_shift_from_retained(retained)
             && let Some(value) = self.normal_dyadic_f64_magnitude(denominator_shift)
         {
             return Some(match self.sign {

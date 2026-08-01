@@ -3205,6 +3205,67 @@ mod tests {
     }
 
     #[test]
+    fn lossy_view_preserves_every_retained_dyadic_fact_path() {
+        let dyadic =
+            Rational::from_parts_raw(Plus, BigUint::from(3_u8), BigUint::one() << 300usize);
+        assert_eq!(dyadic.to_f64_lossy(), Some(3.0 * 2.0_f64.powi(-300)));
+        let dyadic_facts = dyadic
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        assert_eq!(
+            dyadic_facts & (RETAINED_DYADIC_KNOWN | RETAINED_DYADIC_VALUE),
+            RETAINED_DYADIC_KNOWN | RETAINED_DYADIC_VALUE
+        );
+        assert_eq!(
+            (dyadic_facts & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET,
+            301
+        );
+        assert_eq!(dyadic.to_f64_lossy(), Some(3.0 * 2.0_f64.powi(-300)));
+        assert_eq!(
+            dyadic
+                .retained_facts
+                .load(std::sync::atomic::Ordering::Relaxed),
+            dyadic_facts
+        );
+
+        let non_dyadic =
+            Rational::from_parts_raw(Plus, BigUint::from(2_u8), BigUint::from(3_u8));
+        assert_eq!(non_dyadic.to_f64_lossy(), Some(2.0 / 3.0));
+        let non_dyadic_facts = non_dyadic
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        assert_ne!(non_dyadic_facts & RETAINED_DYADIC_KNOWN, 0);
+        assert_eq!(
+            non_dyadic_facts & (RETAINED_DYADIC_VALUE | RETAINED_DYADIC_SHIFT_MASK),
+            0
+        );
+        assert_eq!(non_dyadic.to_f64_lossy(), Some(2.0 / 3.0));
+
+        let unreduced = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::from(8_u8),
+        );
+        assert_eq!(unreduced.to_f64_lossy(), Some(0.75));
+        let canonical_facts = unreduced
+            .canonicalized_ref()
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        assert_eq!(
+            (canonical_facts & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET,
+            3
+        );
+
+        let zero = Rational::from_parts_raw(NoSign, BigUint::zero(), BigUint::one());
+        assert_eq!(zero.to_f64_lossy(), Some(0.0));
+        assert_eq!(
+            zero.retained_facts
+                .load(std::sync::atomic::Ordering::Relaxed),
+            0
+        );
+    }
+
+    #[test]
     fn reduced_dyadic_shift_probe_preserves_every_representation_path() {
         let dyadic =
             Rational::from_parts_raw(Plus, BigUint::from(3_u8), BigUint::one() << 300usize);
