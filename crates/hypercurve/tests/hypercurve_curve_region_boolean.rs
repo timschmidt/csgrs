@@ -1160,6 +1160,33 @@ fn retained_regions_clip_independent_nonlinear_line_parameters() {
             assert!(wide.has_algebraic_fragments());
 
             let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
+            assert_eq!(
+                results
+                    .union()
+                    .boundary_loops()
+                    .iter()
+                    .map(|boundary| boundary.len())
+                    .sum::<usize>(),
+                4
+            );
+            assert_eq!(
+                results
+                    .intersection()
+                    .boundary_loops()
+                    .iter()
+                    .map(|boundary| boundary.len())
+                    .sum::<usize>(),
+                4
+            );
+            assert_eq!(
+                results
+                    .xor()
+                    .boundary_loops()
+                    .iter()
+                    .map(|boundary| boundary.len())
+                    .sum::<usize>(),
+                4
+            );
             assert_location(results.union(), point(3, 0), RegionPointLocation::Boundary);
             assert_location(
                 results.intersection(),

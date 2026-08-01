@@ -11,12 +11,12 @@ use crate::policy::resolve_certified_operation;
 use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2;
 use crate::{
     Aabb2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
-    BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    Classification, Curve2, CurveContext, CurveError, CurveFamily2, CurveIntersectionContact2,
-    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
-    CurvePathBooleanOperand2, CurveRegion2, ExactCurveError, ExactCurveResult, FillRule,
-    RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RegionPointLocation, UncertaintyReason,
+    BezierLineImageFitRelation, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
+    BezierSubcurve2, BooleanOp, Classification, Curve2, CurveContext, CurveError, CurveFamily2,
+    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
+    CurveOperation2, CurveOutcome, CurvePathBooleanOperand2, CurveRegion2, ExactCurveError,
+    ExactCurveResult, FillRule, RationalBezier2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, RegionPointLocation, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -95,6 +95,7 @@ struct CurveRegionBooleanContextData<'a> {
     first_carrier_count: usize,
     authored_carrier_pair_count: usize,
     pairs: Vec<RegionCarrierPair>,
+    strict_line_image_only: OnceLock<bool>,
 }
 
 #[derive(Clone, Debug)]
@@ -525,6 +526,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count,
                 authored_carrier_pair_count,
                 pairs,
+                strict_line_image_only: OnceLock::new(),
             },
         })
     }
@@ -1165,9 +1167,58 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .map_err(|cause| self.invalid(0, cause))?;
         if affine_line_output {
             self.compact_affine_line_result(region)
+        } else if self.strict_line_image_only() {
+            self.compact_retained_line_image_result(region)
         } else {
             Ok(region)
         }
+    }
+
+    fn strict_line_image_only(&self) -> bool {
+        *self.data.strict_line_image_only.get_or_init(|| {
+            self.data
+                .carriers
+                .iter()
+                .all(|carrier| subcurve_is_strict_line_image(&carrier.curve))
+        })
+    }
+
+    fn compact_retained_line_image_result(
+        &self,
+        region: CurveRegion2,
+    ) -> ExactCurveResult<CurveRegion2> {
+        let native = match region
+            .native_line_arc_region(&CurveContext::STRICT)
+            .map_err(|cause| self.invalid(0, cause))?
+        {
+            Classification::Decided(native) => native,
+            Classification::Uncertain(_) => return Ok(region),
+        };
+        let mut reduced_fragment_count = false;
+        let mut compact_contours =
+            |contours: &[crate::Contour2]| -> ExactCurveResult<Vec<crate::Contour2>> {
+                contours
+                    .iter()
+                    .map(|contour| {
+                        let compact = match contour
+                            .merge_adjacent_collinear_lines(&CurveContext::STRICT)
+                            .map_err(|cause| self.invalid(0, cause))?
+                        {
+                            Classification::Decided(contour) => contour,
+                            Classification::Uncertain(_) => return Ok(contour.clone()),
+                        };
+                        reduced_fragment_count |= compact.len() < contour.len();
+                        Ok(compact)
+                    })
+                    .collect()
+            };
+        let material = compact_contours(native.material_contours())?;
+        let holes = compact_contours(native.hole_contours())?;
+        if !reduced_fragment_count {
+            return Ok(region);
+        }
+        CurveRegion2::from_certified_oriented_line_contours(material, holes)
+            .map_err(|cause| self.invalid(0, cause))
     }
 
     fn compact_affine_line_result(&self, region: CurveRegion2) -> ExactCurveResult<CurveRegion2> {
@@ -1363,6 +1414,21 @@ fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
             curve: BezierSubcurve2::Quadratic(curve),
             ..
         } if curve.retained_exact_line_image().is_some()
+    )
+}
+
+fn subcurve_is_strict_line_image(curve: &BezierSubcurve2) -> bool {
+    let fit = match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.fit_exact_line_image(&CurveContext::STRICT),
+        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image(&CurveContext::STRICT),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.fit_exact_line_image(&CurveContext::STRICT)
+        }
+        BezierSubcurve2::Rational(curve) => curve.fit_exact_line_image(&CurveContext::STRICT),
+    };
+    matches!(
+        fit,
+        Ok(Classification::Decided(BezierLineImageFitRelation::Fit(_)))
     )
 }
 

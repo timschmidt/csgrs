@@ -1900,7 +1900,7 @@ fn retained_endpoint_point_evidence(
     policy: &CurveContext,
 ) -> CurveResult<Option<Point2>> {
     if let Some(image) = image
-        && let Some(point) = exact_rational_point_from_image(image.point())
+        && let Some(point) = exact_rational_point_from_image(image.point(), None)
     {
         return Ok(Some(point));
     }
@@ -5881,7 +5881,7 @@ fn retained_line_endpoint_point(
             let Some(image) = image else {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             };
-            match exact_rational_point_from_image(image.point()) {
+            match exact_rational_point_from_image(image.point(), Some(policy)) {
                 Some(point) => Classification::Decided(point),
                 None => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
@@ -5889,7 +5889,10 @@ fn retained_line_endpoint_point(
     }
 }
 
-fn exact_rational_point_from_image(point: &BezierEndpointPointImage2) -> Option<Point2> {
+fn exact_rational_point_from_image(
+    point: &BezierEndpointPointImage2,
+    resolution_policy: Option<&CurveContext>,
+) -> Option<Point2> {
     match point {
         BezierEndpointPointImage2::Polynomial(point) => Some(Point2::new(
             point
@@ -5903,18 +5906,24 @@ fn exact_rational_point_from_image(point: &BezierEndpointPointImage2) -> Option<
                 .exact_rational_witness()?
                 .clone(),
         )),
-        BezierEndpointPointImage2::Rational(point) => Some(Point2::new(
-            point
-                .x()?
-                .representation()?
-                .exact_rational_witness()?
-                .clone(),
-            point
-                .y()?
-                .representation()?
-                .exact_rational_witness()?
-                .clone(),
-        )),
+        BezierEndpointPointImage2::Rational(point) => {
+            let point = match resolution_policy {
+                Some(policy) => point.resolved(policy)?,
+                None => point,
+            };
+            Some(Point2::new(
+                point
+                    .x()?
+                    .representation()?
+                    .exact_rational_witness()?
+                    .clone(),
+                point
+                    .y()?
+                    .representation()?
+                    .exact_rational_witness()?
+                    .clone(),
+            ))
+        }
     }
 }
 
