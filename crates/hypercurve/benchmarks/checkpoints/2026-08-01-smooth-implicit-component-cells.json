@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-01",
+  "checkpoint": "smooth-implicit-component-cells",
+  "source_revision": "75287688ec926c6a198dd405053f179a3a383d02",
+  "previous_checkpoint_revision": "bbe2e5d4b92d34e94210c76cd582c57d2c151817",
+  "hypersolve_revision": "aa085f9ef0dee13384856febb3b57efa99bb2a51",
+  "scope": {
+    "operation": "exact square-clipped topology and overlap transport for smooth implicit Bezier parameter components",
+    "completed_families": [
+      "smooth components with finitely enumerable critical fibers in both parameter projections",
+      "closed components that are not global graphs in either parameter",
+      "rational and algebraic retained event fibers",
+      "multiple disjoint components sharing the same critical fibers",
+      "transverse entry and exit through all four authored parameter-domain edges",
+      "smooth projection folds and lifted-direction turns",
+      "isolated tangential contacts with the closed parameter square",
+      "zero-distance public BezierParallel2 shared-component overlap transport",
+      "structural rejection of interior singularities and boundary-coincident components",
+      "STRICT and APPROXIMATE_512 through one proof graph"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "authority": "parameter_component_system has one production call into regular implicit-component certification; the global ordered-graph specialization remains the first fast path and the cylindrical cell decomposition is the sole general fallback",
+    "boundary_coincidence": "all four square-edge specializations are classified coefficient-by-coefficient before topology construction; an identically zero specialization is retained as an explicit structural boundary rather than being mislabeled Unsupported",
+    "smoothness": "all solutions of H=H_lifted are enumerated and H_retained is proved nonzero at each; therefore a point where both partial derivatives vanish cannot be admitted as a regular cell",
+    "events": "the decomposition contains every H=H_lifted projection fold, every H=H_retained lifted-direction turn, and every root on each of the four authored square boundaries; exact-equivalent events share one retained fiber and one lifted vertex",
+    "fiber_isolation": "each event receives a disjoint rational lifted neighborhood whose exact retained fiber is proved to contain exactly one distinct root; rational fibers use Hypercurve isolation and algebraic fibers use Hypersolve closed local-field Sturm counting",
+    "tube_certificate": "rational side fibers refine toward each event without a fixed cap until both horizontal tube edges are proved rootless on the open retained interval; this prevents sample roots from being attached to an unrelated component",
+    "incidence": "interior smooth vertices require degree two; square-boundary vertices admit zero, one, or two in-domain incidences; ordered roots outside event tubes retain equal gap rank across a critical fiber",
+    "cell_transport": "tracks are connected by exact event incidence and invariant gap rank, split at every event, and emitted only when both parameter coordinates are strictly monotone; orientation follows exact endpoint order",
+    "isolated_points": "a selected domain event with no in-square incident edge is retained as an exact isolated parameter pair",
+    "branch_selection": "H and the selected-normal branch polynomial are proved to have no common unit-square solution before tracing; one exact sign per track therefore selects or rejects the complete cell without sampling geometry",
+    "strict": "STRICT uses exact specialization, resultants, root isolation, local-field Sturm counts, replay, and unbounded separating refinement",
+    "approximate_512": "APPROXIMATE_512 follows the identical topology proof; only inherited Hyperreal equality terminals may stop at 512 bits, consumption is observed, and no approximate parameter, incidence, orientation, or geometry is synthesized",
+    "failure_semantics": "singular/shared-derivative and boundary-coincident topology remains an explicit boundary; unsupported coefficient towers remain explicit uncertainty"
+  },
+  "matched_historical_benchmark": {
+    "method": "five all-feature release processes per revision pinned to CPU 11; the identical closed-oval fixture was the only source change in detached historical Hypercurve revision bbe2e5d; both revisions used Hypersolve aa085f9 and five iterations per candidate/contact sublane",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "fixture": "P(v)=(v,v^2), source v=(t-1/2)^2, target v=1/16-(u-1/2)^2, giving the closed correspondence (t-1/2)^2+(u-1/2)^2=1/16",
+    "historical_candidates_microseconds": [
+      143302.907,
+      144287.188,
+      149242.846,
+      142018.563,
+      141862.118
+    ],
+    "historical_contacts_microseconds": [
+      145223.144,
+      145741.316,
+      169856.115,
+      145739.454,
+      143414.820
+    ],
+    "current_candidates_microseconds": [
+      74540.631,
+      73774.140,
+      73964.859,
+      73757.091,
+      73866.507
+    ],
+    "current_contacts_microseconds": [
+      74615.498,
+      73777.771,
+      74262.710,
+      73670.799,
+      73525.259
+    ],
+    "historical_candidate_median_microseconds": 143302.907,
+    "historical_contact_median_microseconds": 145739.454,
+    "current_candidate_median_microseconds": 73866.507,
+    "current_contact_median_microseconds": 73777.771,
+    "candidate_time_change_percent": -48.454286,
+    "contact_time_change_percent": -49.376940,
+    "candidate_speedup": 1.940025,
+    "contact_speedup": 1.975384,
+    "historical_outcome": "candidate projection reports the positive-dimensional component marker and contact replay remains incomplete with DegenerateResultant; both checksums are 5",
+    "current_outcome": "candidate projection retains the component marker and contact replay completes with four exactly oriented overlap cells per iteration; candidate checksum is 5 and contact checksum is 20",
+    "interpretation": "the completed route is approximately twice as fast while replacing an incomplete historical answer with exact closed-component topology"
+  },
+  "existing_lane_guards": [
+    {
+      "lane": "bezier_parallel_implicit_quadratic_component",
+      "historical_candidate_median_microseconds": 2688.162,
+      "historical_contact_median_microseconds": 2665.597,
+      "current_candidate_median_microseconds": 2691.573,
+      "current_contact_median_microseconds": 2670.851,
+      "candidate_change_percent": 0.126890,
+      "contact_change_percent": 0.197104,
+      "interpretation": "the global monotone-graph fast path remains flat"
+    },
+    {
+      "lane": "bezier_parallel_two_turning_implicit_graphs",
+      "historical_candidate_median_microseconds": 82470.097,
+      "historical_contact_median_microseconds": 82650.423,
+      "current_candidate_median_microseconds": 81728.868,
+      "current_contact_median_microseconds": 81316.504,
+      "candidate_change_percent": -0.898785,
+      "contact_change_percent": -1.613929,
+      "interpretation": "the previously completed multiple-graph route remains within run noise and does not regress"
+    }
+  ],
+  "memory": {
+    "method": "three alternating fresh pinned processes per revision under /usr/bin/time, running the complete Bezier-intersection benchmark group",
+    "historical_max_rss_kib": [
+      16664,
+      16484,
+      16512
+    ],
+    "current_max_rss_kib": [
+      11188,
+      11368,
+      11472
+    ],
+    "historical_median_max_rss_kib": 16512,
+    "current_median_max_rss_kib": 11368,
+    "change_percent": -31.153101,
+    "interpretation": "this is whole-process group evidence; the complete cell route avoids the historical failed-resultant peak"
+  },
+  "competitive_context": {
+    "direct_peer_lane": "none",
+    "reason": "the pinned finite competitors do not expose exact algebraic parameter-correspondence cells or STRICT/APPROXIMATE_512 semantics",
+    "policy": "no floating-point sampling result is treated as a correctness or throughput substitute; the existing CurveRegion2 finite competitive corpus remains the broader throughput reference"
+  },
+  "release_size": {
+    "binary": "target/release/deps/offset-ea116fee283cd918",
+    "matched_historical_file_bytes": 7474984,
+    "current_file_bytes": 7522512,
+    "matched_historical_text_bytes": 5689551,
+    "current_text_bytes": 5729767,
+    "matched_historical_loadable_bytes": 5957375,
+    "current_loadable_bytes": 5998327,
+    "file_change_percent": 0.635827,
+    "text_change_percent": 0.706840,
+    "loadable_change_percent": 0.687417,
+    "interpretation": "the general exact topology fallback adds less than 0.7% to the matched release image while nearly doubling throughput on the newly completed operation"
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "scope": "hypercurve and hypersolve with examples, tests, benchmarks, and fuzz targets",
+    "nodes": 30020,
+    "edges": 54020,
+    "change_from_previous_checkpoint": {
+      "nodes": 84,
+      "edges": 138
+    },
+    "artifact": "/tmp/hypercurve-smooth-implicit-cells-stack-callgraph/callgraph.json",
+    "interpretation": "the syntax graph shows one production caller into regular implicit certification, the fast graph and general cell branches immediately beneath it, and the algebraic fiber path into the imported Hypersolve closed counter; this is navigation and source-complexity evidence, not runtime reachability"
+  },
+  "verification": {
+    "all_features_library_tests": 311,
+    "no_default_features_library_tests": 275,
+    "public_fixture": "parallel_rational_contacts_partition_a_closed_implicit_oval passes under STRICT and APPROXIMATE_512 in both feature configurations",
+    "internal_matrix": [
+      "rational closed oval",
+      "algebraic closed oval",
+      "multiple disjoint ovals on shared critical fibers",
+      "transverse square entry and exit",
+      "isolated square-boundary tangency",
+      "interior cusp rejection",
+      "boundary-coincident component rejection"
+    ],
+    "full_all_features": "passed",
+    "full_no_default_features": "passed",
+    "quality": [
+      "cargo clippy --all-features --all-targets -- -D warnings",
+      "cargo clippy --no-default-features --all-targets -- -D warnings",
+      "cargo fmt --all -- --check",
+      "git diff --check"
+    ]
+  },
+  "remaining": [
+    "supported singular/shared-derivative topology beyond explicit boundary retention",
+    "supported boundary-coincident topology beyond explicit boundary retention",
+    "supported non-rational coefficient towers",
+    "remaining exact parallel carrier surfaces and authoritative CurveRegion2 offset regularization",
+    "solver-driven CurveRegion2 fillet and chamfer"
+  ]
+}
