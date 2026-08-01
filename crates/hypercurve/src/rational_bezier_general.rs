@@ -212,6 +212,20 @@ enum RationalBezierEndpointParameterRelation2 {
 }
 
 impl RationalBezierIntersectionOverlap2 {
+    pub(crate) fn from_certified_parameters(
+        first_start: BezierParameter2,
+        first_end: BezierParameter2,
+        second_start: BezierParameter2,
+        second_end: BezierParameter2,
+        orientation: RationalBezierOverlapOrientation2,
+    ) -> Self {
+        Self {
+            first_range: BezierParameterRange2::new_validated(first_start, first_end),
+            second_range: BezierParameterRange2::new_validated(second_start, second_end),
+            orientation,
+        }
+    }
+
     /// Returns the exact overlap range on the first curve.
     pub const fn first_range(&self) -> &BezierParameterRange2 {
         &self.first_range

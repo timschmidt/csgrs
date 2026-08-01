@@ -492,6 +492,29 @@ fn bench_bezier_parallel_intersections(
     Ok(())
 }
 
+fn rationalized_parabola_parallel_target() -> CurveResult<RationalBezier2> {
+    RationalBezier2::try_new(
+        vec![
+            Point2::new(s(0), s(1)),
+            Point2::new(q(-1, 18), s(1)),
+            Point2::new(q(-15, 134), q(133, 134)),
+            Point2::new(q(-43, 264), q(43, 44)),
+            Point2::new(q(-117, 580), q(1111, 1160)),
+            Point2::new(q(-25, 112), q(211, 224)),
+            Point2::new(q(-9, 40), q(301, 320)),
+        ],
+        vec![
+            s(1),
+            q(3, 4),
+            q(67, 120),
+            q(33, 80),
+            q(29, 96),
+            q(7, 32),
+            q(5, 32),
+        ],
+    )
+}
+
 fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     let exact_parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).parallel_left(s(1))?;
     let exact_target = RationalBezier2::try_new(vec![p(1, 0), p(1, 2)], vec![s(1), s(1)])?;
@@ -591,6 +614,19 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
         &ph_overlap_parallel,
         &ph_overlap_target,
         10,
+    )?;
+
+    let rational_component_parallel = QuadraticBezier2::new(
+        p(0, 0),
+        Point2::new(q(3, 16), s(0)),
+        Point2::new(q(3, 8), q(9, 64)),
+    )
+    .parallel_left(s(1))?;
+    bench_bezier_parallel_intersections(
+        "bezier_parallel_nonlinear_rational_component",
+        &rational_component_parallel,
+        &rationalized_parabola_parallel_target()?,
+        5,
     )?;
 
     let cold_iterations = 10_u32;

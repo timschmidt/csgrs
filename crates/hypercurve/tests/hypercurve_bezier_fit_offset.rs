@@ -63,6 +63,38 @@ fn rootful_homogeneous_factor_vertical() -> RationalBezier2 {
     .unwrap()
 }
 
+fn rationally_reparameterized_parabola_parallel() -> RationalBezier2 {
+    // This degree-six rational curve is the exact unit left parallel of
+    // P(t)=(3t/8, 9t^2/64). Its parameter u rationalizes
+    // sqrt(16+9t^2), and the parameter correspondence is
+    //
+    //   t = (4u-u^2)/(6-3u).
+    //
+    // The source is not PH in its authored parameter, so this overlap cannot
+    // use same-parameter rational materialization.
+    RationalBezier2::try_new(
+        vec![
+            Point2::new(r(0), r(1)),
+            Point2::new(q(-1, 18), r(1)),
+            Point2::new(q(-15, 134), q(133, 134)),
+            Point2::new(q(-43, 264), q(43, 44)),
+            Point2::new(q(-117, 580), q(1111, 1160)),
+            Point2::new(q(-25, 112), q(211, 224)),
+            Point2::new(q(-9, 40), q(301, 320)),
+        ],
+        vec![
+            r(1),
+            q(3, 4),
+            q(67, 120),
+            q(33, 80),
+            q(29, 96),
+            q(7, 32),
+            q(5, 32),
+        ],
+    )
+    .unwrap()
+}
+
 fn real_representation_samples() -> Vec<Real> {
     let rational = |numerator: i64, denominator: u64| {
         Real::new(Rational::fraction(numerator, denominator).unwrap())
@@ -1827,6 +1859,155 @@ fn parallel_rational_contacts_retain_partial_and_reversed_overlap_ranges() {
         assert_eq!(
             reversed.orientation(),
             RationalBezierOverlapOrientation2::Reversed
+        );
+    }
+}
+
+#[test]
+fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component() {
+    let parallel = QuadraticBezier2::new(
+        p(0, 0),
+        Point2::new(q(3, 16), r(0)),
+        Point2::new(q(3, 8), q(9, 64)),
+    )
+    .parallel_left(r(1))
+    .unwrap();
+    let target = rationally_reparameterized_parabola_parallel();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert!(matches!(
+            parallel
+                .exact_pythagorean_hodograph_offset(&policy)
+                .unwrap(),
+            Classification::Decided(None)
+        ));
+        assert_eq!(
+            parallel.intersection_candidates(&target, &policy).unwrap(),
+            Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+        );
+
+        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(overlap)) =
+            parallel.intersection_contacts(&target, &policy).unwrap()
+        else {
+            panic!("nonlinear rational parameter component did not replay as an overlap");
+        };
+        assert_eq!(
+            overlap.first_range().exact_endpoints(),
+            Some((&Real::zero(), &Real::one()))
+        );
+        assert_eq!(
+            overlap.second_range().exact_endpoints(),
+            Some((&Real::zero(), &Real::one()))
+        );
+        assert_eq!(
+            overlap.orientation(),
+            RationalBezierOverlapOrientation2::Same
+        );
+
+        let Classification::Decided(partial) = target
+            .subcurve_between_exact(&q(1, 4), &q(3, 4), &policy)
+            .unwrap()
+        else {
+            panic!("rationalized parallel subcurve was not decided");
+        };
+        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(partial)) =
+            parallel.intersection_contacts(&partial, &policy).unwrap()
+        else {
+            panic!("partial nonlinear rational component did not retain exact ranges");
+        };
+        assert_eq!(
+            partial.first_range().exact_endpoints(),
+            Some((&q(5, 28), &q(13, 20)))
+        );
+        assert_eq!(
+            partial.second_range().exact_endpoints(),
+            Some((&Real::zero(), &Real::one()))
+        );
+        assert_eq!(
+            partial.orientation(),
+            RationalBezierOverlapOrientation2::Same
+        );
+
+        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(reversed)) =
+            parallel
+                .intersection_contacts(&target.reversed(), &policy)
+                .unwrap()
+        else {
+            panic!("reversed nonlinear rational component did not retain orientation");
+        };
+        assert_eq!(
+            reversed.first_range().exact_endpoints(),
+            Some((&Real::zero(), &Real::one()))
+        );
+        assert_eq!(
+            reversed.second_range().exact_endpoints(),
+            Some((&Real::one(), &Real::zero()))
+        );
+        assert_eq!(
+            reversed.orientation(),
+            RationalBezierOverlapOrientation2::Reversed
+        );
+    }
+}
+
+#[test]
+fn parallel_rational_contacts_clip_a_component_at_both_curve_domains() {
+    let source = QuadraticBezier2::new(
+        p(0, 0),
+        Point2::new(q(3, 16), r(0)),
+        Point2::new(q(3, 8), q(9, 64)),
+    );
+    let target = rationally_reparameterized_parabola_parallel();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let parallel = source
+            .subcurve_between_exact(&Real::zero(), &q(7, 10), &policy)
+            .unwrap()
+            .parallel_left(r(1))
+            .unwrap();
+        let Classification::Decided(target) = target
+            .subcurve_between_exact(&q(1, 10), &q(9, 10), &policy)
+            .unwrap()
+        else {
+            panic!("rationalized target subcurve was not decided");
+        };
+        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(overlap)) =
+            parallel.intersection_contacts(&target, &policy).unwrap()
+        else {
+            panic!("two-sided nonlinear component clipping did not produce an overlap");
+        };
+
+        assert_eq!(
+            overlap.first_range().exact_endpoints(),
+            Some((&q(13, 133), &Real::one()))
+        );
+        assert!(matches!(
+            overlap.second_range().start(),
+            BezierParameter2::Exact(value) if value == &Real::zero()
+        ));
+        assert!(matches!(
+            overlap.second_range().end(),
+            BezierParameter2::Algebraic(_)
+        ));
+        assert_eq!(
+            overlap
+                .second_range()
+                .end()
+                .cmp_by_refinement(&BezierParameter2::Exact(q(4, 5)), &policy)
+                .unwrap(),
+            Classification::Decided(std::cmp::Ordering::Greater)
+        );
+        assert_eq!(
+            overlap
+                .second_range()
+                .end()
+                .cmp_by_refinement(&BezierParameter2::Exact(q(9, 10)), &policy)
+                .unwrap(),
+            Classification::Decided(std::cmp::Ordering::Less)
+        );
+        assert_eq!(
+            overlap.orientation(),
+            RationalBezierOverlapOrientation2::Same
         );
     }
 }
