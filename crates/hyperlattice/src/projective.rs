@@ -159,42 +159,44 @@ where
     let n2 = second.normal();
     let n3 = third.normal();
 
+    let rows = [
+        [&n1.x, &n1.y, &n1.z, first.offset()],
+        [&n2.x, &n2.y, &n2.z, second.offset()],
+        [&n3.x, &n3.y, &n3.z, third.offset()],
+    ];
+    if let Some([x, y, z, w]) = Real::exact_rational_sparse_homogeneous_plane_intersection3(rows) {
+        crate::trace_dispatch!(
+            "hyperlattice_projective",
+            "three-plane-intersection",
+            "exact-rational-sparse-row"
+        );
+        return HomogeneousPoint3::new(x, y, z, w);
+    }
+    crate::trace_dispatch!(
+        "hyperlattice_projective",
+        "three-plane-intersection",
+        "expanded-fallback"
+    );
+    expanded_three_plane_intersection(rows)
+}
+
+fn expanded_three_plane_intersection(rows: [[&Real; 4]; 3]) -> HomogeneousPoint3 {
     HomogeneousPoint3::new(
         neg_det3(
-            first.offset(),
-            &n1.y,
-            &n1.z,
-            second.offset(),
-            &n2.y,
-            &n2.z,
-            third.offset(),
-            &n3.y,
-            &n3.z,
+            rows[0][3], rows[0][1], rows[0][2], rows[1][3], rows[1][1], rows[1][2], rows[2][3],
+            rows[2][1], rows[2][2],
         ),
         neg_det3(
-            &n1.x,
-            first.offset(),
-            &n1.z,
-            &n2.x,
-            second.offset(),
-            &n2.z,
-            &n3.x,
-            third.offset(),
-            &n3.z,
+            rows[0][0], rows[0][3], rows[0][2], rows[1][0], rows[1][3], rows[1][2], rows[2][0],
+            rows[2][3], rows[2][2],
         ),
         neg_det3(
-            &n1.x,
-            &n1.y,
-            first.offset(),
-            &n2.x,
-            &n2.y,
-            second.offset(),
-            &n3.x,
-            &n3.y,
-            third.offset(),
+            rows[0][0], rows[0][1], rows[0][3], rows[1][0], rows[1][1], rows[1][3], rows[2][0],
+            rows[2][1], rows[2][3],
         ),
         det3(
-            &n1.x, &n1.y, &n1.z, &n2.x, &n2.y, &n2.z, &n3.x, &n3.y, &n3.z,
+            rows[0][0], rows[0][1], rows[0][2], rows[1][0], rows[1][1], rows[1][2], rows[2][0],
+            rows[2][1], rows[2][2],
         ),
     )
 }
@@ -350,6 +352,37 @@ mod tests {
         ProjectivePlane3::new(p3(a, b, c), r(d))
     }
 
+    fn q(numerator: i64, denominator: u64) -> Real {
+        format!("{numerator}/{denominator}").parse().unwrap()
+    }
+
+    fn coefficient_refs(coefficients: &[[Real; 4]; 3]) -> [[&Real; 4]; 3] {
+        std::array::from_fn(|row| std::array::from_fn(|column| &coefficients[row][column]))
+    }
+
+    fn coefficient_planes(coefficients: &[[Real; 4]; 3]) -> [ProjectivePlane3; 3] {
+        std::array::from_fn(|row| {
+            ProjectivePlane3::new(
+                Point3::new(
+                    coefficients[row][0].clone(),
+                    coefficients[row][1].clone(),
+                    coefficients[row][2].clone(),
+                ),
+                coefficients[row][3].clone(),
+            )
+        })
+    }
+
+    fn assert_projectively_equal(left: &HomogeneousPoint3, right: &HomogeneousPoint3) {
+        let left = [&left.x, &left.y, &left.z, &left.w];
+        let right = [&right.x, &right.y, &right.z, &right.w];
+        for first in 0..4 {
+            for second in (first + 1)..4 {
+                assert_eq!(left[first] * right[second], left[second] * right[first]);
+            }
+        }
+    }
+
     #[test]
     fn three_plane_intersection_preserves_homogeneous_point() {
         let x_eq_1 = plane(1, 0, 0, -1);
@@ -359,6 +392,125 @@ mod tests {
         let point = intersect_three_planes(&x_eq_1, &y_eq_2, &z_eq_3);
         assert_eq!(point, HomogeneousPoint3::new(r(1), r(2), r(3), r(1)));
         assert_eq!(point.to_affine_point().unwrap(), p3(1, 2, 3));
+    }
+
+    #[test]
+    fn sparse_exact_row_matches_expanded_cofactors_for_every_position() {
+        const NUMERATORS: [[i64; 4]; 3] = [[2, 3, 5, 7], [11, 13, 17, 19], [23, 29, 31, 37]];
+        const ODD_DENOMINATORS: [u64; 4] = [3, 5, 7, 11];
+
+        for non_dyadic_retained_rows in [false, true] {
+            for sparse_row in 0..3 {
+                for sparse_column in 0..4 {
+                    let mut coefficients = std::array::from_fn(|row| {
+                        std::array::from_fn(|column| {
+                            let denominator = if non_dyadic_retained_rows {
+                                ODD_DENOMINATORS[(row + column) % 4]
+                            } else {
+                                1_u64 << ((row * 4 + column) % 8)
+                            };
+                            q(NUMERATORS[row][column], denominator)
+                        })
+                    });
+                    coefficients[sparse_row] = std::array::from_fn(|_| Real::zero());
+                    coefficients[sparse_row][sparse_column] = q(
+                        if (sparse_row + sparse_column) % 2 == 0 {
+                            41
+                        } else {
+                            -41
+                        },
+                        3,
+                    );
+
+                    let [x, y, z, w] = Real::exact_rational_sparse_homogeneous_plane_intersection3(
+                        coefficient_refs(&coefficients),
+                    )
+                    .expect("the exact matrix has a one-coefficient row");
+                    let direct = HomogeneousPoint3::new(x, y, z, w);
+                    let planes = coefficient_planes(&coefficients);
+                    let aggregate = intersect_three_planes(&planes[0], &planes[1], &planes[2]);
+                    let expanded =
+                        expanded_three_plane_intersection(coefficient_refs(&coefficients));
+
+                    assert_eq!(aggregate, direct);
+                    assert_eq!(aggregate, expanded);
+                    assert_projectively_equal(&aggregate, &expanded);
+                    assert!(
+                        expanded
+                            .coordinates()
+                            .into_iter()
+                            .any(|value| !value.exact_rational_ref().unwrap().is_zero())
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn nonsparse_or_symbolic_rows_use_the_expanded_fallback() {
+        let nonsparse = [
+            [r(1), r(2), r(3), r(4)],
+            [r(5), r(6), r(7), r(8)],
+            [r(9), r(10), r(11), r(12)],
+        ];
+        assert!(
+            Real::exact_rational_sparse_homogeneous_plane_intersection3(coefficient_refs(
+                &nonsparse
+            ))
+            .is_none()
+        );
+
+        let symbolic = [
+            [Real::pi(), Real::zero(), Real::zero(), Real::zero()],
+            [r(1), r(2), r(3), r(4)],
+            [r(5), r(7), r(11), r(13)],
+        ];
+        assert!(
+            Real::exact_rational_sparse_homogeneous_plane_intersection3(coefficient_refs(
+                &symbolic
+            ))
+            .is_none()
+        );
+        let planes = coefficient_planes(&symbolic);
+        let fallback = intersect_three_planes(&planes[0], &planes[1], &planes[2]);
+        assert!(
+            fallback
+                .coordinates()
+                .into_iter()
+                .any(|value| value.exact_rational_ref().is_none())
+        );
+    }
+
+    #[test]
+    fn sparse_intersection_handles_multiple_sparse_and_degenerate_rows() {
+        for (degenerate, coefficients) in [
+            (
+                false,
+                [
+                    [r(2), r(0), r(0), r(0)],
+                    [r(0), r(3), r(0), r(0)],
+                    [r(1), r(2), r(5), r(7)],
+                ],
+            ),
+            (
+                true,
+                [
+                    [r(2), r(0), r(0), r(0)],
+                    [r(1), r(3), r(5), r(7)],
+                    [r(2), r(6), r(10), r(14)],
+                ],
+            ),
+        ] {
+            let planes = coefficient_planes(&coefficients);
+            let aggregate = intersect_three_planes(&planes[0], &planes[1], &planes[2]);
+            let expanded = expanded_three_plane_intersection(coefficient_refs(&coefficients));
+            assert_eq!(aggregate, expanded);
+            assert_projectively_equal(&aggregate, &expanded);
+            if degenerate {
+                assert_eq!(aggregate, HomogeneousPoint3::new(r(0), r(0), r(0), r(0)));
+                assert_eq!(aggregate, expanded);
+            }
+        }
     }
 
     #[test]
