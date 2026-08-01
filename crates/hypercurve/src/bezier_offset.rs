@@ -1217,6 +1217,19 @@ impl BezierParallel2 {
         other: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
+        if let Some(Some(offset)) = self.data.certified_ph_offset.get() {
+            return Ok(
+                match offset
+                    .curve()
+                    .intersection_candidates_classified(other, policy)?
+                {
+                    Classification::Decided(candidates) => {
+                        Classification::Decided(parallel_candidates_from_rational(candidates))
+                    }
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                },
+            );
+        }
         Ok(self
             .intersection_candidate_system(other, policy)?
             .map(|system| {
@@ -1250,6 +1263,18 @@ impl BezierParallel2 {
                     ) {
                         return Ok(Classification::Decided(
                             BezierParallelIntersectionCandidateSystem2::projected(candidates, None),
+                        ));
+                    }
+                    if let Classification::Decided(RationalBezierIntersectionContacts2::Overlap(
+                        overlap,
+                    )) = offset
+                        .curve()
+                        .intersection_contacts_classified(other, policy)?
+                    {
+                        return Ok(Classification::Decided(
+                            BezierParallelIntersectionCandidateSystem2::overlaps(Arc::from([
+                                overlap,
+                            ])),
                         ));
                     }
                 }

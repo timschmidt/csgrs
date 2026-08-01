@@ -1951,6 +1951,10 @@ fn parallel_rational_contacts_partition_a_noninjective_parameter_component() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert!(matches!(
+            parallel.intersection_candidates(&target, &policy).unwrap(),
+            Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+        ));
         let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
         assert!(intersections.is_complete(), "{intersections:?}");
         assert!(intersections.contacts().is_empty());
