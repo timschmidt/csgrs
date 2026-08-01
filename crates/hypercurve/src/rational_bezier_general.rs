@@ -4512,13 +4512,10 @@ impl RationalBezier2 {
             self.retain_quadratic_conic_parameter_frame(policy);
         }
         let range = self.source_parameter_range();
-        let forward = compare_reals(range.start(), &Real::zero(), policy)
-            == Some(std::cmp::Ordering::Equal)
-            && compare_reals(range.end(), &Real::one(), policy) == Some(std::cmp::Ordering::Equal);
-        let reversed = compare_reals(range.start(), &Real::one(), policy)
-            == Some(std::cmp::Ordering::Equal)
-            && compare_reals(range.end(), &Real::zero(), policy) == Some(std::cmp::Ordering::Equal);
+        let forward = range.start() == &Real::zero() && range.end() == &Real::one();
+        let reversed = range.start() == &Real::one() && range.end() == &Real::zero();
         let retained_frame = self.data.lineage.root.quadratic_conic_parameter_frame.get();
+        let retained_subcurve_frame;
         let structural_frame;
         let ordered = if let Some(frame) = retained_frame
             && forward
@@ -4528,6 +4525,19 @@ impl RationalBezier2 {
             && reversed
         {
             [&frame[2], &frame[1], &frame[0]]
+        } else if let Some(frame) = retained_frame {
+            // The root frame and retained source range already certify this
+            // subcurve, so evaluate its quadratic blossom instead of re-proving reduction.
+            retained_subcurve_frame = [
+                quadratic_homogeneous_blossom(frame, range.start(), range.start()),
+                quadratic_homogeneous_blossom(frame, range.start(), range.end()),
+                quadratic_homogeneous_blossom(frame, range.end(), range.end()),
+            ];
+            [
+                &retained_subcurve_frame[0],
+                &retained_subcurve_frame[1],
+                &retained_subcurve_frame[2],
+            ]
         } else {
             structural_frame =
                 match exact_quadratic_homogeneous_reduction(self.homogeneous_controls(), policy) {
@@ -4923,6 +4933,22 @@ fn quadratic_conic_parameter_frame(curve: &RationalBezier2) -> &[HomogeneousPoin
                 .try_into()
                 .expect("quadratic curve has three homogeneous controls")
         })
+}
+
+fn quadratic_homogeneous_blossom(
+    frame: &[HomogeneousPoint2; 3],
+    first: &Real,
+    second: &Real,
+) -> HomogeneousPoint2 {
+    let one_minus_first = Real::one() - first;
+    let one_minus_second = Real::one() - second;
+    let first_scale = &one_minus_first * &one_minus_second;
+    let middle_scale = &one_minus_first * second + first * &one_minus_second;
+    let last_scale = first * second;
+    let mut point = frame[0].scaled(&first_scale);
+    point.add_scaled(&frame[1], &middle_scale);
+    point.add_scaled(&frame[2], &last_scale);
+    point
 }
 
 fn push_unique_parameter_overlap_contact(
