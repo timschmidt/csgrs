@@ -9,8 +9,8 @@ use crate::policy::{resolve_cached_evaluation, resolve_certified_operation};
 use crate::rational_bezier::RationalQuadraticCircle2;
 use crate::{
     CircularArc2, Classification, CurveContext, CurveError, CurveFamily2, CurveOperation2,
-    CurveOutcome, ExactCurveError, ExactCurveResult, Point2, RationalQuadraticBezier2, Real,
-    UncertaintyReason,
+    CurveOutcome, CurveResult, ExactCurveError, ExactCurveResult, Point2, RationalBezier2,
+    RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 
 /// Exact rational quadratic span from one circular-arc decomposition.
@@ -364,7 +364,118 @@ fn full_circle_quarter_points(arc: &CircularArc2) -> Vec<Point2> {
     ]
 }
 
-fn rational_minor_arc_span(
+pub(crate) fn rational_bezier_circular_arc(
+    curve: &RationalBezier2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<CircularArc2>>> {
+    let conic = match curve.retained_quadratic_representative(policy)? {
+        Classification::Decided(Some(conic)) => conic,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    rational_quadratic_circular_arc(&conic, policy)
+}
+
+pub(crate) fn rational_quadratic_circular_arc(
+    curve: &RationalQuadraticBezier2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<CircularArc2>>> {
+    if curve.common_nonzero_weight_sign(policy).is_none() {
+        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+    }
+    if let Some(circle) = curve.retained_circular_conic() {
+        let (radial_x, radial_y) = curve.start().delta_from(&circle.center);
+        let (tangent_x, tangent_y) = curve.control().delta_from(curve.start());
+        let tangent_cross = &radial_x * tangent_y - &radial_y * tangent_x;
+        let clockwise = match crate::classify::real_sign(&tangent_cross, policy) {
+            Some(RealSign::Positive) => false,
+            Some(RealSign::Negative) => true,
+            Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        return Ok(Classification::Decided(Some(
+            CircularArc2::new_with_certified_radius(
+                curve.start().clone(),
+                curve.end().clone(),
+                circle.center.clone(),
+                circle.radius_squared.clone(),
+                clockwise,
+                None,
+            ),
+        )));
+    }
+
+    let homogeneous =
+        |point: &Point2, weight: &Real| [weight * point.x(), weight * point.y(), weight.clone()];
+    let first = homogeneous(curve.start(), curve.start_weight());
+    let control = homogeneous(curve.control(), curve.control_weight());
+    let last = homogeneous(curve.end(), curve.end_weight());
+    let cross = |left: &[Real; 3], right: &[Real; 3]| {
+        [
+            &left[1] * &right[2] - &left[2] * &right[1],
+            &left[2] * &right[0] - &left[0] * &right[2],
+            &left[0] * &right[1] - &left[1] * &right[0],
+        ]
+    };
+    let lambda0 = cross(&control, &last);
+    let lambda1 = cross(&last, &first);
+    let lambda2 = cross(&first, &control);
+    let four = Real::from(4_i8);
+    let two = Real::from(2_i8);
+    let xx = &lambda1[0] * &lambda1[0] - &four * &lambda0[0] * &lambda2[0];
+    let xy = &two * &lambda1[0] * &lambda1[1]
+        - &four * (&lambda0[0] * &lambda2[1] + &lambda0[1] * &lambda2[0]);
+    let yy = &lambda1[1] * &lambda1[1] - &four * &lambda0[1] * &lambda2[1];
+    let x = &two * &lambda1[0] * &lambda1[2]
+        - &four * (&lambda0[0] * &lambda2[2] + &lambda0[2] * &lambda2[0]);
+    let y = &two * &lambda1[1] * &lambda1[2]
+        - &four * (&lambda0[1] * &lambda2[2] + &lambda0[2] * &lambda2[1]);
+    let constant = &lambda1[2] * &lambda1[2] - &four * &lambda0[2] * &lambda2[2];
+    match (
+        crate::classify::real_sign(&xx, policy),
+        crate::classify::real_sign(&(&xx - &yy), policy),
+        crate::classify::real_sign(&xy, policy),
+    ) {
+        (
+            Some(RealSign::Positive | RealSign::Negative),
+            Some(RealSign::Zero),
+            Some(RealSign::Zero),
+        ) => {}
+        (Some(_), Some(_), Some(_)) => return Ok(Classification::Decided(None)),
+        _ => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+    let denominator = &two * &xx;
+    let center = Point2::new(((-x) / &denominator)?, ((-y) / denominator)?);
+    let radius_squared = curve.start().distance_squared(&center);
+    let implicit_radius_squared =
+        center.x() * center.x() + center.y() * center.y() - ((constant / &xx)?);
+    match crate::classify::real_sign(&(radius_squared - implicit_radius_squared), policy) {
+        Some(RealSign::Zero) => {}
+        Some(RealSign::Positive | RealSign::Negative) => {
+            return Ok(Classification::Decided(None));
+        }
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+    let (radial_x, radial_y) = curve.start().delta_from(&center);
+    let (tangent_x, tangent_y) = curve.control().delta_from(curve.start());
+    let tangent_cross = &radial_x * tangent_y - &radial_y * tangent_x;
+    let clockwise = match crate::classify::real_sign(&tangent_cross, policy) {
+        Some(RealSign::Positive) => false,
+        Some(RealSign::Negative) => true,
+        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    Ok(Classification::Decided(Some(
+        CircularArc2::try_from_center(
+            curve.start().clone(),
+            curve.end().clone(),
+            center,
+            clockwise,
+        )?,
+    )))
+}
+
+pub(crate) fn rational_minor_arc_span(
     implicit_quadratic_conic: &Arc<[Real; 6]>,
     circular_conic: &Arc<RationalQuadraticCircle2>,
     endpoints: &[Point2],

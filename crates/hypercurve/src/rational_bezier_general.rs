@@ -4466,16 +4466,24 @@ impl RationalBezier2 {
                 }
             }
         }
-        Ok(Classification::Decided(Some(
-            RationalQuadraticBezier2::try_new(
-                controls[0].clone(),
-                controls[1].clone(),
-                controls[2].clone(),
-                ordered[0].weight.clone(),
-                ordered[1].weight.clone(),
-                ordered[2].weight.clone(),
-            )?,
-        )))
+        let representative = RationalQuadraticBezier2::try_new(
+            controls[0].clone(),
+            controls[1].clone(),
+            controls[2].clone(),
+            ordered[0].weight.clone(),
+            ordered[1].weight.clone(),
+            ordered[2].weight.clone(),
+        )?
+        .with_retained_conic_provenance(
+            self.data
+                .lineage
+                .root
+                .implicit_quadratic_conic
+                .get()
+                .cloned(),
+            self.data.lineage.root.circular_conic.get().cloned(),
+        );
+        Ok(Classification::Decided(Some(representative)))
     }
 
     fn polynomial_graph(
