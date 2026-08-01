@@ -445,8 +445,25 @@ pub(crate) fn rational_quadratic_circular_arc(
         (Some(_), Some(_), Some(_)) => return Ok(Classification::Decided(None)),
         _ => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
-    let denominator = &two * &xx;
-    let center = Point2::new(((-x) / &denominator)?, ((-y) / denominator)?);
+    let start_tangent = curve.control().delta_from(curve.start());
+    let end_tangent = curve.end().delta_from(curve.control());
+    let start_normal = (-start_tangent.1, start_tangent.0);
+    let end_normal = (-end_tangent.1, end_tangent.0);
+    let normal_cross = &start_normal.0 * &end_normal.1 - &start_normal.1 * &end_normal.0;
+    let center = if matches!(
+        crate::classify::real_sign(&normal_cross, policy),
+        Some(RealSign::Positive | RealSign::Negative)
+    ) {
+        let chord = curve.end().delta_from(curve.start());
+        let scale = ((&chord.0 * &end_normal.1 - &chord.1 * &end_normal.0) / normal_cross)?;
+        Point2::new(
+            curve.start().x() + &scale * &start_normal.0,
+            curve.start().y() + scale * &start_normal.1,
+        )
+    } else {
+        let denominator = &two * &xx;
+        Point2::new(((-x) / &denominator)?, ((-y) / denominator)?)
+    };
     let radius_squared = curve.start().distance_squared(&center);
     let implicit_radius_squared =
         center.x() * center.x() + center.y() * center.y() - ((constant / &xx)?);
@@ -518,8 +535,8 @@ fn contextualize_arc_error(error: ExactCurveError) -> ExactCurveError {
 mod tests {
     use std::sync::Arc;
 
-    use super::CircularArc2;
-    use crate::{CurveContext, Point2, Real};
+    use super::{CircularArc2, rational_quadratic_circular_arc};
+    use crate::{Classification, CurveContext, Point2, RationalQuadraticBezier2, Real};
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
@@ -562,5 +579,26 @@ mod tests {
                 span.curve().retained_implicit_quadratic_conic().unwrap(),
             ));
         }
+    }
+
+    #[test]
+    fn independent_algebraic_quarter_circle_recovers_minimal_center() {
+        let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
+        let curve = RationalQuadraticBezier2::try_unit_end_weights(
+            point(1, 0),
+            point(1, 1),
+            point(0, 1),
+            half_sqrt_two,
+        )
+        .unwrap();
+
+        let Classification::Decided(Some(arc)) =
+            rational_quadratic_circular_arc(&curve, &CurveContext::STRICT).unwrap()
+        else {
+            panic!("the canonical algebraic quarter circle must be recognized strictly")
+        };
+        assert_eq!(arc.center(), &point(0, 0));
+        assert_eq!(arc.radius_squared_ref(), &Real::one());
+        assert!(!arc.is_clockwise());
     }
 }

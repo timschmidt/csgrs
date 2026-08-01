@@ -373,6 +373,23 @@ fn bench_exact_bezier_parallel_evaluation(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_exact_bezier_parallel_construction(iterations: u32) -> CurveResult<()> {
+    let source = CubicBezier2::new(p(0, 0), p(1, 2), p(3, -1), p(4, 0));
+    let distance = q(1, 10);
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..iterations {
+        let parallel = source.parallel_left(distance.clone())?;
+        checksum += black_box(parallel.distance().to_f64_lossy().is_some() as usize);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_parallel_exact_construct: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_bezier_parallel_cusp_isolation(iterations: u32) -> CurveResult<()> {
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), s(0)), p(1, 1));
     let parallel = source.parallel_left(s(1))?;
@@ -507,6 +524,21 @@ fn bench_curve_region_bezier_offset_lanes(
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if let Ok(group) = std::env::var("HYPERCURVE_OFFSET_BENCH_GROUP") {
+        match group.as_str() {
+            "bezier-construct" => bench_exact_bezier_parallel_construction(100_000)?,
+            "bezier-eval" => bench_exact_bezier_parallel_evaluation(10_000)?,
+            "bezier-ph" => bench_exact_ph_offset_construction(1_000)?,
+            "bezier-carrier" => {
+                bench_exact_bezier_parallel_construction(100_000)?;
+                bench_exact_bezier_parallel_evaluation(10_000)?;
+                bench_exact_ph_offset_construction(1_000)?;
+            }
+            _ => panic!("unknown HYPERCURVE_OFFSET_BENCH_GROUP={group:?}"),
+        }
+        return Ok(());
+    }
+
     bench_line_offset(100_000)?;
 
     let clockwise_arc = Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(-1))?);
@@ -543,6 +575,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     bench_contour_joined_offset(100_000)?;
     bench_contour_checked_offset(100_000)?;
     bench_contour_checked_offset_evidence(100_000)?;
+    bench_exact_bezier_parallel_construction(100_000)?;
     bench_exact_bezier_parallel_evaluation(10_000)?;
     bench_bezier_parallel_cusp_isolation(100)?;
     bench_exact_ph_offset_construction(1_000)?;

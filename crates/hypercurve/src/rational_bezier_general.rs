@@ -1111,6 +1111,12 @@ impl RationalBezier2 {
         if in_closed_unit_interval(parameter, policy) != Some(true) {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         }
+        if parameter.zero_status() == ZeroKnowledge::Zero {
+            return Classification::Decided(self.start().clone());
+        }
+        if (Real::one() - parameter).zero_status() == ZeroKnowledge::Zero {
+            return Classification::Decided(self.end().clone());
+        }
         if self.degree() > MAX_RETAINED_EVALUATION_POWER_DEGREE
             && self.data.homogeneous_power_basis.get().is_none()
         {
@@ -3305,23 +3311,25 @@ impl RationalBezier2 {
         })
     }
 
-    fn homogeneous_power_basis(&self) -> CurveResult<&RationalParametricCurve2> {
+    pub(crate) fn homogeneous_power_basis(&self) -> CurveResult<&RationalParametricCurve2> {
         if let Some(power_basis) = self.data.homogeneous_power_basis.get() {
             return Ok(power_basis);
         }
-        let homogeneous = self.homogeneous_controls();
         let x = bernstein_to_power_coefficients(
-            homogeneous.iter().map(|point| point.x.clone()).collect(),
-        )?;
-        let y = bernstein_to_power_coefficients(
-            homogeneous.iter().map(|point| point.y.clone()).collect(),
-        )?;
-        let weight = bernstein_to_power_coefficients(
-            homogeneous
+            self.control_points()
                 .iter()
-                .map(|point| point.weight.clone())
+                .zip(self.weights())
+                .map(|(point, weight)| point.x() * weight)
                 .collect(),
         )?;
+        let y = bernstein_to_power_coefficients(
+            self.control_points()
+                .iter()
+                .zip(self.weights())
+                .map(|(point, weight)| point.y() * weight)
+                .collect(),
+        )?;
+        let weight = bernstein_to_power_coefficients(self.weights().to_vec())?;
         let _ = self
             .data
             .homogeneous_power_basis

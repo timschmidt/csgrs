@@ -59,6 +59,16 @@ impl LineSeg2 {
 }
 
 impl CircularArc2 {
+    pub(crate) fn left_offset_radius_scale(&self, distance: &Real) -> CurveResult<Real> {
+        let radius = self.radius_squared().sqrt()?;
+        if self.is_clockwise() {
+            (&radius + distance) / radius
+        } else {
+            (&radius - distance) / radius
+        }
+        .map_err(Into::into)
+    }
+
     /// Returns the constant-distance arc on this arc's left side.
     ///
     /// Counter-clockwise arcs have their left normal on the circle interior, so
@@ -73,14 +83,9 @@ impl CircularArc2 {
         distance: Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        let radius = self.radius_squared().sqrt()?;
-        let offset_radius = if self.is_clockwise() {
-            &radius + &distance
-        } else {
-            &radius - &distance
-        };
+        let radius_scale = self.left_offset_radius_scale(&distance)?;
 
-        match real_sign(&offset_radius, policy) {
+        match real_sign(&radius_scale, policy) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Zero | RealSign::Negative) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -88,7 +93,6 @@ impl CircularArc2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
 
-        let radius_scale = (offset_radius / &radius)?;
         let offset = Self::try_from_center_with_bulge(
             scale_from_center(self.start(), self.center(), &radius_scale),
             scale_from_center(self.end(), self.center(), &radius_scale),
@@ -1042,7 +1046,7 @@ fn outline_segments_with_square_caps(
     Ok(Classification::Decided(segments))
 }
 
-fn scale_from_center(point: &Point2, center: &Point2, scale: &Real) -> Point2 {
+pub(crate) fn scale_from_center(point: &Point2, center: &Point2, scale: &Real) -> Point2 {
     let radius = point.delta_from(center);
     Point2::new(
         center.x() + (&radius.0 * scale),

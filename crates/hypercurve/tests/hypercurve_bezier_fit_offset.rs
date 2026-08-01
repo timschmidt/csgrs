@@ -3,7 +3,7 @@ use hypercurve::{
     BezierLineImageFitRelation, BezierOffsetCandidate2, BezierParallelApproximationCurve2,
     BezierParallelVerificationOptions, BezierParameter2, Classification, CubicBezier2, Curve2,
     CurveContext, CurveError, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, Point2,
-    QuadraticBezier2, Rational, RationalQuadraticBezier2, Real,
+    QuadraticBezier2, Rational, RationalBezier2, RationalQuadraticBezier2, Real,
 };
 use num::bigint::{BigInt, BigUint};
 use proptest::prelude::*;
@@ -354,7 +354,7 @@ fn cubic_pythagorean_hodograph_parallel_materializes_exact_rational_bezier() {
         Classification::Uncertain(reason) => panic!("PH recognition was uncertain: {reason:?}"),
     };
     assert_eq!(exact.source_degree(), 3);
-    assert!(exact.rational_degree() >= 5);
+    assert_eq!(exact.rational_degree(), 5);
     assert_eq!(exact.speed_polynomial(), &[r(1), r(0), r(1)]);
     assert!(
         exact
@@ -374,6 +374,263 @@ fn cubic_pythagorean_hodograph_parallel_materializes_exact_rational_bezier() {
         let rational = exact.curve().point_at(&parameter, &policy()).unwrap();
         assert_eq!(rational, analytic);
     }
+}
+
+#[test]
+fn nonuniform_rational_line_parallel_materializes_exactly() {
+    let source =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(2, 0)], vec![r(1), r(2), r(3)]).unwrap();
+    let parallel = source.parallel_left(r(2)).unwrap();
+    let exact = match parallel
+        .exact_pythagorean_hodograph_offset(&policy())
+        .unwrap()
+    {
+        Classification::Decided(Some(exact)) => exact,
+        Classification::Decided(None) => panic!("rational line was not recognized as PH"),
+        Classification::Uncertain(reason) => {
+            panic!("rational line PH recognition was uncertain: {reason:?}")
+        }
+    };
+
+    for parameter in [r(0), q(1, 2), r(1)] {
+        let analytic = match parallel.point_at(&parameter, &policy()).unwrap() {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                panic!("rational analytic parallel was uncertain: {reason:?}")
+            }
+        };
+        let materialized = exact.curve().point_at(&parameter, &policy()).unwrap();
+        assert_eq!(analytic, materialized);
+        assert_eq!(analytic.y(), &r(2));
+    }
+    assert_eq!(
+        parallel.point_at(&q(1, 2), &policy()).unwrap(),
+        Classification::Decided(Point2::new(q(5, 4), r(2)))
+    );
+}
+
+#[test]
+fn rational_quarter_circle_parallel_materializes_concentric_exact_curve() {
+    // Homogeneous power form `(1-t^2, 2t, 1+t^2)` traces the unit-circle
+    // quarter. Its Bernstein weights `[1, 1, 2]` deliberately exercise a
+    // nonuniform rational parameterization without an approximate scalar.
+    let source =
+        RationalQuadraticBezier2::try_new(p(1, 0), p(1, 1), p(0, 1), r(1), r(1), r(2)).unwrap();
+    let parallel = source.parallel_left(q(1, 2)).unwrap();
+    let exact = match parallel
+        .exact_pythagorean_hodograph_offset(&policy())
+        .unwrap()
+    {
+        Classification::Decided(Some(exact)) => exact,
+        Classification::Decided(None) => panic!("rational circle was not recognized as PH"),
+        Classification::Uncertain(reason) => {
+            panic!("rational circle PH recognition was uncertain: {reason:?}")
+        }
+    };
+
+    for parameter in [r(0), q(1, 2), r(1)] {
+        let analytic = match parallel.point_at(&parameter, &policy()).unwrap() {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                panic!("rational circle parallel was uncertain: {reason:?}")
+            }
+        };
+        assert_eq!(
+            exact.curve().point_at(&parameter, &policy()).unwrap(),
+            analytic
+        );
+        assert_eq!(
+            analytic.x() * analytic.x() + analytic.y() * analytic.y(),
+            q(1, 4)
+        );
+    }
+}
+
+#[test]
+fn noncircular_rational_ph_parallel_preserves_parameter_and_derivative_exactly() {
+    // This is the noncircular polynomial PH curve
+    // `P(t) = (t - t^3/3, t^2)` represented with the nonconstant projective
+    // factor `W(t) = 1 + t`. Its homogeneous hodograph has speed
+    // `(1 + t)^2 (1 + t^2)`.
+    let source = RationalBezier2::try_new(
+        vec![
+            p(0, 0),
+            Point2::new(q(1, 5), r(0)),
+            Point2::new(q(4, 9), q(1, 9)),
+            Point2::new(q(2, 3), q(3, 7)),
+            Point2::new(q(2, 3), r(1)),
+        ],
+        vec![r(1), q(5, 4), q(3, 2), q(7, 4), r(2)],
+    )
+    .unwrap();
+    let parallel = source.parallel_left(q(1, 10)).unwrap();
+    let analysis = match parallel.singularity_analysis(&policy()).unwrap() {
+        Classification::Decided(analysis) => analysis,
+        Classification::Uncertain(reason) => {
+            panic!("rational PH singularity analysis was uncertain: {reason:?}")
+        }
+    };
+    assert!(analysis.source_is_regular());
+    assert!(analysis.parallel_is_cusp_free());
+
+    let exact = match parallel
+        .exact_pythagorean_hodograph_offset(&policy())
+        .unwrap()
+    {
+        Classification::Decided(Some(exact)) => exact,
+        Classification::Decided(None) => panic!("noncircular rational PH curve was rejected"),
+        Classification::Uncertain(reason) => {
+            panic!("noncircular rational PH proof was uncertain: {reason:?}")
+        }
+    };
+    let midpoint = q(1, 2);
+    let analytic_point = match parallel.point_at(&midpoint, &policy()).unwrap() {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            panic!("rational PH point was uncertain: {reason:?}")
+        }
+    };
+    assert_eq!(analytic_point, Point2::new(q(227, 600), q(31, 100)));
+    assert_eq!(
+        exact.curve().point_at(&midpoint, &policy()).unwrap(),
+        analytic_point
+    );
+
+    let analytic_derivative = match parallel.derivative_at(&midpoint, &policy()).unwrap() {
+        Classification::Decided(derivative) => derivative,
+        Classification::Uncertain(reason) => {
+            panic!("rational PH derivative was uncertain: {reason:?}")
+        }
+    };
+    assert_eq!(analytic_derivative.dx(), &q(327, 500));
+    assert_eq!(analytic_derivative.dy(), &q(109, 125));
+    assert_eq!(
+        exact.curve().derivative_at(&midpoint, &policy()).unwrap(),
+        analytic_derivative
+    );
+}
+
+#[test]
+fn exact_ph_materialization_has_no_fixed_bernstein_elevation_limit() {
+    // Let `a=t-1/2` and `b=1/16`. The cubic below has hodograph
+    // `(a^2-b^2, 2ab)` and speed `(t-1/2)^2 + 1/256`. The speed is strictly
+    // positive, but its Bernstein coefficients do not all become positive
+    // until degree 65, well beyond the former fixed +32 search window.
+    let source = CubicBezier2::new(
+        p(0, 0),
+        Point2::new(q(21, 256), q(-1, 48)),
+        Point2::new(q(-1, 384), q(-1, 48)),
+        Point2::new(q(61, 768), r(0)),
+    );
+    let parallel = source.parallel_left(q(1, 10)).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let exact = match parallel
+            .exact_pythagorean_hodograph_offset(&policy)
+            .unwrap()
+        {
+            Classification::Decided(Some(exact)) => exact,
+            Classification::Decided(None) => panic!("strictly regular PH curve was rejected"),
+            Classification::Uncertain(reason) => {
+                panic!("PH degree elevation was uncertain: {reason:?}")
+            }
+        };
+        assert_eq!(exact.rational_degree(), 65);
+        for parameter in [r(0), q(1, 2), r(1)] {
+            let analytic = match parallel.point_at(&parameter, &policy).unwrap() {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    panic!("analytic PH parallel was uncertain: {reason:?}")
+                }
+            };
+            assert_eq!(
+                exact.curve().point_at(&parameter, &policy).unwrap(),
+                analytic
+            );
+        }
+    }
+}
+
+#[test]
+fn symmetric_algebraic_quarter_circle_parallel_is_exact_under_both_policies() {
+    let half_sqrt_two = (r(2).sqrt().unwrap() / r(2)).unwrap();
+    let source =
+        RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), half_sqrt_two)
+            .unwrap();
+    let parallel = source.parallel_left(q(1, 2)).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let exact = match parallel
+            .exact_pythagorean_hodograph_offset(&policy)
+            .unwrap()
+        {
+            Classification::Decided(Some(exact)) => exact,
+            Classification::Decided(None) => panic!("algebraic rational circle was not PH"),
+            Classification::Uncertain(reason) => {
+                panic!("algebraic rational circle PH proof was uncertain: {reason:?}")
+            }
+        };
+
+        assert_eq!(exact.rational_degree(), 2);
+        assert_eq!(
+            exact.curve().control_points(),
+            &[
+                Point2::new(q(1, 2), r(0)),
+                Point2::new(q(1, 2), q(1, 2)),
+                Point2::new(r(0), q(1, 2))
+            ]
+        );
+        assert_eq!(
+            exact.curve().weights(),
+            &[r(1), (r(2).sqrt().unwrap() / r(2)).unwrap(), r(1)]
+        );
+        assert_eq!(
+            exact.curve().point_at(&r(0), &policy).unwrap(),
+            Point2::new(q(1, 2), r(0))
+        );
+        assert_eq!(
+            exact.curve().point_at(&r(1), &policy).unwrap(),
+            Point2::new(r(0), q(1, 2))
+        );
+    }
+}
+
+#[test]
+fn circular_parallel_materializes_radius_collapse_and_reversal_exactly() {
+    let source =
+        RationalQuadraticBezier2::try_new(p(1, 0), p(1, 1), p(0, 1), r(1), r(1), r(2)).unwrap();
+    for (distance, expected) in [
+        (r(1), vec![p(0, 0), p(0, 0), p(0, 0)]),
+        (r(2), vec![p(-1, 0), p(-1, -1), p(0, -1)]),
+    ] {
+        let parallel = source.parallel_left(distance).unwrap();
+        let exact = match parallel
+            .exact_pythagorean_hodograph_offset(&CurveContext::STRICT)
+            .unwrap()
+        {
+            Classification::Decided(Some(exact)) => exact,
+            Classification::Decided(None) => panic!("circular parallel was not exact"),
+            Classification::Uncertain(reason) => {
+                panic!("circular parallel materialization was uncertain: {reason:?}")
+            }
+        };
+        assert_eq!(exact.rational_degree(), 2);
+        assert_eq!(exact.curve().control_points(), expected);
+        assert_eq!(exact.curve().weights(), &[r(1), r(1), r(2)]);
+    }
+}
+
+#[test]
+fn rational_parallel_rejects_projective_denominator_boundary() {
+    let source =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 1), p(2, 0)], vec![r(1), r(-1), r(1)]).unwrap();
+    let analysis = source
+        .parallel_left(r(1))
+        .unwrap()
+        .singularity_analysis(&policy())
+        .unwrap();
+    assert_eq!(
+        analysis,
+        Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+    );
 }
 
 #[test]
@@ -708,6 +965,29 @@ fn certified_curve_path_parallel_preserves_smooth_exact_connections() {
     for pair in parallel.path().curves().windows(2) {
         assert_eq!(pair[0].end(), pair[1].start());
     }
+}
+
+#[test]
+fn certified_curve_path_promotes_rational_ph_span_without_chords() {
+    let source =
+        RationalQuadraticBezier2::try_new(p(1, 0), p(1, 1), p(0, 1), r(1), r(1), r(2)).unwrap();
+    let path = CurvePath2::try_new(vec![Curve2::from(source)]).unwrap();
+    let options = BezierParallelVerificationOptions::try_new(q(1, 20), 12, &policy()).unwrap();
+    let parallel = match path
+        .approximate_parallel_blend2d_certified(q(1, 2), &options, &policy())
+        .unwrap()
+    {
+        Classification::Decided(parallel) => parallel,
+        Classification::Uncertain(reason) => panic!("rational PH path offset failed: {reason:?}"),
+    };
+    assert_eq!(parallel.source_curve_count(), 1);
+    assert_eq!(parallel.exact_source_curve_count(), 1);
+    assert_eq!(parallel.approximated_source_curve_count(), 0);
+    assert_eq!(parallel.output_curve_count(), 1);
+    assert!(matches!(
+        parallel.path().curves()[0].geometry(),
+        hypercurve::CurveGeometry2::RationalBezier(_)
+    ));
 }
 
 #[test]

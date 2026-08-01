@@ -1,7 +1,7 @@
-//! Certified staged offsets for polynomial Bezier curves.
+//! Certified staged offsets for polynomial and rational Bezier curves.
 //!
 //! General parallels remain retained analytic expressions because they are not
-//! finite polynomial Beziers. Exact source and offset cusps are isolated before
+//! generally finite rational Beziers. Exact source and offset cusps are isolated before
 //! construction. Line images and Pythagorean hodographs materialize exactly;
 //! other regular spans use Blend2D degree reduction and Levien-style tangent
 //! cubics only as candidates, with a conservative same-parameter/Hausdorff
@@ -13,6 +13,8 @@
 //! simplification analyses and Blend2D's exact same-parameter degree-reduction
 //! identities. Hypercurve deliberately replaces their sampling/error heuristics
 //! with exact-scalar interval certification at the acceptance boundary.
+
+use std::sync::{Arc, OnceLock};
 
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 
@@ -27,32 +29,62 @@ use crate::{
     RationalBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 
-/// Polynomial Bezier source retained by an exact parallel evaluator.
 #[derive(Clone, Debug, PartialEq)]
 enum BezierParallelSource2 {
     Quadratic(QuadraticBezier2),
     Cubic(CubicBezier2),
+    Rational(RationalBezier2),
 }
 
-/// Exact analytic parallel of a polynomial Bezier curve.
+#[derive(Debug)]
+struct BezierParallelData2 {
+    source: BezierParallelSource2,
+    distance: Real,
+    polynomial_power_basis: OnceLock<(Vec<Real>, Vec<Real>)>,
+    differential: OnceLock<BezierParallelDifferential2>,
+}
+
+#[derive(Debug)]
+struct BezierParallelDifferential2 {
+    tangent_x: Vec<Real>,
+    tangent_y: Vec<Real>,
+    tangent_derivative_x: Vec<Real>,
+    tangent_derivative_y: Vec<Real>,
+}
+
+/// Exact analytic parallel of a polynomial or rational Bezier curve.
 ///
-/// A general parallel is not itself a polynomial Bezier. This carrier retains
+/// A general parallel is not itself a finite rational Bezier. This compact,
+/// clone-shared carrier retains
 /// the exact expression `P(t) + d * left_normal(P'(t))`; fitted Beziers are
 /// separate approximation products and can therefore be verified against this
 /// object without confusing exact scalar coordinates with exact curve image.
-#[derive(Clone, Debug, PartialEq)]
+/// Polynomial sources retain their native compact representation; rational
+/// sources use homogeneous coordinates. The tangent numerator and its
+/// derivative are built lazily and shared by every clone.
+#[derive(Clone)]
 pub struct BezierParallel2 {
-    source: BezierParallelSource2,
-    distance: Real,
-    source_x: Vec<Real>,
-    source_y: Vec<Real>,
-    derivative_x: Vec<Real>,
-    derivative_y: Vec<Real>,
-    second_derivative_x: Vec<Real>,
-    second_derivative_y: Vec<Real>,
+    data: Arc<BezierParallelData2>,
 }
 
-/// Exact rational parallel certified from a polynomial Pythagorean hodograph.
+impl std::fmt::Debug for BezierParallel2 {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("BezierParallel2")
+            .field("source", &self.data.source)
+            .field("distance", &self.data.distance)
+            .finish()
+    }
+}
+
+impl PartialEq for BezierParallel2 {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data)
+            || (self.data.source == other.data.source && self.data.distance == other.data.distance)
+    }
+}
+
+/// Exact rational parallel certified from a homogeneous Pythagorean hodograph.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CertifiedPythagoreanHodographOffset2 {
     curve: RationalBezier2,
@@ -355,12 +387,12 @@ impl CertifiedPythagoreanHodographOffset2 {
         &self.curve
     }
 
-    /// Returns the polynomial whose square is exactly `P' dot P'`.
+    /// Returns `sigma`, where the homogeneous tangent numerator satisfies `H dot H = sigma^2`.
     pub fn speed_polynomial(&self) -> &[Real] {
         &self.speed_polynomial
     }
 
-    /// Returns the polynomial source degree.
+    /// Returns the homogeneous source degree.
     pub const fn source_degree(&self) -> usize {
         self.source_degree
     }
@@ -418,51 +450,106 @@ impl BezierParallelSingularityAnalysis2 {
 }
 
 impl BezierParallel2 {
-    fn from_controls(
-        source: BezierParallelSource2,
-        controls: &[&Point2],
-        distance: Real,
-    ) -> CurveResult<Self> {
-        let x = bernstein_to_power_coefficients(
-            controls.iter().map(|point| point.x().clone()).collect(),
-        )?;
-        let y = bernstein_to_power_coefficients(
-            controls.iter().map(|point| point.y().clone()).collect(),
-        )?;
-        let derivative_x = polynomial_derivative(&x);
-        let derivative_y = polynomial_derivative(&y);
-        let second_derivative_x = polynomial_derivative(&derivative_x);
-        let second_derivative_y = polynomial_derivative(&derivative_y);
-        Ok(Self {
-            source,
-            distance,
-            source_x: x,
-            source_y: y,
-            derivative_x,
-            derivative_y,
-            second_derivative_x,
-            second_derivative_y,
-        })
-    }
-
-    /// Returns the signed distance measured along the source's left normal.
-    pub const fn distance(&self) -> &Real {
-        &self.distance
-    }
-
-    /// Returns the retained quadratic source when this is a quadratic parallel.
-    pub const fn quadratic_source(&self) -> Option<&QuadraticBezier2> {
-        match &self.source {
-            BezierParallelSource2::Quadratic(source) => Some(source),
-            BezierParallelSource2::Cubic(_) => None,
+    fn from_source(source: BezierParallelSource2, distance: Real) -> Self {
+        Self {
+            data: Arc::new(BezierParallelData2 {
+                source,
+                distance,
+                polynomial_power_basis: OnceLock::new(),
+                differential: OnceLock::new(),
+            }),
         }
     }
 
-    /// Returns the retained cubic source when this is a cubic parallel.
-    pub const fn cubic_source(&self) -> Option<&CubicBezier2> {
-        match &self.source {
-            BezierParallelSource2::Quadratic(_) => None,
-            BezierParallelSource2::Cubic(source) => Some(source),
+    /// Returns the degree of the retained source span.
+    pub fn source_degree(&self) -> usize {
+        match &self.data.source {
+            BezierParallelSource2::Quadratic(_) => 2,
+            BezierParallelSource2::Cubic(_) => 3,
+            BezierParallelSource2::Rational(source) => source.degree(),
+        }
+    }
+
+    fn polynomial_power_basis(&self) -> CurveResult<&(Vec<Real>, Vec<Real>)> {
+        if let Some(power_basis) = self.data.polynomial_power_basis.get() {
+            return Ok(power_basis);
+        }
+        let power_basis = match &self.data.source {
+            BezierParallelSource2::Quadratic(source) => {
+                polynomial_control_power_basis(&source.control_points())?
+            }
+            BezierParallelSource2::Cubic(source) => {
+                polynomial_control_power_basis(&source.control_points())?
+            }
+            BezierParallelSource2::Rational(_) => {
+                return Err(CurveError::Topology(
+                    "rational parallel requested a polynomial source basis".to_owned(),
+                ));
+            }
+        };
+        let _ = self.data.polynomial_power_basis.set(power_basis);
+        Ok(self
+            .data
+            .polynomial_power_basis
+            .get()
+            .expect("parallel polynomial basis was initialized"))
+    }
+
+    fn differential(&self) -> CurveResult<&BezierParallelDifferential2> {
+        if let Some(differential) = self.data.differential.get() {
+            return Ok(differential);
+        }
+        let (tangent_x, tangent_y) = match &self.data.source {
+            BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => {
+                let (source_x, source_y) = self.polynomial_power_basis()?;
+                (
+                    polynomial_derivative(source_x),
+                    polynomial_derivative(source_y),
+                )
+            }
+            BezierParallelSource2::Rational(source) => {
+                let source = source.homogeneous_power_basis()?;
+                let x_numerator = polynomial_trim_structural_zeros(source.x_numerator.clone());
+                let y_numerator = polynomial_trim_structural_zeros(source.y_numerator.clone());
+                let weight = polynomial_trim_structural_zeros(source.weight.clone());
+                let x_derivative = polynomial_derivative(&x_numerator);
+                let y_derivative = polynomial_derivative(&y_numerator);
+                let weight_derivative = polynomial_derivative(&weight);
+                (
+                    polynomial_subtract(
+                        &polynomial_multiply(&x_derivative, &weight),
+                        &polynomial_multiply(&x_numerator, &weight_derivative),
+                    ),
+                    polynomial_subtract(
+                        &polynomial_multiply(&y_derivative, &weight),
+                        &polynomial_multiply(&y_numerator, &weight_derivative),
+                    ),
+                )
+            }
+        };
+        let differential = BezierParallelDifferential2 {
+            tangent_derivative_x: polynomial_derivative(&tangent_x),
+            tangent_derivative_y: polynomial_derivative(&tangent_y),
+            tangent_x,
+            tangent_y,
+        };
+        let _ = self.data.differential.set(differential);
+        Ok(self
+            .data
+            .differential
+            .get()
+            .expect("parallel differential was initialized"))
+    }
+
+    /// Returns the signed distance measured along the source's left normal.
+    pub fn distance(&self) -> &Real {
+        &self.data.distance
+    }
+
+    fn rational_source(&self) -> Option<&RationalBezier2> {
+        match &self.data.source {
+            BezierParallelSource2::Rational(source) => Some(source),
+            BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => None,
         }
     }
 
@@ -477,12 +564,44 @@ impl BezierParallel2 {
             Some(false) => return Err(CurveError::InvalidBezierParameter),
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
-        let source_point = self.source_point_at(parameter.clone());
-        if real_sign(&self.distance, policy) == Some(RealSign::Zero) {
-            return Ok(Classification::Decided(source_point));
+        if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
+            return Ok(match &self.data.source {
+                BezierParallelSource2::Quadratic(source) => {
+                    Classification::Decided(source.point_at(parameter.clone()))
+                }
+                BezierParallelSource2::Cubic(source) => {
+                    Classification::Decided(source.point_at(parameter.clone()))
+                }
+                BezierParallelSource2::Rational(source) => {
+                    source.point_at_classified(parameter, policy)
+                }
+            });
         }
-        let derivative = self.source_derivative_at(parameter);
-        let speed_squared = derivative.dx() * derivative.dx() + derivative.dy() * derivative.dy();
+        let differential = self.differential()?;
+        let source_point = if let Some(source) = self.rational_source() {
+            let source = source.homogeneous_power_basis()?;
+            let weight = polynomial_evaluate(&source.weight, parameter);
+            match real_sign(&weight, policy) {
+                Some(RealSign::Positive | RealSign::Negative) => {}
+                Some(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            Point2::new(
+                (polynomial_evaluate(&source.x_numerator, parameter) / &weight)?,
+                (polynomial_evaluate(&source.y_numerator, parameter) / weight)?,
+            )
+        } else {
+            let (source_x, source_y) = self.polynomial_power_basis()?;
+            Point2::new(
+                polynomial_evaluate(source_x, parameter),
+                polynomial_evaluate(source_y, parameter),
+            )
+        };
+        let tangent_x = polynomial_evaluate(&differential.tangent_x, parameter);
+        let tangent_y = polynomial_evaluate(&differential.tangent_y, parameter);
+        let speed_squared = &tangent_x * &tangent_x + &tangent_y * &tangent_y;
         match real_sign(&speed_squared, policy) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Zero) => {
@@ -496,11 +615,11 @@ impl BezierParallel2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
         let speed = speed_squared.sqrt()?;
-        let normal_x = ((Real::zero() - derivative.dy()) / &speed)?;
-        let normal_y = (derivative.dx().clone() / &speed)?;
+        let normal_x = ((Real::zero() - &tangent_y) / &speed)?;
+        let normal_y = (tangent_x / &speed)?;
         Ok(Classification::Decided(source_point.translated(
-            &self.distance * normal_x,
-            &self.distance * normal_y,
+            self.distance() * normal_x,
+            self.distance() * normal_y,
         )))
     }
 
@@ -515,12 +634,42 @@ impl BezierParallel2 {
             Some(false) => return Err(CurveError::InvalidBezierParameter),
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
-        let derivative = self.source_derivative_at(parameter);
-        if real_sign(&self.distance, policy) == Some(RealSign::Zero) {
-            return Ok(Classification::Decided(derivative));
+        if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
+            return match &self.data.source {
+                BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => {
+                    let differential = self.differential()?;
+                    Ok(Classification::Decided(CurveDerivative2::new(
+                        polynomial_evaluate(&differential.tangent_x, parameter),
+                        polynomial_evaluate(&differential.tangent_y, parameter),
+                    )))
+                }
+                BezierParallelSource2::Rational(source) => {
+                    Ok(source.derivative_at_classified(parameter, policy))
+                }
+            };
         }
-        let second = self.source_second_derivative_at(parameter);
-        let speed_squared = derivative.dx() * derivative.dx() + derivative.dy() * derivative.dy();
+        let differential = self.differential()?;
+        let weight = if let Some(source) = self.rational_source() {
+            let source = source.homogeneous_power_basis()?;
+            let weight = polynomial_evaluate(&source.weight, parameter);
+            match real_sign(&weight, policy) {
+                Some(RealSign::Positive | RealSign::Negative) => {}
+                Some(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            Some(weight)
+        } else {
+            None
+        };
+        let tangent_x = polynomial_evaluate(&differential.tangent_x, parameter);
+        let tangent_y = polynomial_evaluate(&differential.tangent_y, parameter);
+        let tangent_derivative_x =
+            polynomial_evaluate(&differential.tangent_derivative_x, parameter);
+        let tangent_derivative_y =
+            polynomial_evaluate(&differential.tangent_derivative_y, parameter);
+        let speed_squared = &tangent_x * &tangent_x + &tangent_y * &tangent_y;
         match real_sign(&speed_squared, policy) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Zero) => {
@@ -535,15 +684,24 @@ impl BezierParallel2 {
         }
         let speed = speed_squared.clone().sqrt()?;
         let speed_cubed = &speed_squared * &speed;
-        let velocity_acceleration_dot =
-            derivative.dx() * second.dx() + derivative.dy() * second.dy();
-        let normal_derivative_x = ((Real::zero() - second.dy()) / &speed)?
-            + ((derivative.dy() * &velocity_acceleration_dot) / &speed_cubed)?;
-        let normal_derivative_y = (second.dx().clone() / &speed)?
-            - ((derivative.dx() * velocity_acceleration_dot) / speed_cubed)?;
+        let tangent_dot_derivative =
+            &tangent_x * &tangent_derivative_x + &tangent_y * &tangent_derivative_y;
+        let normal_derivative_x = ((Real::zero() - &tangent_derivative_y) / &speed)?
+            + ((&tangent_y * &tangent_dot_derivative) / &speed_cubed)?;
+        let normal_derivative_y = (tangent_derivative_x / &speed)?
+            - ((&tangent_x * tangent_dot_derivative) / speed_cubed)?;
+        let (source_derivative_x, source_derivative_y) = if let Some(weight) = weight {
+            let weight_squared = &weight * &weight;
+            (
+                (&tangent_x / &weight_squared)?,
+                (&tangent_y / weight_squared)?,
+            )
+        } else {
+            (tangent_x.clone(), tangent_y.clone())
+        };
         Ok(Classification::Decided(CurveDerivative2::new(
-            derivative.dx() + &self.distance * normal_derivative_x,
-            derivative.dy() + &self.distance * normal_derivative_y,
+            source_derivative_x + self.distance() * normal_derivative_x,
+            source_derivative_y + self.distance() * normal_derivative_y,
         )))
     }
 
@@ -557,9 +715,38 @@ impl BezierParallel2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelSingularityAnalysis2>> {
+        let source = match self.rational_source() {
+            Some(source) => Some(source.homogeneous_power_basis()?),
+            None => None,
+        };
+        let differential = self.differential()?;
+        let weight = if let Some(source) = source {
+            let weight = polynomial_trim_structural_zeros(source.weight.clone());
+            let weight_polynomial = match polynomial_from_coefficients(weight.clone(), policy)? {
+                Classification::Decided(Some(polynomial)) => polynomial,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            match weight_polynomial.isolate_unit_interval_roots(policy)? {
+                Classification::Decided(roots) if roots.is_empty() => {}
+                Classification::Decided(_) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            Some(weight)
+        } else {
+            None
+        };
         let speed_squared = polynomial_add(
-            &polynomial_multiply(&self.derivative_x, &self.derivative_x),
-            &polynomial_multiply(&self.derivative_y, &self.derivative_y),
+            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
+            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
         );
         let speed_polynomial = match polynomial_from_coefficients(speed_squared.clone(), policy)? {
             Classification::Decided(Some(polynomial)) => polynomial,
@@ -572,7 +759,7 @@ impl BezierParallel2 {
             Classification::Decided(roots) => roots,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        if real_sign(&self.distance, policy) == Some(RealSign::Zero) {
+        if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
             return Ok(Classification::Decided(
                 BezierParallelSingularityAnalysis2 {
                     source_singularities,
@@ -584,10 +771,17 @@ impl BezierParallel2 {
         }
 
         let curvature_cross = polynomial_subtract(
-            &polynomial_multiply(&self.second_derivative_x, &self.derivative_y),
-            &polynomial_multiply(&self.second_derivative_y, &self.derivative_x),
+            &polynomial_multiply(&differential.tangent_derivative_x, &differential.tangent_y),
+            &polynomial_multiply(&differential.tangent_derivative_y, &differential.tangent_x),
         );
-        let signed_curvature_term = polynomial_scale(&curvature_cross, &self.distance);
+        let signed_curvature_term = if let Some(weight) = &weight {
+            polynomial_scale(
+                &polynomial_multiply(&polynomial_multiply(weight, weight), &curvature_cross),
+                self.distance(),
+            )
+        } else {
+            polynomial_scale(&curvature_cross, self.distance())
+        };
         let squared_cusp_polynomial = polynomial_subtract(
             &polynomial_multiply(&signed_curvature_term, &signed_curvature_term),
             &polynomial_power(&speed_squared, 3),
@@ -637,20 +831,58 @@ impl BezierParallel2 {
         ))
     }
 
-    /// Materializes this parallel exactly when the source hodograph is Pythagorean.
+    /// Materializes this parallel exactly when the homogeneous hodograph is Pythagorean.
     ///
-    /// If `P' dot P' = sigma^2` for a polynomial `sigma` with certified nonzero
-    /// sign over `[0, 1]`, the unit normal is rational and the complete parallel
-    /// is converted to an arbitrary-degree [`RationalBezier2`]. `None` means the
-    /// exact polynomial-square identity was disproved; unresolved scalar signs
-    /// remain explicit [`Classification::Uncertain`].
+    /// For a rational source `(X/W, Y/W)`, let
+    /// `H = (X'W-XW', Y'W-YW')`. If `H dot H = sigma^2` for a polynomial
+    /// `sigma` with certified nonzero sign over `[0, 1]`, the unit normal is
+    /// rational and the complete parallel is converted to an arbitrary-degree
+    /// [`RationalBezier2`]. Polynomial PH curves are the `W=1` specialization.
+    /// `None` means the exact polynomial-square identity was disproved;
+    /// unresolved scalar signs remain explicit [`Classification::Uncertain`].
     pub fn exact_pythagorean_hodograph_offset(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
+        let rational_source = self.rational_source();
+        let rational_power_basis = match rational_source {
+            Some(source) => Some(source.homogeneous_power_basis()?),
+            None => None,
+        };
+        let polynomial_power_basis = if rational_source.is_none() {
+            Some(self.polynomial_power_basis()?)
+        } else {
+            None
+        };
+        let (source_x, source_y) = match (rational_power_basis, polynomial_power_basis) {
+            (Some(source), None) => (&source.x_numerator, &source.y_numerator),
+            (None, Some((source_x, source_y))) => (source_x, source_y),
+            _ => unreachable!("parallel source has exactly one power basis"),
+        };
+        let differential = self.differential()?;
+        let weight = if let Some(source) = rational_power_basis {
+            let weight = polynomial_trim_structural_zeros(source.weight.clone());
+            let weight_polynomial = match polynomial_from_coefficients(weight.clone(), policy)? {
+                Classification::Decided(Some(polynomial)) => polynomial,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            match weight_polynomial.isolate_unit_interval_roots(policy)? {
+                Classification::Decided(roots) if roots.is_empty() => {}
+                Classification::Decided(_) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            Some(weight)
+        } else {
+            None
+        };
         let speed_squared = polynomial_add(
-            &polynomial_multiply(&self.derivative_x, &self.derivative_x),
-            &polynomial_multiply(&self.derivative_y, &self.derivative_y),
+            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
+            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
         );
         let mut speed = match polynomial_square_root(&speed_squared, policy)? {
             Classification::Decided(Some(speed)) => speed,
@@ -679,22 +911,100 @@ impl BezierParallel2 {
             return Ok(Classification::Decided(None));
         }
 
-        let numerator_x = polynomial_subtract(
-            &polynomial_multiply(&self.source_x, &speed),
-            &polynomial_scale(&self.derivative_y, &self.distance),
-        );
-        let numerator_y = polynomial_add(
-            &polynomial_multiply(&self.source_y, &speed),
-            &polynomial_scale(&self.derivative_x, &self.distance),
-        );
-        let source_degree = self.source_x.len() - 1;
+        if let Some(source) = rational_source
+            && let Classification::Decided(Some(arc)) =
+                crate::arc_bezier::rational_bezier_circular_arc(source, policy)?
+        {
+            let radius_scale = arc.left_offset_radius_scale(self.distance())?;
+            let controls = source
+                .control_points()
+                .iter()
+                .map(|point| crate::offset::scale_from_center(point, arc.center(), &radius_scale))
+                .collect();
+            let weights = source.weights().to_vec();
+            let curve = if matches!(
+                real_sign(&radius_scale, &CurveContext::STRICT),
+                Some(RealSign::Positive | RealSign::Negative)
+            ) {
+                let two = Real::from(2_i8);
+                let radius_squared = arc.radius_squared_ref() * &radius_scale * &radius_scale;
+                let implicit = Arc::new([
+                    Real::one(),
+                    Real::zero(),
+                    Real::one(),
+                    -(&two * arc.center().x()),
+                    -(&two * arc.center().y()),
+                    arc.center().x() * arc.center().x() + arc.center().y() * arc.center().y()
+                        - &radius_squared,
+                ]);
+                let circle = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
+                    center: arc.center().clone(),
+                    radius_squared,
+                });
+                RationalBezier2::try_new_with_implicit_quadratic_conic(
+                    controls,
+                    weights,
+                    implicit,
+                    Some(circle),
+                )?
+            } else {
+                RationalBezier2::try_new(controls, weights)?
+            };
+            let source_degree = self.source_degree();
+            return Ok(Classification::Decided(Some(
+                CertifiedPythagoreanHodographOffset2 {
+                    curve,
+                    speed_polynomial: speed,
+                    source_degree,
+                    rational_degree: source_degree,
+                    distance: self.distance().clone(),
+                },
+            )));
+        }
+
+        let (normal_x_term, normal_y_term, mut denominator) = if let Some(weight) = &weight {
+            let weighted_distance = polynomial_scale(weight, self.distance());
+            (
+                polynomial_multiply(&weighted_distance, &differential.tangent_y),
+                polynomial_multiply(&weighted_distance, &differential.tangent_x),
+                polynomial_multiply(weight, &speed),
+            )
+        } else {
+            (
+                polynomial_scale(&differential.tangent_y, self.distance()),
+                polynomial_scale(&differential.tangent_x, self.distance()),
+                speed.clone(),
+            )
+        };
+        let mut numerator_x =
+            polynomial_subtract(&polynomial_multiply(source_x, &speed), &normal_x_term);
+        let mut numerator_y =
+            polynomial_add(&polynomial_multiply(source_y, &speed), &normal_y_term);
+        if weight.is_some() {
+            match real_sign(&polynomial_evaluate(&denominator, &Real::zero()), policy) {
+                Some(RealSign::Positive) => {}
+                Some(RealSign::Negative) => {
+                    let negative_one = Real::from(-1_i8);
+                    numerator_x = polynomial_scale(&numerator_x, &negative_one);
+                    numerator_y = polynomial_scale(&numerator_y, &negative_one);
+                    denominator = polynomial_scale(&denominator, &negative_one);
+                }
+                Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+        let source_degree = self.source_degree();
         let base_degree = numerator_x
             .len()
             .max(numerator_y.len())
-            .max(speed.len())
+            .max(denominator.len())
             .saturating_sub(1);
-        for rational_degree in base_degree..=base_degree.saturating_add(32) {
-            let weights = power_to_bernstein_coefficients(&speed, rational_degree)?;
+        let mut rational_degree = base_degree;
+        let mut weights = power_to_bernstein_coefficients(&denominator, rational_degree)?;
+        // A polynomial certified strictly positive on the compact unit interval
+        // has all-positive Bernstein coefficients after finitely many degree
+        // elevations. Keep that exact guarantee instead of imposing a search cap.
+        loop {
             let mut all_positive = true;
             for weight in &weights {
                 match real_sign(weight, policy) {
@@ -707,6 +1017,11 @@ impl BezierParallel2 {
                 }
             }
             if !all_positive {
+                let Some(next_degree) = rational_degree.checked_add(1) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                weights = elevate_scalar_bernstein_once(&weights)?;
+                rational_degree = next_degree;
                 continue;
             }
             let x_homogeneous = power_to_bernstein_coefficients(&numerator_x, rational_degree)?;
@@ -724,11 +1039,10 @@ impl BezierParallel2 {
                     speed_polynomial: speed,
                     source_degree,
                     rational_degree,
-                    distance: self.distance.clone(),
+                    distance: self.distance().clone(),
                 },
             )));
         }
-        Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
     }
 
     /// Builds a Levien-style endpoint-tangent cubic for later verification.
@@ -823,7 +1137,7 @@ impl BezierParallel2 {
         Ok(Classification::Decided(LevienCubicOffsetCandidate2 {
             curve: CubicBezier2::new(start, control1, control2, end),
             matched_midpoint,
-            distance: self.distance.clone(),
+            distance: self.distance().clone(),
         }))
     }
 
@@ -846,13 +1160,21 @@ impl BezierParallel2 {
         if !analysis.source_is_regular() {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
-        let source = PolynomialBezierNode2::from_source(&self.source);
+        let source = match &self.data.source {
+            BezierParallelSource2::Quadratic(source) => {
+                PolynomialBezierNode2::Quadratic(source.clone())
+            }
+            BezierParallelSource2::Cubic(source) => PolynomialBezierNode2::Cubic(source.clone()),
+            BezierParallelSource2::Rational(_) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+        };
         let candidate_node = PolynomialBezierNode2::from_candidate(&candidate);
         let mut trace = ParallelVerificationTrace::default();
         match verify_parallel_node(
             source,
             candidate_node,
-            &self.distance,
+            self.distance(),
             options,
             policy,
             0,
@@ -864,32 +1186,11 @@ impl BezierParallel2 {
                     error_bound: options.max_error.clone(),
                     leaf_count: trace.leaf_count,
                     maximum_depth: trace.maximum_depth,
-                    distance: self.distance.clone(),
+                    distance: self.distance().clone(),
                 },
             )),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
-    }
-
-    fn source_point_at(&self, parameter: Real) -> Point2 {
-        match &self.source {
-            BezierParallelSource2::Quadratic(source) => source.point_at(parameter),
-            BezierParallelSource2::Cubic(source) => source.point_at(parameter),
-        }
-    }
-
-    fn source_derivative_at(&self, parameter: &Real) -> CurveDerivative2 {
-        CurveDerivative2::new(
-            polynomial_evaluate(&self.derivative_x, parameter),
-            polynomial_evaluate(&self.derivative_y, parameter),
-        )
-    }
-
-    fn source_second_derivative_at(&self, parameter: &Real) -> CurveDerivative2 {
-        CurveDerivative2::new(
-            polynomial_evaluate(&self.second_derivative_x, parameter),
-            polynomial_evaluate(&self.second_derivative_y, parameter),
-        )
     }
 }
 
@@ -912,13 +1213,6 @@ enum PolynomialBezierNode2 {
 }
 
 impl PolynomialBezierNode2 {
-    fn from_source(source: &BezierParallelSource2) -> Self {
-        match source {
-            BezierParallelSource2::Quadratic(curve) => Self::Quadratic(curve.clone()),
-            BezierParallelSource2::Cubic(curve) => Self::Cubic(curve.clone()),
-        }
-    }
-
     fn from_candidate(candidate: &BezierParallelApproximationCurve2) -> Self {
         match candidate {
             BezierParallelApproximationCurve2::Quadratic(curve) => Self::Quadratic(curve.clone()),
@@ -1387,11 +1681,10 @@ impl BezierOffsetCandidate2 {
 impl QuadraticBezier2 {
     /// Retains this quadratic's exact analytic left parallel.
     pub fn parallel_left(&self, distance: Real) -> CurveResult<BezierParallel2> {
-        BezierParallel2::from_controls(
+        Ok(BezierParallel2::from_source(
             BezierParallelSource2::Quadratic(self.clone()),
-            &self.control_points(),
             distance,
-        )
+        ))
     }
 
     /// Retains this quadratic's exact analytic right parallel.
@@ -1591,11 +1884,10 @@ impl QuadraticBezier2 {
 impl CubicBezier2 {
     /// Retains this cubic's exact analytic left parallel.
     pub fn parallel_left(&self, distance: Real) -> CurveResult<BezierParallel2> {
-        BezierParallel2::from_controls(
+        Ok(BezierParallel2::from_source(
             BezierParallelSource2::Cubic(self.clone()),
-            &self.control_points(),
             distance,
-        )
+        ))
     }
 
     /// Retains this cubic's exact analytic right parallel.
@@ -1720,6 +2012,19 @@ impl CubicBezier2 {
 }
 
 impl RationalQuadraticBezier2 {
+    /// Retains this rational quadratic's exact analytic left parallel.
+    pub fn parallel_left(&self, distance: Real) -> CurveResult<BezierParallel2> {
+        Ok(BezierParallel2::from_source(
+            BezierParallelSource2::Rational(RationalBezier2::from(self.clone())),
+            distance,
+        ))
+    }
+
+    /// Retains this rational quadratic's exact analytic right parallel.
+    pub fn parallel_right(&self, distance: Real) -> CurveResult<BezierParallel2> {
+        self.parallel_left(-distance)
+    }
+
     /// Runs exact source analysis for later rational-conic offset adapters.
     pub fn offset_preflight(
         &self,
@@ -1775,12 +2080,27 @@ impl RationalQuadraticBezier2 {
     }
 }
 
+impl RationalBezier2 {
+    /// Retains this arbitrary-degree rational Bezier's exact analytic left parallel.
+    pub fn parallel_left(&self, distance: Real) -> CurveResult<BezierParallel2> {
+        Ok(BezierParallel2::from_source(
+            BezierParallelSource2::Rational(self.clone()),
+            distance,
+        ))
+    }
+
+    /// Retains this arbitrary-degree rational Bezier's exact analytic right parallel.
+    pub fn parallel_right(&self, distance: Real) -> CurveResult<BezierParallel2> {
+        self.parallel_left(-distance)
+    }
+}
+
 impl CurvePath2 {
     /// Constructs a connected certified left parallel for supported smooth paths.
     ///
-    /// Native lines/arcs and polynomial PH offsets remain exact. General
-    /// quadratic/cubic spans use the adaptive Blend2D construction followed by
-    /// the conservative verifier. If adjacent primitive parallels do not meet
+    /// Native lines/arcs and polynomial or rational PH offsets remain exact.
+    /// General quadratic/cubic spans use the adaptive Blend2D construction
+    /// followed by the conservative verifier. If adjacent primitive parallels do not meet
     /// exactly (the usual case at an authored corner), this returns
     /// `Unsupported`; selecting a miter, round, or bevel join belongs to the
     /// region/string offset layer.
@@ -1882,10 +2202,39 @@ impl CurvePath2 {
                         }
                     }
                 }
-                CurveGeometry2::RationalQuadraticBezier(_)
-                | CurveGeometry2::RationalBezier(_)
-                | CurveGeometry2::PolynomialBSpline(_)
-                | CurveGeometry2::Nurbs(_) => {
+                CurveGeometry2::RationalQuadraticBezier(curve) => {
+                    match append_exact_rational_parallel(
+                        curve
+                            .parallel_left(distance.clone())
+                            .map_err(|cause| parallel_path_error(source, cause))?,
+                        policy,
+                        &mut output,
+                    )
+                    .map_err(|cause| parallel_path_error(source, cause))?
+                    {
+                        Classification::Decided(()) => exact_source_curve_count += 1,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                CurveGeometry2::RationalBezier(curve) => {
+                    match append_exact_rational_parallel(
+                        curve
+                            .parallel_left(distance.clone())
+                            .map_err(|cause| parallel_path_error(source, cause))?,
+                        policy,
+                        &mut output,
+                    )
+                    .map_err(|cause| parallel_path_error(source, cause))?
+                    {
+                        Classification::Decided(()) => exact_source_curve_count += 1,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                CurveGeometry2::PolynomialBSpline(_) | CurveGeometry2::Nurbs(_) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 }
             }
@@ -1921,6 +2270,30 @@ impl CurvePath2 {
             approximated_source_curve_count,
             verification_leaf_count,
         }))
+    }
+}
+
+fn append_exact_rational_parallel(
+    parallel: BezierParallel2,
+    policy: &CurveContext,
+    output: &mut Vec<Curve2>,
+) -> CurveResult<Classification<()>> {
+    let singularities = match parallel.singularity_analysis(policy)? {
+        Classification::Decided(singularities) => singularities,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    if !singularities.source_is_regular() || !singularities.parallel_is_cusp_free() {
+        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+    }
+    match parallel.exact_pythagorean_hodograph_offset(policy)? {
+        Classification::Decided(Some(exact)) => {
+            output.push(Curve2::from(exact.curve().clone()));
+            Ok(Classification::Decided(()))
+        }
+        Classification::Decided(None) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
 }
 
@@ -2051,6 +2424,15 @@ impl StagedBezierOffset for RationalQuadraticBezier2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
         RationalQuadraticBezier2::fit_exact_line_image(self, policy)
+    }
+
+    fn exact_pythagorean_hodograph_offset(
+        &self,
+        distance: Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
+        self.parallel_left(distance)?
+            .exact_pythagorean_hodograph_offset(policy)
     }
 }
 
@@ -2195,6 +2577,29 @@ fn push_endpoint_normal_risk(
         ZeroStatus::Unknown => risks.push(BezierOffsetRisk::UnresolvedEndpointNormal { endpoint }),
         ZeroStatus::NonZero => {}
     }
+}
+
+fn polynomial_control_power_basis(controls: &[&Point2]) -> CurveResult<(Vec<Real>, Vec<Real>)> {
+    Ok((
+        bernstein_to_power_coefficients(controls.iter().map(|point| point.x().clone()).collect())?,
+        bernstein_to_power_coefficients(controls.iter().map(|point| point.y().clone()).collect())?,
+    ))
+}
+
+fn elevate_scalar_bernstein_once(controls: &[Real]) -> CurveResult<Vec<Real>> {
+    let degree = controls.len().saturating_sub(1);
+    let next_degree = degree + 1;
+    let denominator = Real::from(next_degree as u64);
+    let mut elevated = Vec::with_capacity(next_degree + 1);
+    elevated.push(controls[0].clone());
+    for index in 1..next_degree {
+        let left_weight = (Real::from(index as u64) / &denominator)?;
+        elevated.push(
+            &controls[index - 1] * &left_weight + &controls[index] * (Real::one() - left_weight),
+        );
+    }
+    elevated.push(controls[degree].clone());
+    Ok(elevated)
 }
 
 fn polynomial_derivative(coefficients: &[Real]) -> Vec<Real> {
@@ -2409,6 +2814,17 @@ fn polynomial_evaluate(coefficients: &[Real], parameter: &Real) -> Real {
         })
 }
 
+fn polynomial_trim_structural_zeros(mut coefficients: Vec<Real>) -> Vec<Real> {
+    while coefficients.len() > 1
+        && coefficients
+            .last()
+            .is_some_and(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+    {
+        coefficients.pop();
+    }
+    coefficients
+}
+
 fn polynomial_add(first: &[Real], second: &[Real]) -> Vec<Real> {
     let length = first.len().max(second.len());
     (0..length)
@@ -2475,36 +2891,42 @@ fn polynomial_square_root(
     if normalized.is_empty() {
         return Ok(Classification::Decided(Some(vec![Real::zero()])));
     }
-    let degree = normalized.len() - 1;
+    let mut valuation = 0;
+    while valuation < normalized.len() {
+        match real_sign(&normalized[valuation], policy) {
+            Some(RealSign::Zero) => valuation += 1,
+            Some(RealSign::Positive | RealSign::Negative) => break,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
+    if !valuation.is_multiple_of(2) {
+        return Ok(Classification::Decided(None));
+    }
+    let reduced = &normalized[valuation..];
+    let degree = reduced.len() - 1;
     if !degree.is_multiple_of(2) {
         return Ok(Classification::Decided(None));
     }
     let root_degree = degree / 2;
-    let leading = normalized[degree].clone();
-    match real_sign(&leading, policy) {
+    let constant = reduced[0].clone();
+    match real_sign(&constant, policy) {
         Some(RealSign::Positive) => {}
         Some(RealSign::Zero | RealSign::Negative) => {
             return Ok(Classification::Decided(None));
         }
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
-    let leading_root = leading.sqrt()?;
-    let mut root = vec![Real::zero(); root_degree + 1];
-    root[root_degree] = leading_root.clone();
-    for index in (0..root_degree).rev() {
-        let power = root_degree + index;
+    let constant_root = constant.sqrt()?;
+    let mut root = vec![Real::zero(); valuation / 2 + root_degree + 1];
+    root[valuation / 2] = constant_root.clone();
+    for index in 1..=root_degree {
         let mut known = Real::zero();
-        for left in (index + 1)..=root_degree {
-            let Some(right) = power.checked_sub(left) else {
-                continue;
-            };
-            if right > root_degree || right <= index {
-                continue;
-            }
-            known = &known + &root[left] * &root[right];
+        for left in 1..index {
+            let right = index - left;
+            known = &known + &root[valuation / 2 + left] * &root[valuation / 2 + right];
         }
-        let residual = normalized.get(power).cloned().unwrap_or_else(Real::zero) - known;
-        root[index] = (residual / (&leading_root * Real::from(2_i8)))?;
+        let residual = &reduced[index] - known;
+        root[valuation / 2 + index] = (residual / (&constant_root * Real::from(2_i8)))?;
     }
     let replay = polynomial_multiply(&root, &root);
     let difference = polynomial_subtract(&replay, &normalized);
@@ -2639,6 +3061,30 @@ mod conversion_tests {
     use super::*;
 
     #[test]
+    fn exact_parallel_is_one_word_and_clones_share_lazy_differential() {
+        let source = QuadraticBezier2::new(
+            Point2::new(Real::zero(), Real::zero()),
+            Point2::new(Real::one(), Real::one()),
+            Point2::new(Real::from(2_i8), Real::zero()),
+        );
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        let clone = parallel.clone();
+
+        assert_eq!(
+            std::mem::size_of::<BezierParallel2>(),
+            std::mem::size_of::<usize>()
+        );
+        assert!(Arc::ptr_eq(&parallel.data, &clone.data));
+        assert!(parallel.data.differential.get().is_none());
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        assert!(matches!(
+            clone.point_at(&half, &CurveContext::STRICT).unwrap(),
+            Classification::Decided(_)
+        ));
+        assert!(parallel.data.differential.get().is_some());
+    }
+
+    #[test]
     fn power_to_bernstein_remains_exact_beyond_u64_binomials() {
         let degree = 80_usize;
         let coefficients =
@@ -2654,5 +3100,32 @@ mod conversion_tests {
                 Some(std::cmp::Ordering::Equal)
             );
         }
+    }
+
+    #[test]
+    fn polynomial_square_root_preserves_even_origin_valuation() {
+        let coefficients = [
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::from(2_i8),
+            Real::one(),
+        ];
+        assert_eq!(
+            polynomial_square_root(&coefficients, &CurveContext::STRICT).unwrap(),
+            Classification::Decided(Some(vec![Real::zero(), Real::one(), Real::one()]))
+        );
+    }
+
+    #[test]
+    fn polynomial_square_root_rejects_odd_origin_valuation() {
+        assert_eq!(
+            polynomial_square_root(
+                &[Real::zero(), Real::one(), Real::one()],
+                &CurveContext::STRICT,
+            )
+            .unwrap(),
+            Classification::Decided(None)
+        );
     }
 }
