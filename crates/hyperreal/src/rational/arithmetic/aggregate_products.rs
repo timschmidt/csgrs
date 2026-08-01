@@ -2851,6 +2851,73 @@ impl Rational {
         ))
     }
 
+    /// Construct a homogeneous three-plane intersection when one exact row
+    /// has a single nonzero coefficient.
+    ///
+    /// The sparse coefficient is a common projective scale. Applying it once
+    /// to each two-by-two minor reproduces the exact signed cofactor tuple
+    /// without expanding four independent three-by-three determinants.
+    pub(crate) fn homogeneous_plane_intersection3_sparse(
+        matrix: [[&Self; 4]; 3],
+        sparse_row: usize,
+        sparse_column: usize,
+    ) -> [Self; 4] {
+        let other_rows: [usize; 2] = match sparse_row {
+            0 => [1, 2],
+            1 => [0, 2],
+            _ => [0, 1],
+        };
+        let mut columns = [0_usize; 3];
+        let mut next = 0;
+        for column in 0..4 {
+            if column != sparse_column {
+                columns[next] = column;
+                next += 1;
+            }
+        }
+        let [first, second, third] = columns;
+        let left = matrix[other_rows[0]].map(Self::canonicalized_ref);
+        let right = matrix[other_rows[1]].map(Self::canonicalized_ref);
+        let scale = matrix[sparse_row][sparse_column].canonicalized_ref();
+        let positive_terms = if (sparse_row + sparse_column) & 1 == 0 {
+            [true, false]
+        } else {
+            [false, true]
+        };
+        let dyadic = columns.into_iter().all(|column| {
+            left[column].dyadic_denominator_shift().is_some()
+                && right[column].dyadic_denominator_shift().is_some()
+        });
+        let difference = |terms| {
+            if dyadic {
+                Self::signed_product_sum_known_dyadic(positive_terms, terms)
+            } else {
+                let positive = terms[0][0] * terms[0][1];
+                let negative = terms[1][0] * terms[1][1];
+                if positive_terms[0] {
+                    &positive - &negative
+                } else {
+                    &negative - &positive
+                }
+            }
+        };
+        let cross = [
+            difference([[left[second], right[third]], [left[third], right[second]]]),
+            difference([[left[third], right[first]], [left[first], right[third]]]),
+            difference([[left[first], right[second]], [left[second], right[first]]]),
+        ];
+        let mut result = core::array::from_fn(|_| Self::zero());
+        for (column, value) in columns.into_iter().zip(cross) {
+            result[column] = &value * scale;
+        }
+        crate::trace_dispatch!(
+            "rational",
+            "homogeneous-plane-intersection3",
+            "sparse-exact-row-scaled-cofactors"
+        );
+        result
+    }
+
     /// Invert a fixed 3x3 exact-rational matrix as one aggregate operation.
     ///
     /// Keeping the cofactors and shared determinant reciprocal in `Rational`

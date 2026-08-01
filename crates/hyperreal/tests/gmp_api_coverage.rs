@@ -56,6 +56,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "exact_rational_normalize_known_exact",
     "exact_rational_ref",
     "exact_rational_reuse_evidence",
+    "exact_rational_sparse_homogeneous_plane_intersection3",
     "exact_rational_signed_product_sum",
     "exact_rational_signed_product_sum2_known_exact",
     "exact_rational_signed_product_sum_known_exact",

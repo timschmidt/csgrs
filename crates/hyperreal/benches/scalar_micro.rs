@@ -1123,6 +1123,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 name: "real_signed_product_sum_mixed_symbolic_det3",
                 description: "Computes the same determinant-shaped builder with symbolic factors and rational scales.",
             },
+            BenchDoc {
+                name: "exact_rational_sparse_homogeneous_plane_intersection3",
+                description: "Computes a canonical exact three-plane cofactor tuple from one sparse dyadic row.",
+            },
         ],
     },
 ];
@@ -3104,6 +3108,24 @@ fn bench_exact_product_sums(c: &mut Criterion) {
             ))
         })
     });
+
+    let sparse_planes = [
+        [real(3, 8), real(-5, 16), real(7, 32), real(11, 64)],
+        [real(-13, 16), real(17, 32), real(19, 64), real(-23, 128)],
+        [Real::zero(), Real::zero(), real(-41, 8), Real::zero()],
+    ];
+    let sparse_plane_refs = sparse_planes.each_ref().map(|row| row.each_ref());
+    group.bench_function(
+        "exact_rational_sparse_homogeneous_plane_intersection3",
+        |b| {
+            b.iter(|| {
+                black_box(
+                    Real::exact_rational_sparse_homogeneous_plane_intersection3(sparse_plane_refs)
+                        .unwrap(),
+                )
+            })
+        },
+    );
 
     group.finish();
 }

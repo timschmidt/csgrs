@@ -405,6 +405,46 @@ impl Real {
         Ok((Real::new(re), Real::new(im)))
     }
 
+    /// Construct a homogeneous three-plane intersection from an exact sparse row.
+    ///
+    /// Returns `None` unless all coefficients are exact rationals and one
+    /// plane row has exactly one nonzero coefficient. The successful result
+    /// preserves the expanded determinant's exact signed cofactor tuple while
+    /// evaluating its three nonzero coordinates as scaled two-by-two minors.
+    pub fn exact_rational_sparse_homogeneous_plane_intersection3(
+        matrix: [[&Real; 4]; 3],
+    ) -> Option<[Real; 4]> {
+        let mut rationals = [[rationals::ZERO.deref(); 4]; 3];
+        let mut sparse = None;
+        for row in 0..3 {
+            let mut nonzero_count = 0;
+            let mut nonzero_column = 0;
+            for column in 0..4 {
+                let rational = matrix[row][column].exact_rational_ref()?;
+                rationals[row][column] = rational;
+                if !rational.is_zero() {
+                    nonzero_count += 1;
+                    nonzero_column = column;
+                }
+            }
+            if sparse.is_none() && nonzero_count == 1 {
+                sparse = Some((row, nonzero_column));
+            }
+        }
+        let (sparse_row, sparse_column) = sparse?;
+        let result = Rational::homogeneous_plane_intersection3_sparse(
+            rationals,
+            sparse_row,
+            sparse_column,
+        );
+        crate::trace_dispatch!(
+            "real",
+            "homogeneous-plane-intersection3",
+            "exact-rational-sparse-row"
+        );
+        Some(result.map(Real::new))
+    }
+
     /// Invert a dense 3x3 matrix after the caller has proved every component
     /// is an exact rational.
     ///
