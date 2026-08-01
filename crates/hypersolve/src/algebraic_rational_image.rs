@@ -43,7 +43,7 @@ use crate::integer_interpolation::{
     interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
 };
 use crate::resultant::{quotient_ring_resultant_polynomial, resultant_univariate_polynomials};
-use crate::root_isolation::IsolatedRootInterval;
+use crate::root_isolation::{IsolatedRootInterval, square_free_part};
 
 const MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION: usize = 16;
 
@@ -696,6 +696,7 @@ fn direct_rational_image_representation(
                 primitive_integer_polynomial(&representation.polynomial_coefficients)
         {
             representation.polynomial_coefficients = polynomial;
+            representation = promote_linear_square_free_image_root(representation, policy);
             representation.validation =
                 validate_algebraic_root_representation(&representation, policy);
             return representation.is_valid().then_some(representation);
@@ -768,8 +769,48 @@ fn direct_rational_image_representation(
     if representation.interval.exact_root.is_some() {
         representation.kind = AlgebraicRootKind::ExactRationalWitness;
     }
+    representation = promote_linear_square_free_image_root(representation, policy);
     representation.validation = validate_algebraic_root_representation(&representation, policy);
     Some(representation)
+}
+
+fn promote_linear_square_free_image_root(
+    representation: AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> AlgebraicRootRepresentation {
+    if representation.exact_rational_witness().is_some() {
+        return representation;
+    }
+    let Some(square_free) =
+        square_free_part(representation.polynomial_coefficients.clone(), policy)
+    else {
+        return representation;
+    };
+    let [constant, linear] = square_free.as_slice() else {
+        return representation;
+    };
+    let Ok(root) = (-constant.clone()) / linear.clone() else {
+        return representation;
+    };
+    let inside = matches!(
+        compare_reals(&representation.interval.lower, &root, policy).value(),
+        Some(Ordering::Less | Ordering::Equal)
+    ) && matches!(
+        compare_reals(&root, &representation.interval.upper, policy).value(),
+        Some(Ordering::Less | Ordering::Equal)
+    );
+    if !inside
+        || compare_reals(
+            &evaluate_real_polynomial(&representation.polynomial_coefficients, &root),
+            &Real::zero(),
+            policy,
+        )
+        .value()
+            != Some(Ordering::Equal)
+    {
+        return representation;
+    }
+    exact_constant_representation(&representation, root, policy)
 }
 
 fn direct_rational_map(
@@ -1370,6 +1411,36 @@ mod tests {
             Some(&(real(34) / real(4)).unwrap())
         );
         assert!(root.is_valid());
+    }
+
+    #[test]
+    fn rational_image_promotes_a_repeated_rational_image_root() {
+        let source = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![real(-1), Real::one(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            ..sqrt_two_positive()
+        };
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let report = transform_algebraic_root_rational_image(
+                &source,
+                &[Real::zero(), real(2), real(2)],
+                &[Real::one()],
+                policy,
+            );
+
+            assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
+            let root = report.representation.as_ref().unwrap();
+            assert_eq!(root.exact_rational_witness(), Some(&real(2)));
+            assert_eq!(root.polynomial_coefficients, vec![real(-2), Real::one()]);
+            assert!(root.is_valid());
+        }
     }
 
     #[test]

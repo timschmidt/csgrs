@@ -1794,7 +1794,10 @@ pub(crate) fn polynomials_share_one_root_in_interval(
     }
 }
 
-fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+pub(crate) fn square_free_part(
+    polynomial: Vec<Real>,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
     let polynomial = trim_polynomial(polynomial, policy)?;
     let gcd = polynomial_gcd(polynomial.clone(), derivative(&polynomial), policy)?;
     if gcd.len() <= 1 {
