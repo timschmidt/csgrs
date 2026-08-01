@@ -108,7 +108,7 @@ pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
 pub use bezier_offset::{
     BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOffsetRisk, BezierParallel2,
-    BezierParallelApproximationCurve2, BezierParallelPointIncidence2,
+    BezierParallelApproximationCurve2, BezierParallelIncidence2,
     BezierParallelSingularityAnalysis2, BezierParallelVerificationOptions,
     Blend2dCubicQuadraticReduction2, Blend2dQuadraticOffsetCandidate2,
     CertifiedBezierParallelApproximation2, CertifiedBezierParallelPath2,
