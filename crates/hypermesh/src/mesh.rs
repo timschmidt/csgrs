@@ -1580,13 +1580,13 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
                 .cloned();
             let mut polygon = match (retained_positions.as_ref(), supplied_planes) {
                 (Some(positions), Some(planes)) => {
-                    Ok(make_indexed_triangle_with_deferred_edges_and_input_planes(
+                    make_indexed_triangle_with_deferred_edges_and_input_planes(
                         Arc::clone(positions),
                         [i0, i1, i2],
                         planes,
                         mesh_index as isize,
                         polygon_index,
-                    ))
+                    )
                 }
                 (Some(positions), None) => {
                     let axis_hint = approximate_positions.as_ref().and_then(|points| {
@@ -1648,7 +1648,7 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
                             None => None,
                         },
                     };
-                    Ok(make_indexed_triangle_with_deferred_edges(
+                    make_indexed_triangle_with_deferred_edges(
                         Arc::clone(positions),
                         [i0, i1, i2],
                         support_hint,
@@ -1659,7 +1659,7 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
                         ),
                         mesh_index as isize,
                         polygon_index,
-                    ))
+                    )
                 }
                 (None, Some(planes)) => make_triangle_with_input_planes(
                     decisions,
@@ -1669,7 +1669,7 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
                     planes,
                     mesh_index as isize,
                     polygon_index,
-                ),
+                )?,
                 (None, None) => convex_triangle_decision(
                     decisions,
                     p0,
@@ -1677,9 +1677,9 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
                     p2,
                     mesh_index as isize,
                     polygon_index,
-                ),
-            }?
-            .with_source_triangle_edge_identities(mesh_index, [i0, i1, i2]);
+                )?,
+            };
+            polygon.set_source_triangle_edge_identities(mesh_index, [i0, i1, i2]);
             if !polygon.support.decide_is_valid(decisions)? {
                 return Err(HypermeshError::DegenerateTriangle {
                     mesh_index,

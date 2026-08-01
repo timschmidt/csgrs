@@ -549,13 +549,13 @@ impl ConvexPolygon {
         Ok(result)
     }
 
-    pub(crate) fn with_source_triangle_edge_identities(
-        mut self,
+    #[inline]
+    pub(crate) fn set_source_triangle_edge_identities(
+        &mut self,
         mesh: usize,
         vertices: [usize; 3],
-    ) -> Self {
+    ) {
         self.known_identities = Some(RetainedIdentityCycles::SourceTriangle { mesh, vertices });
-        self
     }
 
     pub(crate) fn from_certified_convex_face(
@@ -1086,9 +1086,9 @@ mod tests {
 
     #[test]
     fn source_triangle_identities_expand_from_compact_descriptor() {
-        let polygon =
-            approximate_convex_triangle(&point(0, 0, 0), &point(1, 0, 0), &point(0, 1, 0), 3, 7)
-                .with_source_triangle_edge_identities(3, [9, 2, 5]);
+        let mut polygon =
+            approximate_convex_triangle(&point(0, 0, 0), &point(1, 0, 0), &point(0, 1, 0), 3, 7);
+        polygon.set_source_triangle_edge_identities(3, [9, 2, 5]);
 
         assert!(std::mem::size_of::<RetainedIdentityCycles>() <= 5 * std::mem::size_of::<usize>());
         assert_eq!(

@@ -5594,7 +5594,7 @@ mod tests {
 
     #[test]
     fn projective_cycle_expands_deferred_source_edges_on_demand() {
-        let polygon = crate::polygon::make_triangle_with_deferred_edges(
+        let mut polygon = crate::polygon::make_triangle_with_deferred_edges(
             &crate::test_support::approximate_decisions(),
             &p(1, 0, 0),
             &p(0, 1, 0),
@@ -5602,8 +5602,8 @@ mod tests {
             0,
             0,
         )
-        .unwrap()
-        .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        .unwrap();
+        polygon.set_source_triangle_edge_identities(0, [0, 1, 2]);
         assert!(polygon.edges.is_empty());
         assert_eq!(polygon.vertex_count(), 3);
 
@@ -5625,8 +5625,8 @@ mod tests {
 
     #[test]
     fn consuming_projective_split_preserves_shared_boundary_identities() {
-        let polygon = approximate_convex_triangle(&p(0, 0, -1), &p(2, 0, 1), &p(0, 2, 0), 0, 0)
-            .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        let mut polygon = approximate_convex_triangle(&p(0, 0, -1), &p(2, 0, 1), &p(0, 2, 0), 0, 0);
+        polygon.set_source_triangle_edge_identities(0, [0, 1, 2]);
         let mut point_cache = ProjectivePointCache::default();
         let cycle = ProjectiveCycle::from_polygon(
             &polygon,
@@ -5718,8 +5718,8 @@ mod tests {
 
     #[test]
     fn rank_deficient_boundary_planes_do_not_prove_unrecorded_incidence() {
-        let polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0)
-            .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        let mut polygon = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        polygon.set_source_triangle_edge_identities(0, [0, 1, 2]);
         let source_identity = ConstructionPlaneIdentity { mesh: 0, plane: 0 };
         let target_identity = ConstructionPlaneIdentity { mesh: 1, plane: 0 };
         let mut point_cache = ProjectivePointCache::default();
@@ -5779,7 +5779,7 @@ mod tests {
 
     #[test]
     fn singleton_certified_face_preserves_deferred_edges() {
-        let polygon = crate::polygon::make_triangle_with_deferred_edges(
+        let mut polygon = crate::polygon::make_triangle_with_deferred_edges(
             &crate::test_support::approximate_decisions(),
             &p(1, 0, 0),
             &p(0, 1, 0),
@@ -5787,8 +5787,8 @@ mod tests {
             0,
             0,
         )
-        .unwrap()
-        .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        .unwrap();
+        polygon.set_source_triangle_edge_identities(0, [0, 1, 2]);
         let support_identity = ConstructionPlaneIdentity { mesh: 0, plane: 0 };
         let polygons = [polygon];
         let supports = [vec![&polygons[0].support], Vec::new()];
@@ -5810,7 +5810,7 @@ mod tests {
 
     #[test]
     fn certified_face_grouping_rejects_unaligned_or_out_of_range_supports() {
-        let polygon = crate::polygon::make_triangle_with_deferred_edges(
+        let mut polygon = crate::polygon::make_triangle_with_deferred_edges(
             &crate::test_support::approximate_decisions(),
             &p(1, 0, 0),
             &p(0, 1, 0),
@@ -5818,8 +5818,8 @@ mod tests {
             0,
             0,
         )
-        .unwrap()
-        .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        .unwrap();
+        polygon.set_source_triangle_edge_identities(0, [0, 1, 2]);
         let polygons = [polygon];
         let supports = [vec![&polygons[0].support], Vec::new()];
 
@@ -5856,24 +5856,24 @@ mod tests {
     fn merged_certified_face_cycle_is_independent_of_triangle_order() {
         let positions: std::sync::Arc<[Point3]> =
             std::sync::Arc::from([p(0, 0, 0), p(1, 0, 0), p(1, 1, 0), p(0, 1, 0)]);
-        let first = crate::polygon::make_indexed_triangle_with_deferred_edges(
+        let mut first = crate::polygon::make_indexed_triangle_with_deferred_edges(
             positions.clone(),
             [0, 1, 2],
             None,
             std::sync::Arc::new(Vec::new()),
             0,
             0,
-        )
-        .with_source_triangle_edge_identities(0, [0, 1, 2]);
-        let second = crate::polygon::make_indexed_triangle_with_deferred_edges(
+        );
+        first.set_source_triangle_edge_identities(0, [0, 1, 2]);
+        let mut second = crate::polygon::make_indexed_triangle_with_deferred_edges(
             positions,
             [0, 2, 3],
             Some(first.support.clone()),
             std::sync::Arc::new(Vec::new()),
             0,
             1,
-        )
-        .with_source_triangle_edge_identities(0, [0, 2, 3]);
+        );
+        second.set_source_triangle_edge_identities(0, [0, 2, 3]);
         let support_identity = ConstructionPlaneIdentity { mesh: 0, plane: 0 };
 
         let collapse = |polygons: &[ConvexPolygon]| {
@@ -6124,7 +6124,7 @@ mod tests {
 
     #[test]
     fn projective_cycle_verification_reuses_exact_plane_incidences() {
-        let polygon = crate::polygon::make_triangle_with_deferred_edges(
+        let mut polygon = crate::polygon::make_triangle_with_deferred_edges(
             &crate::test_support::approximate_decisions(),
             &p(1, 0, 0),
             &p(0, 1, 0),
@@ -6132,8 +6132,8 @@ mod tests {
             0,
             0,
         )
-        .unwrap()
-        .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        .unwrap();
+        polygon.set_source_triangle_edge_identities(0, [0, 1, 2]);
         let mut point_cache = ProjectivePointCache::default();
         let cycle = ProjectiveCycle::from_polygon(
             &polygon,
@@ -6189,8 +6189,8 @@ mod tests {
 
     #[test]
     fn source_relation_indexes_certified_source_vertices_without_coordinate_hashing() {
-        let polygon = approximate_convex_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0)
-            .with_source_triangle_edge_identities(0, [7, 9, 11]);
+        let mut polygon = approximate_convex_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0);
+        polygon.set_source_triangle_edge_identities(0, [7, 9, 11]);
         let plane = Plane::axis_aligned(2, Real::zero());
         let mut cache = PointPlaneClassificationCache::default();
         let mut on_source_vertices = Vec::new();
