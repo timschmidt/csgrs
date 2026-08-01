@@ -1493,8 +1493,11 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
     for (mesh_index, mesh) in meshes.iter().enumerate() {
         let input_is_certified_convex =
             certified_convex_inputs.is_some_and(|certified| certified[mesh_index]);
-        let retained_positions = (defer_edges && input_is_certified_convex)
-            .then(|| Arc::<[Point3]>::from(mesh.positions));
+        let retained_positions =
+            (defer_edges && input_is_certified_convex).then(|| match mesh.native {
+                Some(native) => Arc::clone(&native.positions),
+                None => Arc::<[Point3]>::from(mesh.positions),
+            });
         // Bound the admission scan before retaining an approximate position
         // cache. A missed axis face only skips the fast path, and every hint
         // is revalidated exactly when its support plane is constructed.
@@ -2247,6 +2250,7 @@ mod tests {
         };
 
         assert!(Arc::ptr_eq(first, second));
+        assert!(Arc::ptr_eq(first, &mesh.positions));
         assert!(Arc::ptr_eq(
             &soup.polygons[0].edges,
             &soup.polygons[1].edges
@@ -2260,6 +2264,23 @@ mod tests {
                 .into_value(),
             positions[..3]
         );
+
+        let borrowed_triangles = [Triangle::new(0, 1, 2), Triangle::new(0, 3, 1)];
+        let borrowed = build_polygon_soup_with_deferred_edges(
+            &crate::test_support::approximate_decisions(),
+            &[TriangleMeshRef::new(&positions, &borrowed_triangles)],
+            &[true],
+            None,
+        )
+        .unwrap();
+        let Some(RetainedVertexCycle::IndexedTriangle {
+            positions: borrowed,
+            ..
+        }) = &borrowed.polygons[0].known_vertices
+        else {
+            panic!("borrowed certified triangles must retain owned positions");
+        };
+        assert!(!std::ptr::eq(borrowed.as_ptr(), positions.as_ptr()));
     }
 
     #[test]
