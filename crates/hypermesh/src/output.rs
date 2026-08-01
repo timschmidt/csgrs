@@ -4432,6 +4432,11 @@ fn projected_segment_crossing(
     let ab_filter = rational_queries
         .and_then(|queries| RationalLine2Filter::from_point3(&queries[0], &queries[1], axes))
         .or_else(|| projected_rational_line_filter(a, b, axes));
+    let ab_signs = rational_queries.and_then(|queries| {
+        ab_filter
+            .as_ref()
+            .map(|filter| filter.sign_point3_pair([&queries[2], &queries[3]], axes))
+    });
     let c_side = projected_orientation(
         decisions,
         a,
@@ -4440,6 +4445,7 @@ fn projected_segment_crossing(
         axes,
         ab_filter.as_ref(),
         rational_queries.map(|queries| &queries[2]),
+        ab_signs.map(|signs| signs[0]),
     )?;
     let d_side = projected_orientation(
         decisions,
@@ -4449,6 +4455,7 @@ fn projected_segment_crossing(
         axes,
         ab_filter.as_ref(),
         rational_queries.map(|queries| &queries[3]),
+        ab_signs.map(|signs| signs[1]),
     )?;
     if same_side(c_side, d_side) {
         return Ok(Some(false));
@@ -4456,6 +4463,11 @@ fn projected_segment_crossing(
     let cd_filter = rational_queries
         .and_then(|queries| RationalLine2Filter::from_point3(&queries[2], &queries[3], axes))
         .or_else(|| projected_rational_line_filter(c, d, axes));
+    let cd_signs = rational_queries.and_then(|queries| {
+        cd_filter
+            .as_ref()
+            .map(|filter| filter.sign_point3_pair([&queries[0], &queries[1]], axes))
+    });
     let a_side = projected_orientation(
         decisions,
         c,
@@ -4464,6 +4476,7 @@ fn projected_segment_crossing(
         axes,
         cd_filter.as_ref(),
         rational_queries.map(|queries| &queries[0]),
+        cd_signs.map(|signs| signs[0]),
     )?;
     let b_side = projected_orientation(
         decisions,
@@ -4473,6 +4486,7 @@ fn projected_segment_crossing(
         axes,
         cd_filter.as_ref(),
         rational_queries.map(|queries| &queries[1]),
+        cd_signs.map(|signs| signs[1]),
     )?;
     if same_side(a_side, b_side) {
         return Ok(Some(false));
@@ -4510,6 +4524,7 @@ fn projected_orientation(
     [u_axis, v_axis]: [usize; 2],
     filter: Option<&RationalLine2Filter>,
     query: Option<&RationalPoint3Query>,
+    precomputed_sign: Option<Option<RealSign>>,
 ) -> HypermeshResult<Classification> {
     let [from_u, from_v, to_u, to_v, point_u, point_v] = [
         vertex_axis(from, u_axis),
@@ -4528,7 +4543,9 @@ fn projected_orientation(
         point_u,
         point_v,
         filter,
-        query.map(|query| filter.and_then(|filter| filter.sign_point3(query, [u_axis, v_axis]))),
+        precomputed_sign.or_else(|| {
+            query.map(|query| filter.and_then(|filter| filter.sign_point3(query, [u_axis, v_axis])))
+        }),
     )
 }
 
