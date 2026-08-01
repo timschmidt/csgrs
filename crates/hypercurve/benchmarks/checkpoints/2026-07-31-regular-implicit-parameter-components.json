@@ -1,0 +1,232 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "regular-implicit-parameter-components",
+  "source_revision": "daaea24ab18702b3373b51feac9c89557eb27f96",
+  "core_transport_revision": "5ede931",
+  "hypersolve_revision": "2c7dcf21299dbc3e3900b4611d3d0e603e24c5f5",
+  "historical_control_revision": "1961dc2",
+  "historical_hypersolve_revision": "bd56d47",
+  "scope": {
+    "operation": "exact transport of one regular implicit parameter component through analytic-parallel/rational-Bezier contact replay",
+    "completed_families": [
+      "irreducible quadratic, square-free cubic, and degree-four implicit common-fiber polynomials",
+      "same- and reversed-orientation monotone graphs over the complete closed unit interval",
+      "exact exclusion of open-edge crossings and component critical points",
+      "selected-normal branch acceptance, rejection, and exact opposite-branch discard",
+      "retention and replay of isolated residual solutions beside an overlap",
+      "a public non-PH analytic-parallel fixture whose component is irreducible and nonlinear in both parameters",
+      "STRICT and APPROXIMATE_512 through the identical construction graph"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "component_authority": "Hypersolve publishes a primitive common-fiber polynomial only after it divides both authored equations exactly; both exact quotients remain in the recursive residual engine",
+    "closed_domain": "the retained endpoint fibers each contain exactly one unit-interval root, and every lifted box-edge root is an authored endpoint",
+    "regularity": "exact two-equation resultant replay proves the component shares no unit-square solution with either parameter derivative",
+    "topology": "absence of retained-direction critical points and open-edge entry, together with one midpoint fiber root, proves exactly one graph over the closed retained interval",
+    "orientation": "absence of lifted-direction critical points proves strict monotonicity; exact endpoint comparison selects same or reversed overlap orientation",
+    "branch": "the selected signed-normal polynomial has no zero on the component and its exact midpoint sign accepts or discards the whole graph",
+    "residuals": "after component removal, every remaining isolated candidate is projected and replayed through the same authoritative engine",
+    "strict": "STRICT uses exact rational component division, exact root isolation, exact resultant replay, exact critical-point exclusion, and exact sign predicates",
+    "approximate_512": "APPROXIMATE_512 follows the same proof graph; only inherited Hyperreal equality terminals may stop at 512 bits, and no approximate polynomial, range, point, or topology event is synthesized",
+    "failure_semantics": "multi-cell, nonmonotone, singular, boundary-coincident, unsupported coefficient-tower, or undecidable cases remain explicit Boundary or RealSign uncertainty"
+  },
+  "sampled_fiber_gcd_fast_path": {
+    "algorithm": "specialize both authored equations at exact integer fibers, compute exact univariate GCDs, scale each monic GCD by the lower-degree authored leading coefficient, interpolate only that low-degree polynomial family, remove the scale as exact polynomial content, and authorize the candidate only by exact division of both original bivariate equations",
+    "fallback": "a degree drop, inconsistent sampled degree, unsupported coefficient, failed interpolation, or failed exact division falls through to the complete subresultant scan",
+    "policy": "the speculative reconstruction is exact-rational and policy-independent; it cannot publish approximate evidence",
+    "high_cofactor_fixture": "H(t,u)=(6-3u)(t^2+t)+2u^2-8u divides authored systems of bidegrees (7,6) and (8,12); seven retained-u samples replace reconstruction of a degree-114 first subresultant",
+    "memory": "only degrees actually observed allocate sample buckets; specialized fibers are moved into the GCD instead of cloned"
+  },
+  "public_fixture": {
+    "source": "P((t^2+t)/2), where P(v)=(3v/8,9v^2/64)",
+    "target": "the independent degree-six rational parametrization of P's exact unit left parallel",
+    "component": "(6-3u)(t^2+t)-2(4u-u^2)=0",
+    "properties": [
+      "source reparameterization derivative is strictly positive on [0,1]",
+      "the authored analytic parallel is not Pythagorean-hodograph",
+      "the correspondence is irreducible and nonlinear in both parameters",
+      "the complete overlap is [0,1] to [0,1] with same orientation"
+    ]
+  },
+  "matched_release_benchmark": {
+    "method": "five interleaved all-feature release processes per revision pinned to CPU 11; the pre-fast and current binaries use byte-identical Hypercurve source and one iteration of the expensive implicit lane",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "pre_fast_snapshot": "/tmp/hypercurve-implicit-pre-fast.Rfn2Ux",
+    "implicit_candidates": {
+      "pre_fast_samples_microseconds": [
+        2381593.991,
+        2344018.139,
+        2457025.204,
+        2324615.091,
+        2340449.764
+      ],
+      "current_samples_microseconds": [
+        3029.682,
+        3118.106,
+        3043.571,
+        3030.792,
+        3063.3
+      ],
+      "pre_fast_median_microseconds": 2344018.139,
+      "current_median_microseconds": 3043.571,
+      "speedup": 770.153921
+    },
+    "implicit_contacts": {
+      "pre_fast_samples_microseconds": [
+        2294232.267,
+        2245374.739,
+        2362912.573,
+        2255497.755,
+        2237152.644
+      ],
+      "current_samples_microseconds": [
+        2745.311,
+        2792.998,
+        2769.429,
+        2738.272,
+        2724.873
+      ],
+      "pre_fast_median_microseconds": 2255497.755,
+      "current_median_microseconds": 2745.311,
+      "speedup": 821.581874
+    },
+    "steady_state_100_iterations": {
+      "implicit_candidates_median_microseconds": 2671.976,
+      "implicit_contacts_median_microseconds": 2661.377
+    },
+    "existing_component_lanes": {
+      "nonlinear_rational_candidates": {
+        "historical_median_microseconds": 37807.227,
+        "current_median_microseconds": 1340.42,
+        "change_percent": -96.454593
+      },
+      "nonlinear_rational_contacts": {
+        "historical_median_microseconds": 37131.817,
+        "current_median_microseconds": 1235.399,
+        "change_percent": -96.672937
+      }
+    },
+    "ordinary_sentinels": {
+      "interpretation": "every pre-existing median in the final five-run set improved; algebraic and higher-nullity lanes improved by 0.83 to 1.98 percent, exact finite contacts by 1.93 percent, and rootless-axis lanes by 0.57 to 1.99 percent. Sub-ten-microsecond lanes are retained as noisy direction-only sentinels."
+    }
+  },
+  "direct_hypersolve_benchmark": {
+    "method": "five interleaved optimized algebraic_fiber processes pinned to CPU 11",
+    "lanes": {
+      "implicit_quadratic_common_fiber": {
+        "historical_median_microseconds": 181.89,
+        "current_median_microseconds": 32.182,
+        "change_percent": -82.306889
+      },
+      "rational_quadratic_two_components": {
+        "historical_median_microseconds": 459.896,
+        "current_median_microseconds": 62.995,
+        "change_percent": -86.302338
+      },
+      "repeated_cubic_three_components": {
+        "historical_median_microseconds": 3692.493,
+        "current_median_microseconds": 164.348,
+        "change_percent": -95.549132
+      },
+      "implicit_quadratic_high_cofactor": {
+        "current_median_microseconds": 233.207,
+        "historical_lane_available": false
+      }
+    }
+  },
+  "process_memory": {
+    "method": "five fresh matched one-iteration release processes per revision under /usr/bin/time -v, pinned to CPU 11; values are whole-process maximum RSS",
+    "pre_fast_samples_kib": [
+      200232,
+      200072,
+      200240,
+      200340,
+      200260
+    ],
+    "current_samples_kib": [
+      8612,
+      8496,
+      8408,
+      8452,
+      8520
+    ],
+    "pre_fast_median_kib": 200240,
+    "current_median_kib": 8496,
+    "change_percent": -95.757091
+  },
+  "release_size": {
+    "fast_path_matched_binary": {
+      "pre_fast_file_bytes": 7408344,
+      "current_file_bytes": 7437392,
+      "file_change_percent": 0.392098,
+      "pre_fast_text_bytes": 5641095,
+      "current_text_bytes": 5661023,
+      "text_change_percent": 0.353265,
+      "pre_fast_loadable_bytes": 5908215,
+      "current_loadable_bytes": 5928703,
+      "loadable_change_percent": 0.346771
+    },
+    "combined_since_implicit_retention": {
+      "historical_file_bytes": 7380688,
+      "current_file_bytes": 7437392,
+      "file_change_percent": 0.768275,
+      "historical_text_bytes": 5618383,
+      "current_text_bytes": 5661023,
+      "text_change_percent": 0.758937,
+      "historical_loadable_bytes": 5887743,
+      "current_loadable_bytes": 5928703,
+      "loadable_change_percent": 0.695683
+    }
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "scope": "hypercurve and hypersolve with examples, tests, benchmarks, fuzz targets, and per-library output",
+    "historical_nodes": 29731,
+    "current_nodes": 29875,
+    "node_change": 144,
+    "historical_edges": 53125,
+    "current_edges": 53701,
+    "edge_change": 576,
+    "fast_path_only_node_change": 14,
+    "fast_path_only_edge_change": 37,
+    "historical_artifact": "/tmp/hypercurve-implicit-baseline-callgraph-output/callgraph.json",
+    "current_artifact": "/tmp/hypercurve-implicit-sampled-callgraph/callgraph.json",
+    "interpretation": "this syntax graph is a navigation and source-complexity aid, not reachability or binary-size evidence"
+  },
+  "verification": {
+    "hypersolve": {
+      "all_features_library_tests": 195,
+      "all_features_readme_tests": 2,
+      "all_features_residual_property_tests": 131,
+      "all_features_smoke_tests": 209,
+      "full_no_default_features": "passed",
+      "high_cofactor_both_parameter_orientations": "passed"
+    },
+    "hypercurve": {
+      "all_features_library_tests": 298,
+      "no_default_features_library_tests": 265,
+      "parallel_fit_offset_all_features": 84,
+      "parallel_fit_offset_no_default_features": 74,
+      "curve_region_boolean_all_features": 29,
+      "curve_region_boolean_fuzz_all_features": 11,
+      "full_all_features": "passed",
+      "full_no_default_features": "passed"
+    },
+    "quality": [
+      "cargo clippy --all-features --all-targets -- -D warnings",
+      "cargo clippy --no-default-features --all-targets -- -D warnings",
+      "cargo fmt --all -- --check",
+      "git diff --check"
+    ]
+  },
+  "remaining": [
+    "multi-cell regular implicit topology partitioned at exact critical events",
+    "nonmonotone implicit components represented as multiple oriented overlap cells",
+    "singular components and boundary-coincident branches",
+    "supported non-rational coefficient towers",
+    "remaining exact parallel carrier surfaces and authoritative CurveRegion2 offset regularization"
+  ]
+}
