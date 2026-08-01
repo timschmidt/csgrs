@@ -6097,6 +6097,80 @@ pub(crate) fn exact_contact_point_evidence(
     }
 }
 
+pub(crate) fn rational_parameter_image_matches(
+    source: &BezierParameter2,
+    target: &BezierParameter2,
+    numerator: &[Real],
+    denominator: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    match source {
+        BezierParameter2::Exact(source) => {
+            let denominator = evaluate_power_polynomial(denominator, source);
+            match real_sign(&denominator, policy) {
+                Some(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Some(RealSign::Positive | RealSign::Negative) => {}
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            let image = (evaluate_power_polynomial(numerator, source) / denominator)?;
+            BezierParameter2::Exact(image).same_value(target, policy)
+        }
+        BezierParameter2::Algebraic(source) => {
+            let candidate = match conic_parameter_candidate(
+                source.polynomial().coefficients(),
+                &(numerator.to_vec(), denominator.to_vec()),
+                policy,
+            )? {
+                Classification::Decided(candidate) => candidate,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            #[cfg(feature = "predicates")]
+            {
+                let target_interval = match target.known_interval(policy)? {
+                    Classification::Decided(interval) => interval,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let evidence = candidate.map.transform_in_interval(
+                    &parameter_representation(source, policy),
+                    &AlgebraicPolynomialValueInterval {
+                        lower: target_interval.start().clone(),
+                        upper: target_interval.end().clone(),
+                    },
+                );
+                if evidence.status == AlgebraicRootRationalImageStatus::ImageIntervalDisjoint {
+                    return Ok(Classification::Decided(false));
+                }
+                if evidence.status != AlgebraicRootRationalImageStatus::Transformed {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
+                let Some(image) = evidence.representation.as_ref() else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                };
+                Ok(algebraic_coordinates_equal(
+                    image,
+                    &parameter_root_representation(target, policy),
+                    policy,
+                )
+                .map_or(
+                    Classification::Uncertain(UncertaintyReason::Predicate),
+                    Classification::Decided,
+                ))
+            }
+            #[cfg(not(feature = "predicates"))]
+            {
+                let _ = (target, candidate);
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+        }
+    }
+}
+
 fn conic_parameter_candidate(
     source_polynomial: &[Real],
     candidate: &(Vec<Real>, Vec<Real>),

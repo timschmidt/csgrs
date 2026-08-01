@@ -1469,8 +1469,95 @@ fn parallel_rational_contacts_replay_identical_algebraic_parameters() {
     }
 }
 
+#[cfg(feature = "predicates")]
 #[test]
-fn parallel_rational_contacts_retain_unresolved_coupled_algebraic_pairs() {
+fn parallel_rational_contacts_lift_coupled_distinct_algebraic_parameters() {
+    let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
+    let parallel = source.parallel_left(r(0)).unwrap();
+    let target = RationalBezier2::try_new(vec![p(0, 1), p(2, 0)], vec![r(1), r(1)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let replay = parallel.intersection_contacts(&target, &policy).unwrap();
+        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
+            replay.clone()
+        else {
+            panic!("nullity-one coupled algebraic contact was not lifted: {replay:?}");
+        };
+        assert_eq!(contacts.len(), 1);
+        assert!(matches!(
+            contacts[0].parallel_parameter(),
+            BezierParameter2::Algebraic(_)
+        ));
+        assert!(matches!(
+            contacts[0].other_parameter(),
+            BezierParameter2::Algebraic(_)
+        ));
+        assert_ne!(
+            contacts[0].parallel_parameter(),
+            contacts[0].other_parameter()
+        );
+        assert!(matches!(
+            contacts[0].point(),
+            RationalBezierIntersectionPointEvidence2::Algebraic(_)
+        ));
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn parallel_rational_lift_pairs_multiple_algebraic_projections_without_cross_product() {
+    let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
+    let parallel = source.parallel_left(r(0)).unwrap();
+    let target = RationalBezier2::try_new(
+        vec![Point2::new(r(0), q(-1, 5)), Point2::new(r(2), q(9, 5))],
+        vec![r(1), r(1)],
+    )
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let replay = parallel.intersection_contacts(&target, &policy).unwrap();
+        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
+            replay.clone()
+        else {
+            panic!("multiple coupled algebraic contacts were not paired: {replay:?}");
+        };
+        assert_eq!(contacts.len(), 2);
+        assert!(contacts.iter().all(|contact| {
+            matches!(contact.parallel_parameter(), BezierParameter2::Algebraic(_))
+                && matches!(contact.other_parameter(), BezierParameter2::Algebraic(_))
+        }));
+        assert_ne!(contacts[0].point(), contacts[1].point());
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn parallel_rational_contacts_replay_selected_branch_through_algebraic_lift() {
+    let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
+    let parallel = source.parallel_left(r(1)).unwrap();
+    let target = RationalBezier2::try_new(vec![p(-1, 1), p(1, 1)], vec![r(1), r(1)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let replay = parallel.intersection_contacts(&target, &policy).unwrap();
+        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
+            replay.clone()
+        else {
+            panic!("coupled algebraic branch replay was not complete: {replay:?}");
+        };
+        assert_eq!(contacts.len(), 2);
+        assert!(contacts.iter().any(|contact| {
+            contact.parallel_parameter() == &BezierParameter2::Exact(r(0))
+                && contact.other_parameter() == &BezierParameter2::Exact(q(1, 2))
+        }));
+        assert!(contacts.iter().any(|contact| {
+            matches!(contact.parallel_parameter(), BezierParameter2::Algebraic(_))
+                && matches!(contact.other_parameter(), BezierParameter2::Algebraic(_))
+        }));
+    }
+}
+
+#[test]
+fn parallel_rational_contacts_retain_higher_nullity_algebraic_fibers() {
     let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(2, 0))
         .parallel_left(r(1))
         .unwrap();
@@ -1487,7 +1574,7 @@ fn parallel_rational_contacts_retain_unresolved_coupled_algebraic_pairs() {
                 },
         }) = parallel.intersection_contacts(&target, &policy).unwrap()
         else {
-            panic!("unsupported coupled algebraic pair was not retained explicitly");
+            panic!("higher-nullity algebraic fiber was not retained explicitly");
         };
         assert!(contacts.is_empty());
         assert_eq!(parallel_parameters.len(), 1);
