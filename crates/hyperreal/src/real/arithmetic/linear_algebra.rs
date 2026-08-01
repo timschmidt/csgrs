@@ -482,6 +482,52 @@ impl RationalLine2Filter {
             errors,
         )
     }
+
+    /// Try to certify two projected query signs against the same line.
+    ///
+    /// The line direction and its conservative error are computed once. An
+    /// inconclusive direction or query returns `None` in the corresponding
+    /// slot for the caller's exact fallback.
+    #[inline]
+    #[doc(hidden)]
+    pub fn sign_point3_pair(
+        &self,
+        points: [&RationalPoint3Query; 2],
+        axes: [usize; 2],
+    ) -> [Option<RealSign>; 2] {
+        let Some((first_values, first_errors)) = points[0].projection(axes) else {
+            return [None, None];
+        };
+        let Some((second_values, second_errors)) = points[1].projection(axes) else {
+            return [None, None];
+        };
+        let Some((direction, direction_errors)) = Real::rational_line2_direction_f64(
+            self.from,
+            self.from_errors,
+            self.to,
+            self.to_errors,
+        ) else {
+            return [None, None];
+        };
+        [
+            Real::certified_rational_line2_sign_from_direction_f64(
+                self.from,
+                self.from_errors,
+                direction,
+                direction_errors,
+                first_values,
+                first_errors,
+            ),
+            Real::certified_rational_line2_sign_from_direction_f64(
+                self.from,
+                self.from_errors,
+                direction,
+                direction_errors,
+                second_values,
+                second_errors,
+            ),
+        ]
+    }
 }
 
 impl RationalLinearForm4Query {
@@ -986,18 +1032,53 @@ impl Real {
         point: [f64; 2],
         point_errors: [f64; 2],
     ) -> Option<RealSign> {
-        let (abx, abx_error) = Self::difference_f64_with_error(
+        let (direction, direction_errors) = Self::rational_line2_direction_f64(
+            from,
+            from_errors,
+            to,
+            to_errors,
+        )?;
+        Self::certified_rational_line2_sign_from_direction_f64(
+            from,
+            from_errors,
+            direction,
+            direction_errors,
+            point,
+            point_errors,
+        )
+    }
+
+    #[inline]
+    fn rational_line2_direction_f64(
+        from: [f64; 2],
+        from_errors: [f64; 2],
+        to: [f64; 2],
+        to_errors: [f64; 2],
+    ) -> Option<([f64; 2], [f64; 2])> {
+        let (x, x_error) = Self::difference_f64_with_error(
             to[0],
             to_errors[0],
             from[0],
             from_errors[0],
         )?;
-        let (aby, aby_error) = Self::difference_f64_with_error(
+        let (y, y_error) = Self::difference_f64_with_error(
             to[1],
             to_errors[1],
             from[1],
             from_errors[1],
         )?;
+        Some(([x, y], [x_error, y_error]))
+    }
+
+    #[inline]
+    fn certified_rational_line2_sign_from_direction_f64(
+        from: [f64; 2],
+        from_errors: [f64; 2],
+        direction: [f64; 2],
+        direction_errors: [f64; 2],
+        point: [f64; 2],
+        point_errors: [f64; 2],
+    ) -> Option<RealSign> {
         let (apx, apx_error) = Self::difference_f64_with_error(
             point[0],
             point_errors[0],
@@ -1011,14 +1092,14 @@ impl Real {
             from_errors[1],
         )?;
         let (left, left_error) = Self::product_f64_with_error(
-            abx,
-            abx_error,
+            direction[0],
+            direction_errors[0],
             apy,
             apy_error,
         )?;
         let (right, right_error) = Self::product_f64_with_error(
-            aby,
-            aby_error,
+            direction[1],
+            direction_errors[1],
             apx,
             apx_error,
         )?;

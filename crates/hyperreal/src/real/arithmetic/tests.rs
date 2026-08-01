@@ -828,8 +828,20 @@ mod tests {
             Some(RealSign::Negative),
         );
         assert_eq!(projected.sign_point3(&boundary, [0, 1]), None);
+        assert_eq!(
+            projected.sign_point3_pair([&positive, &negative], [0, 1]),
+            [Some(RealSign::Positive), Some(RealSign::Negative)],
+        );
+        assert_eq!(
+            projected.sign_point3_pair([&boundary, &positive], [0, 1]),
+            [None, Some(RealSign::Positive)],
+        );
         assert!(RationalLine2Filter::from_point3(&from, &to, [1, 1]).is_none());
         assert!(projected.sign_point3(&positive, [0, 3]).is_none());
+        assert_eq!(
+            projected.sign_point3_pair([&positive, &negative], [0, 3]),
+            [None, None],
+        );
 
         let enclosed = |point: [&Rational; 3]| {
             RationalPoint3Query::from_certified_enclosures(
