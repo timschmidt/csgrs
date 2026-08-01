@@ -1496,7 +1496,7 @@ impl CurveIntersectionContext {
                         orientation: overlap.orientation(),
                         parameter_correspondence: match &pair.state {
                             CurveSpanPairState::Rational(intersection) => {
-                                Some(intersection.overlap_parameter_correspondence())
+                                Some(intersection.overlap_parameter_correspondence(&overlap))
                             }
                             _ => None,
                         },

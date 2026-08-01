@@ -191,6 +191,14 @@ pub struct RationalBezierIntersectionOverlap2 {
 pub(crate) enum RationalBezierOverlapParameterCorrespondence2 {
     Identity,
     UnitComplement,
+    EndpointProjective {
+        second_to_first_scale: Real,
+        reversed: bool,
+    },
+    RangeProjective {
+        second_to_first_scale: Real,
+        reversed: bool,
+    },
     General {
         first: RationalBezier2,
         second: RationalBezier2,
@@ -229,6 +237,26 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             Classification::Decided(false) => {}
             Classification::Uncertain(reason) => unresolved = Some(reason),
         }
+        match first.endpoint_projective_parameter_scale(second, false, policy) {
+            Classification::Decided(Some(second_to_first_scale)) => {
+                return Self::EndpointProjective {
+                    second_to_first_scale,
+                    reversed: false,
+                };
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => unresolved = Some(reason),
+        }
+        match first.endpoint_projective_parameter_scale(second, true, policy) {
+            Classification::Decided(Some(second_to_first_scale)) => {
+                return Self::EndpointProjective {
+                    second_to_first_scale,
+                    reversed: true,
+                };
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => unresolved = Some(reason),
+        }
         Self::General {
             first: first.clone(),
             second: second.clone(),
@@ -236,22 +264,102 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         }
     }
 
+    fn for_overlap(
+        first: &RationalBezier2,
+        second: &RationalBezier2,
+        overlap: &RationalBezierIntersectionOverlap2,
+        policy: &CurveContext,
+    ) -> Self {
+        let fallback = Self::new(first, second, policy);
+        if !matches!(fallback, Self::General { .. }) {
+            return fallback;
+        }
+        let (Some(first_start), Some(first_end)) = (
+            overlap.first_range().start().as_exact(),
+            overlap.first_range().end().as_exact(),
+        ) else {
+            return fallback;
+        };
+        let reversed = overlap.orientation() == RationalBezierOverlapOrientation2::Reversed;
+        let (second_start, second_end) = if reversed {
+            (
+                overlap.second_range().end().as_exact(),
+                overlap.second_range().start().as_exact(),
+            )
+        } else {
+            (
+                overlap.second_range().start().as_exact(),
+                overlap.second_range().end().as_exact(),
+            )
+        };
+        let (Some(second_start), Some(second_end)) = (second_start, second_end) else {
+            return fallback;
+        };
+        let first_subcurve = match first.subcurve_between_exact(first_start, first_end, policy) {
+            Ok(Classification::Decided(curve)) => curve,
+            Ok(Classification::Uncertain(_)) | Err(_) => return fallback,
+        };
+        let second_subcurve = match second.subcurve_between_exact(second_start, second_end, policy)
+        {
+            Ok(Classification::Decided(curve)) => curve,
+            Ok(Classification::Uncertain(_)) | Err(_) => return fallback,
+        };
+        let second_to_first_scale = match first_subcurve.endpoint_projective_parameter_scale(
+            &second_subcurve,
+            reversed,
+            policy,
+        ) {
+            Classification::Decided(Some(scale)) => scale,
+            Classification::Decided(None) | Classification::Uncertain(_) => return fallback,
+        };
+        Self::RangeProjective {
+            second_to_first_scale,
+            reversed,
+        }
+    }
+
     pub(crate) const fn projective_reversal(&self) -> Option<bool> {
         match self {
             Self::Identity => Some(false),
             Self::UnitComplement => Some(true),
-            Self::General { .. } => None,
+            Self::EndpointProjective { .. }
+            | Self::RangeProjective { .. }
+            | Self::General { .. } => None,
         }
     }
 
     pub(crate) fn map_first_to_second(
         &self,
         parameter: &BezierParameter2,
+        first_range: &BezierParameterRange2,
+        second_range: &BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParameter2>>> {
         match self {
             Self::Identity => Ok(Classification::Decided(Some(parameter.clone()))),
             Self::UnitComplement => Ok(Classification::Decided(Some(parameter.unit_complement()))),
+            Self::EndpointProjective {
+                second_to_first_scale,
+                reversed,
+            } => endpoint_projective_parameter_image(
+                parameter,
+                second_to_first_scale,
+                *reversed,
+                true,
+                policy,
+            ),
+            Self::RangeProjective {
+                second_to_first_scale,
+                reversed,
+            } => range_projective_parameter_image(
+                parameter,
+                first_range,
+                second_range,
+                second_to_first_scale,
+                *reversed,
+                true,
+                policy,
+            ),
             Self::General {
                 first,
                 second,
@@ -263,11 +371,35 @@ impl RationalBezierOverlapParameterCorrespondence2 {
     pub(crate) fn map_second_to_first(
         &self,
         parameter: &BezierParameter2,
+        first_range: &BezierParameterRange2,
+        second_range: &BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParameter2>>> {
         match self {
             Self::Identity => Ok(Classification::Decided(Some(parameter.clone()))),
             Self::UnitComplement => Ok(Classification::Decided(Some(parameter.unit_complement()))),
+            Self::EndpointProjective {
+                second_to_first_scale,
+                reversed,
+            } => endpoint_projective_parameter_image(
+                parameter,
+                second_to_first_scale,
+                *reversed,
+                false,
+                policy,
+            ),
+            Self::RangeProjective {
+                second_to_first_scale,
+                reversed,
+            } => range_projective_parameter_image(
+                parameter,
+                first_range,
+                second_range,
+                second_to_first_scale,
+                *reversed,
+                false,
+                policy,
+            ),
             Self::General {
                 first,
                 second,
@@ -448,10 +580,12 @@ impl RationalBezierIntersectionContext {
 
     pub(crate) fn overlap_parameter_correspondence(
         &self,
+        overlap: &RationalBezierIntersectionOverlap2,
     ) -> RationalBezierOverlapParameterCorrespondence2 {
-        RationalBezierOverlapParameterCorrespondence2::new(
+        RationalBezierOverlapParameterCorrespondence2::for_overlap(
             &self.data.first,
             &self.data.second,
+            overlap,
             &self.data.policy,
         )
     }
@@ -3529,6 +3663,60 @@ impl RationalBezier2 {
         Some(true)
     }
 
+    fn endpoint_projective_parameter_scale(
+        &self,
+        other: &Self,
+        reversed: bool,
+        policy: &CurveContext,
+    ) -> Classification<Option<Real>> {
+        if self.degree() != other.degree() {
+            return Classification::Decided(None);
+        }
+        let degree = self.degree();
+        let other_base = if reversed { degree } else { 0 };
+        for index in 0..=degree {
+            let other_index = if reversed { degree - index } else { index };
+            match is_zero(
+                &self.control_points()[index]
+                    .distance_squared(&other.control_points()[other_index]),
+                policy,
+            ) {
+                Some(true) => {}
+                Some(false) => return Classification::Decided(None),
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+        }
+        if !matches!(self.common_weight_sign(policy), Classification::Decided(_))
+            || !matches!(other.common_weight_sign(policy), Classification::Decided(_))
+        {
+            return Classification::Uncertain(UncertaintyReason::RealSign);
+        }
+        let other_first = if reversed { degree - 1 } else { 1 };
+        let scale_numerator = &other.weights()[other_first] * &self.weights()[0];
+        let scale_denominator = &self.weights()[1] * &other.weights()[other_base];
+        let Ok(scale) = scale_numerator / scale_denominator else {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        };
+        match real_sign(&scale, policy) {
+            Some(RealSign::Positive) => {}
+            Some(_) => return Classification::Decided(None),
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        }
+        let mut scale_power = Real::one();
+        for index in 0..=degree {
+            let other_index = if reversed { degree - index } else { index };
+            let difference = &other.weights()[other_index] * &self.weights()[0]
+                - &scale_power * &self.weights()[index] * &other.weights()[other_base];
+            match is_zero(&difference, policy) {
+                Some(true) => {}
+                Some(false) => return Classification::Decided(None),
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+            scale_power *= &scale;
+        }
+        Classification::Decided(Some(scale))
+    }
+
     pub(crate) fn same_projective_control_net_degree_aligned(
         &self,
         other: &Self,
@@ -3605,7 +3793,45 @@ impl RationalBezier2 {
                     orientation: RationalBezierOverlapOrientation2::Reversed,
                 }),
             ),
-            Classification::Decided(false) => self.partial_image_overlap(other, policy),
+            Classification::Decided(false) => {
+                for reversed in [false, true] {
+                    match self.endpoint_projective_parameter_scale(other, reversed, policy) {
+                        Classification::Decided(Some(_)) => {
+                            return Classification::Decided(
+                                RationalBezierSharedComponentReplay::Overlap(
+                                    RationalBezierIntersectionOverlap2 {
+                                        first_range: BezierParameterRange2::from_exact(
+                                            Real::zero(),
+                                            Real::one(),
+                                        ),
+                                        second_range: if reversed {
+                                            BezierParameterRange2::from_exact(
+                                                Real::one(),
+                                                Real::zero(),
+                                            )
+                                        } else {
+                                            BezierParameterRange2::from_exact(
+                                                Real::zero(),
+                                                Real::one(),
+                                            )
+                                        },
+                                        orientation: if reversed {
+                                            RationalBezierOverlapOrientation2::Reversed
+                                        } else {
+                                            RationalBezierOverlapOrientation2::Same
+                                        },
+                                    },
+                                ),
+                            );
+                        }
+                        Classification::Decided(None) => {}
+                        Classification::Uncertain(reason) => {
+                            return Classification::Uncertain(reason);
+                        }
+                    }
+                }
+                self.partial_image_overlap(other, policy)
+            }
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         }
     }
@@ -4393,7 +4619,19 @@ impl RationalBezier2 {
             policy,
         ) {
             Classification::Decided(true) => {}
-            Classification::Decided(false) => return Classification::Decided(None),
+            Classification::Decided(false) => {
+                match first_subcurve.endpoint_projective_parameter_scale(
+                    &second_subcurve,
+                    reversed,
+                    policy,
+                ) {
+                    Classification::Decided(Some(_)) => {}
+                    Classification::Decided(None) => return Classification::Decided(None),
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                }
+            }
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
         let orientation = if reversed {
@@ -4710,6 +4948,119 @@ fn parameter_root_representation(
         BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
         BezierParameter2::Algebraic(parameter) => parameter_representation(parameter, policy),
     }
+}
+
+fn endpoint_projective_parameter_image(
+    parameter: &BezierParameter2,
+    second_to_first_scale: &Real,
+    reversed: bool,
+    first_to_second: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    let one = Real::one();
+    let zero = Real::zero();
+    let (numerator, denominator) = match (reversed, first_to_second) {
+        (false, true) => (
+            [zero, one.clone()],
+            [second_to_first_scale.clone(), &one - second_to_first_scale],
+        ),
+        (false, false) => (
+            [Real::zero(), second_to_first_scale.clone()],
+            [one.clone(), second_to_first_scale - &one],
+        ),
+        (true, _) => (
+            [
+                second_to_first_scale.clone(),
+                -second_to_first_scale.clone(),
+            ],
+            [second_to_first_scale.clone(), &one - second_to_first_scale],
+        ),
+    };
+    projective_parameter_image(parameter, &numerator, &denominator, policy)
+}
+
+fn range_projective_parameter_image(
+    parameter: &BezierParameter2,
+    first_range: &BezierParameterRange2,
+    second_range: &BezierParameterRange2,
+    second_to_first_scale: &Real,
+    reversed: bool,
+    first_to_second: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    let (Some(first_start), Some(first_end)) =
+        (first_range.start().as_exact(), first_range.end().as_exact())
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let (second_start, second_end) = if reversed {
+        (
+            second_range.end().as_exact(),
+            second_range.start().as_exact(),
+        )
+    } else {
+        (
+            second_range.start().as_exact(),
+            second_range.end().as_exact(),
+        )
+    };
+    let (Some(second_start), Some(second_end)) = (second_start, second_end) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let second_span = second_end - second_start;
+    let denominator = [
+        second_to_first_scale * first_end - first_start,
+        Real::one() - second_to_first_scale,
+    ];
+    let aligned_numerator = if reversed {
+        [second_to_first_scale * first_end, -second_to_first_scale]
+    } else {
+        [-first_start.clone(), Real::one()]
+    };
+    let numerator = [
+        second_start * &denominator[0] + &second_span * &aligned_numerator[0],
+        second_start * &denominator[1] + second_span * &aligned_numerator[1],
+    ];
+    if first_to_second {
+        projective_parameter_image(parameter, &numerator, &denominator, policy)
+    } else {
+        let inverse_numerator = [numerator[0].clone(), -denominator[0].clone()];
+        let inverse_denominator = [-numerator[1].clone(), denominator[1].clone()];
+        projective_parameter_image(parameter, &inverse_numerator, &inverse_denominator, policy)
+    }
+}
+
+fn projective_parameter_image(
+    parameter: &BezierParameter2,
+    numerator: &[Real; 2],
+    denominator: &[Real; 2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    if let Some(parameter) = parameter.as_exact() {
+        let numerator = &numerator[0] + &numerator[1] * parameter;
+        let denominator = &denominator[0] + &denominator[1] * parameter;
+        let mapped = match numerator / denominator {
+            Ok(mapped) => mapped,
+            Err(_) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+        };
+        return Ok(match in_closed_unit_interval(&mapped, policy) {
+            Some(true) => Classification::Decided(Some(BezierParameter2::Exact(mapped))),
+            Some(false) => Classification::Decided(None),
+            None => Classification::Uncertain(UncertaintyReason::Ordering),
+        });
+    }
+    let root = parameter_root_representation(parameter, policy);
+    let candidate = match conic_parameter_candidate(
+        &root.polynomial_coefficients,
+        &(numerator.to_vec(), denominator.to_vec()),
+        policy,
+    )? {
+        Classification::Decided(candidate) => candidate,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    conic_parameter_from_candidates(std::slice::from_ref(&candidate), parameter, policy)
 }
 
 fn overlap_parameter_on_curve(
@@ -6441,6 +6792,124 @@ mod tests {
                 .is_none(),
             "nonrational Real carriers retain the certified general path"
         );
+    }
+
+    #[test]
+    fn endpoint_projective_cubic_correspondence_maps_both_orientations() {
+        let controls = vec![
+            Point2::new(Real::zero(), Real::zero()),
+            Point2::new(Real::from(7_i8), Real::from(-5_i8)),
+            Point2::new(Real::from(8_i8), Real::from(-4_i8)),
+            Point2::new(Real::from(3_i8), Real::from(3_i8)),
+        ];
+        let first = RationalBezier2::try_new(controls.clone(), vec![Real::one(); 4]).unwrap();
+        let same = RationalBezier2::try_new(
+            controls.clone(),
+            vec![
+                Real::one(),
+                Real::from(2_i8),
+                Real::from(4_i8),
+                Real::from(8_i8),
+            ],
+        )
+        .unwrap();
+        let reversed = RationalBezier2::try_new(
+            controls.into_iter().rev().collect(),
+            vec![
+                Real::from(8_i8),
+                Real::from(4_i8),
+                Real::from(2_i8),
+                Real::one(),
+            ],
+        )
+        .unwrap();
+        let unit = BezierParameterRange2::from_exact(Real::zero(), Real::one());
+        let first_parameter = BezierParameter2::Exact((Real::one() / Real::from(3_i8)).unwrap());
+        let same_expected = (Real::one() / Real::from(5_i8)).unwrap();
+        let reversed_expected = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (second, expected) in [(&same, &same_expected), (&reversed, &reversed_expected)] {
+                assert!(matches!(
+                    first.image_overlap(second, &policy),
+                    Classification::Decided(RationalBezierSharedComponentReplay::Overlap(_))
+                ));
+                let correspondence =
+                    RationalBezierOverlapParameterCorrespondence2::new(&first, second, &policy);
+                let Classification::Decided(Some(mapped)) = correspondence
+                    .map_first_to_second(&first_parameter, &unit, &unit, &policy)
+                    .unwrap()
+                else {
+                    panic!("projective correspondence did not map the first parameter");
+                };
+                assert_eq!(mapped.as_exact(), Some(expected));
+                let Classification::Decided(Some(round_trip)) = correspondence
+                    .map_second_to_first(&mapped, &unit, &unit, &policy)
+                    .unwrap()
+                else {
+                    panic!("projective correspondence did not map the second parameter");
+                };
+                assert_eq!(round_trip, first_parameter);
+            }
+        }
+    }
+
+    #[test]
+    fn range_projective_correspondence_maps_and_inverts_oriented_ranges() {
+        let first_range = BezierParameterRange2::from_exact(
+            (Real::one() / Real::from(4_i8)).unwrap(),
+            (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+        );
+        let second_low = (Real::one() / Real::from(5_i8)).unwrap();
+        let second_high = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+        let scale = Real::from(2_i8);
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (reversed, second_range) in [
+                (
+                    false,
+                    BezierParameterRange2::from_exact(second_low.clone(), second_high.clone()),
+                ),
+                (
+                    true,
+                    BezierParameterRange2::from_exact(second_high.clone(), second_low.clone()),
+                ),
+            ] {
+                for (first, expected_second) in [
+                    (first_range.start(), second_range.start()),
+                    (first_range.end(), second_range.end()),
+                ] {
+                    let Classification::Decided(Some(mapped)) = range_projective_parameter_image(
+                        first,
+                        &first_range,
+                        &second_range,
+                        &scale,
+                        reversed,
+                        true,
+                        &policy,
+                    )
+                    .unwrap() else {
+                        panic!("range projective map did not map an endpoint");
+                    };
+                    assert_eq!(mapped, expected_second.clone());
+                    let Classification::Decided(Some(round_trip)) =
+                        range_projective_parameter_image(
+                            &mapped,
+                            &first_range,
+                            &second_range,
+                            &scale,
+                            reversed,
+                            false,
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("range projective inverse did not map an endpoint");
+                    };
+                    assert_eq!(round_trip, first.clone());
+                }
+            }
+        }
     }
 
     #[test]

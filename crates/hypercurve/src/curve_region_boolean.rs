@@ -2176,6 +2176,8 @@ fn clip_corresponding_parameter_overlap(
         correspondence,
         true,
         &first_start,
+        first_range,
+        second_range,
         first_carrier.family,
         policy,
     )?;
@@ -2183,6 +2185,8 @@ fn clip_corresponding_parameter_overlap(
         correspondence,
         true,
         &first_end,
+        first_range,
+        second_range,
         first_carrier.family,
         policy,
     )?;
@@ -2222,6 +2226,8 @@ fn clip_corresponding_parameter_overlap(
         correspondence,
         false,
         &second_start,
+        first_range,
+        second_range,
         second_carrier.family,
         policy,
     )?;
@@ -2229,6 +2235,8 @@ fn clip_corresponding_parameter_overlap(
         correspondence,
         false,
         &second_end,
+        first_range,
+        second_range,
         second_carrier.family,
         policy,
     )?;
@@ -2242,13 +2250,15 @@ fn mapped_overlap_parameter(
     correspondence: &RationalBezierOverlapParameterCorrespondence2,
     first_to_second: bool,
     parameter: &BezierParameter2,
+    first_range: &BezierParameterRange2,
+    second_range: &BezierParameterRange2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierParameter2> {
     let mapped = if first_to_second {
-        correspondence.map_first_to_second(parameter, policy)
+        correspondence.map_first_to_second(parameter, first_range, second_range, policy)
     } else {
-        correspondence.map_second_to_first(parameter, policy)
+        correspondence.map_second_to_first(parameter, first_range, second_range, policy)
     };
     match mapped {
         Ok(Classification::Decided(Some(parameter))) => Ok(parameter),

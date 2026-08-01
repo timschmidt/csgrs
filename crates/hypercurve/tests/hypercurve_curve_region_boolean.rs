@@ -5,7 +5,7 @@ use hypercurve::{
 #[cfg(feature = "predicates")]
 use hypercurve::{
     CircularArc2, CubicBezier2, CurveBoundaryInteriorSide2, CurveRegionLoopRole, FillRule,
-    QuadraticBezier2, RationalBezier2,
+    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
 };
 
 fn point(x: i64, y: i64) -> Point2 {
@@ -1259,6 +1259,144 @@ fn retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges() {
                 Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap());
             assert_location(results.xor(), between_tops, RegionPointLocation::Inside);
         }
+    }
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
+    // In the affine frame u = (x + y) / 2 and v = (x - y) / 2, this cubic has
+    // u(t) = 3t and v(t) = 18t(1-t). It is therefore image-injective, but both
+    // authored x and y coordinates reverse direction in the open domain.
+    let controls = [point(0, 0), point(7, -5), point(8, -4), point(3, 3)];
+    let polynomial = CurvePath2::try_new(vec![
+        Curve2::from(CubicBezier2::new(
+            controls[0].clone(),
+            controls[1].clone(),
+            controls[2].clone(),
+            controls[3].clone(),
+        )),
+        Curve2::from(LineSeg2::try_new(controls[3].clone(), controls[0].clone()).unwrap()),
+    ])
+    .unwrap();
+    // Scaling homogeneous Bernstein control i by 2^i composes t with the
+    // projective map 2s / (1 + s) without changing the image or traversal.
+    let reparameterized = CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalBezier2::try_new(
+                controls.to_vec(),
+                vec![
+                    Real::one(),
+                    Real::from(2_i8),
+                    Real::from(4_i8),
+                    Real::from(8_i8),
+                ],
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(controls[3].clone(), controls[0].clone()).unwrap()),
+    ])
+    .unwrap();
+
+    let polynomial_rational =
+        RationalBezier2::try_new(controls.to_vec(), vec![Real::one(); 4]).unwrap();
+    let projective_rational = RationalBezier2::try_new(
+        controls.to_vec(),
+        vec![
+            Real::one(),
+            Real::from(2_i8),
+            Real::from(4_i8),
+            Real::from(8_i8),
+        ],
+    )
+    .unwrap();
+    assert!(matches!(
+        polynomial_rational
+            .intersection_contacts(&projective_rational, &CurveContext::STRICT)
+            .unwrap(),
+        RationalBezierIntersectionContacts2::Overlap(_)
+    ));
+
+    let narrow_clip = square_path(-20, -10, 20, -1);
+    let wide_clip = square_path(-20, -10, 20, 0);
+    let narrow_sample = point(4, -2);
+    let wide_only_sample = Point2::new(
+        Real::from(2_i8),
+        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+    );
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let narrow = polynomial
+            .boolean_region(
+                &narrow_clip,
+                BooleanOp::Intersection,
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        let wide = reparameterized
+            .boolean_region(
+                &wide_clip,
+                BooleanOp::Intersection,
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        assert!(narrow.has_algebraic_fragments());
+
+        let evidence = narrow.intersect_region(&wide, &policy).unwrap();
+        assert!(evidence.value.is_complete());
+        assert_eq!(evidence.value.contacts().len(), 2);
+        assert_eq!(evidence.value.overlaps().len(), 1);
+
+        let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
+        assert!(results.difference().is_empty());
+        for sample in [&narrow_sample, &wide_only_sample] {
+            assert_eq!(
+                results
+                    .union()
+                    .classify_point(sample, &policy)
+                    .unwrap()
+                    .into_value(),
+                Classification::Decided(RegionPointLocation::Inside)
+            );
+        }
+        assert_eq!(
+            results
+                .intersection()
+                .classify_point(&narrow_sample, &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+        assert_eq!(
+            results
+                .intersection()
+                .classify_point(&wide_only_sample, &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+        assert_eq!(
+            results
+                .xor()
+                .classify_point(&narrow_sample, &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+        assert_eq!(
+            results
+                .xor()
+                .classify_point(&wide_only_sample, &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
     }
 }
 
