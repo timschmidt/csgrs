@@ -1,7 +1,10 @@
 use std::hint::black_box;
 use std::time::Instant;
 
-use hypercurve::{BooleanOp, BulgeVertex2, Contour2, CurveContext, CurveRegion2, Point2, Real};
+use hypercurve::{
+    BooleanOp, BulgeVertex2, Contour2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
+    CurvePath2, CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2, Real,
+};
 
 fn point(x: i32, y: i32) -> Point2 {
     Point2::from_values(x, y)
@@ -35,6 +38,118 @@ fn capsule(center_x: i32) -> Contour2 {
     .unwrap()
 }
 
+fn rectangle_path(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurvePath2 {
+    let points = [
+        point(min_x, min_y),
+        point(max_x, min_y),
+        point(max_x, max_y),
+        point(min_x, max_y),
+    ];
+    CurvePath2::try_new(
+        (0..points.len())
+            .map(|index| {
+                Curve2::from(
+                    LineSeg2::try_new(
+                        points[index].clone(),
+                        points[(index + 1) % points.len()].clone(),
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
+fn clipped_region(
+    path: &CurvePath2,
+    clip: CurvePath2,
+    interior_side: CurveBoundaryInteriorSide2,
+    policy: &CurveContext,
+) -> CurveRegion2 {
+    path.boolean_region(
+        &clip,
+        BooleanOp::Intersection,
+        interior_side,
+        CurveBoundaryInteriorSide2::Left,
+        policy,
+    )
+    .unwrap()
+    .into_value()
+}
+
+fn mobius_overlap_regions(policy: &CurveContext) -> (CurveRegion2, CurveRegion2) {
+    let start = point(-2, 4);
+    let control = point(0, -4);
+    let end = point(2, 4);
+    let quadratic = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            start.clone(),
+            control.clone(),
+            end.clone(),
+        )),
+        Curve2::from(LineSeg2::try_new(end.clone(), start.clone()).unwrap()),
+    ])
+    .unwrap();
+    let reparameterized = CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalBezier2::try_new(
+                vec![start.clone(), control, end.clone()],
+                vec![Real::one(), Real::from(2_i8), Real::from(4_i8)],
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(end, start).unwrap()),
+    ])
+    .unwrap();
+    (
+        clipped_region(
+            &quadratic,
+            rectangle_path(-3, -1, 3, 2),
+            CurveBoundaryInteriorSide2::Left,
+            policy,
+        ),
+        clipped_region(
+            &reparameterized,
+            rectangle_path(-3, -1, 3, 3),
+            CurveBoundaryInteriorSide2::Left,
+            policy,
+        ),
+    )
+}
+
+fn nonlinear_line_overlap_regions(policy: &CurveContext) -> (CurveRegion2, CurveRegion2) {
+    let line_region = |control_x| {
+        CurvePath2::try_new(vec![
+            Curve2::from(
+                RationalBezier2::try_new(
+                    vec![point(0, 0), point(control_x, 0), point(4, 0)],
+                    vec![Real::one(); 3],
+                )
+                .unwrap(),
+            ),
+            Curve2::from(LineSeg2::try_new(point(4, 0), point(4, 4)).unwrap()),
+            Curve2::from(LineSeg2::try_new(point(4, 4), point(0, 4)).unwrap()),
+            Curve2::from(LineSeg2::try_new(point(0, 4), point(0, 0)).unwrap()),
+        ])
+        .unwrap()
+    };
+    (
+        clipped_region(
+            &line_region(1),
+            rectangle_path(-1, -1, 2, 5),
+            CurveBoundaryInteriorSide2::Left,
+            policy,
+        ),
+        clipped_region(
+            &line_region(3),
+            rectangle_path(-1, -1, 3, 5),
+            CurveBoundaryInteriorSide2::Left,
+            policy,
+        ),
+    )
+}
+
 fn region_weight(region: &CurveRegion2) -> usize {
     region
         .boundary_loops()
@@ -54,18 +169,21 @@ fn measure(operation: &mut impl FnMut() -> usize, iterations: u32) -> (u128, usi
 
 fn main() {
     let policy = CurveContext::STRICT;
-    let contours = match std::env::var("HYPERCURVE_CURVE_REGION_BATCH_FIXTURE").as_deref() {
-        Ok("circles") => (circle(0), circle(1)),
-        Ok("capsules") => (capsule(0), capsule(2)),
-        Ok(fixture) => panic!("unknown batch benchmark fixture {fixture}"),
-        Err(_) => (rectangle(0, 0, 4, 4), rectangle(2, 0, 6, 4)),
+    let native_regions = |contours: (Contour2, Contour2)| {
+        [contours.0, contours.1].map(|contour| {
+            CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
+                .unwrap()
+                .into_value()
+        })
     };
-    let first = CurveRegion2::try_from_native_material_contours(vec![contours.0], &policy)
-        .unwrap()
-        .into_value();
-    let second = CurveRegion2::try_from_native_material_contours(vec![contours.1], &policy)
-        .unwrap()
-        .into_value();
+    let [first, second] = match std::env::var("HYPERCURVE_CURVE_REGION_BATCH_FIXTURE").as_deref() {
+        Ok("circles") => native_regions((circle(0), circle(1))),
+        Ok("capsules") => native_regions((capsule(0), capsule(2))),
+        Ok("mobius-overlap") => mobius_overlap_regions(&policy).into(),
+        Ok("nonlinear-line-overlap") => nonlinear_line_overlap_regions(&policy).into(),
+        Ok(fixture) => panic!("unknown batch benchmark fixture {fixture}"),
+        Err(_) => native_regions((rectangle(0, 0, 4, 4), rectangle(2, 0, 6, 4))),
+    };
     let iterations = std::env::var("HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS")
         .ok()
         .and_then(|value| value.parse().ok())

@@ -2112,63 +2112,71 @@ fn clip_corresponding_parameter_overlap(
     second_carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<(BezierParameterRange2, BezierParameterRange2)>> {
-    let (second_overlap_start, second_overlap_end) = ascending_range(second_range, policy)?;
-    let second_start = maximum_parameter([second_overlap_start, &second_carrier.start], policy)?;
-    let second_end = minimum_parameter([second_overlap_end, &second_carrier.end], policy)?;
-    match decided_parameter_cmp(&second_start, &second_end, policy)? {
-        Ordering::Less => {}
-        Ordering::Equal | Ordering::Greater => return Ok(None),
-    }
-    let second_start_on_first = mapped_overlap_parameter(
-        correspondence,
-        false,
-        &second_start,
-        second_carrier.family,
-        policy,
-    )?;
-    let second_end_on_first = mapped_overlap_parameter(
-        correspondence,
-        false,
-        &second_end,
-        second_carrier.family,
-        policy,
-    )?;
-    let (second_start_on_first, second_end_on_first) =
-        match decided_parameter_cmp(&second_start_on_first, &second_end_on_first, policy)? {
-            Ordering::Less => (second_start_on_first, second_end_on_first),
-            Ordering::Greater => (second_end_on_first, second_start_on_first),
-            Ordering::Equal => return Ok(None),
-        };
-
     let (first_overlap_start, first_overlap_end) = ascending_range(first_range, policy)?;
-    let first_start = maximum_parameter(
-        [
-            first_overlap_start,
-            &first_carrier.start,
-            &second_start_on_first,
-        ],
-        policy,
-    )?;
-    let first_end = minimum_parameter(
-        [first_overlap_end, &first_carrier.end, &second_end_on_first],
-        policy,
-    )?;
+    let first_start = maximum_parameter([first_overlap_start, &first_carrier.start], policy)?;
+    let first_end = minimum_parameter([first_overlap_end, &first_carrier.end], policy)?;
     match decided_parameter_cmp(&first_start, &first_end, policy)? {
         Ordering::Less => {}
         Ordering::Equal | Ordering::Greater => return Ok(None),
     }
-    let second_start = mapped_overlap_parameter(
+    let mapped_start = mapped_overlap_parameter(
         correspondence,
         true,
         &first_start,
         first_carrier.family,
         policy,
     )?;
-    let second_end = mapped_overlap_parameter(
+    let mapped_end = mapped_overlap_parameter(
         correspondence,
         true,
         &first_end,
         first_carrier.family,
+        policy,
+    )?;
+    let mapped_order = decided_parameter_cmp(&mapped_start, &mapped_end, policy)?;
+    let (mapped_low, mapped_high) = match mapped_order {
+        Ordering::Less => (&mapped_start, &mapped_end),
+        Ordering::Greater => (&mapped_end, &mapped_start),
+        Ordering::Equal => return Ok(None),
+    };
+    let (second_overlap_start, second_overlap_end) = ascending_range(second_range, policy)?;
+    let second_low = maximum_parameter(
+        [mapped_low, second_overlap_start, &second_carrier.start],
+        policy,
+    )?;
+    let second_high = minimum_parameter(
+        [mapped_high, second_overlap_end, &second_carrier.end],
+        policy,
+    )?;
+    match decided_parameter_cmp(&second_low, &second_high, policy)? {
+        Ordering::Less => {}
+        Ordering::Equal | Ordering::Greater => return Ok(None),
+    }
+    if decided_parameter_cmp(&second_low, mapped_low, policy)? == Ordering::Equal
+        && decided_parameter_cmp(&second_high, mapped_high, policy)? == Ordering::Equal
+    {
+        return Ok(Some((
+            BezierParameterRange2::new_validated(first_start, first_end),
+            BezierParameterRange2::new_validated(mapped_start, mapped_end),
+        )));
+    }
+    let (second_start, second_end) = if mapped_order == Ordering::Less {
+        (second_low, second_high)
+    } else {
+        (second_high, second_low)
+    };
+    let first_start = mapped_overlap_parameter(
+        correspondence,
+        false,
+        &second_start,
+        second_carrier.family,
+        policy,
+    )?;
+    let first_end = mapped_overlap_parameter(
+        correspondence,
+        false,
+        &second_end,
+        second_carrier.family,
         policy,
     )?;
     Ok(Some((
