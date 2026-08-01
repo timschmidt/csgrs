@@ -824,7 +824,12 @@ fn direct_rational_map(
     if !has_exact_coefficients(&numerator) || !has_exact_coefficients(&denominator) {
         return None;
     }
-    if numerator.len() > 1 && denominator.len() > 1 {
+    // Two nonconstant linears either are coprime or describe a constant map;
+    // `constant_rational_map_value` handles the latter without a polynomial GCD.
+    if numerator.len() > 1
+        && denominator.len() > 1
+        && (numerator.len() != 2 || denominator.len() != 2)
+    {
         let gcd = primitive_integer_polynomial_gcd(&numerator, &denominator)?;
         if gcd.len() > 1 {
             let (reduced_numerator, numerator_remainder) =
