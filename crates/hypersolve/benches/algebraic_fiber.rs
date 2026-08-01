@@ -5,9 +5,11 @@ use hyperreal::Real;
 use hypersolve::{
     AlgebraicFiberRootCountStatus, AlgebraicRootKind, AlgebraicRootRepresentation,
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BivariatePolynomial,
+    BivariatePolynomialRationalComponentStatus, CurveIntersectionResultantConfig,
     CurveResultantParameter, IsolatedRootInterval, PredicatePolicy, SymbolId,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
+    rational_parameter_component_bivariate_polynomial_system,
 };
 
 fn r(value: i64) -> Real {
@@ -16,6 +18,29 @@ fn r(value: i64) -> Real {
 
 fn q(numerator: i64, denominator: i64) -> Real {
     (r(numerator) / r(denominator)).expect("nonzero benchmark denominator")
+}
+
+fn multiply_bivariate(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+) -> BivariatePolynomial {
+    let first_columns = first.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+    let second_columns = second.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+    let mut coefficients = vec![
+        vec![Real::zero(); first_columns + second_columns - 1];
+        first.coefficients.len() + second.coefficients.len() - 1
+    ];
+    for (first_power, first_row) in first.coefficients.iter().enumerate() {
+        for (second_power, second_row) in second.coefficients.iter().enumerate() {
+            for (first_column, first_coefficient) in first_row.iter().enumerate() {
+                for (second_column, second_coefficient) in second_row.iter().enumerate() {
+                    coefficients[first_power + second_power][first_column + second_column] +=
+                        first_coefficient * second_coefficient;
+                }
+            }
+        }
+    }
+    BivariatePolynomial::new(coefficients)
 }
 
 fn main() {
@@ -103,6 +128,58 @@ fn main() {
     let elapsed = started.elapsed();
     println!(
         "algebraic_common_fiber_degree_drop: {iterations} iterations in {elapsed:?} ({:?}/iter), root_checksum={common_root_count}, refinement_checksum={common_refinement_steps}",
+        elapsed / iterations
+    );
+
+    let first_component = BivariatePolynomial::new(vec![vec![r(0), r(1)], vec![r(-1)]]);
+    let second_component = BivariatePolynomial::new(vec![vec![r(-1), r(1)], vec![r(1)]]);
+    let common = multiply_bivariate(&first_component, &second_component);
+    let first = multiply_bivariate(
+        &common,
+        &BivariatePolynomial::new(vec![vec![r(1), r(1)], vec![r(1)]]),
+    );
+    let second = multiply_bivariate(
+        &common,
+        &BivariatePolynomial::new(vec![vec![r(2), r(1)], vec![r(-1)]]),
+    );
+    let config = CurveIntersectionResultantConfig {
+        min_precision: -512,
+        max_resultant_degree: 64,
+    };
+    let started = Instant::now();
+    let mut component_checksum = 0_usize;
+    for _ in 0..iterations {
+        let first_report = rational_parameter_component_bivariate_polynomial_system(
+            black_box(&first),
+            black_box(&second),
+            CurveResultantParameter::First,
+            config,
+        );
+        assert_eq!(
+            first_report.status,
+            BivariatePolynomialRationalComponentStatus::Constructed
+        );
+        let reduced = first_report
+            .reduced_equations
+            .as_ref()
+            .expect("the first factor retains its exact residual");
+        let second_report = rational_parameter_component_bivariate_polynomial_system(
+            black_box(&reduced[0]),
+            black_box(&reduced[1]),
+            CurveResultantParameter::First,
+            config,
+        );
+        assert_eq!(
+            second_report.status,
+            BivariatePolynomialRationalComponentStatus::Constructed
+        );
+        component_checksum += black_box(
+            first_report.numerator_coefficients.len() + second_report.numerator_coefficients.len(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_quadratic_common_fiber_two_components: {iterations} iterations in {elapsed:?} ({:?}/iter), component_checksum={component_checksum}",
         elapsed / iterations
     );
 }
