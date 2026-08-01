@@ -2583,6 +2583,8 @@ fn split_edge_crossing_events(
     let approximate_sweep_axis = approximate_vertices
         .map(|vertices| approximate_crossing_sweep_axis(vertices, &edges))
         .unwrap_or(0);
+    let approximate_overlap_axes =
+        projection_axes(approximate_sweep_axis).expect("the crossing sweep axis is valid");
     let exact_bounds_axis = approximate_vertices.map(|_| approximate_sweep_axis);
     let mut bounded_edges = edges
         .into_iter()
@@ -2712,7 +2714,12 @@ fn split_edge_crossing_events(
                 {
                     break;
                 }
-                if !approximate_edge_overlaps_bounds(vertices, right.edge, &left_bounds) {
+                if !approximate_edge_overlaps_bounds_on_axes(
+                    vertices,
+                    right.edge,
+                    &left_bounds,
+                    approximate_overlap_axes,
+                ) {
                     continue;
                 }
             } else if compare_real_decision(
@@ -4192,15 +4199,21 @@ fn approximate_bounds_overlap(left: &ApproximateEdgeBounds, right: &ApproximateE
     (0..3).all(|axis| left[axis][1] >= right[axis][0] && right[axis][1] >= left[axis][0])
 }
 
-fn approximate_edge_overlaps_bounds(
+// The direct crossing scan calls this only after sorting by the excluded-axis
+// minimum and proving that the right minimum does not exceed the left maximum.
+// The right maximum is at least its minimum, so overlap on that axis is already
+// established; only the two remaining outward-enclosure axes need testing.
+fn approximate_edge_overlaps_bounds_on_axes(
     vertices: &[ApproximateOutputVertex],
     edge: [usize; 2],
     bounds: &ApproximateEdgeBounds,
+    overlap_axes: [usize; 2],
 ) -> bool {
-    (0..3).all(|axis| {
+    let overlaps = |axis: usize| {
         bounds[axis][1] >= approximate_edge_min(vertices, edge, axis)
             && approximate_edge_max(vertices, edge, axis) >= bounds[axis][0]
-    })
+    };
+    overlaps(overlap_axes[0]) && overlaps(overlap_axes[1])
 }
 
 // Every axis is exactness-equivalent because the sweep rejects a pair only
@@ -5459,6 +5472,35 @@ mod tests {
             0,
         );
         assert_eq!(approximate_crossing_sweep_axis(&vertices, &edges), 1);
+    }
+
+    #[test]
+    fn crossing_overlap_reuses_the_established_sweep_axis() {
+        let point = |coordinates: [f64; 3]| coordinates.map(|value| [value, value]);
+        for sweep_axis in 0..3 {
+            let separated_axis = (sweep_axis + 1) % 3;
+            let mut right_min = [0.5; 3];
+            let mut right_max = [1.5; 3];
+            right_min[separated_axis] = 2.0;
+            right_max[separated_axis] = 3.0;
+            let vertices = [
+                point([0.0; 3]),
+                point([1.0; 3]),
+                point(right_min),
+                point(right_max),
+            ];
+            let left = approximate_edge_bounds(&vertices, [0, 1]);
+            let right = approximate_edge_bounds(&vertices, [2, 3]);
+
+            assert!(right[sweep_axis][0] >= left[sweep_axis][0]);
+            assert!(right[sweep_axis][0] <= left[sweep_axis][1]);
+            assert!(!approximate_edge_overlaps_bounds_on_axes(
+                &vertices,
+                [2, 3],
+                &left,
+                projection_axes(sweep_axis).unwrap(),
+            ));
+        }
     }
 
     #[test]
