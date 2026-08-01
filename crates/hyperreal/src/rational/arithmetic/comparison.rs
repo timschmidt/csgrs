@@ -224,8 +224,36 @@ fn compare_shifted_biguints(
     }
 
     let common_shift = left_shift.min(right_shift);
-    let mut left_digits = ShiftedU64Digits::new(left, left_shift - common_shift);
-    let mut right_digits = ShiftedU64Digits::new(right, right_shift - common_shift);
+    let left_shift = left_shift - common_shift;
+    let right_shift = right_shift - common_shift;
+    if left_shift == 0 && right_shift == 0 {
+        return left.cmp(right);
+    }
+    // Equal total widths align the first emitted word. A mismatch decides the
+    // exact order; an equal prefix still reaches the complete borrowed scan.
+    let leading_digit = |value: &BigUint, shift: u64| {
+        let bit_shift = (shift % 64) as u32;
+        let mut digits = value.iter_u64_digits();
+        let upper = digits.next_back().unwrap_or_default();
+        if bit_shift == 0 {
+            upper
+        } else {
+            let high_carry = upper >> (64 - bit_shift);
+            if high_carry != 0 {
+                high_carry
+            } else {
+                (upper << bit_shift)
+                    | (digits.next_back().unwrap_or_default() >> (64 - bit_shift))
+            }
+        }
+    };
+    match leading_digit(left, left_shift).cmp(&leading_digit(right, right_shift)) {
+        std::cmp::Ordering::Equal => {}
+        ordering => return ordering,
+    }
+
+    let mut left_digits = ShiftedU64Digits::new(left, left_shift);
+    let mut right_digits = ShiftedU64Digits::new(right, right_shift);
     loop {
         match (left_digits.next(), right_digits.next()) {
             (Some(left), Some(right)) => match left.cmp(&right) {

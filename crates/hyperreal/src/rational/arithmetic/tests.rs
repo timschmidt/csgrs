@@ -4527,7 +4527,18 @@ mod tests {
 
         let boundary_value =
             (BigUint::one() << 130_usize) | (BigUint::one() << 63_usize) | BigUint::one();
-        for shift in [1_u64, 63, 64, 65, 127, 128, 129] {
+        for shift in 1_u64..64 {
+            let shifted = &boundary_value << shift as usize;
+            assert_eq!(
+                compare_shifted_biguints(&boundary_value, shift, &shifted, 0),
+                Ordering::Equal
+            );
+            assert_eq!(
+                compare_shifted_biguints(&shifted, 0, &boundary_value, shift),
+                Ordering::Equal
+            );
+        }
+        for shift in [64_u64, 65, 127, 128, 129] {
             let shifted = &boundary_value << shift as usize;
             assert_eq!(
                 compare_shifted_biguints(&boundary_value, shift, &shifted, 0),
