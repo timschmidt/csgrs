@@ -182,4 +182,45 @@ fn main() {
         "rational_quadratic_common_fiber_two_components: {iterations} iterations in {elapsed:?} ({:?}/iter), component_checksum={component_checksum}",
         elapsed / iterations
     );
+
+    let repeated_component = BivariatePolynomial::new(vec![vec![r(0), r(1)], vec![r(-1)]]);
+    let distinct_component = BivariatePolynomial::new(vec![vec![r(-1), r(1)], vec![r(1)]]);
+    let repeated_common = multiply_bivariate(
+        &multiply_bivariate(&repeated_component, &repeated_component),
+        &distinct_component,
+    );
+    let first = multiply_bivariate(
+        &repeated_common,
+        &BivariatePolynomial::new(vec![vec![r(1), r(1)], vec![r(1)]]),
+    );
+    let second = multiply_bivariate(
+        &repeated_common,
+        &BivariatePolynomial::new(vec![vec![r(2), r(1)], vec![r(-1)]]),
+    );
+    let started = Instant::now();
+    let mut component_checksum = 0_usize;
+    for _ in 0..iterations {
+        let mut residual = [first.clone(), second.clone()];
+        for _ in 0..3 {
+            let report = rational_parameter_component_bivariate_polynomial_system(
+                black_box(&residual[0]),
+                black_box(&residual[1]),
+                CurveResultantParameter::First,
+                config,
+            );
+            assert_eq!(
+                report.status,
+                BivariatePolynomialRationalComponentStatus::Constructed
+            );
+            component_checksum += black_box(report.numerator_coefficients.len());
+            residual = report
+                .reduced_equations
+                .expect("each cubic factor retains its exact residual");
+        }
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_repeated_cubic_common_fiber_three_components: {iterations} iterations in {elapsed:?} ({:?}/iter), component_checksum={component_checksum}",
+        elapsed / iterations
+    );
 }
