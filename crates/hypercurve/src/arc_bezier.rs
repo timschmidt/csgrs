@@ -170,7 +170,8 @@ fn compute_circular_arc_decomposition(
         let parameter_end = (Real::from((span_index + 1) as u8) / &denominator)
             .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
         spans.push(CircularArcBezierSpan2 {
-            curve: rational_minor_arc_span(&implicit_quadratic_conic, &circular_conic, endpoints)?,
+            curve: rational_minor_arc_span(&implicit_quadratic_conic, &circular_conic, endpoints)
+                .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause))?,
             parameter_start,
             parameter_end,
         });
@@ -479,15 +480,14 @@ pub(crate) fn rational_minor_arc_span(
     implicit_quadratic_conic: &Arc<[Real; 6]>,
     circular_conic: &Arc<RationalQuadraticCircle2>,
     endpoints: &[Point2],
-) -> ExactCurveResult<RationalQuadraticBezier2> {
+) -> CurveResult<RationalQuadraticBezier2> {
     let center = &circular_conic.center;
     let radius_squared = &circular_conic.radius_squared;
     let start = endpoints[0].delta_from(center);
     let end = endpoints[1].delta_from(center);
     let dot = (&start.0 * &end.0) + (&start.1 * &end.1);
     let cross = (&start.0 * &end.1) - (&start.1 * &end.0);
-    let tangent_half = (cross / (radius_squared + dot))
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
+    let tangent_half = (cross / (radius_squared + dot))?;
     let control = Point2::new(
         center.x() + &start.0 - &tangent_half * &start.1,
         center.y() + &start.1 + &tangent_half * &start.0,
@@ -504,7 +504,6 @@ pub(crate) fn rational_minor_arc_span(
         Some(Arc::clone(implicit_quadratic_conic)),
         Some(Arc::clone(circular_conic)),
     )
-    .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause))
 }
 
 fn arc_error(operation: CurveOperation2, cause: CurveError) -> ExactCurveError {

@@ -1,11 +1,11 @@
 use hypercurve::{
     BooleanOp, BulgeVertex2, Classification, Contour2, Curve2, CurveCertainty, CurveContext,
-    CurvePath2, CurveRegion2, LineSeg2, Point2, Real, RegionPointLocation,
+    CurvePath2, CurveRegion2, LineSeg2, Point2, Real, RegionPointLocation, Segment2,
 };
 #[cfg(feature = "predicates")]
 use hypercurve::{
     CircularArc2, CubicBezier2, CurveBoundaryInteriorSide2, CurveRegionLoopRole, FillRule,
-    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
+    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2, UncertaintyReason,
 };
 
 fn point(x: i64, y: i64) -> Point2 {
@@ -212,6 +212,25 @@ fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLo
             .into_value(),
         Classification::Decided(expected)
     );
+}
+
+fn native_segment_counts(region: &CurveRegion2, policy: &CurveContext) -> (usize, usize) {
+    let native = region
+        .native_contours_fast_path(policy)
+        .expect("native publication must not fail")
+        .into_value();
+    let Classification::Decided(native) = native else {
+        panic!("certified line/circular Boolean output must publish native contours");
+    };
+    native
+        .material_contours()
+        .iter()
+        .chain(native.hole_contours())
+        .flat_map(Contour2::segments)
+        .fold((0, 0), |(lines, arcs), segment| match segment {
+            Segment2::Line(_) => (lines + 1, arcs),
+            Segment2::Arc(_) => (lines, arcs + 1),
+        })
 }
 
 #[test]
@@ -619,6 +638,68 @@ fn mixed_line_circular_conic_batch_reuses_one_authoritative_topology() {
             }
         }
     }
+}
+
+#[test]
+fn circular_boolean_outputs_publish_native_boundaries_under_both_policies() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let first = circle_with_policy(Real::zero(), &policy);
+        let second = circle_with_policy(Real::one(), &policy);
+        let batch = first
+            .boolean_regions(&second, &policy)
+            .expect("overlapping circles must complete under either policy")
+            .into_value();
+        for region in [
+            batch.union(),
+            batch.intersection(),
+            batch.difference(),
+            batch.xor(),
+        ] {
+            let (lines, arcs) = native_segment_counts(region, &policy);
+            assert_eq!(lines, 0);
+            assert!(arcs > 0);
+            assert!(region.boundary_loops().iter().all(|boundary| {
+                boundary
+                    .fragments()
+                    .iter()
+                    .all(|fragment| !fragment.is_algebraic_endpoint_images())
+            }));
+        }
+
+        let first = capsule(0);
+        let second = capsule(2);
+        let batch = first
+            .boolean_regions(&second, &policy)
+            .expect("overlapping capsules must complete under either policy")
+            .into_value();
+        for region in [
+            batch.union(),
+            batch.intersection(),
+            batch.difference(),
+            batch.xor(),
+        ] {
+            let (lines, arcs) = native_segment_counts(region, &policy);
+            assert!(lines > 0);
+            assert!(arcs > 0);
+        }
+    }
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc() {
+    let region = symbolic_quadratic_cap(Real::from(-4_i8), &CurveContext::STRICT);
+    let union = region
+        .boolean_region(&region, BooleanOp::Union, &CurveContext::STRICT)
+        .expect("identical exact conic regions have an exact union")
+        .into_value();
+    assert!(matches!(
+        union
+            .native_contours_fast_path(&CurveContext::STRICT)
+            .expect("native classification is evidence, not an API failure")
+            .into_value(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    ));
 }
 
 #[test]

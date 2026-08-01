@@ -718,8 +718,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     second_parameter,
                     &self.data.policy,
                 )?;
-                let mut matching_contact_vertex = None;
-                for existing in &contact_points {
+                let mut matching_contact_index = None;
+                for (existing_index, existing) in contact_points.iter().enumerate() {
                     if contacts_decided_distinct_from_carriers(
                         existing,
                         [pair.first_carrier_index, pair.second_carrier_index],
@@ -731,7 +731,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                     match same_contact_point(&existing.point, contact.point(), &self.data.policy) {
                         Classification::Decided(true) => {
-                            matching_contact_vertex = Some(existing.topology_vertex);
+                            matching_contact_index = Some(existing_index);
                             break;
                         }
                         Classification::Decided(false) => {}
@@ -740,25 +740,47 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                     }
                 }
-                let topology_vertex = match (first_existing, second_existing) {
-                    (Some(first), Some(second)) if first != second => {
-                        replace_topology_vertex(&mut events, &mut contact_points, second, first);
-                        contact_vertex_counts[first] += contact_vertex_counts[second];
-                        contact_vertex_counts[second] = 0;
-                        reclassification_vertices[first] |= reclassification_vertices[second];
-                        reclassification_vertices[second] = false;
-                        transition_candidates[first] = None;
-                        transition_candidates[second] = None;
-                        first
-                    }
-                    (Some(vertex), _) | (_, Some(vertex)) => vertex,
-                    (None, None) => matching_contact_vertex.unwrap_or_else(|| {
+                let matching_contact_vertex =
+                    matching_contact_index.map(|index| contact_points[index].topology_vertex);
+                let topology_vertex = first_existing
+                    .or(second_existing)
+                    .or(matching_contact_vertex)
+                    .unwrap_or_else(|| {
                         let vertex = next_topology_vertex;
                         next_topology_vertex += 1;
                         vertex
-                    }),
-                };
-                if matching_contact_vertex.is_none() {
+                    });
+                for previous_vertex in [first_existing, second_existing, matching_contact_vertex]
+                    .into_iter()
+                    .flatten()
+                    .filter(|previous| *previous != topology_vertex)
+                {
+                    replace_topology_vertex(
+                        &mut events,
+                        &mut contact_points,
+                        previous_vertex,
+                        topology_vertex,
+                    );
+                    contact_vertex_counts[topology_vertex] +=
+                        contact_vertex_counts[previous_vertex];
+                    contact_vertex_counts[previous_vertex] = 0;
+                    reclassification_vertices[topology_vertex] |=
+                        reclassification_vertices[previous_vertex];
+                    reclassification_vertices[previous_vertex] = false;
+                    transition_candidates[topology_vertex] = None;
+                    transition_candidates[previous_vertex] = None;
+                }
+                if let Some(index) = matching_contact_index {
+                    if matches!(
+                        contact_points[index].point,
+                        RationalBezierIntersectionPointEvidence2::Algebraic(_)
+                    ) && matches!(
+                        contact.point(),
+                        RationalBezierIntersectionPointEvidence2::Exact(_)
+                    ) {
+                        contact_points[index].point = contact.point().clone();
+                    }
+                } else {
                     contact_points.push(ContactVertex {
                         point: contact.point().clone(),
                         topology_vertex,
@@ -857,14 +879,29 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
 
+        let mut exact_contact_point_index_by_vertex = vec![usize::MAX; next_topology_vertex];
+        for (contact_index, contact) in contact_points.iter().enumerate() {
+            if matches!(
+                contact.point,
+                RationalBezierIntersectionPointEvidence2::Exact(_)
+            ) {
+                exact_contact_point_index_by_vertex[contact.topology_vertex] = contact_index;
+            }
+        }
         let split_fragments = self
             .data
             .carriers
             .iter()
             .enumerate()
             .map(|(carrier_index, carrier)| {
-                split_carrier(carrier, &events[carrier_index], &self.data.policy)
-                    .map_err(|cause| self.invalid(carrier_index, cause))
+                split_carrier(
+                    carrier,
+                    &events[carrier_index],
+                    &contact_points,
+                    &exact_contact_point_index_by_vertex,
+                    &self.data.policy,
+                )
+                .map_err(|cause| self.invalid(carrier_index, cause))
             })
             .collect::<ExactCurveResult<Vec<_>>>()?;
         let transverse_vertices = certified_transverse_contact_vertices(
@@ -1120,10 +1157,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
 
-        let affine_line_output = !arrangement_fragments.is_empty()
+        let native_line_arc_output = !arrangement_fragments.is_empty()
             && arrangement_fragments
                 .iter()
-                .all(|fragment| split_fragment_is_affine_line(fragment.fragment()));
+                .all(|fragment| split_fragment_is_native_line_or_arc(fragment.fragment()));
         let graph = BezierArrangementGraph2::from_certified_fragments(arrangement_fragments);
         let certified_successors = certified_boolean_successors(
             &graph,
@@ -1164,8 +1201,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         region = region
             .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
             .map_err(|cause| self.invalid(0, cause))?;
-        if affine_line_output || self.strict_line_image_only() {
-            self.compact_line_image_result(region)
+        if native_line_arc_output || self.strict_line_image_only() {
+            self.compact_native_result(region)
         } else {
             Ok(region)
         }
@@ -1180,7 +1217,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         })
     }
 
-    fn compact_line_image_result(&self, region: CurveRegion2) -> ExactCurveResult<CurveRegion2> {
+    fn compact_native_result(&self, region: CurveRegion2) -> ExactCurveResult<CurveRegion2> {
         if region.is_empty() {
             return Ok(region);
         }
@@ -1204,10 +1241,42 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     match crate::bezier_region::retained_line_fragment_segment(
                         fragment,
                         &self.data.policy,
-                    )
-                    .map_err(|cause| self.invalid(0, cause))?
-                    {
-                        Classification::Decided(line) => Ok(crate::Segment2::Line(line)),
+                    ) {
+                        Ok(Classification::Decided(line)) => {
+                            return Ok(crate::Segment2::Line(line));
+                        }
+                        Ok(Classification::Uncertain(UncertaintyReason::Unsupported)) => {}
+                        Ok(Classification::Uncertain(reason)) => {
+                            return Err(self.blocked(0, reason));
+                        }
+                        Err(cause) => return Err(self.invalid(0, cause)),
+                    }
+                    let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+                        return Err(self.blocked(0, UncertaintyReason::Unsupported));
+                    };
+                    let arc = match curve {
+                        BezierSubcurve2::RationalQuadratic(curve) => {
+                            crate::arc_bezier::rational_quadratic_circular_arc(
+                                curve,
+                                &self.data.policy,
+                            )
+                        }
+                        BezierSubcurve2::Rational(curve) => {
+                            crate::arc_bezier::rational_bezier_circular_arc(
+                                curve,
+                                &self.data.policy,
+                            )
+                        }
+                        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => {
+                            return Err(self.blocked(0, UncertaintyReason::Unsupported));
+                        }
+                    }
+                    .map_err(|cause| self.invalid(0, cause))?;
+                    match arc {
+                        Classification::Decided(Some(arc)) => Ok(crate::Segment2::Arc(arc)),
+                        Classification::Decided(None) => {
+                            Err(self.blocked(0, UncertaintyReason::Unsupported))
+                        }
                         Classification::Uncertain(reason) => Err(self.blocked(0, reason)),
                     }
                 })
@@ -1245,7 +1314,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return Err(self.invalid(
                         0,
                         CurveError::Topology(
-                            "regularized Boolean emitted a zero-area affine line loop".into(),
+                            "regularized Boolean emitted a zero-area native loop".into(),
                         ),
                     ));
                 }
@@ -1254,14 +1323,25 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
         if !reduced_fragment_count {
             let loop_count = region.len();
-            return match mixed_roles {
+            let region = match mixed_roles {
                 Some(roles) => region.with_certified_loop_roles(roles),
                 None => region.with_certified_all_material_loop_roles(loop_count),
             }
-            .map_err(|cause| self.invalid(0, cause));
+            .map_err(|cause| self.invalid(0, cause))?;
+            return region
+                .with_certified_native_contours(material, holes)
+                .map_err(|cause| self.invalid(0, cause));
         }
-        CurveRegion2::from_certified_oriented_line_contours(material, holes)
-            .map_err(|cause| self.invalid(0, cause))
+        match CurveRegion2::from_certified_oriented_native_contours(
+            material,
+            holes,
+            &self.data.policy,
+        )
+        .map_err(|cause| self.invalid(0, cause))?
+        {
+            Classification::Decided(region) => Ok(region),
+            Classification::Uncertain(reason) => Err(self.blocked(0, reason)),
+        }
     }
 
     fn fragment_location(
@@ -1391,14 +1471,23 @@ fn region_carrier_count(region: &CurveRegion2) -> usize {
         .sum()
 }
 
-fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
-    matches!(
-        fragment,
+fn split_fragment_is_native_line_or_arc(fragment: &BezierSplitFragment2) -> bool {
+    match fragment {
         BezierSplitFragment2::Materialized {
             curve: BezierSubcurve2::Quadratic(curve),
             ..
-        } if curve.retained_exact_line_image().is_some()
-    )
+        } => curve.retained_exact_line_image().is_some(),
+        BezierSplitFragment2::Materialized {
+            curve: BezierSubcurve2::RationalQuadratic(curve),
+            ..
+        } => curve.retained_circular_conic().is_some(),
+        BezierSplitFragment2::Materialized {
+            curve: BezierSubcurve2::Cubic(_) | BezierSubcurve2::Rational(_),
+            ..
+        }
+        | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::Unresolved { .. } => false,
+    }
 }
 
 fn subcurve_is_strict_line_image(curve: &BezierSubcurve2) -> bool {
@@ -1555,24 +1644,40 @@ fn build_region_carriers(
 fn split_carrier(
     carrier: &RegionCarrier,
     events: &[CarrierEvent],
+    contact_points: &[ContactVertex],
+    exact_contact_point_index_by_vertex: &[usize],
     policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
     // Most retained events need very little isolator separation. Preserve the
     // former eight-step proof budget for close roots or endpoint images whose
     // complete topology replay needs a narrower interval.
     for max_refinement_steps in [1, 2, 4] {
-        if let Ok(fragments) =
-            split_carrier_with_refinement(carrier, events, max_refinement_steps, policy)
-        {
+        if let Ok(fragments) = split_carrier_with_refinement(
+            carrier,
+            events,
+            contact_points,
+            exact_contact_point_index_by_vertex,
+            max_refinement_steps,
+            policy,
+        ) {
             return Ok(fragments);
         }
     }
-    split_carrier_with_refinement(carrier, events, 8, policy)
+    split_carrier_with_refinement(
+        carrier,
+        events,
+        contact_points,
+        exact_contact_point_index_by_vertex,
+        8,
+        policy,
+    )
 }
 
 fn split_carrier_with_refinement(
     carrier: &RegionCarrier,
     events: &[CarrierEvent],
+    contact_points: &[ContactVertex],
+    exact_contact_point_index_by_vertex: &[usize],
     max_refinement_steps: usize,
     policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
@@ -1602,14 +1707,25 @@ fn split_carrier_with_refinement(
         if !parameter_range_inside_carrier(start, end, carrier, policy)? {
             continue;
         }
+        let start_topology_vertex = event_vertex(events, start, policy)?;
+        let end_topology_vertex = event_vertex(events, end, policy)?;
+        let fragment = compact_retained_circular_fragment(
+            fragment,
+            carrier,
+            start_topology_vertex,
+            end_topology_vertex,
+            contact_points,
+            exact_contact_point_index_by_vertex,
+            policy,
+        );
         output.push(SplitCarrierFragment {
             fragment: if carrier.reversed {
                 fragment.reversed()?
             } else {
-                fragment.clone()
+                fragment
             },
-            start_topology_vertex: event_vertex(events, start, policy)?,
-            end_topology_vertex: event_vertex(events, end, policy)?,
+            start_topology_vertex,
+            end_topology_vertex,
         });
     }
     if carrier.reversed {
@@ -1622,6 +1738,117 @@ fn split_carrier_with_refinement(
         }
     }
     Ok(output)
+}
+
+fn compact_retained_circular_fragment(
+    fragment: &BezierSplitFragment2,
+    carrier: &RegionCarrier,
+    start_topology_vertex: Option<usize>,
+    end_topology_vertex: Option<usize>,
+    contact_points: &[ContactVertex],
+    exact_contact_point_index_by_vertex: &[usize],
+    policy: &CurveContext,
+) -> BezierSplitFragment2 {
+    if let BezierSplitFragment2::Materialized {
+        start,
+        end,
+        curve: BezierSubcurve2::Rational(curve),
+    } = fragment
+        && let Some(curve) =
+            retained_circular_quadratic(&BezierSubcurve2::Rational(curve.clone()), policy)
+    {
+        return BezierSplitFragment2::Materialized {
+            start: start.clone(),
+            end: end.clone(),
+            curve: BezierSubcurve2::RationalQuadratic(curve),
+        };
+    }
+    let BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } = fragment else {
+        return fragment.clone();
+    };
+    let Some(curve) = retained_circular_quadratic(&carrier.curve, policy) else {
+        return fragment.clone();
+    };
+    let Some(start_point) = exact_split_endpoint_point(
+        start,
+        start_topology_vertex,
+        carrier,
+        contact_points,
+        exact_contact_point_index_by_vertex,
+        policy,
+    ) else {
+        return fragment.clone();
+    };
+    let Some(end_point) = exact_split_endpoint_point(
+        end,
+        end_topology_vertex,
+        carrier,
+        contact_points,
+        exact_contact_point_index_by_vertex,
+        policy,
+    ) else {
+        return fragment.clone();
+    };
+    let (Some(implicit_conic), Some(circular_conic)) = (
+        curve.retained_implicit_quadratic_conic(),
+        curve.retained_circular_conic(),
+    ) else {
+        return fragment.clone();
+    };
+    let endpoints = [start_point, end_point];
+    let Ok(curve) =
+        crate::arc_bezier::rational_minor_arc_span(implicit_conic, circular_conic, &endpoints)
+    else {
+        return fragment.clone();
+    };
+    BezierSplitFragment2::Materialized {
+        start: start.clone(),
+        end: end.clone(),
+        curve: BezierSubcurve2::RationalQuadratic(curve),
+    }
+}
+
+fn retained_circular_quadratic(
+    curve: &BezierSubcurve2,
+    policy: &CurveContext,
+) -> Option<crate::RationalQuadraticBezier2> {
+    let curve = match curve {
+        BezierSubcurve2::RationalQuadratic(curve) => curve.clone(),
+        BezierSubcurve2::Rational(curve) => {
+            match curve.retained_quadratic_representative(policy).ok()? {
+                Classification::Decided(Some(curve)) => curve,
+                Classification::Decided(None) | Classification::Uncertain(_) => return None,
+            }
+        }
+        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => return None,
+    };
+    (curve.retained_implicit_quadratic_conic().is_some()
+        && curve.retained_circular_conic().is_some())
+    .then_some(curve)
+}
+
+fn exact_split_endpoint_point(
+    parameter: &BezierParameter2,
+    topology_vertex: Option<usize>,
+    carrier: &RegionCarrier,
+    contact_points: &[ContactVertex],
+    exact_contact_point_index_by_vertex: &[usize],
+    policy: &CurveContext,
+) -> Option<crate::Point2> {
+    if let Some(contact_index) = topology_vertex
+        .and_then(|vertex| exact_contact_point_index_by_vertex.get(vertex))
+        .copied()
+        .filter(|index| *index != usize::MAX)
+        && let RationalBezierIntersectionPointEvidence2::Exact(point) =
+            &contact_points.get(contact_index)?.point
+    {
+        return Some(point.clone());
+    }
+    let parameter = parameter.as_exact()?;
+    match carrier.curve.point_at(parameter, policy) {
+        Classification::Decided(point) => Some(point),
+        Classification::Uncertain(_) => None,
+    }
 }
 
 fn certified_boolean_successors(

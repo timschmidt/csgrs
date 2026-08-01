@@ -2323,44 +2323,63 @@ impl CurveRegion2 {
         Ok(promoted)
     }
 
-    /// Materializes already-certified, filled-left affine-line loops without
+    /// Materializes already-certified, filled-left native loops without
     /// replaying path construction or loop nesting.
     ///
     /// This is the compact output boundary for the authoritative Boolean
     /// arrangement. The traversal has already certified closure, face side,
     /// and material/hole role; every input contour has already merged adjacent
-    /// codirected line runs. Keeping this constructor private to the crate
+    /// codirected line runs. Circular arcs are retained as exact rational
+    /// quadratic spans. Keeping this constructor private to the crate
     /// prevents unproved authored contours from bypassing ordinary validation.
-    pub(crate) fn from_certified_oriented_line_contours(
+    pub(crate) fn from_certified_oriented_native_contours(
         material_contours: Vec<Contour2>,
         hole_contours: Vec<Contour2>,
-    ) -> CurveResult<Self> {
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
         if material_contours.is_empty() && hole_contours.is_empty() {
-            return Ok(Self::default());
+            return Ok(Classification::Decided(Self::default()));
         }
 
         let mut boundary_loops =
             Vec::with_capacity(material_contours.len().saturating_add(hole_contours.len()));
         for contour in material_contours.iter().chain(&hole_contours) {
-            let fragments = contour
-                .segments()
-                .iter()
-                .map(|segment| {
-                    let Segment2::Line(line) = segment else {
-                        return Err(CurveError::Topology(
-                            "certified affine-line Boolean output contains a nonlinear segment"
-                                .into(),
-                        ));
-                    };
-                    Ok(BezierSplitFragment2::Materialized {
-                        start: BezierParameter2::Exact(Real::zero()),
-                        end: BezierParameter2::Exact(Real::one()),
-                        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
-                            line.clone(),
-                        )),
-                    })
-                })
-                .collect::<CurveResult<Vec<_>>>()?;
+            let mut fragments = Vec::with_capacity(contour.len());
+            for segment in contour.segments() {
+                match segment {
+                    Segment2::Line(line) => {
+                        fragments.push(BezierSplitFragment2::Materialized {
+                            start: BezierParameter2::Exact(Real::zero()),
+                            end: BezierParameter2::Exact(Real::one()),
+                            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                                line.clone(),
+                            )),
+                        });
+                    }
+                    Segment2::Arc(arc) => {
+                        let decomposition =
+                            match arc.rational_bezier_decomposition_with_policy(policy) {
+                                Ok(Classification::Decided(decomposition)) => decomposition,
+                                Ok(Classification::Uncertain(reason)) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                                Err(ExactCurveError::Invalid { cause, .. }) => {
+                                    return Err(cause.clone());
+                                }
+                                Err(ExactCurveError::Blocked(blocker)) => {
+                                    return Ok(Classification::Uncertain(blocker.reason()));
+                                }
+                            };
+                        fragments.extend(decomposition.spans().iter().map(|span| {
+                            BezierSplitFragment2::Materialized {
+                                start: BezierParameter2::Exact(Real::zero()),
+                                end: BezierParameter2::Exact(Real::one()),
+                                curve: BezierSubcurve2::RationalQuadratic(span.curve().clone()),
+                            }
+                        }));
+                    }
+                }
+            }
             boundary_loops.push(CurveRegionBoundaryLoop2 {
                 fragments,
                 arrangement_sources: None,
@@ -2386,9 +2405,27 @@ impl CurveRegion2 {
             .certify(Arc::from(vec![true; loop_count]));
         data.line_image_region
             .certify(Some(LineArcRegion2::new(material_contours, hole_contours)));
-        Ok(Self {
+        Ok(Classification::Decided(Self {
             data: Arc::new(data),
-        })
+        }))
+    }
+
+    pub(crate) fn with_certified_native_contours(
+        self,
+        material_contours: Vec<Contour2>,
+        hole_contours: Vec<Contour2>,
+    ) -> CurveResult<Self> {
+        if material_contours.len().saturating_add(hole_contours.len())
+            != self.data.boundary_loops.len()
+        {
+            return Err(CurveError::Topology(
+                "curved-region native contour count must match the boundary-loop count".into(),
+            ));
+        }
+        self.data
+            .line_image_region
+            .certify(Some(LineArcRegion2::new(material_contours, hole_contours)));
+        Ok(self)
     }
 
     /// Constructs a unified region whose native contours are all material.
