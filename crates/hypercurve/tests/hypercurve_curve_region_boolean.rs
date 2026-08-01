@@ -46,6 +46,17 @@ fn circle(center_x: Real) -> CurveRegion2 {
     circle_with_policy(center_x, &CurveContext::STRICT)
 }
 
+fn integer_circle(center_x: i64, radius: i64) -> CurveRegion2 {
+    let contour = Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(point(center_x - radius, 0), Real::one()),
+        BulgeVertex2::new(point(center_x + radius, 0), Real::one()),
+    ])
+    .unwrap();
+    CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+}
+
 fn circle_with_policy(center_x: Real, policy: &CurveContext) -> CurveRegion2 {
     let contour = Contour2::from_bulge_vertices(&[
         BulgeVertex2::new(
@@ -333,6 +344,169 @@ fn affine_line_batch_preserves_material_and_hole_roles() {
     assert_location(intersection, point(2, 2), RegionPointLocation::Inside);
     assert_location(intersection, point(5, 5), RegionPointLocation::Outside);
     assert_location(intersection, point(0, 0), RegionPointLocation::Outside);
+}
+
+#[test]
+fn regularized_affine_contacts_discard_lower_dimensional_intersections() {
+    let point_touching = (square(0, 0, 2, 2), square(2, 2, 4, 4));
+    let edge_touching = (square(0, 0, 2, 2), square(2, 0, 4, 2));
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for (label, (first, second), second_interior, expected_union_loops) in [
+            ("point", &point_touching, point(3, 3), 2_usize),
+            ("edge", &edge_touching, point(3, 1), 1_usize),
+        ] {
+            let evidence = first.intersect_region(second, &policy).unwrap();
+            assert_eq!(evidence.certainty, CurveCertainty::Certified, "{label}");
+            assert!(evidence.value.is_complete(), "{label}");
+            assert!(!evidence.value.contacts().is_empty(), "{label}");
+            if label == "point" {
+                assert!(evidence.value.overlaps().is_empty(), "{label}");
+            } else {
+                assert!(!evidence.value.overlaps().is_empty(), "{label}");
+            }
+
+            let results = first.boolean_regions(second, &policy).unwrap();
+            assert_eq!(results.certainty, CurveCertainty::Certified, "{label}");
+            let results = results.into_value();
+            assert!(results.intersection().is_empty(), "{label}");
+            assert_eq!(
+                results.union().boundary_loops().len(),
+                expected_union_loops,
+                "{label} union"
+            );
+            assert_eq!(
+                results.difference().boundary_loops().len(),
+                1,
+                "{label} difference"
+            );
+            assert_location(
+                results.difference(),
+                point(1, 1),
+                RegionPointLocation::Inside,
+            );
+            assert_location(
+                results.difference(),
+                second_interior.clone(),
+                RegionPointLocation::Outside,
+            );
+            assert_eq!(
+                results.xor().boundary_loops().len(),
+                expected_union_loops,
+                "{label} xor"
+            );
+            for (operation, result) in [("union", results.union()), ("xor", results.xor())] {
+                for sample in [point(1, 1), second_interior.clone()] {
+                    assert_eq!(
+                        result
+                            .classify_point(&sample, &policy)
+                            .unwrap()
+                            .into_value(),
+                        Classification::Decided(RegionPointLocation::Inside),
+                        "{label} {operation} result at {sample:?}"
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn regularized_conic_tangencies_preserve_regions_but_not_point_intersections() {
+    let external = (integer_circle(0, 2), integer_circle(4, 2));
+    let internal = (integer_circle(0, 3), integer_circle(2, 1));
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let external_evidence = external.0.intersect_region(&external.1, &policy).unwrap();
+        assert_eq!(external_evidence.certainty, CurveCertainty::Certified);
+        assert!(external_evidence.value.is_complete());
+        assert!(!external_evidence.value.contacts().is_empty());
+        assert!(external_evidence.value.overlaps().is_empty());
+        let external_results = external.0.boolean_regions(&external.1, &policy).unwrap();
+        assert_eq!(external_results.certainty, CurveCertainty::Certified);
+        let external_results = external_results.into_value();
+        assert!(external_results.intersection().is_empty());
+        assert_eq!(external_results.union().boundary_loops().len(), 2);
+        assert_eq!(external_results.difference().boundary_loops().len(), 1);
+        assert_eq!(external_results.xor().boundary_loops().len(), 2);
+        for result in [external_results.union(), external_results.xor()] {
+            assert_location(result, point(0, 0), RegionPointLocation::Inside);
+            assert_location(result, point(4, 0), RegionPointLocation::Inside);
+        }
+
+        let internal_evidence = internal.0.intersect_region(&internal.1, &policy).unwrap();
+        assert_eq!(internal_evidence.certainty, CurveCertainty::Certified);
+        assert!(internal_evidence.value.is_complete());
+        assert!(!internal_evidence.value.contacts().is_empty());
+        assert!(internal_evidence.value.overlaps().is_empty());
+        let internal_results = internal.0.boolean_regions(&internal.1, &policy).unwrap();
+        assert_eq!(internal_results.certainty, CurveCertainty::Certified);
+        let internal_results = internal_results.into_value();
+        assert_eq!(internal_results.union().boundary_loops().len(), 1);
+        assert_eq!(internal_results.intersection().boundary_loops().len(), 1);
+        assert_eq!(internal_results.difference().boundary_loops().len(), 2);
+        assert_eq!(internal_results.xor().boundary_loops().len(), 2);
+        assert_location(
+            internal_results.union(),
+            point(0, 0),
+            RegionPointLocation::Inside,
+        );
+        assert_location(
+            internal_results.intersection(),
+            point(2, 0),
+            RegionPointLocation::Inside,
+        );
+        for result in [internal_results.difference(), internal_results.xor()] {
+            assert_location(result, point(-2, 0), RegionPointLocation::Inside);
+            assert_location(result, point(2, 0), RegionPointLocation::Outside);
+        }
+    }
+}
+
+#[test]
+fn regularized_partial_shared_edges_resolve_exact_side_ownership() {
+    let attached = (square(0, 0, 4, 4), square(4, 1, 6, 3));
+    let boundary_contained = (square(0, 0, 4, 4), square(1, 0, 3, 2));
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let attached_results = attached.0.boolean_regions(&attached.1, &policy).unwrap();
+        assert_eq!(attached_results.certainty, CurveCertainty::Certified);
+        let attached_results = attached_results.into_value();
+        assert!(attached_results.intersection().is_empty());
+        assert_eq!(attached_results.union().boundary_loops().len(), 1);
+        assert_eq!(attached_results.difference().boundary_loops().len(), 1);
+        assert_eq!(attached_results.xor().boundary_loops().len(), 1);
+        for result in [attached_results.union(), attached_results.xor()] {
+            assert_location(result, point(2, 2), RegionPointLocation::Inside);
+            assert_location(result, point(5, 2), RegionPointLocation::Inside);
+            assert_location(result, point(4, 2), RegionPointLocation::Inside);
+        }
+
+        let contained_results = boundary_contained
+            .0
+            .boolean_regions(&boundary_contained.1, &policy)
+            .unwrap();
+        assert_eq!(contained_results.certainty, CurveCertainty::Certified);
+        let contained_results = contained_results.into_value();
+        assert_eq!(contained_results.union().boundary_loops().len(), 1);
+        assert_eq!(contained_results.intersection().boundary_loops().len(), 1);
+        assert_eq!(contained_results.difference().boundary_loops().len(), 1);
+        assert_eq!(contained_results.xor().boundary_loops().len(), 1);
+        assert_location(
+            contained_results.union(),
+            point(2, 1),
+            RegionPointLocation::Inside,
+        );
+        assert_location(
+            contained_results.intersection(),
+            point(2, 1),
+            RegionPointLocation::Inside,
+        );
+        for result in [contained_results.difference(), contained_results.xor()] {
+            assert_location(result, point(2, 1), RegionPointLocation::Outside);
+            assert_location(result, point(2, 3), RegionPointLocation::Inside);
+        }
+    }
 }
 
 #[test]

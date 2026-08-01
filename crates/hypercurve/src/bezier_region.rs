@@ -713,6 +713,34 @@ pub enum CurveRegionLoopRole {
     Hole,
 }
 
+fn shared_curve_region_loop_roles(roles: Vec<CurveRegionLoopRole>) -> Arc<[CurveRegionLoopRole]> {
+    static MATERIAL_HOLE: OnceLock<Arc<[CurveRegionLoopRole]>> = OnceLock::new();
+    match roles.as_slice() {
+        [CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole] => MATERIAL_HOLE
+            .get_or_init(|| Arc::from([CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]))
+            .clone(),
+        _ => roles.into(),
+    }
+}
+
+fn shared_all_material_curve_region_loop_roles(role_count: usize) -> Arc<[CurveRegionLoopRole]> {
+    static ONE_MATERIAL: OnceLock<Arc<[CurveRegionLoopRole]>> = OnceLock::new();
+    static TWO_MATERIAL: OnceLock<Arc<[CurveRegionLoopRole]>> = OnceLock::new();
+    match role_count {
+        1 => ONE_MATERIAL
+            .get_or_init(|| Arc::from([CurveRegionLoopRole::Material]))
+            .clone(),
+        2 => TWO_MATERIAL
+            .get_or_init(|| {
+                Arc::from([CurveRegionLoopRole::Material, CurveRegionLoopRole::Material])
+            })
+            .clone(),
+        _ => std::iter::repeat_n(CurveRegionLoopRole::Material, role_count)
+            .collect::<Vec<_>>()
+            .into(),
+    }
+}
+
 /// One exact retained material boundary and the hole boundaries it owns.
 ///
 /// This is the mixed-family counterpart to [`crate::RegionContourProfile`].
@@ -2822,6 +2850,34 @@ impl CurveRegion2 {
         self.data
             .filled_side_is_left
             .certify(Arc::from(filled_side_is_left));
+        Ok(self)
+    }
+
+    pub(crate) fn with_certified_loop_roles(
+        mut self,
+        roles: Vec<CurveRegionLoopRole>,
+    ) -> CurveResult<Self> {
+        if roles.len() != self.data.boundary_loops.len() {
+            return Err(CurveError::Topology(
+                "curved-region loop roles must match the boundary-loop count".into(),
+            ));
+        }
+        let data = self.data_mut_for_construction();
+        data.certified_loop_roles = Some(shared_curve_region_loop_roles(roles));
+        Ok(self)
+    }
+
+    pub(crate) fn with_certified_all_material_loop_roles(
+        mut self,
+        role_count: usize,
+    ) -> CurveResult<Self> {
+        if role_count != self.data.boundary_loops.len() {
+            return Err(CurveError::Topology(
+                "curved-region material roles must match the boundary-loop count".into(),
+            ));
+        }
+        self.data_mut_for_construction().certified_loop_roles =
+            Some(shared_all_material_curve_region_loop_roles(role_count));
         Ok(self)
     }
 

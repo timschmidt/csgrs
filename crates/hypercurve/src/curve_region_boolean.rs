@@ -1164,10 +1164,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         region = region
             .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
             .map_err(|cause| self.invalid(0, cause))?;
-        if affine_line_output {
-            self.compact_affine_line_result(region)
-        } else if self.strict_line_image_only() {
-            self.compact_retained_line_image_result(region)
+        if affine_line_output || self.strict_line_image_only() {
+            self.compact_line_image_result(region)
         } else {
             Ok(region)
         }
@@ -1182,68 +1180,38 @@ impl<'a> CurveRegionBooleanContext<'a> {
         })
     }
 
-    fn compact_retained_line_image_result(
-        &self,
-        region: CurveRegion2,
-    ) -> ExactCurveResult<CurveRegion2> {
-        let native = match region
-            .native_line_arc_region(&CurveContext::STRICT)
-            .map_err(|cause| self.invalid(0, cause))?
-        {
-            Classification::Decided(native) => native,
-            Classification::Uncertain(_) => return Ok(region),
-        };
-        let mut reduced_fragment_count = false;
-        let mut compact_contours =
-            |contours: &[crate::Contour2]| -> ExactCurveResult<Vec<crate::Contour2>> {
-                contours
-                    .iter()
-                    .map(|contour| {
-                        let compact = match contour
-                            .merge_adjacent_collinear_lines(&CurveContext::STRICT)
-                            .map_err(|cause| self.invalid(0, cause))?
-                        {
-                            Classification::Decided(contour) => contour,
-                            Classification::Uncertain(_) => return Ok(contour.clone()),
-                        };
-                        reduced_fragment_count |= compact.len() < contour.len();
-                        Ok(compact)
-                    })
-                    .collect()
-            };
-        let material = compact_contours(native.material_contours())?;
-        let holes = compact_contours(native.hole_contours())?;
-        if !reduced_fragment_count {
+    fn compact_line_image_result(&self, region: CurveRegion2) -> ExactCurveResult<CurveRegion2> {
+        if region.is_empty() {
             return Ok(region);
         }
-        CurveRegion2::from_certified_oriented_line_contours(material, holes)
-            .map_err(|cause| self.invalid(0, cause))
-    }
-
-    fn compact_affine_line_result(&self, region: CurveRegion2) -> ExactCurveResult<CurveRegion2> {
         let mut material = Vec::new();
         let mut holes = Vec::new();
+        let mut mixed_roles = None::<Vec<crate::CurveRegionLoopRole>>;
         let mut reduced_fragment_count = false;
-        for boundary in region.boundary_loops() {
+        for (loop_index, boundary) in region.boundary_loops().iter().enumerate() {
             let segments = boundary
                 .fragments()
                 .iter()
                 .map(|fragment| {
-                    let BezierSplitFragment2::Materialized {
+                    if let BezierSplitFragment2::Materialized {
                         curve: BezierSubcurve2::Quadratic(curve),
                         ..
                     } = fragment
-                    else {
-                        unreachable!("affine-line result was checked before compaction")
-                    };
-                    crate::Segment2::Line(
-                        curve
-                            .retained_exact_line_image()
-                            .expect("affine-line result retains its exact line image")
-                            .clone(),
+                        && let Some(line) = curve.retained_exact_line_image()
+                    {
+                        return Ok(crate::Segment2::Line(line.clone()));
+                    }
+                    match crate::bezier_region::retained_line_fragment_segment(
+                        fragment,
+                        &self.data.policy,
                     )
+                    .map_err(|cause| self.invalid(0, cause))?
+                    {
+                        Classification::Decided(line) => Ok(crate::Segment2::Line(line)),
+                        Classification::Uncertain(reason) => Err(self.blocked(0, reason)),
+                    }
                 })
-                .collect();
+                .collect::<ExactCurveResult<Vec<_>>>()?;
             let contour =
                 crate::Contour2::from_validated_closed_segments(segments, FillRule::NonZero);
             let contour = match contour
@@ -1259,8 +1227,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .map_err(|cause| self.invalid(0, cause))?
                 .expect("line contours always have an exact signed area");
             match crate::classify::compare_reals(&area, &crate::Real::zero(), &self.data.policy) {
-                Some(Ordering::Greater) => material.push(contour),
-                Some(Ordering::Less) => holes.push(contour),
+                Some(Ordering::Greater) => {
+                    if let Some(roles) = &mut mixed_roles {
+                        roles.push(crate::CurveRegionLoopRole::Material);
+                    }
+                    material.push(contour);
+                }
+                Some(Ordering::Less) => {
+                    mixed_roles
+                        .get_or_insert_with(|| {
+                            vec![crate::CurveRegionLoopRole::Material; loop_index]
+                        })
+                        .push(crate::CurveRegionLoopRole::Hole);
+                    holes.push(contour);
+                }
                 Some(Ordering::Equal) => {
                     return Err(self.invalid(
                         0,
@@ -1273,7 +1253,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         if !reduced_fragment_count {
-            return Ok(region);
+            let loop_count = region.len();
+            return match mixed_roles {
+                Some(roles) => region.with_certified_loop_roles(roles),
+                None => region.with_certified_all_material_loop_roles(loop_count),
+            }
+            .map_err(|cause| self.invalid(0, cause));
         }
         CurveRegion2::from_certified_oriented_line_contours(material, holes)
             .map_err(|cause| self.invalid(0, cause))

@@ -187,6 +187,12 @@ fn main() {
     let [first, second] = match std::env::var("HYPERCURVE_CURVE_REGION_BATCH_FIXTURE").as_deref() {
         Ok("circles") => native_regions((circle(0), circle(1))),
         Ok("capsules") => native_regions((capsule(0), capsule(2))),
+        Ok("point-touch-rectangles") => {
+            native_regions((rectangle(0, 0, 2, 2), rectangle(2, 2, 4, 4)))
+        }
+        Ok("shared-edge-rectangles") => {
+            native_regions((rectangle(0, 0, 2, 2), rectangle(2, 0, 4, 2)))
+        }
         Ok("aligned-conic-overlap") => conic_overlap_regions(false, &policy).into(),
         Ok("mobius-overlap") => conic_overlap_regions(true, &policy).into(),
         Ok("nonlinear-line-overlap") => nonlinear_line_overlap_regions(&policy).into(),
