@@ -4351,6 +4351,101 @@ mod tests {
     }
 
     #[test]
+    fn leading_significand_cross_products_certify_exact_order() {
+        for bits in [129_usize, 257, 521, 1025] {
+            let denominator = (BigUint::one() << bits) + BigUint::from(65_537_u32);
+            let larger = Rational::from_parts_raw(
+                Plus,
+                (BigUint::one() << bits)
+                    + (BigUint::one() << (bits - 2))
+                    + BigUint::from(3_u8),
+                denominator.clone(),
+            );
+            let smaller = Rational::from_parts_raw(
+                Plus,
+                (BigUint::one() << bits)
+                    + (BigUint::one() << (bits - 3))
+                    + BigUint::from(5_u8),
+                denominator,
+            );
+            assert_eq!(larger.msd_exact(), Some(0));
+            assert_eq!(smaller.msd_exact(), Some(0));
+            assert_eq!(
+                compare_normalized_magnitude_intervals(&larger, &smaller, 0),
+                Some(Ordering::Greater)
+            );
+            assert_eq!(
+                compare_normalized_magnitude_intervals(&smaller, &larger, 0),
+                Some(Ordering::Less)
+            );
+        }
+    }
+
+    #[test]
+    fn normalized_significand_intervals_match_biguint_reference() {
+        fn generated(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state ^= *state << 13;
+                *state ^= *state >> 7;
+                *state ^= *state << 17;
+                value = (value << 64_usize) | BigUint::from(*state);
+            }
+            value >>= bits.div_ceil(64) * 64 - bits;
+            value | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0x0243_f6a8_885a_308d_u64;
+        for index in 0..10_000_usize {
+            let bits = 1 + (state as usize + index * 17) % 1_024;
+            let value = generated(bits, &mut state);
+            let (lower, upper, actual_bits) =
+                normalized_biguint_significand_interval(&value).unwrap();
+            assert_eq!(actual_bits, bits as u64);
+            if bits <= 53 {
+                assert_eq!(lower, upper);
+                assert_eq!(BigUint::from(lower), &value << (53 - bits));
+            } else {
+                let shift = bits - 53;
+                assert!(BigUint::from(lower) << shift <= value);
+                assert!(value < BigUint::from(upper) << shift);
+            }
+        }
+
+        let mut certified = 0_usize;
+        for index in 0..5_000_usize {
+            let numerator_bits = 129 + (state as usize + index * 29) % 896;
+            let denominator_bits = 129 + ((state >> 13) as usize + index * 11) % 896;
+            let left = Rational::from_parts_raw(
+                Plus,
+                generated(numerator_bits, &mut state),
+                generated(denominator_bits, &mut state),
+            );
+            let right = Rational::from_parts_raw(
+                Plus,
+                generated(numerator_bits, &mut state),
+                generated(denominator_bits, &mut state),
+            );
+            let Some(common_msd) = left
+                .msd_exact()
+                .filter(|msd| right.msd_exact() == Some(*msd))
+            else {
+                continue;
+            };
+            let Some(ordering) =
+                compare_normalized_magnitude_intervals(&left, &right, common_msd)
+            else {
+                continue;
+            };
+            let reference = (&left.numerator * &right.denominator)
+                .cmp(&(&right.numerator * &left.denominator));
+            assert_eq!(ordering, reference, "generated comparison {index}");
+            certified += 1;
+        }
+        assert!(certified >= 1_000, "only {certified} comparisons certified");
+    }
+
+    #[test]
     fn same() {
         use std::cmp::Ordering;
 

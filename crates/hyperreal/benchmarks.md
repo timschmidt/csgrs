@@ -309,6 +309,7 @@ Cold backend algorithm families and retained rational fact dispatch selected fro
 | --- | ---: | ---: | --- |
 | `rational_algorithm_dispatch_speed/dyadic_fact_cold` | not run | not run | Classifies a fresh non-dyadic denominator and retains the result. |
 | `rational_algorithm_dispatch_speed/dyadic_fact_retained` | not run | not run | Reads an already-retained non-dyadic denominator classification. |
+| `rational_algorithm_dispatch_speed/compare_leading_significand_retained_1024_bits` | 48.90 ns | 48.50 ns - 49.36 ns | Compares retained wide rational magnitudes through the certified leading-significand interval. |
 | `rational_algorithm_dispatch_speed/mul_backend_basecase_cold` | not run | not run | Multiplies fresh balanced 16-limb integers through the backend basecase kernel. |
 | `rational_algorithm_dispatch_speed/mul_backend_half_karatsuba_cold` | not run | not run | Multiplies fresh unbalanced 33-by-66-limb integers through half-Karatsuba. |
 | `rational_algorithm_dispatch_speed/mul_backend_karatsuba_cold` | not run | not run | Multiplies fresh balanced 40-limb integers through Karatsuba. |

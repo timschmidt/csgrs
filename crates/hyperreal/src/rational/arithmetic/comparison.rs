@@ -106,11 +106,25 @@ fn compare_normalized_magnitude_intervals(
     right: &Rational,
     common_msd: i32,
 ) -> Option<std::cmp::Ordering> {
-    let (left_lower, left_upper) = normalized_rational_magnitude_interval(left, common_msd)?;
-    let (right_lower, right_upper) = normalized_rational_magnitude_interval(right, common_msd)?;
+    let normalized = |value: &Rational| {
+        let numerator = normalized_biguint_significand_interval(&value.numerator)?;
+        let denominator = normalized_biguint_significand_interval(&value.denominator)?;
+        let raw_exponent = i128::from(numerator.2) - i128::from(denominator.2);
+        let scale_shift = u32::try_from(raw_exponent - i128::from(common_msd)).ok()?;
+        (scale_shift <= 1).then_some((numerator, denominator, scale_shift))
+    };
+    let (left_numerator, left_denominator, left_shift) = normalized(left)?;
+    let (right_numerator, right_denominator, right_shift) = normalized(right)?;
+    let product = |left: u64, right: u64, shift: u32| {
+        (u128::from(left) * u128::from(right)) << shift
+    };
+    let left_upper = product(left_numerator.1, right_denominator.1, left_shift);
+    let right_lower = product(right_numerator.0, left_denominator.0, right_shift);
     if left_upper < right_lower {
         Some(std::cmp::Ordering::Less)
-    } else if right_upper < left_lower {
+    } else if product(right_numerator.1, left_denominator.1, right_shift)
+        < product(left_numerator.0, right_denominator.0, left_shift)
+    {
         Some(std::cmp::Ordering::Greater)
     } else {
         None
@@ -121,21 +135,29 @@ fn normalized_rational_magnitude_interval(
     value: &Rational,
     msd: i32,
 ) -> Option<(f64, f64)> {
-    let (numerator_lower, numerator_upper) = normalized_biguint_interval(&value.numerator)?;
-    let (denominator_lower, denominator_upper) = normalized_biguint_interval(&value.denominator)?;
-    let raw_exponent =
-        i128::from(value.numerator.bits()) - i128::from(value.denominator.bits());
+    let (numerator_lower, numerator_upper, numerator_bits) =
+        normalized_biguint_significand_interval(&value.numerator)?;
+    let (denominator_lower, denominator_upper, denominator_bits) =
+        normalized_biguint_significand_interval(&value.denominator)?;
+    let raw_exponent = i128::from(numerator_bits) - i128::from(denominator_bits);
     let scale_shift = raw_exponent - i128::from(msd);
     if !(0..=1).contains(&scale_shift) {
         return None;
     }
+    const SIGNIFICAND_SCALE: f64 = (1_u64 << 52) as f64;
+    let numerator_lower = numerator_lower as f64 / SIGNIFICAND_SCALE;
+    let numerator_upper = numerator_upper as f64 / SIGNIFICAND_SCALE;
+    let denominator_lower = denominator_lower as f64 / SIGNIFICAND_SCALE;
+    let denominator_upper = denominator_upper as f64 / SIGNIFICAND_SCALE;
     let scale = if scale_shift == 0 { 1.0 } else { 2.0 };
     let lower = ((numerator_lower / denominator_upper) * scale).next_down();
     let upper = ((numerator_upper / denominator_lower) * scale).next_up();
     (lower.is_finite() && upper.is_finite()).then_some((lower, upper))
 }
 
-fn normalized_biguint_interval(value: &BigUint) -> Option<(f64, f64)> {
+/// Return outward leading-significand bounds over the common denominator
+/// `2^52`, together with the magnitude bit count.
+fn normalized_biguint_significand_interval(value: &BigUint) -> Option<(u64, u64, u64)> {
     const SIGNIFICAND_BITS: u64 = 53;
 
     let bits = value.bits();
@@ -143,9 +165,8 @@ fn normalized_biguint_interval(value: &BigUint) -> Option<(f64, f64)> {
         return None;
     }
     if bits <= SIGNIFICAND_BITS {
-        let normalized =
-            value.to_u64()? as f64 / (1_u64 << (bits.saturating_sub(1) as u32)) as f64;
-        return Some((normalized, normalized));
+        let exact = value.to_u64()? << u32::try_from(SIGNIFICAND_BITS - bits).ok()?;
+        return Some((exact, exact, bits));
     }
 
     let mut digits = value.iter_u64_digits();
@@ -157,9 +178,7 @@ fn normalized_biguint_interval(value: &BigUint) -> Option<(f64, f64)> {
         let remaining = SIGNIFICAND_BITS - high_bits;
         (high << remaining) | (digits.next_back().unwrap_or_default() >> (64 - remaining))
     };
-    let lower = leading as f64 / (1_u64 << (SIGNIFICAND_BITS - 1)) as f64;
-    let upper = (leading + 1) as f64 / (1_u64 << (SIGNIFICAND_BITS - 1)) as f64;
-    Some((lower, upper))
+    Some((leading, leading + 1, bits))
 }
 
 fn compare_word_magnitudes(left: &Rational, right: &Rational) -> Option<std::cmp::Ordering> {

@@ -410,6 +410,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Reads an already-retained non-dyadic denominator classification.",
             },
             BenchDoc {
+                name: "compare_leading_significand_retained_1024_bits",
+                description: "Compares retained wide rational magnitudes through the certified leading-significand interval.",
+            },
+            BenchDoc {
                 name: "mul_backend_basecase_cold",
                 description: "Multiplies fresh balanced 16-limb integers through the backend basecase kernel.",
             },
@@ -1689,6 +1693,25 @@ fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
     assert!(!retained_non_dyadic.is_dyadic());
     group.bench_function("dyadic_fact_retained", |b| {
         b.iter(|| black_box(black_box(&retained_non_dyadic).is_dyadic()))
+    });
+
+    let scale = BigUint::from(1_u8) << 1024_usize;
+    let compare_left = Rational::from_bigint_fraction(
+        BigInt::from(&scale + (&scale >> 2_usize) + 3_u8),
+        &scale + 65_537_u32,
+    )
+    .unwrap();
+    let compare_right = Rational::from_bigint_fraction(
+        BigInt::from(&scale + (&scale >> 3_usize) + 5_u8),
+        &scale + 131_071_u32,
+    )
+    .unwrap();
+    assert_eq!(
+        compare_left.partial_cmp(&compare_right),
+        Some(std::cmp::Ordering::Greater)
+    );
+    group.bench_function("compare_leading_significand_retained_1024_bits", |b| {
+        b.iter(|| black_box(black_box(&compare_left).partial_cmp(black_box(&compare_right))))
     });
 
     for (name, left_limbs, right_limbs) in [
