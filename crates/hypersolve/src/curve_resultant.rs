@@ -14,9 +14,11 @@ use hyperreal::{CertifiedRealSign, Real, RealSign};
 
 use crate::bareiss::{BareissError, determinant_bareiss};
 use crate::curve_substitution::RationalParametricCurve2;
+use crate::integer_interpolation::primitive_integer_polynomial_gcd;
 use crate::resultant::{
     UnivariateResultantError, resultant_univariate_polynomials, sylvester_matrix,
 };
+use crate::root_isolation::polynomial_div_rem;
 
 /// Selects which curve parameter remains after exact elimination.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -64,6 +66,157 @@ impl BivariatePolynomial {
     /// Constructs a bivariate polynomial from its ascending-power grid.
     pub const fn new(coefficients: Vec<Vec<Real>>) -> Self {
         Self { coefficients }
+    }
+}
+
+/// Final status for exact univariate axis-factor extraction from two bivariate equations.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BivariatePolynomialAxisFactorStatus {
+    /// Neither equation pair has a nonconstant common factor depending on only
+    /// one parameter.
+    Primitive,
+    /// At least one nonconstant common axis factor was extracted exactly.
+    Reduced,
+    /// Both equations are identically zero, so no greatest finite factor exists.
+    ZeroSystem,
+    /// At least one authored coefficient is not an exact rational.
+    UnsupportedCoefficient,
+    /// Division by a computed exact GCD did not leave zero remainder.
+    DivisionFailed,
+}
+
+/// Exact common axis factors and, when needed, their primitive equation pair.
+///
+/// Factors are stored in ascending power order and normalized to primitive
+/// integer coefficients with positive leading coefficient. A successful absent
+/// factor is represented by `[1]`; factors are empty when extraction did not
+/// complete. `reduced_equations` is allocated only for
+/// [`BivariatePolynomialAxisFactorStatus::Reduced`].
+///
+/// This report does **not** authorize saturation. Removing one of these factors
+/// deletes the complete fiber at each of its roots. A geometry caller must first
+/// prove that every extracted factor is nonzero throughout that parameter's
+/// authored domain before substituting `reduced_equations` for the originals.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BivariatePolynomialAxisFactorReport {
+    /// Final extraction status.
+    pub status: BivariatePolynomialAxisFactorStatus,
+    /// Greatest common factor depending only on the first parameter.
+    pub first_parameter_factor: Vec<Real>,
+    /// Greatest common factor depending only on the second parameter after the
+    /// first-parameter factor has been divided out.
+    pub second_parameter_factor: Vec<Real>,
+    /// Primitive equation pair when a nonconstant factor was extracted.
+    pub reduced_equations: Option<[BivariatePolynomial; 2]>,
+}
+
+/// Extract exact-rational common factors supported on either parameter axis.
+///
+/// For equations `F(t, u)` and `G(t, u)`, the first factor is the univariate GCD
+/// of every `u`-coefficient polynomial in `t` from both equations. After exact
+/// division, the second factor is the GCD of every remaining `t`-coefficient
+/// polynomial in `u`. Thus genuinely bivariate common components remain in the
+/// returned equations; only separable axis content is reported.
+///
+/// The operation is policy-independent because it accepts exact-rational
+/// coefficients only. In particular, APPROXIMATE_512 is never used to infer an
+/// algebraic factor. Callers remain responsible for domain-certified saturation
+/// as described by [`BivariatePolynomialAxisFactorReport`].
+pub fn extract_bivariate_polynomial_system_axis_factors(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+) -> BivariatePolynomialAxisFactorReport {
+    let equations = [first_equation, second_equation];
+    if equations.iter().any(|equation| {
+        equation
+            .coefficients
+            .iter()
+            .flatten()
+            .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    }) {
+        return axis_factor_failure(BivariatePolynomialAxisFactorStatus::UnsupportedCoefficient);
+    }
+    if equations
+        .iter()
+        .all(|equation| exact_bivariate_is_zero(equation))
+    {
+        return axis_factor_failure(BivariatePolynomialAxisFactorStatus::ZeroSystem);
+    }
+
+    let Some(first_parameter_factor) =
+        common_axis_factor(&equations, CurveResultantParameter::First)
+    else {
+        return axis_factor_failure(BivariatePolynomialAxisFactorStatus::DivisionFailed);
+    };
+    if exact_polynomial_is_zero(&first_parameter_factor) {
+        return axis_factor_failure(BivariatePolynomialAxisFactorStatus::DivisionFailed);
+    }
+
+    let mut reduced_equations = if first_parameter_factor.len() > 1 {
+        let (Some(first), Some(second)) = (
+            divide_bivariate_by_axis(
+                first_equation,
+                &first_parameter_factor,
+                CurveResultantParameter::First,
+            ),
+            divide_bivariate_by_axis(
+                second_equation,
+                &first_parameter_factor,
+                CurveResultantParameter::First,
+            ),
+        ) else {
+            return axis_factor_failure(BivariatePolynomialAxisFactorStatus::DivisionFailed);
+        };
+        Some([first, second])
+    } else {
+        None
+    };
+
+    let reduced_refs = match &reduced_equations {
+        Some(reduced) => [&reduced[0], &reduced[1]],
+        None => equations,
+    };
+    let Some(second_parameter_factor) =
+        common_axis_factor(&reduced_refs, CurveResultantParameter::Second)
+    else {
+        return axis_factor_failure(BivariatePolynomialAxisFactorStatus::DivisionFailed);
+    };
+    if exact_polynomial_is_zero(&second_parameter_factor) {
+        return axis_factor_failure(BivariatePolynomialAxisFactorStatus::DivisionFailed);
+    }
+
+    if second_parameter_factor.len() > 1 {
+        let sources = match &reduced_equations {
+            Some(reduced) => [&reduced[0], &reduced[1]],
+            None => equations,
+        };
+        let (Some(first), Some(second)) = (
+            divide_bivariate_by_axis(
+                sources[0],
+                &second_parameter_factor,
+                CurveResultantParameter::Second,
+            ),
+            divide_bivariate_by_axis(
+                sources[1],
+                &second_parameter_factor,
+                CurveResultantParameter::Second,
+            ),
+        ) else {
+            return axis_factor_failure(BivariatePolynomialAxisFactorStatus::DivisionFailed);
+        };
+        reduced_equations = Some([first, second]);
+    }
+
+    let status = if reduced_equations.is_some() {
+        BivariatePolynomialAxisFactorStatus::Reduced
+    } else {
+        BivariatePolynomialAxisFactorStatus::Primitive
+    };
+    BivariatePolynomialAxisFactorReport {
+        status,
+        first_parameter_factor,
+        second_parameter_factor,
+        reduced_equations,
     }
 }
 
@@ -805,6 +958,144 @@ const fn oriented_bidegree(
     }
 }
 
+fn axis_factor_failure(
+    status: BivariatePolynomialAxisFactorStatus,
+) -> BivariatePolynomialAxisFactorReport {
+    BivariatePolynomialAxisFactorReport {
+        status,
+        first_parameter_factor: Vec::new(),
+        second_parameter_factor: Vec::new(),
+        reduced_equations: None,
+    }
+}
+
+fn common_axis_factor(
+    equations: &[&BivariatePolynomial; 2],
+    parameter: CurveResultantParameter,
+) -> Option<Vec<Real>> {
+    let mut factor = vec![Real::zero()];
+    for equation in equations {
+        match parameter {
+            CurveResultantParameter::First => {
+                let column_count = equation
+                    .coefficients
+                    .iter()
+                    .map(Vec::len)
+                    .max()
+                    .unwrap_or(0);
+                for second_power in 0..column_count {
+                    let column = equation
+                        .coefficients
+                        .iter()
+                        .map(|row| row.get(second_power).cloned().unwrap_or_else(Real::zero))
+                        .collect::<Vec<_>>();
+                    factor = primitive_integer_polynomial_gcd(&factor, &column)?;
+                    if exact_unit_polynomial(&factor) {
+                        return Some(factor);
+                    }
+                }
+            }
+            CurveResultantParameter::Second => {
+                for row in &equation.coefficients {
+                    factor = primitive_integer_polynomial_gcd(&factor, row)?;
+                    if exact_unit_polynomial(&factor) {
+                        return Some(factor);
+                    }
+                }
+            }
+        }
+    }
+    Some(factor)
+}
+
+fn divide_bivariate_by_axis(
+    polynomial: &BivariatePolynomial,
+    factor: &[Real],
+    parameter: CurveResultantParameter,
+) -> Option<BivariatePolynomial> {
+    let coefficients = match parameter {
+        CurveResultantParameter::First => {
+            let column_count = polynomial
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .max()
+                .unwrap_or(0);
+            let mut quotient_columns = Vec::with_capacity(column_count);
+            let mut row_count = 0;
+            for second_power in 0..column_count {
+                let column = polynomial
+                    .coefficients
+                    .iter()
+                    .map(|row| row.get(second_power).cloned().unwrap_or_else(Real::zero))
+                    .collect::<Vec<_>>();
+                let quotient = divide_polynomial_exact(column, factor)?;
+                row_count = row_count.max(quotient.len());
+                quotient_columns.push(quotient);
+            }
+            let mut coefficients = vec![vec![Real::zero(); column_count]; row_count];
+            for (second_power, column) in quotient_columns.into_iter().enumerate() {
+                for (first_power, coefficient) in column.into_iter().enumerate() {
+                    coefficients[first_power][second_power] = coefficient;
+                }
+            }
+            coefficients
+        }
+        CurveResultantParameter::Second => polynomial
+            .coefficients
+            .iter()
+            .map(|row| divide_polynomial_exact(row.clone(), factor))
+            .collect::<Option<Vec<_>>>()?,
+    };
+    Some(canonical_exact_bivariate(coefficients))
+}
+
+fn divide_polynomial_exact(dividend: Vec<Real>, divisor: &[Real]) -> Option<Vec<Real>> {
+    let (quotient, remainder) =
+        polynomial_div_rem(dividend, divisor, hyperlimit::PredicatePolicy::STRICT)?;
+    exact_polynomial_is_zero(&remainder).then_some(quotient)
+}
+
+fn canonical_exact_bivariate(mut coefficients: Vec<Vec<Real>>) -> BivariatePolynomial {
+    for row in &mut coefficients {
+        while row.last().is_some_and(exact_real_is_zero) {
+            row.pop();
+        }
+    }
+    while coefficients.last().is_some_and(Vec::is_empty) {
+        coefficients.pop();
+    }
+    if coefficients.is_empty() {
+        coefficients.push(vec![Real::zero()]);
+    }
+    BivariatePolynomial::new(coefficients)
+}
+
+fn exact_bivariate_is_zero(polynomial: &BivariatePolynomial) -> bool {
+    polynomial
+        .coefficients
+        .iter()
+        .flatten()
+        .all(exact_real_is_zero)
+}
+
+fn exact_polynomial_is_zero(polynomial: &[Real]) -> bool {
+    polynomial.iter().all(exact_real_is_zero)
+}
+
+fn exact_unit_polynomial(polynomial: &[Real]) -> bool {
+    polynomial.len() == 1
+        && polynomial[0]
+            .exact_rational_ref()
+            .is_some_and(|coefficient| coefficient.is_one())
+}
+
+fn exact_real_is_zero(value: &Real) -> bool {
+    value
+        .exact_rational_ref()
+        .is_some_and(|coefficient| coefficient.is_zero())
+}
+
 fn bivariate_polynomial_is_empty(polynomial: &BivariatePolynomial) -> bool {
     polynomial.coefficients.is_empty() || polynomial.coefficients.iter().all(Vec::is_empty)
 }
@@ -1047,6 +1338,34 @@ mod tests {
         PolynomialParametricCurve2::new(vec![real(0), real(1)], vec![real(0)])
     }
 
+    fn multiply_axis_factors(
+        polynomial: &BivariatePolynomial,
+        first_factor: &[Real],
+        second_factor: &[Real],
+    ) -> BivariatePolynomial {
+        let first_degree_count = polynomial.coefficients.len() + first_factor.len() - 1;
+        let second_degree_count = polynomial
+            .coefficients
+            .iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0)
+            + second_factor.len()
+            - 1;
+        let mut coefficients = vec![vec![Real::zero(); second_degree_count]; first_degree_count];
+        for (first_power, row) in polynomial.coefficients.iter().enumerate() {
+            for (second_power, coefficient) in row.iter().enumerate() {
+                for (first_delta, first_scale) in first_factor.iter().enumerate() {
+                    for (second_delta, second_scale) in second_factor.iter().enumerate() {
+                        coefficients[first_power + first_delta][second_power + second_delta] +=
+                            coefficient * first_scale * second_scale;
+                    }
+                }
+            }
+        }
+        canonical_exact_bivariate(coefficients)
+    }
+
     #[test]
     fn curve_resultant_finds_parabola_horizontal_intersections() {
         let parabola = PolynomialParametricCurve2::new(
@@ -1129,6 +1448,112 @@ mod tests {
                 -report.resultant_coefficients[1].clone()
             );
         }
+    }
+
+    #[test]
+    fn bivariate_axis_factors_extract_first_parameter_content_exactly() {
+        let factor = vec![real(-2), real(1)];
+        let first_primitive = BivariatePolynomial::new(vec![vec![real(1), real(2)], vec![real(3)]]);
+        let second_primitive =
+            BivariatePolynomial::new(vec![vec![real(4)], vec![real(5), real(6)]]);
+        let first = multiply_axis_factors(&first_primitive, &factor, &[real(1)]);
+        let second = multiply_axis_factors(&second_primitive, &factor, &[real(1)]);
+
+        let report = extract_bivariate_polynomial_system_axis_factors(&first, &second);
+
+        assert_eq!(report.status, BivariatePolynomialAxisFactorStatus::Reduced);
+        assert_eq!(report.first_parameter_factor, factor);
+        assert_eq!(report.second_parameter_factor, vec![real(1)]);
+        assert_eq!(
+            report.reduced_equations,
+            Some([first_primitive, second_primitive])
+        );
+    }
+
+    #[test]
+    fn bivariate_axis_factors_extract_both_axes_sequentially() {
+        let first_factor = vec![real(-2), real(1)];
+        let second_factor = vec![real(3), real(1)];
+        let first_primitive = BivariatePolynomial::new(vec![vec![real(1), real(2)], vec![real(3)]]);
+        let second_primitive =
+            BivariatePolynomial::new(vec![vec![real(4)], vec![real(5), real(6)]]);
+        let first = multiply_axis_factors(&first_primitive, &first_factor, &second_factor);
+        let second = multiply_axis_factors(&second_primitive, &first_factor, &second_factor);
+
+        let report = extract_bivariate_polynomial_system_axis_factors(&first, &second);
+
+        assert_eq!(report.status, BivariatePolynomialAxisFactorStatus::Reduced);
+        assert_eq!(report.first_parameter_factor, first_factor);
+        assert_eq!(report.second_parameter_factor, second_factor);
+        assert_eq!(
+            report.reduced_equations,
+            Some([first_primitive, second_primitive])
+        );
+    }
+
+    #[test]
+    fn bivariate_axis_factors_leave_primitive_system_unallocated() {
+        let first = BivariatePolynomial::new(vec![vec![real(1), real(2)], vec![real(3)]]);
+        let second = BivariatePolynomial::new(vec![vec![real(4)], vec![real(5), real(6)]]);
+
+        let report = extract_bivariate_polynomial_system_axis_factors(&first, &second);
+
+        assert_eq!(
+            report.status,
+            BivariatePolynomialAxisFactorStatus::Primitive
+        );
+        assert_eq!(report.first_parameter_factor, vec![real(1)]);
+        assert_eq!(report.second_parameter_factor, vec![real(1)]);
+        assert!(report.reduced_equations.is_none());
+    }
+
+    #[test]
+    fn bivariate_axis_factors_reduce_one_zero_equation_without_losing_evidence() {
+        let zero = BivariatePolynomial::new(vec![vec![real(0)]]);
+        let first_factor = vec![real(-2), real(1)];
+        let second_factor = vec![real(3), real(1)];
+        let nonzero = multiply_axis_factors(
+            &BivariatePolynomial::new(vec![vec![real(5)]]),
+            &first_factor,
+            &second_factor,
+        );
+
+        let report = extract_bivariate_polynomial_system_axis_factors(&zero, &nonzero);
+
+        assert_eq!(report.status, BivariatePolynomialAxisFactorStatus::Reduced);
+        assert_eq!(report.first_parameter_factor, first_factor);
+        assert_eq!(report.second_parameter_factor, second_factor);
+        assert_eq!(
+            report.reduced_equations,
+            Some([
+                BivariatePolynomial::new(vec![vec![real(0)]]),
+                BivariatePolynomial::new(vec![vec![real(5)]])
+            ])
+        );
+    }
+
+    #[test]
+    fn bivariate_axis_factors_report_zero_and_unsupported_systems() {
+        let zero = BivariatePolynomial::new(vec![vec![real(0)]]);
+        let zero_report = extract_bivariate_polynomial_system_axis_factors(&zero, &zero);
+        assert_eq!(
+            zero_report.status,
+            BivariatePolynomialAxisFactorStatus::ZeroSystem
+        );
+        assert!(zero_report.first_parameter_factor.is_empty());
+        assert!(zero_report.second_parameter_factor.is_empty());
+        assert!(zero_report.reduced_equations.is_none());
+
+        let unsupported = BivariatePolynomial::new(vec![vec![Real::pi(), real(1)]]);
+        let unsupported_report =
+            extract_bivariate_polynomial_system_axis_factors(&unsupported, &zero);
+        assert_eq!(
+            unsupported_report.status,
+            BivariatePolynomialAxisFactorStatus::UnsupportedCoefficient
+        );
+        assert!(unsupported_report.first_parameter_factor.is_empty());
+        assert!(unsupported_report.second_parameter_factor.is_empty());
+        assert!(unsupported_report.reduced_equations.is_none());
     }
 
     #[test]
