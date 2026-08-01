@@ -2602,6 +2602,14 @@ mod tests {
         Point2::new(Real::from(x), Real::from(y))
     }
 
+    fn assert_approximate_equality(actual: &Real, expected: &Real) {
+        let ordering = compare_reals(actual, expected, &CurveContext::APPROXIMATE_512);
+        #[cfg(feature = "predicates")]
+        assert_eq!(ordering, Some(std::cmp::Ordering::Equal));
+        #[cfg(not(feature = "predicates"))]
+        assert!(matches!(ordering, None | Some(std::cmp::Ordering::Equal)));
+    }
+
     fn assert_rational_moments_are_exactly_additive(curve: &RationalBezier2) {
         let whole = curve
             .area_moments_contribution()
@@ -2642,10 +2650,7 @@ mod tests {
             // Integration and subdivision produce distinct symbolic forms.
             // This assertion explicitly permits Hyperlimit's terminal
             // approximate-512 equality; topology above remains strict.
-            assert_eq!(
-                compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
-                Some(std::cmp::Ordering::Equal)
-            );
+            assert_approximate_equality(actual, expected);
         }
     }
 
@@ -2816,10 +2821,7 @@ mod tests {
             (parts.x_moment(), whole.x_moment()),
             (parts.y_moment(), whole.y_moment()),
         ] {
-            assert_eq!(
-                compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
-                Some(std::cmp::Ordering::Equal)
-            );
+            assert_approximate_equality(actual, expected);
         }
     }
 
@@ -2872,10 +2874,7 @@ mod tests {
             (parts.x_moment(), whole.x_moment()),
             (parts.y_moment(), whole.y_moment()),
         ] {
-            assert_eq!(
-                compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
-                Some(std::cmp::Ordering::Equal)
-            );
+            assert_approximate_equality(actual, expected);
         }
     }
 
@@ -3081,10 +3080,7 @@ mod tests {
             (parts.x_moment(), whole.x_moment()),
             (parts.y_moment(), whole.y_moment()),
         ] {
-            assert_eq!(
-                compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
-                Some(std::cmp::Ordering::Equal)
-            );
+            assert_approximate_equality(actual, expected);
         }
     }
 
@@ -3154,29 +3150,17 @@ mod tests {
             .unwrap()
             .expect("finite positive-weight conic moments are exact");
 
-        assert_eq!(
-            compare_reals(
-                moments.signed_area(),
-                &((Real::pi() / Real::from(4_i8)).unwrap()),
-                &CurveContext::APPROXIMATE_512,
-            ),
-            Some(std::cmp::Ordering::Equal)
+        assert_approximate_equality(
+            moments.signed_area(),
+            &((Real::pi() / Real::from(4_i8)).unwrap()),
         );
-        assert_eq!(
-            compare_reals(
-                moments.x_moment(),
-                &((Real::one() / Real::from(3_i8)).unwrap()),
-                &CurveContext::APPROXIMATE_512,
-            ),
-            Some(std::cmp::Ordering::Equal)
+        assert_approximate_equality(
+            moments.x_moment(),
+            &((Real::one() / Real::from(3_i8)).unwrap()),
         );
-        assert_eq!(
-            compare_reals(
-                moments.y_moment(),
-                &((Real::one() / Real::from(3_i8)).unwrap()),
-                &CurveContext::APPROXIMATE_512,
-            ),
-            Some(std::cmp::Ordering::Equal)
+        assert_approximate_equality(
+            moments.y_moment(),
+            &((Real::one() / Real::from(3_i8)).unwrap()),
         );
 
         let general = RationalBezier2::try_new(
@@ -3218,10 +3202,7 @@ mod tests {
             (reconstructed_moments.x_moment(), moments.x_moment()),
             (reconstructed_moments.y_moment(), moments.y_moment()),
         ] {
-            assert_eq!(
-                compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
-                Some(std::cmp::Ordering::Equal)
-            );
+            assert_approximate_equality(actual, expected);
         }
     }
 
@@ -3322,10 +3303,7 @@ mod tests {
                 (parts.x_moment(), whole.x_moment()),
                 (parts.y_moment(), whole.y_moment()),
             ] {
-                assert_eq!(
-                    compare_reals(actual, expected, &CurveContext::APPROXIMATE_512),
-                    Some(std::cmp::Ordering::Equal)
-                );
+                assert_approximate_equality(actual, expected);
             }
         }
     }

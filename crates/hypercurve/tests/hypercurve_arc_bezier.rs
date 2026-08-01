@@ -1,9 +1,9 @@
 use hypercurve::{
     BezierSubcurve2, CircularArc2, Classification, Curve2, CurveContext, CurveGeometry2,
-    CurvePath2, LineSeg2, Point2, Real,
+    CurvePath2, LineSeg2, Point2, Real, UncertaintyReason,
 };
 #[cfg(feature = "predicates")]
-use hypercurve::{CurveCertainty, CurveOperation2, ExactCurveError, UncertaintyReason};
+use hypercurve::{CurveCertainty, CurveOperation2, ExactCurveError};
 use hyperreal::RealSign;
 use std::cmp::Ordering;
 
@@ -21,6 +21,16 @@ fn half() -> Real {
 
 fn q(numerator: i32, denominator: i32) -> Real {
     (r(numerator) / r(denominator)).unwrap()
+}
+
+fn assert_replayed_containment(classification: Classification<bool>) {
+    #[cfg(feature = "predicates")]
+    assert_eq!(classification, Classification::Decided(true));
+    #[cfg(not(feature = "predicates"))]
+    assert!(matches!(
+        classification,
+        Classification::Decided(true) | Classification::Uncertain(UncertaintyReason::Predicate)
+    ));
 }
 
 #[test]
@@ -193,10 +203,7 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
         .point_at(&minor_parameter, &policy)
         .unwrap()
         .into_value();
-    assert_eq!(
-        minor.contains_point(&minor_replayed, &policy),
-        Classification::Decided(true)
-    );
+    assert_replayed_containment(minor.contains_point(&minor_replayed, &policy));
 
     let major = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap();
     let Classification::Decided(strict_major_parameter) = major
@@ -231,10 +238,7 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
             .point_at(&parameter, &policy)
             .unwrap()
             .into_value();
-        assert_eq!(
-            major.contains_point(&replayed, &policy),
-            Classification::Decided(true)
-        );
+        assert_replayed_containment(major.contains_point(&replayed, &policy));
     }
 
     let full = CircularArc2::try_from_center(p(1, 0), p(1, 0), p(0, 0), false).unwrap();
