@@ -7657,6 +7657,60 @@ the no-default build and warning-denied Clippy gate pass. Hypermesh was not
 modified. Complete evidence is in
 [`2026-07-31-lower-dimensional-boolean-ownership.json`](benchmarks/checkpoints/2026-07-31-lower-dimensional-boolean-ownership.json).
 
+## Projective cubic shared-component checkpoint (2026-07-31)
+
+Equal-degree rational Beziers now recognize endpoint-fixed projective/Mobius
+reparameterizations directly from their exact control nets. Affine control
+points must agree in the selected orientation, and the complete homogeneous
+weight sequence must certify one positive geometric ratio. Complete overlaps
+retain that scale directly. Partial overlaps retain the same one-`Real` scale
+and derive their forward and inverse maps from the overlap ranges already
+stored in the intersection witness. Identity and unit complement remain the
+smaller affine variants. A one-pass relation classifier avoids repeating
+control-point comparisons on failed candidates.
+
+The regression cubic has controls `(0,0)`, `(7,-5)`, `(8,-4)`, `(3,3)` and,
+in the affine frame `u=(x+y)/2`, `v=(x-y)/2`, has `u=3t` and
+`v=18t(1-t)`. Its image is injective even though both authored coordinates
+reverse internally, so the earlier injective-axis correspondence cannot apply.
+Weights `[1,2,4,8]` preserve the image through a projective parameter map.
+Independently clipped regions now retain two contacts and one complete overlap,
+then publish the correct `[4,2,0,4]` union/intersection/difference/XOR fragment
+counts under both STRICT and APPROXIMATE_512. The isolated historical parent
+instead returns `Blocked(Boolean, CubicBezier, Boundary)`.
+
+The remaining algebraic endpoint transport exposed a Hypersolve issue: the
+source polynomial and a rational map could share a factor whose root lay
+outside the selected isolator. That factor made the image resultant vanish
+identically even though the denominator was nonzero on the represented root.
+Hypersolve now cancels an exact primitive-polynomial GCD and certifies both
+division remainders. Nonconstant linear-over-linear maps stay on their former
+fast path because they are either coprime or already recognized as constant.
+The matched linear rational-image control is neutral at 8.020 versus 8.057 us
+with overlapping intervals; the degree-12/cubic control improves from 1.9500
+to 1.9274 ms.
+
+Eleven alternating CPU-14 all-family pairs measure 488.331 ms for the
+candidate and 489.006 ms for its parent (-0.14% median, +0.38% paired
+geometric mean), so the complete workload is neutral. The supported aligned
+conic control is likewise neutral. On the newly completed cubic, one shared
+all-four arrangement takes 2.302 ms versus 9.130 ms for four independent
+authoritative calls, a 3.97x speedup. Over 100 batches, sharing reduces
+allocation calls from 14,243,895 to 3,711,595 (-73.94%) and temporary
+allocations from 419,323 to 109,423 (-73.90%). The complete 67-cell heap
+profile is exactly unchanged at 8,295,412 calls, 1,392,519 temporaries, and
+34.70 MiB peak heap.
+
+The matched pathological image adds 16,560 stripped bytes and 16,396 loadable
+bytes (0.29%); the focused batch image adds 20,752 stripped bytes (0.42%). The
+complete static graph moves from 23,086 nodes/39,896 edges to
+23,136/40,006; source-only growth is 45 nodes and 97 edges. All 270
+all-feature unit tests, the complete integration/documentation suite, both
+policy regressions, both warning-denied Clippy matrices, formatting, and the
+Hypersolve all-feature/no-default suites pass. Hypermesh was not modified.
+Complete evidence is in
+[`2026-07-31-projective-cubic-shared-component.json`](benchmarks/checkpoints/2026-07-31-projective-cubic-shared-component.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
