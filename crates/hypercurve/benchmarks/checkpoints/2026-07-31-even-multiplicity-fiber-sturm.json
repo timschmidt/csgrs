@@ -1,0 +1,206 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "even-multiplicity-fiber-sturm",
+  "source_revision": "77a2fbff24e34cb9ea9a35c3fbfd65f41faef5f8",
+  "implementation_revisions": {
+    "hypercurve": "59cbfb9c036d96a6cea958155fed11ae834ca912",
+    "hypersolve_correctness": "a8aaf7cc15678297cae8e4cf0d4704d956fc0fc1",
+    "hypersolve_optimized": "c1cecd74c1aa0d3eed56a6546ea5b54a05817fc2",
+    "hypercurve_policy_test_contract": "77a2fbff24e34cb9ea9a35c3fbfd65f41faef5f8"
+  },
+  "historical_controls": {
+    "hypercurve_higher_nullity_sign_change": "e347051",
+    "hypersolve_fiber_subresultants": "4fa8a6b",
+    "hypersolve_unoptimized_local_sturm": "a8aaf7c"
+  },
+  "scope": {
+    "operation": "exact replay of a higher-nullity algebraic fiber candidate in the rational-Bezier parallel contact kernel",
+    "new_case": "a selected root of the specialized fiber GCD whose multiplicity is even, so its endpoint signs do not change",
+    "canonical_fixture": "alpha=cuberoot(1/2), beta=alpha^2=cuberoot(1/4), with a specialized fiber proportional to (beta-alpha^2)^2",
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "field": "the fiber is counted over the exact local algebraic field Q(alpha), represented by rational-polynomial fractions reduced modulo the retained root's defining polynomial",
+    "root_counter": "a square-free local-field Sturm sequence counts distinct roots in the candidate isolator, including roots of even multiplicity",
+    "reducible_definitions": "the defining polynomial need not be irreducible; exact isolator evidence selects the intended real root and tests cover a reducible carrier",
+    "endpoint_contract": "exact endpoint roots are counted once and open-interval variations count the remaining roots",
+    "fast_path_order": [
+      "direct exact bivariate substitution",
+      "rank-one factor replay",
+      "nullity-one algebraic lift",
+      "higher-nullity fiber endpoint sign change",
+      "local-field Sturm root count"
+    ],
+    "acceptance": "zero counted roots rejects the pair, one or more counted roots accepts it, and unsupported arithmetic remains explicit uncertainty",
+    "strict": "STRICT uses exact identities, rational arithmetic, certified algebraic-root refinement, and exact Sturm variation only",
+    "approximate_512": "APPROXIMATE_512 follows the same proof graph and may approximate only an unresolved inherited sign/equality at Hyperlimit's 512-bit terminal",
+    "unsupported": "non-rational bivariate coefficients, invalid isolator evidence, specialized degree drops, and positive-dimensional shared components remain explicit rather than guessed",
+    "no_predicates_build": "without the optional predicate backend Hypercurve preserves explicit Incomplete/Predicate uncertainty; it never substitutes a floating contact"
+  },
+  "completion_change": {
+    "before": "an even-multiplicity higher-nullity fiber could survive candidate projection but remained Incomplete because neither direct substitution nor endpoint sign change certified it",
+    "after": "the coupled even-multiplicity pair is certified Direct under STRICT and APPROXIMATE_512",
+    "guards": "zero-root, repeated-root, multi-root, rational-witness, endpoint-root, invalid-evidence, unsupported-coefficient, both-orientation, and both-policy cases are tested"
+  },
+  "matched_local_sturm_benchmark": {
+    "fixture": "the canonical even-multiplicity fiber above",
+    "method": "seven interleaved pinned-core release samples, 1000 root counts per process, identical benchmark source and current dependency revisions",
+    "baseline_revision": "a8aaf7c",
+    "candidate_revision": "c1cecd7",
+    "baseline_samples_microseconds_per_count": [94.623, 97.091, 99.104, 98.262, 96.725, 94.746, 108.212],
+    "candidate_samples_microseconds_per_count": [35.824, 36.283, 53.795, 32.641, 31.110, 31.840, 33.970],
+    "baseline_median_microseconds": 97.091,
+    "candidate_median_microseconds": 33.970,
+    "median_change_percent": -65.012205,
+    "checksum": "one distinct root per iteration at both revisions"
+  },
+  "matched_local_sturm_heaptrack": {
+    "baseline_profile": "/tmp/hypersolve-algebraic-fiber-a8aaf7c.zst",
+    "candidate_profile": "/tmp/hypersolve-algebraic-fiber-optimized-final.zst",
+    "baseline": {
+      "runtime_seconds": 1.139,
+      "allocation_calls": 2147187,
+      "temporary_allocations": 190001,
+      "peak_heap_kibibytes_reported": 106.68,
+      "peak_rss_mebibytes_reported": 6.01,
+      "leaked_kibibytes_reported": 23.86
+    },
+    "candidate": {
+      "runtime_seconds": 0.417,
+      "allocation_calls": 391202,
+      "temporary_allocations": 23001,
+      "peak_heap_kibibytes_reported": 103.04,
+      "peak_rss_mebibytes_reported": 5.95,
+      "leaked_kibibytes_reported": 20.43
+    },
+    "change_percent": {
+      "runtime": -63.388938,
+      "allocation_calls": -81.780721,
+      "temporary_allocations": -87.894274,
+      "peak_heap": -3.412073,
+      "peak_rss": -0.998336,
+      "leaked": -14.375524
+    }
+  },
+  "native_hypercurve_release_benchmark": {
+    "command": "taskset -c 9 env HYPERCURVE_OFFSET_BENCH_GROUP=bezier-intersection target/release/deps/offset-ea116fee283cd918",
+    "method": "five pinned-core all-feature release processes; the existing lanes do not trigger local Sturm after their earlier exact certificates, so they are retained as end-to-end non-regression sentinels rather than measurements of the new cold path",
+    "lanes": {
+      "exact_represented_contact": {
+        "iterations_per_process": 1000,
+        "candidate_samples_microseconds": [43.628, 40.962, 42.177, 42.572, 40.599],
+        "contact_samples_microseconds": [56.261, 56.923, 55.878, 62.113, 56.534],
+        "candidate_median_microseconds": 42.177,
+        "contact_median_microseconds": 56.534
+      },
+      "nullity_one_algebraic_lift": {
+        "iterations_per_process": 100,
+        "candidate_samples_microseconds": [464.915, 506.835, 487.051, 471.600, 466.465],
+        "contact_samples_microseconds": [1144.052, 1149.920, 1137.464, 1151.965, 1161.251],
+        "candidate_median_microseconds": 471.600,
+        "contact_median_microseconds": 1149.920
+      },
+      "selected_branch_algebraic_contact": {
+        "iterations_per_process": 100,
+        "candidate_samples_microseconds": [512.005, 508.277, 508.415, 511.930, 508.939],
+        "contact_samples_microseconds": [1205.452, 1234.262, 1229.277, 1212.736, 1263.933],
+        "candidate_median_microseconds": 508.939,
+        "contact_median_microseconds": 1229.277
+      },
+      "higher_nullity_sign_change": {
+        "iterations_per_process": 100,
+        "candidate_samples_microseconds": [814.515, 831.619, 818.863, 821.214, 814.786],
+        "contact_samples_microseconds": [2546.679, 2543.693, 2525.320, 2531.798, 2492.367],
+        "candidate_median_microseconds": 818.863,
+        "contact_median_microseconds": 2531.798,
+        "contact_checksum_per_process": 100
+      }
+    },
+    "aggregate_heaptrack": {
+      "profile": "/tmp/hypercurve-even-fiber-final.zst.zst",
+      "runtime_seconds": 3.56,
+      "allocation_calls": 10677466,
+      "temporary_allocations": 574226,
+      "peak_heap_mebibytes_reported": 1.29,
+      "peak_rss_mebibytes_reported": 11.06,
+      "leaked_kibibytes_reported": 581.12,
+      "interpretation": "allocation counts are identical to the preceding higher-nullity checkpoint because every benchmark lane exits before the new local-Sturm fallback"
+    }
+  },
+  "release_size": {
+    "matched_standalone_fiber_executable": {
+      "baseline_file_bytes": 2273272,
+      "candidate_file_bytes": 2276512,
+      "file_change_percent": 0.142526,
+      "baseline_text_bytes": 1604132,
+      "candidate_text_bytes": 1607204,
+      "text_change_percent": 0.191505,
+      "baseline_data_bytes": 219936,
+      "candidate_data_bytes": 219944,
+      "baseline_bss_bytes": 3298,
+      "candidate_bss_bytes": 4298
+    },
+    "all_feature_hypercurve_offset_executable": {
+      "prior_checkpoint_file_bytes": 6875424,
+      "candidate_file_bytes": 6979976,
+      "file_change_percent": 1.520663,
+      "prior_checkpoint_text_bytes": 5217123,
+      "candidate_text_bytes": 5289467,
+      "text_change_percent": 1.386665,
+      "candidate_data_bytes": 263072,
+      "candidate_bss_bytes": 3424,
+      "interpretation": "the linked all-feature cost includes the reusable exact local-field arithmetic; the focused optimized executable adds under 0.2 percent text over its correctness-first baseline"
+    },
+    "default_feature_hypercurve_offset_executable": {
+      "file_bytes": 6748416,
+      "text_bytes": 5107766,
+      "data_bytes": 262488,
+      "bss_bytes": 5312
+    }
+  },
+  "static_call_graph": {
+    "tool": "tools/hyper-callgraph",
+    "hypercurve": {
+      "nodes": 17418,
+      "edges": 29809,
+      "artifact": "/tmp/hypercurve-even-fiber-callgraph/callgraph.json"
+    },
+    "hypersolve": {
+      "nodes": 4427,
+      "edges": 7143,
+      "artifact": "/tmp/hypersolve-even-fiber-callgraph/callgraph.json"
+    },
+    "change_from_parallel_fiber_checkpoint": {
+      "hypercurve_nodes": 87,
+      "hypercurve_edges": 252,
+      "hypersolve_nodes": 183,
+      "hypersolve_edges": 311
+    },
+    "caveat": "the utility is a static source approximation and these default scans exclude benchmark-only functions"
+  },
+  "competitive_context": {
+    "equivalent_direct_peer": "none in the current comparison harness",
+    "reason": "the available Curvo comparison approximates open-curve offsets and does not expose an exact algebraic fiber/contact proof contract",
+    "comparison_rule": "heuristic offset throughput remains useful context but is not reported as an interchangeable correctness benchmark"
+  },
+  "validation": {
+    "hypercurve_cargo_test_all_features": "pass: 277 library tests, every integration target, 29 CurveRegion Boolean tests, 11 deterministic Boolean fuzz tests, adversarial/pathological corpora, README tests, and doc tests",
+    "hypercurve_cargo_test_no_default_features": "pass: 245 library tests and every enabled integration, README, and documentation target",
+    "hypercurve_focused_all_features_after_policy_test_update": "pass: 22 moment tests and the directed arc replay contract",
+    "hypercurve_clippy_all_targets_all_features_deny_warnings": "pass",
+    "hypercurve_clippy_all_targets_no_default_features_deny_warnings": "pass",
+    "hypercurve_cargo_fmt_check": "pass",
+    "hypercurve_git_diff_check": "pass",
+    "hypersolve_all_feature_and_no_default_test_matrices": "pass: 178 library, 2 README, 131 residual property, 209 smoke, and documentation tests",
+    "hypersolve_clippy_all_target_feature_matrices_deny_warnings": "pass",
+    "policies": "both retained orientations and both STRICT/APPROXIMATE_512 are covered; the no-predicate feature contract is explicit"
+  },
+  "next_boundary": {
+    "specialization": "replace the conservative specialized-degree-drop rejection with an exact degree-drop-safe fiber construction",
+    "overlap": "classify positive-dimensional shared components and exact parameter correspondences",
+    "coefficients": "extend the local algebraic field beyond rational bivariate coefficients where CurveRegion2 inputs can generate a supported exact tower",
+    "topology": "feed all completed contacts and overlaps into the one authoritative CurveRegion2 Boolean/offset/corner regularization engine"
+  }
+}
