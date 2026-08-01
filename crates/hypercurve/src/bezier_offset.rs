@@ -40,14 +40,14 @@ use hypersolve::{
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
 };
 use hypersolve::{
-    BivariatePolynomial, BivariatePolynomialAxisFactorStatus,
-    BivariatePolynomialRationalComponentStatus, CurveIntersectionParameterLiftMap,
-    CurveIntersectionParameterLiftReport, CurveIntersectionParameterLiftStatus,
-    CurveIntersectionResultantConfig, CurveResultantParameter, RationalParametricCurve2,
+    BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentStatus,
+    CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
+    CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
+    CurveResultantParameter, RationalParametricCurve2,
     extract_bivariate_polynomial_system_axis_factors,
     linear_parameter_lifts_bivariate_polynomial_system,
-    rational_parameter_component_bivariate_polynomial_system,
-    resultant_bivariate_polynomial_system, subresultant_chain_univariate_polynomials,
+    parameter_component_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
+    subresultant_chain_univariate_polynomials,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1352,12 +1352,7 @@ impl BezierParallel2 {
                     max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
                 };
                 if let Classification::Decided(Some(component)) =
-                    rational_parameter_component_system(
-                        component_equations,
-                        &branch,
-                        policy,
-                        config,
-                    )?
+                    parameter_component_system(component_equations, &branch, policy, config)?
                 {
                     return parallel_candidate_system_from_rational_component(component, policy);
                 }
@@ -1422,7 +1417,7 @@ impl BezierParallel2 {
                 max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
             };
             if let Classification::Decided(Some(component)) =
-                rational_parameter_component_system(component_equations, &branch, policy, config)?
+                parameter_component_system(component_equations, &branch, policy, config)?
             {
                 return parallel_candidate_system_from_rational_component(component, policy);
             }
@@ -4635,7 +4630,7 @@ fn bivariate_unit_square_has_strict_bernstein_sign(
     Ok(strict_sign.is_some())
 }
 
-fn rational_parameter_component_system(
+fn parameter_component_system(
     equations: &[BivariatePolynomial; 2],
     branch: &BivariatePolynomial,
     policy: &CurveContext,
@@ -4652,14 +4647,14 @@ fn rational_parameter_component_system(
             CurveResultantParameter::Second,
             CurveResultantParameter::First,
         ] {
-            let report = rational_parameter_component_bivariate_polynomial_system(
+            let report = parameter_component_bivariate_polynomial_system(
                 &residual_equations[0],
                 &residual_equations[1],
                 retained_parameter,
                 config,
             );
             let (map, reduced_equations) = match report.status {
-                BivariatePolynomialRationalComponentStatus::Constructed => {
+                BivariatePolynomialComponentStatus::Rational => {
                     let Some(reduced_equations) = report.reduced_equations else {
                         continue;
                     };
@@ -4672,17 +4667,21 @@ fn rational_parameter_component_system(
                         reduced_equations,
                     )
                 }
-                BivariatePolynomialRationalComponentStatus::UndecidedCoefficient => {
+                BivariatePolynomialComponentStatus::UndecidedCoefficient => {
                     blocker = Some(UncertaintyReason::RealSign);
                     continue;
                 }
-                BivariatePolynomialRationalComponentStatus::EmptyEquation
-                | BivariatePolynomialRationalComponentStatus::UnsupportedLiftedDegree
-                | BivariatePolynomialRationalComponentStatus::DegreeBoundExceeded
-                | BivariatePolynomialRationalComponentStatus::NoLinearComponent
-                | BivariatePolynomialRationalComponentStatus::DeterminantError
-                | BivariatePolynomialRationalComponentStatus::InterpolationFailed
-                | BivariatePolynomialRationalComponentStatus::DivisionFailed => continue,
+                BivariatePolynomialComponentStatus::Implicit => {
+                    blocker = Some(UncertaintyReason::Boundary);
+                    continue;
+                }
+                BivariatePolynomialComponentStatus::EmptyEquation
+                | BivariatePolynomialComponentStatus::UnsupportedLiftedDegree
+                | BivariatePolynomialComponentStatus::DegreeBoundExceeded
+                | BivariatePolynomialComponentStatus::NoSupportedComponent
+                | BivariatePolynomialComponentStatus::DeterminantError
+                | BivariatePolynomialComponentStatus::InterpolationFailed
+                | BivariatePolynomialComponentStatus::DivisionFailed => continue,
             };
             match certify_rational_parameter_component_map(
                 &residual_equations,
@@ -6945,7 +6944,7 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(Some(system)) =
-                rational_parameter_component_system(&equations, &branch, &policy, config).unwrap()
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
             else {
                 panic!("shared component plus residual point was not decomposed");
             };
@@ -6996,7 +6995,7 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(Some(system)) =
-                rational_parameter_component_system(&equations, &branch, &policy, config).unwrap()
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
             else {
                 panic!("two rational components were not enumerated");
             };
@@ -7057,7 +7056,7 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(Some(system)) =
-                rational_parameter_component_system(&equations, &branch, &policy, config).unwrap()
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
             else {
                 panic!("repeated rational component was not extracted");
             };
@@ -7095,7 +7094,7 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(Some(system)) =
-                rational_parameter_component_system(&equations, &branch, &policy, config).unwrap()
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
             else {
                 panic!("repeated cubic common fiber was not enumerated");
             };
@@ -7135,7 +7134,7 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(Some(system)) =
-                rational_parameter_component_system(&equations, &branch, &policy, config).unwrap()
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
             else {
                 panic!("triple cubic common fiber was not enumerated");
             };
@@ -7145,6 +7144,37 @@ mod conversion_tests {
                 system.overlaps[0].orientation(),
                 RationalBezierOverlapOrientation2::Same
             );
+        }
+    }
+
+    #[test]
+    fn implicit_parameter_component_remains_an_explicit_boundary() {
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::from(-1_i8), Real::zero(), Real::one()],
+            vec![Real::zero()],
+            vec![Real::one()],
+        ]);
+        let equations = [
+            bivariate_multiply(
+                &component,
+                &BivariatePolynomial::new(vec![vec![Real::from(2_i8)], vec![Real::one()]]),
+            ),
+            bivariate_multiply(
+                &component,
+                &BivariatePolynomial::new(vec![vec![Real::from(2_i8), Real::one()]]),
+            ),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                parameter_component_system(&equations, &branch, &policy, config).unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
         }
     }
 
@@ -7179,7 +7209,7 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(Some(system)) =
-                rational_parameter_component_system(&equations, &branch, &policy, config).unwrap()
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
             else {
                 panic!("split selected and opposite components were not decided");
             };
@@ -7256,7 +7286,7 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(Some(system)) =
-                rational_parameter_component_system(&equations, &branch, &policy, config).unwrap()
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
             else {
                 panic!("exact component extraction trusted a speculative negative probe");
             };
