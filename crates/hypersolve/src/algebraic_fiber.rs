@@ -88,6 +88,34 @@ pub fn count_bivariate_fiber_roots_at_algebraic_parameter(
         retained_root,
         fiber_lower,
         fiber_upper,
+        FiberIntervalEndpoints::RejectRoots,
+        policy,
+    )
+}
+
+/// Count distinct roots in one closed exact bivariate fiber interval.
+///
+/// This is the endpoint-owning counterpart to
+/// [`count_bivariate_fiber_roots_at_algebraic_parameter`]. Rational roots at
+/// either bound are deflated exactly in the local algebraic field and counted
+/// once regardless of multiplicity. It is intended for callers that already
+/// own both interval endpoints and therefore do not need a half-open topology
+/// convention.
+pub fn count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+    polynomial: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    retained_root: &AlgebraicRootRepresentation,
+    fiber_lower: &Real,
+    fiber_upper: &Real,
+    policy: PredicatePolicy,
+) -> AlgebraicFiberRootCountReport {
+    count_bivariate_fiber_system_roots(
+        &[polynomial],
+        retained_parameter,
+        retained_root,
+        fiber_lower,
+        fiber_upper,
+        FiberIntervalEndpoints::IncludeRoots,
         policy,
     )
 }
@@ -114,8 +142,15 @@ pub fn count_bivariate_common_fiber_roots_at_algebraic_parameter(
         retained_root,
         fiber_lower,
         fiber_upper,
+        FiberIntervalEndpoints::RejectRoots,
         policy,
     )
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum FiberIntervalEndpoints {
+    RejectRoots,
+    IncludeRoots,
 }
 
 fn count_bivariate_fiber_system_roots(
@@ -124,6 +159,7 @@ fn count_bivariate_fiber_system_roots(
     retained_root: &AlgebraicRootRepresentation,
     fiber_lower: &Real,
     fiber_upper: &Real,
+    endpoints: FiberIntervalEndpoints,
     policy: PredicatePolicy,
 ) -> AlgebraicFiberRootCountReport {
     if fiber_lower.exact_rational_ref().is_none()
@@ -177,6 +213,7 @@ fn count_bivariate_fiber_system_roots(
             retained_parameter,
             fiber_lower,
             fiber_upper,
+            endpoints,
             &mut field,
         ),
         [first, second] => count_common_fiber_roots(
@@ -185,6 +222,7 @@ fn count_bivariate_fiber_system_roots(
             retained_parameter,
             fiber_lower,
             fiber_upper,
+            endpoints,
             &mut field,
         ),
         _ => Err(LocalFieldError::Undecided),
@@ -272,10 +310,11 @@ fn count_fiber_roots(
     retained_parameter: CurveResultantParameter,
     fiber_lower: &Real,
     fiber_upper: &Real,
+    endpoints: FiberIntervalEndpoints,
     field: &mut LocalAlgebraicField,
 ) -> Result<LocalRootCountOutcome, LocalFieldError> {
     let first = local_fiber_polynomial(polynomial, retained_parameter, field)?;
-    count_local_polynomial_roots(first, fiber_lower, fiber_upper, field)
+    count_local_polynomial_roots(first, fiber_lower, fiber_upper, endpoints, field)
 }
 
 fn count_common_fiber_roots(
@@ -284,6 +323,7 @@ fn count_common_fiber_roots(
     retained_parameter: CurveResultantParameter,
     fiber_lower: &Real,
     fiber_upper: &Real,
+    endpoints: FiberIntervalEndpoints,
     field: &mut LocalAlgebraicField,
 ) -> Result<LocalRootCountOutcome, LocalFieldError> {
     let mut first = local_fiber_polynomial(first, retained_parameter, field)?;
@@ -293,10 +333,16 @@ fn count_common_fiber_roots(
     match (first_is_zero, second_is_zero) {
         (true, true) => return Ok(LocalRootCountOutcome::IdenticallyZeroFiber),
         (true, false) => {
-            return count_local_polynomial_roots(second, fiber_lower, fiber_upper, field);
+            return count_local_polynomial_roots(
+                second,
+                fiber_lower,
+                fiber_upper,
+                endpoints,
+                field,
+            );
         }
         (false, true) => {
-            return count_local_polynomial_roots(first, fiber_lower, fiber_upper, field);
+            return count_local_polynomial_roots(first, fiber_lower, fiber_upper, endpoints, field);
         }
         (false, false) => {}
     }
@@ -314,7 +360,7 @@ fn count_common_fiber_roots(
         first = second;
         second = remainder;
     }
-    count_local_polynomial_roots(first, fiber_lower, fiber_upper, field)
+    count_local_polynomial_roots(first, fiber_lower, fiber_upper, endpoints, field)
 }
 
 fn local_fiber_polynomial(
@@ -338,9 +384,10 @@ fn local_polynomial_is_zero(
 }
 
 fn count_local_polynomial_roots(
-    first: Vec<LocalFieldElement>,
+    mut first: Vec<LocalFieldElement>,
     fiber_lower: &Real,
     fiber_upper: &Real,
+    endpoints: FiberIntervalEndpoints,
     field: &mut LocalAlgebraicField,
 ) -> Result<LocalRootCountOutcome, LocalFieldError> {
     if local_polynomial_is_zero(&first, field)? {
@@ -351,6 +398,24 @@ fn count_local_polynomial_roots(
             count: 0,
             sequence_length: 1,
         });
+    }
+
+    let mut endpoint_root_count = 0_usize;
+    if endpoints == FiberIntervalEndpoints::IncludeRoots {
+        let (deflated, had_root) =
+            deflate_local_polynomial_at_rational_root(first, fiber_lower, field)?;
+        first = deflated;
+        endpoint_root_count += usize::from(had_root);
+        let (deflated, had_root) =
+            deflate_local_polynomial_at_rational_root(first, fiber_upper, field)?;
+        first = deflated;
+        endpoint_root_count += usize::from(had_root);
+        if first.len() == 1 {
+            return Ok(LocalRootCountOutcome::Counted {
+                count: endpoint_root_count,
+                sequence_length: 1,
+            });
+        }
     }
 
     let second = derivative_local_polynomial(&first, field)?;
@@ -377,8 +442,9 @@ fn count_local_polynomial_roots(
     }
 
     let sequence_length = sequence.len();
-    if local_polynomial_sign_at(&sequence[0], fiber_lower, field)? == Ordering::Equal
-        || local_polynomial_sign_at(&sequence[0], fiber_upper, field)? == Ordering::Equal
+    if endpoints == FiberIntervalEndpoints::RejectRoots
+        && (local_polynomial_sign_at(&sequence[0], fiber_lower, field)? == Ordering::Equal
+            || local_polynomial_sign_at(&sequence[0], fiber_upper, field)? == Ordering::Equal)
     {
         return Ok(LocalRootCountOutcome::EndpointRoot { sequence_length });
     }
@@ -386,11 +452,39 @@ fn count_local_polynomial_roots(
     let upper_variations = local_sign_variations(&sequence, fiber_upper, field)?;
     let count = lower_variations
         .checked_sub(upper_variations)
+        .and_then(|count| count.checked_add(endpoint_root_count))
         .ok_or(LocalFieldError::Undecided)?;
     Ok(LocalRootCountOutcome::Counted {
         count,
         sequence_length,
     })
+}
+
+fn deflate_local_polynomial_at_rational_root(
+    mut polynomial: Vec<LocalFieldElement>,
+    root: &Real,
+    field: &mut LocalAlgebraicField,
+) -> Result<(Vec<LocalFieldElement>, bool), LocalFieldError> {
+    let mut had_root = false;
+    while polynomial.len() > 1
+        && local_polynomial_sign_at(&polynomial, root, field)? == Ordering::Equal
+    {
+        let degree = polynomial.len() - 1;
+        let mut quotient = vec![LocalFieldElement::zero(); degree];
+        quotient[degree - 1] = polynomial[degree].clone();
+        for power in (1..degree).rev() {
+            quotient[power - 1] = quotient[power]
+                .scale(root, field)?
+                .add(&polynomial[power], field)?;
+        }
+        let remainder = quotient[0].scale(root, field)?.add(&polynomial[0], field)?;
+        if !remainder.is_zero(field)? {
+            return Err(LocalFieldError::Undecided);
+        }
+        polynomial = quotient;
+        had_root = true;
+    }
+    Ok((polynomial, had_root))
 }
 
 fn fiber_coefficient_polynomials(
@@ -1390,6 +1484,46 @@ mod tests {
             policy,
         );
         assert_eq!(endpoint.status, AlgebraicFiberRootCountStatus::EndpointRoot);
+        let repeated_endpoint_owned = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+            &relation,
+            CurveResultantParameter::First,
+            &alpha,
+            &half,
+            &real(1),
+            policy,
+        );
+        assert_eq!(
+            repeated_endpoint_owned.status,
+            AlgebraicFiberRootCountStatus::Counted
+        );
+        assert_eq!(repeated_endpoint_owned.distinct_root_count, Some(1));
+
+        // b(b-a)(b-1) has three distinct roots at a=1/2. The closed
+        // contract owns rational roots at either bound and counts each once.
+        let endpoint_owned_relation = BivariatePolynomial::new(vec![
+            vec![real(0), real(0), real(-1), real(1)],
+            vec![real(0), real(1), real(-1)],
+        ]);
+        let lower_closed = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+            &endpoint_owned_relation,
+            CurveResultantParameter::First,
+            &alpha,
+            &real(0),
+            &rational(3, 4),
+            policy,
+        );
+        assert_eq!(lower_closed.status, AlgebraicFiberRootCountStatus::Counted);
+        assert_eq!(lower_closed.distinct_root_count, Some(2));
+        let both_closed = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+            &endpoint_owned_relation,
+            CurveResultantParameter::First,
+            &alpha,
+            &real(0),
+            &real(1),
+            policy,
+        );
+        assert_eq!(both_closed.status, AlgebraicFiberRootCountStatus::Counted);
+        assert_eq!(both_closed.distinct_root_count, Some(3));
 
         let reversed = count_bivariate_fiber_roots_at_algebraic_parameter(
             &relation,
