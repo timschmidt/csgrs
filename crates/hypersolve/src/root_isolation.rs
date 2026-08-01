@@ -1749,7 +1749,7 @@ fn derivative(polynomial: &[Real]) -> Vec<Real> {
         .collect()
 }
 
-fn polynomial_gcd(
+pub(crate) fn polynomial_gcd(
     mut left: Vec<Real>,
     mut right: Vec<Real>,
     policy: PredicatePolicy,
