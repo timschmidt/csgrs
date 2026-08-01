@@ -1369,16 +1369,17 @@ fn repeated_cubic_rational_maps(coefficients: Vec<Vec<Real>>) -> Vec<(Vec<Real>,
         ),
         &multiply_exact_polynomials(&quadratic, &linear),
     );
-    vec![
-        (
-            repeated_numerator,
-            scale_exact_polynomial(&delta, &Real::from(2_i8)),
-        ),
-        (
+    if exact_polynomial_is_zero(&delta) {
+        vec![(
             scale_exact_polynomial(&quadratic, &Real::from(-1_i8)),
             scale_exact_polynomial(&cubic, &Real::from(3_i8)),
-        ),
-    ]
+        )]
+    } else {
+        vec![(
+            repeated_numerator,
+            scale_exact_polynomial(&delta, &Real::from(2_i8)),
+        )]
+    }
 }
 
 fn first_dividing_rational_map(
@@ -2892,6 +2893,61 @@ mod tests {
                 images,
                 vec![retained.clone(), retained.clone(), real(1) - retained]
             );
+        }
+    }
+
+    #[test]
+    fn bivariate_rational_component_extracts_triple_cubic_factor() {
+        let component = BivariatePolynomial::new(vec![vec![real(0), real(1)], vec![real(-1)]]);
+        let common = multiply_bivariate(&multiply_bivariate(&component, &component), &component);
+        let first = multiply_bivariate(
+            &common,
+            &BivariatePolynomial::new(vec![vec![real(1), real(1)], vec![real(1)]]),
+        );
+        let second = multiply_bivariate(
+            &common,
+            &BivariatePolynomial::new(vec![vec![real(2), real(1)], vec![real(-1)]]),
+        );
+        let config = CurveIntersectionResultantConfig {
+            min_precision: -64,
+            max_resultant_degree: 32,
+        };
+
+        for (first, second, retained_parameter) in [
+            (
+                first.clone(),
+                second.clone(),
+                CurveResultantParameter::First,
+            ),
+            (
+                swap_bivariate(&first),
+                swap_bivariate(&second),
+                CurveResultantParameter::Second,
+            ),
+        ] {
+            let mut residual = [first, second];
+            let retained = (real(1) / real(4)).unwrap();
+            for _ in 0..3 {
+                let report = rational_parameter_component_bivariate_polynomial_system(
+                    &residual[0],
+                    &residual[1],
+                    retained_parameter,
+                    config,
+                );
+                assert_eq!(
+                    report.status,
+                    BivariatePolynomialRationalComponentStatus::Constructed
+                );
+                assert_eq!(
+                    (eval_univariate(&report.numerator_coefficients, &retained)
+                        / eval_univariate(&report.denominator_coefficients, &retained))
+                    .unwrap(),
+                    retained
+                );
+                residual = report
+                    .reduced_equations
+                    .expect("each cubic factor retains the exact residual");
+            }
         }
     }
 
