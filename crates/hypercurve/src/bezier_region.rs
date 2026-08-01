@@ -7958,18 +7958,40 @@ mod tests {
     }
 
     #[test]
-    fn irrational_weight_semicircle_region_classifies_without_native_accelerator() {
+    fn irrational_weight_semicircle_region_recovers_exact_native_accelerator() {
         let policy = CurveContext::STRICT;
-        let upper =
-            Curve2::from(CircularArc2::try_from_center(p(0, 0), p(2, 0), p(1, 0), true).unwrap());
-        let lower =
-            Curve2::from(CircularArc2::try_from_center(p(2, 0), p(0, 0), p(1, 0), true).unwrap());
-        let region = CurveRegion2::try_from_boundary_paths(
-            &[CurvePath2::try_new(vec![upper, lower]).unwrap()],
-            &policy,
-        )
-        .unwrap()
-        .into_value();
+        let arcs = [
+            CircularArc2::try_from_center(p(0, 0), p(2, 0), p(1, 0), true).unwrap(),
+            CircularArc2::try_from_center(p(2, 0), p(0, 0), p(1, 0), true).unwrap(),
+        ];
+        let mut curves = Vec::with_capacity(4);
+        for arc in arcs {
+            for span in arc
+                .rational_bezier_decomposition(&policy)
+                .unwrap()
+                .into_value()
+                .spans()
+            {
+                let curve = span.curve();
+                let controls = curve.control_points();
+                let weights = curve.weights();
+                curves.push(Curve2::from(
+                    RationalQuadraticBezier2::try_new(
+                        controls[0].clone(),
+                        controls[1].clone(),
+                        controls[2].clone(),
+                        weights[0].clone(),
+                        weights[1].clone(),
+                        weights[2].clone(),
+                    )
+                    .unwrap(),
+                ));
+            }
+        }
+        let region =
+            CurveRegion2::try_from_boundary_paths(&[CurvePath2::try_new(curves).unwrap()], &policy)
+                .unwrap()
+                .into_value();
         let point = Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap());
         assert_eq!(
             region
@@ -7991,7 +8013,7 @@ mod tests {
         );
         assert!(matches!(
             region.data.line_image_region.certified(),
-            Some(None)
+            Some(Some(_))
         ));
     }
 
