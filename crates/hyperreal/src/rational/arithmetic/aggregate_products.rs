@@ -3444,11 +3444,8 @@ impl Rational {
             if signs[i] == NoSign {
                 continue;
             }
-            if left[i].is_internally_unreduced() || right[i].is_internally_unreduced() {
-                return None;
-            }
-            let shift =
-                left[i].dyadic_denominator_shift()? + right[i].dyadic_denominator_shift()?;
+            let shift = left[i].dyadic_denominator_shift_if_reduced()?
+                + right[i].dyadic_denominator_shift_if_reduced()?;
             denominator_shifts[i] = shift;
             max_shift = max_shift.max(shift);
         }
@@ -3638,11 +3635,9 @@ impl Rational {
             let mut magnitude = 1_u128;
             let mut shift = 0_u64;
             for factor in terms[i] {
-                if factor.is_internally_unreduced() {
-                    return None;
-                }
                 magnitude = magnitude.checked_mul(factor.numerator.to_u128()?)?;
-                shift = shift.checked_add(factor.dyadic_denominator_shift()?)?;
+                shift =
+                    shift.checked_add(factor.dyadic_denominator_shift_if_reduced()?)?;
             }
             magnitudes[i] = magnitude;
             denominator_shifts[i] = shift;
@@ -3815,10 +3810,8 @@ impl Rational {
             live_terms += 1;
             let mut shift = 0_u64;
             for factor in terms[i] {
-                if factor.is_internally_unreduced() {
-                    return None;
-                }
-                shift = shift.checked_add(factor.dyadic_denominator_shift()?)?;
+                shift =
+                    shift.checked_add(factor.dyadic_denominator_shift_if_reduced()?)?;
                 numerator_bits[i] = numerator_bits[i].saturating_add(factor.numerator.bits());
             }
             denominator_shifts[i] = shift;

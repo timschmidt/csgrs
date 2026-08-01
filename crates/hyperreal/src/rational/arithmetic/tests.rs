@@ -3205,6 +3205,54 @@ mod tests {
     }
 
     #[test]
+    fn reduced_dyadic_shift_probe_preserves_every_representation_path() {
+        let dyadic =
+            Rational::from_parts_raw(Plus, BigUint::from(3_u8), BigUint::one() << 300usize);
+        assert_eq!(
+            dyadic.dyadic_denominator_shift_if_reduced(),
+            Some(300)
+        );
+        assert_eq!(
+            dyadic.dyadic_denominator_shift_if_reduced(),
+            Some(300)
+        );
+
+        let non_dyadic = Rational::fraction(2, 3).unwrap();
+        assert_eq!(
+            non_dyadic.dyadic_denominator_shift_if_reduced(),
+            None
+        );
+
+        let unreduced = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::from(8_u8),
+        );
+        assert_eq!(
+            unreduced.dyadic_denominator_shift_if_reduced(),
+            None
+        );
+        assert_eq!(unreduced.dyadic_denominator_shift(), Some(2));
+
+        let wide_unreduced = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::one() << 200usize,
+        );
+        let wide_dyadic = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(5_u8),
+            BigUint::one() << 200usize,
+        );
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(15_u8),
+            BigUint::one() << 399usize,
+        )
+        .unwrap();
+        assert_eq!(wide_unreduced * wide_dyadic, expected);
+    }
+
+    #[test]
     fn dyadic_add_sub_stay_reduced() {
         let three_eighths = Rational::fraction(3, 8).unwrap();
         let five_sixteenths = Rational::fraction(5, 16).unwrap();

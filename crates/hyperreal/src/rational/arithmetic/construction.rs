@@ -724,12 +724,28 @@ impl Rational {
 
     #[inline]
     pub(crate) fn dyadic_denominator_shift(&self) -> Option<u64> {
-        if self.is_internally_unreduced() {
-            return self.canonicalized_ref().dyadic_denominator_shift();
-        }
         let retained = self
             .retained_facts
             .load(std::sync::atomic::Ordering::Relaxed);
+        if retained & RETAINED_UNREDUCED_INTERNAL != 0 {
+            return self.canonicalized_ref().dyadic_denominator_shift();
+        }
+        self.dyadic_denominator_shift_from_retained(retained)
+    }
+
+    #[inline]
+    pub(crate) fn dyadic_denominator_shift_if_reduced(&self) -> Option<u64> {
+        let retained = self
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        if retained & RETAINED_UNREDUCED_INTERNAL != 0 {
+            return None;
+        }
+        self.dyadic_denominator_shift_from_retained(retained)
+    }
+
+    #[inline]
+    fn dyadic_denominator_shift_from_retained(&self, retained: u32) -> Option<u64> {
         let encoded_shift =
             (retained & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET;
         if encoded_shift != 0 {
@@ -739,6 +755,12 @@ impl Rational {
             crate::trace_dispatch!("rational", "retained-facts", "non-dyadic-hit");
             return None;
         }
+        self.learn_dyadic_denominator_shift()
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn learn_dyadic_denominator_shift(&self) -> Option<u64> {
         let shift = Self::biguint_power_of_two_shift(&self.denominator);
         self.retain_fact(
             RETAINED_DYADIC_KNOWN

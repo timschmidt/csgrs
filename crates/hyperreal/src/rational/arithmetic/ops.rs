@@ -619,12 +619,9 @@ impl Rational {
     }
 
     fn mul_wide_dyadic_with_word_numerators(&self, other: &Self) -> Option<Self> {
-        if self.is_internally_unreduced() || other.is_internally_unreduced() {
-            return None;
-        }
         let mut denominator_shift = self
-            .dyadic_denominator_shift()?
-            .checked_add(other.dyadic_denominator_shift()?)?;
+            .dyadic_denominator_shift_if_reduced()?
+            .checked_add(other.dyadic_denominator_shift_if_reduced()?)?;
         let mut left_numerator = self.numerator.to_u128()?;
         let mut right_numerator = other.numerator.to_u128()?;
         let left_cancel = u64::from(left_numerator.trailing_zeros()).min(denominator_shift);
