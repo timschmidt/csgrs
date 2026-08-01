@@ -39,9 +39,10 @@ use hypersolve::{
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
 };
 use hypersolve::{
-    BivariatePolynomial, CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
-    CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
-    CurveResultantParameter, RationalParametricCurve2,
+    BivariatePolynomial, BivariatePolynomialAxisFactorStatus, CurveIntersectionParameterLiftMap,
+    CurveIntersectionParameterLiftReport, CurveIntersectionParameterLiftStatus,
+    CurveIntersectionResultantConfig, CurveResultantParameter, RationalParametricCurve2,
+    extract_bivariate_polynomial_system_axis_factors,
     linear_parameter_lifts_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
 };
 
@@ -213,6 +214,11 @@ pub enum BezierParallelIntersectionCandidates2 {
     },
     /// A projection vanished identically and requires shared-component replay.
     DegenerateResultant,
+}
+
+struct BezierParallelIntersectionCandidateSystem2 {
+    candidates: BezierParallelIntersectionCandidates2,
+    replay_equations: Option<[BivariatePolynomial; 2]>,
 }
 
 /// One exactly replayed contact between an analytic parallel and a rational Bezier.
@@ -1108,6 +1114,16 @@ impl BezierParallel2 {
         other: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
+        Ok(self
+            .intersection_candidate_system(other, policy)?
+            .map(|system| system.candidates))
+    }
+
+    fn intersection_candidate_system(
+        &self,
+        other: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelIntersectionCandidateSystem2>> {
         let distance_sign = match real_sign(self.distance(), policy) {
             Some(sign) => sign,
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
@@ -1119,7 +1135,10 @@ impl BezierParallel2 {
                     .intersection_candidates_classified(other, policy)?
                 {
                     Classification::Decided(candidates) => {
-                        Classification::Decided(parallel_candidates_from_rational(candidates))
+                        Classification::Decided(BezierParallelIntersectionCandidateSystem2 {
+                            candidates: parallel_candidates_from_rational(candidates),
+                            replay_equations: None,
+                        })
                     }
                     Classification::Uncertain(reason) => Classification::Uncertain(reason),
                 },
@@ -1152,7 +1171,10 @@ impl BezierParallel2 {
             )
         {
             return Ok(Classification::Decided(
-                BezierParallelIntersectionCandidates2::NoIntersection,
+                BezierParallelIntersectionCandidateSystem2 {
+                    candidates: BezierParallelIntersectionCandidates2::NoIntersection,
+                    replay_equations: None,
+                },
             ));
         }
 
@@ -1162,59 +1184,31 @@ impl BezierParallel2 {
             self.distance(),
             other_power,
         );
-        let config = CurveIntersectionResultantConfig {
-            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
-            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        let equations = [orthogonality, distance_relation];
+        let candidates = match project_parallel_intersection_system(&equations, policy)? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let parallel = match resultant_parameter_projection(
-            resultant_bivariate_polynomial_system(
-                &orthogonality,
-                &distance_relation,
-                CurveResultantParameter::First,
-                config,
-            ),
-            policy,
-        )? {
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        if matches!(
+            candidates,
+            BezierParallelIntersectionCandidates2::DegenerateResultant
+        ) {
+            match self.exact_rational_parallel_component(policy)? {
+                Classification::Decided(Some(exact_parallel)) => {
+                    return Ok(exact_parallel
+                        .intersection_candidates_classified(other, policy)?
+                        .map(|candidates| BezierParallelIntersectionCandidateSystem2 {
+                            candidates: parallel_candidates_from_rational(candidates),
+                            replay_equations: None,
+                        }));
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             }
-        };
-        if matches!(parallel, ResultantParameterProjection::Degenerate) {
-            return Ok(Classification::Decided(
-                BezierParallelIntersectionCandidates2::DegenerateResultant,
-            ));
         }
-        let other = match resultant_parameter_projection(
-            resultant_bivariate_polynomial_system(
-                &orthogonality,
-                &distance_relation,
-                CurveResultantParameter::Second,
-                config,
-            ),
-            policy,
-        )? {
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        Ok(Classification::Decided(match (parallel, other) {
-            (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
-                BezierParallelIntersectionCandidates2::NoIntersection
-            }
-            (ResultantParameterProjection::Degenerate, _)
-            | (_, ResultantParameterProjection::Degenerate) => {
-                BezierParallelIntersectionCandidates2::DegenerateResultant
-            }
-            (
-                ResultantParameterProjection::Parameters(parallel_parameters),
-                ResultantParameterProjection::Parameters(other_parameters),
-            ) => BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters,
-                other_parameters,
-            },
-        }))
+        parallel_intersection_candidate_system(equations, candidates, policy)
     }
 
     /// Replays every resultant candidate into exact selected-branch contacts.
@@ -1236,12 +1230,16 @@ impl BezierParallel2 {
         other: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionContacts2>> {
-        let candidates = match self.intersection_candidates(other, policy)? {
-            Classification::Decided(candidates) => candidates,
+        let candidate_system = match self.intersection_candidate_system(other, policy)? {
+            Classification::Decided(candidate_system) => candidate_system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        let BezierParallelIntersectionCandidateSystem2 {
+            candidates,
+            replay_equations,
+        } = candidate_system;
         let (parallel_parameters, other_parameters) = match &candidates {
             BezierParallelIntersectionCandidates2::NoIntersection => {
                 return Ok(Classification::Decided(
@@ -1260,12 +1258,15 @@ impl BezierParallel2 {
         let source = self.source_power_basis()?;
         let differential = self.differential()?;
         let other_power = other.homogeneous_power_basis()?;
-        let (orthogonality, distance_relation) = parallel_rational_intersection_equations(
-            &source,
-            differential,
-            self.distance(),
-            other_power,
-        );
+        let [orthogonality, distance_relation] = replay_equations.unwrap_or_else(|| {
+            let (orthogonality, distance_relation) = parallel_rational_intersection_equations(
+                &source,
+                differential,
+                self.distance(),
+                other_power,
+            );
+            [orthogonality, distance_relation]
+        });
         let distance_sign = match real_sign(self.distance(), policy) {
             Some(sign) => sign,
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
@@ -1387,25 +1388,14 @@ impl BezierParallel2 {
         other: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionContacts2>> {
-        let exact_parallel = match real_sign(self.distance(), policy) {
-            Some(RealSign::Zero) => self.data.source.to_rational_bezier()?,
-            Some(RealSign::Positive | RealSign::Negative) => {
-                if let Some(Some(offset)) = self.data.certified_ph_offset.get() {
-                    offset.curve().clone()
-                } else {
-                    match self.exact_pythagorean_hodograph_offset(policy)? {
-                        Classification::Decided(Some(offset)) => offset.curve().clone(),
-                        Classification::Decided(None) | Classification::Uncertain(_) => {
-                            return Ok(Classification::Decided(
-                                BezierParallelIntersectionContacts2::DegenerateResultant,
-                            ));
-                        }
-                    }
-                }
+        let exact_parallel = match self.exact_rational_parallel_component(policy)? {
+            Classification::Decided(Some(exact_parallel)) => exact_parallel,
+            Classification::Decided(None) => {
+                return Ok(Classification::Decided(
+                    BezierParallelIntersectionContacts2::DegenerateResultant,
+                ));
             }
-            None => {
-                return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
-            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         let replay = match exact_parallel.intersection_contacts_classified(other, policy)? {
             Classification::Decided(replay) => replay,
@@ -1444,6 +1434,31 @@ impl BezierParallel2 {
                 BezierParallelIntersectionContacts2::DegenerateResultant
             }
         }))
+    }
+
+    fn exact_rational_parallel_component(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalBezier2>>> {
+        match real_sign(self.distance(), policy) {
+            Some(RealSign::Zero) => Ok(Classification::Decided(Some(
+                self.data.source.to_rational_bezier()?,
+            ))),
+            Some(RealSign::Positive | RealSign::Negative) => {
+                if let Some(cached) = self.data.certified_ph_offset.get() {
+                    return Ok(Classification::Decided(
+                        cached.as_deref().map(|offset| offset.curve().clone()),
+                    ));
+                }
+                Ok(Classification::Decided(
+                    match self.exact_pythagorean_hodograph_offset(policy)? {
+                        Classification::Decided(Some(offset)) => Some(offset.curve().clone()),
+                        Classification::Decided(None) | Classification::Uncertain(_) => None,
+                    },
+                ))
+            }
+            None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
     }
 
     fn certified_transverse_contact(
@@ -4115,6 +4130,128 @@ fn polynomial_from_coefficients(
 const MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE: usize = 128;
 const PARALLEL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
 
+fn parallel_intersection_candidate_system(
+    equations: [BivariatePolynomial; 2],
+    candidates: BezierParallelIntersectionCandidates2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierParallelIntersectionCandidateSystem2>> {
+    if matches!(
+        candidates,
+        BezierParallelIntersectionCandidates2::DegenerateResultant
+    ) && let Some(reduced) = rootless_axis_primitive_system(&equations, policy)?
+    {
+        let candidates = match project_parallel_intersection_system(&reduced, policy)? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        return Ok(Classification::Decided(parallel_candidate_system(
+            candidates, reduced,
+        )));
+    }
+    Ok(Classification::Decided(parallel_candidate_system(
+        candidates, equations,
+    )))
+}
+
+fn parallel_candidate_system(
+    candidates: BezierParallelIntersectionCandidates2,
+    equations: [BivariatePolynomial; 2],
+) -> BezierParallelIntersectionCandidateSystem2 {
+    let replay_equations = matches!(
+        &candidates,
+        BezierParallelIntersectionCandidates2::Candidates { .. }
+    )
+    .then_some(equations);
+    BezierParallelIntersectionCandidateSystem2 {
+        candidates,
+        replay_equations,
+    }
+}
+
+fn project_parallel_intersection_system(
+    equations: &[BivariatePolynomial; 2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
+    let config = CurveIntersectionResultantConfig {
+        min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+    };
+    let parallel = match resultant_parameter_projection(
+        resultant_bivariate_polynomial_system(
+            &equations[0],
+            &equations[1],
+            CurveResultantParameter::First,
+            config,
+        ),
+        policy,
+    )? {
+        Classification::Decided(projection) => projection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    if matches!(parallel, ResultantParameterProjection::Degenerate) {
+        return Ok(Classification::Decided(
+            BezierParallelIntersectionCandidates2::DegenerateResultant,
+        ));
+    }
+    let other = match resultant_parameter_projection(
+        resultant_bivariate_polynomial_system(
+            &equations[0],
+            &equations[1],
+            CurveResultantParameter::Second,
+            config,
+        ),
+        policy,
+    )? {
+        Classification::Decided(projection) => projection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(match (parallel, other) {
+        (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
+            BezierParallelIntersectionCandidates2::NoIntersection
+        }
+        (ResultantParameterProjection::Degenerate, _)
+        | (_, ResultantParameterProjection::Degenerate) => {
+            BezierParallelIntersectionCandidates2::DegenerateResultant
+        }
+        (
+            ResultantParameterProjection::Parameters(parallel_parameters),
+            ResultantParameterProjection::Parameters(other_parameters),
+        ) => BezierParallelIntersectionCandidates2::Candidates {
+            parallel_parameters,
+            other_parameters,
+        },
+    }))
+}
+
+/// Returns the axis-primitive system only after proving saturation preserves
+/// the complete solution set on the closed parameter square.
+fn rootless_axis_primitive_system(
+    equations: &[BivariatePolynomial; 2],
+    policy: &CurveContext,
+) -> CurveResult<Option<[BivariatePolynomial; 2]>> {
+    let report = extract_bivariate_polynomial_system_axis_factors(&equations[0], &equations[1]);
+    if report.status != BivariatePolynomialAxisFactorStatus::Reduced {
+        return Ok(None);
+    }
+    for factor in [
+        &report.first_parameter_factor,
+        &report.second_parameter_factor,
+    ] {
+        if factor.len() <= 1 {
+            continue;
+        }
+        let polynomial = match polynomial_from_coefficients(factor.clone(), policy)? {
+            Classification::Decided(Some(polynomial)) => polynomial,
+            Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
+        };
+        match polynomial.isolate_unit_interval_roots(policy)? {
+            Classification::Decided(roots) if roots.is_empty() => {}
+            Classification::Decided(_) | Classification::Uncertain(_) => return Ok(None),
+        }
+    }
+    Ok(report.reduced_equations)
+}
+
 fn parallel_rational_intersection_equations(
     source: &BezierParallelPowerBasisRef<'_>,
     differential: &BezierParallelDifferential2,
@@ -5467,6 +5604,45 @@ mod conversion_tests {
             .unwrap(),
             Classification::Decided(None)
         );
+    }
+
+    #[test]
+    fn axis_saturation_requires_every_removed_factor_to_be_rootless() {
+        let rootless = [
+            BivariatePolynomial::new(vec![
+                vec![Real::from(2_i8), Real::from(2_i8)],
+                vec![Real::one(), Real::one()],
+            ]),
+            BivariatePolynomial::new(vec![
+                vec![Real::from(4_i8), Real::from(2_i8)],
+                vec![Real::from(2_i8), Real::one()],
+            ]),
+        ];
+        let rootful = [
+            BivariatePolynomial::new(vec![
+                vec![Real::from(-1_i8), Real::from(-1_i8)],
+                vec![Real::from(2_i8), Real::from(2_i8)],
+            ]),
+            BivariatePolynomial::new(vec![
+                vec![Real::from(-2_i8), Real::from(-1_i8)],
+                vec![Real::from(4_i8), Real::from(2_i8)],
+            ]),
+        ];
+        let expected = [
+            BivariatePolynomial::new(vec![vec![Real::one(), Real::one()]]),
+            BivariatePolynomial::new(vec![vec![Real::from(2_i8), Real::one()]]),
+        ];
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                rootless_axis_primitive_system(&rootless, &policy).unwrap(),
+                Some(expected.clone())
+            );
+            assert_eq!(
+                rootless_axis_primitive_system(&rootful, &policy).unwrap(),
+                None
+            );
+        }
     }
 
     #[test]

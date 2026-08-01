@@ -531,6 +531,35 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
         100,
     )?;
 
+    let factored_parabola = RationalBezier2::try_new(
+        vec![
+            p(0, 0),
+            Point2::new(q(2, 7), s(0)),
+            Point2::new(q(5, 8), q(1, 4)),
+            p(1, 1),
+        ],
+        vec![s(2), q(7, 3), q(8, 3), s(3)],
+    )?;
+    let ordinary_vertical = RationalBezier2::try_new(vec![p(0, 0), p(0, 2)], vec![s(1), s(1)])?;
+    bench_bezier_parallel_intersections(
+        "bezier_parallel_rootless_source_axis_factor",
+        &factored_parabola.parallel_left(s(1))?,
+        &ordinary_vertical,
+        10,
+    )?;
+
+    let ordinary_parabola = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), s(0)), p(1, 1));
+    let factored_vertical = RationalBezier2::try_new(
+        vec![p(0, 0), Point2::new(s(0), q(4, 5)), p(0, 2)],
+        vec![s(2), q(5, 2), s(3)],
+    )?;
+    bench_bezier_parallel_intersections(
+        "bezier_parallel_rootless_target_axis_factor",
+        &ordinary_parabola.parallel_left(s(1))?,
+        &factored_vertical,
+        10,
+    )?;
+
     let line_overlap_parallel =
         QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).parallel_left(s(1))?;
     let line_overlap_target = RationalBezier2::try_new(vec![p(0, 1), p(2, 1)], vec![s(1), s(1)])?;

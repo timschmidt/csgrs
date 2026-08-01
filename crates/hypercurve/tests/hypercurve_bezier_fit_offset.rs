@@ -27,6 +27,42 @@ fn q(numerator: i32, denominator: i32) -> Real {
     (r(numerator) / r(denominator)).unwrap()
 }
 
+fn rootless_homogeneous_factor_parabola() -> RationalBezier2 {
+    // Homogeneous power basis
+    //   (X, Y, W) = (t(t + 2), t^2(t + 2), t + 2)
+    // represents the regular non-PH parabola (t, t^2). The common factor has
+    // its only root at t=-2, outside the authored parameter interval.
+    RationalBezier2::try_new(
+        vec![
+            p(0, 0),
+            Point2::new(q(2, 7), r(0)),
+            Point2::new(q(5, 8), q(1, 4)),
+            p(1, 1),
+        ],
+        vec![r(2), q(7, 3), q(8, 3), r(3)],
+    )
+    .unwrap()
+}
+
+fn rootless_homogeneous_factor_vertical() -> RationalBezier2 {
+    // (0, 2u(u + 2), u + 2) represents the same finite segment as (0, 2u).
+    RationalBezier2::try_new(
+        vec![p(0, 0), Point2::new(r(0), q(4, 5)), p(0, 2)],
+        vec![r(2), q(5, 2), r(3)],
+    )
+    .unwrap()
+}
+
+fn rootful_homogeneous_factor_vertical() -> RationalBezier2 {
+    // (0, 2u(u - 1/3), u - 1/3) has a removable projective base point at
+    // u=1/3. Hypercurve deliberately retains that authored domain boundary.
+    RationalBezier2::try_new(
+        vec![p(0, 0), p(0, -2), p(0, 2)],
+        vec![q(-1, 3), q(1, 6), q(2, 3)],
+    )
+    .unwrap()
+}
+
 fn real_representation_samples() -> Vec<Real> {
     let rational = |numerator: i64, denominator: u64| {
         Real::new(Rational::fraction(numerator, denominator).unwrap())
@@ -1230,6 +1266,68 @@ fn parallel_rational_intersection_candidates_report_disjoint_and_shared_componen
                 .intersection_candidates(&coincident, &policy)
                 .unwrap(),
             Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+        );
+    }
+}
+
+#[test]
+fn parallel_rational_intersections_saturate_rootless_homogeneous_axis_content() {
+    let factored_parallel = rootless_homogeneous_factor_parabola()
+        .parallel_left(r(1))
+        .unwrap();
+    let ordinary_parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1))
+        .parallel_left(r(1))
+        .unwrap();
+    let ordinary_vertical =
+        RationalBezier2::try_new(vec![p(0, 0), p(0, 2)], vec![r(1), r(1)]).unwrap();
+    let factored_vertical = rootless_homogeneous_factor_vertical();
+
+    for (parallel, vertical) in [
+        (&factored_parallel, &ordinary_vertical),
+        (&ordinary_parallel, &factored_vertical),
+    ] {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters,
+                other_parameters,
+            }) = parallel.intersection_candidates(vertical, &policy).unwrap()
+            else {
+                panic!("rootless homogeneous axis content was not saturated");
+            };
+            assert_eq!(parallel_parameters.len(), 2);
+            assert_eq!(other_parameters.len(), 2);
+            assert!(parallel_parameters.contains(&BezierParameter2::Exact(r(0))));
+            assert!(other_parameters.contains(&BezierParameter2::Exact(q(1, 2))));
+            assert!(other_parameters.contains(&BezierParameter2::Exact(q(5, 8))));
+
+            let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
+                parallel.intersection_contacts(vertical, &policy).unwrap()
+            else {
+                panic!("rootless homogeneous axis content did not replay completely");
+            };
+            assert_eq!(contacts.len(), 2);
+            assert!(contacts.iter().any(|contact| {
+                contact.point() == &RationalBezierIntersectionPointEvidence2::Exact(p(0, 1))
+            }));
+            assert!(contacts.iter().any(|contact| {
+                contact.point()
+                    == &RationalBezierIntersectionPointEvidence2::Exact(Point2::new(r(0), q(5, 4)))
+            }));
+        }
+    }
+}
+
+#[test]
+fn parallel_rational_axis_saturation_retains_in_domain_projective_base_points() {
+    let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1))
+        .parallel_left(r(1))
+        .unwrap();
+    let rootful = rootful_homogeneous_factor_vertical();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            parallel.intersection_candidates(&rootful, &policy).unwrap(),
+            Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
         );
     }
 }
