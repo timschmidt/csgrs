@@ -127,6 +127,28 @@ fn rationally_reparameterized_parabola_parallel() -> RationalBezier2 {
     .unwrap()
 }
 
+fn nonlinearly_reparameterized_parabola() -> RationalBezier2 {
+    // P(v)=(3v/8,9v^2/64) authored through v=(t^2+t)/2. The derivative of
+    // the reparameterization is strictly positive on [0,1], while the unit
+    // parallel remains non-PH. Against rationally_reparameterized_parabola_parallel
+    // the common parameter component is
+    //
+    //   (6-3u)(t^2+t) - 2(4u-u^2) = 0,
+    //
+    // which is irreducible and nonlinear in both parameters.
+    RationalBezier2::try_new(
+        vec![
+            p(0, 0),
+            Point2::new(q(3, 64), r(0)),
+            Point2::new(q(1, 8), q(3, 512)),
+            Point2::new(q(15, 64), q(9, 256)),
+            Point2::new(q(3, 8), q(9, 64)),
+        ],
+        vec![r(1); 5],
+    )
+    .unwrap()
+}
+
 fn real_representation_samples() -> Vec<Real> {
     let rational = |numerator: i64, denominator: u64| {
         Real::new(Rational::fraction(numerator, denominator).unwrap())
@@ -1932,30 +1954,19 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
 }
 
 #[test]
-fn parallel_rational_contacts_transport_an_implicit_quartic_parameter_component() {
-    // The selected line parallel uses x(t)=t^2+t, while the independently
-    // authored target uses x(u)=u^4+u. Their complete correspondence
-    //
-    //   u^4 + u - t^2 - t = 0
-    //
-    // is irreducible and nonlinear in both parameters, but has one regular
-    // monotone branch across the closed unit square.
-    let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(2, 0))
+fn parallel_rational_contacts_transport_an_implicit_parameter_component() {
+    let parallel = nonlinearly_reparameterized_parabola()
         .parallel_left(Real::one())
         .unwrap();
-    let target = RationalBezier2::try_new(
-        vec![
-            p(0, 1),
-            Point2::new(q(1, 4), Real::one()),
-            Point2::new(q(1, 2), Real::one()),
-            Point2::new(q(3, 4), Real::one()),
-            p(2, 1),
-        ],
-        vec![Real::one(); 5],
-    )
-    .unwrap();
+    let target = rationally_reparameterized_parabola_parallel();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert!(matches!(
+            parallel
+                .exact_pythagorean_hodograph_offset(&policy)
+                .unwrap(),
+            Classification::Decided(None)
+        ));
         assert!(matches!(
             parallel.intersection_candidates(&target, &policy).unwrap(),
             Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)

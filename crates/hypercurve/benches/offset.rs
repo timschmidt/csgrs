@@ -513,6 +513,19 @@ fn rationalized_parabola_parallel_target() -> CurveResult<RationalBezier2> {
     )
 }
 
+fn nonlinearly_reparameterized_parabola() -> CurveResult<RationalBezier2> {
+    RationalBezier2::try_new(
+        vec![
+            p(0, 0),
+            Point2::new(q(3, 64), s(0)),
+            Point2::new(q(1, 8), q(3, 512)),
+            Point2::new(q(15, 64), q(9, 256)),
+            Point2::new(q(3, 8), q(9, 64)),
+        ],
+        vec![s(1); 5],
+    )
+}
+
 fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     let exact_parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).parallel_left(s(1))?;
     let exact_target = RationalBezier2::try_new(vec![p(1, 0), p(1, 2)], vec![s(1), s(1)])?;
@@ -628,19 +641,10 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     )?;
 
     let implicit_component_parallel =
-        QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), s(0)), p(2, 0)).parallel_left(s(1))?;
-    let implicit_component_target = RationalBezier2::try_new(
-        vec![
-            p(0, 1),
-            Point2::new(q(1, 4), s(1)),
-            Point2::new(q(1, 2), s(1)),
-            Point2::new(q(3, 4), s(1)),
-            p(2, 1),
-        ],
-        vec![s(1); 5],
-    )?;
+        nonlinearly_reparameterized_parabola()?.parallel_left(s(1))?;
+    let implicit_component_target = rationalized_parabola_parallel_target()?;
     bench_bezier_parallel_intersections(
-        "bezier_parallel_implicit_quartic_component",
+        "bezier_parallel_implicit_quadratic_component",
         &implicit_component_parallel,
         &implicit_component_target,
         100,
