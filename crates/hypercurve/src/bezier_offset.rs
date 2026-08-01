@@ -191,6 +191,55 @@ pub enum BezierParallelIntersectionCandidates2 {
     DegenerateResultant,
 }
 
+/// One exactly replayed contact between an analytic parallel and a rational Bezier.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierParallelIntersectionContact2 {
+    parallel_parameter: BezierParameter2,
+    other_parameter: BezierParameter2,
+    point: crate::RationalBezierIntersectionPointEvidence2,
+    certified_transverse: bool,
+}
+
+impl BezierParallelIntersectionContact2 {
+    /// Returns the exact parameter on the analytic parallel.
+    pub const fn parallel_parameter(&self) -> &BezierParameter2 {
+        &self.parallel_parameter
+    }
+
+    /// Returns the exact parameter on the rational Bezier.
+    pub const fn other_parameter(&self) -> &BezierParameter2 {
+        &self.other_parameter
+    }
+
+    /// Returns retained affine point evidence evaluated on the rational Bezier.
+    pub const fn point(&self) -> &crate::RationalBezierIntersectionPointEvidence2 {
+        &self.point
+    }
+
+    /// Returns whether exact first derivatives certify a transverse contact.
+    pub const fn is_certified_transverse(&self) -> bool {
+        self.certified_transverse
+    }
+}
+
+/// Exact replay status for analytic-parallel/rational-Bezier candidates.
+#[derive(Clone, Debug, PartialEq)]
+pub enum BezierParallelIntersectionContacts2 {
+    /// Replay certified that the finite curve images do not meet.
+    NoIntersection,
+    /// Every candidate pair was decided and these selected-branch contacts remain.
+    Contacts(Arc<[BezierParallelIntersectionContact2]>),
+    /// Some contacts were certified, but at least one algebraic pair remains unresolved.
+    Incomplete {
+        /// Contacts already certified by exact replay.
+        contacts: Arc<[BezierParallelIntersectionContact2]>,
+        /// Complete unpaired resultant projections retained for later replay.
+        candidates: BezierParallelIntersectionCandidates2,
+    },
+    /// A resultant vanished identically and exact overlap replay is required.
+    DegenerateResultant,
+}
+
 impl std::fmt::Debug for BezierParallel2 {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter
@@ -1097,6 +1146,174 @@ impl BezierParallel2 {
                 other_parameters,
             },
         }))
+    }
+
+    /// Replays every resultant candidate into exact selected-branch contacts.
+    ///
+    /// Directly represented pairs and pairs with one isolated algebraic
+    /// parameter are substituted into both original equations exactly. Pairs
+    /// of algebraic parameters are also decided when either equation is
+    /// univariate on the candidate box or the parameters have a certified
+    /// identity/reversal relation. Other coupled algebraic pairs remain in an
+    /// explicit [`BezierParallelIntersectionContacts2::Incomplete`] result;
+    /// no projected root is promoted to topology without exact replay.
+    pub fn intersection_contacts(
+        &self,
+        other: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelIntersectionContacts2>> {
+        let candidates = match self.intersection_candidates(other, policy)? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let (parallel_parameters, other_parameters) = match &candidates {
+            BezierParallelIntersectionCandidates2::NoIntersection => {
+                return Ok(Classification::Decided(
+                    BezierParallelIntersectionContacts2::NoIntersection,
+                ));
+            }
+            BezierParallelIntersectionCandidates2::DegenerateResultant => {
+                return Ok(Classification::Decided(
+                    BezierParallelIntersectionContacts2::DegenerateResultant,
+                ));
+            }
+            BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters,
+                other_parameters,
+            } => (parallel_parameters, other_parameters),
+        };
+
+        let source = self.source_power_basis()?;
+        let differential = self.differential()?;
+        let other_power = other.homogeneous_power_basis()?;
+        let (orthogonality, distance_relation) = parallel_rational_intersection_equations(
+            &source,
+            differential,
+            self.distance(),
+            other_power,
+        );
+        let distance_sign = match real_sign(self.distance(), policy) {
+            Some(sign) => sign,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let branch = (distance_sign != RealSign::Zero).then(|| {
+            parallel_rational_selected_branch(&source, differential, self.distance(), other_power)
+        });
+
+        let mut contacts = Vec::new();
+        let mut incomplete = false;
+        for parallel_parameter in parallel_parameters {
+            for other_parameter in other_parameters {
+                let paired = match bivariate_pair_satisfies_system(
+                    &orthogonality,
+                    &distance_relation,
+                    parallel_parameter,
+                    other_parameter,
+                    policy,
+                )? {
+                    Classification::Decided(paired) => paired,
+                    Classification::Uncertain(_) => {
+                        incomplete = true;
+                        continue;
+                    }
+                };
+                if !paired {
+                    continue;
+                }
+                if let Some(branch) = branch.as_ref() {
+                    match signed_bivariate_at_parameter_pair(
+                        branch,
+                        parallel_parameter,
+                        other_parameter,
+                        policy,
+                    )? {
+                        Classification::Decided(RealSign::Positive) => {}
+                        Classification::Decided(RealSign::Negative) => continue,
+                        Classification::Decided(RealSign::Zero) => {
+                            return Err(CurveError::Topology(
+                                "parallel branch vanished at a regular nonzero-distance contact"
+                                    .to_owned(),
+                            ));
+                        }
+                        Classification::Uncertain(_) => {
+                            incomplete = true;
+                            continue;
+                        }
+                    }
+                }
+                let Some(point) = crate::rational_bezier_general::exact_contact_point_evidence(
+                    other,
+                    other_parameter,
+                    policy,
+                )?
+                else {
+                    incomplete = true;
+                    continue;
+                };
+                contacts.push(BezierParallelIntersectionContact2 {
+                    parallel_parameter: parallel_parameter.clone(),
+                    other_parameter: other_parameter.clone(),
+                    point,
+                    certified_transverse: self.certified_transverse_contact(
+                        other,
+                        parallel_parameter,
+                        other_parameter,
+                        policy,
+                    ),
+                });
+            }
+        }
+        let contacts: Arc<[BezierParallelIntersectionContact2]> = contacts.into();
+        if incomplete {
+            return Ok(Classification::Decided(
+                BezierParallelIntersectionContacts2::Incomplete {
+                    contacts,
+                    candidates,
+                },
+            ));
+        }
+        Ok(Classification::Decided(if contacts.is_empty() {
+            BezierParallelIntersectionContacts2::NoIntersection
+        } else {
+            BezierParallelIntersectionContacts2::Contacts(contacts)
+        }))
+    }
+
+    fn certified_transverse_contact(
+        &self,
+        other: &RationalBezier2,
+        parallel_parameter: &BezierParameter2,
+        other_parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> bool {
+        let (Some(parallel_parameter), Some(other_parameter)) =
+            (parallel_parameter.as_exact(), other_parameter.as_exact())
+        else {
+            return false;
+        };
+        let Ok(Classification::Decided(parallel_derivative)) =
+            self.derivative_at(parallel_parameter, policy)
+        else {
+            return false;
+        };
+        let Classification::Decided(other_derivatives) =
+            other.derivatives_at_classified(other_parameter, 1, policy)
+        else {
+            return false;
+        };
+        let Some(other_derivative) = other_derivatives.first() else {
+            return false;
+        };
+        !matches!(
+            real_sign(
+                &(parallel_derivative.dx() * other_derivative.dy()
+                    - parallel_derivative.dy() * other_derivative.dx()),
+                policy,
+            ),
+            Some(RealSign::Zero) | None
+        )
     }
 
     fn polynomial_power_basis(&self) -> CurveResult<&(Vec<Real>, Vec<Real>)> {
@@ -3731,6 +3948,291 @@ fn parallel_rational_intersection_equations(
         orthogonality,
         bivariate_subtract(&squared_delta, &weighted_distance_squared),
     )
+}
+
+fn parallel_rational_selected_branch(
+    source: &BezierParallelPowerBasisRef<'_>,
+    differential: &BezierParallelDifferential2,
+    distance: &Real,
+    other: &RationalParametricCurve2,
+) -> BivariatePolynomial {
+    let unit_weight = [Real::one()];
+    let source_weight = source.weight.unwrap_or(&unit_weight);
+    let delta_x = bivariate_parameter_difference(
+        source_weight,
+        &other.x_numerator,
+        source.x_numerator,
+        &other.weight,
+    );
+    let delta_y = bivariate_parameter_difference(
+        source_weight,
+        &other.y_numerator,
+        source.y_numerator,
+        &other.weight,
+    );
+    let orientation = bivariate_subtract(
+        &bivariate_multiply_first_parameter(&delta_y, &differential.tangent_x),
+        &bivariate_multiply_first_parameter(&delta_x, &differential.tangent_y),
+    );
+    bivariate_scale(
+        bivariate_multiply(
+            &orientation,
+            &bivariate_outer_product(source_weight, &other.weight),
+        ),
+        distance,
+    )
+}
+
+fn bivariate_pair_satisfies_system(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let first_sign =
+        signed_bivariate_at_parameter_pair(first, first_parameter, second_parameter, policy)?;
+    if matches!(
+        first_sign,
+        Classification::Decided(RealSign::Positive | RealSign::Negative)
+    ) {
+        return Ok(Classification::Decided(false));
+    }
+    let second_sign =
+        signed_bivariate_at_parameter_pair(second, first_parameter, second_parameter, policy)?;
+    if matches!(
+        second_sign,
+        Classification::Decided(RealSign::Positive | RealSign::Negative)
+    ) {
+        return Ok(Classification::Decided(false));
+    }
+    match (first_sign, second_sign) {
+        (Classification::Decided(RealSign::Zero), Classification::Decided(RealSign::Zero)) => {
+            Ok(Classification::Decided(true))
+        }
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+            Ok(Classification::Uncertain(reason))
+        }
+        _ => unreachable!("nonzero bivariate signs returned above"),
+    }
+}
+
+fn signed_bivariate_at_parameter_pair(
+    polynomial: &BivariatePolynomial,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    match (first_parameter, second_parameter) {
+        (BezierParameter2::Exact(first), BezierParameter2::Exact(second)) => {
+            match real_sign(
+                &polynomial_evaluate(&bivariate_specialize_first(polynomial, first), second),
+                policy,
+            ) {
+                Some(sign) => Ok(Classification::Decided(sign)),
+                None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+        (BezierParameter2::Exact(first), second) => signed_coefficients_at_parameter(
+            bivariate_specialize_first(polynomial, first),
+            second,
+            policy,
+        ),
+        (first, BezierParameter2::Exact(second)) => signed_coefficients_at_parameter(
+            bivariate_specialize_second(polynomial, second),
+            first,
+            policy,
+        ),
+        (first, second) => {
+            let mut blocker = UncertaintyReason::Predicate;
+            match bivariate_single_axis_coefficients(
+                polynomial,
+                CurveResultantParameter::First,
+                policy,
+            )? {
+                Classification::Decided(Some(coefficients)) => {
+                    return signed_coefficients_at_parameter(coefficients, first, policy);
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => blocker = reason,
+            }
+            match bivariate_single_axis_coefficients(
+                polynomial,
+                CurveResultantParameter::Second,
+                policy,
+            )? {
+                Classification::Decided(Some(coefficients)) => {
+                    return signed_coefficients_at_parameter(coefficients, second, policy);
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => blocker = reason,
+            }
+            if matches!(
+                first.same_value(second, policy)?,
+                Classification::Decided(true)
+            ) {
+                return signed_coefficients_at_parameter(
+                    bivariate_substitute_second_equal_first(polynomial),
+                    first,
+                    policy,
+                );
+            }
+            let complemented = first.clone().unit_complement();
+            if matches!(
+                complemented.same_value(second, policy)?,
+                Classification::Decided(true)
+            ) {
+                return signed_coefficients_at_parameter(
+                    bivariate_substitute_second_equal_one_minus_first(polynomial),
+                    first,
+                    policy,
+                );
+            }
+            Ok(Classification::Uncertain(blocker))
+        }
+    }
+}
+
+fn signed_coefficients_at_parameter(
+    coefficients: Vec<Real>,
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let polynomial = match polynomial_from_coefficients(coefficients, policy)? {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    signed_polynomial_at_root(polynomial.as_ref(), parameter, policy)
+}
+
+fn bivariate_specialize_first(polynomial: &BivariatePolynomial, value: &Real) -> Vec<Real> {
+    let second_count = polynomial
+        .coefficients
+        .iter()
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0);
+    (0..second_count)
+        .map(|second_power| {
+            polynomial
+                .coefficients
+                .iter()
+                .rev()
+                .fold(Real::zero(), |accumulator, row| {
+                    accumulator * value + row.get(second_power).cloned().unwrap_or_else(Real::zero)
+                })
+        })
+        .collect()
+}
+
+fn bivariate_specialize_second(polynomial: &BivariatePolynomial, value: &Real) -> Vec<Real> {
+    polynomial
+        .coefficients
+        .iter()
+        .map(|row| polynomial_evaluate(row, value))
+        .collect()
+}
+
+fn bivariate_single_axis_coefficients(
+    polynomial: &BivariatePolynomial,
+    axis: CurveResultantParameter,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<Real>>>> {
+    let mut unknown = false;
+    match axis {
+        CurveResultantParameter::First => {
+            for row in &polynomial.coefficients {
+                for coefficient in row.iter().skip(1) {
+                    match real_sign(coefficient, policy) {
+                        Some(RealSign::Zero) => {}
+                        Some(RealSign::Positive | RealSign::Negative) => {
+                            return Ok(Classification::Decided(None));
+                        }
+                        None => unknown = true,
+                    }
+                }
+            }
+            if unknown {
+                return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+            }
+            Ok(Classification::Decided(Some(
+                polynomial
+                    .coefficients
+                    .iter()
+                    .map(|row| row.first().cloned().unwrap_or_else(Real::zero))
+                    .collect(),
+            )))
+        }
+        CurveResultantParameter::Second => {
+            for row in polynomial.coefficients.iter().skip(1) {
+                for coefficient in row {
+                    match real_sign(coefficient, policy) {
+                        Some(RealSign::Zero) => {}
+                        Some(RealSign::Positive | RealSign::Negative) => {
+                            return Ok(Classification::Decided(None));
+                        }
+                        None => unknown = true,
+                    }
+                }
+            }
+            if unknown {
+                return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+            }
+            Ok(Classification::Decided(Some(
+                polynomial.coefficients.first().cloned().unwrap_or_default(),
+            )))
+        }
+    }
+}
+
+fn bivariate_substitute_second_equal_first(polynomial: &BivariatePolynomial) -> Vec<Real> {
+    let degree = polynomial
+        .coefficients
+        .iter()
+        .enumerate()
+        .flat_map(|(first, row)| {
+            row.iter()
+                .enumerate()
+                .map(move |(second, _)| first + second)
+        })
+        .max()
+        .unwrap_or(0);
+    let mut coefficients = vec![Real::zero(); degree + 1];
+    for (first, row) in polynomial.coefficients.iter().enumerate() {
+        for (second, coefficient) in row.iter().enumerate() {
+            coefficients[first + second] += coefficient;
+        }
+    }
+    coefficients
+}
+
+fn bivariate_substitute_second_equal_one_minus_first(
+    polynomial: &BivariatePolynomial,
+) -> Vec<Real> {
+    let second_degree = polynomial
+        .coefficients
+        .iter()
+        .map(|row| row.len().saturating_sub(1))
+        .max()
+        .unwrap_or(0);
+    let mut complement_powers = Vec::with_capacity(second_degree + 1);
+    complement_powers.push(vec![Real::one()]);
+    for degree in 1..=second_degree {
+        complement_powers.push(polynomial_multiply(
+            &complement_powers[degree - 1],
+            &[Real::one(), Real::from(-1_i8)],
+        ));
+    }
+    let degree = polynomial.coefficients.len().saturating_sub(1) + second_degree;
+    let mut coefficients = vec![Real::zero(); degree + 1];
+    for (first, row) in polynomial.coefficients.iter().enumerate() {
+        for (second, coefficient) in row.iter().enumerate() {
+            for (power, factor) in complement_powers[second].iter().enumerate() {
+                coefficients[first + power] += coefficient * factor;
+            }
+        }
+    }
+    coefficients
 }
 
 fn bivariate_parameter_difference(

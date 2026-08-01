@@ -6064,7 +6064,7 @@ fn sort_reals(values: &mut [Real], policy: &CurveContext) -> Option<()> {
     Some(())
 }
 
-fn exact_contact_point_evidence(
+pub(crate) fn exact_contact_point_evidence(
     curve: &RationalBezier2,
     parameter: &BezierParameter2,
     policy: &CurveContext,
