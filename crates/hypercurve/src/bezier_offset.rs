@@ -18,6 +18,8 @@ use std::sync::{Arc, OnceLock};
 
 #[cfg(feature = "predicates")]
 use crate::bezier_algebraic_image::parameter_representation;
+#[cfg(feature = "predicates")]
+use crate::bezier_parameter::BezierParameterRefinement2;
 use crate::bezier_parameter::{bernstein_to_power_coefficients, power_to_bernstein_coefficients};
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::rational_bezier_general::{
@@ -38,6 +40,8 @@ use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 use hypersolve::{
     AlgebraicFiberRootCountStatus, PredicateCertainty,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
+    count_bivariate_fiber_roots_at_algebraic_parameter,
+    count_bivariate_fiber_roots_at_algebraic_parameter_closed,
 };
 use hypersolve::{
     BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentStatus,
@@ -373,6 +377,38 @@ fn parallel_contact_pair_is_retained(
             (Classification::Decided(false), _) | (_, Classification::Decided(false)) => {}
             (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
                 uncertain = Some(reason)
+            }
+        }
+    }
+    Ok(uncertain.map_or(Classification::Decided(false), Classification::Uncertain))
+}
+
+fn parallel_parameter_pair_is_overlap_boundary(
+    overlaps: &[RationalBezierIntersectionOverlap2],
+    parallel_parameter: &BezierParameter2,
+    other_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let mut uncertain = None;
+    for overlap in overlaps {
+        for (parallel_boundary, other_boundary) in [
+            (
+                overlap.first_range().start(),
+                overlap.second_range().start(),
+            ),
+            (overlap.first_range().end(), overlap.second_range().end()),
+        ] {
+            match (
+                parallel_parameter.same_value(parallel_boundary, policy)?,
+                other_parameter.same_value(other_boundary, policy)?,
+            ) {
+                (Classification::Decided(true), Classification::Decided(true)) => {
+                    return Ok(Classification::Decided(true));
+                }
+                (Classification::Decided(false), _) | (_, Classification::Decided(false)) => {}
+                (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                    uncertain = Some(reason)
+                }
             }
         }
     }
@@ -1324,10 +1360,7 @@ impl BezierParallel2 {
             other_power,
         );
         let equations = [orthogonality, distance_relation];
-        if other.degree() >= 4
-            && distance_sign != RealSign::Zero
-            && bivariate_system_may_have_component(&equations)
-        {
+        if other.degree() >= 4 && bivariate_system_may_have_component(&equations) {
             let reduced = rootless_axis_primitive_system(&equations, policy)?;
             let component_equations = reduced.as_ref().unwrap_or(&equations);
             if bivariate_system_may_have_component(component_equations) {
@@ -1341,11 +1374,12 @@ impl BezierParallel2 {
                         BezierParallelIntersectionCandidateSystem2::overlaps(Arc::from([overlap])),
                     ));
                 }
-                let branch = parallel_rational_selected_branch(
+                let branch = parallel_rational_component_branch(
                     &source,
                     differential,
                     self.distance(),
                     other_power,
+                    distance_sign,
                 );
                 let config = CurveIntersectionResultantConfig {
                     min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
@@ -1404,14 +1438,14 @@ impl BezierParallel2 {
         if matches!(
             candidate_system.candidates,
             BezierParallelIntersectionCandidates2::DegenerateResultant
-        ) && distance_sign != RealSign::Zero
-            && let Some(component_equations) = candidate_system.replay_equations.as_ref()
+        ) && let Some(component_equations) = candidate_system.replay_equations.as_ref()
         {
-            let branch = parallel_rational_selected_branch(
+            let branch = parallel_rational_component_branch(
                 &source,
                 differential,
                 self.distance(),
                 other_power,
+                distance_sign,
             );
             let config = CurveIntersectionResultantConfig {
                 min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
@@ -1528,6 +1562,17 @@ impl BezierParallel2 {
         };
         for parallel_parameter in parallel_parameters {
             for other_parameter in other_parameters {
+                if matches!(
+                    parallel_parameter_pair_is_overlap_boundary(
+                        &overlaps,
+                        parallel_parameter,
+                        other_parameter,
+                        policy,
+                    )?,
+                    Classification::Decided(true)
+                ) {
+                    continue;
+                }
                 let replay = match replay_bivariate_parameter_pair(
                     &orthogonality,
                     &distance_relation,
@@ -4758,13 +4803,13 @@ fn parameter_component_system(
 
 /// Certifies the complete unit-square image of one regular implicit component.
 ///
-/// Accepts one regular graph with finitely many exact turning events, or
-/// multiple disjoint regular graphs when every graph is monotone. It proves
-/// that no root enters through an open box edge, retains isolated lifted-edge
-/// tangencies, and proves the selected-branch predicate has no zero on any
-/// graph. Each interval between consecutive turning events becomes one
-/// oriented overlap cell. Multiple turning graphs, projection folds, and
-/// singular or boundary-coincident topology remain an explicit boundary.
+/// Accepts every disjoint regular graph with finitely many exact turning
+/// events. It proves that no root enters through an open box edge, retains
+/// isolated lifted-edge tangencies, assigns each critical pair by invariant
+/// exact fiber-root order, and proves the selected-branch predicate has no zero
+/// on any graph. Each interval between consecutive turning events becomes one
+/// oriented overlap cell. Projection folds and singular or boundary-coincident
+/// topology remain an explicit boundary.
 fn certify_regular_implicit_parameter_component(
     component: &BivariatePolynomial,
     branch: &BivariatePolynomial,
@@ -4861,39 +4906,11 @@ fn certify_regular_implicit_parameter_component(
         Classification::Decided(true) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
-    let mut component_branches = Vec::with_capacity(branch_count);
-    if branch_count == 1 {
-        let mut boundaries = Vec::with_capacity(turning_points.len() + 2);
-        for point in std::iter::once(ParameterComponentPoint {
-            retained_parameter: BezierParameter2::Exact(Real::zero()),
-            lifted_parameter: start_roots.into_iter().next().unwrap(),
-        })
-        .chain(
-            turning_points
-                .into_iter()
-                .map(|point| ParameterComponentPoint {
-                    retained_parameter: point.parallel_parameter,
-                    lifted_parameter: point.other_parameter,
-                }),
-        )
-        .chain(std::iter::once(ParameterComponentPoint {
-            retained_parameter: BezierParameter2::Exact(Real::one()),
-            lifted_parameter: end_roots.into_iter().next().unwrap(),
-        })) {
-            match insert_parameter_component_point(&mut boundaries, point, policy)? {
-                Classification::Decided(()) => {}
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-        component_branches.push(boundaries);
-    } else {
-        if !turning_points.is_empty() {
-            return Ok(Classification::Decided(None));
-        }
-        for (lifted_start, lifted_end) in start_roots.into_iter().zip(end_roots) {
-            component_branches.push(vec![
+    let mut component_branches = start_roots
+        .into_iter()
+        .zip(end_roots)
+        .map(|(lifted_start, lifted_end)| {
+            vec![
                 ParameterComponentPoint {
                     retained_parameter: BezierParameter2::Exact(Real::zero()),
                     lifted_parameter: lifted_start,
@@ -4902,7 +4919,30 @@ fn certify_regular_implicit_parameter_component(
                     retained_parameter: BezierParameter2::Exact(Real::one()),
                     lifted_parameter: lifted_end,
                 },
-            ]);
+            ]
+        })
+        .collect::<Vec<_>>();
+    for point in turning_points {
+        let rank =
+            match parameter_component_point_root_rank(component, &point, branch_count, policy)? {
+                Classification::Decided(Some(rank)) => rank,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        match insert_parameter_component_point(
+            &mut component_branches[rank],
+            ParameterComponentPoint {
+                retained_parameter: point.parallel_parameter,
+                lifted_parameter: point.other_parameter,
+            },
+            policy,
+        )? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         }
     }
 
@@ -4956,6 +4996,214 @@ fn certify_regular_implicit_parameter_component(
         overlaps: overlaps.into(),
         isolated_pairs: Arc::from([]),
     })))
+}
+
+fn parameter_component_point_root_rank(
+    component: &BivariatePolynomial,
+    point: &BezierParallelIntersectionParameterPair2,
+    branch_count: usize,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<usize>>> {
+    if let BezierParameter2::Exact(retained_parameter) = &point.parallel_parameter {
+        let roots = match polynomial_unit_interval_roots(
+            &bivariate_specialize_first(component, retained_parameter),
+            policy,
+        )? {
+            Classification::Decided(Some(roots)) if roots.len() == branch_count => roots,
+            Classification::Decided(_) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let mut blocker = None;
+        for (rank, root) in roots.into_iter().enumerate() {
+            match root.cmp_by_refinement(&point.other_parameter, policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(Some(rank)));
+                }
+                Classification::Decided(_) => {}
+                Classification::Uncertain(reason) => blocker = Some(reason),
+            }
+        }
+        return Ok(blocker.map_or(Classification::Decided(None), Classification::Uncertain));
+    }
+
+    #[cfg(feature = "predicates")]
+    {
+        let BezierParameter2::Algebraic(retained_parameter) = &point.parallel_parameter else {
+            unreachable!("exact retained parameters returned above")
+        };
+        let retained_representation = parameter_representation(retained_parameter, policy);
+        let rank = match &point.other_parameter {
+            BezierParameter2::Exact(lifted_parameter) => {
+                match compare_reals(lifted_parameter, &Real::zero(), policy) {
+                    Some(std::cmp::Ordering::Equal) => return Ok(Classification::Decided(Some(0))),
+                    Some(std::cmp::Ordering::Less) | None => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                    }
+                    Some(std::cmp::Ordering::Greater) => {}
+                }
+                match compare_reals(lifted_parameter, &Real::one(), policy) {
+                    Some(std::cmp::Ordering::Equal) => {
+                        return Ok(Classification::Decided(Some(branch_count - 1)));
+                    }
+                    Some(std::cmp::Ordering::Greater) | None => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                    }
+                    Some(std::cmp::Ordering::Less) => {}
+                }
+                if lifted_parameter.exact_rational_ref().is_none() {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
+                let mut lower = (lifted_parameter / Real::from(2_i8))?;
+                let mut upper = ((lifted_parameter + Real::one()) / Real::from(2_i8))?;
+                loop {
+                    match algebraic_fiber_root_rank_in_isolator(
+                        component,
+                        &retained_representation,
+                        &lower,
+                        &upper,
+                        branch_count,
+                        policy,
+                    )? {
+                        Classification::Decided(Some(rank)) => break rank,
+                        Classification::Decided(None) => {
+                            lower = ((lower + lifted_parameter) / Real::from(2_i8))?;
+                            upper = ((upper + lifted_parameter) / Real::from(2_i8))?;
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+            }
+            BezierParameter2::Algebraic(_) => {
+                let mut refinement =
+                    BezierParameterRefinement2::new(&point.other_parameter, policy);
+                let mut refinement_steps = 0_usize;
+                loop {
+                    let refined = refinement.refine_to(refinement_steps);
+                    match refined {
+                        BezierParameter2::Exact(lifted_parameter) => {
+                            return parameter_component_point_root_rank(
+                                component,
+                                &BezierParallelIntersectionParameterPair2 {
+                                    parallel_parameter: point.parallel_parameter.clone(),
+                                    other_parameter: BezierParameter2::Exact(
+                                        lifted_parameter.clone(),
+                                    ),
+                                },
+                                branch_count,
+                                policy,
+                            );
+                        }
+                        BezierParameter2::Algebraic(lifted_parameter) => {
+                            match algebraic_fiber_root_rank_in_isolator(
+                                component,
+                                &retained_representation,
+                                lifted_parameter.interval().start(),
+                                lifted_parameter.interval().end(),
+                                branch_count,
+                                policy,
+                            )? {
+                                Classification::Decided(Some(rank)) => break rank,
+                                Classification::Decided(None) => {
+                                    refinement_steps = refinement_steps.saturating_add(8);
+                                }
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        Ok(Classification::Decided(Some(rank)))
+    }
+
+    #[cfg(not(feature = "predicates"))]
+    {
+        let _ = (component, point, branch_count, policy);
+        Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_fiber_root_rank_in_isolator(
+    component: &BivariatePolynomial,
+    retained_parameter: &hypersolve::AlgebraicRootRepresentation,
+    lifted_lower: &Real,
+    lifted_upper: &Real,
+    branch_count: usize,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<usize>>> {
+    if !matches!(
+        compare_reals(&Real::zero(), lifted_lower, policy),
+        Some(std::cmp::Ordering::Less)
+    ) || !matches!(
+        compare_reals(lifted_upper, &Real::one(), policy),
+        Some(std::cmp::Ordering::Less)
+    ) {
+        return Ok(Classification::Decided(None));
+    }
+    let isolator_report = count_bivariate_fiber_roots_at_algebraic_parameter(
+        component,
+        CurveResultantParameter::First,
+        retained_parameter,
+        lifted_lower,
+        lifted_upper,
+        policy.predicate_policy(),
+    );
+    if isolator_report.certainty == PredicateCertainty::Approximate {
+        policy.observe_approximate_512();
+    }
+    match isolator_report.status {
+        AlgebraicFiberRootCountStatus::Counted => match isolator_report.distinct_root_count {
+            Some(1) => {}
+            Some(_) => return Ok(Classification::Decided(None)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Predicate)),
+        },
+        AlgebraicFiberRootCountStatus::EndpointRoot => {
+            return Ok(Classification::Decided(None));
+        }
+        AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        AlgebraicFiberRootCountStatus::InvalidEvidence
+        | AlgebraicFiberRootCountStatus::InvalidInterval
+        | AlgebraicFiberRootCountStatus::UnsupportedCoefficient
+        | AlgebraicFiberRootCountStatus::Undecided => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+    }
+
+    let rank_report = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+        component,
+        CurveResultantParameter::First,
+        retained_parameter,
+        &Real::zero(),
+        lifted_lower,
+        policy.predicate_policy(),
+    );
+    if rank_report.certainty == PredicateCertainty::Approximate {
+        policy.observe_approximate_512();
+    }
+    Ok(match rank_report.status {
+        AlgebraicFiberRootCountStatus::Counted => match rank_report.distinct_root_count {
+            Some(rank) if rank < branch_count => Classification::Decided(Some(rank)),
+            Some(_) => Classification::Decided(None),
+            None => Classification::Uncertain(UncertaintyReason::Predicate),
+        },
+        AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => {
+            Classification::Uncertain(UncertaintyReason::Boundary)
+        }
+        AlgebraicFiberRootCountStatus::EndpointRoot
+        | AlgebraicFiberRootCountStatus::InvalidEvidence
+        | AlgebraicFiberRootCountStatus::InvalidInterval
+        | AlgebraicFiberRootCountStatus::UnsupportedCoefficient
+        | AlgebraicFiberRootCountStatus::Undecided => {
+            Classification::Uncertain(UncertaintyReason::Predicate)
+        }
+    })
 }
 
 fn insert_parameter_component_point(
@@ -5754,6 +6002,20 @@ fn parallel_rational_selected_branch(
         ),
         distance,
     )
+}
+
+fn parallel_rational_component_branch(
+    source: &BezierParallelPowerBasisRef<'_>,
+    differential: &BezierParallelDifferential2,
+    distance: &Real,
+    other: &RationalParametricCurve2,
+    distance_sign: RealSign,
+) -> BivariatePolynomial {
+    if distance_sign == RealSign::Zero {
+        BivariatePolynomial::new(vec![vec![Real::one()]])
+    } else {
+        parallel_rational_selected_branch(source, differential, distance, other)
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -7977,6 +8239,155 @@ mod conversion_tests {
             assert_eq!(
                 selected_upper.second_range().start().as_exact(),
                 Some(&Real::one())
+            );
+        }
+    }
+
+    #[test]
+    fn regular_implicit_parameter_component_partitions_multiple_turning_graphs() {
+        // H(t,u)=u^2-u+1/16+(t-1/2)^2/32 has two disjoint regular graphs.
+        // Both turn at t=1/2, but in opposite lifted directions. Exact fiber
+        // order assigns the two critical pairs to their respective graphs.
+        let component = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(9_i8) / Real::from(128_i16)).unwrap(),
+                Real::from(-1_i8),
+                Real::one(),
+            ],
+            vec![(Real::from(-1_i8) / Real::from(32_i8)).unwrap()],
+            vec![(Real::one() / Real::from(32_i8)).unwrap()],
+        ]);
+        let equations = [
+            component.clone(),
+            bivariate_scale(component, &Real::from(2_i8)),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let upper_branch =
+            BivariatePolynomial::new(vec![vec![Real::from(-1_i8), Real::from(2_i8)]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("two turning implicit graphs were not partitioned");
+            };
+            let [lower_left, lower_right, upper_left, upper_right] = system.overlaps.as_ref()
+            else {
+                panic!("two one-turn graphs must produce four overlap cells");
+            };
+            for (left, right) in [(lower_left, lower_right), (upper_left, upper_right)] {
+                assert_eq!(
+                    left.first_range().exact_endpoints(),
+                    Some((&Real::zero(), &half))
+                );
+                assert_eq!(
+                    right.first_range().exact_endpoints(),
+                    Some((&half, &Real::one()))
+                );
+                assert_eq!(left.second_range().end(), right.second_range().start());
+                assert!(!left.second_range().end().is_exact());
+            }
+            assert_eq!(
+                [
+                    lower_left.orientation(),
+                    lower_right.orientation(),
+                    upper_left.orientation(),
+                    upper_right.orientation(),
+                ],
+                [
+                    RationalBezierOverlapOrientation2::Reversed,
+                    RationalBezierOverlapOrientation2::Same,
+                    RationalBezierOverlapOrientation2::Same,
+                    RationalBezierOverlapOrientation2::Reversed,
+                ]
+            );
+
+            let Classification::Decided(Some(selected)) =
+                parameter_component_system(&equations, &upper_branch, &policy, config).unwrap()
+            else {
+                panic!("the upper turning graph was not selected independently");
+            };
+            let [upper_left, upper_right] = selected.overlaps.as_ref() else {
+                panic!("the selected upper turning graph must retain both cells");
+            };
+            assert_eq!(
+                [upper_left.orientation(), upper_right.orientation()],
+                [
+                    RationalBezierOverlapOrientation2::Same,
+                    RationalBezierOverlapOrientation2::Reversed,
+                ]
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn regular_implicit_parameter_component_ranks_algebraic_multi_graph_turns() {
+        // H(t,u)=u^2-u+1/16+(t^3-t)/64 has two regular graphs whose
+        // critical pairs share t=1/sqrt(3). Both lifted coordinates are also
+        // algebraic. Local-field Sturm counting ranks each pair without
+        // sampling or assuming that independent resultant roots correspond.
+        let component = BivariatePolynomial::new(vec![
+            vec![
+                (Real::one() / Real::from(16_i8)).unwrap(),
+                Real::from(-1_i8),
+                Real::one(),
+            ],
+            vec![(Real::from(-1_i8) / Real::from(64_i8)).unwrap()],
+            vec![],
+            vec![(Real::one() / Real::from(64_i8)).unwrap()],
+        ]);
+        let equations = [
+            component.clone(),
+            bivariate_scale(component, &Real::from(2_i8)),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("coupled algebraic turns were not assigned to both graphs");
+            };
+            let [lower_left, lower_right, upper_left, upper_right] = system.overlaps.as_ref()
+            else {
+                panic!("two algebraic one-turn graphs must produce four cells");
+            };
+            assert_eq!(
+                lower_left.first_range().end(),
+                lower_right.first_range().start()
+            );
+            assert_eq!(
+                upper_left.first_range().end(),
+                upper_right.first_range().start()
+            );
+            assert_eq!(
+                lower_left.first_range().end(),
+                upper_left.first_range().end()
+            );
+            assert!(!lower_left.first_range().end().is_exact());
+            assert_eq!(
+                [
+                    lower_left.orientation(),
+                    lower_right.orientation(),
+                    upper_left.orientation(),
+                    upper_right.orientation(),
+                ],
+                [
+                    RationalBezierOverlapOrientation2::Reversed,
+                    RationalBezierOverlapOrientation2::Same,
+                    RationalBezierOverlapOrientation2::Same,
+                    RationalBezierOverlapOrientation2::Reversed,
+                ]
             );
         }
     }

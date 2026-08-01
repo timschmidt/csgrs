@@ -526,6 +526,30 @@ fn nonlinearly_reparameterized_parabola() -> CurveResult<RationalBezier2> {
     )
 }
 
+fn two_turning_graph_parabolas() -> CurveResult<(RationalBezier2, RationalBezier2)> {
+    let source = RationalBezier2::try_new(
+        vec![
+            Point2::new(q(9, 128), q(81, 16_384)),
+            Point2::new(q(1, 16), q(63, 16_384)),
+            Point2::new(q(23, 384), q(179, 49_152)),
+            Point2::new(q(1, 16), q(63, 16_384)),
+            Point2::new(q(9, 128), q(81, 16_384)),
+        ],
+        vec![s(1); 5],
+    )?;
+    let target = RationalBezier2::try_new(
+        vec![
+            p(0, 0),
+            Point2::new(q(1, 4), s(0)),
+            Point2::new(q(1, 3), q(1, 6)),
+            Point2::new(q(1, 4), s(0)),
+            p(0, 0),
+        ],
+        vec![s(1); 5],
+    )?;
+    Ok((source, target))
+}
+
 fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     let exact_parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).parallel_left(s(1))?;
     let exact_target = RationalBezier2::try_new(vec![p(1, 0), p(1, 2)], vec![s(1), s(1)])?;
@@ -648,6 +672,14 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
         &implicit_component_parallel,
         &implicit_component_target,
         100,
+    )?;
+
+    let (turning_source, turning_target) = two_turning_graph_parabolas()?;
+    bench_bezier_parallel_intersections(
+        "bezier_parallel_two_turning_implicit_graphs",
+        &turning_source.parallel_left(s(0))?,
+        &turning_target,
+        5,
     )?;
 
     let cold_iterations = 10_u32;
