@@ -7415,6 +7415,54 @@ feature matrices, and no-default checking pass. Hypermesh was not modified.
 Complete evidence is in
 [`2026-07-31-authoritative-curve-region-boolean-batch.json`](benchmarks/checkpoints/2026-07-31-authoritative-curve-region-boolean-batch.json).
 
+## General-pair policy and degeneracy checkpoint (2026-07-31)
+
+The authoritative arrangement now handles policy-certified line images stored
+as general rational Beziers without entering a degenerate resultant replay.
+Both carriers are certified against exact endpoint segments, the native
+line/line relation supplies the complete contact or overlap witness, and exact
+curve parameters are recovered only for contacts on both images. This closes
+the line/general `RealSign` blocker under `APPROXIMATE_512` while retaining a
+typed blocker under `STRICT` for the deliberately unresolved symbolic case.
+
+Promotion from a rational quadratic into the general rational carrier now
+retains its implicit quadratic and circular-conic support. Independently
+degree-elevated circle spans consequently keep conic/general specialization
+and support sharing instead of falling through to general resultants.
+`CurvePath2` also exposes policy-aware connectivity construction as an
+explicit `CurveOutcome`; internal composition continues through the raw
+one-pass constructor.
+
+Deterministic tests exercise every ordered pair among line, arc, quadratic,
+cubic, rational quadratic, general rational Bezier, polynomial B-spline, and
+NURBS carriers. All 64 transverse pairs, 64 shared-endpoint pairs, and 64
+tangent/overlap pairs complete. Coincident images cover all eight same-family
+pairs and eight degree-equivalent cross-family directions. The selected
+carrier pair is proven to interact in each fixture, all four regularized set
+operations run, and structurally different results are checked through an
+exact XOR differential. The 20 retired blockers and 268-operation
+pathological corpus also remain clear.
+
+Symbolic general/general caps, line/general elevated lines, conic/general
+elevated circles, and path connectivity all block under `STRICT` and complete
+under `APPROXIMATE_512` with `Approximate512Consumed`. Returned coordinates
+and carriers remain exact; the terminal is used only for a predicate decision.
+
+Eleven alternating-order CPU-pinned full-workload pairs measured 494.472 ms
+for the candidate and 493.573 ms for its parent. The +0.18% median contrasts
+with a -0.11% paired geometric mean, so throughput is neutral. Heaptrack drops
+from 8,229,442 to 8,227,030 allocation calls while temporary allocations stay
+at 1,380,405; peak heap and leaked memory are unchanged. The matched
+pathological executable adds 2,336 stripped bytes and 4,108 loadable bytes
+(0.072%), an accepted correctness cost.
+
+The isolated static graph moves from 22,915 nodes/39,445 edges to 22,960
+nodes/39,609 edges, dominated by the exhaustive integration-test matrix. All
+266 unit tests, 19 focused Boolean tests, 11 generated corpora, both
+warning-denied Clippy feature matrices, formatting, and the exact pathological
+gate pass. Hypermesh was not modified. Complete evidence is in
+[`2026-07-31-general-pair-curve-region-policy.json`](benchmarks/checkpoints/2026-07-31-general-pair-curve-region-policy.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
