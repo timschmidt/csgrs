@@ -1569,9 +1569,11 @@ pub(crate) fn build_projective_input_soup(
                 .and_then(|planes| planes.get(mesh_index))
                 .and_then(|planes| planes.get(triangle_index))
                 .map(|planes| planes.support.clone());
+            let mut support_requires_validation = false;
             let support_plane = if let Some(support) = supplied_support {
                 let index = support_planes.len();
                 support_planes.push(support);
+                support_requires_validation = true;
                 index
             } else {
                 let axis_hint = approximate_positions.as_ref().and_then(|points| {
@@ -1601,6 +1603,7 @@ pub(crate) fn build_projective_input_soup(
                                 exact_axis_aligned_triangle_support(p0, p1, p2, axis, orientation)?;
                             let index = support_planes.len();
                             support_planes.push(support);
+                            support_requires_validation = true;
                             return Some(index);
                         }
                     };
@@ -1615,6 +1618,7 @@ pub(crate) fn build_projective_input_soup(
                         exact_axis_aligned_triangle_support(p0, p1, p2, axis, orientation)?;
                     let index = support_planes.len();
                     support_planes.push(support);
+                    support_requires_validation = true;
                     axis_support_planes.push((key, index));
                     Some(index)
                 });
@@ -1639,16 +1643,25 @@ pub(crate) fn build_projective_input_soup(
                         None => {
                             let index = support_planes.len();
                             support_planes.push(Plane::from_points(p0, p1, p2));
+                            support_requires_validation = true;
                             index
                         }
                     }
                 } else {
                     let index = support_planes.len();
                     support_planes.push(Plane::from_points(p0, p1, p2));
+                    support_requires_validation = true;
                     index
                 }
             };
-            if !support_planes[support_plane].decide_is_valid(decisions)? {
+            // The certified-convex input fact already certifies every source
+            // triangle. Validate each immutable stored support when it is
+            // introduced; exact reuse and inversion preserve non-zero normal
+            // validity without repeating the same policy predicate per
+            // coplanar subdivision triangle.
+            if support_requires_validation
+                && !support_planes[support_plane].decide_is_valid(decisions)?
+            {
                 return Err(HypermeshError::DegenerateTriangle {
                     mesh_index,
                     triangle_index,
