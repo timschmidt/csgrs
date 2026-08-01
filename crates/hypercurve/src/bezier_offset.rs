@@ -4532,6 +4532,17 @@ fn parallel_candidate_system_from_rational_component(
     component: RationalParameterComponentSystem2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelIntersectionCandidateSystem2>> {
+    for equation in &component.residual_equations {
+        if bivariate_unit_square_has_strict_bernstein_sign(equation, policy)? {
+            let mut candidate_system = BezierParallelIntersectionCandidateSystem2::projected(
+                BezierParallelIntersectionCandidates2::NoIntersection,
+                None,
+            );
+            candidate_system.overlaps = component.overlaps;
+            candidate_system.component_pairs = component.isolated_pairs;
+            return Ok(Classification::Decided(candidate_system));
+        }
+    }
     let candidates =
         match project_parallel_intersection_system(&component.residual_equations, policy)? {
             Classification::Decided(candidates) => candidates,
@@ -4546,6 +4557,55 @@ fn parallel_candidate_system_from_rational_component(
         }
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
+}
+
+/// Proves one bivariate polynomial nonzero throughout the authored parameter square.
+///
+/// Tensor-product Bernstein basis functions are nonnegative and sum to one on
+/// `[0, 1]^2`, so controls with one strict sign certify that the polynomial has
+/// that sign everywhere. A mixed, zero, or undecidable control merely declines
+/// this acceleration and leaves the complete resultant path authoritative.
+fn bivariate_unit_square_has_strict_bernstein_sign(
+    polynomial: &BivariatePolynomial,
+    policy: &CurveContext,
+) -> CurveResult<bool> {
+    let first_degree = polynomial.coefficients.len().saturating_sub(1);
+    let second_degree = polynomial
+        .coefficients
+        .iter()
+        .map(Vec::len)
+        .max()
+        .unwrap_or_default()
+        .saturating_sub(1);
+    if polynomial.coefficients.is_empty() || polynomial.coefficients.iter().all(Vec::is_empty) {
+        return Ok(false);
+    }
+
+    let second_controls = polynomial
+        .coefficients
+        .iter()
+        .map(|row| power_to_bernstein_coefficients(row, second_degree))
+        .collect::<CurveResult<Vec<_>>>()?;
+    let mut strict_sign = None;
+    for second_index in 0..=second_degree {
+        let first_power = second_controls
+            .iter()
+            .map(|row| row[second_index].clone())
+            .collect::<Vec<_>>();
+        for control in power_to_bernstein_coefficients(&first_power, first_degree)? {
+            let Some(sign @ (RealSign::Positive | RealSign::Negative)) =
+                real_sign(&control, policy)
+            else {
+                return Ok(false);
+            };
+            match strict_sign {
+                Some(previous) if previous != sign => return Ok(false),
+                Some(_) => {}
+                None => strict_sign = Some(sign),
+            }
+        }
+    }
+    Ok(strict_sign.is_some())
 }
 
 fn rational_parameter_component_system(
@@ -6840,6 +6900,32 @@ mod conversion_tests {
             assert_eq!(
                 other_parameters,
                 vec![BezierParameter2::Exact(three_quarters.clone())]
+            );
+        }
+    }
+
+    #[test]
+    fn bivariate_bernstein_sign_excludes_only_strict_unit_square_misses() {
+        let positive = BivariatePolynomial::new(vec![
+            vec![Real::one(), Real::one()],
+            vec![Real::one(), Real::one()],
+        ]);
+        let negative = bivariate_scale(positive.clone(), &Real::from(-1_i8));
+        let boundary_zero =
+            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![Real::one()]]);
+        let sign_change = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::from(-1_i8)],
+            vec![Real::one()],
+        ]);
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(bivariate_unit_square_has_strict_bernstein_sign(&positive, &policy).unwrap());
+            assert!(bivariate_unit_square_has_strict_bernstein_sign(&negative, &policy).unwrap());
+            assert!(
+                !bivariate_unit_square_has_strict_bernstein_sign(&boundary_zero, &policy).unwrap()
+            );
+            assert!(
+                !bivariate_unit_square_has_strict_bernstein_sign(&sign_change, &policy).unwrap()
             );
         }
     }
