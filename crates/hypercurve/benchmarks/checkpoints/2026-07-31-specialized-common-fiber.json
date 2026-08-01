@@ -1,0 +1,211 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "specialized-common-fiber",
+  "source_revision": "3a2a945636569520e78548dede8e45080f7b15ce",
+  "implementation_revisions": {
+    "hypersolve_common_fiber": "0891b9fd0ac538db748d632e5accd9a87dc1f47f",
+    "hypersolve_subresultant_removal": "b90e522d5ef6661039dd5ba0d1e4a82cefb5a91d",
+    "hypersolve_benchmark": "979861a55fb967198de0d587db9b89e9746b565a",
+    "hypersolve_reducible_field_contract": "6126872b9cc21c58b77774cde7dcf0998dfb468c",
+    "hypercurve_unified_replay": "3a2a945636569520e78548dede8e45080f7b15ce"
+  },
+  "historical_controls": {
+    "hypercurve_higher_nullity_sign_change": "e347051ec627ef0a8a6ddcc49b5917c8894bd79c",
+    "hypercurve_even_multiplicity": "f0dcc78824fdd28e17a92b834a131f768af32b5a",
+    "hypersolve_fiber_subresultants": "4fa8a6b2ff552fbf7cee99faac366b67f061bad1",
+    "hypersolve_even_multiplicity_optimized": "c1cecd74c1aa0d3eed56a6546ea5b54a05817fc2"
+  },
+  "scope": {
+    "operation": "exact replay of specialized common fibers in rational-Bezier parallel contact systems",
+    "completed_cases": [
+      "formal fiber degree drops after specialization at an algebraic retained parameter",
+      "even-multiplicity common roots",
+      "one authored equation specializing identically to zero",
+      "rootless specialized fibers and roots at projective infinity",
+      "both retained-parameter orientations",
+      "reducible retained-root carrier polynomials"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "authority": "the two original bivariate equations are specialized into the selected local algebraic field before their actual fiber degrees are inspected",
+    "field": "rational-polynomial fractions are reduced modulo the retained parameter's defining polynomial; exact isolator evidence selects the intended real root even when that polynomial is reducible",
+    "fiber": "the exact local-field polynomial GCD of the specialized authored equations is the single common-fiber authority",
+    "root_counter": "a square-free local-field Sturm sequence counts distinct common roots in the candidate isolator, including even-multiplicity and exact endpoint roots",
+    "zero_equations": "if exactly one specialized equation is zero, the other equation supplies the fiber; if both are zero, the fiber is positive-dimensional and is reported explicitly",
+    "fast_path_order": [
+      "direct exact bivariate substitution",
+      "coefficient-rank-one replay",
+      "retained-First nullity-one algebraic lift",
+      "specialized common-fiber GCD and Sturm count in both orientations",
+      "retained-Second nullity-one algebraic lift"
+    ],
+    "acceptance": "Counted(0) rejects the projected pair, Counted(n>0) accepts exact Direct evidence, and an identically zero common fiber returns Boundary uncertainty rather than inventing a point",
+    "strict": "STRICT uses only exact identities, rational arithmetic, certified algebraic isolators, exact local-field GCD, and exact Sturm variation",
+    "approximate_512": "APPROXIMATE_512 follows the same proof graph; approximation is permitted only when an inherited Hyperlimit sign/equality reaches its 512-bit terminal, and consumed approximate certainty is propagated",
+    "unsupported": "unsupported coefficient towers remain Predicate uncertainty; positive-dimensional components are retained as Boundary uncertainty for overlap classification",
+    "no_predicates_build": "without the optional predicate backend, unresolved decisions remain explicit Incomplete/Predicate evidence and never become floating contacts"
+  },
+  "canonical_degree_drop_fixture": {
+    "retained_root": "alpha=cuberoot(1/2)",
+    "other_root": "beta=alpha^2=cuberoot(1/4)",
+    "definitions": [
+      "A(a)=2*a^3-1",
+      "B(b)=4*b^3-1",
+      "f(a,b)=A(a)*B(b)+(b-a^2)",
+      "g(a,b)=A(a)*B(b)+2*(b-a^2)"
+    ],
+    "property": "specialization deletes the formal leading A*B term in either orientation while the exact common fiber retains beta=alpha^2"
+  },
+  "completion_change": {
+    "before": "Hypercurve rejected specialized degree drops conservatively and carried separate positive-index subresultant reports plus endpoint-sign and local-Sturm fallbacks",
+    "after": "one specialization-first common-GCD engine handles stable degree, degree drop, and even multiplicity without interpolated subresultant reports",
+    "false_positive_guard": "a degree-drop projection whose only apparent solution is a root at infinity is rejected by a zero finite-root count",
+    "positive_dimension_guard": "two equations that both vanish on the selected fiber return explicit Boundary uncertainty",
+    "test_matrix": "both orientations and both STRICT/APPROXIMATE_512 policies cover degree drop, even multiplicity, rootless fibers, fully vanished fibers, and reducible field carriers"
+  },
+  "code_collapse": {
+    "hypercurve_unified_replay": {
+      "insertions": 167,
+      "deletions": 291,
+      "net_lines": -124,
+      "removed": "cached CurveIntersectionFiberSubresultantReport values, formal-degree guards, and selected positive-index subresultant replay"
+    },
+    "hypersolve_four_commit_series": {
+      "insertions": 355,
+      "deletions": 402,
+      "net_lines": -47,
+      "superseded_subresultant_removal_deletions": 385,
+      "removed": "public curve fiber subresultant reports plus interpolation and determinantal helpers"
+    }
+  },
+  "specialized_common_fiber_benchmark": {
+    "criterion": {
+      "lane": "count_bivariate_common_fiber_degree_drop",
+      "samples": 10,
+      "iterations": 20000,
+      "estimate_interval_microseconds": [24.739, 24.926, 25.127],
+      "outliers": "one mild high outlier"
+    },
+    "standalone": {
+      "method": "seven pinned-core release processes; 1000 root counts and 4000 isolator refinements per process",
+      "common_degree_drop_samples_microseconds": [39.664, 25.192, 39.594, 25.562, 24.926, 24.947, 24.803],
+      "common_degree_drop_median_microseconds": 25.192,
+      "even_multiplicity_samples_microseconds": [53.721, 33.934, 54.722, 33.973, 33.671, 47.840, 33.477],
+      "even_multiplicity_median_microseconds": 33.973,
+      "checksum": "1000 common roots per process for each lane",
+      "caveat": "the host showed a repeatable bimodal CPU-frequency/runtime band, so medians and all raw samples are retained"
+    }
+  },
+  "native_hypercurve_release_benchmark": {
+    "command": "taskset -c 9 env HYPERCURVE_OFFSET_BENCH_GROUP=bezier-intersection target/release/deps/offset-ea116fee283cd918",
+    "method": "five pinned-core all-feature release processes",
+    "lanes": {
+      "exact_represented_contact": {
+        "candidate_samples_microseconds": [39.692, 49.609, 40.662, 41.289, 40.569],
+        "contact_samples_microseconds": [55.872, 57.206, 55.744, 57.036, 56.162],
+        "candidate_median_microseconds": 40.662,
+        "contact_median_microseconds": 56.162
+      },
+      "nullity_one_algebraic_lift": {
+        "candidate_samples_microseconds": [462.426, 470.229, 469.965, 461.664, 472.206],
+        "contact_samples_microseconds": [1120.679, 1114.013, 1127.671, 1138.284, 1126.250],
+        "candidate_median_microseconds": 469.965,
+        "contact_median_microseconds": 1126.250
+      },
+      "selected_branch_algebraic_contact": {
+        "candidate_samples_microseconds": [498.881, 491.039, 501.810, 495.429, 485.456],
+        "contact_samples_microseconds": [1175.796, 1179.386, 1187.754, 1168.762, 1176.587],
+        "candidate_median_microseconds": 495.429,
+        "contact_median_microseconds": 1176.587
+      },
+      "higher_nullity_contact": {
+        "candidate_samples_microseconds": [808.777, 794.888, 819.524, 793.605, 808.580],
+        "contact_samples_microseconds": [2160.994, 2172.723, 2156.887, 2150.881, 2145.982],
+        "candidate_median_microseconds": 808.580,
+        "contact_median_microseconds": 2156.887,
+        "change_from_immediate_pre_unification_percent": -14.807,
+        "change_from_historical_higher_nullity_checkpoint_percent": -13.933
+      }
+    },
+    "aggregate_heaptrack": {
+      "profile": "/tmp/hypercurve-specialized-fiber-final.zst.zst",
+      "runtime_seconds": 3.495,
+      "allocation_calls": 10081546,
+      "temporary_allocations": 528824,
+      "peak_heap_mebibytes_reported": 1.31,
+      "peak_rss_mebibytes_reported": 11.14,
+      "leaked_kibibytes_reported": 598.02,
+      "change_from_immediate_pre_unification_percent": {
+        "runtime": -1.826,
+        "allocation_calls": -5.581,
+        "temporary_allocations": -7.907
+      },
+      "caveat": "rounded peak heap, RSS, and retained process allocations rose slightly while material allocation traffic and runtime fell"
+    }
+  },
+  "release_size": {
+    "all_feature_hypercurve_offset_executable": {
+      "file_bytes": 6927944,
+      "text_bytes": 5248279,
+      "data_bytes": 262432,
+      "bss_bytes": 4304,
+      "change_from_immediate_pre_unification_percent": {
+        "file": -0.745,
+        "text": -0.779,
+        "data": -0.243
+      },
+      "change_from_historical_higher_nullity_checkpoint_percent": {
+        "file": 0.764,
+        "text": 0.597
+      },
+      "interpretation": "the unified degree-drop/even-multiplicity implementation is smaller than the immediately preceding split machinery and remains below one percent over the older sign-change-only checkpoint"
+    }
+  },
+  "static_call_graph": {
+    "tool": "tools/hyper-callgraph",
+    "hypercurve": {
+      "nodes": 17410,
+      "edges": 29769,
+      "change_from_even_multiplicity_checkpoint": {
+        "nodes": -8,
+        "edges": -40
+      },
+      "artifact": "/tmp/hypercurve-specialized-fiber-callgraph/callgraph.json"
+    },
+    "hypersolve": {
+      "nodes": 4403,
+      "edges": 7094,
+      "change_from_even_multiplicity_checkpoint": {
+        "nodes": -24,
+        "edges": -49
+      },
+      "artifact": "/tmp/hypersolve-specialized-fiber-callgraph/callgraph.json"
+    },
+    "caveat": "the utility is a static source approximation and default scans exclude benchmark-only functions"
+  },
+  "competitive_context": {
+    "equivalent_direct_peer": "none in the current harness",
+    "reason": "Curvo's available lane is a heuristic open-curve offset and does not expose an exact algebraic common-fiber/contact proof contract",
+    "comparison_rule": "competitive heuristic throughput is retained as context but is not presented as correctness-equivalent"
+  },
+  "validation": {
+    "hypercurve_cargo_test_all_features": "pass: 277 library tests, every integration target, 29 authoritative CurveRegion Boolean tests, 11 deterministic Boolean fuzz tests including the long corpus, the 268-operation pathological workload, README tests, and doc tests",
+    "hypercurve_cargo_test_no_default_features": "pass: 244 library tests and every enabled integration, README, and documentation target",
+    "hypercurve_clippy_all_targets_all_features_deny_warnings": "pass",
+    "hypercurve_clippy_all_targets_no_default_features_deny_warnings": "pass",
+    "hypercurve_cargo_fmt_check": "pass",
+    "hypercurve_git_diff_check": "pass",
+    "hypersolve_all_feature_and_no_default_test_matrices": "pass: 177 library tests, 2 README tests, 131 residual property tests, 209 smoke tests, and doc tests in each matrix",
+    "hypersolve_clippy_all_target_feature_matrices_deny_warnings": "pass",
+    "policies": "stable-degree, degree-drop, even-multiplicity, both-orientation, rootless, fully vanished, and reducible-field paths are covered under STRICT and APPROXIMATE_512"
+  },
+  "next_boundary": {
+    "overlap": "classify positive-dimensional common fibers and shared curve components with exact parameter correspondence instead of reducing them to point contacts",
+    "coefficients": "extend the local field to supported non-rational coefficient towers generated by exact CurveRegion2 inputs",
+    "topology": "transport completed contacts and overlaps into raw offset-piece splitting and the one authoritative CurveRegion2 regularization engine",
+    "corners": "use the same carrier/intersection substrate for exact round, bevel, bounded-miter, fillet, and chamfer construction"
+  }
+}
