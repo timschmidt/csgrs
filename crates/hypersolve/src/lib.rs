@@ -9,6 +9,7 @@ pub mod active_set;
 pub mod affine;
 pub mod algebraic;
 pub mod algebraic_binary;
+pub mod algebraic_fiber;
 pub mod algebraic_mobius;
 pub mod algebraic_polynomial_image;
 pub mod algebraic_rational_image;
@@ -92,6 +93,10 @@ pub use algebraic::{
 pub use algebraic_binary::{
     AlgebraicRootBinaryTransformReport, AlgebraicRootBinaryTransformStatus,
     transform_algebraic_roots_binary,
+};
+pub use algebraic_fiber::{
+    AlgebraicFiberRootCountReport, AlgebraicFiberRootCountStatus,
+    count_bivariate_fiber_roots_at_algebraic_parameter,
 };
 pub use algebraic_mobius::{
     AlgebraicRootMobiusTransformReport, AlgebraicRootMobiusTransformStatus,
