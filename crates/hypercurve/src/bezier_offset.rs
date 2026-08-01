@@ -1439,11 +1439,12 @@ impl BezierParallel2 {
     /// distance or a certified Pythagorean hodograph supplies an exact
     /// rational parallel. Otherwise a primitive first subresultant may expose
     /// every extractable parameter component; rational maps retain their
-    /// partitioned fast path, while one regular implicit graph is accepted only
-    /// after exact closed-domain, critical-point, monotonicity, and selected-
-    /// branch certification. Both authored residual equations remain in the
-    /// same recursive engine. Unsupported coefficient towers and multi-cell or
-    /// singular implicit topology remain explicit
+    /// partitioned fast path, while regular implicit graphs are accepted only
+    /// after exact closed-domain, critical-point, cell-orientation, and
+    /// selected-branch certification. Both authored residual equations remain
+    /// in the same recursive engine. Unsupported coefficient towers,
+    /// projection folds, and singular or boundary-coincident implicit topology
+    /// remain explicit
     /// [`BezierParallelIntersectionSet2::incomplete_candidates`] evidence; no
     /// projected root is promoted without exact replay.
     pub fn intersections(
@@ -4757,11 +4758,13 @@ fn parameter_component_system(
 
 /// Certifies the complete unit-square image of one regular implicit component.
 ///
-/// This is the first algebraic-function transport cut. It accepts exactly one
-/// graph over the retained unit interval, proves that no root enters through
-/// an open box edge, excludes vertical and horizontal critical points, and
-/// proves the selected-branch predicate has no zero on the graph. More general
-/// multi-cell or singular implicit topology remains an explicit boundary.
+/// Accepts one regular graph with finitely many exact turning events, or
+/// multiple disjoint regular graphs when every graph is monotone. It proves
+/// that no root enters through an open box edge, retains isolated lifted-edge
+/// tangencies, and proves the selected-branch predicate has no zero on any
+/// graph. Each interval between consecutive turning events becomes one
+/// oriented overlap cell. Multiple turning graphs, projection folds, and
+/// singular or boundary-coincident topology remain an explicit boundary.
 fn certify_regular_implicit_parameter_component(
     component: &BivariatePolynomial,
     branch: &BivariatePolynomial,
@@ -4784,16 +4787,39 @@ fn certify_regular_implicit_parameter_component(
         &bivariate_specialize_first(component, &Real::zero()),
         policy,
     )? {
-        Classification::Decided(Some(roots)) if roots.len() == 1 => roots,
+        Classification::Decided(Some(roots)) if !roots.is_empty() => roots,
         Classification::Decided(_) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
+    let branch_count = start_roots.len();
     let end_roots = match polynomial_unit_interval_roots(
         &bivariate_specialize_first(component, &Real::one()),
         policy,
     )? {
-        Classification::Decided(Some(roots)) if roots.len() == 1 => roots,
+        Classification::Decided(Some(roots)) if roots.len() == branch_count => roots,
         Classification::Decided(_) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    let retained_derivative =
+        bivariate_parameter_derivative(component, CurveResultantParameter::First);
+    let lifted_derivative =
+        bivariate_parameter_derivative(component, CurveResultantParameter::Second);
+    match bivariate_system_has_unit_square_solution(component, &lifted_derivative, policy, config)?
+    {
+        Classification::Decided(false) => {}
+        Classification::Decided(true) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    let turning_points = match bivariate_system_unit_square_solution_pairs(
+        component,
+        &retained_derivative,
+        policy,
+        config,
+    )? {
+        Classification::Decided(points) => points,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
 
@@ -4806,7 +4832,12 @@ fn certify_regular_implicit_parameter_component(
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        match parameters_are_unit_endpoints(&roots, policy)? {
+        match lifted_boundary_roots_are_turning_events(
+            &roots,
+            &boundary_value,
+            &turning_points,
+            policy,
+        )? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
@@ -4815,25 +4846,12 @@ fn certify_regular_implicit_parameter_component(
         }
     }
 
-    for derivative in [
-        bivariate_parameter_derivative(component, CurveResultantParameter::First),
-        bivariate_parameter_derivative(component, CurveResultantParameter::Second),
-    ] {
-        match bivariate_system_has_unit_square_solution(component, &derivative, policy, config)? {
-            Classification::Decided(false) => {}
-            Classification::Decided(true) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-    }
-
     let half = (Real::one() / Real::from(2_i8))?;
-    let midpoint_root = match polynomial_unit_interval_roots(
+    let midpoint_roots = match polynomial_unit_interval_roots(
         &bivariate_specialize_first(component, &half),
         policy,
     )? {
-        Classification::Decided(Some(mut roots)) if roots.len() == 1 => roots.pop().unwrap(),
+        Classification::Decided(Some(roots)) if roots.len() == branch_count => roots,
         Classification::Decided(_) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -4843,65 +4861,184 @@ fn certify_regular_implicit_parameter_component(
         Classification::Decided(true) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
-    let branch_sign = match signed_bivariate_at_parameter_pair(
-        branch,
-        &BezierParameter2::Exact(half),
-        &midpoint_root,
-        policy,
-    )? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-
-    let lifted_start = start_roots.into_iter().next().unwrap();
-    let lifted_end = end_roots.into_iter().next().unwrap();
-    let direction = match lifted_start.cmp_by_refinement(&lifted_end, policy)? {
-        Classification::Decided(std::cmp::Ordering::Equal) => {
+    let mut component_branches = Vec::with_capacity(branch_count);
+    if branch_count == 1 {
+        let mut boundaries = Vec::with_capacity(turning_points.len() + 2);
+        for point in std::iter::once(ParameterComponentPoint {
+            retained_parameter: BezierParameter2::Exact(Real::zero()),
+            lifted_parameter: start_roots.into_iter().next().unwrap(),
+        })
+        .chain(
+            turning_points
+                .into_iter()
+                .map(|point| ParameterComponentPoint {
+                    retained_parameter: point.parallel_parameter,
+                    lifted_parameter: point.other_parameter,
+                }),
+        )
+        .chain(std::iter::once(ParameterComponentPoint {
+            retained_parameter: BezierParameter2::Exact(Real::one()),
+            lifted_parameter: end_roots.into_iter().next().unwrap(),
+        })) {
+            match insert_parameter_component_point(&mut boundaries, point, policy)? {
+                Classification::Decided(()) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        component_branches.push(boundaries);
+    } else {
+        if !turning_points.is_empty() {
             return Ok(Classification::Decided(None));
         }
-        Classification::Decided(direction) => direction,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let overlaps = match branch_sign {
-        RealSign::Positive => Arc::from([parameter_component_overlap_from_domain(
-            retained_parameter,
-            ParameterComponentDomain {
-                retained_start: BezierParameter2::Exact(Real::zero()),
-                retained_end: BezierParameter2::Exact(Real::one()),
-                lifted_start,
-                lifted_end,
-            },
-            direction,
-        )]),
-        RealSign::Negative => Arc::from([]),
-        RealSign::Zero => return Ok(Classification::Decided(None)),
-    };
+        for (lifted_start, lifted_end) in start_roots.into_iter().zip(end_roots) {
+            component_branches.push(vec![
+                ParameterComponentPoint {
+                    retained_parameter: BezierParameter2::Exact(Real::zero()),
+                    lifted_parameter: lifted_start,
+                },
+                ParameterComponentPoint {
+                    retained_parameter: BezierParameter2::Exact(Real::one()),
+                    lifted_parameter: lifted_end,
+                },
+            ]);
+        }
+    }
+
+    let mut overlaps = Vec::new();
+    for (boundaries, midpoint_root) in component_branches.iter().zip(midpoint_roots) {
+        let branch_sign = match signed_bivariate_at_parameter_pair(
+            branch,
+            &BezierParameter2::Exact(half.clone()),
+            &midpoint_root,
+            policy,
+        )? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let selected_branch = match branch_sign {
+            RealSign::Positive => true,
+            RealSign::Negative => false,
+            RealSign::Zero => return Ok(Classification::Decided(None)),
+        };
+        for window in boundaries.windows(2) {
+            let [start, end] = window else {
+                unreachable!("component boundaries are visited in pairs")
+            };
+            let direction = match start
+                .lifted_parameter
+                .cmp_by_refinement(&end.lifted_parameter, policy)?
+            {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Decided(direction) => direction,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if selected_branch {
+                overlaps.push(parameter_component_overlap_from_domain(
+                    retained_parameter,
+                    ParameterComponentDomain {
+                        retained_start: start.retained_parameter.clone(),
+                        retained_end: end.retained_parameter.clone(),
+                        lifted_start: start.lifted_parameter.clone(),
+                        lifted_end: end.lifted_parameter.clone(),
+                    },
+                    direction,
+                ));
+            }
+        }
+    }
     Ok(Classification::Decided(Some(ParameterComponentEvidence2 {
-        overlaps,
+        overlaps: overlaps.into(),
         isolated_pairs: Arc::from([]),
     })))
 }
 
-fn parameters_are_unit_endpoints(
-    parameters: &[BezierParameter2],
+fn insert_parameter_component_point(
+    points: &mut Vec<ParameterComponentPoint>,
+    point: ParameterComponentPoint,
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    let mut index = 0;
+    while index < points.len() {
+        match point
+            .retained_parameter
+            .cmp_by_refinement(&points[index].retained_parameter, policy)?
+        {
+            Classification::Decided(std::cmp::Ordering::Less) => break,
+            Classification::Decided(std::cmp::Ordering::Greater) => index += 1,
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                return match point
+                    .lifted_parameter
+                    .cmp_by_refinement(&points[index].lifted_parameter, policy)?
+                {
+                    Classification::Decided(std::cmp::Ordering::Equal) => {
+                        Ok(Classification::Decided(()))
+                    }
+                    Classification::Decided(_) => {
+                        Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+                    }
+                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                };
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    points.insert(index, point);
+    Ok(Classification::Decided(()))
+}
+
+fn lifted_boundary_roots_are_turning_events(
+    roots: &[BezierParameter2],
+    lifted_boundary: &Real,
+    turning_points: &[BezierParallelIntersectionParameterPair2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let zero = BezierParameter2::Exact(Real::zero());
     let one = BezierParameter2::Exact(Real::one());
-    for parameter in parameters {
-        match parameter.cmp_by_refinement(&zero, policy)? {
+    let lifted_boundary = BezierParameter2::Exact(lifted_boundary.clone());
+    for root in roots {
+        match root.cmp_by_refinement(&zero, policy)? {
             Classification::Decided(std::cmp::Ordering::Equal) => continue,
             Classification::Decided(_) => {}
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        match parameter.cmp_by_refinement(&one, policy)? {
-            Classification::Decided(std::cmp::Ordering::Equal) => {}
-            Classification::Decided(_) => return Ok(Classification::Decided(false)),
+        match root.cmp_by_refinement(&one, policy)? {
+            Classification::Decided(std::cmp::Ordering::Equal) => continue,
+            Classification::Decided(_) => {}
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
+        }
+
+        let mut blocker = None;
+        let mut matched = false;
+        for point in turning_points {
+            match root.cmp_by_refinement(&point.parallel_parameter, policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    match lifted_boundary.cmp_by_refinement(&point.other_parameter, policy)? {
+                        Classification::Decided(std::cmp::Ordering::Equal) => {
+                            matched = true;
+                            break;
+                        }
+                        Classification::Decided(_) => {}
+                        Classification::Uncertain(reason) => blocker = Some(reason),
+                    }
+                }
+                Classification::Decided(_) => {}
+                Classification::Uncertain(reason) => blocker = Some(reason),
+            }
+        }
+        if !matched {
+            return Ok(blocker.map_or(Classification::Decided(false), Classification::Uncertain));
         }
     }
     Ok(Classification::Decided(true))
@@ -4988,6 +5125,68 @@ fn bivariate_system_has_unit_square_solution(
         }
     }
     Ok(blocker.map_or(Classification::Decided(false), Classification::Uncertain))
+}
+
+fn bivariate_system_unit_square_solution_pairs(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    policy: &CurveContext,
+    config: CurveIntersectionResultantConfig,
+) -> CurveResult<Classification<Vec<BezierParallelIntersectionParameterPair2>>> {
+    if bivariate_unit_square_has_strict_bernstein_sign(second, policy)?
+        || bivariate_unit_square_has_strict_bernstein_sign(first, policy)?
+    {
+        return Ok(Classification::Decided(Vec::new()));
+    }
+    let candidates = match project_parallel_intersection_system(first, second, policy)? {
+        Classification::Decided(candidates) => candidates,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let (parallel_parameters, other_parameters) = match candidates {
+        BezierParallelIntersectionCandidates2::Candidates {
+            parallel_parameters,
+            other_parameters,
+        } => (parallel_parameters, other_parameters),
+        BezierParallelIntersectionCandidates2::NoIntersection => {
+            return Ok(Classification::Decided(Vec::new()));
+        }
+        BezierParallelIntersectionCandidates2::DegenerateResultant => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+    };
+
+    let mut blocker = None;
+    let mut pairs = Vec::new();
+    let mut parameter_lifts = [None, None];
+    for first_parameter in parallel_parameters {
+        for second_parameter in &other_parameters {
+            match replay_bivariate_parameter_pair(
+                first,
+                second,
+                &first_parameter,
+                second_parameter,
+                policy,
+                config,
+                &mut parameter_lifts,
+            )? {
+                Classification::Decided(BivariateParameterPairReplay::Rejected) => {}
+                Classification::Decided(
+                    BivariateParameterPairReplay::Direct
+                    | BivariateParameterPairReplay::LinearLift(_, _),
+                ) => {
+                    let pair = BezierParallelIntersectionParameterPair2 {
+                        parallel_parameter: first_parameter.clone(),
+                        other_parameter: second_parameter.clone(),
+                    };
+                    if !pairs.contains(&pair) {
+                        pairs.push(pair);
+                    }
+                }
+                Classification::Uncertain(reason) => blocker = Some(reason),
+            }
+        }
+    }
+    Ok(blocker.map_or(Classification::Decided(pairs), Classification::Uncertain))
 }
 
 fn certify_rational_parameter_component_map(
@@ -5111,14 +5310,14 @@ struct ParameterComponentDomain {
     lifted_end: BezierParameter2,
 }
 
-struct RationalParameterComponentPoint {
+struct ParameterComponentPoint {
     retained_parameter: BezierParameter2,
     lifted_parameter: BezierParameter2,
 }
 
 struct RationalParameterComponentPartition {
     domains: Vec<(ParameterComponentDomain, std::cmp::Ordering)>,
-    isolated_points: Vec<RationalParameterComponentPoint>,
+    isolated_points: Vec<ParameterComponentPoint>,
 }
 
 #[derive(Clone)]
@@ -5287,7 +5486,7 @@ fn rational_parameter_component_domains(
                 Classification::Decided(None) => continue,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-        isolated_points.push(RationalParameterComponentPoint {
+        isolated_points.push(ParameterComponentPoint {
             retained_parameter: boundary.parameter.clone(),
             lifted_parameter,
         });
@@ -5412,7 +5611,7 @@ fn parameter_component_overlap_from_domain(
 
 fn rational_parameter_component_pair(
     retained_parameter: CurveResultantParameter,
-    point: RationalParameterComponentPoint,
+    point: ParameterComponentPoint,
 ) -> BezierParallelIntersectionParameterPair2 {
     match retained_parameter {
         CurveResultantParameter::First => BezierParallelIntersectionParameterPair2 {
@@ -7520,6 +7719,335 @@ mod conversion_tests {
                     }
                 }
             }
+        }
+    }
+
+    #[test]
+    fn regular_implicit_parameter_component_partitions_turning_events() {
+        // H(t,u)=u^2+u-t^2+t-2 has one regular graph in the square. It
+        // descends from (0,1) to its exact algebraic minimum at t=1/2, then
+        // ascends to (1,1). The correspondence is irreducible in both
+        // parameters, so the implicit authority must publish two oriented
+        // cells rather than reject the nonmonotone whole.
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::from(-2_i8), Real::one(), Real::one()],
+            vec![Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let equations = [
+            component.clone(),
+            bivariate_scale(component, &Real::from(2_i8)),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("regular implicit turning graph was not partitioned");
+            };
+            let [descending, ascending] = system.overlaps.as_ref() else {
+                panic!("one turning event must produce two overlap cells");
+            };
+            assert_eq!(
+                descending.first_range().exact_endpoints(),
+                Some((&Real::zero(), &half))
+            );
+            assert_eq!(
+                ascending.first_range().exact_endpoints(),
+                Some((&half, &Real::one()))
+            );
+            assert_eq!(
+                descending.orientation(),
+                RationalBezierOverlapOrientation2::Reversed
+            );
+            assert_eq!(
+                ascending.orientation(),
+                RationalBezierOverlapOrientation2::Same
+            );
+            assert_eq!(
+                descending.second_range().start().as_exact(),
+                Some(&Real::one())
+            );
+            assert_eq!(
+                ascending.second_range().end().as_exact(),
+                Some(&Real::one())
+            );
+            assert_eq!(
+                descending.second_range().end(),
+                ascending.second_range().start()
+            );
+            assert!(!descending.second_range().end().is_exact());
+        }
+    }
+
+    #[test]
+    fn regular_implicit_parameter_component_sorts_multiple_turning_events() {
+        // With f(t)=3/2+t^3/3-t^2/2+3t/16, H=u^2+u-f(t) has
+        // turning events at t=1/4 and t=3/4. The graph remains strictly
+        // inside the lifted domain, so all three monotone cells are retained.
+        let component = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(-3_i8) / Real::from(2_i8)).unwrap(),
+                Real::one(),
+                Real::one(),
+            ],
+            vec![(Real::from(-3_i8) / Real::from(16_i8)).unwrap()],
+            vec![(Real::one() / Real::from(2_i8)).unwrap()],
+            vec![(Real::from(-1_i8) / Real::from(3_i8)).unwrap()],
+        ]);
+        let equations = [
+            component.clone(),
+            bivariate_scale(component, &Real::from(2_i8)),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("multiple implicit turning events were not partitioned");
+            };
+            let [first, middle, last] = system.overlaps.as_ref() else {
+                panic!("two turning events must produce three cells");
+            };
+            assert_eq!(
+                first.first_range().exact_endpoints(),
+                Some((&Real::zero(), &quarter))
+            );
+            assert_eq!(
+                middle.first_range().exact_endpoints(),
+                Some((&quarter, &three_quarters))
+            );
+            assert_eq!(
+                last.first_range().exact_endpoints(),
+                Some((&three_quarters, &Real::one()))
+            );
+            assert_eq!(
+                [
+                    first.orientation(),
+                    middle.orientation(),
+                    last.orientation(),
+                ],
+                [
+                    RationalBezierOverlapOrientation2::Same,
+                    RationalBezierOverlapOrientation2::Reversed,
+                    RationalBezierOverlapOrientation2::Same,
+                ]
+            );
+            assert_eq!(first.second_range().end(), middle.second_range().start());
+            assert_eq!(middle.second_range().end(), last.second_range().start());
+        }
+    }
+
+    #[test]
+    fn regular_implicit_parameter_component_retains_a_lifted_boundary_tangency() {
+        // H(t,u)=u^2+u-(t-1/2)^2 has one regular graph that touches u=0
+        // at its minimum. The edge root is also the exact turning event, so
+        // it partitions two valid closed-domain cells instead of looking like
+        // a transverse root entering or leaving the authored square.
+        let component = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(-1_i8) / Real::from(4_i8)).unwrap(),
+                Real::one(),
+                Real::one(),
+            ],
+            vec![Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let equations = [
+            component.clone(),
+            bivariate_scale(component, &Real::from(2_i8)),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("regular lifted-boundary tangency was not retained");
+            };
+            let [descending, ascending] = system.overlaps.as_ref() else {
+                panic!("one lifted-boundary tangency must produce two cells");
+            };
+            assert_eq!(
+                descending.first_range().exact_endpoints(),
+                Some((&Real::zero(), &half))
+            );
+            assert_eq!(
+                ascending.first_range().exact_endpoints(),
+                Some((&half, &Real::one()))
+            );
+            assert_eq!(
+                descending.second_range().end().as_exact(),
+                Some(&Real::zero())
+            );
+            assert_eq!(
+                ascending.second_range().start().as_exact(),
+                Some(&Real::zero())
+            );
+            assert_eq!(
+                descending.orientation(),
+                RationalBezierOverlapOrientation2::Reversed
+            );
+            assert_eq!(
+                ascending.orientation(),
+                RationalBezierOverlapOrientation2::Same
+            );
+        }
+    }
+
+    #[test]
+    fn regular_implicit_parameter_component_transports_multiple_monotone_graphs() {
+        // H(t,u)=u^2-u+(t^2+t)/16 has two disjoint regular graphs over
+        // the full retained interval. H_u never vanishes on either branch and
+        // H_t is strictly positive, so root order pairs their endpoints
+        // without a Cartesian branch expansion.
+        let sixteenth = (Real::one() / Real::from(16_i8)).unwrap();
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::from(-1_i8), Real::one()],
+            vec![sixteenth.clone()],
+            vec![sixteenth],
+        ]);
+        let equations = [
+            component.clone(),
+            bivariate_scale(component, &Real::from(2_i8)),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let upper_branch =
+            BivariatePolynomial::new(vec![vec![Real::from(-1_i8), Real::from(2_i8)]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("two regular implicit graphs were not transported");
+            };
+            let [lower, upper] = system.overlaps.as_ref() else {
+                panic!("two regular graphs must produce two overlaps");
+            };
+            for overlap in [lower, upper] {
+                assert_eq!(
+                    overlap.first_range().exact_endpoints(),
+                    Some((&Real::zero(), &Real::one()))
+                );
+            }
+            assert_eq!(lower.second_range().start().as_exact(), Some(&Real::zero()));
+            assert_eq!(upper.second_range().start().as_exact(), Some(&Real::one()));
+            assert_eq!(lower.orientation(), RationalBezierOverlapOrientation2::Same);
+            assert_eq!(
+                upper.orientation(),
+                RationalBezierOverlapOrientation2::Reversed
+            );
+            assert!(!lower.second_range().end().is_exact());
+            assert!(!upper.second_range().end().is_exact());
+
+            let Classification::Decided(Some(selected)) =
+                parameter_component_system(&equations, &upper_branch, &policy, config).unwrap()
+            else {
+                panic!("disconnected implicit branches were not signed independently");
+            };
+            let [selected_upper] = selected.overlaps.as_ref() else {
+                panic!("2u-1 must select only the upper implicit graph");
+            };
+            assert_eq!(
+                selected_upper.orientation(),
+                RationalBezierOverlapOrientation2::Reversed
+            );
+            assert_eq!(
+                selected_upper.second_range().start().as_exact(),
+                Some(&Real::one())
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn regular_implicit_parameter_component_pairs_coupled_algebraic_turning_event() {
+        // H(t,u)=u^2+u-t^3+t-2 has one turning event at t=1/sqrt(3).
+        // Both coordinates of the event are algebraic, so independent
+        // resultant projections must be paired by exact bivariate replay.
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::from(-2_i8), Real::one(), Real::one()],
+            vec![Real::one()],
+            vec![],
+            vec![Real::from(-1_i8)],
+        ]);
+        let equations = [
+            component.clone(),
+            bivariate_scale(component, &Real::from(2_i8)),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let system =
+                match parameter_component_system(&equations, &branch, &policy, config).unwrap() {
+                    Classification::Decided(Some(system)) => system,
+                    Classification::Decided(None) => {
+                        panic!("coupled algebraic turning event was declined under {policy:?}")
+                    }
+                    Classification::Uncertain(reason) => panic!(
+                        "coupled algebraic turning event was uncertain under {policy:?}: {reason:?}"
+                    ),
+                };
+            let [descending, ascending] = system.overlaps.as_ref() else {
+                panic!("one algebraic turning event must produce two cells");
+            };
+            assert_eq!(
+                descending.orientation(),
+                RationalBezierOverlapOrientation2::Reversed
+            );
+            assert_eq!(
+                ascending.orientation(),
+                RationalBezierOverlapOrientation2::Same
+            );
+            assert_eq!(
+                descending.first_range().start().as_exact(),
+                Some(&Real::zero())
+            );
+            assert_eq!(ascending.first_range().end().as_exact(), Some(&Real::one()));
+            assert_eq!(
+                descending.first_range().end(),
+                ascending.first_range().start()
+            );
+            assert!(!descending.first_range().end().is_exact());
+            assert_eq!(
+                descending.second_range().start().as_exact(),
+                Some(&Real::one())
+            );
+            assert_eq!(
+                ascending.second_range().end().as_exact(),
+                Some(&Real::one())
+            );
+            assert_eq!(
+                descending.second_range().end(),
+                ascending.second_range().start()
+            );
+            assert!(!descending.second_range().end().is_exact());
         }
     }
 
