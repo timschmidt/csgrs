@@ -1354,14 +1354,15 @@ impl BezierParallel2 {
                 if let Classification::Decided(Some(component)) =
                     parameter_component_system(component_equations, &branch, policy, config)?
                 {
-                    return parallel_candidate_system_from_rational_component(component, policy);
+                    return parallel_candidate_system_from_parameter_components(component, policy);
                 }
             }
         }
-        let candidates = match project_parallel_intersection_system(&equations, policy)? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let candidates =
+            match project_parallel_intersection_system(&equations[0], &equations[1], policy)? {
+                Classification::Decided(candidates) => candidates,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
         if matches!(
             candidates,
             BezierParallelIntersectionCandidates2::DegenerateResultant
@@ -1419,7 +1420,7 @@ impl BezierParallel2 {
             if let Classification::Decided(Some(component)) =
                 parameter_component_system(component_equations, &branch, policy, config)?
             {
-                return parallel_candidate_system_from_rational_component(component, policy);
+                return parallel_candidate_system_from_parameter_components(component, policy);
             }
         }
         Ok(Classification::Decided(candidate_system))
@@ -1437,14 +1438,14 @@ impl BezierParallel2 {
     /// delegates to the rational shared-component authority whenever zero
     /// distance or a certified Pythagorean hodograph supplies an exact
     /// rational parallel. Otherwise a primitive first subresultant may expose
-    /// every extractable rational parameter component; both authored
-    /// equations, finite domains, monotonicity, exact overlap boundaries or
-    /// isolated domain-touch pairs, and the selected normal branch are
-    /// certified before they become result evidence. Split quadratic common
-    /// fibers are enumerated through their exact residual systems. Unsupported
-    /// coefficient towers and irreducible or higher-degree common fibers remain
-    /// explicit [`BezierParallelIntersectionSet2::incomplete_candidates`]
-    /// evidence; no projected root is promoted without exact replay.
+    /// every extractable parameter component; rational maps retain their
+    /// partitioned fast path, while one regular implicit graph is accepted only
+    /// after exact closed-domain, critical-point, monotonicity, and selected-
+    /// branch certification. Both authored residual equations remain in the
+    /// same recursive engine. Unsupported coefficient towers and multi-cell or
+    /// singular implicit topology remain explicit
+    /// [`BezierParallelIntersectionSet2::incomplete_candidates`] evidence; no
+    /// projected root is promoted without exact replay.
     pub fn intersections(
         &self,
         other: &RationalBezier2,
@@ -4417,10 +4418,11 @@ fn parallel_intersection_candidate_system(
         BezierParallelIntersectionCandidates2::DegenerateResultant
     ) && let Some(reduced) = rootless_axis_primitive_system(&equations, policy)?
     {
-        let candidates = match project_parallel_intersection_system(&reduced, policy)? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let candidates =
+            match project_parallel_intersection_system(&reduced[0], &reduced[1], policy)? {
+                Classification::Decided(candidates) => candidates,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
         return Ok(Classification::Decided(parallel_candidate_system(
             candidates, reduced,
         )));
@@ -4443,7 +4445,8 @@ fn parallel_candidate_system(
 }
 
 fn project_parallel_intersection_system(
-    equations: &[BivariatePolynomial; 2],
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
     let config = CurveIntersectionResultantConfig {
@@ -4452,8 +4455,8 @@ fn project_parallel_intersection_system(
     };
     let parallel = match resultant_parameter_projection(
         resultant_bivariate_polynomial_system(
-            &equations[0],
-            &equations[1],
+            first_equation,
+            second_equation,
             CurveResultantParameter::First,
             config,
         ),
@@ -4469,8 +4472,8 @@ fn project_parallel_intersection_system(
     }
     let other = match resultant_parameter_projection(
         resultant_bivariate_polynomial_system(
-            &equations[0],
-            &equations[1],
+            first_equation,
+            second_equation,
             CurveResultantParameter::Second,
             config,
         ),
@@ -4544,14 +4547,14 @@ fn bivariate_system_may_have_component(equations: &[BivariatePolynomial; 2]) -> 
     true
 }
 
-struct RationalParameterComponentSystem2 {
+struct ParameterComponentSystem2 {
     overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
     isolated_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
     residual_equations: [BivariatePolynomial; 2],
 }
 
-fn parallel_candidate_system_from_rational_component(
-    component: RationalParameterComponentSystem2,
+fn parallel_candidate_system_from_parameter_components(
+    component: ParameterComponentSystem2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelIntersectionCandidateSystem2>> {
     for equation in &component.residual_equations {
@@ -4565,11 +4568,14 @@ fn parallel_candidate_system_from_rational_component(
             return Ok(Classification::Decided(candidate_system));
         }
     }
-    let candidates =
-        match project_parallel_intersection_system(&component.residual_equations, policy)? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let candidates = match project_parallel_intersection_system(
+        &component.residual_equations[0],
+        &component.residual_equations[1],
+        policy,
+    )? {
+        Classification::Decided(candidates) => candidates,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
     match parallel_intersection_candidate_system(component.residual_equations, candidates, policy)?
     {
         Classification::Decided(mut candidate_system) => {
@@ -4635,7 +4641,7 @@ fn parameter_component_system(
     branch: &BivariatePolynomial,
     policy: &CurveContext,
     config: CurveIntersectionResultantConfig,
-) -> CurveResult<Classification<Option<RationalParameterComponentSystem2>>> {
+) -> CurveResult<Classification<Option<ParameterComponentSystem2>>> {
     let mut residual_equations = equations.clone();
     let mut overlaps = Vec::new();
     let mut isolated_pairs = Vec::new();
@@ -4653,27 +4659,57 @@ fn parameter_component_system(
                 retained_parameter,
                 config,
             );
-            let (map, reduced_equations) = match report.status {
+            match report.status {
                 BivariatePolynomialComponentStatus::Rational => {
                     let Some(reduced_equations) = report.reduced_equations else {
                         continue;
                     };
-                    (
-                        CurveIntersectionParameterLiftMap {
-                            cofactor_row: 0,
-                            numerator_coefficients: report.numerator_coefficients,
-                            denominator_coefficients: report.denominator_coefficients,
-                        },
-                        reduced_equations,
-                    )
+                    let map = CurveIntersectionParameterLiftMap {
+                        cofactor_row: 0,
+                        numerator_coefficients: report.numerator_coefficients,
+                        denominator_coefficients: report.denominator_coefficients,
+                    };
+                    match certify_rational_parameter_component_map(
+                        &residual_equations,
+                        branch,
+                        retained_parameter,
+                        &map,
+                        policy,
+                    )? {
+                        Classification::Decided(Some(evidence)) => {
+                            next_component = Some((evidence, reduced_equations));
+                            break;
+                        }
+                        Classification::Decided(None) => {}
+                        Classification::Uncertain(reason) => blocker = Some(reason),
+                    }
                 }
                 BivariatePolynomialComponentStatus::UndecidedCoefficient => {
                     blocker = Some(UncertaintyReason::RealSign);
-                    continue;
                 }
                 BivariatePolynomialComponentStatus::Implicit => {
-                    blocker = Some(UncertaintyReason::Boundary);
-                    continue;
+                    let (Some(component), Some(reduced_equations)) =
+                        (report.implicit_component, report.reduced_equations)
+                    else {
+                        blocker = Some(UncertaintyReason::Boundary);
+                        continue;
+                    };
+                    match certify_regular_implicit_parameter_component(
+                        &component,
+                        branch,
+                        retained_parameter,
+                        policy,
+                        config,
+                    )? {
+                        Classification::Decided(Some(evidence)) => {
+                            next_component = Some((evidence, reduced_equations));
+                            break;
+                        }
+                        Classification::Decided(None) => {
+                            blocker = Some(UncertaintyReason::Boundary)
+                        }
+                        Classification::Uncertain(reason) => blocker = Some(reason),
+                    }
                 }
                 BivariatePolynomialComponentStatus::EmptyEquation
                 | BivariatePolynomialComponentStatus::UnsupportedLiftedDegree
@@ -4681,21 +4717,7 @@ fn parameter_component_system(
                 | BivariatePolynomialComponentStatus::NoSupportedComponent
                 | BivariatePolynomialComponentStatus::DeterminantError
                 | BivariatePolynomialComponentStatus::InterpolationFailed
-                | BivariatePolynomialComponentStatus::DivisionFailed => continue,
-            };
-            match certify_rational_parameter_component_map(
-                &residual_equations,
-                branch,
-                retained_parameter,
-                &map,
-                policy,
-            )? {
-                Classification::Decided(Some(evidence)) => {
-                    next_component = Some((evidence, reduced_equations));
-                    break;
-                }
-                Classification::Decided(None) => {}
-                Classification::Uncertain(reason) => blocker = Some(reason),
+                | BivariatePolynomialComponentStatus::DivisionFailed => {}
             }
         }
         let Some((evidence, reduced_equations)) = next_component else {
@@ -4703,13 +4725,11 @@ fn parameter_component_system(
                 return Ok(blocker
                     .map_or_else(|| Classification::Decided(None), Classification::Uncertain));
             }
-            return Ok(Classification::Decided(Some(
-                RationalParameterComponentSystem2 {
-                    overlaps: overlaps.into(),
-                    isolated_pairs: isolated_pairs.into(),
-                    residual_equations,
-                },
-            )));
+            return Ok(Classification::Decided(Some(ParameterComponentSystem2 {
+                overlaps: overlaps.into(),
+                isolated_pairs: isolated_pairs.into(),
+                residual_equations,
+            })));
         };
         for overlap in evidence.overlaps.iter() {
             if !overlaps.contains(overlap) {
@@ -4725,16 +4745,249 @@ fn parameter_component_system(
         extracted_component = true;
         for equation in &residual_equations {
             if bivariate_unit_square_has_strict_bernstein_sign(equation, policy)? {
-                return Ok(Classification::Decided(Some(
-                    RationalParameterComponentSystem2 {
-                        overlaps: overlaps.into(),
-                        isolated_pairs: isolated_pairs.into(),
-                        residual_equations,
-                    },
-                )));
+                return Ok(Classification::Decided(Some(ParameterComponentSystem2 {
+                    overlaps: overlaps.into(),
+                    isolated_pairs: isolated_pairs.into(),
+                    residual_equations,
+                })));
             }
         }
     }
+}
+
+/// Certifies the complete unit-square image of one regular implicit component.
+///
+/// This is the first algebraic-function transport cut. It accepts exactly one
+/// graph over the retained unit interval, proves that no root enters through
+/// an open box edge, excludes vertical and horizontal critical points, and
+/// proves the selected-branch predicate has no zero on the graph. More general
+/// multi-cell or singular implicit topology remains an explicit boundary.
+fn certify_regular_implicit_parameter_component(
+    component: &BivariatePolynomial,
+    branch: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    policy: &CurveContext,
+    config: CurveIntersectionResultantConfig,
+) -> CurveResult<Classification<Option<ParameterComponentEvidence2>>> {
+    let swapped_component;
+    let swapped_branch;
+    let (component, branch) = match retained_parameter {
+        CurveResultantParameter::First => (component, branch),
+        CurveResultantParameter::Second => {
+            swapped_component = bivariate_swap_parameters(component);
+            swapped_branch = bivariate_swap_parameters(branch);
+            (&swapped_component, &swapped_branch)
+        }
+    };
+
+    let start_roots = match polynomial_unit_interval_roots(
+        &bivariate_specialize_first(component, &Real::zero()),
+        policy,
+    )? {
+        Classification::Decided(Some(roots)) if roots.len() == 1 => roots,
+        Classification::Decided(_) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end_roots = match polynomial_unit_interval_roots(
+        &bivariate_specialize_first(component, &Real::one()),
+        policy,
+    )? {
+        Classification::Decided(Some(roots)) if roots.len() == 1 => roots,
+        Classification::Decided(_) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    for boundary_value in [Real::zero(), Real::one()] {
+        let roots = match polynomial_unit_interval_roots(
+            &bivariate_specialize_second(component, &boundary_value),
+            policy,
+        )? {
+            Classification::Decided(Some(roots)) => roots,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        match parameters_are_unit_endpoints(&roots, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+
+    for derivative in [
+        bivariate_parameter_derivative(component, CurveResultantParameter::First),
+        bivariate_parameter_derivative(component, CurveResultantParameter::Second),
+    ] {
+        match bivariate_system_has_unit_square_solution(component, &derivative, policy, config)? {
+            Classification::Decided(false) => {}
+            Classification::Decided(true) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+
+    let half = (Real::one() / Real::from(2_i8))?;
+    let midpoint_root = match polynomial_unit_interval_roots(
+        &bivariate_specialize_first(component, &half),
+        policy,
+    )? {
+        Classification::Decided(Some(mut roots)) if roots.len() == 1 => roots.pop().unwrap(),
+        Classification::Decided(_) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    match bivariate_system_has_unit_square_solution(component, branch, policy, config)? {
+        Classification::Decided(false) => {}
+        Classification::Decided(true) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    let branch_sign = match signed_bivariate_at_parameter_pair(
+        branch,
+        &BezierParameter2::Exact(half),
+        &midpoint_root,
+        policy,
+    )? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    let lifted_start = start_roots.into_iter().next().unwrap();
+    let lifted_end = end_roots.into_iter().next().unwrap();
+    let direction = match lifted_start.cmp_by_refinement(&lifted_end, policy)? {
+        Classification::Decided(std::cmp::Ordering::Equal) => {
+            return Ok(Classification::Decided(None));
+        }
+        Classification::Decided(direction) => direction,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let overlaps = match branch_sign {
+        RealSign::Positive => Arc::from([parameter_component_overlap_from_domain(
+            retained_parameter,
+            ParameterComponentDomain {
+                retained_start: BezierParameter2::Exact(Real::zero()),
+                retained_end: BezierParameter2::Exact(Real::one()),
+                lifted_start,
+                lifted_end,
+            },
+            direction,
+        )]),
+        RealSign::Negative => Arc::from([]),
+        RealSign::Zero => return Ok(Classification::Decided(None)),
+    };
+    Ok(Classification::Decided(Some(ParameterComponentEvidence2 {
+        overlaps,
+        isolated_pairs: Arc::from([]),
+    })))
+}
+
+fn parameters_are_unit_endpoints(
+    parameters: &[BezierParameter2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let zero = BezierParameter2::Exact(Real::zero());
+    let one = BezierParameter2::Exact(Real::one());
+    for parameter in parameters {
+        match parameter.cmp_by_refinement(&zero, policy)? {
+            Classification::Decided(std::cmp::Ordering::Equal) => continue,
+            Classification::Decided(_) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match parameter.cmp_by_refinement(&one, policy)? {
+            Classification::Decided(std::cmp::Ordering::Equal) => {}
+            Classification::Decided(_) => return Ok(Classification::Decided(false)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(true))
+}
+
+fn bivariate_parameter_derivative(
+    polynomial: &BivariatePolynomial,
+    parameter: CurveResultantParameter,
+) -> BivariatePolynomial {
+    let coefficients = match parameter {
+        CurveResultantParameter::First => polynomial
+            .coefficients
+            .iter()
+            .enumerate()
+            .skip(1)
+            .map(|(power, row)| {
+                let scale = Real::from(power as u64);
+                row.iter().map(|coefficient| coefficient * &scale).collect()
+            })
+            .collect(),
+        CurveResultantParameter::Second => polynomial
+            .coefficients
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .enumerate()
+                    .skip(1)
+                    .map(|(power, coefficient)| coefficient * Real::from(power as u64))
+                    .collect()
+            })
+            .collect(),
+    };
+    BivariatePolynomial::new(coefficients)
+}
+
+fn bivariate_system_has_unit_square_solution(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    policy: &CurveContext,
+    config: CurveIntersectionResultantConfig,
+) -> CurveResult<Classification<bool>> {
+    if bivariate_unit_square_has_strict_bernstein_sign(second, policy)?
+        || bivariate_unit_square_has_strict_bernstein_sign(first, policy)?
+    {
+        return Ok(Classification::Decided(false));
+    }
+    let candidates = match project_parallel_intersection_system(first, second, policy)? {
+        Classification::Decided(candidates) => candidates,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let (parallel_parameters, other_parameters) = match candidates {
+        BezierParallelIntersectionCandidates2::Candidates {
+            parallel_parameters,
+            other_parameters,
+        } => (parallel_parameters, other_parameters),
+        BezierParallelIntersectionCandidates2::NoIntersection => {
+            return Ok(Classification::Decided(false));
+        }
+        BezierParallelIntersectionCandidates2::DegenerateResultant => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+    };
+
+    let mut blocker = None;
+    let mut parameter_lifts = [None, None];
+    for first_parameter in &parallel_parameters {
+        for second_parameter in &other_parameters {
+            match replay_bivariate_parameter_pair(
+                first,
+                second,
+                first_parameter,
+                second_parameter,
+                policy,
+                config,
+                &mut parameter_lifts,
+            )? {
+                Classification::Decided(BivariateParameterPairReplay::Rejected) => {}
+                Classification::Decided(
+                    BivariateParameterPairReplay::Direct
+                    | BivariateParameterPairReplay::LinearLift(_, _),
+                ) => return Ok(Classification::Decided(true)),
+                Classification::Uncertain(reason) => blocker = Some(reason),
+            }
+        }
+    }
+    Ok(blocker.map_or(Classification::Decided(false), Classification::Uncertain))
 }
 
 fn certify_rational_parameter_component_map(
@@ -4743,7 +4996,7 @@ fn certify_rational_parameter_component_map(
     retained_parameter: CurveResultantParameter,
     map: &CurveIntersectionParameterLiftMap,
     policy: &CurveContext,
-) -> CurveResult<Classification<Option<RationalParameterComponentEvidence2>>> {
+) -> CurveResult<Classification<Option<ParameterComponentEvidence2>>> {
     for equation in equations {
         let (cleared, _) = bivariate_on_parameter_lift_cleared(equation, retained_parameter, map);
         match polynomial_from_coefficients(cleared, policy)? {
@@ -4808,7 +5061,7 @@ fn certify_rational_parameter_component_map(
             }
         };
         match branch_sign {
-            RealSign::Positive => overlaps.push(rational_parameter_component_overlap_from_domain(
+            RealSign::Positive => overlaps.push(parameter_component_overlap_from_domain(
                 retained_parameter,
                 domain,
                 direction,
@@ -4839,21 +5092,19 @@ fn certify_rational_parameter_component_map(
             RealSign::Zero => return Ok(Classification::Decided(None)),
         }
     }
-    Ok(Classification::Decided(Some(
-        RationalParameterComponentEvidence2 {
-            overlaps: overlaps.into(),
-            isolated_pairs: isolated_pairs.into(),
-        },
-    )))
+    Ok(Classification::Decided(Some(ParameterComponentEvidence2 {
+        overlaps: overlaps.into(),
+        isolated_pairs: isolated_pairs.into(),
+    })))
 }
 
-struct RationalParameterComponentEvidence2 {
+struct ParameterComponentEvidence2 {
     overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
     isolated_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
 }
 
 #[derive(Clone)]
-struct RationalParameterComponentDomain {
+struct ParameterComponentDomain {
     retained_start: BezierParameter2,
     retained_end: BezierParameter2,
     lifted_start: BezierParameter2,
@@ -4866,7 +5117,7 @@ struct RationalParameterComponentPoint {
 }
 
 struct RationalParameterComponentPartition {
-    domains: Vec<(RationalParameterComponentDomain, std::cmp::Ordering)>,
+    domains: Vec<(ParameterComponentDomain, std::cmp::Ordering)>,
     isolated_points: Vec<RationalParameterComponentPoint>,
 }
 
@@ -5009,7 +5260,7 @@ fn rational_parameter_component_domains(
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
         domains.push((
-            RationalParameterComponentDomain {
+            ParameterComponentDomain {
                 retained_start: boundaries[start].parameter.clone(),
                 retained_end: boundaries[end].parameter.clone(),
                 lifted_start,
@@ -5115,9 +5366,9 @@ fn rational_parameter_component_boundary_image(
     )
 }
 
-fn rational_parameter_component_overlap_from_domain(
+fn parameter_component_overlap_from_domain(
     retained_parameter: CurveResultantParameter,
-    domain: RationalParameterComponentDomain,
+    domain: ParameterComponentDomain,
     direction: std::cmp::Ordering,
 ) -> RationalBezierIntersectionOverlap2 {
     let orientation = match direction {
@@ -6952,7 +7203,12 @@ mod conversion_tests {
             let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
                 parallel_parameters,
                 other_parameters,
-            }) = project_parallel_intersection_system(&system.residual_equations, &policy).unwrap()
+            }) = project_parallel_intersection_system(
+                &system.residual_equations[0],
+                &system.residual_equations[1],
+                &policy,
+            )
+            .unwrap()
             else {
                 panic!("residual isolated solution was discarded");
             };
@@ -7008,7 +7264,7 @@ mod conversion_tests {
                 overlap.orientation() == RationalBezierOverlapOrientation2::Reversed
             }));
             let Classification::Decided(candidate_system) =
-                parallel_candidate_system_from_rational_component(system, &policy).unwrap()
+                parallel_candidate_system_from_parameter_components(system, &policy).unwrap()
             else {
                 panic!("multiple component residual projection was uncertain");
             };
@@ -7175,6 +7431,248 @@ mod conversion_tests {
                 parameter_component_system(&equations, &branch, &policy, config).unwrap(),
                 Classification::Uncertain(UncertaintyReason::Boundary)
             ));
+        }
+    }
+
+    #[test]
+    fn regular_implicit_parameter_components_transport_monotone_graphs() {
+        let components = [
+            (
+                BivariatePolynomial::new(vec![
+                    vec![Real::zero(), Real::from(2_i8), Real::from(2_i8)],
+                    vec![Real::from(-3_i8)],
+                    vec![Real::from(-1_i8)],
+                ]),
+                RationalBezierOverlapOrientation2::Same,
+            ),
+            (
+                BivariatePolynomial::new(vec![
+                    vec![Real::from(4_i8), Real::from(-6_i8), Real::from(2_i8)],
+                    vec![Real::from(-3_i8)],
+                    vec![Real::from(-1_i8)],
+                ]),
+                RationalBezierOverlapOrientation2::Reversed,
+            ),
+            (
+                BivariatePolynomial::new(vec![
+                    vec![Real::zero(), Real::one(), Real::zero(), Real::one()],
+                    vec![Real::from(-1_i8)],
+                    vec![Real::from(-1_i8)],
+                ]),
+                RationalBezierOverlapOrientation2::Same,
+            ),
+            (
+                BivariatePolynomial::new(vec![
+                    vec![
+                        Real::zero(),
+                        Real::one(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::one(),
+                    ],
+                    vec![Real::from(-1_i8)],
+                    vec![Real::zero()],
+                    vec![Real::from(-1_i8)],
+                ]),
+                RationalBezierOverlapOrientation2::Same,
+            ),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (component, expected_orientation) in &components {
+                let equations = [
+                    component.clone(),
+                    bivariate_scale(component.clone(), &Real::from(2_i8)),
+                ];
+                let Classification::Decided(Some(system)) =
+                    parameter_component_system(&equations, &branch, &policy, config).unwrap()
+                else {
+                    panic!("regular implicit graph was not transported");
+                };
+                let [overlap] = system.overlaps.as_ref() else {
+                    panic!("one regular implicit graph must produce one overlap");
+                };
+                assert_eq!(overlap.orientation(), *expected_orientation);
+                assert_eq!(
+                    overlap.first_range().start().as_exact(),
+                    Some(&Real::zero())
+                );
+                assert_eq!(overlap.first_range().end().as_exact(), Some(&Real::one()));
+                match expected_orientation {
+                    RationalBezierOverlapOrientation2::Same => {
+                        assert_eq!(
+                            overlap.second_range().start().as_exact(),
+                            Some(&Real::zero())
+                        );
+                        assert_eq!(overlap.second_range().end().as_exact(), Some(&Real::one()));
+                    }
+                    RationalBezierOverlapOrientation2::Reversed => {
+                        assert_eq!(
+                            overlap.second_range().start().as_exact(),
+                            Some(&Real::one())
+                        );
+                        assert_eq!(overlap.second_range().end().as_exact(), Some(&Real::zero()));
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn regular_implicit_parameter_component_rejects_a_branch_zero() {
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::from(2_i8), Real::from(2_i8)],
+            vec![Real::from(-3_i8)],
+            vec![Real::from(-1_i8)],
+        ]);
+        let equations = [
+            component.clone(),
+            bivariate_scale(component, &Real::from(2_i8)),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![
+            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+            Real::one(),
+        ]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                parameter_component_system(&equations, &branch, &policy, config).unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+        }
+    }
+
+    #[test]
+    fn regular_implicit_parameter_component_discards_the_opposite_branch() {
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::from(2_i8), Real::from(2_i8)],
+            vec![Real::from(-3_i8)],
+            vec![Real::from(-1_i8)],
+        ]);
+        let equations = [
+            component.clone(),
+            bivariate_scale(component, &Real::from(2_i8)),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::from(-1_i8)]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("opposite regular implicit graph was not decided");
+            };
+            assert!(system.overlaps.is_empty());
+            assert!(system.isolated_pairs.is_empty());
+        }
+    }
+
+    #[test]
+    fn regular_implicit_component_excludes_off_component_critical_points() {
+        // H=16u^2-8u-3-2t-3t^2 has one unit-square branch from
+        // (0,3/4) to (1,1). H_u vanishes on u=1/4, but H does not vanish
+        // there; the exact two-equation fallback must distinguish that from a
+        // critical point on the transported component.
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::from(-3_i8), Real::from(-8_i8), Real::from(16_i8)],
+            vec![Real::from(-2_i8)],
+            vec![Real::from(-3_i8)],
+        ]);
+        let equations = [
+            component.clone(),
+            bivariate_scale(component, &Real::from(2_i8)),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("off-component derivative zero blocked a regular graph");
+            };
+            let [overlap] = system.overlaps.as_ref() else {
+                panic!("one regular implicit graph must produce one overlap");
+            };
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&Real::zero(), &Real::one()))
+            );
+            let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+            assert_eq!(
+                overlap.second_range().exact_endpoints(),
+                Some((&three_quarters, &Real::one()))
+            );
+        }
+    }
+
+    #[test]
+    fn regular_implicit_component_retains_residual_isolated_candidates() {
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::from(2_i8), Real::from(2_i8)],
+            vec![Real::from(-3_i8)],
+            vec![Real::from(-1_i8)],
+        ]);
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let equations = [
+            bivariate_multiply(
+                &component,
+                &BivariatePolynomial::new(vec![vec![-quarter.clone()], vec![Real::one()]]),
+            ),
+            bivariate_multiply(
+                &component,
+                &BivariatePolynomial::new(vec![vec![-three_quarters.clone(), Real::one()]]),
+            ),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("implicit component plus isolated residual was not decomposed");
+            };
+            assert_eq!(system.overlaps.len(), 1);
+            let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters,
+                other_parameters,
+            }) = project_parallel_intersection_system(
+                &system.residual_equations[0],
+                &system.residual_equations[1],
+                &policy,
+            )
+            .unwrap()
+            else {
+                panic!("residual isolated solution was discarded");
+            };
+            assert_eq!(
+                parallel_parameters,
+                vec![BezierParameter2::Exact(quarter.clone())]
+            );
+            assert_eq!(
+                other_parameters,
+                vec![BezierParameter2::Exact(three_quarters.clone())]
+            );
         }
     }
 

@@ -627,6 +627,25 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
         5,
     )?;
 
+    let implicit_component_parallel =
+        QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), s(0)), p(2, 0)).parallel_left(s(1))?;
+    let implicit_component_target = RationalBezier2::try_new(
+        vec![
+            p(0, 1),
+            Point2::new(q(1, 4), s(1)),
+            Point2::new(q(1, 2), s(1)),
+            Point2::new(q(3, 4), s(1)),
+            p(2, 1),
+        ],
+        vec![s(1); 5],
+    )?;
+    bench_bezier_parallel_intersections(
+        "bezier_parallel_implicit_quartic_component",
+        &implicit_component_parallel,
+        &implicit_component_target,
+        100,
+    )?;
+
     let cold_iterations = 10_u32;
     let started = Instant::now();
     let mut cold_checksum = 0_usize;

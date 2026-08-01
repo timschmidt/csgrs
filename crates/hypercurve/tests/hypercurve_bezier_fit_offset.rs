@@ -1932,6 +1932,52 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
 }
 
 #[test]
+fn parallel_rational_contacts_transport_an_implicit_quartic_parameter_component() {
+    // The selected line parallel uses x(t)=t^2+t, while the independently
+    // authored target uses x(u)=u^4+u. Their complete correspondence
+    //
+    //   u^4 + u - t^2 - t = 0
+    //
+    // is irreducible and nonlinear in both parameters, but has one regular
+    // monotone branch across the closed unit square.
+    let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(2, 0))
+        .parallel_left(Real::one())
+        .unwrap();
+    let target = RationalBezier2::try_new(
+        vec![
+            p(0, 1),
+            Point2::new(q(1, 4), Real::one()),
+            Point2::new(q(1, 2), Real::one()),
+            Point2::new(q(3, 4), Real::one()),
+            p(2, 1),
+        ],
+        vec![Real::one(); 5],
+    )
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert!(matches!(
+            parallel.intersection_candidates(&target, &policy).unwrap(),
+            Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+        ));
+        let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
+        let overlap = only_parallel_overlap(&intersections);
+        assert_eq!(
+            overlap.first_range().exact_endpoints(),
+            Some((&Real::zero(), &Real::one()))
+        );
+        assert_eq!(
+            overlap.second_range().exact_endpoints(),
+            Some((&Real::zero(), &Real::one()))
+        );
+        assert_eq!(
+            overlap.orientation(),
+            RationalBezierOverlapOrientation2::Same
+        );
+    }
+}
+
+#[test]
 fn parallel_rational_contacts_partition_a_noninjective_parameter_component() {
     let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 0))
         .parallel_left(Real::one())
