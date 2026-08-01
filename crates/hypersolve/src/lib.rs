@@ -138,10 +138,12 @@ pub use certification::{
     report_lossy_adapter_only_candidate,
 };
 pub use curve_resultant::{
-    BivariatePolynomial, CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
-    CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
-    CurveIntersectionResultantReport, CurveIntersectionResultantSample,
-    CurveIntersectionResultantStatus, CurveResultantParameter, PolynomialParametricCurve2,
+    BivariatePolynomial, CurveIntersectionFiberSubresultant,
+    CurveIntersectionFiberSubresultantReport, CurveIntersectionParameterLiftMap,
+    CurveIntersectionParameterLiftReport, CurveIntersectionParameterLiftStatus,
+    CurveIntersectionResultantConfig, CurveIntersectionResultantReport,
+    CurveIntersectionResultantSample, CurveIntersectionResultantStatus, CurveResultantParameter,
+    PolynomialParametricCurve2, fiber_subresultants_bivariate_polynomial_system,
     linear_parameter_lifts_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
     resultant_parametric_curve_intersection, resultant_rational_parametric_curve_intersection,
 };
