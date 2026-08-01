@@ -145,13 +145,16 @@ pub use certification::{
 };
 pub use curve_resultant::{
     BivariatePolynomial, BivariatePolynomialAxisFactorReport, BivariatePolynomialAxisFactorStatus,
+    BivariatePolynomialRationalComponentReport, BivariatePolynomialRationalComponentStatus,
     CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
     CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
     CurveIntersectionResultantReport, CurveIntersectionResultantSample,
     CurveIntersectionResultantStatus, CurveResultantParameter, PolynomialParametricCurve2,
     extract_bivariate_polynomial_system_axis_factors,
-    linear_parameter_lifts_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
-    resultant_parametric_curve_intersection, resultant_rational_parametric_curve_intersection,
+    linear_parameter_lifts_bivariate_polynomial_system,
+    rational_parameter_component_bivariate_polynomial_system,
+    resultant_bivariate_polynomial_system, resultant_parametric_curve_intersection,
+    resultant_rational_parametric_curve_intersection,
 };
 pub use curve_substitution::{
     BezierPowerBasisSubstitutionConfig, BezierPowerBasisSubstitutionReport,

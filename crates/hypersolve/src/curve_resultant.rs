@@ -338,6 +338,52 @@ pub struct CurveIntersectionParameterLiftReport {
     pub determinant_error: Option<BareissError>,
 }
 
+/// Final status for a generic rational parameter component of a bivariate system.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BivariatePolynomialRationalComponentStatus {
+    /// A rational map for the unique generic linear fiber factor was constructed.
+    Constructed,
+    /// At least one bivariate equation was empty.
+    EmptyEquation,
+    /// A coefficient needed for degree certification remained undecided.
+    UndecidedCoefficient,
+    /// One equation is constant in the prospective lifted parameter.
+    UnsupportedLiftedDegree,
+    /// The conservative coefficient degree exceeded the configured budget.
+    DegreeBoundExceeded,
+    /// The first subresultant vanished, so the generic common fiber is not linear.
+    NoLinearComponent,
+    /// An exact subresultant determinant could not be constructed.
+    DeterminantError,
+    /// Exact coefficient interpolation did not complete.
+    InterpolationFailed,
+}
+
+/// Exact rational map candidate for a positive-dimensional bivariate component.
+///
+/// When `status` is [`BivariatePolynomialRationalComponentStatus::Constructed`],
+/// the prospective lifted parameter is `numerator(retained) / denominator(retained)`.
+/// The map comes from the primitive first subresultant. Geometry callers must
+/// still prove both authored equations vanish identically under the map and
+/// certify its finite parameter-domain branch before accepting a component.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BivariatePolynomialRationalComponentReport {
+    /// Final construction status.
+    pub status: BivariatePolynomialRationalComponentStatus,
+    /// Parameter supplied to the rational map.
+    pub retained_parameter: CurveResultantParameter,
+    /// Parameter produced by the rational map.
+    pub lifted_parameter: CurveResultantParameter,
+    /// Conservative interpolation degree used for both map coefficients.
+    pub degree_bound: usize,
+    /// Rational-map numerator in ascending retained-parameter power order.
+    pub numerator_coefficients: Vec<Real>,
+    /// Rational-map denominator in ascending retained-parameter power order.
+    pub denominator_coefficients: Vec<Real>,
+    /// Exact determinant failure, when construction stopped at that boundary.
+    pub determinant_error: Option<BareissError>,
+}
+
 /// Eliminates one parameter from two exact bivariate polynomial equations.
 ///
 /// Both equations use [`BivariatePolynomial`]'s `(first, second)` coefficient
@@ -727,6 +773,231 @@ pub fn linear_parameter_lifts_bivariate_polynomial_system(
     )
 }
 
+/// Constructs the rational map of a generic linear common component.
+///
+/// The first nonzero subresultant of two polynomials in the lifted parameter
+/// is their generic GCD up to retained-parameter content. This specialization
+/// computes only the degree-one subresultant, removes exact rational content,
+/// and returns its root as a rational function. It is substantially smaller
+/// than constructing every adjugate lift when a vanished resultant already
+/// establishes a positive-dimensional system. A caller must still replay the
+/// map as documented by [`BivariatePolynomialRationalComponentReport`].
+pub fn rational_parameter_component_bivariate_polynomial_system(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> BivariatePolynomialRationalComponentReport {
+    let lifted_parameter = opposite_parameter(retained_parameter);
+    if bivariate_polynomial_is_empty(first_equation)
+        || bivariate_polynomial_is_empty(second_equation)
+    {
+        return rational_component_report(
+            BivariatePolynomialRationalComponentStatus::EmptyEquation,
+            retained_parameter,
+            lifted_parameter,
+            0,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+    }
+    let (Ok(first_degree), Ok(second_degree)) = (
+        certified_bivariate_degree(first_equation, config.min_precision),
+        certified_bivariate_degree(second_equation, config.min_precision),
+    ) else {
+        return rational_component_report(
+            BivariatePolynomialRationalComponentStatus::UndecidedCoefficient,
+            retained_parameter,
+            lifted_parameter,
+            0,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+    };
+    let (Some(first_degree), Some(second_degree)) = (first_degree, second_degree) else {
+        return rational_component_report(
+            BivariatePolynomialRationalComponentStatus::NoLinearComponent,
+            retained_parameter,
+            lifted_parameter,
+            0,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+    };
+    let (first_retained_degree, first_lifted_degree) =
+        oriented_bidegree(first_degree, retained_parameter);
+    let (second_retained_degree, second_lifted_degree) =
+        oriented_bidegree(second_degree, retained_parameter);
+    let terminal_degree = first_lifted_degree.min(second_lifted_degree);
+    if terminal_degree == 0 {
+        return rational_component_report(
+            BivariatePolynomialRationalComponentStatus::UnsupportedLiftedDegree,
+            retained_parameter,
+            lifted_parameter,
+            0,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+    }
+
+    let (mut constant, mut linear, degree_bound) = if terminal_degree == 1 {
+        let (equation, degree_bound) = if first_lifted_degree <= second_lifted_degree {
+            (first_equation, first_retained_degree)
+        } else {
+            (second_equation, second_retained_degree)
+        };
+        let coefficients = bivariate_fiber_coefficient_polynomials(equation, retained_parameter);
+        (
+            coefficients.first().cloned().unwrap_or_default(),
+            coefficients.get(1).cloned().unwrap_or_default(),
+            degree_bound,
+        )
+    } else {
+        let degree_bound = (second_lifted_degree - 1) * first_retained_degree
+            + (first_lifted_degree - 1) * second_retained_degree;
+        if degree_bound > config.max_resultant_degree {
+            return rational_component_report(
+                BivariatePolynomialRationalComponentStatus::DegreeBoundExceeded,
+                retained_parameter,
+                lifted_parameter,
+                degree_bound,
+                Vec::new(),
+                Vec::new(),
+                None,
+            );
+        }
+        let mut parameters = Vec::with_capacity(degree_bound + 1);
+        let mut constant_samples = Vec::with_capacity(degree_bound + 1);
+        let mut linear_samples = Vec::with_capacity(degree_bound + 1);
+        let mut sample_index = 0_usize;
+        while parameters.len() <= degree_bound {
+            let parameter = Real::from(sample_index as u64);
+            sample_index += 1;
+            let first = evaluate_bivariate_at_retained_parameter(
+                first_equation,
+                &parameter,
+                retained_parameter,
+            );
+            let second = evaluate_bivariate_at_retained_parameter(
+                second_equation,
+                &parameter,
+                retained_parameter,
+            );
+            let (Ok(first_sample_degree), Ok(second_sample_degree)) = (
+                certified_nonzero_degree(&first, config.min_precision),
+                certified_nonzero_degree(&second, config.min_precision),
+            ) else {
+                return rational_component_report(
+                    BivariatePolynomialRationalComponentStatus::UndecidedCoefficient,
+                    retained_parameter,
+                    lifted_parameter,
+                    degree_bound,
+                    Vec::new(),
+                    Vec::new(),
+                    None,
+                );
+            };
+            if first_sample_degree != Some(first_lifted_degree)
+                || second_sample_degree != Some(second_lifted_degree)
+            {
+                continue;
+            }
+            let coefficients =
+                match first_subresultant_coefficients(&first, &second, config.min_precision) {
+                    Ok(coefficients) => coefficients,
+                    Err(error) => {
+                        return rational_component_report(
+                            BivariatePolynomialRationalComponentStatus::DeterminantError,
+                            retained_parameter,
+                            lifted_parameter,
+                            degree_bound,
+                            Vec::new(),
+                            Vec::new(),
+                            Some(error),
+                        );
+                    }
+                };
+            constant_samples.push(coefficients[0].clone());
+            linear_samples.push(coefficients[1].clone());
+            parameters.push(parameter);
+        }
+        let Some(constant) =
+            interpolate_parameter_values(&parameters, &constant_samples, config.min_precision)
+        else {
+            return rational_component_report(
+                BivariatePolynomialRationalComponentStatus::InterpolationFailed,
+                retained_parameter,
+                lifted_parameter,
+                degree_bound,
+                Vec::new(),
+                Vec::new(),
+                None,
+            );
+        };
+        let Some(linear) =
+            interpolate_parameter_values(&parameters, &linear_samples, config.min_precision)
+        else {
+            return rational_component_report(
+                BivariatePolynomialRationalComponentStatus::InterpolationFailed,
+                retained_parameter,
+                lifted_parameter,
+                degree_bound,
+                Vec::new(),
+                Vec::new(),
+                None,
+            );
+        };
+        (constant, linear, degree_bound)
+    };
+
+    if exact_polynomial_is_zero(&linear) {
+        return rational_component_report(
+            BivariatePolynomialRationalComponentStatus::NoLinearComponent,
+            retained_parameter,
+            lifted_parameter,
+            degree_bound,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+    }
+    if let Some(content) = primitive_integer_polynomial_gcd(&constant, &linear)
+        && !exact_unit_polynomial(&content)
+        && !exact_polynomial_is_zero(&content)
+    {
+        let (Some(reduced_constant), Some(reduced_linear)) = (
+            divide_polynomial_exact(constant.clone(), &content),
+            divide_polynomial_exact(linear.clone(), &content),
+        ) else {
+            return rational_component_report(
+                BivariatePolynomialRationalComponentStatus::InterpolationFailed,
+                retained_parameter,
+                lifted_parameter,
+                degree_bound,
+                Vec::new(),
+                Vec::new(),
+                None,
+            );
+        };
+        constant = reduced_constant;
+        linear = reduced_linear;
+    }
+    let numerator_coefficients = constant.into_iter().map(std::ops::Neg::neg).collect();
+    rational_component_report(
+        BivariatePolynomialRationalComponentStatus::Constructed,
+        retained_parameter,
+        lifted_parameter,
+        degree_bound,
+        numerator_coefficients,
+        linear,
+        None,
+    )
+}
+
 /// Eliminate one parameter from a pair of 2D polynomial parametric curves.
 ///
 /// For `retained_parameter == First`, this constructs
@@ -870,6 +1141,100 @@ fn parameter_lift_report(
         maps,
         determinant_error,
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn rational_component_report(
+    status: BivariatePolynomialRationalComponentStatus,
+    retained_parameter: CurveResultantParameter,
+    lifted_parameter: CurveResultantParameter,
+    degree_bound: usize,
+    numerator_coefficients: Vec<Real>,
+    denominator_coefficients: Vec<Real>,
+    determinant_error: Option<BareissError>,
+) -> BivariatePolynomialRationalComponentReport {
+    BivariatePolynomialRationalComponentReport {
+        status,
+        retained_parameter,
+        lifted_parameter,
+        degree_bound,
+        numerator_coefficients,
+        denominator_coefficients,
+        determinant_error,
+    }
+}
+
+fn bivariate_fiber_coefficient_polynomials(
+    polynomial: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+) -> Vec<Vec<Real>> {
+    match retained_parameter {
+        CurveResultantParameter::First => {
+            let fiber_count = polynomial
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .max()
+                .unwrap_or(0);
+            (0..fiber_count)
+                .map(|fiber_power| {
+                    polynomial
+                        .coefficients
+                        .iter()
+                        .map(|row| row.get(fiber_power).cloned().unwrap_or_else(Real::zero))
+                        .collect()
+                })
+                .collect()
+        }
+        CurveResultantParameter::Second => polynomial.coefficients.clone(),
+    }
+}
+
+fn first_subresultant_coefficients(
+    first: &[Real],
+    second: &[Real],
+    min_precision: i32,
+) -> Result<[Real; 2], BareissError> {
+    let first_degree = first.len() - 1;
+    let second_degree = second.len() - 1;
+    debug_assert!(first_degree > 1 && second_degree > 1);
+    let row_count = first_degree + second_degree - 2;
+    let column_count = first_degree + second_degree - 1;
+    let first_row_count = second_degree - 1;
+    let second_row_count = first_degree - 1;
+    let mut matrix = vec![vec![Real::zero(); column_count]; row_count];
+    for (row, matrix_row) in matrix.iter_mut().take(first_row_count).enumerate() {
+        for (power, coefficient) in first.iter().enumerate() {
+            matrix_row[row + first_degree - power] = coefficient.clone();
+        }
+    }
+    for (row, matrix_row) in matrix
+        .iter_mut()
+        .skip(first_row_count)
+        .take(second_row_count)
+        .enumerate()
+    {
+        for (power, coefficient) in second.iter().enumerate() {
+            matrix_row[row + second_degree - power] = coefficient.clone();
+        }
+    }
+
+    let mut coefficients = [Real::zero(), Real::zero()];
+    for (power, coefficient) in coefficients.iter_mut().enumerate() {
+        let last_column = column_count - 1 - power;
+        let minor = matrix
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .take(row_count - 1)
+                    .chain(std::iter::once(&row[last_column]))
+                    .cloned()
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        *coefficient = determinant_bareiss(&minor, min_precision)?.determinant;
+    }
+    Ok(coefficients)
 }
 
 fn signed_cofactor(
@@ -1366,6 +1731,29 @@ mod tests {
         canonical_exact_bivariate(coefficients)
     }
 
+    fn multiply_bivariate(
+        first: &BivariatePolynomial,
+        second: &BivariatePolynomial,
+    ) -> BivariatePolynomial {
+        let first_columns = first.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+        let second_columns = second.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+        let mut coefficients = vec![
+            vec![Real::zero(); first_columns + second_columns - 1];
+            first.coefficients.len() + second.coefficients.len() - 1
+        ];
+        for (first_power, first_row) in first.coefficients.iter().enumerate() {
+            for (second_power, second_row) in second.coefficients.iter().enumerate() {
+                for (first_column, first_coefficient) in first_row.iter().enumerate() {
+                    for (second_column, second_coefficient) in second_row.iter().enumerate() {
+                        coefficients[first_power + second_power][first_column + second_column] +=
+                            first_coefficient * second_coefficient;
+                    }
+                }
+            }
+        }
+        canonical_exact_bivariate(coefficients)
+    }
+
     #[test]
     fn curve_resultant_finds_parabola_horizontal_intersections() {
         let parabola = PolynomialParametricCurve2::new(
@@ -1554,6 +1942,80 @@ mod tests {
         assert!(unsupported_report.first_parameter_factor.is_empty());
         assert!(unsupported_report.second_parameter_factor.is_empty());
         assert!(unsupported_report.reduced_equations.is_none());
+    }
+
+    #[test]
+    fn bivariate_rational_component_recovers_primitive_nonlinear_map() {
+        // F(x,y)=(2+x)y-x(1+x), so y=x(1+x)/(2+x). Multiplying F by
+        // independent linear cofactors makes the generic fiber degrees two
+        // while preserving exactly one common root.
+        let factor = BivariatePolynomial::new(vec![
+            vec![real(0), real(2)],
+            vec![real(-1), real(1)],
+            vec![real(-1)],
+        ]);
+        let first = multiply_bivariate(
+            &factor,
+            &BivariatePolynomial::new(vec![vec![real(1), real(1)]]),
+        );
+        let second = multiply_bivariate(
+            &factor,
+            &BivariatePolynomial::new(vec![vec![real(3), real(1)], vec![real(1)]]),
+        );
+        let report = rational_parameter_component_bivariate_polynomial_system(
+            &first,
+            &second,
+            CurveResultantParameter::First,
+            CurveIntersectionResultantConfig {
+                min_precision: -64,
+                max_resultant_degree: 16,
+            },
+        );
+
+        assert_eq!(
+            report.status,
+            BivariatePolynomialRationalComponentStatus::Constructed
+        );
+        assert_eq!(report.retained_parameter, CurveResultantParameter::First);
+        assert_eq!(report.lifted_parameter, CurveResultantParameter::Second);
+        assert_eq!(
+            eval_univariate(&report.numerator_coefficients, &real(0)),
+            real(0)
+        );
+        let numerator_at_one = eval_univariate(&report.numerator_coefficients, &real(1));
+        let denominator_at_one = eval_univariate(&report.denominator_coefficients, &real(1));
+        assert_eq!(numerator_at_one * real(3), denominator_at_one * real(2));
+    }
+
+    #[test]
+    fn bivariate_rational_component_rejects_a_generic_quadratic_fiber() {
+        let factor = BivariatePolynomial::new(vec![
+            vec![real(-1), real(0), real(1)],
+            vec![real(0), real(-1)],
+        ]);
+        let first = multiply_bivariate(
+            &factor,
+            &BivariatePolynomial::new(vec![vec![real(1), real(1)]]),
+        );
+        let second = multiply_bivariate(
+            &factor,
+            &BivariatePolynomial::new(vec![vec![real(2)], vec![real(1)]]),
+        );
+        let report = rational_parameter_component_bivariate_polynomial_system(
+            &first,
+            &second,
+            CurveResultantParameter::First,
+            CurveIntersectionResultantConfig {
+                min_precision: -64,
+                max_resultant_degree: 16,
+            },
+        );
+        assert_eq!(
+            report.status,
+            BivariatePolynomialRationalComponentStatus::NoLinearComponent
+        );
+        assert!(report.numerator_coefficients.is_empty());
+        assert!(report.denominator_coefficients.is_empty());
     }
 
     #[test]
