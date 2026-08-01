@@ -41,9 +41,10 @@ use crate::algebraic_polynomial_image::{
 };
 use crate::integer_interpolation::{
     interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
+    primitive_integer_polynomial_gcd,
 };
 use crate::resultant::{quotient_ring_resultant_polynomial, resultant_univariate_polynomials};
-use crate::root_isolation::{IsolatedRootInterval, square_free_part};
+use crate::root_isolation::{IsolatedRootInterval, polynomial_div_rem, square_free_part};
 
 const MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION: usize = 16;
 
@@ -818,10 +819,26 @@ fn direct_rational_map(
     denominator_coefficients: &[Real],
     policy: PredicatePolicy,
 ) -> Option<DirectRationalMap> {
-    let numerator = trim_real_polynomial(numerator_coefficients.to_vec(), policy)?;
-    let denominator = trim_real_polynomial(denominator_coefficients.to_vec(), policy)?;
+    let mut numerator = trim_real_polynomial(numerator_coefficients.to_vec(), policy)?;
+    let mut denominator = trim_real_polynomial(denominator_coefficients.to_vec(), policy)?;
     if !has_exact_coefficients(&numerator) || !has_exact_coefficients(&denominator) {
         return None;
+    }
+    if numerator.len() > 1 && denominator.len() > 1 {
+        let gcd = primitive_integer_polynomial_gcd(&numerator, &denominator)?;
+        if gcd.len() > 1 {
+            let (reduced_numerator, numerator_remainder) =
+                polynomial_div_rem(numerator, &gcd, policy)?;
+            let (reduced_denominator, denominator_remainder) =
+                polynomial_div_rem(denominator, &gcd, policy)?;
+            if !is_exact_zero_polynomial(&numerator_remainder, policy)
+                || !is_exact_zero_polynomial(&denominator_remainder, policy)
+            {
+                return None;
+            }
+            numerator = reduced_numerator;
+            denominator = reduced_denominator;
+        }
     }
     let constant_value = constant_rational_map_value(&numerator, &denominator, policy);
     Some(DirectRationalMap {
@@ -830,6 +847,12 @@ fn direct_rational_map(
         constant_value,
         derivative_numerator: OnceLock::new(),
         cleared_coefficients: OnceLock::new(),
+    })
+}
+
+fn is_exact_zero_polynomial(polynomial: &[Real], policy: PredicatePolicy) -> bool {
+    polynomial.iter().all(|coefficient| {
+        compare_reals(coefficient, &Real::zero(), policy).value() == Some(Ordering::Equal)
     })
 }
 
@@ -1234,6 +1257,35 @@ mod tests {
         assert!(root.is_valid());
         assert_eq!(root.interval.lower, (real(1) / real(2)).unwrap());
         assert_eq!(root.interval.upper, (real(2) / real(3)).unwrap());
+    }
+
+    #[test]
+    fn rational_image_cancels_a_common_factor_outside_the_isolated_root() {
+        // The represented root is sqrt(2), while the defining polynomial also
+        // carries the root -3. The rational map is x after cancelling x + 3;
+        // retaining that harmless common factor makes the direct resultant
+        // vanish identically even though the denominator is positive on [1, 2].
+        let mut root = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![real(-6), real(-2), real(3), real(1)],
+            ..sqrt_two_positive()
+        };
+        root.validation = validate_algebraic_root_representation(&root, PredicatePolicy::STRICT);
+        assert!(root.is_valid());
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let report = transform_algebraic_root_rational_image(
+                &root,
+                &[Real::zero(), real(3), Real::one()],
+                &[real(3), Real::one()],
+                policy,
+            );
+
+            assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
+            let image = report.representation.as_ref().unwrap();
+            assert!(image.is_valid());
+            assert_eq!(image.interval.lower, real(1));
+            assert_eq!(image.interval.upper, real(2));
+        }
     }
 
     #[test]

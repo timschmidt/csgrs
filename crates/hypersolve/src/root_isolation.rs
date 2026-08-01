@@ -1807,7 +1807,7 @@ pub(crate) fn square_free_part(
     is_zero_polynomial(&remainder, policy)?.then_some(quotient)
 }
 
-fn polynomial_div_rem(
+pub(crate) fn polynomial_div_rem(
     dividend: Vec<Real>,
     divisor: &[Real],
     policy: PredicatePolicy,
