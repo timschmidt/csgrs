@@ -20,7 +20,10 @@ pub(crate) const ARRANGEMENT_CLASSIFICATION: i8 = 2;
 
 type SplitEdgeCache = StorageHashMap<[usize; 2], SplitEdgeChain>;
 type ApproximateOutputVertex = [[f64; 2]; 3];
+type ApproximateEdgeBounds = [[f64; 2]; 3];
 const MIN_ADAPTIVE_CROSSING_SWEEP_EDGES: usize = 256;
+// Small sweeps repay one left-bound computation, but not a full side cache.
+const MIN_CACHED_CROSSING_BOUNDS_EDGES: usize = 1024;
 
 struct SplitEdgeChain(Vec<usize>);
 
@@ -2633,21 +2636,64 @@ fn split_edge_crossing_events(
             }
         }
     }
+    let approximate_bounds = match approximate_vertices {
+        Some(vertices) if bounded_edges.len() >= MIN_CACHED_CROSSING_BOUNDS_EDGES => {
+            let mut bounds = Vec::new();
+            if bounds.try_reserve_exact(bounded_edges.len()).is_err() {
+                None
+            } else {
+                for edge in &bounded_edges {
+                    bounds.push(approximate_edge_bounds(vertices, edge.edge));
+                }
+                Some(bounds)
+            }
+        }
+        _ => None,
+    };
 
     let mut interner = None;
     let mut events = Vec::new();
+    #[derive(Clone, Copy)]
+    enum ApproximateLeftBounds<'a> {
+        Cached(&'a [ApproximateEdgeBounds], &'a ApproximateEdgeBounds),
+        Direct(&'a [ApproximateOutputVertex], ApproximateEdgeBounds),
+    }
     for left_index in 0..bounded_edges.len() {
         let left = &bounded_edges[left_index];
-        for right in &bounded_edges[(left_index + 1)..] {
-            if let Some(approximate_vertices) = approximate_vertices {
+        let approximate_left_bounds = match (approximate_vertices, approximate_bounds.as_deref()) {
+            (Some(_), Some(bounds)) => {
+                Some(ApproximateLeftBounds::Cached(bounds, &bounds[left_index]))
+            }
+            (Some(vertices), None) => Some(ApproximateLeftBounds::Direct(
+                vertices,
+                approximate_edge_bounds(vertices, left.edge),
+            )),
+            (None, _) => None,
+        };
+        for right_index in (left_index + 1)..bounded_edges.len() {
+            let right = &bounded_edges[right_index];
+            if let Some(ApproximateLeftBounds::Cached(approximate_bounds, left_bounds)) =
+                approximate_left_bounds
+            {
+                let right_bounds = &approximate_bounds[right_index];
                 // Disjoint outward-rounded enclosures prove exact separation;
                 // every survivor is checked against the exact bounds below.
-                if approximate_edge_min(approximate_vertices, right.edge, approximate_sweep_axis)
-                    > approximate_edge_max(approximate_vertices, left.edge, approximate_sweep_axis)
+                if right_bounds[approximate_sweep_axis][0] > left_bounds[approximate_sweep_axis][1]
                 {
                     break;
                 }
-                if !approximate_edge_bounds_overlap(approximate_vertices, left.edge, right.edge) {
+                if !approximate_bounds_overlap(left_bounds, right_bounds) {
+                    continue;
+                }
+            } else if let Some(ApproximateLeftBounds::Direct(vertices, left_bounds)) =
+                approximate_left_bounds
+            {
+                if approximate_edge_min(vertices, right.edge, approximate_sweep_axis)
+                    > left_bounds[approximate_sweep_axis][1]
+                {
+                    break;
+                }
+                if !approximate_edge_overlaps_bounds(vertices, right.edge, &left_bounds) {
                     continue;
                 }
             } else if compare_real_decision(
@@ -4107,15 +4153,30 @@ fn approximate_edge_max(
     vertices[edge[0]][axis][1].max(vertices[edge[1]][axis][1])
 }
 
-fn approximate_edge_bounds_overlap(
+fn approximate_edge_bounds(
     vertices: &[ApproximateOutputVertex],
-    left: [usize; 2],
-    right: [usize; 2],
+    edge: [usize; 2],
+) -> ApproximateEdgeBounds {
+    [0, 1, 2].map(|axis| {
+        [
+            approximate_edge_min(vertices, edge, axis),
+            approximate_edge_max(vertices, edge, axis),
+        ]
+    })
+}
+
+fn approximate_bounds_overlap(left: &ApproximateEdgeBounds, right: &ApproximateEdgeBounds) -> bool {
+    (0..3).all(|axis| left[axis][1] >= right[axis][0] && right[axis][1] >= left[axis][0])
+}
+
+fn approximate_edge_overlaps_bounds(
+    vertices: &[ApproximateOutputVertex],
+    edge: [usize; 2],
+    bounds: &ApproximateEdgeBounds,
 ) -> bool {
     (0..3).all(|axis| {
-        approximate_edge_max(vertices, left, axis) >= approximate_edge_min(vertices, right, axis)
-            && approximate_edge_max(vertices, right, axis)
-                >= approximate_edge_min(vertices, left, axis)
+        bounds[axis][1] >= approximate_edge_min(vertices, edge, axis)
+            && approximate_edge_max(vertices, edge, axis) >= bounds[axis][0]
     })
 }
 
@@ -5325,6 +5386,31 @@ mod tests {
             0,
         );
         assert_eq!(approximate_crossing_sweep_axis(&vertices, &edges), 1);
+    }
+
+    #[test]
+    fn cached_crossing_bounds_preserve_separated_exact_sweep() {
+        let triangle_count = MIN_CACHED_CROSSING_BOUNDS_EDGES.div_ceil(3);
+        let mut soup = BooleanMesh::default();
+        for index in 0..triangle_count {
+            let x = i32::try_from(index * 4).unwrap();
+            let base = soup.vertices.len();
+            soup.vertices
+                .extend([ov(x, 0, 0), ov(x + 1, 0, 0), ov(x, 1, 0)]);
+            soup.triangles.push([base, base + 1, base + 2]);
+            soup.sources.push(TriangleSource::default());
+        }
+        assert!(soup.triangles.len() * 3 >= MIN_CACHED_CROSSING_BOUNDS_EDGES);
+        let approximate = exact_output_vertex_enclosures(&soup.vertices).unwrap();
+
+        for_each_policy(|decisions| {
+            let mut resolved = soup.clone();
+            assert!(
+                !split_edge_crossing_events(decisions, &mut resolved, Some(&approximate)).unwrap()
+            );
+            assert_eq!(resolved, soup);
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
     }
 
     #[test]
