@@ -1754,6 +1754,23 @@ mod tests {
         canonical_exact_bivariate(coefficients)
     }
 
+    fn swap_bivariate(polynomial: &BivariatePolynomial) -> BivariatePolynomial {
+        let second_count = polynomial
+            .coefficients
+            .iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0);
+        let mut coefficients =
+            vec![vec![Real::zero(); polynomial.coefficients.len()]; second_count];
+        for (first_power, row) in polynomial.coefficients.iter().enumerate() {
+            for (second_power, coefficient) in row.iter().enumerate() {
+                coefficients[second_power][first_power] = coefficient.clone();
+            }
+        }
+        canonical_exact_bivariate(coefficients)
+    }
+
     #[test]
     fn curve_resultant_finds_parabola_horizontal_intersections() {
         let parabola = PolynomialParametricCurve2::new(
@@ -2016,6 +2033,63 @@ mod tests {
         );
         assert!(report.numerator_coefficients.is_empty());
         assert!(report.denominator_coefficients.is_empty());
+    }
+
+    #[test]
+    fn bivariate_rational_component_handles_unequal_degrees_in_both_orientations() {
+        // C(x,y)=(2+x)y-(x^2+3x+1). Independent degree-one and degree-two
+        // cofactors leave C as the unique generic common fiber factor while
+        // exercising rectangular first-subresultant minors.
+        let component = BivariatePolynomial::new(vec![
+            vec![real(-1), real(2)],
+            vec![real(-3), real(1)],
+            vec![real(-1)],
+        ]);
+        let first = multiply_bivariate(
+            &component,
+            &BivariatePolynomial::new(vec![vec![real(1), real(1)], vec![real(1)]]),
+        );
+        let second = multiply_bivariate(
+            &component,
+            &BivariatePolynomial::new(vec![vec![real(1), real(1), real(1)]]),
+        );
+
+        for (first, second, retained_parameter) in [
+            (
+                first.clone(),
+                second.clone(),
+                CurveResultantParameter::First,
+            ),
+            (
+                swap_bivariate(&first),
+                swap_bivariate(&second),
+                CurveResultantParameter::Second,
+            ),
+        ] {
+            let report = rational_parameter_component_bivariate_polynomial_system(
+                &first,
+                &second,
+                retained_parameter,
+                CurveIntersectionResultantConfig {
+                    min_precision: -64,
+                    max_resultant_degree: 32,
+                },
+            );
+            assert_eq!(
+                report.status,
+                BivariatePolynomialRationalComponentStatus::Constructed
+            );
+            for value in [real(0), real(1), real(2), real(3)] {
+                let numerator = eval_univariate(&report.numerator_coefficients, &value);
+                let denominator = eval_univariate(&report.denominator_coefficients, &value);
+                let component_denominator = real(2) + &value;
+                let component_numerator = &value * &value + real(3) * &value + real(1);
+                assert_eq!(
+                    numerator * component_denominator,
+                    denominator * component_numerator
+                );
+            }
+        }
     }
 
     #[test]
