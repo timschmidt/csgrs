@@ -1557,12 +1557,24 @@ impl Rational {
         smaller: &BigUint,
         [a, b, c, d]: [i128; 4],
     ) -> Option<(BigUint, BigUint)> {
-        let larger_signed = BigInt::from(larger.clone());
-        let smaller_signed = BigInt::from(smaller.clone());
-        let first = &larger_signed * a + &smaller_signed * b;
-        let second = larger_signed * c + smaller_signed * d;
-        let first = first.magnitude().clone();
-        let second = second.magnitude().clone();
+        // Apply signed one-word coefficients without cloning wide values into
+        // `BigInt`; a row magnitude is a sum or an absolute difference.
+        let apply_row = |left: i128, right: i128| {
+            let left_coefficient = u64::try_from(left.unsigned_abs()).ok()?;
+            let right_coefficient = u64::try_from(right.unsigned_abs()).ok()?;
+            let mut left_product = larger * left_coefficient;
+            let right_product = smaller * right_coefficient;
+            if left.is_negative() == right.is_negative() {
+                left_product += right_product;
+                Some(left_product)
+            } else if left_product >= right_product {
+                Some(left_product - right_product)
+            } else {
+                Some(right_product - left_product)
+            }
+        };
+        let first = apply_row(a, b)?;
+        let second = apply_row(c, d)?;
         if &first >= larger || &second >= larger {
             return None;
         }

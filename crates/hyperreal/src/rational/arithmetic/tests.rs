@@ -1206,6 +1206,55 @@ mod tests {
     }
 
     #[test]
+    fn unsigned_lehmer_matrix_application_matches_signed_magnitudes() {
+        fn signed_reference(
+            larger: &BigUint,
+            smaller: &BigUint,
+            [a, b, c, d]: [i128; 4],
+        ) -> Option<(BigUint, BigUint)> {
+            let larger_signed = BigInt::from(larger.clone());
+            let smaller_signed = BigInt::from(smaller.clone());
+            let first = (&larger_signed * a + &smaller_signed * b)
+                .magnitude()
+                .clone();
+            let second = (larger_signed * c + smaller_signed * d)
+                .magnitude()
+                .clone();
+            if &first >= larger || &second >= larger {
+                return None;
+            }
+            Some((first, second))
+        }
+
+        let larger = (BigUint::one() << 320_usize) + (BigUint::one() << 127_usize) + 17_u8;
+        let smaller = (BigUint::one() << 319_usize) + (BigUint::one() << 191_usize) + 29_u8;
+        for a in [-3_i128, -1, 0, 1, 3] {
+            for b in [-3_i128, -1, 0, 1, 3] {
+                for c in [-3_i128, -1, 0, 1, 3] {
+                    for d in [-3_i128, -1, 0, 1, 3] {
+                        let matrix = [a, b, c, d];
+                        assert_eq!(
+                            Rational::apply_lehmer_gcd_matrix(&larger, &smaller, matrix),
+                            signed_reference(&larger, &smaller, matrix),
+                            "matrix={matrix:?}"
+                        );
+                    }
+                }
+            }
+        }
+        for oversized in [i128::MIN, i128::MAX] {
+            assert_eq!(
+                Rational::apply_lehmer_gcd_matrix(
+                    &larger,
+                    &smaller,
+                    [oversized, -oversized.saturating_abs(), 1, -1]
+                ),
+                None
+            );
+        }
+    }
+
+    #[test]
     fn recursive_half_gcd_preserves_matrix_and_stop_invariants() {
         fn generated_magnitude(bits: usize, mut state: u64) -> BigUint {
             let mut value = BigUint::ZERO;

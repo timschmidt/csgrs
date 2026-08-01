@@ -358,25 +358,25 @@ Cold backend algorithm families and retained rational fact dispatch selected fro
 | `rational_algorithm_dispatch_speed/reduce_fixed_512_coprime_cold` | not run | not run | Reduces fresh balanced 512-bit operands through the fixed-limb rational-operation GCD. |
 | `rational_algorithm_dispatch_speed/exact_remainder_large_knuth` | not run | not run | Computes a wide rational fractional remainder through the traced normalized Knuth backend. |
 | `rational_algorithm_dispatch_speed/division_trivial_small_quotient` | not run | not run | Exercises the backend's zero-quotient magnitude division exit on wide operands. |
-| `rational_algorithm_dispatch_speed/gcd_selected_128_bits` | not run | not run | Runs selected magnitude GCD on an ascending balanced two-limb pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_128_bits` | 132.43 ns | 131.89 ns - 133.17 ns | Runs selected magnitude GCD on an ascending balanced two-limb pair. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_128_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 128-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_192_bits` | not run | not run | Runs selected magnitude GCD at the retained three-limb Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_selected_192_bits` | 5.370 us | 5.342 us - 5.410 us | Runs selected magnitude GCD at the retained three-limb Lehmer crossover. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_192_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 192-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_512_bits` | not run | not run | Runs selected magnitude GCD above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_selected_512_bits` | 11.227 us | 11.204 us - 11.254 us | Runs selected magnitude GCD above the Lehmer crossover. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_512_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 512-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_1024_bits` | not run | not run | Runs selected magnitude GCD above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_selected_1024_bits` | 21.747 us | 21.676 us - 21.824 us | Runs selected magnitude GCD above the Lehmer crossover. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_1024_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 1,024-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_4096_bits` | not run | not run | Runs selected magnitude GCD well above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_selected_4096_bits` | 118.069 us | 117.625 us - 118.632 us | Runs selected magnitude GCD well above the Lehmer crossover. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_4096_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 4,096-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_192_bits` | 8.086 us | 8.072 us - 8.101 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 192 bits. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_192_bits` | 8.464 us | 8.451 us - 8.479 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 192 bits. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_192_bits` | 8.538 us | 8.497 us - 8.584 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_256_bits` | 8.338 us | 8.296 us - 8.387 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 256 bits. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_256_bits` | 8.316 us | 8.202 us - 8.452 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 256 bits. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_256_bits` | 13.967 us | 13.920 us - 14.020 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_512_bits` | 12.705 us | 12.660 us - 12.760 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 512 bits. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_512_bits` | 12.293 us | 12.230 us - 12.373 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 512 bits. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_512_bits` | 31.514 us | 31.336 us - 31.721 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_1024_bits` | 25.140 us | 25.074 us - 25.220 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 1,024 bits. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_1024_bits` | 24.132 us | 24.049 us - 24.226 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 1,024 bits. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_1024_bits` | 72.899 us | 72.721 us - 73.099 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_4096_bits` | 132.787 us | 132.540 us - 133.054 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 4,096 bits. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_4096_bits` | 129.132 us | 128.630 us - 129.760 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 4,096 bits. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_4096_bits` | 514.854 us | 512.048 us - 517.995 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
 | `rational_algorithm_dispatch_speed/half_gcd_candidate_8192_bits` | not run | not run | Runs the recursive half-GCD candidate below its provisional crossover. |
 | `rational_algorithm_dispatch_speed/half_gcd_lehmer_8192_bits` | not run | not run | Runs the quadratic Lehmer baseline on the same 8,192-bit pair. |
