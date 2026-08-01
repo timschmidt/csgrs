@@ -1199,7 +1199,10 @@ impl BezierParallel2 {
             other_power,
         );
         let equations = [orthogonality, distance_relation];
-        if distance_sign != RealSign::Zero && bivariate_system_may_have_component(&equations) {
+        if other.degree() >= 4
+            && distance_sign != RealSign::Zero
+            && bivariate_system_may_have_component(&equations)
+        {
             let reduced = rootless_axis_primitive_system(&equations, policy)?;
             let component_equations = reduced.as_ref().unwrap_or(&equations);
             if bivariate_system_may_have_component(component_equations) {
