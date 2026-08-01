@@ -12,8 +12,11 @@
 
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 
+use crate::bareiss::{BareissError, determinant_bareiss};
 use crate::curve_substitution::RationalParametricCurve2;
-use crate::resultant::{UnivariateResultantError, resultant_univariate_polynomials};
+use crate::resultant::{
+    UnivariateResultantError, resultant_univariate_polynomials, sylvester_matrix,
+};
 
 /// Selects which curve parameter remains after exact elimination.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -128,6 +131,58 @@ pub struct CurveIntersectionResultantReport {
     pub resultant_coefficients: Vec<Real>,
     /// Sampled resultant error, if construction failed at that boundary.
     pub resultant_error: Option<UnivariateResultantError>,
+}
+
+/// Final status for a rational lift of the eliminated system parameter.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum CurveIntersectionParameterLiftStatus {
+    /// Every potentially useful adjugate ratio was constructed exactly.
+    Constructed,
+    /// At least one bivariate equation was empty.
+    EmptyEquation,
+    /// A coefficient needed for degree certification remained undecided.
+    UndecidedCoefficient,
+    /// One equation is constant in the eliminated parameter, so a linear
+    /// common-root lift cannot certify the pairing.
+    UnsupportedEliminatedDegree,
+    /// The conservative cofactor degree exceeded the configured budget.
+    DegreeBoundExceeded,
+    /// An exact cofactor determinant could not be constructed.
+    DeterminantError,
+    /// Exact cofactor interpolation or trimming did not complete.
+    InterpolationFailed,
+}
+
+/// One exact adjugate ratio for lifting the eliminated parameter.
+///
+/// At a retained root where the specialized Sylvester matrix has nullity one,
+/// at least one returned denominator is nonzero and
+/// `eliminated = numerator(retained) / denominator(retained)`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveIntersectionParameterLiftMap {
+    /// Sylvester row whose two signed cofactors define this ratio.
+    pub cofactor_row: usize,
+    /// Numerator coefficients in ascending retained-parameter power order.
+    pub numerator_coefficients: Vec<Real>,
+    /// Denominator coefficients in ascending retained-parameter power order.
+    pub denominator_coefficients: Vec<Real>,
+}
+
+/// Exact report for linear common-root lifts of one bivariate system parameter.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveIntersectionParameterLiftReport {
+    /// Final construction status.
+    pub status: CurveIntersectionParameterLiftStatus,
+    /// Parameter supplied to every returned rational map.
+    pub retained_parameter: CurveResultantParameter,
+    /// Parameter produced by every returned rational map.
+    pub lifted_parameter: CurveResultantParameter,
+    /// Conservative interpolation degree used for every signed cofactor.
+    pub degree_bound: usize,
+    /// Candidate adjugate ratios. Identically zero denominators are omitted.
+    pub maps: Vec<CurveIntersectionParameterLiftMap>,
+    /// Exact determinant failure, when construction stopped at that boundary.
+    pub determinant_error: Option<BareissError>,
 }
 
 /// Eliminates one parameter from two exact bivariate polynomial equations.
@@ -300,6 +355,225 @@ pub fn resultant_bivariate_polynomial_system(
     )
 }
 
+/// Constructs rational lifts for the eliminated parameter of a bivariate system.
+///
+/// After specializing the retained parameter, the Sylvester matrix annihilates
+/// `[u^(n-1), ..., u, 1]` at every common root `u`. When that matrix has
+/// nullity one, any nonzero adjugate column is a scalar multiple of this power
+/// vector, so the ratio of its last two entries is exactly `u`. This function
+/// interpolates those signed cofactors as exact polynomials of the retained
+/// parameter. Callers must still prove that a denominator is nonzero at their
+/// retained root and replay the resulting rational image against the intended
+/// lifted-root interval.
+pub fn linear_parameter_lifts_bivariate_polynomial_system(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> CurveIntersectionParameterLiftReport {
+    let lifted_parameter = opposite_parameter(retained_parameter);
+    if bivariate_polynomial_is_empty(first_equation)
+        || bivariate_polynomial_is_empty(second_equation)
+    {
+        return parameter_lift_report(
+            CurveIntersectionParameterLiftStatus::EmptyEquation,
+            retained_parameter,
+            lifted_parameter,
+            0,
+            Vec::new(),
+            None,
+        );
+    }
+    let (Ok(first_degree), Ok(second_degree)) = (
+        certified_bivariate_degree(first_equation, config.min_precision),
+        certified_bivariate_degree(second_equation, config.min_precision),
+    ) else {
+        return parameter_lift_report(
+            CurveIntersectionParameterLiftStatus::UndecidedCoefficient,
+            retained_parameter,
+            lifted_parameter,
+            0,
+            Vec::new(),
+            None,
+        );
+    };
+    let (Some(first_degree), Some(second_degree)) = (first_degree, second_degree) else {
+        return parameter_lift_report(
+            CurveIntersectionParameterLiftStatus::UnsupportedEliminatedDegree,
+            retained_parameter,
+            lifted_parameter,
+            0,
+            Vec::new(),
+            None,
+        );
+    };
+    let (first_retained_degree, first_lifted_degree) =
+        oriented_bidegree(first_degree, retained_parameter);
+    let (second_retained_degree, second_lifted_degree) =
+        oriented_bidegree(second_degree, retained_parameter);
+    if first_lifted_degree == 0 || second_lifted_degree == 0 {
+        return parameter_lift_report(
+            CurveIntersectionParameterLiftStatus::UnsupportedEliminatedDegree,
+            retained_parameter,
+            lifted_parameter,
+            0,
+            Vec::new(),
+            None,
+        );
+    }
+    let sylvester_dimension = first_lifted_degree + second_lifted_degree;
+    let retained_entry_degree = first_retained_degree.max(second_retained_degree);
+    let degree_bound = (sylvester_dimension - 1) * retained_entry_degree;
+    if degree_bound > config.max_resultant_degree {
+        return parameter_lift_report(
+            CurveIntersectionParameterLiftStatus::DegreeBoundExceeded,
+            retained_parameter,
+            lifted_parameter,
+            degree_bound,
+            Vec::new(),
+            None,
+        );
+    }
+
+    let mut parameters = Vec::with_capacity(degree_bound + 1);
+    let mut numerators = vec![Vec::with_capacity(degree_bound + 1); sylvester_dimension];
+    let mut denominators = vec![Vec::with_capacity(degree_bound + 1); sylvester_dimension];
+    let mut sample_index = 0_usize;
+    while parameters.len() <= degree_bound {
+        let parameter = Real::from(sample_index as u64);
+        sample_index += 1;
+        let first = evaluate_bivariate_at_retained_parameter(
+            first_equation,
+            &parameter,
+            retained_parameter,
+        );
+        let second = evaluate_bivariate_at_retained_parameter(
+            second_equation,
+            &parameter,
+            retained_parameter,
+        );
+        let (Ok(first_sample_degree), Ok(second_sample_degree)) = (
+            certified_nonzero_degree(&first, config.min_precision),
+            certified_nonzero_degree(&second, config.min_precision),
+        ) else {
+            return parameter_lift_report(
+                CurveIntersectionParameterLiftStatus::UndecidedCoefficient,
+                retained_parameter,
+                lifted_parameter,
+                degree_bound,
+                Vec::new(),
+                None,
+            );
+        };
+        if first_sample_degree != Some(first_lifted_degree)
+            || second_sample_degree != Some(second_lifted_degree)
+        {
+            continue;
+        }
+        let sylvester = sylvester_matrix(&first, &second);
+        for cofactor_row in 0..sylvester_dimension {
+            let numerator = match signed_cofactor(
+                &sylvester,
+                cofactor_row,
+                sylvester_dimension - 2,
+                config.min_precision,
+            ) {
+                Ok(value) => value,
+                Err(error) => {
+                    return parameter_lift_report(
+                        CurveIntersectionParameterLiftStatus::DeterminantError,
+                        retained_parameter,
+                        lifted_parameter,
+                        degree_bound,
+                        Vec::new(),
+                        Some(error),
+                    );
+                }
+            };
+            let denominator = match signed_cofactor(
+                &sylvester,
+                cofactor_row,
+                sylvester_dimension - 1,
+                config.min_precision,
+            ) {
+                Ok(value) => value,
+                Err(error) => {
+                    return parameter_lift_report(
+                        CurveIntersectionParameterLiftStatus::DeterminantError,
+                        retained_parameter,
+                        lifted_parameter,
+                        degree_bound,
+                        Vec::new(),
+                        Some(error),
+                    );
+                }
+            };
+            numerators[cofactor_row].push(numerator);
+            denominators[cofactor_row].push(denominator);
+        }
+        parameters.push(parameter);
+    }
+
+    let mut maps = Vec::with_capacity(sylvester_dimension);
+    for cofactor_row in 0..sylvester_dimension {
+        let Some(numerator) = interpolate_parameter_values(
+            &parameters,
+            &numerators[cofactor_row],
+            config.min_precision,
+        ) else {
+            return parameter_lift_report(
+                CurveIntersectionParameterLiftStatus::InterpolationFailed,
+                retained_parameter,
+                lifted_parameter,
+                degree_bound,
+                Vec::new(),
+                None,
+            );
+        };
+        let Some(denominator) = interpolate_parameter_values(
+            &parameters,
+            &denominators[cofactor_row],
+            config.min_precision,
+        ) else {
+            return parameter_lift_report(
+                CurveIntersectionParameterLiftStatus::InterpolationFailed,
+                retained_parameter,
+                lifted_parameter,
+                degree_bound,
+                Vec::new(),
+                None,
+            );
+        };
+        let Ok(denominator_is_zero) =
+            is_certified_zero_polynomial(&denominator, config.min_precision)
+        else {
+            return parameter_lift_report(
+                CurveIntersectionParameterLiftStatus::UndecidedCoefficient,
+                retained_parameter,
+                lifted_parameter,
+                degree_bound,
+                Vec::new(),
+                None,
+            );
+        };
+        if !denominator_is_zero {
+            maps.push(CurveIntersectionParameterLiftMap {
+                cofactor_row,
+                numerator_coefficients: numerator,
+                denominator_coefficients: denominator,
+            });
+        }
+    }
+    parameter_lift_report(
+        CurveIntersectionParameterLiftStatus::Constructed,
+        retained_parameter,
+        lifted_parameter,
+        degree_bound,
+        maps,
+        None,
+    )
+}
+
 /// Eliminate one parameter from a pair of 2D polynomial parametric curves.
 ///
 /// For `retained_parameter == First`, this constructs
@@ -425,6 +699,72 @@ fn curve_resultant_report(
         resultant_coefficients,
         resultant_error,
     }
+}
+
+fn parameter_lift_report(
+    status: CurveIntersectionParameterLiftStatus,
+    retained_parameter: CurveResultantParameter,
+    lifted_parameter: CurveResultantParameter,
+    degree_bound: usize,
+    maps: Vec<CurveIntersectionParameterLiftMap>,
+    determinant_error: Option<BareissError>,
+) -> CurveIntersectionParameterLiftReport {
+    CurveIntersectionParameterLiftReport {
+        status,
+        retained_parameter,
+        lifted_parameter,
+        degree_bound,
+        maps,
+        determinant_error,
+    }
+}
+
+fn signed_cofactor(
+    matrix: &[Vec<Real>],
+    removed_row: usize,
+    removed_column: usize,
+    min_precision: i32,
+) -> Result<Real, BareissError> {
+    let minor = matrix
+        .iter()
+        .enumerate()
+        .filter(|(row, _)| *row != removed_row)
+        .map(|(_, row)| {
+            row.iter()
+                .enumerate()
+                .filter(|(column, _)| *column != removed_column)
+                .map(|(_, coefficient)| coefficient.clone())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let determinant = determinant_bareiss(&minor, min_precision)?.determinant;
+    Ok(if (removed_row + removed_column).is_multiple_of(2) {
+        determinant
+    } else {
+        -determinant
+    })
+}
+
+fn interpolate_parameter_values(
+    parameters: &[Real],
+    values: &[Real],
+    min_precision: i32,
+) -> Option<Vec<Real>> {
+    if parameters.len() != values.len() {
+        return None;
+    }
+    let samples = parameters
+        .iter()
+        .zip(values)
+        .map(
+            |(parameter_value, resultant)| CurveIntersectionResultantSample {
+                parameter_value: parameter_value.clone(),
+                resultant: resultant.clone(),
+            },
+        )
+        .collect::<Vec<_>>();
+    let coefficients = interpolate_samples(&samples, min_precision)?;
+    trim_trailing_zeroes(coefficients, min_precision).ok()
 }
 
 fn undecided_report(
@@ -789,6 +1129,99 @@ mod tests {
                 -report.resultant_coefficients[1].clone()
             );
         }
+    }
+
+    #[test]
+    fn bivariate_linear_lifts_recover_either_parameter_from_adjugate_ratios() {
+        // `u-t=0` and `u+t-1=0` meet only at `t=u=1/2`.
+        let first = BivariatePolynomial::new(vec![vec![real(0), real(1)], vec![real(-1)]]);
+        let second = BivariatePolynomial::new(vec![vec![real(-1), real(1)], vec![real(1)]]);
+        let half = (real(1) / real(2)).unwrap();
+
+        for retained_parameter in [
+            CurveResultantParameter::First,
+            CurveResultantParameter::Second,
+        ] {
+            let report = linear_parameter_lifts_bivariate_polynomial_system(
+                &first,
+                &second,
+                retained_parameter,
+                CurveIntersectionResultantConfig::default(),
+            );
+            assert_eq!(
+                report.status,
+                CurveIntersectionParameterLiftStatus::Constructed
+            );
+            assert_eq!(report.retained_parameter, retained_parameter);
+            assert_eq!(
+                report.lifted_parameter,
+                opposite_parameter(retained_parameter)
+            );
+            assert_eq!(report.degree_bound, 1);
+            assert!(!report.maps.is_empty());
+            assert!(report.maps.iter().any(|map| {
+                let denominator = eval_univariate(&map.denominator_coefficients, &half);
+                if denominator == real(0) {
+                    return false;
+                }
+                let numerator = eval_univariate(&map.numerator_coefficients, &half);
+                numerator == &half * denominator
+            }));
+        }
+    }
+
+    #[test]
+    fn bivariate_linear_lifts_recover_a_nonlinear_common_root() {
+        // `u^2-t=0` and `4u+4t-3=0` share `(t,u)=(1/4,1/2)`.
+        let first = BivariatePolynomial::new(vec![vec![real(0), real(0), real(1)], vec![real(-1)]]);
+        let second = BivariatePolynomial::new(vec![vec![real(-3), real(4)], vec![real(4)]]);
+        let quarter = (real(1) / real(4)).unwrap();
+        let half = (real(1) / real(2)).unwrap();
+
+        for (retained_parameter, retained, lifted) in [
+            (CurveResultantParameter::First, &quarter, &half),
+            (CurveResultantParameter::Second, &half, &quarter),
+        ] {
+            let report = linear_parameter_lifts_bivariate_polynomial_system(
+                &first,
+                &second,
+                retained_parameter,
+                CurveIntersectionResultantConfig::default(),
+            );
+            assert_eq!(
+                report.status,
+                CurveIntersectionParameterLiftStatus::Constructed
+            );
+            assert!(report.maps.iter().any(|map| {
+                let denominator = eval_univariate(&map.denominator_coefficients, retained);
+                if denominator == real(0) {
+                    return false;
+                }
+                let numerator = eval_univariate(&map.numerator_coefficients, retained);
+                numerator == lifted * denominator
+            }));
+        }
+    }
+
+    #[test]
+    fn bivariate_linear_lifts_report_nonlinear_fibers_explicitly() {
+        // The first equation vanishes as a polynomial in `u` at `t=1/2`, so
+        // the specialized common-root fiber is not certified by a nullity-one
+        // Sylvester lift.
+        let first = BivariatePolynomial::new(vec![vec![real(-1)], vec![real(2)]]);
+        let second = BivariatePolynomial::new(vec![vec![real(-1), real(0), real(2)]]);
+        let report = linear_parameter_lifts_bivariate_polynomial_system(
+            &first,
+            &second,
+            CurveResultantParameter::First,
+            CurveIntersectionResultantConfig::default(),
+        );
+
+        assert_eq!(
+            report.status,
+            CurveIntersectionParameterLiftStatus::UnsupportedEliminatedDegree
+        );
+        assert!(report.maps.is_empty());
     }
 
     #[test]

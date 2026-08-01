@@ -784,7 +784,7 @@ fn is_zero_polynomial(
     Ok(true)
 }
 
-fn sylvester_matrix(left: &[Real], right: &[Real]) -> Vec<Vec<Real>> {
+pub(crate) fn sylvester_matrix(left: &[Real], right: &[Real]) -> Vec<Vec<Real>> {
     let left_degree = left.len() - 1;
     let right_degree = right.len() - 1;
     let dimension = left_degree + right_degree;
