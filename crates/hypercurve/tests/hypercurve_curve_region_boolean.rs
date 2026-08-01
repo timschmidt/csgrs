@@ -4,8 +4,8 @@ use hypercurve::{
 };
 #[cfg(feature = "predicates")]
 use hypercurve::{
-    CircularArc2, CurveBoundaryInteriorSide2, CurveRegionLoopRole, FillRule, QuadraticBezier2,
-    RationalBezier2,
+    CircularArc2, CubicBezier2, CurveBoundaryInteriorSide2, CurveRegionLoopRole, FillRule,
+    QuadraticBezier2, RationalBezier2,
 };
 
 fn point(x: i64, y: i64) -> Point2 {
@@ -916,4 +916,89 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
     let between_tops = Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap());
     assert_location(xor, point(0, 1), RegionPointLocation::Outside);
     assert_location(xor, between_tops, RegionPointLocation::Inside);
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges() {
+    let quadratic_start = point(-2, 4);
+    let quadratic_control = point(0, -4);
+    let quadratic_end = point(2, 4);
+    let quadratic = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            quadratic_start.clone(),
+            quadratic_control.clone(),
+            quadratic_end.clone(),
+        )),
+        Curve2::from(LineSeg2::try_new(quadratic_end.clone(), quadratic_start.clone()).unwrap()),
+    ])
+    .unwrap();
+    let cubic_first_control = Point2::new(
+        (Real::from(-2_i8) / Real::from(3_i8)).unwrap(),
+        (Real::from(-4_i8) / Real::from(3_i8)).unwrap(),
+    );
+    let cubic_second_control = Point2::new(
+        (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+        (Real::from(-4_i8) / Real::from(3_i8)).unwrap(),
+    );
+    let cubic = CurvePath2::try_new(vec![
+        Curve2::from(CubicBezier2::new(
+            quadratic_start.clone(),
+            cubic_first_control.clone(),
+            cubic_second_control.clone(),
+            quadratic_end.clone(),
+        )),
+        Curve2::from(LineSeg2::try_new(quadratic_end.clone(), quadratic_start.clone()).unwrap()),
+    ])
+    .unwrap();
+    let reversed_cubic = CurvePath2::try_new(vec![
+        Curve2::from(CubicBezier2::new(
+            quadratic_end.clone(),
+            cubic_second_control,
+            cubic_first_control,
+            quadratic_start.clone(),
+        )),
+        Curve2::from(LineSeg2::try_new(quadratic_start, quadratic_end).unwrap()),
+    ])
+    .unwrap();
+    let policy = CurveContext::STRICT;
+    let narrow = quadratic
+        .boolean_region(
+            &square_path(-3, -1, 3, 2),
+            BooleanOp::Intersection,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+    assert!(narrow.has_algebraic_fragments());
+    for (cubic, interior_side) in [
+        (&cubic, CurveBoundaryInteriorSide2::Left),
+        (&reversed_cubic, CurveBoundaryInteriorSide2::Right),
+    ] {
+        let wide = cubic
+            .boolean_region(
+                &square_path(-3, -1, 3, 3),
+                BooleanOp::Intersection,
+                interior_side,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        assert!(wide.has_algebraic_fragments());
+
+        let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
+        assert_location(results.union(), point(0, 3), RegionPointLocation::Boundary);
+        assert_location(
+            results.intersection(),
+            point(0, 3),
+            RegionPointLocation::Outside,
+        );
+        assert!(results.difference().is_empty());
+        let between_tops =
+            Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap());
+        assert_location(results.xor(), between_tops, RegionPointLocation::Inside);
+    }
 }

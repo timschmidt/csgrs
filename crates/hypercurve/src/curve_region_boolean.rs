@@ -141,6 +141,12 @@ struct CarrierOverlap {
     orientation: RationalBezierOverlapOrientation2,
 }
 
+#[derive(Debug)]
+enum CarrierOverlapClip {
+    Unmatched,
+    Matched(Option<(BezierParameterRange2, BezierParameterRange2)>),
+}
+
 #[derive(Clone, Copy, Debug)]
 struct TransitionContactCandidate {
     first_carrier: usize,
@@ -603,11 +609,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             ranges_intersect(overlap.first_range(), first_carrier, &self.data.policy)?;
         let second_intersects =
             ranges_intersect(overlap.second_range(), second_carrier, &self.data.policy)?;
-        if !first_intersects && !second_intersects {
+        if !first_intersects || !second_intersects {
             return Ok(None);
         }
-        if first_intersects == second_intersects
-            && range_inside_carrier(overlap.first_range(), first_carrier, &self.data.policy)?
+        if range_inside_carrier(overlap.first_range(), first_carrier, &self.data.policy)?
             && range_inside_carrier(overlap.second_range(), second_carrier, &self.data.policy)?
         {
             return Ok(Some((
@@ -615,7 +620,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 overlap.second_range().clone(),
             )));
         }
-        if let Some(ranges) = clip_identity_parameter_overlap(
+        match clip_projectively_aligned_parameter_overlap(
             overlap.first_range(),
             overlap.second_range(),
             overlap.orientation(),
@@ -623,19 +628,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             second_carrier,
             &self.data.policy,
         )? {
-            return Ok(Some(ranges));
+            CarrierOverlapClip::Matched(ranges) => Ok(ranges),
+            CarrierOverlapClip::Unmatched => {
+                Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported))
+            }
         }
-        if identity_parameter_correspondence(
-            overlap.first_range(),
-            overlap.second_range(),
-            overlap.orientation(),
-            first_carrier,
-            second_carrier,
-            &self.data.policy,
-        )? {
-            return Ok(None);
-        }
-        Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported))
     }
 
     fn build_boolean_topology(&self) -> ExactCurveResult<CurveRegionBooleanTopology> {
@@ -784,55 +781,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
 
             for overlap in result.overlaps() {
-                let first_carrier = &self.data.carriers[pair.first_carrier_index];
-                let second_carrier = &self.data.carriers[pair.second_carrier_index];
-                let first_intersects =
-                    ranges_intersect(overlap.first_range(), first_carrier, &self.data.policy)?;
-                let second_intersects =
-                    ranges_intersect(overlap.second_range(), second_carrier, &self.data.policy)?;
-                if !first_intersects && !second_intersects {
+                let Some((first_range, second_range)) =
+                    self.clipped_overlap_ranges(pair, overlap)?
+                else {
                     continue;
-                }
-                let (first_range, second_range) = if first_intersects == second_intersects
-                    && range_inside_carrier(
-                        overlap.first_range(),
-                        first_carrier,
-                        &self.data.policy,
-                    )?
-                    && range_inside_carrier(
-                        overlap.second_range(),
-                        second_carrier,
-                        &self.data.policy,
-                    )? {
-                    (
-                        overlap.first_range().clone(),
-                        overlap.second_range().clone(),
-                    )
-                } else {
-                    let Some(ranges) = clip_identity_parameter_overlap(
-                        overlap.first_range(),
-                        overlap.second_range(),
-                        overlap.orientation(),
-                        first_carrier,
-                        second_carrier,
-                        &self.data.policy,
-                    )?
-                    else {
-                        if identity_parameter_correspondence(
-                            overlap.first_range(),
-                            overlap.second_range(),
-                            overlap.orientation(),
-                            first_carrier,
-                            second_carrier,
-                            &self.data.policy,
-                        )? {
-                            continue;
-                        }
-                        return Err(
-                            self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported)
-                        );
-                    };
-                    ranges
                 };
                 let first_parameters = [first_range.start(), first_range.end()];
                 let second_parameters = [second_range.start(), second_range.end()];
@@ -2141,61 +2093,80 @@ fn range_inside_carrier(
     )
 }
 
-fn clip_identity_parameter_overlap(
+fn clip_projectively_aligned_parameter_overlap(
     first_range: &BezierParameterRange2,
     second_range: &BezierParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
     first_carrier: &RegionCarrier,
     second_carrier: &RegionCarrier,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<(BezierParameterRange2, BezierParameterRange2)>> {
-    if !identity_parameter_correspondence(
-        first_range,
-        second_range,
-        orientation,
-        first_carrier,
-        second_carrier,
-        policy,
-    )? {
-        return Ok(None);
+) -> ExactCurveResult<CarrierOverlapClip> {
+    let invalid = |family, cause| ExactCurveError::invalid(CurveOperation2::Boolean, family, cause);
+    let reversed = orientation == RationalBezierOverlapOrientation2::Reversed;
+    if reversed || first_carrier.curve != second_carrier.curve {
+        let first = RationalBezier2::try_from_subcurve(&first_carrier.curve)
+            .map_err(|cause| invalid(first_carrier.family, cause))?;
+        let second = RationalBezier2::try_from_subcurve(&second_carrier.curve)
+            .map_err(|cause| invalid(second_carrier.family, cause))?;
+        match first.same_projective_control_net_degree_aligned(&second, reversed, policy) {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(CarrierOverlapClip::Unmatched),
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Boolean,
+                    first_carrier.family,
+                    reason,
+                ));
+            }
+        }
+    }
+
+    let map_to_second = |parameter: &BezierParameter2| {
+        if reversed {
+            parameter.unit_complement()
+        } else {
+            parameter.clone()
+        }
+    };
+    let mapped_overlap_start = map_to_second(first_range.start());
+    let mapped_overlap_end = map_to_second(first_range.end());
+    if decided_parameter_cmp(&mapped_overlap_start, second_range.start(), policy)?
+        != Ordering::Equal
+        || decided_parameter_cmp(&mapped_overlap_end, second_range.end(), policy)?
+            != Ordering::Equal
+    {
+        return Ok(CarrierOverlapClip::Unmatched);
     }
 
     let (overlap_start, overlap_end) = ascending_range(first_range, policy)?;
+    let (second_start_in_first, second_end_in_first) = if reversed {
+        (
+            second_carrier.end.unit_complement(),
+            second_carrier.start.unit_complement(),
+        )
+    } else {
+        (second_carrier.start.clone(), second_carrier.end.clone())
+    };
     let start = maximum_parameter(
-        [overlap_start, &first_carrier.start, &second_carrier.start],
+        [overlap_start, &first_carrier.start, &second_start_in_first],
         policy,
     )?;
     let end = minimum_parameter(
-        [overlap_end, &first_carrier.end, &second_carrier.end],
+        [overlap_end, &first_carrier.end, &second_end_in_first],
         policy,
     )?;
     match decided_parameter_cmp(&start, &end, policy)? {
         Ordering::Less => {}
-        Ordering::Equal | Ordering::Greater => return Ok(None),
+        Ordering::Equal | Ordering::Greater => {
+            return Ok(CarrierOverlapClip::Matched(None));
+        }
     }
-    let range = BezierParameterRange2::new_validated(start, end);
-    Ok(Some((range.clone(), range)))
-}
-
-fn identity_parameter_correspondence(
-    first_range: &BezierParameterRange2,
-    second_range: &BezierParameterRange2,
-    orientation: RationalBezierOverlapOrientation2,
-    first_carrier: &RegionCarrier,
-    second_carrier: &RegionCarrier,
-    policy: &CurveContext,
-) -> ExactCurveResult<bool> {
-    if orientation != RationalBezierOverlapOrientation2::Same
-        || first_carrier.curve != second_carrier.curve
-    {
-        return Ok(false);
-    }
-    Ok(
-        decided_parameter_cmp(first_range.start(), second_range.start(), policy)?
-            == Ordering::Equal
-            && decided_parameter_cmp(first_range.end(), second_range.end(), policy)?
-                == Ordering::Equal,
-    )
+    let second_start = map_to_second(&start);
+    let second_end = map_to_second(&end);
+    Ok(CarrierOverlapClip::Matched(Some((
+        BezierParameterRange2::new_validated(start, end),
+        BezierParameterRange2::new_validated(second_start, second_end),
+    ))))
 }
 
 fn maximum_parameter<const N: usize>(

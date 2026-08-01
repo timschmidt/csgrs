@@ -1246,6 +1246,32 @@ impl BezierParameter2 {
         matches!(self, Self::Exact(_))
     }
 
+    pub(crate) fn unit_complement(&self) -> Self {
+        match self {
+            Self::Exact(value) => Self::Exact(Real::one() - value),
+            Self::Algebraic(parameter) => {
+                // Horner composition with `(1 - t)` preserves the leading
+                // coefficient structurally while avoiding a second temporary
+                // coefficient basis. The affine bijection preserves the
+                // certified singleton root and reverses its isolating interval.
+                let polynomial = parameter.polynomial();
+                let polynomial = BezierParameterPolynomial {
+                    coefficients: unit_complement_power_coefficients(polynomial.coefficients()),
+                };
+                let interval = BezierParameterInterval {
+                    start: Real::one() - parameter.interval().end(),
+                    end: Real::one() - parameter.interval().start(),
+                };
+                let complemented =
+                    BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
+                if parameter.data.shared.simple_root.get() == Some(&true) {
+                    let _ = complemented.data.shared.simple_root.set(true);
+                }
+                Self::Algebraic(complemented)
+            }
+        }
+    }
+
     /// Promotes a rational algebraic parameter to a represented exact value.
     ///
     /// Irrational and nonrational-coefficient parameters remain algebraic.
@@ -1340,6 +1366,24 @@ impl BezierParameter2 {
         }
         strict_rational_between_known_order(self, other, &left, &right, policy)
     }
+}
+
+fn unit_complement_power_coefficients(coefficients: &[Real]) -> Vec<Real> {
+    let mut transformed = vec![
+        coefficients
+            .last()
+            .expect("a Bezier parameter polynomial is nonempty")
+            .clone(),
+    ];
+    for coefficient in coefficients[..coefficients.len() - 1].iter().rev() {
+        let previous_len = transformed.len();
+        transformed.push(-transformed[previous_len - 1].clone());
+        for power in (1..previous_len).rev() {
+            transformed[power] = &transformed[power] - &transformed[power - 1];
+        }
+        transformed[0] += coefficient;
+    }
+    transformed
 }
 
 fn strict_rational_between_known_order(
@@ -3451,6 +3495,27 @@ mod conversion_tests {
                 panic!("{context} unexpectedly uncertain: {reason:?}")
             }
         }
+    }
+
+    #[test]
+    fn algebraic_unit_complement_preserves_the_exact_singleton_root() {
+        let policy = CurveContext::STRICT;
+        let parameter = algebraic_parameter(&polynomial(&[-1, 0, 2]));
+        let complemented = parameter.unit_complement();
+        let BezierParameter2::Algebraic(complemented_algebraic) = &complemented else {
+            panic!("an irrational parameter must remain algebraic")
+        };
+        assert_eq!(
+            complemented_algebraic.polynomial().coefficients(),
+            &[Real::one(), Real::from(-4_i8), Real::from(2_i8)]
+        );
+        assert_eq!(complemented_algebraic.interval().start(), &Real::zero());
+        assert_eq!(complemented_algebraic.interval().end(), &rational(1, 2));
+        let restored = complemented.unit_complement();
+        assert!(decided(
+            restored.same_value(&parameter, &policy).unwrap(),
+            "double-complement equality"
+        ));
     }
 
     #[test]

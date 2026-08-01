@@ -2744,48 +2744,8 @@ fn rationalize_subcurve(
     curve: &BezierSubcurve2,
     family: CurveFamily2,
 ) -> ExactCurveResult<RationalBezier2> {
-    let exact_line_image = match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.retained_exact_line_image().cloned(),
-        _ => None,
-    };
-    let implicit_quadratic_conic = match curve {
-        BezierSubcurve2::RationalQuadratic(curve) => {
-            curve.retained_implicit_quadratic_conic().cloned()
-        }
-        _ => None,
-    };
-    let circular_conic = match curve {
-        BezierSubcurve2::RationalQuadratic(curve) => curve.retained_circular_conic().cloned(),
-        _ => None,
-    };
-    let (control_points, weights) = match curve {
-        BezierSubcurve2::Quadratic(curve) => (
-            curve.control_points().into_iter().cloned().collect(),
-            vec![Real::one(); 3],
-        ),
-        BezierSubcurve2::Cubic(curve) => (
-            curve.control_points().into_iter().cloned().collect(),
-            vec![Real::one(); 4],
-        ),
-        BezierSubcurve2::RationalQuadratic(curve) => (
-            curve.control_points().into_iter().cloned().collect(),
-            curve.weights().into_iter().cloned().collect(),
-        ),
-        BezierSubcurve2::Rational(curve) => return Ok(curve.clone()),
-    };
-    match (exact_line_image, implicit_quadratic_conic) {
-        (Some(line), _) => {
-            RationalBezier2::try_new_with_exact_line_image(control_points, weights, line)
-        }
-        (None, Some(conic)) => RationalBezier2::try_new_with_implicit_quadratic_conic(
-            control_points,
-            weights,
-            conic,
-            circular_conic,
-        ),
-        (None, None) => RationalBezier2::try_new(control_points, weights),
-    }
-    .map_err(|cause| ExactCurveError::invalid(CurveOperation2::NativeTopology, family, cause))
+    RationalBezier2::try_from_subcurve(curve)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::NativeTopology, family, cause))
 }
 
 fn promote_native_bezier_fragments(

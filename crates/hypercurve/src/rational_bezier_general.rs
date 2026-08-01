@@ -37,7 +37,7 @@ use crate::intersect::{circle_relation_from_supports, oriented_param_range_overl
 use crate::{
     Aabb2, Axis2, BezierArrangementGraph2, BezierLineContactKind, BezierLineContactRelation,
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
-    BezierParameterPolynomial, BezierParameterRange2, BezierSplitMaterialization2,
+    BezierParameterPolynomial, BezierParameterRange2, BezierSplitMaterialization2, BezierSubcurve2,
     CircleCircleRelation, Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
     CurveOperation2, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, LineSide,
     ParamRange, Point2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
@@ -509,6 +509,27 @@ impl From<RationalQuadraticBezier2> for RationalBezier2 {
 }
 
 impl RationalBezier2 {
+    pub(crate) fn try_from_subcurve(curve: &BezierSubcurve2) -> CurveResult<Self> {
+        match curve {
+            BezierSubcurve2::Quadratic(curve) => {
+                let control_points = curve.control_points().into_iter().cloned().collect();
+                let weights = vec![Real::one(); 3];
+                match curve.retained_exact_line_image() {
+                    Some(line) => {
+                        Self::try_new_with_exact_line_image(control_points, weights, line.clone())
+                    }
+                    None => Self::try_new(control_points, weights),
+                }
+            }
+            BezierSubcurve2::Cubic(curve) => Self::try_new(
+                curve.control_points().into_iter().cloned().collect(),
+                vec![Real::one(); 4],
+            ),
+            BezierSubcurve2::RationalQuadratic(curve) => Ok(Self::from(curve.clone())),
+            BezierSubcurve2::Rational(curve) => Ok(curve.clone()),
+        }
+    }
+
     /// Constructs an exact positive-degree rational Bezier curve.
     pub fn try_new(control_points: Vec<Point2>, weights: Vec<Real>) -> CurveResult<Self> {
         Self::try_new_with_lineage(
@@ -3426,7 +3447,7 @@ impl RationalBezier2 {
         Some(true)
     }
 
-    fn same_projective_control_net_degree_aligned(
+    pub(crate) fn same_projective_control_net_degree_aligned(
         &self,
         other: &Self,
         reversed: bool,
