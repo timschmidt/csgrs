@@ -3794,7 +3794,7 @@ impl CurveRegion2 {
             let path = if self.data.strict_materialized_connectivity_certified {
                 CurvePath2::from_structurally_closed_curves(curves)
             } else {
-                let path = CurvePath2::try_new_with_policy(curves, policy)
+                let path = CurvePath2::try_new_raw(curves, policy)
                     .map_err(|error| error.with_operation(operation))?;
                 match crate::curve::validate_closed_curve_path_connectivity(&path, policy)
                     .map_err(|error| error.with_operation(operation))?
@@ -5202,7 +5202,7 @@ fn materialized_boundary_loop_is_simple(
         }
         curves.push(Curve2::from(curve.clone()));
     }
-    let path = match CurvePath2::try_new_with_policy(curves, policy) {
+    let path = match CurvePath2::try_new_raw(curves, policy) {
         Ok(path) => path,
         Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
         Err(ExactCurveError::Blocked(blocker)) => {

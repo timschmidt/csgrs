@@ -489,6 +489,25 @@ impl PartialEq for RationalBezier2 {
     }
 }
 
+impl From<RationalQuadraticBezier2> for RationalBezier2 {
+    fn from(curve: RationalQuadraticBezier2) -> Self {
+        let control_points = curve.control_points().into_iter().cloned().collect();
+        let weights = curve.weights().into_iter().cloned().collect();
+        let implicit_quadratic_conic = curve.retained_implicit_quadratic_conic().cloned();
+        let circular_conic = curve.retained_circular_conic().cloned();
+        match implicit_quadratic_conic {
+            Some(implicit_quadratic_conic) => Self::try_new_with_implicit_quadratic_conic(
+                control_points,
+                weights,
+                implicit_quadratic_conic,
+                circular_conic,
+            ),
+            None => Self::try_new(control_points, weights),
+        }
+        .expect("validated rational-quadratic controls remain valid after promotion")
+    }
+}
+
 impl RationalBezier2 {
     /// Constructs an exact positive-degree rational Bezier curve.
     pub fn try_new(control_points: Vec<Point2>, weights: Vec<Real>) -> CurveResult<Self> {
@@ -1595,10 +1614,9 @@ impl RationalBezier2 {
                 },
             }));
         }
-        if let Classification::Decided(Some(overlap)) =
-            self.certified_line_image_overlap(other, policy)
+        if let Some(Classification::Decided(contacts)) =
+            self.certified_linear_image_contacts(other, policy)?
         {
-            let contacts = RationalBezierIntersectionContacts2::Overlap(overlap);
             let candidates = intersection_candidates_from_contacts(&contacts);
             let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
@@ -1776,6 +1794,72 @@ impl RationalBezier2 {
         }))
     }
 
+    fn certified_linear_image_contacts(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
+        let first = match self.fit_exact_line_image(policy)? {
+            Classification::Decided(BezierLineImageFitRelation::Fit(first)) => first,
+            Classification::Decided(BezierLineImageFitRelation::NotLine) => return Ok(None),
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
+        let second = match other.fit_exact_line_image(policy)? {
+            Classification::Decided(BezierLineImageFitRelation::Fit(second)) => second,
+            Classification::Decided(BezierLineImageFitRelation::NotLine) => return Ok(None),
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
+        Ok(match first.line().intersect_line(second.line(), policy)? {
+            crate::LineLineIntersection::None => Some(Classification::Decided(
+                RationalBezierIntersectionContacts2::NoIntersection,
+            )),
+            crate::LineLineIntersection::Point { point, kind, .. } => {
+                let unique_parameter =
+                    |curve: &Self| match unique_point_incidence_parameter(curve, &point, policy) {
+                        Classification::Decided(Some(parameter)) => Ok(parameter),
+                        Classification::Decided(None) => Err(UncertaintyReason::Predicate),
+                        Classification::Uncertain(reason) => Err(reason),
+                    };
+                let first_parameter = match unique_parameter(self) {
+                    Ok(parameter) => parameter,
+                    Err(reason) => {
+                        return Ok(Some(Classification::Uncertain(reason)));
+                    }
+                };
+                let second_parameter = match unique_parameter(other) {
+                    Ok(parameter) => parameter,
+                    Err(reason) => return Ok(Some(Classification::Uncertain(reason))),
+                };
+                Some(Classification::Decided(
+                    RationalBezierIntersectionContacts2::Contacts(Arc::from([
+                        RationalBezierIntersectionContact2 {
+                            first_parameter,
+                            second_parameter,
+                            point: RationalBezierIntersectionPointEvidence2::Exact(point),
+                            certified_transverse: kind == crate::IntersectionKind::Crossing,
+                        },
+                    ])),
+                ))
+            }
+            crate::LineLineIntersection::Overlap { .. } => {
+                match self.certified_line_image_overlap(other, policy) {
+                    Classification::Decided(Some(overlap)) => Some(Classification::Decided(
+                        RationalBezierIntersectionContacts2::Overlap(overlap),
+                    )),
+                    Classification::Decided(None) => None,
+                    Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
+                }
+            }
+            crate::LineLineIntersection::Uncertain { reason } => {
+                Some(Classification::Uncertain(reason))
+            }
+        })
+    }
+
     /// Replays all resultant projections into exact paired contacts.
     ///
     /// The result distinguishes complete contact sets from partial algebraic
@@ -1811,12 +1895,10 @@ impl RationalBezier2 {
                 RationalBezierIntersectionContacts2::NoIntersection,
             ));
         }
-        if let Classification::Decided(Some(overlap)) =
-            self.certified_line_image_overlap(other, policy)
+        if let Some(Classification::Decided(contacts)) =
+            self.certified_linear_image_contacts(other, policy)?
         {
-            return Ok(Classification::Decided(
-                RationalBezierIntersectionContacts2::Overlap(overlap),
-            ));
+            return Ok(Classification::Decided(contacts));
         }
 
         // A symbolic quadratic conic is better served by its implicit

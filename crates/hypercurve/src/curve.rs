@@ -1587,10 +1587,21 @@ impl CurvePath2 {
 
     /// Constructs a nonempty ordered path with exactly connected endpoints.
     pub fn try_new(curves: Vec<Curve2>) -> ExactCurveResult<Self> {
-        Self::try_new_with_policy(curves, &CurveContext::STRICT)
+        Self::try_new_raw(curves, &CurveContext::STRICT)
     }
 
-    pub(crate) fn try_new_with_policy(
+    /// Constructs a nonempty ordered path under the selected endpoint policy.
+    ///
+    /// The outcome reports when connectivity consumed the authorized 512-bit
+    /// terminal. No approximate coordinate replacement is performed.
+    pub fn try_new_with_policy(
+        curves: Vec<Curve2>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| Self::try_new_raw(curves, attempt))
+    }
+
+    pub(crate) fn try_new_raw(
         curves: Vec<Curve2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
@@ -1961,7 +1972,7 @@ impl CurvePath2 {
             curves.push(next_trim);
             curves.extend(self.data.curves[next_index + 1..].iter().cloned());
         }
-        Self::try_new_with_policy(curves, policy).map_err(|error| remap_operation(error, operation))
+        Self::try_new_raw(curves, policy).map_err(|error| remap_operation(error, operation))
     }
 
     /// Borrows conservative exact bounds computed once across all path curves.
@@ -2433,7 +2444,7 @@ impl<'a> CurvePathView2<'a> {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurvePath2>> {
         resolve_certified_operation(policy, |attempt| {
-            CurvePath2::try_new_with_policy(self.curves.to_vec(), attempt)?
+            CurvePath2::try_new_raw(self.curves.to_vec(), attempt)?
                 .chamfer_vertex_by_parameters_raw(
                     vertex_index,
                     previous_parameter,
@@ -2457,15 +2468,14 @@ impl<'a> CurvePathView2<'a> {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurvePath2>> {
         resolve_certified_operation(policy, |attempt| {
-            CurvePath2::try_new_with_policy(self.curves.to_vec(), attempt)?
-                .fillet_vertex_by_parameters_raw(
-                    vertex_index,
-                    previous_parameter,
-                    next_parameter,
-                    center,
-                    clockwise,
-                    attempt,
-                )
+            CurvePath2::try_new_raw(self.curves.to_vec(), attempt)?.fillet_vertex_by_parameters_raw(
+                vertex_index,
+                previous_parameter,
+                next_parameter,
+                center,
+                clockwise,
+                attempt,
+            )
         })
     }
 }
@@ -3264,7 +3274,7 @@ mod tests {
             Curve2::from(LineSeg2::try_new(upper_left, lower_left).unwrap()),
         ];
         let constructed = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |attempt| {
-            CurvePath2::try_new_with_policy(curves, attempt)
+            CurvePath2::try_new_raw(curves, attempt)
         })
         .expect("the terminal policy must construct the symbolically connected path");
         assert_eq!(

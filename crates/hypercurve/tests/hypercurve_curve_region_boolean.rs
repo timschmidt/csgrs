@@ -3,7 +3,10 @@ use hypercurve::{
     CurvePath2, CurveRegion2, LineSeg2, Point2, Real, RegionPointLocation,
 };
 #[cfg(feature = "predicates")]
-use hypercurve::{CurveBoundaryInteriorSide2, QuadraticBezier2};
+use hypercurve::{
+    CircularArc2, CurveBoundaryInteriorSide2, CurveRegionLoopRole, FillRule, QuadraticBezier2,
+    RationalBezier2,
+};
 
 fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
@@ -99,6 +102,92 @@ fn symbolic_rectangle(width: Real) -> CurveRegion2 {
     CurveRegion2::try_from_boundary_paths(
         &[CurvePath2::try_new(curves).unwrap()],
         &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value()
+}
+
+#[cfg(feature = "predicates")]
+fn symbolic_quadratic_cap(control_y: Real, policy: &CurveContext) -> CurveRegion2 {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            point(-2, 4),
+            Point2::new(Real::zero(), control_y),
+            point(2, 4),
+        )),
+        Curve2::from(LineSeg2::try_new(point(2, 4), point(-2, 4)).unwrap()),
+    ])
+    .unwrap();
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
+    )
+    .unwrap()
+    .into_value()
+}
+
+#[cfg(feature = "predicates")]
+fn symbolic_general_line_region(control_y: Real, policy: &CurveContext) -> CurveRegion2 {
+    let bottom = RationalBezier2::try_new(
+        vec![
+            point(0, 0),
+            Point2::new((Real::from(4_i8) / Real::from(3_i8)).unwrap(), control_y),
+            Point2::new((Real::from(8_i8) / Real::from(3_i8)).unwrap(), Real::zero()),
+            point(4, 0),
+        ],
+        vec![Real::one(); 4],
+    )
+    .unwrap();
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(bottom),
+        Curve2::from(LineSeg2::try_new(point(4, 0), point(4, 4)).unwrap()),
+        Curve2::from(LineSeg2::try_new(point(4, 4), point(0, 4)).unwrap()),
+        Curve2::from(LineSeg2::try_new(point(0, 4), point(0, 0)).unwrap()),
+    ])
+    .unwrap();
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
+    )
+    .unwrap()
+    .into_value()
+}
+
+#[cfg(feature = "predicates")]
+fn symbolic_elevated_circle(center_x: Real, policy: &CurveContext) -> CurveRegion2 {
+    let left = Point2::new(&center_x - Real::from(2_i8), Real::zero());
+    let right = Point2::new(center_x + Real::from(2_i8), Real::zero());
+    let arcs = [
+        CircularArc2::from_bulge(left.clone(), right.clone(), Real::one()).unwrap(),
+        CircularArc2::from_bulge(right, left, Real::one()).unwrap(),
+    ];
+    let mut curves = Vec::with_capacity(4);
+    for arc in &arcs {
+        let decomposition = arc
+            .rational_bezier_decomposition(policy)
+            .unwrap()
+            .into_value();
+        for span in decomposition.spans() {
+            let general = RationalBezier2::from(span.curve().clone())
+                .elevated_to_degree(3)
+                .unwrap();
+            curves.push(Curve2::from(general));
+        }
+    }
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[CurvePath2::try_new_with_policy(curves, policy)
+            .unwrap()
+            .into_value()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
     )
     .unwrap()
     .into_value()
@@ -526,6 +615,120 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
         Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap()),
         RegionPointLocation::Inside,
     );
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn curve_path_construction_obeys_the_approximate_512_terminal() {
+    let first_end = Point2::new(Real::pi() + Real::e(), Real::zero());
+    let second_start = Point2::new(Real::e() + Real::pi(), Real::zero());
+    let curves = vec![
+        Curve2::from(LineSeg2::try_new(point(0, 0), first_end).unwrap()),
+        Curve2::from(LineSeg2::try_new(second_start, point(0, 1)).unwrap()),
+    ];
+
+    assert!(matches!(
+        CurvePath2::try_new_with_policy(curves.clone(), &CurveContext::STRICT),
+        Err(hypercurve::ExactCurveError::Blocked(_))
+    ));
+    let path = CurvePath2::try_new_with_policy(curves, &CurveContext::APPROXIMATE_512)
+        .expect("the authorized terminal should certify symbolic path connectivity");
+    assert_eq!(path.certainty, CurveCertainty::Approximate512Consumed);
+    assert_eq!(path.value.curves().len(), 2);
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn general_curve_batch_obeys_the_approximate_512_terminal() {
+    let first = symbolic_quadratic_cap(-(Real::pi() + Real::e()), &CurveContext::APPROXIMATE_512);
+    let second = symbolic_quadratic_cap(-(Real::e() + Real::pi()), &CurveContext::APPROXIMATE_512);
+
+    assert!(matches!(
+        first.boolean_regions(&second, &CurveContext::STRICT),
+        Err(hypercurve::ExactCurveError::Blocked(_))
+    ));
+    let batch = first
+        .boolean_regions(&second, &CurveContext::APPROXIMATE_512)
+        .expect("the authorized terminal should decide equivalent general curves");
+    assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
+    assert_eq!(batch.value.union().boundary_loops().len(), 1);
+    assert_eq!(batch.value.intersection().boundary_loops().len(), 1);
+    assert_location(
+        batch.value.union(),
+        point(0, 2),
+        RegionPointLocation::Inside,
+    );
+    assert_location(
+        batch.value.intersection(),
+        point(0, 2),
+        RegionPointLocation::Inside,
+    );
+    assert_location(
+        batch.value.union(),
+        point(0, -2),
+        RegionPointLocation::Outside,
+    );
+    assert!(batch.value.difference().is_empty());
+    assert!(batch.value.xor().is_empty());
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn line_general_batch_obeys_the_approximate_512_terminal() {
+    let first = square(0, 0, 4, 4);
+    let symbolic_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let second = symbolic_general_line_region(symbolic_zero, &CurveContext::APPROXIMATE_512);
+
+    assert!(matches!(
+        first.boolean_regions(&second, &CurveContext::STRICT),
+        Err(hypercurve::ExactCurveError::Blocked(_))
+    ));
+    let batch = first
+        .boolean_regions(&second, &CurveContext::APPROXIMATE_512)
+        .expect("the authorized terminal should decide the general line image");
+    assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
+    assert_location(
+        batch.value.union(),
+        point(2, 2),
+        RegionPointLocation::Inside,
+    );
+    assert_location(
+        batch.value.intersection(),
+        point(2, 2),
+        RegionPointLocation::Inside,
+    );
+    assert!(batch.value.difference().is_empty());
+    assert!(batch.value.xor().is_empty());
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn conic_general_batch_obeys_the_approximate_512_terminal() {
+    let first_center = Real::pi() + Real::e();
+    let second_center = Real::e() + Real::pi();
+    let first = circle_with_policy(first_center.clone(), &CurveContext::APPROXIMATE_512);
+    let second = symbolic_elevated_circle(second_center, &CurveContext::APPROXIMATE_512);
+
+    assert!(matches!(
+        first.boolean_regions(&second, &CurveContext::STRICT),
+        Err(hypercurve::ExactCurveError::Blocked(_))
+    ));
+    let batch = first
+        .boolean_regions(&second, &CurveContext::APPROXIMATE_512)
+        .expect("the authorized terminal should decide the conic/general shared image");
+    assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
+    assert_location(
+        batch.value.union(),
+        Point2::new(first_center.clone(), Real::zero()),
+        RegionPointLocation::Inside,
+    );
+    assert_location(
+        batch.value.intersection(),
+        Point2::new(first_center, Real::zero()),
+        RegionPointLocation::Inside,
+    );
+    assert!(batch.value.difference().is_empty());
+    assert!(batch.value.xor().is_empty());
 }
 
 #[test]

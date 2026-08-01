@@ -8,7 +8,7 @@ use std::collections::HashSet;
 use hypercurve::{
     BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
     CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalQuadraticBezier2, Real,
+    RationalBezier2, RationalQuadraticBezier2, Real, Similarity2,
 };
 use proptest::prelude::*;
 use proptest::test_runner::{FileFailurePersistence, TestCaseError};
@@ -368,9 +368,19 @@ fn exact_boolean_results(
                     format!("{label}: immediate {operation:?} failed after batch success: {error}")
                 })?
                 .value;
-            if &immediate != batch.region(operation) {
+            if &immediate != batch.region(operation)
+                && !immediate
+                    .boolean_region(batch.region(operation), BooleanOp::Xor, &policy)
+                    .map_err(|error| {
+                        format!(
+                            "{label}: exact {operation:?} differential failed after structural mismatch: {error}"
+                        )
+                    })?
+                    .value
+                    .is_empty()
+            {
                 return Err(format!(
-                    "{label}: immediate and batch {operation:?} results differ"
+                    "{label}: immediate and batch {operation:?} results are not topologically equivalent"
                 ));
             }
         }
@@ -1162,6 +1172,310 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
         true,
     )
     .unwrap();
+}
+
+fn deterministic_family_region(family: u8) -> CurveRegion2 {
+    generated_region(&GeneratedRegion {
+        origin_x: -4,
+        origin_y: -4,
+        width: 8,
+        height: 8,
+        lower_family: family,
+        upper_family: 0,
+        curvature: 3,
+        weight_numerator: 2,
+        weight_denominator: 3,
+    })
+}
+
+fn exact_quarter_turn(translation_x: i8, translation_y: i8) -> Similarity2 {
+    Similarity2::try_from_real_affine(
+        Real::zero(),
+        -Real::one(),
+        Real::one(),
+        Real::zero(),
+        Real::from(translation_x),
+        Real::from(translation_y),
+    )
+    .expect("the exact quarter turn is a nonsingular similarity")
+}
+
+fn assert_selected_family_pair_contact(label: &str, first: &CurveRegion2, second: &CurveRegion2) {
+    let evidence = first
+        .intersect_region(second, &CurveContext::STRICT)
+        .expect("the deterministic family fixture has exact contact evidence")
+        .into_value();
+    let exercised_carrier_pairs = evidence
+        .contacts()
+        .iter()
+        .map(|contact| {
+            (
+                contact.first().carrier_index(),
+                contact.second().carrier_index(),
+            )
+        })
+        .collect::<Vec<_>>();
+    assert!(
+        exercised_carrier_pairs.contains(&(0, 4)),
+        "{label} must exercise its selected carrier pair; observed {exercised_carrier_pairs:?}"
+    );
+}
+
+#[test]
+fn deterministic_transverse_curve_family_pair_matrix_completes() {
+    let quarter_turn = exact_quarter_turn(-2, -2);
+
+    for first_family in 0_u8..8 {
+        let first = deterministic_family_region(first_family);
+        for second_family in 0_u8..8 {
+            let second = deterministic_family_region(second_family)
+                .transform_similarity(&quarter_turn, &CurveContext::STRICT)
+                .expect("the exact family fixture remains a valid region after rotation")
+                .into_value();
+
+            let label =
+                format!("deterministic transverse family pair {first_family}/{second_family}");
+            assert_selected_family_pair_contact(&label, &first, &second);
+            exact_boolean_results(
+                &label,
+                &first,
+                &second,
+                first_family >= 2 || second_family >= 2,
+            )
+            .unwrap_or_else(|failure| panic!("{failure}"));
+        }
+    }
+}
+
+#[test]
+fn deterministic_endpoint_curve_family_pair_matrix_completes() {
+    let quarter_turn = exact_quarter_turn(0, 0);
+
+    for first_family in 0_u8..8 {
+        let first = deterministic_family_region(first_family);
+        for second_family in 0_u8..8 {
+            let second = deterministic_family_region(second_family)
+                .transform_similarity(&quarter_turn, &CurveContext::STRICT)
+                .expect("the exact endpoint fixture remains a valid region after rotation")
+                .into_value();
+            let label =
+                format!("deterministic endpoint family pair {first_family}/{second_family}");
+            assert_selected_family_pair_contact(&label, &first, &second);
+            exact_boolean_results(
+                &label,
+                &first,
+                &second,
+                first_family >= 2 || second_family >= 2,
+            )
+            .unwrap_or_else(|failure| panic!("{failure}"));
+        }
+    }
+}
+
+fn tangent_family_curve(family: u8, side: i16) -> Curve2 {
+    let endpoint_y = if family == 0 { 0 } else { 4 * side };
+    let start = point(-4, endpoint_y);
+    let end = point(4, endpoint_y);
+    match family {
+        0 => Curve2::from(LineSeg2::try_new(start, end).unwrap()),
+        1 => Curve2::from(
+            CircularArc2::from_bulge(start, end, integer(side))
+                .expect("a unit signed bulge forms the tangent semicircle"),
+        ),
+        2 => Curve2::from(QuadraticBezier2::new(start, point(0, -endpoint_y), end)),
+        3 | 6 => {
+            let controls = vec![
+                start,
+                Point2::new(fraction(-4, 3), fraction(-endpoint_y, 3)),
+                Point2::new(fraction(4, 3), fraction(-endpoint_y, 3)),
+                end,
+            ];
+            if family == 3 {
+                Curve2::from(CubicBezier2::new(
+                    controls[0].clone(),
+                    controls[1].clone(),
+                    controls[2].clone(),
+                    controls[3].clone(),
+                ))
+            } else {
+                Curve2::try_polynomial_bspline(
+                    3,
+                    controls,
+                    clamped_cubic_knots(),
+                    &CurveContext::STRICT,
+                )
+                .expect("the tangent polynomial spline is valid")
+                .into_value()
+            }
+        }
+        4 => Curve2::from(
+            RationalQuadraticBezier2::try_new(
+                start,
+                Point2::new(Real::zero(), fraction(-endpoint_y, 2)),
+                end,
+                Real::one(),
+                Real::from(2_i8),
+                Real::one(),
+            )
+            .expect("the tangent rational quadratic has positive weights"),
+        ),
+        5 | 7 => {
+            let controls = vec![
+                start,
+                Point2::new(fraction(-4, 3), fraction(-endpoint_y, 6)),
+                Point2::new(fraction(4, 3), fraction(-endpoint_y, 6)),
+                end,
+            ];
+            let weights = vec![Real::one(), Real::from(2_i8), Real::from(2_i8), Real::one()];
+            if family == 5 {
+                Curve2::from(
+                    RationalBezier2::try_new(controls, weights)
+                        .expect("the tangent rational Bezier has positive weights"),
+                )
+            } else {
+                Curve2::try_nurbs(
+                    3,
+                    controls,
+                    weights,
+                    clamped_cubic_knots(),
+                    &CurveContext::STRICT,
+                )
+                .expect("the tangent NURBS is valid")
+                .into_value()
+            }
+        }
+        _ => unreachable!("the deterministic matrix has exactly eight curve families"),
+    }
+}
+
+fn tangent_family_region(family: u8, material_above: bool, outer_y: i16) -> CurveRegion2 {
+    let endpoint_y = if family == 0 {
+        0
+    } else if material_above {
+        4
+    } else {
+        -4
+    };
+    let tangent = tangent_family_curve(family, if material_above { 1 } else { -1 });
+    let curves = if material_above {
+        vec![
+            tangent,
+            Curve2::from(LineSeg2::try_new(point(4, endpoint_y), point(4, outer_y)).unwrap()),
+            Curve2::from(LineSeg2::try_new(point(4, outer_y), point(-4, outer_y)).unwrap()),
+            Curve2::from(LineSeg2::try_new(point(-4, outer_y), point(-4, endpoint_y)).unwrap()),
+        ]
+    } else {
+        vec![
+            tangent
+                .reversed(&CurveContext::STRICT)
+                .expect("the tangent carrier reverses exactly")
+                .into_value(),
+            Curve2::from(LineSeg2::try_new(point(-4, endpoint_y), point(-4, outer_y)).unwrap()),
+            Curve2::from(LineSeg2::try_new(point(-4, outer_y), point(4, outer_y)).unwrap()),
+            Curve2::from(LineSeg2::try_new(point(4, outer_y), point(4, endpoint_y)).unwrap()),
+        ]
+    };
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[CurvePath2::try_new(curves).expect("the tangent fixture boundary is connected")],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        &CurveContext::STRICT,
+    )
+    .expect("the tangent fixture bounds a simple exact region")
+    .into_value()
+}
+
+#[test]
+fn deterministic_tangent_curve_family_pair_matrix_completes() {
+    for first_family in 0_u8..8 {
+        let first = tangent_family_region(first_family, true, 8);
+        for second_family in 0_u8..8 {
+            let second = tangent_family_region(second_family, false, -8);
+            let label = format!("deterministic tangent family pair {first_family}/{second_family}");
+            let evidence = first
+                .intersect_region(&second, &CurveContext::STRICT)
+                .unwrap_or_else(|error| panic!("{label}: exact intersection failed: {error}"))
+                .into_value();
+            if first_family == 0 && second_family == 0 {
+                assert!(
+                    evidence.overlaps().iter().any(|overlap| {
+                        overlap.first().carrier_index() == 0
+                            && overlap.second().carrier_index() == 4
+                    }),
+                    "{label}: the coincident line pair must retain overlap evidence"
+                );
+            } else {
+                let origin = point(0, 0);
+                assert!(
+                    evidence.contacts().iter().any(|contact| {
+                        matches!(
+                            contact.contact().point(),
+                            hypercurve::RationalBezierIntersectionPointEvidence2::Exact(point)
+                                if point == &origin
+                        ) && !contact.contact().is_certified_transverse()
+                    }),
+                    "{label}: the selected pair must retain its nontransverse contact"
+                );
+            }
+            exact_boolean_results(
+                &label,
+                &first,
+                &second,
+                first_family >= 2 || second_family >= 2,
+            )
+            .unwrap_or_else(|failure| panic!("{failure}"));
+        }
+    }
+}
+
+#[test]
+fn deterministic_coincident_curve_family_images_complete() {
+    let pairs = [
+        (0_u8, 0_u8),
+        (1, 1),
+        (2, 2),
+        (3, 3),
+        (4, 4),
+        (5, 5),
+        (6, 6),
+        (7, 7),
+        (2, 3),
+        (3, 2),
+        (2, 6),
+        (6, 2),
+        (3, 6),
+        (6, 3),
+        (5, 7),
+        (7, 5),
+    ];
+    for (first_family, second_family) in pairs {
+        let first = tangent_family_region(first_family, true, 8);
+        let second = tangent_family_region(second_family, true, 10);
+        let label = format!("deterministic coincident family image {first_family}/{second_family}");
+        let evidence = first
+            .intersect_region(&second, &CurveContext::STRICT)
+            .unwrap_or_else(|error| panic!("{label}: exact intersection failed: {error}"))
+            .into_value();
+        assert!(
+            evidence.overlaps().iter().any(|overlap| {
+                if first_family == 0 {
+                    overlap.first().carrier_index() == 0 && overlap.second().carrier_index() == 4
+                } else {
+                    overlap.first().family() != hypercurve::CurveFamily2::Line
+                        && overlap.second().family() != hypercurve::CurveFamily2::Line
+                }
+            }),
+            "{label}: the selected coincident image must retain overlap evidence"
+        );
+        exact_boolean_results(
+            &label,
+            &first,
+            &second,
+            first_family >= 2 || second_family >= 2,
+        )
+        .unwrap_or_else(|failure| panic!("{failure}"));
+    }
 }
 
 proptest! {
