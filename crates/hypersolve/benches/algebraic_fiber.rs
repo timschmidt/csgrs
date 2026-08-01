@@ -5,11 +5,11 @@ use hyperreal::Real;
 use hypersolve::{
     AlgebraicFiberRootCountStatus, AlgebraicRootKind, AlgebraicRootRepresentation,
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BivariatePolynomial,
-    BivariatePolynomialRationalComponentStatus, CurveIntersectionResultantConfig,
-    CurveResultantParameter, IsolatedRootInterval, PredicatePolicy, SymbolId,
+    BivariatePolynomialComponentStatus, CurveIntersectionResultantConfig, CurveResultantParameter,
+    IsolatedRootInterval, PredicatePolicy, SymbolId,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
-    rational_parameter_component_bivariate_polynomial_system,
+    parameter_component_bivariate_polynomial_system,
 };
 
 fn r(value: i64) -> Real {
@@ -149,7 +149,7 @@ fn main() {
     let started = Instant::now();
     let mut component_checksum = 0_usize;
     for _ in 0..iterations {
-        let first_report = rational_parameter_component_bivariate_polynomial_system(
+        let first_report = parameter_component_bivariate_polynomial_system(
             black_box(&first),
             black_box(&second),
             CurveResultantParameter::First,
@@ -157,13 +157,13 @@ fn main() {
         );
         assert_eq!(
             first_report.status,
-            BivariatePolynomialRationalComponentStatus::Constructed
+            BivariatePolynomialComponentStatus::Rational
         );
         let reduced = first_report
             .reduced_equations
             .as_ref()
             .expect("the first factor retains its exact residual");
-        let second_report = rational_parameter_component_bivariate_polynomial_system(
+        let second_report = parameter_component_bivariate_polynomial_system(
             black_box(&reduced[0]),
             black_box(&reduced[1]),
             CurveResultantParameter::First,
@@ -171,7 +171,7 @@ fn main() {
         );
         assert_eq!(
             second_report.status,
-            BivariatePolynomialRationalComponentStatus::Constructed
+            BivariatePolynomialComponentStatus::Rational
         );
         component_checksum += black_box(
             first_report.numerator_coefficients.len() + second_report.numerator_coefficients.len(),
@@ -180,6 +180,43 @@ fn main() {
     let elapsed = started.elapsed();
     println!(
         "rational_quadratic_common_fiber_two_components: {iterations} iterations in {elapsed:?} ({:?}/iter), component_checksum={component_checksum}",
+        elapsed / iterations
+    );
+
+    let implicit_component =
+        BivariatePolynomial::new(vec![vec![r(-1), r(0), r(1)], vec![r(0), r(-1)]]);
+    let first = multiply_bivariate(
+        &implicit_component,
+        &BivariatePolynomial::new(vec![vec![r(1), r(1)], vec![r(1)]]),
+    );
+    let second = multiply_bivariate(
+        &implicit_component,
+        &BivariatePolynomial::new(vec![vec![r(2), r(2)], vec![r(-1)]]),
+    );
+    let started = Instant::now();
+    let mut component_checksum = 0_usize;
+    for _ in 0..iterations {
+        let report = parameter_component_bivariate_polynomial_system(
+            black_box(&first),
+            black_box(&second),
+            CurveResultantParameter::First,
+            config,
+        );
+        assert_eq!(report.status, BivariatePolynomialComponentStatus::Implicit);
+        component_checksum += black_box(
+            report
+                .implicit_component
+                .as_ref()
+                .expect("the irreducible quadratic remains explicit")
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .sum::<usize>(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "implicit_quadratic_common_fiber: {iterations} iterations in {elapsed:?} ({:?}/iter), component_checksum={component_checksum}",
         elapsed / iterations
     );
 
@@ -202,16 +239,13 @@ fn main() {
     for _ in 0..iterations {
         let mut residual = [first.clone(), second.clone()];
         for _ in 0..3 {
-            let report = rational_parameter_component_bivariate_polynomial_system(
+            let report = parameter_component_bivariate_polynomial_system(
                 black_box(&residual[0]),
                 black_box(&residual[1]),
                 CurveResultantParameter::First,
                 config,
             );
-            assert_eq!(
-                report.status,
-                BivariatePolynomialRationalComponentStatus::Constructed
-            );
+            assert_eq!(report.status, BivariatePolynomialComponentStatus::Rational);
             component_checksum += black_box(report.numerator_coefficients.len());
             residual = report
                 .reduced_equations
