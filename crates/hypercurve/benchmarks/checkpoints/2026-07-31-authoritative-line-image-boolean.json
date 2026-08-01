@@ -278,7 +278,7 @@
     "retained_reference": "the mixed-line/conic checkpoint records a 61.98x gap to Cavalier binary64 under explicitly unequal exactness and degeneracy guarantees"
   },
   "verification": {
-    "library_no_default_features": "264 passed",
+    "library_default_features": "264 passed",
     "focused_curve_region_boolean_all_features": "22 passed",
     "persistent_curve_region_boolean_fuzz_all_features": "11 passed",
     "full_all_features": "pass; 268 unit tests plus all integration and documentation tests",

@@ -7608,10 +7608,54 @@ bytes. The isolated graph moves from 23,045 nodes/39,808 edges to 23,049
 nodes/39,818 edges.
 
 All 268 all-feature unit tests, the complete integration/documentation suite,
-264 no-default library tests, 22 focused Boolean tests, 11 persistent
+264 default-feature library tests, 22 focused Boolean tests, 11 persistent
 generated/retired corpora, formatting, and both warning-denied Clippy matrices
 pass. Hypermesh was not modified. Complete evidence is in
 [`2026-07-31-authoritative-line-image-boolean.json`](benchmarks/checkpoints/2026-07-31-authoritative-line-image-boolean.json).
+
+## Lower-dimensional Boolean ownership checkpoint (2026-07-31)
+
+Regularized `CurveRegion2` operations now separate exact contact evidence from
+two-dimensional result publication. Vertex-only and shared-edge intersections
+remain complete intersection witnesses, but they do not become zero-area
+region interiors. Externally and internally tangent conics follow the same
+contract. Tests cover complete and partial shared edges, attached components,
+boundary-contained material, and all four operations under STRICT and
+APPROXIMATE_512.
+
+The defect was in publication, not traversal: an unchanged two-loop affine
+result had no explicit roles, so a later point query could interpret a shared
+vertex as ambiguous nesting and return `Uncertain(Boundary)` for a deep
+interior point. One line-image compactor now replaces the former affine and
+retained-line variants. It preserves unchanged exact geometry and provenance
+while attaching exact oriented-area roles; only actually reducible collinear
+fragments are rebuilt. Empty regularized results retain the process-shared
+zero-allocation representation. Removing the role attachment reproduces the
+interior-classification failure.
+
+Eleven alternating-order CPU-14 pairs measure 485.095 ms for the candidate
+and 485.135 ms for its parent over the complete 67-cell workload (-0.008%
+median, -0.058% paired geometric mean). The dedicated point-contact all-four
+batch moves from 53.864 to 54.269 us (+0.75% median, +0.99% paired mean),
+inside the two-percent gate. Whole-workload allocation and temporary counts
+are exactly unchanged at 8,271,997 and 1,388,763. Over 1,000 point-contact
+batches the candidate adds only two process-lifetime role-table allocations
+and no temporary or recurring allocation.
+
+The matched pathological executable adds 4,320 stripped file bytes and 4,164
+loadable bytes (0.072%); the dedicated batch executable adds 3,368 bytes
+(0.052%). The complete static graph moves from 23,049 nodes/39,818 edges to
+23,085/39,890, dominated by three integration regressions; source-only growth
+is eight nodes and 26 edges while two compactor entries collapse to one.
+
+All 268 all-feature unit tests, the complete integration/documentation suite,
+264 default-feature library tests, 25 focused Boolean tests, 11 persistent
+generated/retired corpora, formatting, and both warning-denied Clippy matrices
+pass. The historical parent and candidate share eight predicate-dependent
+moment-test failures only when the predicate feature is deliberately disabled;
+the no-default build and warning-denied Clippy gate pass. Hypermesh was not
+modified. Complete evidence is in
+[`2026-07-31-lower-dimensional-boolean-ownership.json`](benchmarks/checkpoints/2026-07-31-lower-dimensional-boolean-ownership.json).
 
 ## Optimization boundary
 
