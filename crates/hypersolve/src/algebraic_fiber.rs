@@ -1186,6 +1186,12 @@ mod tests {
             vec![real(0), real(0), real(-2)],
             vec![real(1)],
         ]);
+        let common_first =
+            BivariatePolynomial::new(vec![vec![real(0), real(0), real(1)], vec![real(-1)]]);
+        let common_second = BivariatePolynomial::new(vec![
+            vec![real(0), real(0), real(1), real(1)],
+            vec![real(-1), real(-1)],
+        ]);
         for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             let alpha = represented_root(
                 vec![real(6), real(-2), real(-3), real(1)],
@@ -1221,6 +1227,19 @@ mod tests {
             assert_eq!(two_roots.status, AlgebraicFiberRootCountStatus::Counted);
             assert_eq!(two_roots.distinct_root_count, Some(2));
             assert_eq!(two_roots.certainty, Certainty::Exact);
+
+            let common = count_bivariate_common_fiber_roots_at_algebraic_parameter(
+                &common_first,
+                &common_second,
+                CurveResultantParameter::First,
+                &alpha,
+                &real(1),
+                &rational(5, 4),
+                policy,
+            );
+            assert_eq!(common.status, AlgebraicFiberRootCountStatus::Counted);
+            assert_eq!(common.distinct_root_count, Some(1));
+            assert_eq!(common.certainty, Certainty::Exact);
         }
     }
 
