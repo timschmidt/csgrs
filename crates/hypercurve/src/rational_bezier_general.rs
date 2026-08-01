@@ -187,6 +187,12 @@ pub struct RationalBezierIntersectionOverlap2 {
     orientation: RationalBezierOverlapOrientation2,
 }
 
+#[derive(Clone, Debug)]
+pub(crate) struct RationalBezierOverlapParameterCorrespondence2 {
+    first: RationalBezier2,
+    second: RationalBezier2,
+}
+
 impl RationalBezierIntersectionOverlap2 {
     /// Returns the exact overlap range on the first curve.
     pub const fn first_range(&self) -> &BezierParameterRange2 {
@@ -202,6 +208,31 @@ impl RationalBezierIntersectionOverlap2 {
     /// Returns relative parameter orientation on the shared image.
     pub const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
         self.orientation
+    }
+}
+
+impl RationalBezierOverlapParameterCorrespondence2 {
+    fn new(first: &RationalBezier2, second: &RationalBezier2) -> Self {
+        Self {
+            first: first.clone(),
+            second: second.clone(),
+        }
+    }
+
+    pub(crate) fn map_first_to_second(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+        overlap_parameter_on_curve(&self.first, &self.second, parameter, policy)
+    }
+
+    pub(crate) fn map_second_to_first(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+        overlap_parameter_on_curve(&self.second, &self.first, parameter, policy)
     }
 }
 
@@ -372,6 +403,12 @@ impl RationalBezierIntersectionContext {
 
     pub(crate) fn try_contacts(&self) -> ExactCurveResult<RationalBezierIntersectionContacts2> {
         self.try_contact_view().cloned()
+    }
+
+    pub(crate) fn overlap_parameter_correspondence(
+        &self,
+    ) -> RationalBezierOverlapParameterCorrespondence2 {
+        RationalBezierOverlapParameterCorrespondence2::new(&self.data.first, &self.data.second)
     }
 
     fn try_topology(&self) -> ExactCurveResult<RationalBezierIntersectionTopology2> {
@@ -1559,8 +1596,8 @@ impl RationalBezier2 {
                     BezierParameter2::Exact(Real::one()),
                 ),
                 second_range: BezierParameterRange2::new_validated(
-                    BezierParameter2::Exact(Real::zero()),
                     BezierParameter2::Exact(Real::one()),
+                    BezierParameter2::Exact(Real::zero()),
                 ),
                 orientation: RationalBezierOverlapOrientation2::Reversed,
             };
@@ -4628,6 +4665,252 @@ fn parameter_root_representation(
         BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
         BezierParameter2::Algebraic(parameter) => parameter_representation(parameter, policy),
     }
+}
+
+fn overlap_parameter_on_curve(
+    source: &RationalBezier2,
+    target: &RationalBezier2,
+    source_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    let mut unresolved = None;
+    match source.same_projective_control_net_degree_aligned(target, false, policy) {
+        Classification::Decided(true) => {
+            return Ok(Classification::Decided(Some(source_parameter.clone())));
+        }
+        Classification::Decided(false) => {}
+        Classification::Uncertain(reason) => unresolved = Some(reason),
+    }
+    match source.same_projective_control_net_degree_aligned(target, true, policy) {
+        Classification::Decided(true) => {
+            return Ok(Classification::Decided(Some(
+                source_parameter.unit_complement(),
+            )));
+        }
+        Classification::Decided(false) => {}
+        Classification::Uncertain(reason) => unresolved = Some(reason),
+    }
+
+    let target_is_conic = match target.implicit_quadratic_conic(policy) {
+        Classification::Decided(Some(_)) => true,
+        Classification::Decided(None) => {
+            target
+                .data
+                .lineage
+                .root
+                .quadratic_conic_parameter_frame
+                .get()
+                .is_some()
+                && target
+                    .data
+                    .lineage
+                    .root
+                    .implicit_quadratic_conic
+                    .get()
+                    .is_some()
+        }
+        Classification::Uncertain(reason) => {
+            unresolved = Some(reason);
+            false
+        }
+    };
+    if target_is_conic {
+        match conic_parameter_map(target, source, policy)? {
+            Classification::Decided(parameter_map) => {
+                let root = parameter_root_representation(source_parameter, policy);
+                match conic_parameter_candidate(
+                    &root.polynomial_coefficients,
+                    &parameter_map.primary,
+                    policy,
+                )? {
+                    Classification::Decided(primary) => {
+                        return conic_parameter_from_curve_parameter(
+                            &parameter_map,
+                            &primary,
+                            &root.polynomial_coefficients,
+                            source_parameter,
+                            false,
+                            policy,
+                        );
+                    }
+                    Classification::Uncertain(reason) => unresolved = Some(reason),
+                }
+            }
+            Classification::Uncertain(reason) => unresolved = Some(reason),
+        }
+    }
+
+    for axis in [Axis2::X, Axis2::Y] {
+        let graph = match target.polynomial_graph(axis, policy)? {
+            Classification::Decided(Some(graph)) => graph,
+            Classification::Decided(None) => continue,
+            Classification::Uncertain(reason) => {
+                unresolved = Some(reason);
+                continue;
+            }
+        };
+        let basis = source.homogeneous_power_basis()?;
+        let coordinate = match axis {
+            Axis2::X => &basis.x_numerator,
+            Axis2::Y => &basis.y_numerator,
+        };
+        let numerator = subtract_power_polynomials(
+            coordinate,
+            &scale_power_polynomial(&basis.weight, &graph.origin),
+        );
+        let denominator = scale_power_polynomial(&basis.weight, &graph.scale);
+        let root = parameter_root_representation(source_parameter, policy);
+        let candidate = match conic_parameter_candidate(
+            &root.polynomial_coefficients,
+            &(numerator, denominator),
+            policy,
+        )? {
+            Classification::Decided(candidate) => candidate,
+            Classification::Uncertain(reason) => {
+                unresolved = Some(reason);
+                continue;
+            }
+        };
+        return conic_parameter_from_candidates(&[candidate], source_parameter, policy);
+    }
+
+    if let Some(parameter) = source_parameter.as_exact() {
+        match source.point_at_classified(parameter, policy) {
+            Classification::Decided(point) => {
+                return Ok(unique_point_incidence_parameter(target, &point, policy));
+            }
+            Classification::Uncertain(reason) => unresolved = Some(reason),
+        }
+    }
+    #[cfg(feature = "predicates")]
+    for axis in [Axis2::X, Axis2::Y] {
+        if !target.has_certified_injective_axis_on(axis, policy) {
+            continue;
+        }
+        match overlap_parameter_through_injective_axis(
+            source,
+            target,
+            source_parameter,
+            axis,
+            policy,
+        )? {
+            Classification::Decided(parameter) => {
+                return Ok(Classification::Decided(parameter));
+            }
+            Classification::Uncertain(reason) => unresolved = Some(reason),
+        }
+    }
+    Ok(Classification::Uncertain(
+        unresolved.unwrap_or(UncertaintyReason::Unsupported),
+    ))
+}
+
+#[cfg(feature = "predicates")]
+fn overlap_parameter_through_injective_axis(
+    source: &RationalBezier2,
+    target: &RationalBezier2,
+    source_parameter: &BezierParameter2,
+    axis: Axis2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    let source_basis = source.homogeneous_power_basis()?;
+    let source_coordinate = match axis {
+        Axis2::X => &source_basis.x_numerator,
+        Axis2::Y => &source_basis.y_numerator,
+    };
+    let source_root = parameter_root_representation(source_parameter, policy);
+    let coordinate_map = AlgebraicRootRationalMap::new(
+        &source_root.polynomial_coefficients,
+        source_coordinate,
+        &source_basis.weight,
+        policy.predicate_policy(),
+    );
+    let coordinate_image = coordinate_map.transform(&source_root);
+    if coordinate_image.status != AlgebraicRootRationalImageStatus::Transformed {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    }
+    let Some(coordinate_image) = coordinate_image.representation.as_ref() else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    };
+
+    let target_basis = target.homogeneous_power_basis()?;
+    let target_coordinate = match axis {
+        Axis2::X => &target_basis.x_numerator,
+        Axis2::Y => &target_basis.y_numerator,
+    };
+    let Some(preimage_coefficients) = rational_map_preimage_polynomial(
+        &coordinate_image.polynomial_coefficients,
+        target_coordinate,
+        &target_basis.weight,
+    ) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let polynomial =
+        match BezierParameterPolynomial::try_new_power_basis(preimage_coefficients, policy) {
+            Ok(Classification::Decided(polynomial)) => polynomial,
+            Ok(Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+            Err(CurveError::InvalidBezierPolynomial) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+            Err(error) => return Err(error),
+        };
+    let parameters = match polynomial.isolate_unit_interval_roots(policy)? {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let mut matched = None;
+    let mut unresolved = false;
+    for parameter in parameters {
+        let Some(replay) = target.candidate_point_replay(&parameter, policy)? else {
+            unresolved = true;
+            continue;
+        };
+        let candidate_coordinate = match axis {
+            Axis2::X => &replay.x,
+            Axis2::Y => &replay.y,
+        };
+        match algebraic_coordinates_equal(coordinate_image, candidate_coordinate, policy) {
+            Some(true) if matched.is_none() => matched = Some(parameter),
+            Some(true) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            Some(false) => {}
+            None => unresolved = true,
+        }
+    }
+    if let Some(parameter) = matched {
+        return match parameter.promote_represented_rational_root(policy)? {
+            Classification::Decided(parameter) => Ok(Classification::Decided(Some(parameter))),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        };
+    }
+    Ok(if unresolved {
+        Classification::Uncertain(UncertaintyReason::Predicate)
+    } else {
+        Classification::Decided(None)
+    })
+}
+
+#[cfg(feature = "predicates")]
+fn rational_map_preimage_polynomial(
+    image_polynomial: &[Real],
+    numerator: &[Real],
+    denominator: &[Real],
+) -> Option<Vec<Real>> {
+    let degree = image_polynomial.len().checked_sub(1)?;
+    let numerator_powers = power_polynomial_sequence(numerator, degree)?;
+    let denominator_powers = power_polynomial_sequence(denominator, degree)?;
+    let mut preimage = vec![Real::zero()];
+    for (power, coefficient) in image_polynomial.iter().enumerate() {
+        let term = multiply_power_polynomials(
+            &numerator_powers[power],
+            &denominator_powers[degree - power],
+        )?;
+        add_scaled_power_polynomial(&mut preimage, &term, coefficient);
+    }
+    Some(preimage)
 }
 
 struct ConicParameterMap2 {

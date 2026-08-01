@@ -9,7 +9,9 @@ use crate::classify::compare_reals;
 use crate::intersect::{circle_relation_from_supports, oriented_param_range_overlap};
 use crate::policy::resolve_certified_operation;
 use crate::rational_bezier::RationalQuadraticCircle2;
-use crate::rational_bezier_general::RationalBezierIntersectionContext;
+use crate::rational_bezier_general::{
+    RationalBezierIntersectionContext, RationalBezierOverlapParameterCorrespondence2,
+};
 use crate::{
     ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
     BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
@@ -39,13 +41,24 @@ pub struct CurveIntersectionContact2 {
 }
 
 /// Certified positive-length overlap between two promoted top-level spans.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct CurveIntersectionOverlap2 {
     first_span_index: usize,
     second_span_index: usize,
     first_range: BezierParameterRange2,
     second_range: BezierParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
+    parameter_correspondence: Option<RationalBezierOverlapParameterCorrespondence2>,
+}
+
+impl PartialEq for CurveIntersectionOverlap2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.first_span_index == other.first_span_index
+            && self.second_span_index == other.second_span_index
+            && self.first_range == other.first_range
+            && self.second_range == other.second_range
+            && self.orientation == other.orientation
+    }
 }
 
 /// Reason one promoted span pair did not produce complete contact topology.
@@ -494,6 +507,7 @@ fn build_native_line_evidence(
                         b_range.end().clone(),
                     ),
                     orientation,
+                    parameter_correspondence: None,
                 }],
             )
         }
@@ -937,6 +951,7 @@ fn build_native_coincident_arc_evidence(
                         first_range,
                         second_range,
                         orientation,
+                        parameter_correspondence: None,
                     });
                 }
                 ArcArcIntersection::Uncertain { reason } => {
@@ -1417,6 +1432,7 @@ impl CurveIntersectionContext {
                         second_range.end().clone(),
                     ),
                     orientation: *orientation,
+                    parameter_correspondence: None,
                 });
                 continue;
             }
@@ -1478,6 +1494,12 @@ impl CurveIntersectionContext {
                         first_range: overlap.first_range().clone(),
                         second_range: overlap.second_range().clone(),
                         orientation: overlap.orientation(),
+                        parameter_correspondence: match &pair.state {
+                            CurveSpanPairState::Rational(intersection) => {
+                                Some(intersection.overlap_parameter_correspondence())
+                            }
+                            _ => None,
+                        },
                     });
                 }
                 RationalBezierIntersectionContacts2::Incomplete {
@@ -1685,6 +1707,12 @@ impl CurveIntersectionOverlap2 {
     /// Returns relative traversal orientation on the shared image.
     pub const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
         self.orientation
+    }
+
+    pub(crate) const fn parameter_correspondence(
+        &self,
+    ) -> Option<&RationalBezierOverlapParameterCorrespondence2> {
+        self.parameter_correspondence.as_ref()
     }
 }
 

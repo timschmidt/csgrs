@@ -1002,3 +1002,173 @@ fn retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges() {
         assert_location(results.xor(), between_tops, RegionPointLocation::Inside);
     }
 }
+
+#[test]
+#[cfg(feature = "predicates")]
+fn retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges() {
+    let start = point(-2, 4);
+    let control = point(0, -4);
+    let end = point(2, 4);
+    let quadratic = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            start.clone(),
+            control.clone(),
+            end.clone(),
+        )),
+        Curve2::from(LineSeg2::try_new(end.clone(), start.clone()).unwrap()),
+    ])
+    .unwrap();
+    // Scaling homogeneous Bernstein control i by lambda^i composes the
+    // original quadratic with t = lambda*s / (1 - s + lambda*s). The image
+    // and traversal are unchanged, but corresponding clipped parameters are
+    // neither identical nor unit complements.
+    let reparameterized = CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalBezier2::try_new(
+                vec![start.clone(), control.clone(), end.clone()],
+                vec![Real::one(), Real::from(2_i8), Real::from(4_i8)],
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(end.clone(), start.clone()).unwrap()),
+    ])
+    .unwrap();
+    let reversed_reparameterized = CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalBezier2::try_new(
+                vec![end.clone(), control, start.clone()],
+                vec![Real::from(4_i8), Real::from(2_i8), Real::one()],
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(start.clone(), end.clone()).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let narrow = quadratic
+            .boolean_region(
+                &square_path(-3, -1, 3, 2),
+                BooleanOp::Intersection,
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        assert!(narrow.has_algebraic_fragments());
+        for (wide_path, interior_side) in [
+            (&reparameterized, CurveBoundaryInteriorSide2::Left),
+            (&reversed_reparameterized, CurveBoundaryInteriorSide2::Right),
+        ] {
+            let wide = wide_path
+                .boolean_region(
+                    &square_path(-3, -1, 3, 3),
+                    BooleanOp::Intersection,
+                    interior_side,
+                    CurveBoundaryInteriorSide2::Left,
+                    &policy,
+                )
+                .unwrap()
+                .into_value();
+            assert!(wide.has_algebraic_fragments());
+
+            let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
+            assert_location(results.union(), point(0, 3), RegionPointLocation::Boundary);
+            assert_location(
+                results.intersection(),
+                point(0, 3),
+                RegionPointLocation::Outside,
+            );
+            assert!(results.difference().is_empty());
+            let between_tops =
+                Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap());
+            assert_location(results.xor(), between_tops, RegionPointLocation::Inside);
+        }
+    }
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn retained_regions_clip_independent_nonlinear_line_parameters() {
+    let first = CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalBezier2::try_new(
+                vec![point(0, 0), point(1, 0), point(4, 0)],
+                vec![Real::one(); 3],
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(point(4, 0), point(4, 4)).unwrap()),
+        Curve2::from(LineSeg2::try_new(point(4, 4), point(0, 4)).unwrap()),
+        Curve2::from(LineSeg2::try_new(point(0, 4), point(0, 0)).unwrap()),
+    ])
+    .unwrap();
+    let second = CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalBezier2::try_new(
+                vec![point(0, 0), point(3, 0), point(4, 0)],
+                vec![Real::one(); 3],
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(point(4, 0), point(4, 4)).unwrap()),
+        Curve2::from(LineSeg2::try_new(point(4, 4), point(0, 4)).unwrap()),
+        Curve2::from(LineSeg2::try_new(point(0, 4), point(0, 0)).unwrap()),
+    ])
+    .unwrap();
+    let second_reversed = CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalBezier2::try_new(
+                vec![point(4, 0), point(3, 0), point(0, 0)],
+                vec![Real::one(); 3],
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(point(0, 0), point(0, 4)).unwrap()),
+        Curve2::from(LineSeg2::try_new(point(0, 4), point(4, 4)).unwrap()),
+        Curve2::from(LineSeg2::try_new(point(4, 4), point(4, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let narrow = first
+            .boolean_region(
+                &square_path(-1, -1, 2, 5),
+                BooleanOp::Intersection,
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        assert!(narrow.has_algebraic_fragments());
+        for (wide_path, interior_side) in [
+            (&second, CurveBoundaryInteriorSide2::Left),
+            (&second_reversed, CurveBoundaryInteriorSide2::Right),
+        ] {
+            let wide = wide_path
+                .boolean_region(
+                    &square_path(-1, -1, 3, 5),
+                    BooleanOp::Intersection,
+                    interior_side,
+                    CurveBoundaryInteriorSide2::Left,
+                    &policy,
+                )
+                .unwrap()
+                .into_value();
+            assert!(wide.has_algebraic_fragments());
+
+            let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
+            assert_location(results.union(), point(3, 0), RegionPointLocation::Boundary);
+            assert_location(
+                results.intersection(),
+                point(2, 0),
+                RegionPointLocation::Boundary,
+            );
+            assert!(results.difference().is_empty());
+            assert_location(results.xor(), point(3, 2), RegionPointLocation::Boundary);
+            assert_location(results.xor(), point(1, 2), RegionPointLocation::Outside);
+        }
+    }
+}

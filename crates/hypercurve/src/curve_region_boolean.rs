@@ -8,6 +8,7 @@ use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
 use crate::policy::resolve_certified_operation;
+use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2;
 use crate::{
     Aabb2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
     BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
@@ -619,6 +620,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 overlap.first_range().clone(),
                 overlap.second_range().clone(),
             )));
+        }
+        if let Some(correspondence) = overlap.parameter_correspondence() {
+            return clip_corresponding_parameter_overlap(
+                overlap.first_range(),
+                overlap.second_range(),
+                correspondence,
+                first_carrier,
+                second_carrier,
+                &self.data.policy,
+            );
         }
         match clip_projectively_aligned_parameter_overlap(
             overlap.first_range(),
@@ -2091,6 +2102,111 @@ fn range_inside_carrier(
         !decided_parameter_cmp(start, &carrier.start, policy)?.is_lt()
             && !decided_parameter_cmp(end, &carrier.end, policy)?.is_gt(),
     )
+}
+
+fn clip_corresponding_parameter_overlap(
+    first_range: &BezierParameterRange2,
+    second_range: &BezierParameterRange2,
+    correspondence: &RationalBezierOverlapParameterCorrespondence2,
+    first_carrier: &RegionCarrier,
+    second_carrier: &RegionCarrier,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<(BezierParameterRange2, BezierParameterRange2)>> {
+    let (second_overlap_start, second_overlap_end) = ascending_range(second_range, policy)?;
+    let second_start = maximum_parameter([second_overlap_start, &second_carrier.start], policy)?;
+    let second_end = minimum_parameter([second_overlap_end, &second_carrier.end], policy)?;
+    match decided_parameter_cmp(&second_start, &second_end, policy)? {
+        Ordering::Less => {}
+        Ordering::Equal | Ordering::Greater => return Ok(None),
+    }
+    let second_start_on_first = mapped_overlap_parameter(
+        correspondence,
+        false,
+        &second_start,
+        second_carrier.family,
+        policy,
+    )?;
+    let second_end_on_first = mapped_overlap_parameter(
+        correspondence,
+        false,
+        &second_end,
+        second_carrier.family,
+        policy,
+    )?;
+    let (second_start_on_first, second_end_on_first) =
+        match decided_parameter_cmp(&second_start_on_first, &second_end_on_first, policy)? {
+            Ordering::Less => (second_start_on_first, second_end_on_first),
+            Ordering::Greater => (second_end_on_first, second_start_on_first),
+            Ordering::Equal => return Ok(None),
+        };
+
+    let (first_overlap_start, first_overlap_end) = ascending_range(first_range, policy)?;
+    let first_start = maximum_parameter(
+        [
+            first_overlap_start,
+            &first_carrier.start,
+            &second_start_on_first,
+        ],
+        policy,
+    )?;
+    let first_end = minimum_parameter(
+        [first_overlap_end, &first_carrier.end, &second_end_on_first],
+        policy,
+    )?;
+    match decided_parameter_cmp(&first_start, &first_end, policy)? {
+        Ordering::Less => {}
+        Ordering::Equal | Ordering::Greater => return Ok(None),
+    }
+    let second_start = mapped_overlap_parameter(
+        correspondence,
+        true,
+        &first_start,
+        first_carrier.family,
+        policy,
+    )?;
+    let second_end = mapped_overlap_parameter(
+        correspondence,
+        true,
+        &first_end,
+        first_carrier.family,
+        policy,
+    )?;
+    Ok(Some((
+        BezierParameterRange2::new_validated(first_start, first_end),
+        BezierParameterRange2::new_validated(second_start, second_end),
+    )))
+}
+
+fn mapped_overlap_parameter(
+    correspondence: &RationalBezierOverlapParameterCorrespondence2,
+    first_to_second: bool,
+    parameter: &BezierParameter2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<BezierParameter2> {
+    let mapped = if first_to_second {
+        correspondence.map_first_to_second(parameter, policy)
+    } else {
+        correspondence.map_second_to_first(parameter, policy)
+    };
+    match mapped {
+        Ok(Classification::Decided(Some(parameter))) => Ok(parameter),
+        Ok(Classification::Decided(None)) => Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            family,
+            UncertaintyReason::Predicate,
+        )),
+        Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            family,
+            reason,
+        )),
+        Err(cause) => Err(ExactCurveError::invalid(
+            CurveOperation2::Boolean,
+            family,
+            cause,
+        )),
+    }
 }
 
 fn clip_projectively_aligned_parameter_overlap(
