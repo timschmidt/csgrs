@@ -2054,6 +2054,76 @@ fn parallel_rational_contacts_partition_two_turning_implicit_graphs() {
 }
 
 #[test]
+fn parallel_rational_contacts_partition_a_closed_implicit_oval() {
+    // P(v)=(v,v^2), source v=(t-1/2)^2, and target
+    // v=1/16-(u-1/2)^2 produce the closed parameter correspondence
+    // (t-1/2)^2+(u-1/2)^2=1/16. Neither parameter is a global graph
+    // coordinate, so the authoritative component topology must traverse folds
+    // in both projections.
+    let source = RationalBezier2::try_new(
+        vec![
+            Point2::new(q(1, 4), q(1, 16)),
+            Point2::new(Real::zero(), q(-1, 16)),
+            Point2::new(q(-1, 12), q(1, 16)),
+            Point2::new(Real::zero(), q(-1, 16)),
+            Point2::new(q(1, 4), q(1, 16)),
+        ],
+        vec![Real::one(); 5],
+    )
+    .unwrap();
+    let target = RationalBezier2::try_new(
+        vec![
+            Point2::new(q(-3, 16), q(9, 256)),
+            Point2::new(q(1, 16), q(-15, 256)),
+            Point2::new(q(7, 48), q(59, 768)),
+            Point2::new(q(1, 16), q(-15, 256)),
+            Point2::new(q(-3, 16), q(9, 256)),
+        ],
+        vec![Real::one(); 5],
+    )
+    .unwrap();
+    let parallel = source.parallel_left(Real::zero()).unwrap();
+    let quarter = q(1, 4);
+    let half = q(1, 2);
+    let three_quarters = q(3, 4);
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
+        assert!(intersections.is_complete(), "{intersections:?}");
+        assert!(intersections.contacts().is_empty());
+        let [lower_left, lower_right, upper_left, upper_right] = intersections.overlaps() else {
+            panic!("the closed parameter oval must produce four overlap cells");
+        };
+        for overlap in [lower_left, upper_left] {
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&quarter, &half))
+            );
+        }
+        for overlap in [lower_right, upper_right] {
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&half, &three_quarters))
+            );
+        }
+        assert_eq!(
+            [
+                lower_left.orientation(),
+                lower_right.orientation(),
+                upper_left.orientation(),
+                upper_right.orientation(),
+            ],
+            [
+                RationalBezierOverlapOrientation2::Reversed,
+                RationalBezierOverlapOrientation2::Same,
+                RationalBezierOverlapOrientation2::Same,
+                RationalBezierOverlapOrientation2::Reversed,
+            ]
+        );
+    }
+}
+
+#[test]
 fn parallel_rational_contacts_partition_a_noninjective_parameter_component() {
     let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 0))
         .parallel_left(Real::one())
