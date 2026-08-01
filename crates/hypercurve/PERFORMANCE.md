@@ -7782,6 +7782,53 @@ failures are predicate-disabled `None` results rather than this cut's Boolean
 regressions. Hypermesh was not modified. Complete evidence is in
 [`2026-07-31-native-circular-boolean-publication.json`](benchmarks/checkpoints/2026-07-31-native-circular-boolean-publication.json).
 
+## Exact rational Bezier parallel carrier checkpoint (2026-07-31)
+
+`BezierParallel2` is now a one-word clone-shared exact carrier for native
+quadratic/cubic and arbitrary-degree rational Beziers. Polynomial sources stay
+native; homogeneous power bases, tangent numerators, and their derivatives are
+built only on first use and shared thereafter. For `P=(X/W,Y/W)`, the carrier
+uses `H=(X'W-XW',Y'W-YW')`, evaluates
+`P+d*R90(H)/sqrt(H dot H)`, differentiates that expression exactly, rejects
+projective denominator roots, and isolates rational offset cusps from
+`d W^2 (H' cross H)+|H|^3=0` with exact post-square sign filtering.
+
+Homogeneous PH sources materialize exactly as
+`(XS-dW Hy, YS+dW Hx, WS)`. The former arbitrary 32-degree search ceiling is
+gone: once `WS` is certified strictly positive on the unit interval,
+incremental Bernstein elevation continues to the mathematically guaranteed
+all-positive representation. A regression whose first positive representation
+is degree 65 passes under STRICT and APPROXIMATE_512. Circular rational conics
+retain a degree-two same-parameter fast path, including exact radius collapse
+and negative radial reversal. Regular rational PH spans now enter certified
+`CurvePath2` parallels without chord fallback.
+
+Fifteen alternating CPU-9 parent/candidate release pairs measured:
+
+| Workload | `92b9477` | `8284dcf` | Change |
+| --- | ---: | ---: | ---: |
+| Exact carrier construction | 1,594.1 ns | 66.0 ns | -95.86% |
+| Repeated exact point evaluation | 5,200.5 ns | 3,996.0 ns | -23.16% |
+| Exact polynomial PH materialization | 15,921.7 ns | 15,745.7 ns | -1.11% |
+
+Heaptrack over 100,000 constructions records 4,300,074 to 100,040 allocation
+calls (-97.67%), 800,002 to 100,002 temporary allocations (-87.50%), and a
+2.97% peak-heap reduction. Over 10,000 evaluations, allocations fall 27.60%;
+the retained lazy caches add a visible 1.03 KiB peak-heap sentinel. The matched
+release benchmark executable grows 55,488 bytes (0.87%), with text up 1.18%.
+That first-cut size cost is accepted for general rational exactness and removal
+of the mathematical completion cap; piecewise low-degree PH publication is the
+next memory/size optimization boundary.
+
+The seven-process competitive open-cubic median improves 1.38% for
+Hypercurve's certified lane and 1.05% for its weaker chord control; Curvo's
+floating heuristic is unchanged within noise (+0.49%). The guarantees remain
+deliberately non-equivalent. All 274 all-feature library tests, the complete
+integration/adversarial/doc suite, 38 focused tests in both feature matrices,
+formatting, and both warning-denied Clippy matrices pass. Hypermesh was not
+modified. Complete raw samples and evidence are in
+[`2026-07-31-exact-rational-bezier-parallel-carrier.json`](benchmarks/checkpoints/2026-07-31-exact-rational-bezier-parallel-carrier.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
