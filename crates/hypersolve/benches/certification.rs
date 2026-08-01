@@ -21,6 +21,7 @@ use hypersolve::{
     compare_algebraic_root_representations_by_difference,
     compare_algebraic_root_representations_with_refinement, context_from_problem,
     count_bernstein_univariate_polynomial_interval_roots,
+    count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_descartes_univariate_polynomial_roots, determinant_bareiss, diagnose_failed_constraints,
     diagnose_sketch_failed_constraints, eliminate_affine_rows_with_substitution_classes,
@@ -4700,6 +4701,31 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             count_bivariate_fiber_roots_at_algebraic_parameter(
                 &even_fiber,
+                CurveResultantParameter::First,
+                &cube_alpha,
+                &even_fiber_lower,
+                &even_fiber_upper,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    let degree_drop_first = BivariatePolynomial::new(vec![
+        vec![r(1), r(1), r(0), r(-4)],
+        vec![],
+        vec![r(-1)],
+        vec![r(-2), r(0), r(0), r(8)],
+    ]);
+    let degree_drop_second = BivariatePolynomial::new(vec![
+        vec![r(1), r(2), r(0), r(-4)],
+        vec![],
+        vec![r(-2)],
+        vec![r(-2), r(0), r(0), r(8)],
+    ]);
+    c.bench_function("count_bivariate_common_fiber_degree_drop", |b| {
+        b.iter(|| {
+            count_bivariate_common_fiber_roots_at_algebraic_parameter(
+                &degree_drop_first,
+                &degree_drop_second,
                 CurveResultantParameter::First,
                 &cube_alpha,
                 &even_fiber_lower,

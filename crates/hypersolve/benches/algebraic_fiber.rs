@@ -6,6 +6,7 @@ use hypersolve::{
     AlgebraicFiberRootCountStatus, AlgebraicRootKind, AlgebraicRootRepresentation,
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BivariatePolynomial,
     CurveResultantParameter, IsolatedRootInterval, PredicatePolicy, SymbolId,
+    count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
 };
 
@@ -67,6 +68,41 @@ fn main() {
     let elapsed = started.elapsed();
     println!(
         "algebraic_fiber_even_multiplicity: {iterations} iterations in {elapsed:?} ({:?}/iter), root_checksum={root_count}, refinement_checksum={refinement_steps}",
+        elapsed / iterations
+    );
+
+    let second = BivariatePolynomial::new(vec![
+        vec![r(1), r(2), r(0), r(-4)],
+        vec![],
+        vec![r(-2)],
+        vec![r(-2), r(0), r(0), r(8)],
+    ]);
+    let first = BivariatePolynomial::new(vec![
+        vec![r(1), r(1), r(0), r(-4)],
+        vec![],
+        vec![r(-1)],
+        vec![r(-2), r(0), r(0), r(8)],
+    ]);
+    let started = Instant::now();
+    let mut common_root_count = 0_usize;
+    let mut common_refinement_steps = 0_usize;
+    for _ in 0..iterations {
+        let report = count_bivariate_common_fiber_roots_at_algebraic_parameter(
+            black_box(&first),
+            black_box(&second),
+            CurveResultantParameter::First,
+            black_box(&retained_root),
+            black_box(&lower),
+            black_box(&upper),
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(report.status, AlgebraicFiberRootCountStatus::Counted);
+        common_root_count += black_box(report.distinct_root_count.unwrap_or(0));
+        common_refinement_steps += black_box(report.retained_refinement_steps);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "algebraic_common_fiber_degree_drop: {iterations} iterations in {elapsed:?} ({:?}/iter), root_checksum={common_root_count}, refinement_checksum={common_refinement_steps}",
         elapsed / iterations
     );
 }
