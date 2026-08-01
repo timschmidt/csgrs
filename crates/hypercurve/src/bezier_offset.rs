@@ -7067,6 +7067,50 @@ mod conversion_tests {
     }
 
     #[test]
+    fn rational_component_system_enumerates_repeated_cubic_fibers() {
+        let repeated = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let distinct = BivariatePolynomial::new(vec![
+            vec![Real::from(-1_i8), Real::one()],
+            vec![Real::one()],
+        ]);
+        let common = bivariate_multiply(&bivariate_multiply(&repeated, &repeated), &distinct);
+        let equations = [
+            bivariate_multiply(
+                &common,
+                &BivariatePolynomial::new(vec![vec![Real::from(2_i8)], vec![Real::one()]]),
+            ),
+            bivariate_multiply(
+                &common,
+                &BivariatePolynomial::new(vec![vec![Real::from(2_i8), Real::one()]]),
+            ),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                rational_parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("repeated cubic common fiber was not enumerated");
+            };
+            assert_eq!(system.overlaps.len(), 2);
+            assert!(system.isolated_pairs.is_empty());
+            assert!(system.overlaps.iter().any(|overlap| {
+                overlap.orientation() == RationalBezierOverlapOrientation2::Same
+            }));
+            assert!(system.overlaps.iter().any(|overlap| {
+                overlap.orientation() == RationalBezierOverlapOrientation2::Reversed
+            }));
+        }
+    }
+
+    #[test]
     fn rational_component_system_filters_split_components_independently() {
         // u=t/4 lies wholly on the negative branch of 2u-1, while
         // u=1-t/4 lies wholly on its positive branch.
