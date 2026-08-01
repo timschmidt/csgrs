@@ -1538,14 +1538,11 @@ fn build_region_carriers(
                 }
             };
             let family = subcurve_family(&curve);
-            let already_affine = matches!(
-                &curve,
-                BezierSubcurve2::Quadratic(curve)
-                    if curve.retained_exact_line_image().is_some()
-            );
-            if !already_affine
-                && let Ok(Classification::Decided(line)) =
-                    crate::bezier_region::retained_line_fragment_segment(fragment, policy)
+            if matches!(
+                fragment,
+                BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            ) && let Ok(Classification::Decided(line)) =
+                crate::bezier_region::retained_line_fragment_segment(fragment, policy)
             {
                 curve = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line));
                 start = BezierParameter2::Exact(crate::Real::zero());
