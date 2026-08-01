@@ -55,7 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn unplanned_dyadic_word_totals_match_two_pass_alignment() {
+    fn unplanned_four_and_six_term_dyadic_word_totals_match_two_pass_alignment() {
         let mut state = 0x243f_6a88_85a3_08d3_u64;
         let mut saw_fallback = false;
         for case in 0..512 {
@@ -88,6 +88,21 @@ mod tests {
             );
             let actual = Rational::signed_product_sum_dyadic_word_totals_unplanned(terms, signs);
             assert_eq!(actual, expected, "case {case}");
+            assert!(!narrow || expected.is_some());
+            saw_fallback |= expected.is_none();
+
+            let terms: [[&Rational; 2]; 4] =
+                std::array::from_fn(|index| [&values[index * 2], &values[index * 2 + 1]]);
+            let signs = [Plus, Minus, Plus, Minus];
+            let plan = Rational::product_sum_dyadic_plan(terms, signs).unwrap();
+            let expected = Rational::signed_product_sum_dyadic_word_totals(
+                terms,
+                signs,
+                plan.denominator_shifts,
+                plan.max_shift,
+            );
+            let actual = Rational::signed_product_sum_dyadic_word_totals_unplanned(terms, signs);
+            assert_eq!(actual, expected, "four-term case {case}");
             assert!(!narrow || expected.is_some());
             saw_fallback |= expected.is_none();
         }

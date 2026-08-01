@@ -3636,9 +3636,9 @@ impl Rational {
             let mut magnitude = 1_u128;
             let mut shift = 0_u64;
             for factor in terms[i] {
-                magnitude = magnitude.checked_mul(factor.numerator.to_u128()?)?;
                 shift =
                     shift.checked_add(factor.dyadic_denominator_shift_if_reduced()?)?;
+                magnitude = magnitude.checked_mul(factor.numerator.to_u128()?)?;
             }
             // Both totals stay aligned to `max_shift`. Because each side is a
             // monotonic sum of magnitudes, raising that alignment has the same
@@ -5154,12 +5154,14 @@ impl Rational {
             }
             _ => {}
         }
-        // Expanded 2D orientation determinants have six pair products and
-        // overwhelmingly stay in the word-sized dyadic envelope. Probe that
-        // shape directly; wider determinant shapes benefit from the generic
-        // bit-width plan before attempting a word accumulator.
-        if TERMS == 6
-            && FACTORS == 2
+        // Expanded affine and 2D orientation determinants have four or six
+        // pair products and overwhelmingly stay in the word-sized dyadic
+        // envelope. Use the fourth affine factor as a conservative admission
+        // guard; a rejected probe simply continues to the complete bit-width
+        // plan.
+        if FACTORS == 2
+            && (TERMS == 6
+                || (TERMS == 4 && terms[3][0].numerator.to_u128().is_some()))
             && let Some((positive, negative)) =
                 Self::signed_product_sum_dyadic_word_totals_unplanned(terms, signs)
         {
