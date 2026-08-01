@@ -1,9 +1,10 @@
 use hypercurve::{
     BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierFlatteningOptions,
     BezierLineImageFitRelation, BezierOffsetCandidate2, BezierParallelApproximationCurve2,
-    BezierParallelVerificationOptions, BezierParameter2, Classification, CubicBezier2, Curve2,
-    CurveContext, CurveError, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, Point2,
-    QuadraticBezier2, Rational, RationalBezier2, RationalQuadraticBezier2, Real,
+    BezierParallelPointIncidence2, BezierParallelVerificationOptions, BezierParameter2,
+    Classification, CubicBezier2, Curve2, CurveContext, CurveError, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, FillRule, Point2, QuadraticBezier2, Rational, RationalBezier2,
+    RationalQuadraticBezier2, Real,
 };
 use num::bigint::{BigInt, BigUint};
 use proptest::prelude::*;
@@ -806,6 +807,175 @@ fn exact_parallel_conservative_bounds_cover_both_offset_sides() {
                 );
             }
         }
+    }
+}
+
+#[test]
+fn exact_parallel_point_incidence_rejects_the_opposite_normal_branch() {
+    let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
+    let parallel = source.parallel_left(r(1)).unwrap();
+    let right_parallel = source.parallel_left(r(-1)).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            parallel.point_incidence(&p(1, 1), &policy).unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::Parameters(vec![
+                BezierParameter2::Exact(q(1, 2))
+            ]))
+        );
+        assert_eq!(
+            parallel.point_incidence(&p(1, -1), &policy).unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::Parameters(Vec::new()))
+        );
+        assert_eq!(
+            parallel.contains_point(&p(1, 1), &policy).unwrap(),
+            Classification::Decided(true)
+        );
+        assert_eq!(
+            parallel.contains_point(&p(1, -1), &policy).unwrap(),
+            Classification::Decided(false)
+        );
+        assert_eq!(
+            right_parallel.point_incidence(&p(1, -1), &policy).unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::Parameters(vec![
+                BezierParameter2::Exact(q(1, 2))
+            ]))
+        );
+        assert_eq!(
+            right_parallel.point_incidence(&p(1, 1), &policy).unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::Parameters(Vec::new()))
+        );
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn parallel_point_incidence_uses_approximate_512_only_as_a_terminal_decision() {
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
+    let parallel = source.parallel_left(undecidable_zero).unwrap();
+
+    assert_eq!(
+        parallel.point_incidence(&p(1, 0), &CurveContext::STRICT),
+        Ok(Classification::Uncertain(
+            hypercurve::UncertaintyReason::RealSign
+        ))
+    );
+    assert_eq!(
+        parallel.point_incidence(&p(1, 0), &CurveContext::APPROXIMATE_512),
+        Ok(Classification::Decided(
+            BezierParallelPointIncidence2::Parameters(vec![BezierParameter2::Exact(q(1, 2))])
+        ))
+    );
+}
+
+#[test]
+fn exact_parallel_point_incidence_retains_algebraic_parameters() {
+    // `x(t)=t+t^2` reaches x=1 at the nonrepresented root
+    // `(-1+sqrt(5))/2`; its tangent is regular over the complete domain.
+    let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(2, 0));
+    let parallel = source.parallel_left(r(1)).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let Classification::Decided(BezierParallelPointIncidence2::Parameters(parameters)) =
+            parallel.point_incidence(&p(1, 1), &policy).unwrap()
+        else {
+            panic!("algebraic parallel incidence was not decided");
+        };
+        let [BezierParameter2::Algebraic(parameter)] = parameters.as_slice() else {
+            panic!("parallel incidence did not retain its algebraic parameter");
+        };
+        assert_eq!(parameter.polynomial().degree(), 2);
+
+        assert_eq!(
+            parallel.point_incidence(&p(1, -1), &policy).unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::Parameters(Vec::new()))
+        );
+    }
+}
+
+#[test]
+fn rational_parallel_point_incidence_preserves_projective_parameterization() {
+    let source =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(2, 0)], vec![r(1), r(2), r(3)]).unwrap();
+    let parallel = source.parallel_left(r(2)).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            parallel
+                .point_incidence(&Point2::new(q(5, 4), r(2)), &policy)
+                .unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::Parameters(vec![
+                BezierParameter2::Exact(q(1, 2))
+            ]))
+        );
+        assert_eq!(
+            parallel
+                .point_incidence(&Point2::new(q(5, 4), r(-2)), &policy)
+                .unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::Parameters(Vec::new()))
+        );
+    }
+}
+
+#[test]
+fn collapsed_circular_parallel_reports_entire_curve_point_incidence() {
+    let source =
+        RationalQuadraticBezier2::try_new(p(1, 0), p(1, 1), p(0, 1), r(1), r(1), r(2)).unwrap();
+    let parallel = source.parallel_left(r(1)).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            parallel.point_incidence(&p(0, 0), &policy).unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::EntireCurve)
+        );
+        assert_eq!(
+            parallel.point_incidence(&p(1, 0), &policy).unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::Parameters(Vec::new()))
+        );
+    }
+}
+
+#[test]
+fn parallel_point_incidence_rejects_projective_poles_and_source_singularities() {
+    let projective =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 1), p(2, 0)], vec![r(1), r(-1), r(1)])
+            .unwrap()
+            .parallel_left(r(1))
+            .unwrap();
+    let singular = QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0))
+        .parallel_left(r(1))
+        .unwrap();
+    let zero_distance_singular = QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0))
+        .parallel_left(r(0))
+        .unwrap();
+    let zero_distance_constant = QuadraticBezier2::new(p(3, 4), p(3, 4), p(3, 4))
+        .parallel_left(r(0))
+        .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            projective.point_incidence(&p(0, 0), &policy).unwrap(),
+            Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+        );
+        assert_eq!(
+            singular.point_incidence(&p(0, 1), &policy).unwrap(),
+            Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+        );
+        assert_eq!(
+            zero_distance_singular
+                .point_incidence(&p(0, 0), &policy)
+                .unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::Parameters(vec![
+                BezierParameter2::Exact(r(0))
+            ]))
+        );
+        assert_eq!(
+            zero_distance_constant
+                .point_incidence(&p(3, 4), &policy)
+                .unwrap(),
+            Classification::Decided(BezierParallelPointIncidence2::EntireCurve)
+        );
     }
 }
 
