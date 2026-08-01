@@ -1,0 +1,179 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "rational-parallel-overlap",
+  "source_revision": "3849cf499a6789168bb9a1507bf5e6230d72138b",
+  "historical_control_revision": "9dd3c00",
+  "scope": {
+    "operation": "positive-dimensional analytic-parallel/rational-Bezier intersection replay",
+    "completed_families": [
+      "zero-distance parallels of arbitrary polynomial or rational Bezier sources",
+      "certified polynomial and rational Pythagorean-hodograph parallels",
+      "line-image and circular-conic PH specializations",
+      "full, partial, and reversed rational shared images",
+      "selected-versus-opposite normal branch discrimination"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "authority": "an exact rational materialization delegates to RationalBezier2's existing shared-component replay and returns its oriented parameter ranges",
+    "overlap_evidence": "BezierParallelIntersectionContacts2::Overlap reuses RationalBezierIntersectionOverlap2; its first range is the analytic-parallel parameter and its second range is the rational operand parameter",
+    "zero_distance": "the analytic parallel is exactly its authored rationalized source even when the source is non-PH or stationary",
+    "nonzero_distance": "only a certified polynomial-square homogeneous hodograph materializes a rational selected parallel",
+    "branch_selection": "the rational materialization represents the authored signed parallel, so an identically degenerate squared equation caused solely by the opposite normal branch can resolve to NoIntersection",
+    "strict": "STRICT caches only a result constructed by the strict proof path",
+    "approximate_512": "APPROXIMATE_512 first attempts the strict construction and may decide only at inherited 512-bit terminals; an approximate-only materialization is never entered into the certified cache and cannot answer a later STRICT call",
+    "unresolved": "a nonzero non-PH degenerate system remains DegenerateResultant for exact bivariate common-factor classification rather than being guessed"
+  },
+  "implementation": {
+    "reuse": "the parallel contact result maps the authoritative rational NoIntersection, Contacts, Overlap, Incomplete, and DegenerateResultant outcomes without a second overlap representation or compatibility layer",
+    "cache": "one clone-shared lazy slot retains only certified PH results behind an Arc; clones retain the one-word BezierParallel2 handle and repeated contact replay does not rebuild the rational carrier",
+    "candidate_fast_path": "a retained certified rational parallel delegates candidate construction directly",
+    "degenerate_fast_path": "the second elimination direction is skipped once the first resultant is identically zero",
+    "rational_fast_path": "same or reversed projective control nets are recognized before generic rational resultant construction",
+    "tests": "full/partial/reversed line overlap, selected/opposite branches, independently constructed PH geometry, zero-distance non-PH geometry, both policies, and approximate-cache isolation"
+  },
+  "matched_release_benchmark": {
+    "method": "five pinned-CPU-9 all-feature release processes with identical fixtures and benchmark source; the baseline is an isolated checkout of 9dd3c00",
+    "baseline_checkout": "/tmp/hypercurve-overlap-baseline",
+    "baseline_semantics": "shared-component lanes return DegenerateResultant with checksum one; the candidate implementation returns an exact overlap or selected-branch NoIntersection with the same count checksum",
+    "lanes": {
+      "line_overlap_candidates": {
+        "iterations_per_process": 1000,
+        "baseline_samples_microseconds": [53.405, 53.239, 53.271, 52.902, 53.236],
+        "candidate_samples_microseconds": [31.316, 32.176, 31.735, 32.143, 31.350],
+        "baseline_median_microseconds": 53.239,
+        "candidate_median_microseconds": 31.735,
+        "median_change_percent": -40.391442
+      },
+      "line_overlap_contacts": {
+        "iterations_per_process": 1000,
+        "baseline_samples_microseconds": [53.513, 53.661, 53.014, 52.986, 53.403],
+        "candidate_samples_microseconds": [8.216, 8.566, 8.458, 8.519, 8.241],
+        "baseline_median_microseconds": 53.403,
+        "candidate_median_microseconds": 8.459,
+        "median_change_percent": -84.160066,
+        "speedup": 6.313
+      },
+      "warm_ph_overlap_candidates": {
+        "iterations_per_process": 10,
+        "baseline_samples_microseconds": [232705.164, 235673.755, 229954.599, 232659.761, 278214.479],
+        "candidate_samples_microseconds": [1.966, 2.000, 1.991, 2.141, 2.011],
+        "baseline_median_microseconds": 232705.164,
+        "candidate_median_microseconds": 2.000,
+        "median_change_percent": -99.999141,
+        "speedup": 116352.582
+      },
+      "warm_ph_overlap_contacts": {
+        "iterations_per_process": 10,
+        "baseline_samples_microseconds": [227033.930, 228500.484, 224986.322, 227314.085, 316131.468],
+        "candidate_samples_microseconds": [7.499, 10.851, 9.608, 11.543, 7.374],
+        "baseline_median_microseconds": 227314.085,
+        "candidate_median_microseconds": 9.608,
+        "median_change_percent": -99.995773,
+        "speedup": 23658.835
+      },
+      "cold_ph_overlap_contacts": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [226.145747, 229.116826, 223.808597, 227.417100, 235.353695],
+        "candidate_samples_milliseconds": [127.091991, 126.222206, 126.572790, 126.955490, 125.838932],
+        "baseline_median_milliseconds": 227.417100,
+        "candidate_median_milliseconds": 126.572790,
+        "median_change_percent": -44.343328,
+        "speedup": 1.797
+      }
+    },
+    "non_overlap_sentinels": {
+      "maximum_observed_median_regression_percent": 2.5723,
+      "maximum_lane": "higher-nullity candidate projection",
+      "exact_candidate_change_percent": -8.0029,
+      "exact_contact_change_percent": 1.6508,
+      "nullity_one_contact_change_percent": 1.1975,
+      "selected_branch_contact_change_percent": 1.6600,
+      "higher_nullity_contact_change_percent": 0.7830,
+      "interpretation": "all completed non-overlap sentinels remain within 2.6 percent in sequential process samples while the exact candidate lane improves"
+    }
+  },
+  "matched_heaptrack": {
+    "method": "the identical complete benchmark process under Heaptrack; baseline overlap lanes are unresolved while candidate lanes are exact",
+    "baseline_profile": "/tmp/hypercurve-overlap-baseline-direct.zst.zst",
+    "candidate_profile": "/tmp/hypercurve-overlap-current-direct.zst.zst",
+    "baseline": {
+      "runtime_seconds": 103.983,
+      "allocation_calls": 193601277,
+      "temporary_allocations": 13004132,
+      "peak_heap_mebibytes_reported": 120.09,
+      "peak_rss_mebibytes_reported": 155.22,
+      "leaked_mebibytes_reported": 119.33
+    },
+    "candidate": {
+      "runtime_seconds": 21.810,
+      "allocation_calls": 42264889,
+      "temporary_allocations": 2790223,
+      "peak_heap_mebibytes_reported": 94.22,
+      "peak_rss_mebibytes_reported": 124.52,
+      "leaked_mebibytes_reported": 93.46
+    },
+    "change_percent": {
+      "runtime": -79.025418,
+      "allocation_calls": -78.169106,
+      "temporary_allocations": -78.543566,
+      "peak_heap": -21.542177,
+      "peak_rss": -19.778379,
+      "leaked": -21.679377
+    }
+  },
+  "release_size": {
+    "production_like_pathological_regions": {
+      "baseline_file_bytes": 7346864,
+      "candidate_file_bytes": 7352128,
+      "file_change_percent": 0.071650,
+      "baseline_text_bytes": 5572114,
+      "candidate_text_bytes": 5578266,
+      "text_change_percent": 0.110407,
+      "baseline_data_bytes": 267608,
+      "candidate_data_bytes": 267056,
+      "baseline_bss_bytes": 3160,
+      "candidate_bss_bytes": 5744
+    },
+    "offset_microbenchmark": {
+      "baseline_file_bytes": 6928688,
+      "candidate_file_bytes": 7182240,
+      "baseline_text_bytes": 5248807,
+      "candidate_text_bytes": 5452239,
+      "interpretation": "the microbenchmark newly references rational-overlap machinery that its baseline dead-stripped; the production-like binary already links that authority and is the representative marginal-size result"
+    }
+  },
+  "static_call_graph": {
+    "tool": "tools/hyper-callgraph",
+    "nodes": 17436,
+    "edges": 29876,
+    "change_from_specialized_common_fiber_checkpoint": {
+      "nodes": 26,
+      "edges": 107
+    },
+    "artifact": "/tmp/hypercurve-rational-parallel-overlap-callgraph/callgraph.json",
+    "caveat": "the utility is a static source approximation and default scans exclude benchmark-only functions"
+  },
+  "competitive_context": {
+    "equivalent_direct_peer": "none in the current harness",
+    "reason": "the available heuristic offset peer does not expose exact positive-dimensional parameter correspondence or STRICT/APPROXIMATE_512 evidence",
+    "comparison_rule": "heuristic offset throughput is not represented as correctness-equivalent"
+  },
+  "validation": {
+    "cargo_test_all_features": "pass: 277 library tests, 76 offset integration tests, every integration target, 29 authoritative CurveRegion Boolean tests, 11 deterministic Boolean fuzz tests, the 268-operation pathological workload, README tests, and doc tests",
+    "cargo_test_no_default_features": "pass: 244 library tests, 67 offset integration tests, and every enabled integration, README, and documentation target",
+    "clippy_all_targets_all_features_deny_warnings": "pass",
+    "clippy_all_targets_no_default_features_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "policies": "all new geometric cases run under STRICT and APPROXIMATE_512; approximate-only PH cache isolation is explicitly tested"
+  },
+  "next_boundary": {
+    "factor_classification": "remove or classify non-rational bivariate common factors, including out-of-domain base components, before finite contact projection",
+    "component_transport": "retain an exact correspondence and finite parameter-domain ranges for supported genuinely algebraic shared components",
+    "topology": "feed analytic overlap evidence into raw offset-piece splitting and authoritative CurveRegion2 regularization",
+    "coefficients": "extend supported local fields for non-rational coefficient towers generated by exact inputs"
+  }
+}
