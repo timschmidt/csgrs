@@ -75,6 +75,10 @@ fn exact_parameter(parameter: &BezierParameter2) -> &Real {
     }
 }
 
+fn assert_real_eq(left: &Real, right: &Real) {
+    assert_eq!(left.partial_cmp(right), Some(std::cmp::Ordering::Equal));
+}
+
 #[test]
 fn quadratic_line_image_fit_offsets_as_exact_line() {
     let bezier = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
@@ -631,6 +635,178 @@ fn rational_parallel_rejects_projective_denominator_boundary() {
         analysis,
         Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
     );
+}
+
+#[test]
+fn exact_parallel_reversal_preserves_image_and_reverses_parameter_derivative() {
+    let source = CubicBezier2::new(p(0, 0), p(1, 2), p(3, 2), p(4, 0));
+    let parallel = source.parallel_left(q(1, 3)).unwrap();
+    let reversed = parallel.reversed();
+
+    assert_eq!(reversed.distance(), &q(-1, 3));
+    assert_eq!(reversed.reversed(), parallel);
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for parameter in [r(0), q(1, 4), r(1)] {
+            let complement = r(1) - &parameter;
+            let expected_point = parallel.point_at(&complement, &policy).unwrap();
+            assert_eq!(
+                reversed.point_at(&parameter, &policy).unwrap(),
+                expected_point
+            );
+
+            let Classification::Decided(expected_derivative) =
+                parallel.derivative_at(&complement, &policy).unwrap()
+            else {
+                panic!("source parallel derivative was uncertain");
+            };
+            let Classification::Decided(actual_derivative) =
+                reversed.derivative_at(&parameter, &policy).unwrap()
+            else {
+                panic!("reversed parallel derivative was uncertain");
+            };
+            assert_real_eq(actual_derivative.dx(), &(-expected_derivative.dx().clone()));
+            assert_real_eq(actual_derivative.dy(), &(-expected_derivative.dy().clone()));
+        }
+    }
+}
+
+#[test]
+fn exact_parallel_split_preserves_parameter_map_and_chain_derivative() {
+    let source = CubicBezier2::new(p(0, 0), p(1, 2), p(3, 2), p(4, 0));
+    let parallel = source.parallel_left(q(1, 3)).unwrap();
+    let split_parameter = q(1, 3);
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let Classification::Decided((left, right)) =
+            parallel.split_at_exact(&split_parameter, &policy).unwrap()
+        else {
+            panic!("interior parallel split was uncertain");
+        };
+        let local = q(1, 2);
+        let left_global = q(1, 6);
+        let right_global = q(2, 3);
+        assert_eq!(
+            left.point_at(&local, &policy).unwrap(),
+            parallel.point_at(&left_global, &policy).unwrap()
+        );
+        assert_eq!(
+            right.point_at(&local, &policy).unwrap(),
+            parallel.point_at(&right_global, &policy).unwrap()
+        );
+
+        let Classification::Decided(left_derivative) = left.derivative_at(&local, &policy).unwrap()
+        else {
+            panic!("left split derivative was uncertain");
+        };
+        let Classification::Decided(source_left_derivative) =
+            parallel.derivative_at(&left_global, &policy).unwrap()
+        else {
+            panic!("source left derivative was uncertain");
+        };
+        let expected_left_derivative = source_left_derivative.scaled(&q(1, 3));
+        assert_real_eq(left_derivative.dx(), expected_left_derivative.dx());
+        assert_real_eq(left_derivative.dy(), expected_left_derivative.dy());
+
+        let Classification::Decided(right_derivative) =
+            right.derivative_at(&local, &policy).unwrap()
+        else {
+            panic!("right split derivative was uncertain");
+        };
+        let Classification::Decided(source_right_derivative) =
+            parallel.derivative_at(&right_global, &policy).unwrap()
+        else {
+            panic!("source right derivative was uncertain");
+        };
+        let expected_right_derivative = source_right_derivative.scaled(&q(2, 3));
+        assert_real_eq(right_derivative.dx(), expected_right_derivative.dx());
+        assert_real_eq(right_derivative.dy(), expected_right_derivative.dy());
+
+        assert_eq!(
+            parallel.split_at_exact(&r(0), &policy).unwrap(),
+            Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+        );
+        assert_eq!(
+            parallel.split_at_exact(&r(1), &policy).unwrap(),
+            Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+        );
+    }
+}
+
+#[test]
+fn rational_parallel_subcurve_preserves_parameter_map_and_chain_derivative() {
+    let source =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(2, 0)], vec![r(1), r(2), r(3)]).unwrap();
+    let parallel = source.parallel_left(r(2)).unwrap();
+    let start = q(1, 4);
+    let end = q(3, 4);
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let Classification::Decided(subcurve) = parallel
+            .subcurve_between_exact(&start, &end, &policy)
+            .unwrap()
+        else {
+            panic!("rational parallel subcurve was uncertain");
+        };
+        for (local, global) in [
+            (r(0), start.clone()),
+            (q(1, 2), q(1, 2)),
+            (r(1), end.clone()),
+        ] {
+            assert_eq!(
+                subcurve.point_at(&local, &policy).unwrap(),
+                parallel.point_at(&global, &policy).unwrap()
+            );
+        }
+
+        let Classification::Decided(subcurve_derivative) =
+            subcurve.derivative_at(&q(1, 2), &policy).unwrap()
+        else {
+            panic!("rational parallel subcurve derivative was uncertain");
+        };
+        let Classification::Decided(source_derivative) =
+            parallel.derivative_at(&q(1, 2), &policy).unwrap()
+        else {
+            panic!("rational source parallel derivative was uncertain");
+        };
+        let expected_derivative = source_derivative.scaled(&q(1, 2));
+        assert_real_eq(subcurve_derivative.dx(), expected_derivative.dx());
+        assert_real_eq(subcurve_derivative.dy(), expected_derivative.dy());
+
+        assert_eq!(
+            parallel
+                .subcurve_between_exact(&start, &start, &policy)
+                .unwrap(),
+            Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+        );
+    }
+}
+
+#[test]
+fn exact_parallel_conservative_bounds_cover_both_offset_sides() {
+    let source =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(2, 0)], vec![r(1), r(2), r(3)]).unwrap();
+    for distance in [r(-2), r(2)] {
+        let parallel = source.parallel_left(distance).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(bounds) = parallel.conservative_bounds(&policy).unwrap()
+            else {
+                panic!("parallel bounds were uncertain");
+            };
+            assert_eq!(bounds.min(), &p(-2, -2));
+            assert_eq!(bounds.max(), &p(4, 2));
+            for parameter in [r(0), q(1, 4), q(1, 2), q(3, 4), r(1)] {
+                let Classification::Decided(point) =
+                    parallel.point_at(&parameter, &policy).unwrap()
+                else {
+                    panic!("parallel point was uncertain");
+                };
+                assert_eq!(
+                    bounds.contains_point(&point, &policy),
+                    Classification::Decided(true)
+                );
+            }
+        }
+    }
 }
 
 #[test]

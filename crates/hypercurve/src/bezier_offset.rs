@@ -21,7 +21,7 @@ use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 use crate::bezier_parameter::{bernstein_to_power_coefficients, power_to_bernstein_coefficients};
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::{
-    BezierCuspClassification, BezierDegree, BezierEndpoint, BezierInflectionClassification,
+    Aabb2, BezierCuspClassification, BezierDegree, BezierEndpoint, BezierInflectionClassification,
     BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, CertifiedBezierLineImageOffset2, Classification, CubicBezier2,
     Curve2, CurveContext, CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2,
@@ -34,6 +34,92 @@ enum BezierParallelSource2 {
     Quadratic(QuadraticBezier2),
     Cubic(CubicBezier2),
     Rational(RationalBezier2),
+}
+
+impl BezierParallelSource2 {
+    fn reversed(&self) -> Self {
+        match self {
+            Self::Quadratic(source) => {
+                let reversed = if source.retained_exact_line_image().is_some() {
+                    QuadraticBezier2::with_retained_exact_line_image(
+                        source.end().clone(),
+                        source.control().clone(),
+                        source.start().clone(),
+                    )
+                    .expect("reversing a retained exact line preserves distinct endpoints")
+                } else {
+                    QuadraticBezier2::new(
+                        source.end().clone(),
+                        source.control().clone(),
+                        source.start().clone(),
+                    )
+                };
+                Self::Quadratic(reversed)
+            }
+            Self::Cubic(source) => Self::Cubic(CubicBezier2::new(
+                source.end().clone(),
+                source.control2().clone(),
+                source.control1().clone(),
+                source.start().clone(),
+            )),
+            Self::Rational(source) => Self::Rational(source.reversed()),
+        }
+    }
+
+    fn split_at_exact(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<(Self, Self)>> {
+        match self {
+            Self::Quadratic(source) => {
+                let (left, right) = source.split_at_exact(parameter.clone());
+                Ok(Classification::Decided((
+                    Self::Quadratic(left),
+                    Self::Quadratic(right),
+                )))
+            }
+            Self::Cubic(source) => {
+                let (left, right) = source.split_at_exact(parameter.clone());
+                Ok(Classification::Decided((
+                    Self::Cubic(left),
+                    Self::Cubic(right),
+                )))
+            }
+            Self::Rational(source) => source.split_at_exact(parameter, policy).map(|split| {
+                split.map(|(left, right)| (Self::Rational(left), Self::Rational(right)))
+            }),
+        }
+    }
+
+    fn subcurve_between_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match self {
+            Self::Quadratic(source) => source
+                .subcurve_between_exact(start, end, policy)
+                .map(Self::Quadratic)
+                .map(Classification::Decided),
+            Self::Cubic(source) => source
+                .subcurve_between_exact(start, end, policy)
+                .map(Self::Cubic)
+                .map(Classification::Decided),
+            Self::Rational(source) => source
+                .subcurve_between_exact(start, end, policy)
+                .map(|subcurve| subcurve.map(Self::Rational)),
+        }
+    }
+
+    fn certified_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
+        match self {
+            Self::Quadratic(source) => source.certified_bounds(policy),
+            Self::Cubic(source) => source.certified_bounds(policy),
+            Self::Rational(source) => source.certified_bounds_classified(policy),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -468,6 +554,93 @@ impl BezierParallel2 {
             BezierParallelSource2::Cubic(_) => 3,
             BezierParallelSource2::Rational(source) => source.degree(),
         }
+    }
+
+    /// Returns the same exact parallel image with traversal direction reversed.
+    ///
+    /// Reversal flips the source tangent and therefore its left normal. The
+    /// signed distance is negated so this carrier still traces the original
+    /// parallel image, now from end to start.
+    pub fn reversed(&self) -> Self {
+        Self::from_source(self.data.source.reversed(), -self.distance().clone())
+    }
+
+    /// Splits this exact parallel at one represented interior parameter.
+    ///
+    /// The two returned carriers use local `[0, 1]` parameters and retain the
+    /// same signed left distance. Endpoint splits are rejected as boundaries
+    /// because a zero-width source span has no defined unit normal.
+    pub fn split_at_exact(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<(Self, Self)>> {
+        match strict_interior_unit_parameter(parameter, policy) {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        Ok(self
+            .data
+            .source
+            .split_at_exact(parameter, policy)?
+            .map(|(left, right)| {
+                (
+                    Self::from_source(left, self.distance().clone()),
+                    Self::from_source(right, self.distance().clone()),
+                )
+            }))
+    }
+
+    /// Restricts this exact parallel to an ordered, nonempty represented range.
+    ///
+    /// The returned carrier is reparameterized to `[0, 1]` and retains the
+    /// source orientation and signed left distance.
+    pub fn subcurve_between_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        if in_closed_unit_interval(start, policy) != Some(true)
+            || in_closed_unit_interval(end, policy) != Some(true)
+        {
+            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        }
+        match compare_reals(start, end, policy) {
+            Some(std::cmp::Ordering::Less) => {}
+            Some(std::cmp::Ordering::Equal) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Some(std::cmp::Ordering::Greater) | None => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            }
+        }
+        Ok(self
+            .data
+            .source
+            .subcurve_between_exact(start, end, policy)?
+            .map(|source| Self::from_source(source, self.distance().clone())))
+    }
+
+    /// Returns a conservative exact box for every defined point of this parallel.
+    ///
+    /// A unit normal changes either source coordinate by at most `|distance|`,
+    /// so expanding a certified source box by that amount is exact broad-phase
+    /// evidence without sampling the parallel or materializing a finite curve.
+    pub fn conservative_bounds(&self, policy: &CurveContext) -> CurveResult<Classification<Aabb2>> {
+        let source = match self.data.source.certified_bounds(policy) {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radius = self.distance().abs();
+        Ok(Classification::Decided(Aabb2::new_unchecked(
+            Point2::new(source.min_x() - &radius, source.min_y() - &radius),
+            Point2::new(source.max_x() + &radius, source.max_y() + radius),
+        )))
     }
 
     fn polynomial_power_basis(&self) -> CurveResult<&(Vec<Real>, Vec<Real>)> {
@@ -2584,6 +2757,25 @@ fn polynomial_control_power_basis(controls: &[&Point2]) -> CurveResult<(Vec<Real
         bernstein_to_power_coefficients(controls.iter().map(|point| point.x().clone()).collect())?,
         bernstein_to_power_coefficients(controls.iter().map(|point| point.y().clone()).collect())?,
     ))
+}
+
+fn strict_interior_unit_parameter(parameter: &Real, policy: &CurveContext) -> Classification<()> {
+    if in_closed_unit_interval(parameter, policy) != Some(true) {
+        return Classification::Uncertain(UncertaintyReason::Ordering);
+    }
+    match (
+        compare_reals(parameter, &Real::zero(), policy),
+        compare_reals(parameter, &Real::one(), policy),
+    ) {
+        (Some(std::cmp::Ordering::Greater), Some(std::cmp::Ordering::Less)) => {
+            Classification::Decided(())
+        }
+        (Some(std::cmp::Ordering::Equal), _) | (_, Some(std::cmp::Ordering::Equal)) => {
+            Classification::Uncertain(UncertaintyReason::Boundary)
+        }
+        (Some(_), Some(_)) => Classification::Uncertain(UncertaintyReason::Ordering),
+        _ => Classification::Uncertain(UncertaintyReason::Ordering),
+    }
 }
 
 fn elevate_scalar_bernstein_once(controls: &[Real]) -> CurveResult<Vec<Real>> {
