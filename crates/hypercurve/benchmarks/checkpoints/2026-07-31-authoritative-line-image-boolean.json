@@ -1,0 +1,298 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "authoritative-line-image-boolean",
+  "source_revision": "1c015085a73b0813049bf47f1b5064e487fe6ad3",
+  "implementation_revisions": [
+    "e455578",
+    "1c01508"
+  ],
+  "historical_control_revision": "8c2129eee4fe59b5eb683aa553a3ee7d757097ca",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "authoritative_engine": "every nonempty, nonidentical CurveRegion2 Boolean operation and all-four batch enters CurveRegionBooleanContext",
+    "deleted_engine_selection": "the nontrivial boolean_region_without_general_context dispatch to LineArcRegion2::boolean_region was removed; only empty and structurally identical set identities short-circuit",
+    "specialization_location": "exact retained algebraic line images are canonicalized to quadratic line carriers inside build_region_carriers, before pair dispatch and arrangement construction",
+    "ordinary_materialized_curves": "already-affine materialized curves retain native affine dispatch; other materialized curves are not subjected to an eager exact-line proof",
+    "public_api_growth": false,
+    "compatibility_shims_added": false
+  },
+  "exactness_and_policy": {
+    "line_proof": "a source-backed algebraic-endpoint fragment may lower to a line only when the retained source curve proves exact line-image membership; rational endpoint coordinates alone are insufficient",
+    "canonical_parameterization": "a proven line image becomes an exact QuadraticBezier2 line segment with exact carrier parameters 0 and 1",
+    "provenance": "the original authored family remains attached to public blocker and diagnostic evidence",
+    "strict": "unresolved source-line membership or endpoint evidence remains a typed STRICT blocker or stays on the exact general carrier path",
+    "approximate_512": "APPROXIMATE_512 may terminate only the inherited predicate equality at 512 bits and reports Approximate512Consumed; returned points and carriers remain exact",
+    "nonlinear_guard_fixture": "the rational cubic power curve (x,y)=(2t^2-1,2t^3-t), split at sqrt(1/2), has exact rational algebraic endpoint images but is not a line",
+    "mutation_check": "removing the retained-source line-image guard makes exact_line_fragment_lowering_rejects_nonlinear_algebraic_source fail"
+  },
+  "regression_matrix": {
+    "nonlinear_line_overlap": {
+      "first_coordinate": "x(t) = 2t + 2t^2",
+      "second_coordinate": "x(s) = 6s - 2s^2",
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "operations": [
+        "union",
+        "intersection",
+        "difference",
+        "xor"
+      ],
+      "fragment_counts": {
+        "historical_independent": [4, 4, 0, 4],
+        "historical_shared": [4, 4, 0, 4],
+        "candidate_independent": [4, 4, 0, 4],
+        "candidate_shared": [4, 4, 0, 4]
+      },
+      "result": "pass"
+    },
+    "source_line_rejection": {
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "result": "pass"
+    }
+  },
+  "paired_release_pathological_benchmark": {
+    "command": "taskset -c 9 HYPERCURVE_PATHOLOGICAL_MODE=boolean {historical,candidate pathological_regions binary}",
+    "method": "eleven alternating-order process pairs; complete 67-cell all-family workload; same dependency state and toolchain",
+    "cells_per_process": 67,
+    "historical_milliseconds": [
+      484.435245,
+      467.370802,
+      474.065598,
+      476.188434,
+      477.375434,
+      489.96317,
+      472.954723,
+      473.569992,
+      473.815635,
+      472.447248,
+      485.178565
+    ],
+    "candidate_milliseconds": [
+      478.876501,
+      479.955119,
+      476.185574,
+      474.581563,
+      476.761505,
+      497.001283,
+      481.795734,
+      475.66113,
+      490.889228,
+      478.204378,
+      478.732321
+    ],
+    "historical_median_milliseconds": 474.065598,
+    "candidate_median_milliseconds": 478.732321,
+    "median_change_percent": 0.984404,
+    "paired_geometric_mean_change_percent": 0.786251,
+    "interpretation": "the complete all-family workload remains throughput-neutral under the established two-percent checkpoint gate"
+  },
+  "nonlinear_line_shared_benchmark": {
+    "method": "eleven alternating-order CPU-9 process pairs; 10000 all-four batches per process",
+    "historical_nanoseconds_per_batch": [
+      176033,
+      176118,
+      182901,
+      176805,
+      176037,
+      173772,
+      177240,
+      187500,
+      180201,
+      175237,
+      175845
+    ],
+    "candidate_nanoseconds_per_batch": [
+      64242,
+      65798,
+      69089,
+      66510,
+      65627,
+      65117,
+      66283,
+      65679,
+      63669,
+      64726,
+      67146
+    ],
+    "historical_median_nanoseconds": 176118,
+    "candidate_median_nanoseconds": 65679,
+    "median_change_percent": -62.707389,
+    "paired_geometric_mean_change_percent": -63.023437,
+    "speedup": 2.681496,
+    "interpretation": "canonical affine carriers eliminate nonlinear correspondence replay while retaining the one authoritative arrangement"
+  },
+  "nonlinear_line_independent_control": {
+    "method": "eleven alternating-order CPU-9 process pairs; 5000 four-operation groups per process",
+    "historical_legacy_nanoseconds_per_group": [
+      87135,
+      79400,
+      82454,
+      83374,
+      81489,
+      81304,
+      82385,
+      79912,
+      80596,
+      81549,
+      81459
+    ],
+    "candidate_authoritative_nanoseconds_per_group": [
+      209290,
+      206793,
+      211151,
+      217575,
+      208667,
+      204532,
+      209091,
+      205672,
+      209164,
+      208526,
+      205265
+    ],
+    "historical_median_nanoseconds": 81489,
+    "candidate_median_nanoseconds": 208667,
+    "candidate_shared_vs_historical_independent_speedup": 1.240716,
+    "candidate_shared_vs_candidate_independent_speedup": 3.177073,
+    "interpretation": "a single candidate operation intentionally rebuilds authoritative topology, so four independent candidate calls are slower than the deleted legacy engine; the intended shared all-four API is 24.1 percent faster than four historical legacy calls and 3.18 times faster than four candidate calls"
+  },
+  "supported_path_controls": {
+    "aligned_conic_shared": {
+      "iterations_per_process": 2000,
+      "historical_nanoseconds_per_batch": [
+        367094,
+        367434,
+        365062,
+        361169,
+        366515,
+        364607,
+        362241,
+        368870,
+        368460,
+        367255,
+        364142
+      ],
+      "candidate_nanoseconds_per_batch": [
+        360628,
+        359736,
+        365229,
+        375734,
+        368450,
+        366474,
+        370292,
+        360046,
+        360182,
+        361953,
+        361526
+      ],
+      "historical_median_nanoseconds": 366515,
+      "candidate_median_nanoseconds": 361953,
+      "median_change_percent": -1.244697,
+      "paired_geometric_mean_change_percent": -0.320244,
+      "interpretation": "the already-specialized aligned conic path does not regress"
+    },
+    "mobius_conic_shared": {
+      "iterations_per_process": 500,
+      "historical_median_nanoseconds": 1119455,
+      "candidate_median_nanoseconds": 1122603,
+      "median_change_percent": 0.281200,
+      "interpretation": "median throughput is neutral; paired means were discarded because candidate process scheduling outliers repeated across controls"
+    }
+  },
+  "heaptrack": {
+    "all_family": {
+      "historical_allocation_calls": 8271997,
+      "candidate_allocation_calls": 8271997,
+      "historical_temporary_allocations": 1388763,
+      "candidate_temporary_allocations": 1388763,
+      "historical_peak_heap": "34.70M",
+      "candidate_peak_heap": "34.70M",
+      "historical_peak_rss": "64.82M",
+      "candidate_peak_rss": "65.02M",
+      "historical_total_leaked": "476.82K",
+      "candidate_total_leaked": "476.82K",
+      "interpretation": "allocation and temporary-allocation counts are exactly unchanged; RSS is process noise"
+    },
+    "nonlinear_line_1000_shared_batches": {
+      "historical_allocation_calls": 1221318,
+      "candidate_allocation_calls": 408292,
+      "allocation_reduction_percent": 66.569558,
+      "allocation_ratio": 2.991300,
+      "historical_temporary_allocations": 58293,
+      "candidate_temporary_allocations": 7238,
+      "temporary_reduction_percent": 87.583400,
+      "historical_peak_heap": "230.93K",
+      "candidate_peak_heap": "220.05K",
+      "historical_peak_rss": "9.49M",
+      "candidate_peak_rss": "9.15M"
+    },
+    "nonlinear_line_1000_independent_groups": {
+      "historical_legacy_allocation_calls": 390317,
+      "candidate_authoritative_allocation_calls": 1241292,
+      "historical_legacy_temporary_allocations": 17293,
+      "candidate_authoritative_temporary_allocations": 13238,
+      "candidate_shared_allocation_increase_over_historical_independent_percent": 4.605000,
+      "interpretation": "one candidate shared topology is within 4.61 percent of four legacy-operation allocation calls while providing one authoritative engine"
+    }
+  },
+  "matched_pathological_binary": {
+    "historical_file_bytes": 7034224,
+    "candidate_file_bytes": 7015784,
+    "file_change_bytes": -18440,
+    "file_change_percent": -0.262147,
+    "historical_stripped_bytes": 5593792,
+    "candidate_stripped_bytes": 5579536,
+    "stripped_change_bytes": -14256,
+    "stripped_change_percent": -0.254854,
+    "historical_text_bytes": 5323745,
+    "candidate_text_bytes": 5309577,
+    "text_change_bytes": -14168,
+    "historical_data_bytes": 266160,
+    "candidate_data_bytes": 266080,
+    "historical_bss_bytes": 2864,
+    "candidate_bss_bytes": 4832,
+    "historical_loadable_bytes": 5592769,
+    "candidate_loadable_bytes": 5580489,
+    "loadable_change_bytes": -12280,
+    "loadable_change_percent": -0.219569
+  },
+  "static_call_graph": {
+    "command": "hyper-callgraph --root {snapshot} --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "historical_nodes": 23045,
+    "candidate_nodes": 23049,
+    "node_change": 4,
+    "historical_edges": 39808,
+    "candidate_edges": 39818,
+    "edge_change": 10,
+    "historical_artifact": "/tmp/hypercurve-authoritative-line-callgraph-parent/callgraph.json",
+    "candidate_artifact": "/tmp/hypercurve-authoritative-line-callgraph-candidate/callgraph.json"
+  },
+  "competitive_context": {
+    "rerun": false,
+    "reason": "the checkpoint changes exact carrier publication and engine routing, not the competitive fixture contract",
+    "retained_reference": "the mixed-line/conic checkpoint records a 61.98x gap to Cavalier binary64 under explicitly unequal exactness and degeneracy guarantees"
+  },
+  "verification": {
+    "library_no_default_features": "264 passed",
+    "focused_curve_region_boolean_all_features": "22 passed",
+    "persistent_curve_region_boolean_fuzz_all_features": "11 passed",
+    "full_all_features": "pass; 268 unit tests plus all integration and documentation tests",
+    "clippy_all_targets_all_features_deny_warnings": "pass",
+    "clippy_all_targets_no_default_features_deny_warnings": "pass",
+    "formatting": "pass",
+    "diff_check": "pass",
+    "hypermesh_modified": false
+  },
+  "remaining_boundaries": [
+    "reduce authoritative topology construction overhead for isolated single-operation calls without restoring a second engine",
+    "complete lower-dimensional boundary and overlap ownership",
+    "support shared components without a certified injective coordinate or retained inverse",
+    "publish native conic and arc results compactly inside the authoritative arrangement",
+    "complete exact general offsets and solver-driven fillet/chamfer"
+  ]
+}

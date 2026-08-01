@@ -7566,6 +7566,53 @@ ownership, and native line/arc publication inside the one authority. Hypermesh
 was not modified. Complete evidence is in
 [`2026-07-31-overlap-parameter-correspondence.json`](benchmarks/checkpoints/2026-07-31-overlap-parameter-correspondence.json).
 
+## Authoritative exact line-image Boolean checkpoint (2026-07-31)
+
+Every nonempty, nonidentical single-operation and all-four `CurveRegion2`
+Boolean call now enters `CurveRegionBooleanContext`. The nontrivial dispatch
+to the historical `LineArcRegion2` region Boolean engine is deleted; only
+empty and structurally identical set identities bypass topology. Exact
+retained algebraic line images are canonicalized inside the arrangement to
+quadratic line carriers with exact parameters zero and one, so native affine
+pair dispatch remains a specialization beneath the single authority.
+
+Source-backed algebraic endpoints cannot prove line membership by themselves.
+The lowering path must also prove that the retained source curve is an exact
+line image. A mutation-checked rational cubic power-curve regression has two
+exact rational algebraic endpoint images while its source is nonlinear; it is
+rejected under both STRICT and APPROXIMATE_512. Authorized approximate
+terminals remain predicate decisions only, report `Approximate512Consumed`,
+and never replace returned geometry with finite coordinates.
+
+Eleven alternating CPU-pinned pairs reduce the independently nonlinear-line
+all-four batch from 176.118 to 65.679 us, a 62.71% reduction and 2.68x
+speedup. Heaptrack over 1,000 batches falls from 1,221,318 to 408,292
+allocation calls (-66.57%) and from 58,293 to 7,238 temporary allocations
+(-87.58%). Output remains four union, four intersection, zero difference, and
+four XOR fragments under both policies.
+
+Four isolated candidate operations rebuild the authoritative topology four
+times and therefore take 208.667 us versus 81.489 us for the deleted legacy
+route. The intended candidate all-four call is nevertheless 1.24x faster than
+those four historical calls and 3.18x faster than four candidate calls. This
+makes reusable topology or a compact single-mask arrangement the measured
+single-operation optimization boundary without reintroducing a second
+Boolean engine.
+
+The complete 67-cell workload moves from 474.066 to 478.732 ms (+0.98%
+median, +0.79% paired geometric mean), while allocation and temporary counts
+are exactly unchanged at 8,271,997 and 1,388,763. The aligned-conic control
+improves 1.24% at the median and the Mobius-conic median is neutral. The
+matched executable shrinks 14,256 stripped file bytes and 12,280 loadable
+bytes. The isolated graph moves from 23,045 nodes/39,808 edges to 23,049
+nodes/39,818 edges.
+
+All 268 all-feature unit tests, the complete integration/documentation suite,
+264 no-default library tests, 22 focused Boolean tests, 11 persistent
+generated/retired corpora, formatting, and both warning-denied Clippy matrices
+pass. Hypermesh was not modified. Complete evidence is in
+[`2026-07-31-authoritative-line-image-boolean.json`](benchmarks/checkpoints/2026-07-31-authoritative-line-image-boolean.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
