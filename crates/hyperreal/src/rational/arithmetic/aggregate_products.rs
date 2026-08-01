@@ -3625,11 +3625,12 @@ impl Rational {
         terms: [[&Self; FACTORS]; TERMS],
         signs: [Sign; TERMS],
     ) -> Option<(u128, u128)> {
-        let mut magnitudes = [0_u128; TERMS];
-        let mut denominator_shifts = [0_u64; TERMS];
+        let mut positive = 0_u128;
+        let mut negative = 0_u128;
         let mut max_shift = 0_u64;
         for i in 0..TERMS {
-            if signs[i] == NoSign {
+            let sign = signs[i];
+            if sign == NoSign {
                 continue;
             }
             let mut magnitude = 1_u128;
@@ -3639,20 +3640,20 @@ impl Rational {
                 shift =
                     shift.checked_add(factor.dyadic_denominator_shift_if_reduced()?)?;
             }
-            magnitudes[i] = magnitude;
-            denominator_shifts[i] = shift;
-            max_shift = max_shift.max(shift);
-        }
-
-        let mut positive = 0_u128;
-        let mut negative = 0_u128;
-        for i in 0..TERMS {
-            let sign = signs[i];
-            if sign == NoSign {
-                continue;
+            // Both totals stay aligned to `max_shift`. Because each side is a
+            // monotonic sum of magnitudes, raising that alignment has the same
+            // checked-word success envelope as scaling every term afterward.
+            if shift > max_shift {
+                if positive != 0 || negative != 0 {
+                    let scale_shift = u32::try_from(shift - max_shift).ok()?;
+                    positive = Self::checked_word_shift_left(positive, scale_shift)?;
+                    negative = Self::checked_word_shift_left(negative, scale_shift)?;
+                }
+                max_shift = shift;
+            } else if shift < max_shift {
+                let scale_shift = u32::try_from(max_shift - shift).ok()?;
+                magnitude = Self::checked_word_shift_left(magnitude, scale_shift)?;
             }
-            let scale_shift = u32::try_from(max_shift - denominator_shifts[i]).ok()?;
-            let magnitude = Self::checked_word_shift_left(magnitudes[i], scale_shift)?;
             match sign {
                 Plus => positive = positive.checked_add(magnitude)?,
                 Minus => negative = negative.checked_add(magnitude)?,

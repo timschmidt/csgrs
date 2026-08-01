@@ -55,6 +55,46 @@ mod tests {
     }
 
     #[test]
+    fn unplanned_dyadic_word_totals_match_two_pass_alignment() {
+        let mut state = 0x243f_6a88_85a3_08d3_u64;
+        let mut saw_fallback = false;
+        for case in 0..512 {
+            let narrow = case % 2 == 0;
+            let values: [Rational; 12] = std::array::from_fn(|_| {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                let magnitude = if narrow {
+                    u128::from((state & 0xfff) | 1)
+                } else {
+                    u128::from(state | 1)
+                };
+                let shift = if narrow { state % 16 } else { state % 128 };
+                Rational::from_bigint_fraction(
+                    BigInt::from(magnitude),
+                    BigUint::one() << usize::try_from(shift).unwrap(),
+                )
+                .unwrap()
+            });
+            let terms: [[&Rational; 2]; 6] =
+                std::array::from_fn(|index| [&values[index * 2], &values[index * 2 + 1]]);
+            let signs = [Plus, Minus, Plus, Minus, Plus, Minus];
+            let plan = Rational::product_sum_dyadic_plan(terms, signs).unwrap();
+            let expected = Rational::signed_product_sum_dyadic_word_totals(
+                terms,
+                signs,
+                plan.denominator_shifts,
+                plan.max_shift,
+            );
+            let actual = Rational::signed_product_sum_dyadic_word_totals_unplanned(terms, signs);
+            assert_eq!(actual, expected, "case {case}");
+            assert!(!narrow || expected.is_some());
+            saw_fallback |= expected.is_none();
+        }
+        assert!(saw_fallback);
+    }
+
+    #[test]
     fn direct_shifted_wide_narrow_product_matches_biguint() {
         let left = [u64::MAX, u64::MAX - 1, 1, 0];
         for right in [u128::from(u64::MAX) - 17, u128::MAX - 17] {
