@@ -37,3 +37,7 @@ harness = false
 name = "dispatch_trace"
 harness = false
 required-features = ["dispatch-trace"]
+
+[[bench]]
+name = "algebraic_fiber"
+harness = false

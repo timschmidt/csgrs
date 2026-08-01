@@ -1,13 +1,13 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypersolve::{
-    AlgebraicRootArithmeticOp, AlgebraicRootKind, AlgebraicRootRationalMap,
-    AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
+    AlgebraicFiberRootCountStatus, AlgebraicRootArithmeticOp, AlgebraicRootKind,
+    AlgebraicRootRationalMap, AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BatchPredicateScheduleConfig,
-    BsplineKnotSpanSubstitutionConfig, Constraint, CurveResultantParameter, DraggedParameterWeight,
-    EqualitySubstitution, Expr, IntervalBoxCertificationPackage, IsolatedRootInterval,
-    PolynomialCurvePoint2, PolynomialParametricCurve2, Problem, ProposalEngineKind,
-    ProposalEnginePrecision, ProposalEngineReport, RationalCurveControlPoint2,
+    BivariatePolynomial, BsplineKnotSpanSubstitutionConfig, Constraint, CurveResultantParameter,
+    DraggedParameterWeight, EqualitySubstitution, Expr, IntervalBoxCertificationPackage,
+    IsolatedRootInterval, PolynomialCurvePoint2, PolynomialParametricCurve2, Problem,
+    ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RationalCurveControlPoint2,
     RationalParametricCurve2, SolverBlock, SolverConfig, SolverPoint2, SolverState,
     SparseLinearSystem, SparseResidualTerm, SymbolId, UnivariateResultantPairInput, VariableBall,
     analyze_exact_affine_rank, analyze_sparse_bareiss_elimination_pattern,
@@ -21,6 +21,7 @@ use hypersolve::{
     compare_algebraic_root_representations_by_difference,
     compare_algebraic_root_representations_with_refinement, context_from_problem,
     count_bernstein_univariate_polynomial_interval_roots,
+    count_bivariate_fiber_roots_at_algebraic_parameter,
     count_descartes_univariate_polynomial_roots, determinant_bareiss, diagnose_failed_constraints,
     diagnose_sketch_failed_constraints, eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, equality_substitution_classes,
@@ -4664,6 +4665,49 @@ fn certification(c: &mut Criterion) {
     };
     let degree_twelve_cubic_numerator = [Real::zero(), Real::one(), Real::zero(), Real::one()];
     let degree_twelve_quadratic_denominator = [r(2), Real::one(), Real::one()];
+    let cube_alpha = AlgebraicRootRepresentation {
+        polynomial_coefficients: vec![r(-1), Real::zero(), Real::zero(), r(2)],
+        interval: IsolatedRootInterval {
+            lower: (r(3) / r(4)).unwrap(),
+            upper: (r(4) / r(5)).unwrap(),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        ..sqrt_two.clone()
+    };
+    let even_fiber = BivariatePolynomial::new(vec![
+        vec![r(0), r(0), r(1)],
+        vec![],
+        vec![r(0), r(-2)],
+        vec![],
+        vec![r(1)],
+    ]);
+    let even_fiber_lower = (r(3) / r(5)).unwrap();
+    let even_fiber_upper = (r(2) / r(3)).unwrap();
+    assert_eq!(
+        count_bivariate_fiber_roots_at_algebraic_parameter(
+            &even_fiber,
+            CurveResultantParameter::First,
+            &cube_alpha,
+            &even_fiber_lower,
+            &even_fiber_upper,
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .status,
+        AlgebraicFiberRootCountStatus::Counted
+    );
+    c.bench_function("count_bivariate_fiber_roots_even_multiplicity", |b| {
+        b.iter(|| {
+            count_bivariate_fiber_roots_at_algebraic_parameter(
+                &even_fiber,
+                CurveResultantParameter::First,
+                &cube_alpha,
+                &even_fiber_lower,
+                &even_fiber_upper,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
     c.bench_function("compare_algebraic_root_representations", |b| {
         b.iter(|| {
             compare_algebraic_root_representations(

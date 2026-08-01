@@ -14,7 +14,8 @@ use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy, compare_reals};
 use hyperreal::{Real, ZeroKnowledge};
 
 use crate::algebraic::{
-    AlgebraicRootKind, AlgebraicRootPolynomialEvaluationStatus, AlgebraicRootRepresentation,
+    AlgebraicRootKind, AlgebraicRootPolynomialEvaluationReport,
+    AlgebraicRootPolynomialEvaluationStatus, AlgebraicRootRepresentation,
     evaluate_polynomial_at_algebraic_root, validate_algebraic_root_representation,
 };
 use crate::curve_resultant::{BivariatePolynomial, CurveResultantParameter};
@@ -60,7 +61,7 @@ pub struct AlgebraicFiberRootCountReport {
     /// package.
     pub certainty: Certainty,
     /// Compact diagnostic reason for a non-counted result.
-    pub message: Option<String>,
+    pub message: Option<&'static str>,
 }
 
 /// Count distinct roots of one exact bivariate fiber over a represented root.
@@ -165,6 +166,29 @@ enum LocalFieldError {
     UnsupportedCoefficient,
     DivisionByZero,
     Undecided,
+}
+
+fn local_evaluation_sign(
+    evaluation: &AlgebraicRootPolynomialEvaluationReport,
+) -> Result<Option<Ordering>, LocalFieldError> {
+    if let Some(sign) = evaluation.sign {
+        return Ok(Some(sign));
+    }
+    match evaluation.status {
+        AlgebraicRootPolynomialEvaluationStatus::IntervalContainsZero => Ok(None),
+        AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence => {
+            Err(LocalFieldError::InvalidEvidence)
+        }
+        AlgebraicRootPolynomialEvaluationStatus::InvalidPolynomial => {
+            Err(LocalFieldError::UnsupportedCoefficient)
+        }
+        AlgebraicRootPolynomialEvaluationStatus::Undecided
+        | AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRationalWitness
+        | AlgebraicRootPolynomialEvaluationStatus::IntervalCertifiedPositive
+        | AlgebraicRootPolynomialEvaluationStatus::IntervalCertifiedNegative => {
+            Err(LocalFieldError::Undecided)
+        }
+    }
 }
 
 fn count_fiber_roots(
@@ -281,9 +305,7 @@ fn local_polynomial_remainder(
     field: &mut LocalAlgebraicField,
 ) -> Result<Vec<LocalFieldElement>, LocalFieldError> {
     trim_local_polynomial(&mut dividend, field)?;
-    let mut divisor = divisor.to_vec();
-    trim_local_polynomial(&mut divisor, field)?;
-    if divisor.len() == 1 && divisor[0].is_zero(field)? {
+    if divisor.is_empty() || (divisor.len() == 1 && divisor[0].is_zero(field)?) {
         return Err(LocalFieldError::DivisionByZero);
     }
     while dividend.len() >= divisor.len() && !(dividend.len() == 1 && dividend[0].is_zero(field)?) {
@@ -355,14 +377,15 @@ fn local_sign_variations(
 #[derive(Clone, Debug)]
 struct LocalFieldElement {
     numerator: Vec<Real>,
-    denominator: Vec<Real>,
+    // `None` is the canonical, allocation-free representation of one.
+    denominator: Option<Vec<Real>>,
 }
 
 impl LocalFieldElement {
     fn zero() -> Self {
         Self {
             numerator: vec![Real::zero()],
-            denominator: vec![Real::one()],
+            denominator: None,
         }
     }
 
@@ -372,32 +395,75 @@ impl LocalFieldElement {
     ) -> Result<Self, LocalFieldError> {
         Ok(Self {
             numerator: field.reduce(numerator)?,
-            denominator: vec![Real::one()],
+            denominator: None,
         })
     }
 
     fn add(&self, other: &Self, field: &LocalAlgebraicField) -> Result<Self, LocalFieldError> {
-        let left = field.multiply_polynomials(&self.numerator, &other.denominator)?;
-        let right = field.multiply_polynomials(&other.numerator, &self.denominator)?;
-        Ok(Self {
-            numerator: field.add_polynomials(&left, &right, false)?,
-            denominator: field.multiply_polynomials(&self.denominator, &other.denominator)?,
-        })
+        self.combine(other, false, field)
     }
 
     fn subtract(&self, other: &Self, field: &LocalAlgebraicField) -> Result<Self, LocalFieldError> {
-        let left = field.multiply_polynomials(&self.numerator, &other.denominator)?;
-        let right = field.multiply_polynomials(&other.numerator, &self.denominator)?;
+        self.combine(other, true, field)
+    }
+
+    fn combine(
+        &self,
+        other: &Self,
+        subtract: bool,
+        field: &LocalAlgebraicField,
+    ) -> Result<Self, LocalFieldError> {
+        let (numerator, denominator) = match (&self.denominator, &other.denominator) {
+            (None, None) => (
+                field.add_polynomials(&self.numerator, &other.numerator, subtract)?,
+                None,
+            ),
+            (Some(left_denominator), Some(right_denominator))
+                if left_denominator == right_denominator =>
+            {
+                (
+                    field.add_polynomials(&self.numerator, &other.numerator, subtract)?,
+                    Some(left_denominator.clone()),
+                )
+            }
+            (Some(left_denominator), None) => {
+                let right = field.multiply_polynomials(&other.numerator, left_denominator)?;
+                (
+                    field.add_polynomials(&self.numerator, &right, subtract)?,
+                    Some(left_denominator.clone()),
+                )
+            }
+            (None, Some(right_denominator)) => {
+                let left = field.multiply_polynomials(&self.numerator, right_denominator)?;
+                (
+                    field.add_polynomials(&left, &other.numerator, subtract)?,
+                    Some(right_denominator.clone()),
+                )
+            }
+            (Some(left_denominator), Some(right_denominator)) => {
+                let left = field.multiply_polynomials(&self.numerator, right_denominator)?;
+                let right = field.multiply_polynomials(&other.numerator, left_denominator)?;
+                (
+                    field.add_polynomials(&left, &right, subtract)?,
+                    Some(field.multiply_polynomials(left_denominator, right_denominator)?),
+                )
+            }
+        };
         Ok(Self {
-            numerator: field.add_polynomials(&left, &right, true)?,
-            denominator: field.multiply_polynomials(&self.denominator, &other.denominator)?,
+            numerator,
+            denominator,
         })
     }
 
     fn multiply(&self, other: &Self, field: &LocalAlgebraicField) -> Result<Self, LocalFieldError> {
+        let denominator = match (&self.denominator, &other.denominator) {
+            (None, None) => None,
+            (Some(denominator), None) | (None, Some(denominator)) => Some(denominator.clone()),
+            (Some(left), Some(right)) => Some(field.multiply_polynomials(left, right)?),
+        };
         Ok(Self {
             numerator: field.multiply_polynomials(&self.numerator, &other.numerator)?,
-            denominator: field.multiply_polynomials(&self.denominator, &other.denominator)?,
+            denominator,
         })
     }
 
@@ -409,9 +475,17 @@ impl LocalFieldElement {
         if other.is_zero(field)? {
             return Err(LocalFieldError::DivisionByZero);
         }
+        let numerator = match &other.denominator {
+            Some(denominator) => field.multiply_polynomials(&self.numerator, denominator)?,
+            None => self.numerator.clone(),
+        };
+        let denominator = match &self.denominator {
+            Some(denominator) => field.multiply_polynomials(denominator, &other.numerator)?,
+            None => other.numerator.clone(),
+        };
         Ok(Self {
-            numerator: field.multiply_polynomials(&self.numerator, &other.denominator)?,
-            denominator: field.multiply_polynomials(&self.denominator, &other.numerator)?,
+            numerator,
+            denominator: field.canonical_denominator(denominator),
         })
     }
 
@@ -437,7 +511,7 @@ impl LocalFieldElement {
     }
 
     fn is_zero(&self, field: &mut LocalAlgebraicField) -> Result<bool, LocalFieldError> {
-        Ok(field.sign_polynomial(&self.numerator)? == Ordering::Equal)
+        field.is_zero_polynomial(&self.numerator)
     }
 
     fn sign(&self, field: &mut LocalAlgebraicField) -> Result<Ordering, LocalFieldError> {
@@ -445,10 +519,16 @@ impl LocalFieldElement {
         if numerator == Ordering::Equal {
             return Ok(Ordering::Equal);
         }
-        let denominator = field.sign_polynomial(&self.denominator)?;
-        if denominator == Ordering::Equal {
-            return Err(LocalFieldError::DivisionByZero);
-        }
+        let denominator = match &self.denominator {
+            Some(denominator) => {
+                let sign = field.sign_polynomial(denominator)?;
+                if sign == Ordering::Equal {
+                    return Err(LocalFieldError::DivisionByZero);
+                }
+                sign
+            }
+            None => Ordering::Greater,
+        };
         Ok(if numerator == denominator {
             Ordering::Greater
         } else {
@@ -460,6 +540,7 @@ impl LocalFieldElement {
 struct LocalAlgebraicField {
     root: AlgebraicRootRepresentation,
     modulus: Vec<Real>,
+    signed_polynomials: Vec<(Vec<Real>, Ordering)>,
     policy: PredicatePolicy,
     certainty: Certainty,
     refinement_steps: usize,
@@ -486,6 +567,7 @@ impl LocalAlgebraicField {
         Ok(Self {
             root: root.clone(),
             modulus: root.polynomial_coefficients.clone(),
+            signed_polynomials: Vec::new(),
             policy,
             certainty: Certainty::Exact,
             refinement_steps: 0,
@@ -516,16 +598,37 @@ impl LocalAlgebraicField {
         self.consume(compare_reals(left, right, self.policy))
     }
 
-    fn reduce(&self, polynomial: Vec<Real>) -> Result<Vec<Real>, LocalFieldError> {
+    fn reduce(&self, mut polynomial: Vec<Real>) -> Result<Vec<Real>, LocalFieldError> {
         if polynomial
             .iter()
             .any(|coefficient| coefficient.exact_rational_ref().is_none())
         {
             return Err(LocalFieldError::UnsupportedCoefficient);
         }
+        while polynomial.len() > 1
+            && polynomial
+                .last()
+                .is_some_and(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+        {
+            polynomial.pop();
+        }
+        if polynomial.is_empty() {
+            polynomial.push(Real::zero());
+        }
+        if polynomial.len() < self.modulus.len() {
+            return Ok(polynomial);
+        }
         polynomial_div_rem(polynomial, &self.modulus, self.policy)
             .map(|(_, remainder)| remainder)
             .ok_or(LocalFieldError::Undecided)
+    }
+
+    fn canonical_denominator(&self, denominator: Vec<Real>) -> Option<Vec<Real>> {
+        if denominator.len() == 1 && denominator[0] == Real::one() {
+            None
+        } else {
+            Some(denominator)
+        }
     }
 
     fn add_polynomials(
@@ -571,14 +674,84 @@ impl LocalAlgebraicField {
         {
             return Ok(Ordering::Equal);
         }
+        if let Some((_, sign)) = self
+            .signed_polynomials
+            .iter()
+            .find(|(signed, _)| signed == &polynomial)
+        {
+            return Ok(*sign);
+        }
+        let sign = self.sign_reduced_polynomial(&polynomial)?;
+        self.signed_polynomials.push((polynomial, sign));
+        Ok(sign)
+    }
+
+    fn is_zero_polynomial(&mut self, polynomial: &[Real]) -> Result<bool, LocalFieldError> {
+        let polynomial = self.reduce(polynomial.to_vec())?;
+        if polynomial
+            .iter()
+            .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+        {
+            return Ok(true);
+        }
+        if let Some((_, sign)) = self
+            .signed_polynomials
+            .iter()
+            .find(|(signed, _)| signed == &polynomial)
+        {
+            return Ok(*sign == Ordering::Equal);
+        }
+        let evaluation =
+            evaluate_polynomial_at_algebraic_root(&self.root, &polynomial, self.policy);
+        if let Some(sign) = local_evaluation_sign(&evaluation)? {
+            self.signed_polynomials.push((polynomial, sign));
+            return Ok(sign == Ordering::Equal);
+        }
+        let is_zero = polynomials_share_one_root_in_interval(
+            &self.modulus,
+            &polynomial,
+            &self.root.interval.lower,
+            &self.root.interval.upper,
+            self.policy,
+        )
+        .ok_or(LocalFieldError::Undecided)?;
+        if is_zero {
+            self.signed_polynomials.push((polynomial, Ordering::Equal));
+        }
+        Ok(is_zero)
+    }
+
+    fn sign_reduced_polynomial(
+        &mut self,
+        polynomial: &[Real],
+    ) -> Result<Ordering, LocalFieldError> {
         if self.root.exact_rational_witness().is_some() {
-            return evaluate_polynomial_at_algebraic_root(&self.root, &polynomial, self.policy)
+            return evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy)
                 .sign
                 .ok_or(LocalFieldError::Undecided);
         }
+
+        // Most local-field coefficients separate from zero over the existing
+        // isolating interval.  Prove that cheap case before constructing a
+        // polynomial GCD; a zero coefficient necessarily leaves zero inside
+        // the conservative interval enclosure and still reaches the exact
+        // common-root test below.
+        let evaluation = evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
+        if let Some(sign) = local_evaluation_sign(&evaluation)? {
+            return Ok(sign);
+        }
+        // Ordered sign queries usually need only a tighter isolating interval.
+        // Refine once before paying for a common-root GCD.  Exact zero tests
+        // use `is_zero_polynomial`, which takes the identity path directly.
+        self.refine_root()?;
+        let evaluation = evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
+        if let Some(sign) = local_evaluation_sign(&evaluation)? {
+            return Ok(sign);
+        }
+
         match polynomials_share_one_root_in_interval(
             &self.modulus,
-            &polynomial,
+            polynomial,
             &self.root.interval.lower,
             &self.root.interval.upper,
             self.policy,
@@ -590,64 +763,51 @@ impl LocalAlgebraicField {
 
         loop {
             let evaluation =
-                evaluate_polynomial_at_algebraic_root(&self.root, &polynomial, self.policy);
-            if let Some(sign) = evaluation.sign {
+                evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
+            if let Some(sign) = local_evaluation_sign(&evaluation)? {
                 return Ok(sign);
             }
-            match evaluation.status {
-                AlgebraicRootPolynomialEvaluationStatus::IntervalContainsZero => {}
-                AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence => {
-                    return Err(LocalFieldError::InvalidEvidence);
-                }
-                AlgebraicRootPolynomialEvaluationStatus::InvalidPolynomial => {
-                    return Err(LocalFieldError::UnsupportedCoefficient);
-                }
-                AlgebraicRootPolynomialEvaluationStatus::Undecided => {
-                    return Err(LocalFieldError::Undecided);
-                }
-                AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRationalWitness
-                | AlgebraicRootPolynomialEvaluationStatus::IntervalCertifiedPositive
-                | AlgebraicRootPolynomialEvaluationStatus::IntervalCertifiedNegative => {
-                    return Err(LocalFieldError::Undecided);
-                }
-            }
-
-            let refinement = refine_isolated_univariate_polynomial_interval(
-                &self.modulus,
-                &self.root.interval,
-                RootIsolationConfig {
-                    policy: self.policy,
-                    max_interval_width: None,
-                    max_refinement_steps: 4,
-                },
-            );
-            let Some(refined_interval) = refinement.refined_interval else {
-                return Err(match refinement.status {
-                    IsolatedRootRefinementStatus::InvalidPolynomial
-                    | IsolatedRootRefinementStatus::InvalidInterval
-                    | IsolatedRootRefinementStatus::NonUnitIsolation => {
-                        LocalFieldError::InvalidEvidence
-                    }
-                    IsolatedRootRefinementStatus::Refined
-                    | IsolatedRootRefinementStatus::ExactRoot
-                    | IsolatedRootRefinementStatus::Undecided => LocalFieldError::Undecided,
-                });
-            };
-            if refined_interval == self.root.interval {
-                return Err(LocalFieldError::Undecided);
-            }
-            self.refinement_steps += refinement.refinement_steps;
-            self.root.interval = refined_interval;
-            self.root.kind = if self.root.interval.exact_root.is_some() {
-                AlgebraicRootKind::ExactRationalWitness
-            } else {
-                AlgebraicRootKind::IsolatingInterval
-            };
-            self.root.validation = validate_algebraic_root_representation(&self.root, self.policy);
-            if !self.root.is_valid() {
-                return Err(LocalFieldError::InvalidEvidence);
-            }
+            self.refine_root()?;
         }
+    }
+
+    fn refine_root(&mut self) -> Result<(), LocalFieldError> {
+        let refinement = refine_isolated_univariate_polynomial_interval(
+            &self.modulus,
+            &self.root.interval,
+            RootIsolationConfig {
+                policy: self.policy,
+                max_interval_width: None,
+                max_refinement_steps: 4,
+            },
+        );
+        let Some(refined_interval) = refinement.refined_interval else {
+            return Err(match refinement.status {
+                IsolatedRootRefinementStatus::InvalidPolynomial
+                | IsolatedRootRefinementStatus::InvalidInterval
+                | IsolatedRootRefinementStatus::NonUnitIsolation => {
+                    LocalFieldError::InvalidEvidence
+                }
+                IsolatedRootRefinementStatus::Refined
+                | IsolatedRootRefinementStatus::ExactRoot
+                | IsolatedRootRefinementStatus::Undecided => LocalFieldError::Undecided,
+            });
+        };
+        if refined_interval == self.root.interval {
+            return Err(LocalFieldError::Undecided);
+        }
+        self.refinement_steps += refinement.refinement_steps;
+        self.root.interval = refined_interval;
+        self.root.kind = if self.root.interval.exact_root.is_some() {
+            AlgebraicRootKind::ExactRationalWitness
+        } else {
+            AlgebraicRootKind::IsolatingInterval
+        };
+        self.root.validation = validate_algebraic_root_representation(&self.root, self.policy);
+        if !self.root.is_valid() {
+            return Err(LocalFieldError::InvalidEvidence);
+        }
+        Ok(())
     }
 }
 
@@ -695,7 +855,7 @@ fn fiber_root_count_report(
     sturm_sequence_length: usize,
     retained_refinement_steps: usize,
     certainty: Certainty,
-    message: Option<&str>,
+    message: Option<&'static str>,
 ) -> AlgebraicFiberRootCountReport {
     AlgebraicFiberRootCountReport {
         status,
@@ -703,7 +863,7 @@ fn fiber_root_count_report(
         sturm_sequence_length,
         retained_refinement_steps,
         certainty,
-        message: message.map(str::to_owned),
+        message,
     }
 }
 
@@ -743,6 +903,32 @@ mod tests {
                 distinct_root_count: 1,
             },
             kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        root.validation = validate_algebraic_root_representation(&root, policy);
+        assert!(root.is_valid());
+        root
+    }
+
+    fn represented_rational_root(
+        value: Real,
+        policy: PredicatePolicy,
+    ) -> AlgebraicRootRepresentation {
+        let mut root = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-value.clone(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: value.clone(),
+                upper: value.clone(),
+                exact_root: Some(value),
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -846,5 +1032,133 @@ mod tests {
             AlgebraicFiberRootCountStatus::IdenticallyZeroFiber
         );
         assert_eq!(report.distinct_root_count, None);
+    }
+
+    #[test]
+    fn local_field_sturm_handles_a_reducible_defining_polynomial() {
+        // (a^2 - 2)(a - 3) defines sqrt(2) locally on (7/5, 3/2).
+        // The quotient by the whole cubic is not a field, so this exercises
+        // denominator signing and exact common-root zero detection at the
+        // selected factor rather than assuming global irreducibility.
+        let relation = BivariatePolynomial::new(vec![
+            vec![real(0), real(0), real(1)],
+            vec![real(0), real(-2)],
+            vec![real(1)],
+        ]);
+        let repeated_two_root_fiber = BivariatePolynomial::new(vec![
+            vec![real(0), real(0), real(0), real(0), real(1)],
+            vec![real(0), real(0), real(-2)],
+            vec![real(1)],
+        ]);
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                vec![real(6), real(-2), real(-3), real(1)],
+                rational(7, 5),
+                rational(3, 2),
+                policy,
+            );
+            for retained_parameter in [
+                CurveResultantParameter::First,
+                CurveResultantParameter::Second,
+            ] {
+                let report = count_bivariate_fiber_roots_at_algebraic_parameter(
+                    &relation,
+                    retained_parameter,
+                    &alpha,
+                    &real(1),
+                    &real(2),
+                    policy,
+                );
+                assert_eq!(report.status, AlgebraicFiberRootCountStatus::Counted);
+                assert_eq!(report.distinct_root_count, Some(1));
+                assert_eq!(report.certainty, Certainty::Exact);
+            }
+
+            let two_roots = count_bivariate_fiber_roots_at_algebraic_parameter(
+                &repeated_two_root_fiber,
+                CurveResultantParameter::First,
+                &alpha,
+                &real(-2),
+                &real(2),
+                policy,
+            );
+            assert_eq!(two_roots.status, AlgebraicFiberRootCountStatus::Counted);
+            assert_eq!(two_roots.distinct_root_count, Some(2));
+            assert_eq!(two_roots.certainty, Certainty::Exact);
+        }
+    }
+
+    #[test]
+    fn local_field_sturm_reports_rational_endpoint_roots_and_input_boundaries() {
+        let policy = PredicatePolicy::STRICT;
+        let half = rational(1, 2);
+        let alpha = represented_rational_root(half.clone(), policy);
+        let relation = BivariatePolynomial::new(vec![
+            vec![real(0), real(0), real(1)],
+            vec![real(0), real(-2)],
+            vec![real(1)],
+        ]);
+
+        let counted = count_bivariate_fiber_roots_at_algebraic_parameter(
+            &relation,
+            CurveResultantParameter::First,
+            &alpha,
+            &real(0),
+            &real(1),
+            policy,
+        );
+        assert_eq!(counted.status, AlgebraicFiberRootCountStatus::Counted);
+        assert_eq!(counted.distinct_root_count, Some(1));
+
+        let endpoint = count_bivariate_fiber_roots_at_algebraic_parameter(
+            &relation,
+            CurveResultantParameter::First,
+            &alpha,
+            &half,
+            &real(1),
+            policy,
+        );
+        assert_eq!(endpoint.status, AlgebraicFiberRootCountStatus::EndpointRoot);
+
+        let reversed = count_bivariate_fiber_roots_at_algebraic_parameter(
+            &relation,
+            CurveResultantParameter::First,
+            &alpha,
+            &real(1),
+            &real(0),
+            policy,
+        );
+        assert_eq!(
+            reversed.status,
+            AlgebraicFiberRootCountStatus::InvalidInterval
+        );
+
+        let unsupported = count_bivariate_fiber_roots_at_algebraic_parameter(
+            &BivariatePolynomial::new(vec![vec![Real::pi(), real(1)]]),
+            CurveResultantParameter::First,
+            &alpha,
+            &real(0),
+            &real(1),
+            policy,
+        );
+        assert_eq!(
+            unsupported.status,
+            AlgebraicFiberRootCountStatus::UnsupportedCoefficient
+        );
+
+        let mut nonunit = alpha;
+        nonunit.interval.distinct_root_count = 2;
+        let invalid = count_bivariate_fiber_roots_at_algebraic_parameter(
+            &relation,
+            CurveResultantParameter::First,
+            &nonunit,
+            &real(0),
+            &real(1),
+            policy,
+        );
+        assert_eq!(
+            invalid.status,
+            AlgebraicFiberRootCountStatus::InvalidEvidence
+        );
     }
 }
