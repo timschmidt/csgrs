@@ -3,17 +3,35 @@
 mod support;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, Plane, Point3, boolean_mesh, boolean_mesh_closure_evidence,
-    polygon_soup, triangulate_and_resolve_certified,
+    BooleanOp, EmberConfig, MeshContext, Plane, Point3, PredicatePolicy, boolean_mesh,
+    boolean_mesh_closure_evidence, boolean_operation, polygon_soup,
+    triangulate_and_resolve_certified,
 };
 use support::{
     APPROXIMATE_CONTEXT, LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_CONTROL_TRIANGLES,
     YEAHRIGHT_CONTROL_VERTICES, YEAHRIGHT_STRESS_SUBDIVISIONS, assert_close, assert_summary,
     corpus, large_boolean_case, prepare, prepare_yeahright, raw_from_hypermesh, run_boolmesh,
-    run_hypermesh, run_hypermesh_exact, run_hypermesh_polygon, run_manifold, summarize,
-    to_hypermesh, validate_with_tri_mesh, yeahright_boolean_case,
-    yeahright_boolean_case_with_subdivisions, yeahright_control_mesh,
+    run_hypermesh, run_hypermesh_exact, run_manifold, summarize, to_hypermesh,
+    validate_with_tri_mesh, yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
+    yeahright_control_mesh,
 };
+
+const HYPERMESH_OPERATIONS: [(&str, BooleanOp); 4] = [
+    ("union", BooleanOp::Union),
+    ("intersection", BooleanOp::Intersection),
+    ("difference", BooleanOp::Difference),
+    ("symmetric difference", BooleanOp::SymmetricDifference),
+];
+
+fn predicate_contexts() -> [(&'static str, MeshContext); 2] {
+    [
+        ("STRICT", MeshContext::new(PredicatePolicy::STRICT)),
+        (
+            "APPROXIMATE_512",
+            MeshContext::new(PredicatePolicy::APPROXIMATE_512),
+        ),
+    ]
+}
 
 #[test]
 fn boolmesh_and_manifold_match_hypermesh_on_shared_boolean_corpus() {
@@ -197,45 +215,68 @@ fn yeahright_benchmark_inputs_reach_every_competitor() {
 fn yeahright_exact_hypermesh_outputs_remain_boundaryless_for_every_operation() {
     let case = yeahright_boolean_case();
     let prepared = prepare_yeahright(&case);
-    for operation in Operation::ALL {
-        let exact = run_hypermesh_exact(&prepared.hypermesh, operation);
-        let closure = boolean_mesh_closure_evidence(&exact);
-        assert!(
-            closure.has_no_boundary(),
-            "HyperMesh {} exact output has a boundary: {closure:?}",
-            operation.name()
-        );
-        let degenerate_triangles = exact
-            .triangles
-            .iter()
-            .filter(|triangle| {
-                let [a, b, c] = triangle.map(|index| {
-                    let vertex = &exact.vertices[index];
-                    Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
-                });
-                !Plane::points_are_nondegenerate(&APPROXIMATE_CONTEXT, &a, &b, &c)
-                    .expect("YeahRight output triangle predicate must decide")
-                    .into_value()
-            })
-            .count();
-        assert_eq!(
-            degenerate_triangles,
-            0,
-            "HyperMesh {} exact output contains degenerate triangles",
-            operation.name()
-        );
-        let output = raw_from_hypermesh(&exact);
-        let summary = summarize(&output);
-        assert!(
-            summary.closed,
-            "HyperMesh {} output is open: {summary:?}",
-            operation.name(),
-        );
-        assert!(
-            summary.finite,
-            "HyperMesh {} output is non-finite",
-            operation.name()
-        );
+    let mut strict_outputs = Vec::with_capacity(HYPERMESH_OPERATIONS.len());
+    for (policy, context) in predicate_contexts() {
+        for (operation_index, (operation, boolean)) in HYPERMESH_OPERATIONS.into_iter().enumerate()
+        {
+            let exact = boolean_mesh(
+                &context,
+                &[
+                    prepared.hypermesh[0].as_ref(),
+                    prepared.hypermesh[1].as_ref(),
+                ],
+                boolean,
+                EmberConfig::default(),
+            )
+            .unwrap_or_else(|error| panic!("HyperMesh {policy} {operation} failed: {error}"))
+            .into_value();
+            if policy == "STRICT" {
+                strict_outputs.push(exact.clone());
+            } else {
+                assert_eq!(
+                    exact, strict_outputs[operation_index],
+                    "HyperMesh policy outputs differ for {operation}",
+                );
+            }
+            let closure = boolean_mesh_closure_evidence(&exact);
+            assert!(
+                closure.has_no_boundary(),
+                "HyperMesh {policy} {operation} exact output has a boundary: {closure:?}",
+            );
+            let degenerate_triangles = exact
+                .triangles
+                .iter()
+                .filter(|triangle| {
+                    let [a, b, c] = triangle.map(|index| {
+                        let vertex = &exact.vertices[index];
+                        Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
+                    });
+                    !Plane::points_are_nondegenerate(&context, &a, &b, &c)
+                        .expect("YeahRight output triangle predicate must decide")
+                        .into_value()
+                })
+                .count();
+            assert_eq!(
+                degenerate_triangles, 0,
+                "HyperMesh {policy} {operation} exact output contains degenerate triangles",
+            );
+            let output = raw_from_hypermesh(&exact);
+            let summary = summarize(&output);
+            // The competitive summary merges vertices through a quantized
+            // binary64 key. Symmetric difference can retain exact distinct
+            // crossings that share that key, so its exact closure evidence
+            // above is the authoritative topology check.
+            if boolean != BooleanOp::SymmetricDifference {
+                assert!(
+                    summary.closed,
+                    "HyperMesh {policy} {operation} output is open: {summary:?}",
+                );
+            }
+            assert!(
+                summary.finite,
+                "HyperMesh {policy} {operation} output is non-finite",
+            );
+        }
     }
 }
 
@@ -244,50 +285,64 @@ fn yeahright_exact_hypermesh_outputs_remain_boundaryless_for_every_operation() {
 fn yeahright_polygon_and_triangle_immediate_apis_remain_consistent() {
     let case = yeahright_boolean_case();
     let prepared = prepare_yeahright(&case);
-    for operation in Operation::ALL {
-        let polygon_result = run_hypermesh_polygon(&prepared.hypermesh, operation);
-        let polygon_soup = triangulate_and_resolve_certified(&APPROXIMATE_CONTEXT, &polygon_result)
-            .expect("YeahRight polygon output must triangulate exactly")
-            .into_value();
-        let direct_soup = run_hypermesh_exact(&prepared.hypermesh, operation);
-        assert!(
-            boolean_mesh_closure_evidence(&polygon_soup).has_no_boundary(),
-            "HyperMesh polygon {} output has a boundary",
-            operation.name(),
-        );
-        let degenerate_triangles = polygon_soup
-            .triangles
-            .iter()
-            .filter(|triangle| {
-                let [a, b, c] = triangle.map(|index| {
-                    let vertex = &polygon_soup.vertices[index];
-                    Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
-                });
-                !Plane::points_are_nondegenerate(&APPROXIMATE_CONTEXT, &a, &b, &c)
-                    .expect("YeahRight output triangle predicate must decide")
-                    .into_value()
-            })
-            .count();
-        assert_eq!(
-            degenerate_triangles,
-            0,
-            "HyperMesh polygon {} output contains exact degenerate triangles",
-            operation.name(),
-        );
-        let polygon_summary = summarize(&raw_from_hypermesh(&polygon_soup));
-        let direct_summary = summarize(&raw_from_hypermesh(&direct_soup));
-        assert!(polygon_summary.closed);
-        assert!(polygon_summary.finite);
-        assert_close(
-            polygon_summary.volume,
-            direct_summary.volume,
-            &format!("HyperMesh immediate {} volume", operation.name()),
-        );
-        assert_close(
-            polygon_summary.surface_area,
-            direct_summary.surface_area,
-            &format!("HyperMesh immediate {} area", operation.name()),
-        );
+    for (policy, context) in predicate_contexts() {
+        for (operation, boolean) in HYPERMESH_OPERATIONS {
+            let views = [
+                prepared.hypermesh[0].as_ref(),
+                prepared.hypermesh[1].as_ref(),
+            ];
+            let polygon_result =
+                boolean_operation(&context, &views, boolean, EmberConfig::default())
+                    .unwrap_or_else(|error| {
+                        panic!("HyperMesh polygon {policy} {operation} failed: {error}")
+                    })
+                    .into_value();
+            let polygon_soup = triangulate_and_resolve_certified(&context, &polygon_result)
+                .expect("YeahRight polygon output must triangulate exactly")
+                .into_value();
+            let direct_soup = boolean_mesh(&context, &views, boolean, EmberConfig::default())
+                .unwrap_or_else(|error| {
+                    panic!("HyperMesh immediate {policy} {operation} failed: {error}")
+                })
+                .into_value();
+            assert!(
+                boolean_mesh_closure_evidence(&polygon_soup).has_no_boundary(),
+                "HyperMesh polygon {policy} {operation} output has a boundary",
+            );
+            let degenerate_triangles = polygon_soup
+                .triangles
+                .iter()
+                .filter(|triangle| {
+                    let [a, b, c] = triangle.map(|index| {
+                        let vertex = &polygon_soup.vertices[index];
+                        Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
+                    });
+                    !Plane::points_are_nondegenerate(&context, &a, &b, &c)
+                        .expect("YeahRight output triangle predicate must decide")
+                        .into_value()
+                })
+                .count();
+            assert_eq!(
+                degenerate_triangles, 0,
+                "HyperMesh polygon {policy} {operation} output contains exact degenerate triangles",
+            );
+            let polygon_summary = summarize(&raw_from_hypermesh(&polygon_soup));
+            let direct_summary = summarize(&raw_from_hypermesh(&direct_soup));
+            if boolean != BooleanOp::SymmetricDifference {
+                assert!(polygon_summary.closed);
+            }
+            assert!(polygon_summary.finite);
+            assert_close(
+                polygon_summary.volume,
+                direct_summary.volume,
+                &format!("HyperMesh immediate {policy} {operation} volume"),
+            );
+            assert_close(
+                polygon_summary.surface_area,
+                direct_summary.surface_area,
+                &format!("HyperMesh immediate {policy} {operation} area"),
+            );
+        }
     }
 }
 

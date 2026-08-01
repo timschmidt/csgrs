@@ -17,8 +17,7 @@ use crate::output::TriangleSource;
 use crate::point_interner::{PointCoordinates, PointInterner};
 use crate::polygon::{
     ConvexPolygon, InputTrianglePlanes, convex_triangle_decision, edge_plane,
-    exact_axis_aligned_triangle_support, make_indexed_triangle_with_deferred_edges,
-    make_indexed_triangle_with_deferred_edges_and_input_planes, make_triangle_with_input_planes,
+    exact_axis_aligned_triangle_support, make_triangle_with_input_planes,
 };
 use crate::predicate::{classify_point_decision, points_equal};
 use crate::storage_hash::StorageHashMap;
@@ -1306,6 +1305,34 @@ pub struct PolygonSoup {
     pub num_meshes: usize,
 }
 
+pub(crate) struct ProjectiveInputSoup {
+    pub(crate) meshes: Vec<ProjectiveInputMesh>,
+    pub(crate) bounds: Aabb,
+}
+
+pub(crate) struct ProjectiveInputMesh {
+    pub(crate) positions: Arc<[Point3]>,
+    pub(crate) support_planes: Vec<Plane>,
+    pub(crate) triangles: Vec<ProjectiveInputTriangle>,
+    pub(crate) polygon_offset: isize,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct ProjectiveInputTriangle {
+    pub(crate) indices: [usize; 3],
+    pub(crate) support_plane: usize,
+}
+
+impl ProjectiveInputMesh {
+    pub(crate) fn polygon_index(&self, triangle: usize) -> HypermeshResult<isize> {
+        self.polygon_offset
+            .checked_add(
+                isize::try_from(triangle).map_err(|_| HypermeshError::UnknownClassification)?,
+            )
+            .ok_or(HypermeshError::UnknownClassification)
+    }
+}
+
 impl PolygonSoup {
     /// Recomputes exact bounds from polygon vertices.
     pub fn compute_bounds_from_vertices(
@@ -1385,7 +1412,7 @@ pub fn polygon_soup(
     meshes: &[TriangleMeshRef<'_>],
 ) -> HypermeshResult<MeshOutcome<PolygonSoup>> {
     let decisions = DecisionContext::new(context);
-    let soup = build_polygon_soup_with_edge_mode(&decisions, meshes, None, None, false)?;
+    let soup = build_polygon_soup_internal(&decisions, meshes, None, None)?;
     Ok(decisions.finish(soup))
 }
 
@@ -1407,7 +1434,7 @@ fn certify_convex_mesh_decision(
     decisions: &DecisionContext,
     mesh: TriangleMeshRef<'_>,
 ) -> HypermeshResult<()> {
-    let soup = build_polygon_soup_with_edge_mode(decisions, &[mesh], None, None, false)?;
+    let soup = build_polygon_soup_internal(decisions, &[mesh], None, None)?;
     for polygon in &soup.polygons {
         for point in mesh.positions {
             if classify_point_decision(decisions, point, &polygon.support)?
@@ -1426,41 +1453,19 @@ pub(crate) fn build_polygon_soup_with_certified_convex_inputs(
     certified_convex_inputs: &[bool],
     input_planes: Option<&[&[InputTrianglePlanes]]>,
 ) -> HypermeshResult<PolygonSoup> {
-    build_polygon_soup_with_edge_mode(
+    build_polygon_soup_internal(
         decisions,
         meshes,
         Some(certified_convex_inputs),
         input_planes,
-        false,
     )
 }
 
-pub(crate) fn build_polygon_soup_with_deferred_edges(
+pub(crate) fn build_projective_input_soup(
     decisions: &DecisionContext,
     meshes: &[TriangleMeshRef<'_>],
-    certified_convex_inputs: &[bool],
     input_planes: Option<&[&[InputTrianglePlanes]]>,
-) -> HypermeshResult<PolygonSoup> {
-    build_polygon_soup_with_edge_mode(
-        decisions,
-        meshes,
-        Some(certified_convex_inputs),
-        input_planes,
-        true,
-    )
-}
-
-pub(crate) fn build_polygon_soup_with_edge_mode(
-    decisions: &DecisionContext,
-    meshes: &[TriangleMeshRef<'_>],
-    certified_convex_inputs: Option<&[bool]>,
-    input_planes: Option<&[&[InputTrianglePlanes]]>,
-    defer_edges: bool,
-) -> HypermeshResult<PolygonSoup> {
-    crate::trace_dispatch!("build-polygon-soup", "start");
-    if certified_convex_inputs.is_some_and(|certified| certified.len() != meshes.len()) {
-        return Err(HypermeshError::UnknownClassification);
-    }
+) -> HypermeshResult<ProjectiveInputSoup> {
     if input_planes.is_some_and(|planes| {
         planes.len() != meshes.len()
             || planes
@@ -1476,38 +1481,23 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
         decisions,
         meshes.iter().flat_map(|mesh| mesh.positions.iter()),
     )?;
-    crate::trace_dispatch!("build-polygon-soup", "bounds-computed");
-
-    let polygon_capacity = meshes
-        .iter()
-        .try_fold(0usize, |total, mesh| {
-            total.checked_add(mesh.triangles.len())
-        })
-        .ok_or(HypermeshError::UnknownClassification)?;
-    let mut polygons = Vec::with_capacity(polygon_capacity);
+    let mut projective_meshes = Vec::with_capacity(meshes.len());
     let mut polygon_index = 0isize;
-    // Deferred source triangles have no materialized boundary planes. Keep
-    // that immutable empty cycle once for the whole input instead of
-    // allocating an identical Arc<Vec<_>> for every triangle.
-    let deferred_edges = defer_edges.then(|| Arc::new(Vec::<Plane>::new()));
     for (mesh_index, mesh) in meshes.iter().enumerate() {
-        let input_is_certified_convex =
-            certified_convex_inputs.is_some_and(|certified| certified[mesh_index]);
-        let retained_positions =
-            (defer_edges && input_is_certified_convex).then(|| match mesh.native {
-                Some(native) => Arc::clone(&native.positions),
-                None => Arc::<[Point3]>::from(mesh.positions),
-            });
+        let polygon_offset = polygon_index;
+        let positions = match mesh.native {
+            Some(native) => Arc::clone(&native.positions),
+            None => Arc::<[Point3]>::from(mesh.positions),
+        };
         // Bound the admission scan before retaining an approximate position
         // cache. A missed axis face only skips the fast path, and every hint
         // is revalidated exactly when its support plane is constructed.
         let sample_count = mesh.triangles.len().min(64);
-        let predominantly_axis_aligned = retained_positions.is_some()
-            && (0..sample_count).all(|sample| {
-                let triangle_index = sample * mesh.triangles.len() / sample_count;
-                approximate_triangle_axis(mesh.positions, mesh.triangles[triangle_index].indices())
-                    .is_some()
-            });
+        let predominantly_axis_aligned = (0..sample_count).all(|sample| {
+            let triangle_index = sample * mesh.triangles.len() / sample_count;
+            approximate_triangle_axis(mesh.positions, mesh.triangles[triangle_index].indices())
+                .is_some()
+        });
         let (approximate_positions, approximate_positions_are_exact_dyadic) =
             if predominantly_axis_aligned {
                 let exact_dyadic = mesh
@@ -1542,15 +1532,193 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
             } else {
                 (None, false)
             };
-        let mut axis_support_planes: Vec<((usize, u64, bool), Plane)> = Vec::with_capacity(6);
-        let mut adjacent_support_planes =
-            (!predominantly_axis_aligned && retained_positions.is_some() && input_planes.is_none())
-                .then(|| {
-                    AdjacentSupportEdges::new(
-                        mesh.positions.len(),
-                        mesh.triangles.len().saturating_mul(3).div_ceil(2),
-                    )
+        let mut support_planes = Vec::new();
+        let mut triangles = Vec::with_capacity(mesh.triangles.len());
+        let mut axis_support_planes: Vec<((usize, u64, bool), usize)> = Vec::with_capacity(6);
+        let mut adjacent_support_planes = (!predominantly_axis_aligned && input_planes.is_none())
+            .then(|| {
+                AdjacentSupportEdges::new(
+                    mesh.positions.len(),
+                    mesh.triangles.len().saturating_mul(3).div_ceil(2),
+                )
+            });
+        for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
+            let indices @ [i0, i1, i2] = triangle.indices();
+            let p0 = mesh
+                .positions
+                .get(i0)
+                .ok_or(HypermeshError::VertexIndexOutOfBounds {
+                    index: i0,
+                    vertex_count: mesh.positions.len(),
+                })?;
+            let p1 = mesh
+                .positions
+                .get(i1)
+                .ok_or(HypermeshError::VertexIndexOutOfBounds {
+                    index: i1,
+                    vertex_count: mesh.positions.len(),
+                })?;
+            let p2 = mesh
+                .positions
+                .get(i2)
+                .ok_or(HypermeshError::VertexIndexOutOfBounds {
+                    index: i2,
+                    vertex_count: mesh.positions.len(),
+                })?;
+            let supplied_support = input_planes
+                .and_then(|planes| planes.get(mesh_index))
+                .and_then(|planes| planes.get(triangle_index))
+                .map(|planes| planes.support.clone());
+            let support_plane = if let Some(support) = supplied_support {
+                let index = support_planes.len();
+                support_planes.push(support);
+                index
+            } else {
+                let axis_hint = approximate_positions.as_ref().and_then(|points| {
+                    let [p0, p1, p2] = [points[i0], points[i1], points[i2]];
+                    let axis = (0..3).find(|&axis| p0[axis] == p1[axis] && p0[axis] == p2[axis])?;
+                    let orientation = if approximate_positions_are_exact_dyadic {
+                        let u = (axis + 1) % 3;
+                        let v = (axis + 2) % 3;
+                        Real::certified_affine_det2_sign_exact_dyadic_f64(
+                            [p0[u], p0[v]],
+                            [p1[u], p1[v]],
+                            [p2[u], p2[v]],
+                        )
+                    } else {
+                        None
+                    };
+                    let exact_coordinate =
+                        approximate_positions_are_exact_dyadic.then(|| p0[axis].to_bits());
+                    Some((axis, orientation, exact_coordinate))
                 });
+                let axis_support = axis_hint.and_then(|(axis, orientation, exact_coordinate)| {
+                    let orientation_positive = match orientation {
+                        Some(RealSign::Negative) => false,
+                        Some(RealSign::Positive) => true,
+                        Some(RealSign::Zero) | None => {
+                            let support =
+                                exact_axis_aligned_triangle_support(p0, p1, p2, axis, orientation)?;
+                            let index = support_planes.len();
+                            support_planes.push(support);
+                            return Some(index);
+                        }
+                    };
+                    let key = (axis, exact_coordinate?, orientation_positive);
+                    if let Some((_, support)) = axis_support_planes
+                        .iter()
+                        .find(|(candidate, _)| *candidate == key)
+                    {
+                        return Some(*support);
+                    }
+                    let support =
+                        exact_axis_aligned_triangle_support(p0, p1, p2, axis, orientation)?;
+                    let index = support_planes.len();
+                    support_planes.push(support);
+                    axis_support_planes.push((key, index));
+                    Some(index)
+                });
+                if let Some(support) = axis_support {
+                    support
+                } else if let Some(adjacent) = adjacent_support_planes.as_ref() {
+                    match adjacent_coplanar_support_index(
+                        decisions,
+                        mesh.positions,
+                        indices,
+                        &triangles,
+                        &support_planes,
+                        adjacent,
+                    )? {
+                        Some((support, false)) => support,
+                        Some((support, true)) => {
+                            let inverted = support_planes[support].inverted();
+                            let index = support_planes.len();
+                            support_planes.push(inverted);
+                            index
+                        }
+                        None => {
+                            let index = support_planes.len();
+                            support_planes.push(Plane::from_points(p0, p1, p2));
+                            index
+                        }
+                    }
+                } else {
+                    let index = support_planes.len();
+                    support_planes.push(Plane::from_points(p0, p1, p2));
+                    index
+                }
+            };
+            if !support_planes[support_plane].decide_is_valid(decisions)? {
+                return Err(HypermeshError::DegenerateTriangle {
+                    mesh_index,
+                    triangle_index,
+                });
+            }
+            let stored_triangle = triangles.len();
+            triangles.push(ProjectiveInputTriangle {
+                indices,
+                support_plane,
+            });
+            if let Some(adjacent) = adjacent_support_planes.as_mut() {
+                for [start, end] in [[i0, i1], [i1, i2], [i2, i0]] {
+                    adjacent.insert_if_absent(start, end, stored_triangle);
+                }
+            }
+            polygon_index = polygon_index
+                .checked_add(1)
+                .ok_or(HypermeshError::UnknownClassification)?;
+        }
+        projective_meshes.push(ProjectiveInputMesh {
+            positions,
+            support_planes,
+            triangles,
+            polygon_offset,
+        });
+    }
+    Ok(ProjectiveInputSoup {
+        meshes: projective_meshes,
+        bounds,
+    })
+}
+
+pub(crate) fn build_polygon_soup_internal(
+    decisions: &DecisionContext,
+    meshes: &[TriangleMeshRef<'_>],
+    certified_convex_inputs: Option<&[bool]>,
+    input_planes: Option<&[&[InputTrianglePlanes]]>,
+) -> HypermeshResult<PolygonSoup> {
+    crate::trace_dispatch!("build-polygon-soup", "start");
+    if certified_convex_inputs.is_some_and(|certified| certified.len() != meshes.len()) {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    if input_planes.is_some_and(|planes| {
+        planes.len() != meshes.len()
+            || planes
+                .iter()
+                .zip(meshes)
+                .any(|(planes, mesh)| planes.len() != mesh.triangles.len())
+    }) {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    validate_non_empty_mesh_views(meshes)?;
+
+    let bounds = bounds_for_positions(
+        decisions,
+        meshes.iter().flat_map(|mesh| mesh.positions.iter()),
+    )?;
+    crate::trace_dispatch!("build-polygon-soup", "bounds-computed");
+
+    let polygon_capacity = meshes
+        .iter()
+        .try_fold(0usize, |total, mesh| {
+            total.checked_add(mesh.triangles.len())
+        })
+        .ok_or(HypermeshError::UnknownClassification)?;
+    let mut polygons: Vec<ConvexPolygon> = Vec::with_capacity(polygon_capacity);
+    let mut polygon_index = 0isize;
+    for (mesh_index, mesh) in meshes.iter().enumerate() {
+        let input_is_certified_convex =
+            certified_convex_inputs.is_some_and(|certified| certified[mesh_index]);
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
             let p0 = mesh
@@ -1578,90 +1746,8 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
                 .and_then(|planes| planes.get(mesh_index))
                 .and_then(|planes| planes.get(triangle_index))
                 .cloned();
-            let mut polygon = match (retained_positions.as_ref(), supplied_planes) {
-                (Some(positions), Some(planes)) => {
-                    make_indexed_triangle_with_deferred_edges_and_input_planes(
-                        Arc::clone(positions),
-                        [i0, i1, i2],
-                        planes,
-                        mesh_index as isize,
-                        polygon_index,
-                    )
-                }
-                (Some(positions), None) => {
-                    let axis_hint = approximate_positions.as_ref().and_then(|points| {
-                        let [p0, p1, p2] = [points[i0], points[i1], points[i2]];
-                        let axis =
-                            (0..3).find(|&axis| p0[axis] == p1[axis] && p0[axis] == p2[axis])?;
-                        let orientation = if approximate_positions_are_exact_dyadic {
-                            let u = (axis + 1) % 3;
-                            let v = (axis + 2) % 3;
-                            Real::certified_affine_det2_sign_exact_dyadic_f64(
-                                [p0[u], p0[v]],
-                                [p1[u], p1[v]],
-                                [p2[u], p2[v]],
-                            )
-                        } else {
-                            None
-                        };
-                        let exact_coordinate =
-                            approximate_positions_are_exact_dyadic.then(|| p0[axis].to_bits());
-                        Some((axis, orientation, exact_coordinate))
-                    });
-                    let axis_support_hint =
-                        axis_hint.and_then(|(axis, orientation, exact_coordinate)| {
-                            let orientation_positive = match orientation {
-                                Some(RealSign::Negative) => false,
-                                Some(RealSign::Positive) => true,
-                                Some(RealSign::Zero) | None => {
-                                    return exact_axis_aligned_triangle_support(
-                                        p0,
-                                        p1,
-                                        p2,
-                                        axis,
-                                        orientation,
-                                    );
-                                }
-                            };
-                            let key = (axis, exact_coordinate?, orientation_positive);
-                            if let Some((_, support)) = axis_support_planes
-                                .iter()
-                                .find(|(candidate, _)| *candidate == key)
-                            {
-                                return Some(support.clone());
-                            }
-                            let support =
-                                exact_axis_aligned_triangle_support(p0, p1, p2, axis, orientation)?;
-                            axis_support_planes.push((key, support.clone()));
-                            Some(support)
-                        });
-                    let support_hint = match axis_support_hint {
-                        Some(support) => Some(support),
-                        None => match adjacent_support_planes.as_ref() {
-                            Some(adjacent) => adjacent_coplanar_support_hint(
-                                decisions,
-                                mesh.positions,
-                                [i0, i1, i2],
-                                &polygons,
-                                adjacent,
-                            )?,
-                            None => None,
-                        },
-                    };
-                    make_indexed_triangle_with_deferred_edges(
-                        Arc::clone(positions),
-                        [i0, i1, i2],
-                        support_hint,
-                        Arc::clone(
-                            deferred_edges
-                                .as_ref()
-                                .expect("retained positions imply deferred edges"),
-                        ),
-                        mesh_index as isize,
-                        polygon_index,
-                    )
-                }
-                (None, Some(planes)) => make_triangle_with_input_planes(
+            let mut polygon = match supplied_planes {
+                Some(planes) => make_triangle_with_input_planes(
                     decisions,
                     p0,
                     p1,
@@ -1670,7 +1756,7 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
                     mesh_index as isize,
                     polygon_index,
                 )?,
-                (None, None) => convex_triangle_decision(
+                None => convex_triangle_decision(
                     decisions,
                     p0,
                     p1,
@@ -1686,10 +1772,8 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
                     triangle_index,
                 });
             }
-            if !defer_edges {
-                polygon.delta_w = vec![0; meshes.len()];
-                polygon.delta_w[mesh_index] = 1;
-            }
+            polygon.delta_w = vec![0; meshes.len()];
+            polygon.delta_w[mesh_index] = 1;
             let stored_polygon = polygons.len();
             polygons.reserve(1);
             // SAFETY: `reserve(1)` guarantees that `stored_polygon` addresses
@@ -1697,11 +1781,6 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
             unsafe {
                 polygons.as_mut_ptr().add(stored_polygon).write(polygon);
                 polygons.set_len(stored_polygon + 1);
-            }
-            if let Some(adjacent) = adjacent_support_planes.as_mut() {
-                for [start, end] in [[i0, i1], [i1, i2], [i2, i0]] {
-                    adjacent.insert_if_absent(start, end, stored_polygon);
-                }
             }
             polygon_index += 1;
         }
@@ -1730,13 +1809,14 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
     })
 }
 
-fn adjacent_coplanar_support_hint(
+fn adjacent_coplanar_support_index(
     decisions: &DecisionContext,
     positions: &[Point3],
     triangle: [usize; 3],
-    polygons: &[ConvexPolygon],
+    triangles: &[ProjectiveInputTriangle],
+    support_planes: &[Plane],
     adjacent: &AdjacentSupportEdges,
-) -> HypermeshResult<Option<Plane>> {
+) -> HypermeshResult<Option<(usize, bool)>> {
     let [Some(p0), Some(p1), Some(p2)] = triangle.map(|index| positions.get(index)) else {
         return Ok(None);
     };
@@ -1744,10 +1824,14 @@ fn adjacent_coplanar_support_hint(
     for edge in 0..3 {
         let start = triangle[edge];
         let end = triangle[(edge + 1) % 3];
-        let Some((stored_start, stored_end, polygon_index)) = adjacent.get(start, end) else {
+        let Some((stored_start, stored_end, triangle_index)) = adjacent.get(start, end) else {
             continue;
         };
-        let Some(candidate) = polygons.get(polygon_index).map(|polygon| &polygon.support) else {
+        let Some((support_index, candidate)) = triangles.get(triangle_index).and_then(|triangle| {
+            support_planes
+                .get(triangle.support_plane)
+                .map(|support| (triangle.support_plane, support))
+        }) else {
             continue;
         };
         if classify_point_decision(decisions, points[(edge + 2) % 3], candidate)?
@@ -1756,10 +1840,10 @@ fn adjacent_coplanar_support_hint(
             continue;
         }
         if stored_start == end && stored_end == start {
-            return Ok(Some(candidate.clone()));
+            return Ok(Some((support_index, false)));
         }
         if stored_start == start && stored_end == end {
-            return Ok(Some(candidate.inverted()));
+            return Ok(Some((support_index, true)));
         }
     }
     Ok(None)
@@ -1993,7 +2077,6 @@ fn bounds_for_positions<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::polygon::RetainedVertexCycle;
 
     #[test]
     fn approximate_convexity_facts_obey_later_operation_policy() {
@@ -2219,7 +2302,11 @@ mod tests {
     }
 
     #[test]
-    fn deferred_certified_triangles_share_one_indexed_position_pool() {
+    fn projective_input_triangles_share_one_indexed_position_pool() {
+        assert_eq!(
+            std::mem::size_of::<ProjectiveInputTriangle>(),
+            4 * std::mem::size_of::<usize>()
+        );
         let positions = vec![
             Point3::new(Real::zero(), Real::zero(), Real::zero()),
             Point3::new(Real::one(), Real::zero(), Real::zero()),
@@ -2230,67 +2317,33 @@ mod tests {
             positions.clone(),
             vec![Triangle::new(0, 1, 2), Triangle::new(0, 3, 1)],
         );
-        let soup = build_polygon_soup_with_deferred_edges(
+        let soup = build_projective_input_soup(
             &crate::test_support::approximate_decisions(),
             &[mesh.as_ref()],
-            &[true],
             None,
         )
         .unwrap();
-
-        let (
-            Some(RetainedVertexCycle::IndexedTriangle {
-                positions: first,
-                indices: first_indices,
-            }),
-            Some(RetainedVertexCycle::IndexedTriangle {
-                positions: second,
-                indices: second_indices,
-            }),
-        ) = (
-            &soup.polygons[0].known_vertices,
-            &soup.polygons[1].known_vertices,
-        )
-        else {
-            panic!("certified deferred triangles must retain indexed vertices");
-        };
-
-        assert!(Arc::ptr_eq(first, second));
-        assert!(Arc::ptr_eq(first, &mesh.positions));
-        assert!(Arc::ptr_eq(
-            &soup.polygons[0].edges,
-            &soup.polygons[1].edges
-        ));
-        assert_eq!(*first_indices, [0, 1, 2]);
-        assert_eq!(*second_indices, [0, 3, 1]);
-        assert_eq!(
-            soup.polygons[0]
-                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
-                .unwrap()
-                .into_value(),
-            positions[..3]
-        );
+        let source = &soup.meshes[0];
+        assert!(Arc::ptr_eq(&source.positions, &mesh.positions));
+        assert_eq!(source.triangles[0].indices, [0, 1, 2]);
+        assert_eq!(source.triangles[1].indices, [0, 3, 1]);
+        assert_eq!(&source.positions[..3], &positions[..3]);
 
         let borrowed_triangles = [Triangle::new(0, 1, 2), Triangle::new(0, 3, 1)];
-        let borrowed = build_polygon_soup_with_deferred_edges(
+        let borrowed = build_projective_input_soup(
             &crate::test_support::approximate_decisions(),
             &[TriangleMeshRef::new(&positions, &borrowed_triangles)],
-            &[true],
             None,
         )
         .unwrap();
-        let Some(RetainedVertexCycle::IndexedTriangle {
-            positions: borrowed,
-            ..
-        }) = &borrowed.polygons[0].known_vertices
-        else {
-            panic!("borrowed certified triangles must retain owned positions");
-        };
-        assert!(!std::ptr::eq(borrowed.as_ptr(), positions.as_ptr()));
+        assert!(!std::ptr::eq(
+            borrowed.meshes[0].positions.as_ptr(),
+            positions.as_ptr()
+        ));
     }
 
     #[test]
-    fn deferred_certified_triangles_reuse_adjacent_coplanar_support() {
+    fn projective_input_triangles_reuse_adjacent_coplanar_support() {
         let positions = vec![
             Point3::new(Real::from(0), Real::from(0), Real::from(0)),
             Point3::new(Real::from(4), Real::from(0), Real::from(4)),
@@ -2302,15 +2355,17 @@ mod tests {
             vec![Triangle::new(0, 1, 2), Triangle::new(1, 0, 3)],
         );
 
-        let soup = build_polygon_soup_with_deferred_edges(
+        let soup = build_projective_input_soup(
             &crate::test_support::approximate_decisions(),
             &[mesh.as_ref()],
-            &[true],
             None,
         )
         .unwrap();
 
-        assert_eq!(soup.polygons[0].support, soup.polygons[1].support);
+        assert_eq!(
+            soup.meshes[0].triangles[0].support_plane,
+            soup.meshes[0].triangles[1].support_plane
+        );
     }
 
     #[test]

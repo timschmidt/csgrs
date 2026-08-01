@@ -16,8 +16,9 @@ use crate::geometry::{
     compare_real_decision,
 };
 use crate::mesh::{
-    OutputVertex, Triangle, TriangleMesh, TriangleMeshRef,
-    build_polygon_soup_with_certified_convex_inputs, build_polygon_soup_with_deferred_edges,
+    OutputVertex, ProjectiveInputSoup, Triangle, TriangleMesh, TriangleMeshRef,
+    build_polygon_soup_internal, build_polygon_soup_with_certified_convex_inputs,
+    build_projective_input_soup,
 };
 use crate::output::{
     ARRANGEMENT_CLASSIFICATION, BooleanMesh, BooleanResult, ClassifiedPolygon, TriangleSource,
@@ -26,6 +27,8 @@ use crate::output::{
 use crate::polygon::{
     ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
     InputTrianglePlanes, KnownEdgeIdentityCycle, edge_plane,
+    make_indexed_triangle_with_deferred_edges,
+    make_indexed_triangle_with_deferred_edges_and_input_planes,
 };
 use crate::predicate::{
     ProjectivePoint3PredicateEvidence, RationalPlane4PredicateEvidence, classify_point_decision,
@@ -1219,21 +1222,49 @@ fn compute_boolean(
     }
     let certified_convex_inputs = certified_convex_inputs.unwrap_or(&[]);
     let use_two_convex_candidate = meshes.len() == 2 && certified_convex_inputs == [true, true];
-    let mut soup = if use_two_convex_candidate {
-        build_polygon_soup_with_deferred_edges(
-            decisions,
-            meshes,
-            certified_convex_inputs,
-            input_planes,
-        )?
-    } else if certified_convex_inputs.is_empty() {
-        crate::mesh::build_polygon_soup_with_edge_mode(
-            decisions,
-            meshes,
-            None,
-            input_planes,
-            false,
-        )?
+    if use_two_convex_candidate && retained_polygons.is_none() {
+        match build_projective_input_soup(decisions, meshes, input_planes) {
+            Ok(projective_input) => {
+                match compute_projective_input_soup(
+                    decisions,
+                    &projective_input,
+                    input_planes,
+                    operation,
+                    retain_winding || operation == BooleanOp::SymmetricDifference,
+                ) {
+                    Ok(Some(candidate)) => {
+                        return Ok(BooleanComputation {
+                            soup: crate::mesh::PolygonSoup {
+                                polygons: Vec::new(),
+                                bounds: projective_input.bounds,
+                                num_meshes: projective_input.meshes.len(),
+                            },
+                            classified: candidate.classified,
+                            boolean_mesh: Some(candidate.boolean_mesh),
+                            input_edges_deferred: true,
+                        });
+                    }
+                    Ok(None) => {}
+                    Err(error) if is_retryable_boolean_path_error(&error) => {
+                        if cfg!(debug_assertions) {
+                            eprintln!(
+                                "[DEBUG] compact projective convex candidate failed: {error}"
+                            );
+                        }
+                    }
+                    Err(error) => return Err(error),
+                }
+            }
+            Err(error) if is_retryable_boolean_path_error(&error) => {
+                if cfg!(debug_assertions) {
+                    eprintln!("[DEBUG] compact projective input preparation failed: {error}");
+                }
+            }
+            Err(error) => return Err(error),
+        }
+    }
+    let mut soup = if certified_convex_inputs.is_empty() {
+        build_polygon_soup_internal(decisions, meshes, None, input_planes)?
     } else {
         build_polygon_soup_with_certified_convex_inputs(
             decisions,
@@ -1268,17 +1299,6 @@ fn compute_boolean(
     {
         (candidate.classified, Some(candidate.boolean_mesh), true)
     } else {
-        if use_two_convex_candidate {
-            soup = build_polygon_soup_with_certified_convex_inputs(
-                decisions,
-                meshes,
-                certified_convex_inputs,
-                input_planes,
-            )?;
-            if let Some(retained_polygons) = retained_polygons {
-                replace_retained_input_polygons(decisions, &mut soup, retained_polygons)?;
-            }
-        }
         let process_bounds = expanded_bounds(&soup.bounds);
         let ref_point = outside_reference_point(&process_bounds);
         let ref_wnv = vec![0; soup.num_meshes];
@@ -3183,6 +3203,368 @@ impl ProjectiveAffineCache {
     }
 }
 
+fn compute_projective_input_soup(
+    decisions: &DecisionContext,
+    input: &ProjectiveInputSoup,
+    input_planes: Option<&[&[InputTrianglePlanes]]>,
+    operation: BooleanOp,
+    retain_winding: bool,
+) -> HypermeshResult<Option<ConvexCandidate>> {
+    let [first, second] = input.meshes.as_slice() else {
+        return Err(crate::error::HypermeshError::UnknownClassification);
+    };
+    let input_meshes = [first, second];
+    let mut support_planes: [Vec<&Plane>; 2] = std::array::from_fn(|_| Vec::new());
+    let mut storage_support_planes: [StorageHashMap<[usize; 4], usize>; 2] =
+        std::array::from_fn(|_| StorageHashMap::default());
+    let mut approximate_support_planes: [StorageHashMap<[u64; 4], Vec<usize>>; 2] =
+        std::array::from_fn(|_| StorageHashMap::default());
+    let mut non_exact_support_planes: [Vec<usize>; 2] = std::array::from_fn(|_| Vec::new());
+    let mut support_plane_f64_values: [Vec<Option<[f64; 4]>>; 2] =
+        std::array::from_fn(|_| Vec::new());
+    let mut indexed_support_planes: [Vec<usize>; 2] = std::array::from_fn(|_| Vec::new());
+    for (mesh, source) in input_meshes.iter().enumerate() {
+        indexed_support_planes[mesh].reserve(source.support_planes.len());
+        for support in &source.support_planes {
+            let storage_key = exact_plane_storage_key(support);
+            let stored_plane =
+                storage_key.and_then(|key| storage_support_planes[mesh].get(&key).copied());
+            let plane = if let Some(index) = stored_plane {
+                index
+            } else if let Some(values) = exact_plane_f64(support) {
+                let key = values.map(f64::to_bits);
+                if let Some(index) = approximate_support_planes[mesh]
+                    .get(&key)
+                    .into_iter()
+                    .flatten()
+                    .copied()
+                    .find(|&index| support_planes[mesh][index] == support)
+                {
+                    index
+                } else {
+                    let index = support_planes[mesh].len();
+                    support_planes[mesh].push(support);
+                    support_plane_f64_values[mesh].push(Some(values));
+                    approximate_support_planes[mesh]
+                        .entry(key)
+                        .or_default()
+                        .push(index);
+                    index
+                }
+            } else if let Some(index) =
+                non_exact_support_planes[mesh]
+                    .iter()
+                    .copied()
+                    .find(|&index| {
+                        certifiably_same_oriented_plane(
+                            decisions,
+                            support_planes[mesh][index],
+                            support,
+                        )
+                        .unwrap_or(false)
+                    })
+            {
+                index
+            } else if let Some(index) = support_planes[mesh]
+                .iter()
+                .position(|plane| *plane == support)
+            {
+                index
+            } else {
+                let index = support_planes[mesh].len();
+                support_planes[mesh].push(support);
+                support_plane_f64_values[mesh].push(None);
+                non_exact_support_planes[mesh].push(index);
+                index
+            };
+            if let Some(key) = storage_key
+                && stored_plane.is_none()
+            {
+                storage_support_planes[mesh].insert(key, plane);
+            }
+            indexed_support_planes[mesh].push(plane);
+        }
+    }
+    let support_planes_f64 =
+        support_plane_f64_values.map(|planes| planes.into_iter().collect::<Option<Vec<_>>>());
+    let canonical_plane_identities = canonical_plane_identities(decisions, &support_planes);
+    let (faces, mut face_supports) = collapse_projective_input_faces(
+        decisions,
+        input_meshes,
+        input_planes,
+        &support_planes,
+        &indexed_support_planes,
+    )?;
+    for identity in &mut face_supports {
+        *identity = canonical_plane_identities[identity.mesh][identity.plane];
+    }
+    compute_projective_convex_faces(
+        decisions,
+        &faces,
+        &support_planes,
+        &support_planes_f64,
+        canonical_plane_identities,
+        face_supports,
+        operation,
+        retain_winding,
+    )
+}
+
+fn collapse_projective_input_faces(
+    decisions: &DecisionContext,
+    input_meshes: [&crate::mesh::ProjectiveInputMesh; 2],
+    input_planes: Option<&[&[InputTrianglePlanes]]>,
+    support_planes: &[Vec<&Plane>; 2],
+    indexed_support_planes: &[Vec<usize>; 2],
+) -> HypermeshResult<(Vec<ConvexPolygon>, Vec<ConstructionPlaneIdentity>)> {
+    const MAX_SINGLE_USE_CERTIFICATE_TRIANGLES: usize = 16;
+    let first_mesh_planes = support_planes[0].len();
+    let group_count = first_mesh_planes
+        .checked_add(support_planes[1].len())
+        .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+    let triangle_count = input_meshes
+        .iter()
+        .try_fold(0usize, |total, mesh| {
+            total.checked_add(mesh.triangles.len())
+        })
+        .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+    let mut group_offsets = vec![0usize; group_count + 1];
+    for (mesh, source) in input_meshes.iter().enumerate() {
+        for triangle in &source.triangles {
+            let Some(&support) = indexed_support_planes[mesh].get(triangle.support_plane) else {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            };
+            let group = if mesh == 0 {
+                support
+            } else {
+                first_mesh_planes + support
+            };
+            group_offsets[group + 1] += 1;
+        }
+    }
+    for group in 0..group_count {
+        group_offsets[group + 1] += group_offsets[group];
+    }
+    let mut grouped_triangles = vec![[0usize; 2]; triangle_count];
+    for mesh in (0..input_meshes.len()).rev() {
+        for (triangle_index, triangle) in input_meshes[mesh].triangles.iter().enumerate().rev() {
+            let support = indexed_support_planes[mesh][triangle.support_plane];
+            let group = if mesh == 0 {
+                support
+            } else {
+                first_mesh_planes + support
+            };
+            group_offsets[group + 1] -= 1;
+            grouped_triangles[group_offsets[group + 1]] = [mesh, triangle_index];
+        }
+    }
+
+    let deferred_edges = Arc::new(Vec::<Plane>::new());
+    let mut faces = Vec::with_capacity(group_count);
+    let mut face_supports = Vec::with_capacity(group_count);
+    for group in 0..group_count {
+        let start = group_offsets[group + 1];
+        let end = if group + 1 == group_count {
+            grouped_triangles.len()
+        } else {
+            group_offsets[group + 2]
+        };
+        let triangle_refs = &grouped_triangles[start..end];
+        if triangle_refs.is_empty() {
+            continue;
+        }
+        let (mesh, support) = if group < first_mesh_planes {
+            (0, group)
+        } else {
+            (1, group - first_mesh_planes)
+        };
+        if let [[source_mesh, triangle_index]] = triangle_refs {
+            if *source_mesh != mesh {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            }
+            let source = &input_meshes[mesh];
+            let triangle = source
+                .triangles
+                .get(*triangle_index)
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            let mut face = if let Some(planes) = input_planes
+                .and_then(|planes| planes.get(mesh))
+                .and_then(|planes| planes.get(*triangle_index))
+            {
+                let mut planes = planes.clone();
+                planes.support = support_planes[mesh][support].clone();
+                make_indexed_triangle_with_deferred_edges_and_input_planes(
+                    Arc::clone(&source.positions),
+                    triangle.indices,
+                    planes,
+                    mesh as isize,
+                    source.polygon_index(*triangle_index)?,
+                )
+            } else {
+                make_indexed_triangle_with_deferred_edges(
+                    Arc::clone(&source.positions),
+                    triangle.indices,
+                    Some(support_planes[mesh][support].clone()),
+                    Arc::clone(&deferred_edges),
+                    mesh as isize,
+                    source.polygon_index(*triangle_index)?,
+                )
+            };
+            face.set_source_triangle_edge_identities(mesh, triangle.indices);
+            face.delta_w = vec![0; input_meshes.len()];
+            face.delta_w[mesh] = 1;
+            faces.push(face);
+            face_supports.push(ConstructionPlaneIdentity {
+                mesh,
+                plane: support,
+            });
+            continue;
+        }
+
+        let source_edge_count = triangle_refs.len().saturating_mul(3);
+        let mut source_edges = SourceEdgeOccurrences::with_capacity(
+            source_edge_count,
+            input_meshes[mesh].positions.len(),
+        );
+        for &[source_mesh, triangle_index] in triangle_refs {
+            if source_mesh != mesh {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            }
+            let triangle = input_meshes[mesh]
+                .triangles
+                .get(triangle_index)
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            let [i0, i1, i2] = triangle.indices;
+            for mut endpoints in [[i0, i1], [i1, i2], [i2, i0]] {
+                endpoints.sort_unstable();
+                source_edges.push(endpoints);
+            }
+        }
+
+        let mut single_use_vertices = [0usize; MAX_SINGLE_USE_CERTIFICATE_TRIANGLES * 3];
+        let mut single_use_vertex_count = 0;
+        if triangle_refs.len() <= MAX_SINGLE_USE_CERTIFICATE_TRIANGLES {
+            let mut source_vertex_count = 0;
+            for &[_, triangle_index] in triangle_refs {
+                for vertex in input_meshes[mesh].triangles[triangle_index].indices {
+                    single_use_vertices[source_vertex_count] = vertex;
+                    source_vertex_count += 1;
+                }
+            }
+            let source_vertices = &mut single_use_vertices[..source_vertex_count];
+            source_vertices.sort_unstable();
+            let mut vertex_index = 0;
+            while vertex_index < source_vertices.len() {
+                let mut next = vertex_index + 1;
+                while next < source_vertices.len()
+                    && source_vertices[next] == source_vertices[vertex_index]
+                {
+                    next += 1;
+                }
+                if next == vertex_index + 1 {
+                    source_vertices[single_use_vertex_count] = source_vertices[vertex_index];
+                    single_use_vertex_count += 1;
+                }
+                vertex_index = next;
+            }
+        }
+        let boundary_edges = source_edges.into_unique_occurrences();
+        let mut outgoing = Vec::with_capacity(boundary_edges.len());
+        for occurrence in boundary_edges {
+            let (group_triangle_index, edge_index) = (occurrence / 3, occurrence % 3);
+            let [_, triangle_index] = triangle_refs[group_triangle_index];
+            let triangle = &input_meshes[mesh].triangles[triangle_index];
+            let start = triangle.indices[edge_index];
+            let end = triangle.indices[(edge_index + 1) % 3];
+            let point = input_meshes[mesh]
+                .positions
+                .get(start)
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            let edge_plane = input_planes
+                .and_then(|planes| planes.get(mesh))
+                .and_then(|planes| planes.get(triangle_index))
+                .map(|planes| &planes.edges[edge_index]);
+            outgoing.push((start, end, point, edge_plane));
+        }
+        outgoing.sort_unstable_by_key(|entry| entry.0);
+        if outgoing.windows(2).any(|pair| pair[0].0 == pair[1].0) {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        let Some(mut current) = outgoing.first().map(|entry| entry.0) else {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        };
+        let cycle_start = current;
+        let mut face_vertices = Vec::with_capacity(outgoing.len());
+        let mut vertex_identities = Vec::with_capacity(outgoing.len());
+        let mut edge_planes = Vec::new();
+        let mut edge_planes_complete = true;
+        let mut edge_identities = Vec::with_capacity(outgoing.len());
+        while face_vertices.len() < outgoing.len() {
+            let Ok(outgoing_index) = outgoing.binary_search_by_key(&current, |entry| entry.0)
+            else {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            };
+            let (_, next, point, edge_plane) = outgoing[outgoing_index];
+            face_vertices.push(point);
+            vertex_identities.push(ConstructionVertexIdentity::Source {
+                mesh,
+                vertex: current,
+            });
+            if edge_planes_complete {
+                if let Some(edge_plane) = edge_plane {
+                    if edge_planes.is_empty() {
+                        edge_planes.reserve(outgoing.len());
+                    }
+                    edge_planes.push(edge_plane.clone());
+                } else {
+                    edge_planes.clear();
+                    edge_planes_complete = false;
+                }
+            }
+            let mut endpoints = [current, next];
+            endpoints.sort_unstable();
+            edge_identities.push(ConstructionEdgeIdentity::Source { mesh, endpoints });
+            current = next;
+            if current == cycle_start {
+                break;
+            }
+        }
+        if current != cycle_start || face_vertices.len() != outgoing.len() {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        let certified_noncollinear_source_vertices = (single_use_vertex_count != 0)
+            .then_some(&single_use_vertices[..single_use_vertex_count]);
+        collapse_certified_collinear_face_vertices(
+            decisions,
+            mesh,
+            support_planes[mesh][support],
+            &mut face_vertices,
+            &mut vertex_identities,
+            &mut edge_planes,
+            &mut edge_identities,
+            certified_noncollinear_source_vertices,
+        )?;
+        let mut delta_w = vec![0; input_meshes.len()];
+        delta_w[mesh] = 1;
+        faces.push(ConvexPolygon::from_certified_convex_face(
+            support_planes[mesh][support].clone(),
+            &face_vertices,
+            Some(Arc::clone(&input_meshes[mesh].positions)),
+            vertex_identities,
+            edge_planes,
+            edge_identities,
+            mesh as isize,
+            input_meshes[mesh].polygon_index(triangle_refs[0][1])?,
+            delta_w,
+        ));
+        face_supports.push(ConstructionPlaneIdentity {
+            mesh,
+            plane: support,
+        });
+    }
+    Ok((faces, face_supports))
+}
+
 fn compute_two_convex_inputs_projectively(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
@@ -3194,10 +3576,7 @@ fn compute_two_convex_inputs_projectively(
         std::array::from_fn(|_| StorageHashMap::default());
     let mut approximate_support_planes: [StorageHashMap<[u64; 4], Vec<usize>>; 2] =
         std::array::from_fn(|_| StorageHashMap::default());
-    let mut non_exact_support_planes: [Vec<usize>; 2] = std::array::from_fn(|_| Vec::new());
     let mut support_plane_f64_values: [Vec<Option<[f64; 4]>>; 2] =
-        std::array::from_fn(|_| Vec::new());
-    let mut normalized_support_plane_f64_values: [Vec<Option<[f64; 4]>>; 2] =
         std::array::from_fn(|_| Vec::new());
     let mut polygon_support_planes = Vec::with_capacity(polygons.len());
     for polygon in polygons {
@@ -3225,7 +3604,6 @@ fn compute_two_convex_inputs_projectively(
                 let index = support_planes[mesh].len();
                 support_planes[mesh].push(&polygon.support);
                 support_plane_f64_values[mesh].push(Some(values));
-                normalized_support_plane_f64_values[mesh].push(normalize_plane_f64(values));
                 approximate_support_planes[mesh]
                     .entry(key)
                     .or_default()
@@ -3245,8 +3623,6 @@ fn compute_two_convex_inputs_projectively(
             let index = support_planes[mesh].len();
             support_planes[mesh].push(&polygon.support);
             support_plane_f64_values[mesh].push(None);
-            normalized_support_plane_f64_values[mesh].push(plane_f64(&polygon.support));
-            non_exact_support_planes[mesh].push(index);
             index
         };
         if let Some(key) = storage_key
@@ -3258,11 +3634,7 @@ fn compute_two_convex_inputs_projectively(
     }
     let support_planes_f64 =
         support_plane_f64_values.map(|planes| planes.into_iter().collect::<Option<Vec<_>>>());
-    let canonical_plane_identities = canonical_plane_identities(
-        decisions,
-        &support_planes,
-        &normalized_support_plane_f64_values,
-    );
+    let canonical_plane_identities = canonical_plane_identities(decisions, &support_planes);
     let (projective_polygons, mut projective_polygon_support_planes) =
         match collapse_certified_convex_faces(
             decisions,
@@ -3280,8 +3652,29 @@ fn compute_two_convex_inputs_projectively(
     for identity in &mut projective_polygon_support_planes {
         *identity = canonical_plane_identities[identity.mesh][identity.plane];
     }
-    let polygons = projective_polygons.as_slice();
-    let polygon_support_planes = projective_polygon_support_planes;
+    compute_projective_convex_faces(
+        decisions,
+        &projective_polygons,
+        &support_planes,
+        &support_planes_f64,
+        canonical_plane_identities,
+        projective_polygon_support_planes,
+        operation,
+        retain_winding,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn compute_projective_convex_faces(
+    decisions: &DecisionContext,
+    polygons: &[ConvexPolygon],
+    support_planes: &[Vec<&Plane>; 2],
+    support_planes_f64: &[Option<Vec<[f64; 4]>>; 2],
+    canonical_plane_identities: [Vec<ConstructionPlaneIdentity>; 2],
+    polygon_support_planes: Vec<ConstructionPlaneIdentity>,
+    operation: BooleanOp,
+    retain_winding: bool,
+) -> HypermeshResult<Option<ConvexCandidate>> {
     let mut classified = Vec::new();
     let mut point_plane_caches: [PointPlaneClassificationCache; 2] =
         std::array::from_fn(|_| PointPlaneClassificationCache::default());
@@ -3817,6 +4210,7 @@ fn certifiably_same_unoriented_plane(
     certifiably_proportional_plane(decisions, left, right).unwrap_or(false)
 }
 
+#[cfg(test)]
 fn plane_f64(plane: &Plane) -> Option<[f64; 4]> {
     normalize_plane_f64([
         plane.normal.x.to_f64_lossy()?,
@@ -3826,6 +4220,7 @@ fn plane_f64(plane: &Plane) -> Option<[f64; 4]> {
     ])
 }
 
+#[cfg(test)]
 fn normalize_plane_f64(mut values: [f64; 4]) -> Option<[f64; 4]> {
     if !values.into_iter().all(f64::is_finite) {
         return None;
@@ -3857,7 +4252,6 @@ fn normalize_plane_f64(mut values: [f64; 4]) -> Option<[f64; 4]> {
 fn canonical_plane_identities(
     decisions: &DecisionContext,
     support_planes: &[Vec<&Plane>; 2],
-    _normalized_support_plane_f64_values: &[Vec<Option<[f64; 4]>>; 2],
 ) -> [Vec<ConstructionPlaneIdentity>; 2] {
     let first = (0..support_planes[0].len())
         .map(|plane| ConstructionPlaneIdentity { mesh: 0, plane })
@@ -5852,6 +6246,131 @@ mod tests {
         );
     }
 
+    fn compact_projective_square_input() -> [crate::mesh::ProjectiveInputMesh; 2] {
+        let positions: std::sync::Arc<[Point3]> =
+            std::sync::Arc::from([p(0, 0, 0), p(1, 0, 0), p(1, 1, 0), p(0, 1, 0)]);
+        let support = Plane::from_points(&positions[0], &positions[1], &positions[2]);
+        [
+            crate::mesh::ProjectiveInputMesh {
+                positions,
+                support_planes: vec![support],
+                triangles: vec![
+                    crate::mesh::ProjectiveInputTriangle {
+                        indices: [0, 1, 2],
+                        support_plane: 0,
+                    },
+                    crate::mesh::ProjectiveInputTriangle {
+                        indices: [0, 2, 3],
+                        support_plane: 0,
+                    },
+                ],
+                polygon_offset: 0,
+            },
+            crate::mesh::ProjectiveInputMesh {
+                positions: std::sync::Arc::from([]),
+                support_planes: Vec::new(),
+                triangles: Vec::new(),
+                polygon_offset: 2,
+            },
+        ]
+    }
+
+    #[test]
+    fn compact_projective_face_collapse_traces_undirected_source_edges() {
+        let input = compact_projective_square_input();
+        let support_planes = [vec![&input[0].support_planes[0]], Vec::new()];
+        let indexed_support_planes = [vec![0], Vec::new()];
+
+        let (faces, face_supports) = collapse_projective_input_faces(
+            &crate::test_support::approximate_decisions(),
+            [&input[0], &input[1]],
+            None,
+            &support_planes,
+            &indexed_support_planes,
+        )
+        .unwrap();
+
+        assert_eq!(faces.len(), 1);
+        assert_eq!(
+            face_supports,
+            vec![ConstructionPlaneIdentity { mesh: 0, plane: 0 }]
+        );
+        assert!(faces[0].edges.is_empty());
+        assert_eq!(
+            faces[0]
+                .known_vertex_identities()
+                .unwrap()
+                .iter()
+                .collect::<Vec<_>>(),
+            (0..4)
+                .map(|vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex })
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            faces[0]
+                .known_edge_identities()
+                .unwrap()
+                .iter()
+                .collect::<Vec<_>>(),
+            [[0, 1], [1, 2], [2, 3], [0, 3]]
+                .map(|endpoints| { ConstructionEdgeIdentity::Source { mesh: 0, endpoints } })
+                .to_vec()
+        );
+    }
+
+    #[test]
+    fn compact_projective_face_collapse_preserves_supplied_boundary_planes() {
+        let input = compact_projective_square_input();
+        let decisions = crate::test_support::approximate_decisions();
+        let triangle_planes = input[0]
+            .triangles
+            .iter()
+            .map(|triangle| {
+                let [a, b, c] = triangle.indices;
+                InputTrianglePlanes::from_points_decision(
+                    &decisions,
+                    &input[0].positions[a],
+                    &input[0].positions[b],
+                    &input[0].positions[c],
+                )
+                .unwrap()
+            })
+            .collect::<Vec<_>>();
+        let empty_planes = [];
+        let input_planes = [&triangle_planes[..], &empty_planes[..]];
+        let support_planes = [vec![&input[0].support_planes[0]], Vec::new()];
+        let indexed_support_planes = [vec![0], Vec::new()];
+
+        let (faces, _) = collapse_projective_input_faces(
+            &decisions,
+            [&input[0], &input[1]],
+            Some(&input_planes),
+            &support_planes,
+            &indexed_support_planes,
+        )
+        .unwrap();
+
+        assert_eq!(faces.len(), 1);
+        assert_eq!(faces[0].edges.len(), 4);
+        let vertices = faces[0]
+            .known_vertices
+            .as_ref()
+            .unwrap()
+            .iter()
+            .collect::<Vec<_>>();
+        for (edge, plane) in faces[0].edges.iter().enumerate() {
+            assert_eq!(
+                classify_point_decision(&decisions, vertices[edge], plane).unwrap(),
+                Classification::On
+            );
+            assert_eq!(
+                classify_point_decision(&decisions, vertices[(edge + 1) % vertices.len()], plane,)
+                    .unwrap(),
+                Classification::On
+            );
+        }
+    }
+
     #[test]
     fn merged_certified_face_cycle_is_independent_of_triangle_order() {
         let positions: std::sync::Arc<[Point3]> =
@@ -6234,14 +6753,10 @@ mod tests {
         let opposite_bottom = bottom.inverted();
         let top = Plane::axis_aligned(2, Real::one());
         let support_planes = [vec![&bottom, &top], vec![&opposite_bottom, &bottom]];
-        let normalized = support_planes
-            .each_ref()
-            .map(|planes| planes.iter().map(|plane| plane_f64(plane)).collect());
 
         let identities = canonical_plane_identities(
             &crate::test_support::approximate_decisions(),
             &support_planes,
-            &normalized,
         );
         assert_eq!(identities[0][0], identities[1][0]);
         assert_eq!(identities[0][0], identities[1][1]);
