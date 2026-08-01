@@ -236,6 +236,14 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         }
     }
 
+    pub(crate) const fn projective_reversal(&self) -> Option<bool> {
+        match self {
+            Self::Identity => Some(false),
+            Self::UnitComplement => Some(true),
+            Self::General { .. } => None,
+        }
+    }
+
     pub(crate) fn map_first_to_second(
         &self,
         parameter: &BezierParameter2,

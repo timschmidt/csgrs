@@ -622,6 +622,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
             )));
         }
         if let Some(correspondence) = overlap.parameter_correspondence() {
+            if let Some(reversed) = correspondence.projective_reversal() {
+                return match clip_aligned_parameter_overlap(
+                    overlap.first_range(),
+                    overlap.second_range(),
+                    reversed,
+                    first_carrier,
+                    second_carrier,
+                    &self.data.policy,
+                )? {
+                    CarrierOverlapClip::Matched(ranges) => Ok(ranges),
+                    CarrierOverlapClip::Unmatched => {
+                        Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Predicate))
+                    }
+                };
+            }
             return clip_corresponding_parameter_overlap(
                 overlap.first_range(),
                 overlap.second_range(),
@@ -2245,6 +2260,24 @@ fn clip_projectively_aligned_parameter_overlap(
         }
     }
 
+    clip_aligned_parameter_overlap(
+        first_range,
+        second_range,
+        reversed,
+        first_carrier,
+        second_carrier,
+        policy,
+    )
+}
+
+fn clip_aligned_parameter_overlap(
+    first_range: &BezierParameterRange2,
+    second_range: &BezierParameterRange2,
+    reversed: bool,
+    first_carrier: &RegionCarrier,
+    second_carrier: &RegionCarrier,
+    policy: &CurveContext,
+) -> ExactCurveResult<CarrierOverlapClip> {
     let map_to_second = |parameter: &BezierParameter2| {
         if reversed {
             parameter.unit_complement()
