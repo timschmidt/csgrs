@@ -2061,7 +2061,7 @@ fn build_split_edge_chain(
         }
         SplitEdgeSearch::AxisOrder(axis_order) => {
             let axis = dominant_segment_axis(decisions, &vertices[edge[0]], &vertices[edge[1]])?;
-            let bounds = exact_edge_bounds(decisions, edge, vertices, None)?;
+            let bounds = exact_edge_bounds(decisions, edge, vertices, None, None)?;
             let (start, end) =
                 candidate_vertex_index_range_for_edge(decisions, axis_order, vertices, edge, axis)?;
             for &vertex_index in &axis_order[axis][start..end] {
@@ -2580,13 +2580,22 @@ fn split_edge_crossing_events(
     edges.sort();
     edges.dedup();
 
+    let approximate_sweep_axis = approximate_vertices
+        .map(|vertices| approximate_crossing_sweep_axis(vertices, &edges))
+        .unwrap_or(0);
+    let exact_bounds_axis = approximate_vertices.map(|_| approximate_sweep_axis);
     let mut bounded_edges = edges
         .into_iter()
-        .map(|edge| exact_edge_bounds(decisions, edge, &soup.vertices, approximate_vertices))
+        .map(|edge| {
+            exact_edge_bounds(
+                decisions,
+                edge,
+                &soup.vertices,
+                approximate_vertices,
+                exact_bounds_axis,
+            )
+        })
         .collect::<HypermeshResult<Vec<_>>>()?;
-    let approximate_sweep_axis = approximate_vertices
-        .map(|vertices| approximate_crossing_sweep_axis(vertices, &bounded_edges))
-        .unwrap_or(0);
     if let Some(approximate_vertices) = approximate_vertices {
         bounded_edges.sort_unstable_by(|left, right| {
             approximate_edge_min(approximate_vertices, left.edge, approximate_sweep_axis)
@@ -2710,13 +2719,15 @@ fn split_edge_crossing_events(
             if left_edge.iter().any(|vertex| right_edge.contains(vertex)) {
                 continue;
             }
-            if !edge_bounds_overlap_exact(
-                decisions,
-                left,
-                right,
-                &soup.vertices,
-                usize::from(approximate_vertices.is_none()),
-            )? {
+            // Certified outward enclosures already reject every pair whose
+            // exact bounds are provably disjoint at binary64 resolution. The
+            // complete projected-crossing predicate below is independently
+            // sufficient for every enclosure survivor, including exact
+            // separation hidden by rounding. Keep exact bounds as the broad
+            // phase only when no certified enclosure sweep exists.
+            if approximate_vertices.is_none()
+                && !edge_bounds_overlap_exact(decisions, left, right, &soup.vertices, 1)?
+            {
                 continue;
             }
 
@@ -4185,16 +4196,16 @@ fn approximate_edge_overlaps_bounds(
 // candidate volume only; all survivors still take the exact predicate path.
 fn least_sampled_interval_overlap_axis(
     vertices: &[ApproximateOutputVertex],
-    edges: &[ExactEdgeBounds],
+    edges: &[[usize; 2]],
 ) -> usize {
     const MAX_SAMPLED_EDGES: usize = 32;
 
     let sample_count = edges.len().min(MAX_SAMPLED_EDGES);
     let mut overlap_counts = [0_u16; 3];
     for left_sample in 0..sample_count {
-        let left = edges[left_sample.saturating_mul(edges.len()) / sample_count].edge;
+        let left = edges[left_sample.saturating_mul(edges.len()) / sample_count];
         for right_sample in (left_sample + 1)..sample_count {
-            let right = edges[right_sample.saturating_mul(edges.len()) / sample_count].edge;
+            let right = edges[right_sample.saturating_mul(edges.len()) / sample_count];
             for (axis, overlap_count) in overlap_counts.iter_mut().enumerate() {
                 if approximate_edge_max(vertices, left, axis)
                     >= approximate_edge_min(vertices, right, axis)
@@ -4218,7 +4229,7 @@ fn least_sampled_interval_overlap_axis(
 
 fn approximate_crossing_sweep_axis(
     vertices: &[ApproximateOutputVertex],
-    edges: &[ExactEdgeBounds],
+    edges: &[[usize; 2]],
 ) -> usize {
     if edges.len() < MIN_ADAPTIVE_CROSSING_SWEEP_EDGES {
         0
@@ -4255,10 +4266,12 @@ fn exact_edge_bounds(
     edge: [usize; 2],
     vertices: &[OutputVertex],
     approximate_vertices: Option<&[ApproximateOutputVertex]>,
+    only_axis: Option<usize>,
 ) -> HypermeshResult<ExactEdgeBounds> {
     let mut min = [edge[0]; 3];
     let mut max = [edge[1]; 3];
-    for axis in 0..3 {
+    let (first_axis, end_axis) = only_axis.map_or((0, 3), |axis| (axis, axis + 1));
+    for axis in first_axis..end_axis {
         let approximate_order = approximate_vertices.and_then(|vertices| {
             let left = vertices[edge[0]][axis];
             let right = vertices[edge[1]][axis];
@@ -5382,6 +5395,31 @@ mod tests {
     }
 
     #[test]
+    fn crossing_discovery_keeps_exact_bounds_without_certified_enclosures() {
+        let sqrt_two = Real::from(2).sqrt().unwrap();
+        let soup = BooleanMesh {
+            vertices: vec![
+                ovx(-sqrt_two.clone(), 0, 0),
+                ovx(sqrt_two, 0, 0),
+                ov(-2, -1, 0),
+                ov(0, -1, 0),
+                ov(0, 1, 0),
+                ov(1, -1, 0),
+            ],
+            triangles: vec![[0, 1, 2], [3, 4, 5]],
+            sources: vec![TriangleSource::default(); 2],
+        };
+        assert!(exact_output_vertex_enclosures(&soup.vertices).is_none());
+
+        for_each_policy(|decisions| {
+            let mut resolved = soup.clone();
+            assert!(split_edge_crossing_events(decisions, &mut resolved, None).unwrap());
+            assert!(resolved.vertices.contains(&ov(0, 0, 0)));
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
+    }
+
+    #[test]
     fn adaptive_crossing_sweep_selects_the_least_overlapping_sampled_axis() {
         let mut vertices = Vec::with_capacity(MIN_ADAPTIVE_CROSSING_SWEEP_EDGES * 2);
         let mut edges = Vec::with_capacity(MIN_ADAPTIVE_CROSSING_SWEEP_EDGES);
@@ -5390,11 +5428,7 @@ mod tests {
             let start = vertices.len();
             vertices.push([[0.0, 0.0], [coordinate, coordinate], [0.0, 0.0]]);
             vertices.push([[1.0, 1.0], [coordinate, coordinate], [0.0, 0.0]]);
-            edges.push(ExactEdgeBounds {
-                edge: [start, start + 1],
-                min: [start; 3],
-                max: [start + 1; 3],
-            });
+            edges.push([start, start + 1]);
         }
 
         assert_eq!(least_sampled_interval_overlap_axis(&vertices, &edges), 1);
@@ -5495,6 +5529,63 @@ mod tests {
                     .iter()
                     .any(|vertex| { output_vertices_equal(decisions, vertex, &expected).unwrap() })
             );
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        });
+    }
+
+    #[test]
+    fn projected_crossing_rejects_exact_separation_hidden_by_f64_bounds() {
+        let base = Real::from(1_i64 << 60);
+        let [a, b, c, d] = [
+            ovx(base.clone(), 0, 0),
+            ovx(&base + &Real::from(2), 0, 0),
+            ovx(&base + &Real::from(3), -1, 0),
+            ovx(&base + &Real::from(3), 1, 0),
+        ];
+        let vertices = vec![
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            d.clone(),
+            ovx(base.clone(), -2, 0),
+            ovx(&base + &Real::from(5), -1, 0),
+        ];
+        let approximate = exact_output_vertex_enclosures(&vertices).unwrap();
+        let left_bounds = approximate_edge_bounds(&approximate, [0, 1]);
+        let right_bounds = approximate_edge_bounds(&approximate, [2, 3]);
+        assert!(approximate_bounds_overlap(&left_bounds, &right_bounds));
+
+        for_each_policy(|decisions| {
+            let left =
+                exact_edge_bounds(decisions, [0, 1], &vertices, Some(&approximate), None).unwrap();
+            let right =
+                exact_edge_bounds(decisions, [2, 3], &vertices, Some(&approximate), None).unwrap();
+            assert!(!edge_bounds_overlap_exact(decisions, &left, &right, &vertices, 0).unwrap());
+
+            let queries = [0, 1, 2, 3].map(|index| {
+                RationalPoint3Query::from_certified_enclosures(approximate[index]).unwrap()
+            });
+            assert!(
+                proper_segment_intersection_after_bounds_overlap(
+                    decisions,
+                    &a,
+                    &b,
+                    &c,
+                    &d,
+                    approximate_projection_axis(&approximate, [0, 1], [2, 3]),
+                    Some(&queries),
+                )
+                .unwrap()
+                .is_none()
+            );
+
+            let mut soup = BooleanMesh {
+                vertices: vertices.clone(),
+                triangles: vec![[0, 1, 4], [2, 3, 5]],
+                sources: vec![TriangleSource::default(); 2],
+            };
+            assert!(!split_edge_crossing_events(decisions, &mut soup, Some(&approximate)).unwrap());
+            assert_eq!(soup.triangles, vec![[0, 1, 4], [2, 3, 5]]);
             assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
         });
     }
