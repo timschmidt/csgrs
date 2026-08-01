@@ -958,6 +958,17 @@ mod tests {
 
     #[test]
     fn fixed_512_gcd_matches_biguint_reference() {
+        let equal_256 = ((BigUint::one() << 200_usize) + BigUint::from(21_u8)) << 37_usize;
+        assert_eq!(
+            Rational::gcd_fixed::<4>(&equal_256, &equal_256),
+            Some(equal_256.clone())
+        );
+        let equal_512 = ((BigUint::one() << 450_usize) + BigUint::from(35_u8)) << 17_usize;
+        assert_eq!(
+            Rational::gcd_fixed::<8>(&equal_512, &equal_512),
+            Some(equal_512.clone())
+        );
+
         let mut state = [
             0x243f_6a88_85a3_08d3_u64,
             0x1319_8a2e_0370_7344_u64,

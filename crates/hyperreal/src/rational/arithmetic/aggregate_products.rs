@@ -1333,12 +1333,12 @@ impl Rational {
                 };
             }
         };
-        let common_shift = trailing_zeros(&left).min(trailing_zeros(&right));
         let left_shift = trailing_zeros(&left);
+        let right_shift = trailing_zeros(&right);
+        let common_shift = left_shift.min(right_shift);
         shift_right(&mut left, left_shift);
+        shift_right(&mut right, right_shift);
         loop {
-            let right_shift = trailing_zeros(&right);
-            shift_right(&mut right, right_shift);
             if left[2..].iter().all(|word| *word == 0)
                 && right[2..].iter().all(|word| *word == 0)
             {
@@ -1346,7 +1346,21 @@ impl Rational {
                 let right = u128::from(right[0]) | u128::from(right[1]) << 64;
                 return Some(BigUint::from(Self::gcd_word(left, right)) << common_shift);
             }
-            if left.iter().rev().cmp(right.iter().rev()).is_gt() {
+            let mut index = WORDS;
+            let mut ordering = core::cmp::Ordering::Equal;
+            while index != 0 {
+                index -= 1;
+                ordering = left[index].cmp(&right[index]);
+                if !ordering.is_eq() {
+                    break;
+                }
+            }
+            if ordering.is_eq() {
+                break;
+            }
+            // The three-way comparison makes the following difference
+            // strictly positive, so the next normalization never sees zero.
+            if ordering.is_gt() {
                 core::mem::swap(&mut left, &mut right);
             }
             let mut borrow = false;
@@ -1357,9 +1371,8 @@ impl Rational {
                 borrow = first_borrow || second_borrow;
             }
             debug_assert!(!borrow);
-            if right == [0; WORDS] {
-                break;
-            }
+            let right_shift = trailing_zeros(&right);
+            shift_right(&mut right, right_shift);
         }
 
         if common_shift != 0 {
