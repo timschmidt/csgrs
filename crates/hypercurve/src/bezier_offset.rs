@@ -4801,15 +4801,16 @@ fn parameter_component_system(
     }
 }
 
-/// Certifies the complete unit-square image of one smooth implicit component.
+/// Certifies the complete unit-square image of one finite-event implicit component.
 ///
 /// A globally graphical component takes the ordered-fiber fast path. The
 /// general path partitions at both projection derivatives and all authored
 /// square boundaries, proves every event incidence through isolated exact
 /// fiber tubes, and emits one doubly monotone oriented overlap cell per edge.
-/// Smooth projection folds, transverse domain crossings, and isolated boundary
-/// touches are accepted. Singular and boundary-coincident topology remains an
-/// explicit boundary.
+/// Projection folds, transverse domain crossings, isolated boundary touches,
+/// and isolated singular vertices are accepted. Positive-dimensional
+/// derivative sharing and boundary-coincident topology remains an explicit
+/// boundary.
 fn certify_regular_implicit_parameter_component(
     component: &BivariatePolynomial,
     branch: &BivariatePolynomial,
@@ -5018,7 +5019,7 @@ fn certify_regular_implicit_parameter_graph(
     })))
 }
 
-/// General exact cell decomposition for a smooth implicit component.
+/// General exact cell decomposition for a finite-event implicit component.
 ///
 /// The retained-axis resultant critical fibers, lifted-axis turning fibers,
 /// and all four authored-domain boundaries form a cylindrical decomposition.
@@ -5059,21 +5060,21 @@ fn certify_regular_implicit_parameter_cells(
         Classification::Decided(points) => points,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    for point in &folds {
-        match signed_bivariate_at_parameter_pair(
+    let mut critical_points = Vec::with_capacity(folds.len());
+    for point in folds {
+        let singular = match signed_bivariate_at_parameter_pair(
             &retained_derivative,
             &point.parallel_parameter,
             &point.other_parameter,
             policy,
         )? {
-            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Decided(None));
-            }
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => false,
+            Classification::Decided(RealSign::Zero) => true,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
-        }
+        };
+        critical_points.push((point, singular));
     }
     let turns = match bivariate_system_unit_square_solution_pairs(
         component,
@@ -5084,6 +5085,22 @@ fn certify_regular_implicit_parameter_cells(
         Classification::Decided(points) => points,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
+    critical_points.reserve(turns.len());
+    for point in turns {
+        let singular = match signed_bivariate_at_parameter_pair(
+            &lifted_derivative,
+            &point.parallel_parameter,
+            &point.other_parameter,
+            policy,
+        )? {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => false,
+            Classification::Decided(RealSign::Zero) => true,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        critical_points.push((point, singular));
+    }
     match bivariate_system_has_unit_square_solution(component, branch, policy, config)? {
         Classification::Decided(false) => {}
         Classification::Decided(true) => return Ok(Classification::Decided(None)),
@@ -5100,13 +5117,14 @@ fn certify_regular_implicit_parameter_cells(
             }
         }
     }
-    for point in folds.into_iter().chain(turns) {
+    for (point, singular) in critical_points {
         let event = ImplicitParameterComponentEvent {
             point: ParameterComponentPoint {
                 retained_parameter: point.parallel_parameter,
                 lifted_parameter: point.other_parameter,
             },
             domain_boundary: false,
+            singular,
         };
         match insert_implicit_parameter_component_event(&mut fibers, event, policy)? {
             Classification::Decided(()) => {}
@@ -5133,6 +5151,7 @@ fn certify_regular_implicit_parameter_cells(
                     lifted_parameter,
                 },
                 domain_boundary: true,
+                singular: false,
             };
             match insert_implicit_parameter_component_event(&mut fibers, event, policy)? {
                 Classification::Decided(()) => {}
@@ -5160,6 +5179,7 @@ fn certify_regular_implicit_parameter_cells(
                     lifted_parameter: BezierParameter2::Exact(lifted_boundary.clone()),
                 },
                 domain_boundary: true,
+                singular: false,
             };
             match insert_implicit_parameter_component_event(&mut fibers, event, policy)? {
                 Classification::Decided(()) => {}
@@ -5394,6 +5414,7 @@ fn insert_implicit_parameter_component_event(
             }
             Classification::Decided(std::cmp::Ordering::Equal) => {
                 events[index].domain_boundary |= event.domain_boundary;
+                events[index].singular |= event.singular;
                 return Ok(Classification::Decided(()));
             }
             Classification::Decided(std::cmp::Ordering::Greater) => {}
@@ -5899,6 +5920,12 @@ fn implicit_parameter_fiber_incidence_counts_are_valid(
             + right
                 .as_ref()
                 .map_or(0, |side| side.event_ranks[event_index].len());
+        if fiber.events[event_index].singular {
+            if !fiber.events[event_index].domain_boundary && !incidence_count.is_multiple_of(2) {
+                return false;
+            }
+            continue;
+        }
         if if fiber.events[event_index].domain_boundary {
             incidence_count > 2
         } else {
@@ -6589,6 +6616,7 @@ struct ParameterComponentPoint {
 struct ImplicitParameterComponentEvent {
     point: ParameterComponentPoint,
     domain_boundary: bool,
+    singular: bool,
 }
 
 struct ImplicitParameterComponentFiber {
@@ -9723,11 +9751,11 @@ mod conversion_tests {
     }
 
     #[test]
-    fn regular_implicit_parameter_cells_reject_singular_and_boundary_coincident_components() {
-        // H(t,u)=(u-1/2)^2-(t-1/2)^3 has an interior cusp where both
-        // partial derivatives vanish. H(t,u)=u coincides with an authored
-        // square edge. Neither topology may be promoted as regular cells.
-        let cusp = BivariatePolynomial::new(vec![
+    fn implicit_parameter_cells_partition_an_interior_cusp() {
+        // H(t,u)=(u-1/2)^2-(t-1/2)^3 has one singular vertex, no
+        // left incidence, and two right incidences. Both branches terminate
+        // independently at the singular parameter pair.
+        let component = BivariatePolynomial::new(vec![
             vec![
                 (Real::from(3_i8) / Real::from(8_i8)).unwrap(),
                 Real::from(-1_i8),
@@ -9737,6 +9765,204 @@ mod conversion_tests {
             vec![(Real::from(3_i8) / Real::from(2_i8)).unwrap()],
             vec![Real::from(-1_i8)],
         ]);
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(evidence)) =
+                certify_regular_implicit_parameter_component(
+                    &component,
+                    &branch,
+                    CurveResultantParameter::First,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("the interior cusp was not partitioned");
+            };
+            assert!(evidence.isolated_pairs.is_empty());
+            let [descending, ascending] = evidence.overlaps.as_ref() else {
+                panic!("the cusp must produce two monotone branches");
+            };
+            for overlap in [descending, ascending] {
+                assert_eq!(
+                    overlap.first_range().exact_endpoints(),
+                    Some((&half, &Real::one()))
+                );
+            }
+            assert_eq!(
+                [descending.orientation(), ascending.orientation(),],
+                [
+                    RationalBezierOverlapOrientation2::Reversed,
+                    RationalBezierOverlapOrientation2::Same,
+                ]
+            );
+            assert_eq!(descending.second_range().start().as_exact(), Some(&half));
+            assert!(!descending.second_range().end().is_exact());
+            assert_eq!(ascending.second_range().start().as_exact(), Some(&half));
+            assert!(!ascending.second_range().end().is_exact());
+        }
+    }
+
+    #[test]
+    fn implicit_parameter_cells_clip_a_cusp_on_the_domain_corner() {
+        // H(t,u)=u^2-t^3 has two real cusp half-branches, but the square
+        // retains only u=t^(3/2). The singular corner therefore has one
+        // in-domain incidence and the opposite corner closes the exact cell.
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::zero(), Real::one()],
+            vec![],
+            vec![],
+            vec![Real::from(-1_i8)],
+        ]);
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(evidence)) =
+                certify_regular_implicit_parameter_component(
+                    &component,
+                    &branch,
+                    CurveResultantParameter::First,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("the corner cusp was not clipped");
+            };
+            assert!(evidence.isolated_pairs.is_empty());
+            let [overlap] = evidence.overlaps.as_ref() else {
+                panic!("the clipped corner cusp must have one cell");
+            };
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&Real::zero(), &Real::one()))
+            );
+            assert_eq!(
+                overlap.second_range().exact_endpoints(),
+                Some((&Real::zero(), &Real::one()))
+            );
+            assert_eq!(
+                overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same
+            );
+        }
+    }
+
+    #[test]
+    fn implicit_parameter_cells_split_every_branch_at_an_interior_node() {
+        // H(t,u)=(u-1/2)^2-(t-1/2)^2(t+1)/4 is irreducible over the
+        // rationals and has two real branches crossing at (1/2,1/2).
+        let component = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(3_i8) / Real::from(16_i8)).unwrap(),
+                Real::from(-1_i8),
+                Real::one(),
+            ],
+            vec![(Real::from(3_i8) / Real::from(16_i8)).unwrap()],
+            vec![],
+            vec![(Real::from(-1_i8) / Real::from(4_i8)).unwrap()],
+        ]);
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(evidence)) =
+                certify_regular_implicit_parameter_component(
+                    &component,
+                    &branch,
+                    CurveResultantParameter::First,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("the interior node was not split into exact cells");
+            };
+            assert!(evidence.isolated_pairs.is_empty());
+            assert_eq!(evidence.overlaps.len(), 4);
+            assert_eq!(
+                evidence
+                    .overlaps
+                    .iter()
+                    .filter(|overlap| overlap.first_range().end().as_exact() == Some(&half))
+                    .count(),
+                2
+            );
+            assert_eq!(
+                evidence
+                    .overlaps
+                    .iter()
+                    .filter(|overlap| overlap.first_range().start().as_exact() == Some(&half))
+                    .count(),
+                2
+            );
+            assert!(evidence.overlaps.iter().all(|overlap| {
+                overlap.second_range().start().as_exact() == Some(&half)
+                    || overlap.second_range().end().as_exact() == Some(&half)
+            }));
+        }
+    }
+
+    #[test]
+    fn implicit_parameter_cells_retain_an_isolated_singular_point() {
+        // H(t,u)=(t-1/2)^2+(u-1/2)^2 has one real point and no real
+        // incident branch. Distinct-root fiber counting must retain the point.
+        let component = BivariatePolynomial::new(vec![
+            vec![
+                (Real::one() / Real::from(2_i8)).unwrap(),
+                Real::from(-1_i8),
+                Real::one(),
+            ],
+            vec![Real::from(-1_i8)],
+            vec![Real::one()],
+        ]);
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(evidence)) =
+                certify_regular_implicit_parameter_component(
+                    &component,
+                    &branch,
+                    CurveResultantParameter::First,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("the isolated singular point was not retained");
+            };
+            assert!(evidence.overlaps.is_empty());
+            let [point] = evidence.isolated_pairs.as_ref() else {
+                panic!("the singular real locus must contain one point");
+            };
+            assert_eq!(point.parallel_parameter.as_exact(), Some(&half));
+            assert_eq!(point.other_parameter.as_exact(), Some(&half));
+        }
+    }
+
+    #[test]
+    fn implicit_parameter_cells_reject_a_boundary_coincident_component() {
+        // H(t,u)=u coincides with an authored square edge and cannot be
+        // represented by ordinary two-nondegenerate-range overlap cells.
         let boundary_coincident = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]);
         let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
         let config = CurveIntersectionResultantConfig {
@@ -9745,27 +9971,17 @@ mod conversion_tests {
         };
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            for (name, component) in [("cusp", &cusp), ("boundary", &boundary_coincident)] {
-                match certify_regular_implicit_parameter_component(
-                    component,
+            assert!(matches!(
+                certify_regular_implicit_parameter_component(
+                    &boundary_coincident,
                     &branch,
                     CurveResultantParameter::First,
                     &policy,
                     config,
                 )
-                .unwrap()
-                {
-                    Classification::Decided(None) => {}
-                    Classification::Decided(Some(evidence)) => panic!(
-                        "{name} topology was incorrectly completed with {} overlaps and {} points",
-                        evidence.overlaps.len(),
-                        evidence.isolated_pairs.len()
-                    ),
-                    Classification::Uncertain(reason) => {
-                        panic!("{name} topology returned the wrong blocker: {reason:?}")
-                    }
-                }
-            }
+                .unwrap(),
+                Classification::Decided(None)
+            ));
         }
     }
 

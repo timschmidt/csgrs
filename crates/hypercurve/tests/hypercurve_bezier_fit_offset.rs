@@ -2124,6 +2124,63 @@ fn parallel_rational_contacts_partition_a_closed_implicit_oval() {
 }
 
 #[test]
+fn parallel_rational_contacts_partition_an_implicit_cusp() {
+    // P(v)=(v,v^2), source v=(t-1/2)^3, and target
+    // v=(u-1/2)^2 produce the singular parameter correspondence
+    // (u-1/2)^2=(t-1/2)^3. The two real branches meet at one cusp
+    // parameter pair and must be published as independent exact cells.
+    let source = RationalBezier2::try_new(
+        vec![
+            Point2::new(q(-1, 8), q(1, 64)),
+            Point2::new(Real::zero(), q(-1, 64)),
+            Point2::new(q(1, 40), q(1, 64)),
+            Point2::new(Real::zero(), q(-1, 64)),
+            Point2::new(q(-1, 40), q(1, 64)),
+            Point2::new(Real::zero(), q(-1, 64)),
+            Point2::new(q(1, 8), q(1, 64)),
+        ],
+        vec![Real::one(); 7],
+    )
+    .unwrap();
+    let target = RationalBezier2::try_new(
+        vec![
+            Point2::new(q(1, 4), q(1, 16)),
+            Point2::new(Real::zero(), q(-1, 16)),
+            Point2::new(q(-1, 12), q(1, 16)),
+            Point2::new(Real::zero(), q(-1, 16)),
+            Point2::new(q(1, 4), q(1, 16)),
+        ],
+        vec![Real::one(); 5],
+    )
+    .unwrap();
+    let parallel = source.parallel_left(Real::zero()).unwrap();
+    let half = q(1, 2);
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
+        assert!(intersections.is_complete(), "{intersections:?}");
+        assert!(intersections.contacts().is_empty());
+        assert_eq!(intersections.overlaps().len(), 2);
+        for orientation in [
+            RationalBezierOverlapOrientation2::Reversed,
+            RationalBezierOverlapOrientation2::Same,
+        ] {
+            let overlap = intersections
+                .overlaps()
+                .iter()
+                .find(|overlap| overlap.orientation() == orientation)
+                .expect("the cusp must retain both oriented branches");
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&half, &Real::one()))
+            );
+            assert_eq!(overlap.second_range().start().as_exact(), Some(&half));
+            assert!(!overlap.second_range().end().is_exact());
+        }
+    }
+}
+
+#[test]
 fn parallel_rational_contacts_partition_a_noninjective_parameter_component() {
     let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 0))
         .parallel_left(Real::one())
