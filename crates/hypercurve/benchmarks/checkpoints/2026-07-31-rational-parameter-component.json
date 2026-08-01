@@ -1,0 +1,327 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "rational-parameter-component",
+  "source_revision": "f9f8a490998620a1f3b83da8fcb7f2da159ffaf5",
+  "core_implementation_revision": "e2204da",
+  "historical_control_revision": "45028a41a562cf94deda371c3b2889c6b54e3495",
+  "hypersolve_revision": "f99b276b1f2d778dd42e06ad7e53bcc5c31ec264",
+  "historical_hypersolve_revision": "a23f6bbbd6c43d275fedd5867e170c18dc86659c",
+  "scope": {
+    "operation": "finite analytic-parallel/rational-Bezier intersections whose two authored equations share a genuinely bivariate nullity-one rational parameter component",
+    "completed_families": [
+      "primitive nonlinear rational correspondences between the two authored curve parameters",
+      "increasing and decreasing rational maps",
+      "weakly monotone maps with stationary points that do not reverse sign",
+      "full overlap, one-sided partial overlap, and two-sided exact domain clipping",
+      "rational and algebraic overlap boundaries",
+      "selected-normal branch replay and exact rejection of opposite or vanishing normal branches",
+      "projective denominator rootlessness over the actual clipped domain",
+      "STRICT and APPROXIMATE_512 policy propagation without approximate construction"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "component_model": "Hypersolve extracts a primitive nullity-one relation t = N(u)/D(u), or its exact transposed orientation, from the first nonzero subresultant of the two rational bivariate equations",
+    "coefficient_domain": "the extractor accepts exact rational bivariate coefficients; unsupported Real coefficient towers remain explicit uncertainty",
+    "authorization": "Hypercurve accepts the map only after replaying both original authored equations identically on the cleared parameter lift",
+    "content": "Hypersolve cancels exact rational polynomial content shared by the interpolated first-subresultant coefficients before publishing the map",
+    "domain": "Hypercurve proves D is rootless on the retained source interval, proves weak monotonicity interval by interval, intersects the exact image with the other authored [0,1] domain, and constructs oriented parameter ranges without sampling",
+    "stationary_points": "interior derivative roots are permitted only when exact side signs show no reversal; a noninjective map is not guessed into one overlap",
+    "branch": "the selected signed normal equation must be rootless and have the requested sign on the clipped domain; the opposite branch and a vanishing selected branch are rejected",
+    "poles": "a denominator root in the retained domain is an explicit DegenerateResultant boundary until pole-split component transport is implemented",
+    "endpoints": "clipping may retain exact rational endpoints or isolated algebraic endpoints; neither is rounded to a construction coordinate",
+    "strict": "STRICT accepts only exact subresultant, identity, rootlessness, sign, monotonicity, and range certificates",
+    "approximate_512": "APPROXIMATE_512 follows the identical proof graph and can terminate only through inherited Hyperreal 512-bit equality decisions; it does not create an approximate component, range, branch, or contact",
+    "failure_semantics": "unsupported higher-nullity, nonmonotone, pole-split, or coefficient-tower cases remain explicit degeneracy rather than being mislabeled NoIntersection"
+  },
+  "implementation": {
+    "hypersolve_api": "rational_parameter_component_bivariate_polynomial_system returns BivariatePolynomialRationalComponentReport with explicit status, retained orientation, and primitive numerator/denominator coefficients",
+    "extraction_algorithm": "specialized exact first-subresultant samples are interpolated directly; the abandoned generic adjugate prototype is not retained",
+    "hypercurve_spine": "BezierParallel2::intersection_candidate_system performs cheap component detection, rootless axis saturation, rational component certification, and exact overlap return before the expensive generic resultant route",
+    "fallback": "degree-zero through degree-three ordinary pairs skip the speculative early component probe and retain the complete historical resultant-then-degenerate-replay path",
+    "degree_gate": "the early shared-component probe is limited to target degree four or greater; this is a performance dispatch gate, not a mathematical limit",
+    "replay": "BezierParallel2::replay_rational_parameter_component certifies the component against the retained source differential, distance sign, authored target homogeneous basis, and both original equations",
+    "carrier": "candidate equations and certified overlap are stored in a compact enum so one result never allocates both representations",
+    "exact_fixture": "P(t)=(3t/8,9t^2/64) with its unit left parallel and target map t=(4u-u^2)/(6-3u) yields primitive component -3tu+6t+u^2-4u; the authored source is non-PH",
+    "tests": "the nonlinear fixture covers full, partial, reversed, and two-sided clipping under both policies; private tests cover stationary derivatives, branch signs, authored-equation replay, denominator poles, and both parameter orientations"
+  },
+  "matched_release_benchmark": {
+    "method": "five sequential direct all-feature release-binary samples per revision pinned to CPU 11 with byte-identical fixtures; build-lock-contaminated and concurrent warmup samples were discarded before this recorded set",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "baseline_checkout": "/tmp/hypercurve-rational-component-baseline",
+    "baseline_hypersolve_checkout": "/tmp/hypersolve-rational-component-baseline",
+    "baseline_semantics": "the nonlinear component lanes return one unresolved DegenerateResultant marker; the candidate returns one certified Overlap. Equal checksums therefore count result records, not equal mathematical certainty",
+    "noise": "the third current process contains a visible system-contention outlier in several lanes; all five samples are retained and medians are reported",
+    "lanes": {
+      "exact_candidates": {
+        "iterations_per_process": 1000,
+        "baseline_samples_microseconds": [57.587, 37.646, 54.858, 43.825, 41.050],
+        "candidate_samples_microseconds": [57.379, 38.955, 52.958, 39.110, 37.185],
+        "baseline_median_microseconds": 43.825,
+        "candidate_median_microseconds": 39.110,
+        "median_change_percent": -10.758699
+      },
+      "exact_contacts": {
+        "iterations_per_process": 1000,
+        "baseline_samples_microseconds": [47.320, 46.647, 47.517, 46.325, 47.111],
+        "candidate_samples_microseconds": [47.502, 47.603, 82.462, 48.840, 46.162],
+        "baseline_median_microseconds": 47.111,
+        "candidate_median_microseconds": 47.603,
+        "median_change_percent": 1.044342
+      },
+      "algebraic_lift_candidates": {
+        "iterations_per_process": 100,
+        "baseline_samples_microseconds": [437.160, 446.733, 455.962, 440.467, 443.757],
+        "candidate_samples_microseconds": [431.527, 437.923, 766.655, 437.632, 438.792],
+        "baseline_median_microseconds": 443.757,
+        "candidate_median_microseconds": 437.923,
+        "median_change_percent": -1.314683
+      },
+      "algebraic_lift_contacts": {
+        "iterations_per_process": 100,
+        "baseline_samples_milliseconds": [1.077278, 1.094607, 1.079756, 1.092692, 1.117947],
+        "candidate_samples_milliseconds": [1.063098, 1.085551, 1.787415, 1.063653, 1.068945],
+        "baseline_median_milliseconds": 1.092692,
+        "candidate_median_milliseconds": 1.068945,
+        "median_change_percent": -2.173257
+      },
+      "selected_branch_candidates": {
+        "iterations_per_process": 100,
+        "baseline_samples_microseconds": [476.379, 486.089, 475.117, 473.497, 500.214],
+        "candidate_samples_microseconds": [473.447, 480.826, 619.535, 465.816, 469.671],
+        "baseline_median_microseconds": 476.379,
+        "candidate_median_microseconds": 473.447,
+        "median_change_percent": -0.615476
+      },
+      "selected_branch_contacts": {
+        "iterations_per_process": 100,
+        "baseline_samples_milliseconds": [1.155804, 1.130796, 1.121668, 1.123455, 1.134118],
+        "candidate_samples_milliseconds": [1.129505, 1.121702, 1.478736, 1.124344, 1.093925],
+        "baseline_median_milliseconds": 1.130796,
+        "candidate_median_milliseconds": 1.124344,
+        "median_change_percent": -0.570572
+      },
+      "higher_nullity_candidates": {
+        "iterations_per_process": 100,
+        "baseline_samples_microseconds": [766.265, 774.863, 758.428, 777.911, 798.157],
+        "candidate_samples_microseconds": [771.670, 758.624, 1248.440, 761.918, 746.909],
+        "baseline_median_microseconds": 774.863,
+        "candidate_median_microseconds": 761.918,
+        "median_change_percent": -1.670618
+      },
+      "higher_nullity_contacts": {
+        "iterations_per_process": 100,
+        "baseline_samples_milliseconds": [2.124163, 2.128289, 2.117087, 2.106150, 2.145349],
+        "candidate_samples_milliseconds": [2.085105, 2.101418, 2.432175, 2.084544, 2.084640],
+        "baseline_median_milliseconds": 2.124163,
+        "candidate_median_milliseconds": 2.085105,
+        "median_change_percent": -1.838748
+      },
+      "rootless_source_axis_candidates": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [3.583749, 3.550522, 3.538179, 3.582697, 3.523209],
+        "candidate_samples_milliseconds": [3.641781, 3.592608, 3.711365, 3.539033, 3.529099],
+        "baseline_median_milliseconds": 3.550522,
+        "candidate_median_milliseconds": 3.592608,
+        "median_change_percent": 1.185347
+      },
+      "rootless_source_axis_contacts": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [3.703294, 3.665456, 3.639582, 3.649686, 3.611191],
+        "candidate_samples_milliseconds": [3.556470, 3.653331, 3.741561, 3.610150, 3.567976],
+        "baseline_median_milliseconds": 3.649686,
+        "candidate_median_milliseconds": 3.610150,
+        "median_change_percent": -1.083271
+      },
+      "rootless_target_axis_candidates": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [2.095488, 2.111746, 2.084071, 2.095469, 2.060015],
+        "candidate_samples_milliseconds": [2.038021, 2.165785, 2.748504, 2.049716, 2.087472],
+        "baseline_median_milliseconds": 2.095469,
+        "candidate_median_milliseconds": 2.087472,
+        "median_change_percent": -0.381633
+      },
+      "rootless_target_axis_contacts": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [2.151011, 2.152876, 2.113024, 2.130873, 2.166555],
+        "candidate_samples_milliseconds": [2.137911, 2.109564, 3.054710, 2.144278, 2.097260],
+        "baseline_median_milliseconds": 2.151011,
+        "candidate_median_milliseconds": 2.137911,
+        "median_change_percent": -0.609016
+      },
+      "line_overlap_candidates": {
+        "iterations_per_process": 1000,
+        "baseline_samples_microseconds": [2.287, 2.288, 2.262, 2.277, 2.334],
+        "candidate_samples_microseconds": [2.187, 2.210, 4.206, 2.181, 2.235],
+        "baseline_median_microseconds": 2.287,
+        "candidate_median_microseconds": 2.210,
+        "median_change_percent": -3.366856
+      },
+      "line_overlap_contacts": {
+        "iterations_per_process": 1000,
+        "baseline_samples_microseconds": [11.665, 7.654, 7.620, 7.624, 7.572],
+        "candidate_samples_microseconds": [7.217, 7.358, 9.742, 7.213, 7.315],
+        "baseline_median_microseconds": 7.624,
+        "candidate_median_microseconds": 7.315,
+        "median_change_percent": -4.052991
+      },
+      "warm_ph_overlap_candidates": {
+        "iterations_per_process": 10,
+        "baseline_samples_microseconds": [1.862, 1.962, 1.882, 1.872, 1.880],
+        "candidate_samples_microseconds": [1.769, 1.817, 1.861, 1.766, 1.824],
+        "baseline_median_microseconds": 1.880,
+        "candidate_median_microseconds": 1.817,
+        "median_change_percent": -3.351064,
+        "interpretation": "sub-two-microsecond low-iteration sentinel; direction is useful but magnitude is noisy"
+      },
+      "warm_ph_overlap_contacts": {
+        "iterations_per_process": 10,
+        "baseline_samples_microseconds": [6.687, 7.264, 6.818, 6.826, 6.830],
+        "candidate_samples_microseconds": [6.666, 6.715, 6.838, 6.569, 8.794],
+        "baseline_median_microseconds": 6.826,
+        "candidate_median_microseconds": 6.715,
+        "median_change_percent": -1.626135
+      },
+      "nonlinear_rational_component_candidates": {
+        "iterations_per_process": 5,
+        "baseline_samples_milliseconds": [100.907891, 100.196676, 100.709816, 99.800893, 100.314140],
+        "candidate_samples_milliseconds": [36.916805, 36.525548, 37.350720, 36.258171, 36.567129],
+        "baseline_median_milliseconds": 100.314140,
+        "candidate_median_milliseconds": 36.567129,
+        "median_change_percent": -63.547383,
+        "speedup": 2.743287,
+        "interpretation": "one certified exact overlap replaces one unresolved marker while also completing 2.74 times faster"
+      },
+      "nonlinear_rational_component_contacts": {
+        "iterations_per_process": 5,
+        "baseline_samples_milliseconds": [98.425037, 100.566430, 100.068608, 100.300440, 99.824407],
+        "candidate_samples_milliseconds": [35.625988, 35.738742, 37.701256, 36.196433, 37.458166],
+        "baseline_median_milliseconds": 100.068608,
+        "candidate_median_milliseconds": 36.196433,
+        "median_change_percent": -63.828384,
+        "speedup": 2.764599,
+        "interpretation": "exact authored-equation and selected-branch replay replaces unresolved degeneracy"
+      },
+      "cold_ph_overlap_contacts": {
+        "iterations_per_process": 10,
+        "baseline_samples_milliseconds": [117.282763, 120.041889, 118.279077, 118.116478, 118.138479],
+        "candidate_samples_milliseconds": [0.539867, 0.519220, 0.532036, 0.513930, 0.562942],
+        "baseline_median_milliseconds": 118.138479,
+        "candidate_median_milliseconds": 0.532036,
+        "median_change_percent": -99.549651,
+        "speedup": 222.049784,
+        "interpretation": "early exact rational/PH authority avoids constructing the historical generic resultant on each cold object"
+      }
+    },
+    "ordinary_sentinels": {
+      "maximum_observed_median_regression_percent": 1.185347,
+      "maximum_lane": "rootless-source candidate projection",
+      "exact_contact_regression_percent": 1.044342,
+      "interpretation": "the degree-four dispatch gate removes the earlier speculative cost from low-degree ordinary pairs; most retained ordinary lanes improve and the two regressing medians remain within 1.19 percent"
+    }
+  },
+  "matched_heaptrack": {
+    "method": "the identical complete release benchmark process under Heaptrack on CPU 11; both binaries contain the same nonlinear component fixture",
+    "baseline_profile": "/tmp/hypercurve-rational-component-baseline-f9f8a49.zst.zst",
+    "candidate_profile": "/tmp/hypercurve-rational-component-current-f9f8a49.zst.zst",
+    "baseline": {
+      "runtime_seconds": 36.49,
+      "allocation_calls": 68591831,
+      "temporary_allocations": 4680851,
+      "peak_heap_mebibytes_reported": 95.69,
+      "peak_rss_mebibytes_reported": 126.94,
+      "retained_at_exit_mebibytes_reported": 94.92
+    },
+    "candidate": {
+      "runtime_seconds": 12.93,
+      "allocation_calls": 23127849,
+      "temporary_allocations": 1464966,
+      "peak_heap_mebibytes_reported": 8.50,
+      "peak_rss_mebibytes_reported": 21.87,
+      "retained_at_exit_mebibytes_reported": 8.36
+    },
+    "change_percent": {
+      "runtime": -64.565634,
+      "allocation_calls": -66.281919,
+      "temporary_allocations": -68.702999,
+      "peak_heap": -91.117149,
+      "peak_rss": -82.771388,
+      "retained_at_exit": -91.192583
+    },
+    "interpretation": "the early exact component and PH routes avoid the historical generic elimination structures; retained-at-exit bytes are process-wide clone-shared caches reported by Heaptrack and are not asserted to be unreachable leaks"
+  },
+  "release_size": {
+    "matched_offset_microbenchmark": {
+      "baseline_file_bytes": 7004088,
+      "candidate_file_bytes": 7062592,
+      "file_change_percent": 0.835284,
+      "baseline_text_bytes": 5311910,
+      "candidate_text_bytes": 5366122,
+      "text_change_percent": 1.020575,
+      "baseline_data_bytes": 263464,
+      "candidate_data_bytes": 264032,
+      "baseline_bss_bytes": 4992,
+      "candidate_bss_bytes": 3448,
+      "baseline_loadable_total_bytes": 5580366,
+      "candidate_loadable_total_bytes": 5633602,
+      "loadable_change_percent": 0.953988,
+      "interpretation": "the byte-identical source fixture makes this a linked implementation/Hypersolve delta; the accepted 0.84 percent file growth buys a previously unresolved exact family and large time/heap reductions"
+    }
+  },
+  "static_call_graph": {
+    "tool": "tools/hyper-callgraph",
+    "matched_hypercurve_only": {
+      "baseline_nodes": 17373,
+      "candidate_nodes": 17420,
+      "node_delta": 47,
+      "baseline_edges": 29622,
+      "candidate_edges": 29757,
+      "edge_delta": 135,
+      "baseline_artifact": "/tmp/hypercurve-rational-component-callgraph-baseline-f9f8a49/callgraph.json",
+      "candidate_artifact": "/tmp/hypercurve-rational-component-callgraph-current-f9f8a49/callgraph.json"
+    },
+    "hypercurve_exact_stack": {
+      "libraries": [
+        "hyperreal",
+        "hyperlattice",
+        "hyperlimit",
+        "hypersolve",
+        "hypertri",
+        "hypercurve",
+        "hyperbrep"
+      ],
+      "nodes": 40002,
+      "edges": 74885,
+      "cross_library_edges": 159,
+      "artifact": "/tmp/hypercurve-rational-component-stack-callgraph-f9f8a49/callgraph.json"
+    },
+    "audited_route": "BezierParallel2::intersection_candidate_system reaches component detection, rootless-axis reduction, rational_parameter_component_overlap, exact certification, and replay; Hypersolve's direct first-subresultant API and its orientation tests are present in the same selected-stack graph",
+    "caveat": "the utility is a static source approximation and resolves some imported free-function calls under the caller namespace; matched graphs exclude tests and benchmarks, and the selected exact-stack scan deliberately excludes Hypermesh"
+  },
+  "competitive_context": {
+    "equivalent_direct_peer": "none in the current harness",
+    "reason": "the available peer offset libraries do not expose exact two-parameter projective correspondence, authored-equation identity replay, selected-normal proof, algebraic overlap endpoints, or STRICT/APPROXIMATE_512 evidence",
+    "comparison_rule": "a heuristic sampled offset or unresolved historical marker is not reported as correctness-equivalent throughput; competitive Boolean and ordinary offset comparisons remain in the broader CurveRegion2 benchmark matrix"
+  },
+  "validation": {
+    "hypersolve": "pass at f99b276: 185 library tests, 131 residual property tests, 209 smoke tests, README tests, doc tests; all-target warning-denied Clippy, formatting, and diff checks also passed for this implementation series",
+    "cargo_test_all_features": "pass at f9f8a49: 282 library tests, every integration target, 80 exact offset tests, 29 authoritative CurveRegion Boolean tests, 11 deterministic Boolean fuzz tests including both approximately 97-second retired corpora, all 268 pathological exact Boolean operations, README tests, and doc tests",
+    "cargo_test_no_default_features": "pass at f9f8a49: 249 library tests and every enabled integration, README, and documentation target",
+    "clippy_all_targets_all_features_deny_warnings": "pass at f9f8a49",
+    "clippy_all_targets_no_default_features_deny_warnings": "pass at f9f8a49",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass before adding this checkpoint artifact",
+    "policies": "all new public geometric cases run under STRICT and APPROXIMATE_512; approximate terminal consumption is reported, never cached as strict proof, and never used to construct overlap geometry"
+  },
+  "next_boundary": {
+    "pole_split_components": "partition a rational correspondence at certified denominator roots and transport every finite branch instead of treating the whole component as one unresolved degeneracy",
+    "noninjective_components": "split at exact derivative events and retain each monotone correspondence without merging duplicate image coverage incorrectly",
+    "higher_nullity_components": "classify fibers with more than one common parameter value and publish complete multi-branch overlap evidence",
+    "coefficient_towers": "extend exact component extraction beyond rational coefficients while preserving explicit terminal policy",
+    "carrier_surfaces": "feed every completed overlap and point-contact family through one compact authoritative CurveRegion2 arrangement and regularization carrier",
+    "topology": "remove remaining historical Boolean/offset/corner operation islands only after equivalent exact evidence reaches the authoritative carrier",
+    "corner_solver": "route chamfer and fillet construction through the unified corner-option enum and Hypersolve-backed exact incidence constraints"
+  }
+}
