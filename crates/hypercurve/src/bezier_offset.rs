@@ -18,9 +18,11 @@ use std::sync::{Arc, OnceLock};
 
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 use hypersolve::{
-    BivariatePolynomial, CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
+    BivariatePolynomial, CurveIntersectionFiberSubresultantReport,
+    CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
     CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
     CurveResultantParameter, RationalParametricCurve2,
+    fiber_subresultants_bivariate_polynomial_system,
     linear_parameter_lifts_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
 };
 
@@ -1155,10 +1157,11 @@ impl BezierParallel2 {
     /// Directly represented pairs and pairs with one isolated algebraic
     /// parameter are substituted into both original equations exactly. Pairs
     /// of algebraic parameters use univariate/identity/reversal fast paths,
-    /// followed by Hypersolve's exact nullity-one Sylvester lift for genuinely
-    /// coupled systems. Higher-nullity fibers remain in an explicit
-    /// [`BezierParallelIntersectionContacts2::Incomplete`] result; no projected
-    /// root is promoted to topology without exact replay.
+    /// followed by Hypersolve's exact nullity-one Sylvester lift or
+    /// specialization-safe subresultant fibers for genuinely coupled systems.
+    /// Unsupported degree drops and fibers without sufficient isolator evidence
+    /// remain explicit [`BezierParallelIntersectionContacts2::Incomplete`]
+    /// results; no projected root is promoted without exact replay.
     pub fn intersection_contacts(
         &self,
         other: &RationalBezier2,
@@ -1206,61 +1209,29 @@ impl BezierParallel2 {
 
         let mut contacts = Vec::new();
         let mut incomplete = false;
-        let mut parameter_lifts = [None, None];
+        let mut parameter_lifts: [Option<CurveIntersectionParameterLiftReport>; 2] = [None, None];
+        let mut fiber_subresultants: [Option<CurveIntersectionFiberSubresultantReport>; 2] =
+            [None, None];
         let lift_config = CurveIntersectionResultantConfig {
             min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
             max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
         };
         for parallel_parameter in parallel_parameters {
             for other_parameter in other_parameters {
-                let replay = match bivariate_pair_satisfies_system(
+                let replay = match replay_bivariate_parameter_pair(
                     &orthogonality,
                     &distance_relation,
                     parallel_parameter,
                     other_parameter,
                     policy,
+                    lift_config,
+                    &mut parameter_lifts,
+                    &mut fiber_subresultants,
                 )? {
-                    Classification::Decided(true) => BivariateParameterPairReplay::Direct,
-                    Classification::Decided(false) => BivariateParameterPairReplay::Rejected,
+                    Classification::Decided(replay) => replay,
                     Classification::Uncertain(_) => {
-                        let first_lifts = parameter_lifts[0].get_or_insert_with(|| {
-                            linear_parameter_lifts_bivariate_polynomial_system(
-                                &orthogonality,
-                                &distance_relation,
-                                CurveResultantParameter::First,
-                                lift_config,
-                            )
-                        });
-                        match parameter_pair_matches_linear_lift(
-                            first_lifts,
-                            parallel_parameter,
-                            other_parameter,
-                            policy,
-                        )? {
-                            Classification::Decided(replay) => replay,
-                            Classification::Uncertain(_) => {
-                                let second_lifts = parameter_lifts[1].get_or_insert_with(|| {
-                                    linear_parameter_lifts_bivariate_polynomial_system(
-                                        &orthogonality,
-                                        &distance_relation,
-                                        CurveResultantParameter::Second,
-                                        lift_config,
-                                    )
-                                });
-                                match parameter_pair_matches_linear_lift(
-                                    second_lifts,
-                                    other_parameter,
-                                    parallel_parameter,
-                                    policy,
-                                )? {
-                                    Classification::Decided(replay) => replay,
-                                    Classification::Uncertain(_) => {
-                                        incomplete = true;
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
+                        incomplete = true;
+                        continue;
                     }
                 };
                 if replay == BivariateParameterPairReplay::Rejected {
@@ -4056,6 +4027,98 @@ enum BivariateParameterPairReplay {
     LinearLift(CurveResultantParameter, usize),
 }
 
+fn replay_bivariate_parameter_pair(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    policy: &CurveContext,
+    config: CurveIntersectionResultantConfig,
+    parameter_lifts: &mut [Option<CurveIntersectionParameterLiftReport>; 2],
+    fiber_subresultants: &mut [Option<CurveIntersectionFiberSubresultantReport>; 2],
+) -> CurveResult<Classification<BivariateParameterPairReplay>> {
+    match bivariate_pair_satisfies_system(first, second, first_parameter, second_parameter, policy)?
+    {
+        Classification::Decided(true) => {
+            return Ok(Classification::Decided(
+                BivariateParameterPairReplay::Direct,
+            ));
+        }
+        Classification::Decided(false) => {
+            return Ok(Classification::Decided(
+                BivariateParameterPairReplay::Rejected,
+            ));
+        }
+        Classification::Uncertain(_) => {}
+    }
+
+    let first_lifts = parameter_lifts[0].get_or_insert_with(|| {
+        linear_parameter_lifts_bivariate_polynomial_system(
+            first,
+            second,
+            CurveResultantParameter::First,
+            config,
+        )
+    });
+    match parameter_pair_matches_linear_lift(
+        first_lifts,
+        first_parameter,
+        second_parameter,
+        policy,
+    )? {
+        Classification::Decided(replay) => return Ok(Classification::Decided(replay)),
+        Classification::Uncertain(_) => {}
+    }
+
+    for (report_index, axis, retained_parameter, fiber_parameter) in [
+        (
+            0,
+            CurveResultantParameter::First,
+            first_parameter,
+            second_parameter,
+        ),
+        (
+            1,
+            CurveResultantParameter::Second,
+            second_parameter,
+            first_parameter,
+        ),
+    ] {
+        let report = fiber_subresultants[report_index].get_or_insert_with(|| {
+            fiber_subresultants_bivariate_polynomial_system(first, second, axis, config)
+        });
+        match parameter_pair_matches_fiber_subresultants(
+            report,
+            first,
+            second,
+            retained_parameter,
+            fiber_parameter,
+            policy,
+        )? {
+            Classification::Decided(replay) => return Ok(Classification::Decided(replay)),
+            Classification::Uncertain(_) => {}
+        }
+    }
+
+    let second_lifts = parameter_lifts[1].get_or_insert_with(|| {
+        linear_parameter_lifts_bivariate_polynomial_system(
+            first,
+            second,
+            CurveResultantParameter::Second,
+            config,
+        )
+    });
+    match parameter_pair_matches_linear_lift(
+        second_lifts,
+        second_parameter,
+        first_parameter,
+        policy,
+    )? {
+        Classification::Decided(replay) => Ok(Classification::Decided(replay)),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
 fn bivariate_pair_satisfies_system(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
@@ -4192,6 +4255,186 @@ fn parameter_pair_matches_linear_lift(
         }
     }
     Ok(Classification::Uncertain(blocker))
+}
+
+fn parameter_pair_matches_fiber_subresultants(
+    report: &CurveIntersectionFiberSubresultantReport,
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+    retained_parameter: &BezierParameter2,
+    fiber_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BivariateParameterPairReplay>> {
+    if report.status != CurveIntersectionParameterLiftStatus::Constructed
+        || report.retained_parameter == report.fiber_parameter
+    {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    }
+    for equation in [first_equation, second_equation] {
+        match bivariate_fiber_degree_is_stable_at_parameter(
+            equation,
+            report.retained_parameter,
+            retained_parameter,
+            policy,
+        )? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    for subresultant in &report.subresultants {
+        let principal_coefficients = bivariate_fiber_coefficient_polynomial(
+            &subresultant.polynomial,
+            report.retained_parameter,
+            subresultant.index,
+        );
+        let principal_sign =
+            signed_coefficients_at_parameter(principal_coefficients, retained_parameter, policy)?;
+        match principal_sign {
+            Classification::Decided(RealSign::Zero) => continue,
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                let fiber_sign = signed_bivariate_at_parameter_pair(
+                    &subresultant.polynomial,
+                    if report.retained_parameter == CurveResultantParameter::First {
+                        retained_parameter
+                    } else {
+                        fiber_parameter
+                    },
+                    if report.retained_parameter == CurveResultantParameter::First {
+                        fiber_parameter
+                    } else {
+                        retained_parameter
+                    },
+                    policy,
+                )?;
+                return Ok(match fiber_sign {
+                    Classification::Decided(RealSign::Zero) => {
+                        Classification::Decided(BivariateParameterPairReplay::Direct)
+                    }
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                        Classification::Decided(BivariateParameterPairReplay::Rejected)
+                    }
+                    Classification::Uncertain(reason) => {
+                        match fiber_subresultant_has_root_in_parameter_interval(
+                            &subresultant.polynomial,
+                            report.retained_parameter,
+                            retained_parameter,
+                            fiber_parameter,
+                            policy,
+                        )? {
+                            Classification::Decided(true) => {
+                                Classification::Decided(BivariateParameterPairReplay::Direct)
+                            }
+                            Classification::Decided(false) => {
+                                Classification::Decided(BivariateParameterPairReplay::Rejected)
+                            }
+                            Classification::Uncertain(_) => Classification::Uncertain(reason),
+                        }
+                    }
+                });
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+}
+
+fn bivariate_fiber_degree_is_stable_at_parameter(
+    polynomial: &BivariatePolynomial,
+    retained_axis: CurveResultantParameter,
+    retained_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let maximum_fiber_power = match retained_axis {
+        CurveResultantParameter::First => polynomial
+            .coefficients
+            .iter()
+            .map(|row| row.len().saturating_sub(1))
+            .max()
+            .unwrap_or(0),
+        CurveResultantParameter::Second => polynomial.coefficients.len().saturating_sub(1),
+    };
+    for fiber_power in (0..=maximum_fiber_power).rev() {
+        let coefficients =
+            bivariate_fiber_coefficient_polynomial(polynomial, retained_axis, fiber_power);
+        let coefficient = match polynomial_from_coefficients(coefficients, policy)? {
+            Classification::Decided(Some(coefficient)) => coefficient,
+            Classification::Decided(None) => continue,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        return Ok(
+            signed_polynomial_at_root(Some(&coefficient), retained_parameter, policy)?
+                .map(|sign| sign != RealSign::Zero),
+        );
+    }
+    Ok(Classification::Decided(false))
+}
+
+fn bivariate_fiber_coefficient_polynomial(
+    polynomial: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    fiber_power: usize,
+) -> Vec<Real> {
+    match retained_parameter {
+        CurveResultantParameter::First => polynomial
+            .coefficients
+            .iter()
+            .map(|row| row.get(fiber_power).cloned().unwrap_or_else(Real::zero))
+            .collect(),
+        CurveResultantParameter::Second => polynomial
+            .coefficients
+            .get(fiber_power)
+            .cloned()
+            .unwrap_or_default(),
+    }
+}
+
+fn fiber_subresultant_has_root_in_parameter_interval(
+    polynomial: &BivariatePolynomial,
+    retained_axis: CurveResultantParameter,
+    retained_parameter: &BezierParameter2,
+    fiber_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let BezierParameter2::Algebraic(fiber_parameter) = fiber_parameter else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    };
+    // The retained parameter already zeros its exact projection resultant. A
+    // sign change proves that this specialized GCD has a root in the fiber
+    // candidate's interval; the interval contains exactly one projected root,
+    // so that root is the represented candidate without materializing either
+    // algebraic parameter.
+    let endpoint_sign = |endpoint: &Real| -> CurveResult<Classification<RealSign>> {
+        let coefficients = match retained_axis {
+            CurveResultantParameter::First => bivariate_specialize_second(polynomial, endpoint),
+            CurveResultantParameter::Second => bivariate_specialize_first(polynomial, endpoint),
+        };
+        signed_coefficients_at_parameter(coefficients, retained_parameter, policy)
+    };
+    let start = endpoint_sign(fiber_parameter.interval().start())?;
+    let end = endpoint_sign(fiber_parameter.interval().end())?;
+    Ok(match (start, end) {
+        (
+            Classification::Decided(RealSign::Positive),
+            Classification::Decided(RealSign::Negative),
+        )
+        | (
+            Classification::Decided(RealSign::Negative),
+            Classification::Decided(RealSign::Positive),
+        ) => Classification::Decided(true),
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+            Classification::Uncertain(reason)
+        }
+        _ => Classification::Uncertain(UncertaintyReason::Predicate),
+    })
 }
 
 fn signed_bivariate_on_parameter_lift(
@@ -4355,6 +4598,13 @@ fn signed_bivariate_at_parameter_pair(
                 Classification::Decided(None) => {}
                 Classification::Uncertain(reason) => blocker = reason,
             }
+            match signed_rank_one_bivariate_at_parameter_pair(polynomial, first, second, policy)? {
+                Classification::Decided(Some(sign)) => {
+                    return Ok(Classification::Decided(sign));
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => blocker = reason,
+            }
             if matches!(
                 first.same_value(second, policy)?,
                 Classification::Decided(true)
@@ -4415,6 +4665,114 @@ fn signed_bivariate_at_parameter_pair(
             Ok(Classification::Uncertain(blocker))
         }
     }
+}
+
+fn signed_rank_one_bivariate_at_parameter_pair(
+    polynomial: &BivariatePolynomial,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<RealSign>>> {
+    let column_count = polynomial
+        .coefficients
+        .iter()
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0);
+    let mut pivot = None;
+    let mut unknown = false;
+    for (row_index, row) in polynomial.coefficients.iter().enumerate() {
+        for column_index in 0..column_count {
+            let coefficient = row.get(column_index).cloned().unwrap_or_else(Real::zero);
+            match real_sign(&coefficient, policy) {
+                Some(RealSign::Zero) => {}
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => {
+                    pivot = Some((row_index, column_index, coefficient, sign));
+                    break;
+                }
+                None => unknown = true,
+            }
+        }
+        if pivot.is_some() {
+            break;
+        }
+    }
+    let Some((pivot_row_index, pivot_column_index, pivot_value, pivot_sign)) = pivot else {
+        return Ok(if unknown {
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        } else {
+            Classification::Decided(Some(RealSign::Zero))
+        });
+    };
+    let pivot_row = &polynomial.coefficients[pivot_row_index];
+    for row in &polynomial.coefficients {
+        let column_value = row
+            .get(pivot_column_index)
+            .cloned()
+            .unwrap_or_else(Real::zero);
+        for column_index in 0..column_count {
+            let coefficient = row.get(column_index).cloned().unwrap_or_else(Real::zero);
+            let row_value = pivot_row
+                .get(column_index)
+                .cloned()
+                .unwrap_or_else(Real::zero);
+            match real_sign(
+                &(coefficient * &pivot_value - &column_value * row_value),
+                policy,
+            ) {
+                Some(RealSign::Zero) => {}
+                Some(RealSign::Positive | RealSign::Negative) => {
+                    return Ok(Classification::Decided(None));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+    }
+
+    let first_sign = signed_coefficients_at_parameter(
+        polynomial
+            .coefficients
+            .iter()
+            .map(|row| {
+                row.get(pivot_column_index)
+                    .cloned()
+                    .unwrap_or_else(Real::zero)
+            })
+            .collect(),
+        first_parameter,
+        policy,
+    )?;
+    let second_sign = signed_coefficients_at_parameter(
+        (0..column_count)
+            .map(|column_index| {
+                pivot_row
+                    .get(column_index)
+                    .cloned()
+                    .unwrap_or_else(Real::zero)
+            })
+            .collect(),
+        second_parameter,
+        policy,
+    )?;
+    Ok(match (first_sign, second_sign) {
+        (Classification::Decided(RealSign::Zero), _)
+        | (_, Classification::Decided(RealSign::Zero)) => {
+            Classification::Decided(Some(RealSign::Zero))
+        }
+        (
+            Classification::Decided(first @ (RealSign::Positive | RealSign::Negative)),
+            Classification::Decided(second @ (RealSign::Positive | RealSign::Negative)),
+        ) => Classification::Decided(Some(
+            if (first == second) == (pivot_sign == RealSign::Positive) {
+                RealSign::Positive
+            } else {
+                RealSign::Negative
+            },
+        )),
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+            Classification::Uncertain(reason)
+        }
+    })
 }
 
 fn signed_coefficients_at_parameter(
@@ -5036,6 +5394,72 @@ mod conversion_tests {
             .unwrap(),
             Classification::Decided(None)
         );
+    }
+
+    #[test]
+    fn fiber_subresultants_refuse_specialized_degree_drops_in_either_orientation() {
+        let policy = CurveContext::STRICT;
+        let defining = match BezierParameterPolynomial::try_new_power_basis(
+            vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],
+            &policy,
+        )
+        .unwrap()
+        {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => panic!("defining polynomial: {reason:?}"),
+        };
+        let parameters = match defining.isolate_unit_interval_roots(&policy).unwrap() {
+            Classification::Decided(parameters) => parameters,
+            Classification::Uncertain(reason) => panic!("parameter isolation: {reason:?}"),
+        };
+        let [parameter] = parameters.as_slice() else {
+            panic!("expected one positive square-root parameter");
+        };
+        assert!(matches!(parameter, BezierParameter2::Algebraic(_)));
+
+        let retained_first = BivariatePolynomial::new(vec![
+            vec![Real::one(), Real::zero(), Real::from(-1_i8)],
+            vec![Real::zero()],
+            vec![Real::zero(), Real::zero(), Real::from(2_i8)],
+        ]);
+        let retained_second = BivariatePolynomial::new(vec![
+            vec![Real::one()],
+            vec![Real::zero()],
+            vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],
+        ]);
+        let stable = BivariatePolynomial::new(vec![vec![Real::one(), Real::zero(), Real::one()]]);
+        for active_policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                bivariate_fiber_degree_is_stable_at_parameter(
+                    &retained_first,
+                    CurveResultantParameter::First,
+                    parameter,
+                    &active_policy,
+                )
+                .unwrap(),
+                Classification::Decided(false)
+            );
+            assert_eq!(
+                bivariate_fiber_degree_is_stable_at_parameter(
+                    &retained_second,
+                    CurveResultantParameter::Second,
+                    parameter,
+                    &active_policy,
+                )
+                .unwrap(),
+                Classification::Decided(false)
+            );
+            assert_eq!(
+                bivariate_fiber_degree_is_stable_at_parameter(
+                    &stable,
+                    CurveResultantParameter::First,
+                    parameter,
+                    &active_policy,
+                )
+                .unwrap(),
+                Classification::Decided(true)
+            );
+        }
     }
 
     #[test]

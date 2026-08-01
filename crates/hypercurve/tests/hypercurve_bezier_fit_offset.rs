@@ -1557,7 +1557,7 @@ fn parallel_rational_contacts_replay_selected_branch_through_algebraic_lift() {
 }
 
 #[test]
-fn parallel_rational_contacts_retain_higher_nullity_algebraic_fibers() {
+fn parallel_rational_contacts_handle_higher_nullity_algebraic_fibers() {
     let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(2, 0))
         .parallel_left(r(1))
         .unwrap();
@@ -1565,28 +1565,38 @@ fn parallel_rational_contacts_retain_higher_nullity_algebraic_fibers() {
         RationalBezier2::try_new(vec![p(1, 0), p(1, 0), p(1, 2)], vec![r(1), r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionContacts2::Incomplete {
-            contacts,
-            candidates:
-                BezierParallelIntersectionCandidates2::Candidates {
-                    parallel_parameters,
-                    other_parameters,
-                },
-        }) = parallel.intersection_contacts(&target, &policy).unwrap()
-        else {
-            panic!("higher-nullity algebraic fiber was not retained explicitly");
-        };
-        assert!(contacts.is_empty());
-        assert_eq!(parallel_parameters.len(), 1);
-        assert_eq!(other_parameters.len(), 1);
-        assert!(matches!(
-            parallel_parameters[0],
-            BezierParameter2::Algebraic(_)
-        ));
-        assert!(matches!(
-            other_parameters[0],
-            BezierParameter2::Algebraic(_)
-        ));
+        let replay = parallel.intersection_contacts(&target, &policy).unwrap();
+        #[cfg(feature = "predicates")]
+        {
+            let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
+                replay.clone()
+            else {
+                panic!("higher-nullity algebraic fiber was not replayed: {replay:?}");
+            };
+            assert_eq!(contacts.len(), 1);
+            assert!(matches!(
+                contacts[0].parallel_parameter(),
+                BezierParameter2::Algebraic(_)
+            ));
+            assert!(matches!(
+                contacts[0].other_parameter(),
+                BezierParameter2::Algebraic(_)
+            ));
+            assert!(matches!(
+                contacts[0].point(),
+                RationalBezierIntersectionPointEvidence2::Algebraic(_)
+            ));
+        }
+        #[cfg(not(feature = "predicates"))]
+        {
+            assert!(matches!(
+                replay,
+                Classification::Decided(BezierParallelIntersectionContacts2::Incomplete {
+                    contacts,
+                    ..
+                }) if contacts.is_empty()
+            ));
+        }
     }
 }
 
