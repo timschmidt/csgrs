@@ -479,6 +479,7 @@ fn bench_bezier_parallel_intersections(
         contact_count += black_box(match contacts {
             BezierParallelIntersectionContacts2::NoIntersection => 0,
             BezierParallelIntersectionContacts2::Contacts(contacts) => contacts.len(),
+            BezierParallelIntersectionContacts2::Overlap(_) => 1,
             BezierParallelIntersectionContacts2::Incomplete { contacts, .. } => contacts.len(),
             BezierParallelIntersectionContacts2::DegenerateResultant => 1,
         });
@@ -528,7 +529,60 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
         &higher_nullity_parallel,
         &higher_nullity_target,
         100,
-    )
+    )?;
+
+    let line_overlap_parallel =
+        QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).parallel_left(s(1))?;
+    let line_overlap_target = RationalBezier2::try_new(vec![p(0, 1), p(2, 1)], vec![s(1), s(1)])?;
+    bench_bezier_parallel_intersections(
+        "bezier_parallel_line_overlap",
+        &line_overlap_parallel,
+        &line_overlap_target,
+        1_000,
+    )?;
+
+    let ph_overlap_source = CubicBezier2::new(
+        p(0, 0),
+        Point2::new(q(1, 3), s(0)),
+        Point2::new(q(2, 3), q(1, 3)),
+        Point2::new(q(2, 3), s(1)),
+    );
+    let ph_overlap_parallel = ph_overlap_source.parallel_left(s(1))?;
+    let Classification::Decided(Some(ph_overlap)) =
+        ph_overlap_parallel.exact_pythagorean_hodograph_offset(&CurveContext::STRICT)?
+    else {
+        panic!("PH overlap benchmark source was not recognized");
+    };
+    let ph_overlap_target = RationalBezier2::try_new(
+        ph_overlap.curve().control_points().to_vec(),
+        ph_overlap.curve().weights().to_vec(),
+    )?;
+    bench_bezier_parallel_intersections(
+        "bezier_parallel_ph_overlap",
+        &ph_overlap_parallel,
+        &ph_overlap_target,
+        10,
+    )?;
+
+    let cold_iterations = 10_u32;
+    let started = Instant::now();
+    let mut cold_checksum = 0_usize;
+    for _ in 0..cold_iterations {
+        let cold_parallel = ph_overlap_source.clone().parallel_left(s(1))?;
+        let Classification::Decided(contacts) = cold_parallel
+            .intersection_contacts(black_box(&ph_overlap_target), &CurveContext::STRICT)?
+        else {
+            panic!("cold PH overlap replay became uncertain");
+        };
+        cold_checksum +=
+            black_box(matches!(contacts, BezierParallelIntersectionContacts2::Overlap(_)) as usize);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_parallel_ph_overlap_cold: {cold_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={cold_checksum}",
+        elapsed / cold_iterations
+    );
+    Ok(())
 }
 
 fn bench_certified_bezier_parallel_construction(iterations: u32) -> CurveResult<()> {

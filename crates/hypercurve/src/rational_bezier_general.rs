@@ -2992,7 +2992,7 @@ impl RationalBezier2 {
         }
     }
 
-    fn intersection_candidates_classified(
+    pub(crate) fn intersection_candidates_classified(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -3037,6 +3037,13 @@ impl RationalBezier2 {
             Classification::Decided(None) => {}
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
+            }
+        }
+        for reversed in [false, true] {
+            if self.same_projective_control_net(other, reversed, policy) == Some(true) {
+                return Ok(Classification::Decided(
+                    RationalBezierIntersectionCandidates2::DegenerateResultant,
+                ));
             }
         }
         let config = CurveIntersectionResultantConfig {

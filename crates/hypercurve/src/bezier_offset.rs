@@ -29,7 +29,8 @@ use crate::{
     BezierParameterPolynomial, CertifiedBezierLineImageOffset2, Classification, CubicBezier2,
     Curve2, CurveContext, CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2,
     CurvePath2, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionOverlap2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 #[cfg(feature = "predicates")]
@@ -135,6 +136,20 @@ impl BezierParallelSource2 {
             Self::Rational(source) => source.certified_bounds_classified(policy),
         }
     }
+
+    fn to_rational_bezier(&self) -> CurveResult<RationalBezier2> {
+        match self {
+            Self::Quadratic(source) => RationalBezier2::try_new(
+                source.control_points().into_iter().cloned().collect(),
+                vec![Real::one(); 3],
+            ),
+            Self::Cubic(source) => RationalBezier2::try_new(
+                source.control_points().into_iter().cloned().collect(),
+                vec![Real::one(); 4],
+            ),
+            Self::Rational(source) => Ok(source.clone()),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -143,6 +158,7 @@ struct BezierParallelData2 {
     distance: Real,
     polynomial_power_basis: OnceLock<(Vec<Real>, Vec<Real>)>,
     differential: OnceLock<BezierParallelDifferential2>,
+    certified_ph_offset: OnceLock<Option<Arc<CertifiedPythagoreanHodographOffset2>>>,
 }
 
 #[derive(Debug)]
@@ -237,6 +253,11 @@ pub enum BezierParallelIntersectionContacts2 {
     NoIntersection,
     /// Every candidate pair was decided and these selected-branch contacts remain.
     Contacts(Arc<[BezierParallelIntersectionContact2]>),
+    /// Exact shared-component replay certified a positive-length overlap.
+    ///
+    /// The retained rational-overlap evidence uses its first parameter range
+    /// for the analytic parallel and its second range for `other`.
+    Overlap(RationalBezierIntersectionOverlap2),
     /// Some contacts were certified, but at least one algebraic pair remains unresolved.
     Incomplete {
         /// Contacts already certified by exact replay.
@@ -244,8 +265,29 @@ pub enum BezierParallelIntersectionContacts2 {
         /// Complete unpaired resultant projections retained for later replay.
         candidates: BezierParallelIntersectionCandidates2,
     },
-    /// A resultant vanished identically and exact overlap replay is required.
+    /// A resultant vanished identically and no supported exact rational
+    /// materialization could yet resolve the shared component.
     DegenerateResultant,
+}
+
+fn parallel_candidates_from_rational(
+    candidates: RationalBezierIntersectionCandidates2,
+) -> BezierParallelIntersectionCandidates2 {
+    match candidates {
+        RationalBezierIntersectionCandidates2::NoIntersection => {
+            BezierParallelIntersectionCandidates2::NoIntersection
+        }
+        RationalBezierIntersectionCandidates2::Candidates {
+            first_parameters,
+            second_parameters,
+        } => BezierParallelIntersectionCandidates2::Candidates {
+            parallel_parameters: first_parameters,
+            other_parameters: second_parameters,
+        },
+        RationalBezierIntersectionCandidates2::DegenerateResultant => {
+            BezierParallelIntersectionCandidates2::DegenerateResultant
+        }
+    }
 }
 
 impl std::fmt::Debug for BezierParallel2 {
@@ -638,6 +680,7 @@ impl BezierParallel2 {
                 distance,
                 polynomial_power_basis: OnceLock::new(),
                 differential: OnceLock::new(),
+                certified_ph_offset: OnceLock::new(),
             }),
         }
     }
@@ -1069,6 +1112,19 @@ impl BezierParallel2 {
             Some(sign) => sign,
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
+        if let Some(Some(offset)) = self.data.certified_ph_offset.get() {
+            return Ok(
+                match offset
+                    .curve()
+                    .intersection_candidates_classified(other, policy)?
+                {
+                    Classification::Decided(candidates) => {
+                        Classification::Decided(parallel_candidates_from_rational(candidates))
+                    }
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                },
+            );
+        }
         let source = self.source_power_basis()?;
         if let Classification::Uncertain(reason) = Self::certify_finite_source(&source, policy)? {
             return Ok(Classification::Uncertain(reason));
@@ -1124,6 +1180,11 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        if matches!(parallel, ResultantParameterProjection::Degenerate) {
+            return Ok(Classification::Decided(
+                BezierParallelIntersectionCandidates2::DegenerateResultant,
+            ));
+        }
         let other = match resultant_parameter_projection(
             resultant_bivariate_polynomial_system(
                 &orthogonality,
@@ -1161,11 +1222,13 @@ impl BezierParallel2 {
     /// Directly represented pairs and pairs with one isolated algebraic
     /// parameter are substituted into both original equations exactly. Pairs
     /// of algebraic parameters use univariate/identity/reversal fast paths,
-    /// followed by Hypersolve's exact nullity-one Sylvester lift or
-    /// specialization-safe subresultant fibers for genuinely coupled systems.
-    /// A local-field Sturm count retains even-multiplicity roots that have no
-    /// endpoint sign change. Unsupported degree drops and fibers without
-    /// sufficient isolator evidence remain explicit
+    /// followed by Hypersolve's exact nullity-one Sylvester lift or one
+    /// specialization-first common-fiber GCD and local-field Sturm count for
+    /// genuinely coupled systems. Even-multiplicity roots and specialized
+    /// degree drops are retained exactly. A degenerate resultant delegates to
+    /// the rational shared-component authority whenever zero distance or a
+    /// certified Pythagorean hodograph supplies an exact rational parallel.
+    /// Unsupported coefficient towers remain explicit
     /// [`BezierParallelIntersectionContacts2::Incomplete`] results; no
     /// projected root is promoted without exact replay.
     pub fn intersection_contacts(
@@ -1186,9 +1249,7 @@ impl BezierParallel2 {
                 ));
             }
             BezierParallelIntersectionCandidates2::DegenerateResultant => {
-                return Ok(Classification::Decided(
-                    BezierParallelIntersectionContacts2::DegenerateResultant,
-                ));
+                return self.replay_degenerate_rational_component(other, policy);
             }
             BezierParallelIntersectionCandidates2::Candidates {
                 parallel_parameters,
@@ -1318,6 +1379,70 @@ impl BezierParallel2 {
             BezierParallelIntersectionContacts2::NoIntersection
         } else {
             BezierParallelIntersectionContacts2::Contacts(contacts)
+        }))
+    }
+
+    fn replay_degenerate_rational_component(
+        &self,
+        other: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelIntersectionContacts2>> {
+        let exact_parallel = match real_sign(self.distance(), policy) {
+            Some(RealSign::Zero) => self.data.source.to_rational_bezier()?,
+            Some(RealSign::Positive | RealSign::Negative) => {
+                if let Some(Some(offset)) = self.data.certified_ph_offset.get() {
+                    offset.curve().clone()
+                } else {
+                    match self.exact_pythagorean_hodograph_offset(policy)? {
+                        Classification::Decided(Some(offset)) => offset.curve().clone(),
+                        Classification::Decided(None) | Classification::Uncertain(_) => {
+                            return Ok(Classification::Decided(
+                                BezierParallelIntersectionContacts2::DegenerateResultant,
+                            ));
+                        }
+                    }
+                }
+            }
+            None => {
+                return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+            }
+        };
+        let replay = match exact_parallel.intersection_contacts_classified(other, policy)? {
+            Classification::Decided(replay) => replay,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let map_contacts = |contacts: &[crate::RationalBezierIntersectionContact2]| {
+            contacts
+                .iter()
+                .map(|contact| BezierParallelIntersectionContact2 {
+                    parallel_parameter: contact.first_parameter().clone(),
+                    other_parameter: contact.second_parameter().clone(),
+                    point: contact.point().clone(),
+                    certified_transverse: contact.is_certified_transverse(),
+                })
+                .collect::<Arc<[_]>>()
+        };
+        Ok(Classification::Decided(match replay {
+            RationalBezierIntersectionContacts2::NoIntersection => {
+                BezierParallelIntersectionContacts2::NoIntersection
+            }
+            RationalBezierIntersectionContacts2::Contacts(contacts) => {
+                BezierParallelIntersectionContacts2::Contacts(map_contacts(&contacts))
+            }
+            RationalBezierIntersectionContacts2::Overlap(overlap) => {
+                BezierParallelIntersectionContacts2::Overlap(overlap)
+            }
+            RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => {
+                BezierParallelIntersectionContacts2::Incomplete {
+                    contacts: map_contacts(&contacts),
+                    candidates: BezierParallelIntersectionCandidates2::DegenerateResultant,
+                }
+            }
+            RationalBezierIntersectionContacts2::DegenerateResultant => {
+                BezierParallelIntersectionContacts2::DegenerateResultant
+            }
         }))
     }
 
@@ -1814,6 +1939,47 @@ impl BezierParallel2 {
     /// `None` means the exact polynomial-square identity was disproved;
     /// unresolved scalar signs remain explicit [`Classification::Uncertain`].
     pub fn exact_pythagorean_hodograph_offset(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
+        if let Some(cached) = self.data.certified_ph_offset.get() {
+            return Ok(Classification::Decided(cached.as_deref().cloned()));
+        }
+        if policy.permits_approximate_512() {
+            match self.compute_pythagorean_hodograph_offset(&CurveContext::STRICT)? {
+                Classification::Decided(offset) => {
+                    return Ok(Classification::Decided(
+                        self.retain_certified_ph_offset(offset),
+                    ));
+                }
+                Classification::Uncertain(_) => {
+                    return self.compute_pythagorean_hodograph_offset(policy);
+                }
+            }
+        }
+        match self.compute_pythagorean_hodograph_offset(policy)? {
+            Classification::Decided(offset) => Ok(Classification::Decided(
+                self.retain_certified_ph_offset(offset),
+            )),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    fn retain_certified_ph_offset(
+        &self,
+        offset: Option<CertifiedPythagoreanHodographOffset2>,
+    ) -> Option<CertifiedPythagoreanHodographOffset2> {
+        let _ = self.data.certified_ph_offset.set(offset.map(Arc::new));
+        self.data
+            .certified_ph_offset
+            .get()
+            .expect("a certified PH result was retained")
+            .as_deref()
+            .cloned()
+    }
+
+    #[cold]
+    fn compute_pythagorean_hodograph_offset(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
