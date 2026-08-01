@@ -1691,7 +1691,13 @@ pub(crate) fn build_polygon_soup_with_edge_mode(
                 polygon.delta_w[mesh_index] = 1;
             }
             let stored_polygon = polygons.len();
-            polygons.push(polygon);
+            polygons.reserve(1);
+            // SAFETY: `reserve(1)` guarantees that `stored_polygon` addresses
+            // one spare slot. `write` initializes it before the length grows.
+            unsafe {
+                polygons.as_mut_ptr().add(stored_polygon).write(polygon);
+                polygons.set_len(stored_polygon + 1);
+            }
             if let Some(adjacent) = adjacent_support_planes.as_mut() {
                 for [start, end] in [[i0, i1], [i1, i2], [i2, i0]] {
                     adjacent.insert_if_absent(start, end, stored_polygon);
