@@ -21,7 +21,7 @@ use crate::bezier_algebraic_image::parameter_representation;
 use crate::bezier_parameter::{bernstein_to_power_coefficients, power_to_bernstein_coefficients};
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::rational_bezier_general::{
-    ResultantParameterProjection, resultant_parameter_projection,
+    ResultantParameterProjection, rational_parameter_image, resultant_parameter_projection,
 };
 use crate::{
     Aabb2, BezierCuspClassification, BezierDegree, BezierEndpoint, BezierInflectionClassification,
@@ -220,12 +220,40 @@ pub enum BezierParallelIntersectionCandidates2 {
     DegenerateResultant,
 }
 
-enum BezierParallelIntersectionCandidateSystem2 {
-    Projected {
+struct BezierParallelIntersectionCandidateSystem2 {
+    candidates: BezierParallelIntersectionCandidates2,
+    replay_equations: Option<[BivariatePolynomial; 2]>,
+    overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
+    component_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
+}
+
+#[derive(Clone)]
+struct BezierParallelIntersectionParameterPair2 {
+    parallel_parameter: BezierParameter2,
+    other_parameter: BezierParameter2,
+}
+
+impl BezierParallelIntersectionCandidateSystem2 {
+    fn projected(
         candidates: BezierParallelIntersectionCandidates2,
         replay_equations: Option<[BivariatePolynomial; 2]>,
-    },
-    Overlap(RationalBezierIntersectionOverlap2),
+    ) -> Self {
+        Self {
+            candidates,
+            replay_equations,
+            overlaps: Arc::from([]),
+            component_pairs: Arc::from([]),
+        }
+    }
+
+    fn overlaps(overlaps: Arc<[RationalBezierIntersectionOverlap2]>) -> Self {
+        Self {
+            candidates: BezierParallelIntersectionCandidates2::NoIntersection,
+            replay_equations: None,
+            overlaps,
+            component_pairs: Arc::from([]),
+        }
+    }
 }
 
 /// One exactly replayed contact between an analytic parallel and a rational Bezier.
@@ -259,28 +287,96 @@ impl BezierParallelIntersectionContact2 {
     }
 }
 
-/// Exact replay status for analytic-parallel/rational-Bezier candidates.
+/// Complete or explicitly incomplete analytic-parallel/rational-Bezier intersection set.
+///
+/// Isolated contacts and positive-dimensional overlaps are independent slices:
+/// both may occur for one authored pair. When replay cannot complete, the
+/// original complete parameter projections remain behind one shared pointer
+/// instead of inflating every successful result.
 #[derive(Clone, Debug, PartialEq)]
-pub enum BezierParallelIntersectionContacts2 {
-    /// Replay certified that the finite curve images do not meet.
-    NoIntersection,
-    /// Every candidate pair was decided and these selected-branch contacts remain.
-    Contacts(Arc<[BezierParallelIntersectionContact2]>),
-    /// Exact shared-component replay certified a positive-length overlap.
-    ///
-    /// The retained rational-overlap evidence uses its first parameter range
-    /// for the analytic parallel and its second range for `other`.
-    Overlap(RationalBezierIntersectionOverlap2),
-    /// Some contacts were certified, but at least one algebraic pair remains unresolved.
-    Incomplete {
-        /// Contacts already certified by exact replay.
+pub struct BezierParallelIntersectionSet2 {
+    contacts: Arc<[BezierParallelIntersectionContact2]>,
+    overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
+    incomplete_candidates: Option<Arc<BezierParallelIntersectionCandidates2>>,
+}
+
+impl BezierParallelIntersectionSet2 {
+    fn complete(
         contacts: Arc<[BezierParallelIntersectionContact2]>,
-        /// Complete unpaired resultant projections retained for later replay.
+        overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
+    ) -> Self {
+        Self {
+            contacts,
+            overlaps,
+            incomplete_candidates: None,
+        }
+    }
+
+    fn incomplete(
+        contacts: Arc<[BezierParallelIntersectionContact2]>,
+        overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
         candidates: BezierParallelIntersectionCandidates2,
-    },
-    /// A resultant vanished identically and no supported exact rational
-    /// materialization could yet resolve the shared component.
-    DegenerateResultant,
+    ) -> Self {
+        Self {
+            contacts,
+            overlaps,
+            incomplete_candidates: Some(Arc::new(candidates)),
+        }
+    }
+
+    /// Returns every exactly replayed isolated selected-branch contact.
+    pub fn contacts(&self) -> &[BezierParallelIntersectionContact2] {
+        &self.contacts
+    }
+
+    /// Returns every exactly certified positive-length overlap.
+    ///
+    /// Each overlap uses its first range for the analytic parallel and its
+    /// second range for the rational operand.
+    pub fn overlaps(&self) -> &[RationalBezierIntersectionOverlap2] {
+        &self.overlaps
+    }
+
+    /// Returns whether all possible finite contacts and components were decided.
+    pub const fn is_complete(&self) -> bool {
+        self.incomplete_candidates.is_none()
+    }
+
+    /// Returns complete unpaired projections retained after incomplete replay.
+    pub fn incomplete_candidates(&self) -> Option<&BezierParallelIntersectionCandidates2> {
+        self.incomplete_candidates.as_deref()
+    }
+
+    /// Returns whether a complete result proves the two finite images disjoint.
+    pub fn is_empty(&self) -> bool {
+        self.is_complete() && self.contacts.is_empty() && self.overlaps.is_empty()
+    }
+}
+
+fn parallel_contact_pair_is_retained(
+    contacts: &[BezierParallelIntersectionContact2],
+    pair: &BezierParallelIntersectionParameterPair2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let mut uncertain = None;
+    for contact in contacts {
+        let parallel_equal = contact
+            .parallel_parameter
+            .same_value(&pair.parallel_parameter, policy)?;
+        let other_equal = contact
+            .other_parameter
+            .same_value(&pair.other_parameter, policy)?;
+        match (parallel_equal, other_equal) {
+            (Classification::Decided(true), Classification::Decided(true)) => {
+                return Ok(Classification::Decided(true));
+            }
+            (Classification::Decided(false), _) | (_, Classification::Decided(false)) => {}
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                uncertain = Some(reason)
+            }
+        }
+    }
+    Ok(uncertain.map_or(Classification::Decided(false), Classification::Uncertain))
 }
 
 fn parallel_candidates_from_rational(
@@ -1123,11 +1219,10 @@ impl BezierParallel2 {
     ) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
         Ok(self
             .intersection_candidate_system(other, policy)?
-            .map(|system| match system {
-                BezierParallelIntersectionCandidateSystem2::Projected { candidates, .. } => {
-                    candidates
-                }
-                BezierParallelIntersectionCandidateSystem2::Overlap(_) => {
+            .map(|system| {
+                if system.overlaps.is_empty() {
+                    system.candidates
+                } else {
                     BezierParallelIntersectionCandidates2::DegenerateResultant
                 }
             }))
@@ -1143,20 +1238,25 @@ impl BezierParallel2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
         if let Some(Some(offset)) = self.data.certified_ph_offset.get() {
-            return Ok(
-                match offset
-                    .curve()
-                    .intersection_candidates_classified(other, policy)?
-                {
-                    Classification::Decided(candidates) => Classification::Decided(
-                        BezierParallelIntersectionCandidateSystem2::Projected {
-                            candidates: parallel_candidates_from_rational(candidates),
-                            replay_equations: None,
-                        },
-                    ),
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                },
-            );
+            match offset
+                .curve()
+                .intersection_candidates_classified(other, policy)?
+            {
+                Classification::Decided(candidates) => {
+                    let candidates = parallel_candidates_from_rational(candidates);
+                    if !matches!(
+                        candidates,
+                        BezierParallelIntersectionCandidates2::DegenerateResultant
+                    ) {
+                        return Ok(Classification::Decided(
+                            BezierParallelIntersectionCandidateSystem2::projected(candidates, None),
+                        ));
+                    }
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
         }
         let source = self.source_power_basis()?;
         if let Classification::Uncertain(reason) = Self::certify_finite_source(&source, policy)? {
@@ -1185,10 +1285,10 @@ impl BezierParallel2 {
             )
         {
             return Ok(Classification::Decided(
-                BezierParallelIntersectionCandidateSystem2::Projected {
-                    candidates: BezierParallelIntersectionCandidates2::NoIntersection,
-                    replay_equations: None,
-                },
+                BezierParallelIntersectionCandidateSystem2::projected(
+                    BezierParallelIntersectionCandidates2::NoIntersection,
+                    None,
+                ),
             ));
         }
 
@@ -1213,7 +1313,7 @@ impl BezierParallel2 {
                     )) = exact_parallel.intersection_contacts_classified(other, policy)?
                 {
                     return Ok(Classification::Decided(
-                        BezierParallelIntersectionCandidateSystem2::Overlap(overlap),
+                        BezierParallelIntersectionCandidateSystem2::overlaps(Arc::from([overlap])),
                     ));
                 }
                 let branch = parallel_rational_selected_branch(
@@ -1226,17 +1326,15 @@ impl BezierParallel2 {
                     min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
                     max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
                 };
-                if let Classification::Decided(Some(overlap)) =
-                    rational_parameter_component_overlap(
+                if let Classification::Decided(Some(component)) =
+                    rational_parameter_component_system(
                         component_equations,
                         &branch,
                         policy,
                         config,
                     )?
                 {
-                    return Ok(Classification::Decided(
-                        BezierParallelIntersectionCandidateSystem2::Overlap(overlap),
-                    ));
+                    return parallel_candidate_system_from_rational_component(component, policy);
                 }
             }
         }
@@ -1250,14 +1348,24 @@ impl BezierParallel2 {
         ) {
             match self.exact_rational_parallel_component(policy)? {
                 Classification::Decided(Some(exact_parallel)) => {
-                    return Ok(exact_parallel
-                        .intersection_candidates_classified(other, policy)?
-                        .map(|candidates| {
-                            BezierParallelIntersectionCandidateSystem2::Projected {
-                                candidates: parallel_candidates_from_rational(candidates),
-                                replay_equations: None,
+                    match exact_parallel.intersection_candidates_classified(other, policy)? {
+                        Classification::Decided(candidates) => {
+                            let candidates = parallel_candidates_from_rational(candidates);
+                            if !matches!(
+                                candidates,
+                                BezierParallelIntersectionCandidates2::DegenerateResultant
+                            ) {
+                                return Ok(Classification::Decided(
+                                    BezierParallelIntersectionCandidateSystem2::projected(
+                                        candidates, None,
+                                    ),
+                                ));
                             }
-                        }));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
                 }
                 Classification::Decided(None) => {}
                 Classification::Uncertain(reason) => {
@@ -1265,7 +1373,36 @@ impl BezierParallel2 {
                 }
             }
         }
-        parallel_intersection_candidate_system(equations, candidates, policy)
+        let candidate_system =
+            match parallel_intersection_candidate_system(equations, candidates, policy)? {
+                Classification::Decided(candidate_system) => candidate_system,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        if matches!(
+            candidate_system.candidates,
+            BezierParallelIntersectionCandidates2::DegenerateResultant
+        ) && distance_sign != RealSign::Zero
+            && let Some(component_equations) = candidate_system.replay_equations.as_ref()
+        {
+            let branch = parallel_rational_selected_branch(
+                &source,
+                differential,
+                self.distance(),
+                other_power,
+            );
+            let config = CurveIntersectionResultantConfig {
+                min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+                max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+            };
+            if let Classification::Decided(Some(component)) =
+                rational_parameter_component_system(component_equations, &branch, policy, config)?
+            {
+                return parallel_candidate_system_from_rational_component(component, policy);
+            }
+        }
+        Ok(Classification::Decided(candidate_system))
     }
 
     /// Replays every resultant candidate into exact selected-branch contacts.
@@ -1281,46 +1418,61 @@ impl BezierParallel2 {
     /// distance or a certified Pythagorean hodograph supplies an exact
     /// rational parallel. Otherwise a primitive first subresultant may expose
     /// one rational parameter component; both authored equations, finite
-    /// domain, monotonicity, exact overlap boundaries, and the selected normal
-    /// branch are certified before it becomes overlap evidence. Unsupported
-    /// coefficient towers and higher-nullity components remain explicit
-    /// [`BezierParallelIntersectionContacts2::Incomplete`] results; no
+    /// domain, monotonicity, exact overlap boundaries or isolated domain-touch
+    /// pairs, and the selected normal branch are certified before they become
+    /// result evidence. Unsupported coefficient towers and higher-nullity components remain explicit
+    /// [`BezierParallelIntersectionSet2::incomplete_candidates`] evidence; no
     /// projected root is promoted without exact replay.
-    pub fn intersection_contacts(
+    pub fn intersections(
         &self,
         other: &RationalBezier2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParallelIntersectionContacts2>> {
+    ) -> CurveResult<Classification<BezierParallelIntersectionSet2>> {
         let candidate_system = match self.intersection_candidate_system(other, policy)? {
             Classification::Decided(candidate_system) => candidate_system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let (candidates, replay_equations) = match candidate_system {
-            BezierParallelIntersectionCandidateSystem2::Projected {
-                candidates,
-                replay_equations,
-            } => (candidates, replay_equations),
-            BezierParallelIntersectionCandidateSystem2::Overlap(overlap) => {
-                return Ok(Classification::Decided(
-                    BezierParallelIntersectionContacts2::Overlap(overlap),
-                ));
-            }
-        };
+        let BezierParallelIntersectionCandidateSystem2 {
+            candidates,
+            replay_equations,
+            overlaps,
+            component_pairs,
+        } = candidate_system;
+        let residual_degenerate = matches!(
+            candidates,
+            BezierParallelIntersectionCandidates2::DegenerateResultant
+        );
+        let empty_parameters: &[BezierParameter2] = &[];
         let (parallel_parameters, other_parameters) = match &candidates {
             BezierParallelIntersectionCandidates2::NoIntersection => {
-                return Ok(Classification::Decided(
-                    BezierParallelIntersectionContacts2::NoIntersection,
-                ));
+                if component_pairs.is_empty() {
+                    return Ok(Classification::Decided(
+                        BezierParallelIntersectionSet2::complete(Arc::from([]), overlaps),
+                    ));
+                }
+                (empty_parameters, empty_parameters)
             }
             BezierParallelIntersectionCandidates2::DegenerateResultant => {
-                return self.replay_degenerate_component(other, replay_equations.as_ref(), policy);
+                if component_pairs.is_empty() {
+                    if !overlaps.is_empty() {
+                        return Ok(Classification::Decided(
+                            BezierParallelIntersectionSet2::incomplete(
+                                Arc::from([]),
+                                overlaps,
+                                BezierParallelIntersectionCandidates2::DegenerateResultant,
+                            ),
+                        ));
+                    }
+                    return self.replay_degenerate_component(other, policy);
+                }
+                (empty_parameters, empty_parameters)
             }
             BezierParallelIntersectionCandidates2::Candidates {
                 parallel_parameters,
                 other_parameters,
-            } => (parallel_parameters, other_parameters),
+            } => (parallel_parameters.as_slice(), other_parameters.as_slice()),
         };
 
         let source = self.source_power_basis()?;
@@ -1344,7 +1496,7 @@ impl BezierParallel2 {
         });
 
         let mut contacts = Vec::new();
-        let mut incomplete = false;
+        let mut incomplete = residual_degenerate;
         let mut parameter_lifts: [Option<CurveIntersectionParameterLiftReport>; 2] = [None, None];
         let lift_config = CurveIntersectionResultantConfig {
             min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
@@ -1435,40 +1587,65 @@ impl BezierParallel2 {
                 });
             }
         }
+        for pair in component_pairs.iter() {
+            match parallel_contact_pair_is_retained(&contacts, pair, policy)? {
+                Classification::Decided(true) => continue,
+                Classification::Decided(false) => {}
+                Classification::Uncertain(_) => {
+                    incomplete = true;
+                    continue;
+                }
+            }
+            let Some(point) = crate::rational_bezier_general::exact_contact_point_evidence(
+                other,
+                &pair.other_parameter,
+                policy,
+            )?
+            else {
+                incomplete = true;
+                continue;
+            };
+            contacts.push(BezierParallelIntersectionContact2 {
+                parallel_parameter: pair.parallel_parameter.clone(),
+                other_parameter: pair.other_parameter.clone(),
+                point,
+                certified_transverse: self.certified_transverse_contact(
+                    other,
+                    &pair.parallel_parameter,
+                    &pair.other_parameter,
+                    policy,
+                ),
+            });
+        }
         let contacts: Arc<[BezierParallelIntersectionContact2]> = contacts.into();
         if incomplete {
             return Ok(Classification::Decided(
-                BezierParallelIntersectionContacts2::Incomplete {
-                    contacts,
-                    candidates,
-                },
+                BezierParallelIntersectionSet2::incomplete(contacts, overlaps, candidates),
             ));
         }
-        Ok(Classification::Decided(if contacts.is_empty() {
-            BezierParallelIntersectionContacts2::NoIntersection
-        } else {
-            BezierParallelIntersectionContacts2::Contacts(contacts)
-        }))
+        Ok(Classification::Decided(
+            BezierParallelIntersectionSet2::complete(contacts, overlaps),
+        ))
     }
 
     fn replay_degenerate_component(
         &self,
         other: &RationalBezier2,
-        equations: Option<&[BivariatePolynomial; 2]>,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParallelIntersectionContacts2>> {
+    ) -> CurveResult<Classification<BezierParallelIntersectionSet2>> {
         let exact_parallel = match self.exact_rational_parallel_component(policy)? {
             Classification::Decided(Some(exact_parallel)) => Some(exact_parallel),
             Classification::Decided(None) => None,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         let Some(exact_parallel) = exact_parallel else {
-            let Some(equations) = equations else {
-                return Ok(Classification::Decided(
-                    BezierParallelIntersectionContacts2::DegenerateResultant,
-                ));
-            };
-            return self.replay_rational_parameter_component(other, equations, policy);
+            return Ok(Classification::Decided(
+                BezierParallelIntersectionSet2::incomplete(
+                    Arc::from([]),
+                    Arc::from([]),
+                    BezierParallelIntersectionCandidates2::DegenerateResultant,
+                ),
+            ));
         };
         let replay = match exact_parallel.intersection_contacts_classified(other, policy)? {
             Classification::Decided(replay) => replay,
@@ -1489,60 +1666,29 @@ impl BezierParallel2 {
         };
         Ok(Classification::Decided(match replay {
             RationalBezierIntersectionContacts2::NoIntersection => {
-                BezierParallelIntersectionContacts2::NoIntersection
+                BezierParallelIntersectionSet2::complete(Arc::from([]), Arc::from([]))
             }
             RationalBezierIntersectionContacts2::Contacts(contacts) => {
-                BezierParallelIntersectionContacts2::Contacts(map_contacts(&contacts))
+                BezierParallelIntersectionSet2::complete(map_contacts(&contacts), Arc::from([]))
             }
             RationalBezierIntersectionContacts2::Overlap(overlap) => {
-                BezierParallelIntersectionContacts2::Overlap(overlap)
+                BezierParallelIntersectionSet2::complete(Arc::from([]), Arc::from([overlap]))
             }
             RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => {
-                BezierParallelIntersectionContacts2::Incomplete {
-                    contacts: map_contacts(&contacts),
-                    candidates: BezierParallelIntersectionCandidates2::DegenerateResultant,
-                }
+                BezierParallelIntersectionSet2::incomplete(
+                    map_contacts(&contacts),
+                    Arc::from([]),
+                    BezierParallelIntersectionCandidates2::DegenerateResultant,
+                )
             }
             RationalBezierIntersectionContacts2::DegenerateResultant => {
-                BezierParallelIntersectionContacts2::DegenerateResultant
+                BezierParallelIntersectionSet2::incomplete(
+                    Arc::from([]),
+                    Arc::from([]),
+                    BezierParallelIntersectionCandidates2::DegenerateResultant,
+                )
             }
         }))
-    }
-
-    fn replay_rational_parameter_component(
-        &self,
-        other: &RationalBezier2,
-        equations: &[BivariatePolynomial; 2],
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParallelIntersectionContacts2>> {
-        if !matches!(
-            real_sign(self.distance(), policy),
-            Some(RealSign::Positive | RealSign::Negative)
-        ) {
-            return Ok(Classification::Decided(
-                BezierParallelIntersectionContacts2::DegenerateResultant,
-            ));
-        }
-        let source = self.source_power_basis()?;
-        let differential = self.differential()?;
-        let other_power = other.homogeneous_power_basis()?;
-        let branch =
-            parallel_rational_selected_branch(&source, differential, self.distance(), other_power);
-        let config = CurveIntersectionResultantConfig {
-            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
-            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-        };
-        Ok(
-            match rational_parameter_component_overlap(equations, &branch, policy, config)? {
-                Classification::Decided(Some(overlap)) => {
-                    Classification::Decided(BezierParallelIntersectionContacts2::Overlap(overlap))
-                }
-                Classification::Decided(None) => Classification::Decided(
-                    BezierParallelIntersectionContacts2::DegenerateResultant,
-                ),
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
-        )
     }
 
     fn exact_rational_parallel_component(
@@ -4271,10 +4417,7 @@ fn parallel_candidate_system(
         BezierParallelIntersectionCandidates2::NoIntersection
     ))
     .then_some(equations);
-    BezierParallelIntersectionCandidateSystem2::Projected {
-        candidates,
-        replay_equations,
-    }
+    BezierParallelIntersectionCandidateSystem2::projected(candidates, replay_equations)
 }
 
 fn project_parallel_intersection_system(
@@ -4379,12 +4522,38 @@ fn bivariate_system_may_have_component(equations: &[BivariatePolynomial; 2]) -> 
     true
 }
 
-fn rational_parameter_component_overlap(
+struct RationalParameterComponentSystem2 {
+    overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
+    isolated_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
+    residual_equations: [BivariatePolynomial; 2],
+}
+
+fn parallel_candidate_system_from_rational_component(
+    component: RationalParameterComponentSystem2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierParallelIntersectionCandidateSystem2>> {
+    let candidates =
+        match project_parallel_intersection_system(&component.residual_equations, policy)? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+    match parallel_intersection_candidate_system(component.residual_equations, candidates, policy)?
+    {
+        Classification::Decided(mut candidate_system) => {
+            candidate_system.overlaps = component.overlaps;
+            candidate_system.component_pairs = component.isolated_pairs;
+            Ok(Classification::Decided(candidate_system))
+        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+fn rational_parameter_component_system(
     equations: &[BivariatePolynomial; 2],
     branch: &BivariatePolynomial,
     policy: &CurveContext,
     config: CurveIntersectionResultantConfig,
-) -> CurveResult<Classification<Option<RationalBezierIntersectionOverlap2>>> {
+) -> CurveResult<Classification<Option<RationalParameterComponentSystem2>>> {
     let mut blocker = None;
     for retained_parameter in [
         CurveResultantParameter::Second,
@@ -4396,13 +4565,19 @@ fn rational_parameter_component_overlap(
             retained_parameter,
             config,
         );
-        let map = match report.status {
+        let (map, reduced_equations) = match report.status {
             BivariatePolynomialRationalComponentStatus::Constructed => {
-                CurveIntersectionParameterLiftMap {
-                    cofactor_row: 0,
-                    numerator_coefficients: report.numerator_coefficients,
-                    denominator_coefficients: report.denominator_coefficients,
-                }
+                let Some(reduced_equations) = report.reduced_equations else {
+                    continue;
+                };
+                (
+                    CurveIntersectionParameterLiftMap {
+                        cofactor_row: 0,
+                        numerator_coefficients: report.numerator_coefficients,
+                        denominator_coefficients: report.denominator_coefficients,
+                    },
+                    reduced_equations,
+                )
             }
             BivariatePolynomialRationalComponentStatus::UndecidedCoefficient => {
                 blocker = Some(UncertaintyReason::RealSign);
@@ -4413,7 +4588,8 @@ fn rational_parameter_component_overlap(
             | BivariatePolynomialRationalComponentStatus::DegreeBoundExceeded
             | BivariatePolynomialRationalComponentStatus::NoLinearComponent
             | BivariatePolynomialRationalComponentStatus::DeterminantError
-            | BivariatePolynomialRationalComponentStatus::InterpolationFailed => continue,
+            | BivariatePolynomialRationalComponentStatus::InterpolationFailed
+            | BivariatePolynomialRationalComponentStatus::DivisionFailed => continue,
         };
         match certify_rational_parameter_component_map(
             equations,
@@ -4422,8 +4598,14 @@ fn rational_parameter_component_overlap(
             &map,
             policy,
         )? {
-            Classification::Decided(Some(overlap)) => {
-                return Ok(Classification::Decided(Some(overlap)));
+            Classification::Decided(Some(evidence)) => {
+                return Ok(Classification::Decided(Some(
+                    RationalParameterComponentSystem2 {
+                        overlaps: evidence.overlaps,
+                        isolated_pairs: evidence.isolated_pairs,
+                        residual_equations: reduced_equations,
+                    },
+                )));
             }
             Classification::Decided(None) => {}
             Classification::Uncertain(reason) => blocker = Some(reason),
@@ -4438,7 +4620,7 @@ fn certify_rational_parameter_component_map(
     retained_parameter: CurveResultantParameter,
     map: &CurveIntersectionParameterLiftMap,
     policy: &CurveContext,
-) -> CurveResult<Classification<Option<RationalBezierIntersectionOverlap2>>> {
+) -> CurveResult<Classification<Option<RationalParameterComponentEvidence2>>> {
     for equation in equations {
         let (cleared, _) = bivariate_on_parameter_lift_cleared(equation, retained_parameter, map);
         match polynomial_from_coefficients(cleared, policy)? {
@@ -4448,24 +4630,6 @@ fn certify_rational_parameter_component_map(
         }
     }
 
-    match polynomial_is_rootless_on_unit_interval(&map.denominator_coefficients, policy)? {
-        Classification::Decided(true) => {}
-        Classification::Decided(false) => return Ok(Classification::Decided(None)),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    let lifted_at_zero = match rational_parameter_map_at(map, &Real::zero(), policy)? {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let lifted_at_one = match rational_parameter_map_at(map, &Real::one(), policy)? {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let direction = match compare_reals(&lifted_at_zero, &lifted_at_one, policy) {
-        Some(direction @ (std::cmp::Ordering::Less | std::cmp::Ordering::Greater)) => direction,
-        Some(std::cmp::Ordering::Equal) => return Ok(Classification::Decided(None)),
-        None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-    };
     let derivative_numerator = polynomial_subtract(
         &polynomial_multiply(
             &polynomial_derivative(&map.numerator_coefficients),
@@ -4476,107 +4640,96 @@ fn certify_rational_parameter_component_map(
             &polynomial_derivative(&map.denominator_coefficients),
         ),
     );
-    let derivative_sign = if direction == std::cmp::Ordering::Less {
-        RealSign::Positive
-    } else {
-        RealSign::Negative
-    };
-    match polynomial_has_weak_unit_interval_sign(&derivative_numerator, derivative_sign, policy)? {
-        Classification::Decided(true) => {}
-        Classification::Decided(false) => return Ok(Classification::Decided(None)),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    let domain = match rational_parameter_component_domain(
-        map,
-        lifted_at_zero,
-        lifted_at_one,
-        direction,
-        policy,
-    )? {
-        Classification::Decided(Some(domain)) => domain,
+    let partition = match rational_parameter_component_domains(map, &derivative_numerator, policy)?
+    {
+        Classification::Decided(Some(partition)) => partition,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
 
     let (branch_coefficients, _) =
         bivariate_on_parameter_lift_cleared(branch, retained_parameter, map);
-    match polynomial_is_rootless_on_parameter_range(
-        &branch_coefficients,
-        &domain.retained_start,
-        &domain.retained_end,
-        policy,
-    )? {
-        Classification::Decided(true) => {}
-        Classification::Decided(false) => return Ok(Classification::Decided(None)),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    let mut overlaps = Vec::with_capacity(partition.domains.len());
+    for (domain, direction) in partition.domains {
+        match polynomial_is_rootless_on_parameter_range(
+            &branch_coefficients,
+            &domain.retained_start,
+            &domain.retained_end,
+            policy,
+        )? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let branch_sample = match domain
+            .retained_start
+            .strict_rational_between_ordered(&domain.retained_end, policy)?
+        {
+            Classification::Decided(sample) => BezierParameter2::Exact(sample),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let branch_sign = match signed_bivariate_on_parameter_lift(
+            branch,
+            &branch_sample,
+            retained_parameter,
+            map,
+            policy,
+        )? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match branch_sign {
+            RealSign::Positive => overlaps.push(rational_parameter_component_overlap_from_domain(
+                retained_parameter,
+                domain,
+                direction,
+            )),
+            RealSign::Negative => {}
+            RealSign::Zero => return Ok(Classification::Decided(None)),
+        }
     }
-    let branch_sample = match domain
-        .retained_start
-        .strict_rational_between_ordered(&domain.retained_end, policy)?
-    {
-        Classification::Decided(sample) => BezierParameter2::Exact(sample),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let branch_sign = match signed_bivariate_on_parameter_lift(
-        branch,
-        &branch_sample,
-        retained_parameter,
-        map,
-        policy,
-    )? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    if branch_sign != RealSign::Positive {
-        return Ok(Classification::Decided(None));
+    let mut isolated_pairs = Vec::with_capacity(partition.isolated_points.len());
+    for point in partition.isolated_points {
+        let sign = match signed_bivariate_on_parameter_lift(
+            branch,
+            &point.retained_parameter,
+            retained_parameter,
+            map,
+            policy,
+        )? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match sign {
+            RealSign::Positive => {
+                isolated_pairs.push(rational_parameter_component_pair(retained_parameter, point))
+            }
+            RealSign::Negative => {}
+            RealSign::Zero => return Ok(Classification::Decided(None)),
+        }
     }
-
-    let orientation = if direction == std::cmp::Ordering::Less {
-        RationalBezierOverlapOrientation2::Same
-    } else {
-        RationalBezierOverlapOrientation2::Reversed
-    };
-    let RationalParameterComponentDomain {
-        retained_start,
-        retained_end,
-        lifted_start,
-        lifted_end,
-    } = domain;
-    let overlap = match (retained_parameter, direction) {
-        (CurveResultantParameter::First, _) => {
-            RationalBezierIntersectionOverlap2::from_certified_parameters(
-                retained_start,
-                retained_end,
-                lifted_start,
-                lifted_end,
-                orientation,
-            )
-        }
-        (CurveResultantParameter::Second, std::cmp::Ordering::Less) => {
-            RationalBezierIntersectionOverlap2::from_certified_parameters(
-                lifted_start,
-                lifted_end,
-                retained_start,
-                retained_end,
-                orientation,
-            )
-        }
-        (CurveResultantParameter::Second, std::cmp::Ordering::Greater) => {
-            RationalBezierIntersectionOverlap2::from_certified_parameters(
-                lifted_end,
-                lifted_start,
-                retained_end,
-                retained_start,
-                orientation,
-            )
-        }
-        (_, std::cmp::Ordering::Equal) => {
-            unreachable!("a rational component domain has a strict direction")
-        }
-    };
-    Ok(Classification::Decided(Some(overlap)))
+    Ok(Classification::Decided(Some(
+        RationalParameterComponentEvidence2 {
+            overlaps: overlaps.into(),
+            isolated_pairs: isolated_pairs.into(),
+        },
+    )))
 }
 
+struct RationalParameterComponentEvidence2 {
+    overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
+    isolated_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
+}
+
+#[derive(Clone)]
 struct RationalParameterComponentDomain {
     retained_start: BezierParameter2,
     retained_end: BezierParameter2,
@@ -4584,186 +4737,319 @@ struct RationalParameterComponentDomain {
     lifted_end: BezierParameter2,
 }
 
-fn rational_parameter_component_domain(
+struct RationalParameterComponentPoint {
+    retained_parameter: BezierParameter2,
+    lifted_parameter: BezierParameter2,
+}
+
+struct RationalParameterComponentPartition {
+    domains: Vec<(RationalParameterComponentDomain, std::cmp::Ordering)>,
+    isolated_points: Vec<RationalParameterComponentPoint>,
+}
+
+#[derive(Clone)]
+struct RationalParameterComponentBoundary {
+    parameter: BezierParameter2,
+    denominator_root: bool,
+    zero_image: bool,
+    unit_image: bool,
+}
+
+fn rational_parameter_component_domains(
     map: &CurveIntersectionParameterLiftMap,
-    lifted_at_zero: Real,
-    lifted_at_one: Real,
-    direction: std::cmp::Ordering,
+    derivative_numerator: &[Real],
     policy: &CurveContext,
-) -> CurveResult<Classification<Option<RationalParameterComponentDomain>>> {
-    let zero = Real::zero();
-    let one = Real::one();
-    let Some(start_zero_order) = compare_reals(&lifted_at_zero, &zero, policy) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+) -> CurveResult<Classification<Option<RationalParameterComponentPartition>>> {
+    let denominator_roots =
+        match polynomial_unit_interval_roots(&map.denominator_coefficients, policy)? {
+            Classification::Decided(Some(roots)) => roots,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+    let derivative_roots = match polynomial_unit_interval_roots(derivative_numerator, policy)? {
+        Classification::Decided(Some(roots)) => roots,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let Some(start_one_order) = compare_reals(&lifted_at_zero, &one, policy) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+    let zero_roots = match polynomial_unit_interval_roots(&map.numerator_coefficients, policy)? {
+        Classification::Decided(Some(roots)) => roots,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let Some(end_zero_order) = compare_reals(&lifted_at_one, &zero, policy) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
-    };
-    let Some(end_one_order) = compare_reals(&lifted_at_one, &one, policy) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+    let unit_coefficients =
+        polynomial_subtract(&map.numerator_coefficients, &map.denominator_coefficients);
+    let unit_roots = match polynomial_unit_interval_roots(&unit_coefficients, policy)? {
+        Classification::Decided(Some(roots)) => roots,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
 
-    let (retained_start, retained_end, lifted_start, lifted_end) = match direction {
-        std::cmp::Ordering::Less => {
-            if matches!(
-                end_zero_order,
-                std::cmp::Ordering::Less | std::cmp::Ordering::Equal
-            ) || matches!(
-                start_one_order,
-                std::cmp::Ordering::Greater | std::cmp::Ordering::Equal
-            ) {
-                return Ok(Classification::Decided(None));
-            }
-            let (retained_start, lifted_start) = if matches!(
-                start_zero_order,
-                std::cmp::Ordering::Greater | std::cmp::Ordering::Equal
-            ) {
-                (
-                    BezierParameter2::Exact(zero.clone()),
-                    BezierParameter2::Exact(lifted_at_zero),
-                )
-            } else {
-                let root = match rational_parameter_map_boundary(map, false, policy)? {
-                    Classification::Decided(Some(root)) => root,
-                    Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                (root, BezierParameter2::Exact(zero.clone()))
-            };
-            let (retained_end, lifted_end) = if matches!(
-                end_one_order,
-                std::cmp::Ordering::Less | std::cmp::Ordering::Equal
-            ) {
-                (
-                    BezierParameter2::Exact(one.clone()),
-                    BezierParameter2::Exact(lifted_at_one),
-                )
-            } else {
-                let root = match rational_parameter_map_boundary(map, true, policy)? {
-                    Classification::Decided(Some(root)) => root,
-                    Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                (root, BezierParameter2::Exact(one.clone()))
-            };
-            (retained_start, retained_end, lifted_start, lifted_end)
-        }
-        std::cmp::Ordering::Greater => {
-            if matches!(
-                end_one_order,
-                std::cmp::Ordering::Greater | std::cmp::Ordering::Equal
-            ) || matches!(
-                start_zero_order,
-                std::cmp::Ordering::Less | std::cmp::Ordering::Equal
-            ) {
-                return Ok(Classification::Decided(None));
-            }
-            let (retained_start, lifted_start) = if matches!(
-                start_one_order,
-                std::cmp::Ordering::Less | std::cmp::Ordering::Equal
-            ) {
-                (
-                    BezierParameter2::Exact(zero.clone()),
-                    BezierParameter2::Exact(lifted_at_zero),
-                )
-            } else {
-                let root = match rational_parameter_map_boundary(map, true, policy)? {
-                    Classification::Decided(Some(root)) => root,
-                    Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                (root, BezierParameter2::Exact(one.clone()))
-            };
-            let (retained_end, lifted_end) = if matches!(
-                end_zero_order,
-                std::cmp::Ordering::Greater | std::cmp::Ordering::Equal
-            ) {
-                (
-                    BezierParameter2::Exact(one),
-                    BezierParameter2::Exact(lifted_at_one),
-                )
-            } else {
-                let root = match rational_parameter_map_boundary(map, false, policy)? {
-                    Classification::Decided(Some(root)) => root,
-                    Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                (root, BezierParameter2::Exact(zero))
-            };
-            (retained_start, retained_end, lifted_start, lifted_end)
-        }
-        std::cmp::Ordering::Equal => return Ok(Classification::Decided(None)),
-    };
-    if !matches!(
-        retained_start.cmp_by_refinement(&retained_end, policy)?,
-        Classification::Decided(std::cmp::Ordering::Less)
-    ) {
-        return Ok(Classification::Decided(None));
+    let mut boundaries = Vec::with_capacity(
+        denominator_roots.len() + derivative_roots.len() + zero_roots.len() + unit_roots.len() + 2,
+    );
+    for boundary in [Real::zero(), Real::one()] {
+        boundaries.push(RationalParameterComponentBoundary {
+            parameter: BezierParameter2::Exact(boundary),
+            denominator_root: false,
+            zero_image: false,
+            unit_image: false,
+        });
     }
-    let expected_lifted_order = direction;
-    if !matches!(
-        lifted_start.cmp_by_refinement(&lifted_end, policy)?,
-        Classification::Decided(order) if order == expected_lifted_order
-    ) {
-        return Ok(Classification::Decided(None));
+    for (roots, denominator_root, zero_image, unit_image) in [
+        (denominator_roots, true, false, false),
+        (derivative_roots, false, false, false),
+        (zero_roots, false, true, false),
+        (unit_roots, false, false, true),
+    ] {
+        for parameter in roots {
+            let boundary = RationalParameterComponentBoundary {
+                parameter,
+                denominator_root,
+                zero_image,
+                unit_image,
+            };
+            if let Classification::Uncertain(reason) =
+                insert_rational_parameter_component_boundary(&mut boundaries, boundary, policy)?
+            {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+
+    let zero = Real::zero();
+    let one = Real::one();
+    let mut runs: Vec<(usize, usize, std::cmp::Ordering)> = Vec::new();
+    for index in 0..boundaries.len().saturating_sub(1) {
+        let sample = match boundaries[index]
+            .parameter
+            .strict_rational_between_ordered(&boundaries[index + 1].parameter, policy)?
+        {
+            Classification::Decided(sample) => sample,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let direction = match real_sign(&polynomial_evaluate(derivative_numerator, &sample), policy)
+        {
+            Some(RealSign::Positive) => std::cmp::Ordering::Less,
+            Some(RealSign::Negative) => std::cmp::Ordering::Greater,
+            Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let lifted = match rational_parameter_map_at(map, &sample, policy)? {
+            Classification::Decided(lifted) => lifted,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let Some(zero_order) = compare_reals(&lifted, &zero, policy) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        };
+        let Some(unit_order) = compare_reals(&lifted, &one, policy) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        };
+        if zero_order != std::cmp::Ordering::Greater || unit_order != std::cmp::Ordering::Less {
+            continue;
+        }
+        if let Some((_, end, previous_direction)) = runs.last_mut()
+            && *end == index
+            && *previous_direction == direction
+            && !boundaries[index].denominator_root
+        {
+            *end = index + 1;
+        } else {
+            runs.push((index, index + 1, direction));
+        }
+    }
+
+    let mut covered_boundaries = vec![false; boundaries.len()];
+    for (start, end, _) in &runs {
+        covered_boundaries[*start..=*end].fill(true);
+    }
+    let mut domains = Vec::with_capacity(runs.len());
+    for (start, end, direction) in runs {
+        let lifted_start =
+            match rational_parameter_component_boundary_image(&boundaries[start], map, policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+        let lifted_end =
+            match rational_parameter_component_boundary_image(&boundaries[end], map, policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+        match lifted_start.cmp_by_refinement(&lifted_end, policy)? {
+            Classification::Decided(order) if order == direction => {}
+            Classification::Decided(_) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        domains.push((
+            RationalParameterComponentDomain {
+                retained_start: boundaries[start].parameter.clone(),
+                retained_end: boundaries[end].parameter.clone(),
+                lifted_start,
+                lifted_end,
+            },
+            direction,
+        ));
+    }
+
+    let mut isolated_points = Vec::new();
+    let last_boundary = boundaries.len().saturating_sub(1);
+    for (index, boundary) in boundaries.iter().enumerate() {
+        if covered_boundaries[index]
+            || (!boundary.zero_image
+                && !boundary.unit_image
+                && index != 0
+                && index != last_boundary)
+        {
+            continue;
+        }
+        let lifted_parameter =
+            match rational_parameter_component_boundary_image(boundary, map, policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+        isolated_points.push(RationalParameterComponentPoint {
+            retained_parameter: boundary.parameter.clone(),
+            lifted_parameter,
+        });
     }
     Ok(Classification::Decided(Some(
-        RationalParameterComponentDomain {
-            retained_start,
-            retained_end,
-            lifted_start,
-            lifted_end,
+        RationalParameterComponentPartition {
+            domains,
+            isolated_points,
         },
     )))
 }
 
-fn rational_parameter_map_boundary(
-    map: &CurveIntersectionParameterLiftMap,
-    unit_boundary: bool,
+fn polynomial_unit_interval_roots(
+    coefficients: &[Real],
     policy: &CurveContext,
-) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    let coefficients = if unit_boundary {
-        polynomial_subtract(&map.numerator_coefficients, &map.denominator_coefficients)
-    } else {
-        map.numerator_coefficients.clone()
-    };
-    let polynomial = match polynomial_from_coefficients(coefficients, policy)? {
+) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
+    let polynomial = match polynomial_from_coefficients(coefficients.to_vec(), policy)? {
         Classification::Decided(Some(polynomial)) => polynomial,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    match polynomial.isolate_unit_interval_roots(policy)? {
-        Classification::Decided(roots) if roots.len() == 1 => {
-            Ok(Classification::Decided(roots.into_iter().next()))
+    Ok(polynomial.isolate_unit_interval_roots(policy)?.map(Some))
+}
+
+fn insert_rational_parameter_component_boundary(
+    boundaries: &mut Vec<RationalParameterComponentBoundary>,
+    boundary: RationalParameterComponentBoundary,
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    let mut index = 0;
+    while index < boundaries.len() {
+        match boundary
+            .parameter
+            .cmp_by_refinement(&boundaries[index].parameter, policy)?
+        {
+            Classification::Decided(std::cmp::Ordering::Less) => break,
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                boundaries[index].denominator_root |= boundary.denominator_root;
+                boundaries[index].zero_image |= boundary.zero_image;
+                boundaries[index].unit_image |= boundary.unit_image;
+                return Ok(Classification::Decided(()));
+            }
+            Classification::Decided(std::cmp::Ordering::Greater) => index += 1,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         }
-        Classification::Decided(_) => Ok(Classification::Decided(None)),
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+    boundaries.insert(index, boundary);
+    Ok(Classification::Decided(()))
+}
+
+fn rational_parameter_component_boundary_image(
+    boundary: &RationalParameterComponentBoundary,
+    map: &CurveIntersectionParameterLiftMap,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    if boundary.denominator_root {
+        return Ok(Classification::Decided(None));
+    }
+    if boundary.zero_image {
+        return Ok(Classification::Decided(Some(BezierParameter2::Exact(
+            Real::zero(),
+        ))));
+    }
+    if boundary.unit_image {
+        return Ok(Classification::Decided(Some(BezierParameter2::Exact(
+            Real::one(),
+        ))));
+    }
+    rational_parameter_image(
+        &boundary.parameter,
+        &map.numerator_coefficients,
+        &map.denominator_coefficients,
+        policy,
+    )
+}
+
+fn rational_parameter_component_overlap_from_domain(
+    retained_parameter: CurveResultantParameter,
+    domain: RationalParameterComponentDomain,
+    direction: std::cmp::Ordering,
+) -> RationalBezierIntersectionOverlap2 {
+    let orientation = match direction {
+        std::cmp::Ordering::Less => RationalBezierOverlapOrientation2::Same,
+        std::cmp::Ordering::Greater => RationalBezierOverlapOrientation2::Reversed,
+        std::cmp::Ordering::Equal => unreachable!("a component domain has nonzero derivative"),
+    };
+    match (retained_parameter, direction) {
+        (CurveResultantParameter::First, _) => {
+            RationalBezierIntersectionOverlap2::from_certified_parameters(
+                domain.retained_start,
+                domain.retained_end,
+                domain.lifted_start,
+                domain.lifted_end,
+                orientation,
+            )
+        }
+        (CurveResultantParameter::Second, std::cmp::Ordering::Less) => {
+            RationalBezierIntersectionOverlap2::from_certified_parameters(
+                domain.lifted_start,
+                domain.lifted_end,
+                domain.retained_start,
+                domain.retained_end,
+                orientation,
+            )
+        }
+        (CurveResultantParameter::Second, std::cmp::Ordering::Greater) => {
+            RationalBezierIntersectionOverlap2::from_certified_parameters(
+                domain.lifted_end,
+                domain.lifted_start,
+                domain.retained_end,
+                domain.retained_start,
+                orientation,
+            )
+        }
+        (CurveResultantParameter::Second, std::cmp::Ordering::Equal) => {
+            unreachable!("a component domain has nonzero derivative")
+        }
     }
 }
 
-fn polynomial_is_rootless_on_unit_interval(
-    coefficients: &[Real],
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    let polynomial = match polynomial_from_coefficients(coefficients.to_vec(), policy)? {
-        Classification::Decided(Some(polynomial)) => polynomial,
-        Classification::Decided(None) => return Ok(Classification::Decided(false)),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    Ok(polynomial
-        .isolate_unit_interval_roots(policy)?
-        .map(|roots| roots.is_empty()))
+fn rational_parameter_component_pair(
+    retained_parameter: CurveResultantParameter,
+    point: RationalParameterComponentPoint,
+) -> BezierParallelIntersectionParameterPair2 {
+    match retained_parameter {
+        CurveResultantParameter::First => BezierParallelIntersectionParameterPair2 {
+            parallel_parameter: point.retained_parameter,
+            other_parameter: point.lifted_parameter,
+        },
+        CurveResultantParameter::Second => BezierParallelIntersectionParameterPair2 {
+            parallel_parameter: point.lifted_parameter,
+            other_parameter: point.retained_parameter,
+        },
+    }
 }
 
 fn polynomial_is_rootless_on_parameter_range(
@@ -4802,56 +5088,6 @@ fn polynomial_is_rootless_on_parameter_range(
             std::cmp::Ordering::Equal | std::cmp::Ordering::Less
         ) {
             return Ok(Classification::Decided(false));
-        }
-    }
-    Ok(Classification::Decided(true))
-}
-
-fn polynomial_has_weak_unit_interval_sign(
-    coefficients: &[Real],
-    expected_sign: RealSign,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    debug_assert!(matches!(
-        expected_sign,
-        RealSign::Positive | RealSign::Negative
-    ));
-    let polynomial = match polynomial_from_coefficients(coefficients.to_vec(), policy)? {
-        Classification::Decided(Some(polynomial)) => polynomial,
-        Classification::Decided(None) => return Ok(Classification::Decided(false)),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let roots = match polynomial.isolate_unit_interval_roots(policy)? {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let mut boundaries = Vec::with_capacity(roots.len() + 2);
-    boundaries.push(BezierParameter2::Exact(Real::zero()));
-    boundaries.extend(roots);
-    boundaries.push(BezierParameter2::Exact(Real::one()));
-    for pair in boundaries.windows(2) {
-        match pair[0].cmp_by_refinement(&pair[1], policy)? {
-            Classification::Decided(std::cmp::Ordering::Equal) => continue,
-            Classification::Decided(std::cmp::Ordering::Less) => {}
-            Classification::Decided(std::cmp::Ordering::Greater) => {
-                return Ok(Classification::Decided(false));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        let sample = match pair[0].strict_rational_between_ordered(&pair[1], policy)? {
-            Classification::Decided(sample) => sample,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        match real_sign(&polynomial_evaluate(coefficients, &sample), policy) {
-            Some(sign) if sign == expected_sign => {}
-            Some(RealSign::Zero | RealSign::Positive | RealSign::Negative) => {
-                return Ok(Classification::Decided(false));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
     }
     Ok(Classification::Decided(true))
@@ -6210,15 +6446,24 @@ mod conversion_tests {
                 vec![Real::from(-1_i8), Real::from(4_i8)],
                 vec![Real::from(2_i8)],
             );
-            let Classification::Decided(Some(increasing)) = rational_parameter_component_domain(
-                &increasing,
-                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-                (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
-                std::cmp::Ordering::Less,
-                &policy,
-            )
-            .unwrap() else {
+            let derivative = polynomial_subtract(
+                &polynomial_multiply(
+                    &polynomial_derivative(&increasing.numerator_coefficients),
+                    &increasing.denominator_coefficients,
+                ),
+                &polynomial_multiply(
+                    &increasing.numerator_coefficients,
+                    &polynomial_derivative(&increasing.denominator_coefficients),
+                ),
+            );
+            let Classification::Decided(Some(increasing)) =
+                rational_parameter_component_domains(&increasing, &derivative, &policy).unwrap()
+            else {
                 panic!("increasing rational map did not clip");
+            };
+            assert!(increasing.isolated_points.is_empty());
+            let [(increasing, std::cmp::Ordering::Less)] = increasing.domains.as_slice() else {
+                panic!("increasing map did not produce one increasing domain");
             };
             assert_eq!(
                 increasing.retained_start.as_exact(),
@@ -6235,15 +6480,24 @@ mod conversion_tests {
                 vec![Real::from(3_i8), Real::from(-4_i8)],
                 vec![Real::from(2_i8)],
             );
-            let Classification::Decided(Some(decreasing)) = rational_parameter_component_domain(
-                &decreasing,
-                (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
-                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-                std::cmp::Ordering::Greater,
-                &policy,
-            )
-            .unwrap() else {
+            let derivative = polynomial_subtract(
+                &polynomial_multiply(
+                    &polynomial_derivative(&decreasing.numerator_coefficients),
+                    &decreasing.denominator_coefficients,
+                ),
+                &polynomial_multiply(
+                    &decreasing.numerator_coefficients,
+                    &polynomial_derivative(&decreasing.denominator_coefficients),
+                ),
+            );
+            let Classification::Decided(Some(decreasing)) =
+                rational_parameter_component_domains(&decreasing, &derivative, &policy).unwrap()
+            else {
                 panic!("decreasing rational map did not clip");
+            };
+            assert!(decreasing.isolated_points.is_empty());
+            let [(decreasing, std::cmp::Ordering::Greater)] = decreasing.domains.as_slice() else {
+                panic!("decreasing map did not produce one decreasing domain");
             };
             assert_eq!(
                 decreasing.retained_start.as_exact(),
@@ -6282,37 +6536,129 @@ mod conversion_tests {
                     &polynomial_derivative(&map.denominator_coefficients),
                 ),
             );
-            assert_eq!(
-                polynomial_has_weak_unit_interval_sign(
-                    &derivative_numerator,
-                    RealSign::Positive,
-                    &policy,
-                )
-                .unwrap(),
-                Classification::Decided(true)
-            );
-            assert_eq!(
-                polynomial_has_weak_unit_interval_sign(
-                    &derivative_numerator,
-                    RealSign::Negative,
-                    &policy,
-                )
-                .unwrap(),
-                Classification::Decided(false)
-            );
-
-            let Classification::Decided(Some(domain)) = rational_parameter_component_domain(
-                &map,
-                (Real::from(3_i8) / Real::from(8_i8)).unwrap(),
-                (Real::from(5_i8) / Real::from(8_i8)).unwrap(),
-                std::cmp::Ordering::Less,
-                &policy,
-            )
-            .unwrap() else {
+            let Classification::Decided(Some(domains)) =
+                rational_parameter_component_domains(&map, &derivative_numerator, &policy).unwrap()
+            else {
                 panic!("weakly monotone full-domain map was rejected");
+            };
+            assert!(domains.isolated_points.is_empty());
+            let [(domain, std::cmp::Ordering::Less)] = domains.domains.as_slice() else {
+                panic!("stationary increasing map was not merged into one domain");
             };
             assert_eq!(domain.retained_start.as_exact(), Some(&Real::zero()));
             assert_eq!(domain.retained_end.as_exact(), Some(&Real::one()));
+        }
+    }
+
+    #[test]
+    fn rational_component_domains_split_noninjective_and_pole_separated_maps() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let noninjective = parameter_lift_map(
+                vec![Real::zero(), Real::from(4_i8), Real::from(-4_i8)],
+                vec![Real::one()],
+            );
+            let derivative = polynomial_subtract(
+                &polynomial_multiply(
+                    &polynomial_derivative(&noninjective.numerator_coefficients),
+                    &noninjective.denominator_coefficients,
+                ),
+                &polynomial_multiply(
+                    &noninjective.numerator_coefficients,
+                    &polynomial_derivative(&noninjective.denominator_coefficients),
+                ),
+            );
+            let Classification::Decided(Some(domains)) =
+                rational_parameter_component_domains(&noninjective, &derivative, &policy).unwrap()
+            else {
+                panic!("noninjective finite map did not partition");
+            };
+            let [
+                (ascending, std::cmp::Ordering::Less),
+                (descending, std::cmp::Ordering::Greater),
+            ] = domains.domains.as_slice()
+            else {
+                panic!("noninjective map did not produce two oriented domains");
+            };
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            assert_eq!(ascending.retained_start.as_exact(), Some(&Real::zero()));
+            assert_eq!(ascending.retained_end.as_exact(), Some(&half));
+            assert_eq!(ascending.lifted_start.as_exact(), Some(&Real::zero()));
+            assert_eq!(ascending.lifted_end.as_exact(), Some(&Real::one()));
+            assert_eq!(descending.retained_start.as_exact(), Some(&half));
+            assert_eq!(descending.retained_end.as_exact(), Some(&Real::one()));
+            assert_eq!(descending.lifted_start.as_exact(), Some(&Real::one()));
+            assert_eq!(descending.lifted_end.as_exact(), Some(&Real::zero()));
+
+            let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+            let pole_split = parameter_lift_map(
+                vec![-quarter.clone(), Real::one()],
+                vec![Real::from(-1_i8), Real::from(2_i8)],
+            );
+            let derivative = polynomial_subtract(
+                &polynomial_multiply(
+                    &polynomial_derivative(&pole_split.numerator_coefficients),
+                    &pole_split.denominator_coefficients,
+                ),
+                &polynomial_multiply(
+                    &pole_split.numerator_coefficients,
+                    &polynomial_derivative(&pole_split.denominator_coefficients),
+                ),
+            );
+            let Classification::Decided(Some(domains)) =
+                rational_parameter_component_domains(&pole_split, &derivative, &policy).unwrap()
+            else {
+                panic!("pole-separated finite branches did not partition");
+            };
+            let [
+                (first, std::cmp::Ordering::Greater),
+                (second, std::cmp::Ordering::Greater),
+            ] = domains.domains.as_slice()
+            else {
+                panic!("pole-separated map did not retain both finite branches");
+            };
+            let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+            assert_eq!(first.retained_start.as_exact(), Some(&Real::zero()));
+            assert_eq!(first.retained_end.as_exact(), Some(&quarter));
+            assert_eq!(first.lifted_start.as_exact(), Some(&quarter));
+            assert_eq!(first.lifted_end.as_exact(), Some(&Real::zero()));
+            assert_eq!(second.retained_start.as_exact(), Some(&three_quarters));
+            assert_eq!(second.retained_end.as_exact(), Some(&Real::one()));
+            assert_eq!(second.lifted_start.as_exact(), Some(&Real::one()));
+            assert_eq!(second.lifted_end.as_exact(), Some(&three_quarters));
+        }
+    }
+
+    #[test]
+    fn rational_component_domains_retain_isolated_closed_square_touches() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let tangent_touch = parameter_lift_map(
+                vec![Real::from(-1_i8), Real::from(4_i8), Real::from(-4_i8)],
+                vec![Real::one()],
+            );
+            let derivative = polynomial_subtract(
+                &polynomial_multiply(
+                    &polynomial_derivative(&tangent_touch.numerator_coefficients),
+                    &tangent_touch.denominator_coefficients,
+                ),
+                &polynomial_multiply(
+                    &tangent_touch.numerator_coefficients,
+                    &polynomial_derivative(&tangent_touch.denominator_coefficients),
+                ),
+            );
+            let Classification::Decided(Some(partition)) =
+                rational_parameter_component_domains(&tangent_touch, &derivative, &policy).unwrap()
+            else {
+                panic!("isolated closed-square component touch was not partitioned");
+            };
+            assert!(partition.domains.is_empty());
+            let [point] = partition.isolated_points.as_slice() else {
+                panic!("isolated component touch was not retained exactly once");
+            };
+            assert_eq!(
+                point.retained_parameter.as_exact(),
+                Some(&(Real::one() / Real::from(2_i8)).unwrap())
+            );
+            assert_eq!(point.lifted_parameter.as_exact(), Some(&Real::zero()));
         }
     }
 
@@ -6342,9 +6688,13 @@ mod conversion_tests {
                 .unwrap(),
                 Classification::Decided(false)
             );
+            let zero = BezierParameter2::Exact(Real::zero());
+            let one = BezierParameter2::Exact(Real::one());
             assert_eq!(
-                polynomial_is_rootless_on_unit_interval(
+                polynomial_is_rootless_on_parameter_range(
                     &[Real::from(-1_i8), Real::from(2_i8)],
+                    &zero,
+                    &one,
                     &policy,
                 )
                 .unwrap(),
@@ -6375,7 +6725,7 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let equations = [identity_equation.clone(), identity_equation.clone()];
-            let Classification::Decided(Some(overlap)) = certify_rational_parameter_component_map(
+            let Classification::Decided(Some(evidence)) = certify_rational_parameter_component_map(
                 &equations,
                 &selected_branch,
                 CurveResultantParameter::First,
@@ -6385,6 +6735,10 @@ mod conversion_tests {
             .unwrap() else {
                 panic!("selected identity component was not certified");
             };
+            assert!(evidence.isolated_pairs.is_empty());
+            let [overlap] = evidence.overlaps.as_ref() else {
+                panic!("identity component did not produce exactly one overlap");
+            };
             assert_eq!(
                 overlap.first_range().exact_endpoints(),
                 Some((&Real::zero(), &Real::one()))
@@ -6393,18 +6747,19 @@ mod conversion_tests {
                 overlap.second_range().exact_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
-            assert_eq!(
-                certify_rational_parameter_component_map(
-                    &equations,
-                    &opposite_branch,
-                    CurveResultantParameter::First,
-                    &identity,
-                    &policy,
-                )
-                .unwrap(),
-                Classification::Decided(None)
-            );
-            assert_eq!(
+            let Classification::Decided(Some(opposite)) = certify_rational_parameter_component_map(
+                &equations,
+                &opposite_branch,
+                CurveResultantParameter::First,
+                &identity,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("opposite component was not decided");
+            };
+            assert!(opposite.overlaps.is_empty());
+            assert!(opposite.isolated_pairs.is_empty());
+            assert!(matches!(
                 certify_rational_parameter_component_map(
                     &equations,
                     &vanishing_branch,
@@ -6414,19 +6769,128 @@ mod conversion_tests {
                 )
                 .unwrap(),
                 Classification::Decided(None)
-            );
+            ));
 
             let pole_equations = [pole_equation.clone(), pole_equation.clone()];
+            let Classification::Decided(Some(evidence)) = certify_rational_parameter_component_map(
+                &pole_equations,
+                &selected_branch,
+                CurveResultantParameter::First,
+                &pole_map,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("finite component domain before a pole was not retained");
+            };
+            assert!(evidence.isolated_pairs.is_empty());
+            let [overlap] = evidence.overlaps.as_ref() else {
+                panic!("pole-split map did not produce one finite overlap");
+            };
             assert_eq!(
-                certify_rational_parameter_component_map(
-                    &pole_equations,
-                    &selected_branch,
-                    CurveResultantParameter::First,
-                    &pole_map,
-                    &policy,
-                )
-                .unwrap(),
-                Classification::Decided(None)
+                overlap.first_range().exact_endpoints(),
+                Some((&Real::zero(), &(Real::one() / Real::from(3_i8)).unwrap()))
+            );
+            assert_eq!(
+                overlap.second_range().exact_endpoints(),
+                Some((&Real::zero(), &Real::one()))
+            );
+        }
+    }
+
+    #[test]
+    fn rational_component_system_retains_residual_isolated_candidates() {
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::from(-1_i8)],
+            vec![Real::one()],
+        ]);
+        let first_residual =
+            BivariatePolynomial::new(vec![vec![-quarter.clone()], vec![Real::one()]]);
+        let second_residual =
+            BivariatePolynomial::new(vec![vec![-three_quarters.clone(), Real::one()]]);
+        let equations = [
+            bivariate_multiply(&component, &first_residual),
+            bivariate_multiply(&component, &second_residual),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                rational_parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("shared component plus residual point was not decomposed");
+            };
+            assert_eq!(system.overlaps.len(), 1);
+            let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters,
+                other_parameters,
+            }) = project_parallel_intersection_system(&system.residual_equations, &policy).unwrap()
+            else {
+                panic!("residual isolated solution was discarded");
+            };
+            assert_eq!(
+                parallel_parameters,
+                vec![BezierParameter2::Exact(quarter.clone())]
+            );
+            assert_eq!(
+                other_parameters,
+                vec![BezierParameter2::Exact(three_quarters.clone())]
+            );
+        }
+    }
+
+    #[test]
+    fn rational_component_probe_is_not_an_authoritative_negative() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        // D=(t-2)(t-3)(t-5) makes every fixed fast probe see the genuine
+        // component D(t)u-N(t) collapse to a nonzero constant. On [0,1],
+        // N/D=t/2-1/D is finite, increasing, and lies strictly inside [0,1].
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::one(), Real::from(-30_i8)],
+            vec![Real::from(15_i8), Real::from(31_i8)],
+            vec![Real::from(-31_i8) * half.clone(), Real::from(-10_i8)],
+            vec![Real::from(5_i8), Real::one()],
+            vec![-half, Real::zero()],
+        ]);
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let first_residual = BivariatePolynomial::new(vec![vec![-quarter], vec![Real::one()]]);
+        let second_residual = BivariatePolynomial::new(vec![vec![-three_quarters, Real::one()]]);
+        let equations = [
+            bivariate_multiply(&component, &first_residual),
+            bivariate_multiply(&component, &second_residual),
+        ];
+        assert!(!bivariate_system_may_have_component(&equations));
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                rational_parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("exact component extraction trusted a speculative negative probe");
+            };
+            let [overlap] = system.overlaps.as_ref() else {
+                panic!("finite component hidden from the fixed probe was not retained");
+            };
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&Real::zero(), &Real::one()))
+            );
+            assert_eq!(
+                overlap.second_range().exact_endpoints(),
+                Some((
+                    &(Real::one() / Real::from(30_i8)).unwrap(),
+                    &(Real::from(5_i8) / Real::from(8_i8)).unwrap()
+                ))
             );
         }
     }

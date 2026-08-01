@@ -3,10 +3,10 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelIntersectionCandidates2,
-    BezierParallelIntersectionContacts2, BezierParallelVerificationOptions, BulgeVertex2,
-    CircularArc2, Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2,
-    CurveRegion2, CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2, OffsetCap,
-    Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
+    BezierParallelVerificationOptions, BulgeVertex2, CircularArc2, Classification, Contour2,
+    CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole, CurveResult,
+    CurveString2, FillRule, LineSeg2, OffsetCap, Point2, QuadraticBezier2, RationalBezier2, Real,
+    Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -472,17 +472,15 @@ fn bench_bezier_parallel_intersections(
     let mut contact_count = 0_usize;
     for _ in 0..iterations {
         let Classification::Decided(contacts) =
-            parallel.intersection_contacts(black_box(other), black_box(&policy))?
+            parallel.intersections(black_box(other), black_box(&policy))?
         else {
             panic!("{name} contact replay became uncertain");
         };
-        contact_count += black_box(match contacts {
-            BezierParallelIntersectionContacts2::NoIntersection => 0,
-            BezierParallelIntersectionContacts2::Contacts(contacts) => contacts.len(),
-            BezierParallelIntersectionContacts2::Overlap(_) => 1,
-            BezierParallelIntersectionContacts2::Incomplete { contacts, .. } => contacts.len(),
-            BezierParallelIntersectionContacts2::DegenerateResultant => 1,
-        });
+        contact_count += black_box(
+            contacts.contacts().len()
+                + contacts.overlaps().len()
+                + usize::from(!contacts.is_complete()),
+        );
     }
     let contact_elapsed = started.elapsed();
     println!(
@@ -634,13 +632,16 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     let mut cold_checksum = 0_usize;
     for _ in 0..cold_iterations {
         let cold_parallel = ph_overlap_source.clone().parallel_left(s(1))?;
-        let Classification::Decided(contacts) = cold_parallel
-            .intersection_contacts(black_box(&ph_overlap_target), &CurveContext::STRICT)?
+        let Classification::Decided(contacts) =
+            cold_parallel.intersections(black_box(&ph_overlap_target), &CurveContext::STRICT)?
         else {
             panic!("cold PH overlap replay became uncertain");
         };
-        cold_checksum +=
-            black_box(matches!(contacts, BezierParallelIntersectionContacts2::Overlap(_)) as usize);
+        cold_checksum += black_box(
+            (contacts.is_complete()
+                && contacts.contacts().is_empty()
+                && contacts.overlaps().len() == 1) as usize,
+        );
     }
     let elapsed = started.elapsed();
     println!(

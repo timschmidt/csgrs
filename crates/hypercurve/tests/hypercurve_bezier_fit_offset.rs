@@ -2,9 +2,10 @@ use hypercurve::{
     BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierFlatteningOptions,
     BezierLineImageFitRelation, BezierOffsetCandidate2, BezierParallelApproximationCurve2,
     BezierParallelIncidence2, BezierParallelIntersectionCandidates2,
-    BezierParallelIntersectionContacts2, BezierParallelVerificationOptions, BezierParameter2,
-    Classification, CubicBezier2, Curve2, CurveContext, CurveError, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Rational, RationalBezier2,
+    BezierParallelIntersectionContact2, BezierParallelIntersectionSet2,
+    BezierParallelVerificationOptions, BezierParameter2, Classification, CubicBezier2, Curve2,
+    CurveContext, CurveError, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
+    Point2, QuadraticBezier2, Rational, RationalBezier2, RationalBezierIntersectionOverlap2,
     RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
     RationalQuadraticBezier2, Real,
 };
@@ -25,6 +26,37 @@ fn policy() -> CurveContext {
 
 fn q(numerator: i32, denominator: i32) -> Real {
     (r(numerator) / r(denominator)).unwrap()
+}
+
+fn decided_parallel_set(
+    result: Classification<BezierParallelIntersectionSet2>,
+) -> BezierParallelIntersectionSet2 {
+    let Classification::Decided(result) = result else {
+        panic!("parallel intersections remained uncertain");
+    };
+    result
+}
+
+fn only_parallel_contacts(
+    intersections: &BezierParallelIntersectionSet2,
+) -> &[BezierParallelIntersectionContact2] {
+    assert!(intersections.is_complete());
+    assert!(intersections.overlaps().is_empty());
+    intersections.contacts()
+}
+
+fn only_parallel_overlap(
+    intersections: &BezierParallelIntersectionSet2,
+) -> &RationalBezierIntersectionOverlap2 {
+    assert!(intersections.is_complete());
+    assert!(intersections.contacts().is_empty());
+    let [overlap] = intersections.overlaps() else {
+        panic!(
+            "expected one parallel overlap, found {}",
+            intersections.overlaps().len()
+        );
+    };
+    overlap
 }
 
 fn rootless_homogeneous_factor_parabola() -> RationalBezier2 {
@@ -1332,11 +1364,9 @@ fn parallel_rational_intersections_saturate_rootless_homogeneous_axis_content() 
             assert!(other_parameters.contains(&BezierParameter2::Exact(q(1, 2))));
             assert!(other_parameters.contains(&BezierParameter2::Exact(q(5, 8))));
 
-            let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-                parallel.intersection_contacts(vertical, &policy).unwrap()
-            else {
-                panic!("rootless homogeneous axis content did not replay completely");
-            };
+            let intersections =
+                decided_parallel_set(parallel.intersections(vertical, &policy).unwrap());
+            let contacts = only_parallel_contacts(&intersections);
             assert_eq!(contacts.len(), 2);
             assert!(contacts.iter().any(|contact| {
                 contact.point() == &RationalBezierIntersectionPointEvidence2::Exact(p(0, 1))
@@ -1456,11 +1486,9 @@ fn parallel_rational_contacts_replay_exact_pair_and_transversality() {
     let vertical = RationalBezier2::try_new(vec![p(1, 0), p(1, 2)], vec![r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-            parallel.intersection_contacts(&vertical, &policy).unwrap()
-        else {
-            panic!("exact parallel/rational contact was not decided");
-        };
+        let intersections =
+            decided_parallel_set(parallel.intersections(&vertical, &policy).unwrap());
+        let contacts = only_parallel_contacts(&intersections);
         assert_eq!(contacts.len(), 1);
         assert_eq!(
             contacts[0].parallel_parameter(),
@@ -1486,11 +1514,9 @@ fn parallel_rational_contacts_reject_the_squared_opposite_branch() {
     let vertical = RationalBezier2::try_new(vec![p(1, -2), p(1, 2)], vec![r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-            parallel.intersection_contacts(&vertical, &policy).unwrap()
-        else {
-            panic!("selected parallel branch was not decided");
-        };
+        let intersections =
+            decided_parallel_set(parallel.intersections(&vertical, &policy).unwrap());
+        let contacts = only_parallel_contacts(&intersections);
         assert_eq!(contacts.len(), 1);
         assert_eq!(
             contacts[0].parallel_parameter(),
@@ -1521,13 +1547,9 @@ fn parallel_rational_contacts_preserve_negative_distance_and_weight_orientation(
         RationalBezier2::try_new(vec![p(1, -2), p(1, 2)], vec![r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-            right_parallel
-                .intersection_contacts(&vertical, &policy)
-                .unwrap()
-        else {
-            panic!("negative-distance/weight contact was not decided");
-        };
+        let intersections =
+            decided_parallel_set(right_parallel.intersections(&vertical, &policy).unwrap());
+        let contacts = only_parallel_contacts(&intersections);
         assert_eq!(contacts.len(), 1);
         assert_eq!(
             contacts[0].other_parameter(),
@@ -1538,13 +1560,12 @@ fn parallel_rational_contacts_preserve_negative_distance_and_weight_orientation(
             &RationalBezierIntersectionPointEvidence2::Exact(p(1, -1))
         );
 
-        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
+        let intersections = decided_parallel_set(
             rational_source
-                .intersection_contacts(&positive_vertical, &policy)
-                .unwrap()
-        else {
-            panic!("negative source-weight contact was not decided");
-        };
+                .intersections(&positive_vertical, &policy)
+                .unwrap(),
+        );
+        let contacts = only_parallel_contacts(&intersections);
         assert_eq!(contacts.len(), 1);
         assert_eq!(
             contacts[0].other_parameter(),
@@ -1565,11 +1586,9 @@ fn parallel_rational_contacts_replay_one_algebraic_parameter_exactly() {
     let vertical = RationalBezier2::try_new(vec![p(1, 0), p(1, 2)], vec![r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-            parallel.intersection_contacts(&vertical, &policy).unwrap()
-        else {
-            panic!("algebraic/exact parallel contact was not decided");
-        };
+        let intersections =
+            decided_parallel_set(parallel.intersections(&vertical, &policy).unwrap());
+        let contacts = only_parallel_contacts(&intersections);
         assert_eq!(contacts.len(), 1);
         assert!(matches!(
             contacts[0].parallel_parameter(),
@@ -1599,11 +1618,8 @@ fn parallel_rational_contacts_replay_identical_algebraic_parameters() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-            parallel.intersection_contacts(&target, &policy).unwrap()
-        else {
-            panic!("coupled equal-algebraic parallel contact was not decided");
-        };
+        let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
+        let contacts = only_parallel_contacts(&intersections);
         assert_eq!(contacts.len(), 1);
         assert!(matches!(
             (
@@ -1630,12 +1646,9 @@ fn parallel_rational_contacts_lift_coupled_distinct_algebraic_parameters() {
     let target = RationalBezier2::try_new(vec![p(0, 1), p(2, 0)], vec![r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let replay = parallel.intersection_contacts(&target, &policy).unwrap();
-        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-            replay.clone()
-        else {
-            panic!("nullity-one coupled algebraic contact was not lifted: {replay:?}");
-        };
+        let replay = parallel.intersections(&target, &policy).unwrap();
+        let intersections = decided_parallel_set(replay.clone());
+        let contacts = only_parallel_contacts(&intersections);
         assert_eq!(contacts.len(), 1);
         assert!(matches!(
             contacts[0].parallel_parameter(),
@@ -1668,12 +1681,9 @@ fn parallel_rational_lift_pairs_multiple_algebraic_projections_without_cross_pro
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let replay = parallel.intersection_contacts(&target, &policy).unwrap();
-        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-            replay.clone()
-        else {
-            panic!("multiple coupled algebraic contacts were not paired: {replay:?}");
-        };
+        let replay = parallel.intersections(&target, &policy).unwrap();
+        let intersections = decided_parallel_set(replay.clone());
+        let contacts = only_parallel_contacts(&intersections);
         assert_eq!(contacts.len(), 2);
         assert!(contacts.iter().all(|contact| {
             matches!(contact.parallel_parameter(), BezierParameter2::Algebraic(_))
@@ -1691,12 +1701,9 @@ fn parallel_rational_contacts_replay_selected_branch_through_algebraic_lift() {
     let target = RationalBezier2::try_new(vec![p(-1, 1), p(1, 1)], vec![r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let replay = parallel.intersection_contacts(&target, &policy).unwrap();
-        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-            replay.clone()
-        else {
-            panic!("coupled algebraic branch replay was not complete: {replay:?}");
-        };
+        let replay = parallel.intersections(&target, &policy).unwrap();
+        let intersections = decided_parallel_set(replay.clone());
+        let contacts = only_parallel_contacts(&intersections);
         assert_eq!(contacts.len(), 2);
         assert!(contacts.iter().any(|contact| {
             contact.parallel_parameter() == &BezierParameter2::Exact(r(0))
@@ -1718,14 +1725,11 @@ fn parallel_rational_contacts_handle_higher_nullity_algebraic_fibers() {
         RationalBezier2::try_new(vec![p(1, 0), p(1, 0), p(1, 2)], vec![r(1), r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let replay = parallel.intersection_contacts(&target, &policy).unwrap();
+        let replay = parallel.intersections(&target, &policy).unwrap();
         #[cfg(feature = "predicates")]
         {
-            let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-                replay.clone()
-            else {
-                panic!("higher-nullity algebraic fiber was not replayed: {replay:?}");
-            };
+            let intersections = decided_parallel_set(replay.clone());
+            let contacts = only_parallel_contacts(&intersections);
             assert_eq!(contacts.len(), 1);
             assert!(matches!(
                 contacts[0].parallel_parameter(),
@@ -1742,13 +1746,10 @@ fn parallel_rational_contacts_handle_higher_nullity_algebraic_fibers() {
         }
         #[cfg(not(feature = "predicates"))]
         {
-            assert!(matches!(
-                replay,
-                Classification::Decided(BezierParallelIntersectionContacts2::Incomplete {
-                    contacts,
-                    ..
-                }) if contacts.is_empty()
-            ));
+            let intersections = decided_parallel_set(replay);
+            assert!(!intersections.is_complete());
+            assert!(intersections.contacts().is_empty());
+            assert!(intersections.overlaps().is_empty());
         }
     }
 }
@@ -1761,11 +1762,9 @@ fn zero_distance_parallel_contacts_keep_stationary_source_contact() {
     let vertical = RationalBezier2::try_new(vec![p(0, -1), p(0, 1)], vec![r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) =
-            parallel.intersection_contacts(&vertical, &policy).unwrap()
-        else {
-            panic!("zero-distance stationary source contact was not decided");
-        };
+        let intersections =
+            decided_parallel_set(parallel.intersections(&vertical, &policy).unwrap());
+        let contacts = only_parallel_contacts(&intersections);
         assert_eq!(contacts.len(), 1);
         assert_eq!(
             contacts[0].parallel_parameter(),
@@ -1789,17 +1788,12 @@ fn parallel_rational_contacts_resolve_selected_and_opposite_shared_components() 
     let opposite = RationalBezier2::try_new(vec![p(0, -1), p(2, -1)], vec![r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        assert_eq!(
-            parallel.intersection_contacts(&disjoint, &policy).unwrap(),
-            Classification::Decided(BezierParallelIntersectionContacts2::NoIntersection)
-        );
-        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(overlap)) =
-            parallel
-                .intersection_contacts(&coincident, &policy)
-                .unwrap()
-        else {
-            panic!("selected line parallel did not retain its shared component");
-        };
+        let disjoint_intersections =
+            decided_parallel_set(parallel.intersections(&disjoint, &policy).unwrap());
+        assert!(disjoint_intersections.is_empty());
+        let intersections =
+            decided_parallel_set(parallel.intersections(&coincident, &policy).unwrap());
+        let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
             overlap.first_range().exact_endpoints(),
             Some((&Real::zero(), &Real::one()))
@@ -1812,10 +1806,9 @@ fn parallel_rational_contacts_resolve_selected_and_opposite_shared_components() 
             overlap.orientation(),
             RationalBezierOverlapOrientation2::Same
         );
-        assert_eq!(
-            parallel.intersection_contacts(&opposite, &policy).unwrap(),
-            Classification::Decided(BezierParallelIntersectionContacts2::NoIntersection)
-        );
+        let opposite_intersections =
+            decided_parallel_set(parallel.intersections(&opposite, &policy).unwrap());
+        assert!(opposite_intersections.is_empty());
     }
 }
 
@@ -1827,11 +1820,9 @@ fn parallel_rational_contacts_retain_partial_and_reversed_overlap_ranges() {
     let partial = RationalBezier2::try_new(vec![p(1, 1), p(3, 1)], vec![r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(overlap)) =
-            parallel.intersection_contacts(&partial, &policy).unwrap()
-        else {
-            panic!("partial line parallel overlap was not retained");
-        };
+        let intersections =
+            decided_parallel_set(parallel.intersections(&partial, &policy).unwrap());
+        let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
             overlap.first_range().exact_endpoints(),
             Some((&q(1, 2), &Real::one()))
@@ -1845,13 +1836,12 @@ fn parallel_rational_contacts_retain_partial_and_reversed_overlap_ranges() {
             RationalBezierOverlapOrientation2::Same
         );
 
-        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(reversed)) =
+        let reversed_intersections = decided_parallel_set(
             parallel
-                .intersection_contacts(&partial.reversed(), &policy)
-                .unwrap()
-        else {
-            panic!("reversed line parallel overlap was not retained");
-        };
+                .intersections(&partial.reversed(), &policy)
+                .unwrap(),
+        );
+        let reversed = only_parallel_overlap(&reversed_intersections);
         assert_eq!(
             reversed.first_range().exact_endpoints(),
             Some((&q(1, 2), &Real::one()))
@@ -1886,11 +1876,8 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
             Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
         );
 
-        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(overlap)) =
-            parallel.intersection_contacts(&target, &policy).unwrap()
-        else {
-            panic!("nonlinear rational parameter component did not replay as an overlap");
-        };
+        let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
+        let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
             overlap.first_range().exact_endpoints(),
             Some((&Real::zero(), &Real::one()))
@@ -1910,11 +1897,9 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
         else {
             panic!("rationalized parallel subcurve was not decided");
         };
-        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(partial)) =
-            parallel.intersection_contacts(&partial, &policy).unwrap()
-        else {
-            panic!("partial nonlinear rational component did not retain exact ranges");
-        };
+        let partial_intersections =
+            decided_parallel_set(parallel.intersections(&partial, &policy).unwrap());
+        let partial = only_parallel_overlap(&partial_intersections);
         assert_eq!(
             partial.first_range().exact_endpoints(),
             Some((&q(5, 28), &q(13, 20)))
@@ -1928,13 +1913,9 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
             RationalBezierOverlapOrientation2::Same
         );
 
-        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(reversed)) =
-            parallel
-                .intersection_contacts(&target.reversed(), &policy)
-                .unwrap()
-        else {
-            panic!("reversed nonlinear rational component did not retain orientation");
-        };
+        let reversed_intersections =
+            decided_parallel_set(parallel.intersections(&target.reversed(), &policy).unwrap());
+        let reversed = only_parallel_overlap(&reversed_intersections);
         assert_eq!(
             reversed.first_range().exact_endpoints(),
             Some((&Real::zero(), &Real::one()))
@@ -1947,6 +1928,149 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
             reversed.orientation(),
             RationalBezierOverlapOrientation2::Reversed
         );
+    }
+}
+
+#[test]
+fn parallel_rational_contacts_partition_a_noninjective_parameter_component() {
+    let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 0))
+        .parallel_left(Real::one())
+        .unwrap();
+    // x(u)=4u(1-u) traverses the selected line parallel once in each
+    // direction, meeting at the stationary parameter u=1/2.
+    let target = RationalBezier2::try_new(
+        vec![
+            p(0, 1),
+            p(1, 1),
+            Point2::new(q(4, 3), Real::one()),
+            p(1, 1),
+            p(0, 1),
+        ],
+        vec![Real::one(); 5],
+    )
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
+        assert!(intersections.is_complete(), "{intersections:?}");
+        assert!(intersections.contacts().is_empty());
+        assert_eq!(intersections.overlaps().len(), 2);
+        let same = intersections
+            .overlaps()
+            .iter()
+            .find(|overlap| overlap.orientation() == RationalBezierOverlapOrientation2::Same)
+            .expect("forward noninjective branch was not retained");
+        let reversed = intersections
+            .overlaps()
+            .iter()
+            .find(|overlap| overlap.orientation() == RationalBezierOverlapOrientation2::Reversed)
+            .expect("reverse noninjective branch was not retained");
+        assert_eq!(
+            same.first_range().exact_endpoints(),
+            Some((&Real::zero(), &Real::one()))
+        );
+        assert_eq!(
+            same.second_range().exact_endpoints(),
+            Some((&Real::zero(), &q(1, 2)))
+        );
+        assert_eq!(
+            reversed.first_range().exact_endpoints(),
+            Some((&Real::zero(), &Real::one()))
+        );
+        assert_eq!(
+            reversed.second_range().exact_endpoints(),
+            Some((&Real::one(), &q(1, 2)))
+        );
+    }
+}
+
+#[test]
+fn parallel_rational_contacts_retain_an_isolated_component_domain_touch() {
+    let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 0))
+        .parallel_left(Real::one())
+        .unwrap();
+    // x(u)=-(2u-1)^2 lies outside the parallel's x-domain except for the
+    // stationary touch x=0 at u=1/2. The algebraic equations share a full
+    // parameter component, but its intersection with the closed authored
+    // parameter square is one isolated contact rather than an overlap.
+    let target = RationalBezier2::try_new(
+        vec![
+            p(-1, 1),
+            p(0, 1),
+            Point2::new(q(1, 3), Real::one()),
+            p(0, 1),
+            p(-1, 1),
+        ],
+        vec![Real::one(); 5],
+    )
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
+        let contacts = only_parallel_contacts(&intersections);
+        assert_eq!(contacts.len(), 1);
+        assert_eq!(
+            contacts[0].parallel_parameter(),
+            &BezierParameter2::Exact(Real::zero())
+        );
+        assert_eq!(
+            contacts[0].other_parameter(),
+            &BezierParameter2::Exact(q(1, 2))
+        );
+        assert_eq!(
+            contacts[0].point(),
+            &RationalBezierIntersectionPointEvidence2::Exact(p(0, 1))
+        );
+        assert!(!contacts[0].is_certified_transverse());
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn parallel_rational_component_can_yield_overlaps_and_an_isolated_contact() {
+    let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 0))
+        .parallel_left(Real::one())
+        .unwrap();
+    // x(u)=u(1/2-u)(u-3/4)^2 is inside the parallel domain on
+    // [0,1/2], traversing that small range in both directions, and touches
+    // x=0 once more at the isolated double root u=3/4.
+    let target = RationalBezier2::try_new(
+        vec![
+            p(0, 1),
+            Point2::new(q(9, 128), Real::one()),
+            Point2::new(q(-5, 64), Real::one()),
+            Point2::new(q(7, 128), Real::one()),
+            Point2::new(q(-1, 32), Real::one()),
+        ],
+        vec![Real::one(); 5],
+    )
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
+        assert!(intersections.is_complete(), "{intersections:?}");
+        assert_eq!(intersections.overlaps().len(), 2);
+        let [contact] = intersections.contacts() else {
+            panic!("mixed component did not retain exactly one isolated contact");
+        };
+        assert_eq!(
+            contact.parallel_parameter(),
+            &BezierParameter2::Exact(Real::zero())
+        );
+        assert_eq!(contact.other_parameter(), &BezierParameter2::Exact(q(3, 4)));
+        assert_eq!(
+            contact.point(),
+            &RationalBezierIntersectionPointEvidence2::Exact(p(0, 1))
+        );
+        assert!(
+            intersections
+                .overlaps()
+                .iter()
+                .any(|overlap| overlap.orientation() == RationalBezierOverlapOrientation2::Same)
+        );
+        assert!(intersections.overlaps().iter().any(|overlap| {
+            overlap.orientation() == RationalBezierOverlapOrientation2::Reversed
+        }));
     }
 }
 
@@ -1971,11 +2095,8 @@ fn parallel_rational_contacts_clip_a_component_at_both_curve_domains() {
         else {
             panic!("rationalized target subcurve was not decided");
         };
-        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(overlap)) =
-            parallel.intersection_contacts(&target, &policy).unwrap()
-        else {
-            panic!("two-sided nonlinear component clipping did not produce an overlap");
-        };
+        let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
+        let overlap = only_parallel_overlap(&intersections);
 
         assert_eq!(
             overlap.first_range().exact_endpoints(),
@@ -2023,13 +2144,9 @@ fn zero_distance_non_ph_parallel_reuses_the_exact_source_overlap() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(overlap)) =
-            parallel
-                .intersection_contacts(&same_source, &policy)
-                .unwrap()
-        else {
-            panic!("zero-distance non-PH source overlap was not retained");
-        };
+        let intersections =
+            decided_parallel_set(parallel.intersections(&same_source, &policy).unwrap());
+        let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
             overlap.first_range().exact_endpoints(),
             Some((&Real::zero(), &Real::one()))
@@ -2063,13 +2180,12 @@ fn independently_constructed_ph_parallel_reuses_rational_overlap_authority() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionContacts2::Overlap(overlap)) =
+        let intersections = decided_parallel_set(
             parallel
-                .intersection_contacts(&independently_constructed, &policy)
-                .unwrap()
-        else {
-            panic!("independent PH offset overlap was not retained");
-        };
+                .intersections(&independently_constructed, &policy)
+                .unwrap(),
+        );
+        let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
             overlap.first_range().exact_endpoints(),
             Some((&Real::zero(), &Real::one()))
@@ -2091,17 +2207,17 @@ fn parallel_rational_contacts_inherit_the_approximate_512_terminal() {
     let vertical = RationalBezier2::try_new(vec![p(1, -1), p(1, 1)], vec![r(1), r(1)]).unwrap();
 
     assert_eq!(
-        parallel.intersection_contacts(&vertical, &CurveContext::STRICT),
+        parallel.intersections(&vertical, &CurveContext::STRICT),
         Ok(Classification::Uncertain(
             hypercurve::UncertaintyReason::RealSign
         ))
     );
-    let Classification::Decided(BezierParallelIntersectionContacts2::Contacts(contacts)) = parallel
-        .intersection_contacts(&vertical, &CurveContext::APPROXIMATE_512)
-        .unwrap()
-    else {
-        panic!("APPROXIMATE_512 did not resolve the inherited terminal");
-    };
+    let intersections = decided_parallel_set(
+        parallel
+            .intersections(&vertical, &CurveContext::APPROXIMATE_512)
+            .unwrap(),
+    );
+    let contacts = only_parallel_contacts(&intersections);
     assert_eq!(contacts.len(), 1);
     assert_eq!(
         contacts[0].point(),

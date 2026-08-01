@@ -6192,6 +6192,45 @@ pub(crate) fn rational_parameter_image_matches(
     }
 }
 
+pub(crate) fn rational_parameter_image(
+    source: &BezierParameter2,
+    numerator: &[Real],
+    denominator: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    if let Some(source) = source.as_exact() {
+        let denominator_value = evaluate_power_polynomial(denominator, source);
+        match real_sign(&denominator_value, policy) {
+            Some(RealSign::Positive | RealSign::Negative) => {}
+            Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let value = (evaluate_power_polynomial(numerator, source) / denominator_value)?;
+        return match BezierParameter2::exact(value, policy) {
+            Ok(Classification::Decided(parameter)) => Ok(Classification::Decided(Some(parameter))),
+            Err(CurveError::InvalidBezierParameter) => Ok(Classification::Decided(None)),
+            Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
+            Err(error) => Err(error),
+        };
+    }
+    let BezierParameter2::Algebraic(source) = source else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    };
+    let candidate = match conic_parameter_candidate(
+        source.polynomial().coefficients(),
+        &(numerator.to_vec(), denominator.to_vec()),
+        policy,
+    )? {
+        Classification::Decided(candidate) => candidate,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    real_coefficient_rational_image_parameter(
+        &BezierParameter2::Algebraic(source.clone()),
+        &candidate,
+        policy,
+    )
+}
+
 fn conic_parameter_candidate(
     source_polynomial: &[Real],
     candidate: &(Vec<Real>, Vec<Real>),
