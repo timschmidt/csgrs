@@ -4255,8 +4255,18 @@ fn approximate_projection_axis(
     left: [usize; 2],
     right: [usize; 2],
 ) -> Option<usize> {
-    let left = [0, 1, 2].map(|axis| vertices[left[1]][axis][0] - vertices[left[0]][axis][0]);
-    let right = [0, 1, 2].map(|axis| vertices[right[1]][axis][0] - vertices[right[0]][axis][0]);
+    // This normal only chooses which complete exact projection is tried first;
+    // a zero or non-finite component never proves or rejects a crossing.
+    let left = [
+        vertices[left[1]][0][0] - vertices[left[0]][0][0],
+        vertices[left[1]][1][0] - vertices[left[0]][1][0],
+        vertices[left[1]][2][0] - vertices[left[0]][2][0],
+    ];
+    let right = [
+        vertices[right[1]][0][0] - vertices[right[0]][0][0],
+        vertices[right[1]][1][0] - vertices[right[0]][1][0],
+        vertices[right[1]][2][0] - vertices[right[0]][2][0],
+    ];
     let normal = [
         left[1] * right[2] - left[2] * right[1],
         left[2] * right[0] - left[0] * right[2],
@@ -5449,6 +5459,33 @@ mod tests {
             0,
         );
         assert_eq!(approximate_crossing_sweep_axis(&vertices, &edges), 1);
+    }
+
+    #[test]
+    fn approximate_crossing_projection_keeps_ties_and_nonfinite_components_conservative() {
+        let point = |x, y, z| [[x, x], [y, y], [z, z]];
+        let vertices = [
+            point(0.0, 0.0, 0.0),
+            point(1.0, 0.0, 0.0),
+            point(0.0, 1.0, 1.0),
+            point(f64::MAX, 1.0, 0.0),
+            point(0.0, f64::MAX, 1.0),
+            point(f64::MAX, 0.0, 0.0),
+            point(0.0, f64::MAX, 0.0),
+            point(2.0, 0.0, 0.0),
+        ];
+
+        for (left, right, expected) in [
+            ([0, 1], [0, 2], Some(2)),
+            ([0, 3], [0, 4], Some(1)),
+            ([0, 5], [0, 6], None),
+            ([0, 1], [0, 7], None),
+        ] {
+            assert_eq!(
+                approximate_projection_axis(&vertices, left, right),
+                expected
+            );
+        }
     }
 
     #[test]
