@@ -1,0 +1,290 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "native-circular-boolean-publication",
+  "source_revision": "1ddf7b8d72f1b4b89928accf88272fc7b7c83da0",
+  "benchmark_revision": "ecb8ef744bc9324ee48a716494c5dda5c27b8907",
+  "implementation_revisions": [
+    "92b9477b43bd2912802a50a9be8b6066b976eb54",
+    "5d5449506551ea87703e2d7d7455af8ad6bf0dd9",
+    "763ed05e61d583ef3424726eff905d3ddcc1fa58",
+    "7e2035a12854bd87bc8ab99851538e82ab10041d",
+    "ecb8ef744bc9324ee48a716494c5dda5c27b8907",
+    "1ddf7b8d72f1b4b89928accf88272fc7b7c83da0"
+  ],
+  "historical_control_revision": "92b9477b43bd2912802a50a9be8b6066b976eb54",
+  "dependency_revisions": {
+    "hyperreal": "dd226cb23b348b3983dc63142539c1c733c48757",
+    "hyperlimit": "3e5d8816cd32bba46f48e0c6c13ab7a9da227784",
+    "hypersolve": "b2a279032f4824c635923a6093fe1d342c208da9"
+  },
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "closed_boundary": "Boolean results whose materialized retained boundaries are certified line or circular-conic images publish one exact lazy native contour view",
+    "hard_case": "a native circle against an exact cubic degree elevation of another circle",
+    "noncircular_conics": "remain retained exact curves and deliberately do not claim native circular-arc identity",
+    "authoritative_engine": "all nontrivial results continue through CurveRegionBooleanContext; native publication is a lazy view of that result rather than another Boolean engine",
+    "public_api_growth": false,
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "defects_closed": {
+    "lost_exact_contact_witness": "topology merging now preserves the strongest exact Point2 witness for each physical contact",
+    "degree_elevated_circle_contacts": "retained circle-circle relations recover exact parameters for rational Beziers of any degree, using the retained quadratic frame when present and complete point incidence otherwise",
+    "algebraic_circular_fragments": "selected algebraic-endpoint images with certified circular support lower to exact provenance-bearing rational quadratics",
+    "native_publication": "materialized circular rational-quadratic and general-rational loops lazily publish CircularArc2 contours and exact material/hole roles",
+    "duplicate_recognition": "straight_skeleton and Boolean publication share the canonical rational circular-conic recognizer",
+    "repeated_inverse_elevation": "a retained quadratic frame plus exact lineage interval reconstructs split degree elevations with the quadratic blossom rather than a fresh inverse-degree proof"
+  },
+  "exact_architecture": {
+    "support_cache": "one batch-local exact circle relation is keyed by certified center and squared radius and reused for native arcs, rational quadratics, and general rational Beziers",
+    "parameter_cache": "per-span exact witness parameters are keyed by clone-shared rational data and retained Point2 storage; control-hull bounds reject impossible witnesses before conic inversion",
+    "contact_identity": "clone-shared exact Point2 evidence merges by retained storage before scalar equality, with exact distance proof as the complete fallback",
+    "fragment_lowering": "lowering is an optional exact compaction and never blocks the Boolean if circular materialization cannot be proved",
+    "native_cache": "native contour and role construction remains behind the existing clone-shared native-view cache, avoiding eager Boolean construction cost",
+    "policy": "STRICT accepts only exact certificates; APPROXIMATE_512 may terminate inherited sign/equality predicates at 512 bits and reports consumption while returned points, parameters, conics, and contours remain exact"
+  },
+  "regression_matrix": {
+    "operands": [
+      "native radius-2 circle centered at x=0",
+      "radius-2 circle centered at x=1, decomposed into four rational quadratics and exactly elevated to cubic degree"
+    ],
+    "policies": ["STRICT", "APPROXIMATE_512"],
+    "operations": ["union", "intersection", "difference", "xor"],
+    "total_fragment_counts": [8, 4, 6, 12],
+    "historical_algebraic_endpoint_fragment_counts": [4, 4, 4, 8],
+    "candidate_algebraic_endpoint_fragment_counts": [0, 0, 0, 0],
+    "candidate_native_contours_available_for_every_result": true,
+    "returned_geometry_approximated": false,
+    "result": "pass"
+  },
+  "paired_release_elevated_circle": {
+    "command": "taskset -c 14 HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=elevated-circles HYPERCURVE_CURVE_REGION_BATCH_MODE=shared HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=1000 {historical,candidate curve_region_boolean_batch binary}",
+    "method": "one warm-up followed by eleven alternating-order matched process pairs; both binaries use identical current dependency revisions and toolchain",
+    "historical_nanoseconds_per_batch": [
+      687472,
+      697212,
+      685571,
+      681545,
+      680628,
+      717788,
+      680860,
+      681605,
+      691745,
+      680213,
+      687170
+    ],
+    "candidate_nanoseconds_per_batch": [
+      957510,
+      961821,
+      965828,
+      964036,
+      971234,
+      967620,
+      974205,
+      973704,
+      960580,
+      970278,
+      960246
+    ],
+    "historical_median_nanoseconds": 685571,
+    "candidate_median_nanoseconds": 965828,
+    "median_change_percent": 40.879355,
+    "paired_geometric_mean_change_percent": 40.364505,
+    "interpretation": "the historical result is not equivalent: it retains unresolved algebraic endpoint fragments and cannot publish native contours; the measured premium is the exact native completion cost"
+  },
+  "candidate_shared_topology_benchmark": {
+    "command": "taskset -c 14 HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=elevated-circles HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=200 HYPERCURVE_CURVE_REGION_BATCH_MODE={independent,shared} candidate curve_region_boolean_batch binary",
+    "independent_nanoseconds_per_batch": [
+      3084541,
+      3080384,
+      3061798,
+      3087461,
+      3150848,
+      3141047,
+      3090785,
+      3126161,
+      3112050,
+      3107498,
+      3125580
+    ],
+    "shared_nanoseconds_per_batch": [
+      969065,
+      959310,
+      972508,
+      948807,
+      1032193,
+      1000518,
+      959341,
+      959171,
+      961392,
+      955620,
+      989805
+    ],
+    "independent_median_nanoseconds": 3107498,
+    "shared_median_nanoseconds": 961392,
+    "median_shared_speedup": 3.232290,
+    "paired_geometric_mean_shared_speedup": 3.191785
+  },
+  "already_complete_native_controls": {
+    "native_circles": {
+      "iterations_per_process": 500,
+      "historical_nanoseconds_per_batch": [
+        1142646,
+        1151054,
+        1168000,
+        1159202,
+        1170104,
+        1151737,
+        1176347,
+        1142496,
+        1155762,
+        1165970,
+        1171064
+      ],
+      "candidate_nanoseconds_per_batch": [
+        953363,
+        935951,
+        945101,
+        936944,
+        956271,
+        933824,
+        955443,
+        958563,
+        939825,
+        947853,
+        937841
+      ],
+      "historical_median_nanoseconds": 1159202,
+      "candidate_median_nanoseconds": 945101,
+      "median_change_percent": -18.469689,
+      "paired_geometric_mean_change_percent": -18.451458
+    },
+    "native_capsules": {
+      "iterations_per_process": 1000,
+      "historical_nanoseconds_per_batch": [
+        553508,
+        549108,
+        553180,
+        563081,
+        548947,
+        545804,
+        549686,
+        549531,
+        547401,
+        550345,
+        558386
+      ],
+      "candidate_nanoseconds_per_batch": [
+        444398,
+        456245,
+        446449,
+        454194,
+        444664,
+        448078,
+        451288,
+        459993,
+        446592,
+        457410,
+        451864
+      ],
+      "historical_median_nanoseconds": 549686,
+      "candidate_median_nanoseconds": 451288,
+      "median_change_percent": -17.900765,
+      "paired_geometric_mean_change_percent": -18.255735
+    },
+    "candidate_elevated_vs_native_circle_median_percent": 2.193099,
+    "interpretation": "native publication is deferred, and retained Point2 identity eliminates repeated exact equality proofs on already-complete circular paths"
+  },
+  "callgrind": {
+    "command": "HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=elevated-circles HYPERCURVE_CURVE_REGION_BATCH_MODE=shared HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=1 valgrind --tool=callgrind curve_region_boolean_batch",
+    "historical_instructions": 35240308,
+    "candidate_instructions": 42786356,
+    "instruction_delta": 7546048,
+    "instruction_change_percent": 21.413116,
+    "artifacts": [
+      "/tmp/hypercurve-elevated-circle-parent-matched.callgrind",
+      "/tmp/hypercurve-elevated-circle-candidate-blossom.callgrind"
+    ]
+  },
+  "heaptrack": {
+    "method": "one process with benchmark warm-ups and 100 measured shared batches",
+    "elevated_circles": {
+      "historical_allocation_calls": 771849,
+      "candidate_allocation_calls": 1161461,
+      "allocation_change_percent": 50.477749,
+      "historical_temporary_allocations": 87259,
+      "candidate_temporary_allocations": 36674,
+      "temporary_change_percent": -57.971098,
+      "historical_peak_heap": "266.89K",
+      "candidate_peak_heap": "242.59K",
+      "peak_heap_change_percent": -9.104875,
+      "historical_total_leaked": "72.33K",
+      "candidate_total_leaked": "51.95K"
+    },
+    "native_circles": {
+      "historical_allocation_calls": 1477517,
+      "candidate_allocation_calls": 1181799,
+      "allocation_change_percent": -20.014524,
+      "historical_temporary_allocations": 51344,
+      "candidate_temporary_allocations": 43994,
+      "temporary_change_percent": -14.315207,
+      "historical_peak_heap": "239.97K",
+      "candidate_peak_heap": "233.96K",
+      "peak_heap_change_percent": -2.504480
+    },
+    "artifacts": [
+      "/tmp/hypercurve-elevated-circle-parent-matched-final.zst",
+      "/tmp/hypercurve-elevated-circle-candidate-blossom-final.zst",
+      "/tmp/hypercurve-native-circle-parent-matched-final.zst",
+      "/tmp/hypercurve-native-circle-candidate-matched-final.zst"
+    ]
+  },
+  "matched_release_binary": {
+    "historical_file_bytes": 6512560,
+    "candidate_file_bytes": 6542152,
+    "file_delta_bytes": 29592,
+    "file_delta_percent": 0.454384,
+    "historical_stripped_bytes": 5142744,
+    "candidate_stripped_bytes": 5162144,
+    "stripped_delta_bytes": 19400,
+    "stripped_delta_percent": 0.377231,
+    "historical_text_bytes": 4880558,
+    "candidate_text_bytes": 4899350,
+    "text_delta_bytes": 18792,
+    "text_delta_percent": 0.385038,
+    "historical_loadable_bytes": 5142350,
+    "candidate_loadable_bytes": 5162822,
+    "loadable_delta_bytes": 20472,
+    "loadable_delta_percent": 0.398106
+  },
+  "static_callgraph": {
+    "command": "hyper-callgraph --root {historical,candidate} --format json --crate-name hypercurve",
+    "historical_nodes": 17003,
+    "candidate_nodes": 17064,
+    "node_delta": 61,
+    "historical_edges": 28734,
+    "candidate_edges": 28864,
+    "edge_delta": 130,
+    "artifacts": [
+      "/tmp/hypercurve-native-callgraph-parent-final/callgraph.json",
+      "/tmp/hypercurve-native-callgraph-candidate-final/callgraph.json"
+    ]
+  },
+  "competitive_context": {
+    "like_for_like_exact_degree_elevated_circle_publication_available": false,
+    "claim": "no floating peer result is presented as equivalent to exact retained degree-elevated contact recovery and native contour publication",
+    "existing_unequal_guarantee_reference": "the separately documented mixed line/conic lane remains 61.98x slower than Cavalier binary64 calls and is not used as this checkpoint's acceptance comparator"
+  },
+  "verification": {
+    "all_feature_curve_region_boolean_tests": 29,
+    "no_default_curve_region_boolean_tests": 12,
+    "complete_all_feature_suite": "pass: 270 library tests, every integration target, and doc tests",
+    "complete_no_default_suite": "inherited limitation: 231 of 239 library tests pass; the same eight predicate-disabled rational-moment equality tests fail at historical_control_revision with identical None-versus-Some(Equal) assertions",
+    "no_default_regression_against_historical_control": false,
+    "straight_skeleton_shared_recognizer_test": "pass",
+    "all_feature_clippy_all_targets_deny_warnings": "pass",
+    "no_default_clippy_all_targets_deny_warnings": "pass",
+    "format_and_diff_check": "pass"
+  }
+}

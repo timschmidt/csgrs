@@ -7711,6 +7711,77 @@ Hypersolve all-feature/no-default suites pass. Hypermesh was not modified.
 Complete evidence is in
 [`2026-07-31-projective-cubic-shared-component.json`](benchmarks/checkpoints/2026-07-31-projective-cubic-shared-component.json).
 
+## Native circular Boolean publication checkpoint (2026-07-31)
+
+The authoritative `CurveRegionBooleanContext` now publishes a lazy native
+line/arc view whenever every retained result fragment is provably affine or
+circular. This is a view of the same arrangement result, not a second Boolean
+engine. Rational quadratics and arbitrary-degree rational Beziers retain their
+implicit conic and exact circle support through splitting and reduction. A
+single circular-conic recognizer now serves publication and straight-skeleton
+callers; the historical straight-skeleton copy was deleted.
+
+The hard regression intersects a native circle with a second circle whose four
+rational-quadratic spans were exactly elevated to cubics. One exact support
+relation is shared across every promoted span pair. Exact witness parameters
+are cached by clone-shared curve data and retained `Point2` identity, with an
+exact control-hull rejection before conic inversion. Physical contacts likewise
+merge by retained point identity before falling back to scalar distance proof.
+The result preserves exact `Point2` witnesses, lowers selected endpoint images
+to provenance-bearing rational quadratics, and lazily computes native contours
+and material/hole roles only when requested.
+
+Split elevated curves already carry a certified quadratic root frame and an
+exact lineage interval. Publication now evaluates the quadratic blossom on
+that interval instead of running inverse degree elevation and proving all
+homogeneous residuals again. The first complete implementation recorded
+66,610,605 Callgrind instructions in the focused process; witness reuse and
+lineage reconstruction reduce that to 42,786,356. No finite coordinate,
+tolerance, or sampled carrier is introduced. STRICT requires the exact
+certificates; APPROXIMATE_512 can terminate only inherited predicate decisions
+and still returns the same exact geometry while reporting consumption.
+
+Both policies publish native contours for union, intersection, difference,
+and XOR. Total fragment counts are `[8,4,6,12]`. The historical parent has the
+same totals but leaves `[4,4,4,8]` algebraic-endpoint fragments and cannot
+publish native contours; the candidate leaves none. Eleven matched,
+alternating CPU-14 pairs measure 965.828 us for the complete candidate and
+685.571 us for that incomplete historical result, a 40.88% median completion
+premium. The candidate is only 2.19% slower than its own 945.101 us native
+circle control. One shared candidate arrangement is 3.23x faster than four
+candidate calls.
+
+The already-complete native controls improve materially. Overlapping circles
+move from 1.159 ms to 945.101 us (-18.47% median, -18.45% paired geometric
+mean). Capsules move from 549.686 to 451.288 us (-17.90% median, -18.26%
+paired mean). Heaptrack over the native-circle process reduces allocation
+calls 20.01%, temporary allocations 14.32%, and peak heap 2.50%.
+
+For the newly completed elevated case, exact quadratic-surd witness proof
+raises total allocation calls 50.48% relative to the unresolved historical
+output. Those allocations are short-lived: temporary allocations fall 57.97%,
+peak heap falls from 266.89 to 242.59 KiB (-9.10%), and retained leaked memory
+falls from 72.33 to 51.95 KiB. Callgrind records a 21.41% instruction premium
+over the incomplete historical path, consistent with the wall-clock result.
+
+Matched release size grows 29,592 file bytes, 19,400 stripped bytes (0.377%),
+18,792 text bytes (0.385%), and 20,472 loadable bytes (0.398%). The source
+graph moves from 17,003 nodes/28,734 edges to 17,064/28,864. This sub-half-
+percent cost is accepted for a new exact completion class; eager native
+publication was rejected because it made ordinary circle Booleans about four
+times slower. The retained lazy design instead speeds those ordinary paths.
+
+All 29 all-feature and 12 no-default focused Boolean tests pass, including
+explicit STRICT/APPROXIMATE_512 native-publication and noncircular-conic
+negative regressions. The complete all-feature suite passes: 270 library tests,
+every integration target, the adversarial Boolean corpus, and doc tests. Both
+warning-denied Clippy matrices, formatting, and the shared straight-skeleton
+recognition test pass. The complete no-default suite reaches the same inherited
+eight rational-moment equality failures as the exact parent revision; the
+failures are predicate-disabled `None` results rather than this cut's Boolean
+regressions. Hypermesh was not modified. Complete evidence is in
+[`2026-07-31-native-circular-boolean-publication.json`](benchmarks/checkpoints/2026-07-31-native-circular-boolean-publication.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
