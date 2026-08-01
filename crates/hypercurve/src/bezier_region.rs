@@ -5818,6 +5818,17 @@ fn retained_line_fragment_endpoints(
             start_image,
             end_image,
         } => {
+            if let Some(source_curve) = source_curve {
+                match subcurve_fit_exact_line_image(source_curve, policy)? {
+                    Classification::Decided(BezierLineImageFitRelation::Fit(_)) => {}
+                    Classification::Decided(BezierLineImageFitRelation::NotLine) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
             let start = match retained_line_endpoint_point(
                 start,
                 start_image.as_ref(),
@@ -5850,6 +5861,19 @@ fn retained_line_fragment_endpoints(
             Ok(Classification::Uncertain(UncertaintyReason::Boundary))
         }
     }
+}
+
+pub(crate) fn retained_line_fragment_segment(
+    fragment: &BezierSplitFragment2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<LineSeg2>> {
+    let endpoints = match retained_line_fragment_endpoints(fragment, policy)? {
+        Classification::Decided(endpoints) => endpoints.points,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    LineSeg2::try_new(endpoints.0, endpoints.1).map(Classification::Decided)
 }
 
 fn subcurve_fit_exact_line_image(
@@ -7110,13 +7134,74 @@ mod tests {
     use std::cmp::Ordering;
 
     #[cfg(feature = "predicates")]
-    use crate::CurveCertainty;
+    use crate::{
+        BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial,
+        CurveCertainty,
+    };
     use crate::{
         CircularArc2, CubicBezier2, Curve2, CurvePath2, QuadraticBezier2, RationalQuadraticBezier2,
     };
 
     fn p(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn exact_line_fragment_lowering_rejects_nonlinear_algebraic_source() {
+        let policy = CurveContext::STRICT;
+        let polynomial = BezierParameterPolynomial::try_new_power_basis(
+            vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],
+            &policy,
+        )
+        .expect("the quadratic parameter polynomial is valid");
+        let Classification::Decided(polynomial) = polynomial else {
+            panic!("the exact polynomial must be decided");
+        };
+        let interval = BezierParameterInterval::try_new(
+            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+            (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+            &policy,
+        )
+        .expect("the isolating interval is valid");
+        let Classification::Decided(interval) = interval else {
+            panic!("the exact interval must be decided");
+        };
+        let parameter = BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+            .expect("sqrt(1/2) has one root in the supplied interval");
+        let Classification::Decided(parameter) = parameter else {
+            panic!("the exact algebraic parameter must be decided");
+        };
+
+        // In power form this is `(x, y) = (2t^2 - 1, 2t^3 - t)`.
+        // Both coordinates are exactly zero at the irrational split while the
+        // source image itself is not a line.
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::from(-1_i8), Real::zero()),
+                Point2::new(
+                    Real::from(-1_i8),
+                    (Real::from(-1_i8) / Real::from(3_i8)).unwrap(),
+                ),
+                Point2::new(
+                    (Real::from(-1_i8) / Real::from(3_i8)).unwrap(),
+                    (Real::from(-2_i8) / Real::from(3_i8)).unwrap(),
+                ),
+                Point2::new(Real::one(), Real::one()),
+            ],
+            vec![Real::one(); 4],
+        )
+        .expect("the polynomial cubic has a rational Bezier representation");
+        let split = source
+            .split_at_parameters(&[BezierParameter2::algebraic(parameter)], &policy)
+            .expect("the exact algebraic split is constructible");
+        let Classification::Decided(split) = split else {
+            panic!("the exact algebraic split must be decided");
+        };
+        assert!(matches!(
+            retained_line_fragment_segment(&split.fragments()[0], &policy),
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        ));
     }
 
     #[test]

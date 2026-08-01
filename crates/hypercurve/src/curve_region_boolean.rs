@@ -15,8 +15,9 @@ use crate::{
     BezierSubcurve2, BooleanOp, Classification, Curve2, CurveContext, CurveError, CurveFamily2,
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
     CurveOperation2, CurveOutcome, CurvePathBooleanOperand2, CurveRegion2, ExactCurveError,
-    ExactCurveResult, FillRule, RationalBezier2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RegionPointLocation, UncertaintyReason,
+    ExactCurveResult, FillRule, QuadraticBezier2, RationalBezier2,
+    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    RegionPointLocation, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -388,9 +389,7 @@ impl CurveRegion2 {
         operation: BooleanOp,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        if let Some(region) =
-            boolean_region_without_general_context(self, other, operation, policy)?
-        {
+        if let Some(region) = boolean_trivial_region(self, other, operation)? {
             return Ok(region);
         }
         CurveRegionBooleanContext::try_new(self, other, policy)?
@@ -425,10 +424,10 @@ impl CurveRegion2 {
         // no arrangement at all.
         if self.is_empty() || other.is_empty() || self == other {
             let immediate = [
-                boolean_region_without_general_context(self, other, operations[0], policy)?,
-                boolean_region_without_general_context(self, other, operations[1], policy)?,
-                boolean_region_without_general_context(self, other, operations[2], policy)?,
-                boolean_region_without_general_context(self, other, operations[3], policy)?,
+                boolean_trivial_region(self, other, operations[0])?,
+                boolean_trivial_region(self, other, operations[1])?,
+                boolean_trivial_region(self, other, operations[2])?,
+                boolean_trivial_region(self, other, operations[3])?,
             ];
             return Ok(CurveRegionBooleanResults2 {
                 regions: Box::new(
@@ -1432,40 +1431,16 @@ fn subcurve_is_strict_line_image(curve: &BezierSubcurve2) -> bool {
     )
 }
 
-fn boolean_region_without_general_context(
+fn boolean_trivial_region(
     first: &CurveRegion2,
     second: &CurveRegion2,
     operation: BooleanOp,
-    policy: &CurveContext,
 ) -> ExactCurveResult<Option<CurveRegion2>> {
     if first.is_empty() || second.is_empty() {
         return empty_operand_result(first, second, operation).map(Some);
     }
     if first == second {
         return identical_operand_result(first, operation).map(Some);
-    }
-
-    // Keep the mature line/arc Boolean kernel as an implementation detail of
-    // the unified carrier. Promotion retains the exact source
-    // `LineArcRegion2`, so immediate operations can bypass general carrier and
-    // intersection construction without segmenting curves.
-    let invalid =
-        |cause| ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, cause);
-    if let (Classification::Decided(first), Classification::Decided(second)) = (
-        first.native_line_arc_region(policy).map_err(invalid)?,
-        second.native_line_arc_region(policy).map_err(invalid)?,
-    ) {
-        match first
-            .boolean_region(second, operation, FillRule::NonZero, policy)
-            .map_err(invalid)?
-        {
-            Classification::Decided(region) => {
-                return CurveRegion2::try_from_line_arc_region_raw(&region, policy)
-                    .map(Some)
-                    .map_err(|error| error.with_operation(CurveOperation2::Boolean));
-            }
-            Classification::Uncertain(_) => {}
-        }
     }
     Ok(None)
 }
@@ -1537,7 +1512,7 @@ fn build_region_carriers(
     let mut carriers = Vec::new();
     for (loop_index, boundary_loop) in region.boundary_loops().iter().enumerate() {
         for (fragment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
-            let (curve, start, end, reversed) = match fragment {
+            let (mut curve, mut start, mut end, mut reversed) = match fragment {
                 BezierSplitFragment2::Materialized { curve, .. } => (
                     curve.clone(),
                     BezierParameter2::Exact(crate::Real::zero()),
@@ -1562,11 +1537,26 @@ fn build_region_carriers(
                     ));
                 }
             };
+            let family = subcurve_family(&curve);
+            let already_affine = matches!(
+                &curve,
+                BezierSubcurve2::Quadratic(curve)
+                    if curve.retained_exact_line_image().is_some()
+            );
+            if !already_affine
+                && let Ok(Classification::Decided(line)) =
+                    crate::bezier_region::retained_line_fragment_segment(fragment, policy)
+            {
+                curve = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line));
+                start = BezierParameter2::Exact(crate::Real::zero());
+                end = BezierParameter2::Exact(crate::Real::one());
+                reversed = false;
+            }
             carriers.push(RegionCarrier {
                 operand,
                 loop_index,
                 fragment_index,
-                family: subcurve_family(&curve),
+                family,
                 curve,
                 start,
                 end,
