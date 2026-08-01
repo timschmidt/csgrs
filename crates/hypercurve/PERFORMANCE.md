@@ -7463,6 +7463,46 @@ warning-denied Clippy feature matrices, formatting, and the exact pathological
 gate pass. Hypermesh was not modified. Complete evidence is in
 [`2026-07-31-general-pair-curve-region-policy.json`](benchmarks/checkpoints/2026-07-31-general-pair-curve-region-policy.json).
 
+## Retained overlap-clipping checkpoint (2026-07-31)
+
+Second-generation Boolean operands can retain algebraic subranges of different
+exact parameterizations of the same image. A quadratic cap and its exact cubic
+degree elevation, clipped independently and then combined, previously reached
+the identity-only overlap clip and returned
+`Blocked(Boolean, QuadraticBezier, Unsupported)`. The same failure occurred
+when the cubic parameterization was reversed.
+
+Overlap clipping now proves projective control-net equivalence after exact
+degree alignment, transports forward parameters identically, and transports
+reversed parameters through an exact unit complement. For an algebraic
+parameter, the complement uses Horner composition of its defining polynomial
+with `1 - t`, reverses the certified singleton isolator, and preserves known
+simple-root evidence. No root or coordinate is approximated. The forward and
+reversed retained-region chains now produce the correct union, intersection,
+difference, and XOR under `STRICT`.
+
+The same clip routine now serves public retained intersection evidence and
+Boolean topology; the second copy is deleted. One provenance-preserving
+`RationalBezier2::try_from_subcurve` implementation also replaces the separate
+`Curve2` and `CurveRegion2` rationalization bodies. If either carrier misses a
+source overlap range, the positive-length clipped overlap is now immediately
+and correctly empty.
+
+Eleven repeated alternating-order, CPU-pinned all-feature processes measured
+491.554 ms for the candidate and 489.325 ms for its parent. The +0.46% median
+and -0.34% paired geometric mean classify throughput as neutral. Heaptrack
+adds 151 allocation calls and 307 temporary classifications over all 67 cells,
+with unchanged 34.70 MiB peak heap and leak total. The loaded executable is 16
+bytes smaller; the stripped file adds 1,776 bytes for exact algebraic parameter
+transport.
+
+The isolated graph moves from 22,960 nodes/39,609 edges to 22,977 nodes/39,639
+edges. All 267 unit tests, 20 focused Boolean tests, 11 generated/retired
+corpora, and both warning-denied Clippy matrices pass. The next overlap boundary
+is an explicit correspondence witness for nonlinear line and Mobius conic
+parameterizations. Hypermesh was not modified. Complete evidence is in
+[`2026-07-31-retained-overlap-clipping.json`](benchmarks/checkpoints/2026-07-31-retained-overlap-clipping.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

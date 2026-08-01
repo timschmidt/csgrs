@@ -1,0 +1,147 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "retained-overlap-clipping",
+  "source_revision": "fce4b5d61b90b84e7cd3c6a7b33fca7d7263d205",
+  "matched_behavior_control_revision": "ea8c6ba5d0ec6ae957ef13d31536f9396868b62c",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "defect": {
+    "shape": "second-generation CurveRegion2 operands retain algebraic subranges of two degree-equivalent parameterizations of the same image",
+    "example": "one quadratic cap and its exact cubic degree elevation are independently clipped, then combined",
+    "previous_strict_result": "Blocked(Boolean, QuadraticBezier, Unsupported)",
+    "affected_orientations": [
+      "same",
+      "reversed"
+    ],
+    "cause": "carrier overlap clipping accepted only structurally identical curves with identity parameters"
+  },
+  "implementation": {
+    "single_clipping_authority": "CurveRegionBooleanContext::clipped_overlap_ranges serves public intersection evidence and Boolean topology",
+    "projectively_aligned_parameterizations": "degree alignment and exact homogeneous-control comparison certify identity or unit-complement transport",
+    "algebraic_reversal": "BezierParameter2::unit_complement transforms the defining polynomial by exact Horner composition and reverses the singleton isolator",
+    "empty_clip_rule": "absence from either carrier domain proves that a retained source overlap contributes no positive-length shared span",
+    "rationalization": "one RationalBezier2::try_from_subcurve implementation replaces duplicate Curve2 and CurveRegion conversion bodies",
+    "finite_coordinate_replacement": false
+  },
+  "semantic_evidence": {
+    "forward_degree_elevated_chain": "pass under STRICT",
+    "reversed_degree_elevated_chain": "pass under STRICT",
+    "algebraic_fragments_retained": true,
+    "union_boundary_point": "correct",
+    "intersection_excludes_wide_only_band": true,
+    "narrow_minus_wide_is_empty": true,
+    "xor_contains_wide_only_band": true,
+    "algebraic_double_complement": "certified equal to the original singleton root",
+    "generated_all_family_corpus": "11/11 pass in 110.89 seconds",
+    "pathological_operations": "268/268 decided with unchanged 603 candidate pairs, 3248 fragments, 134 point classifications, and checksum 6"
+  },
+  "paired_release_pathological_benchmark": {
+    "command": "taskset -c 9 HYPERCURVE_PATHOLOGICAL_MODE=boolean {control,candidate pathological_regions all-feature binary}",
+    "method": "eleven alternating-order process pairs; complete 67-cell all-family workload; the complete series was repeated after two gross scheduler stalls in the first series",
+    "cells_per_process": 67,
+    "control_boolean_milliseconds": [
+      488.738442,
+      489.324902,
+      497.343572,
+      491.843139,
+      486.738220,
+      501.816186,
+      525.511652,
+      496.934430,
+      485.184756,
+      487.118593,
+      487.328639
+    ],
+    "candidate_boolean_milliseconds": [
+      491.554180,
+      496.781142,
+      489.751953,
+      493.277671,
+      490.897884,
+      495.534357,
+      491.163167,
+      493.553822,
+      499.259522,
+      485.564811,
+      491.084952
+    ],
+    "control_median_milliseconds": 489.324902,
+    "candidate_median_milliseconds": 491.554180,
+    "median_change_percent": 0.455582,
+    "paired_geometric_mean_change_percent": -0.336087,
+    "interpretation": "opposing sub-half-percent statistics classify the unrelated full workload as throughput-neutral"
+  },
+  "heaptrack": {
+    "command": "HYPERCURVE_PATHOLOGICAL_MODE=boolean heaptrack --record-only {control,candidate pathological_regions all-feature binary}",
+    "control_allocation_calls": 8227027,
+    "candidate_allocation_calls": 8227178,
+    "allocation_call_delta": 151,
+    "control_temporary_allocations": 1380403,
+    "candidate_temporary_allocations": 1380710,
+    "temporary_allocation_delta": 307,
+    "control_peak_heap": "34.70M",
+    "candidate_peak_heap": "34.70M",
+    "control_peak_rss": "65.08M",
+    "candidate_peak_rss": "65.14M",
+    "control_total_leaked": "476.82K",
+    "candidate_total_leaked": "476.82K",
+    "artifacts": [
+      "/tmp/hypercurve-overlap-parent.zst.zst",
+      "/tmp/hypercurve-overlap-candidate.zst.zst"
+    ],
+    "interpretation": "the full workload changes by 151 allocation calls and 307 temporary classifications over 67 cells; peak heap and leaks are unchanged"
+  },
+  "matched_release_pathological_binary": {
+    "command": "cargo bench --all-features --bench pathological_regions --no-run; size; strip --strip-all",
+    "control_debug_file_bytes": 7205736,
+    "candidate_debug_file_bytes": 7220320,
+    "debug_file_delta_bytes": 14584,
+    "control_stripped_file_bytes": 5734488,
+    "candidate_stripped_file_bytes": 5736264,
+    "stripped_file_delta_bytes": 1776,
+    "control_size": {
+      "text": 5464214,
+      "data": 266408,
+      "bss": 5696,
+      "total_loadable": 5736318
+    },
+    "candidate_size": {
+      "text": 5466454,
+      "data": 265928,
+      "bss": 3920,
+      "total_loadable": 5736302
+    },
+    "text_delta_bytes": 2240,
+    "data_delta_bytes": -480,
+    "bss_delta_bytes": -1776,
+    "total_loadable_delta_bytes": -16,
+    "interpretation": "the exact algebraic transport adds 1776 stripped file bytes while rationalization consolidation keeps the loaded image byte-neutral"
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace/hypercurve --out-dir /tmp/hypercurve-overlap-clipping-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "control_nodes": 22960,
+    "candidate_nodes": 22977,
+    "node_delta": 17,
+    "control_edges": 39609,
+    "candidate_edges": 39639,
+    "edge_delta": 30,
+    "artifact": "/tmp/hypercurve-overlap-clipping-callgraph/callgraph.json",
+    "duplicate_overlap_clipping_body_removed": true,
+    "duplicate_rationalization_bodies_removed": 2
+  },
+  "verification": {
+    "unit_tests": "267/267 pass",
+    "focused_curve_region_boolean_tests": "20/20 pass",
+    "generated_curve_region_boolean_tests": "11/11 pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_fmt": "pass",
+    "git_diff_check": "pass",
+    "hypermesh_modified": false
+  },
+  "remaining_overlap_boundary": {
+    "nonlinear_line_parameter_transport": "not yet represented by the affine/projectively-aligned clip certificate",
+    "mobius_conic_parameter_transport": "not yet represented by the affine/projectively-aligned clip certificate",
+    "general_action": "retain an explicit exact parameter-correspondence witness on overlap evidence rather than infer it during region clipping"
+  }
+}
