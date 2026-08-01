@@ -1,0 +1,327 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "overlap-parameter-correspondence",
+  "source_revision": "3d4bef2e1c202ad81370ed3da940c80844bb6706",
+  "historical_control_revision": "82c1eea62fe5dafb5fba9df36b03a2794225cfee",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "closed_boundaries": [
+      "retained CurveRegion2 operands may clip the same conic image through a non-affine Mobius parameter correspondence",
+      "retained CurveRegion2 operands may clip the same line image through independently nonlinear monotone polynomial parameterizations",
+      "forward and reversed parameter traversal retain oriented overlap ranges",
+      "STRICT and APPROXIMATE_512 use the same exact returned parameters and geometry"
+    ],
+    "authoritative_engine": "all nonempty, nonidentical all-family Boolean batches continue through one CurveRegion2 arrangement",
+    "unchanged_fast_path": "degree-aligned identity and unit-complement overlap transports remain in the compact affine clip path",
+    "public_api_growth": false,
+    "compatibility_shims_added": false
+  },
+  "defects_closed": {
+    "mobius_retained_overlap": "the historical engine returned Blocked(Boolean, QuadraticBezier, Unsupported)",
+    "nonlinear_line_retained_overlap": "the historical engine returned Blocked(Boolean, RationalBezier, Unsupported)",
+    "reversed_complete_control_net_overlap": "the second overlap range now reports 1 to 0, matching documented traversal orientation, instead of 0 to 1"
+  },
+  "exact_correspondence_architecture": {
+    "retention": "one private correspondence witness is classified when top-level overlap evidence is formed and retained only by CurveIntersectionOverlap2",
+    "public_equality": "the private witness is intentionally excluded from CurveIntersectionOverlap2 public PartialEq semantics",
+    "witness_variants": [
+      "identity",
+      "exact unit complement 1 - t",
+      "general clone-shared RationalBezier2 carrier pair with retained uncertainty"
+    ],
+    "general_transport_order": [
+      "implicit-conic rational parameter map",
+      "exact affine polynomial-graph parameter map",
+      "exact point incidence for represented source parameters",
+      "certified injective-axis algebraic transport"
+    ],
+    "injective_axis_transport": [
+      "Hypersolve maps the source parameter's exact algebraic root through the selected rational coordinate",
+      "Hypercurve forms the target coordinate preimage polynomial exactly",
+      "all target roots on [0,1] are isolated",
+      "exact algebraic coordinate equality selects one and only one target parameter"
+    ],
+    "clipping": "the first retained carrier interval is clipped, its endpoints are transported, and the reverse map is evaluated only if the second retained carrier clips that mapped interval further",
+    "exactness": "no algebraic root, coordinate, or returned carrier is replaced by a finite approximation",
+    "policy": "unresolved comparisons remain typed STRICT blockers; APPROXIMATE_512 may terminate only predicate equality through the inherited policy and reports consumption at the public outcome boundary"
+  },
+  "regression_matrix": {
+    "mobius_conic": {
+      "weights": [1, 2, 4],
+      "directions": ["forward", "reversed"],
+      "policies": ["STRICT", "APPROXIMATE_512"],
+      "operations": ["union", "intersection", "difference", "xor"],
+      "result": "pass"
+    },
+    "independently_nonlinear_line": {
+      "first_coordinate": "x(t) = 2t + 2t^2",
+      "second_coordinate": "x(s) = 6s - 2s^2",
+      "directions": ["forward", "reversed"],
+      "policies": ["STRICT", "APPROXIMATE_512"],
+      "operations": ["union", "intersection", "difference", "xor"],
+      "result": "pass"
+    }
+  },
+  "historical_completion": {
+    "method": "the final benchmark harness was copied into an isolated 82c1eea source snapshot and built against the same dependency state and toolchain",
+    "aligned_conic_overlap": "historical and candidate engines complete",
+    "mobius_overlap": "historical engine panics after Blocked(Boolean, QuadraticBezier, Unsupported); candidate completes",
+    "nonlinear_line_overlap": "historical engine panics after Blocked(Boolean, RationalBezier, Unsupported); candidate completes",
+    "interpretation": "the two principal fixtures measure newly supported mathematical paths rather than a slower replacement for historical successful behavior"
+  },
+  "paired_release_pathological_benchmark": {
+    "command": "taskset -c 9 HYPERCURVE_PATHOLOGICAL_MODE=boolean {historical,candidate pathological_regions binary}",
+    "method": "eleven alternating-order process pairs; complete 67-cell all-family workload; same dependency state and toolchain",
+    "cells_per_process": 67,
+    "historical_milliseconds": [
+      486.332823,
+      481.079761,
+      482.411080,
+      479.727024,
+      482.188476,
+      486.017373,
+      479.707785,
+      484.546694,
+      491.508968,
+      488.910486,
+      501.529382
+    ],
+    "candidate_milliseconds": [
+      494.724298,
+      481.859738,
+      485.978196,
+      493.628193,
+      485.602482,
+      487.998908,
+      494.378161,
+      486.776722,
+      486.144785,
+      490.970285,
+      484.550024
+    ],
+    "historical_median_milliseconds": 484.546694,
+    "candidate_median_milliseconds": 486.776722,
+    "median_change_percent": 0.460230,
+    "paired_geometric_mean_change_percent": 0.540440,
+    "interpretation": "the complete all-family workload remains throughput-neutral"
+  },
+  "aligned_supported_path_benchmark": {
+    "fixture": "aligned-conic-overlap",
+    "method": "eleven alternating-order CPU-9 process pairs; 2000 all-four batches per process",
+    "historical_nanoseconds_per_batch": [
+      349853,
+      359923,
+      358152,
+      354843,
+      367852,
+      354829,
+      352074,
+      359368,
+      355012,
+      350646,
+      349355
+    ],
+    "candidate_nanoseconds_per_batch": [
+      360816,
+      368082,
+      353126,
+      357754,
+      351502,
+      359010,
+      360213,
+      355146,
+      361049,
+      360954,
+      353204
+    ],
+    "historical_median_nanoseconds": 354843,
+    "candidate_median_nanoseconds": 359010,
+    "median_change_percent": 1.174322,
+    "paired_geometric_mean_change_percent": 0.742618,
+    "fragment_counts": {
+      "independent": [4, 2, 0, 4],
+      "shared": [4, 2, 0, 4]
+    },
+    "interpretation": "the already-supported projectively aligned lane stays on its compact fast path; the small retained-witness cost is accepted"
+  },
+  "new_path_batch_benchmarks": {
+    "method": "eleven alternating CPU-9 independent/shared processes using the same final binary; independent performs four authoritative single-operation calls and shared performs one all-four arrangement",
+    "mobius_overlap": {
+      "iterations_per_process": 200,
+      "independent_nanoseconds_per_batch": [
+        4576800,
+        4550096,
+        4438232,
+        4432841,
+        4431844,
+        4455224,
+        4551374,
+        4494269,
+        4570611,
+        4495629,
+        4456268
+      ],
+      "shared_nanoseconds_per_batch": [
+        1156482,
+        1112207,
+        1122449,
+        1107604,
+        1119365,
+        1127864,
+        1162984,
+        1149549,
+        1120523,
+        1110129,
+        1114333
+      ],
+      "independent_median_nanoseconds": 4494269,
+      "shared_median_nanoseconds": 1120523,
+      "shared_speedup": 4.010867,
+      "fragment_counts": {
+        "independent": [4, 2, 0, 4],
+        "shared": [4, 2, 0, 4]
+      },
+      "historical_status": "unsupported"
+    },
+    "nonlinear_line_overlap": {
+      "iterations_per_process": 1000,
+      "independent_nanoseconds_per_batch": [
+        84522,
+        95661,
+        84360,
+        88447,
+        89845,
+        86055,
+        85028,
+        86561,
+        88831,
+        88182,
+        84112
+      ],
+      "shared_nanoseconds_per_batch": [
+        220152,
+        230109,
+        220718,
+        215173,
+        214889,
+        212019,
+        213676,
+        218299,
+        213665,
+        218894,
+        214819
+      ],
+      "independent_median_nanoseconds": 86561,
+      "shared_median_nanoseconds": 215173,
+      "shared_slowdown": 2.485796,
+      "fragment_counts": {
+        "independent": [4, 4, 0, 4],
+        "shared": [6, 4, 0, 4]
+      },
+      "historical_status": "unsupported",
+      "interpretation": "four independent calls re-promote exact line images into the mature native line kernel, while the shared arrangement retains general rational carriers; native line publication inside the unified authority is the measured optimization target"
+    }
+  },
+  "heaptrack": {
+    "all_family": {
+      "command": "HYPERCURVE_PATHOLOGICAL_MODE=boolean heaptrack --record-only {historical,candidate pathological_regions binary}",
+      "historical_allocation_calls": 8227180,
+      "candidate_allocation_calls": 8227180,
+      "historical_temporary_allocations": 1380711,
+      "candidate_temporary_allocations": 1380711,
+      "historical_peak_heap": "34.70M",
+      "candidate_peak_heap": "34.70M",
+      "historical_peak_rss": "65.04M",
+      "candidate_peak_rss": "65.15M",
+      "historical_total_leaked": "476.82K",
+      "candidate_total_leaked": "476.82K",
+      "interpretation": "allocation and temporary-allocation counts are exactly unchanged; the RSS difference is process noise"
+    },
+    "mobius_200_batches": {
+      "independent_allocation_calls": 13956097,
+      "shared_allocation_calls": 3572697,
+      "allocation_reduction_percent": 74.400457,
+      "allocation_ratio": 3.906320,
+      "independent_temporary_allocations": 718563,
+      "shared_temporary_allocations": 183963,
+      "independent_peak_heap": "543.52K",
+      "shared_peak_heap": "543.52K"
+    },
+    "nonlinear_line_1000_batches": {
+      "independent_allocation_calls": 391058,
+      "shared_allocation_calls": 2077060,
+      "shared_allocation_increase_percent": 431.138603,
+      "shared_to_independent_allocation_ratio": 5.311386,
+      "independent_temporary_allocations": 17373,
+      "shared_temporary_allocations": 151372,
+      "independent_peak_heap": "234.61K",
+      "shared_peak_heap": "235.64K"
+    },
+    "artifacts": [
+      "/tmp/hypercurve-correspondence-parent.zst.zst",
+      "/tmp/hypercurve-correspondence-candidate-3d4.zst.zst",
+      "/tmp/hypercurve-mobius-independent-3d4.zst.zst",
+      "/tmp/hypercurve-mobius-shared-3d4.zst.zst",
+      "/tmp/hypercurve-line-independent-3d4.zst.zst",
+      "/tmp/hypercurve-line-shared-3d4.zst.zst"
+    ]
+  },
+  "matched_release_pathological_binary": {
+    "command": "cargo bench --bench pathological_regions --no-run; size; strip --strip-all",
+    "historical_debug_file_bytes": 7220360,
+    "candidate_debug_file_bytes": 7231656,
+    "debug_file_delta_bytes": 11296,
+    "debug_file_delta_percent": 0.156446,
+    "historical_stripped_file_bytes": 5736328,
+    "candidate_stripped_file_bytes": 5750384,
+    "stripped_file_delta_bytes": 14056,
+    "stripped_file_delta_percent": 0.245035,
+    "historical_size": {
+      "text": 5466518,
+      "data": 265928,
+      "bss": 3856,
+      "total_loadable": 5736302
+    },
+    "candidate_size": {
+      "text": 5480346,
+      "data": 266160,
+      "bss": 2088,
+      "total_loadable": 5748594
+    },
+    "text_delta_bytes": 13828,
+    "data_delta_bytes": 232,
+    "bss_delta_bytes": -1768,
+    "total_loadable_delta_bytes": 12292,
+    "total_loadable_delta_percent": 0.214284,
+    "interpretation": "the sub-quarter-percent linked-size cost buys exact completion of two historically unsupported overlap classes"
+  },
+  "static_callgraph": {
+    "command": "/home/tim/Documents/GitHub/workspace/tools/hyper-callgraph/target/release/hyper-callgraph --root {isolated source root} --out-dir /tmp/hypercurve-overlap-correspondence-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "historical_nodes": 22977,
+    "candidate_nodes": 23032,
+    "node_delta": 55,
+    "historical_edges": 39639,
+    "candidate_edges": 39783,
+    "edge_delta": 144,
+    "artifact": "/tmp/hypercurve-overlap-correspondence-callgraph/callgraph.json",
+    "interpretation": "the delta includes the two-policy, two-orientation integration matrix and three persistent benchmark fixtures in addition to the private exact transport"
+  },
+  "verification": {
+    "unit_tests": "267/267 pass in 41.81 seconds",
+    "focused_curve_region_boolean_tests": "22/22 pass in 3.79 seconds",
+    "generated_curve_region_boolean_tests": "11/11 pass in 91.78 seconds",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features": "pass",
+    "cargo_fmt": "pass",
+    "git_diff_check": "pass",
+    "hypermesh_modified_by_this_work": false
+  },
+  "remaining_boolean_boundary": {
+    "unsupported_correspondence": "a shared component whose target carrier has no certified injective coordinate and no conic or polynomial-graph inverse still requires exact bivariate branch evidence",
+    "lower_dimensional_ownership": "complete regularized ownership for all coincident, tangent, and zero-area remnants remains to be audited and closed",
+    "performance": "fold exact native line and then line/arc publication into the authoritative arrangement so nonlinear line-image batches recover native compactness and allocation behavior",
+    "later_phases": "general exact offsets and solver-driven fillet/chamfer remain pending"
+  }
+}

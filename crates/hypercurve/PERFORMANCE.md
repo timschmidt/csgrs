@@ -7503,6 +7503,69 @@ is an explicit correspondence witness for nonlinear line and Mobius conic
 parameterizations. Hypermesh was not modified. Complete evidence is in
 [`2026-07-31-retained-overlap-clipping.json`](benchmarks/checkpoints/2026-07-31-retained-overlap-clipping.json).
 
+## Exact overlap-correspondence checkpoint (2026-07-31)
+
+Retained Boolean operands may now clip a shared curve image even when their
+parameters are related nonlinearly. The overlap evidence classifies one private
+correspondence as identity, exact unit complement, or a clone-shared general
+rational-Bezier pair. Identity and reversal stay on the existing compact clip
+path. A general witness tries the retained conic rational map, an affine
+polynomial graph, exact point incidence, and finally a certified injective-axis
+transport. The last path uses Hypersolve's exact algebraic rational image,
+forms the target preimage polynomial, isolates every root on `[0,1]`, and
+selects a unique parameter by exact algebraic-coordinate equality.
+
+The arrangement clips the first carrier, transports only its two endpoints,
+and maps backwards only when the second carrier shortens that interval. No
+algebraic parameter or returned coordinate is approximated. STRICT therefore
+retains a typed blocker when a proof is unavailable, while APPROXIMATE_512 may
+terminate only the inherited equality predicate and reports that consumption
+at the public outcome boundary. The private correspondence is excluded from
+public overlap equality. This work also fixes reversed complete-control-net
+overlaps so the documented second range is oriented `1 -> 0`.
+
+Forward and reversed regressions cover a Mobius-reparameterized quadratic
+conic with weights `[1,2,4]` and independent monotone line parameters
+`x(t)=2t+2t^2` and `x(s)=6s-2s^2`. All four regularized operations pass under
+both policies. An isolated `82c1eea` build of the final harness cannot execute
+either fixture: it returns `Unsupported` Boolean blockers for the quadratic
+and general-rational families. The new paths are mathematical coverage that
+did not exist in the historical engine.
+
+Eleven alternating CPU-pinned full-workload pairs measured 486.777 ms for the
+candidate and 484.547 ms for the historical parent: +0.46% at the median and
++0.54% by paired geometric mean, which is throughput-neutral. The previously
+supported aligned-conic lane moves from 354.843 to 359.010 us per all-four
+batch (+1.17% median, +0.74% paired mean), confirming that it remains on the
+fast transport. The newly supported Mobius fixture takes 1.121 ms for one
+shared batch versus 4.494 ms for four independent calls, a 4.01x speedup.
+
+The nonlinear line fixture exposes the next optimization boundary. The shared
+arrangement takes 215.173 us versus 86.561 us for four independent calls, or
+2.49x longer, and publishes six rather than four union fragments. Independent
+calls re-promote the line image into the mature native line kernel, whereas
+the shared authority retains general rational carriers. Folding native line
+publication into the unified arrangement is therefore a measured target, not
+a speculative rewrite.
+
+Heaptrack is exactly unchanged over the 67-cell workload at 8,227,180
+allocation calls, 1,380,711 temporary allocations, and 34.70 MiB peak heap.
+For 200 Mobius batches, the shared route makes 3,572,697 allocations versus
+13,956,097 independently, a 74.40% reduction. For 1,000 nonlinear-line
+batches it makes 2,077,060 versus 391,058, confirming the native-line target.
+The matched pathological executable adds 12,292 loadable bytes (0.214%) and
+14,056 stripped file bytes (0.245%), an accepted cost for the two exact
+completion classes.
+
+The isolated graph moves from 22,977 nodes/39,639 edges to 23,032 nodes/39,783
+edges. All 267 unit tests, 22 focused Boolean tests, 11 generated/retired
+corpora, no-default checking, and both warning-denied Clippy matrices pass.
+Remaining Boolean work includes shared components without a certified
+injective coordinate or retained inverse, complete lower-dimensional
+ownership, and native line/arc publication inside the one authority. Hypermesh
+was not modified. Complete evidence is in
+[`2026-07-31-overlap-parameter-correspondence.json`](benchmarks/checkpoints/2026-07-31-overlap-parameter-correspondence.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
