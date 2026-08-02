@@ -594,27 +594,32 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
     trace_row(
         &mut rows,
         filters,
-        "computable/sign/deep_scaled_product_sign",
+        "computable/sign_until/deep_scaled_product_floor_2000",
         || {
-            black_box(deep_scaled_product_chain(200).sign());
+            black_box(deep_scaled_product_chain(200).sign_until(-2000));
         },
     );
     trace_row(
         &mut rows,
         filters,
-        "computable/sign/perturbed_scaled_product_sign",
+        "computable/sign_until/perturbed_scaled_product_floor_2000",
         || {
-            black_box(perturbed_scaled_product_chain(200).sign());
+            black_box(perturbed_scaled_product_chain(200).sign_until(-2000));
         },
     );
-    trace_row(&mut rows, filters, "computable/sign/pi_minus_one", || {
-        let value = Computable::pi().add(Computable::one().negate());
-        black_box(value.sign());
-    });
     trace_row(
         &mut rows,
         filters,
-        "computable/sign/pi_minus_one_sign_until",
+        "computable/sign_until/pi_minus_one_floor_2000",
+        || {
+            let value = Computable::pi().add(Computable::one().negate());
+            black_box(value.sign_until(-2000));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign_until/pi_minus_one_floor_128",
         || {
             let value = Computable::pi().add(Computable::one().negate());
             black_box(value.sign_until(-128));
@@ -623,69 +628,69 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
     trace_row(
         &mut rows,
         filters,
-        "computable/sign/deep_scaled_product_sign_until",
+        "computable/sign_until/deep_scaled_product_floor_128",
         || {
             black_box(deep_scaled_product_chain(200).sign_until(-128));
         },
     );
     let cached_scaled_product = {
         let value = deep_scaled_product_chain(200);
-        let _ = value.sign();
+        let _ = value.sign_until(-2000);
         value
     };
     trace_row(
         &mut rows,
         filters,
-        "computable/sign/deep_scaled_product_sign_cached",
+        "computable/sign_until/deep_scaled_product_cached",
         || {
-            black_box(cached_scaled_product.sign());
+            black_box(cached_scaled_product.sign_until(-2000));
         },
     );
     let cached_half_product = {
         let value = deep_half_product_chain(200);
-        let _ = value.sign();
+        let _ = value.sign_until(-2000);
         value
     };
     trace_row(
         &mut rows,
         filters,
-        "computable/sign/deep_half_product_sign_cached",
+        "computable/sign_until/deep_half_product_cached",
         || {
-            black_box(cached_half_product.sign());
+            black_box(cached_half_product.sign_until(-2000));
         },
     );
     let pi_minus_one_cached = {
         let value = Computable::pi().add(Computable::one().negate());
-        let _ = value.sign();
+        let _ = value.sign_until(-2000);
         value
     };
     trace_row(
         &mut rows,
         filters,
-        "computable/sign/pi_minus_one_cached",
+        "computable/sign_until/pi_minus_one_cached",
         || {
-            black_box(pi_minus_one_cached.sign());
+            black_box(pi_minus_one_cached.sign_until(-2000));
         },
     );
     trace_row(
         &mut rows,
         filters,
-        "computable/sign/exp_unknown_sign_arg",
+        "computable/sign_until/exp_unknown_sign_arg_floor_2000",
         || {
-            black_box(exp_unknown_sign_arg_chain().sign());
+            black_box(exp_unknown_sign_arg_chain().sign_until(-2000));
         },
     );
     let exp_unknown_sign_arg_cached = {
         let value = exp_unknown_sign_arg_chain();
-        let _ = value.sign();
+        let _ = value.sign_until(-2000);
         value
     };
     trace_row(
         &mut rows,
         filters,
-        "computable/sign/exp_unknown_sign_arg_cached",
+        "computable/sign_until/exp_unknown_sign_arg_cached",
         || {
-            black_box(exp_unknown_sign_arg_cached.sign());
+            black_box(exp_unknown_sign_arg_cached.sign_until(-2000));
         },
     );
     trace_row(

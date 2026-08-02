@@ -1768,12 +1768,14 @@ fn bench_computable_api(c: &mut Criterion) {
     group.bench_function(BenchmarkId::new("gmp_mpfr128", "compare_absolute"), |b| {
         b.iter(|| black_box(g_lhs.partial_cmp(&g_rhs).unwrap()))
     });
-    group.bench_function(BenchmarkId::new("hyperreal", "sign"), |b| {
-        b.iter(|| black_box(h_lhs.sign()))
-    });
-    group.bench_function(BenchmarkId::new("gmp_mpfr128", "sign"), |b| {
-        b.iter(|| black_box(g_lhs.cmp0()))
-    });
+    group.bench_function(
+        BenchmarkId::new("hyperreal", "sign_until_floor_2000"),
+        |b| b.iter(|| black_box(h_lhs.sign_until(-2000))),
+    );
+    group.bench_function(
+        BenchmarkId::new("gmp_mpfr128", "sign_until_floor_2000"),
+        |b| b.iter(|| black_box(Some(g_lhs.cmp0()))),
+    );
     group.bench_function(BenchmarkId::new("hyperreal", "sign_until"), |b| {
         b.iter(|| black_box(h_lhs.sign_until(-128)))
     });

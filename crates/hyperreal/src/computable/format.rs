@@ -1,7 +1,6 @@
-use crate::Computable;
 use crate::computable::{Precision, unsigned};
+use crate::{Computable, RealSign};
 use core::fmt;
-use num::bigint::Sign::Minus;
 use num::{BigUint, Zero};
 
 fn trim(num: &mut Vec<u8>) {
@@ -169,15 +168,15 @@ fn digits(
 
 impl fmt::Display for Computable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.sign() == Minus {
+        let msd = self.iter_msd();
+        let bits = enough_bits(msd, f.precision());
+        let appr = self.approx(msd - bits);
+        if self.sign_until(msd - bits) == Some(RealSign::Negative) {
             f.write_str("-")?;
         } else if f.sign_plus() {
             // Even for zero
             f.write_str("+")?;
         }
-        let msd = self.iter_msd();
-        let bits = enough_bits(msd, f.precision());
-        let appr = self.approx(msd - bits);
         let mut dp = f.precision().unwrap_or(DEFAULT_PRECISION);
         let (num, mut exp) = digits(appr.magnitude(), Places::Zero(dp), bits, msd, true);
         let mut num = num.into_iter().peekable();
@@ -224,18 +223,18 @@ impl fmt::Display for Computable {
 
 impl fmt::UpperExp for Computable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.sign() == Minus {
-            f.write_str("-")?;
-        } else if f.sign_plus() {
-            // Even for zero
-            f.write_str("+")?;
-        }
         let msd = self.iter_msd();
         let precision = f.precision();
         // Precision does not include the first digit before the decimal point
         let exact = precision.unwrap_or(DEFAULT_PRECISION);
         let bits = enough_bits(msd, f.precision());
         let appr = self.approx(msd - bits);
+        if self.sign_until(msd - bits) == Some(RealSign::Negative) {
+            f.write_str("-")?;
+        } else if f.sign_plus() {
+            // Even for zero
+            f.write_str("+")?;
+        }
 
         let (num, exp) = digits(
             appr.magnitude(),
@@ -258,18 +257,18 @@ impl fmt::UpperExp for Computable {
 
 impl fmt::LowerExp for Computable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.sign() == Minus {
-            f.write_str("-")?;
-        } else if f.sign_plus() {
-            // Even for zero
-            f.write_str("+")?;
-        }
         let msd = self.iter_msd();
         let precision = f.precision();
         // Precision does not include the first digit before the decimal point
         let exact = precision.unwrap_or(DEFAULT_PRECISION);
         let bits = enough_bits(msd, f.precision());
         let appr = self.approx(msd - bits);
+        if self.sign_until(msd - bits) == Some(RealSign::Negative) {
+            f.write_str("-")?;
+        } else if f.sign_plus() {
+            // Even for zero
+            f.write_str("+")?;
+        }
 
         let (num, exp) = digits(
             appr.magnitude(),

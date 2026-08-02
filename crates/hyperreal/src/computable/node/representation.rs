@@ -76,10 +76,6 @@ impl Node {
         self.cache.get()
     }
 
-    pub(crate) fn cached_sign(&self) -> Option<Sign> {
-        self.cache.sign()
-    }
-
     pub(crate) fn store_cache_value(&self, p: Precision, value: BigInt) {
         self.cache.store(p, value);
     }
@@ -163,11 +159,6 @@ impl ApproximationCache {
         } else {
             Some(scale(cached.value.clone(), cached.precision - p))
         }
-    }
-
-    fn sign(&self) -> Option<Sign> {
-        let guard = self.cell()?.read().unwrap_or_else(|error| error.into_inner());
-        guard.as_ref().map(|cached| cached.value.sign())
     }
 
     fn store(&self, p: Precision, value: BigInt) {

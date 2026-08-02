@@ -197,9 +197,9 @@ not be replaced with an epsilon comparison.
 
 `Computable::approx(p)` returns a scaled integer approximation at binary
 precision `p`; it does not promise a fixed decimal digit count.
-`Computable::sign` is a compatibility best-effort query whose `NoSign` result
-also means unresolved, and `compare_absolute` reports tolerance overlap as
-`Equal`; neither is an exact decision API. Partial-function expression
+`Computable::sign_until` returns `None` when bounded refinement cannot prove a
+sign, and `compare_absolute` reports tolerance overlap as `Equal`; neither
+turns an unresolved comparison into an exact decision. Partial-function expression
 constructors such as `inverse`, `sqrt`, and `ln` assume their mathematical
 domains. Prefer the checked `Real` operations at external decision boundaries.
 

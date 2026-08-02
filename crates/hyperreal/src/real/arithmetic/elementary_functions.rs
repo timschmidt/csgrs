@@ -3440,10 +3440,13 @@ impl Real {
     }
 
     fn compute_exp_ln_powi(value: Computable, exp: BigInt) -> Option<Computable> {
-        match value.sign() {
-            Sign::NoSign => None,
-            Sign::Plus => Some(value.ln().multiply(Computable::integer(exp)).exp()),
-            Sign::Minus => {
+        match value
+            .sign_until(Self::PARTIAL_CMP_MIN_PRECISION)
+            .map(num_sign_from_real)
+        {
+            None | Some(Sign::NoSign) => None,
+            Some(Sign::Plus) => Some(value.ln().multiply(Computable::integer(exp)).exp()),
+            Some(Sign::Minus) => {
                 // Take the power of the positive version and negate it afterwards.
                 let value = value.negate();
                 let odd = exp.bit(0);

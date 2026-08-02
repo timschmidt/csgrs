@@ -1133,7 +1133,7 @@ mod tests {
     fn inverse_of_exact_fraction_has_structural_bound() {
         let third = Computable::rational(Rational::fraction(1, 3).unwrap());
         let inverse = third.inverse();
-        assert_eq!(inverse.sign(), Sign::Plus);
+        assert_eq!(inverse.sign_until(0), Some(RealSign::Positive));
         assert_eq!(inverse.msd(-4), Some(1));
     }
 
@@ -1163,7 +1163,7 @@ mod tests {
     #[test]
     fn square_of_negative_fraction_has_structural_bound() {
         let value = Computable::rational(Rational::fraction(-3, 8).unwrap()).square();
-        assert_eq!(value.sign(), Sign::Plus);
+        assert_eq!(value.sign_until(0), Some(RealSign::Positive));
         assert_eq!(value.msd(-4), Some(-3));
     }
 
@@ -1175,7 +1175,7 @@ mod tests {
             .sqrt();
         let expected =
             Computable::pi().multiply(Computable::rational(Rational::fraction(7, 8).unwrap()));
-        assert_eq!(value.sign(), Sign::Plus);
+        assert_eq!(value.sign_until(0), Some(RealSign::Positive));
         assert_eq!(value.msd(-4), Some(1));
         assert_close(value, expected, -60, 2);
     }
@@ -1454,7 +1454,7 @@ mod tests {
     fn add_with_dominant_term_has_structural_bound() {
         let value = Computable::integer(BigInt::from(8))
             .add(Computable::rational(Rational::fraction(-1, 8).unwrap()));
-        assert_eq!(value.sign(), Sign::Plus);
+        assert_eq!(value.sign_until(0), Some(RealSign::Positive));
         assert_eq!(value.msd(-4), Some(2));
     }
 
@@ -1501,7 +1501,7 @@ mod tests {
         for _ in 0..2000 {
             value = value.multiply(scale.clone()).inverse().negate();
         }
-        assert_eq!(value.sign(), Sign::Plus);
+        assert_eq!(value.sign_until(0), Some(RealSign::Positive));
         assert_close(value, Computable::pi(), -60, 2);
     }
 

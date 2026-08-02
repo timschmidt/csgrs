@@ -32,7 +32,12 @@ impl Real {
             self.rational.sign()
         } else {
             crate::trace_dispatch!("real", "best_sign", "scaled-computable");
-            match (self.rational.sign(), self.computable_ref().sign()) {
+            let computable_sign = self
+                .computable_ref()
+                .sign_until(-2000)
+                .map(num_sign_from_real)
+                .unwrap_or(Sign::NoSign);
+            match (self.rational.sign(), computable_sign) {
                 (Sign::NoSign, _) => Sign::NoSign,
                 (_, Sign::NoSign) => Sign::NoSign,
                 (Sign::Plus, Sign::Plus) => Sign::Plus,

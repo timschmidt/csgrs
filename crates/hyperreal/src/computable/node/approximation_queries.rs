@@ -355,47 +355,6 @@ impl Computable {
         }
     }
 
-    /// Best-effort sign query retained for compatibility.
-    ///
-    /// [`Sign::NoSign`] means either exact zero or unresolved after the legacy
-    /// refinement floor. Semantic decisions must use [`Computable::sign_until`]
-    /// so uncertainty remains explicit.
-    pub fn sign(&self) -> Sign {
-        if let Some(sign) = self.exact_sign() {
-            crate::trace_dispatch!("computable", "sign", "exact-sign-cache");
-            return sign;
-        }
-        if let Some(sign) = self.internal.cached_sign()
-            && sign != Sign::NoSign
-        {
-            self.internal
-                .facts
-                .replace_exact_sign(ExactSignCache::Valid(sign));
-            crate::trace_dispatch!("computable", "sign", "approximation-cache-sign");
-            return sign;
-        }
-        // Delay approximation refinement until after structural information has
-        // had a chance to prove the sign. This avoids precision work for
-        // purely symbolic queries.
-        if let Some(sign) = self.cheap_bound().known_sign() {
-            self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
-            crate::trace_dispatch!("computable", "sign", "cheap-bound-sign");
-            return sign;
-        }
-        crate::trace_dispatch!("computable", "sign", "precision-refinement");
-        let mut sign = Sign::NoSign;
-        let mut p = 0;
-        while p > -2000 && sign == Sign::NoSign {
-            let appr = self.approx(p);
-            p -= 10;
-            sign = appr.sign();
-        }
-        if sign != Sign::NoSign {
-            self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
-        }
-        sign
-    }
-
     fn cached(&self) -> Option<(Precision, BigInt)> {
         if let Some(constant) = self.shared_constant_kind() {
             SHARED_CONSTANT_CACHES[constant.cache_index()].get()

@@ -1420,7 +1420,7 @@ mod tests {
         let frac: Real = "-1.3".parse().unwrap();
         let five: Real = 5.into();
         let answer = frac.pow(five).unwrap();
-        assert!(closest_f64(answer, -3.7129299999999996));
+        assert!(closest_f64(answer, -3.71293));
     }
 
     #[test]
@@ -1550,7 +1550,7 @@ mod tests {
             Real::new(Rational::fraction(3, 10).unwrap())
                 .acos()
                 .unwrap(),
-            1.266103672779499
+            1.2661036727794992
         ));
         assert!(closest_f64(
             Real::new(Rational::new(2)).atan().unwrap(),
@@ -1750,7 +1750,7 @@ mod tests {
         ));
         assert!(closest_f64(
             Real::new(Rational::new(2)).acosh().unwrap(),
-            1.3169578969248166
+            1.3169578969248168
         ));
         assert!(closest_f64(
             Real::new(Rational::new(2)).sqrt().unwrap().acosh().unwrap(),
@@ -1775,7 +1775,7 @@ mod tests {
             Real::new(Rational::fraction(-1, 2).unwrap())
                 .atanh()
                 .unwrap(),
-            -0.5493061443340548
+            -0.5493061443340549
         ));
         assert!(closest_f64(
             Real::new(Rational::new(-2)).asinh().unwrap(),
@@ -4530,7 +4530,7 @@ mod tests {
         let y = Computable::pi()
             .add(Computable::rational(tiny.clone()))
             .add(Computable::pi().negate());
-        assert_eq!(y.sign(), num::bigint::Sign::Plus);
+        assert_eq!(y.sign_until(0), Some(RealSign::Positive));
 
         let got = y.atan2(Computable::one()).approx(-2600);
         let expected = Computable::rational(tiny)
@@ -4552,7 +4552,7 @@ mod tests {
         let y = Computable::pi()
             .add(Computable::rational(tiny.clone()).negate())
             .add(Computable::pi().negate());
-        assert_eq!(y.sign(), num::bigint::Sign::Minus);
+        assert_eq!(y.sign_until(0), Some(RealSign::Negative));
 
         let got = y.atan2(Computable::one().negate()).approx(-2600);
         let expected = Computable::rational(tiny)
@@ -4580,7 +4580,7 @@ mod tests {
         let opaque_positive = left.add(right.negate());
 
         assert_eq!(opaque_positive.sign_until(-4096), None);
-        assert_eq!(opaque_positive.sign(), num::bigint::Sign::NoSign);
+        assert_eq!(opaque_positive.sign_until(-2000), None);
         assert_eq!(
             opaque_positive.try_compare_to_until(&Computable::zero(), -4096),
             None
@@ -4593,6 +4593,7 @@ mod tests {
         );
 
         let value = Real::irrational_from_computable(opaque_positive);
+        assert_eq!(f64::from(value.clone()), 0.0);
         assert_eq!(value.best_sign(), num::bigint::Sign::NoSign);
         assert_eq!(value.clone().sqrt(), Err(Problem::Exhausted));
         assert_eq!(value.clone().inverse(), Err(Problem::UnknownZero));

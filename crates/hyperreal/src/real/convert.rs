@@ -125,19 +125,60 @@ impl Real {
 
 use crate::computable::Precision;
 
+/// Stably round a certified exact-real approximation to an unsigned binary integer.
+///
+/// `Computable::approx(p)` is within one integer unit of the value scaled by
+/// `2^-p`. Evaluate below the destination precision and round both ends of that
+/// closed error interval. Equal results certify the rounded integer and make
+/// conversion independent of whichever finer approximation happens to be
+/// cached. The terminal 64-guard-bit case chooses the even adjacent integer;
+/// this handles exact midpoints deterministically and bounds an unresolved
+/// lossy conversion to far below one destination ULP.
+#[inline(never)]
+fn stable_rounded_magnitude(c: &Computable, precision: Precision) -> u64 {
+    for guard in [8_u32, 24, 64] {
+        let approximation = c.approx(precision - guard as Precision);
+        let magnitude: u128 = approximation
+            .magnitude()
+            .try_into()
+            .expect("float significand plus guard bits should fit in a u128");
+        let truncated = magnitude >> guard;
+        let halfway = 1_u128 << (guard - 1);
+        let remainder = magnitude & ((halfway << 1) - 1);
+        // For an even truncated integer the halfway value stays below the
+        // transition; for an odd integer it rounds up. The approximation's
+        // closed +/-1 interval is certified whenever both endpoints remain on
+        // one side of that transition.
+        let transition = halfway + u128::from(truncated & 1 == 0);
+        if remainder + 1 < transition {
+            return truncated
+                .try_into()
+                .expect("rounded float significand should fit in a u64");
+        }
+        if remainder.saturating_sub(1) >= transition {
+            return (truncated + 1)
+                .try_into()
+                .expect("rounded float significand should fit in a u64");
+        }
+        if guard == 64 {
+            return (truncated + u128::from(truncated & 1 != 0))
+                .try_into()
+                .expect("rounded float significand should fit in a u64");
+        }
+    }
+    unreachable!()
+}
+
 // (Significand, Exponent)
-fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
+#[inline(never)]
+fn sig_exp_32_stable(c: &Computable, mut msd: Precision) -> (u32, u32) {
     const SIG_BITS: u32 = 0x007f_ffff;
     const OVERSIZE: u32 = SIG_BITS.next_power_of_two() << 1;
 
     if msd <= -126 {
         // Subnormal output needs the fixed minimum precision, independent of
         // the discovered MSD.
-        let sig = c
-            .approx(-149)
-            .magnitude()
-            .try_into()
-            .expect("Magnitude of the top bits should fit in a u32");
+        let sig = stable_rounded_magnitude(c, -149) as u32;
         // It is possible for that top bit to be set, so we're not a denormal
         if sig > SIG_BITS {
             (sig & SIG_BITS, 1)
@@ -147,12 +188,40 @@ fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
     } else {
         // Normal output requests just enough bits for the f32 significand, then
         // repairs the exponent if rounding carried into a new top bit.
+        let mut sig = stable_rounded_magnitude(c, msd - 24) as u32;
+        // Almost (but not quite) two orders of binary magnitude range
+        while sig >= OVERSIZE {
+            msd += 1;
+            sig = stable_rounded_magnitude(c, msd - 24) as u32;
+        }
+        (sig & SIG_BITS, (126 + msd) as u32)
+    }
+}
+
+// Explicitly lossy exports retain the single-approximation path used by mesh
+// rendering and broad-phase views. Certified topology decisions never consume
+// these bits without an exact filter or fallback.
+fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
+    const SIG_BITS: u32 = 0x007f_ffff;
+    const OVERSIZE: u32 = SIG_BITS.next_power_of_two() << 1;
+
+    if msd <= -126 {
+        let sig = c
+            .approx(-149)
+            .magnitude()
+            .try_into()
+            .expect("Magnitude of the top bits should fit in a u32");
+        if sig > SIG_BITS {
+            (sig & SIG_BITS, 1)
+        } else {
+            (sig, 0)
+        }
+    } else {
         let mut sig: u32 = c
             .approx(msd - 24)
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u32");
-        // Almost (but not quite) two orders of binary magnitude range
         while sig >= OVERSIZE {
             msd += 1;
             sig >>= 1;
@@ -163,40 +232,34 @@ fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
 
 impl From<Real> for f32 {
     fn from(r: Real) -> f32 {
-        use num::bigint::Sign::*;
-
         const NEG_BITS: u32 = 0x8000_0000;
         const EXP_BITS: u32 = 0x7f80_0000;
         const SIG_BITS: u32 = 0x007f_ffff;
         debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u32::MAX);
 
         let c = r.fold();
-        let neg = match c.sign() {
-            NoSign => {
-                return 0.0;
-            }
-            Plus => 0,
-            Minus => 1,
-        };
-
         let Some(msd) = c.iter_msd_stop(-150) else {
             // Below the f32 subnormal floor, round to signed zero.
-            return match neg {
-                0 => 0.0,
-                1 => -0.0,
-                _ => unreachable!(),
+            return if matches!(c.sign_until(-2000), Some(RealSign::Negative)) {
+                -0.0
+            } else {
+                0.0
             };
         };
         if msd > 127 {
             // Above the finite f32 range, saturate to signed infinity.
-            return match neg {
-                0 => f32::INFINITY,
-                1 => f32::NEG_INFINITY,
-                _ => unreachable!(),
+            return match c.sign_until(-2000) {
+                Some(RealSign::Negative) => f32::NEG_INFINITY,
+                Some(RealSign::Positive) => f32::INFINITY,
+                Some(RealSign::Zero) | None => 0.0,
             };
         }
-        let (sig_bits, exp) = sig_exp_32(c, msd);
-        let neg_bits: u32 = neg << NEG_BITS.trailing_zeros();
+        let (sig_bits, exp) = sig_exp_32_stable(&c, msd);
+        let neg_bits = match c.sign_until(-2000) {
+            Some(RealSign::Negative) => NEG_BITS,
+            Some(RealSign::Positive) => 0,
+            Some(RealSign::Zero) | None => return 0.0,
+        };
         let exp_bits: u32 = exp << EXP_BITS.trailing_zeros();
         let bits = neg_bits | exp_bits | sig_bits;
         f32::from_bits(bits)
@@ -311,13 +374,39 @@ fn unambiguous_f32_from_f64(value: f64) -> Option<Option<f32>> {
 }
 
 // (Significand, Exponent)
-fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
+#[inline(never)]
+fn sig_exp_64_stable(c: &Computable, mut msd: Precision) -> (u64, u64) {
     const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
     const OVERSIZE: u64 = SIG_BITS.next_power_of_two() << 1;
 
     if msd <= -1022 {
         // Subnormal f64 path mirrors f32 with the wider significand and lower
         // minimum precision.
+        let sig = stable_rounded_magnitude(c, -1074);
+        if sig > SIG_BITS {
+            (sig & SIG_BITS, 1)
+        } else {
+            (sig, 0)
+        }
+    } else {
+        // Normal f64 path requests 53 useful bits and handles one-bit carry from
+        // rounding by shifting the significand and bumping the exponent.
+        let mut sig = stable_rounded_magnitude(c, msd - 53);
+        // Almost (but not quite) two orders of binary magnitude range
+        while sig >= OVERSIZE {
+            msd += 1;
+            sig = stable_rounded_magnitude(c, msd - 53);
+        }
+        (sig & SIG_BITS, (1022 + msd) as u64)
+    }
+}
+
+#[inline(never)]
+fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
+    const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
+    const OVERSIZE: u64 = SIG_BITS.next_power_of_two() << 1;
+
+    if msd <= -1022 {
         let sig = c
             .approx(-1074)
             .magnitude()
@@ -329,14 +418,11 @@ fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
             (sig, 0)
         }
     } else {
-        // Normal f64 path requests 53 useful bits and handles one-bit carry from
-        // rounding by shifting the significand and bumping the exponent.
         let mut sig: u64 = c
             .approx(msd - 53)
             .magnitude()
             .try_into()
             .expect("Magnitude of the top bits should fit in a u64");
-        // Almost (but not quite) two orders of binary magnitude range
         while sig >= OVERSIZE {
             msd += 1;
             sig >>= 1;
@@ -347,40 +433,34 @@ fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
 
 impl From<Real> for f64 {
     fn from(r: Real) -> f64 {
-        use num::bigint::Sign::*;
-
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
         const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
         const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
         debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u64::MAX);
 
         let c = r.fold();
-        let neg = match c.sign() {
-            NoSign => {
-                return 0.0;
-            }
-            Plus => 0,
-            Minus => 1,
-        };
-
         let Some(msd) = c.iter_msd_stop(-1075) else {
             // Too small for f64, including subnormal precision.
-            return match neg {
-                0 => 0.0,
-                1 => -0.0,
-                _ => unreachable!(),
+            return if matches!(c.sign_until(-2000), Some(RealSign::Negative)) {
+                -0.0
+            } else {
+                0.0
             };
         };
         if msd > 1023 {
             // Too large for finite f64.
-            return match neg {
-                0 => f64::INFINITY,
-                1 => f64::NEG_INFINITY,
-                _ => unreachable!(),
+            return match c.sign_until(-2000) {
+                Some(RealSign::Negative) => f64::NEG_INFINITY,
+                Some(RealSign::Positive) => f64::INFINITY,
+                Some(RealSign::Zero) | None => 0.0,
             };
         }
-        let (sig_bits, exp) = sig_exp_64(c, msd);
-        let neg_bits: u64 = neg << NEG_BITS.trailing_zeros();
+        let (sig_bits, exp) = sig_exp_64_stable(&c, msd);
+        let neg_bits = match c.sign_until(-2000) {
+            Some(RealSign::Negative) => NEG_BITS,
+            Some(RealSign::Positive) => 0,
+            Some(RealSign::Zero) | None => return 0.0,
+        };
         let exp_bits: u64 = exp << EXP_BITS.trailing_zeros();
         let bits = neg_bits | exp_bits | sig_bits;
         f64::from_bits(bits)
@@ -785,9 +865,30 @@ mod tests {
     // but none of our other tests for f32 catch that
     #[test]
     fn bit_conversion() {
-        let r = Real::new(Rational::fraction(2, 5).unwrap()) * Real::pi();
-        let f: f32 = r.sin().into();
+        let value = || {
+            let r = Real::new(Rational::fraction(2, 5).unwrap()) * Real::pi();
+            r.sin()
+        };
+        let f: f32 = value().into();
         assert_eq!(f, 0.951_056_54);
+
+        let warmed = value();
+        let c = warmed.fold_ref();
+        assert_eq!(c.sign_until(-2000), Some(RealSign::Positive));
+        assert_eq!(f32::from(warmed).to_bits(), f.to_bits());
+
+        let negative_value = || {
+            Real::new(Rational::fraction(-1, 2).unwrap())
+                .atanh()
+                .unwrap()
+        };
+        let expected = f64::from(negative_value()).to_bits();
+        let warmed = negative_value();
+        assert_eq!(
+            warmed.fold_ref().sign_until(-2000),
+            Some(RealSign::Negative)
+        );
+        assert_eq!(f64::from(warmed).to_bits(), expected);
     }
 
     // Our Pi isn't exactly equal to the IEEE approximations since it's more accurate

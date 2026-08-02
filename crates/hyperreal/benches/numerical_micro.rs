@@ -707,56 +707,56 @@ fn bench_computable_bounds(c: &mut Criterion) {
     let mut group = c.benchmark_group("computable_bounds");
 
     let deep_scaled_product = deep_scaled_product_chain(200);
-    group.bench_function("deep_scaled_product_sign", |b| {
+    group.bench_function("deep_scaled_product_sign_until_p2000", |b| {
         b.iter_batched(
             || deep_scaled_product.clone(),
-            |value| black_box(value.sign()),
+            |value| black_box(value.sign_until(-2000)),
             BatchSize::SmallInput,
         )
     });
 
     let scaled_square = scaled_square_chain(6);
-    group.bench_function("scaled_square_sign", |b| {
+    group.bench_function("scaled_square_sign_until_p2000", |b| {
         b.iter_batched(
             || scaled_square.clone(),
-            |value| black_box(value.sign()),
+            |value| black_box(value.sign_until(-2000)),
             BatchSize::SmallInput,
         )
     });
-    group.bench_function("sqrt_scaled_square_sign", |b| {
+    group.bench_function("sqrt_scaled_square_sign_until_p2000", |b| {
         b.iter_batched(
             || scaled_square.clone().sqrt(),
-            |value| black_box(value.sign()),
+            |value| black_box(value.sign_until(-2000)),
             BatchSize::SmallInput,
         )
     });
 
     let structural_bound = deep_structural_bound_chain(200);
-    group.bench_function("deep_structural_bound_sign", |b| {
+    group.bench_function("deep_structural_bound_sign_until_p2000", |b| {
         b.iter_batched(
             || structural_bound.clone(),
-            |value| black_box(value.sign()),
+            |value| black_box(value.sign_until(-2000)),
             BatchSize::SmallInput,
         )
     });
     let structural_bound_cached = deep_structural_bound_chain(200);
-    structural_bound_cached.sign();
-    group.bench_function("deep_structural_bound_sign_cached", |b| {
-        b.iter(|| black_box(structural_bound_cached.sign()))
+    structural_bound_cached.sign_until(-2000);
+    group.bench_function("deep_structural_bound_sign_until_cached", |b| {
+        b.iter(|| black_box(structural_bound_cached.sign_until(-2000)))
     });
     group.bench_function("deep_structural_bound_facts_cached", |b| {
         b.iter(|| black_box(structural_bound_cached.structural_facts()))
     });
 
     let perturbed = perturbed_scaled_product_chain(200);
-    group.bench_function("perturbed_scaled_product_sign", |b| {
+    group.bench_function("perturbed_scaled_product_sign_until_p2000", |b| {
         b.iter_batched(
             || perturbed.clone(),
-            |value| black_box(value.sign()),
+            |value| black_box(value.sign_until(-2000)),
             BatchSize::SmallInput,
         )
     });
-    group.bench_function("perturbed_scaled_product_sign_until", |b| {
+    group.bench_function("perturbed_scaled_product_sign_until_p128", |b| {
         b.iter_batched(
             || perturbed.clone(),
             |value| black_box(value.sign_until(-128)),
@@ -767,33 +767,33 @@ fn bench_computable_bounds(c: &mut Criterion) {
     let pi_minus_tiny = Computable::pi().add(Computable::rational(
         Rational::from_bigint_fraction(BigInt::from(-1), BigUint::from(1_u8) << 200).unwrap(),
     ));
-    group.bench_function("pi_minus_tiny_sign", |b| {
+    group.bench_function("pi_minus_tiny_sign_until_p2000", |b| {
         b.iter_batched(
             || pi_minus_tiny.clone(),
-            |value| black_box(value.sign()),
+            |value| black_box(value.sign_until(-2000)),
             BatchSize::SmallInput,
         )
     });
     let pi_minus_tiny_cached = Computable::pi().add(Computable::rational(
         Rational::from_bigint_fraction(BigInt::from(-1), BigUint::from(1_u8) << 200).unwrap(),
     ));
-    pi_minus_tiny_cached.sign();
-    group.bench_function("pi_minus_tiny_sign_cached", |b| {
-        b.iter(|| black_box(pi_minus_tiny_cached.sign()))
+    pi_minus_tiny_cached.sign_until(-2000);
+    group.bench_function("pi_minus_tiny_sign_until_cached", |b| {
+        b.iter(|| black_box(pi_minus_tiny_cached.sign_until(-2000)))
     });
 
     let exp_unknown_sign_arg = Computable::one().add(Computable::pi().negate()).exp();
-    group.bench_function("exp_unknown_sign_arg_sign", |b| {
+    group.bench_function("exp_unknown_sign_arg_sign_until_p2000", |b| {
         b.iter_batched(
             || exp_unknown_sign_arg.clone(),
-            |value| black_box(value.sign()),
+            |value| black_box(value.sign_until(-2000)),
             BatchSize::SmallInput,
         )
     });
     let exp_unknown_sign_arg_cached = Computable::one().add(Computable::pi().negate()).exp();
-    exp_unknown_sign_arg_cached.sign();
-    group.bench_function("exp_unknown_sign_arg_sign_cached", |b| {
-        b.iter(|| black_box(exp_unknown_sign_arg_cached.sign()))
+    exp_unknown_sign_arg_cached.sign_until(-2000);
+    group.bench_function("exp_unknown_sign_arg_sign_until_cached", |b| {
+        b.iter(|| black_box(exp_unknown_sign_arg_cached.sign_until(-2000)))
     });
 
     group.finish();
