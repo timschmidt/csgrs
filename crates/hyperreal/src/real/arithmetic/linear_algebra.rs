@@ -1008,7 +1008,10 @@ impl Real {
         if scale_bits == 0 || scale_bits == EXPONENT_MASK {
             return None;
         }
-        let inverse_scale = 1.0 / f64::from_bits(scale_bits);
+        // Normal reciprocals have biased exponent 2046 - E; the largest scale
+        // has the lone exact subnormal reciprocal 2^-1023.
+        let inverse_scale_bits = ((2046_u64 << 52) - scale_bits).max(1_u64 << 51);
+        let inverse_scale = f64::from_bits(inverse_scale_bits);
         for value in &mut values {
             let was_nonzero = value.to_bits() << 1 != 0;
             *value *= inverse_scale;

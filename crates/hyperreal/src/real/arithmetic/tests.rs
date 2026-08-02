@@ -741,6 +741,78 @@ mod tests {
     }
 
     #[test]
+    fn rational_linear_form4_normalization_handles_every_normal_exponent() {
+        fn reference(mut values: [f64; 4]) -> Option<[f64; 4]> {
+            const EXPONENT_MASK: u64 = 0x7ff0_0000_0000_0000;
+            const SAFE_MIN_MAGNITUDE_BITS: u64 = (1023_u64 - 500) << 52;
+            let max_magnitude_bits = values
+                .iter()
+                .map(|value| value.to_bits() & i64::MAX as u64)
+                .max()
+                .unwrap_or(0);
+            if max_magnitude_bits == 0 {
+                return Some(values);
+            }
+            let scale_bits = max_magnitude_bits & EXPONENT_MASK;
+            if scale_bits == 0 || scale_bits == EXPONENT_MASK {
+                return None;
+            }
+            let inverse_scale = 1.0 / f64::from_bits(scale_bits);
+            for value in &mut values {
+                let was_nonzero = value.to_bits() << 1 != 0;
+                *value *= inverse_scale;
+                let magnitude_bits = value.to_bits() & i64::MAX as u64;
+                if was_nonzero && magnitude_bits < SAFE_MIN_MAGNITUDE_BITS {
+                    return None;
+                }
+            }
+            Some(values)
+        }
+
+        for exponent in 1..=2046_u64 {
+            let scale = f64::from_bits(exponent << 52);
+            for span in [0, 1, 499, 500, 501, 1022, 2045] {
+                let lane_exponent = exponent.saturating_sub(span).max(1);
+                let lane = f64::from_bits(
+                    (lane_exponent << 52)
+                        | [0, 1, 1_u64 << 51, (1_u64 << 52) - 1]
+                            [(span % 4) as usize],
+                );
+                let values = [scale, -lane, 0.0, -0.0];
+                assert_eq!(
+                    Real::normalize_rational_linear_form4_values(values),
+                    reference(values),
+                    "normal exponent {exponent}, span {span}",
+                );
+            }
+        }
+        for values in [
+            [f64::INFINITY, 1.0, 0.0, 0.0],
+            [f64::NAN, 1.0, 0.0, 0.0],
+        ] {
+            assert_eq!(
+                Real::normalize_rational_linear_form4_values(values),
+                reference(values),
+            );
+        }
+        for values in [
+            [f64::MIN_POSITIVE, f64::from_bits(1), -0.0, 0.0],
+            [
+                f64::MIN_POSITIVE,
+                f64::from_bits((1_u64 << 52) - 1),
+                0.0,
+                0.0,
+            ],
+            [f64::MAX, f64::from_bits(1), 0.0, -0.0],
+        ] {
+            assert_eq!(
+                Real::normalize_rational_linear_form4_values(values),
+                reference(values),
+            );
+        }
+    }
+
+    #[test]
     fn rational_linear_form4_filter_rejects_unsafe_f64_ranges() {
         assert_eq!(
             Real::certified_rational_linear_form4_sign_f64(
