@@ -6,12 +6,12 @@
 //! root of `Res_x(P(x), q(x)-y)`. The implementation keeps the elimination
 //! polynomial and the mapped isolating interval as replayable evidence.
 //!
-//! This is intentionally bounded. It accepts only image polynomials whose
-//! derivative has a certified nonzero sign over the source isolating interval,
-//! so the image interval contains one image of the one represented source
-//! root. The univariate resultant is sampled at exact integer image values and
-//! then interpolated exactly, avoiding primitive approximations while reusing
-//! the crate's certified resultant machinery.
+//! This is intentionally bounded. A nonzero derivative uses the endpoint-image
+//! fast path. Stationary or initially nonmonotone maps instead use exact
+//! interval evaluation and source-root refinement until Bernstein variation
+//! certifies one distinct resultant root. The univariate resultant is sampled
+//! at exact integer image values and then interpolated exactly, avoiding
+//! primitive approximations while reusing the crate's certified machinery.
 //! It combines a Sylvester resultant with the standard real-root isolation
 //! model and exact replay.
 
@@ -31,7 +31,7 @@ use crate::integer_interpolation::{
     interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
 };
 use crate::resultant::{quotient_ring_resultant_polynomial, resultant_univariate_polynomials};
-use crate::root_isolation::IsolatedRootInterval;
+use crate::root_isolation::{IsolatedRootInterval, certify_algebraic_image_interval};
 
 const MAX_SYLVESTER_DIMENSION: usize = 8;
 
@@ -45,9 +45,8 @@ pub enum AlgebraicRootPolynomialImageStatus {
     /// The image polynomial is empty, constant-only where unsupported, or has
     /// non-exact coefficients.
     InvalidImagePolynomial,
-    /// The image derivative could not be separated from zero on the source
-    /// interval, so the image may not preserve one-root isolation.
-    NonMonotoneImage,
+    /// Bounded refinement could not certify one distinct image root.
+    ImageIsolationFailed,
     /// The bounded exact resultant package refused the Sylvester dimension.
     UnsupportedDegree,
     /// The resultant polynomial or mapped interval failed validation.
@@ -74,8 +73,8 @@ pub struct AlgebraicRootPolynomialImageReport {
 ///
 /// Coefficients are in ascending power order. The source polynomial `P` and
 /// the image polynomial `q` must have exact-rational coefficients. The function
-/// first certifies that `q'` has one nonzero sign on the source interval; then
-/// it builds `Res_x(P(x), q(x)-y)` as the defining polynomial for the image.
+/// It builds `Res_x(P(x), q(x)-y)` as the defining polynomial for the image,
+/// then certifies a one-root image interval directly or by exact refinement.
 /// This follows the exact EGC separation: constructed algebraic values carry
 /// exact replay evidence, and unsupported topology remains reportable.
 pub fn transform_algebraic_root_polynomial_image(
@@ -139,24 +138,6 @@ pub fn transform_algebraic_root_polynomial_image(
             policy,
         );
     }
-    let Some(derivative_sign) = certify_derivative_interval_sign(&image, &root.interval, policy)
-    else {
-        return polynomial_image_report(
-            AlgebraicRootPolynomialImageStatus::NonMonotoneImage,
-            image,
-            None,
-            Some("image derivative is not certified nonzero over the source interval".to_owned()),
-        );
-    };
-    if derivative_sign == Ordering::Equal {
-        return polynomial_image_report(
-            AlgebraicRootPolynomialImageStatus::NonMonotoneImage,
-            image,
-            None,
-            Some("image derivative is certified zero over the source interval".to_owned()),
-        );
-    }
-
     if image.len() == 2 {
         let affine = transform_algebraic_root_mobius(
             root,
@@ -209,12 +190,14 @@ pub fn transform_algebraic_root_polynomial_image(
             Some("could not construct resultant image polynomial exactly".to_owned()),
         );
     };
-    let Some(interval) = polynomial_image_interval(&root.interval, &image, policy) else {
+    let Some(interval) =
+        certified_polynomial_image_interval(root, &image, &polynomial_coefficients, policy)
+    else {
         return polynomial_image_report(
-            AlgebraicRootPolynomialImageStatus::Undecided,
+            AlgebraicRootPolynomialImageStatus::ImageIsolationFailed,
             image,
             None,
-            Some("could not construct polynomial image interval exactly".to_owned()),
+            Some("could not certify a one-root polynomial image interval".to_owned()),
         );
     };
     let kind = if interval.exact_root.is_some() {
@@ -356,25 +339,70 @@ fn polynomial_image_interval(
     })
 }
 
-fn certify_derivative_interval_sign(
+fn certified_polynomial_image_interval(
+    root: &AlgebraicRootRepresentation,
     image_polynomial: &[Real],
-    interval: &IsolatedRootInterval,
+    resultant_polynomial: &[Real],
     policy: PredicatePolicy,
-) -> Option<Ordering> {
+) -> Option<IsolatedRootInterval> {
     let derivative = derivative_coefficients(image_polynomial);
-    if derivative.is_empty() {
-        return Some(Ordering::Equal);
+    certify_algebraic_image_interval(
+        &root.polynomial_coefficients,
+        &root.interval,
+        resultant_polynomial,
+        policy,
+        |source_interval| {
+            polynomial_image_enclosure(source_interval, image_polynomial, &derivative, policy)
+        },
+    )
+}
+
+fn polynomial_image_enclosure(
+    interval: &IsolatedRootInterval,
+    image_polynomial: &[Real],
+    derivative: &[Real],
+    policy: PredicatePolicy,
+) -> Option<IsolatedRootInterval> {
+    if interval.exact_root.is_some()
+        || certify_polynomial_interval_sign(derivative, interval, policy)
+            .is_some_and(|sign| sign != Ordering::Equal)
+    {
+        return polynomial_image_interval(interval, image_polynomial, policy);
     }
-    let derivative_interval = evaluate_interval_polynomial(
-        &derivative,
+    let image = evaluate_interval_polynomial(
+        image_polynomial,
         &ValueInterval {
             lower: interval.lower.clone(),
             upper: interval.upper.clone(),
         },
         policy,
     )?;
-    let lower = compare_reals(&derivative_interval.lower, &Real::zero(), policy).value()?;
-    let upper = compare_reals(&derivative_interval.upper, &Real::zero(), policy).value()?;
+    Some(IsolatedRootInterval {
+        lower: image.lower,
+        upper: image.upper,
+        exact_root: None,
+        distinct_root_count: 1,
+    })
+}
+
+fn certify_polynomial_interval_sign(
+    polynomial: &[Real],
+    interval: &IsolatedRootInterval,
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    if polynomial.is_empty() {
+        return Some(Ordering::Equal);
+    }
+    let value_interval = evaluate_interval_polynomial(
+        polynomial,
+        &ValueInterval {
+            lower: interval.lower.clone(),
+            upper: interval.upper.clone(),
+        },
+        policy,
+    )?;
+    let lower = compare_reals(&value_interval.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals(&value_interval.upper, &Real::zero(), policy).value()?;
     if lower == Ordering::Greater {
         Some(Ordering::Greater)
     } else if upper == Ordering::Less {
@@ -614,18 +642,70 @@ mod tests {
     }
 
     #[test]
-    fn polynomial_image_rejects_nonmonotone_source_interval() {
-        let report = transform_algebraic_root_polynomial_image(
-            &sqrt_two_positive(),
-            &[Real::zero(), real(-3), Real::one()],
-            PredicatePolicy::APPROXIMATE_512,
-        );
+    fn polynomial_image_refines_a_nonmonotone_source_interval() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let report = transform_algebraic_root_polynomial_image(
+                &sqrt_two_positive(),
+                &[Real::zero(), real(-3), Real::one()],
+                policy,
+            );
 
-        assert_eq!(
-            report.status,
-            AlgebraicRootPolynomialImageStatus::NonMonotoneImage
-        );
-        assert!(report.representation.is_none());
+            assert_eq!(
+                report.status,
+                AlgebraicRootPolynomialImageStatus::Transformed
+            );
+            assert!(report.representation.as_ref().unwrap().is_valid());
+        }
+    }
+
+    #[test]
+    fn polynomial_image_represents_a_stationary_algebraic_map() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let report = transform_algebraic_root_polynomial_image(
+                &sqrt_two_positive(),
+                &[Real::zero(), real(-6), Real::zero(), Real::one()],
+                policy,
+            );
+
+            assert_eq!(
+                report.status,
+                AlgebraicRootPolynomialImageStatus::Transformed
+            );
+            let image = report.representation.as_ref().unwrap();
+            assert_eq!(
+                image.polynomial_coefficients,
+                vec![real(-32), Real::zero(), Real::one()]
+            );
+            assert!(image.is_valid());
+        }
+    }
+
+    #[test]
+    fn polynomial_image_refines_away_a_foreign_resultant_root() {
+        let mut selected = sqrt_two_positive();
+        selected.polynomial_coefficients = vec![real(6), real(-2), real(-3), Real::one()];
+        selected.validation =
+            validate_algebraic_root_representation(&selected, PredicatePolicy::STRICT);
+        assert!(selected.is_valid());
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let report = transform_algebraic_root_polynomial_image(
+                &selected,
+                &[Real::zero(), real(-4), Real::one()],
+                policy,
+            );
+
+            assert_eq!(
+                report.status,
+                AlgebraicRootPolynomialImageStatus::Transformed
+            );
+            let image = report.representation.as_ref().unwrap();
+            assert!(image.is_valid());
+            assert_eq!(
+                compare_reals(&image.interval.upper, &real(-3), policy).value(),
+                Some(Ordering::Less)
+            );
+        }
     }
 
     #[test]

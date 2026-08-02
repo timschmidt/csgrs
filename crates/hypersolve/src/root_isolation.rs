@@ -22,6 +22,9 @@ use crate::integer_interpolation::primitive_integer_polynomial_gcd;
 use crate::model::{ConstraintKind, Problem};
 use crate::symbolic::{Expr, SymbolId};
 
+const ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS: usize = 8;
+const ALGEBRAIC_IMAGE_REFINEMENT_STEPS: usize = 8;
+
 /// Multiplicity evidence found before Sturm isolation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RootMultiplicityStatus {
@@ -1792,6 +1795,132 @@ pub(crate) fn polynomials_share_one_root_in_interval(
         1 => Some(true),
         _ => None,
     }
+}
+
+/// Certifies one distinct root through exact Bernstein variation, removing a
+/// repeated factor only when the direct variation does not already decide.
+pub(crate) fn polynomial_has_one_distinct_root_in_open_interval(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    if compare_reals(lower, upper, policy).value()? != Ordering::Less {
+        return Some(false);
+    }
+    let lower_value = evaluate_polynomial(polynomial, lower);
+    let upper_value = evaluate_polynomial(polynomial, upper);
+    let lower_sign = compare_reals(&lower_value, &Real::zero(), policy).value()?;
+    let upper_sign = compare_reals(&upper_value, &Real::zero(), policy).value()?;
+    if lower_sign == Ordering::Equal || upper_sign == Ordering::Equal {
+        return Some(false);
+    }
+    if polynomial.len() <= 3 && lower_sign != upper_sign {
+        return Some(true);
+    }
+    let variations = polynomial_interval_bernstein_variations(
+        polynomial,
+        lower,
+        upper,
+        lower_value,
+        upper_value,
+        policy,
+    )?;
+    if variations <= 1 {
+        return Some(variations == 1);
+    }
+    let square_free = square_free_part(polynomial.to_vec(), policy)?;
+    let variations = polynomial_interval_bernstein_variations(
+        &square_free,
+        lower,
+        upper,
+        evaluate_polynomial(&square_free, lower),
+        evaluate_polynomial(&square_free, upper),
+        policy,
+    )?;
+    Some(variations == 1)
+}
+
+/// Refines one represented source root until its conservative image enclosure
+/// contains one distinct root of the exact image polynomial.
+pub(crate) fn certify_algebraic_image_interval<F>(
+    source_polynomial: &[Real],
+    source_interval: &IsolatedRootInterval,
+    image_polynomial: &[Real],
+    policy: PredicatePolicy,
+    mut enclosure: F,
+) -> Option<IsolatedRootInterval>
+where
+    F: FnMut(&IsolatedRootInterval) -> Option<IsolatedRootInterval>,
+{
+    let mut source_interval = source_interval.clone();
+    for round in 0..=ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS {
+        if let Some(mut image_interval) = enclosure(&source_interval) {
+            let exact_image = match image_interval.exact_root.as_ref() {
+                Some(root) => sign_at(image_polynomial, root, policy)? == Ordering::Equal,
+                None => false,
+            };
+            if exact_image
+                || polynomial_has_one_distinct_root_in_open_interval(
+                    image_polynomial,
+                    &image_interval.lower,
+                    &image_interval.upper,
+                    policy,
+                ) == Some(true)
+            {
+                image_interval.distinct_root_count = 1;
+                return Some(image_interval);
+            }
+        }
+        if round == ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS {
+            break;
+        }
+        let refinement = refine_isolated_univariate_polynomial_interval(
+            source_polynomial,
+            &source_interval,
+            RootIsolationConfig {
+                policy,
+                max_interval_width: None,
+                max_refinement_steps: ALGEBRAIC_IMAGE_REFINEMENT_STEPS,
+            },
+        );
+        if !matches!(
+            refinement.status,
+            IsolatedRootRefinementStatus::Refined | IsolatedRootRefinementStatus::ExactRoot
+        ) {
+            return None;
+        }
+        let refined = refinement.refined_interval?;
+        if refined == source_interval {
+            return None;
+        }
+        source_interval = refined;
+    }
+    None
+}
+
+fn polynomial_interval_bernstein_variations(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+    lower_value: Real,
+    upper_value: Real,
+    policy: PredicatePolicy,
+) -> Option<usize> {
+    if let [_, _] = polynomial {
+        return sign_variations_for_coefficients(&[lower_value, upper_value], policy);
+    }
+    if let [_, _, quadratic] = polynomial {
+        let derivative_at_lower =
+            polynomial[1].clone() + Real::from(2_i8) * quadratic.clone() * lower.clone();
+        let middle = lower_value.clone()
+            + ((upper.clone() - lower.clone()) * derivative_at_lower / Real::from(2_i8)).ok()?;
+        return sign_variations_for_coefficients(&[lower_value, middle, upper_value], policy);
+    }
+    sign_variations_for_coefficients(
+        &power_to_bernstein_on_interval(polynomial, lower, upper)?,
+        policy,
+    )
 }
 
 pub(crate) fn square_free_part(

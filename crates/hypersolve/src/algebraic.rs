@@ -1157,7 +1157,7 @@ fn arithmetic_with_same_representation(
             )
         }
         AlgebraicRootPolynomialImageStatus::InvalidImagePolynomial
-        | AlgebraicRootPolynomialImageStatus::NonMonotoneImage
+        | AlgebraicRootPolynomialImageStatus::ImageIsolationFailed
         | AlgebraicRootPolynomialImageStatus::UnsupportedDegree
         | AlgebraicRootPolynomialImageStatus::Undecided => algebraic_arithmetic_report(
             operation,
