@@ -6,22 +6,23 @@ use std::sync::{Arc, OnceLock};
 
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
-use crate::classify::real_sign;
+use crate::classify::{compare_reals, real_sign};
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
 use crate::policy::resolve_certified_operation;
 use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2;
 use crate::{
-    Aabb2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
+    Aabb2, Axis2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
     BezierLineContactRelation, BezierLineImageFitRelation, BezierParallel2,
     BezierParallelPairIntersectionSet2, BezierParameter2, BezierParameterRange2,
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Curve2, CurveContext,
     CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionContact2,
     CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
-    CurvePathBooleanOperand2, CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
-    FillRule, LineSeg2, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
-    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RationalBezierPointIncidence2, Real, RealSign,
-    RegionPointLocation, Segment2, UncertaintyReason,
+    CurvePathBooleanOperand2, CurveRegion2, CurveRegionLoopRole, CurveResult, ExactCurveError,
+    ExactCurveResult, FillRule, LineSeg2, QuadraticBezier2, RationalBezier2,
+    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
+    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    RationalBezierPointIncidence2, Real, RealSign, RegionPointLocation, Segment2,
+    UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -1348,6 +1349,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
             RegionCarrierPairContext::ParallelPair
             | RegionCarrierPairContext::ParallelSameImage
             | RegionCarrierPairContext::ParallelSelf => {
+                if !matches!(pair.context, RegionCarrierPairContext::ParallelSelf)
+                    && (self.parallel_pair_is_coordinate_disjoint(pair)
+                        || self.adjacent_parallel_pair_is_endpoint_only(pair))
+                {
+                    // A shared strictly monotone coordinate either separates
+                    // the complete images or reduces them to one already
+                    // seeded adjacent loop vertex.  Neither case needs a
+                    // bivariate resultant.
+                    return Ok(RegionPairResult {
+                        contacts: Vec::new(),
+                        overlaps: Vec::new(),
+                        blockers: Vec::new(),
+                    });
+                }
                 let parallel = first.geometry.parallel();
                 let mut intersections = Vec::with_capacity(2);
                 match &pair.context {
@@ -1436,6 +1451,182 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 })
             }
         }
+    }
+
+    fn parallel_pair_is_coordinate_disjoint(&self, pair: &RegionCarrierPair) -> bool {
+        let first = &self.data.carriers[pair.first_carrier_index];
+        let second = &self.data.carriers[pair.second_carrier_index];
+        let (
+            RegionCarrierGeometry::AnalyticParallel(first_parallel),
+            RegionCarrierGeometry::AnalyticParallel(second_parallel),
+        ) = (&first.geometry, &second.geometry)
+        else {
+            return false;
+        };
+        let Some(first_start) = exact_carrier_point(
+            first,
+            carrier_traversal_start_parameter(first),
+            &self.data.policy,
+        ) else {
+            return false;
+        };
+        let Some(first_end) = exact_carrier_point(
+            first,
+            carrier_traversal_end_parameter(first),
+            &self.data.policy,
+        ) else {
+            return false;
+        };
+        let Some(second_start) = exact_carrier_point(
+            second,
+            carrier_traversal_start_parameter(second),
+            &self.data.policy,
+        ) else {
+            return false;
+        };
+        let Some(second_end) = exact_carrier_point(
+            second,
+            carrier_traversal_end_parameter(second),
+            &self.data.policy,
+        ) else {
+            return false;
+        };
+
+        for axis in [Axis2::X, Axis2::Y] {
+            if !first_parallel
+                .regular_fragment_has_certified_injective_axis_on(axis, &self.data.policy)
+                || !second_parallel
+                    .regular_fragment_has_certified_injective_axis_on(axis, &self.data.policy)
+            {
+                continue;
+            }
+            let Some((first_minimum, first_maximum)) =
+                ordered_axis_endpoint_points(&first_start, &first_end, axis, &self.data.policy)
+            else {
+                continue;
+            };
+            let Some((second_minimum, second_maximum)) =
+                ordered_axis_endpoint_points(&second_start, &second_end, axis, &self.data.policy)
+            else {
+                continue;
+            };
+            for (lower_maximum, upper_minimum) in [
+                (first_maximum, second_minimum),
+                (second_maximum, first_minimum),
+            ] {
+                match compare_reals(
+                    point_coordinate(lower_maximum, axis),
+                    point_coordinate(upper_minimum, axis),
+                    &self.data.policy,
+                ) {
+                    Some(Ordering::Less) => return true,
+                    Some(Ordering::Equal)
+                        if points_are_decided_distinct(
+                            lower_maximum,
+                            upper_minimum,
+                            &self.data.policy,
+                        ) =>
+                    {
+                        // Strict coordinate monotonicity makes this boundary
+                        // value unique on each carrier.  Distinct endpoint
+                        // points therefore exclude even a tangential contact.
+                        return true;
+                    }
+                    Some(Ordering::Equal | Ordering::Greater) | None => {}
+                }
+            }
+        }
+        false
+    }
+
+    fn adjacent_parallel_pair_is_endpoint_only(&self, pair: &RegionCarrierPair) -> bool {
+        if pair.first_carrier_index == pair.second_carrier_index {
+            return false;
+        }
+        let first = &self.data.carriers[pair.first_carrier_index];
+        let second = &self.data.carriers[pair.second_carrier_index];
+        if first.operand != second.operand || first.loop_index != second.loop_index {
+            return false;
+        }
+        let (
+            RegionCarrierGeometry::AnalyticParallel(first_parallel),
+            RegionCarrierGeometry::AnalyticParallel(second_parallel),
+        ) = (&first.geometry, &second.geometry)
+        else {
+            return false;
+        };
+        let boundary = match first.operand {
+            CurvePathBooleanOperand2::First => self.data.first.boundary_loops(),
+            CurvePathBooleanOperand2::Second => self.data.second.boundary_loops(),
+        }
+        .get(first.loop_index);
+        let Some(boundary) = boundary else {
+            return false;
+        };
+        let fragment_count = boundary.fragments().len();
+        let first_start = carrier_traversal_start_parameter(first);
+        let first_end = carrier_traversal_end_parameter(first);
+        let second_start = carrier_traversal_start_parameter(second);
+        let second_end = carrier_traversal_end_parameter(second);
+        let (first_other, first_shared, second_shared, second_other) =
+            if first.fragment_index.checked_add(1) == Some(second.fragment_index) {
+                (first_start, first_end, second_start, second_end)
+            } else if first.fragment_index == 0
+                && second.fragment_index.checked_add(1) == Some(fragment_count)
+            {
+                (first_end, first_start, second_end, second_start)
+            } else {
+                return false;
+            };
+        let Some(first_other) = exact_carrier_point(first, first_other, &self.data.policy) else {
+            return false;
+        };
+        let Some(first_shared) = exact_carrier_point(first, first_shared, &self.data.policy) else {
+            return false;
+        };
+        let Some(second_shared) = exact_carrier_point(second, second_shared, &self.data.policy)
+        else {
+            return false;
+        };
+        let Some(second_other) = exact_carrier_point(second, second_other, &self.data.policy)
+        else {
+            return false;
+        };
+        if compare_reals(first_shared.x(), second_shared.x(), &self.data.policy)
+            != Some(Ordering::Equal)
+            || compare_reals(first_shared.y(), second_shared.y(), &self.data.policy)
+                != Some(Ordering::Equal)
+        {
+            return false;
+        }
+
+        for axis in [Axis2::X, Axis2::Y] {
+            if !first_parallel
+                .regular_fragment_has_certified_injective_axis_on(axis, &self.data.policy)
+                || !second_parallel
+                    .regular_fragment_has_certified_injective_axis_on(axis, &self.data.policy)
+            {
+                continue;
+            }
+            let first_order = compare_reals(
+                point_coordinate(&first_other, axis),
+                point_coordinate(&first_shared, axis),
+                &self.data.policy,
+            );
+            let second_order = compare_reals(
+                point_coordinate(&second_other, axis),
+                point_coordinate(&second_shared, axis),
+                &self.data.policy,
+            );
+            if matches!(
+                (first_order, second_order),
+                (Some(Ordering::Less), Some(Ordering::Greater))
+                    | (Some(Ordering::Greater), Some(Ordering::Less))
+            ) {
+                return true;
+            }
+        }
+        false
     }
 
     fn clipped_overlap_ranges(
@@ -2011,6 +2202,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
 
     fn build_regularized_region(&self) -> ExactCurveResult<CurveRegion2> {
         let topology = self.build_split_topology()?;
+        let simple_loop_filled_side = self.certified_simple_single_loop_filled_side();
         let mut arrangement_fragments = Vec::new();
         let mut arrangement_directions = Vec::new();
         for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
@@ -2028,10 +2220,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     split.end_topology_vertex,
                     source_end,
                 )?;
-                let action = self.regularized_fragment_action(
-                    carrier_index,
-                    &split.fragment,
-                    &topology.overlaps,
+                let action = simple_loop_filled_side.map_or_else(
+                    || {
+                        self.regularized_fragment_action(
+                            carrier_index,
+                            &split.fragment,
+                            &topology.overlaps,
+                        )
+                    },
+                    |filled_side_is_left| {
+                        Ok(if filled_side_is_left {
+                            RegionFragmentAction::Keep
+                        } else {
+                            RegionFragmentAction::KeepReversed
+                        })
+                    },
                 )?;
                 if action == RegionFragmentAction::Discard {
                     continue;
@@ -2104,6 +2307,50 @@ impl<'a> CurveRegionBooleanContext<'a> {
         } else {
             Ok(region)
         }
+    }
+
+    fn certified_simple_single_loop_filled_side(&self) -> Option<bool> {
+        if self.data.first.boundary_loops().len() != 1
+            || self.data.carriers.is_empty()
+            || self.data.carriers.iter().any(|carrier| {
+                carrier.operand != CurvePathBooleanOperand2::First
+                    || carrier.loop_index != 0
+                    || !carrier
+                        .geometry
+                        .has_certified_injective_axis(&self.data.policy)
+            })
+        {
+            return None;
+        }
+        let Ok(Classification::Decided(roles)) = self.data.first.loop_roles_raw(&self.data.policy)
+        else {
+            return None;
+        };
+        if roles.as_slice() != [CurveRegionLoopRole::Material] {
+            return None;
+        }
+        let Ok(Classification::Decided(filled_sides)) =
+            self.data.first.filled_side_is_left_raw(&self.data.policy)
+        else {
+            return None;
+        };
+        let [filled_side_is_left] = filled_sides else {
+            return None;
+        };
+        for pair in &self.data.pairs {
+            if pair.first_carrier_index == pair.second_carrier_index
+                || !matches!(
+                    pair.context,
+                    RegionCarrierPairContext::ParallelPair
+                        | RegionCarrierPairContext::ParallelSameImage
+                )
+                || !(self.parallel_pair_is_coordinate_disjoint(pair)
+                    || self.adjacent_parallel_pair_is_endpoint_only(pair))
+            {
+                return None;
+            }
+        }
+        Some(*filled_side_is_left)
     }
 
     fn regularized_fragment_action(
@@ -3755,6 +4002,75 @@ const fn action_from_result_sides(left: bool, right: bool) -> RegionFragmentActi
     }
 }
 
+const fn carrier_traversal_start_parameter(carrier: &RegionCarrier) -> &BezierParameter2 {
+    if carrier.reversed {
+        &carrier.end
+    } else {
+        &carrier.start
+    }
+}
+
+const fn carrier_traversal_end_parameter(carrier: &RegionCarrier) -> &BezierParameter2 {
+    if carrier.reversed {
+        &carrier.start
+    } else {
+        &carrier.end
+    }
+}
+
+fn exact_carrier_point(
+    carrier: &RegionCarrier,
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> Option<crate::Point2> {
+    let parameter = parameter.as_exact()?;
+    match carrier.geometry.point_at(parameter, policy) {
+        Ok(Classification::Decided(point)) => Some(point),
+        Ok(Classification::Uncertain(_)) | Err(_) => None,
+    }
+}
+
+fn point_coordinate(point: &crate::Point2, axis: Axis2) -> &Real {
+    match axis {
+        Axis2::X => point.x(),
+        Axis2::Y => point.y(),
+    }
+}
+
+fn ordered_axis_endpoint_points<'a>(
+    first: &'a crate::Point2,
+    second: &'a crate::Point2,
+    axis: Axis2,
+    policy: &CurveContext,
+) -> Option<(&'a crate::Point2, &'a crate::Point2)> {
+    match compare_reals(
+        point_coordinate(first, axis),
+        point_coordinate(second, axis),
+        policy,
+    ) {
+        Some(Ordering::Less) => Some((first, second)),
+        Some(Ordering::Greater) => Some((second, first)),
+        Some(Ordering::Equal) | None => None,
+    }
+}
+
+fn points_are_decided_distinct(
+    first: &crate::Point2,
+    second: &crate::Point2,
+    policy: &CurveContext,
+) -> bool {
+    [Axis2::X, Axis2::Y].into_iter().any(|axis| {
+        matches!(
+            compare_reals(
+                point_coordinate(first, axis),
+                point_coordinate(second, axis),
+                policy,
+            ),
+            Some(Ordering::Less | Ordering::Greater)
+        )
+    })
+}
+
 fn parameter_in_carrier(
     parameter: &BezierParameter2,
     carrier: &RegionCarrier,
@@ -4216,11 +4532,14 @@ impl RegionCarrierGeometry {
     fn has_certified_injective_axis(&self, policy: &CurveContext) -> bool {
         match self {
             Self::Bezier(curve) => subcurve_has_certified_injective_axis(curve, policy),
-            Self::AnalyticParallel(parallel) => matches!(
-                parallel.exact_rational_parallel_component(policy),
-                Ok(Classification::Decided(Some(curve)))
-                    if curve.has_certified_injective_axis(policy)
-            ),
+            Self::AnalyticParallel(parallel) => {
+                parallel.regular_fragment_has_certified_injective_axis(policy)
+                    || matches!(
+                        parallel.exact_rational_parallel_component(policy),
+                        Ok(Classification::Decided(Some(curve)))
+                            if curve.has_certified_injective_axis(policy)
+                    )
+            }
         }
     }
 
@@ -4385,8 +4704,9 @@ const fn boolean_operation_index(operation: BooleanOp) -> usize {
 mod certified_successor_tests {
     use super::*;
     use crate::{
-        BezierAlgebraicParameter2, CurvePath2, LineSeg2, Point2, RationalBezier2,
-        RationalBezierAlgebraicPointImage2, Real,
+        BezierAlgebraicParameter2, BezierParallelFragment2, CurvePath2, CurveRegionBoundaryLoop2,
+        LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicPointImage2,
+        Real,
     };
 
     fn decided<T>(classification: Classification<T>) -> T {
@@ -4429,6 +4749,86 @@ mod certified_successor_tests {
             vec![Real::one(); 2],
         )
         .expect("valid rational line")
+    }
+
+    #[test]
+    fn monotone_parallel_ranges_remove_only_proven_unary_pairs() {
+        let policy = CurveContext::STRICT;
+        let tenth = (Real::one() / Real::from(10_i8)).expect("nonzero denominator");
+        let sources = [
+            QuadraticBezier2::new(
+                Point2::from_values(1, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(0, 1),
+            ),
+            QuadraticBezier2::new(
+                Point2::from_values(0, 1),
+                Point2::from_values(-1, 1),
+                Point2::from_values(-1, 0),
+            ),
+            QuadraticBezier2::new(
+                Point2::from_values(-1, 0),
+                Point2::from_values(-1, -1),
+                Point2::from_values(0, -1),
+            ),
+            QuadraticBezier2::new(
+                Point2::from_values(0, -1),
+                Point2::from_values(1, -1),
+                Point2::from_values(1, 0),
+            ),
+        ];
+        let fragments = sources
+            .into_iter()
+            .map(|source| {
+                let parallel = source
+                    .parallel_left(-tenth.clone())
+                    .expect("valid exact parallel");
+                BezierSplitFragment2::AnalyticParallel(
+                    BezierParallelFragment2::from_certified_range(
+                        parallel,
+                        BezierParameterRange2::new_validated(
+                            BezierParameter2::Exact(Real::zero()),
+                            BezierParameter2::Exact(Real::one()),
+                        ),
+                        false,
+                    ),
+                )
+            })
+            .collect();
+        let region = CurveRegion2::new(vec![
+            CurveRegionBoundaryLoop2::new(fragments, &policy)
+                .expect("connected exact parallel loop"),
+        ])
+        .expect("valid raw region")
+        .with_certified_loop_roles(vec![CurveRegionLoopRole::Material])
+        .expect("valid material role")
+        .with_certified_filled_side_is_left(vec![true])
+        .expect("valid filled-side evidence");
+        let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
+            .expect("valid unary arrangement");
+
+        assert_eq!(context.data.pairs.len(), 6);
+        let resultant_free = context
+            .data
+            .pairs
+            .iter()
+            .filter(|pair| {
+                context.parallel_pair_is_coordinate_disjoint(pair)
+                    || context.adjacent_parallel_pair_is_endpoint_only(pair)
+            })
+            .count();
+        assert_eq!(resultant_free, 6);
+        assert!(
+            context
+                .data
+                .pairs
+                .iter()
+                .all(|pair| { !matches!(pair.context, RegionCarrierPairContext::ParallelSelf) })
+        );
+        assert_eq!(
+            context.certified_simple_single_loop_filled_side(),
+            Some(true)
+        );
     }
 
     fn square_region(min_x: i8, min_y: i8, max_x: i8, max_y: i8) -> CurveRegion2 {

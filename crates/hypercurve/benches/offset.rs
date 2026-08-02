@@ -973,22 +973,30 @@ fn bench_certified_bezier_parallel_construction(iterations: u32) -> CurveResult<
     Ok(())
 }
 
-fn bench_curve_region_bezier_offset_lanes(
-    iterations: u32,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn curve_region_bezier_offset_fixture() -> Result<CurveRegion2, Box<dyn std::error::Error>> {
     let source_path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(1, 0), p(1, 1), p(0, 1))),
         Curve2::from(QuadraticBezier2::new(p(0, 1), p(-1, 1), p(-1, 0))),
         Curve2::from(QuadraticBezier2::new(p(-1, 0), p(-1, -1), p(0, -1))),
         Curve2::from(QuadraticBezier2::new(p(0, -1), p(1, -1), p(1, 0))),
     ])?;
-    let source = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+    Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[source_path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::EvenOdd],
         &CurveContext::STRICT,
     )?
-    .into_value();
+    .into_value())
+}
+
+fn bench_curve_region_bezier_offset_lanes(
+    iterations: u32,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Keep lane-local lazy source caches so no later adapter inherits warm
+    // role or side evidence from the direct lane.
+    let exact_source = curve_region_bezier_offset_fixture()?;
+    let certified_source = curve_region_bezier_offset_fixture()?;
+    let fallback_source = curve_region_bezier_offset_fixture()?;
     let policy = CurveContext::STRICT;
     let verification = BezierParallelVerificationOptions::try_new(q(1, 20), 16, &policy)?;
     let flattening = BezierFlatteningOptions::try_new(q(1, 20), 16, &policy)?;
@@ -996,7 +1004,7 @@ fn bench_curve_region_bezier_offset_lanes(
     let started = Instant::now();
     let mut exact_loops = 0_usize;
     for _ in 0..iterations {
-        let result = source
+        let result = exact_source
             .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
             .into_value();
         exact_loops += black_box(result.boundary_loops().len());
@@ -1010,7 +1018,7 @@ fn bench_curve_region_bezier_offset_lanes(
     let started = Instant::now();
     let mut certified_loops = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(result) = source
+        let Classification::Decided(result) = certified_source
             .offset_with_certified_bezier_parallel(
                 q(1, 10),
                 &OffsetCornerStyle2::Round,
@@ -1035,7 +1043,7 @@ fn bench_curve_region_bezier_offset_lanes(
     let started = Instant::now();
     let mut fallback_loops = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(result) = source
+        let Classification::Decided(result) = fallback_source
             .offset_with_certified_segmentation(
                 q(1, 10),
                 &OffsetCornerStyle2::Round,

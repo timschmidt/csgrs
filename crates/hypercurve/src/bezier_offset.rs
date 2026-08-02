@@ -25,16 +25,16 @@ use crate::rational_bezier_general::{
     ResultantParameterProjection, rational_parameter_image, resultant_parameter_projection,
 };
 use crate::{
-    Aabb2, BezierCuspClassification, BezierDegree, BezierEndpoint, BezierInflectionClassification,
-    BezierLineContact, BezierLineContactKind, BezierLineContactRelation,
-    BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
-    BezierParameterInterval, BezierParameterPolynomial, CertifiedBezierLineImageOffset2,
-    Classification, CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError,
-    CurveGeometry2, CurveOperation2, CurvePath2, CurveResult, ExactCurveError, ExactCurveResult,
-    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionCandidates2,
-    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
-    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, Similarity2,
-    UncertaintyReason,
+    Aabb2, Axis2, BezierCuspClassification, BezierDegree, BezierEndpoint,
+    BezierInflectionClassification, BezierLineContact, BezierLineContactKind,
+    BezierLineContactRelation, BezierLineCrossingDirection, BezierLineImageFitRelation,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
+    CertifiedBezierLineImageOffset2, Classification, CubicBezier2, Curve2, CurveContext,
+    CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2, CurvePath2, CurveResult,
+    ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
+    RationalQuadraticBezier2, Real, Similarity2, UncertaintyReason,
 };
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 use hypersolve::{
@@ -1452,6 +1452,35 @@ impl BezierParallel2 {
             BezierParallelSource2::Cubic(_) => 3,
             BezierParallelSource2::Rational(source) => source.degree(),
         }
+    }
+
+    /// Returns whether every regular cusp-free fragment has an injective coordinate.
+    ///
+    /// A regular parallel derivative is the source derivative multiplied by
+    /// one continuous scalar.  [`BezierParallelFragment2`](crate::BezierParallelFragment2)
+    /// excludes source singularities and interior parallel cusps, so that
+    /// scalar has one sign in the open fragment.  An injective source
+    /// coordinate therefore remains monotone (possibly with reversed
+    /// orientation) on every such fragment.  This stronger whole-source test
+    /// lets unary arrangements omit an impossible within-fragment
+    /// self-intersection without weakening cross-fragment replay.
+    pub(crate) fn regular_fragment_has_certified_injective_axis(
+        &self,
+        policy: &CurveContext,
+    ) -> bool {
+        [Axis2::X, Axis2::Y]
+            .into_iter()
+            .any(|axis| self.regular_fragment_has_certified_injective_axis_on(axis, policy))
+    }
+
+    pub(crate) fn regular_fragment_has_certified_injective_axis_on(
+        &self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> bool {
+        self.source()
+            .to_rational_bezier()
+            .is_ok_and(|source| source.has_certified_injective_axis_on(axis, policy))
     }
 
     /// Returns the same exact parallel image with traversal direction reversed.

@@ -5087,7 +5087,11 @@ impl RationalBezier2 {
         injective
     }
 
-    fn has_certified_injective_axis_on(&self, axis: Axis2, policy: &CurveContext) -> bool {
+    pub(crate) fn has_certified_injective_axis_on(
+        &self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> bool {
         let (start, end) = match axis {
             Axis2::X => (self.start().x(), self.end().x()),
             Axis2::Y => (self.start().y(), self.end().y()),
