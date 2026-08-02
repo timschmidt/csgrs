@@ -1,0 +1,171 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact general algebraic cusp point images",
+  "source_revision": "46f4433c49b348af2d2f4f10c68d707c0c4fd22c",
+  "semantic_revisions": [
+    "d180962b16b79a92e12b058e1ac144de63ef10c3",
+    "46f4433c49b348af2d2f4f10c68d707c0c4fd22c"
+  ],
+  "comparison_revision": "6c0c3472b68aa66f372c9a5f039caa2b2ad5e87e",
+  "previous_checkpoint": "2026-08-02-rational-image-map-reuse.json",
+  "scope": {
+    "included": [
+      "one shared exact speed and signed-curvature polynomial authority for analytic Bezier parallels",
+      "square-root-free exact point images at selected general algebraic cusps",
+      "exact source-parallel point construction at arbitrary signed Real distances from the same cusp",
+      "retained exact rational expressions when bounded Hypersolve coordinate-image construction declines",
+      "STRICT and APPROXIMATE_512 cusp, non-cusp, distance, midpoint, tangent-orthogonality, and orientation proofs",
+      "matched parent runtime, linked-size, allocation, historical/competitive, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "admission of a partial algebraic semicircle, line, or general join carrier to CurveRegion2",
+      "approximate point coordinates or conversion of represented algebraic roots into canonical Real",
+      "finite projection or export of general analytic offsets",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "definitions": "For homogeneous tangent numerator H, S=H dot H and Q=d W^2(H'_x H_y-H'_y H_x).",
+    "selected_cusp": "Construction requires the certified regular selected branch S>0, Q<0, and Q^2=S^3 at the retained isolated source parameter.",
+    "normal_reduction": "The selected cusp identities imply 1/sqrt(S)=-S/Q and therefore left normal N=(H_y S/Q,-H_x S/Q).",
+    "point_image": "For any requested shared-source parallel distance c, x=(XQ+c H_y S W)/(WQ) and y=(YQ-c H_x S W)/(WQ); W=1 is the polynomial specialization.",
+    "domain": "Q<0 proves Q is nonzero. Because Q contains W^2, it also proves the affine source weight is nonzero at the cusp, so WQ is a valid denominator.",
+    "non_cusp": "A certified source singularity, opposite signed-curvature branch, or nonzero cusp residual returns Decided(None); unresolved predicates remain Classification::Uncertain.",
+    "retention": "Hypersolve coordinate transformation is an optional representation optimization. If it declines one coordinate after the cusp/domain proof, Hypercurve retains the exact parameter and rational coordinate polynomials instead of discarding the exact point.",
+    "policy": "STRICT accepts only its exact predicate proofs. APPROXIMATE_512 may terminate an otherwise unresolved predicate at its configured 512-bit boundary, while returned coordinates remain the exact retained rational expression selected by that policy."
+  },
+  "capability": {
+    "comparison_revision": "General algebraic cusp parameters were isolated, but their center and neighboring shared-source parallel points required an unrepresented nested radical and raw offset construction returned Boundary.",
+    "source_revision": "The center and both offset-side points are exact rational images of the same retained cusp isolator for polynomial and rational Bezier sources.",
+    "bounded_transform_fallback": "The general cubic fixture makes the bounded rational-image package decline a y-coordinate representation; the new path retains and proves the exact rational expression instead of reporting YImageFailed.",
+    "intentional_boundary": "The point substrate remains crate-internal until a complete algebraic join carrier participates in intersection, bounds, ray classification, arrangement, and export. No partial carrier is admitted to CurveRegion2."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "focused_capability": {
+      "method": "eleven release unit-test processes pinned to CPU 11 under perf stat; each process isolates the general cubic cusps, constructs inner/center/outer images under both policies, proves all geometric identities, and rejects one irrational non-cusp",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses <release-lib-test> bezier_offset::conversion_tests::general_algebraic_cusp_points_are_exact_rational_images --exact",
+      "task_clock_ms": 3.59,
+      "cycles": 9836709,
+      "instructions": 22514234,
+      "branches": 4634833,
+      "branch_misses": 77793,
+      "elapsed_seconds": 0.004184106,
+      "interpretation": "This is a new exact capability baseline, not a comparison with a parent approximation. It includes degree-heavy independent identity assertions and test-harness overhead."
+    },
+    "matched_parent_guard": {
+      "workload": "the unchanged two-policy radical_parallel_cusp_offsets_exactly_under_both_policies release integration regression",
+      "method": "adjacent eleven-run perf-stat measurements of byte-matched source and comparison test executables pinned to CPU 11",
+      "comparison_revision": {
+        "task_clock_ms": 372.37,
+        "cycles": 1529041953,
+        "instructions": 3468944511,
+        "branches": 660977800,
+        "branch_misses": 9333081,
+        "elapsed_seconds": 0.373326116
+      },
+      "source_revision": {
+        "task_clock_ms": 367.35,
+        "cycles": 1517983274,
+        "instructions": 3468716220,
+        "branches": 660952783,
+        "branch_misses": 9399561,
+        "elapsed_seconds": 0.368033748
+      },
+      "change_percent": {
+        "task_clock": -1.348121,
+        "cycles": -0.723242,
+        "instructions": -0.006581,
+        "branches": -0.003785,
+        "branch_misses": 0.712305,
+        "elapsed": -1.417626
+      },
+      "interpretation": "Instructions and branches are neutral, elapsed time improves, and the branch-miss movement is scheduler/noise scale. Consolidating the polynomial formula does not regress the existing exact cusp path."
+    },
+    "historical_and_competitive_controls": {
+      "method": "three fixed-iteration, eleven-sample all-feature processes per source/comparison executable pinned to CPU 11; reported values are medians of process medians",
+      "open_cubic_comparison_ns": 30340053.5,
+      "open_cubic_source_ns": 30607545.0,
+      "open_cubic_change_percent": 0.881645,
+      "line_arc_comparison_ns": 20020.8,
+      "line_arc_source_ns": 19326.6,
+      "line_arc_change_percent": -3.467394,
+      "latest_curvo_open_cubic_ns": 8470.8,
+      "latest_cavalier_line_arc_ns": 939.9,
+      "interpretation": "The general exact open-cubic sentinel is within sub-percent process noise and the native line/arc sentinel improves. Curvo and Cavalier remain finite binary64 controls and cannot retain this algebraic cusp parameter, exact rational point expression, or CurveRegion2 topology."
+    }
+  },
+  "memory": {
+    "allocation_profile": {
+      "tool": "Heaptrack direct release-unit-test trace",
+      "profile": "/tmp/hypercurve-general-algebraic-cusp-point-d180962-20260802.zst.zst",
+      "workload": "the complete two-policy general algebraic cusp point construction and independent identity-verification fixture",
+      "allocation_calls": 39099,
+      "temporary_allocations": 4876,
+      "peak_heap": "366.42 KiB",
+      "instrumented_runtime_seconds": 0.07,
+      "interpretation": "The profile includes all high-degree test polynomial products and sign proofs, not only point construction. Bigint growth remains the dominant allocation origin and is a scheduled optimization target."
+    }
+  },
+  "release_size": {
+    "method": "matched all-feature curve_region_boolean_batch release executables built against identical live dependency revisions",
+    "file_bytes": 7840936,
+    "text_bytes": 5935034,
+    "data_bytes": 266448,
+    "bss_bytes": 1768,
+    "prior_file_bytes": 7839528,
+    "prior_text_bytes": 5934726,
+    "prior_data_bytes": 266416,
+    "prior_bss_bytes": 2120,
+    "file_change_bytes": 1408,
+    "text_change_bytes": 308,
+    "file_change_percent": 0.017960,
+    "text_change_percent": 0.005190,
+    "allocated_section_bytes": 6204006,
+    "prior_allocated_section_bytes": 6204018,
+    "allocated_section_change_bytes": -12,
+    "actual_text_section_bytes": 4413591,
+    "prior_actual_text_section_bytes": 4413575,
+    "actual_text_section_change_bytes": 16,
+    "interpretation": "Keeping the not-yet-consumed carrier substrate crate-internal removes the initially observed public-symbol cost. Actual allocated sections shrink 12 bytes and .text grows only 16 bytes; aggregate size categories differ mainly through alignment and unwind metadata."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-general-algebraic-cusp-point-46f4433-20260802 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 31689,
+    "edges": 58218,
+    "prior_nodes": 31644,
+    "prior_edges": 58120,
+    "artifact": "/tmp/hypercurve-callgraph-general-algebraic-cusp-point-46f4433-20260802/callgraph.json",
+    "confirmed_paths": [
+      "BezierParallel2::singularity_analysis -> parallel_signed_curvature_polynomial",
+      "BezierParallel2::parallel_derivative_scale_sign_from_polynomials -> parallel_signed_curvature_polynomial",
+      "BezierParallel2::algebraic_parallel_cusp_point_image -> parallel_signed_curvature_polynomial",
+      "BezierParallel2::algebraic_parallel_cusp_point_image -> rational_point_image_from_power_basis -> RationalBezierAlgebraicPointImage2::from_retained_expression"
+    ]
+  },
+  "verification": {
+    "focused_fixture": "passed exact cusp construction at three distances, source distance, endpoint separation, midpoint, tangent orthogonality, left-normal orientation, and irrational non-cusp rejection under STRICT and APPROXIMATE_512",
+    "all_feature_library": "passed: 353 tests",
+    "no_default_library": "passed: 312 tests",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_builds": "passed all-feature curve_region_boolean_batch and comparative builds plus the focused release unit and existing radical-cusp integration executables",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "implement one compact algebraic cusp arc/line carrier without admitting a partial fragment family",
+    "complete that carrier's pair intersections, bounds, ray classification, arrangement, reversal, splitting, and finite export",
+    "route general algebraic cusp and distinct-carrier joins through the complete carrier",
+    "continue reducing bigint and certified rational-image allocation churn",
+    "extend structural parallel-pair differential coverage beyond the monotone simple-loop proof",
+    "complete expansion, erosion, collapse, cusp, and offset self-contact differential coverage",
+    "implement radius-driven fillet and two-setback chamfer solvers",
+    "delete displaced historical region-offset machinery after differential coverage passes"
+  ]
+}
