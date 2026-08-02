@@ -35,13 +35,14 @@ use crate::{
     BezierArrangementTraversal2, BezierEndpointPointImage2, BezierFlatteningOptions,
     BezierLineContact, BezierLineContactKind, BezierLineContactRelation,
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallel2,
-    BezierParallelVerificationOptions, BezierParameter2, BezierRetainedLinearOverlapTraversal2,
+    BezierParallelSource2, BezierParallelVerificationOptions, BezierParameter2,
+    BezierParameterRange2, BezierRetainedLinearOverlapTraversal2,
     BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
+    CircularArc2, Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
     CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveError, CurveFamily2,
     CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
     CurvePathIntersectionContact2, CurveResult, ExactCurveError, ExactCurveResult, FillRule,
-    LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    LineArcRegion2, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2,
     RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
     RegionArrangementSummary2, RegionPointLocation, RetainedTopologyStatus, Segment2,
     UncertaintyReason,
@@ -282,7 +283,7 @@ pub struct CurveRegionCertifiedSegmentationResult2 {
 /// Evidence for a general-curve offset routed through exact-scalar certified segmentation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionSegmentedOffsetEvidence2 {
-    used_exact_native_fast_path: bool,
+    used_exact_authoritative_path: bool,
     max_source_chord_error: Real,
     loop_evidence: Vec<CurveRegionSegmentationLoopEvidence2>,
     lossy_boundary: bool,
@@ -311,7 +312,7 @@ pub struct CurveRegionCertifiedParallelLoopEvidence2 {
 /// Evidence for the strongest completed lane of a general curved-region offset.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionCertifiedParallelOffsetEvidence2 {
-    used_exact_native_fast_path: bool,
+    used_exact_authoritative_path: bool,
     used_certified_parallel_path: bool,
     used_segmented_source_fallback: bool,
     max_parallel_fit_error: Real,
@@ -518,9 +519,9 @@ impl CurveRegionCertifiedSegmentationResult2 {
 }
 
 impl CurveRegionSegmentedOffsetEvidence2 {
-    /// Returns true when no segmentation was needed because native offsetting succeeded exactly.
-    pub const fn used_exact_native_fast_path(&self) -> bool {
-        self.used_exact_native_fast_path
+    /// Returns true when the authoritative exact offset completed without segmentation.
+    pub const fn used_exact_authoritative_path(&self) -> bool {
+        self.used_exact_authoritative_path
     }
 
     /// Returns the certified curve-to-source-chord error budget.
@@ -604,9 +605,9 @@ impl CurveRegionCertifiedParallelLoopEvidence2 {
 }
 
 impl CurveRegionCertifiedParallelOffsetEvidence2 {
-    /// Returns whether the exact native line/arc offset kernel completed the operation.
-    pub const fn used_exact_native_fast_path(&self) -> bool {
-        self.used_exact_native_fast_path
+    /// Returns whether the authoritative exact offset kernel completed the operation.
+    pub const fn used_exact_authoritative_path(&self) -> bool {
+        self.used_exact_authoritative_path
     }
 
     /// Returns whether verified polynomial/rational parallels supplied the output boundary.
@@ -2111,18 +2112,18 @@ fn wrap_segmented_parallel_fallback(
                 CurveRegionCertifiedParallelOffsetResult2 {
                     region,
                     evidence: CurveRegionCertifiedParallelOffsetEvidence2 {
-                        used_exact_native_fast_path: fallback_evidence
-                            .used_exact_native_fast_path(),
+                        used_exact_authoritative_path: fallback_evidence
+                            .used_exact_authoritative_path(),
                         used_certified_parallel_path: false,
                         used_segmented_source_fallback: !fallback_evidence
-                            .used_exact_native_fast_path(),
+                            .used_exact_authoritative_path(),
                         max_parallel_fit_error: max_parallel_fit_error.clone(),
                         max_output_chord_error: max_output_chord_error.clone(),
                         certified_pre_regularization_boundary_error: fallback_evidence
-                            .used_exact_native_fast_path()
+                            .used_exact_authoritative_path()
                             .then(Real::zero),
                         final_boundary_hausdorff_certified: fallback_evidence
-                            .used_exact_native_fast_path(),
+                            .used_exact_authoritative_path(),
                         loop_evidence: Vec::new(),
                         fallback_evidence: Some(fallback_evidence),
                     },
@@ -2200,6 +2201,378 @@ fn native_region_role_contour(
         CurveRegionLoopRole::Material => region.material_contours().get(ordinal),
         CurveRegionLoopRole::Hole => region.hole_contours().get(ordinal),
     }
+}
+
+struct ExactOffsetSpan2 {
+    fragments: Vec<BezierSplitFragment2>,
+    source_start: Point2,
+    source_end: Point2,
+    offset_start: Point2,
+    offset_end: Point2,
+    start_tangent: (Real, Real),
+    end_tangent: (Real, Real),
+}
+
+fn exact_offset_span_from_materialized_curve(
+    curve: &BezierSubcurve2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactOffsetSpan2>> {
+    if let Classification::Decided(segment) = materialized_native_subcurve_segment(curve, policy)?
+        && let Classification::Decided(offset) = segment.offset_left(distance.clone(), policy)?
+    {
+        return exact_offset_span_from_native_segment(curve, &offset, policy);
+    }
+
+    let source = match curve {
+        BezierSubcurve2::Quadratic(curve) => BezierParallelSource2::Quadratic(curve.clone()),
+        BezierSubcurve2::Cubic(curve) => BezierParallelSource2::Cubic(curve.clone()),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            BezierParallelSource2::Rational(curve.clone().into())
+        }
+        BezierSubcurve2::Rational(curve) => BezierParallelSource2::Rational(curve.clone()),
+    };
+    let parallel = BezierParallel2::from_source(source, distance.clone());
+    let analysis = match parallel.singularity_analysis(policy)? {
+        Classification::Decided(analysis) => analysis,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    if !analysis.source_is_regular() {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    }
+
+    let mut boundaries = Vec::with_capacity(analysis.parallel_cusps().len() + 2);
+    boundaries.push(BezierParameter2::Exact(Real::zero()));
+    let zero = BezierParameter2::Exact(Real::zero());
+    let one = BezierParameter2::Exact(Real::one());
+    for cusp in analysis.parallel_cusps() {
+        let after_zero = match cusp.cmp_by_refinement(&zero, policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let before_one = match cusp.cmp_by_refinement(&one, policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if after_zero == std::cmp::Ordering::Greater && before_one == std::cmp::Ordering::Less {
+            let order = cusp.cmp_by_refinement(
+                boundaries
+                    .last()
+                    .expect("parallel split inventory begins at zero"),
+                policy,
+            )?;
+            match order {
+                Classification::Decided(std::cmp::Ordering::Greater) => {
+                    boundaries.push(cusp.clone());
+                }
+                Classification::Decided(std::cmp::Ordering::Equal) => {}
+                Classification::Decided(std::cmp::Ordering::Less) => {
+                    return Err(CurveError::Topology(
+                        "parallel cusp isolators are not ordered".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+    }
+    boundaries.push(one);
+
+    let fragments = if boundaries.len() == 2 {
+        match parallel.exact_pythagorean_hodograph_offset(policy)? {
+            Classification::Decided(Some(offset)) => vec![materialized_offset_fragment(
+                BezierSubcurve2::Rational(offset.curve().clone()),
+            )],
+            Classification::Decided(None) | Classification::Uncertain(_) => {
+                exact_parallel_fragments(&parallel, &boundaries)
+            }
+        }
+    } else {
+        exact_parallel_fragments(&parallel, &boundaries)
+    };
+    let offset_start = match parallel.point_at(&Real::zero(), policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let offset_end = match parallel.point_at(&Real::one(), policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let start_tangent = match parallel.derivative_at(&Real::zero(), policy)? {
+        Classification::Decided(derivative) => (derivative.dx().clone(), derivative.dy().clone()),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end_tangent = match parallel.derivative_at(&Real::one(), policy)? {
+        Classification::Decided(derivative) => (derivative.dx().clone(), derivative.dy().clone()),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(ExactOffsetSpan2 {
+        fragments,
+        source_start: curve.start().clone(),
+        source_end: curve.end().clone(),
+        offset_start,
+        offset_end,
+        start_tangent,
+        end_tangent,
+    }))
+}
+
+fn exact_parallel_fragments(
+    parallel: &BezierParallel2,
+    boundaries: &[BezierParameter2],
+) -> Vec<BezierSplitFragment2> {
+    boundaries
+        .windows(2)
+        .map(|pair| {
+            BezierSplitFragment2::AnalyticParallel(
+                crate::BezierParallelFragment2::from_certified_range(
+                    parallel.clone(),
+                    BezierParameterRange2::new_validated(pair[0].clone(), pair[1].clone()),
+                    false,
+                ),
+            )
+        })
+        .collect()
+}
+
+fn materialized_offset_fragment(curve: BezierSubcurve2) -> BezierSplitFragment2 {
+    BezierSplitFragment2::Materialized {
+        start: BezierParameter2::Exact(Real::zero()),
+        end: BezierParameter2::Exact(Real::one()),
+        curve,
+    }
+}
+
+fn exact_offset_span_from_native_segment(
+    source: &BezierSubcurve2,
+    offset: &Segment2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactOffsetSpan2>> {
+    let (fragments, start_tangent, end_tangent) = match offset {
+        Segment2::Line(line) => {
+            let tangent = line.delta();
+            (
+                vec![materialized_offset_fragment(BezierSubcurve2::Quadratic(
+                    QuadraticBezier2::from_line_segment(line.clone()),
+                ))],
+                tangent.clone(),
+                tangent,
+            )
+        }
+        Segment2::Arc(arc) => {
+            let decomposition = match arc.rational_bezier_decomposition_with_policy(policy) {
+                Ok(Classification::Decided(decomposition)) => decomposition,
+                Ok(Classification::Uncertain(reason)) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    return Ok(Classification::Uncertain(blocker.reason()));
+                }
+            };
+            let fragments = decomposition
+                .spans()
+                .iter()
+                .map(|span| {
+                    materialized_offset_fragment(BezierSubcurve2::RationalQuadratic(
+                        span.curve().clone(),
+                    ))
+                })
+                .collect();
+            (
+                fragments,
+                native_segment_endpoint_tangent(offset, true),
+                native_segment_endpoint_tangent(offset, false),
+            )
+        }
+    };
+    Ok(Classification::Decided(ExactOffsetSpan2 {
+        fragments,
+        source_start: source.start().clone(),
+        source_end: source.end().clone(),
+        offset_start: offset.start().clone(),
+        offset_end: offset.end().clone(),
+        start_tangent,
+        end_tangent,
+    }))
+}
+
+fn native_segment_endpoint_tangent(segment: &Segment2, start: bool) -> (Real, Real) {
+    match segment {
+        Segment2::Line(line) => line.delta(),
+        Segment2::Arc(arc) => {
+            let point = if start { arc.start() } else { arc.end() };
+            let (rx, ry) = point.delta_from(arc.center());
+            if arc.is_clockwise() {
+                (ry, -rx)
+            } else {
+                (-ry, rx)
+            }
+        }
+    }
+}
+
+fn append_exact_offset_join(
+    fragments: &mut Vec<BezierSplitFragment2>,
+    previous: &ExactOffsetSpan2,
+    next: &ExactOffsetSpan2,
+    distance: &Real,
+    style: &OffsetCornerStyle2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    match is_zero(
+        &previous.offset_end.distance_squared(&next.offset_start),
+        policy,
+    ) {
+        Some(true) => return Ok(Classification::Decided(())),
+        Some(false) => {}
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+    match is_zero(
+        &previous.source_end.distance_squared(&next.source_start),
+        policy,
+    ) {
+        Some(true) => {}
+        Some(false) => return Err(CurveError::DisconnectedCurvePath),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+
+    let turn = offset_vector_cross(&previous.end_tangent, &next.start_tangent);
+    let inward = match real_sign(&(turn * distance), policy) {
+        Some(RealSign::Positive) => true,
+        Some(RealSign::Negative | RealSign::Zero) => false,
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    match style {
+        OffsetCornerStyle2::Round if !inward => append_exact_round_join(
+            fragments,
+            &previous.offset_end,
+            &next.offset_start,
+            &previous.source_end,
+            policy,
+        ),
+        OffsetCornerStyle2::Bevel if !inward => {
+            append_exact_line_join(fragments, &previous.offset_end, &next.offset_start, policy)
+        }
+        OffsetCornerStyle2::Miter { limit } if !inward => {
+            append_exact_miter_join(fragments, previous, next, distance, Some(limit), policy)
+        }
+        OffsetCornerStyle2::Round
+        | OffsetCornerStyle2::Bevel
+        | OffsetCornerStyle2::Miter { .. } => {
+            append_exact_miter_join(fragments, previous, next, distance, None, policy)
+        }
+    }
+}
+
+fn append_exact_round_join(
+    fragments: &mut Vec<BezierSplitFragment2>,
+    from: &Point2,
+    to: &Point2,
+    center: &Point2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    let from_radius = from.delta_from(center);
+    let to_radius = to.delta_from(center);
+    let clockwise = match real_sign(
+        &(&from_radius.0 * &to_radius.1 - &from_radius.1 * &to_radius.0),
+        policy,
+    ) {
+        Some(RealSign::Positive) => false,
+        Some(RealSign::Negative | RealSign::Zero) => true,
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    let arc = CircularArc2::try_from_center(from.clone(), to.clone(), center.clone(), clockwise)?;
+    let decomposition = match arc.rational_bezier_decomposition_with_policy(policy) {
+        Ok(Classification::Decided(decomposition)) => decomposition,
+        Ok(Classification::Uncertain(reason)) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+        Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+        Err(ExactCurveError::Blocked(blocker)) => {
+            return Ok(Classification::Uncertain(blocker.reason()));
+        }
+    };
+    fragments.extend(decomposition.spans().iter().map(|span| {
+        materialized_offset_fragment(BezierSubcurve2::RationalQuadratic(span.curve().clone()))
+    }));
+    Ok(Classification::Decided(()))
+}
+
+fn append_exact_line_join(
+    fragments: &mut Vec<BezierSplitFragment2>,
+    from: &Point2,
+    to: &Point2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    match is_zero(&from.distance_squared(to), policy) {
+        Some(true) => Ok(Classification::Decided(())),
+        Some(false) => {
+            fragments.push(materialized_offset_fragment(BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(LineSeg2::try_new(from.clone(), to.clone())?),
+            )));
+            Ok(Classification::Decided(()))
+        }
+        None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+}
+
+fn append_exact_miter_join(
+    fragments: &mut Vec<BezierSplitFragment2>,
+    previous: &ExactOffsetSpan2,
+    next: &ExactOffsetSpan2,
+    distance: &Real,
+    limit: Option<&Real>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    let denominator = offset_vector_cross(&previous.end_tangent, &next.start_tangent);
+    let denominator_sign = real_sign(&denominator, policy);
+    let Some(RealSign::Positive | RealSign::Negative) = denominator_sign else {
+        return match denominator_sign {
+            Some(RealSign::Zero) => {
+                append_exact_line_join(fragments, &previous.offset_end, &next.offset_start, policy)
+            }
+            None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            Some(RealSign::Positive | RealSign::Negative) => unreachable!(),
+        };
+    };
+    let delta = next.offset_start.delta_from(&previous.offset_end);
+    let numerator = &delta.0 * &next.start_tangent.1 - &delta.1 * &next.start_tangent.0;
+    let parameter = (numerator / denominator)?;
+    let miter = previous.offset_end.translated(
+        &previous.end_tangent.0 * &parameter,
+        &previous.end_tangent.1 * parameter,
+    );
+    if let Some(limit) = limit {
+        let miter_distance_squared = miter.distance_squared(&previous.source_end);
+        let maximum_squared = distance * distance * limit * limit;
+        match compare_reals(&miter_distance_squared, &maximum_squared, policy) {
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {}
+            Some(std::cmp::Ordering::Greater) => {
+                return append_exact_line_join(
+                    fragments,
+                    &previous.offset_end,
+                    &next.offset_start,
+                    policy,
+                );
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+    }
+    match append_exact_line_join(fragments, &previous.offset_end, &miter, policy)? {
+        Classification::Decided(()) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    append_exact_line_join(fragments, &miter, &next.offset_start, policy)
+}
+
+fn offset_vector_cross(first: &(Real, Real), second: &(Real, Real)) -> Real {
+    &first.0 * &second.1 - &first.1 * &second.0
 }
 
 const fn curve_region_role_depth(role: CurveRegionLoopRole) -> i32 {
@@ -4117,23 +4490,25 @@ impl CurveRegion2 {
     /// move into their voids. Independently offset material components and
     /// voids are unioned, then the unified void set is subtracted, so overlaps
     /// created by expansion are returned as regularized boundary topology.
-    /// The current materialization path handles certified native line/arc
-    /// topology. Expanding raw self-walks are regularized exactly. Certified
-    /// convex all-line contractions use exact shifted-half-plane intersection
-    /// and decide complete collapse. Axis-aligned non-convex line contours use
-    /// an exact rectangular distance arrangement that handles neck collapse and
-    /// component splitting. Other non-convex contracting wavefronts retain
-    /// source-direction evidence where it certifies a branch and otherwise
-    /// remain explicit `Unsupported` uncertainty. General polynomial/rational
-    /// offsets are likewise unsupported because their exact parallels are not
-    /// usually finite rational curves.
+    /// Native line/arc contours retain their specialized wavefront path.
+    /// Materialized polynomial and rational spans lower to exact analytic
+    /// parallels, split at every certified offset cusp, and retain exact PH
+    /// materializations where available. Round joins are exact circular conics;
+    /// bevel and bounded-miter joins are exact lines. Every general result then
+    /// passes through the same authoritative exact arrangement that removes
+    /// self-walk branches and composes material and hole loops. Certified convex
+    /// all-line contractions and orthogonal non-convex collapses retain their
+    /// faster exact native paths. Unsupported retained source fragments and the
+    /// remaining non-orthogonal post-collapse wavefront cases return explicit
+    /// uncertainty rather than sampled geometry.
     pub fn offset(
         &self,
         distance: Real,
+        corner_style: &OffsetCornerStyle2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         crate::policy::resolve_certified_operation(policy, |attempt| {
-            match self.offset_raw(distance.clone(), attempt)? {
+            match self.offset_raw(distance.clone(), corner_style, attempt)? {
                 Classification::Decided(region) => Ok(region),
                 Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                     CurveOperation2::Offset,
@@ -4147,6 +4522,30 @@ impl CurveRegion2 {
     fn offset_raw(
         &self,
         distance: Real,
+        corner_style: &OffsetCornerStyle2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<Self>> {
+        match crate::offset::validate_offset_corner_style(corner_style, policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+        {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match self.offset_native_raw(distance.clone(), corner_style, policy)? {
+            Classification::Decided(region) => Ok(Classification::Decided(region)),
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                self.offset_exact_general_raw(distance, corner_style, policy)
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    fn offset_native_raw(
+        &self,
+        distance: Real,
+        corner_style: &OffsetCornerStyle2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
         if is_zero(&distance, policy) == Some(true) {
@@ -4245,7 +4644,7 @@ impl CurveRegion2 {
                 }
             }
             let raw_offset = match contour
-                .offset_left_with_line_joins(signed_left_distance.clone(), policy)
+                .offset_left_with_corner_style(signed_left_distance.clone(), corner_style, policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
             {
                 Classification::Decided(offset) => offset,
@@ -4383,11 +4782,132 @@ impl CurveRegion2 {
         Self::try_from_line_arc_region_raw(&edited, policy).map(Classification::Decided)
     }
 
+    fn offset_exact_general_raw(
+        &self,
+        distance: Real,
+        corner_style: &OffsetCornerStyle2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<Self>> {
+        if is_zero(&distance, policy) == Some(true) {
+            return Ok(Classification::Decided(self.clone()));
+        }
+        let roles = match self
+            .loop_roles_raw(policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+        {
+            Classification::Decided(roles) => roles,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let filled_sides = match self
+            .filled_side_is_left_raw(policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+        {
+            Classification::Decided(sides) => sides,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let fill_rules = self.loop_fill_rules().map_or_else(
+            || vec![FillRule::EvenOdd; self.data.boundary_loops.len()],
+            <[_]>::to_vec,
+        );
+        if roles.len() != self.data.boundary_loops.len()
+            || filled_sides.len() != self.data.boundary_loops.len()
+            || fill_rules.len() != self.data.boundary_loops.len()
+        {
+            return Err(curve_region_edit_error(
+                CurveOperation2::Offset,
+                CurveError::Topology(
+                    "exact offset semantics are inconsistent with boundary loops".into(),
+                ),
+            ));
+        }
+
+        let mut offset_loops = Vec::with_capacity(self.data.boundary_loops.len());
+        for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
+            let signed_left_distance = if filled_sides[loop_index] {
+                Real::zero() - &distance
+            } else {
+                distance.clone()
+            };
+            let mut spans = Vec::with_capacity(boundary_loop.len());
+            for fragment in boundary_loop.fragments() {
+                let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                match exact_offset_span_from_materialized_curve(
+                    curve,
+                    &signed_left_distance,
+                    policy,
+                )
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+                {
+                    Classification::Decided(span) => spans.push(span),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            if spans.is_empty() {
+                return Err(curve_region_edit_error(
+                    CurveOperation2::Offset,
+                    CurveError::Topology("exact offset loop has no source spans".into()),
+                ));
+            }
+            let fragment_capacity = spans
+                .iter()
+                .map(|span| span.fragments.len())
+                .sum::<usize>()
+                .saturating_add(spans.len().saturating_mul(2));
+            let mut fragments = Vec::with_capacity(fragment_capacity);
+            for span_index in 0..spans.len() {
+                fragments.extend(spans[span_index].fragments.iter().cloned());
+                let next_index = (span_index + 1) % spans.len();
+                match append_exact_offset_join(
+                    &mut fragments,
+                    &spans[span_index],
+                    &spans[next_index],
+                    &signed_left_distance,
+                    corner_style,
+                    policy,
+                )
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+                {
+                    Classification::Decided(()) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            offset_loops.push(
+                CurveRegionBoundaryLoop2::new(fragments, policy)
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+            );
+        }
+
+        let mut raw = Self::new(offset_loops)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+        {
+            let data = raw.data_mut_for_construction();
+            data.certified_loop_roles = Some(Arc::from(roles.clone()));
+            data.certified_loop_fill_rules = Some(Arc::from(fill_rules));
+            data.signed_loop_composition = true;
+        }
+        raw = raw
+            .with_certified_filled_side_is_left(filled_sides.to_vec())
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+        raw.regularized_region_raw(policy)
+            .map(Classification::Decided)
+            .map_err(|error| error.with_operation(CurveOperation2::Offset))
+    }
+
     /// Offsets arbitrary materialized curve families through certified exact-scalar segmentation.
     ///
-    /// Native line/arc topology first uses [`Self::offset`] with no loss. When
-    /// that exact fast path evidence `Unsupported`, each retained Bezier or
-    /// rational span is subdivided until its control hull certifies the
+    /// [`Self::offset`] first attempts the authoritative exact kernel with no
+    /// loss. Only when that kernel reports `Unsupported` is each retained
+    /// Bezier or rational span subdivided until its control hull certifies the
     /// requested source-curve chord error. The emitted vertices remain
     /// [`Real`] values, and the resulting line topology is offset and
     /// regularized by the exact native kernel. The evidence explicitly marks
@@ -4396,26 +4916,28 @@ impl CurveRegion2 {
     pub fn offset_with_certified_segmentation(
         &self,
         distance: Real,
+        corner_style: &OffsetCornerStyle2,
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Classification<CurveRegionSegmentedOffsetResult2>>> {
         resolve_certified_operation(policy, |attempt| {
-            self.offset_with_certified_segmentation_raw(distance, options, attempt)
+            self.offset_with_certified_segmentation_raw(distance, corner_style, options, attempt)
         })
     }
 
     fn offset_with_certified_segmentation_raw(
         &self,
         distance: Real,
+        corner_style: &OffsetCornerStyle2,
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CurveRegionSegmentedOffsetResult2>> {
-        match self.offset_raw(distance.clone(), policy)? {
+        match self.offset_raw(distance.clone(), corner_style, policy)? {
             Classification::Decided(region) => {
                 return Ok(Classification::Decided(CurveRegionSegmentedOffsetResult2 {
                     region,
                     evidence: CurveRegionSegmentedOffsetEvidence2 {
-                        used_exact_native_fast_path: true,
+                        used_exact_authoritative_path: true,
                         max_source_chord_error: options.max_error().clone(),
                         loop_evidence: Vec::new(),
                         lossy_boundary: false,
@@ -4435,7 +4957,7 @@ impl CurveRegion2 {
             }
         };
         let (segmented_source, segmentation_evidence) = segmented.into_parts();
-        let region = match segmented_source.offset_raw(distance, policy)? {
+        let region = match segmented_source.offset_raw(distance, corner_style, policy)? {
             Classification::Decided(region) => region,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -4444,7 +4966,7 @@ impl CurveRegion2 {
         Ok(Classification::Decided(CurveRegionSegmentedOffsetResult2 {
             region,
             evidence: CurveRegionSegmentedOffsetEvidence2 {
-                used_exact_native_fast_path: false,
+                used_exact_authoritative_path: false,
                 max_source_chord_error: segmentation_evidence.max_source_chord_error,
                 loop_evidence: segmentation_evidence.loop_evidence,
                 lossy_boundary: segmentation_evidence.lossy_boundary,
@@ -4454,10 +4976,11 @@ impl CurveRegion2 {
 
     /// Offsets general smooth polynomial boundaries through certified analytic parallels.
     ///
-    /// The method first preserves the exact native line/arc result. Otherwise
-    /// it constructs exact PH or conservatively verified Blend2D parallels for
-    /// every smooth boundary path, chordizes those *output* curves with a
-    /// separate certificate, and regularizes the resulting line arrangement.
+    /// The method first preserves any result from the authoritative exact
+    /// offset kernel. Otherwise it constructs exact PH or conservatively
+    /// verified Blend2D parallels for every smooth boundary path, chordizes
+    /// those *output* curves with a separate certificate, and regularizes the
+    /// resulting line arrangement.
     /// The pre-regularization directed bound is
     /// `parallel_fit_error + output_chord_error`. Because regularization can
     /// remove raw branches, the result does not promote that into a Hausdorff
@@ -4468,6 +4991,7 @@ impl CurveRegion2 {
     pub fn offset_with_certified_bezier_parallel(
         &self,
         distance: Real,
+        corner_style: &OffsetCornerStyle2,
         parallel_options: &BezierParallelVerificationOptions,
         output_flattening: &BezierFlatteningOptions,
         fallback_source_flattening: &BezierFlatteningOptions,
@@ -4477,6 +5001,7 @@ impl CurveRegion2 {
         resolve_certified_operation(policy, |attempt| {
             self.offset_with_certified_bezier_parallel_raw(
                 distance,
+                corner_style,
                 parallel_options,
                 output_flattening,
                 fallback_source_flattening,
@@ -4488,18 +5013,19 @@ impl CurveRegion2 {
     fn offset_with_certified_bezier_parallel_raw(
         &self,
         distance: Real,
+        corner_style: &OffsetCornerStyle2,
         parallel_options: &BezierParallelVerificationOptions,
         output_flattening: &BezierFlatteningOptions,
         fallback_source_flattening: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CurveRegionCertifiedParallelOffsetResult2>> {
-        match self.offset_raw(distance.clone(), policy)? {
+        match self.offset_raw(distance.clone(), corner_style, policy)? {
             Classification::Decided(region) => {
                 return Ok(Classification::Decided(
                     CurveRegionCertifiedParallelOffsetResult2 {
                         region,
                         evidence: CurveRegionCertifiedParallelOffsetEvidence2 {
-                            used_exact_native_fast_path: true,
+                            used_exact_authoritative_path: true,
                             used_certified_parallel_path: false,
                             used_segmented_source_fallback: false,
                             max_parallel_fit_error: Real::zero(),
@@ -4605,6 +5131,7 @@ impl CurveRegion2 {
             return wrap_segmented_parallel_fallback(
                 self.offset_with_certified_segmentation_raw(
                     distance,
+                    corner_style,
                     fallback_source_flattening,
                     policy,
                 )?,
@@ -4673,7 +5200,7 @@ impl CurveRegion2 {
             CurveRegionCertifiedParallelOffsetResult2 {
                 region,
                 evidence: CurveRegionCertifiedParallelOffsetEvidence2 {
-                    used_exact_native_fast_path: false,
+                    used_exact_authoritative_path: false,
                     used_certified_parallel_path: true,
                     used_segmented_source_fallback: false,
                     max_parallel_fit_error: parallel_options.max_error().clone(),
@@ -6388,7 +6915,7 @@ fn materialized_native_loop_to_contour(
     ))
 }
 
-fn materialized_native_subcurve_segment(
+pub(crate) fn materialized_native_subcurve_segment(
     curve: &BezierSubcurve2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Segment2>> {
@@ -6830,6 +7357,8 @@ fn classify_point_with_retained_ray_skipping_origin(
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
                 BezierLineContactRelation::Contacts { contacts } => {
+                    let sole_crossing_contact = contacts.len() == 1
+                        && contacts[0].kind() == BezierLineContactKind::Crossing;
                     for contact in contacts {
                         match retained_parameter_contains(
                             contact.parameter(),
@@ -6866,6 +7395,16 @@ fn classify_point_with_retained_ray_skipping_origin(
                                 }
                                 Classification::Decided(false) => {}
                                 Classification::Uncertain(reason) => {
+                                    // The exact representative lies on this
+                                    // transverse source ray. A complete
+                                    // singleton crossing is therefore the
+                                    // origin even when its independently
+                                    // isolated parameter cannot be ordered
+                                    // against the represented witness.
+                                    if sole_crossing_contact && !origin_contact_was_skipped {
+                                        origin_contact_was_skipped = true;
+                                        continue;
+                                    }
                                     return Ok(Classification::Uncertain(reason));
                                 }
                             }
@@ -6944,6 +7483,8 @@ fn classify_point_with_retained_ray_skipping_origin(
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
             BezierLineContactRelation::Contacts { contacts } => {
+                let sole_crossing_contact =
+                    contacts.len() == 1 && contacts[0].kind() == BezierLineContactKind::Crossing;
                 for contact in contacts {
                     let retained = if let Some((start, end, reversed)) = range {
                         retained_parameter_contains(
@@ -6974,11 +7515,32 @@ fn classify_point_with_retained_ray_skipping_origin(
                     if let Some(origin) = skipped_origin
                         && origin.fragment_index == Some(fragment_index)
                     {
-                        match retained_parameters_equal(
-                            contact.parameter(),
-                            origin.parameter,
-                            policy,
-                        )? {
+                        let is_origin = contact.supporting_line_parameter().map_or_else(
+                            || {
+                                retained_parameters_equal(
+                                    contact.parameter(),
+                                    origin.parameter,
+                                    policy,
+                                )
+                            },
+                            |line_parameter| {
+                                compare_reals(line_parameter, &Real::zero(), policy).map_or_else(
+                                    || {
+                                        retained_parameters_equal(
+                                            contact.parameter(),
+                                            origin.parameter,
+                                            policy,
+                                        )
+                                    },
+                                    |order| {
+                                        Ok(Classification::Decided(
+                                            order == std::cmp::Ordering::Equal,
+                                        ))
+                                    },
+                                )
+                            },
+                        )?;
+                        match is_origin {
                             Classification::Decided(true) => {
                                 if origin_contact_was_skipped
                                     || contact.kind() != BezierLineContactKind::Crossing
@@ -6992,6 +7554,16 @@ fn classify_point_with_retained_ray_skipping_origin(
                             }
                             Classification::Decided(false) => {}
                             Classification::Uncertain(reason) => {
+                                // The exact representative lies on this
+                                // transverse source ray. A complete
+                                // singleton crossing is therefore the
+                                // origin even when its independently
+                                // isolated parameter cannot be ordered
+                                // against the represented witness.
+                                if sole_crossing_contact && !origin_contact_was_skipped {
+                                    origin_contact_was_skipped = true;
+                                    continue;
+                                }
                                 return Ok(Classification::Uncertain(reason));
                             }
                         }
@@ -8184,6 +8756,7 @@ mod tests {
         let strict_segmented_offset = region
             .offset_with_certified_segmentation(
                 collapse_distance.clone(),
+                &OffsetCornerStyle2::Round,
                 &flattening,
                 &CurveContext::STRICT,
             )
@@ -8196,6 +8769,7 @@ mod tests {
         let approximate_segmented_offset = region
             .offset_with_certified_segmentation(
                 collapse_distance.clone(),
+                &OffsetCornerStyle2::Round,
                 &flattening,
                 &CurveContext::APPROXIMATE_512,
             )
@@ -8215,6 +8789,7 @@ mod tests {
         let approximate_parallel_offset = region
             .offset_with_certified_bezier_parallel(
                 collapse_distance,
+                &OffsetCornerStyle2::Round,
                 &parallel,
                 &flattening,
                 &flattening,

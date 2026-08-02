@@ -248,6 +248,8 @@ pub enum CurveError {
     InvalidFlatteningOptions,
     /// Bezier parallel verification options cannot certify a positive error budget.
     InvalidBezierOffsetOptions,
+    /// Exact region-offset corner options are outside their defined domain.
+    InvalidOffsetOptions,
     /// Finite projection options contain non-finite or unsupported values.
     InvalidFiniteProjectionOptions,
     /// Edge-preview tolerances are negative or non-finite.
@@ -345,6 +347,7 @@ impl fmt::Display for CurveError {
             Self::InvalidBezierOffsetOptions => {
                 write!(f, "Bezier parallel verification options are invalid")
             }
+            Self::InvalidOffsetOptions => write!(f, "region offset options are invalid"),
             Self::InvalidFiniteProjectionOptions => {
                 write!(f, "finite projection options are invalid")
             }

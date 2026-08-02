@@ -6,7 +6,7 @@ use hypercurve::{
     BezierParallelPairIntersectionCandidates2, BezierParallelVerificationOptions, BulgeVertex2,
     CircularArc2, Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2,
     CurveRegion2, CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2, OffsetCap,
-    Point2, QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
+    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -994,11 +994,26 @@ fn bench_curve_region_bezier_offset_lanes(
     let flattening = BezierFlatteningOptions::try_new(q(1, 20), 16, &policy)?;
 
     let started = Instant::now();
+    let mut exact_loops = 0_usize;
+    for _ in 0..iterations {
+        let result = source
+            .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
+            .into_value();
+        exact_loops += black_box(result.boundary_loops().len());
+    }
+    let exact_elapsed = started.elapsed();
+    println!(
+        "curve_region_bezier_parallel_exact: {iterations} iterations in {exact_elapsed:?} ({:?}/iter), loops={exact_loops}",
+        exact_elapsed / iterations
+    );
+
+    let started = Instant::now();
     let mut certified_loops = 0_usize;
     for _ in 0..iterations {
         let Classification::Decided(result) = source
             .offset_with_certified_bezier_parallel(
                 q(1, 10),
+                &OffsetCornerStyle2::Round,
                 &verification,
                 &flattening,
                 &flattening,
@@ -1008,11 +1023,12 @@ fn bench_curve_region_bezier_offset_lanes(
         else {
             panic!("certified CurveRegion2 Bezier offset became uncertain");
         };
+        assert!(result.evidence().used_exact_authoritative_path());
         certified_loops += black_box(result.region().boundary_loops().len());
     }
     let certified_elapsed = started.elapsed();
     println!(
-        "curve_region_bezier_parallel_certified: {iterations} iterations in {certified_elapsed:?} ({:?}/iter), loops={certified_loops}",
+        "curve_region_bezier_parallel_exact_via_certified_adapter: {iterations} iterations in {certified_elapsed:?} ({:?}/iter), loops={certified_loops}",
         certified_elapsed / iterations
     );
 
@@ -1020,16 +1036,22 @@ fn bench_curve_region_bezier_offset_lanes(
     let mut fallback_loops = 0_usize;
     for _ in 0..iterations {
         let Classification::Decided(result) = source
-            .offset_with_certified_segmentation(q(1, 10), &flattening, &policy)?
+            .offset_with_certified_segmentation(
+                q(1, 10),
+                &OffsetCornerStyle2::Round,
+                &flattening,
+                &policy,
+            )?
             .into_value()
         else {
             panic!("segmented CurveRegion2 Bezier offset became uncertain");
         };
+        assert!(result.evidence().used_exact_authoritative_path());
         fallback_loops += black_box(result.region().boundary_loops().len());
     }
     let fallback_elapsed = started.elapsed();
     println!(
-        "curve_region_bezier_parallel_chord_fallback: {iterations} iterations in {fallback_elapsed:?} ({:?}/iter), loops={fallback_loops}",
+        "curve_region_bezier_parallel_exact_via_segmentation_adapter: {iterations} iterations in {fallback_elapsed:?} ({:?}/iter), loops={fallback_loops}",
         fallback_elapsed / iterations
     );
     Ok(())
@@ -1050,6 +1072,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "bezier-intersection" => bench_bezier_parallel_intersection_lanes()?,
             "bezier-pair-general" => bench_bezier_parallel_pair_general_contact()?,
             "bezier-pair-intersection" => bench_bezier_parallel_pair_intersection_lanes()?,
+            "curve-region-exact" => bench_curve_region_bezier_offset_lanes(10)?,
             _ => panic!("unknown HYPERCURVE_OFFSET_BENCH_GROUP={group:?}"),
         }
         return Ok(());

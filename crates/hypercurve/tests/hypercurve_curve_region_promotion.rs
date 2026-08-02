@@ -1,8 +1,9 @@
 use hypercurve::{
     BezierFlatteningOptions, CircularArc2, Classification, Contour2, CubicBezier2, Curve2,
-    CurveCertainty, CurveContext, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole,
-    FillRule, FiniteProjectionOptions, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2,
+    CurveCertainty, CurveContext, CurveError, CurveOutcome, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, ExactCurveError, FillRule, FiniteProjectionOptions, LineArcRegion2,
+    LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
+    RegionPointLocation, Segment2, Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
 
@@ -12,6 +13,12 @@ fn p(x: i64, y: i64) -> Point2 {
 
 fn q(numerator: i64, denominator: i64) -> Real {
     (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
+fn sharp_offset() -> OffsetCornerStyle2 {
+    OffsetCornerStyle2::Miter {
+        limit: Real::from(1_000),
+    }
 }
 
 fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> Contour2 {
@@ -103,6 +110,22 @@ fn double_wound_quadratic_cap() -> CurvePath2 {
     let curve = Curve2::from(QuadraticBezier2::new(p(-2, 4), p(0, -4), p(2, 4)));
     let close = Curve2::from(LineSeg2::try_new(p(2, 4), p(-2, 4)).unwrap());
     CurvePath2::try_new(vec![curve.clone(), close.clone(), curve, close]).unwrap()
+}
+
+fn rational_cap_path() -> CurvePath2 {
+    CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalBezier2::try_new(
+                vec![p(-2, 0), p(0, 4), p(2, 0)],
+                vec![Real::one(), Real::from(2), Real::one()],
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(p(2, 0), p(2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(2, -2), p(-2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-2, -2), p(-2, 0)).unwrap()),
+    ])
+    .unwrap()
 }
 
 fn quadratic_fillet_path() -> CurvePath2 {
@@ -263,7 +286,7 @@ fn unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics(
 }
 
 #[test]
-fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentation() {
+fn unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement() {
     let policy = CurveContext::STRICT;
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(-2, 0), p(0, 4), p(2, 0))),
@@ -280,11 +303,26 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
     )
     .unwrap()
     .into_value();
-    assert!(matches!(
-        source.offset(Real::one(), &policy),
-        Err(hypercurve::ExactCurveError::Blocked(blocker))
-            if blocker.reason() == hypercurve::UncertaintyReason::Unsupported
-    ));
+    let exact = source
+        .offset(Real::one(), &sharp_offset(), &policy)
+        .unwrap()
+        .into_value();
+    assert!(!exact.is_empty());
+    assert!(exact.has_algebraic_fragments());
+    assert_eq!(
+        exact
+            .classify_point(&p(0, 0), &policy)
+            .unwrap()
+            .into_value(),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        exact
+            .classify_point(&p(0, 5), &policy)
+            .unwrap()
+            .into_value(),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
     let options = BezierFlatteningOptions::try_new(q(1, 32), 12, &policy).unwrap();
 
     let segmented = decided(
@@ -317,21 +355,177 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
 
     let offset = decided(
         source
-            .offset_with_certified_segmentation(Real::one(), &options, &policy)
+            .offset_with_certified_segmentation(Real::one(), &sharp_offset(), &options, &policy)
             .unwrap()
             .into_value(),
     );
 
     assert!(!offset.region().is_empty());
-    assert!(!offset.evidence().used_exact_native_fast_path());
-    assert!(offset.evidence().lossy_boundary());
+    assert!(offset.evidence().used_exact_authoritative_path());
+    assert!(!offset.evidence().lossy_boundary());
     assert_eq!(offset.evidence().max_source_chord_error(), &q(1, 32));
-    assert_eq!(offset.evidence().loop_evidence().len(), 1);
-    assert!(offset.evidence().loop_evidence()[0].output_segment_count() > 4);
+    assert!(offset.evidence().loop_evidence().is_empty());
+    assert!(offset.region().has_algebraic_fragments());
+}
+
+#[test]
+fn unified_region_offsets_general_rational_boundary_identically_under_both_policies() {
+    let source = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        &[rational_cap_path()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
+    let strict = source
+        .offset(
+            Real::one(),
+            &OffsetCornerStyle2::Round,
+            &CurveContext::STRICT,
+        )
+        .unwrap();
+    let approximate = source
+        .offset(
+            Real::one(),
+            &OffsetCornerStyle2::Round,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap();
+
+    assert_eq!(strict.certainty, CurveCertainty::Certified);
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(strict.value, approximate.value);
+    assert!(strict.value.has_algebraic_fragments());
+    assert_eq!(
+        certified(
+            strict
+                .value
+                .classify_point(&p(0, 0), &CurveContext::STRICT)
+                .unwrap()
+        ),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        certified(
+            strict
+                .value
+                .classify_point(&p(0, 5), &CurveContext::STRICT)
+                .unwrap()
+        ),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+}
+
+#[test]
+fn unified_region_offset_corner_styles_have_exact_area_and_miter_fallback() {
+    let policy = CurveContext::STRICT;
+    let source = CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)], &policy)
+        .unwrap()
+        .into_value();
+    let round = source
+        .offset(Real::one(), &OffsetCornerStyle2::Round, &policy)
+        .unwrap()
+        .into_value();
+    let bevel = source
+        .offset(Real::one(), &OffsetCornerStyle2::Bevel, &policy)
+        .unwrap()
+        .into_value();
+    let limited_miter = source
+        .offset(
+            Real::one(),
+            &OffsetCornerStyle2::Miter { limit: Real::one() },
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+    let miter = source
+        .offset(Real::one(), &sharp_offset(), &policy)
+        .unwrap()
+        .into_value();
+
+    let round_native = decided(round.native_contours_fast_path(&policy).unwrap());
+    let round_area = round_native.material_contours()[0]
+        .signed_area()
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        round_area
+            .certified_eq_until(&(Real::from(32) + Real::pi()), -512)
+            .as_bool(),
+        Some(true)
+    );
+    assert_eq!(
+        decided(bevel.filled_area(&policy).unwrap()),
+        Some(Real::from(34))
+    );
+    assert_eq!(limited_miter, bevel);
+    assert_eq!(
+        decided(miter.filled_area(&policy).unwrap()),
+        Some(Real::from(36))
+    );
+    assert_eq!(
+        certified(miter.classify_point(&p(-1, -1), &policy).unwrap()),
+        Classification::Decided(RegionPointLocation::Boundary)
+    );
+    assert_eq!(
+        certified(round.classify_point(&p(-1, -1), &policy).unwrap()),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+}
+
+#[test]
+fn unified_region_offset_corner_options_obey_the_terminal_policy() {
+    let source = CurveRegion2::try_from_native_material_contours(
+        vec![square(0, 0, 4, 4)],
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert!(matches!(
+            source.offset(
+                Real::one(),
+                &OffsetCornerStyle2::Miter {
+                    limit: -Real::one(),
+                },
+                &policy,
+            ),
+            Err(ExactCurveError::Invalid {
+                cause: CurveError::InvalidOffsetOptions,
+                ..
+            })
+        ));
+    }
+
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let style = OffsetCornerStyle2::Miter {
+        limit: undecidable_zero,
+    };
     assert!(matches!(
-        certified(offset.region().native_contours_fast_path(&policy).unwrap()),
-        Classification::Decided(_)
+        source.offset(Real::one(), &style, &CurveContext::STRICT),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.reason() == hypercurve::UncertaintyReason::RealSign
     ));
+    let approximate = source
+        .offset(Real::one(), &style, &CurveContext::APPROXIMATE_512)
+        .unwrap();
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(
+        decided(
+            approximate
+                .value
+                .filled_area(&CurveContext::STRICT)
+                .unwrap()
+        ),
+        Some(Real::from(34))
+    );
 }
 
 #[test]
@@ -382,7 +576,7 @@ fn unified_region_offset_regularizes_overlapping_expanded_components() {
         .into_value();
 
     let offset = promoted
-        .offset(Real::from(2), &policy)
+        .offset(Real::from(2), &sharp_offset(), &policy)
         .unwrap()
         .into_value();
     let native = decided(offset.native_contours_fast_path(&policy).unwrap());
@@ -407,7 +601,7 @@ fn unified_region_offset_regularizes_overlapping_expanded_voids() {
         .into_value();
 
     let offset = promoted
-        .offset(Real::from(-2), &policy)
+        .offset(Real::from(-2), &sharp_offset(), &policy)
         .unwrap()
         .into_value();
     let native = decided(offset.native_contours_fast_path(&policy).unwrap());
@@ -429,7 +623,7 @@ fn unified_region_expansion_regularizes_a_closed_concavity() {
         .into_value();
 
     let offset = promoted
-        .offset(Real::from(3), &policy)
+        .offset(Real::from(3), &sharp_offset(), &policy)
         .unwrap()
         .into_value();
     let native = decided(offset.native_contours_fast_path(&policy).unwrap());
@@ -457,7 +651,10 @@ fn unified_region_contracts_nonconvex_material_before_its_medial_collapse() {
         .unwrap()
         .into_value();
 
-    let eroded = source.offset(-Real::one(), &policy).unwrap().into_value();
+    let eroded = source
+        .offset(-Real::one(), &sharp_offset(), &policy)
+        .unwrap()
+        .into_value();
 
     assert_eq!(
         certified(eroded.classify_point(&p(1, 1), &policy).unwrap()),
@@ -476,7 +673,10 @@ fn unified_region_discards_nonconvex_material_after_wavefront_collapse() {
         .unwrap()
         .into_value();
 
-    let eroded = source.offset(Real::from(-2), &policy).unwrap().into_value();
+    let eroded = source
+        .offset(Real::from(-2), &sharp_offset(), &policy)
+        .unwrap()
+        .into_value();
 
     assert!(eroded.is_empty());
     assert_eq!(
@@ -492,7 +692,10 @@ fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
         .unwrap()
         .into_value();
 
-    let eroded = source.offset(-q(3, 2), &policy).unwrap().into_value();
+    let eroded = source
+        .offset(-q(3, 2), &sharp_offset(), &policy)
+        .unwrap()
+        .into_value();
     let native = decided(eroded.native_contours_fast_path(&policy).unwrap());
 
     assert_eq!(native.material_contours().len(), 2);
@@ -516,7 +719,10 @@ fn unified_region_convex_contraction_decides_collapse_and_over_contraction() {
         .unwrap()
         .into_value();
 
-    let near = source.offset(-q(3, 2), &policy).unwrap().into_value();
+    let near = source
+        .offset(-q(3, 2), &sharp_offset(), &policy)
+        .unwrap()
+        .into_value();
     let near_bounds = decided(near.bounds(&policy).unwrap());
     assert_eq!(near_bounds.min_x(), &q(3, 2));
     assert_eq!(near_bounds.min_y(), &q(3, 2));
@@ -524,14 +730,14 @@ fn unified_region_convex_contraction_decides_collapse_and_over_contraction() {
     assert_eq!(near_bounds.max_y(), &q(5, 2));
     assert!(
         source
-            .offset(Real::from(-2), &policy)
+            .offset(Real::from(-2), &sharp_offset(), &policy)
             .unwrap()
             .into_value()
             .is_empty()
     );
     assert!(
         source
-            .offset(Real::from(-3), &policy)
+            .offset(Real::from(-3), &sharp_offset(), &policy)
             .unwrap()
             .into_value()
             .is_empty()
@@ -545,7 +751,10 @@ fn unified_region_convex_erosion_handles_orientation_and_redundant_edges() {
         let source = CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
             .unwrap()
             .into_value();
-        let eroded = source.offset(Real::from(-1), &policy).unwrap().into_value();
+        let eroded = source
+            .offset(Real::from(-1), &sharp_offset(), &policy)
+            .unwrap()
+            .into_value();
         let bounds = decided(eroded.bounds(&policy).unwrap());
         assert_eq!(bounds.min_x(), &Real::one());
         assert_eq!(bounds.min_y(), &Real::one());
@@ -567,7 +776,10 @@ fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_ex
             .into_value();
     let root_two = Real::from(2).sqrt().unwrap();
 
-    let eroded = source.offset(Real::from(-1), &policy).unwrap().into_value();
+    let eroded = source
+        .offset(Real::from(-1), &sharp_offset(), &policy)
+        .unwrap()
+        .into_value();
     let native = decided(eroded.native_contours_fast_path(&policy).unwrap());
     let vertices = native.material_contours()[0]
         .segments()
@@ -608,7 +820,7 @@ fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_ex
     let collapse_distance = Real::from(4) - Real::from(2) * root_two;
     assert!(
         source
-            .offset(-collapse_distance, &policy)
+            .offset(-collapse_distance, &sharp_offset(), &policy)
             .unwrap()
             .into_value()
             .is_empty(),
@@ -616,7 +828,7 @@ fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_ex
     );
     assert!(
         source
-            .offset(Real::from(-2), &policy)
+            .offset(Real::from(-2), &sharp_offset(), &policy)
             .unwrap()
             .into_value()
             .is_empty()
@@ -634,7 +846,10 @@ fn unified_region_positive_offset_removes_exactly_collapsed_convex_hole() {
     .unwrap()
     .into_value();
 
-    let expanded = source.offset(Real::from(5), &policy).unwrap().into_value();
+    let expanded = source
+        .offset(Real::from(5), &sharp_offset(), &policy)
+        .unwrap()
+        .into_value();
     assert_eq!(decided(expanded.loop_roles(&policy).unwrap()).len(), 1);
     assert_eq!(
         certified(expanded.classify_point(&p(10, 10), &policy).unwrap()),
@@ -1104,7 +1319,10 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
         .into_value();
 
         assert_eq!(
-            region.offset(Real::zero(), &policy).unwrap().into_value(),
+            region
+                .offset(Real::zero(), &sharp_offset(), &policy)
+                .unwrap()
+                .into_value(),
             region,
             "zero offset must preserve higher-order regions"
         );
@@ -1239,7 +1457,10 @@ fn authored_line_arc_paths_retain_the_native_offset_engine() {
         certified(region.native_contours_fast_path(&policy).unwrap()),
         Classification::Decided(_)
     ));
-    let expanded = region.offset(Real::from(2), &policy).unwrap().into_value();
+    let expanded = region
+        .offset(Real::from(2), &sharp_offset(), &policy)
+        .unwrap()
+        .into_value();
     let bounds = decided(expanded.bounds(&policy).unwrap());
     assert_eq!(bounds.min_x(), &Real::from(-7));
     assert_eq!(bounds.min_y(), &Real::from(-7));
@@ -1486,7 +1707,10 @@ fn unified_region_offset_expands_material_and_contracts_holes() {
         .unwrap()
         .into_value();
 
-    let offset = region.offset(Real::one(), &policy).unwrap().into_value();
+    let offset = region
+        .offset(Real::one(), &sharp_offset(), &policy)
+        .unwrap()
+        .into_value();
 
     assert_eq!(
         certified(offset.classify_point(&p(0, 5), &policy).unwrap()),

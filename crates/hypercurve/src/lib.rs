@@ -242,7 +242,7 @@ pub use nurbs::{
     NurbsBezierDecomposition2, NurbsBezierSpanView2, NurbsCurve2, NurbsDegreeElevation2,
     NurbsElevatedBezierSpan2, NurbsNativeSpanView2,
 };
-pub use offset::OffsetCap;
+pub use offset::{OffsetCap, OffsetCornerStyle2};
 pub use point::Point2;
 pub use policy::{CurveCertainty, CurveContext, CurveOutcome, CurvePreviewOptions};
 pub use polynomial_spline::{

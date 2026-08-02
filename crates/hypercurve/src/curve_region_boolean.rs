@@ -6,20 +6,22 @@ use std::sync::{Arc, OnceLock};
 
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
+use crate::classify::real_sign;
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
 use crate::policy::resolve_certified_operation;
 use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2;
 use crate::{
     Aabb2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
-    BezierLineImageFitRelation, BezierParallel2, BezierParallelPairIntersectionSet2,
-    BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    Classification, Curve2, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
-    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
-    CurveOperation2, CurveOutcome, CurvePathBooleanOperand2, CurveRegion2, CurveResult,
-    ExactCurveError, ExactCurveResult, FillRule, QuadraticBezier2, RationalBezier2,
-    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
-    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2, RealSign,
-    RegionPointLocation, UncertaintyReason,
+    BezierLineContactRelation, BezierLineImageFitRelation, BezierParallel2,
+    BezierParallelPairIntersectionSet2, BezierParameter2, BezierParameterRange2,
+    BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Curve2, CurveContext,
+    CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionContact2,
+    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
+    CurvePathBooleanOperand2, CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
+    FillRule, LineSeg2, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, RationalBezierPointIncidence2, Real, RealSign,
+    RegionPointLocation, Segment2, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -916,6 +918,255 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .clone()
     }
 
+    fn parallel_line_pair_result(
+        &self,
+        parallel: &BezierParallel2,
+        curve: &BezierSubcurve2,
+        parallel_is_first: bool,
+    ) -> ExactCurveResult<Classification<Option<RegionPairResult>>> {
+        let retained = BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: curve.clone(),
+        };
+        let line = match crate::bezier_region::retained_line_fragment_segment(
+            &retained,
+            &self.data.policy,
+        )
+        .map_err(|cause| self.invalid(0, cause))?
+        {
+            Classification::Decided(line) => line,
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                return Ok(Classification::Decided(None));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let relation = match parallel
+            .relation_to_supporting_line_with_contacts(&line, &self.data.policy)
+            .map_err(|cause| self.invalid(0, cause))?
+        {
+            Classification::Decided(relation) => relation,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let contacts = match relation {
+            BezierLineContactRelation::ControlHullDisjoint { .. }
+            | BezierLineContactRelation::NoContact => {
+                return Ok(Classification::Decided(Some(RegionPairResult {
+                    contacts: Vec::new(),
+                    overlaps: Vec::new(),
+                    blockers: Vec::new(),
+                })));
+            }
+            BezierLineContactRelation::OnSupportingLine => {
+                return Ok(Classification::Decided(None));
+            }
+            BezierLineContactRelation::Contacts { contacts } => contacts,
+        };
+        let reversed_line = LineSeg2::try_new(line.end().clone(), line.start().clone())
+            .map_err(|cause| self.invalid(0, cause))?;
+        let mut retained_parameters = Vec::with_capacity(contacts.len());
+        for contact in contacts {
+            let from_start = match parallel
+                .supporting_line_parameter_order(contact.parameter(), &line, &self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?
+            {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let from_end = match parallel
+                .supporting_line_parameter_order(
+                    contact.parameter(),
+                    &reversed_line,
+                    &self.data.policy,
+                )
+                .map_err(|cause| self.invalid(0, cause))?
+            {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if from_start == Ordering::Less || from_end == Ordering::Less {
+                continue;
+            }
+            retained_parameters.push(contact.parameter().clone());
+        }
+        self.parallel_exact_parameter_pair_result(
+            parallel,
+            curve,
+            retained_parameters,
+            parallel_is_first,
+        )
+    }
+
+    fn parallel_arc_pair_result(
+        &self,
+        parallel: &BezierParallel2,
+        curve: &BezierSubcurve2,
+        parallel_is_first: bool,
+    ) -> ExactCurveResult<Classification<Option<RegionPairResult>>> {
+        let segment = match crate::bezier_region::materialized_native_subcurve_segment(
+            curve,
+            &self.data.policy,
+        )
+        .map_err(|cause| self.invalid(0, cause))?
+        {
+            Classification::Decided(segment) => segment,
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                return Ok(Classification::Decided(None));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let Segment2::Arc(arc) = segment else {
+            return Ok(Classification::Decided(None));
+        };
+        let incidence = match parallel
+            .circle_incidence(arc.center(), arc.radius_squared_ref(), &self.data.policy)
+            .map_err(|cause| self.invalid(0, cause))?
+        {
+            Classification::Decided(incidence) => incidence,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let parameters = match incidence {
+            crate::BezierParallelIncidence2::EntireCurve => {
+                return Ok(Classification::Decided(None));
+            }
+            crate::BezierParallelIncidence2::Parameters(parameters) => parameters,
+        };
+        let mut retained_parameters = Vec::with_capacity(parameters.len());
+        for parameter in parameters {
+            let Some(exact) = parameter.as_exact() else {
+                return Ok(Classification::Decided(None));
+            };
+            let point = match parallel
+                .point_at(exact, &self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            match arc.contains_point(&point, &self.data.policy) {
+                Classification::Decided(true) => retained_parameters.push(parameter),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        self.parallel_exact_parameter_pair_result(
+            parallel,
+            curve,
+            retained_parameters,
+            parallel_is_first,
+        )
+    }
+
+    fn parallel_exact_parameter_pair_result(
+        &self,
+        parallel: &BezierParallel2,
+        curve: &BezierSubcurve2,
+        parallel_parameters: Vec<BezierParameter2>,
+        parallel_is_first: bool,
+    ) -> ExactCurveResult<Classification<Option<RegionPairResult>>> {
+        let rational =
+            RationalBezier2::try_from_subcurve(curve).map_err(|cause| self.invalid(0, cause))?;
+        let mut result_contacts = Vec::with_capacity(parallel_parameters.len());
+        for parallel_parameter in parallel_parameters {
+            let Some(parallel_parameter_exact) = parallel_parameter.as_exact() else {
+                return Ok(Classification::Decided(None));
+            };
+            let point = match parallel.point_at(parallel_parameter_exact, &self.data.policy) {
+                Ok(Classification::Decided(point)) => point,
+                Ok(Classification::Uncertain(reason)) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                Err(cause) => return Err(self.invalid(0, cause)),
+            };
+            let other_parameters = match rational
+                .point_incidence_classified(&point, &self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?
+            {
+                Classification::Decided(RationalBezierPointIncidence2::Parameters(parameters)) => {
+                    parameters
+                }
+                Classification::Decided(RationalBezierPointIncidence2::EntireCurve) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let parallel_derivative = match parallel
+                .derivative_at(parallel_parameter_exact, &self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?
+            {
+                Classification::Decided(derivative) => derivative,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            for other_parameter in other_parameters {
+                let Some(other_parameter_exact) = other_parameter.as_exact() else {
+                    return Ok(Classification::Decided(None));
+                };
+                let other_derivative = match rational
+                    .derivative_at_classified(other_parameter_exact, &self.data.policy)
+                {
+                    Classification::Decided(derivative) => derivative,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let cross = parallel_derivative.dx() * other_derivative.dy()
+                    - parallel_derivative.dy() * other_derivative.dx();
+                let parallel_cross_other = real_sign(&cross, &self.data.policy);
+                let tangent_cross_sign = parallel_cross_other.and_then(|sign| match sign {
+                    RealSign::Positive | RealSign::Negative => Some(if parallel_is_first {
+                        sign
+                    } else {
+                        match sign {
+                            RealSign::Positive => RealSign::Negative,
+                            RealSign::Negative => RealSign::Positive,
+                            RealSign::Zero => unreachable!(),
+                        }
+                    }),
+                    RealSign::Zero => None,
+                });
+                let (first_parameter, second_parameter) = if parallel_is_first {
+                    (parallel_parameter.clone(), other_parameter)
+                } else {
+                    (other_parameter, parallel_parameter.clone())
+                };
+                result_contacts.push(RegionPairContactEvidence::Direct {
+                    first_parameter,
+                    second_parameter,
+                    point: Some(RationalBezierIntersectionPointEvidence2::Exact(
+                        point.clone(),
+                    )),
+                    certified_transverse: tangent_cross_sign.is_some(),
+                    tangent_cross_sign,
+                });
+            }
+        }
+        Ok(Classification::Decided(Some(RegionPairResult {
+            contacts: result_contacts,
+            overlaps: Vec::new(),
+            blockers: Vec::new(),
+        })))
+    }
+
     fn pair_result(&self, pair: &RegionCarrierPair) -> ExactCurveResult<RegionPairResult> {
         let first = &self.data.carriers[pair.first_carrier_index];
         let second = &self.data.carriers[pair.second_carrier_index];
@@ -1004,6 +1255,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 } else {
                     (second.geometry.parallel(), first.geometry.bezier())
                 };
+                match self.parallel_arc_pair_result(parallel, curve, *parallel_is_first)? {
+                    Classification::Decided(Some(result)) => return Ok(result),
+                    Classification::Decided(None) | Classification::Uncertain(_) => {}
+                }
+                match self.parallel_line_pair_result(parallel, curve, *parallel_is_first)? {
+                    Classification::Decided(Some(result)) => return Ok(result),
+                    Classification::Decided(None) | Classification::Uncertain(_) => {}
+                }
                 let rational = RationalBezier2::try_from_subcurve(curve)
                     .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
                 let result = match parallel

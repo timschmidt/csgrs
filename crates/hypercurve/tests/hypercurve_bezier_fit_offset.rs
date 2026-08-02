@@ -6,9 +6,10 @@ use hypercurve::{
     BezierParallelPairIntersectionCandidates2, BezierParallelPairIntersectionContact2,
     BezierParallelPairIntersectionSet2, BezierParallelVerificationOptions, BezierParameter2,
     Classification, CubicBezier2, Curve2, CurveContext, CurveError, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Rational, RationalBezier2,
-    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real,
+    CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2,
+    Rational, RationalBezier2, RationalBezierIntersectionOverlap2,
+    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    RationalQuadraticBezier2, Real,
 };
 use num::bigint::{BigInt, BigUint};
 use proptest::prelude::*;
@@ -3208,7 +3209,7 @@ fn certified_curve_path_parallel_leaves_corner_join_to_higher_layer() {
 }
 
 #[test]
-fn curve_region_uses_certified_parallel_then_regularizes_output_chords() {
+fn curve_region_certified_adapter_prefers_authoritative_exact_parallel_arrangement() {
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(1, 0), p(1, 1), p(0, 1))),
         Curve2::from(QuadraticBezier2::new(p(0, 1), p(-1, 1), p(-1, 0))),
@@ -3230,6 +3231,7 @@ fn curve_region_uses_certified_parallel_then_regularizes_output_chords() {
     let result = match region
         .offset_with_certified_bezier_parallel(
             q(1, 10),
+            &OffsetCornerStyle2::Round,
             &parallel_options,
             &flattening,
             &flattening,
@@ -3241,21 +3243,23 @@ fn curve_region_uses_certified_parallel_then_regularizes_output_chords() {
         Classification::Decided(result) => result,
         Classification::Uncertain(reason) => panic!("certified region offset failed: {reason:?}"),
     };
-    assert!(result.evidence().used_certified_parallel_path());
+    assert!(result.evidence().used_exact_authoritative_path());
+    assert!(!result.evidence().used_certified_parallel_path());
     assert!(!result.evidence().used_segmented_source_fallback());
-    assert_eq!(result.evidence().loop_evidence().len(), 1);
+    assert!(result.evidence().loop_evidence().is_empty());
     assert_eq!(
         result
             .evidence()
             .certified_pre_regularization_boundary_error(),
-        Some(&q(1, 10))
+        Some(&Real::zero())
     );
-    assert!(!result.evidence().final_boundary_hausdorff_certified());
+    assert!(result.evidence().final_boundary_hausdorff_certified());
     assert!(!result.region().boundary_loops().is_empty());
+    assert!(result.region().has_algebraic_fragments());
 }
 
 #[test]
-fn curve_region_evidence_weaker_source_chord_fallback_for_authored_corner() {
+fn curve_region_authored_corner_stays_on_authoritative_exact_offset_path() {
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, -1), p(2, 0))),
         Curve2::from(QuadraticBezier2::new(p(2, 0), p(2, 1), p(2, 2))),
@@ -3277,6 +3281,7 @@ fn curve_region_evidence_weaker_source_chord_fallback_for_authored_corner() {
     let result = match region
         .offset_with_certified_bezier_parallel(
             q(1, 10),
+            &OffsetCornerStyle2::Round,
             &parallel_options,
             &flattening,
             &flattening,
@@ -3288,16 +3293,18 @@ fn curve_region_evidence_weaker_source_chord_fallback_for_authored_corner() {
         Classification::Decided(result) => result,
         Classification::Uncertain(reason) => panic!("corner fallback failed: {reason:?}"),
     };
+    assert!(result.evidence().used_exact_authoritative_path());
     assert!(!result.evidence().used_certified_parallel_path());
-    assert!(result.evidence().used_segmented_source_fallback());
-    assert!(
+    assert!(!result.evidence().used_segmented_source_fallback());
+    assert_eq!(
         result
             .evidence()
-            .certified_pre_regularization_boundary_error()
-            .is_none()
+            .certified_pre_regularization_boundary_error(),
+        Some(&Real::zero())
     );
-    assert!(!result.evidence().final_boundary_hausdorff_certified());
-    assert!(result.evidence().fallback_evidence().is_some());
+    assert!(result.evidence().final_boundary_hausdorff_certified());
+    assert!(result.evidence().fallback_evidence().is_none());
+    assert!(result.region().has_algebraic_fragments());
 }
 
 proptest! {

@@ -5,11 +5,19 @@ use hypercurve::{
 #[cfg(feature = "predicates")]
 use hypercurve::{
     CircularArc2, CubicBezier2, CurveBoundaryInteriorSide2, CurveRegionLoopRole, FillRule,
-    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2, UncertaintyReason,
+    OffsetCornerStyle2, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
+    UncertaintyReason,
 };
 
 fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
+}
+
+#[cfg(feature = "predicates")]
+fn sharp_offset() -> OffsetCornerStyle2 {
+    OffsetCornerStyle2::Miter {
+        limit: Real::from(1_000),
+    }
 }
 
 fn square_path(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurvePath2 {
@@ -1050,11 +1058,11 @@ fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
     let distance = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
 
     assert!(matches!(
-        source.offset(distance.clone(), &CurveContext::STRICT),
+        source.offset(distance.clone(), &sharp_offset(), &CurveContext::STRICT),
         Err(hypercurve::ExactCurveError::Blocked(_))
     ));
     let outcome = source
-        .offset(distance, &CurveContext::APPROXIMATE_512)
+        .offset(distance, &sharp_offset(), &CurveContext::APPROXIMATE_512)
         .expect("the authorized 512-bit terminal should decide symbolic zero offset");
     assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(outcome.value, source);

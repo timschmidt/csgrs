@@ -214,6 +214,9 @@ exact signatures.
   filled_area, boundary_profiles, materialized_boundary_paths,
   segment_certified, offset, offset_with_certified_segmentation,
   offset_with_certified_bezier_parallel}` is the mixed-family region API.
+  `offset` is the authoritative exact operation and takes an explicit
+  `OffsetCornerStyle2`; the certified methods are opt-in lossy adapters used
+  only when the exact kernel reports an unsupported carrier.
 - `CurveRegion2::{intersect_region, boolean_region, boolean_regions}` returns
   intersection topology or regularized union, intersection, difference, and
   xor results. `BooleanOp` selects an operation; batched

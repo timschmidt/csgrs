@@ -1703,6 +1703,118 @@ impl BezierParallel2 {
             }))
     }
 
+    pub(crate) fn circle_incidence(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelIncidence2>> {
+        let source = self.source_power_basis()?;
+        let differential = self.differential()?;
+        if let Classification::Uncertain(reason) = Self::certify_finite_source(&source, policy)? {
+            return Ok(Classification::Uncertain(reason));
+        }
+        if let Classification::Uncertain(reason) =
+            Self::certify_regular_differential(differential, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let weight = source
+            .weight
+            .map_or_else(|| vec![Real::one()], ToOwned::to_owned);
+        let delta_x =
+            polynomial_subtract(source.x_numerator, &polynomial_scale(&weight, center.x()));
+        let delta_y =
+            polynomial_subtract(source.y_numerator, &polynomial_scale(&weight, center.y()));
+        let distance_square_delta = self.distance() * self.distance() - radius_squared;
+        let radial = polynomial_add(
+            &polynomial_add(
+                &polynomial_multiply(&delta_x, &delta_x),
+                &polynomial_multiply(&delta_y, &delta_y),
+            ),
+            &polynomial_scale(
+                &polynomial_multiply(&weight, &weight),
+                &distance_square_delta,
+            ),
+        );
+        let normal_projection = polynomial_subtract(
+            &polynomial_multiply(&delta_y, &differential.tangent_x),
+            &polynomial_multiply(&delta_x, &differential.tangent_y),
+        );
+        let normal = polynomial_scale(
+            &polynomial_multiply(&weight, &normal_projection),
+            &(Real::from(2_u8) * self.distance()),
+        );
+        let speed_squared = polynomial_add(
+            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
+            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
+        );
+        let squared = polynomial_subtract(
+            &polynomial_multiply(&polynomial_multiply(&radial, &radial), &speed_squared),
+            &polynomial_multiply(&normal, &normal),
+        );
+        let candidate_polynomial = match polynomial_from_coefficients(squared, policy)? {
+            Classification::Decided(Some(polynomial)) => polynomial,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let candidates = match candidate_polynomial.isolate_unit_interval_roots(policy)? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radial_polynomial = match polynomial_from_coefficients(radial, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let normal_polynomial = match polynomial_from_coefficients(normal, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut retained = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            let radial_sign =
+                match signed_polynomial_at_root(radial_polynomial.as_ref(), &candidate, policy)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let normal_sign =
+                match signed_polynomial_at_root(normal_polynomial.as_ref(), &candidate, policy)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            match (radial_sign, normal_sign) {
+                (RealSign::Zero, RealSign::Zero)
+                | (RealSign::Positive, RealSign::Negative)
+                | (RealSign::Negative, RealSign::Positive) => retained.push(candidate),
+                (RealSign::Positive, RealSign::Positive)
+                | (RealSign::Negative, RealSign::Negative) => {}
+                (RealSign::Zero, RealSign::Positive | RealSign::Negative)
+                | (RealSign::Positive | RealSign::Negative, RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "squared parallel-circle candidate lost its exact mate".into(),
+                    ));
+                }
+            }
+        }
+        Ok(Classification::Decided(
+            BezierParallelIncidence2::Parameters(retained),
+        ))
+    }
+
     /// Returns complete exact parameters where this parallel meets a supporting line.
     ///
     /// The finite endpoints of `line` define its nonzero direction and support;
