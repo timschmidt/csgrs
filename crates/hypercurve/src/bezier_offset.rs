@@ -33,7 +33,7 @@ use crate::{
     CurvePath2, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2,
     RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
     RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
-    RationalQuadraticBezier2, Real, UncertaintyReason,
+    RationalQuadraticBezier2, Real, Similarity2, UncertaintyReason,
 };
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 #[cfg(feature = "predicates")]
@@ -54,10 +54,18 @@ use hypersolve::{
     subresultant_chain_univariate_polynomials,
 };
 
+/// Exact source representation retained by an analytic Bezier parallel.
+///
+/// This structural view is the carrier's lossless serialization and
+/// diagnostic boundary: together with the signed distance it reconstructs the
+/// complete procedural curve without exposing or materializing lazy caches.
 #[derive(Clone, Debug, PartialEq)]
-enum BezierParallelSource2 {
+pub enum BezierParallelSource2 {
+    /// Polynomial quadratic Bezier source.
     Quadratic(QuadraticBezier2),
+    /// Polynomial cubic Bezier source.
     Cubic(CubicBezier2),
+    /// Arbitrary-degree rational Bezier source.
     Rational(RationalBezier2),
 }
 
@@ -158,6 +166,46 @@ impl BezierParallelSource2 {
             ),
             Self::Rational(source) => Ok(source.clone()),
         }
+    }
+
+    fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
+        let transformed = match self {
+            Self::Quadratic(source) => {
+                let points = source
+                    .control_points()
+                    .map(|point| transform.transform_point(point));
+                let transformed = if source.retained_exact_line_image().is_some() {
+                    QuadraticBezier2::with_retained_exact_line_image(
+                        points[0].clone(),
+                        points[1].clone(),
+                        points[2].clone(),
+                    )?
+                } else {
+                    QuadraticBezier2::new(points[0].clone(), points[1].clone(), points[2].clone())
+                };
+                Self::Quadratic(transformed)
+            }
+            Self::Cubic(source) => {
+                let points = source
+                    .control_points()
+                    .map(|point| transform.transform_point(point));
+                Self::Cubic(CubicBezier2::new(
+                    points[0].clone(),
+                    points[1].clone(),
+                    points[2].clone(),
+                    points[3].clone(),
+                ))
+            }
+            Self::Rational(source) => Self::Rational(RationalBezier2::try_new(
+                source
+                    .control_points()
+                    .iter()
+                    .map(|point| transform.transform_point(point))
+                    .collect(),
+                source.weights().to_vec(),
+            )?),
+        };
+        Ok(transformed)
     }
 }
 
@@ -949,7 +997,12 @@ impl BezierParallelSingularityAnalysis2 {
 }
 
 impl BezierParallel2 {
-    fn from_source(source: BezierParallelSource2, distance: Real) -> Self {
+    /// Constructs an exact analytic parallel from its structural source and
+    /// signed left-normal distance.
+    ///
+    /// [`Self::source`] and [`Self::distance`] provide the inverse structural
+    /// view for exact serialization and diagnostics.
+    pub fn from_source(source: BezierParallelSource2, distance: Real) -> Self {
         Self {
             data: Arc::new(BezierParallelData2 {
                 source,
@@ -959,6 +1012,11 @@ impl BezierParallel2 {
                 certified_ph_offset: OnceLock::new(),
             }),
         }
+    }
+
+    /// Returns the exact source representation retained by this parallel.
+    pub fn source(&self) -> &BezierParallelSource2 {
+        &self.data.source
     }
 
     /// Returns the degree of the retained source span.
@@ -977,6 +1035,23 @@ impl BezierParallel2 {
     /// parallel image, now from end to start.
     pub fn reversed(&self) -> Self {
         Self::from_source(self.data.source.reversed(), -self.distance().clone())
+    }
+
+    /// Applies a certified planar similarity without materializing a finite
+    /// approximation of this analytic parallel.
+    ///
+    /// Uniform scale multiplies the signed normal distance.  Reflection also
+    /// reverses the transformed source's left normal, so it negates that
+    /// distance.  The parameter and traversal direction remain unchanged.
+    pub fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
+        let mut distance = self.distance() * transform.scale();
+        if transform.reverses_orientation() {
+            distance = -distance;
+        }
+        Ok(Self::from_source(
+            self.data.source.transform_similarity(transform)?,
+            distance,
+        ))
     }
 
     /// Splits this exact parallel at one represented interior parameter.
@@ -9215,6 +9290,108 @@ mod conversion_tests {
             Classification::Decided(_)
         ));
         assert!(parallel.data.differential.get().is_some());
+    }
+
+    #[test]
+    fn exact_parallel_similarity_transports_points_derivatives_and_structure() {
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 2),
+            Point2::from_values(3, 1),
+        );
+        let distance = (Real::one() / Real::from(2_i8)).unwrap();
+        let parallel = source.parallel_left(distance).unwrap();
+        let transform = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-2_i8),
+            Real::from(2_i8),
+            Real::zero(),
+            Real::from(5_i8),
+            Real::from(-7_i8),
+        )
+        .unwrap();
+        let transformed = parallel.transform_similarity(&transform).unwrap();
+        assert_eq!(transformed.distance(), &Real::one());
+        assert!(matches!(
+            transformed.source(),
+            BezierParallelSource2::Quadratic(_)
+        ));
+
+        let parameter = (Real::one() / Real::from(3_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(source_point) =
+                parallel.point_at(&parameter, &policy).unwrap()
+            else {
+                panic!("source parallel point became uncertain");
+            };
+            let Classification::Decided(transformed_point) =
+                transformed.point_at(&parameter, &policy).unwrap()
+            else {
+                panic!("transformed parallel point became uncertain");
+            };
+            assert_eq!(transformed_point, transform.transform_point(&source_point));
+
+            let Classification::Decided(source_derivative) =
+                parallel.derivative_at(&parameter, &policy).unwrap()
+            else {
+                panic!("source parallel derivative became uncertain");
+            };
+            let Classification::Decided(transformed_derivative) =
+                transformed.derivative_at(&parameter, &policy).unwrap()
+            else {
+                panic!("transformed parallel derivative became uncertain");
+            };
+            assert_eq!(
+                transformed_derivative.dx(),
+                &(Real::from(-2_i8) * source_derivative.dy())
+            );
+            assert_eq!(
+                transformed_derivative.dy(),
+                &(Real::from(2_i8) * source_derivative.dx())
+            );
+        }
+
+        let reconstructed = BezierParallel2::from_source(
+            transformed.source().clone(),
+            transformed.distance().clone(),
+        );
+        assert_eq!(reconstructed, transformed);
+    }
+
+    #[test]
+    fn exact_parallel_reflection_negates_scaled_left_distance() {
+        let source = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
+        );
+        let parallel = source.parallel_left(Real::from(2_i8)).unwrap();
+        let reflection = Similarity2::try_from_real_affine(
+            Real::from(-3_i8),
+            Real::zero(),
+            Real::zero(),
+            Real::from(3_i8),
+            Real::zero(),
+            Real::zero(),
+        )
+        .unwrap();
+        let transformed = parallel.transform_similarity(&reflection).unwrap();
+
+        assert_eq!(transformed.distance(), &Real::from(-6_i8));
+        let BezierParallelSource2::Quadratic(transformed_source) = transformed.source() else {
+            panic!("quadratic source family changed under reflection");
+        };
+        assert!(transformed_source.retained_exact_line_image().is_some());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let Classification::Decided(point) = parallel.point_at(&half, &policy).unwrap() else {
+                panic!("source line parallel point became uncertain");
+            };
+            let Classification::Decided(transformed_point) =
+                transformed.point_at(&half, &policy).unwrap()
+            else {
+                panic!("reflected line parallel point became uncertain");
+            };
+            assert_eq!(transformed_point, reflection.transform_point(&point));
+        }
     }
 
     fn parameter_lift_map(

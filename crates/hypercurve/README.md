@@ -128,7 +128,7 @@ exact signatures.
 - `Segment2::{from_bulge, kind, point_at, contains_point, reversed,
   structural_facts}` dispatches over lines and arcs.
 - `Similarity2::{try_from_real_affine, try_from_f64_affine, transform_point,
-  reverses_orientation}` validates exact translation, rotation, reflection,
+  scale, reverses_orientation}` validates exact translation, rotation, reflection,
   and uniform scale transforms. Curve and region types expose
   `transform_similarity`; `CurveRegion2` also exposes `transform_affine`.
 
@@ -156,6 +156,12 @@ exact signatures.
   `offset_preflight`, `offset_left_staged`, `offset_right_staged`, and
   `approximate_parallel_blend2d_certified`. Their result types retain error and
   singularity evidence.
+- `BezierParallel2::{from_source, source, distance, point_at, derivative_at,
+  reversed, split_at_exact, subcurve_between_exact, conservative_bounds,
+  transform_similarity, point_incidence, supporting_line_incidence,
+  intersections}` is the compact exact procedural parallel carrier; its
+  `BezierParallelSource2` plus signed distance is the lossless structural
+  export boundary.
 
 ### Splines and unified curves
 

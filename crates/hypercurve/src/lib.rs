@@ -111,7 +111,7 @@ pub use bezier_offset::{
     BezierParallelApproximationCurve2, BezierParallelIncidence2,
     BezierParallelIntersectionCandidates2, BezierParallelIntersectionContact2,
     BezierParallelIntersectionParameterComponent2, BezierParallelIntersectionSet2,
-    BezierParallelSingularityAnalysis2, BezierParallelVerificationOptions,
+    BezierParallelSingularityAnalysis2, BezierParallelSource2, BezierParallelVerificationOptions,
     Blend2dCubicQuadraticReduction2, Blend2dQuadraticOffsetCandidate2,
     CertifiedBezierParallelApproximation2, CertifiedBezierParallelPath2,
     CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,

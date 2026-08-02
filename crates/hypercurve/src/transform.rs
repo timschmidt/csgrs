@@ -25,6 +25,7 @@ pub struct Similarity2 {
     e: Real,
     xoff: Real,
     yoff: Real,
+    scale: Real,
     reverses_orientation: bool,
 }
 
@@ -45,7 +46,7 @@ impl Similarity2 {
         let second_len_squared = b.clone() * b.clone() + e.clone() * e.clone();
         let policy = CurveContext::STRICT;
         let equal_scale =
-            crate::classify::real_sign(&(first_len_squared - second_len_squared), &policy);
+            crate::classify::real_sign(&(&first_len_squared - &second_len_squared), &policy);
         let orthogonal =
             crate::classify::real_sign(&(a.clone() * b.clone() + d.clone() * e.clone()), &policy);
         let determinant = a.clone() * e.clone() - b.clone() * d.clone();
@@ -61,6 +62,7 @@ impl Similarity2 {
             return Err(CurveError::InvalidSimilarityTransform);
         }
 
+        let scale = first_len_squared.sqrt()?;
         Ok(Self {
             a,
             b,
@@ -68,6 +70,7 @@ impl Similarity2 {
             e,
             xoff,
             yoff,
+            scale,
             reverses_orientation: determinant_sign == Some(RealSign::Negative),
         })
     }
@@ -82,8 +85,10 @@ impl Similarity2 {
     /// ```
     ///
     /// The finite validation tolerance is only used to accept API-boundary
-    /// matrix entries as a similarity. Once accepted, all transformed geometry
-    /// is built with hyperreal coefficients.
+    /// matrix entries as a similarity. Once accepted, the linear part is
+    /// projected onto the nearest orientation-preserving or
+    /// orientation-reversing similarity and all transformed geometry is built
+    /// from that certified hyperreal matrix.
     pub fn try_from_f64_affine(
         a: f64,
         b: f64,
@@ -113,20 +118,42 @@ impl Similarity2 {
             return Err(CurveError::InvalidSimilarityTransform);
         }
 
-        Ok(Self {
-            a: real_from_f64(a)?,
-            b: real_from_f64(b)?,
-            d: real_from_f64(d)?,
-            e: real_from_f64(e)?,
-            xoff: real_from_f64(xoff)?,
-            yoff: real_from_f64(yoff)?,
-            reverses_orientation: determinant < 0.0,
-        })
+        // Store an exact similarity, not merely the approximately similar
+        // matrix used at this finite API boundary.  The orthogonal projection
+        // onto the selected orientation component is the closest similarity
+        // linear part in Frobenius norm.  Reusing the exact constructor then
+        // certifies the invariant consumed by every native-geometry method.
+        let (a, b, d, e) = if determinant > 0.0 {
+            let u = (a + e) * 0.5;
+            let v = (d - b) * 0.5;
+            (u, -v, v, u)
+        } else {
+            let u = (a - e) * 0.5;
+            let v = (b + d) * 0.5;
+            (u, v, v, -u)
+        };
+        Self::try_from_real_affine(
+            real_from_f64(a)?,
+            real_from_f64(b)?,
+            real_from_f64(d)?,
+            real_from_f64(e)?,
+            real_from_f64(xoff)?,
+            real_from_f64(yoff)?,
+        )
     }
 
     /// Returns true when the transform reverses orientation.
     pub const fn reverses_orientation(&self) -> bool {
         self.reverses_orientation
+    }
+
+    /// Returns the certified positive uniform scale of the linear part.
+    ///
+    /// The value is retained once when the transform is constructed so a
+    /// batch transform of exact normal-offset carriers does not repeatedly
+    /// build the same square root.
+    pub const fn scale(&self) -> &Real {
+        &self.scale
     }
 
     /// Transforms a point with hyperreal arithmetic.
@@ -379,6 +406,20 @@ mod tests {
         assert_eq!(
             transformed.y(),
             &(&exact.d * symbolic_point.x() + &exact.e * symbolic_point.y() + exact.yoff.clone())
+        );
+    }
+
+    #[test]
+    fn finite_similarity_constructor_canonicalizes_the_accepted_linear_part() {
+        let transform =
+            Similarity2::try_from_f64_affine(1.0, 1.0e-12, 0.0, 1.0 + 5.0e-13, 7.0, -11.0, 1.0e-9)
+                .unwrap();
+
+        assert_eq!(transform.d, -transform.b.clone());
+        assert_eq!(transform.e, transform.a);
+        assert_eq!(
+            transform.scale() * transform.scale(),
+            &transform.a * &transform.a + &transform.d * &transform.d
         );
     }
 }
