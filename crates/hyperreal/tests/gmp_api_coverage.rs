@@ -105,6 +105,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "certified_affine_det2_sign",
     "certified_affine_det2_sign_exact_dyadic_f64",
     "certified_affine_det3_sign",
+    "certified_enclosure",
     "certified_incircle2_sign",
     "certified_insphere3_sign",
     "certified_linear_form3_sign",

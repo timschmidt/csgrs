@@ -937,6 +937,31 @@ mod tests {
             [None, None],
         );
 
+        assert_eq!(core::mem::size_of::<RationalPoint3Query>(), 48);
+        let supplied_bounds = [[-1.0, -0.5], [2.0, 2.0_f64.next_up()], [-3.0, 4.0]];
+        let bounded = RationalPoint3Query::from_certified_enclosures(supplied_bounds)
+            .expect("finite certified point bounds should construct");
+        for (axis, [lower, upper]) in supplied_bounds.into_iter().enumerate() {
+            let retained = bounded.certified_enclosure(axis);
+            assert!(retained[0] <= lower);
+            assert!(retained[1] >= upper);
+        }
+        let least_subnormal = f64::from_bits(1);
+        let subnormal = RationalPoint3Query::from_certified_enclosures([
+            [0.0, least_subnormal],
+            [0.0, 0.0],
+            [-0.0, 0.0],
+        ])
+        .expect("a finite subnormal-width enclosure should remain representable");
+        let retained = subnormal.certified_enclosure(0);
+        assert!(retained[0] <= 0.0 && retained[1] >= least_subnormal);
+        assert!(RationalPoint3Query::from_certified_enclosures([
+            [-f64::MAX, f64::MAX],
+            [0.0, 0.0],
+            [0.0, 0.0],
+        ])
+        .is_none());
+
         let enclosed = |point: [&Rational; 3]| {
             RationalPoint3Query::from_certified_enclosures(
                 point.map(|coordinate| coordinate.to_f64_enclosure().unwrap()),

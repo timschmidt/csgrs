@@ -324,9 +324,9 @@ pub struct RationalLinearForm4Query {
 
 /// Certified floating intervals for a reusable exact-rational 3D point.
 ///
-/// Retaining the coordinates lets several projected predicates reuse the
-/// same conservative conversion bounds. Uncertain predicates still return
-/// `None` for their exact fallback.
+/// Each coordinate is retained as a finite midpoint and absolute radius, so
+/// the same 48 bytes provide outward bounds and repeated projected-predicate
+/// inputs. Uncertain predicates still return `None` for their exact fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
 pub struct RationalPoint3Query {
@@ -338,13 +338,11 @@ impl RationalPoint3Query {
     /// Construct a reusable query from exact-rational coordinates.
     #[inline]
     pub fn from_rationals(point: [&Rational; 3]) -> Option<Self> {
-        let mut values = [0.0; 3];
-        let mut errors = [0.0; 3];
+        let mut enclosures = [[0.0; 2]; 3];
         for (index, coordinate) in point.into_iter().enumerate() {
-            (values[index], errors[index]) =
-                Real::rational_f64_with_error(coordinate)?;
+            enclosures[index] = coordinate.to_f64_enclosure()?;
         }
-        Some(Self { values, errors })
+        Self::from_certified_enclosures(enclosures)
     }
 
     /// Construct a reusable query from certified outward binary64
@@ -362,18 +360,40 @@ impl RationalPoint3Query {
             if !lower.is_finite() || !upper.is_finite() || lower > upper {
                 return None;
             }
-            values[index] = lower;
-            errors[index] = if lower == upper {
-                0.0
-            } else {
-                let error = (upper - lower).next_up();
-                if !error.is_finite() {
-                    return None;
-                }
-                error
-            };
+            if lower == upper {
+                values[index] = lower;
+                continue;
+            }
+            let span = upper - lower;
+            if !span.is_finite() {
+                return None;
+            }
+            let value = lower + span * 0.5;
+            if !value.is_finite() || value < lower || value > upper {
+                return None;
+            }
+            let error = (value - lower).abs().max((upper - value).abs()).next_up();
+            if !error.is_finite()
+                || !(value - error).is_finite()
+                || !(value + error).is_finite()
+                || value - error > lower
+                || value + error < upper
+            {
+                return None;
+            }
+            values[index] = value;
+            errors[index] = error;
         }
         Some(Self { values, errors })
+    }
+
+    /// Return retained finite certified bounds for one coordinate.
+    #[inline]
+    #[doc(hidden)]
+    pub fn certified_enclosure(&self, axis: usize) -> [f64; 2] {
+        let value = self.values[axis];
+        let error = self.errors[axis];
+        [value - error, value + error]
     }
 
     fn projection(&self, axes: [usize; 2]) -> Option<([f64; 2], [f64; 2])> {
