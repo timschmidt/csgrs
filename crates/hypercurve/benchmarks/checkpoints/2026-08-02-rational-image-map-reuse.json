@@ -1,0 +1,229 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "operation-scoped exact rational-image map reuse",
+  "source_revision": "8d3754bf3413c78891829421ce421a6219b5cce6",
+  "semantic_revisions": [
+    "81b26ad",
+    "8d3754b"
+  ],
+  "comparison_revision": "8db767cdbf42461dcf2c6560b21ed1bbecf3f735",
+  "previous_checkpoint": "2026-08-02-rational-image-interval-proof-performance.json",
+  "scope": {
+    "included": [
+      "one operation-scoped inverse rational-parameter map authority for CurveRegion2 parallel-arc contact replay",
+      "the same authority across rational parameter-component boundaries and selected branch roots",
+      "exact reuse of quotient-ring multiplication matrices, the global determinant polynomial, fallback image polynomial, and fallback image roots for isolators of one defining polynomial",
+      "STRICT/APPROXIMATE_512 cache isolation by owning one CurveContext in each map",
+      "deletion of the displaced one-shot internal rational-image path",
+      "matched radical-cusp, rational-component, allocation, linked-size, historical/competitive, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "approximate coordinates, approximate isolators, or approximate topology",
+      "a partial general algebraic cusp or distinct-carrier join representation",
+      "finite projection or export of general analytic offsets",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "cache_key": "Candidates are shared only when the complete exact coefficient vector of the source defining polynomial is equal. Projectively equivalent but differently scaled polynomials do not share state.",
+    "isolator_independence": "Each source root retains and refines its own exact isolating interval. No local image interval, root choice, or parameter-specific ordering is cached across roots.",
+    "quotient_authority": "For one defining polynomial P and rational map N/D, quotient-ring multiplication matrices and the exact global det(N-uD) coefficient vector are polynomial/map invariants and may be reused across every isolated root of P.",
+    "publication": "Each image still requires the existing local Bernstein one-variation proof, nonzero endpoints, nonzero global leading coefficient, and containment in that root's selected exact image interval before an algebraic parameter is published.",
+    "fallback": "A failed local proof still enters the complete exact image-polynomial/root replay. Cached negative construction results are invariants of the same exact polynomial/map/policy tuple, not inferred geometric negatives.",
+    "policy": "Each map owns its CurveContext. STRICT and APPROXIMATE_512 execute the same exact construction and topology graph; only an unresolved terminal equality/sign may consume the 512-bit policy, and no cached approximate fact can answer STRICT.",
+    "lifetime": "All cached algebra belongs to one Boolean/intersection operation and is released with that operation. It is not attached to authored curves or global state."
+  },
+  "capability": {
+    "8db767c": "Every algebraic image request reconstructs its conic candidate and local quotient authority, even when sibling isolators share one source polynomial and inverse conic map.",
+    "8d3754b": "Sibling isolators share exact polynomial-level authority while retaining independent local proofs; CurveRegion2 and rational parameter-component callers use the same internal engine.",
+    "policy_regression": "A two-root identity-map fixture verifies one candidate/matrix/determinant authority and exact refinement equality for both roots under STRICT and APPROXIMATE_512.",
+    "intentional_boundary": "This is an exact proof-ownership optimization. Genuine general algebraic join coordinates still require a complete carrier rather than a partial line/circle special case."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "adjacent matched release integration-test executables pinned to CPU 11; eleven perf-stat repetitions of the two-policy radical_parallel_cusp_offsets_exactly_under_both_policies regression; fixture construction, exact CurveRegion2 construction, and assertions are retained in both revisions",
+    "primary_command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses <matched-release-test> radical_parallel_cusp_offsets_exactly_under_both_policies --exact",
+    "primary": {
+      "comparison_revision": {
+        "task_clock_ms": 371.89,
+        "cycles": 1525860674,
+        "instructions": 3473625045,
+        "branches": 662005423,
+        "branch_misses": 9525223,
+        "elapsed_seconds": 0.372698748
+      },
+      "source_revision": {
+        "task_clock_ms": 371.25,
+        "cycles": 1528197766,
+        "instructions": 3468939582,
+        "branches": 660977238,
+        "branch_misses": 9315813,
+        "elapsed_seconds": 0.372297465
+      },
+      "change_percent": {
+        "task_clock": -0.172094,
+        "cycles": 0.153165,
+        "instructions": -0.134887,
+        "branches": -0.155314,
+        "branch_misses": -2.198479,
+        "elapsed": -0.107670
+      },
+      "interpretation": "Instruction and branch counts improve deterministically. Elapsed time is neutral to slightly faster; the small cycle increase is inside CPU-frequency and scheduler noise."
+    },
+    "immediate_parent_component_guards": {
+      "method": "three complete all-feature offset benchmark processes per revision pinned to CPU 11; benches/offset.rs is byte-identical; both builds use the same live dependency revisions",
+      "lanes": {
+        "nonlinear_rational_component_candidates": {
+          "comparison_median_ms": 1.444814,
+          "source_median_ms": 1.428092,
+          "change_percent": -1.157381
+        },
+        "nonlinear_rational_component_contacts": {
+          "comparison_median_ms": 1.305080,
+          "source_median_ms": 1.304482,
+          "change_percent": -0.045821
+        },
+        "implicit_quadratic_component_candidates": {
+          "comparison_median_ms": 2.783329,
+          "source_median_ms": 2.773148,
+          "change_percent": -0.365785
+        },
+        "implicit_quadratic_component_contacts": {
+          "comparison_median_ms": 2.802659,
+          "source_median_ms": 2.770582,
+          "change_percent": -1.144520
+        },
+        "two_turning_implicit_graph_candidates": {
+          "comparison_median_ms": 92.768875,
+          "source_median_ms": 92.088191,
+          "change_percent": -0.733742
+        },
+        "two_turning_implicit_graph_contacts": {
+          "comparison_median_ms": 93.264151,
+          "source_median_ms": 90.294304,
+          "change_percent": -3.184339
+        },
+        "closed_implicit_oval_candidates": {
+          "comparison_median_ms": 75.173450,
+          "source_median_ms": 72.819549,
+          "change_percent": -3.131293
+        },
+        "closed_implicit_oval_contacts": {
+          "comparison_median_ms": 73.792461,
+          "source_median_ms": 72.904768,
+          "change_percent": -1.202959
+        },
+        "implicit_cusp_candidates": {
+          "comparison_median_ms": 296.285345,
+          "source_median_ms": 295.837186,
+          "change_percent": -0.151259
+        },
+        "implicit_cusp_contacts": {
+          "comparison_median_ms": 294.568865,
+          "source_median_ms": 293.046005,
+          "change_percent": -0.516979
+        }
+      },
+      "interpretation": "All selected exact rational/implicit component guards are neutral or faster than the immediate parent. The one-shot rational-image function is no longer linked as a competing path."
+    },
+    "historical_and_competitive_controls": {
+      "open_cubic_current_process_median_ns": 30427439.8,
+      "open_cubic_previous_checkpoint_median_ns": 30713675.2,
+      "open_cubic_historical_change_percent": -0.931948,
+      "open_cubic_chord_current_process_median_ns": 1014832.9,
+      "open_cubic_curvo_current_process_median_ns": 8484.7,
+      "open_cubic_exact_to_chord_ratio": 29.9827,
+      "open_cubic_exact_to_curvo_ratio": 3586.15,
+      "line_arc_current_process_median_ns": 19972.8,
+      "line_arc_previous_checkpoint_median_ns": 19860.8,
+      "line_arc_historical_change_percent": 0.563925,
+      "line_arc_cavalier_current_process_median_ns": 928.6,
+      "line_arc_exact_to_cavalier_ratio": 21.5085,
+      "nonlinear_component_2026_07_31_candidate_median_ms": 36.567129,
+      "nonlinear_component_current_candidate_median_ms": 1.428092,
+      "nonlinear_component_historical_candidate_speedup": 25.6056,
+      "nonlinear_component_2026_07_31_contact_median_ms": 36.196433,
+      "nonlinear_component_current_contact_median_ms": 1.304482,
+      "nonlinear_component_historical_contact_speedup": 27.7477,
+      "interpretation": "The exact open-cubic control improves and the exact line/arc control remains inside sub-percent historical noise. The named nonlinear exact-component fixture is more than 25x faster than its July exact checkpoint. Chord/Curvo and Cavalier remain finite binary64 controls and do not retain algebraic parameters, canonical-Real carriers, or exact region topology."
+    }
+  },
+  "memory": {
+    "allocation_profile": {
+      "tool": "Heaptrack direct matched release-integration-test traces",
+      "comparison_profile": "/tmp/hypercurve-radical-cusp-interval-opt-20260802.zst",
+      "source_profile": "/tmp/hypercurve-radical-cusp-rational-map-cache-8d3754b-20260802.zst",
+      "workload": "the identical two-policy radical_parallel_cusp_offsets_exactly_under_both_policies regression",
+      "comparison_allocation_calls": 5309365,
+      "source_allocation_calls": 5305471,
+      "allocation_call_change_percent": -0.073342,
+      "comparison_temporary_allocations": 947560,
+      "source_temporary_allocations": 947456,
+      "temporary_allocation_change_percent": -0.010976,
+      "comparison_peak_heap": "2.59 MiB",
+      "source_peak_heap": "2.59 MiB",
+      "comparison_instrumented_runtime_seconds": 3.537,
+      "source_instrumented_runtime_seconds": 3.401,
+      "interpretation": "Sharing exact quotient authority removes 3,894 allocation calls and 104 analyzer-classified temporary allocations without increasing peak heap. More than five million bigint-heavy calls remain."
+    }
+  },
+  "release_size": {
+    "method": "matched all-feature curve_region_boolean_batch release executables built from source and comparison revisions against identical live dependency contents",
+    "file_bytes": 7839528,
+    "text_bytes": 5934726,
+    "data_bytes": 266416,
+    "bss_bytes": 2120,
+    "prior_file_bytes": 7821616,
+    "prior_text_bytes": 5921078,
+    "prior_data_bytes": 266232,
+    "prior_bss_bytes": 3648,
+    "file_change_bytes": 17912,
+    "text_change_bytes": 13648,
+    "data_change_bytes": 184,
+    "bss_change_bytes": -1528,
+    "file_change_percent": 0.229006,
+    "text_change_percent": 0.230499,
+    "interpretation": "The operation cache and exact two-root policy fixture add 13.6 KiB of linked text (0.23%). This small visible size cost is accepted for lower hot-path proof work and one authoritative internal map engine."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-rational-image-map-reuse-20260802 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 31644,
+    "edges": 58120,
+    "prior_nodes": 31633,
+    "prior_edges": 58080,
+    "artifact": "/tmp/hypercurve-callgraph-rational-image-map-reuse-20260802/callgraph.json",
+    "confirmed_paths": [
+      "CurveRegionBooleanContext::parallel_arc_pair_result -> RationalParameterImageMap2::image -> real_coefficient_rational_image_parameter -> locally_certified_rational_image_parameter",
+      "certify_rational_parameter_component_map -> RationalParameterImageMap2::image",
+      "RationalParameterImageMap2::image -> conic_parameter_candidate or the cached candidate -> exact local proof -> complete fallback"
+    ]
+  },
+  "verification": {
+    "focused_cache_fixture": "passed one exact two-root polynomial through one identity rational map under STRICT and APPROXIMATE_512; both images compare exactly equal to their independent source isolators and one quotient authority is initialized",
+    "focused_regression": "passed radical_parallel_cusp_offsets_exactly_under_both_policies in debug and release",
+    "rational_component_units": "passed all 15 rational-component unit tests selected by name",
+    "all_feature_library": "passed: 352 tests",
+    "no_default_library": "passed: 312 tests",
+    "strict_and_approximate": "passed identical exact cache and radical-cusp topology fixtures under STRICT and APPROXIMATE_512",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_benchmarks": "passed offset, comparative, curve_region_boolean_batch, and the release analytic-parallel integration fixture",
+    "comparative_benchmarks": "passed current open-cubic and line/arc historical/competitive sentinels",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "represent genuine joins at general algebraic cusp and distinct-carrier coordinates without approximation",
+    "continue reducing bigint and certified rational-image allocation churn",
+    "extend structural parallel-pair differential coverage beyond the monotone simple-loop proof",
+    "complete expansion, erosion, collapse, cusp, and offset self-contact differential coverage",
+    "complete finite projection/export for exact analytic offsets",
+    "implement radius-driven fillet and two-setback chamfer solvers",
+    "delete displaced historical region-offset machinery after differential coverage passes"
+  ]
+}
