@@ -154,11 +154,12 @@ blocks before an algorithm is selected.
   first lowering roots to primitive floats.
 - `resultant_parametric_curve_intersection` and
   `resultant_rational_parametric_curve_intersection` expose solver-level curve
-  elimination reports. Modest rational-coefficient Sylvester systems use one
-  sparse, division-free polynomial determinant instead of repeated scalar
-  determinants plus interpolation; the generic exact-coefficient path remains
-  authoritative outside that bounded lane. Curve topology still belongs to
-  Hypercurve.
+  elimination reports. Equal-degree rational systems through degree 12 use a
+  half-size Bezout matrix, while other modest systems use a sparse Sylvester
+  matrix. Both lanes evaluate one division-free polynomial determinant instead
+  of repeated scalar determinants plus interpolation; the generic
+  exact-coefficient path remains authoritative outside those bounded lanes.
+  Curve topology still belongs to Hypercurve.
 - Bézier, rational Bézier, B-spline span, and NURBS span substitution functions
   convert retained curve data into polynomial systems with explicit status.
 

@@ -550,25 +550,41 @@ pub fn resultant_bivariate_polynomial_system(
         );
     }
 
-    // Rational coefficient systems with a modest Sylvester dimension are
+    // Rational coefficient systems with a modest determinant dimension are
     // substantially cheaper to eliminate as one polynomial determinant than
     // as `degree_bound + 1` independent exact determinants followed by dense
-    // interpolation. The subset dynamic program is division-free, retains the
-    // sparse Sylvester rows, and has bounded `O(n 2^n)` state. Keep the sampled
+    // interpolation. Equal eliminated degrees use the half-size Bezout matrix;
+    // other small systems retain sparse Sylvester rows. Both subset programs
+    // are division-free and have bounded `O(n 2^n)` state. Keep the sampled
     // report contract by evaluating the constructed determinant at the same
     // degree-preserving parameter schedule used by the generic path.
     let sylvester_dimension = first_eliminated_degree + second_eliminated_degree;
-    if sylvester_dimension <= 12
-        && bivariate_has_only_rational_coefficients(first_equation)
-        && bivariate_has_only_rational_coefficients(second_equation)
-        && let Some(resultant_coefficients) = symbolic_bivariate_sylvester_resultant(
-            first_equation,
-            second_equation,
-            retained_parameter,
-            first_eliminated_degree,
-            second_eliminated_degree,
-        )
-    {
+    let rational_coefficients = bivariate_has_only_rational_coefficients(first_equation)
+        && bivariate_has_only_rational_coefficients(second_equation);
+    let symbolic_resultant = rational_coefficients
+        .then(|| {
+            if first_eliminated_degree == second_eliminated_degree && first_eliminated_degree <= 12
+            {
+                symbolic_bivariate_bezout_resultant(
+                    first_equation,
+                    second_equation,
+                    retained_parameter,
+                    first_eliminated_degree,
+                )
+            } else if sylvester_dimension <= 12 {
+                symbolic_bivariate_sylvester_resultant(
+                    first_equation,
+                    second_equation,
+                    retained_parameter,
+                    first_eliminated_degree,
+                    second_eliminated_degree,
+                )
+            } else {
+                None
+            }
+        })
+        .flatten();
+    if let Some(resultant_coefficients) = symbolic_resultant {
         let Ok(resultant_coefficients) =
             trim_trailing_zeroes(resultant_coefficients, config.min_precision)
         else {
@@ -701,6 +717,46 @@ fn bivariate_has_only_rational_coefficients(polynomial: &BivariatePolynomial) ->
         .all(|coefficient| coefficient.exact_rational_ref().is_some())
 }
 
+fn symbolic_bivariate_bezout_resultant(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    eliminated_degree: usize,
+) -> Option<Vec<Real>> {
+    let mut first = bivariate_fiber_coefficient_polynomials(first, retained_parameter);
+    let mut second = bivariate_fiber_coefficient_polynomials(second, retained_parameter);
+    first.truncate(eliminated_degree + 1);
+    second.truncate(eliminated_degree + 1);
+    if first.len() != eliminated_degree + 1 || second.len() != eliminated_degree + 1 {
+        return None;
+    }
+    let mut matrix = vec![Vec::<Real>::new(); eliminated_degree.checked_mul(eliminated_degree)?];
+    for high in 1..=eliminated_degree {
+        for low in 0..high {
+            let cross = subtract_exact_polynomials(
+                &multiply_exact_polynomials(&first[high], &second[low]),
+                &multiply_exact_polynomials(&first[low], &second[high]),
+            );
+            if exact_polynomial_is_zero(&cross) {
+                continue;
+            }
+            for offset in 0..(high - low) {
+                let row = high - 1 - offset;
+                let column = low + offset;
+                let index = row * eliminated_degree + column;
+                matrix[index] = add_exact_polynomials(&matrix[index], &cross);
+            }
+        }
+    }
+    let mut determinant = determinant_polynomial_matrix(&matrix, eliminated_degree)?;
+    if !(eliminated_degree * eliminated_degree.saturating_sub(1) / 2).is_multiple_of(2) {
+        determinant
+            .iter_mut()
+            .for_each(|coefficient| *coefficient = -coefficient.clone());
+    }
+    Some(determinant)
+}
+
 fn symbolic_bivariate_sylvester_resultant(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
@@ -713,7 +769,6 @@ fn symbolic_bivariate_sylvester_resultant(
     first.truncate(first_eliminated_degree + 1);
     second.truncate(second_eliminated_degree + 1);
     let dimension = first_eliminated_degree.checked_add(second_eliminated_degree)?;
-    let state_count = 1_usize.checked_shl(u32::try_from(dimension).ok()?)?;
     let mut matrix = vec![Vec::<Real>::new(); dimension.checked_mul(dimension)?];
     let negate = retained_parameter == CurveResultantParameter::Second;
     let oriented = |polynomial: &[Real]| {
@@ -739,6 +794,14 @@ fn symbolic_bivariate_sylvester_resultant(
         }
     }
 
+    determinant_polynomial_matrix(&matrix, dimension)
+}
+
+fn determinant_polynomial_matrix(matrix: &[Vec<Real>], dimension: usize) -> Option<Vec<Real>> {
+    if matrix.len() != dimension.checked_mul(dimension)? {
+        return None;
+    }
+    let state_count = 1_usize.checked_shl(u32::try_from(dimension).ok()?)?;
     let mut partials = vec![None; state_count];
     partials[0] = Some(vec![Real::one()]);
     for mask in 0..state_count {
@@ -3113,6 +3176,98 @@ mod tests {
                 &report.resultant_coefficients[0] * real(2),
                 -report.resultant_coefficients[1].clone()
             );
+        }
+    }
+
+    #[test]
+    fn equal_degree_bezout_resultant_preserves_exact_orientation_on_either_axis() {
+        // Eliminating `u` from `u^2-t` and `u^2-1` gives `(t-1)^2`.
+        // Degree two exercises the sign correction between the Bezout
+        // determinant convention and `resultant(first, second)`.
+        let first = BivariatePolynomial::new(vec![vec![real(0), real(0), real(1)], vec![real(-1)]]);
+        let second = BivariatePolynomial::new(vec![vec![real(-1), real(0), real(1)]]);
+        let expected = vec![real(1), real(-2), real(1)];
+
+        for (first, second, retained_parameter) in [
+            (
+                first.clone(),
+                second.clone(),
+                CurveResultantParameter::First,
+            ),
+            (
+                swap_bivariate(&first),
+                swap_bivariate(&second),
+                CurveResultantParameter::Second,
+            ),
+        ] {
+            assert_eq!(
+                symbolic_bivariate_bezout_resultant(&first, &second, retained_parameter, 2),
+                Some(expected.clone())
+            );
+            let report = resultant_bivariate_polynomial_system(
+                &first,
+                &second,
+                retained_parameter,
+                CurveIntersectionResultantConfig::default(),
+            );
+            assert_eq!(report.status, CurveIntersectionResultantStatus::Constructed);
+            assert_eq!(report.resultant_coefficients, expected);
+        }
+    }
+
+    #[test]
+    fn equal_degree_bezout_matches_sylvester_through_degree_five() {
+        for degree in 1..=5 {
+            let coefficients = |salt: usize| {
+                (0..=2)
+                    .map(|retained_power| {
+                        (0..=degree)
+                            .map(|eliminated_power| {
+                                let value = ((retained_power + 2) * (eliminated_power + 3)
+                                    + salt * (retained_power + eliminated_power + 1))
+                                    % 11;
+                                real(value as i64 - 5)
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>()
+            };
+            let mut first = coefficients(1);
+            let mut second = coefficients(3);
+            first[0][degree] = real(1);
+            second[0][degree] = real(-2);
+            let first = BivariatePolynomial::new(first);
+            let second = BivariatePolynomial::new(second);
+
+            for (first, second, retained_parameter) in [
+                (
+                    first.clone(),
+                    second.clone(),
+                    CurveResultantParameter::First,
+                ),
+                (
+                    swap_bivariate(&first),
+                    swap_bivariate(&second),
+                    CurveResultantParameter::Second,
+                ),
+            ] {
+                assert_eq!(
+                    symbolic_bivariate_bezout_resultant(
+                        &first,
+                        &second,
+                        retained_parameter,
+                        degree,
+                    ),
+                    symbolic_bivariate_sylvester_resultant(
+                        &first,
+                        &second,
+                        retained_parameter,
+                        degree,
+                        degree,
+                    ),
+                    "degree {degree}, retained {retained_parameter:?}"
+                );
+            }
         }
     }
 
