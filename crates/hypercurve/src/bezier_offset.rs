@@ -16,7 +16,9 @@
 
 use std::sync::{Arc, OnceLock};
 
-use crate::bezier_algebraic_image::parameter_representation;
+use crate::bezier_algebraic_image::{
+    parameter_representation, rational_point_image_from_power_basis,
+};
 use crate::bezier_parameter::{
     BezierParameterRefinement2, bernstein_to_power_coefficients, divide_by_linear_root,
     power_to_bernstein_coefficients,
@@ -26,13 +28,14 @@ use crate::rational_bezier_general::{
     RationalParameterImageMap2, ResultantParameterProjection, resultant_parameter_projection,
 };
 use crate::{
-    Aabb2, Axis2, BezierCuspClassification, BezierDegree, BezierEndpoint,
-    BezierInflectionClassification, BezierLineContact, BezierLineContactKind,
-    BezierLineContactRelation, BezierLineCrossingDirection, BezierLineImageFitRelation,
-    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
-    CertifiedBezierLineImageOffset2, Classification, CubicBezier2, Curve2, CurveContext,
-    CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2, CurvePath2, CurveResult,
-    ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    Aabb2, Axis2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierCuspClassification,
+    BezierDegree, BezierEndpoint, BezierInflectionClassification, BezierLineContact,
+    BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
+    BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierParameterRange2, CertifiedBezierLineImageOffset2,
+    Classification, CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError,
+    CurveGeometry2, CurveOperation2, CurvePath2, CurveResult, ExactCurveError, ExactCurveResult,
+    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicPointImage2,
     RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
     RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
     RationalQuadraticBezier2, Real, Similarity2, UncertaintyReason,
@@ -1937,10 +1940,7 @@ impl BezierParallel2 {
             &polynomial_multiply(&weight, &normal_projection),
             &(Real::from(2_u8) * self.distance()),
         );
-        let speed_squared = polynomial_add(
-            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
-            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
-        );
+        let speed_squared = parallel_speed_squared_polynomial(differential);
         let mut squared = polynomial_subtract(
             &polynomial_multiply(&polynomial_multiply(&radial, &radial), &speed_squared),
             &polynomial_multiply(&normal, &normal),
@@ -2242,10 +2242,7 @@ impl BezierParallel2 {
                 (line_polynomial, normal_polynomial)
             }
         };
-        let speed_squared = polynomial_add(
-            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
-            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
-        );
+        let speed_squared = parallel_speed_squared_polynomial(differential);
         let mut squared_relation = polynomial_subtract(
             &polynomial_multiply(
                 &polynomial_multiply(&line_numerator, &line_numerator),
@@ -2971,10 +2968,9 @@ impl BezierParallel2 {
         }
         let source = self.source_power_basis()?;
         let differential = self.differential()?;
-        let speed_squared = polynomial_add(
-            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
-            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
-        );
+        let speed_squared = parallel_speed_squared_polynomial(differential);
+        let signed_curvature =
+            parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
         match signed_coefficients_at_parameter(speed_squared.clone(), parameter, policy)? {
             Classification::Decided(RealSign::Positive) => {}
             Classification::Decided(RealSign::Zero) => {
@@ -2989,17 +2985,6 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        let curvature_cross = polynomial_subtract(
-            &polynomial_multiply(&differential.tangent_derivative_x, &differential.tangent_y),
-            &polynomial_multiply(&differential.tangent_derivative_y, &differential.tangent_x),
-        );
-        let signed_curvature = match source.weight {
-            Some(weight) => polynomial_scale(
-                &polynomial_multiply(&polynomial_multiply(weight, weight), &curvature_cross),
-                self.distance(),
-            ),
-            None => polynomial_scale(&curvature_cross, self.distance()),
-        };
         match signed_coefficients_at_parameter(signed_curvature.clone(), parameter, policy)? {
             Classification::Decided(RealSign::Positive | RealSign::Zero) => {
                 Ok(Classification::Decided(RealSign::Positive))
@@ -3026,6 +3011,118 @@ impl BezierParallel2 {
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
+    }
+
+    /// Constructs an exact point on any source parallel at one selected
+    /// algebraic cusp of this parallel.
+    ///
+    /// With homogeneous tangent numerator `H`, `S=H dot H`, and selected
+    /// signed curvature term `Q=d W^2(H'_x H_y-H'_y H_x)`, a regular cusp
+    /// satisfies `Q<0` and `Q^2=S^3`. Therefore the source left normal is the
+    /// rational expression `(H_y S/Q, -H_x S/Q)`: no nested square root or
+    /// sampled cusp coordinate is needed. `image_distance` selects which
+    /// parallel of the shared source is evaluated at that cusp parameter.
+    ///
+    /// `None` certifies that the supplied algebraic parameter is not a regular
+    /// cusp on the selected signed-curvature branch. Predicate uncertainty is
+    /// preserved separately in [`Classification`].
+    pub fn algebraic_parallel_cusp_point_image(
+        &self,
+        parameter: &BezierAlgebraicParameter2,
+        image_distance: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalBezierAlgebraicPointImage2>>> {
+        let retained_parameter = BezierParameter2::Algebraic(parameter.clone());
+        let source = self.source_power_basis()?;
+        let differential = self.differential()?;
+        let speed_squared = parallel_speed_squared_polynomial(differential);
+        match signed_coefficients_at_parameter(speed_squared.clone(), &retained_parameter, policy)?
+        {
+            Classification::Decided(RealSign::Positive) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Decided(None));
+            }
+            Classification::Decided(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "parallel cusp speed squared was certified negative".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let signed_curvature =
+            parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
+        match signed_coefficients_at_parameter(
+            signed_curvature.clone(),
+            &retained_parameter,
+            policy,
+        )? {
+            Classification::Decided(RealSign::Negative) => {}
+            Classification::Decided(RealSign::Positive | RealSign::Zero) => {
+                return Ok(Classification::Decided(None));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let cusp_residual = polynomial_subtract(
+            &polynomial_multiply(&signed_curvature, &signed_curvature),
+            &polynomial_power(&speed_squared, 3),
+        );
+        match signed_coefficients_at_parameter(cusp_residual, &retained_parameter, policy)? {
+            Classification::Decided(RealSign::Zero) => {}
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                return Ok(Classification::Decided(None));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let mut normal_x_numerator = polynomial_multiply(&differential.tangent_y, &speed_squared);
+        let mut negated_normal_y_numerator =
+            polynomial_multiply(&differential.tangent_x, &speed_squared);
+        let denominator = if let Some(weight) = source.weight {
+            normal_x_numerator = polynomial_multiply(&normal_x_numerator, weight);
+            negated_normal_y_numerator = polynomial_multiply(&negated_normal_y_numerator, weight);
+            polynomial_multiply(weight, &signed_curvature)
+        } else {
+            signed_curvature.clone()
+        };
+        let x_numerator = polynomial_add(
+            &polynomial_multiply(source.x_numerator, &signed_curvature),
+            &polynomial_scale(&normal_x_numerator, image_distance),
+        );
+        let y_numerator = polynomial_subtract(
+            &polynomial_multiply(source.y_numerator, &signed_curvature),
+            &polynomial_scale(&negated_normal_y_numerator, image_distance),
+        );
+        let image = rational_point_image_from_power_basis(
+            parameter,
+            x_numerator.clone(),
+            y_numerator.clone(),
+            denominator.clone(),
+            policy,
+        )?;
+        Ok(Classification::Decided(Some(match image.status() {
+            BezierAlgebraicImageStatus::Transformed
+            | BezierAlgebraicImageStatus::RetainedRationalExpression => image,
+            BezierAlgebraicImageStatus::InvalidParameterEvidence
+            | BezierAlgebraicImageStatus::XImageFailed
+            | BezierAlgebraicImageStatus::YImageFailed => {
+                RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    parameter.clone(),
+                    image.parameter().clone(),
+                    x_numerator,
+                    y_numerator,
+                    denominator,
+                    "retained a certified algebraic cusp rational point expression",
+                )
+            }
+        })))
     }
 
     /// Evaluates the parallel/source derivative scale without constructing the
@@ -4257,18 +4354,8 @@ impl BezierParallel2 {
             ));
         }
 
-        let curvature_cross = polynomial_subtract(
-            &polynomial_multiply(&differential.tangent_derivative_x, &differential.tangent_y),
-            &polynomial_multiply(&differential.tangent_derivative_y, &differential.tangent_x),
-        );
-        let signed_curvature_term = if let Some(weight) = &weight {
-            polynomial_scale(
-                &polynomial_multiply(&polynomial_multiply(weight, weight), &curvature_cross),
-                self.distance(),
-            )
-        } else {
-            polynomial_scale(&curvature_cross, self.distance())
-        };
+        let signed_curvature_term =
+            parallel_signed_curvature_polynomial(differential, weight.as_deref(), self.distance());
         let squared_cusp_polynomial = polynomial_subtract(
             &polynomial_multiply(&signed_curvature_term, &signed_curvature_term),
             &polynomial_power(&speed_squared, 3),
@@ -6176,6 +6263,29 @@ fn polynomial_derivative(coefficients: &[Real]) -> Vec<Real> {
         .skip(1)
         .map(|(degree, coefficient)| coefficient * Real::from(degree as u64))
         .collect()
+}
+
+fn parallel_speed_squared_polynomial(differential: &BezierParallelDifferential2) -> Vec<Real> {
+    polynomial_add(
+        &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
+        &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
+    )
+}
+
+fn parallel_signed_curvature_polynomial(
+    differential: &BezierParallelDifferential2,
+    weight: Option<&[Real]>,
+    distance: &Real,
+) -> Vec<Real> {
+    let curvature_cross = polynomial_subtract(
+        &polynomial_multiply(&differential.tangent_derivative_x, &differential.tangent_y),
+        &polynomial_multiply(&differential.tangent_derivative_y, &differential.tangent_x),
+    );
+    let curvature_cross = match weight {
+        Some(weight) => polynomial_multiply(&polynomial_multiply(weight, weight), &curvature_cross),
+        None => curvature_cross,
+    };
+    polynomial_scale(&curvature_cross, distance)
 }
 
 fn rational_parametric_tangent_numerator(curve: &RationalParametricCurve2) -> [Vec<Real>; 2] {
@@ -12238,6 +12348,122 @@ mod conversion_tests {
         parameter.clone()
     }
 
+    #[cfg(feature = "predicates")]
+    fn rational_image_coordinates(
+        image: &RationalBezierAlgebraicPointImage2,
+    ) -> [(&[Real], &[Real]); 2] {
+        if let Some((x_numerator, y_numerator, denominator)) =
+            image.retained_coordinate_polynomials()
+        {
+            return [(x_numerator, denominator), (y_numerator, denominator)];
+        }
+        let x = image.x().expect("represented x image");
+        let y = image.y().expect("represented y image");
+        [
+            (x.numerator_coefficients(), x.denominator_coefficients()),
+            (y.numerator_coefficients(), y.denominator_coefficients()),
+        ]
+    }
+
+    #[cfg(feature = "predicates")]
+    fn rational_coordinate_difference(
+        first: (&[Real], &[Real]),
+        second: (&[Real], &[Real]),
+    ) -> (Vec<Real>, Vec<Real>) {
+        (
+            polynomial_subtract(
+                &polynomial_multiply(first.0, second.1),
+                &polynomial_multiply(second.0, first.1),
+            ),
+            polynomial_multiply(first.1, second.1),
+        )
+    }
+
+    #[cfg(feature = "predicates")]
+    fn assert_algebraic_polynomial_sign(
+        coefficients: Vec<Real>,
+        parameter: &BezierParameter2,
+        expected: RealSign,
+        policy: &CurveContext,
+    ) {
+        assert_eq!(
+            signed_coefficients_at_parameter(coefficients, parameter, policy).unwrap(),
+            Classification::Decided(expected),
+        );
+    }
+
+    #[cfg(feature = "predicates")]
+    fn assert_rational_image_distance(
+        first: &RationalBezierAlgebraicPointImage2,
+        second: &RationalBezierAlgebraicPointImage2,
+        distance: &Real,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) {
+        let first_coordinates = rational_image_coordinates(first);
+        let second_coordinates = rational_image_coordinates(second);
+        let (dx_numerator, dx_denominator) =
+            rational_coordinate_difference(first_coordinates[0], second_coordinates[0]);
+        let (dy_numerator, dy_denominator) =
+            rational_coordinate_difference(first_coordinates[1], second_coordinates[1]);
+        let dx_denominator_squared = polynomial_multiply(&dx_denominator, &dx_denominator);
+        let dy_denominator_squared = polynomial_multiply(&dy_denominator, &dy_denominator);
+        let common_denominator_squared =
+            polynomial_multiply(&dx_denominator_squared, &dy_denominator_squared);
+        let squared_distance_residual = polynomial_subtract(
+            &polynomial_add(
+                &polynomial_multiply(
+                    &polynomial_multiply(&dx_numerator, &dx_numerator),
+                    &dy_denominator_squared,
+                ),
+                &polynomial_multiply(
+                    &polynomial_multiply(&dy_numerator, &dy_numerator),
+                    &dx_denominator_squared,
+                ),
+            ),
+            &polynomial_scale(&common_denominator_squared, &(distance * distance)),
+        );
+        assert_algebraic_polynomial_sign(
+            squared_distance_residual,
+            parameter,
+            RealSign::Zero,
+            policy,
+        );
+    }
+
+    #[cfg(feature = "predicates")]
+    fn assert_rational_image_midpoint(
+        first: &RationalBezierAlgebraicPointImage2,
+        second: &RationalBezierAlgebraicPointImage2,
+        midpoint: &RationalBezierAlgebraicPointImage2,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) {
+        let first_coordinates = rational_image_coordinates(first);
+        let second_coordinates = rational_image_coordinates(second);
+        let midpoint_coordinates = rational_image_coordinates(midpoint);
+        for ((first, second), midpoint) in first_coordinates
+            .into_iter()
+            .zip(second_coordinates)
+            .zip(midpoint_coordinates)
+        {
+            let first_term =
+                polynomial_multiply(&polynomial_multiply(first.0, second.1), midpoint.1);
+            let second_term =
+                polynomial_multiply(&polynomial_multiply(second.0, first.1), midpoint.1);
+            let midpoint_term = polynomial_scale(
+                &polynomial_multiply(&polynomial_multiply(midpoint.0, first.1), second.1),
+                &Real::from(2_i8),
+            );
+            assert_algebraic_polynomial_sign(
+                polynomial_subtract(&polynomial_add(&first_term, &second_term), &midpoint_term),
+                parameter,
+                RealSign::Zero,
+                policy,
+            );
+        }
+    }
+
     #[test]
     fn exact_parallel_is_one_word_and_distances_share_lazy_source_kernel() {
         let source = QuadraticBezier2::new(
@@ -12340,6 +12566,123 @@ mod conversion_tests {
                     }
                 }
             }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn general_algebraic_cusp_points_are_exact_rational_images() {
+        let point = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = &half + &quarter;
+        let parallel = CubicBezier2::new(point(0, 0), point(0, 4), point(4, -4), point(4, 0))
+            .parallel_left(half.clone())
+            .unwrap();
+        let Classification::Decided(analysis) = parallel
+            .singularity_analysis(&CurveContext::STRICT)
+            .unwrap()
+        else {
+            panic!("general cubic cusp analysis must be decided");
+        };
+        let BezierParameter2::Algebraic(cusp) = &analysis.parallel_cusps()[0] else {
+            panic!("the general cubic cusp must remain algebraic");
+        };
+        let retained_parameter = BezierParameter2::Algebraic(cusp.clone());
+        let source = parallel.source_power_basis().unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source_point = RationalBezierAlgebraicPointImage2::from_retained_expression(
+                cusp.clone(),
+                parameter_representation(cusp, &policy),
+                source.x_numerator.to_vec(),
+                source.y_numerator.to_vec(),
+                source
+                    .weight
+                    .map_or_else(|| vec![Real::one()], ToOwned::to_owned),
+                "retained the exact source point for cusp construction verification",
+            );
+            let construct = |distance: &Real| {
+                let Classification::Decided(Some(image)) = parallel
+                    .algebraic_parallel_cusp_point_image(cusp, distance, &policy)
+                    .unwrap()
+                else {
+                    panic!("selected cusp point image must be decided");
+                };
+                assert!(matches!(
+                    image.status(),
+                    BezierAlgebraicImageStatus::Transformed
+                        | BezierAlgebraicImageStatus::RetainedRationalExpression
+                ));
+                image
+            };
+            let inner = construct(&quarter);
+            let center = construct(&half);
+            let outer = construct(&three_quarters);
+
+            assert_rational_image_distance(
+                &center,
+                &source_point,
+                &half,
+                &retained_parameter,
+                &policy,
+            );
+            assert_rational_image_distance(&outer, &inner, &half, &retained_parameter, &policy);
+            assert_rational_image_midpoint(&inner, &outer, &center, &retained_parameter, &policy);
+
+            let differential = parallel.differential().unwrap();
+            let center_coordinates = rational_image_coordinates(&center);
+            let source_coordinates = rational_image_coordinates(&source_point);
+            let (dx_numerator, dx_denominator) =
+                rational_coordinate_difference(center_coordinates[0], source_coordinates[0]);
+            let (dy_numerator, dy_denominator) =
+                rational_coordinate_difference(center_coordinates[1], source_coordinates[1]);
+            let tangent_dot_displacement = polynomial_add(
+                &polynomial_multiply(
+                    &polynomial_multiply(&dx_numerator, &differential.tangent_x),
+                    &dy_denominator,
+                ),
+                &polynomial_multiply(
+                    &polynomial_multiply(&dy_numerator, &differential.tangent_y),
+                    &dx_denominator,
+                ),
+            );
+            assert_algebraic_polynomial_sign(
+                tangent_dot_displacement,
+                &retained_parameter,
+                RealSign::Zero,
+                &policy,
+            );
+            let tangent_cross_displacement = polynomial_subtract(
+                &polynomial_multiply(
+                    &polynomial_multiply(&dy_numerator, &differential.tangent_x),
+                    &dx_denominator,
+                ),
+                &polynomial_multiply(
+                    &polynomial_multiply(&dx_numerator, &differential.tangent_y),
+                    &dy_denominator,
+                ),
+            );
+            assert_algebraic_polynomial_sign(
+                tangent_cross_displacement,
+                &retained_parameter,
+                RealSign::Positive,
+                &policy,
+            );
+        }
+
+        let BezierParameter2::Algebraic(non_cusp) =
+            algebraic_parameter(vec![Real::from(-1_i8), Real::from(2_i8), Real::one()])
+        else {
+            panic!("the irrational non-cusp parameter must remain algebraic");
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                parallel
+                    .algebraic_parallel_cusp_point_image(&non_cusp, &half, &policy)
+                    .unwrap(),
+                Classification::Decided(None)
+            ));
         }
     }
 

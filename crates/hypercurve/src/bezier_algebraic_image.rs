@@ -285,6 +285,29 @@ impl RationalBezierAlgebraicPointImage2 {
         }
     }
 
+    pub(crate) fn from_retained_expression(
+        parameter: BezierAlgebraicParameter2,
+        parameter_root: AlgebraicRootRepresentation,
+        x_numerator: Vec<Real>,
+        y_numerator: Vec<Real>,
+        denominator: Vec<Real>,
+        message: &'static str,
+    ) -> Self {
+        Self::new(
+            BezierAlgebraicImageStatus::RetainedRationalExpression,
+            parameter_root,
+            None,
+            None,
+            Some(RetainedRationalPointExpression {
+                parameter,
+                x_numerator,
+                y_numerator,
+                denominator,
+            }),
+            Some(message.to_owned()),
+        )
+    }
+
     pub(crate) fn from_parametric_source(
         curve: RationalBezier2,
         parameter: BezierAlgebraicParameter2,
