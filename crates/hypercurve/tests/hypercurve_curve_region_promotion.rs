@@ -662,6 +662,40 @@ fn native_self_crossing_walk_regularizes_with_both_fill_rules() {
 }
 
 #[test]
+fn authoritative_curve_region_arrangement_regularizes_self_crossing_walks() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+            let raw = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[bow_tie_path()],
+                &[CurveRegionLoopRole::Material],
+                &[fill_rule],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            let region = raw.regularized_region(&policy).unwrap().into_value();
+            let native = decided(region.native_contours_fast_path(&policy).unwrap());
+            assert_eq!(native.material_contours().len(), 2);
+            assert!(native.hole_contours().is_empty());
+            for (point, expected) in [
+                (p(2, 3), RegionPointLocation::Inside),
+                (p(2, 1), RegionPointLocation::Inside),
+                (p(0, 2), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    certified(region.classify_point(&point, &policy).unwrap()),
+                    Classification::Decided(expected)
+                );
+            }
+            assert_eq!(
+                decided(region.filled_area(&policy).unwrap()),
+                Some(Real::from(8))
+            );
+        }
+    }
+}
+
+#[test]
 fn native_self_overlap_regularization_honors_winding_multiplicity() {
     let policy = CurveContext::STRICT;
 
@@ -690,6 +724,102 @@ fn native_self_overlap_regularization_honors_winding_multiplicity() {
         .into_value(),
     );
     assert!(even_odd.is_empty());
+}
+
+#[test]
+fn authoritative_curve_region_arrangement_honors_coincident_winding_multiplicity() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let regularize = |fill_rule| {
+            let contour = double_wound_square(fill_rule);
+            let raw = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[path_from_contour(&contour)],
+                &[CurveRegionLoopRole::Material],
+                &[fill_rule],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            raw.regularized_region(&policy).unwrap().into_value()
+        };
+
+        let nonzero = regularize(FillRule::NonZero);
+        assert_eq!(
+            decided(nonzero.filled_area(&policy).unwrap()),
+            Some(Real::from(100))
+        );
+        assert!(regularize(FillRule::EvenOdd).is_empty());
+    }
+}
+
+#[test]
+fn authoritative_curve_region_arrangement_regularizes_signed_loop_composition() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let paths = [
+            path_from_contour(&square(0, 0, 4, 4)),
+            path_from_contour(&square(2, 0, 6, 4)),
+        ];
+        let union = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+            &paths,
+            &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material],
+            &[FillRule::NonZero, FillRule::NonZero],
+            &policy,
+        )
+        .unwrap()
+        .into_value()
+        .regularized_region(&policy)
+        .unwrap()
+        .into_value();
+        assert_eq!(
+            decided(union.filled_area(&policy).unwrap()),
+            Some(Real::from(24))
+        );
+        assert_eq!(
+            certified(union.classify_point(&p(3, 2), &policy).unwrap()),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+
+        let cancellation = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+            &[paths[0].clone(), paths[0].clone()],
+            &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+            &[FillRule::NonZero, FillRule::NonZero],
+            &policy,
+        )
+        .unwrap()
+        .into_value()
+        .regularized_region(&policy)
+        .unwrap()
+        .into_value();
+        assert!(cancellation.is_empty());
+    }
+}
+
+#[test]
+fn authoritative_curve_region_arrangement_regularizes_nonlinear_winding() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let regularize = |fill_rule| {
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[double_wound_quadratic_cap()],
+                &[CurveRegionLoopRole::Material],
+                &[fill_rule],
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+            .regularized_region(&policy)
+            .unwrap()
+            .into_value()
+        };
+        let nonzero = regularize(FillRule::NonZero);
+        assert_eq!(
+            certified(nonzero.classify_point(&p(0, 2), &policy).unwrap()),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+        assert_eq!(
+            decided(nonzero.filled_area(&policy).unwrap()),
+            Some(q(32, 3))
+        );
+        assert!(regularize(FillRule::EvenOdd).is_empty());
+    }
 }
 
 #[test]

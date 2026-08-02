@@ -4944,6 +4944,112 @@ impl CurveRegion2 {
         }))
     }
 
+    pub(crate) fn classify_point_from_boundary_side_ray(
+        &self,
+        point: &Point2,
+        direction_x: Real,
+        direction_y: Real,
+        source_loop_index: usize,
+        source_fragment_index: usize,
+        source_parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RegionPointLocation>> {
+        let direction_squared = &direction_x * &direction_x + &direction_y * &direction_y;
+        match real_sign(&direction_squared, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "boundary-side ray direction has a negative squared norm".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        if source_loop_index >= self.data.boundary_loops.len()
+            || source_fragment_index
+                >= self.data.boundary_loops[source_loop_index]
+                    .fragments()
+                    .len()
+        {
+            return Err(CurveError::Topology(
+                "boundary-side ray source is outside the retained region".into(),
+            ));
+        }
+        if self
+            .data
+            .certified_loop_roles
+            .as_ref()
+            .is_some_and(|roles| roles.len() != self.data.boundary_loops.len())
+            || self
+                .data
+                .certified_loop_fill_rules
+                .as_ref()
+                .is_some_and(|rules| rules.len() != self.data.boundary_loops.len())
+        {
+            return Err(CurveError::Topology(
+                "curve-region loop semantics are inconsistent with boundary loops".into(),
+            ));
+        }
+
+        let endpoint = Point2::new(point.x() + &direction_x, point.y() + &direction_y);
+        let ray = BezierRay2 {
+            line: LineSeg2::try_new(point.clone(), endpoint)?,
+            direction_x,
+            direction_y,
+        };
+        let mut inside = false;
+        let mut signed_depth = 0_i32;
+        for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
+            let fill_rule = self
+                .data
+                .certified_loop_fill_rules
+                .as_ref()
+                .map_or(FillRule::EvenOdd, |rules| rules[loop_index]);
+            let skipped_origin = Some(RetainedRayOriginContact {
+                fragment_index: (loop_index == source_loop_index).then_some(source_fragment_index),
+                parameter: source_parameter,
+            });
+            match classify_point_with_retained_ray_skipping_origin(
+                boundary_loop,
+                point,
+                &ray,
+                fill_rule,
+                skipped_origin,
+                policy,
+            )? {
+                Classification::Decided(ContourPointLocation::Inside) => {
+                    if let Some(roles) = &self.data.certified_loop_roles {
+                        signed_depth += match roles[loop_index] {
+                            CurveRegionLoopRole::Material => 1,
+                            CurveRegionLoopRole::Hole => -1,
+                        };
+                    } else {
+                        inside = !inside;
+                    }
+                }
+                Classification::Decided(ContourPointLocation::Outside) => {}
+                Classification::Decided(ContourPointLocation::Boundary) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        let inside = self
+            .data
+            .certified_loop_roles
+            .as_ref()
+            .map_or(inside, |_| signed_depth > 0);
+        Ok(Classification::Decided(if inside {
+            RegionPointLocation::Inside
+        } else {
+            RegionPointLocation::Outside
+        }))
+    }
+
     /// Returns signed material-minus-hole containment depth for a non-boundary point.
     ///
     /// Explicit roles are authoritative. Otherwise the exact curved nesting
@@ -6671,6 +6777,12 @@ fn retained_fragment_contains_point(
     }
 }
 
+#[derive(Clone, Copy)]
+struct RetainedRayOriginContact<'a> {
+    fragment_index: Option<usize>,
+    parameter: &'a BezierParameter2,
+}
+
 fn classify_point_with_retained_ray(
     boundary_loop: &CurveRegionBoundaryLoop2,
     point: &Point2,
@@ -6678,10 +6790,29 @@ fn classify_point_with_retained_ray(
     fill_rule: FillRule,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
+    classify_point_with_retained_ray_skipping_origin(
+        boundary_loop,
+        point,
+        ray,
+        fill_rule,
+        None,
+        policy,
+    )
+}
+
+fn classify_point_with_retained_ray_skipping_origin(
+    boundary_loop: &CurveRegionBoundaryLoop2,
+    point: &Point2,
+    ray: &BezierRay2,
+    fill_rule: FillRule,
+    skipped_origin: Option<RetainedRayOriginContact<'_>>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ContourPointLocation>> {
     let direction_x = &ray.direction_x;
     let direction_y = &ray.direction_y;
     let mut winding = 0_i32;
-    for fragment in boundary_loop.fragments() {
+    let mut origin_contact_was_skipped = false;
+    for (fragment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
         if let BezierSplitFragment2::AnalyticParallel(fragment) = fragment {
             let relation = match fragment
                 .parallel()
@@ -6714,6 +6845,31 @@ fn classify_point_with_retained_ray(
                                 return Ok(Classification::Uncertain(reason));
                             }
                         }
+                        if let Some(origin) = skipped_origin
+                            && origin.fragment_index == Some(fragment_index)
+                        {
+                            match retained_parameters_equal(
+                                contact.parameter(),
+                                origin.parameter,
+                                policy,
+                            )? {
+                                Classification::Decided(true) => {
+                                    if origin_contact_was_skipped
+                                        || contact.kind() != BezierLineContactKind::Crossing
+                                    {
+                                        return Ok(Classification::Uncertain(
+                                            UncertaintyReason::Boundary,
+                                        ));
+                                    }
+                                    origin_contact_was_skipped = true;
+                                    continue;
+                                }
+                                Classification::Decided(false) => {}
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            }
+                        }
                         match fragment.parallel().supporting_line_parameter_order(
                             contact.parameter(),
                             &ray.line,
@@ -6733,6 +6889,11 @@ fn classify_point_with_retained_ray(
                                 winding += delta;
                             }
                             Classification::Decided(std::cmp::Ordering::Equal) => {
+                                if skipped_origin.is_some()
+                                    && contact.kind() == BezierLineContactKind::Crossing
+                                {
+                                    continue;
+                                }
                                 return Ok(Classification::Decided(ContourPointLocation::Boundary));
                             }
                             Classification::Decided(std::cmp::Ordering::Less) => {}
@@ -6810,6 +6971,31 @@ fn classify_point_with_retained_ray(
                             return Ok(Classification::Uncertain(reason));
                         }
                     }
+                    if let Some(origin) = skipped_origin
+                        && origin.fragment_index == Some(fragment_index)
+                    {
+                        match retained_parameters_equal(
+                            contact.parameter(),
+                            origin.parameter,
+                            policy,
+                        )? {
+                            Classification::Decided(true) => {
+                                if origin_contact_was_skipped
+                                    || contact.kind() != BezierLineContactKind::Crossing
+                                {
+                                    return Ok(Classification::Uncertain(
+                                        UncertaintyReason::Boundary,
+                                    ));
+                                }
+                                origin_contact_was_skipped = true;
+                                continue;
+                            }
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
                     let ahead = if let Some(line_parameter) = contact.supporting_line_parameter() {
                         compare_reals(line_parameter, &Real::zero(), policy)
                             .map(Classification::Decided)
@@ -6866,6 +7052,11 @@ fn classify_point_with_retained_ray(
                             winding += delta;
                         }
                         Classification::Decided(std::cmp::Ordering::Equal) => {
+                            if skipped_origin.is_some()
+                                && contact.kind() == BezierLineContactKind::Crossing
+                            {
+                                continue;
+                            }
                             return Ok(Classification::Decided(ContourPointLocation::Boundary));
                         }
                         Classification::Decided(std::cmp::Ordering::Less) => {}
@@ -6877,9 +7068,24 @@ fn classify_point_with_retained_ray(
             }
         }
     }
+    if skipped_origin.is_some_and(|origin| origin.fragment_index.is_some())
+        && !origin_contact_was_skipped
+    {
+        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+    }
     Ok(Classification::Decided(winding_location(
         winding, fill_rule,
     )))
+}
+
+fn retained_parameters_equal(
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    first
+        .cmp_by_refinement(second, policy)
+        .map(|order| order.map(|order| order == std::cmp::Ordering::Equal))
 }
 
 fn retained_parameter_contains(

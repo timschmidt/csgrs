@@ -13,11 +13,12 @@ use crate::{
     Aabb2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
     BezierLineImageFitRelation, BezierParallel2, BezierParameter2, BezierParameterRange2,
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Curve2, CurveContext,
-    CurveError, CurveFamily2, CurveIntersectionContact2, CurveIntersectionOverlap2,
-    CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome, CurvePathBooleanOperand2,
-    CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult, FillRule, QuadraticBezier2,
-    RationalBezier2, RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RegionPointLocation, UncertaintyReason,
+    CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionContact2,
+    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
+    CurvePathBooleanOperand2, CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
+    FillRule, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionOverlap2,
+    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    RegionPointLocation, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -229,6 +230,15 @@ struct CurveRegionBooleanTopology {
     overlaps: Vec<CarrierOverlap>,
     transverse_contacts: HashMap<usize, TransitionContactCandidate>,
     point_classification_count: usize,
+}
+
+#[derive(Clone, Debug)]
+struct CurveRegionSplitTopology {
+    split_fragments: Vec<Vec<SplitCarrierFragment>>,
+    overlaps: Vec<CarrierOverlap>,
+    transverse_contacts: HashMap<usize, TransitionContactCandidate>,
+    transverse_vertices: Vec<bool>,
+    reclassification_vertices: Vec<bool>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -578,6 +588,28 @@ impl CurveRegion2 {
         CurveRegionBooleanContext::try_new(self, other, policy)?.build_boolean_regions()
     }
 
+    /// Regularizes this region's authored loops through the authoritative exact arrangement.
+    ///
+    /// Every retained carrier pair is intersected and split before the filled
+    /// state on both local sides of each open fragment is classified. Fragments
+    /// separating equal filled states are discarded; the remaining boundary is
+    /// oriented with material on its left and traversed into closed loops.
+    pub fn regularized_region(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| self.regularized_region_raw(attempt))
+    }
+
+    pub(crate) fn regularized_region_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
+        if self.is_empty() {
+            return Ok(self.clone());
+        }
+        CurveRegionBooleanContext::try_new_unary(self, policy)
+            .and_then(|context| context.build_regularized_region())
+            .map_err(|error| error.with_operation(CurveOperation2::Arrangement))
+    }
+
     /// Collects exact contacts and overlaps against another region immediately.
     pub fn intersect_region(
         &self,
@@ -608,6 +640,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             CurvePathBooleanOperand2::First,
             policy,
             &mut rational_quadratic_area_cache,
+            true,
         )?;
         let first_carrier_count = first_carriers.len();
         let mut carriers = first_carriers;
@@ -616,6 +649,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             CurvePathBooleanOperand2::Second,
             policy,
             &mut rational_quadratic_area_cache,
+            true,
         )?);
 
         let authored_carrier_pair_count =
@@ -635,48 +669,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut intersection_cache = CurveIntersectionBatchCache::default();
         for first_carrier_index in 0..first_carrier_count {
             for second_carrier_index in first_carrier_count..carriers.len() {
-                let first_carrier = &carriers[first_carrier_index];
-                let second_carrier = &carriers[second_carrier_index];
-                if carrier_bounds_decided_disjoint(first_carrier, second_carrier, policy) {
-                    continue;
-                }
-                let context = match (&first_carrier.geometry, &second_carrier.geometry) {
-                    (RegionCarrierGeometry::Bezier(_), RegionCarrierGeometry::Bezier(_)) => {
-                        RegionCarrierPairContext::Bezier(
-                            CurveIntersectionContext::try_new_with_batch_cache(
-                                curves[first_carrier_index]
-                                    .as_ref()
-                                    .expect("Bezier carrier has a top-level curve"),
-                                curves[second_carrier_index]
-                                    .as_ref()
-                                    .expect("Bezier carrier has a top-level curve"),
-                                policy,
-                                &mut intersection_cache,
-                            )?,
-                        )
-                    }
-                    (
-                        RegionCarrierGeometry::AnalyticParallel(_),
-                        RegionCarrierGeometry::Bezier(_),
-                    ) => RegionCarrierPairContext::ParallelRational {
-                        parallel_is_first: true,
-                    },
-                    (
-                        RegionCarrierGeometry::Bezier(_),
-                        RegionCarrierGeometry::AnalyticParallel(_),
-                    ) => RegionCarrierPairContext::ParallelRational {
-                        parallel_is_first: false,
-                    },
-                    (
-                        RegionCarrierGeometry::AnalyticParallel(_),
-                        RegionCarrierGeometry::AnalyticParallel(_),
-                    ) => RegionCarrierPairContext::ParallelPair,
-                };
-                pairs.push(RegionCarrierPair {
+                if let Some(pair) = build_candidate_carrier_pair(
+                    &carriers,
+                    &curves,
                     first_carrier_index,
                     second_carrier_index,
-                    context,
-                });
+                    policy,
+                    &mut intersection_cache,
+                )? {
+                    pairs.push(pair);
+                }
             }
         }
 
@@ -687,6 +689,56 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 policy: *policy,
                 carriers,
                 first_carrier_count,
+                authored_carrier_pair_count,
+                pairs,
+                strict_line_image_only: OnceLock::new(),
+            },
+        })
+    }
+
+    fn try_new_unary(region: &'a CurveRegion2, policy: &'a CurveContext) -> ExactCurveResult<Self> {
+        let mut rational_quadratic_area_cache = RationalQuadraticAreaIntegralCache::default();
+        let carriers = build_region_carriers(
+            region,
+            CurvePathBooleanOperand2::First,
+            policy,
+            &mut rational_quadratic_area_cache,
+            false,
+        )?;
+        let carrier_count = carriers.len();
+        let authored_carrier_pair_count =
+            carrier_count.saturating_mul(carrier_count.saturating_sub(1)) / 2;
+        let curves = carriers
+            .iter()
+            .map(|carrier| match &carrier.geometry {
+                RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
+                RegionCarrierGeometry::AnalyticParallel(_) => None,
+            })
+            .collect::<Vec<_>>();
+        let mut pairs = Vec::with_capacity(carrier_count.saturating_mul(2));
+        let mut intersection_cache = CurveIntersectionBatchCache::default();
+        for first_carrier_index in 0..carrier_count {
+            for second_carrier_index in first_carrier_index + 1..carrier_count {
+                if let Some(pair) = build_candidate_carrier_pair(
+                    &carriers,
+                    &curves,
+                    first_carrier_index,
+                    second_carrier_index,
+                    policy,
+                    &mut intersection_cache,
+                )? {
+                    pairs.push(pair);
+                }
+            }
+        }
+
+        Ok(Self {
+            data: CurveRegionBooleanContextData {
+                first: region,
+                second: region,
+                policy: *policy,
+                carriers,
+                first_carrier_count: carrier_count,
                 authored_carrier_pair_count,
                 pairs,
                 strict_line_image_only: OnceLock::new(),
@@ -1048,7 +1100,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
     }
 
-    fn build_boolean_topology(&self) -> ExactCurveResult<CurveRegionBooleanTopology> {
+    fn build_split_topology(&self) -> ExactCurveResult<CurveRegionSplitTopology> {
         let mut events = vec![Vec::new(); self.data.carriers.len()];
         let mut contact_points = Vec::<ContactVertex>::new();
         let mut next_topology_vertex = 0_usize;
@@ -1316,6 +1368,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             })
             .collect();
+        Ok(CurveRegionSplitTopology {
+            split_fragments,
+            overlaps,
+            transverse_contacts,
+            transverse_vertices,
+            reclassification_vertices,
+        })
+    }
+
+    fn build_boolean_topology(&self) -> ExactCurveResult<CurveRegionBooleanTopology> {
+        let CurveRegionSplitTopology {
+            split_fragments,
+            overlaps,
+            transverse_contacts,
+            transverse_vertices,
+            reclassification_vertices,
+        } = self.build_split_topology()?;
         let mut classified_split_fragments = Vec::with_capacity(split_fragments.len());
         let mut point_classification_count = 0_usize;
         let mut previous = None::<(
@@ -1445,6 +1514,212 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             Err(error) => Err(error),
         }
+    }
+
+    fn build_regularized_region(&self) -> ExactCurveResult<CurveRegion2> {
+        for (carrier_index, carrier) in self.data.carriers.iter().enumerate() {
+            if !carrier
+                .geometry
+                .has_certified_injective_axis(&self.data.policy)
+            {
+                return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+            }
+        }
+        let topology = self.build_split_topology()?;
+        let mut arrangement_fragments = Vec::new();
+        for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
+            for (split_fragment_index, split) in splits.iter().enumerate() {
+                let action = self.regularized_fragment_action(
+                    carrier_index,
+                    &split.fragment,
+                    &topology.overlaps,
+                )?;
+                if action == RegionFragmentAction::Discard {
+                    continue;
+                }
+                let fragment = match action {
+                    RegionFragmentAction::Keep => split.fragment.clone(),
+                    RegionFragmentAction::KeepReversed => split
+                        .fragment
+                        .reversed()
+                        .map_err(|cause| self.invalid(carrier_index, cause))?,
+                    RegionFragmentAction::Discard => unreachable!(),
+                };
+                let (start_topology_vertex, end_topology_vertex) = match action {
+                    RegionFragmentAction::Keep => {
+                        (split.start_topology_vertex, split.end_topology_vertex)
+                    }
+                    RegionFragmentAction::KeepReversed => {
+                        (split.end_topology_vertex, split.start_topology_vertex)
+                    }
+                    RegionFragmentAction::Discard => unreachable!(),
+                };
+                arrangement_fragments.push(
+                    BezierArrangementFragment2::new(carrier_index, split_fragment_index, fragment)
+                        .with_topology_vertices(start_topology_vertex, end_topology_vertex),
+                );
+            }
+        }
+        if arrangement_fragments.is_empty() {
+            return Ok(CurveRegion2::default());
+        }
+        let affine_line_output = arrangement_fragments
+            .iter()
+            .all(|fragment| split_fragment_is_affine_line(fragment.fragment()));
+        let graph = BezierArrangementGraph2::from_certified_fragments(arrangement_fragments);
+        let traversal = match graph
+            .traverse_retained_filled_left_faces_with_certified_successors(&[], &self.data.policy)
+        {
+            Classification::Decided(traversal) => traversal,
+            Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
+        };
+        let region =
+            match CurveRegion2::from_certified_retained_arrangement_traversal(&graph, &traversal) {
+                Classification::Decided(region) => region,
+                Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
+            }
+            .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
+            .map_err(|cause| self.invalid(0, cause))?;
+        if affine_line_output || self.strict_line_image_only() {
+            self.compact_line_image_result(region)
+        } else {
+            Ok(region)
+        }
+    }
+
+    fn regularized_fragment_action(
+        &self,
+        carrier_index: usize,
+        fragment: &BezierSplitFragment2,
+        overlaps: &[CarrierOverlap],
+    ) -> ExactCurveResult<RegionFragmentAction> {
+        if !self.regularized_fragment_owns_overlap(carrier_index, fragment, overlaps)? {
+            return Ok(RegionFragmentAction::Discard);
+        }
+        let (parameter, representative) = self.fragment_representative(carrier_index, fragment)?;
+        let carrier = &self.data.carriers[carrier_index];
+        let derivative = match carrier
+            .geometry
+            .derivative_at(&parameter, &self.data.policy)
+            .map_err(|cause| self.invalid(carrier_index, cause))?
+        {
+            Classification::Decided(derivative) => derivative,
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(carrier_index, reason));
+            }
+        };
+        let (mut tangent_x, mut tangent_y) = (derivative.dx().clone(), derivative.dy().clone());
+        if carrier.reversed {
+            tangent_x = -tangent_x;
+            tangent_y = -tangent_y;
+        }
+        let tangent_squared = &tangent_x * &tangent_x + &tangent_y * &tangent_y;
+        match crate::classify::is_zero(&tangent_squared, &self.data.policy) {
+            Some(false) => {}
+            Some(true) => return Err(self.blocked(carrier_index, UncertaintyReason::Boundary)),
+            None => return Err(self.blocked(carrier_index, UncertaintyReason::RealSign)),
+        }
+        let source_parameter = BezierParameter2::Exact(parameter);
+        let left = self.fragment_side_location(
+            carrier_index,
+            &representative,
+            &source_parameter,
+            &tangent_x,
+            &tangent_y,
+            true,
+        )?;
+        let right = self.fragment_side_location(
+            carrier_index,
+            &representative,
+            &source_parameter,
+            &tangent_x,
+            &tangent_y,
+            false,
+        )?;
+        Ok(action_from_result_sides(
+            left == RegionPointLocation::Inside,
+            right == RegionPointLocation::Inside,
+        ))
+    }
+
+    fn regularized_fragment_owns_overlap(
+        &self,
+        carrier_index: usize,
+        fragment: &BezierSplitFragment2,
+        overlaps: &[CarrierOverlap],
+    ) -> ExactCurveResult<bool> {
+        let (start, end) = fragment_range(fragment);
+        for overlap in overlaps {
+            let (own_range, other_carrier_index) = if overlap.first_carrier_index == carrier_index {
+                (&overlap.first_range, overlap.second_carrier_index)
+            } else if overlap.second_carrier_index == carrier_index {
+                (&overlap.second_range, overlap.first_carrier_index)
+            } else {
+                continue;
+            };
+            if other_carrier_index < carrier_index
+                && range_contains_fragment(own_range, start, end, &self.data.policy)?
+            {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
+    fn fragment_side_location(
+        &self,
+        carrier_index: usize,
+        representative: &crate::Point2,
+        source_parameter: &BezierParameter2,
+        tangent_x: &crate::Real,
+        tangent_y: &crate::Real,
+        left: bool,
+    ) -> ExactCurveResult<RegionPointLocation> {
+        let carrier = &self.data.carriers[carrier_index];
+        let normal_x = if left {
+            -tangent_y.clone()
+        } else {
+            tangent_y.clone()
+        };
+        let normal_y = if left {
+            tangent_x.clone()
+        } else {
+            -tangent_x.clone()
+        };
+        let directions = [
+            (normal_x.clone(), normal_y.clone()),
+            (&normal_x + tangent_x, &normal_y + tangent_y),
+            (&normal_x - tangent_x, &normal_y - tangent_y),
+            (
+                &normal_x * crate::Real::from(2_u8) + tangent_x,
+                &normal_y * crate::Real::from(2_u8) + tangent_y,
+            ),
+            (
+                &normal_x * crate::Real::from(2_u8) - tangent_x,
+                &normal_y * crate::Real::from(2_u8) - tangent_y,
+            ),
+        ];
+        let mut last_reason = UncertaintyReason::Boundary;
+        for (direction_x, direction_y) in directions {
+            match self
+                .data
+                .first
+                .classify_point_from_boundary_side_ray(
+                    representative,
+                    direction_x,
+                    direction_y,
+                    carrier.loop_index,
+                    carrier.fragment_index,
+                    source_parameter,
+                    &self.data.policy,
+                )
+                .map_err(|cause| self.invalid(carrier_index, cause))?
+            {
+                Classification::Decided(location) => return Ok(location),
+                Classification::Uncertain(reason) => last_reason = reason,
+            }
+        }
+        Err(self.blocked(carrier_index, last_reason))
     }
 
     fn build_xor_from_exact_set_identity(&self) -> ExactCurveResult<CurveRegion2> {
@@ -1704,6 +1979,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
         carrier_index: usize,
         fragment: &BezierSplitFragment2,
     ) -> ExactCurveResult<RegionPointLocation> {
+        let (_, representative) = self.fragment_representative(carrier_index, fragment)?;
+        let carrier = &self.data.carriers[carrier_index];
+        let other = match carrier.operand {
+            CurvePathBooleanOperand2::First => &self.data.second,
+            CurvePathBooleanOperand2::Second => &self.data.first,
+        };
+        match other
+            .classify_point_raw(&representative, &self.data.policy)
+            .map_err(|cause| self.invalid(carrier_index, cause))?
+        {
+            Classification::Decided(location) => Ok(location),
+            Classification::Uncertain(reason) => Err(self.blocked(carrier_index, reason)),
+        }
+    }
+
+    fn fragment_representative(
+        &self,
+        carrier_index: usize,
+        fragment: &BezierSplitFragment2,
+    ) -> ExactCurveResult<(crate::Real, crate::Point2)> {
         let carrier = &self.data.carriers[carrier_index];
         let (start, end) = fragment_range(fragment);
         let parameter = match start
@@ -1725,17 +2020,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Err(self.blocked(carrier_index, reason));
             }
         };
-        let other = match carrier.operand {
-            CurvePathBooleanOperand2::First => &self.data.second,
-            CurvePathBooleanOperand2::Second => &self.data.first,
-        };
-        match other
-            .classify_point_raw(&representative, &self.data.policy)
-            .map_err(|cause| self.invalid(carrier_index, cause))?
-        {
-            Classification::Decided(location) => Ok(location),
-            Classification::Uncertain(reason) => Err(self.blocked(carrier_index, reason)),
-        }
+        Ok((parameter, representative))
     }
 
     fn fragment_action(
@@ -1828,6 +2113,54 @@ fn region_carrier_count(region: &CurveRegion2) -> usize {
         .iter()
         .map(|boundary| boundary.fragments().len())
         .sum()
+}
+
+fn build_candidate_carrier_pair(
+    carriers: &[RegionCarrier],
+    curves: &[Option<Curve2>],
+    first_carrier_index: usize,
+    second_carrier_index: usize,
+    policy: &CurveContext,
+    intersection_cache: &mut CurveIntersectionBatchCache,
+) -> ExactCurveResult<Option<RegionCarrierPair>> {
+    let first_carrier = &carriers[first_carrier_index];
+    let second_carrier = &carriers[second_carrier_index];
+    if carrier_bounds_decided_disjoint(first_carrier, second_carrier, policy) {
+        return Ok(None);
+    }
+    let context = match (&first_carrier.geometry, &second_carrier.geometry) {
+        (RegionCarrierGeometry::Bezier(_), RegionCarrierGeometry::Bezier(_)) => {
+            RegionCarrierPairContext::Bezier(CurveIntersectionContext::try_new_with_batch_cache(
+                curves[first_carrier_index]
+                    .as_ref()
+                    .expect("Bezier carrier has a top-level curve"),
+                curves[second_carrier_index]
+                    .as_ref()
+                    .expect("Bezier carrier has a top-level curve"),
+                policy,
+                intersection_cache,
+            )?)
+        }
+        (RegionCarrierGeometry::AnalyticParallel(_), RegionCarrierGeometry::Bezier(_)) => {
+            RegionCarrierPairContext::ParallelRational {
+                parallel_is_first: true,
+            }
+        }
+        (RegionCarrierGeometry::Bezier(_), RegionCarrierGeometry::AnalyticParallel(_)) => {
+            RegionCarrierPairContext::ParallelRational {
+                parallel_is_first: false,
+            }
+        }
+        (
+            RegionCarrierGeometry::AnalyticParallel(_),
+            RegionCarrierGeometry::AnalyticParallel(_),
+        ) => RegionCarrierPairContext::ParallelPair,
+    };
+    Ok(Some(RegionCarrierPair {
+        first_carrier_index,
+        second_carrier_index,
+        context,
+    }))
 }
 
 fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
@@ -1925,23 +2258,28 @@ fn build_region_carriers(
     operand: CurvePathBooleanOperand2,
     policy: &CurveContext,
     rational_quadratic_area_cache: &mut RationalQuadraticAreaIntegralCache,
+    require_filled_sides: bool,
 ) -> ExactCurveResult<Vec<RegionCarrier>> {
     if region.is_empty() {
         return Ok(Vec::new());
     }
-    let filled_sides = match region
-        .filled_side_is_left_with_area_cache(policy, rational_quadratic_area_cache)
-        .map_err(|cause| {
-            ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, cause)
-        })? {
-        Classification::Decided(sides) => sides,
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Boolean,
-                CurveFamily2::Line,
-                reason,
-            ));
+    let filled_sides = if require_filled_sides {
+        match region
+            .filled_side_is_left_with_area_cache(policy, rational_quadratic_area_cache)
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, cause)
+            })? {
+            Classification::Decided(sides) => sides.to_vec(),
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Boolean,
+                    CurveFamily2::Line,
+                    reason,
+                ));
+            }
         }
+    } else {
+        vec![false; region.boundary_loops().len()]
     };
     let mut carriers = Vec::new();
     for (loop_index, boundary_loop) in region.boundary_loops().iter().enumerate() {
@@ -3222,6 +3560,18 @@ impl RegionCarrierGeometry {
         }
     }
 
+    fn derivative_at(
+        &self,
+        parameter: &crate::Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveDerivative2>> {
+        match self {
+            Self::Bezier(curve) => RationalBezier2::try_from_subcurve(curve)
+                .map(|curve| curve.derivative_at_classified(parameter, policy)),
+            Self::AnalyticParallel(parallel) => parallel.derivative_at(parameter, policy),
+        }
+    }
+
     fn certified_outer_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
         match self {
             Self::Bezier(curve) => subcurve_certified_outer_bounds(curve, policy),
@@ -3235,7 +3585,11 @@ impl RegionCarrierGeometry {
     fn has_certified_injective_axis(&self, policy: &CurveContext) -> bool {
         match self {
             Self::Bezier(curve) => subcurve_has_certified_injective_axis(curve, policy),
-            Self::AnalyticParallel(_) => false,
+            Self::AnalyticParallel(parallel) => matches!(
+                parallel.exact_rational_parallel_component(policy),
+                Ok(Classification::Decided(Some(curve)))
+                    if curve.has_certified_injective_axis(policy)
+            ),
         }
     }
 
