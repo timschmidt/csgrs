@@ -1117,7 +1117,9 @@ fn bench_curve_region_repeated_bezier_offset_lanes(
 
 fn curve_region_algebraic_partition_fixture(
     partitioned: bool,
+    cyclic_seam: bool,
 ) -> Result<CurveRegion2, Box<dyn std::error::Error>> {
+    assert!(!cyclic_seam || partitioned);
     let policy = CurveContext::STRICT;
     let parallel = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0)).parallel_left(Real::zero())?;
     let zero = BezierParameter2::Exact(Real::zero());
@@ -1174,6 +1176,9 @@ fn curve_region_algebraic_partition_fixture(
         end: BezierParameter2::Exact(Real::one()),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(1, 0), p(0, 0))),
     });
+    if cyclic_seam {
+        fragments.rotate_left(1);
+    }
     Ok(CurveRegion2::try_new_with_loop_topology(
         vec![CurveRegionBoundaryLoop2::new(fragments, &policy)?],
         vec![CurveRegionLoopRole::Material],
@@ -1185,10 +1190,11 @@ fn curve_region_algebraic_partition_fixture(
 fn bench_curve_region_algebraic_partition_offset_lanes(
     iterations: u32,
     partitioned_only: Option<bool>,
+    cyclic_seam: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
-    let partitioned = curve_region_algebraic_partition_fixture(true)?;
-    let unsplit = curve_region_algebraic_partition_fixture(false)?;
+    let partitioned = curve_region_algebraic_partition_fixture(true, cyclic_seam)?;
+    let unsplit = curve_region_algebraic_partition_fixture(false, false)?;
     let partitioned_check = partitioned
         .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
         .into_value();
@@ -1197,12 +1203,13 @@ fn bench_curve_region_algebraic_partition_offset_lanes(
         .into_value();
     assert_eq!(partitioned_check, unsplit_check);
 
+    let partitioned_name = if cyclic_seam {
+        "curve_region_cyclic_algebraic_partition_offset"
+    } else {
+        "curve_region_algebraic_partition_offset"
+    };
     for (is_partitioned, name, source) in [
-        (
-            true,
-            "curve_region_algebraic_partition_offset",
-            &partitioned,
-        ),
+        (true, partitioned_name, &partitioned),
         (false, "curve_region_unsplit_equivalent_offset", &unsplit),
     ] {
         if partitioned_only.is_some_and(|selected| selected != is_partitioned) {
@@ -1243,13 +1250,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "curve-region-exact" => bench_curve_region_bezier_offset_lanes(10)?,
             "curve-region-repeated" => bench_curve_region_repeated_bezier_offset_lanes(100)?,
             "curve-region-algebraic-partition" => {
-                bench_curve_region_algebraic_partition_offset_lanes(20, None)?
+                bench_curve_region_algebraic_partition_offset_lanes(20, None, false)?
             }
             "curve-region-algebraic-partition-only" => {
-                bench_curve_region_algebraic_partition_offset_lanes(20, Some(true))?
+                bench_curve_region_algebraic_partition_offset_lanes(20, Some(true), false)?
             }
             "curve-region-algebraic-partition-control" => {
-                bench_curve_region_algebraic_partition_offset_lanes(20, Some(false))?
+                bench_curve_region_algebraic_partition_offset_lanes(20, Some(false), false)?
+            }
+            "curve-region-cyclic-algebraic-partition" => {
+                bench_curve_region_algebraic_partition_offset_lanes(20, None, true)?
+            }
+            "curve-region-cyclic-algebraic-partition-only" => {
+                bench_curve_region_algebraic_partition_offset_lanes(20, Some(true), true)?
+            }
+            "curve-region-cyclic-algebraic-partition-control" => {
+                bench_curve_region_algebraic_partition_offset_lanes(20, Some(false), true)?
             }
             _ => panic!("unknown HYPERCURVE_OFFSET_BENCH_GROUP={group:?}"),
         }
