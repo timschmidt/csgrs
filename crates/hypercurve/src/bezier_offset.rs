@@ -23,7 +23,7 @@ use crate::bezier_parameter::{
 };
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::rational_bezier_general::{
-    ResultantParameterProjection, rational_parameter_image, resultant_parameter_projection,
+    RationalParameterImageMap2, ResultantParameterProjection, resultant_parameter_projection,
 };
 use crate::{
     Aabb2, Axis2, BezierCuspClassification, BezierDegree, BezierEndpoint,
@@ -9224,8 +9224,17 @@ fn certify_rational_parameter_component_map(
             &polynomial_derivative(&map.denominator_coefficients),
         ),
     );
-    let partition = match rational_parameter_component_domains(map, &derivative_numerator, policy)?
-    {
+    let mut parameter_image_map = RationalParameterImageMap2::new(
+        map.numerator_coefficients.clone(),
+        map.denominator_coefficients.clone(),
+        policy,
+    );
+    let partition = match rational_parameter_component_domains(
+        map,
+        &derivative_numerator,
+        &mut parameter_image_map,
+        policy,
+    )? {
         Classification::Decided(Some(partition)) => partition,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -9302,12 +9311,7 @@ fn certify_rational_parameter_component_map(
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let lifted_parameter = match rational_parameter_image(
-                root,
-                &map.numerator_coefficients,
-                &map.denominator_coefficients,
-                policy,
-            )? {
+            let lifted_parameter = match parameter_image_map.image(root)? {
                 Classification::Decided(Some(parameter)) => parameter,
                 Classification::Decided(None) => return Ok(Classification::Decided(None)),
                 Classification::Uncertain(reason) => {
@@ -9553,6 +9557,7 @@ struct RationalParameterComponentBoundary {
 fn rational_parameter_component_domains(
     map: &CurveIntersectionParameterLiftMap,
     derivative_numerator: &[Real],
+    parameter_image_map: &mut RationalParameterImageMap2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<RationalParameterComponentPartition>>> {
     let denominator_roots =
@@ -9663,18 +9668,22 @@ fn rational_parameter_component_domains(
     }
     let mut domains = Vec::with_capacity(runs.len());
     for (start, end, direction) in runs {
-        let lifted_start =
-            match rational_parameter_component_boundary_image(&boundaries[start], map, policy)? {
-                Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-        let lifted_end =
-            match rational_parameter_component_boundary_image(&boundaries[end], map, policy)? {
-                Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+        let lifted_start = match rational_parameter_component_boundary_image(
+            &boundaries[start],
+            parameter_image_map,
+        )? {
+            Classification::Decided(Some(parameter)) => parameter,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let lifted_end = match rational_parameter_component_boundary_image(
+            &boundaries[end],
+            parameter_image_map,
+        )? {
+            Classification::Decided(Some(parameter)) => parameter,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         match lifted_start.cmp_by_refinement(&lifted_end, policy)? {
             Classification::Decided(order) if order == direction => {}
             Classification::Decided(_) => return Ok(Classification::Decided(None)),
@@ -9703,7 +9712,7 @@ fn rational_parameter_component_domains(
             continue;
         }
         let lifted_parameter =
-            match rational_parameter_component_boundary_image(boundary, map, policy)? {
+            match rational_parameter_component_boundary_image(boundary, parameter_image_map)? {
                 Classification::Decided(Some(parameter)) => parameter,
                 Classification::Decided(None) => continue,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -9763,8 +9772,7 @@ fn insert_rational_parameter_component_boundary(
 
 fn rational_parameter_component_boundary_image(
     boundary: &RationalParameterComponentBoundary,
-    map: &CurveIntersectionParameterLiftMap,
-    policy: &CurveContext,
+    parameter_image_map: &mut RationalParameterImageMap2,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     if boundary.denominator_root {
         return Ok(Classification::Decided(None));
@@ -9779,12 +9787,7 @@ fn rational_parameter_component_boundary_image(
             Real::one(),
         ))));
     }
-    rational_parameter_image(
-        &boundary.parameter,
-        &map.numerator_coefficients,
-        &map.denominator_coefficients,
-        policy,
-    )
+    parameter_image_map.image(&boundary.parameter)
 }
 
 fn parameter_component_overlap_from_domain(
@@ -12557,6 +12560,24 @@ mod conversion_tests {
         }
     }
 
+    fn rational_component_partition(
+        map: &CurveIntersectionParameterLiftMap,
+        derivative_numerator: &[Real],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalParameterComponentPartition>>> {
+        let mut parameter_image_map = RationalParameterImageMap2::new(
+            map.numerator_coefficients.clone(),
+            map.denominator_coefficients.clone(),
+            policy,
+        );
+        rational_parameter_component_domains(
+            map,
+            derivative_numerator,
+            &mut parameter_image_map,
+            policy,
+        )
+    }
+
     #[test]
     fn rational_component_domain_clips_increasing_and_decreasing_maps_exactly() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -12575,7 +12596,7 @@ mod conversion_tests {
                 ),
             );
             let Classification::Decided(Some(increasing)) =
-                rational_parameter_component_domains(&increasing, &derivative, &policy).unwrap()
+                rational_component_partition(&increasing, &derivative, &policy).unwrap()
             else {
                 panic!("increasing rational map did not clip");
             };
@@ -12609,7 +12630,7 @@ mod conversion_tests {
                 ),
             );
             let Classification::Decided(Some(decreasing)) =
-                rational_parameter_component_domains(&decreasing, &derivative, &policy).unwrap()
+                rational_component_partition(&decreasing, &derivative, &policy).unwrap()
             else {
                 panic!("decreasing rational map did not clip");
             };
@@ -12655,7 +12676,7 @@ mod conversion_tests {
                 ),
             );
             let Classification::Decided(Some(domains)) =
-                rational_parameter_component_domains(&map, &derivative_numerator, &policy).unwrap()
+                rational_component_partition(&map, &derivative_numerator, &policy).unwrap()
             else {
                 panic!("weakly monotone full-domain map was rejected");
             };
@@ -12686,7 +12707,7 @@ mod conversion_tests {
                 ),
             );
             let Classification::Decided(Some(domains)) =
-                rational_parameter_component_domains(&noninjective, &derivative, &policy).unwrap()
+                rational_component_partition(&noninjective, &derivative, &policy).unwrap()
             else {
                 panic!("noninjective finite map did not partition");
             };
@@ -12723,7 +12744,7 @@ mod conversion_tests {
                 ),
             );
             let Classification::Decided(Some(domains)) =
-                rational_parameter_component_domains(&pole_split, &derivative, &policy).unwrap()
+                rational_component_partition(&pole_split, &derivative, &policy).unwrap()
             else {
                 panic!("pole-separated finite branches did not partition");
             };
@@ -12764,7 +12785,7 @@ mod conversion_tests {
                 ),
             );
             let Classification::Decided(Some(partition)) =
-                rational_parameter_component_domains(&tangent_touch, &derivative, &policy).unwrap()
+                rational_component_partition(&tangent_touch, &derivative, &policy).unwrap()
             else {
                 panic!("isolated closed-square component touch was not partitioned");
             };

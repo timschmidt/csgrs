@@ -7652,16 +7652,6 @@ fn exact_rational_parameter_image(
     }
 }
 
-pub(crate) fn rational_parameter_image(
-    source: &BezierParameter2,
-    numerator: &[Real],
-    denominator: &[Real],
-    policy: &CurveContext,
-) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    let mut map = RationalParameterImageMap2::new(numerator.to_vec(), denominator.to_vec(), policy);
-    map.image(source)
-}
-
 fn conic_parameter_candidate(
     source_polynomial: &[Real],
     candidate: &(Vec<Real>, Vec<Real>),
