@@ -550,6 +550,53 @@ pub fn resultant_bivariate_polynomial_system(
         );
     }
 
+    // Rational coefficient systems with a modest Sylvester dimension are
+    // substantially cheaper to eliminate as one polynomial determinant than
+    // as `degree_bound + 1` independent exact determinants followed by dense
+    // interpolation. The subset dynamic program is division-free, retains the
+    // sparse Sylvester rows, and has bounded `O(n 2^n)` state. Keep the sampled
+    // report contract by evaluating the constructed determinant at the same
+    // degree-preserving parameter schedule used by the generic path.
+    let sylvester_dimension = first_eliminated_degree + second_eliminated_degree;
+    if sylvester_dimension <= 12
+        && bivariate_has_only_rational_coefficients(first_equation)
+        && bivariate_has_only_rational_coefficients(second_equation)
+        && let Some(resultant_coefficients) = symbolic_bivariate_sylvester_resultant(
+            first_equation,
+            second_equation,
+            retained_parameter,
+            first_eliminated_degree,
+            second_eliminated_degree,
+        )
+    {
+        let Ok(resultant_coefficients) =
+            trim_trailing_zeroes(resultant_coefficients, config.min_precision)
+        else {
+            return undecided_report(retained_parameter, eliminated_parameter);
+        };
+        let Some(samples) = resultant_polynomial_samples(
+            first_equation,
+            second_equation,
+            retained_parameter,
+            first_eliminated_degree,
+            second_eliminated_degree,
+            degree_bound,
+            &resultant_coefficients,
+            config.min_precision,
+        ) else {
+            return undecided_report(retained_parameter, eliminated_parameter);
+        };
+        return curve_resultant_report(
+            CurveIntersectionResultantStatus::Constructed,
+            retained_parameter,
+            eliminated_parameter,
+            degree_bound,
+            samples,
+            resultant_coefficients,
+            None,
+        );
+    }
+
     let mut samples = Vec::with_capacity(degree_bound + 1);
     let mut index = 0_usize;
     while samples.len() <= degree_bound {
@@ -644,6 +691,167 @@ pub fn resultant_bivariate_polynomial_system(
         resultant_coefficients,
         None,
     )
+}
+
+fn bivariate_has_only_rational_coefficients(polynomial: &BivariatePolynomial) -> bool {
+    polynomial
+        .coefficients
+        .iter()
+        .flatten()
+        .all(|coefficient| coefficient.exact_rational_ref().is_some())
+}
+
+fn symbolic_bivariate_sylvester_resultant(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    first_eliminated_degree: usize,
+    second_eliminated_degree: usize,
+) -> Option<Vec<Real>> {
+    let mut first = bivariate_fiber_coefficient_polynomials(first, retained_parameter);
+    let mut second = bivariate_fiber_coefficient_polynomials(second, retained_parameter);
+    first.truncate(first_eliminated_degree + 1);
+    second.truncate(second_eliminated_degree + 1);
+    let dimension = first_eliminated_degree.checked_add(second_eliminated_degree)?;
+    let state_count = 1_usize.checked_shl(u32::try_from(dimension).ok()?)?;
+    let mut matrix = vec![Vec::<Real>::new(); dimension.checked_mul(dimension)?];
+    let negate = retained_parameter == CurveResultantParameter::Second;
+    let oriented = |polynomial: &[Real]| {
+        if negate {
+            polynomial
+                .iter()
+                .map(|coefficient| -coefficient.clone())
+                .collect()
+        } else {
+            polynomial.to_vec()
+        }
+    };
+    for row in 0..second_eliminated_degree {
+        for (degree, coefficient) in first.iter().enumerate() {
+            matrix[row * dimension + row + first_eliminated_degree - degree] =
+                oriented(coefficient);
+        }
+    }
+    for row in 0..first_eliminated_degree {
+        for (degree, coefficient) in second.iter().enumerate() {
+            matrix[(second_eliminated_degree + row) * dimension + row + second_eliminated_degree
+                - degree] = oriented(coefficient);
+        }
+    }
+
+    let mut partials = vec![None; state_count];
+    partials[0] = Some(vec![Real::one()]);
+    for mask in 0..state_count {
+        let row = usize::try_from(mask.count_ones()).ok()?;
+        if row == dimension {
+            continue;
+        }
+        let Some(mut partial) = partials[mask].take() else {
+            continue;
+        };
+        trim_exact_polynomial_in_place(&mut partial);
+        if exact_polynomial_is_zero(&partial) {
+            continue;
+        }
+        for column in 0..dimension {
+            let column_bit = 1_usize.checked_shl(u32::try_from(column).ok()?)?;
+            if mask & column_bit != 0 {
+                continue;
+            }
+            let entry = &matrix[row * dimension + column];
+            if entry.is_empty() || exact_polynomial_is_zero(entry) {
+                continue;
+            }
+            let sign_is_negative = (mask >> (column + 1)).count_ones() % 2 != 0;
+            add_signed_polynomial_product(
+                partials[mask | column_bit].get_or_insert_with(Vec::new),
+                &partial,
+                entry,
+                sign_is_negative,
+            );
+        }
+    }
+    let mut determinant = partials.pop().flatten()?;
+    trim_exact_polynomial_in_place(&mut determinant);
+    Some(determinant)
+}
+
+fn add_signed_polynomial_product(
+    target: &mut Vec<Real>,
+    first: &[Real],
+    second: &[Real],
+    subtract: bool,
+) {
+    let required = first.len() + second.len() - 1;
+    if target.len() < required {
+        target.resize_with(required, Real::zero);
+    }
+    for (first_power, first_coefficient) in first.iter().enumerate() {
+        if exact_real_is_zero(first_coefficient) {
+            continue;
+        }
+        for (second_power, second_coefficient) in second.iter().enumerate() {
+            if exact_real_is_zero(second_coefficient) {
+                continue;
+            }
+            let term = first_coefficient * second_coefficient;
+            if subtract {
+                target[first_power + second_power] -= term;
+            } else {
+                target[first_power + second_power] += term;
+            }
+        }
+    }
+}
+
+fn trim_exact_polynomial_in_place(polynomial: &mut Vec<Real>) {
+    while polynomial.len() > 1 && polynomial.last().is_some_and(exact_real_is_zero) {
+        polynomial.pop();
+    }
+    if polynomial.is_empty() {
+        polynomial.push(Real::zero());
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn resultant_polynomial_samples(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    first_eliminated_degree: usize,
+    second_eliminated_degree: usize,
+    degree_bound: usize,
+    resultant: &[Real],
+    min_precision: i32,
+) -> Option<Vec<CurveIntersectionResultantSample>> {
+    let mut samples = Vec::with_capacity(degree_bound + 1);
+    let mut index = 0_usize;
+    while samples.len() <= degree_bound {
+        let parameter_value = Real::from(index as u64);
+        index += 1;
+        let first_sample =
+            evaluate_bivariate_at_retained_parameter(first, &parameter_value, retained_parameter);
+        let second_sample =
+            evaluate_bivariate_at_retained_parameter(second, &parameter_value, retained_parameter);
+        if certified_nonzero_degree(&first_sample, min_precision).ok()?
+            != Some(first_eliminated_degree)
+            || certified_nonzero_degree(&second_sample, min_precision).ok()?
+                != Some(second_eliminated_degree)
+        {
+            continue;
+        }
+        let value = resultant
+            .iter()
+            .rev()
+            .fold(Real::zero(), |value, coefficient| {
+                value * &parameter_value + coefficient
+            });
+        samples.push(CurveIntersectionResultantSample {
+            parameter_value,
+            resultant: value,
+        });
+    }
+    Some(samples)
 }
 
 /// Constructs rational lifts for the eliminated parameter of a bivariate system.
