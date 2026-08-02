@@ -6410,7 +6410,7 @@ fn projected_bivariate_parameter_pair_has_box_root(
     Ok(false)
 }
 
-fn bivariate_parameter_pair_strict_sign_by_refinement(
+pub(crate) fn bivariate_parameter_pair_strict_sign_by_refinement(
     polynomial: &BivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,

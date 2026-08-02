@@ -1,8 +1,8 @@
 use hypercurve::{
-    BezierFlatteningOptions, CircularArc2, Classification, Contour2, Curve2, CurveCertainty,
-    CurveContext, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
-    FiniteProjectionOptions, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, Real,
-    RegionPointLocation, Segment2, Similarity2,
+    BezierFlatteningOptions, CircularArc2, Classification, Contour2, CubicBezier2, Curve2,
+    CurveCertainty, CurveContext, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    FillRule, FiniteProjectionOptions, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2,
+    RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
 
@@ -124,6 +124,34 @@ fn bow_tie_path() -> CurvePath2 {
             .map(|edge| Curve2::from(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap()))
             .collect(),
     )
+    .unwrap()
+}
+
+fn self_crossing_cubic_path(rational_reparameterization: bool) -> CurvePath2 {
+    // The two self-contact parameters are the irrational roots of
+    // `t^2 - t + 1/8`, so region traversal exercises retained algebraic
+    // endpoints rather than only represented rational witnesses.
+    let controls = vec![p(3, 0), p(-5, 1), p(-5, -6), p(3, 3)];
+    let curve = if rational_reparameterization {
+        Curve2::from(
+            RationalBezier2::try_new(
+                controls,
+                vec![Real::one(), Real::from(2), Real::from(4), Real::from(8)],
+            )
+            .unwrap(),
+        )
+    } else {
+        Curve2::from(CubicBezier2::new(
+            controls[0].clone(),
+            controls[1].clone(),
+            controls[2].clone(),
+            controls[3].clone(),
+        ))
+    };
+    CurvePath2::try_new(vec![
+        curve,
+        Curve2::from(LineSeg2::try_new(p(3, 3), p(3, 0)).unwrap()),
+    ])
     .unwrap()
 }
 
@@ -690,6 +718,32 @@ fn authoritative_curve_region_arrangement_regularizes_self_crossing_walks() {
             assert_eq!(
                 decided(region.filled_area(&policy).unwrap()),
                 Some(Real::from(8))
+            );
+        }
+    }
+}
+
+#[test]
+fn authoritative_curve_region_regularizes_polynomial_and_rational_self_crossings() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for rational_reparameterization in [false, true] {
+            let raw = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[self_crossing_cubic_path(rational_reparameterization)],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            let region = raw.regularized_region(&policy).unwrap().into_value();
+            assert_eq!(region.boundary_loops().len(), 2);
+            assert_eq!(
+                certified(region.classify_point(&p(2, 1), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Inside)
+            );
+            assert_eq!(
+                certified(region.classify_point(&p(-8, -8), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Outside)
             );
         }
     }

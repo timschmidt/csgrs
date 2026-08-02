@@ -1717,7 +1717,12 @@ fn retained_tangent_adjacency(
         }
         let left_key = left.end.as_ref().and_then(exact_retained_endpoint_key);
         let mut visit = |right_index: usize| {
-            if left_index == right_index {
+            if left_index == right_index
+                && !matches!(
+                    (left.start_topology_vertex, left.end_topology_vertex),
+                    (Some(start), Some(end)) if start == end
+                )
+            {
                 return Ok(());
             }
             let right = &endpoints[right_index];
@@ -1994,6 +1999,34 @@ mod endpoint_adjacency_tests {
             panic!("certified topology-only traversal should be decided");
         };
         assert_eq!(traversal.chains()[0].fragment_indices(), [0, 1]);
+    }
+
+    #[test]
+    fn certified_topology_can_close_one_fragment_at_a_self_contact() {
+        let point2 = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let fragment = BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
+                    point2(0, 0),
+                    point2(1, 1),
+                    point2(2, 0),
+                )),
+            },
+        )
+        .with_topology_vertices(Some(7), Some(7));
+        let graph = BezierArrangementGraph2::new(vec![fragment]).unwrap();
+        let Classification::Decided(traversal) =
+            graph.traverse_retained_with_certified_successors(&[Some(0)], &CurveContext::STRICT)
+        else {
+            panic!("certified one-fragment self-contact face should close");
+        };
+        assert_eq!(traversal.chains().len(), 1);
+        assert_eq!(traversal.chains()[0].fragment_indices(), [0]);
+        assert!(traversal.chains()[0].is_closed());
     }
 }
 

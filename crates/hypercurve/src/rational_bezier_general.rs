@@ -15,9 +15,10 @@ use hypersolve::{
     AlgebraicRootRefinementComparisonConfig, compare_algebraic_root_representations_by_difference,
 };
 use hypersolve::{
-    AlgebraicRootRepresentation, CurveIntersectionResultantConfig,
+    AlgebraicRootRepresentation, BivariatePolynomial, CurveIntersectionResultantConfig,
     CurveIntersectionResultantReport, CurveIntersectionResultantStatus, CurveResultantParameter,
-    RationalParametricCurve2, resultant_rational_parametric_curve_intersection,
+    RationalParametricCurve2, divide_bivariate_polynomial_exact,
+    resultant_bivariate_polynomial_system, resultant_rational_parametric_curve_intersection,
 };
 
 use crate::bezier_algebraic_image::{
@@ -168,6 +169,7 @@ pub struct RationalBezierIntersectionContact2 {
     second_parameter: BezierParameter2,
     point: RationalBezierIntersectionPointEvidence2,
     certified_transverse: bool,
+    tangent_cross_sign: Option<RealSign>,
 }
 
 /// Relative parameter orientation of a certified shared rational-Bezier image.
@@ -476,6 +478,11 @@ impl RationalBezierIntersectionContact2 {
     pub const fn is_certified_transverse(&self) -> bool {
         self.certified_transverse
     }
+
+    /// Returns the certified sign of the first tangent crossed with the second.
+    pub const fn tangent_cross_sign(&self) -> Option<RealSign> {
+        self.tangent_cross_sign
+    }
 }
 
 /// Exact replay status for rational Bezier resultant candidates.
@@ -753,6 +760,182 @@ const RATIONAL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
 #[cfg(feature = "predicates")]
 const MAX_QUOTIENT_RING_RATIONAL_IMAGE_DEGREE: usize = 12;
 const MAX_RETAINED_EVALUATION_POWER_DEGREE: usize = 256;
+
+fn rational_self_intersection_residual_system(
+    basis: &RationalParametricCurve2,
+) -> Option<[BivariatePolynomial; 2]> {
+    let diagonal = BivariatePolynomial::new(vec![
+        vec![Real::zero(), Real::one()],
+        vec![Real::from(-1_i8)],
+    ]);
+    let x = rational_coordinate_parameter_difference(&basis.x_numerator, &basis.weight);
+    let y = rational_coordinate_parameter_difference(&basis.y_numerator, &basis.weight);
+    Some([
+        divide_bivariate_polynomial_exact(&x, &diagonal)?,
+        divide_bivariate_polynomial_exact(&y, &diagonal)?,
+    ])
+}
+
+fn rational_coordinate_parameter_difference(
+    numerator: &[Real],
+    weight: &[Real],
+) -> BivariatePolynomial {
+    let coefficient_count = numerator.len().max(weight.len());
+    let mut coefficients = vec![vec![Real::zero(); coefficient_count]; coefficient_count];
+    for (first_power, row) in coefficients.iter_mut().enumerate() {
+        let first_numerator = numerator
+            .get(first_power)
+            .cloned()
+            .unwrap_or_else(Real::zero);
+        let first_weight = weight.get(first_power).cloned().unwrap_or_else(Real::zero);
+        for (second_power, coefficient) in row.iter_mut().enumerate() {
+            let second_numerator = numerator
+                .get(second_power)
+                .cloned()
+                .unwrap_or_else(Real::zero);
+            let second_weight = weight.get(second_power).cloned().unwrap_or_else(Real::zero);
+            *coefficient = &first_numerator * second_weight - &first_weight * second_numerator;
+        }
+    }
+    BivariatePolynomial::new(coefficients)
+}
+
+fn project_symmetric_self_intersection_system(
+    equations: &[BivariatePolynomial; 2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
+    let report = resultant_bivariate_polynomial_system(
+        &equations[0],
+        &equations[1],
+        CurveResultantParameter::First,
+        CurveIntersectionResultantConfig {
+            min_precision: RATIONAL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
+        },
+    );
+    let projection = match resultant_parameter_projection(report, policy)? {
+        Classification::Decided(projection) => projection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(match projection {
+        ResultantParameterProjection::Empty => {
+            RationalBezierIntersectionCandidates2::NoIntersection
+        }
+        ResultantParameterProjection::Degenerate => {
+            RationalBezierIntersectionCandidates2::DegenerateResultant
+        }
+        ResultantParameterProjection::Parameters(parameters) => {
+            RationalBezierIntersectionCandidates2::Candidates {
+                first_parameters: parameters.clone(),
+                second_parameters: parameters,
+            }
+        }
+    }))
+}
+
+fn rational_tangent_cross_polynomial(
+    basis: &RationalParametricCurve2,
+) -> Option<BivariatePolynomial> {
+    let tangent_x = rational_coordinate_tangent_numerator(&basis.x_numerator, &basis.weight)?;
+    let tangent_y = rational_coordinate_tangent_numerator(&basis.y_numerator, &basis.weight)?;
+    let coefficient_count = tangent_x.len().max(tangent_y.len());
+    let mut coefficients = vec![vec![Real::zero(); coefficient_count]; coefficient_count];
+    for (first_power, row) in coefficients.iter_mut().enumerate() {
+        let first_x = tangent_x
+            .get(first_power)
+            .cloned()
+            .unwrap_or_else(Real::zero);
+        let first_y = tangent_y
+            .get(first_power)
+            .cloned()
+            .unwrap_or_else(Real::zero);
+        for (second_power, coefficient) in row.iter_mut().enumerate() {
+            let second_x = tangent_x
+                .get(second_power)
+                .cloned()
+                .unwrap_or_else(Real::zero);
+            let second_y = tangent_y
+                .get(second_power)
+                .cloned()
+                .unwrap_or_else(Real::zero);
+            *coefficient = &first_x * second_y - &first_y * second_x;
+        }
+    }
+    Some(BivariatePolynomial::new(coefficients))
+}
+
+fn rational_coordinate_tangent_numerator(numerator: &[Real], weight: &[Real]) -> Option<Vec<Real>> {
+    let numerator_derivative = derivative_power_polynomial(numerator)?;
+    let weight_derivative = derivative_power_polynomial(weight)?;
+    let first = multiply_power_polynomials(&numerator_derivative, weight)?;
+    let second = multiply_power_polynomials(numerator, &weight_derivative)?;
+    Some(subtract_power_polynomials(&first, &second))
+}
+
+fn derivative_power_polynomial(coefficients: &[Real]) -> Option<Vec<Real>> {
+    if coefficients.len() <= 1 {
+        return Some(vec![Real::zero()]);
+    }
+    coefficients
+        .iter()
+        .enumerate()
+        .skip(1)
+        .map(|(power, coefficient)| Some(Real::from(u64::try_from(power).ok()?) * coefficient))
+        .collect()
+}
+
+fn retain_unordered_rational_self_contacts(
+    replayed: RationalBezierIntersectionContacts2,
+    basis: &RationalParametricCurve2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
+    let retain = |contacts: &Arc<[RationalBezierIntersectionContact2]>|
+     -> CurveResult<Classification<Arc<[RationalBezierIntersectionContact2]>>> {
+        let tangent_cross = rational_tangent_cross_polynomial(basis);
+        let mut retained = Vec::with_capacity(contacts.len());
+        for contact in contacts.iter() {
+            let tangent_cross_sign = match tangent_cross.as_ref() {
+                Some(tangent_cross) => {
+                    crate::bezier_offset::bivariate_parameter_pair_strict_sign_by_refinement(
+                        tangent_cross,
+                        &contact.first_parameter,
+                        &contact.second_parameter,
+                        policy,
+                    )?
+                }
+                None => None,
+            };
+            let mut contact = contact.clone();
+            contact.certified_transverse |= tangent_cross_sign.is_some();
+            contact.tangent_cross_sign = tangent_cross_sign;
+            retained.push(contact);
+        }
+        Ok(Classification::Decided(Arc::from(retained)))
+    };
+    let result = match replayed {
+        RationalBezierIntersectionContacts2::Contacts(contacts) => match retain(&contacts)? {
+            Classification::Decided(contacts) if contacts.is_empty() => {
+                RationalBezierIntersectionContacts2::NoIntersection
+            }
+            Classification::Decided(contacts) => {
+                RationalBezierIntersectionContacts2::Contacts(contacts)
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        },
+        RationalBezierIntersectionContacts2::Incomplete {
+            contacts,
+            candidates,
+        } => match retain(&contacts)? {
+            Classification::Decided(contacts) => RationalBezierIntersectionContacts2::Incomplete {
+                contacts,
+                candidates,
+            },
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        },
+        result => result,
+    };
+    Ok(Classification::Decided(result))
+}
 
 impl PartialEq for RationalBezier2 {
     fn eq(&self, other: &Self) -> bool {
@@ -2149,6 +2332,7 @@ impl RationalBezier2 {
                         second_parameter: BezierParameter2::Exact(b_param),
                         point: RationalBezierIntersectionPointEvidence2::Exact(point),
                         certified_transverse: kind == crate::IntersectionKind::Crossing,
+                        tangent_cross_sign: None,
                     },
                 ])))
             }
@@ -2204,6 +2388,7 @@ impl RationalBezier2 {
                             second_parameter,
                             point: RationalBezierIntersectionPointEvidence2::Exact(point),
                             certified_transverse: kind == crate::IntersectionKind::Crossing,
+                            tangent_cross_sign: None,
                         },
                     ])),
                 ))
@@ -2341,6 +2526,81 @@ impl RationalBezier2 {
         self.replay_intersection_candidate_set(other, &candidates, policy)
     }
 
+    /// Returns every unordered off-diagonal self-contact of this curve.
+    ///
+    /// Both homogeneous coordinate-equality equations contain the universal
+    /// `u - t` identity component. The self-contact authority divides that
+    /// component exactly before elimination, projects the resulting symmetric
+    /// system once, and reuses ordinary affine contact replay. A remaining
+    /// positive-dimensional correspondence is reported as a degenerate
+    /// resultant instead of being mistaken for isolated contacts.
+    pub fn self_intersection_contacts(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<RationalBezierIntersectionContacts2> {
+        match self.self_intersection_contacts_classified(policy) {
+            Ok(Classification::Decided(contacts)) => Ok(contacts),
+            Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
+                CurveOperation2::Intersection,
+                CurveFamily2::RationalBezier,
+                reason,
+            )),
+            Err(cause) => Err(ExactCurveError::invalid(
+                CurveOperation2::Intersection,
+                CurveFamily2::RationalBezier,
+                cause,
+            )),
+        }
+    }
+
+    pub(crate) fn self_intersection_contacts_classified(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
+        if self.has_certified_injective_axis(policy) {
+            return Ok(Classification::Decided(
+                RationalBezierIntersectionContacts2::NoIntersection,
+            ));
+        }
+        if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let basis = self.homogeneous_power_basis()?;
+        let Some(equations) = rational_self_intersection_residual_system(basis) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let candidates = match project_symmetric_self_intersection_system(&equations, policy)? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let replayed = match &candidates {
+            RationalBezierIntersectionCandidates2::NoIntersection => {
+                RationalBezierIntersectionContacts2::NoIntersection
+            }
+            RationalBezierIntersectionCandidates2::DegenerateResultant => {
+                RationalBezierIntersectionContacts2::DegenerateResultant
+            }
+            RationalBezierIntersectionCandidates2::Candidates {
+                first_parameters,
+                second_parameters,
+            } => match self.replay_intersection_candidates_with_pair_filter(
+                self,
+                first_parameters,
+                second_parameters,
+                true,
+                policy,
+            )? {
+                Classification::Decided(replayed) => replayed,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+        };
+        retain_unordered_rational_self_contacts(replayed, basis, policy)
+    }
+
     fn implicit_conic_intersection_contacts(
         &self,
         other: &Self,
@@ -2453,6 +2713,7 @@ impl RationalBezier2 {
                         second_parameter: parameter.clone(),
                         point,
                         certified_transverse,
+                        tangent_cross_sign: None,
                     });
                 }
                 Classification::Decided(None) => {}
@@ -2656,6 +2917,7 @@ impl RationalBezier2 {
                                         point.clone(),
                                     ),
                                     certified_transverse: direction_moves_outside,
+                                    tangent_cross_sign: None,
                                 },
                             ])),
                         )));
@@ -2734,6 +2996,7 @@ impl RationalBezier2 {
                             second_parameter: BezierParameter2::Exact(line_parameter.clone()),
                             point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
                             certified_transverse,
+                            tangent_cross_sign: None,
                         });
                     }
                 }
@@ -2819,6 +3082,7 @@ impl RationalBezier2 {
                     second_parameter: mapped,
                     point,
                     certified_transverse: contact.kind() == BezierLineContactKind::Crossing,
+                    tangent_cross_sign: None,
                 });
                 continue;
             };
@@ -2859,6 +3123,7 @@ impl RationalBezier2 {
                 second_parameter: other_parameter,
                 point: RationalBezierIntersectionPointEvidence2::Exact(point),
                 certified_transverse: contact.kind() == BezierLineContactKind::Crossing,
+                tangent_cross_sign: None,
             });
         }
         Ok(Some(Classification::Decided(if replayed.is_empty() {
@@ -2953,6 +3218,7 @@ impl RationalBezier2 {
                         second_parameter: second_parameter.clone(),
                         point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
                         certified_transverse,
+                        tangent_cross_sign: None,
                     });
                 }
             }
@@ -2997,6 +3263,7 @@ impl RationalBezier2 {
                                 second_parameter: BezierParameter2::Exact(second_parameter),
                                 point: RationalBezierIntersectionPointEvidence2::Exact(point),
                                 certified_transverse: false,
+                                tangent_cross_sign: None,
                             });
                         }
                         Ok(Classification::Decided(if replayed.is_empty() {
@@ -3478,8 +3745,26 @@ impl RationalBezier2 {
         second_parameters: &[BezierParameter2],
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
-        if let Some(contacts) =
-            self.replay_candidates_through_polynomial_graph(other, first_parameters, policy)?
+        self.replay_intersection_candidates_with_pair_filter(
+            other,
+            first_parameters,
+            second_parameters,
+            false,
+            policy,
+        )
+    }
+
+    fn replay_intersection_candidates_with_pair_filter(
+        &self,
+        other: &Self,
+        first_parameters: &[BezierParameter2],
+        second_parameters: &[BezierParameter2],
+        unordered_self_pairs: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
+        if !unordered_self_pairs
+            && let Some(contacts) =
+                self.replay_candidates_through_polynomial_graph(other, first_parameters, policy)?
         {
             return Ok(Classification::Decided(if contacts.is_empty() {
                 RationalBezierIntersectionContacts2::NoIntersection
@@ -3510,6 +3795,17 @@ impl RationalBezier2 {
         let mut contacts = Vec::new();
         for first_index in 0..first_parameters.len() {
             for second_index in 0..second_parameters.len() {
+                if unordered_self_pairs {
+                    match first_parameters[first_index]
+                        .cmp_by_refinement(&second_parameters[second_index], policy)?
+                    {
+                        Classification::Decided(Ordering::Less) => {}
+                        Classification::Decided(Ordering::Equal | Ordering::Greater) => continue,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
                 if first_replays[first_index].is_none() {
                     first_replays[first_index] =
                         Some(self.candidate_point_replay(&first_parameters[first_index], policy)?);
@@ -3538,6 +3834,7 @@ impl RationalBezier2 {
                         // matched isolated contact.
                         certified_transverse: first_simple_roots[first_index]
                             && second_simple_roots[second_index],
+                        tangent_cross_sign: None,
                     }),
                     Some(false) => {}
                     None => {
@@ -3567,6 +3864,7 @@ impl RationalBezier2 {
                                     point: first_replay.evidence.clone(),
                                     certified_transverse: first_simple_roots[first_index]
                                         && second_simple_roots[second_index],
+                                    tangent_cross_sign: None,
                                 });
                             }
                             Classification::Decided(false) => {}
@@ -3668,6 +3966,7 @@ impl RationalBezier2 {
                 second_parameter: mapped,
                 point,
                 certified_transverse: false,
+                tangent_cross_sign: None,
             });
         }
         Ok(Some(contacts))
@@ -6420,6 +6719,7 @@ fn reverse_rational_intersection_contacts(
                         second_parameter: contact.first_parameter.clone(),
                         point: contact.point.clone(),
                         certified_transverse: contact.certified_transverse,
+                        tangent_cross_sign: contact.tangent_cross_sign.map(negated_real_sign),
                     })
                     .collect::<Vec<_>>()
                     .into(),
@@ -6444,6 +6744,7 @@ fn reverse_rational_intersection_contacts(
                     second_parameter: contact.first_parameter.clone(),
                     point: contact.point.clone(),
                     certified_transverse: contact.certified_transverse,
+                    tangent_cross_sign: contact.tangent_cross_sign.map(negated_real_sign),
                 })
                 .collect::<Vec<_>>()
                 .into(),
@@ -6461,6 +6762,14 @@ fn reverse_rational_intersection_contacts(
         RationalBezierIntersectionContacts2::DegenerateResultant => {
             RationalBezierIntersectionContacts2::DegenerateResultant
         }
+    }
+}
+
+const fn negated_real_sign(sign: RealSign) -> RealSign {
+    match sign {
+        RealSign::Positive => RealSign::Negative,
+        RealSign::Negative => RealSign::Positive,
+        RealSign::Zero => RealSign::Zero,
     }
 }
 
@@ -7066,6 +7375,121 @@ mod tests {
     #[cfg(feature = "predicates")]
     fn exact_f64(value: f64) -> Real {
         Real::try_from(value).expect("finite binary rational")
+    }
+
+    #[test]
+    fn off_diagonal_self_contacts_share_one_rational_authority() {
+        let controls = vec![
+            Point2::new(Real::from(9_i8), Real::zero()),
+            Point2::new(Real::from(-7_i8), Real::from(3_i8)),
+            Point2::new(Real::from(-7_i8), Real::from(-10_i8)),
+            Point2::new(Real::from(9_i8), Real::from(9_i8)),
+        ];
+        let fixtures = [
+            (
+                vec![Real::one(); 4],
+                (Real::one() / Real::from(4_i8)).unwrap(),
+                (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+            ),
+            (
+                vec![
+                    Real::one(),
+                    Real::from(2_i8),
+                    Real::from(4_i8),
+                    Real::from(8_i8),
+                ],
+                (Real::one() / Real::from(7_i8)).unwrap(),
+                (Real::from(3_i8) / Real::from(5_i8)).unwrap(),
+            ),
+        ];
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (weights, expected_first, expected_second) in &fixtures {
+                let curve = RationalBezier2::try_new(controls.clone(), weights.clone()).unwrap();
+                let RationalBezierIntersectionContacts2::Contacts(contacts) =
+                    curve.self_intersection_contacts(&policy).unwrap()
+                else {
+                    panic!("isolated rational loop contact was not completely replayed");
+                };
+                assert_eq!(contacts.len(), 1);
+                let contact = &contacts[0];
+                assert!(matches!(
+                    contact
+                        .first_parameter()
+                        .same_value(&BezierParameter2::Exact(expected_first.clone()), &policy)
+                        .unwrap(),
+                    Classification::Decided(true)
+                ));
+                assert!(matches!(
+                    contact
+                        .second_parameter()
+                        .same_value(&BezierParameter2::Exact(expected_second.clone()), &policy)
+                        .unwrap(),
+                    Classification::Decided(true)
+                ));
+                assert!(contact.is_certified_transverse());
+                assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Negative));
+            }
+
+            let algebraic = RationalBezier2::try_new(
+                vec![
+                    Point2::new(Real::from(3_i8), Real::zero()),
+                    Point2::new(Real::from(-5_i8), Real::one()),
+                    Point2::new(Real::from(-5_i8), Real::from(-6_i8)),
+                    Point2::new(Real::from(3_i8), Real::from(3_i8)),
+                ],
+                vec![Real::one(); 4],
+            )
+            .unwrap();
+            let RationalBezierIntersectionContacts2::Contacts(contacts) =
+                algebraic.self_intersection_contacts(&policy).unwrap()
+            else {
+                panic!("algebraic-parameter loop contact was not completely replayed");
+            };
+            assert_eq!(contacts.len(), 1);
+            assert!(matches!(
+                contacts[0].first_parameter(),
+                BezierParameter2::Algebraic(_)
+            ));
+            assert!(matches!(
+                contacts[0].second_parameter(),
+                BezierParameter2::Algebraic(_)
+            ));
+            assert_eq!(contacts[0].tangent_cross_sign(), Some(RealSign::Negative));
+        }
+    }
+
+    #[test]
+    fn self_contact_authority_distinguishes_injective_and_retraced_quadratics() {
+        let injective = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::one(), Real::one()),
+                Point2::new(Real::from(2_i8), Real::zero()),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+        let retraced = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::one(), Real::zero()),
+                Point2::new(Real::zero(), Real::zero()),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                injective.self_intersection_contacts(&policy).unwrap(),
+                RationalBezierIntersectionContacts2::NoIntersection
+            ));
+            assert!(matches!(
+                retraced.self_intersection_contacts(&policy).unwrap(),
+                RationalBezierIntersectionContacts2::DegenerateResultant
+            ));
+        }
     }
 
     #[test]

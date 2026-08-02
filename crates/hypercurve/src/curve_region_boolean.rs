@@ -17,8 +17,9 @@ use crate::{
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
     CurveOperation2, CurveOutcome, CurvePathBooleanOperand2, CurveRegion2, CurveResult,
     ExactCurveError, ExactCurveResult, FillRule, QuadraticBezier2, RationalBezier2,
-    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RealSign, RegionPointLocation, UncertaintyReason,
+    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
+    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2, RealSign,
+    RegionPointLocation, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -97,6 +98,7 @@ struct CurveRegionBooleanContextData<'a> {
     first_carrier_count: usize,
     authored_carrier_pair_count: usize,
     pairs: Vec<RegionCarrierPair>,
+    bezier_self_intersections: Vec<BezierSelfIntersectionCache>,
     parallel_self_intersections: Vec<ParallelSelfIntersectionCache>,
     strict_line_image_only: OnceLock<bool>,
 }
@@ -105,6 +107,12 @@ struct CurveRegionBooleanContextData<'a> {
 struct ParallelSelfIntersectionCache {
     parallel: BezierParallel2,
     result: OnceLock<CurveResult<Classification<BezierParallelPairIntersectionSet2>>>,
+}
+
+#[derive(Debug)]
+struct BezierSelfIntersectionCache {
+    curve: BezierSubcurve2,
+    result: OnceLock<CurveResult<Classification<RationalBezierIntersectionContacts2>>>,
 }
 
 #[derive(Clone, Debug)]
@@ -142,13 +150,13 @@ enum RegionCarrierPairContext {
     ParallelPair,
     ParallelSameImage,
     ParallelSelf,
-    UnsupportedSelf,
+    BezierSelf,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 enum RegionPairContactEvidence {
     Bezier(CurveIntersectionContact2),
-    Analytic {
+    Direct {
         first_parameter: BezierParameter2,
         second_parameter: BezierParameter2,
         point: Option<RationalBezierIntersectionPointEvidence2>,
@@ -169,7 +177,7 @@ struct RegionPairOverlap {
 enum RegionPairBlocker {
     Bezier(CurveIntersectionPairBlocker2),
     Uncertain(UncertaintyReason),
-    IncompleteAnalyticReplay,
+    IncompleteReplay,
     PointImageParameterComponent,
 }
 
@@ -209,12 +217,13 @@ enum CarrierOverlapClip {
     Matched(Option<(BezierParameterRange2, BezierParameterRange2)>),
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 struct TransitionContactCandidate {
     first_carrier: usize,
     second_carrier: usize,
     certified_transverse: bool,
     cross_is_positive: Option<bool>,
+    self_parameters: Option<[BezierParameter2; 2]>,
 }
 
 #[derive(Clone, Debug)]
@@ -233,6 +242,20 @@ struct ClassifiedSplitCarrierFragment {
 #[derive(Clone, Copy, Debug)]
 struct BooleanArrangementFragmentDirection {
     carrier_index: usize,
+    follows_carrier: bool,
+    start_contact_branch: Option<TransitionContactBranch>,
+    end_contact_branch: Option<TransitionContactBranch>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum TransitionContactBranch {
+    First,
+    Second,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct CertifiedContactDirection {
+    branch: TransitionContactBranch,
     follows_carrier: bool,
 }
 
@@ -374,24 +397,24 @@ impl CurveRegionIntersectionBlocker2 {
         match &self.blocker {
             RegionPairBlocker::Bezier(blocker) => Some(blocker),
             RegionPairBlocker::Uncertain(_)
-            | RegionPairBlocker::IncompleteAnalyticReplay
+            | RegionPairBlocker::IncompleteReplay
             | RegionPairBlocker::PointImageParameterComponent => None,
         }
     }
 
-    /// Returns the terminal uncertainty reason when the analytic kernel was undecided.
+    /// Returns the terminal uncertainty reason when the exact carrier kernel was undecided.
     pub const fn uncertainty_reason(&self) -> Option<UncertaintyReason> {
         match self.blocker {
             RegionPairBlocker::Uncertain(reason) => Some(reason),
             RegionPairBlocker::Bezier(_)
-            | RegionPairBlocker::IncompleteAnalyticReplay
+            | RegionPairBlocker::IncompleteReplay
             | RegionPairBlocker::PointImageParameterComponent => None,
         }
     }
 
-    /// Returns true when exact analytic replay retained candidates it could not complete.
-    pub const fn is_incomplete_analytic_replay(&self) -> bool {
-        matches!(self.blocker, RegionPairBlocker::IncompleteAnalyticReplay)
+    /// Returns true when exact replay retained candidates it could not complete.
+    pub const fn is_incomplete_replay(&self) -> bool {
+        matches!(self.blocker, RegionPairBlocker::IncompleteReplay)
     }
 
     /// Returns true for a positive-dimensional parameter component with point image.
@@ -407,7 +430,7 @@ impl RegionPairContactEvidence {
     const fn first_parameter(&self) -> &BezierParameter2 {
         match self {
             Self::Bezier(contact) => contact.first().local_parameter(),
-            Self::Analytic {
+            Self::Direct {
                 first_parameter, ..
             } => first_parameter,
         }
@@ -416,7 +439,7 @@ impl RegionPairContactEvidence {
     const fn second_parameter(&self) -> &BezierParameter2 {
         match self {
             Self::Bezier(contact) => contact.second().local_parameter(),
-            Self::Analytic {
+            Self::Direct {
                 second_parameter, ..
             } => second_parameter,
         }
@@ -425,14 +448,14 @@ impl RegionPairContactEvidence {
     const fn point(&self) -> Option<&RationalBezierIntersectionPointEvidence2> {
         match self {
             Self::Bezier(contact) => Some(contact.point()),
-            Self::Analytic { point, .. } => point.as_ref(),
+            Self::Direct { point, .. } => point.as_ref(),
         }
     }
 
     const fn is_certified_transverse(&self) -> bool {
         match self {
             Self::Bezier(contact) => contact.is_certified_transverse(),
-            Self::Analytic {
+            Self::Direct {
                 certified_transverse,
                 ..
             } => *certified_transverse,
@@ -442,7 +465,7 @@ impl RegionPairContactEvidence {
     const fn tangent_cross_is_positive(&self) -> Option<bool> {
         match self {
             Self::Bezier(_) => None,
-            Self::Analytic {
+            Self::Direct {
                 tangent_cross_sign, ..
             } => match tangent_cross_sign {
                 Some(RealSign::Positive) => Some(true),
@@ -706,6 +729,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             }
         }
+        let bezier_self_intersections = build_bezier_self_intersection_caches(&carriers, &pairs);
         let parallel_self_intersections = build_parallel_self_intersection_caches(&carriers);
 
         Ok(Self {
@@ -717,6 +741,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count,
                 authored_carrier_pair_count,
                 pairs,
+                bezier_self_intersections,
                 parallel_self_intersections,
                 strict_line_image_only: OnceLock::new(),
             },
@@ -766,13 +791,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         RegionCarrierGeometry::AnalyticParallel(_) => {
                             RegionCarrierPairContext::ParallelSelf
                         }
-                        RegionCarrierGeometry::Bezier(_) => {
-                            RegionCarrierPairContext::UnsupportedSelf
-                        }
+                        RegionCarrierGeometry::Bezier(_) => RegionCarrierPairContext::BezierSelf,
                     },
                 });
             }
         }
+        let bezier_self_intersections = build_bezier_self_intersection_caches(&carriers, &pairs);
         let parallel_self_intersections = build_parallel_self_intersection_caches(&carriers);
 
         Ok(Self {
@@ -784,6 +808,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count: carrier_count,
                 authored_carrier_pair_count,
                 pairs,
+                bezier_self_intersections,
                 parallel_self_intersections,
                 strict_line_image_only: OnceLock::new(),
             },
@@ -874,6 +899,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .clone()
     }
 
+    fn bezier_self_intersections(
+        &self,
+        curve: &BezierSubcurve2,
+    ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
+        self.data
+            .bezier_self_intersections
+            .iter()
+            .find(|cache| cache.curve == *curve)
+            .expect("every Bezier carrier has an operation-scoped self-intersection cache")
+            .result
+            .get_or_init(|| {
+                RationalBezier2::try_from_subcurve(curve)?
+                    .self_intersection_contacts_classified(&self.data.policy)
+            })
+            .clone()
+    }
+
     fn pair_result(&self, pair: &RegionCarrierPair) -> ExactCurveResult<RegionPairResult> {
         let first = &self.data.carriers[pair.first_carrier_index];
         let second = &self.data.carriers[pair.second_carrier_index];
@@ -904,6 +946,50 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .cloned()
                         .map(RegionPairBlocker::Bezier)
                         .collect(),
+                })
+            }
+            RegionCarrierPairContext::BezierSelf => {
+                let result = match self
+                    .bezier_self_intersections(first.geometry.bezier())
+                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(reason) => {
+                        return Ok(RegionPairResult {
+                            contacts: Vec::new(),
+                            overlaps: Vec::new(),
+                            blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                        });
+                    }
+                };
+                let contact_evidence = |contact: &crate::RationalBezierIntersectionContact2| {
+                    RegionPairContactEvidence::Direct {
+                        first_parameter: contact.first_parameter().clone(),
+                        second_parameter: contact.second_parameter().clone(),
+                        point: Some(contact.point().clone()),
+                        certified_transverse: contact.is_certified_transverse(),
+                        tangent_cross_sign: contact.tangent_cross_sign(),
+                    }
+                };
+                let (contacts, blockers) = match result {
+                    RationalBezierIntersectionContacts2::NoIntersection => (Vec::new(), Vec::new()),
+                    RationalBezierIntersectionContacts2::Contacts(contacts) => {
+                        (contacts.iter().map(contact_evidence).collect(), Vec::new())
+                    }
+                    RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => (
+                        contacts.iter().map(contact_evidence).collect(),
+                        vec![RegionPairBlocker::IncompleteReplay],
+                    ),
+                    RationalBezierIntersectionContacts2::Overlap(_)
+                    | RationalBezierIntersectionContacts2::DegenerateResultant => (
+                        Vec::new(),
+                        vec![RegionPairBlocker::Uncertain(UncertaintyReason::Boundary)],
+                    ),
+                };
+                Ok(RegionPairResult {
+                    contacts,
+                    overlaps: Vec::new(),
+                    blockers,
                 })
             }
             RegionCarrierPairContext::ParallelRational { parallel_is_first } => {
@@ -949,7 +1035,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     }),
                                 )
                             };
-                        RegionPairContactEvidence::Analytic {
+                        RegionPairContactEvidence::Direct {
                             first_parameter,
                             second_parameter,
                             point: Some(contact.point().clone()),
@@ -986,7 +1072,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     blockers.push(RegionPairBlocker::PointImageParameterComponent);
                 }
                 if !result.is_complete() {
-                    blockers.push(RegionPairBlocker::IncompleteAnalyticReplay);
+                    blockers.push(RegionPairBlocker::IncompleteReplay);
                 }
                 Ok(RegionPairResult {
                     contacts,
@@ -1019,8 +1105,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         intersections.push((self.parallel_self_intersections(parallel), true));
                     }
                     RegionCarrierPairContext::Bezier(_)
-                    | RegionCarrierPairContext::ParallelRational { .. }
-                    | RegionCarrierPairContext::UnsupportedSelf => unreachable!(),
+                    | RegionCarrierPairContext::BezierSelf
+                    | RegionCarrierPairContext::ParallelRational { .. } => unreachable!(),
                 }
                 let mut contacts = Vec::new();
                 let mut overlaps = Vec::new();
@@ -1057,7 +1143,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 RealSign::Zero => RealSign::Zero,
                             });
                         }
-                        contacts.push(RegionPairContactEvidence::Analytic {
+                        contacts.push(RegionPairContactEvidence::Direct {
                             first_parameter,
                             second_parameter,
                             point: None,
@@ -1075,7 +1161,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         blockers.push(RegionPairBlocker::PointImageParameterComponent);
                     }
                     if !result.is_complete() {
-                        blockers.push(RegionPairBlocker::IncompleteAnalyticReplay);
+                        blockers.push(RegionPairBlocker::IncompleteReplay);
                     }
                 }
                 Ok(RegionPairResult {
@@ -1084,11 +1170,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     blockers,
                 })
             }
-            RegionCarrierPairContext::UnsupportedSelf => Ok(RegionPairResult {
-                contacts: Vec::new(),
-                overlaps: Vec::new(),
-                blockers: vec![RegionPairBlocker::Uncertain(UncertaintyReason::Unsupported)],
-            }),
         }
     }
 
@@ -1243,7 +1324,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                     },
                     RegionPairBlocker::Uncertain(reason) => *reason,
-                    RegionPairBlocker::IncompleteAnalyticReplay => UncertaintyReason::Predicate,
+                    RegionPairBlocker::IncompleteReplay => UncertaintyReason::Predicate,
                     RegionPairBlocker::PointImageParameterComponent => UncertaintyReason::Boundary,
                 };
                 return Err(self.blocked(pair.first_carrier_index, reason));
@@ -1371,6 +1452,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         second_carrier: pair.second_carrier_index,
                         certified_transverse: contact.is_certified_transverse(),
                         cross_is_positive: contact.tangent_cross_is_positive(),
+                        self_parameters: (pair.first_carrier_index == pair.second_carrier_index)
+                            .then(|| [first_parameter.clone(), second_parameter.clone()]),
                     })
                 } else {
                     None
@@ -1629,12 +1712,57 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
     }
 
+    fn transition_contact_branch(
+        &self,
+        topology: &CurveRegionSplitTopology,
+        carrier_index: usize,
+        vertex: Option<usize>,
+        parameter: &BezierParameter2,
+    ) -> ExactCurveResult<Option<TransitionContactBranch>> {
+        let Some(contact) = vertex.and_then(|vertex| topology.transverse_contacts.get(&vertex))
+        else {
+            return Ok(None);
+        };
+        let Some([first, second]) = contact.self_parameters.as_ref() else {
+            return Ok(None);
+        };
+        for (candidate, branch) in [
+            (first, TransitionContactBranch::First),
+            (second, TransitionContactBranch::Second),
+        ] {
+            match parameter
+                .same_value(candidate, &self.data.policy)
+                .map_err(|cause| self.invalid(carrier_index, cause))?
+            {
+                Classification::Decided(true) => return Ok(Some(branch)),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Err(self.blocked(carrier_index, reason));
+                }
+            }
+        }
+        Err(self.blocked(carrier_index, UncertaintyReason::Predicate))
+    }
+
     fn build_regularized_region(&self) -> ExactCurveResult<CurveRegion2> {
         let topology = self.build_split_topology()?;
         let mut arrangement_fragments = Vec::new();
         let mut arrangement_directions = Vec::new();
         for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
             for (split_fragment_index, split) in splits.iter().enumerate() {
+                let (source_start, source_end) = split.fragment.parameter_range();
+                let source_start_branch = self.transition_contact_branch(
+                    &topology,
+                    carrier_index,
+                    split.start_topology_vertex,
+                    source_start,
+                )?;
+                let source_end_branch = self.transition_contact_branch(
+                    &topology,
+                    carrier_index,
+                    split.end_topology_vertex,
+                    source_end,
+                )?;
                 let action = self.regularized_fragment_action(
                     carrier_index,
                     &split.fragment,
@@ -1663,6 +1791,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 arrangement_directions.push(BooleanArrangementFragmentDirection {
                     carrier_index,
                     follows_carrier: action == RegionFragmentAction::Keep,
+                    start_contact_branch: match action {
+                        RegionFragmentAction::Keep => source_start_branch,
+                        RegionFragmentAction::KeepReversed => source_end_branch,
+                        RegionFragmentAction::Discard => unreachable!(),
+                    },
+                    end_contact_branch: match action {
+                        RegionFragmentAction::Keep => source_end_branch,
+                        RegionFragmentAction::KeepReversed => source_start_branch,
+                        RegionFragmentAction::Discard => unreachable!(),
+                    },
                 });
                 arrangement_fragments.push(
                     BezierArrangementFragment2::new(carrier_index, split_fragment_index, fragment)
@@ -1958,6 +2096,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 arrangement_directions.push(BooleanArrangementFragmentDirection {
                     carrier_index,
                     follows_carrier: action == RegionFragmentAction::Keep,
+                    start_contact_branch: None,
+                    end_contact_branch: None,
                 });
                 arrangement_fragments.push(
                     BezierArrangementFragment2::new(carrier_index, split_fragment_index, fragment)
@@ -2321,6 +2461,27 @@ fn build_parallel_self_intersection_caches(
         }
         caches.push(ParallelSelfIntersectionCache {
             parallel: parallel.clone(),
+            result: OnceLock::new(),
+        });
+    }
+    caches
+}
+
+fn build_bezier_self_intersection_caches(
+    carriers: &[RegionCarrier],
+    pairs: &[RegionCarrierPair],
+) -> Vec<BezierSelfIntersectionCache> {
+    let mut caches = Vec::<BezierSelfIntersectionCache>::new();
+    for pair in pairs {
+        if !matches!(pair.context, RegionCarrierPairContext::BezierSelf) {
+            continue;
+        }
+        let curve = carriers[pair.first_carrier_index].geometry.bezier();
+        if caches.iter().any(|cache| cache.curve == *curve) {
+            continue;
+        }
+        caches.push(BezierSelfIntersectionCache {
+            curve: curve.clone(),
             result: OnceLock::new(),
         });
     }
@@ -2877,26 +3038,23 @@ fn certified_transverse_successors(
             let vertex = current.end_topology_vertex()?;
             let contact = contacts.get(&vertex)?;
             let crossing_is_positive = crossing_is_positive(contact, vertex)?;
+            let retain_current = contact.first_carrier == contact.second_carrier;
             let mut candidates = starts_by_vertex
                 .get(&vertex)?
                 .iter()
                 .copied()
-                .filter(|candidate_index| *candidate_index != current_index);
+                .filter(|candidate_index| retain_current || *candidate_index != current_index);
             let first_index = candidates.next()?;
             let second_index = candidates.next()?;
             if candidates.next().is_some() {
                 return None;
             }
-            let current = *directions.get(current_index)?;
-            let first = *directions.get(first_index)?;
-            let second = *directions.get(second_index)?;
-            if [current, first, second].into_iter().any(|direction| {
-                direction.carrier_index != contact.first_carrier
-                    && direction.carrier_index != contact.second_carrier
-            }) {
-                return None;
-            }
-            certified_turn_preference(current, first, second, contact, crossing_is_positive).map(
+            let current =
+                certified_contact_direction(*directions.get(current_index)?, false, contact)?;
+            let first = certified_contact_direction(*directions.get(first_index)?, true, contact)?;
+            let second =
+                certified_contact_direction(*directions.get(second_index)?, true, contact)?;
+            certified_turn_preference(current, first, second, crossing_is_positive).map(
                 |first_before_second| {
                     if first_before_second {
                         first_index
@@ -2907,6 +3065,30 @@ fn certified_transverse_successors(
             )
         })
         .collect()
+}
+
+fn certified_contact_direction(
+    direction: BooleanArrangementFragmentDirection,
+    at_start: bool,
+    contact: &TransitionContactCandidate,
+) -> Option<CertifiedContactDirection> {
+    let branch = if contact.first_carrier == contact.second_carrier {
+        if at_start {
+            direction.start_contact_branch
+        } else {
+            direction.end_contact_branch
+        }?
+    } else if direction.carrier_index == contact.first_carrier {
+        TransitionContactBranch::First
+    } else if direction.carrier_index == contact.second_carrier {
+        TransitionContactBranch::Second
+    } else {
+        return None;
+    };
+    Some(CertifiedContactDirection {
+        branch,
+        follows_carrier: direction.follows_carrier,
+    })
 }
 
 fn transverse_carrier_cross_is_positive(
@@ -2950,18 +3132,17 @@ const fn transverse_cross_from_locations(
 }
 
 fn certified_turn_preference(
-    base: BooleanArrangementFragmentDirection,
-    first: BooleanArrangementFragmentDirection,
-    second: BooleanArrangementFragmentDirection,
-    contact: &TransitionContactCandidate,
+    base: CertifiedContactDirection,
+    first: CertifiedContactDirection,
+    second: CertifiedContactDirection,
     crossing_is_positive: bool,
 ) -> Option<bool> {
-    let first_half = certified_turn_half(base, first, contact, crossing_is_positive)?;
-    let second_half = certified_turn_half(base, second, contact, crossing_is_positive)?;
+    let first_half = certified_turn_half(base, first, crossing_is_positive)?;
+    let second_half = certified_turn_half(base, second, crossing_is_positive)?;
     if first_half != second_half {
         return Some(first_half < second_half);
     }
-    match certified_direction_cross(first, second, contact, crossing_is_positive)? {
+    match certified_direction_cross(first, second, crossing_is_positive)? {
         1 => Some(true),
         -1 => Some(false),
         _ => None,
@@ -2969,16 +3150,15 @@ fn certified_turn_preference(
 }
 
 fn certified_turn_half(
-    base: BooleanArrangementFragmentDirection,
-    candidate: BooleanArrangementFragmentDirection,
-    contact: &TransitionContactCandidate,
+    base: CertifiedContactDirection,
+    candidate: CertifiedContactDirection,
     crossing_is_positive: bool,
 ) -> Option<u8> {
-    if base.carrier_index == candidate.carrier_index {
+    if base.branch == candidate.branch {
         return Some(u8::from(base.follows_carrier != candidate.follows_carrier));
     }
     Some(
-        if certified_direction_cross(base, candidate, contact, crossing_is_positive)? > 0 {
+        if certified_direction_cross(base, candidate, crossing_is_positive)? > 0 {
             0
         } else {
             1
@@ -2987,20 +3167,19 @@ fn certified_turn_half(
 }
 
 fn certified_direction_cross(
-    first: BooleanArrangementFragmentDirection,
-    second: BooleanArrangementFragmentDirection,
-    contact: &TransitionContactCandidate,
+    first: CertifiedContactDirection,
+    second: CertifiedContactDirection,
     crossing_is_positive: bool,
 ) -> Option<i8> {
-    if first.carrier_index == second.carrier_index {
+    if first.branch == second.branch {
         return Some(0);
     }
-    let source_cross = if first.carrier_index == contact.first_carrier
-        && second.carrier_index == contact.second_carrier
+    let source_cross = if first.branch == TransitionContactBranch::First
+        && second.branch == TransitionContactBranch::Second
     {
         if crossing_is_positive { 1 } else { -1 }
-    } else if first.carrier_index == contact.second_carrier
-        && second.carrier_index == contact.first_carrier
+    } else if first.branch == TransitionContactBranch::Second
+        && second.branch == TransitionContactBranch::First
     {
         if crossing_is_positive { -1 } else { 1 }
     } else {
@@ -4071,6 +4250,19 @@ mod certified_successor_tests {
         BooleanArrangementFragmentDirection {
             carrier_index,
             follows_carrier,
+            start_contact_branch: None,
+            end_contact_branch: None,
+        }
+    }
+
+    fn contact_direction(carrier_index: usize, follows_carrier: bool) -> CertifiedContactDirection {
+        CertifiedContactDirection {
+            branch: if carrier_index == 3 {
+                TransitionContactBranch::First
+            } else {
+                TransitionContactBranch::Second
+            },
+            follows_carrier,
         }
     }
 
@@ -4238,12 +4430,6 @@ mod certified_successor_tests {
 
     #[test]
     fn certified_branch_order_matches_exact_vector_order() {
-        let contact = TransitionContactCandidate {
-            first_carrier: 3,
-            second_carrier: 7,
-            certified_transverse: true,
-            cross_is_positive: None,
-        };
         for crossing_is_positive in [false, true] {
             for base_carrier in [3, 7] {
                 for base_forward in [false, true] {
@@ -4256,10 +4442,9 @@ mod certified_successor_tests {
                                     let second = direction(second_carrier, second_forward);
                                     assert_eq!(
                                         certified_turn_preference(
-                                            base,
-                                            first,
-                                            second,
-                                            &contact,
+                                            contact_direction(base_carrier, base_forward),
+                                            contact_direction(first_carrier, first_forward),
+                                            contact_direction(second_carrier, second_forward),
                                             crossing_is_positive,
                                         ),
                                         numerical_turn_preference(
