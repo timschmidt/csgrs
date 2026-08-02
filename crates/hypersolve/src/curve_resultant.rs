@@ -1413,8 +1413,8 @@ fn common_fiber_component_report_from_coefficients(
 
     let component = primitive_common_fiber_component(coefficients, retained_parameter).ok_or(())?;
     let (first_reduced, second_reduced) = (
-        divide_bivariate_exact(first_equation, &component).ok_or(())?,
-        divide_bivariate_exact(second_equation, &component).ok_or(())?,
+        divide_bivariate_polynomial_exact(first_equation, &component).ok_or(())?,
+        divide_bivariate_polynomial_exact(second_equation, &component).ok_or(())?,
     );
     Ok(Some(implicit_component_report(
         retained_parameter,
@@ -2047,7 +2047,14 @@ fn primitive_common_fiber_component(
     (!exact_bivariate_is_zero(&component)).then_some(component)
 }
 
-fn divide_bivariate_exact(
+/// Returns the exact quotient when one bivariate polynomial divides another.
+///
+/// The divisor and dividend are canonicalized first. Multivariate long
+/// division proceeds over the exact `Real` field and succeeds only when every
+/// remainder coefficient is certified zero. No predicate policy or
+/// approximate equality participates. A zero divisor is rejected; a zero
+/// dividend has the canonical zero quotient.
+pub fn divide_bivariate_polynomial_exact(
     dividend: &BivariatePolynomial,
     divisor: &BivariatePolynomial,
 ) -> Option<BivariatePolynomial> {
@@ -3718,13 +3725,33 @@ mod tests {
             BivariatePolynomial::new(vec![vec![real(-1), real(2)], vec![], vec![real(3)]]);
         let dividend = multiply_bivariate(&divisor, &quotient);
 
-        assert_eq!(divide_bivariate_exact(&dividend, &divisor), Some(quotient));
+        assert_eq!(
+            divide_bivariate_polynomial_exact(&dividend, &divisor),
+            Some(quotient.clone())
+        );
         assert!(
-            divide_bivariate_exact(
+            divide_bivariate_polynomial_exact(
                 &dividend,
                 &BivariatePolynomial::new(vec![vec![real(1), real(1)], vec![real(1)],])
             )
             .is_none()
+        );
+
+        let zero = BivariatePolynomial::new(vec![vec![real(0)]]);
+        assert_eq!(
+            divide_bivariate_polynomial_exact(&zero, &divisor),
+            Some(zero.clone())
+        );
+        assert!(divide_bivariate_polynomial_exact(&dividend, &zero).is_none());
+
+        let alpha = real(2).sqrt().unwrap();
+        let nonrational_divisor =
+            BivariatePolynomial::new(vec![vec![alpha.clone(), real(1)], vec![real(1)]]);
+        let nonrational_dividend = multiply_bivariate(&nonrational_divisor, &quotient);
+        assert_bivariate_exactly_equal(
+            &divide_bivariate_polynomial_exact(&nonrational_dividend, &nonrational_divisor)
+                .expect("the exact Real divisor must replay"),
+            &quotient,
         );
     }
 
@@ -4039,7 +4066,10 @@ mod tests {
             let quotient = polynomial(quotient_coefficients);
             let dividend = multiply_bivariate(&divisor, &quotient);
 
-            prop_assert_eq!(divide_bivariate_exact(&dividend, &divisor), Some(quotient));
+            prop_assert_eq!(
+                divide_bivariate_polynomial_exact(&dividend, &divisor),
+                Some(quotient)
+            );
         }
 
         #[test]
@@ -4070,7 +4100,7 @@ mod tests {
             }
             perturbed.coefficients[0][0] += real(1);
 
-            prop_assert!(divide_bivariate_exact(&perturbed, &divisor).is_none());
+            prop_assert!(divide_bivariate_polynomial_exact(&perturbed, &divisor).is_none());
         }
 
         #[test]

@@ -151,7 +151,7 @@ pub use curve_resultant::{
     CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
     CurveIntersectionResultantReport, CurveIntersectionResultantSample,
     CurveIntersectionResultantStatus, CurveResultantParameter, PolynomialParametricCurve2,
-    extract_bivariate_polynomial_system_axis_factors,
+    divide_bivariate_polynomial_exact, extract_bivariate_polynomial_system_axis_factors,
     linear_parameter_lifts_bivariate_polynomial_system,
     parameter_component_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
     resultant_parametric_curve_intersection, resultant_rational_parametric_curve_intersection,
