@@ -1599,9 +1599,10 @@ impl BezierParallel2 {
     /// exact closed-domain, critical-point, cell-orientation, singular-incidence,
     /// and selected-branch certification. Axis-wide and boundary-coincident
     /// factors are replayed as point-image parameter components rather than
-    /// false curve overlaps. Both authored residual equations remain in the
-    /// same recursive engine. Unsupported coefficient towers and other
-    /// positive-dimensional derivative sharing remain explicit
+    /// false curve overlaps; exactly extractable repeated implicit factors are
+    /// reduced to one square-free geometric support. Both authored residual
+    /// equations remain in the same recursive engine. Unsupported coefficient
+    /// towers remain explicit
     /// [`BezierParallelIntersectionSet2::incomplete_candidates`] evidence; no
     /// projected root is promoted without exact replay.
     pub fn intersections(
@@ -5031,9 +5032,97 @@ fn parameter_component_system(
 /// Projection folds, transverse domain crossings, isolated boundary touches,
 /// and isolated singular vertices are accepted. The parent intersection engine
 /// replays axis-wide and boundary-coincident components against constant-image
-/// geometry; other positive-dimensional derivative sharing remains an explicit
-/// boundary here.
+/// geometry. When ordinary certification exposes derivative sharing, the same
+/// engine retries after Hypersolve exactly removes component multiplicity.
 fn certify_regular_implicit_parameter_component(
+    component: &BivariatePolynomial,
+    branch: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    policy: &CurveContext,
+    config: CurveIntersectionResultantConfig,
+) -> CurveResult<Classification<Option<ParameterComponentEvidence2>>> {
+    let initial = certify_implicit_parameter_component_once(
+        component,
+        branch,
+        retained_parameter,
+        policy,
+        config,
+    )?;
+    if matches!(initial, Classification::Decided(Some(_))) {
+        return Ok(initial);
+    }
+
+    let Some(reduced) =
+        reduce_implicit_parameter_component_multiplicity(component, retained_parameter, config)
+    else {
+        return Ok(initial);
+    };
+    if reduced == *component {
+        return Ok(initial);
+    }
+    certify_implicit_parameter_component_once(&reduced, branch, retained_parameter, policy, config)
+}
+
+/// Removes every exactly extractable repeated factor before topology replay.
+///
+/// For a primitive characteristic-zero component `H`, a repeated geometric
+/// factor divides both `H` and its derivative in the lifted parameter. The
+/// Hypersolve component extractor remains the algebraic authority: each exact
+/// report supplies `H / gcd_factor` as its first residual equation. Repeating
+/// only while that exact division lowers the bidegree yields the geometric
+/// square-free support without copying multiplicity into overlap topology.
+#[cold]
+#[inline(never)]
+fn reduce_implicit_parameter_component_multiplicity(
+    component: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> Option<BivariatePolynomial> {
+    let differentiated_parameter = match retained_parameter {
+        CurveResultantParameter::First => CurveResultantParameter::Second,
+        CurveResultantParameter::Second => CurveResultantParameter::First,
+    };
+    let mut reduced = component.clone();
+    loop {
+        let derivative = bivariate_parameter_derivative(&reduced, differentiated_parameter);
+        let report = parameter_component_bivariate_polynomial_system(
+            &reduced,
+            &derivative,
+            retained_parameter,
+            config,
+        );
+        if !matches!(
+            report.status,
+            BivariatePolynomialComponentStatus::Rational
+                | BivariatePolynomialComponentStatus::Implicit
+        ) {
+            return Some(reduced);
+        }
+        let [next, _] = report.reduced_equations?;
+        if bivariate_storage_bidegree_sum(&next) >= bivariate_storage_bidegree_sum(&reduced) {
+            return None;
+        }
+        reduced = next;
+    }
+}
+
+fn bivariate_storage_bidegree_sum(polynomial: &BivariatePolynomial) -> usize {
+    polynomial
+        .coefficients
+        .len()
+        .saturating_sub(1)
+        .saturating_add(
+            polynomial
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .max()
+                .unwrap_or_default()
+                .saturating_sub(1),
+        )
+}
+
+fn certify_implicit_parameter_component_once(
     component: &BivariatePolynomial,
     branch: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
@@ -10063,6 +10152,67 @@ mod conversion_tests {
     }
 
     #[test]
+    fn repeated_implicit_cusp_retains_one_square_free_branch_set() {
+        // Squaring the cusp equation changes algebraic multiplicity, not its
+        // parameter topology. The same singular-cell engine must emit the two
+        // geometric half-branches once under either policy.
+        let cusp = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(3_i8) / Real::from(8_i8)).unwrap(),
+                Real::from(-1_i8),
+                Real::one(),
+            ],
+            vec![(Real::from(-3_i8) / Real::from(4_i8)).unwrap()],
+            vec![(Real::from(3_i8) / Real::from(2_i8)).unwrap()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let repeated = bivariate_multiply(&cusp, &cusp);
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let initial = certify_implicit_parameter_component_once(
+                &repeated,
+                &branch,
+                CurveResultantParameter::First,
+                &policy,
+                config,
+            )
+            .unwrap();
+            assert!(matches!(
+                initial,
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+            let Classification::Decided(Some(evidence)) =
+                certify_regular_implicit_parameter_component(
+                    &repeated,
+                    &branch,
+                    CurveResultantParameter::First,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("the repeated cusp was not reduced to geometric support");
+            };
+            assert!(evidence.isolated_pairs.is_empty());
+            let [descending, ascending] = evidence.overlaps.as_ref() else {
+                panic!("cusp multiplicity must not duplicate either branch");
+            };
+            for overlap in [descending, ascending] {
+                assert_eq!(
+                    overlap.first_range().exact_endpoints(),
+                    Some((&half, &Real::one()))
+                );
+            }
+        }
+    }
+
+    #[test]
     fn implicit_parameter_cells_clip_a_cusp_on_the_domain_corner() {
         // H(t,u)=u^2-t^3 has two real cusp half-branches, but the square
         // retains only u=t^(3/2). The singular corner therefore has one
@@ -10471,6 +10621,132 @@ mod conversion_tests {
             assert_eq!(
                 overlap.second_range().exact_endpoints(),
                 Some((&three_quarters, &Real::one()))
+            );
+        }
+    }
+
+    #[test]
+    fn repeated_implicit_component_multiplicity_is_not_topology() {
+        // H=16u^2-8u-3-2t-3t^2 has one unit-square branch. Both equations
+        // carry H^2, so the generic common fiber is non-square-free; the
+        // geometric branch must be transported once while the residual
+        // isolated pair remains available to the ordinary resultant replay.
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::from(-3_i8), Real::from(-8_i8), Real::from(16_i8)],
+            vec![Real::from(-2_i8)],
+            vec![Real::from(-3_i8)],
+        ]);
+        let repeated = bivariate_multiply(&component, &component);
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let equations = [
+            bivariate_multiply(
+                &repeated,
+                &BivariatePolynomial::new(vec![vec![-quarter.clone()], vec![Real::one()]]),
+            ),
+            bivariate_multiply(
+                &repeated,
+                &BivariatePolynomial::new(vec![vec![-three_quarters.clone(), Real::one()]]),
+            ),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("the repeated implicit component was not square-freed");
+            };
+            let [overlap] = system.overlaps.as_ref() else {
+                panic!("geometric multiplicity must not duplicate the overlap");
+            };
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&Real::zero(), &Real::one()))
+            );
+            assert_eq!(
+                overlap.second_range().exact_endpoints(),
+                Some((&three_quarters, &Real::one()))
+            );
+            let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters,
+                other_parameters,
+            }) = project_parallel_intersection_system(
+                &system.residual_equations[0],
+                &system.residual_equations[1],
+                &policy,
+            )
+            .unwrap()
+            else {
+                panic!("the isolated residual pair was lost with component multiplicity");
+            };
+            assert_eq!(
+                parallel_parameters,
+                vec![BezierParameter2::Exact(quarter.clone())]
+            );
+            assert_eq!(
+                other_parameters,
+                vec![BezierParameter2::Exact(three_quarters.clone())]
+            );
+        }
+    }
+
+    #[test]
+    fn implicit_component_reduction_removes_mixed_factor_multiplicities() {
+        // H=(u^2-t)^2 (u+t+1)^3 has square-free support
+        // (u^2-t)(u+t+1). One exact Hypersolve common-factor division may
+        // remove the complete derivative GCD; the loop also permits smaller
+        // rational factors and therefore cannot depend on that optimization.
+        let quadratic = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let linear =
+            BivariatePolynomial::new(vec![vec![Real::one(), Real::one()], vec![Real::one()]]);
+        let quadratic_squared = bivariate_multiply(&quadratic, &quadratic);
+        let linear_squared = bivariate_multiply(&linear, &linear);
+        let repeated = bivariate_multiply(
+            &quadratic_squared,
+            &bivariate_multiply(&linear_squared, &linear),
+        );
+        let expected = bivariate_multiply(&quadratic, &linear);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        let is_zero = |polynomial: &BivariatePolynomial| {
+            polynomial.coefficients.iter().flatten().all(|coefficient| {
+                matches!(
+                    real_sign(coefficient, &CurveContext::STRICT),
+                    Some(RealSign::Zero)
+                )
+            })
+        };
+        for retained_parameter in [
+            CurveResultantParameter::First,
+            CurveResultantParameter::Second,
+        ] {
+            let reduced = reduce_implicit_parameter_component_multiplicity(
+                &repeated,
+                retained_parameter,
+                config,
+            )
+            .expect("mixed multiplicities must have exact square-free support");
+            let scale = reduced.coefficients[0][2].clone();
+            assert!(
+                matches!(
+                    real_sign(&scale, &CurveContext::STRICT),
+                    Some(RealSign::Positive | RealSign::Negative)
+                ) && is_zero(&bivariate_subtract(
+                    &reduced,
+                    &bivariate_scale(expected.clone(), &scale),
+                )),
+                "{retained_parameter:?}: {reduced:?}"
             );
         }
     }
