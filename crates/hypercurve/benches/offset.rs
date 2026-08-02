@@ -3,10 +3,10 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelIntersectionCandidates2,
-    BezierParallelVerificationOptions, BulgeVertex2, CircularArc2, Classification, Contour2,
-    CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole, CurveResult,
-    CurveString2, FillRule, LineSeg2, OffsetCap, Point2, QuadraticBezier2, RationalBezier2, Real,
-    Segment2, Similarity2,
+    BezierParallelPairIntersectionCandidates2, BezierParallelVerificationOptions, BulgeVertex2,
+    CircularArc2, Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2,
+    CurveRegion2, CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2, OffsetCap,
+    Point2, QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -521,6 +521,103 @@ fn bench_bezier_parallel_intersections(
     Ok(())
 }
 
+fn bench_bezier_parallel_pair_intersections(
+    name: &str,
+    first: &hypercurve::BezierParallel2,
+    second: &hypercurve::BezierParallel2,
+    iterations: u32,
+) -> CurveResult<()> {
+    let policy = CurveContext::STRICT;
+    let started = Instant::now();
+    let mut candidate_count = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(candidates) =
+            first.parallel_intersection_candidates(black_box(second), black_box(&policy))?
+        else {
+            panic!("{name} candidate projection became uncertain");
+        };
+        candidate_count += black_box(match candidates {
+            BezierParallelPairIntersectionCandidates2::NoIntersection => 0,
+            BezierParallelPairIntersectionCandidates2::Candidates {
+                first_parameters,
+                second_parameters,
+            } => first_parameters.len() + second_parameters.len(),
+            BezierParallelPairIntersectionCandidates2::DegenerateResultant => 1,
+        });
+    }
+    let candidate_elapsed = started.elapsed();
+    println!(
+        "{name}_candidates: {iterations} iterations in {candidate_elapsed:?} ({:?}/iter), checksum={candidate_count}",
+        candidate_elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut contact_count = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(contacts) =
+            first.parallel_intersections(black_box(second), black_box(&policy))?
+        else {
+            panic!("{name} contact replay became uncertain");
+        };
+        contact_count += black_box(
+            contacts.contacts().len()
+                + contacts.overlaps().len()
+                + usize::from(!contacts.is_complete()),
+        );
+    }
+    let contact_elapsed = started.elapsed();
+    println!(
+        "{name}_contacts: {iterations} iterations in {contact_elapsed:?} ({:?}/iter), checksum={contact_count}",
+        contact_elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_bezier_parallel_pair_general_contact() -> CurveResult<()> {
+    let general_first = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1)).parallel_left(s(1))?;
+    let general_second = QuadraticBezier2::new(p(1, 1), p(1, 2), p(2, 3)).parallel_left(s(1))?;
+    bench_bezier_parallel_pair_intersections(
+        "bezier_parallel_pair_general_contact",
+        &general_first,
+        &general_second,
+        100,
+    )
+}
+
+fn bench_bezier_parallel_pair_intersection_lanes() -> CurveResult<()> {
+    bench_bezier_parallel_pair_general_contact()?;
+
+    let shared_source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1));
+    let subcurve =
+        shared_source.subcurve_between_exact(&q(1, 4), &q(3, 4), &CurveContext::STRICT)?;
+    let shared_first = shared_source.parallel_left(s(1))?;
+    let shared_partial = subcurve.parallel_left(s(1))?;
+    bench_bezier_parallel_pair_intersections(
+        "bezier_parallel_pair_partial_overlap",
+        &shared_first,
+        &shared_partial,
+        100,
+    )?;
+    let shared_unequal = shared_source.parallel_left(s(2))?;
+    bench_bezier_parallel_pair_intersections(
+        "bezier_parallel_pair_false_source_component",
+        &shared_first,
+        &shared_unequal,
+        25,
+    )?;
+
+    let residual_source = CubicBezier2::new(p(0, 0), p(1, 2), p(2, -2), p(3, 0));
+    let residual_first = residual_source.parallel_left(s(1))?;
+    let residual_second = residual_source.parallel_left(s(2))?;
+    bench_bezier_parallel_pair_intersections(
+        "bezier_parallel_pair_residual_algebraic_contact",
+        &residual_first,
+        &residual_second,
+        3,
+    )?;
+    Ok(())
+}
+
 fn rationalized_parabola_parallel_target() -> CurveResult<RationalBezier2> {
     RationalBezier2::try_new(
         vec![
@@ -951,6 +1048,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 bench_exact_ph_offset_construction(1_000)?;
             }
             "bezier-intersection" => bench_bezier_parallel_intersection_lanes()?,
+            "bezier-pair-general" => bench_bezier_parallel_pair_general_contact()?,
+            "bezier-pair-intersection" => bench_bezier_parallel_pair_intersection_lanes()?,
             _ => panic!("unknown HYPERCURVE_OFFSET_BENCH_GROUP={group:?}"),
         }
         return Ok(());

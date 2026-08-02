@@ -41,10 +41,12 @@ fn decided_parallel_set(
 fn decided_parallel_pair_set(
     result: Classification<BezierParallelPairIntersectionSet2>,
 ) -> BezierParallelPairIntersectionSet2 {
-    let Classification::Decided(result) = result else {
-        panic!("parallel/parallel intersections remained uncertain");
-    };
-    result
+    match result {
+        Classification::Decided(result) => result,
+        Classification::Uncertain(reason) => {
+            panic!("parallel/parallel intersections remained uncertain: {reason:?}")
+        }
+    }
 }
 
 fn pair_has_exact_parameters(
@@ -1412,6 +1414,115 @@ fn parallel_pair_structural_overlap_preserves_relative_orientation() {
 }
 
 #[test]
+fn parallel_pair_certifies_partial_source_overlap_and_reparameterization() {
+    let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1));
+    let subcurve = source
+        .subcurve_between_exact(&q(1, 4), &q(3, 4), &CurveContext::STRICT)
+        .unwrap();
+    let first = source.parallel_left(r(1)).unwrap();
+    let same = subcurve.parallel_left(r(1)).unwrap();
+    let reversed_source = QuadraticBezier2::new(
+        subcurve.end().clone(),
+        subcurve.control().clone(),
+        subcurve.start().clone(),
+    );
+    let reversed = reversed_source.parallel_left(r(-1)).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for (second, orientation, second_start, second_end) in [
+            (&same, RationalBezierOverlapOrientation2::Same, r(0), r(1)),
+            (
+                &reversed,
+                RationalBezierOverlapOrientation2::Reversed,
+                r(1),
+                r(0),
+            ),
+        ] {
+            assert_eq!(
+                first
+                    .parallel_intersection_candidates(second, &policy)
+                    .unwrap(),
+                Classification::Decided(
+                    BezierParallelPairIntersectionCandidates2::DegenerateResultant
+                )
+            );
+            let intersections =
+                decided_parallel_pair_set(first.parallel_intersections(second, &policy).unwrap());
+            assert!(intersections.is_complete(), "{intersections:?}");
+            assert!(intersections.contacts().is_empty());
+            let [overlap] = intersections.overlaps() else {
+                panic!("partial parallel overlap was not retained exactly");
+            };
+            assert_eq!(overlap.orientation(), orientation);
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&q(1, 4), &q(3, 4)))
+            );
+            assert_eq!(
+                overlap.second_range().exact_endpoints(),
+                Some((&second_start, &second_end))
+            );
+            assert!(overlap.includes_start());
+            assert!(overlap.includes_end());
+        }
+    }
+}
+
+#[test]
+fn parallel_pair_removes_a_false_same_source_component() {
+    let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1));
+    let first = source.parallel_left(q(1, 2)).unwrap();
+    let unequal = source.parallel_left(r(1)).unwrap();
+    let opposite_branch = source.parallel_left(q(-1, 2)).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for second in [&unequal, &opposite_branch] {
+            assert_eq!(
+                first
+                    .parallel_intersection_candidates(second, &policy)
+                    .unwrap(),
+                Classification::Decided(
+                    BezierParallelPairIntersectionCandidates2::DegenerateResultant
+                )
+            );
+            let intersections =
+                decided_parallel_pair_set(first.parallel_intersections(second, &policy).unwrap());
+            assert!(intersections.is_complete(), "{intersections:?}");
+            assert!(intersections.is_empty(), "{intersections:?}");
+        }
+    }
+}
+
+#[test]
+fn parallel_pair_component_saturation_retains_residual_isolated_contact() {
+    let source = CubicBezier2::new(p(0, 0), p(1, 2), p(2, -2), p(3, 0));
+    let first = source.parallel_left(r(1)).unwrap();
+    let second = source.parallel_left(r(2)).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            first
+                .parallel_intersection_candidates(&second, &policy)
+                .unwrap(),
+            Classification::Decided(BezierParallelPairIntersectionCandidates2::DegenerateResultant)
+        );
+        let intersections =
+            decided_parallel_pair_set(first.parallel_intersections(&second, &policy).unwrap());
+        assert!(intersections.is_complete(), "{intersections:?}");
+        assert!(intersections.overlaps().is_empty());
+        assert_eq!(intersections.contacts().len(), 1, "{intersections:?}");
+        assert!(matches!(
+            intersections.contacts()[0].first_parameter(),
+            BezierParameter2::Algebraic(_)
+        ));
+        assert!(matches!(
+            intersections.contacts()[0].second_parameter(),
+            BezierParameter2::Algebraic(_)
+        ));
+    }
+}
+
+#[test]
 fn parallel_pair_rational_delegate_preserves_operand_parameter_order() {
     let rational_first = QuadraticBezier2::new(p(0, 1), p(0, 2), p(1, 3))
         .parallel_left(r(0))
@@ -1973,7 +2084,7 @@ fn parallel_rational_lift_pairs_multiple_algebraic_projections_without_cross_pro
 
 #[cfg(feature = "predicates")]
 #[test]
-fn parallel_rational_contacts_replay_selected_branch_through_algebraic_lift() {
+fn parallel_rational_contacts_replay_selected_branch_at_a_coupled_algebraic_pair() {
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
     let parallel = source.parallel_left(r(1)).unwrap();
     let target = RationalBezier2::try_new(vec![p(-1, 1), p(1, 1)], vec![r(1), r(1)]).unwrap();

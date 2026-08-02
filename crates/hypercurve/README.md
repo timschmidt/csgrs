@@ -161,8 +161,10 @@ exact signatures.
   transform_similarity, point_incidence, supporting_line_incidence,
   intersections, parallel_intersection_candidates, parallel_intersections}`
   is the compact exact procedural parallel carrier. General parallel pairs use
-  complete polynomial projections, exact three-relation replay, selected
-  normal and tangent-degeneracy predicates, and exact isolating-box rejection;
+  complete polynomial projections, exact common-component saturation,
+  selected normal and tangent-degeneracy predicates, refined tensor-Bernstein
+  rejection, and preconditioned Poincare-Miranda box replay. Exact source
+  overlap transport handles partial and reversed reparameterizations;
   materializable and structural overlap lanes remain cheaper. Its
   `BezierParallelSource2` plus signed distance is the lossless structural
   export boundary.

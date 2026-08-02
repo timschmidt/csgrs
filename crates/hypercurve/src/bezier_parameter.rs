@@ -765,7 +765,6 @@ impl BezierAlgebraicParameter2 {
         parameter
     }
 
-    #[cfg(feature = "predicates")]
     fn with_certified_interval(&self, interval: BezierParameterInterval) -> Self {
         Self {
             data: Arc::new(BezierAlgebraicParameterData {
@@ -1442,7 +1441,6 @@ impl BezierParameter2 {
         )))
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn refined_isolating_interval(
         self,
         max_refinement_steps: usize,
@@ -1482,15 +1480,6 @@ impl BezierParameter2 {
                 Self::Algebraic(algebraic.with_certified_interval(interval))
             }
         }
-    }
-
-    #[cfg(not(feature = "predicates"))]
-    pub(crate) fn refined_isolating_interval(
-        self,
-        _max_refinement_steps: usize,
-        _policy: &CurveContext,
-    ) -> Self {
-        self
     }
 
     /// Compares parameters when exact values or nonoverlapping isolating intervals prove the order.
@@ -1692,7 +1681,6 @@ impl<'a> BezierParameterRefinement2<'a> {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn refine_algebraic_sign_change(
     algebraic: &BezierAlgebraicParameter2,
     max_refinement_steps: usize,
@@ -4062,7 +4050,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn progressive_refinement_matches_one_pass_proof_budget() {
         let policy = CurveContext::STRICT;
