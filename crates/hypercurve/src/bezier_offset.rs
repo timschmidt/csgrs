@@ -3026,7 +3026,9 @@ impl BezierParallel2 {
     /// `None` certifies that the supplied algebraic parameter is not a regular
     /// cusp on the selected signed-curvature branch. Predicate uncertainty is
     /// preserved separately in [`Classification`].
-    pub fn algebraic_parallel_cusp_point_image(
+    // Kept internal until the complete algebraic join carrier consumes it.
+    #[allow(dead_code)]
+    pub(crate) fn algebraic_parallel_cusp_point_image(
         &self,
         parameter: &BezierAlgebraicParameter2,
         image_distance: &Real,

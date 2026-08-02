@@ -285,6 +285,8 @@ impl RationalBezierAlgebraicPointImage2 {
         }
     }
 
+    // Consumed by the algebraic cusp carrier in the next offset tranche.
+    #[allow(dead_code)]
     pub(crate) fn from_retained_expression(
         parameter: BezierAlgebraicParameter2,
         parameter_root: AlgebraicRootRepresentation,
