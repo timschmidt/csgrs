@@ -6,7 +6,7 @@ use hypercurve::{
     BezierParallelVerificationOptions, BulgeVertex2, CircularArc2, Classification, Contour2,
     CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole, CurveResult,
     CurveString2, FillRule, LineSeg2, OffsetCap, Point2, QuadraticBezier2, RationalBezier2, Real,
-    Segment2,
+    Segment2, Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -387,6 +387,37 @@ fn bench_exact_bezier_parallel_construction(iterations: u32) -> CurveResult<()> 
     println!(
         "bezier_parallel_exact_construct: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_exact_bezier_parallel_similarity(iterations: u32) -> CurveResult<()> {
+    let transform = Similarity2::try_from_real_affine(s(0), s(-2), s(2), s(0), s(5), s(-7))?;
+    let carriers = [
+        QuadraticBezier2::new(p(0, 0), p(1, 2), p(3, 1)).parallel_left(q(1, 2))?,
+        CubicBezier2::new(p(0, 0), p(1, 2), p(3, -1), p(4, 0)).parallel_left(q(1, 10))?,
+        RationalBezier2::try_new(
+            vec![p(0, 0), p(1, 2), p(3, -1), p(4, 0)],
+            vec![s(2), s(3), s(3), s(2)],
+        )?
+        .parallel_left(q(2, 5))?,
+    ];
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..iterations {
+        for carrier in &carriers {
+            let transformed = black_box(carrier.transform_similarity(black_box(&transform))?);
+            checksum += black_box(
+                transformed.source_degree()
+                    + usize::from(transformed.distance().to_f64_lossy().is_some()),
+            );
+        }
+    }
+    let elapsed = started.elapsed();
+    let transformations = iterations * carriers.len() as u32;
+    println!(
+        "bezier_parallel_exact_similarity: {transformations} transformations in {elapsed:?} ({:?}/transform), checksum={checksum}",
+        elapsed / transformations
     );
     Ok(())
 }
@@ -913,6 +944,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "bezier-construct" => bench_exact_bezier_parallel_construction(100_000)?,
             "bezier-eval" => bench_exact_bezier_parallel_evaluation(10_000)?,
             "bezier-ph" => bench_exact_ph_offset_construction(1_000)?,
+            "bezier-transform" => bench_exact_bezier_parallel_similarity(10_000)?,
             "bezier-carrier" => {
                 bench_exact_bezier_parallel_construction(100_000)?;
                 bench_exact_bezier_parallel_evaluation(10_000)?;
