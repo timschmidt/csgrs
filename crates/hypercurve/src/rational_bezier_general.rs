@@ -4,6 +4,8 @@ use std::cmp::Ordering;
 use std::sync::Arc;
 use std::sync::{Mutex, OnceLock};
 
+#[cfg(feature = "predicates")]
+use hyperreal::Rational as HyperRational;
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 #[cfg(feature = "predicates")]
 use hypersolve::{
@@ -28,6 +30,7 @@ use crate::bezier_algebraic_image::{
 use crate::bezier_parameter::{BezierParameterRefinement2, bernstein_to_power_coefficients};
 use crate::bezier_topology::{
     exact_line_contact_relation_from_bernstein_distances,
+    exact_quadratic_line_contact_relation_with_certified_crossing,
     polynomial_roots_in_unit_interval_with_endpoints,
 };
 use crate::classify::{
@@ -44,6 +47,8 @@ use crate::{
     ParamRange, Point2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalQuadraticBezier2, UncertaintyReason,
 };
+#[cfg(feature = "predicates")]
+use crate::{BezierAlgebraicParameter2, BezierParameterInterval};
 
 /// Exact planar rational Bezier curve with an arbitrary positive degree.
 ///
@@ -1187,6 +1192,16 @@ impl RationalBezier2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        if point == self.start() {
+            return Ok(Classification::Decided(vec![BezierParameter2::Exact(
+                Real::zero(),
+            )]));
+        }
+        if point == self.end() {
+            return Ok(Classification::Decided(vec![BezierParameter2::Exact(
+                Real::one(),
+            )]));
+        }
         if let Classification::Decided(bounds) = self.certified_bounds_classified(policy)
             && matches!(
                 bounds.contains_point(point, policy),
@@ -1927,8 +1942,29 @@ impl RationalBezier2 {
         line: &LineSeg2,
         policy: &CurveContext,
     ) -> Classification<BezierLineContactRelation> {
-        if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
-            return Classification::Uncertain(reason);
+        let weight_sign = match self.common_weight_sign(policy) {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let control_sides = self
+            .control_points()
+            .iter()
+            .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
+            .collect::<Vec<_>>();
+        for side in [LineSide::Left, LineSide::Right] {
+            if control_sides.iter().all(
+                |candidate| matches!(candidate, Classification::Decided(value) if *value == side),
+            ) {
+                return Classification::Decided(BezierLineContactRelation::ControlHullDisjoint {
+                    side,
+                });
+            }
+        }
+        if control_sides
+            .iter()
+            .all(|side| matches!(side, Classification::Decided(LineSide::On)))
+        {
+            return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
         }
         if self.degree() == 2
             && let Some(circle) = self.data.lineage.root.circular_conic.get()
@@ -2063,32 +2099,65 @@ impl RationalBezier2 {
                 {
                     Real::zero()
                 } else {
-                    orient2_real_expr(line.start(), line.end(), point) * weight
+                    let normalized_weight = if weight_sign == RealSign::Negative {
+                        -weight.clone()
+                    } else {
+                        weight.clone()
+                    };
+                    orient2_real_expr(line.start(), line.end(), point) * normalized_weight
                 }
             })
             .collect::<Vec<_>>();
-        let sides = self
-            .control_points()
-            .iter()
-            .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
-            .collect::<Vec<_>>();
-        if sides
-            .iter()
-            .all(|side| matches!(side, Classification::Decided(LineSide::On)))
-        {
-            return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
-        }
-        for side in [LineSide::Left, LineSide::Right] {
-            if sides.iter().all(
-                |candidate| matches!(candidate, Classification::Decided(value) if *value == side),
-            ) {
-                return Classification::Decided(BezierLineContactRelation::ControlHullDisjoint {
-                    side,
-                });
-            }
-        }
 
         exact_line_contact_relation_from_bernstein_distances(weighted_distances, policy)
+    }
+
+    pub(crate) fn relation_to_line_with_certified_crossing(
+        &self,
+        line: &LineSeg2,
+        parameter: &Real,
+        crossing_direction: BezierLineCrossingDirection,
+        policy: &CurveContext,
+    ) -> Classification<BezierLineContactRelation> {
+        if self.degree() != 2 || self.retained_circular_conic().is_none() {
+            return self.relation_to_line_with_contacts(line, policy);
+        }
+        let weight_sign = match self.common_weight_sign(policy) {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let weighted_distances = self
+            .control_points()
+            .iter()
+            .enumerate()
+            .zip(self.weights())
+            .map(|((index, point), weight)| {
+                if (index == 0 || index + 1 == self.control_points().len())
+                    && (point == line.start()
+                        || point == line.end()
+                        || is_zero(&point.distance_squared(line.start()), policy) == Some(true)
+                        || is_zero(&point.distance_squared(line.end()), policy) == Some(true))
+                {
+                    Real::zero()
+                } else {
+                    let normalized_weight = if weight_sign == RealSign::Negative {
+                        -weight.clone()
+                    } else {
+                        weight.clone()
+                    };
+                    orient2_real_expr(line.start(), line.end(), point) * normalized_weight
+                }
+            })
+            .collect::<Vec<_>>();
+        let Ok(distances) = <Vec<Real> as TryInto<[Real; 3]>>::try_into(weighted_distances) else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        exact_quadratic_line_contact_relation_with_certified_crossing(
+            distances,
+            parameter,
+            crossing_direction,
+            policy,
+        )
     }
 
     /// Returns complete exact point-incidence parameter evidence.
@@ -5087,6 +5156,101 @@ impl RationalBezier2 {
         injective
     }
 
+    pub(crate) fn derivative_is_certified_nonzero_at(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        if in_closed_unit_interval(parameter, policy) != Some(true) {
+            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        }
+        if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let mut uncertainty = None;
+        for axis in [Axis2::X, Axis2::Y] {
+            match self.axis_derivative_is_certified_nonzero_at(axis, parameter, policy)? {
+                Classification::Decided(true) => return Ok(Classification::Decided(true)),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    uncertainty.get_or_insert(reason);
+                }
+            }
+        }
+        Ok(uncertainty.map_or(Classification::Decided(false), Classification::Uncertain))
+    }
+
+    fn axis_derivative_is_certified_nonzero_at(
+        &self,
+        axis: Axis2,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let Some(coefficients) = self.axis_derivative_numerator_bernstein(axis) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let mut positive = false;
+        let mut negative = false;
+        let mut coefficients_decided = true;
+        for coefficient in coefficients {
+            match real_sign(coefficient, policy) {
+                Some(RealSign::Positive) => positive = true,
+                Some(RealSign::Negative) => negative = true,
+                Some(RealSign::Zero) => {}
+                None => coefficients_decided = false,
+            }
+        }
+        if coefficients_decided && positive != negative {
+            let at_start = compare_reals(parameter, &Real::zero(), policy);
+            let at_end = compare_reals(parameter, &Real::one(), policy);
+            if at_start == Some(Ordering::Equal) {
+                return Ok(Classification::Decided(
+                    real_sign(&coefficients[0], policy) != Some(RealSign::Zero),
+                ));
+            }
+            if at_end == Some(Ordering::Equal) {
+                return Ok(Classification::Decided(
+                    real_sign(
+                        coefficients
+                            .last()
+                            .expect("a rational derivative has Bernstein coefficients"),
+                        policy,
+                    ) != Some(RealSign::Zero),
+                ));
+            }
+            if matches!(at_start, Some(Ordering::Greater)) && matches!(at_end, Some(Ordering::Less))
+            {
+                return Ok(Classification::Decided(true));
+            }
+            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        }
+        if coefficients_decided && !positive && !negative {
+            return Ok(Classification::Decided(false));
+        }
+        let polynomial = match BezierParameterPolynomial::try_new_bernstein_basis(
+            coefficients.to_vec(),
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let roots = match polynomial.isolate_unit_interval_roots(policy)? {
+            Classification::Decided(roots) => roots,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let parameter = BezierParameter2::Exact(parameter.clone());
+        for root in roots {
+            match parameter.same_value(&root, policy)? {
+                Classification::Decided(true) => return Ok(Classification::Decided(false)),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(true))
+    }
+
     pub(crate) fn has_certified_injective_axis_on(
         &self,
         axis: Axis2,
@@ -6525,12 +6689,44 @@ fn rational_map_image_polynomial(
 }
 
 #[cfg(feature = "predicates")]
+fn quotient_ring_rational_map_image_coefficients(
+    source: &[Real],
+    numerator: &[Real],
+    denominator: &[Real],
+) -> Option<Vec<Real>> {
+    let matrices = quotient_ring_rational_map_matrices(source, numerator, denominator)?;
+    determinant_linear_power_polynomial(&matrices.numerator, &matrices.denominator, matrices.degree)
+}
+
+#[cfg(feature = "predicates")]
 fn quotient_ring_rational_map_image_polynomial(
     source: &[Real],
     numerator: &[Real],
     denominator: &[Real],
     policy: &CurveContext,
 ) -> Option<Vec<Real>> {
+    match trim_power_polynomial(
+        quotient_ring_rational_map_image_coefficients(source, numerator, denominator)?,
+        policy,
+    ) {
+        Classification::Decided(polynomial) => Some(polynomial),
+        Classification::Uncertain(_) => None,
+    }
+}
+
+#[cfg(feature = "predicates")]
+struct QuotientRingRationalMapMatrices {
+    degree: usize,
+    numerator: Vec<Real>,
+    denominator: Vec<Real>,
+}
+
+#[cfg(feature = "predicates")]
+fn quotient_ring_rational_map_matrices(
+    source: &[Real],
+    numerator: &[Real],
+    denominator: &[Real],
+) -> Option<QuotientRingRationalMapMatrices> {
     let degree = source.len().checked_sub(1)?;
     if degree == 0
         || degree > MAX_QUOTIENT_RING_RATIONAL_IMAGE_DEGREE
@@ -6548,6 +6744,23 @@ fn quotient_ring_rational_map_image_polynomial(
         quotient_multiplication_matrix(source, numerator, inverse_leading.as_ref())?;
     let denominator_matrix =
         quotient_multiplication_matrix(source, denominator, inverse_leading.as_ref())?;
+    Some(QuotientRingRationalMapMatrices {
+        degree,
+        numerator: numerator_matrix,
+        denominator: denominator_matrix,
+    })
+}
+
+#[cfg(feature = "predicates")]
+fn determinant_linear_power_polynomial(
+    constants: &[Real],
+    negative_linear_coefficients: &[Real],
+    degree: usize,
+) -> Option<Vec<Real>> {
+    let matrix_entries = degree.checked_mul(degree)?;
+    if constants.len() != matrix_entries || negative_linear_coefficients.len() != matrix_entries {
+        return None;
+    }
     // The determinant of multiplication by n(x) - y*d(x) in R[x]/(source)
     // is its exact norm, hence the required resultant up to one nonzero scale.
     // Subset expansion visits each partial column set once and keeps the matrix
@@ -6573,8 +6786,8 @@ fn quotient_ring_rational_map_image_polynomial(
             let next = partials[mask | column_bit]
                 .get_or_insert_with(|| vec![Real::zero(); partial.len() + 1]);
             for (power, coefficient) in partial.iter().enumerate() {
-                let constant = coefficient * &numerator_matrix[entry_index];
-                let linear = coefficient * &denominator_matrix[entry_index];
+                let constant = coefficient * &constants[entry_index];
+                let linear = coefficient * &negative_linear_coefficients[entry_index];
                 if negative {
                     next[power] -= constant;
                     next[power + 1] += linear;
@@ -6585,10 +6798,170 @@ fn quotient_ring_rational_map_image_polynomial(
             }
         }
     }
-    match trim_power_polynomial(partials.pop()??, policy) {
-        Classification::Decided(polynomial) => Some(polynomial),
-        Classification::Uncertain(_) => None,
+    partials.pop()?
+}
+
+#[cfg(feature = "predicates")]
+#[derive(Clone)]
+struct CertifiedRationalInterval {
+    lower: HyperRational,
+    upper: HyperRational,
+}
+
+#[cfg(feature = "predicates")]
+impl CertifiedRationalInterval {
+    fn zero() -> Self {
+        Self::point(HyperRational::zero())
     }
+
+    fn point(value: HyperRational) -> Self {
+        Self {
+            lower: value.clone(),
+            upper: value,
+        }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self {
+            lower: &self.lower + &other.lower,
+            upper: &self.upper + &other.upper,
+        }
+    }
+
+    fn negated(&self) -> Self {
+        Self {
+            lower: -self.upper.clone(),
+            upper: -self.lower.clone(),
+        }
+    }
+
+    fn subtract(&self, other: &Self) -> Self {
+        self.add(&other.negated())
+    }
+
+    fn multiply(&self, other: &Self) -> Self {
+        let products = [
+            &self.lower * &other.lower,
+            &self.lower * &other.upper,
+            &self.upper * &other.lower,
+            &self.upper * &other.upper,
+        ];
+        let mut lower = products[0].clone();
+        let mut upper = products[0].clone();
+        for product in products.into_iter().skip(1) {
+            if product < lower {
+                lower = product.clone();
+            }
+            if product > upper {
+                upper = product;
+            }
+        }
+        Self { lower, upper }
+    }
+
+    fn sign(&self) -> Option<RealSign> {
+        if self.lower > HyperRational::zero() {
+            Some(RealSign::Positive)
+        } else if self.upper < HyperRational::zero() {
+            Some(RealSign::Negative)
+        } else if self.lower == HyperRational::zero() && self.upper == HyperRational::zero() {
+            Some(RealSign::Zero)
+        } else {
+            None
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn determinant_local_bernstein_signs_from_enclosures(
+    matrices: &QuotientRingRationalMapMatrices,
+    lower: &HyperRational,
+    upper: &HyperRational,
+    precision: i32,
+) -> Option<(Vec<RealSign>, RealSign)> {
+    let enclose = |value: &Real| {
+        value
+            .certified_dyadic_interval(precision)
+            .map(|interval| CertifiedRationalInterval {
+                lower: interval[0].clone(),
+                upper: interval[1].clone(),
+            })
+    };
+    let numerator = matrices
+        .numerator
+        .iter()
+        .map(enclose)
+        .collect::<Option<Vec<_>>>()?;
+    let denominator = matrices
+        .denominator
+        .iter()
+        .map(enclose)
+        .collect::<Option<Vec<_>>>()?;
+    let lower = CertifiedRationalInterval::point(lower.clone());
+    let span = CertifiedRationalInterval::point(upper - &lower.lower);
+    let constants = numerator
+        .iter()
+        .zip(&denominator)
+        .map(|(numerator, denominator)| numerator.subtract(&lower.multiply(denominator)))
+        .collect::<Vec<_>>();
+    let linear = denominator
+        .iter()
+        .map(|coefficient| span.multiply(coefficient))
+        .collect::<Vec<_>>();
+
+    let state_count = 1_usize.checked_shl(u32::try_from(matrices.degree).ok()?)?;
+    let mut partials = vec![None; state_count];
+    partials[0] = Some(vec![CertifiedRationalInterval::point(HyperRational::one())]);
+    for mask in 0..state_count {
+        let row = usize::try_from(mask.count_ones()).ok()?;
+        if row == matrices.degree {
+            continue;
+        }
+        let Some(partial) = partials[mask].take() else {
+            continue;
+        };
+        for column in 0..matrices.degree {
+            let column_bit = 1_usize.checked_shl(u32::try_from(column).ok()?)?;
+            if mask & column_bit != 0 {
+                continue;
+            }
+            let entry_index = row * matrices.degree + column;
+            let negative = (mask >> (column + 1)).count_ones() % 2 != 0;
+            let next = partials[mask | column_bit]
+                .get_or_insert_with(|| vec![CertifiedRationalInterval::zero(); partial.len() + 1]);
+            for (power, coefficient) in partial.iter().enumerate() {
+                let constant = coefficient.multiply(&constants[entry_index]);
+                let linear = coefficient.multiply(&linear[entry_index]);
+                if negative {
+                    next[power] = next[power].subtract(&constant);
+                    next[power + 1] = next[power + 1].add(&linear);
+                } else {
+                    next[power] = next[power].add(&constant);
+                    next[power + 1] = next[power + 1].subtract(&linear);
+                }
+            }
+        }
+    }
+    let power = partials.pop()??;
+    let leading_power_sign = match power.last()?.sign()? {
+        RealSign::Positive => RealSign::Positive,
+        RealSign::Negative => RealSign::Negative,
+        RealSign::Zero => return None,
+    };
+    let mut signs = Vec::with_capacity(matrices.degree + 1);
+    for index in 0..=matrices.degree {
+        let mut coefficient = CertifiedRationalInterval::zero();
+        for (power_index, power_coefficient) in power.iter().enumerate().take(index + 1) {
+            let numerator = checked_binomial(index, power_index)?;
+            let denominator = checked_binomial(matrices.degree, power_index)?;
+            let weight =
+                HyperRational::fraction(i64::try_from(numerator).ok()?, denominator).ok()?;
+            coefficient = coefficient
+                .add(&power_coefficient.multiply(&CertifiedRationalInterval::point(weight)));
+        }
+        signs.push(coefficient.sign()?);
+    }
+    Some((signs, leading_power_sign))
 }
 
 #[cfg(feature = "predicates")]
@@ -6655,6 +7028,150 @@ fn multiply_power_polynomial_by_linear_factor(polynomial: Vec<Real>, constant: R
 }
 
 #[cfg(feature = "predicates")]
+fn locally_certified_rational_image_parameter(
+    source_parameter: &BezierParameter2,
+    source_polynomial: &[Real],
+    numerator: &[Real],
+    denominator: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Option<Classification<Option<BezierParameter2>>>> {
+    let Some(matrices) =
+        quotient_ring_rational_map_matrices(source_polynomial, numerator, denominator)
+    else {
+        return Ok(None);
+    };
+    let mut refinement = BezierParameterRefinement2::new(source_parameter, policy);
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256] {
+        let refined = refinement.refine_to(refinement_steps);
+        let source_interval = match refined.known_interval(policy)? {
+            Classification::Decided(interval) => ExactRealInterval {
+                lower: interval.start().clone(),
+                upper: interval.end().clone(),
+            },
+            Classification::Uncertain(_) => continue,
+        };
+        let Some(image_interval) =
+            evaluate_rational_map_interval(numerator, denominator, &source_interval, policy)
+        else {
+            continue;
+        };
+        if compare_reals(&image_interval.upper, &Real::zero(), policy) == Some(Ordering::Less)
+            || compare_reals(&image_interval.lower, &Real::one(), policy) == Some(Ordering::Greater)
+        {
+            return Ok(Some(Classification::Decided(None)));
+        }
+        if !matches!(
+            compare_reals(&image_interval.lower, &Real::zero(), policy),
+            Some(Ordering::Greater | Ordering::Equal)
+        ) || !matches!(
+            compare_reals(&image_interval.upper, &Real::one(), policy),
+            Some(Ordering::Less | Ordering::Equal)
+        ) || compare_reals(&image_interval.lower, &image_interval.upper, policy)
+            != Some(Ordering::Less)
+        {
+            continue;
+        }
+
+        let enclosure_precision = match refinement_steps {
+            0..=4 => -4,
+            5..=8 => -6,
+            9..=16 => -8,
+            17..=32 => -12,
+            33..=64 => -16,
+            65..=128 => -24,
+            _ => -32,
+        };
+        let Some(lower_enclosure) = image_interval
+            .lower
+            .certified_dyadic_interval(enclosure_precision)
+        else {
+            continue;
+        };
+        let Some(upper_enclosure) = image_interval
+            .upper
+            .certified_dyadic_interval(enclosure_precision)
+        else {
+            continue;
+        };
+        let lower = if lower_enclosure[0] < HyperRational::zero() {
+            HyperRational::zero()
+        } else {
+            lower_enclosure[0].clone()
+        };
+        let upper = if upper_enclosure[1] > HyperRational::one() {
+            HyperRational::one()
+        } else {
+            upper_enclosure[1].clone()
+        };
+        if lower >= upper {
+            continue;
+        }
+
+        // Localize `det(M_N - u M_D)` to the rational target enclosure and
+        // propagate certified dyadic coefficient intervals through the small
+        // determinant. This avoids first materializing a combinatorial `Real`
+        // expression merely to ask for the signs of its Bernstein controls.
+        let Some((signs, _leading_power_sign)) = [-16, -32, -64, -128, -256, -512]
+            .into_iter()
+            .find_map(|precision| {
+                determinant_local_bernstein_signs_from_enclosures(
+                    &matrices, &lower, &upper, precision,
+                )
+            })
+        else {
+            continue;
+        };
+        let first_sign = signs[0];
+        let last_sign = signs[signs.len() - 1];
+        if first_sign == RealSign::Zero || last_sign == RealSign::Zero {
+            continue;
+        }
+        let mut previous = None;
+        let mut variations = 0_usize;
+        for sign in signs {
+            if sign == RealSign::Zero {
+                continue;
+            }
+            if previous.is_some_and(|previous| previous != sign) {
+                variations += 1;
+            }
+            previous = Some(sign);
+        }
+        if variations != 1 {
+            continue;
+        }
+
+        let interval =
+            match BezierParameterInterval::try_new(Real::new(lower), Real::new(upper), policy)? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(_) => continue,
+            };
+        let Some(global_power) = determinant_linear_power_polynomial(
+            &matrices.numerator,
+            &matrices.denominator,
+            matrices.degree,
+        ) else {
+            continue;
+        };
+        let Some(parameter) =
+            BezierAlgebraicParameter2::from_certified_simple_power_basis(global_power, interval)
+        else {
+            continue;
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "conic-rational-image-fallback",
+            "local-bernstein-resultant",
+        );
+        return Ok(Some(Classification::Decided(Some(
+            BezierParameter2::Algebraic(parameter),
+        ))));
+    }
+    Ok(None)
+}
+
+#[cfg(feature = "predicates")]
 fn real_coefficient_rational_image_parameter(
     source_parameter: &BezierParameter2,
     candidate: &ConicParameterCandidate2,
@@ -6680,6 +7197,15 @@ fn real_coefficient_rational_image_parameter(
     let BezierParameter2::Algebraic(source_algebraic) = source_parameter else {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     };
+    if let Some(result) = locally_certified_rational_image_parameter(
+        source_parameter,
+        source_algebraic.polynomial().coefficients(),
+        &candidate.numerator,
+        &candidate.denominator,
+        policy,
+    )? {
+        return Ok(result);
+    }
     let Some(image_polynomial) = candidate.image_polynomial.get_or_init(|| {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
@@ -8853,6 +9379,65 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         assert!(curve.data.homogeneous_power_basis.get().is_none());
+    }
+
+    #[test]
+    fn derivative_nonzero_certificate_respects_a_zero_endpoint_coefficient() {
+        let curve = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::one(), Real::zero()),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+        let policy = CurveContext::STRICT;
+        assert_eq!(
+            curve
+                .derivative_is_certified_nonzero_at(&Real::zero(), &policy)
+                .unwrap(),
+            Classification::Decided(false)
+        );
+        assert_eq!(
+            curve
+                .derivative_is_certified_nonzero_at(
+                    &(Real::one() / Real::from(2_u8)).unwrap(),
+                    &policy,
+                )
+                .unwrap(),
+            Classification::Decided(true)
+        );
+    }
+
+    #[test]
+    fn negative_common_weights_preserve_geometric_line_crossing_direction() {
+        let curve = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::from(-1_i8), Real::zero()),
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::one(), Real::zero()),
+            ],
+            vec![Real::from(-1_i8); 3],
+        )
+        .unwrap();
+        let line = LineSeg2::try_new(
+            Point2::new(Real::zero(), Real::from(-1_i8)),
+            Point2::new(Real::zero(), Real::one()),
+        )
+        .unwrap();
+        let relation = curve.relation_to_line_with_contacts(&line, &CurveContext::STRICT);
+        let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) = relation
+        else {
+            panic!("the negative-weight line crossing must be decided");
+        };
+        assert_eq!(contacts.len(), 1);
+        let half = (Real::one() / Real::from(2_u8)).unwrap();
+        assert_eq!(contacts[0].parameter().as_exact(), Some(&half));
+        assert_eq!(
+            contacts[0].crossing_direction(),
+            Some(BezierLineCrossingDirection::PositiveToNegative)
+        );
     }
 
     #[test]

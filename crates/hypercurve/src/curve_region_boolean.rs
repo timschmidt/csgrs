@@ -9,17 +9,20 @@ use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
 use crate::classify::{compare_reals, real_sign};
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
 use crate::policy::resolve_certified_operation;
-use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2;
+use crate::rational_bezier_general::{
+    RationalBezierOverlapParameterCorrespondence2, exact_contact_point_evidence,
+    rational_parameter_image,
+};
 use crate::{
-    Aabb2, Axis2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
-    BezierLineContactRelation, BezierLineImageFitRelation, BezierParallel2,
-    BezierParallelPairIntersectionSet2, BezierParameter2, BezierParameterRange2,
-    BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Curve2, CurveContext,
-    CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionContact2,
-    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
-    CurvePathBooleanOperand2, CurveRegion2, CurveRegionLoopRole, CurveResult, ExactCurveError,
-    ExactCurveResult, FillRule, LineSeg2, QuadraticBezier2, RationalBezier2,
-    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
+    Aabb2, ArcArcIntersection, Axis2, BezierArrangementFragment2, BezierArrangementGraph2,
+    BezierEndpointTangentImage2, BezierLineContactRelation, BezierLineCrossingDirection,
+    BezierLineImageFitRelation, BezierParallel2, BezierParallelPairIntersectionSet2,
+    BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
+    Classification, Curve2, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
+    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
+    CurveOperation2, CurveOutcome, CurvePathBooleanOperand2, CurveRegion2, CurveRegionLoopRole,
+    CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, QuadraticBezier2,
+    RationalBezier2, RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
     RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
     RationalBezierPointIncidence2, Real, RealSign, RegionPointLocation, Segment2,
     UncertaintyReason,
@@ -786,7 +789,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             }
             let carrier = &carriers[first_carrier_index];
-            if !carrier.geometry.has_certified_injective_axis(policy) {
+            if !carrier.geometry.has_certified_injective_image(policy) {
                 pairs.push(RegionCarrierPair {
                     first_carrier_index,
                     second_carrier_index: first_carrier_index,
@@ -1029,8 +1032,40 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let Segment2::Arc(arc) = segment else {
             return Ok(Classification::Decided(None));
         };
+        let certified_tangent_contacts = match curve {
+            BezierSubcurve2::RationalQuadratic(curve) => curve.retained_circular_conic(),
+            BezierSubcurve2::Rational(curve) => curve.retained_circular_conic(),
+            BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => None,
+        }
+        .and_then(|circle| circle.tangent_contacts.as_deref())
+        .into_iter()
+        .flatten()
+        .filter_map(|contact| match contact {
+            crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(contact)
+                if contact.parallel == *parallel =>
+            {
+                Some(contact)
+            }
+            crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(_)
+            | crate::rational_bezier::RationalQuadraticCircleTangentContact2::Line { .. } => None,
+        })
+        .collect::<Vec<_>>();
+        let certified_tangent_parameters = certified_tangent_contacts
+            .iter()
+            .map(|contact| {
+                (
+                    contact.parameter.clone(),
+                    contact.eliminant_root_multiplicity,
+                )
+            })
+            .collect::<Vec<_>>();
         let incidence = match parallel
-            .circle_incidence(arc.center(), arc.radius_squared_ref(), &self.data.policy)
+            .circle_incidence(
+                arc.center(),
+                arc.radius_squared_ref(),
+                &certified_tangent_parameters,
+                &self.data.policy,
+            )
             .map_err(|cause| self.invalid(0, cause))?
         {
             Classification::Decided(incidence) => incidence,
@@ -1038,14 +1073,162 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let parameters = match incidence {
-            crate::BezierParallelIncidence2::EntireCurve => {
-                return Ok(Classification::Decided(None));
+        let parameters = incidence;
+        if parameters.iter().all(|(parameter, _)| parameter.is_exact()) {
+            match self.parallel_exact_parameter_pair_result(
+                parallel,
+                curve,
+                parameters
+                    .iter()
+                    .map(|(parameter, _)| parameter.clone())
+                    .collect(),
+                parallel_is_first,
+            )? {
+                Classification::Decided(Some(result)) => {
+                    return Ok(Classification::Decided(Some(result)));
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(_) => {}
             }
-            crate::BezierParallelIncidence2::Parameters(parameters) => parameters,
-        };
+        }
+        if let BezierSubcurve2::RationalQuadratic(conic) = curve
+            && let Some(mut parameter_maps) = parallel
+                .polynomial_circle_rational_quadratic_parameter_maps(
+                    arc.center(),
+                    arc.radius_squared_ref(),
+                    conic,
+                )
+                .map_err(|cause| self.invalid(0, cause))?
+        {
+            for (map_index, (numerator, denominator)) in parameter_maps.iter_mut().enumerate() {
+                let anchor = if map_index == 0 {
+                    conic.start()
+                } else {
+                    conic.end()
+                };
+                if let Some(contact) = certified_tangent_contacts
+                    .iter()
+                    .find(|contact| contact.point == *anchor)
+                {
+                    // Both homogeneous line coordinates in an inverse conic
+                    // chart vanish at its certified anchor contact. Remove
+                    // that common source-parameter factor by construction
+                    // before elimination instead of replaying nested radicals.
+                    if numerator.len() < 2 || denominator.len() < 2 {
+                        return Ok(Classification::Decided(None));
+                    }
+                    *numerator = crate::bezier_parameter::divide_by_linear_root(
+                        numerator,
+                        &contact.parameter,
+                    );
+                    *denominator = crate::bezier_parameter::divide_by_linear_root(
+                        denominator,
+                        &contact.parameter,
+                    );
+                }
+            }
+            let rational = RationalBezier2::try_from_subcurve(curve)
+                .map_err(|cause| self.invalid(0, cause))?;
+            let mut contacts = Vec::with_capacity(parameters.len());
+            for (parallel_parameter, certified_transverse) in &parameters {
+                let certified_contact = parallel_parameter.as_exact().and_then(|parameter| {
+                    certified_tangent_contacts
+                        .iter()
+                        .find(|contact| contact.parameter == *parameter)
+                });
+                if certified_contact.is_none()
+                    && let Some(exact) = parallel_parameter.as_exact()
+                {
+                    let point = parallel
+                        .point_at(exact, &self.data.policy)
+                        .map_err(|cause| self.invalid(0, cause))?;
+                    // This is only a cheap finite-arc rejection. An
+                    // undecided represented point must continue through the
+                    // exact rational parameter image below.
+                    if let Classification::Decided(point) = point
+                        && arc.contains_point(&point, &self.data.policy)
+                            == Classification::Decided(false)
+                    {
+                        continue;
+                    }
+                }
+                let other_parameter = if let Some(contact) = certified_contact
+                    && contact.point == *conic.start()
+                {
+                    Some(BezierParameter2::Exact(Real::zero()))
+                } else if let Some(contact) = certified_contact
+                    && contact.point == *conic.end()
+                {
+                    Some(BezierParameter2::Exact(Real::one()))
+                } else if certified_contact.is_some() {
+                    // Join-level tangent certificates are retained by every
+                    // minor span. A certified join endpoint that is not this
+                    // span's endpoint is outside this span by construction.
+                    continue;
+                } else {
+                    let mut mapped = None;
+                    let mut uncertain = None;
+                    for (numerator, denominator) in &parameter_maps {
+                        match rational_parameter_image(
+                            parallel_parameter,
+                            numerator,
+                            denominator,
+                            &self.data.policy,
+                        )
+                        .map_err(|cause| self.invalid(0, cause))?
+                        {
+                            Classification::Decided(Some(parameter)) => {
+                                mapped = Some(parameter);
+                                break;
+                            }
+                            Classification::Decided(None) => {}
+                            Classification::Uncertain(reason) => uncertain = Some(reason),
+                        }
+                    }
+                    if mapped.is_none()
+                        && let Some(reason) = uncertain
+                    {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                    mapped
+                };
+                let Some(other_parameter) = other_parameter else {
+                    continue;
+                };
+                let point =
+                    exact_contact_point_evidence(&rational, &other_parameter, &self.data.policy)
+                        .map_err(|cause| self.invalid(0, cause))?;
+                let (first_parameter, second_parameter) = if parallel_is_first {
+                    (parallel_parameter.clone(), other_parameter)
+                } else {
+                    (other_parameter, parallel_parameter.clone())
+                };
+                contacts.push(RegionPairContactEvidence::Direct {
+                    first_parameter,
+                    second_parameter,
+                    point,
+                    certified_transverse: *certified_transverse,
+                    tangent_cross_sign: None,
+                });
+            }
+            return Ok(Classification::Decided(Some(RegionPairResult {
+                contacts,
+                overlaps: Vec::new(),
+                blockers: Vec::new(),
+            })));
+        }
         let mut retained_parameters = Vec::with_capacity(parameters.len());
-        for parameter in parameters {
+        for (parameter, _) in parameters {
+            if let Some(contact) = parameter.as_exact().and_then(|parameter| {
+                certified_tangent_contacts
+                    .iter()
+                    .find(|contact| contact.parameter == *parameter)
+            }) {
+                if contact.point == *arc.start() || contact.point == *arc.end() {
+                    retained_parameters.push(parameter);
+                }
+                continue;
+            }
             let Some(exact) = parameter.as_exact() else {
                 return Ok(Classification::Decided(None));
             };
@@ -1811,30 +1994,104 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     &self.data.policy,
                 )?;
                 let mut matching_contact_index = None;
+                let mut uncertain_contact_match = None;
                 for (existing_index, existing) in contact_points.iter().enumerate() {
-                    if contacts_decided_distinct_from_carriers(
+                    if first_existing == Some(existing.topology_vertex)
+                        || second_existing == Some(existing.topology_vertex)
+                    {
+                        matching_contact_index = Some(existing_index);
+                        break;
+                    }
+                    if contacts_decided_same_from_shared_parallel(
                         existing,
                         [pair.first_carrier_index, pair.second_carrier_index],
                         [first_parameter, second_parameter],
                         &self.data.carriers,
                         &self.data.policy,
                     )? {
+                        matching_contact_index = Some(existing_index);
+                        break;
+                    }
+                    let distinct = contacts_decided_distinct_from_carriers(
+                        existing,
+                        [pair.first_carrier_index, pair.second_carrier_index],
+                        [first_parameter, second_parameter],
+                        &self.data.carriers,
+                        &self.data.policy,
+                    )?;
+                    if distinct {
                         continue;
+                    }
+                    match contacts_decided_same_from_circular_carriers(
+                        existing,
+                        [pair.first_carrier_index, pair.second_carrier_index],
+                        [first_parameter, second_parameter],
+                        &self.data.carriers,
+                        &self.data.policy,
+                    ) {
+                        Classification::Decided(true) => {
+                            matching_contact_index = Some(existing_index);
+                            break;
+                        }
+                        Classification::Decided(false) => continue,
+                        Classification::Uncertain(_) => {}
                     }
                     if let (Some(existing_point), Some(point)) =
                         (existing.point.as_ref(), contact.point())
                     {
-                        match same_contact_point(existing_point, point, &self.data.policy) {
+                        let exact_against_existing = match (existing_point, point) {
+                            (
+                                RationalBezierIntersectionPointEvidence2::Algebraic(_),
+                                RationalBezierIntersectionPointEvidence2::Exact(exact),
+                            ) => Some(exact),
+                            _ => None,
+                        };
+                        if let Some(exact) = exact_against_existing
+                            && existing
+                                .carrier_indices
+                                .iter()
+                                .copied()
+                                .any(|carrier_index| {
+                                    exact_point_decided_outside_carrier(
+                                        exact,
+                                        &self.data.carriers[carrier_index],
+                                        &self.data.policy,
+                                    )
+                                })
+                        {
+                            continue;
+                        }
+                        let same = if let Some(exact) = exact_against_existing {
+                            match exact_point_matches_existing_contact_parameter(
+                                exact,
+                                existing,
+                                &self.data.carriers,
+                                &self.data.policy,
+                            ) {
+                                Classification::Decided(equal) => Classification::Decided(equal),
+                                Classification::Uncertain(_) => {
+                                    same_contact_point(existing_point, point, &self.data.policy)
+                                }
+                            }
+                        } else {
+                            same_contact_point(existing_point, point, &self.data.policy)
+                        };
+                        match same {
                             Classification::Decided(true) => {
                                 matching_contact_index = Some(existing_index);
                                 break;
                             }
                             Classification::Decided(false) => {}
                             Classification::Uncertain(reason) => {
-                                return Err(self.blocked(pair.first_carrier_index, reason));
+                                uncertain_contact_match.get_or_insert(reason);
                             }
                         }
                     }
+                }
+                if matching_contact_index.is_none()
+                    && let Some(reason) = uncertain_contact_match
+                {
+                    return Err(self.blocked(pair.first_carrier_index, reason));
                 }
                 let matching_contact_vertex =
                     matching_contact_index.map(|index| contact_points[index].topology_vertex);
@@ -2374,50 +2631,254 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if !self.regularized_fragment_owns_overlap(carrier_index, fragment, overlaps)? {
             return Ok(RegionFragmentAction::Discard);
         }
-        let (parameter, representative) = self.fragment_representative(carrier_index, fragment)?;
         let carrier = &self.data.carriers[carrier_index];
-        let derivative = match carrier
-            .geometry
-            .derivative_at(&parameter, &self.data.policy)
-            .map_err(|cause| self.invalid(carrier_index, cause))?
-        {
-            Classification::Decided(derivative) => derivative,
-            Classification::Uncertain(reason) => {
-                return Err(self.blocked(carrier_index, reason));
+        let max_representatives = match &carrier.geometry {
+            RegionCarrierGeometry::Bezier(
+                BezierSubcurve2::Quadratic(_) | BezierSubcurve2::RationalQuadratic(_),
+            ) => 4,
+            RegionCarrierGeometry::Bezier(BezierSubcurve2::Cubic(_)) => 6,
+            RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(curve)) => {
+                curve.degree().saturating_mul(2).max(2)
+            }
+            RegionCarrierGeometry::AnalyticParallel(_) => 4,
+        };
+        let (start, end) = fragment_range(fragment);
+        let mut upper = end.clone();
+        let mut last_reason = UncertaintyReason::Boundary;
+        let local_circular_curve = match fragment {
+            BezierSplitFragment2::Materialized { curve, .. }
+                if retained_circular_support(curve).is_some() =>
+            {
+                Some(curve)
+            }
+            BezierSplitFragment2::Materialized { .. }
+            | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | BezierSplitFragment2::AnalyticParallel(_)
+            | BezierSplitFragment2::Unresolved { .. } => None,
+        };
+        // Retained circular-conic provenance is a construction certificate for
+        // a proper rational parametrization of a nondegenerate minor arc.
+        let retained_regular_circle = matches!(
+            &carrier.geometry,
+            RegionCarrierGeometry::Bezier(curve) if retained_circular_support(curve).is_some()
+        );
+        // General rational conversion is only a fallback certificate source.
+        // Avoid rebuilding a circular quadratic whose native provenance has
+        // already supplied everything this classifier needs.
+        let rational_geometry = if retained_regular_circle {
+            None
+        } else {
+            match &carrier.geometry {
+                RegionCarrierGeometry::Bezier(curve) => {
+                    RationalBezier2::try_from_subcurve(curve).ok()
+                }
+                RegionCarrierGeometry::AnalyticParallel(_) => None,
             }
         };
-        let (mut tangent_x, mut tangent_y) = (derivative.dx().clone(), derivative.dy().clone());
-        if carrier.reversed {
-            tangent_x = -tangent_x;
-            tangent_y = -tangent_y;
+        let isolator_touches =
+            |parameter: &BezierParameter2, boundary: &Real, use_interval_start: bool| {
+                match parameter.known_interval(&self.data.policy) {
+                    Ok(Classification::Decided(interval)) => {
+                        compare_reals(
+                            if use_interval_start {
+                                interval.start()
+                            } else {
+                                interval.end()
+                            },
+                            boundary,
+                            &self.data.policy,
+                        ) == Some(Ordering::Equal)
+                    }
+                    Ok(Classification::Uncertain(_)) | Err(_) => false,
+                }
+            };
+        // An endpoint witness is only needed when the adjacent algebraic
+        // isolator still touches that endpoint. Otherwise the represented
+        // interior gap is cheaper and avoids an unnecessary boundary ray.
+        let source_endpoint_witness = if local_circular_curve.is_none()
+            && retained_regular_circle
+            && start == &carrier.start
+            && start
+                .as_exact()
+                .is_some_and(|boundary| isolator_touches(end, boundary, true))
+        {
+            start.as_exact().cloned()
+        } else if local_circular_curve.is_none()
+            && retained_regular_circle
+            && end == &carrier.end
+            && end
+                .as_exact()
+                .is_some_and(|boundary| isolator_touches(start, boundary, false))
+        {
+            end.as_exact().cloned()
+        } else {
+            None
+        };
+        let mut source_endpoint_witness_attempted = false;
+        for _ in 0..max_representatives {
+            let (parameter, representative, derivative, derivative_follows_boundary) =
+                if let Some(curve) = local_circular_curve {
+                    let half = (crate::Real::one() / crate::Real::from(2_u8))
+                        .map_err(|cause| self.invalid(carrier_index, cause.into()))?;
+                    let representative = match curve.point_at(&half, &self.data.policy) {
+                        Classification::Decided(point) => point,
+                        Classification::Uncertain(reason) => {
+                            last_reason = reason;
+                            break;
+                        }
+                    };
+                    let derivative_curve = RationalBezier2::try_from_subcurve(curve)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?;
+                    let derivative =
+                        match derivative_curve.derivative_at_classified(&half, &self.data.policy) {
+                            Classification::Decided(derivative) => derivative,
+                            Classification::Uncertain(reason) => {
+                                last_reason = reason;
+                                break;
+                            }
+                        };
+                    (None, representative, derivative, true)
+                } else {
+                    let parameter = if !source_endpoint_witness_attempted {
+                        source_endpoint_witness_attempted = true;
+                        source_endpoint_witness.clone()
+                    } else {
+                        None
+                    };
+                    let parameter = match parameter {
+                        Some(parameter) => parameter,
+                        None => {
+                            let parameter = match start
+                                .strict_rational_between_ordered(&upper, &self.data.policy)
+                                .map_err(|cause| self.invalid(carrier_index, cause))?
+                            {
+                                Classification::Decided(parameter) => parameter,
+                                Classification::Uncertain(reason) => {
+                                    last_reason = reason;
+                                    break;
+                                }
+                            };
+                            upper = BezierParameter2::Exact(parameter.clone());
+                            parameter
+                        }
+                    };
+                    let retained_endpoint = source_endpoint_witness
+                        .as_ref()
+                        .filter(|endpoint| *endpoint == &parameter)
+                        .and_then(|endpoint| match &carrier.geometry {
+                            RegionCarrierGeometry::Bezier(curve)
+                                if endpoint == &crate::Real::zero() =>
+                            {
+                                Some(curve.endpoint_refs().0.clone())
+                            }
+                            RegionCarrierGeometry::Bezier(curve)
+                                if endpoint == &crate::Real::one() =>
+                            {
+                                Some(curve.endpoint_refs().1.clone())
+                            }
+                            RegionCarrierGeometry::Bezier(_)
+                            | RegionCarrierGeometry::AnalyticParallel(_) => None,
+                        });
+                    let representative = match retained_endpoint {
+                        Some(point) => point,
+                        None => match carrier
+                            .geometry
+                            .point_at(&parameter, &self.data.policy)
+                            .map_err(|cause| self.invalid(carrier_index, cause))?
+                        {
+                            Classification::Decided(point) => point,
+                            Classification::Uncertain(reason) => {
+                                last_reason = reason;
+                                continue;
+                            }
+                        },
+                    };
+                    let derivative = match carrier
+                        .geometry
+                        .derivative_at(&parameter, &self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?
+                    {
+                        Classification::Decided(derivative) => derivative,
+                        Classification::Uncertain(reason) => {
+                            last_reason = reason;
+                            continue;
+                        }
+                    };
+                    (Some(parameter), representative, derivative, false)
+                };
+            let tangent_squared =
+                derivative.dx() * derivative.dx() + derivative.dy() * derivative.dy();
+            let regular = match crate::classify::is_zero(&tangent_squared, &self.data.policy) {
+                Some(false) => true,
+                Some(true) => {
+                    last_reason = UncertaintyReason::Boundary;
+                    false
+                }
+                None if retained_regular_circle => true,
+                None => {
+                    match rational_geometry.as_ref().zip(parameter.as_ref()).map(
+                        |(curve, parameter)| {
+                            curve.derivative_is_certified_nonzero_at(parameter, &self.data.policy)
+                        },
+                    ) {
+                        Some(Ok(Classification::Decided(true))) => true,
+                        Some(Ok(Classification::Uncertain(reason))) => {
+                            last_reason = reason;
+                            false
+                        }
+                        Some(Ok(Classification::Decided(false))) | None => {
+                            last_reason = UncertaintyReason::RealSign;
+                            false
+                        }
+                        Some(Err(cause)) => return Err(self.invalid(carrier_index, cause)),
+                    }
+                }
+            };
+            if !regular {
+                continue;
+            }
+            let (mut tangent_x, mut tangent_y) = (derivative.dx().clone(), derivative.dy().clone());
+            if carrier.reversed && !derivative_follows_boundary {
+                tangent_x = -tangent_x;
+                tangent_y = -tangent_y;
+            }
+            let source_parameter = parameter.map(BezierParameter2::Exact);
+            let left = match self.fragment_side_location(
+                carrier_index,
+                &representative,
+                source_parameter.as_ref(),
+                &tangent_x,
+                &tangent_y,
+                true,
+            ) {
+                Ok(location) => location,
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    last_reason = blocker.reason();
+                    continue;
+                }
+                Err(error) => return Err(error),
+            };
+            let right = match self.fragment_side_location(
+                carrier_index,
+                &representative,
+                source_parameter.as_ref(),
+                &tangent_x,
+                &tangent_y,
+                false,
+            ) {
+                Ok(location) => location,
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    last_reason = blocker.reason();
+                    continue;
+                }
+                Err(error) => return Err(error),
+            };
+            return Ok(action_from_result_sides(
+                left == RegionPointLocation::Inside,
+                right == RegionPointLocation::Inside,
+            ));
         }
-        let tangent_squared = &tangent_x * &tangent_x + &tangent_y * &tangent_y;
-        match crate::classify::is_zero(&tangent_squared, &self.data.policy) {
-            Some(false) => {}
-            Some(true) => return Err(self.blocked(carrier_index, UncertaintyReason::Boundary)),
-            None => return Err(self.blocked(carrier_index, UncertaintyReason::RealSign)),
-        }
-        let source_parameter = BezierParameter2::Exact(parameter);
-        let left = self.fragment_side_location(
-            carrier_index,
-            &representative,
-            &source_parameter,
-            &tangent_x,
-            &tangent_y,
-            true,
-        )?;
-        let right = self.fragment_side_location(
-            carrier_index,
-            &representative,
-            &source_parameter,
-            &tangent_x,
-            &tangent_y,
-            false,
-        )?;
-        Ok(action_from_result_sides(
-            left == RegionPointLocation::Inside,
-            right == RegionPointLocation::Inside,
-        ))
+        Err(self.blocked(carrier_index, last_reason))
     }
 
     fn regularized_fragment_owns_overlap(
@@ -2448,7 +2909,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         carrier_index: usize,
         representative: &crate::Point2,
-        source_parameter: &BezierParameter2,
+        source_parameter: Option<&BezierParameter2>,
         tangent_x: &crate::Real,
         tangent_y: &crate::Real,
         left: bool,
@@ -2509,6 +2970,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     representative,
                     direction_x,
                     direction_y,
+                    true,
+                    if left {
+                        BezierLineCrossingDirection::PositiveToNegative
+                    } else {
+                        BezierLineCrossingDirection::NegativeToPositive
+                    },
                     carrier.loop_index,
                     carrier.fragment_index,
                     source_parameter,
@@ -2517,7 +2984,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .map_err(|cause| self.invalid(carrier_index, cause))?
             {
                 Classification::Decided(location) => return Ok(location),
-                Classification::Uncertain(reason) => last_reason = reason,
+                Classification::Uncertain(reason) => {
+                    last_reason = reason;
+                }
             }
         }
         Err(self.blocked(carrier_index, last_reason))
@@ -3090,6 +3559,19 @@ fn subcurve_has_certified_injective_axis(curve: &BezierSubcurve2, policy: &Curve
     rational.is_ok_and(|curve| curve.has_certified_injective_axis(policy))
 }
 
+fn subcurve_has_certified_injective_image(curve: &BezierSubcurve2, policy: &CurveContext) -> bool {
+    match curve {
+        BezierSubcurve2::RationalQuadratic(curve) if curve.retained_circular_conic().is_some() => {
+            true
+        }
+        BezierSubcurve2::Rational(curve) if curve.retained_circular_conic().is_some() => true,
+        BezierSubcurve2::Quadratic(_)
+        | BezierSubcurve2::Cubic(_)
+        | BezierSubcurve2::RationalQuadratic(_)
+        | BezierSubcurve2::Rational(_) => subcurve_has_certified_injective_axis(curve, policy),
+    }
+}
+
 fn subcurve_certified_outer_bounds(
     curve: &BezierSubcurve2,
     policy: &CurveContext,
@@ -3211,7 +3693,7 @@ fn split_carrier(
     // Most retained events need very little isolator separation. Preserve the
     // former eight-step proof budget for close roots or endpoint images whose
     // complete topology replay needs a narrower interval.
-    for max_refinement_steps in [1, 2, 4] {
+    for max_refinement_steps in [0, 1, 2, 4] {
         if let Ok(fragments) = split_carrier_with_refinement(
             carrier,
             events,
@@ -3922,6 +4404,30 @@ fn contacts_decided_distinct_from_carriers(
     carriers: &[RegionCarrier],
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
+    for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
+        for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
+            let (
+                RegionCarrierGeometry::AnalyticParallel(existing_parallel),
+                RegionCarrierGeometry::AnalyticParallel(current_parallel),
+            ) = (
+                &carriers[existing_carrier].geometry,
+                &carriers[current_carrier].geometry,
+            )
+            else {
+                continue;
+            };
+            if existing_parallel == current_parallel
+                && decided_parameter_cmp(
+                    &existing.parameters[existing_slot],
+                    parameters[current_slot],
+                    policy,
+                )? != Ordering::Equal
+                && existing_parallel.regular_fragment_has_certified_injective_axis(policy)
+            {
+                return Ok(true);
+            }
+        }
+    }
     for existing_carrier in existing.carrier_indices {
         for current_carrier in carrier_indices {
             let existing_bounds = carriers[existing_carrier].bounds.get_or_init(|| {
@@ -3948,7 +4454,7 @@ fn contacts_decided_distinct_from_carriers(
     for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
         let carrier = &carriers[existing_carrier];
         let image_is_injective = carrier.image_is_injective.get() == Some(&true)
-            || carrier.geometry.has_certified_injective_axis(policy);
+            || carrier.geometry.has_certified_injective_image(policy);
         if !image_is_injective {
             continue;
         }
@@ -3966,6 +4472,256 @@ fn contacts_decided_distinct_from_carriers(
         }
     }
     Ok(false)
+}
+
+fn contacts_decided_same_from_shared_parallel(
+    existing: &ContactVertex,
+    carrier_indices: [usize; 2],
+    parameters: [&BezierParameter2; 2],
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
+        for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
+            let (
+                RegionCarrierGeometry::AnalyticParallel(existing_parallel),
+                RegionCarrierGeometry::AnalyticParallel(current_parallel),
+            ) = (
+                &carriers[existing_carrier].geometry,
+                &carriers[current_carrier].geometry,
+            )
+            else {
+                continue;
+            };
+            if existing_parallel == current_parallel
+                && decided_parameter_cmp(
+                    &existing.parameters[existing_slot],
+                    parameters[current_slot],
+                    policy,
+                )? == Ordering::Equal
+            {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+fn parameter_matches_any(
+    parameter: &BezierParameter2,
+    candidates: &[BezierParameter2],
+    policy: &CurveContext,
+) -> Classification<bool> {
+    let mut uncertainty = None;
+    for candidate in candidates {
+        match parameter.same_value(candidate, policy) {
+            Ok(Classification::Decided(true)) => return Classification::Decided(true),
+            Ok(Classification::Decided(false)) => {}
+            Ok(Classification::Uncertain(reason)) => {
+                uncertainty.get_or_insert(reason);
+            }
+            Err(_) => {
+                uncertainty.get_or_insert(UncertaintyReason::Unsupported);
+            }
+        }
+    }
+    uncertainty.map_or(Classification::Decided(false), Classification::Uncertain)
+}
+
+fn contacts_decided_same_from_circular_carriers(
+    existing: &ContactVertex,
+    carrier_indices: [usize; 2],
+    parameters: [&BezierParameter2; 2],
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) -> Classification<bool> {
+    let mut uncertainty = None;
+    for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
+        let RegionCarrierGeometry::Bezier(existing_subcurve) = &carriers[existing_carrier].geometry
+        else {
+            continue;
+        };
+        let Ok(existing_curve) = RationalBezier2::try_from_subcurve(existing_subcurve) else {
+            continue;
+        };
+        if existing_curve.retained_circular_conic().is_none() {
+            continue;
+        }
+        let Ok(Classification::Decided(Segment2::Arc(existing_arc))) =
+            crate::bezier_region::materialized_native_subcurve_segment(existing_subcurve, policy)
+        else {
+            continue;
+        };
+        for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
+            let RegionCarrierGeometry::Bezier(current_subcurve) =
+                &carriers[current_carrier].geometry
+            else {
+                continue;
+            };
+            let Ok(current_curve) = RationalBezier2::try_from_subcurve(current_subcurve) else {
+                continue;
+            };
+            if current_curve.retained_circular_conic().is_none() {
+                continue;
+            }
+            let Ok(Classification::Decided(Segment2::Arc(current_arc))) =
+                crate::bezier_region::materialized_native_subcurve_segment(
+                    current_subcurve,
+                    policy,
+                )
+            else {
+                continue;
+            };
+            let relation = match existing_arc.intersect_arc(&current_arc, policy) {
+                Ok(relation) => relation,
+                Err(_) => {
+                    uncertainty.get_or_insert(UncertaintyReason::Unsupported);
+                    continue;
+                }
+            };
+            let points = match relation {
+                ArcArcIntersection::None => return Classification::Decided(false),
+                ArcArcIntersection::Point(hit) => vec![hit.point],
+                ArcArcIntersection::TwoPoints { first, second } => {
+                    vec![first.point, second.point]
+                }
+                ArcArcIntersection::Overlap { .. } => {
+                    uncertainty.get_or_insert(UncertaintyReason::Boundary);
+                    continue;
+                }
+                ArcArcIntersection::Uncertain { reason } => {
+                    uncertainty.get_or_insert(reason);
+                    continue;
+                }
+            };
+            let mut pair_uncertainty = None;
+            for point in points {
+                let existing_parameters =
+                    match existing_curve.retained_circle_point_parameters(&point, policy) {
+                        Ok(Classification::Decided(parameters)) => parameters,
+                        Ok(Classification::Uncertain(reason)) => {
+                            pair_uncertainty.get_or_insert(reason);
+                            continue;
+                        }
+                        Err(_) => {
+                            pair_uncertainty.get_or_insert(UncertaintyReason::Unsupported);
+                            continue;
+                        }
+                    };
+                let current_parameters =
+                    match current_curve.retained_circle_point_parameters(&point, policy) {
+                        Ok(Classification::Decided(parameters)) => parameters,
+                        Ok(Classification::Uncertain(reason)) => {
+                            pair_uncertainty.get_or_insert(reason);
+                            continue;
+                        }
+                        Err(_) => {
+                            pair_uncertainty.get_or_insert(UncertaintyReason::Unsupported);
+                            continue;
+                        }
+                    };
+                match (
+                    parameter_matches_any(
+                        &existing.parameters[existing_slot],
+                        &existing_parameters,
+                        policy,
+                    ),
+                    parameter_matches_any(parameters[current_slot], &current_parameters, policy),
+                ) {
+                    (Classification::Decided(true), Classification::Decided(true)) => {
+                        return Classification::Decided(true);
+                    }
+                    (Classification::Uncertain(reason), _)
+                    | (_, Classification::Uncertain(reason)) => {
+                        pair_uncertainty.get_or_insert(reason);
+                    }
+                    _ => {}
+                }
+            }
+            if let Some(reason) = pair_uncertainty {
+                uncertainty.get_or_insert(reason);
+            } else {
+                return Classification::Decided(false);
+            }
+        }
+    }
+    Classification::Uncertain(uncertainty.unwrap_or(UncertaintyReason::Unsupported))
+}
+
+fn exact_point_decided_outside_carrier(
+    point: &crate::Point2,
+    carrier: &RegionCarrier,
+    policy: &CurveContext,
+) -> bool {
+    let RegionCarrierGeometry::Bezier(curve) = &carrier.geometry else {
+        return false;
+    };
+    let Ok(Classification::Decided(segment)) =
+        crate::bezier_region::materialized_native_subcurve_segment(curve, policy)
+    else {
+        return false;
+    };
+    match segment {
+        Segment2::Line(line) => {
+            line.contains_point(point, policy) == Classification::Decided(false)
+        }
+        Segment2::Arc(arc) => {
+            arc.contains_sweep_point(point, policy) == Classification::Decided(false)
+                || arc.contains_point(point, policy) == Classification::Decided(false)
+        }
+    }
+}
+
+fn exact_point_matches_existing_contact_parameter(
+    point: &crate::Point2,
+    existing: &ContactVertex,
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) -> Classification<bool> {
+    let mut uncertainty = None;
+    for (slot, carrier_index) in existing.carrier_indices.iter().copied().enumerate() {
+        let RegionCarrierGeometry::Bezier(curve) = &carriers[carrier_index].geometry else {
+            continue;
+        };
+        let Ok(curve) = RationalBezier2::try_from_subcurve(curve) else {
+            continue;
+        };
+        if curve.retained_circular_conic().is_none() {
+            continue;
+        }
+        let parameters = match curve.retained_circle_point_parameters(point, policy) {
+            Ok(Classification::Decided(parameters)) => parameters,
+            Ok(Classification::Uncertain(reason)) => {
+                uncertainty.get_or_insert(reason);
+                continue;
+            }
+            Err(_) => {
+                uncertainty.get_or_insert(UncertaintyReason::Unsupported);
+                continue;
+            }
+        };
+        if parameters.is_empty() {
+            return Classification::Decided(false);
+        }
+        let mut parameter_uncertainty = None;
+        for parameter in parameters {
+            match existing.parameters[slot].same_value(&parameter, policy) {
+                Ok(Classification::Decided(true)) => return Classification::Decided(true),
+                Ok(Classification::Decided(false)) => {}
+                Ok(Classification::Uncertain(reason)) => {
+                    parameter_uncertainty.get_or_insert(reason);
+                }
+                Err(_) => {
+                    parameter_uncertainty.get_or_insert(UncertaintyReason::Unsupported);
+                }
+            }
+        }
+        if parameter_uncertainty.is_none() {
+            return Classification::Decided(false);
+        }
+        uncertainty = parameter_uncertainty;
+    }
+    Classification::Uncertain(uncertainty.unwrap_or(UncertaintyReason::Unsupported))
 }
 
 fn event_vertex(
@@ -4552,6 +5308,13 @@ impl RegionCarrierGeometry {
                             if curve.has_certified_injective_axis(policy)
                     )
             }
+        }
+    }
+
+    fn has_certified_injective_image(&self, policy: &CurveContext) -> bool {
+        match self {
+            Self::Bezier(curve) => subcurve_has_certified_injective_image(curve, policy),
+            Self::AnalyticParallel(_) => self.has_certified_injective_axis(policy),
         }
     }
 

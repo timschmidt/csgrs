@@ -3,7 +3,8 @@ use hypercurve::{
     BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, Classification,
     CubicBezier2, CurveBoundaryInteriorSide2, CurveContext, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Real, RegionPointLocation,
+    CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, Real,
+    RegionPointLocation,
 };
 
 fn point(x: i64, y: i64) -> Point2 {
@@ -278,25 +279,25 @@ fn check_policy(policy: CurveContext) {
     }
 }
 
-fn check_algebraic_cusp_connectivity(policy: CurveContext) {
+fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
     let half = (Real::one() / Real::from(2_u8)).unwrap();
     let parallel = QuadraticBezier2::new(point(0, 0), Point2::new(half, Real::zero()), point(1, 1))
         .parallel_left(Real::one())
         .unwrap();
-    let analysis = match parallel.singularity_analysis(&policy).unwrap() {
+    let analysis = match parallel.singularity_analysis(policy).unwrap() {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => panic!("cusp analysis: {reason:?}"),
     };
     let [cusp] = analysis.parallel_cusps() else {
-        panic!("expected one algebraic parallel cusp");
+        panic!("expected one radical parallel cusp");
     };
-    assert!(!cusp.is_exact());
+    assert!(cusp.is_exact());
 
-    let zero = exact_parameter(0, &policy);
-    let one = exact_parameter(1, &policy);
+    let zero = exact_parameter(0, policy);
+    let one = exact_parameter(1, policy);
     let make_range =
         |start: BezierParameter2, end: BezierParameter2| match BezierParameterRange2::try_new(
-            start, end, &policy,
+            start, end, policy,
         )
         .unwrap()
         {
@@ -306,7 +307,7 @@ fn check_algebraic_cusp_connectivity(policy: CurveContext) {
     let first = match BezierParallelFragment2::try_new(
         parallel.clone(),
         make_range(zero, cusp.clone()),
-        &policy,
+        policy,
     )
     .unwrap()
     {
@@ -316,18 +317,18 @@ fn check_algebraic_cusp_connectivity(policy: CurveContext) {
     let second = match BezierParallelFragment2::try_new(
         parallel.clone(),
         make_range(cusp.clone(), one),
-        &policy,
+        policy,
     )
     .unwrap()
     {
         Classification::Decided(fragment) => fragment,
         Classification::Uncertain(reason) => panic!("second cusp span: {reason:?}"),
     };
-    let start = match parallel.point_at(&Real::zero(), &policy).unwrap() {
+    let start = match parallel.point_at(&Real::zero(), policy).unwrap() {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => panic!("parallel start: {reason:?}"),
     };
-    let end = match parallel.point_at(&Real::one(), &policy).unwrap() {
+    let end = match parallel.point_at(&Real::one(), policy).unwrap() {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
     };
@@ -336,12 +337,19 @@ fn check_algebraic_cusp_connectivity(policy: CurveContext) {
         vec![
             BezierSplitFragment2::AnalyticParallel(first),
             BezierSplitFragment2::AnalyticParallel(second),
-            materialized_line(end, start, &policy),
+            materialized_line(end, start, policy),
         ],
-        &policy,
+        policy,
     )
     .expect("the shared analytic carrier and cusp parameter certify connectivity");
     assert_eq!(boundary.len(), 3);
+    CurveRegion2::try_new_with_loop_topology(
+        vec![boundary],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Right],
+    )
+    .expect("the radical cusp cap has exact authored topology")
 }
 
 fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
@@ -407,9 +415,65 @@ fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies(
 }
 
 #[test]
-fn algebraic_parallel_cusp_spans_connect_under_both_policies() {
-    check_algebraic_cusp_connectivity(CurveContext::STRICT);
-    check_algebraic_cusp_connectivity(CurveContext::APPROXIMATE_512);
+fn radical_parallel_cusp_spans_connect_under_both_policies() {
+    assert_eq!(
+        radical_cusp_split_parallel_region(&CurveContext::STRICT).boundary_loops()[0].len(),
+        3
+    );
+    assert_eq!(
+        radical_cusp_split_parallel_region(&CurveContext::APPROXIMATE_512).boundary_loops()[0]
+            .len(),
+        3
+    );
+}
+
+#[test]
+fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
+    let distance = (Real::one() / Real::from(10_u8)).unwrap();
+    let mut strict_signature = None;
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = radical_cusp_split_parallel_region(&policy);
+        let offset = source
+            .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+            .expect("the represented radical cusp offset must complete");
+        assert!(!offset.value.is_empty());
+        let fragment_kinds = offset
+            .value
+            .boundary_loops()
+            .iter()
+            .map(|boundary| {
+                boundary
+                    .fragments()
+                    .iter()
+                    .map(|fragment| match fragment {
+                        BezierSplitFragment2::Materialized { curve, .. } => match curve {
+                            BezierSubcurve2::Quadratic(_) => 0_u8,
+                            BezierSubcurve2::Cubic(_) => 1,
+                            BezierSubcurve2::RationalQuadratic(_) => 2,
+                            BezierSubcurve2::Rational(_) => 3,
+                        },
+                        BezierSplitFragment2::AlgebraicEndpointImages { .. } => 4,
+                        BezierSplitFragment2::AnalyticParallel(_) => 5,
+                        BezierSplitFragment2::Unresolved { .. } => 6,
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        let roles = match offset.value.loop_roles(&policy).unwrap().value {
+            Classification::Decided(roles) => roles,
+            Classification::Uncertain(reason) => panic!("offset loop roles: {reason:?}"),
+        };
+        let signature = (
+            fragment_kinds,
+            roles,
+            offset.value.loop_fill_rules().map(<[_]>::to_vec),
+        );
+        if let Some(strict_signature) = &strict_signature {
+            assert_eq!(&signature, strict_signature);
+        } else {
+            strict_signature = Some(signature);
+        }
+    }
 }
 
 #[test]

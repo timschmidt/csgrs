@@ -18,7 +18,8 @@ use std::sync::{Arc, OnceLock};
 
 use crate::bezier_algebraic_image::parameter_representation;
 use crate::bezier_parameter::{
-    BezierParameterRefinement2, bernstein_to_power_coefficients, power_to_bernstein_coefficients,
+    BezierParameterRefinement2, bernstein_to_power_coefficients, divide_by_linear_root,
+    power_to_bernstein_coefficients,
 };
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::rational_bezier_general::{
@@ -1427,6 +1428,80 @@ impl BezierParallelSingularityAnalysis2 {
     }
 }
 
+/// Solves polynomial-quadratic parallel cusps in the canonical scalar tower.
+///
+/// A quadratic source has affine tangent, quadratic speed squared `S(t)`, and
+/// constant signed curvature term `K=d(P'' x P')`.  On a regular source the
+/// selected cusp equation is `K + S(t)^(3/2)=0`.  It has no solution for
+/// nonnegative `K`; for negative `K` it reduces exactly to the quadratic
+/// `S(t)-cuberoot(K^2)=0`.  Solving that equation directly avoids retaining the
+/// degree-six polynomial introduced by squaring.  The linear/quadratic formula
+/// is itself the exact construction certificate; it does not ask a generic
+/// scalar equality predicate to rediscover cancellation in nested radicals.
+/// If its degree, discriminant sign, or unit-domain membership is unresolved,
+/// the caller retains the complete algebraic isolator.
+fn exact_quadratic_parallel_cusp_candidates(
+    speed_squared: &[Real],
+    signed_curvature_term: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Option<Vec<BezierParameter2>>> {
+    let curvature = polynomial_trim_structural_zeros(signed_curvature_term.to_vec());
+    let [curvature] = curvature.as_slice() else {
+        return Ok(None);
+    };
+    match real_sign(curvature, policy) {
+        Some(RealSign::Positive | RealSign::Zero) => return Ok(Some(Vec::new())),
+        Some(RealSign::Negative) => {}
+        None => return Ok(None),
+    }
+    let target_speed_squared = (curvature * curvature).root_n(3)?;
+    let mut equation = speed_squared.to_vec();
+    equation[0] = &equation[0] - target_speed_squared;
+    let equation = polynomial_trim_structural_zeros(equation);
+    let candidates = match equation.as_slice() {
+        [constant] => match real_sign(constant, policy) {
+            Some(RealSign::Positive | RealSign::Negative) => Vec::new(),
+            Some(RealSign::Zero) | None => return Ok(None),
+        },
+        [constant, linear] => match real_sign(linear, policy) {
+            Some(RealSign::Positive | RealSign::Negative) => {
+                vec![((-constant.clone()) / linear)?]
+            }
+            Some(RealSign::Zero) | None => return Ok(None),
+        },
+        [constant, linear, quadratic] => {
+            match real_sign(quadratic, policy) {
+                Some(RealSign::Positive | RealSign::Negative) => {}
+                Some(RealSign::Zero) | None => return Ok(None),
+            }
+            let discriminant = linear * linear - Real::from(4_i8) * quadratic * constant;
+            match real_sign(&discriminant, policy) {
+                Some(RealSign::Negative) => Vec::new(),
+                Some(RealSign::Zero) => {
+                    vec![((-linear.clone()) / (Real::from(2_i8) * quadratic))?]
+                }
+                Some(RealSign::Positive) => {
+                    let denominator = Real::from(2_i8) * quadratic;
+                    let vertex = ((-linear.clone()) / &denominator)?;
+                    let delta = (discriminant / (&denominator * &denominator))?.sqrt()?;
+                    vec![&vertex - &delta, vertex + delta]
+                }
+                None => return Ok(None),
+            }
+        }
+        _ => return Ok(None),
+    };
+    let mut roots = Vec::with_capacity(candidates.len());
+    for candidate in candidates {
+        match in_closed_unit_interval(&candidate, policy) {
+            Some(true) => roots.push(BezierParameter2::Exact(candidate)),
+            Some(false) => {}
+            None => return Ok(None),
+        }
+    }
+    Ok(Some(roots))
+}
+
 impl BezierParallel2 {
     /// Constructs an exact analytic parallel from its structural source and
     /// signed left-normal distance.
@@ -1811,12 +1886,21 @@ impl BezierParallel2 {
             }))
     }
 
+    /// Solves circle incidence while reusing represented tangent contacts
+    /// certified by exact offset-join construction.
+    ///
+    /// Tangency makes each supplied parameter a root of the squared eliminant
+    /// with multiplicity at least two. Exact synthetic division removes those
+    /// known factors before Sturm isolation, avoiding a request that the scalar
+    /// layer rediscover nested-radical cancellation. Every remaining root is
+    /// still isolated and branch-filtered by the complete generic engine.
     pub(crate) fn circle_incidence(
         &self,
         center: &Point2,
         radius_squared: &Real,
+        certified_tangent_parameters: &[(Real, u8)],
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParallelIncidence2>> {
+    ) -> CurveResult<Classification<Vec<(BezierParameter2, bool)>>> {
         let source = self.source_power_basis()?;
         let differential = self.differential()?;
         if let Classification::Uncertain(reason) = Self::certify_finite_source(&source, policy)? {
@@ -1857,10 +1941,41 @@ impl BezierParallel2 {
             &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
             &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
         );
-        let squared = polynomial_subtract(
+        let mut squared = polynomial_subtract(
             &polynomial_multiply(&polynomial_multiply(&radial, &radial), &speed_squared),
             &polynomial_multiply(&normal, &normal),
         );
+        let mut certified_parameters: Vec<(&Real, u8)> =
+            Vec::with_capacity(certified_tangent_parameters.len());
+        for (parameter, multiplicity) in certified_tangent_parameters {
+            if *multiplicity == 0 {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            if let Some(index) = certified_parameters
+                .iter()
+                .position(|(retained, _)| *retained == parameter)
+            {
+                let previous_multiplicity = certified_parameters[index].1;
+                if previous_multiplicity >= *multiplicity {
+                    continue;
+                }
+                for _ in previous_multiplicity..*multiplicity {
+                    if squared.len() < 2 {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    squared = divide_by_linear_root(&squared, parameter);
+                }
+                certified_parameters[index].1 = *multiplicity;
+                continue;
+            }
+            for _ in 0..*multiplicity {
+                if squared.len() < 2 {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                squared = divide_by_linear_root(&squared, parameter);
+            }
+            certified_parameters.push((parameter, *multiplicity));
+        }
         let candidate_polynomial = match polynomial_from_coefficients(squared, policy)? {
             Classification::Decided(Some(polynomial)) => polynomial,
             Classification::Decided(None) => {
@@ -1876,6 +1991,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        let simple_roots = candidate_polynomial.simple_root_classifications(&candidates, policy)?;
         let radial_polynomial = match polynomial_from_coefficients(radial, policy)? {
             Classification::Decided(polynomial) => polynomial,
             Classification::Uncertain(reason) => {
@@ -1888,8 +2004,8 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let mut retained = Vec::with_capacity(candidates.len());
-        for candidate in candidates {
+        let mut retained = Vec::with_capacity(candidates.len() + certified_parameters.len());
+        for (candidate, simple_root) in candidates.into_iter().zip(simple_roots) {
             let radial_sign =
                 match signed_polynomial_at_root(radial_polynomial.as_ref(), &candidate, policy)? {
                     Classification::Decided(sign) => sign,
@@ -1907,7 +2023,10 @@ impl BezierParallel2 {
             match (radial_sign, normal_sign) {
                 (RealSign::Zero, RealSign::Zero)
                 | (RealSign::Positive, RealSign::Negative)
-                | (RealSign::Negative, RealSign::Positive) => retained.push(candidate),
+                | (RealSign::Negative, RealSign::Positive) => retained.push((
+                    candidate,
+                    matches!(simple_root, Classification::Decided(true)),
+                )),
                 (RealSign::Positive, RealSign::Positive)
                 | (RealSign::Negative, RealSign::Negative) => {}
                 (RealSign::Zero, RealSign::Positive | RealSign::Negative)
@@ -1918,9 +2037,119 @@ impl BezierParallel2 {
                 }
             }
         }
-        Ok(Classification::Decided(
-            BezierParallelIncidence2::Parameters(retained),
-        ))
+        for (parameter, _) in certified_parameters {
+            let candidate = BezierParameter2::Exact(parameter.clone());
+            let mut insert_at = retained.len();
+            for (index, existing) in retained.iter_mut().enumerate() {
+                let ordering = candidate.cmp_by_refinement(&existing.0, policy)?;
+                match ordering {
+                    Classification::Decided(std::cmp::Ordering::Less) => {
+                        insert_at = index;
+                        break;
+                    }
+                    Classification::Decided(std::cmp::Ordering::Equal) => {
+                        // A construction certificate is a lower bound on the
+                        // contact order. If a residual factor remains at the
+                        // same parameter, it is still the certified tangent,
+                        // never a transverse root of the quotient.
+                        *existing = (candidate.clone(), false);
+                        insert_at = usize::MAX;
+                        break;
+                    }
+                    Classification::Decided(std::cmp::Ordering::Greater) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            if insert_at != usize::MAX {
+                retained.insert(insert_at, (candidate, false));
+            }
+        }
+        Ok(Classification::Decided(retained))
+    }
+
+    /// Returns two inverse rational-quadratic parameter charts on a supporting
+    /// circle as rational functions of this polynomial parallel's parameter.
+    ///
+    /// A line through the conic start and a circle point gives the ordinary
+    /// rational inverse `u=2A/(2A-B)`. Parallel coordinates contain
+    /// `1/sqrt(S)`, but on circle incidence the selected equation
+    /// `radial + normal/sqrt(S)=0` eliminates that radical. The resulting two
+    /// power-basis polynomials let `rational_parameter_image` carry an isolated
+    /// parallel root directly into the conic parameter tower. Start- and
+    /// end-anchored charts cover one another's projective denominator pole.
+    pub(crate) fn polynomial_circle_rational_quadratic_parameter_maps(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        conic: &RationalQuadraticBezier2,
+    ) -> CurveResult<Option<[(Vec<Real>, Vec<Real>); 2]>> {
+        let source = self.source_power_basis()?;
+        if source.weight.is_some() {
+            return Ok(None);
+        }
+        let differential = self.differential()?;
+        let delta_x = polynomial_subtract(source.x_numerator, &[center.x().clone()]);
+        let delta_y = polynomial_subtract(source.y_numerator, &[center.y().clone()]);
+        let distance_square_delta = self.distance() * self.distance() - radius_squared;
+        let radial = polynomial_add(
+            &polynomial_add(
+                &polynomial_multiply(&delta_x, &delta_x),
+                &polynomial_multiply(&delta_y, &delta_y),
+            ),
+            &[distance_square_delta],
+        );
+        let normal_projection = polynomial_subtract(
+            &polynomial_multiply(&delta_y, &differential.tangent_x),
+            &polynomial_multiply(&delta_x, &differential.tangent_y),
+        );
+        let normal = polynomial_scale(&normal_projection, &(Real::from(2_u8) * self.distance()));
+        let lifted_line = |anchor: &Point2, point: &Point2| {
+            let (line_x, line_y) = point.delta_from(anchor);
+            let source_from_start_x =
+                polynomial_subtract(source.x_numerator, &[anchor.x().clone()]);
+            let source_from_start_y =
+                polynomial_subtract(source.y_numerator, &[anchor.y().clone()]);
+            let source_line = polynomial_subtract(
+                &polynomial_scale(&source_from_start_x, &line_y),
+                &polynomial_scale(&source_from_start_y, &line_x),
+            );
+            let radical_line = polynomial_scale(
+                &polynomial_add(
+                    &polynomial_scale(&differential.tangent_y, &line_y),
+                    &polynomial_scale(&differential.tangent_x, &line_x),
+                ),
+                &(-self.distance().clone()),
+            );
+            polynomial_subtract(
+                &polynomial_multiply(&source_line, &normal),
+                &polynomial_multiply(&radical_line, &radial),
+            )
+        };
+        let chart =
+            |anchor: &Point2, opposite: &Point2, opposite_weight: &Real, complement: bool| {
+                let control_line = polynomial_scale(
+                    &lifted_line(anchor, conic.control()),
+                    conic.control_weight(),
+                );
+                let opposite_line =
+                    polynomial_scale(&lifted_line(anchor, opposite), opposite_weight);
+                let direct_numerator = polynomial_scale(&control_line, &Real::from(2_u8));
+                let denominator = polynomial_subtract(&direct_numerator, &opposite_line);
+                if complement {
+                    (
+                        polynomial_subtract(&denominator, &direct_numerator),
+                        denominator,
+                    )
+                } else {
+                    (direct_numerator, denominator)
+                }
+            };
+        Ok(Some([
+            chart(conic.start(), conic.end(), conic.end_weight(), false),
+            chart(conic.end(), conic.start(), conic.start_weight(), true),
+        ]))
     }
 
     /// Returns complete exact parameters where this parallel meets a supporting line.
@@ -1936,6 +2165,15 @@ impl BezierParallel2 {
     pub fn supporting_line_incidence(
         &self,
         line: &LineSeg2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelIncidence2>> {
+        self.supporting_line_incidence_with_certified_crossings(line, &[], policy)
+    }
+
+    fn supporting_line_incidence_with_certified_crossings(
+        &self,
+        line: &LineSeg2,
+        certified_crossings: &[Real],
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIncidence2>> {
         let distance_sign = match real_sign(self.distance(), policy) {
@@ -2008,13 +2246,19 @@ impl BezierParallel2 {
             &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
             &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
         );
-        let squared_relation = polynomial_subtract(
+        let mut squared_relation = polynomial_subtract(
             &polynomial_multiply(
                 &polynomial_multiply(&line_numerator, &line_numerator),
                 &speed_squared,
             ),
             &polynomial_multiply(&signed_normal_term, &signed_normal_term),
         );
+        for parameter in certified_crossings {
+            if squared_relation.len() < 2 {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            squared_relation = divide_by_linear_root(&squared_relation, parameter);
+        }
         let incidence =
             match common_unit_polynomial_roots(squared_relation, vec![Real::zero()], policy)? {
                 Classification::Decided(incidence) => incidence,
@@ -2083,6 +2327,34 @@ impl BezierParallel2 {
                         }
                     }
                 }
+                for parameter in certified_crossings {
+                    let candidate = BezierParameter2::Exact(parameter.clone());
+                    let mut insert_at = retained.len();
+                    for (index, existing) in retained.iter_mut().enumerate() {
+                        let ordering = candidate.cmp_by_refinement(existing, policy)?;
+                        match ordering {
+                            Classification::Decided(std::cmp::Ordering::Less) => {
+                                insert_at = index;
+                                break;
+                            }
+                            Classification::Decided(std::cmp::Ordering::Equal) => {
+                                // Preserve the exact construction witness and its
+                                // crossing direction when a higher-order residual
+                                // factor isolates the same parameter again.
+                                *existing = candidate.clone();
+                                insert_at = usize::MAX;
+                                break;
+                            }
+                            Classification::Decided(std::cmp::Ordering::Greater) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    if insert_at != usize::MAX {
+                        retained.insert(insert_at, candidate);
+                    }
+                }
                 Ok(Classification::Decided(
                     BezierParallelIncidence2::Parameters(retained),
                 ))
@@ -2103,7 +2375,24 @@ impl BezierParallel2 {
         line: &LineSeg2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineContactRelation>> {
-        let parameters = match self.supporting_line_incidence(line, policy)? {
+        self.relation_to_supporting_line_with_certified_crossing(line, None, policy)
+    }
+
+    pub(crate) fn relation_to_supporting_line_with_certified_crossing(
+        &self,
+        line: &LineSeg2,
+        certified_crossing: Option<(&Real, BezierLineCrossingDirection)>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierLineContactRelation>> {
+        let certified_parameters = certified_crossing
+            .iter()
+            .map(|(parameter, _)| (*parameter).clone())
+            .collect::<Vec<_>>();
+        let parameters = match self.supporting_line_incidence_with_certified_crossings(
+            line,
+            &certified_parameters,
+            policy,
+        )? {
             Classification::Decided(BezierParallelIncidence2::EntireCurve) => {
                 return Ok(Classification::Decided(
                     BezierLineContactRelation::OnSupportingLine,
@@ -2122,6 +2411,16 @@ impl BezierParallel2 {
 
         let mut contacts = Vec::with_capacity(parameters.len());
         for (index, parameter) in parameters.iter().enumerate() {
+            if let Some((certified_parameter, direction)) = certified_crossing
+                && parameter.as_exact() == Some(certified_parameter)
+            {
+                contacts.push(BezierLineContact::with_crossing_direction(
+                    parameter.clone(),
+                    BezierLineContactKind::Crossing,
+                    Some(direction),
+                )?);
+                continue;
+            }
             let before =
                 match parallel_line_neighbor_sign(self, line, &parameters, index, false, policy)? {
                     Classification::Decided(sign) => sign,
@@ -3870,10 +4169,27 @@ impl BezierParallel2 {
         } else {
             (tangent_x.clone(), tangent_y.clone())
         };
-        Ok(Classification::Decided(CurveDerivative2::new(
+        let derivative = CurveDerivative2::new(
             source_derivative_x + self.distance() * normal_derivative_x,
             source_derivative_y + self.distance() * normal_derivative_y,
-        )))
+        );
+        if derivative.zero_status() == ZeroStatus::Unknown
+            && let Ok(Classification::Decided(analysis)) = self.singularity_analysis(policy)
+            && analysis
+                .parallel_cusps()
+                .iter()
+                .any(|cusp| cusp.as_exact() == Some(parameter))
+        {
+            // The represented radical was constructed by the exact selected-
+            // branch cusp equation. Reuse that certificate instead of asking
+            // scalar simplification to rediscover a nested-radical zero in
+            // both derivative coordinates.
+            return Ok(Classification::Decided(CurveDerivative2::new(
+                Real::zero(),
+                Real::zero(),
+            )));
+        }
+        Ok(Classification::Decided(derivative))
     }
 
     /// Isolates source singularities and distance-dependent parallel cusps exactly.
@@ -3964,10 +4280,29 @@ impl BezierParallel2 {
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let candidates = match cusp_polynomial.isolate_unit_interval_roots(policy)? {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let candidates =
+            if matches!(self.source(), BezierParallelSource2::Quadratic(_)) && weight.is_none() {
+                match exact_quadratic_parallel_cusp_candidates(
+                    &speed_squared,
+                    &signed_curvature_term,
+                    policy,
+                )? {
+                    Some(candidates) => candidates,
+                    None => match cusp_polynomial.isolate_unit_interval_roots(policy)? {
+                        Classification::Decided(roots) => roots,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    },
+                }
+            } else {
+                match cusp_polynomial.isolate_unit_interval_roots(policy)? {
+                    Classification::Decided(roots) => roots,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            };
         let curvature_term_polynomial =
             match polynomial_from_coefficients(signed_curvature_term, policy)? {
                 Classification::Decided(polynomial) => polynomial,
@@ -4152,6 +4487,7 @@ impl BezierParallel2 {
                 let circle = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
                     center: arc.center().clone(),
                     radius_squared,
+                    tangent_contacts: None,
                 });
                 RationalBezier2::try_new_with_implicit_quadratic_conic(
                     controls,
@@ -11926,6 +12262,35 @@ mod conversion_tests {
         assert!(parallel.data.source.differential.get().is_some());
         assert!(redistanced.data.source.differential.get().is_some());
         assert!(redistanced.data.certified_ph_offset.get().is_none());
+    }
+
+    #[test]
+    fn certified_circle_tangent_remains_nontransverse_after_residual_deflation() {
+        let source = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::one(), Real::zero()),
+            )
+            .unwrap(),
+        );
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        let zero = Real::zero();
+        let incidence = parallel
+            .circle_incidence(
+                &Point2::new(Real::zero(), Real::zero()),
+                &Real::one(),
+                &[(zero.clone(), 3)],
+                &CurveContext::STRICT,
+            )
+            .unwrap();
+        let Classification::Decided(contacts) = incidence else {
+            panic!("the certified line/circle tangent must be decided");
+        };
+        let [(parameter, certified_transverse)] = contacts.as_slice() else {
+            panic!("the tangent circle must have one retained contact");
+        };
+        assert_eq!(parameter.as_exact(), Some(&zero));
+        assert!(!certified_transverse);
     }
 
     #[test]

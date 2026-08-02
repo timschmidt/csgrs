@@ -755,6 +755,30 @@ impl BezierAlgebraicParameter2 {
         parameter
     }
 
+    /// Constructs a simple singleton whose local root count was certified by
+    /// an equivalent exact eliminant (for example, one Bernstein sign
+    /// variation on this interval).
+    ///
+    /// Only structurally explicit trailing zeros are removed here. The caller's
+    /// local certificate proves that the retained leading coefficient is
+    /// nonzero and that the polynomial has exactly one simple root, so no
+    /// second global degree/sign pass is needed.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn from_certified_simple_power_basis(
+        mut coefficients: Vec<Real>,
+        interval: BezierParameterInterval,
+    ) -> Option<Self> {
+        while coefficients.len() > 1 && coefficients.last().is_some_and(Real::definitely_zero) {
+            coefficients.pop();
+        }
+        (coefficients.len() > 1).then(|| {
+            Self::from_certified_simple_singleton(
+                BezierParameterPolynomial { coefficients },
+                interval,
+            )
+        })
+    }
+
     fn from_certified_singleton_with_sturm_sequence(
         polynomial: BezierParameterPolynomial,
         interval: BezierParameterInterval,
@@ -1446,6 +1470,9 @@ impl BezierParameter2 {
         max_refinement_steps: usize,
         policy: &CurveContext,
     ) -> Self {
+        if max_refinement_steps == 0 {
+            return self;
+        }
         let Self::Algebraic(algebraic) = self else {
             return self;
         };
@@ -3374,7 +3401,7 @@ fn insert_parameter_ordered(
     Ok(())
 }
 
-fn divide_by_linear_root(coefficients: &[Real], root: &Real) -> Vec<Real> {
+pub(crate) fn divide_by_linear_root(coefficients: &[Real], root: &Real) -> Vec<Real> {
     let degree = coefficients.len() - 1;
     let mut quotient = vec![Real::zero(); degree];
     quotient[degree - 1] = coefficients[degree].clone();

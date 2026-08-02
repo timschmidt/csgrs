@@ -378,22 +378,44 @@ fn quadratic_parallel_isolates_distance_dependent_interior_cusp() {
 }
 
 #[test]
-fn quadratic_parallel_retains_nonrepresented_algebraic_cusp() {
+fn quadratic_parallel_materializes_radical_cusp_parameter() {
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
     let parallel = source.parallel_left(r(1)).unwrap();
-    let analysis = match parallel.singularity_analysis(&policy()).unwrap() {
-        Classification::Decided(analysis) => analysis,
-        Classification::Uncertain(reason) => {
-            panic!("algebraic cusp isolation was uncertain: {reason:?}")
+    let target_speed_squared = r(4).root_n(3).unwrap();
+    let constant = r(1) - target_speed_squared;
+    let quadratic = r(4);
+    let denominator = r(2) * &quadratic;
+    let discriminant = r(0) - r(4) * &quadratic * constant;
+    let expected = (discriminant / (&denominator * &denominator))
+        .unwrap()
+        .sqrt()
+        .unwrap();
+    let mut strict_cusp = None;
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let analysis = match parallel.singularity_analysis(&policy).unwrap() {
+            Classification::Decided(analysis) => analysis,
+            Classification::Uncertain(reason) => {
+                panic!("radical cusp isolation was uncertain: {reason:?}")
+            }
+        };
+        assert!(analysis.source_is_regular());
+        let [BezierParameter2::Exact(cusp)] = analysis.parallel_cusps() else {
+            panic!("the polynomial-quadratic cusp must use the exact Real radical tower");
+        };
+        assert_eq!(cusp, &expected);
+        let derivative = match parallel.derivative_at(cusp, &policy).unwrap() {
+            Classification::Decided(derivative) => derivative,
+            Classification::Uncertain(reason) => {
+                panic!("the represented cusp derivative was uncertain: {reason:?}")
+            }
+        };
+        assert_eq!(derivative.zero_status(), hyperreal::ZeroKnowledge::Zero);
+        if let Some(strict_cusp) = &strict_cusp {
+            assert_eq!(cusp, strict_cusp);
+        } else {
+            strict_cusp = Some(cusp.clone());
         }
-    };
-    assert!(analysis.source_is_regular());
-    assert_eq!(analysis.parallel_cusps().len(), 1);
-    let BezierParameter2::Algebraic(cusp) = &analysis.parallel_cusps()[0] else {
-        panic!("expected a retained nonrational algebraic cusp");
-    };
-    assert_eq!(cusp.root_count(), 1);
-    assert!(cusp.polynomial().degree() >= 4);
+    }
 }
 
 #[test]

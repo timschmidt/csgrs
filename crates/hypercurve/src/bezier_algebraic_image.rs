@@ -327,10 +327,32 @@ impl RationalBezierAlgebraicPointImage2 {
         &self,
         policy: &CurveContext,
     ) -> Option<Classification<Aabb2>> {
-        self.data
-            .parametric_source
-            .as_ref()
-            .map(|source| source.curve.certified_bounds_classified(policy))
+        self.parametric_source_bounds_refined(0, policy)
+    }
+
+    pub(crate) fn parametric_source_bounds_refined(
+        &self,
+        refinement_steps: usize,
+        policy: &CurveContext,
+    ) -> Option<Classification<Aabb2>> {
+        if let Some(source) = self.data.parametric_source.as_ref() {
+            let parameter = crate::BezierParameter2::Algebraic(source.parameter.clone())
+                .refined_isolating_interval(refinement_steps, policy);
+            let (start, end) = match &parameter {
+                crate::BezierParameter2::Exact(parameter) => (parameter, parameter),
+                crate::BezierParameter2::Algebraic(parameter) => {
+                    (parameter.interval().start(), parameter.interval().end())
+                }
+            };
+            match source.curve.subcurve_between_exact(start, end, policy) {
+                Ok(Classification::Decided(curve)) => curve.certified_bounds_classified(policy),
+                Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+                Err(_) => Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+            }
+            .into()
+        } else {
+            None
+        }
     }
 
     pub(crate) fn same_injective_parametric_source_point(
@@ -846,6 +868,22 @@ pub(crate) fn rational_point_image_from_power_basis(
     denominator: Vec<Real>,
     policy: &CurveContext,
 ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
+    let parameter_root = parameter_representation(parameter, policy);
+    if !parameter_root.is_valid() {
+        return Ok(RationalBezierAlgebraicPointImage2::new(
+            BezierAlgebraicImageStatus::RetainedRationalExpression,
+            parameter_root,
+            None,
+            None,
+            Some(RetainedRationalPointExpression {
+                parameter: parameter.clone(),
+                x_numerator,
+                y_numerator,
+                denominator,
+            }),
+            Some("retained an exact Real-coefficient rational point expression".to_owned()),
+        ));
+    }
     let x_numerator = reduce_algebraic_image_polynomial(parameter, x_numerator, policy)?;
     let y_numerator = reduce_algebraic_image_polynomial(parameter, y_numerator, policy)?;
     let denominator = reduce_algebraic_image_polynomial(parameter, denominator, policy)?;

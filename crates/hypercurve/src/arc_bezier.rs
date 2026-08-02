@@ -162,6 +162,7 @@ fn compute_circular_arc_decomposition(
     let circular_conic = Arc::new(RationalQuadraticCircle2 {
         center: arc.center().clone(),
         radius_squared: arc.radius_squared_ref().clone(),
+        tangent_contacts: None,
     });
     let mut spans = Vec::with_capacity(span_count);
     for (span_index, endpoints) in points.windows(2).enumerate() {

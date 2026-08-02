@@ -2767,18 +2767,33 @@ fn append_exact_offset_join(
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
 
-    let turn = offset_vector_cross(&previous.end_tangent, &next.start_tangent);
+    let opposite_tangents =
+        offset_vectors_are_structurally_opposite(&previous.end_tangent, &next.start_tangent);
+    let turn = if opposite_tangents {
+        Real::zero()
+    } else {
+        offset_vector_cross(&previous.end_tangent, &next.start_tangent)
+    };
     let inward = match real_sign(&(turn * distance), policy) {
         Some(RealSign::Positive) => true,
         Some(RealSign::Negative | RealSign::Zero) => false,
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };
     match style {
+        OffsetCornerStyle2::Round if !inward && opposite_tangents => append_exact_round_join(
+            fragments,
+            previous,
+            next,
+            distance,
+            crate::arc_bezier::ArcSweepKind::Semicircle,
+            policy,
+        ),
         OffsetCornerStyle2::Round if !inward => append_exact_round_join(
             fragments,
-            &previous.offset_end,
-            &next.offset_start,
-            &previous.source_end,
+            previous,
+            next,
+            distance,
+            crate::arc_bezier::ArcSweepKind::Minor,
             policy,
         ),
         OffsetCornerStyle2::Bevel if !inward => {
@@ -2795,24 +2810,88 @@ fn append_exact_offset_join(
     }
 }
 
+fn exact_offset_parallel_tangent_contact(
+    span: &ExactOffsetSpan2,
+    at_start: bool,
+    point: &Point2,
+) -> Option<crate::rational_bezier::RationalQuadraticParallelCircleContact2> {
+    let fragment = if at_start {
+        span.fragments.first()
+    } else {
+        span.fragments.last()
+    };
+    let BezierSplitFragment2::AnalyticParallel(fragment) = fragment? else {
+        return None;
+    };
+    let parameter = if at_start {
+        analytic_parallel_traversal_start(fragment)
+    } else {
+        analytic_parallel_traversal_end(fragment)
+    }
+    .as_exact()?
+    .clone();
+    Some(
+        crate::rational_bezier::RationalQuadraticParallelCircleContact2 {
+            parallel: fragment.parallel().clone(),
+            parameter,
+            point: point.clone(),
+            eliminant_root_multiplicity: 2,
+        },
+    )
+}
+
+fn exact_offset_line_tangent_contact(
+    span: &ExactOffsetSpan2,
+    at_start: bool,
+    point: &Point2,
+) -> Option<crate::rational_bezier::RationalQuadraticCircleTangentContact2> {
+    let fragment = if at_start {
+        span.fragments.first()
+    } else {
+        span.fragments.last()
+    };
+    let BezierSplitFragment2::Materialized {
+        curve: BezierSubcurve2::Quadratic(curve),
+        ..
+    } = fragment?
+    else {
+        return None;
+    };
+    Some(
+        crate::rational_bezier::RationalQuadraticCircleTangentContact2::Line {
+            line: curve.retained_exact_line_image()?.clone(),
+            point: point.clone(),
+        },
+    )
+}
+
 fn append_exact_round_join(
     fragments: &mut Vec<BezierSplitFragment2>,
-    from: &Point2,
-    to: &Point2,
-    center: &Point2,
+    previous: &ExactOffsetSpan2,
+    next: &ExactOffsetSpan2,
+    distance: &Real,
+    sweep_kind: crate::arc_bezier::ArcSweepKind,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    let from_radius = from.delta_from(center);
-    let to_radius = to.delta_from(center);
-    let clockwise = match real_sign(
-        &(&from_radius.0 * &to_radius.1 - &from_radius.1 * &to_radius.0),
-        policy,
-    ) {
-        Some(RealSign::Positive) => false,
-        Some(RealSign::Negative | RealSign::Zero) => true,
+    // Both endpoints were constructed from this vertex with the same signed
+    // left-normal distance. The already-certified outer turn therefore fixes
+    // both the traversal orientation and the fact that this is the minor arc;
+    // do not recompute a potentially wide radical radial cross-product.
+    let clockwise = match real_sign(distance, policy) {
+        Some(RealSign::Positive) => true,
+        Some(RealSign::Negative) => false,
+        Some(RealSign::Zero) => return Ok(Classification::Decided(())),
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };
-    let arc = CircularArc2::try_from_center(from.clone(), to.clone(), center.clone(), clockwise)?;
+    let radius_squared = distance * distance;
+    let arc = CircularArc2::new_with_certified_radius_and_sweep(
+        previous.offset_end.clone(),
+        next.offset_start.clone(),
+        previous.source_end.clone(),
+        radius_squared.clone(),
+        clockwise,
+        sweep_kind,
+    );
     let decomposition = match arc.rational_bezier_decomposition_with_policy(policy) {
         Ok(Classification::Decided(decomposition)) => decomposition,
         Ok(Classification::Uncertain(reason)) => {
@@ -2823,8 +2902,49 @@ fn append_exact_round_join(
             return Ok(Classification::Uncertain(blocker.reason()));
         }
     };
+    let mut parallel_contacts = [
+        exact_offset_parallel_tangent_contact(previous, false, &previous.offset_end),
+        exact_offset_parallel_tangent_contact(next, true, &next.offset_start),
+    ]
+    .into_iter()
+    .flatten()
+    .collect::<Vec<_>>();
+    if sweep_kind == crate::arc_bezier::ArcSweepKind::Semicircle
+        && parallel_contacts.len() == 2
+        && parallel_contacts[0].parallel.source() == parallel_contacts[1].parallel.source()
+        && parallel_contacts[0].parameter == parallel_contacts[1].parameter
+    {
+        // A semicircle between the two limiting sides of one analytic cusp is
+        // centered at the cusp parallel. Each neighboring parallel therefore
+        // has this circle as its osculating circle, certifying one additional
+        // eliminant factor beyond ordinary tangency.
+        for contact in &mut parallel_contacts {
+            contact.eliminant_root_multiplicity = 3;
+        }
+    }
+    let tangent_contacts = parallel_contacts
+        .into_iter()
+        .map(crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel)
+        .chain(
+            [
+                exact_offset_line_tangent_contact(previous, false, &previous.offset_end),
+                exact_offset_line_tangent_contact(next, true, &next.offset_start),
+            ]
+            .into_iter()
+            .flatten(),
+        )
+        .collect::<Vec<_>>();
+    let circular_conic = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
+        center: previous.source_end.clone(),
+        radius_squared,
+        tangent_contacts: (!tangent_contacts.is_empty()).then(|| Arc::from(tangent_contacts)),
+    });
     fragments.extend(decomposition.spans().iter().map(|span| {
-        materialized_offset_fragment(BezierSubcurve2::RationalQuadratic(span.curve().clone()))
+        let curve = span.curve().clone().with_retained_conic_provenance(
+            span.curve().retained_implicit_quadratic_conic().cloned(),
+            Some(Arc::clone(&circular_conic)),
+        );
+        materialized_offset_fragment(BezierSubcurve2::RationalQuadratic(curve))
     }));
     Ok(Classification::Decided(()))
 }
@@ -2855,7 +2975,12 @@ fn append_exact_miter_join(
     limit: Option<&Real>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    let denominator = offset_vector_cross(&previous.end_tangent, &next.start_tangent);
+    let denominator =
+        if offset_vectors_are_structurally_opposite(&previous.end_tangent, &next.start_tangent) {
+            Real::zero()
+        } else {
+            offset_vector_cross(&previous.end_tangent, &next.start_tangent)
+        };
     let denominator_sign = real_sign(&denominator, policy);
     let Some(RealSign::Positive | RealSign::Negative) = denominator_sign else {
         return match denominator_sign {
@@ -2898,6 +3023,11 @@ fn append_exact_miter_join(
 
 fn offset_vector_cross(first: &(Real, Real), second: &(Real, Real)) -> Real {
     &first.0 * &second.1 - &first.1 * &second.0
+}
+
+fn offset_vectors_are_structurally_opposite(first: &(Real, Real), second: &(Real, Real)) -> bool {
+    (&first.0 + &second.0).zero_status() == hyperreal::ZeroKnowledge::Zero
+        && (&first.1 + &second.1).zero_status() == hyperreal::ZeroKnowledge::Zero
 }
 
 const fn curve_region_role_depth(role: CurveRegionLoopRole) -> i32 {
@@ -5956,9 +6086,11 @@ impl CurveRegion2 {
         point: &Point2,
         direction_x: Real,
         direction_y: Real,
+        direction_is_certified_nonzero: bool,
+        source_crossing_direction: BezierLineCrossingDirection,
         source_loop_index: usize,
         source_fragment_index: usize,
-        source_parameter: &BezierParameter2,
+        source_parameter: Option<&BezierParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RegionPointLocation>> {
         let direction_squared = &direction_x * &direction_x + &direction_y * &direction_y;
@@ -5972,6 +6104,7 @@ impl CurveRegion2 {
                     "boundary-side ray direction has a negative squared norm".into(),
                 ));
             }
+            None if direction_is_certified_nonzero => {}
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
         if source_loop_index >= self.data.boundary_loops.len()
@@ -6006,6 +6139,9 @@ impl CurveRegion2 {
             direction_x,
             direction_y,
         };
+        let source_tangent_contacts = retained_circle_tangent_contacts(
+            &self.data.boundary_loops[source_loop_index].fragments()[source_fragment_index],
+        );
         let mut inside = false;
         let mut signed_depth = 0_i32;
         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
@@ -6017,6 +6153,8 @@ impl CurveRegion2 {
             let skipped_origin = Some(RetainedRayOriginContact {
                 fragment_index: (loop_index == source_loop_index).then_some(source_fragment_index),
                 parameter: source_parameter,
+                crossing_direction: source_crossing_direction,
+                tangent_contacts: source_tangent_contacts,
             });
             match classify_point_with_retained_ray_skipping_origin(
                 boundary_loop,
@@ -7787,7 +7925,37 @@ fn retained_fragment_contains_point(
 #[derive(Clone, Copy)]
 struct RetainedRayOriginContact<'a> {
     fragment_index: Option<usize>,
-    parameter: &'a BezierParameter2,
+    parameter: Option<&'a BezierParameter2>,
+    crossing_direction: BezierLineCrossingDirection,
+    tangent_contacts: Option<&'a [crate::rational_bezier::RationalQuadraticCircleTangentContact2]>,
+}
+
+fn retained_circle_tangent_contacts(
+    fragment: &BezierSplitFragment2,
+) -> Option<&[crate::rational_bezier::RationalQuadraticCircleTangentContact2]> {
+    let circle = match fragment {
+        BezierSplitFragment2::Materialized {
+            curve: BezierSubcurve2::RationalQuadratic(curve),
+            ..
+        } => curve.retained_circular_conic(),
+        BezierSplitFragment2::Materialized {
+            curve: BezierSubcurve2::Rational(curve),
+            ..
+        }
+        | BezierSplitFragment2::AlgebraicEndpointImages {
+            source_curve: Some(BezierSubcurve2::Rational(curve)),
+            ..
+        } => curve.retained_circular_conic(),
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            source_curve: Some(BezierSubcurve2::RationalQuadratic(curve)),
+            ..
+        } => curve.retained_circular_conic(),
+        BezierSplitFragment2::Materialized { .. }
+        | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::AnalyticParallel(_)
+        | BezierSplitFragment2::Unresolved { .. } => None,
+    }?;
+    circle.tangent_contacts.as_deref()
 }
 
 fn classify_point_with_retained_ray(
@@ -7818,13 +7986,58 @@ fn classify_point_with_retained_ray_skipping_origin(
     let direction_x = &ray.direction_x;
     let direction_y = &ray.direction_y;
     let mut winding = 0_i32;
-    let mut origin_contact_was_skipped = false;
+    let mut source_origin_contact_was_skipped = false;
     for (fragment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
-        if let BezierSplitFragment2::AnalyticParallel(fragment) = fragment {
+        let exact_parallel_curve = match fragment {
+            BezierSplitFragment2::AnalyticParallel(fragment) => match fragment
+                .parallel()
+                .exact_rational_parallel_component(policy)
+            {
+                Ok(Classification::Decided(Some(curve))) => Some(BezierSubcurve2::Rational(curve)),
+                Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => None,
+            },
+            BezierSplitFragment2::Materialized { .. }
+            | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | BezierSplitFragment2::Unresolved { .. } => None,
+        };
+        if let BezierSplitFragment2::AnalyticParallel(fragment) = fragment
+            && exact_parallel_curve.is_none()
+        {
+            let certified_origin_parameter =
+                skipped_origin.and_then(|origin| {
+                    if origin.fragment_index == Some(fragment_index) {
+                        return origin.parameter.and_then(BezierParameter2::as_exact);
+                    }
+                    let source_fragment_index = origin.fragment_index?;
+                    let fragment_count = boundary_loop.fragments().len();
+                    let adjacent = fragment_count > 1
+                        && ((source_fragment_index + 1) % fragment_count == fragment_index
+                            || (fragment_index + 1) % fragment_count == source_fragment_index);
+                    adjacent.then_some(())?;
+                    origin.tangent_contacts?.iter().find_map(|contact| {
+                        match contact {
+                    crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(
+                        contact,
+                    ) if contact.parallel == *fragment.parallel() && contact.point == *point => {
+                        Some(&contact.parameter)
+                    }
+                    crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(_)
+                    | crate::rational_bezier::RationalQuadraticCircleTangentContact2::Line {
+                        ..
+                    } => None,
+                }
+                    })
+                });
+            let certified_crossing = skipped_origin.and_then(|origin| {
+                certified_origin_parameter.map(|parameter| (parameter, origin.crossing_direction))
+            });
             let relation = match fragment
                 .parallel()
-                .relation_to_supporting_line_with_contacts(&ray.line, policy)?
-            {
+                .relation_to_supporting_line_with_certified_crossing(
+                    &ray.line,
+                    certified_crossing,
+                    policy,
+                )? {
                 Classification::Decided(relation) => relation,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -7855,22 +8068,33 @@ fn classify_point_with_retained_ray_skipping_origin(
                             }
                         }
                         if let Some(origin) = skipped_origin
-                            && origin.fragment_index == Some(fragment_index)
+                            && certified_origin_parameter.is_some()
                         {
-                            match retained_parameters_equal(
+                            let certified_parameter = BezierParameter2::Exact(
+                                certified_origin_parameter
+                                    .expect("a certified origin parameter was selected")
+                                    .clone(),
+                            );
+                            let is_origin = retained_parameters_equal(
                                 contact.parameter(),
-                                origin.parameter,
+                                &certified_parameter,
                                 policy,
-                            )? {
+                            )?;
+                            match is_origin {
                                 Classification::Decided(true) => {
-                                    if origin_contact_was_skipped
-                                        || contact.kind() != BezierLineContactKind::Crossing
-                                    {
+                                    if contact.kind() != BezierLineContactKind::Crossing {
                                         return Ok(Classification::Uncertain(
                                             UncertaintyReason::Boundary,
                                         ));
                                     }
-                                    origin_contact_was_skipped = true;
+                                    if origin.fragment_index == Some(fragment_index) {
+                                        if source_origin_contact_was_skipped {
+                                            return Ok(Classification::Uncertain(
+                                                UncertaintyReason::Boundary,
+                                            ));
+                                        }
+                                        source_origin_contact_was_skipped = true;
+                                    }
                                     continue;
                                 }
                                 Classification::Decided(false) => {}
@@ -7881,8 +8105,10 @@ fn classify_point_with_retained_ray_skipping_origin(
                                     // origin even when its independently
                                     // isolated parameter cannot be ordered
                                     // against the represented witness.
-                                    if sole_crossing_contact && !origin_contact_was_skipped {
-                                        origin_contact_was_skipped = true;
+                                    if sole_crossing_contact {
+                                        if origin.fragment_index == Some(fragment_index) {
+                                            source_origin_contact_was_skipped = true;
+                                        }
                                         continue;
                                     }
                                     return Ok(Classification::Uncertain(reason));
@@ -7940,21 +8166,67 @@ fn classify_point_with_retained_ray_skipping_origin(
             | BezierSplitFragment2::Unresolved { .. } => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
-            BezierSplitFragment2::AnalyticParallel(_) => unreachable!(),
+            BezierSplitFragment2::AnalyticParallel(fragment) => (
+                exact_parallel_curve
+                    .as_ref()
+                    .expect("exact analytic component was selected above"),
+                Some((
+                    fragment.range().start(),
+                    fragment.range().end(),
+                    fragment.is_reversed(),
+                )),
+            ),
         };
         if !subcurve_control_hull_may_be_ahead(curve, point, direction_x, direction_y, policy) {
             continue;
         }
         let control_hull_order =
             subcurve_control_hull_strict_order(curve, point, direction_x, direction_y, policy);
-        let relation = match subcurve_relation_to_line_with_contacts(
-            curve,
-            &ray.line,
-            Some((direction_x, direction_y)),
-            policy,
-        ) {
+        let certified_source_crossing = skipped_origin.and_then(|origin| {
+            (origin.fragment_index == Some(fragment_index))
+                .then(|| {
+                    origin
+                        .parameter
+                        .and_then(BezierParameter2::as_exact)
+                        .map(|parameter| (parameter, origin.crossing_direction))
+                })
+                .flatten()
+        });
+        let certified_circle_relation =
+            certified_source_crossing.and_then(|(parameter, crossing_direction)| {
+                let retained_circle = match curve {
+                    BezierSubcurve2::RationalQuadratic(curve) => {
+                        curve.retained_circular_conic().is_some()
+                    }
+                    BezierSubcurve2::Rational(curve) => curve.retained_circular_conic().is_some(),
+                    BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => false,
+                };
+                retained_circle.then(|| {
+                    RationalBezier2::try_from_subcurve(curve).map(|curve| {
+                        curve.relation_to_line_with_certified_crossing(
+                            &ray.line,
+                            parameter,
+                            crossing_direction,
+                            policy,
+                        )
+                    })
+                })
+            });
+        let relation = match certified_circle_relation.transpose() {
+            Ok(Some(relation)) => relation,
+            Ok(None) => subcurve_relation_to_line_with_contacts(
+                curve,
+                &ray.line,
+                Some((direction_x, direction_y)),
+                policy,
+            ),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
+        let relation = match relation {
             Classification::Decided(relation) => relation,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
         match relation {
             BezierLineContactRelation::ControlHullDisjoint { .. }
@@ -7966,6 +8238,68 @@ fn classify_point_with_retained_ray_skipping_origin(
                 let sole_crossing_contact =
                     contacts.len() == 1 && contacts[0].kind() == BezierLineContactKind::Crossing;
                 for contact in contacts {
+                    if let Some(origin) = skipped_origin
+                        && origin.fragment_index == Some(fragment_index)
+                    {
+                        let is_origin = contact.supporting_line_parameter().map_or_else(
+                            || {
+                                origin.parameter.map_or(
+                                    Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+                                    |parameter| {
+                                        retained_parameters_equal(
+                                            contact.parameter(),
+                                            parameter,
+                                            policy,
+                                        )
+                                    },
+                                )
+                            },
+                            |line_parameter| {
+                                compare_reals(line_parameter, &Real::zero(), policy).map_or_else(
+                                    || {
+                                        origin.parameter.map_or(
+                                            Ok(Classification::Uncertain(
+                                                UncertaintyReason::Boundary,
+                                            )),
+                                            |parameter| {
+                                                retained_parameters_equal(
+                                                    contact.parameter(),
+                                                    parameter,
+                                                    policy,
+                                                )
+                                            },
+                                        )
+                                    },
+                                    |order| {
+                                        Ok(Classification::Decided(
+                                            order == std::cmp::Ordering::Equal,
+                                        ))
+                                    },
+                                )
+                            },
+                        )?;
+                        match is_origin {
+                            Classification::Decided(true) => {
+                                if source_origin_contact_was_skipped
+                                    || contact.kind() != BezierLineContactKind::Crossing
+                                {
+                                    return Ok(Classification::Uncertain(
+                                        UncertaintyReason::Boundary,
+                                    ));
+                                }
+                                source_origin_contact_was_skipped = true;
+                                continue;
+                            }
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(_) if sole_crossing_contact => {
+                                source_origin_contact_was_skipped = true;
+                                continue;
+                            }
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
                     let retained = if let Some((start, end, reversed)) = range {
                         retained_parameter_contains(
                             contact.parameter(),
@@ -7990,62 +8324,6 @@ fn classify_point_with_retained_ray_skipping_origin(
                         Classification::Decided(false) => continue,
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
-                        }
-                    }
-                    if let Some(origin) = skipped_origin
-                        && origin.fragment_index == Some(fragment_index)
-                    {
-                        let is_origin = contact.supporting_line_parameter().map_or_else(
-                            || {
-                                retained_parameters_equal(
-                                    contact.parameter(),
-                                    origin.parameter,
-                                    policy,
-                                )
-                            },
-                            |line_parameter| {
-                                compare_reals(line_parameter, &Real::zero(), policy).map_or_else(
-                                    || {
-                                        retained_parameters_equal(
-                                            contact.parameter(),
-                                            origin.parameter,
-                                            policy,
-                                        )
-                                    },
-                                    |order| {
-                                        Ok(Classification::Decided(
-                                            order == std::cmp::Ordering::Equal,
-                                        ))
-                                    },
-                                )
-                            },
-                        )?;
-                        match is_origin {
-                            Classification::Decided(true) => {
-                                if origin_contact_was_skipped
-                                    || contact.kind() != BezierLineContactKind::Crossing
-                                {
-                                    return Ok(Classification::Uncertain(
-                                        UncertaintyReason::Boundary,
-                                    ));
-                                }
-                                origin_contact_was_skipped = true;
-                                continue;
-                            }
-                            Classification::Decided(false) => {}
-                            Classification::Uncertain(reason) => {
-                                // The exact representative lies on this
-                                // transverse source ray. A complete
-                                // singleton crossing is therefore the
-                                // origin even when its independently
-                                // isolated parameter cannot be ordered
-                                // against the represented witness.
-                                if sole_crossing_contact && !origin_contact_was_skipped {
-                                    origin_contact_was_skipped = true;
-                                    continue;
-                                }
-                                return Ok(Classification::Uncertain(reason));
-                            }
                         }
                     }
                     let ahead = if let Some(line_parameter) = contact.supporting_line_parameter() {
@@ -8121,7 +8399,7 @@ fn classify_point_with_retained_ray_skipping_origin(
         }
     }
     if skipped_origin.is_some_and(|origin| origin.fragment_index.is_some())
-        && !origin_contact_was_skipped
+        && !source_origin_contact_was_skipped
     {
         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
     }
@@ -9128,8 +9406,8 @@ mod tests {
     fn retained_parallel_offset_preserves_algebraic_cusp_partition() {
         let construction_policy = CurveContext::STRICT;
         let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(half, Real::zero()), p(1, 1))
-            .parallel_left(Real::one())
+        let parallel = CubicBezier2::new(p(0, 0), p(0, 4), p(4, -4), p(4, 0))
+            .parallel_left(half)
             .expect("the source has an exact analytic parallel");
         let analysis = parallel
             .singularity_analysis(&construction_policy)
@@ -9137,8 +9415,8 @@ mod tests {
         let Classification::Decided(analysis) = analysis else {
             panic!("the exact cusp analysis must be decided");
         };
-        let [cusp] = analysis.parallel_cusps() else {
-            panic!("the selected parallel must have one cusp");
+        let [cusp, next_cusp] = analysis.parallel_cusps() else {
+            panic!("the selected parallel must have two cusps");
         };
         assert!(!cusp.is_exact());
         let make_fragment = |start: BezierParameter2, end: BezierParameter2| {
@@ -9159,7 +9437,7 @@ mod tests {
             fragment
         };
         let first = make_fragment(BezierParameter2::Exact(Real::zero()), cusp.clone());
-        let second = make_fragment(cusp.clone(), BezierParameter2::Exact(Real::one()));
+        let second = make_fragment(cusp.clone(), next_cusp.clone());
         let fragments = vec![
             BezierSplitFragment2::AnalyticParallel(first.clone()),
             BezierSplitFragment2::AnalyticParallel(second.clone()),

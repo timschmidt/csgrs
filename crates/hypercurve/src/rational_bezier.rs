@@ -55,6 +55,27 @@ pub struct RationalQuadraticBezier2 {
 pub(crate) struct RationalQuadraticCircle2 {
     pub(crate) center: Point2,
     pub(crate) radius_squared: Real,
+    pub(crate) tangent_contacts: Option<Arc<[RationalQuadraticCircleTangentContact2]>>,
+}
+
+/// Construction evidence for a tangent contact between a circular join and
+/// an analytic parallel at one endpoint of that join. The corresponding
+/// circle-incidence eliminant has the represented parameter as a root of
+/// multiplicity at least two. Every minor conic span in the join retains the
+/// certificate: the contact is on that span exactly when its point is one of
+/// the span endpoints.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct RationalQuadraticParallelCircleContact2 {
+    pub(crate) parallel: crate::BezierParallel2,
+    pub(crate) parameter: Real,
+    pub(crate) point: Point2,
+    pub(crate) eliminant_root_multiplicity: u8,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum RationalQuadraticCircleTangentContact2 {
+    Parallel(RationalQuadraticParallelCircleContact2),
+    Line { line: LineSeg2, point: Point2 },
 }
 
 impl PartialEq for RationalQuadraticBezier2 {

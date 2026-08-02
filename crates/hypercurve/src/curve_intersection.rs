@@ -183,10 +183,12 @@ impl CurveIntersectionBatchCache {
                 first: RationalQuadraticCircle2 {
                     center: first.center.clone(),
                     radius_squared: first.radius_squared.clone(),
+                    tangent_contacts: None,
                 },
                 second: RationalQuadraticCircle2 {
                     center: second.center.clone(),
                     radius_squared: second.radius_squared.clone(),
+                    tangent_contacts: None,
                 },
                 relation: relation.clone(),
             });
@@ -291,15 +293,30 @@ enum CurveIntersectionDispatch {
     NativeLine(LineLineIntersection),
     NativeLineArc {
         order: LineArcOrder,
+        arc: CircularArc2,
         relation: LineArcIntersection,
     },
-    NativeArcPoints(Vec<Point2>),
-    NativeCoincidentArcs,
+    NativeArcPoints {
+        first_arc: CircularArc2,
+        second_arc: CircularArc2,
+        points: Vec<Point2>,
+    },
+    NativeCoincidentArcs {
+        first_arc: CircularArc2,
+        second_arc: CircularArc2,
+    },
 }
 
 enum NativeArcIntersectionDispatch {
-    Points(Vec<Point2>),
-    Coincident,
+    Points {
+        first_arc: CircularArc2,
+        second_arc: CircularArc2,
+        points: Vec<Point2>,
+    },
+    Coincident {
+        first_arc: CircularArc2,
+        second_arc: CircularArc2,
+    },
 }
 
 #[derive(Debug)]
@@ -521,21 +538,80 @@ fn native_line_arc_intersection(
     first: &Curve2,
     second: &Curve2,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<(LineArcOrder, LineArcIntersection)>> {
-    let (order, relation) = match (first.geometry(), second.geometry()) {
-        (CurveGeometry2::Line(line), CurveGeometry2::CircularArc(arc)) => {
-            (LineArcOrder::LineThenArc, line.intersect_arc(arc, policy))
-        }
-        (CurveGeometry2::CircularArc(arc), CurveGeometry2::Line(line)) => {
-            (LineArcOrder::ArcThenLine, line.intersect_arc(arc, policy))
-        }
-        _ => return Ok(None),
+) -> ExactCurveResult<Option<(LineArcOrder, CircularArc2, LineArcIntersection)>> {
+    let (order, line, arc) = if let (Some(line), Some(arc)) = (
+        affine_line_image(first.geometry()),
+        materialized_circular_arc(second, policy)?,
+    ) {
+        (LineArcOrder::LineThenArc, line, arc)
+    } else if let (Some(arc), Some(line)) = (
+        materialized_circular_arc(first, policy)?,
+        affine_line_image(second.geometry()),
+    ) {
+        (LineArcOrder::ArcThenLine, line, arc)
+    } else {
+        return Ok(None);
     };
-    relation
-        .map(|relation| Some((order, relation)))
+    let arc_curve = match order {
+        LineArcOrder::LineThenArc => second,
+        LineArcOrder::ArcThenLine => first,
+    };
+    if let Some(relation) = retained_tangent_line_arc_contact(arc_curve, line, &arc) {
+        return Ok(Some((order, arc, relation)));
+    }
+    line.intersect_arc(&arc, policy)
+        .map(|relation| Some((order, arc, relation)))
         .map_err(|cause| {
             ExactCurveError::invalid(CurveOperation2::Intersection, first.family(), cause)
         })
+}
+
+fn retained_tangent_line_arc_contact(
+    arc_curve: &Curve2,
+    line: &crate::LineSeg2,
+    arc: &CircularArc2,
+) -> Option<LineArcIntersection> {
+    let circle = match arc_curve.geometry() {
+        CurveGeometry2::RationalQuadraticBezier(curve) => curve.retained_circular_conic(),
+        CurveGeometry2::RationalBezier(curve) => curve.retained_circular_conic(),
+        _ => None,
+    }?;
+    let contacts = circle.tangent_contacts.as_deref()?;
+    for contact in contacts {
+        let crate::rational_bezier::RationalQuadraticCircleTangentContact2::Line {
+            line: certified_line,
+            point,
+        } = contact
+        else {
+            continue;
+        };
+        let same_line = certified_line == line
+            || (certified_line.start() == line.end() && certified_line.end() == line.start());
+        if !same_line {
+            continue;
+        }
+        let line_param = if point == line.start() {
+            Real::zero()
+        } else if point == line.end() {
+            Real::one()
+        } else {
+            continue;
+        };
+        let arc_param = if point == arc.start() {
+            Real::zero()
+        } else if point == arc.end() {
+            Real::one()
+        } else {
+            continue;
+        };
+        return Some(LineArcIntersection::Point(LineArcIntersectionPoint {
+            point: point.clone(),
+            line_param,
+            arc_param,
+            kind: crate::IntersectionKind::Endpoint,
+        }));
+    }
+    None
 }
 
 fn build_native_line_evidence(
@@ -657,6 +733,7 @@ fn build_native_line_arc_evidence(
     first: &Curve2,
     second: &Curve2,
     order: LineArcOrder,
+    arc: &CircularArc2,
     relation: &LineArcIntersection,
     policy: &CurveContext,
     span_pair_count: usize,
@@ -665,18 +742,27 @@ fn build_native_line_arc_evidence(
     match relation {
         LineArcIntersection::None => {}
         LineArcIntersection::Point(hit) => {
-            append_native_line_arc_contact(&mut contacts, first, second, order, hit, policy)?;
+            append_native_line_arc_contact(&mut contacts, first, second, order, arc, hit, policy)?;
         }
         LineArcIntersection::TwoPoints {
             first: first_hit,
             second: second_hit,
         } => {
-            append_native_line_arc_contact(&mut contacts, first, second, order, first_hit, policy)?;
             append_native_line_arc_contact(
                 &mut contacts,
                 first,
                 second,
                 order,
+                arc,
+                first_hit,
+                policy,
+            )?;
+            append_native_line_arc_contact(
+                &mut contacts,
+                first,
+                second,
+                order,
+                arc,
                 second_hit,
                 policy,
             )?;
@@ -704,22 +790,13 @@ fn append_native_line_arc_contact(
     first: &Curve2,
     second: &Curve2,
     order: LineArcOrder,
+    arc: &CircularArc2,
     hit: &LineArcIntersectionPoint,
     policy: &CurveContext,
 ) -> ExactCurveResult<()> {
-    let (line, arc_curve, arc) = match order {
-        LineArcOrder::LineThenArc => {
-            let CurveGeometry2::CircularArc(arc) = second.geometry() else {
-                unreachable!("line-then-arc dispatch requires an arc second operand")
-            };
-            (first, second, arc)
-        }
-        LineArcOrder::ArcThenLine => {
-            let CurveGeometry2::CircularArc(arc) = first.geometry() else {
-                unreachable!("arc-then-line dispatch requires an arc first operand")
-            };
-            (second, first, arc)
-        }
+    let (line, arc_curve) = match order {
+        LineArcOrder::LineThenArc => (first, second),
+        LineArcOrder::ArcThenLine => (second, first),
     };
     let line_fragment =
         &line.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?[0];
@@ -804,23 +881,39 @@ fn native_arc_intersection(
     first: &Curve2,
     second: &Curve2,
     policy: &CurveContext,
+    batch_cache: Option<&mut CurveIntersectionBatchCache>,
 ) -> ExactCurveResult<Option<NativeArcIntersectionDispatch>> {
-    let (CurveGeometry2::CircularArc(first_arc), CurveGeometry2::CircularArc(second_arc)) =
-        (first.geometry(), second.geometry())
-    else {
+    let (Some(first_arc), Some(second_arc)) = (
+        materialized_circular_arc(first, policy)?,
+        materialized_circular_arc(second, policy)?,
+    ) else {
         return Ok(None);
     };
-    let relation = first_arc
-        .circle_relation(second_arc, policy)
-        .map_err(|cause| {
-            ExactCurveError::invalid(CurveOperation2::Intersection, first.family(), cause)
-        })?;
+    let relation = match batch_cache
+        .map(|cache| cache.circular_support_relation(first, second, policy))
+        .transpose()?
+        .flatten()
+    {
+        Some(relation) => relation,
+        None => first_arc
+            .circle_relation(&second_arc, policy)
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Intersection, first.family(), cause)
+            })?,
+    };
     let candidates = match relation {
         CircleCircleRelation::Coincident => {
-            return Ok(Some(NativeArcIntersectionDispatch::Coincident));
+            return Ok(Some(NativeArcIntersectionDispatch::Coincident {
+                first_arc,
+                second_arc,
+            }));
         }
         CircleCircleRelation::Disjoint => {
-            return Ok(Some(NativeArcIntersectionDispatch::Points(Vec::new())));
+            return Ok(Some(NativeArcIntersectionDispatch::Points {
+                first_arc,
+                second_arc,
+                points: Vec::new(),
+            }));
         }
         CircleCircleRelation::Tangent { point } => vec![point],
         CircleCircleRelation::Secant {
@@ -845,21 +938,47 @@ fn native_arc_intersection(
             }
         }
     }
-    Ok(Some(NativeArcIntersectionDispatch::Points(points)))
+    Ok(Some(NativeArcIntersectionDispatch::Points {
+        first_arc,
+        second_arc,
+        points,
+    }))
+}
+
+fn materialized_circular_arc(
+    curve: &Curve2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CircularArc2>> {
+    let arc = match curve.geometry() {
+        CurveGeometry2::CircularArc(arc) => return Ok(Some(arc.clone())),
+        CurveGeometry2::RationalQuadraticBezier(conic)
+            if conic.retained_circular_conic().is_some() =>
+        {
+            crate::arc_bezier::rational_quadratic_circular_arc(conic, policy)
+        }
+        CurveGeometry2::RationalBezier(conic) if conic.retained_circular_conic().is_some() => {
+            crate::arc_bezier::rational_bezier_circular_arc(conic, policy)
+        }
+        _ => return Ok(None),
+    }
+    .map_err(|cause| {
+        ExactCurveError::invalid(CurveOperation2::Intersection, curve.family(), cause)
+    })?;
+    Ok(match arc {
+        Classification::Decided(arc) => arc,
+        Classification::Uncertain(_) => None,
+    })
 }
 
 fn build_native_arc_evidence(
     first: &Curve2,
     second: &Curve2,
+    first_arc: &CircularArc2,
+    second_arc: &CircularArc2,
     points: &[Point2],
     policy: &CurveContext,
     span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
-    let (CurveGeometry2::CircularArc(first_arc), CurveGeometry2::CircularArc(second_arc)) =
-        (first.geometry(), second.geometry())
-    else {
-        unreachable!("native arc result requires two circular arcs")
-    };
     let first_fragments =
         first.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
     let second_fragments =
@@ -933,14 +1052,11 @@ fn build_native_arc_evidence(
 fn build_native_coincident_arc_evidence(
     first: &Curve2,
     second: &Curve2,
+    first_arc: &CircularArc2,
+    second_arc: &CircularArc2,
     policy: &CurveContext,
     span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
-    let (CurveGeometry2::CircularArc(first_arc), CurveGeometry2::CircularArc(second_arc)) =
-        (first.geometry(), second.geometry())
-    else {
-        unreachable!("coincident-arc result requires two circular arcs")
-    };
     let first_fragments =
         first.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
     let second_fragments =
@@ -954,24 +1070,32 @@ fn build_native_coincident_arc_evidence(
 
     for (first_span_index, first_fragment) in first_fragments.iter().enumerate() {
         let (first_start, first_end) = first_fragment.curve().endpoints();
-        let first_span = CircularArc2::new_with_certified_radius(
-            first_start.clone(),
-            first_end.clone(),
-            first_arc.center().clone(),
-            first_arc.radius_squared(),
-            first_arc.is_clockwise(),
-            None,
-        );
-        for (second_span_index, second_fragment) in second_fragments.iter().enumerate() {
-            let (second_start, second_end) = second_fragment.curve().endpoints();
-            let second_span = CircularArc2::new_with_certified_radius(
-                second_start.clone(),
-                second_end.clone(),
+        let first_span = if first_fragments.len() == 1 {
+            first_arc.clone()
+        } else {
+            CircularArc2::new_with_certified_radius(
+                first_start.clone(),
+                first_end.clone(),
                 first_arc.center().clone(),
                 first_arc.radius_squared(),
-                second_arc.is_clockwise(),
+                first_arc.is_clockwise(),
                 None,
-            );
+            )
+        };
+        for (second_span_index, second_fragment) in second_fragments.iter().enumerate() {
+            let (second_start, second_end) = second_fragment.curve().endpoints();
+            let second_span = if second_fragments.len() == 1 {
+                second_arc.clone()
+            } else {
+                CircularArc2::new_with_certified_radius(
+                    second_start.clone(),
+                    second_end.clone(),
+                    first_arc.center().clone(),
+                    first_arc.radius_squared(),
+                    second_arc.is_clockwise(),
+                    None,
+                )
+            };
             let relation = first_span
                 .intersect_arc(&second_span, policy)
                 .map_err(|cause| native_arc_parameter_error(first, cause))?;
@@ -1221,6 +1345,9 @@ fn arc_span_indices_for_point(
 ) -> ExactCurveResult<Vec<usize>> {
     let fragments =
         curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+    if fragments.len() == 1 {
+        return Ok(vec![0]);
+    }
     let mut indices = Vec::new();
     for (span_index, fragment) in fragments.iter().enumerate() {
         let (start, end) = fragment.curve().endpoints();
@@ -1254,11 +1381,36 @@ fn native_arc_span_parameter(
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierParameter2> {
     if span.control_points().len() != 3 || span.weights().len() != 3 {
-        return Err(ExactCurveError::invalid(
-            CurveOperation2::Intersection,
-            curve.family(),
-            CurveError::InvalidRationalBezier,
-        ));
+        let mut parameters = match span
+            .retained_circle_point_parameters(point, policy)
+            .map_err(|cause| native_arc_parameter_error(curve, cause))?
+        {
+            Classification::Decided(parameters) => parameters,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Intersection,
+                    curve.family(),
+                    reason,
+                ));
+            }
+        };
+        if parameters.len() == 1 {
+            return Ok(parameters.pop().expect("one retained circle parameter"));
+        }
+        return Err(if parameters.is_empty() {
+            native_arc_parameter_error(
+                curve,
+                CurveError::Topology(
+                    "retained circular parameterization omitted a certified arc point".into(),
+                ),
+            )
+        } else {
+            ExactCurveError::blocked(
+                CurveOperation2::Intersection,
+                curve.family(),
+                UncertaintyReason::Boundary,
+            )
+        });
     }
     if crate::classify::is_zero(&span.start().distance_squared(point), policy) == Some(true) {
         return Ok(BezierParameter2::Exact(Real::zero()));
@@ -1358,7 +1510,7 @@ impl CurveIntersectionContext {
         let (span_pair_count, dispatch) = match native_line_intersection(first, second, policy)? {
             Some(relation) => (1, CurveIntersectionDispatch::NativeLine(relation)),
             None => {
-                if let Some((order, relation)) =
+                if let Some((order, arc, relation)) =
                     native_line_arc_intersection(first, second, policy)?
                 {
                     let span_pair_count = first
@@ -1375,10 +1527,19 @@ impl CurveIntersectionContext {
                             .len();
                     (
                         span_pair_count,
-                        CurveIntersectionDispatch::NativeLineArc { order, relation },
+                        CurveIntersectionDispatch::NativeLineArc {
+                            order,
+                            arc,
+                            relation,
+                        },
                     )
                 } else {
-                    match native_arc_intersection(first, second, policy)? {
+                    match native_arc_intersection(
+                        first,
+                        second,
+                        policy,
+                        batch_cache.as_deref_mut(),
+                    )? {
                         Some(native) => {
                             let span_pair_count = first
                                 .native_bezier_fragments_for_operation(
@@ -1393,12 +1554,22 @@ impl CurveIntersectionContext {
                                     )?
                                     .len();
                             let dispatch = match native {
-                                NativeArcIntersectionDispatch::Points(points) => {
-                                    CurveIntersectionDispatch::NativeArcPoints(points)
-                                }
-                                NativeArcIntersectionDispatch::Coincident => {
-                                    CurveIntersectionDispatch::NativeCoincidentArcs
-                                }
+                                NativeArcIntersectionDispatch::Points {
+                                    first_arc,
+                                    second_arc,
+                                    points,
+                                } => CurveIntersectionDispatch::NativeArcPoints {
+                                    first_arc,
+                                    second_arc,
+                                    points,
+                                },
+                                NativeArcIntersectionDispatch::Coincident {
+                                    first_arc,
+                                    second_arc,
+                                } => CurveIntersectionDispatch::NativeCoincidentArcs {
+                                    first_arc,
+                                    second_arc,
+                                },
                             };
                             (span_pair_count, dispatch)
                         }
@@ -1491,32 +1662,48 @@ impl CurveIntersectionContext {
                 self.data.span_pair_count,
             );
         }
-        if let CurveIntersectionDispatch::NativeLineArc { order, relation } = &self.data.dispatch {
+        if let CurveIntersectionDispatch::NativeLineArc {
+            order,
+            arc,
+            relation,
+        } = &self.data.dispatch
+        {
             return build_native_line_arc_evidence(
                 &self.data.first,
                 &self.data.second,
                 *order,
+                arc,
                 relation,
                 &self.data.policy,
                 self.data.span_pair_count,
             );
         }
-        if let CurveIntersectionDispatch::NativeArcPoints(points) = &self.data.dispatch {
+        if let CurveIntersectionDispatch::NativeArcPoints {
+            first_arc,
+            second_arc,
+            points,
+        } = &self.data.dispatch
+        {
             return build_native_arc_evidence(
                 &self.data.first,
                 &self.data.second,
+                first_arc,
+                second_arc,
                 points,
                 &self.data.policy,
                 self.data.span_pair_count,
             );
         }
-        if matches!(
-            self.data.dispatch,
-            CurveIntersectionDispatch::NativeCoincidentArcs
-        ) {
+        if let CurveIntersectionDispatch::NativeCoincidentArcs {
+            first_arc,
+            second_arc,
+        } = &self.data.dispatch
+        {
             return build_native_coincident_arc_evidence(
                 &self.data.first,
                 &self.data.second,
+                first_arc,
+                second_arc,
                 &self.data.policy,
                 self.data.span_pair_count,
             );

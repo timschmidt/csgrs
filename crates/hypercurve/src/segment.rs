@@ -624,6 +624,20 @@ impl CircularArc2 {
         Self::from_geometry(start, end, center, radius_squared, true, clockwise, bulge)
     }
 
+    pub(crate) fn new_with_certified_radius_and_sweep(
+        start: Point2,
+        end: Point2,
+        center: Point2,
+        radius_squared: Real,
+        clockwise: bool,
+        sweep_kind: crate::arc_bezier::ArcSweepKind,
+    ) -> Self {
+        let arc =
+            Self::new_with_certified_radius(start, end, center, radius_squared, clockwise, None);
+        arc.retained_facts.sweep_kind.seed_certified(sweep_kind);
+        arc
+    }
+
     pub(crate) fn try_from_center_with_bulge(
         start: Point2,
         end: Point2,

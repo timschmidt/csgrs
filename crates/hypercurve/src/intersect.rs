@@ -1575,6 +1575,9 @@ fn intersect_same_circle_arcs(
     b: &CircularArc2,
     policy: &CurveContext,
 ) -> CurveResult<ArcArcIntersection> {
+    if let Some(contact) = same_circle_adjacent_minor_arc_contact(a, b, policy) {
+        return Ok(contact);
+    }
     if same_circle_minor_arcs_decided_axis_separated(a, b, policy) {
         return Ok(ArcArcIntersection::None);
     }
@@ -1628,6 +1631,58 @@ fn intersect_same_circle_arcs(
             reason: UncertaintyReason::Unsupported,
         }),
     }
+}
+
+fn same_circle_adjacent_minor_arc_contact(
+    a: &CircularArc2,
+    b: &CircularArc2,
+    policy: &CurveContext,
+) -> Option<ArcArcIntersection> {
+    let same_orientation = a.is_clockwise() == b.is_clockwise();
+    let (first_match, second_match) = if same_orientation {
+        (a.end() == b.start(), a.start() == b.end())
+    } else {
+        (a.start() == b.start(), a.end() == b.end())
+    };
+    let (point, a_param, b_param) = match (same_orientation, first_match, second_match) {
+        (true, true, false) => (a.end().clone(), Real::one(), Real::zero()),
+        (true, false, true) => (a.start().clone(), Real::zero(), Real::one()),
+        (false, true, false) => (a.start().clone(), Real::zero(), Real::zero()),
+        (false, false, true) => (a.end().clone(), Real::one(), Real::one()),
+        _ => return None,
+    };
+    // Degenerate arcs may make a second endpoint pair coincide. Preserve the
+    // exact-one-common-endpoint requirement without paying for these two
+    // comparisons on the overwhelmingly common nonadjacent path.
+    let other_endpoint_matches = if same_orientation {
+        a.start() == b.start() || a.end() == b.end()
+    } else {
+        a.start() == b.end() || a.end() == b.start()
+    };
+    if other_endpoint_matches {
+        return None;
+    }
+
+    if !matches!(
+        crate::arc_bezier::classify_sweep_with_policy(a, policy),
+        Ok(Classification::Decided(
+            crate::arc_bezier::ArcSweepKind::Minor
+        ))
+    ) || !matches!(
+        crate::arc_bezier::classify_sweep_with_policy(b, policy),
+        Ok(Classification::Decided(
+            crate::arc_bezier::ArcSweepKind::Minor
+        ))
+    ) {
+        return None;
+    }
+
+    Some(ArcArcIntersection::Point(ArcArcIntersectionPoint {
+        point,
+        a_param,
+        b_param,
+        kind: IntersectionKind::Endpoint,
+    }))
 }
 
 fn same_circle_minor_arcs_decided_axis_separated(

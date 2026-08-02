@@ -9,7 +9,7 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign};
 
-use crate::bezier_parameter::bernstein_to_power_coefficients;
+use crate::bezier_parameter::{bernstein_to_power_coefficients, divide_by_linear_root};
 use crate::classify::{
     classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2_real_expr,
     real_sign,
@@ -3064,6 +3064,98 @@ pub(crate) fn exact_line_contact_relation_from_bernstein_distances(
     exact_line_contact_relation_from_polynomial(polynomial, policy)
 }
 
+/// Solves a quadratic line-incidence polynomial after removing one
+/// construction-certified simple crossing.
+///
+/// A quadratic has at most one remaining root. Its crossing direction is the
+/// opposite of the certified root because the derivatives at two distinct
+/// simple roots of the same quadratic have opposite signs. The certificate
+/// therefore avoids inverse point-to-parameter replay and root sorting without
+/// weakening completeness.
+pub(crate) fn exact_quadratic_line_contact_relation_with_certified_crossing(
+    distances: [Real; 3],
+    parameter: &Real,
+    crossing_direction: BezierLineCrossingDirection,
+    policy: &CurveContext,
+) -> Classification<BezierLineContactRelation> {
+    let coefficients = match bernstein_to_power_coefficients(distances.to_vec()) {
+        Ok(coefficients) => coefficients,
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let quotient = divide_by_linear_root(&coefficients, parameter);
+    let known = match BezierLineContact::with_crossing_direction(
+        BezierParameter2::Exact(parameter.clone()),
+        BezierLineContactKind::Crossing,
+        Some(crossing_direction),
+    ) {
+        Ok(contact) => contact,
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    let Some(linear) = quotient.get(1) else {
+        return Classification::Decided(BezierLineContactRelation::Contacts {
+            contacts: vec![known],
+        });
+    };
+    let Some(linear_sign) = real_sign(linear, policy) else {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    };
+    if linear_sign == RealSign::Zero {
+        return match quotient
+            .first()
+            .and_then(|constant| real_sign(constant, policy))
+        {
+            Some(RealSign::Positive | RealSign::Negative) => {
+                Classification::Decided(BezierLineContactRelation::Contacts {
+                    contacts: vec![known],
+                })
+            }
+            Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
+            None => Classification::Uncertain(UncertaintyReason::RealSign),
+        };
+    }
+    let Some(constant) = quotient.first() else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let Ok(other_parameter) = (-constant.clone()) / linear else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    match in_closed_unit_interval(&other_parameter, policy) {
+        Some(false) => Classification::Decided(BezierLineContactRelation::Contacts {
+            contacts: vec![known],
+        }),
+        None => Classification::Uncertain(UncertaintyReason::Ordering),
+        Some(true) => {
+            let other_direction = match crossing_direction {
+                BezierLineCrossingDirection::NegativeToPositive => {
+                    BezierLineCrossingDirection::PositiveToNegative
+                }
+                BezierLineCrossingDirection::PositiveToNegative => {
+                    BezierLineCrossingDirection::NegativeToPositive
+                }
+            };
+            let other = match BezierLineContact::with_crossing_direction(
+                BezierParameter2::Exact(other_parameter),
+                BezierLineContactKind::Crossing,
+                Some(other_direction),
+            ) {
+                Ok(contact) => contact,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+            };
+            let contacts = match other.parameter().cmp_by_interval(known.parameter(), policy) {
+                Ok(Classification::Decided(Ordering::Less)) => vec![other, known],
+                Ok(Classification::Decided(Ordering::Greater)) => vec![known, other],
+                Ok(Classification::Decided(Ordering::Equal)) => {
+                    return Classification::Uncertain(UncertaintyReason::Boundary);
+                }
+                Ok(Classification::Uncertain(_)) | Err(_) => {
+                    return Classification::Uncertain(UncertaintyReason::Ordering);
+                }
+            };
+            Classification::Decided(BezierLineContactRelation::Contacts { contacts })
+        }
+    }
+}
+
 pub(crate) fn exact_polynomial_line_contact_relation_from_direction(
     controls: &[&Point2],
     origin: &Point2,
@@ -4153,6 +4245,39 @@ mod tests {
             ])
             .unwrap(),
             Real::from(3_i8)
+        );
+    }
+
+    #[test]
+    fn certified_quadratic_crossing_deflation_retains_sorted_opposite_crossings() {
+        let sixteenth = (Real::one() / Real::from(16_u8)).unwrap();
+        let distances = [
+            Real::from(3_u8) * &sixteenth,
+            -Real::from(5_u8) * &sixteenth,
+            Real::from(3_u8) * sixteenth,
+        ];
+        let known = (Real::from(3_u8) / Real::from(4_u8)).unwrap();
+        let relation = exact_quadratic_line_contact_relation_with_certified_crossing(
+            distances,
+            &known,
+            BezierLineCrossingDirection::NegativeToPositive,
+            &CurveContext::STRICT,
+        );
+        let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) = relation
+        else {
+            panic!("the certified quadratic crossings must be decided");
+        };
+        assert_eq!(contacts.len(), 2);
+        let other = (Real::one() / Real::from(4_u8)).unwrap();
+        assert_eq!(contacts[0].parameter().as_exact(), Some(&other));
+        assert_eq!(
+            contacts[0].crossing_direction(),
+            Some(BezierLineCrossingDirection::PositiveToNegative)
+        );
+        assert_eq!(contacts[1].parameter().as_exact(), Some(&known));
+        assert_eq!(
+            contacts[1].crossing_direction(),
+            Some(BezierLineCrossingDirection::NegativeToPositive)
         );
     }
 }
