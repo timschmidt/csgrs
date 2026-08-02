@@ -1879,7 +1879,11 @@ fn is_zero_polynomial(polynomial: &[Real], policy: PredicatePolicy) -> Option<bo
 fn gcd_monic_normalize(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     polynomial = trim_polynomial(polynomial, policy)?;
     if polynomial.len() == 1 {
-        return Some(polynomial);
+        return Some(if is_zero_polynomial(&polynomial, policy)? {
+            vec![Real::zero()]
+        } else {
+            vec![Real::one()]
+        });
     }
     let leading = polynomial.last()?.clone();
     polynomial
