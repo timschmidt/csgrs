@@ -45,6 +45,7 @@ finite interleaved vertex data and projection matrices.
 | `TriangleOrientation` | Exact/certified classification of a point against an oriented triangle. |
 | `ExactCamera` | Orbit-camera state stored as exact values until projection. |
 | `Viewport`, `ScreenPoint` | Checked screen-space dimensions and coordinates. |
+| `ApproxPoint3` | Finite approximate world point produced by `f64` camera math. |
 | `Projection64` | Explicit `f64` view-projection matrix at the rendering boundary. |
 | `RenderVertex64` | One exported `f64` position with an `f32` color. |
 | `GpuColoredMesh` | Context-owned interleaved `xyz rgb` vertex buffer. |
@@ -68,7 +69,9 @@ Replace `src/main.rs` with this complete example:
 
 <!-- quickstart:start -->
 ```rust
-use hypergraphics::{Color3, Point2, Real, polygon_surface_mesh};
+use hypergraphics::{
+    Color3, Point2, PredicatePolicy, Real, TriangulationContext, polygon_surface_mesh,
+};
 
 fn main() -> hypergraphics::Result<()> {
     let square = [
@@ -78,7 +81,8 @@ fn main() -> hypergraphics::Result<()> {
         Point2::new(Real::from(0), Real::from(2)),
     ];
     let orange = Color3::new(0.8, 0.4, 0.1)?;
-    let mesh = polygon_surface_mesh(&square, &[], Real::zero(), orange)?;
+    let context = TriangulationContext::new(PredicatePolicy::STRICT);
+    let mesh = polygon_surface_mesh(&context, &square, &[], Real::zero(), orange)?.into_value();
     let render_vertices = mesh.to_render_vertices64()?;
 
     println!(
@@ -117,17 +121,22 @@ by the crate test suite.
 | Inspect or edit a mesh | `primitive`, `vertices`, `vertices_mut`, `push`, `vertex_count`, `triangle_count` |
 | Build scene helpers | `axes_mesh`, `grid_mesh`, `polygon_surface_mesh` |
 | Select draw topology | `Primitive::Lines`, `Primitive::Triangles` |
-| Construct colors | `Color3::new`, `Color3::to_array` |
+| Construct colors | `Color3::new`, `Color3::{RED, GREEN, BLUE}`, `Color3::to_array` |
 
-`polygon_surface_mesh` accepts one exact outer polygon plus optional hole-start
-indices, triangulates it with Hypertri, and lifts the triangles to a caller
-selected exact Z plane.
+`polygon_surface_mesh` accepts an explicit immutable triangulation context, one
+exact outer polygon plus optional hole-start indices, and lifts Hypertri's
+triangles to a caller-selected exact Z plane. Its outcome retains whether the
+selected policy consumed approximate-512 equality.
+
+`grid_mesh` takes an unsigned half-step count and returns an error if its exact
+coordinate and vertex storage cannot be allocated safely.
 
 ### Query exact geometry
 
 | Task | API |
 | --- | --- |
 | Classify a point against a triangle | `ExactMesh::triangle_orientation_against` |
+| Select a predicate policy | Required `PredicatePolicy` argument |
 | Read the result | `TriangleOrientation::{Negative, Coplanar, Positive, Unknown}` |
 
 Triangle queries require `Primitive::Triangles` and a valid triangle index.
@@ -152,16 +161,25 @@ topology decisions.
 
 | Task | API |
 | --- | --- |
-| Construct a checked viewport | `Viewport::new` |
-| Read its shape | `Viewport::aspect`, `Viewport::center` |
+| Construct checked screen values | `Viewport::new`, `ScreenPoint::new` |
+| Read screen values | Viewport and screen-point accessors, `Viewport::aspect`, `Viewport::center` |
 | Create and edit an exact camera | `ExactCamera::default`, `orbit`, `zoom_by`, `reset_top_down` |
 | Build a projection | `ExactCamera::projection64` |
+| Select a camera predicate policy | Required `PredicatePolicy` argument |
 | Project a world point | `ExactCamera::project_point`, `camera::project_point` |
-| Unproject onto the XY plane | `camera::unproject_to_z0` |
+| Approximately unproject onto the XY plane | `camera::unproject_to_z0` → `ApproxPoint3` |
 | Access the native matrix | `Projection64::new`, `Projection64::matrix` |
 
 Camera projection is intentionally lossy: exact camera parameters and world
-points are converted to `f64` when `Projection64` is built.
+points are converted to `f64` when `Projection64` is built. Domain decisions
+are made first by Hyperlimit and then revalidated after lowering so a valid
+exact interval cannot collapse into an invalid primitive-float projection. An
+undecided explicit policy returns `Error::IndeterminatePredicate`.
+
+Screen coordinates use a top-left origin with Y increasing downward.
+Unprojection inverts the already-lossy `f64` matrix, rejects ill-conditioned
+matrices and nearly parallel rays, and returns `ApproxPoint3` so the result
+cannot be mistaken for exact geometric evidence.
 
 ### Upload and draw
 
@@ -182,6 +200,11 @@ Allocation, upload, draw, bind, and destruction are `unsafe` because
 object, or is being used on its required thread. The caller must maintain those
 invariants.
 
+GLSL ES 1.00/WebGL 1 additionally requires `OES_vertex_array_object`.
+`GpuColoredMesh::new` reports `Error::UnsupportedBackend` when that extension
+is unavailable. ES 1.00 attribute locations are bound explicitly to the same
+indices used by the mesh layout.
+
 ## Features
 
 | Feature | Default | Effect |
@@ -197,14 +220,19 @@ hypergraphics = { version = "0.1.0", default-features = false }
 ```
 
 That configuration retains `Primitive`, `Color3`, `RenderVertex64`, `Viewport`,
-`ScreenPoint`, `Projection64`, `GpuColoredMesh`, and `UnlitProgram`. Supply
-camera matrices through `Projection64::try_from_column_major_f32` and vertex
-data through `GpuColoredMesh::upload_xyz_rgb_f32`.
+`ScreenPoint`, `ApproxPoint3`, `Projection64`, `GpuColoredMesh`, and
+`UnlitProgram`. Supply camera matrices through
+`Projection64::try_from_column_major_f32` and vertex data through
+`GpuColoredMesh::upload_xyz_rgb_f32`.
 
 ## Errors and guarantees
 
-- Primitive color, viewport, matrix, and alpha inputs must be finite.
-- Viewport extents, camera zoom, field of view, and clipping planes are checked.
+- Primitive color, viewport, screen-point, render-vertex, matrix, and alpha
+  constructors reject non-finite values; their validated fields are private.
+- Camera zoom, field of view, and clipping planes are decided through the
+  centralized Hyperlimit policy and revalidated at the `f64` boundary.
+- Primitive-float unprojection uses explicit numerical conditioning and never
+  promotes its result to an exact point implicitly.
 - Exact exports fail when a coordinate cannot be represented as a finite
   primitive float.
 - GPU uploads reject partial vertices and counts that exceed OpenGL's signed
@@ -213,7 +241,7 @@ data through `GpuColoredMesh::upload_xyz_rgb_f32`.
 - `ExactMesh` is an unindexed draw stream. General indexed mesh ownership and
   Boolean topology belong to Hypermesh and CSGRS.
 - The unlit backend supports desktop GLSL 3.30, GLSL ES 3.00/WebGL 2, and GLSL
-  ES 1.00/WebGL 1 shader dialects.
+  ES 1.00/WebGL 1 with `OES_vertex_array_object`.
 
 ## Ecosystem and further documentation
 
@@ -266,9 +294,11 @@ camera projection at the explicit rendering boundary.
 
 ## License and contributing
 
-Hypergraphics is available under either the MIT License or the Apache License
-2.0. Contributions should preserve the separation between exact geometry and
-lossy presentation data. Before submitting a change, run:
+Hypergraphics is available under either the [MIT License](LICENSE-MIT) or the
+[Apache License 2.0](LICENSE-APACHE). Rust 1.88 is the declared minimum
+supported version. Contributions should preserve the separation between exact
+geometry and lossy presentation data. CI checks that MSRV plus the full stable
+feature matrix. Before submitting a change, run:
 
 ```sh
 cargo fmt --all -- --check

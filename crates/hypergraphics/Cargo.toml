@@ -2,10 +2,12 @@
 name = "hypergraphics"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.88"
 description = "Exact 3D scene geometry with explicit f64/f32 rendering boundaries."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/hypergraphics"
+documentation = "https://docs.rs/hypergraphics"
 readme = "README.md"
 keywords = ["graphics", "renderer", "hyperreal", "geometry", "opengl"]
 categories = ["graphics", "rendering", "mathematics"]
@@ -36,6 +38,9 @@ required-features = ["exact"]
 [[example]]
 name = "readme_quickstart"
 required-features = ["exact"]
+
+[package.metadata.docs.rs]
+all-features = true
 
 # Keep transitive Hyper crates unified while using sibling path dependencies.
 [patch.crates-io]

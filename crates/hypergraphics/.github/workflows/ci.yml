@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  stable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Hypergraphics
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: hypergraphics
+          persist-credentials: false
+      - name: Check out Hyperreal
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hyperreal
+          path: hyperreal
+          persist-credentials: false
+      - name: Check out Hyperlattice
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hyperlattice
+          path: hyperlattice
+          persist-credentials: false
+      - name: Check out Hyperlimit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hyperlimit
+          path: hyperlimit
+          persist-credentials: false
+      - name: Check out Hypertri
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hypertri
+          path: hypertri
+          persist-credentials: false
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        with:
+          toolchain: stable
+          components: clippy,rustfmt
+          targets: wasm32-unknown-unknown
+      - name: Check formatting
+        working-directory: hypergraphics
+        run: |
+          cargo fmt --all -- --check
+          cargo fmt --manifest-path fuzz/Cargo.toml --all -- --check
+      - name: Test all features and targets
+        working-directory: hypergraphics
+        run: cargo test --all-targets --all-features
+      - name: Test renderer-only configuration
+        working-directory: hypergraphics
+        run: cargo test --all-targets --no-default-features
+      - name: Lint
+        working-directory: hypergraphics
+        run: |
+          cargo clippy --all-targets --all-features -- -D warnings
+          cargo clippy --all-targets --no-default-features -- -D warnings
+          cargo clippy --manifest-path fuzz/Cargo.toml --bins -- -D warnings
+      - name: Build documentation
+        working-directory: hypergraphics
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: |
+          cargo doc --no-deps --all-features
+          cargo doc --no-deps --no-default-features
+      - name: Check WASM feature matrix
+        working-directory: hypergraphics
+        run: |
+          cargo check --lib --target wasm32-unknown-unknown --all-features
+          cargo check --lib --target wasm32-unknown-unknown --no-default-features
+      - name: Compile fuzz targets
+        working-directory: hypergraphics
+        run: cargo check --manifest-path fuzz/Cargo.toml --bins
+      - name: Inspect the release package
+        working-directory: hypergraphics
+        run: cargo package --no-verify --list
+
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Hypergraphics
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: hypergraphics
+          persist-credentials: false
+      - name: Check out Hyperreal
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hyperreal
+          path: hyperreal
+          persist-credentials: false
+      - name: Check out Hyperlattice
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hyperlattice
+          path: hyperlattice
+          persist-credentials: false
+      - name: Check out Hyperlimit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hyperlimit
+          path: hyperlimit
+          persist-credentials: false
+      - name: Check out Hypertri
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hypertri
+          path: hypertri
+          persist-credentials: false
+      - name: Install MSRV
+        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        with:
+          toolchain: 1.88.0
+      - name: Check all features at MSRV
+        working-directory: hypergraphics
+        run: cargo check --all-targets --all-features
+      - name: Check renderer-only configuration at MSRV
+        working-directory: hypergraphics
+        run: cargo check --all-targets --no-default-features

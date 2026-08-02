@@ -1,5 +1,7 @@
 const README: &str = include_str!("../README.md");
 const QUICKSTART: &str = include_str!("../examples/readme_quickstart.rs");
+const LICENSE_MIT: &str = include_str!("../LICENSE-MIT");
+const LICENSE_APACHE: &str = include_str!("../LICENSE-APACHE");
 
 #[test]
 fn readme_quickstart_matches_the_runnable_example() {
@@ -23,6 +25,12 @@ fn readme_release_metadata_matches_the_manifest() {
         README.contains(&format!("version = \"{}\"", env!("CARGO_PKG_VERSION"))),
         "README must show the current package version"
     );
+    assert!(
+        README.contains(&format!("Rust {}", env!("CARGO_PKG_RUST_VERSION"))),
+        "README must show the declared MSRV"
+    );
+    assert!(LICENSE_MIT.starts_with("MIT License\n"));
+    assert!(LICENSE_APACHE.starts_with("Apache License\n"));
     for heading in [
         "## Primary types",
         "## Quick start",

@@ -1,8 +1,11 @@
 # Hypergraphics fuzzing
 
-`scene_invariants` crosses every Hyperreal structural representation through
-scene construction, exact triangle predicates, cache reuse, mutation, and the
-explicit lossy render boundary.
+`scene_invariants` derives structured inputs that select Hyperreal structural
+representations, predicate policies, valid and invalid triangle indices, cache
+reuse and mutation, checked colors, bounded grids, camera projection and
+conditioned approximate unprojection, and exact polygon triangulation. This
+keeps input mutations coverage-relevant instead of repeating the same full
+cross-product for every byte string.
 
 ```sh
 cargo check --manifest-path fuzz/Cargo.toml --bins

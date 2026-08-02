@@ -1,6 +1,6 @@
 //! Exact 3D scene geometry with an explicit primitive-float rendering boundary.
 //!
-//! Scene geometry stays in [`Real`] and [`Point3`] form until an explicit render
+//! Scene geometry stays in `Real` and `Point3` form until an explicit render
 //! export projects it to finite `f64` values. The crate also provides colored
 //! meshes, an orbit camera, grid and axis helpers, and an unlit OpenGL/WebGL
 //! backend.
@@ -26,16 +26,18 @@ pub mod scene;
 
 #[cfg(feature = "exact")]
 pub use camera::ExactCamera;
-pub use camera::{Projection64, ScreenPoint, Viewport};
+pub use camera::{ApproxPoint3, Projection64, ScreenPoint, Viewport};
 pub use error::{Error, Result};
 #[cfg(feature = "exact")]
 pub use geometry::{ExactMesh, ExactVertex, TriangleOrientation};
 #[cfg(feature = "exact")]
 pub use hyperlattice::{Point3, Vector2, Vector3};
 #[cfg(feature = "exact")]
+pub use hyperlimit::{Certainty, Escalation, PredicatePolicy, RefinementNeed};
+#[cfg(feature = "exact")]
 pub use hyperreal::{Rational, Real};
 #[cfg(feature = "exact")]
-pub use hypertri::Point2;
+pub use hypertri::{Point2, TriangulationContext, TriangulationOutcome};
 pub use render::{Color3, Primitive, RenderVertex64};
 #[cfg(feature = "exact")]
 pub use scene::{axes_mesh, grid_mesh, polygon_surface_mesh};

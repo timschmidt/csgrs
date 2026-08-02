@@ -2,13 +2,13 @@
 
 use std::fmt;
 use std::sync::{
-    Arc, OnceLock,
+    Arc, RwLock,
     atomic::{AtomicUsize, Ordering},
 };
 
 use hyperlattice::Point3;
 use hyperlimit::{
-    Certainty, OrientedPlane3Evidence, PlaneSide, PredicateOutcome, Sign,
+    Certainty, OrientedPlane3Evidence, PlaneSide, PredicateOutcome, PredicatePolicy, Sign,
     classify_point_oriented_plane_with_evidence, orient3, oriented_plane3_evidence,
 };
 
@@ -40,7 +40,7 @@ pub enum TriangleOrientation {
     Coplanar(Certainty),
     /// The query point is on the positive side of the oriented triangle plane.
     Positive(Certainty),
-    /// The exact predicate could not decide under the default policy.
+    /// The exact predicate could not decide under the selected policy.
     Unknown,
 }
 
@@ -91,6 +91,24 @@ impl TriangleOrientation {
 const TRIANGLE_ORIENTATION_CACHE_SLOTS: usize = 4;
 const NO_TRIANGLE_INDEX: usize = usize::MAX;
 
+impl TriangleOrientationCache {
+    fn orient(
+        policy: PredicatePolicy,
+        triangle: [&Point3; 3],
+        point: &Point3,
+    ) -> PredicateOutcome<Sign> {
+        orient3(triangle[0], triangle[1], triangle[2], point, policy)
+    }
+
+    fn classify_plane(
+        policy: PredicatePolicy,
+        point: &Point3,
+        evidence: &OrientedPlane3Evidence,
+    ) -> PredicateOutcome<PlaneSide> {
+        classify_point_oriented_plane_with_evidence(point, evidence, policy)
+    }
+}
+
 #[derive(Debug)]
 struct CachedTriangleOrientation {
     triangle_index: usize,
@@ -109,14 +127,14 @@ impl CachedTriangleOrientation {
 #[derive(Debug)]
 struct TriangleOrientationCacheSlot {
     last_query: AtomicUsize,
-    orientation: OnceLock<Box<CachedTriangleOrientation>>,
+    orientation: RwLock<Option<CachedTriangleOrientation>>,
 }
 
 impl TriangleOrientationCacheSlot {
     fn new() -> Self {
         Self {
             last_query: AtomicUsize::new(NO_TRIANGLE_INDEX),
-            orientation: OnceLock::new(),
+            orientation: RwLock::new(None),
         }
     }
 }
@@ -138,37 +156,34 @@ impl TriangleOrientationCache {
         triangle_index: usize,
         triangle: [&Point3; 3],
         point: &Point3,
+        policy: PredicatePolicy,
     ) -> TriangleOrientation {
         let slot = &self.slots[triangle_index % TRIANGLE_ORIENTATION_CACHE_SLOTS];
-        if let Some(orientation) = self.classify_cached(triangle_index, point) {
+        if let Some(orientation) = self.classify_cached(triangle_index, point, policy) {
             return orientation;
-        }
-        if slot.orientation.get().is_some() {
-            return TriangleOrientation::from_outcome(orient3(
-                triangle[0],
-                triangle[1],
-                triangle[2],
-                point,
-            ));
         }
         let previous = slot.last_query.swap(triangle_index, Ordering::Relaxed);
         if previous != triangle_index {
-            return TriangleOrientation::from_outcome(orient3(
-                triangle[0],
-                triangle[1],
-                triangle[2],
-                point,
-            ));
+            return TriangleOrientation::from_outcome(Self::orient(policy, triangle, point));
         }
-        let cached = slot.orientation.get_or_init(|| {
-            Box::new(CachedTriangleOrientation::new(
+        let mut cached = slot
+            .orientation
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if cached
+            .as_ref()
+            .is_none_or(|cached| cached.triangle_index != triangle_index)
+        {
+            *cached = Some(CachedTriangleOrientation::new(
                 triangle_index,
                 triangle[0],
                 triangle[1],
                 triangle[2],
-            ))
-        });
-        TriangleOrientation::from_plane_outcome(classify_point_oriented_plane_with_evidence(
+            ));
+        }
+        let cached = cached.as_ref().expect("cache entry was initialized");
+        TriangleOrientation::from_plane_outcome(Self::classify_plane(
+            policy,
             point,
             &cached.evidence,
         ))
@@ -178,12 +193,16 @@ impl TriangleOrientationCache {
         &self,
         triangle_index: usize,
         point: &Point3,
+        policy: PredicatePolicy,
     ) -> Option<TriangleOrientation> {
         let cached = self.slots[triangle_index % TRIANGLE_ORIENTATION_CACHE_SLOTS]
             .orientation
-            .get()?;
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let cached = cached.as_ref()?;
         (cached.triangle_index == triangle_index).then(|| {
-            TriangleOrientation::from_plane_outcome(classify_point_oriented_plane_with_evidence(
+            TriangleOrientation::from_plane_outcome(Self::classify_plane(
+                policy,
                 point,
                 &cached.evidence,
             ))
@@ -297,10 +316,7 @@ impl ExactMesh {
                         .ok_or(Error::NonFiniteProjection {
                             value: "vertex position",
                         })?;
-                Ok(RenderVertex64 {
-                    position,
-                    color: vertex.color.to_array(),
-                })
+                RenderVertex64::new(position, vertex.color)
             })
             .collect()
     }
@@ -322,15 +338,25 @@ impl ExactMesh {
         Ok(out)
     }
 
-    /// Run an exact orientation predicate for one triangle against `point`.
+    /// Run an exact orientation predicate under the selected policy.
     pub fn triangle_orientation_against(
         &self,
         triangle_index: usize,
         point: &Point3,
+        policy: PredicatePolicy,
     ) -> Result<TriangleOrientation> {
-        if let Some(orientation) = self
-            .triangle_orientation_cache
-            .classify_cached(triangle_index, point)
+        self.triangle_orientation_against_impl(triangle_index, point, policy)
+    }
+
+    fn triangle_orientation_against_impl(
+        &self,
+        triangle_index: usize,
+        point: &Point3,
+        policy: PredicatePolicy,
+    ) -> Result<TriangleOrientation> {
+        if let Some(orientation) =
+            self.triangle_orientation_cache
+                .classify_cached(triangle_index, point, policy)
         {
             return Ok(orientation);
         }
@@ -351,7 +377,7 @@ impl ExactMesh {
         let triangle = [a, b, c];
         Ok(self
             .triangle_orientation_cache
-            .classify(triangle_index, triangle, point))
+            .classify(triangle_index, triangle, point, policy))
     }
 }
 
@@ -390,19 +416,27 @@ mod tests {
         );
 
         assert!(matches!(
-            mesh.triangle_orientation_against(0, &p(0, 0, 1)).unwrap(),
+            mesh.triangle_orientation_against(0, &p(0, 0, 1), PredicatePolicy::STRICT)
+                .unwrap(),
             TriangleOrientation::Positive(_) | TriangleOrientation::Negative(_)
         ));
 
         for query in [p(0, 0, 1), p(0, 0, -1), p(0, 0, 0)] {
             assert_eq!(
-                mesh.triangle_orientation_against(0, &query).unwrap(),
+                mesh.triangle_orientation_against(0, &query, PredicatePolicy::APPROXIMATE_512)
+                    .unwrap(),
                 TriangleOrientation::from_outcome(orient3(
                     &mesh.vertices()[0].position,
                     &mesh.vertices()[1].position,
                     &mesh.vertices()[2].position,
                     &query,
+                    PredicatePolicy::APPROXIMATE_512,
                 ))
+            );
+            assert_ne!(
+                mesh.triangle_orientation_against(0, &query, PredicatePolicy::STRICT)
+                    .unwrap(),
+                TriangleOrientation::Unknown
             );
         }
     }
@@ -420,21 +454,52 @@ mod tests {
         );
         let query = p(0, 0, 1);
 
-        let before = mesh.triangle_orientation_against(0, &query).unwrap();
+        let before = mesh
+            .triangle_orientation_against(0, &query, PredicatePolicy::STRICT)
+            .unwrap();
         assert_eq!(
-            mesh.triangle_orientation_against(0, &query).unwrap(),
+            mesh.triangle_orientation_against(0, &query, PredicatePolicy::STRICT)
+                .unwrap(),
             before
         );
         let unchanged_clone = mesh.clone();
         mesh.vertices_mut()[2].position = p(0, -1, 0);
-        let after = mesh.triangle_orientation_against(0, &query).unwrap();
+        let after = mesh
+            .triangle_orientation_against(0, &query, PredicatePolicy::STRICT)
+            .unwrap();
 
         assert_ne!(after, before);
         assert_eq!(
             unchanged_clone
-                .triangle_orientation_against(0, &query)
+                .triangle_orientation_against(0, &query, PredicatePolicy::STRICT)
                 .unwrap(),
             before
         );
+    }
+
+    #[test]
+    fn colliding_orientation_cache_entries_are_replaceable() {
+        let color = Color3::GREEN;
+        let mut vertices = Vec::new();
+        for offset in 0..5 {
+            vertices.extend([
+                ExactVertex::new(p(offset * 2, 0, 0), color),
+                ExactVertex::new(p(offset * 2 + 1, 0, 0), color),
+                ExactVertex::new(p(offset * 2, 1, 0), color),
+            ]);
+        }
+        let mesh = ExactMesh::new(Primitive::Triangles, vertices);
+        let query = p(0, 0, 1);
+
+        for triangle_index in [0, 0, 4, 4, 0, 0] {
+            mesh.triangle_orientation_against(triangle_index, &query, PredicatePolicy::STRICT)
+                .unwrap();
+        }
+
+        let cached = mesh.triangle_orientation_cache.slots[0]
+            .orientation
+            .read()
+            .unwrap();
+        assert_eq!(cached.as_ref().map(|entry| entry.triangle_index), Some(0));
     }
 }

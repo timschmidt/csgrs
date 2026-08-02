@@ -1,7 +1,7 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hypergraphics::{
-    Color3, ExactCamera, ExactMesh, ExactVertex, Point3, Primitive, Real, ScreenPoint, Viewport,
-    grid_mesh,
+    Color3, ExactCamera, ExactMesh, ExactVertex, Point3, PredicatePolicy, Primitive, Real,
+    ScreenPoint, Viewport, grid_mesh,
 };
 
 fn point(x: i32, y: i32, z: i32) -> Point3 {
@@ -35,22 +35,51 @@ fn bench_geometry(c: &mut Criterion) {
     );
     let query = point(1, 1, 1);
     c.bench_function("hypergraphics triangle orientation immediate", |b| {
-        b.iter(|| orientation_mesh.triangle_orientation_against(0, black_box(&query)))
+        b.iter(|| {
+            orientation_mesh.triangle_orientation_against(
+                0,
+                black_box(&query),
+                PredicatePolicy::STRICT,
+            )
+        })
     });
     c.bench_function("hypergraphics clone after orientation reuse", |b| {
         b.iter_batched(
             || orientation_mesh.clone(),
-            |mesh| mesh.triangle_orientation_against(0, black_box(&query)),
+            |mesh| mesh.triangle_orientation_against(0, black_box(&query), PredicatePolicy::STRICT),
             BatchSize::SmallInput,
         )
+    });
+
+    let mut collision_vertices = Vec::new();
+    for offset in 0..5 {
+        collision_vertices.extend([
+            ExactVertex::new(point(offset * 2, 0, 0), color),
+            ExactVertex::new(point(offset * 2 + 1, 0, 0), color),
+            ExactVertex::new(point(offset * 2, 1, 0), color),
+        ]);
+    }
+    let collision_mesh = ExactMesh::new(Primitive::Triangles, collision_vertices);
+    c.bench_function("hypergraphics colliding orientation cache entries", |b| {
+        b.iter(|| {
+            for triangle_index in [0, 0, 4, 4] {
+                let _ = black_box(collision_mesh.triangle_orientation_against(
+                    triangle_index,
+                    black_box(&query),
+                    PredicatePolicy::STRICT,
+                ));
+            }
+        })
     });
 }
 
 fn bench_camera(c: &mut Criterion) {
     let camera = ExactCamera::default();
     let viewport = Viewport::new(0.0, 0.0, 1920.0, 1080.0).expect("finite viewport");
-    let projection = camera.projection64(viewport).expect("camera projection");
-    let screen = ScreenPoint { x: 960.0, y: 540.0 };
+    let projection = camera
+        .projection64(viewport, PredicatePolicy::STRICT)
+        .expect("camera projection");
+    let screen = ScreenPoint::new(960.0, 540.0).expect("finite screen point");
 
     c.bench_function("hypergraphics repeated unproject z0", |b| {
         b.iter(|| {

@@ -34,7 +34,7 @@ fn near_coplanar_exact_orientation_does_not_request_approximation() {
     hyperreal::dispatch_trace::reset();
     let _recording = hyperreal::dispatch_trace::recording_scope();
     assert!(matches!(
-        mesh.triangle_orientation_against(0, &query)
+        mesh.triangle_orientation_against(0, &query, hyperlimit::PredicatePolicy::STRICT)
             .expect("triangle query"),
         TriangleOrientation::Positive(_) | TriangleOrientation::Negative(_)
     ));

@@ -11,6 +11,12 @@ use crate::error::{Error, Result};
 use crate::geometry::ExactMesh;
 use crate::render::{Primitive, RenderVertex64};
 
+const POSITION_ATTRIBUTE: u32 = 0;
+const COLOR_ATTRIBUTE: u32 = 1;
+const OES_VERTEX_ARRAY_OBJECT: &str = "OES_vertex_array_object";
+const GL_OES_VERTEX_ARRAY_OBJECT: &str = "GL_OES_vertex_array_object";
+const GL_APPLE_VERTEX_ARRAY_OBJECT: &str = "GL_APPLE_vertex_array_object";
+
 const VS_UNLIT: &str = r#"#version 330
 uniform mat4 u_mvp;
 layout(location=0) in vec3 a_pos;
@@ -60,6 +66,7 @@ void main() { gl_FragColor = vec4(v_col, u_alpha); }
 "#;
 
 /// GPU-side colored mesh with an interleaved `xyz rgb` stride.
+#[must_use = "GPU objects must be released with GpuColoredMesh::destroy"]
 pub struct GpuColoredMesh {
     vao: glow::VertexArray,
     vbo: glow::Buffer,
@@ -72,9 +79,15 @@ impl GpuColoredMesh {
     ///
     /// # Safety
     ///
-    /// `gl` must be a current, valid OpenGL context.
+    /// `gl` must be a current, valid OpenGL context and access to it must be
+    /// serialized according to the context's thread-affinity rules. GLSL ES
+    /// 1.00 contexts must expose `OES_vertex_array_object`.
     pub unsafe fn new(gl: &Context, primitive: Primitive) -> Result<Self> {
         unsafe {
+            validate_vertex_array_support(
+                context_shader_dialect(gl),
+                gl.supported_extensions().iter().map(String::as_str),
+            )?;
             let vao = gl.create_vertex_array().map_err(Error::Backend)?;
             let vbo = match gl.create_buffer() {
                 Ok(vbo) => vbo,
@@ -85,10 +98,10 @@ impl GpuColoredMesh {
             };
             gl.bind_vertex_array(Some(vao));
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(vbo));
-            gl.enable_vertex_attrib_array(0);
-            gl.vertex_attrib_pointer_f32(0, 3, glow::FLOAT, false, 24, 0);
-            gl.enable_vertex_attrib_array(1);
-            gl.vertex_attrib_pointer_f32(1, 3, glow::FLOAT, false, 24, 12);
+            gl.enable_vertex_attrib_array(POSITION_ATTRIBUTE);
+            gl.vertex_attrib_pointer_f32(POSITION_ATTRIBUTE, 3, glow::FLOAT, false, 24, 0);
+            gl.enable_vertex_attrib_array(COLOR_ATTRIBUTE);
+            gl.vertex_attrib_pointer_f32(COLOR_ATTRIBUTE, 3, glow::FLOAT, false, 24, 12);
             gl.bind_vertex_array(None);
             Ok(Self {
                 vao,
@@ -103,7 +116,8 @@ impl GpuColoredMesh {
     ///
     /// # Safety
     ///
-    /// `gl` must be the context that owns this mesh's objects.
+    /// `gl` must be the current context that owns this mesh's objects, and
+    /// access must be serialized according to its thread-affinity rules.
     pub unsafe fn upload_render_vertices64(
         &mut self,
         gl: &Context,
@@ -116,10 +130,10 @@ impl GpuColoredMesh {
             },
         )?);
         for vertex in vertices {
-            for value in vertex.position {
+            for &value in vertex.position() {
                 packed.push(f64_to_f32(value, "vertex position")?);
             }
-            packed.extend_from_slice(&vertex.color);
+            packed.extend_from_slice(&vertex.color().to_array());
         }
         unsafe {
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.vbo));
@@ -137,7 +151,8 @@ impl GpuColoredMesh {
     ///
     /// # Safety
     ///
-    /// `gl` must be the context that owns this mesh's objects.
+    /// `gl` must be the current context that owns this mesh's objects, and
+    /// access must be serialized according to its thread-affinity rules.
     pub unsafe fn upload_xyz_rgb_f32(&mut self, gl: &Context, values: &[f32]) -> Result<()> {
         let vertex_count = validate_xyz_rgb_f32(values)?;
         unsafe {
@@ -156,7 +171,8 @@ impl GpuColoredMesh {
     ///
     /// # Safety
     ///
-    /// `gl` must be the context that owns this mesh's objects.
+    /// `gl` must be the current context that owns this mesh's objects, and
+    /// access must be serialized according to its thread-affinity rules.
     #[cfg(feature = "exact")]
     pub unsafe fn upload_exact_mesh(&mut self, gl: &Context, mesh: &ExactMesh) -> Result<()> {
         let vertex_count = vertex_count_i32(mesh.vertex_count())?;
@@ -200,7 +216,9 @@ impl GpuColoredMesh {
     ///
     /// # Safety
     ///
-    /// A compatible shader program must be bound and `gl` must own this mesh.
+    /// A compatible shader program must be bound, `gl` must be the current
+    /// context that owns this mesh, and access must be serialized according to
+    /// its thread-affinity rules.
     pub unsafe fn draw(&self, gl: &Context) {
         if self.vertex_count == 0 {
             return;
@@ -215,8 +233,9 @@ impl GpuColoredMesh {
     ///
     /// # Safety
     ///
-    /// `gl` must be the context that owns this mesh's objects, and the objects
-    /// must not already have been deleted through another API.
+    /// `gl` must be the current context that owns this mesh's objects, access
+    /// must be serialized according to its thread-affinity rules, and the
+    /// objects must not already have been deleted through another API.
     pub unsafe fn destroy(self, gl: &Context) {
         unsafe {
             gl.delete_buffer(self.vbo);
@@ -232,6 +251,7 @@ unsafe impl Send for GpuColoredMesh {}
 unsafe impl Sync for GpuColoredMesh {}
 
 /// Unlit shader program compatible with [`GpuColoredMesh`].
+#[must_use = "GPU objects must be released with UnlitProgram::destroy"]
 pub struct UnlitProgram {
     prog: glow::Program,
     u_mvp: glow::UniformLocation,
@@ -243,7 +263,8 @@ impl UnlitProgram {
     ///
     /// # Safety
     ///
-    /// `gl` must be a current, valid OpenGL context.
+    /// `gl` must be a current, valid OpenGL context and access to it must be
+    /// serialized according to the context's thread-affinity rules.
     pub unsafe fn new(gl: &Context) -> Result<Self> {
         unsafe {
             let (vs_src, fs_src) = unlit_shader_sources(gl);
@@ -268,7 +289,8 @@ impl UnlitProgram {
     ///
     /// # Safety
     ///
-    /// `gl` must own this program.
+    /// `gl` must be the current context that owns this program, and access
+    /// must be serialized according to its thread-affinity rules.
     pub unsafe fn bind(&self, gl: &Context, projection: &Projection64) -> Result<()> {
         let matrix = projection.to_f32_array()?;
         unsafe {
@@ -283,7 +305,9 @@ impl UnlitProgram {
     ///
     /// # Safety
     ///
-    /// `gl` must own this program and the program should be current.
+    /// `gl` must be the current context that owns this program, access must be
+    /// serialized according to its thread-affinity rules, and this program
+    /// must be current.
     pub unsafe fn set_alpha(&self, gl: &Context, alpha: f32) -> Result<()> {
         if !alpha.is_finite() {
             return Err(Error::NonFinitePrimitive { value: "alpha" });
@@ -298,7 +322,8 @@ impl UnlitProgram {
     ///
     /// # Safety
     ///
-    /// `gl` must be the context that owns this program, and the program must
+    /// `gl` must be the current context that owns this program, access must be
+    /// serialized according to its thread-affinity rules, and the program must
     /// not already have been deleted through another API.
     pub unsafe fn destroy(self, gl: &Context) {
         unsafe { gl.delete_program(self.prog) }
@@ -311,12 +336,16 @@ unsafe impl Send for UnlitProgram {}
 unsafe impl Sync for UnlitProgram {}
 
 fn unlit_shader_sources(gl: &Context) -> (&'static str, &'static str) {
-    let shading_language = unsafe { gl.get_parameter_string(glow::SHADING_LANGUAGE_VERSION) };
-    match shader_dialect(&shading_language) {
+    match context_shader_dialect(gl) {
         ShaderDialect::Desktop330 => (VS_UNLIT, FS_UNLIT),
         ShaderDialect::Es300 => (VS_UNLIT_ES300, FS_UNLIT_ES300),
         ShaderDialect::Es100 => (VS_UNLIT_ES100, FS_UNLIT_ES100),
     }
+}
+
+fn context_shader_dialect(gl: &Context) -> ShaderDialect {
+    let shading_language = unsafe { gl.get_parameter_string(glow::SHADING_LANGUAGE_VERSION) };
+    shader_dialect(&shading_language)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -343,6 +372,28 @@ fn shader_dialect(shading_language: &str) -> ShaderDialect {
         ShaderDialect::Es300
     } else {
         ShaderDialect::Es100
+    }
+}
+
+fn validate_vertex_array_support<'a>(
+    dialect: ShaderDialect,
+    extensions: impl IntoIterator<Item = &'a str>,
+) -> Result<()> {
+    if dialect != ShaderDialect::Es100 {
+        return Ok(());
+    }
+    let has_vertex_arrays = extensions.into_iter().any(|extension| {
+        matches!(
+            extension,
+            OES_VERTEX_ARRAY_OBJECT | GL_OES_VERTEX_ARRAY_OBJECT | GL_APPLE_VERTEX_ARRAY_OBJECT
+        )
+    });
+    if has_vertex_arrays {
+        Ok(())
+    } else {
+        Err(Error::UnsupportedBackend {
+            capability: "OES_vertex_array_object",
+        })
     }
 }
 
@@ -386,6 +437,8 @@ unsafe fn compile(gl: &Context, vs_src: &str, fs_src: &str) -> Result<glow::Prog
         };
         gl.attach_shader(prog, vs);
         gl.attach_shader(prog, fs);
+        gl.bind_attrib_location(prog, POSITION_ATTRIBUTE, "a_pos");
+        gl.bind_attrib_location(prog, COLOR_ATTRIBUTE, "a_col");
         gl.link_program(prog);
         gl.delete_shader(vs);
         gl.delete_shader(fs);
@@ -445,6 +498,33 @@ mod tests {
             ShaderDialect::Es100
         );
         assert_eq!(shader_dialect("4.60 NVIDIA"), ShaderDialect::Desktop330);
+    }
+
+    #[test]
+    fn es100_requires_a_vertex_array_extension_without_panicking() {
+        assert!(matches!(
+            validate_vertex_array_support(ShaderDialect::Es100, std::iter::empty()),
+            Err(Error::UnsupportedBackend {
+                capability: "OES_vertex_array_object"
+            })
+        ));
+        for extension in [
+            OES_VERTEX_ARRAY_OBJECT,
+            GL_OES_VERTEX_ARRAY_OBJECT,
+            GL_APPLE_VERTEX_ARRAY_OBJECT,
+        ] {
+            validate_vertex_array_support(ShaderDialect::Es100, [extension]).unwrap();
+        }
+        validate_vertex_array_support(ShaderDialect::Es300, std::iter::empty()).unwrap();
+        validate_vertex_array_support(ShaderDialect::Desktop330, std::iter::empty()).unwrap();
+    }
+
+    #[test]
+    fn shader_attribute_contract_matches_mesh_layout() {
+        assert_eq!(POSITION_ATTRIBUTE, 0);
+        assert_eq!(COLOR_ATTRIBUTE, 1);
+        assert!(VS_UNLIT_ES100.contains("attribute vec3 a_pos;"));
+        assert!(VS_UNLIT_ES100.contains("attribute vec3 a_col;"));
     }
 
     #[test]

@@ -1,16 +1,16 @@
 //! Exact scene construction helpers.
 
 use hyperlattice::{Point3, Real};
-use hypertri::ExactPoint;
+use hypertri::{ExactPoint, TriangulationContext, TriangulationOutcome};
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::geometry::{Color3, ExactMesh, ExactVertex, Primitive};
 
 /// Build an exact RGB axis gizmo.
 pub fn axes_mesh(length: Real, z_base: Real) -> Result<ExactMesh> {
-    let red = Color3::new(1.0, 0.0, 0.0)?;
-    let green = Color3::new(0.0, 1.0, 0.0)?;
-    let blue = Color3::new(0.0, 0.0, 1.0)?;
+    let red = Color3::RED;
+    let green = Color3::GREEN;
+    let blue = Color3::BLUE;
     let zero = Real::zero();
     let mut mesh = ExactMesh::empty(Primitive::Lines);
 
@@ -46,21 +46,28 @@ pub fn axes_mesh(length: Real, z_base: Real) -> Result<ExactMesh> {
 
 /// Build exact XY grid lines centered at the origin.
 ///
-/// `half_steps` controls loop cardinality, while `step` remains an exact
-/// hyperreal spacing. This avoids deriving iteration counts from lossy floats.
-pub fn grid_mesh(half_steps: i32, step: Real, color: Color3) -> ExactMesh {
-    let vertex_capacity = usize::try_from(half_steps)
-        .ok()
-        .and_then(|count| count.checked_mul(2))
-        .and_then(|count| count.checked_add(1))
-        .and_then(|count| count.checked_mul(4))
-        .unwrap_or(0);
-    let mut mesh = ExactMesh::new(Primitive::Lines, Vec::with_capacity(vertex_capacity));
+/// `half_steps` is unsigned loop cardinality, while `step` remains an exact
+/// hyperreal spacing. Allocation failure is reported instead of panicking.
+pub fn grid_mesh(half_steps: u32, step: Real, color: Color3) -> Result<ExactMesh> {
+    let coordinate_count_u64 = u64::from(half_steps) * 2 + 1;
+    let vertex_count_u64 = coordinate_count_u64 * 4;
+    let coordinate_count = usize::try_from(coordinate_count_u64)
+        .map_err(|_| Error::GridSizeOverflow { half_steps })?;
+    let vertex_count =
+        usize::try_from(vertex_count_u64).map_err(|_| Error::GridSizeOverflow { half_steps })?;
+    let mut coordinates = Vec::new();
+    coordinates
+        .try_reserve_exact(coordinate_count)
+        .map_err(|_| Error::GridSizeOverflow { half_steps })?;
+    let mut vertices = Vec::new();
+    vertices
+        .try_reserve_exact(vertex_count)
+        .map_err(|_| Error::GridSizeOverflow { half_steps })?;
+    let mut mesh = ExactMesh::new(Primitive::Lines, vertices);
     let z = Real::zero();
+    let half_steps = i64::from(half_steps);
     let extent = Real::from(half_steps) * step.clone();
-    let coordinates = (-half_steps..=half_steps)
-        .map(|index| Real::from(index) * step.clone())
-        .collect::<Vec<_>>();
+    coordinates.extend((-half_steps..=half_steps).map(|index| Real::from(index) * step.clone()));
 
     for x in &coordinates {
         mesh.push(ExactVertex::new(
@@ -84,39 +91,44 @@ pub fn grid_mesh(half_steps: i32, step: Real, color: Color3) -> ExactMesh {
         ));
     }
 
-    mesh
+    Ok(mesh)
 }
 
 /// Triangulate an exact 2D polygon with `hypertri` and lift it to a flat z plane.
 pub fn polygon_surface_mesh(
+    context: &TriangulationContext,
     vertices: &[ExactPoint],
     hole_indices: &[usize],
     z: Real,
     color: Color3,
-) -> Result<ExactMesh> {
-    let indices = hypertri::earcut(vertices, hole_indices)?;
-    let mut out = ExactMesh::new(Primitive::Triangles, Vec::with_capacity(indices.len()));
-    for index in indices {
-        let point = &vertices[index];
-        out.push(ExactVertex::new(
-            Point3::new(point.x.clone(), point.y.clone(), z.clone()),
-            color,
-        ));
-    }
-    Ok(out)
+) -> Result<TriangulationOutcome<ExactMesh>> {
+    Ok(
+        hypertri::earcut(context, vertices, hole_indices)?.map(|indices| {
+            let mut out = ExactMesh::new(Primitive::Triangles, Vec::with_capacity(indices.len()));
+            for index in indices {
+                let point = &vertices[index];
+                out.push(ExactVertex::new(
+                    Point3::new(point.x.clone(), point.y.clone(), z.clone()),
+                    color,
+                ));
+            }
+            out
+        }),
+    )
 }
 
 #[cfg(test)]
 mod tests {
+    use hyperlimit::PredicatePolicy;
     use hyperreal::Real;
-    use hypertri::Point2;
+    use hypertri::{Point2, TriangulationContext};
 
     use super::*;
 
     #[test]
     fn grid_keeps_exact_vertex_count() {
         let color = Color3::new(0.2, 0.2, 0.2).unwrap();
-        let mesh = grid_mesh(2, Real::from(5), color);
+        let mesh = grid_mesh(2, Real::from(5), color).unwrap();
         assert_eq!(mesh.vertex_count(), 20);
     }
 
@@ -129,7 +141,10 @@ mod tests {
             Point2::new(Real::from(0), Real::from(1)),
         ];
         let color = Color3::new(0.8, 0.4, 0.1).unwrap();
-        let mesh = polygon_surface_mesh(&vertices, &[], Real::zero(), color).unwrap();
+        let context = TriangulationContext::new(PredicatePolicy::STRICT);
+        let mesh = polygon_surface_mesh(&context, &vertices, &[], Real::zero(), color)
+            .unwrap()
+            .into_value();
         assert_eq!(mesh.primitive(), Primitive::Triangles);
         assert_eq!(mesh.triangle_count(), 2);
     }
