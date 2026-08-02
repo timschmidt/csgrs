@@ -1,0 +1,146 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "monotone exact offset topology",
+  "source_revision": "a88da701d6212c5e91c7d69031f12ae5fd2b60a8",
+  "semantic_revisions": [
+    "a88da70"
+  ],
+  "comparison_revision": "bb8ebe80117d6b97d76a1168807658e2284aceed",
+  "historical_revision": "9740a9535adc2a94899ddacbaa1d4ac2b0d6a0ba",
+  "previous_checkpoint": "2026-08-02-authoritative-exact-curve-region-offset.json",
+  "scope": {
+    "included": [
+      "exact injective-coordinate proof for every regular cusp-free BezierParallel2 fragment",
+      "exact complete-image coordinate separation for analytic-parallel carrier pairs",
+      "exact adjacent-loop endpoint-only contact proof after structural loop-vertex seeding",
+      "certified simple single-material-loop filled-side reuse after complete pair proof",
+      "general exact parallel-pair resultant retained as the unconditional fallback",
+      "lane-local CurveRegion2 benchmark fixtures",
+      "STRICT and APPROXIMATE_512 execution through the same proof graph"
+    ],
+    "excluded": [
+      "repeated offsets of retained AnalyticParallel fragments",
+      "fillet and chamfer solving",
+      "finite projection or export of general analytic offsets",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "injective_axis": "On a regular parallel fragment the offset derivative is one continuous scalar multiple of the source derivative. The fragment invariant excludes source singularities and interior offset cusps, so the scalar cannot change sign in the open interval. Any strictly monotone source coordinate is therefore strictly monotone on the retained exact parallel fragment, possibly with reversed orientation.",
+    "disjoint_pair": "Two fragments with the same certified strictly monotone coordinate have disjoint complete images when their exact endpoint-coordinate intervals are strictly disjoint. If the intervals meet at one coordinate value, strict monotonicity makes that value unique on each fragment and decided-distinct endpoint points exclude even a tangency.",
+    "adjacent_pair": "Two adjacent loop carriers whose common exact endpoint is already seeded as a topology vertex can meet only there when one shared certified coordinate sends their remaining endpoints into opposite open half-lines.",
+    "simple_loop_side": "A one-loop material region may reuse its exact cached filled side only after every retained carrier is injective and every broad-phase candidate pair is proved disjoint or adjacent-endpoint-only. AABB-pruned pairs already carry exact disjointness evidence. Any overlap, self-contact, second operand, unknown role/side, non-analytic pair, or undecided comparison uses the general side-ray classifier.",
+    "fallback": "Every failed or undecidable structural proof falls through to the existing complete exact resultant and side-classification authorities. No heuristic negative is introduced.",
+    "policy": "STRICT and APPROXIMATE_512 traverse the same exact topology. Approximate policy can decide only an otherwise unresolved scalar equality/sign through Hyperlimit's 512-bit terminal, and the enclosing CurveOutcome records Approximate512Consumed."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "method": "release executable pinned to CPU 11; eleven independent process samples; ten operations per lane per sample; fixture construction excluded; each lane owns an independent source region so later adapters cannot inherit direct-lane role or side caches",
+    "command": "taskset -c 11 env HYPERCURVE_OFFSET_BENCH_GROUP=curve-region-exact target/release/deps/offset-ea116fee283cd918",
+    "fixture": "Even-odd material region composed of four authored quadratic Bezier spans, offset outward by 1/10 with exact round joins under STRICT.",
+    "current_exact": {
+      "direct_samples_us": [270.310, 248.784, 251.632, 254.449, 262.198, 253.446, 257.083, 257.400, 255.670, 256.418, 252.335],
+      "direct_median_us": 255.670,
+      "direct_min_us": 248.784,
+      "direct_max_us": 270.310,
+      "certified_adapter_samples_us": [230.879, 242.889, 236.896, 235.350, 231.505, 229.471, 231.310, 238.772, 235.095, 235.689, 234.792],
+      "certified_adapter_median_us": 235.095,
+      "segmentation_adapter_samples_us": [234.201, 230.239, 230.513, 232.991, 236.902, 232.227, 235.092, 235.941, 234.918, 232.512, 234.912],
+      "segmentation_adapter_median_us": 234.201
+    },
+    "authoritative_parent": {
+      "revision": "bb8ebe8",
+      "direct_median_ms": 291.545,
+      "current_speedup": 1140.318
+    },
+    "historical_weaker_controls": {
+      "revision": "9740a95",
+      "exact_operation": "Unsupported",
+      "certified_fitted_median_ms": 3.235874,
+      "current_exact_speedup_over_fitted": 12.656,
+      "chord_fallback_median_ms": 5.407297,
+      "current_exact_speedup_over_chord_fallback": 21.150,
+      "contract_note": "The historical adapters changed the geometry contract and are throughput controls, not exact peers."
+    },
+    "competitive_controls": {
+      "line_arc_capsule_inward": "Hypercurve exact 19,760.2 ns versus Cavalier f64 956.6 ns",
+      "open_cubic_offset": "Hypercurve certified 29,650,296.2 ns and chord fallback 981,952.2 ns versus Curvo heuristic f64 8,366.9 ns",
+      "exact_closed_region_peer": "No checked-in competitor preserves canonical hyperreal::Real exact carriers and exact closed-region regularization for this fixture."
+    }
+  },
+  "memory": {
+    "application_peak_rss": {
+      "tool": "/usr/bin/time -v",
+      "current_three_lane_kib": 6980,
+      "parent_three_lane_kib": 10012,
+      "change_kib": -3032,
+      "change_percent": -30.284
+    },
+    "allocation_profile": {
+      "tool": "Heaptrack direct application trace",
+      "profile": "/tmp/hypercurve-exact-simple-loop-fastpath.gz.zst",
+      "workload": "30 exact operations: ten direct, ten through the certified adapter, and ten through the segmentation adapter, with three independently constructed fixtures",
+      "allocation_calls": 119608,
+      "allocation_calls_per_operation": 3986.93,
+      "temporary_allocations": 14078,
+      "peak_heap_kib": 128.03,
+      "parent_allocation_calls": 150674958,
+      "allocation_call_reduction_percent": 99.92062,
+      "parent_peak_heap_mib": 2.16,
+      "interpretation": "The general resultant remains available but is not reached for the proved simple monotone fixture. Remaining allocation traffic is ordinary exact scalar, cusp-analysis, arrangement, and result construction work rather than bivariate determinant churn."
+    }
+  },
+  "release_size": {
+    "method": "same all-feature curve_region_boolean_batch benchmark source and shared dependency revisions",
+    "parent_file_bytes": 7678488,
+    "current_file_bytes": 7686568,
+    "file_change_bytes": 8080,
+    "file_change_percent": 0.1052,
+    "parent_text_bytes": 5814034,
+    "current_text_bytes": 5818350,
+    "text_change_bytes": 4316,
+    "text_change_percent": 0.0742,
+    "historical_file_bytes": 7647640,
+    "historical_text_bytes": 5783202,
+    "interpretation": "The exact structural fast paths add 0.074% representative text relative to the authoritative offset parent while removing more than three orders of magnitude of runtime on the measured case."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-a88da70.TqUGGX --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "parent_nodes": 31083,
+    "current_nodes": 31143,
+    "node_change": 60,
+    "parent_edges": 56824,
+    "current_edges": 56917,
+    "edge_change": 93,
+    "artifact": "/tmp/hypercurve-callgraph-a88da70.TqUGGX/callgraph.json",
+    "confirmed_paths": [
+      "CurveRegionBooleanContext::pair_result -> parallel_pair_is_coordinate_disjoint",
+      "CurveRegionBooleanContext::pair_result -> adjacent_parallel_pair_is_endpoint_only",
+      "failed proof -> BezierParallel2::parallel_intersections",
+      "CurveRegionBooleanContext::build_regularized_region -> certified_simple_single_loop_filled_side",
+      "RegionCarrierGeometry::has_certified_injective_axis -> BezierParallel2::regular_fragment_has_certified_injective_axis"
+    ]
+  },
+  "verification": {
+    "all_feature_library": "passed: 340 tests",
+    "no_default_library": "passed: 304 tests",
+    "focused_integrations": "passed: 3 analytic-parallel region, 98 Bezier fit/offset, 29 curve-intersection, 29 CurveRegion Boolean, and 42 CurveRegion promotion/regularization tests",
+    "strict_and_approximate": "passed exact offset, cusp/self-contact, and terminal-policy regressions under both policies",
+    "clippy_all_features": "passed with -D warnings",
+    "clippy_no_default_features": "passed with -D warnings",
+    "release_benchmarks": "passed: offset and curve_region_boolean_batch",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "compose repeated signed offsets of retained AnalyticParallel fragments without losing source parameter or cusp-side orientation",
+    "add broader structural parallel-pair differential fixtures beyond the monotone simple-loop proof",
+    "complete remaining scalar towers and finite projection/export",
+    "implement radius-driven fillet and two-setback chamfer solvers",
+    "delete displaced historical offset machinery after exact differential coverage passes"
+  ]
+}
