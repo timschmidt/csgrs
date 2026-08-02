@@ -2536,15 +2536,23 @@ fn analytic_parallel_traversal_end(fragment: &crate::BezierParallelFragment2) ->
 /// branch. Offsetting each split independently would require constructing a
 /// join at an algebraic point. The join does not geometrically exist when the
 /// derivative scale keeps the same sign, so recover the maximal represented-
-/// endpoint range and compose it once. A scale-sign change is deliberately
+/// endpoint range and compose it once. The bounded cyclic scan also permits a
+/// closed loop to rotate an arrangement-only algebraic partition away from its
+/// vector seam without cloning fragments. A scale-sign change is deliberately
 /// not coalesced: it is an old cusp and its two limiting normals can require
 /// different composed distances and an exact algebraic join.
 fn coalesced_analytic_parallel_offset_run(
     fragments: &[BezierSplitFragment2],
     first_index: usize,
+    maximum_run_length: usize,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<(crate::BezierParallelFragment2, usize)>>> {
-    let Some(BezierSplitFragment2::AnalyticParallel(first)) = fragments.get(first_index) else {
+    if fragments.is_empty() || maximum_run_length == 0 {
+        return Ok(Classification::Decided(None));
+    }
+    let Some(BezierSplitFragment2::AnalyticParallel(first)) =
+        fragments.get(first_index % fragments.len())
+    else {
         return Ok(Classification::Decided(None));
     };
     if first.range().exact_endpoints().is_some()
@@ -2564,7 +2572,9 @@ fn coalesced_analytic_parallel_offset_run(
     };
 
     let mut last = first;
-    for (next_index, candidate) in fragments.iter().enumerate().skip(first_index + 1) {
+    for step in 1..maximum_run_length.min(fragments.len()) {
+        let next_index = (first_index + step) % fragments.len();
+        let candidate = &fragments[next_index];
         let BezierSplitFragment2::AnalyticParallel(next) = candidate else {
             break;
         };
@@ -2614,7 +2624,7 @@ fn coalesced_analytic_parallel_offset_run(
                     range,
                     first.is_reversed(),
                 ),
-                next_index - first_index + 1,
+                step + 1,
             ))));
         }
     }
@@ -5405,8 +5415,26 @@ impl CurveRegion2 {
             };
             let source_fragments = boundary_loop.fragments();
             let mut spans = Vec::with_capacity(boundary_loop.len());
-            let mut fragment_index = 0;
-            while fragment_index < source_fragments.len() {
+            let processing_start = match source_fragments.first() {
+                Some(BezierSplitFragment2::AnalyticParallel(first))
+                    if !analytic_parallel_traversal_start(first).is_exact() =>
+                {
+                    source_fragments
+                        .iter()
+                        .position(|fragment| {
+                            matches!(
+                                fragment,
+                                BezierSplitFragment2::AnalyticParallel(candidate)
+                                    if analytic_parallel_traversal_start(candidate).is_exact()
+                            )
+                        })
+                        .unwrap_or(0)
+                }
+                _ => 0,
+            };
+            let mut processed = 0;
+            while processed < source_fragments.len() {
+                let fragment_index = (processing_start + processed) % source_fragments.len();
                 let fragment = &source_fragments[fragment_index];
                 let mut consumed = 1;
                 let offset = match fragment {
@@ -5421,6 +5449,7 @@ impl CurveRegion2 {
                         match coalesced_analytic_parallel_offset_run(
                             source_fragments,
                             fragment_index,
+                            source_fragments.len() - processed,
                             policy,
                         )
                         .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
@@ -5458,7 +5487,7 @@ impl CurveRegion2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
-                fragment_index += consumed;
+                processed += consumed;
             }
             if spans.is_empty() {
                 return Err(curve_region_edit_error(
@@ -9306,8 +9335,13 @@ mod tests {
             BezierSplitFragment2::AnalyticParallel(second.clone()),
         ];
         let Classification::Decided(Some((coalesced, consumed))) =
-            coalesced_analytic_parallel_offset_run(&split_fragments, 0, &construction_policy)
-                .expect("the arrangement-only partition is exactly coalescible")
+            coalesced_analytic_parallel_offset_run(
+                &split_fragments,
+                0,
+                split_fragments.len(),
+                &construction_policy,
+            )
+            .expect("the arrangement-only partition is exactly coalescible")
         else {
             panic!("the arrangement-only partition must coalesce");
         };
@@ -9326,6 +9360,7 @@ mod tests {
             coalesced_analytic_parallel_offset_run(
                 &reversed_split_fragments,
                 0,
+                reversed_split_fragments.len(),
                 &construction_policy,
             )
             .expect("the reversed arrangement-only partition is exactly coalescible")
@@ -9339,41 +9374,68 @@ mod tests {
             Some((&Real::zero(), &Real::one()))
         );
 
-        let closed_loop = |mut fragments: Vec<BezierSplitFragment2>, reversed: bool| {
-            fragments.push(if reversed {
-                quadratic_fragment(p(0, 0), p(1, 0), p(2, 0))
-            } else {
-                quadratic_fragment(p(2, 0), p(1, 0), p(0, 0))
-            });
-            CurveRegion2::try_new_with_loop_topology(
-                vec![
-                    CurveRegionBoundaryLoop2::new(fragments, &construction_policy)
-                        .expect("the algebraic partition retains exact connectivity"),
-                ],
-                vec![CurveRegionLoopRole::Material],
-                vec![FillRule::NonZero],
-                vec![if reversed {
-                    CurveBoundaryInteriorSide2::Left
+        let closed_loop =
+            |mut fragments: Vec<BezierSplitFragment2>, reversed: bool, cyclic_seam: bool| {
+                fragments.push(if reversed {
+                    quadratic_fragment(p(0, 0), p(1, 0), p(2, 0))
                 } else {
-                    CurveBoundaryInteriorSide2::Right
-                }],
-            )
-            .expect("the exact cap topology is authored")
-        };
+                    quadratic_fragment(p(2, 0), p(1, 0), p(0, 0))
+                });
+                if cyclic_seam {
+                    fragments.rotate_left(1);
+                    assert!(matches!(
+                        fragments.first(),
+                        Some(BezierSplitFragment2::AnalyticParallel(first))
+                            if !analytic_parallel_traversal_start(first).is_exact()
+                    ));
+                }
+                CurveRegion2::try_new_with_loop_topology(
+                    vec![
+                        CurveRegionBoundaryLoop2::new(fragments, &construction_policy)
+                            .expect("the algebraic partition retains exact connectivity"),
+                    ],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![if reversed {
+                        CurveBoundaryInteriorSide2::Left
+                    } else {
+                        CurveBoundaryInteriorSide2::Right
+                    }],
+                )
+                .expect("the exact cap topology is authored")
+            };
         let unsplit = fragment(range(zero, one));
         let region_pairs = [
             (
-                closed_loop(split_fragments, false),
+                closed_loop(split_fragments.clone(), false, false),
                 closed_loop(
                     vec![BezierSplitFragment2::AnalyticParallel(unsplit.clone())],
+                    false,
                     false,
                 ),
             ),
             (
-                closed_loop(reversed_split_fragments, true),
+                closed_loop(split_fragments, false, true),
+                closed_loop(
+                    vec![BezierSplitFragment2::AnalyticParallel(unsplit.clone())],
+                    false,
+                    false,
+                ),
+            ),
+            (
+                closed_loop(reversed_split_fragments.clone(), true, false),
                 closed_loop(
                     vec![BezierSplitFragment2::AnalyticParallel(unsplit.reversed())],
                     true,
+                    false,
+                ),
+            ),
+            (
+                closed_loop(reversed_split_fragments, true, true),
+                closed_loop(
+                    vec![BezierSplitFragment2::AnalyticParallel(unsplit.reversed())],
+                    true,
+                    false,
                 ),
             ),
         ];
@@ -9459,7 +9521,7 @@ mod tests {
             };
             assert_ne!(first_scale, second_scale);
             assert_eq!(
-                coalesced_analytic_parallel_offset_run(&fragments, 0, &policy)
+                coalesced_analytic_parallel_offset_run(&fragments, 0, fragments.len(), &policy)
                     .expect("the cusp partition decision is exact"),
                 Classification::Decided(None),
             );
