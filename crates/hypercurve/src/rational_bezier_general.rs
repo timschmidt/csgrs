@@ -6422,6 +6422,10 @@ struct ConicParameterCandidate2 {
     image_polynomial: OnceLock<Option<BezierParameterPolynomial>>,
     #[cfg(feature = "predicates")]
     image_parameters: OnceLock<CurveResult<Classification<Vec<BezierParameter2>>>>,
+    #[cfg(feature = "predicates")]
+    quotient_matrices: OnceLock<Option<QuotientRingRationalMapMatrices>>,
+    #[cfg(feature = "predicates")]
+    quotient_power: OnceLock<Option<Vec<Real>>>,
 }
 
 fn conic_parameter_map(
@@ -7088,13 +7092,22 @@ fn multiply_power_polynomial_by_linear_factor(polynomial: Vec<Real>, constant: R
 #[cfg(feature = "predicates")]
 fn locally_certified_rational_image_parameter(
     source_parameter: &BezierParameter2,
-    source_polynomial: &[Real],
-    numerator: &[Real],
-    denominator: &[Real],
+    candidate: &ConicParameterCandidate2,
     policy: &CurveContext,
 ) -> CurveResult<Option<Classification<Option<BezierParameter2>>>> {
-    let Some(matrices) =
-        quotient_ring_rational_map_matrices(source_polynomial, numerator, denominator)
+    let Some(matrices) = candidate
+        .quotient_matrices
+        .get_or_init(|| {
+            let BezierParameter2::Algebraic(source) = source_parameter else {
+                return None;
+            };
+            quotient_ring_rational_map_matrices(
+                source.polynomial().coefficients(),
+                &candidate.numerator,
+                &candidate.denominator,
+            )
+        })
+        .as_ref()
     else {
         return Ok(None);
     };
@@ -7108,9 +7121,12 @@ fn locally_certified_rational_image_parameter(
             },
             Classification::Uncertain(_) => continue,
         };
-        let Some(image_interval) =
-            evaluate_rational_map_interval(numerator, denominator, &source_interval, policy)
-        else {
+        let Some(image_interval) = evaluate_rational_map_interval(
+            &candidate.numerator,
+            &candidate.denominator,
+            &source_interval,
+            policy,
+        ) else {
             continue;
         };
         if compare_reals(&image_interval.upper, &Real::zero(), policy) == Some(Ordering::Less)
@@ -7173,7 +7189,7 @@ fn locally_certified_rational_image_parameter(
             .into_iter()
             .find_map(|precision| {
                 determinant_local_bernstein_signs_from_enclosures(
-                    &matrices, &lower, &upper, precision,
+                    matrices, &lower, &upper, precision,
                 )
             })
         else {
@@ -7204,16 +7220,23 @@ fn locally_certified_rational_image_parameter(
                 Classification::Decided(interval) => interval,
                 Classification::Uncertain(_) => continue,
             };
-        let Some(global_power) = determinant_linear_power_polynomial(
-            &matrices.numerator,
-            &matrices.denominator,
-            matrices.degree,
-        ) else {
+        let Some(global_power) = candidate
+            .quotient_power
+            .get_or_init(|| {
+                determinant_linear_power_polynomial(
+                    &matrices.numerator,
+                    &matrices.denominator,
+                    matrices.degree,
+                )
+            })
+            .as_ref()
+        else {
             continue;
         };
-        let Some(parameter) =
-            BezierAlgebraicParameter2::from_certified_simple_power_basis(global_power, interval)
-        else {
+        let Some(parameter) = BezierAlgebraicParameter2::from_certified_simple_power_basis(
+            global_power.clone(),
+            interval,
+        ) else {
             continue;
         };
         #[cfg(feature = "dispatch-trace")]
@@ -7255,13 +7278,9 @@ fn real_coefficient_rational_image_parameter(
     let BezierParameter2::Algebraic(source_algebraic) = source_parameter else {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     };
-    if let Some(result) = locally_certified_rational_image_parameter(
-        source_parameter,
-        source_algebraic.polynomial().coefficients(),
-        &candidate.numerator,
-        &candidate.denominator,
-        policy,
-    )? {
+    if let Some(result) =
+        locally_certified_rational_image_parameter(source_parameter, candidate, policy)?
+    {
         return Ok(result);
     }
     let Some(image_polynomial) = candidate.image_polynomial.get_or_init(|| {
@@ -7551,43 +7570,96 @@ pub(crate) fn rational_parameter_image_matches(
     }
 }
 
+/// Operation-scoped exact rational map with policy-isolated algebraic proof caches.
+pub(crate) struct RationalParameterImageMap2 {
+    coefficients: (Vec<Real>, Vec<Real>),
+    candidates: Vec<(Vec<Real>, ConicParameterCandidate2)>,
+    policy: CurveContext,
+}
+
+impl RationalParameterImageMap2 {
+    pub(crate) fn new(numerator: Vec<Real>, denominator: Vec<Real>, policy: &CurveContext) -> Self {
+        Self {
+            coefficients: (numerator, denominator),
+            candidates: Vec::new(),
+            policy: *policy,
+        }
+    }
+
+    pub(crate) fn image(
+        &mut self,
+        source: &BezierParameter2,
+    ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+        if let Some(source) = source.as_exact() {
+            return exact_rational_parameter_image(
+                source,
+                &self.coefficients.0,
+                &self.coefficients.1,
+                &self.policy,
+            );
+        }
+        let BezierParameter2::Algebraic(source) = source else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        };
+        let source_polynomial = source.polynomial().coefficients();
+        let candidate_index = if let Some(index) = self
+            .candidates
+            .iter()
+            .position(|(polynomial, _)| polynomial == source_polynomial)
+        {
+            index
+        } else {
+            let candidate = match conic_parameter_candidate(
+                source_polynomial,
+                &self.coefficients,
+                &self.policy,
+            )? {
+                Classification::Decided(candidate) => candidate,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            self.candidates
+                .push((source_polynomial.to_vec(), candidate));
+            self.candidates.len() - 1
+        };
+        real_coefficient_rational_image_parameter(
+            &BezierParameter2::Algebraic(source.clone()),
+            &self.candidates[candidate_index].1,
+            &self.policy,
+        )
+    }
+}
+
+fn exact_rational_parameter_image(
+    source: &Real,
+    numerator: &[Real],
+    denominator: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    let denominator_value = evaluate_power_polynomial(denominator, source);
+    match real_sign(&denominator_value, policy) {
+        Some(RealSign::Positive | RealSign::Negative) => {}
+        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+    let value = (evaluate_power_polynomial(numerator, source) / denominator_value)?;
+    match BezierParameter2::exact(value, policy) {
+        Ok(Classification::Decided(parameter)) => Ok(Classification::Decided(Some(parameter))),
+        Err(CurveError::InvalidBezierParameter) => Ok(Classification::Decided(None)),
+        Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
+        Err(error) => Err(error),
+    }
+}
+
 pub(crate) fn rational_parameter_image(
     source: &BezierParameter2,
     numerator: &[Real],
     denominator: &[Real],
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    if let Some(source) = source.as_exact() {
-        let denominator_value = evaluate_power_polynomial(denominator, source);
-        match real_sign(&denominator_value, policy) {
-            Some(RealSign::Positive | RealSign::Negative) => {}
-            Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-        let value = (evaluate_power_polynomial(numerator, source) / denominator_value)?;
-        return match BezierParameter2::exact(value, policy) {
-            Ok(Classification::Decided(parameter)) => Ok(Classification::Decided(Some(parameter))),
-            Err(CurveError::InvalidBezierParameter) => Ok(Classification::Decided(None)),
-            Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
-            Err(error) => Err(error),
-        };
-    }
-    let BezierParameter2::Algebraic(source) = source else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-    };
-    let candidate = match conic_parameter_candidate(
-        source.polynomial().coefficients(),
-        &(numerator.to_vec(), denominator.to_vec()),
-        policy,
-    )? {
-        Classification::Decided(candidate) => candidate,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    real_coefficient_rational_image_parameter(
-        &BezierParameter2::Algebraic(source.clone()),
-        &candidate,
-        policy,
-    )
+    let mut map = RationalParameterImageMap2::new(numerator.to_vec(), denominator.to_vec(), policy);
+    map.image(source)
 }
 
 fn conic_parameter_candidate(
@@ -7647,6 +7719,8 @@ fn conic_parameter_candidate(
             denominator,
             image_polynomial: OnceLock::new(),
             image_parameters: OnceLock::new(),
+            quotient_matrices: OnceLock::new(),
+            quotient_power: OnceLock::new(),
         }))
     }
     #[cfg(not(feature = "predicates"))]
@@ -9096,6 +9170,74 @@ mod tests {
             candidate.image_polynomial.get().is_none(),
             "the primary exact map must not construct its unused fallback polynomial"
         );
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn rational_parameter_image_map_reuses_quotient_authority_across_isolators() {
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let two_thirds = Real::from(2_i8) * &third;
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![&third * &two_thirds, -Real::one(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the two-root source polynomial must be certified");
+            };
+            let make_parameter = |lower: Real, upper: Real| {
+                let Classification::Decided(interval) =
+                    crate::BezierParameterInterval::try_new(lower, upper, &policy).unwrap()
+                else {
+                    panic!("the source isolating interval must be certified");
+                };
+                let Classification::Decided(parameter) =
+                    crate::BezierAlgebraicParameter2::try_isolate(
+                        polynomial.clone(),
+                        interval,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the source root must be isolated");
+                };
+                BezierParameter2::Algebraic(parameter)
+            };
+            let first = make_parameter(
+                (Real::one() / Real::from(4_i8)).unwrap(),
+                (Real::one() / Real::from(2_i8)).unwrap(),
+            );
+            let second = make_parameter(
+                (Real::one() / Real::from(2_i8)).unwrap(),
+                (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+            );
+            let mut map = RationalParameterImageMap2::new(
+                vec![Real::zero(), Real::one()],
+                vec![Real::one()],
+                &policy,
+            );
+
+            for source in [&first, &second] {
+                let Classification::Decided(Some(image)) = map.image(source).unwrap() else {
+                    panic!("the identity rational map must retain each exact root");
+                };
+                assert!(matches!(
+                    image.cmp_by_refinement(source, &policy).unwrap(),
+                    Classification::Decided(Ordering::Equal)
+                ));
+            }
+            assert_eq!(map.candidates.len(), 1);
+            let candidate = &map.candidates[0].1;
+            assert!(
+                candidate
+                    .quotient_matrices
+                    .get()
+                    .is_some_and(Option::is_some)
+            );
+            assert!(candidate.quotient_power.get().is_some_and(Option::is_some));
+        }
     }
 
     #[test]

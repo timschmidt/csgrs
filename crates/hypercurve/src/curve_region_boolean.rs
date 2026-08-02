@@ -10,8 +10,8 @@ use crate::classify::{compare_reals, real_sign};
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
 use crate::policy::resolve_certified_operation;
 use crate::rational_bezier_general::{
-    RationalBezierOverlapParameterCorrespondence2, exact_contact_point_evidence,
-    rational_parameter_image,
+    RationalBezierOverlapParameterCorrespondence2, RationalParameterImageMap2,
+    exact_contact_point_evidence,
 };
 use crate::{
     Aabb2, ArcArcIntersection, Axis2, BezierArrangementFragment2, BezierArrangementGraph2,
@@ -1127,6 +1127,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     );
                 }
             }
+            let mut parameter_maps = parameter_maps
+                .into_iter()
+                .map(|(numerator, denominator)| {
+                    RationalParameterImageMap2::new(numerator, denominator, &self.data.policy)
+                })
+                .collect::<Vec<_>>();
             let rational = RationalBezier2::try_from_subcurve(curve)
                 .map_err(|cause| self.invalid(0, cause))?;
             let mut contacts = Vec::with_capacity(parameters.len());
@@ -1168,14 +1174,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 } else {
                     let mut mapped = None;
                     let mut uncertain = None;
-                    for (numerator, denominator) in &parameter_maps {
-                        match rational_parameter_image(
-                            parallel_parameter,
-                            numerator,
-                            denominator,
-                            &self.data.policy,
-                        )
-                        .map_err(|cause| self.invalid(0, cause))?
+                    for parameter_map in &mut parameter_maps {
+                        match parameter_map
+                            .image(parallel_parameter)
+                            .map_err(|cause| self.invalid(0, cause))?
                         {
                             Classification::Decided(Some(parameter)) => {
                                 mapped = Some(parameter);
