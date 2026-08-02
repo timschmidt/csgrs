@@ -291,17 +291,84 @@ impl BezierParallelIntersectionContact2 {
     }
 }
 
+/// One exact positive-dimensional parameter component with zero-dimensional image.
+///
+/// A missing parameter means that every parameter in that operand's authored
+/// unit domain maps to `point`; at least one parameter is always missing. This
+/// keeps collapsed or constant curves out of positive-length overlap evidence
+/// while retaining their complete parameter solution set.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierParallelIntersectionParameterComponent2 {
+    parallel_parameter: Option<BezierParameter2>,
+    other_parameter: Option<BezierParameter2>,
+    point: crate::RationalBezierIntersectionPointEvidence2,
+}
+
+impl BezierParallelIntersectionParameterComponent2 {
+    fn fixed_parallel_parameter(parallel_parameter: BezierParameter2, point: Point2) -> Self {
+        Self {
+            parallel_parameter: Some(parallel_parameter),
+            other_parameter: None,
+            point: crate::RationalBezierIntersectionPointEvidence2::Exact(point),
+        }
+    }
+
+    fn fixed_other_parameter(other_parameter: BezierParameter2, point: Point2) -> Self {
+        Self {
+            parallel_parameter: None,
+            other_parameter: Some(other_parameter),
+            point: crate::RationalBezierIntersectionPointEvidence2::Exact(point),
+        }
+    }
+
+    fn entire_parameter_square(point: Point2) -> Self {
+        Self {
+            parallel_parameter: None,
+            other_parameter: None,
+            point: crate::RationalBezierIntersectionPointEvidence2::Exact(point),
+        }
+    }
+
+    /// Returns the fixed analytic-parallel parameter, or `None` when every
+    /// parallel parameter belongs to this component.
+    pub const fn parallel_parameter(&self) -> Option<&BezierParameter2> {
+        self.parallel_parameter.as_ref()
+    }
+
+    /// Returns the fixed rational-curve parameter, or `None` when every
+    /// rational-curve parameter belongs to this component.
+    pub const fn other_parameter(&self) -> Option<&BezierParameter2> {
+        self.other_parameter.as_ref()
+    }
+
+    /// Returns retained exact evidence for the component's single image point.
+    pub const fn point(&self) -> &crate::RationalBezierIntersectionPointEvidence2 {
+        &self.point
+    }
+
+    /// Returns whether both complete authored parameter domains form the component.
+    pub const fn is_entire_parameter_square(&self) -> bool {
+        self.parallel_parameter.is_none() && self.other_parameter.is_none()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum BezierParallelIntersectionSupplement2 {
+    ParameterComponents(Arc<[BezierParallelIntersectionParameterComponent2]>),
+    Incomplete(BezierParallelIntersectionCandidates2),
+}
+
 /// Complete or explicitly incomplete analytic-parallel/rational-Bezier intersection set.
 ///
-/// Isolated contacts and positive-dimensional overlaps are independent slices:
-/// both may occur for one authored pair. When replay cannot complete, the
-/// original complete parameter projections remain behind one shared pointer
-/// instead of inflating every successful result.
+/// Isolated contacts, positive-length image overlaps, and positive-dimensional
+/// parameter components with point image are independent slices. The rare
+/// parameter-component or incomplete-replay payload shares the existing
+/// optional pointer, so the common result representation does not grow.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierParallelIntersectionSet2 {
     contacts: Arc<[BezierParallelIntersectionContact2]>,
     overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
-    incomplete_candidates: Option<Arc<BezierParallelIntersectionCandidates2>>,
+    supplement: Option<Arc<BezierParallelIntersectionSupplement2>>,
 }
 
 impl BezierParallelIntersectionSet2 {
@@ -312,7 +379,22 @@ impl BezierParallelIntersectionSet2 {
         Self {
             contacts,
             overlaps,
-            incomplete_candidates: None,
+            supplement: None,
+        }
+    }
+
+    fn complete_parameter_components(
+        components: Arc<[BezierParallelIntersectionParameterComponent2]>,
+    ) -> Self {
+        if components.is_empty() {
+            return Self::complete(Arc::from([]), Arc::from([]));
+        }
+        Self {
+            contacts: Arc::from([]),
+            overlaps: Arc::from([]),
+            supplement: Some(Arc::new(
+                BezierParallelIntersectionSupplement2::ParameterComponents(components),
+            )),
         }
     }
 
@@ -324,7 +406,9 @@ impl BezierParallelIntersectionSet2 {
         Self {
             contacts,
             overlaps,
-            incomplete_candidates: Some(Arc::new(candidates)),
+            supplement: Some(Arc::new(BezierParallelIntersectionSupplement2::Incomplete(
+                candidates,
+            ))),
         }
     }
 
@@ -341,19 +425,39 @@ impl BezierParallelIntersectionSet2 {
         &self.overlaps
     }
 
+    /// Returns every exact positive-dimensional parameter component whose
+    /// geometric image is one point.
+    pub fn parameter_components(&self) -> &[BezierParallelIntersectionParameterComponent2] {
+        match self.supplement.as_deref() {
+            Some(BezierParallelIntersectionSupplement2::ParameterComponents(components)) => {
+                components
+            }
+            Some(BezierParallelIntersectionSupplement2::Incomplete(_)) | None => &[],
+        }
+    }
+
     /// Returns whether all possible finite contacts and components were decided.
-    pub const fn is_complete(&self) -> bool {
-        self.incomplete_candidates.is_none()
+    pub fn is_complete(&self) -> bool {
+        !matches!(
+            self.supplement.as_deref(),
+            Some(BezierParallelIntersectionSupplement2::Incomplete(_))
+        )
     }
 
     /// Returns complete unpaired projections retained after incomplete replay.
     pub fn incomplete_candidates(&self) -> Option<&BezierParallelIntersectionCandidates2> {
-        self.incomplete_candidates.as_deref()
+        match self.supplement.as_deref() {
+            Some(BezierParallelIntersectionSupplement2::Incomplete(candidates)) => Some(candidates),
+            Some(BezierParallelIntersectionSupplement2::ParameterComponents(_)) | None => None,
+        }
     }
 
     /// Returns whether a complete result proves the two finite images disjoint.
     pub fn is_empty(&self) -> bool {
-        self.is_complete() && self.contacts.is_empty() && self.overlaps.is_empty()
+        self.is_complete()
+            && self.contacts.is_empty()
+            && self.overlaps.is_empty()
+            && self.parameter_components().is_empty()
     }
 }
 
@@ -1360,6 +1464,24 @@ impl BezierParallel2 {
             other_power,
         );
         let equations = [orthogonality, distance_relation];
+        for parameter in [
+            CurveResultantParameter::First,
+            CurveResultantParameter::Second,
+        ] {
+            if equations.iter().all(|equation| {
+                matches!(
+                    bivariate_polynomial_is_independent_of_parameter(equation, parameter, policy),
+                    Classification::Decided(true)
+                )
+            }) {
+                return Ok(Classification::Decided(
+                    BezierParallelIntersectionCandidateSystem2::projected(
+                        BezierParallelIntersectionCandidates2::DegenerateResultant,
+                        Some(equations),
+                    ),
+                ));
+            }
+        }
         if other.degree() >= 4 && bivariate_system_may_have_component(&equations) {
             let reduced = rootless_axis_primitive_system(&equations, policy)?;
             let component_equations = reduced.as_ref().unwrap_or(&equations);
@@ -1473,12 +1595,13 @@ impl BezierParallel2 {
     /// distance or a certified Pythagorean hodograph supplies an exact
     /// rational parallel. Otherwise a primitive first subresultant may expose
     /// every extractable parameter component; rational maps retain their
-    /// partitioned fast path, while regular implicit graphs are accepted only
-    /// after exact closed-domain, critical-point, cell-orientation, and
-    /// selected-branch certification. Both authored residual equations remain
-    /// in the same recursive engine. Unsupported coefficient towers,
-    /// projection folds, and singular or boundary-coincident implicit topology
-    /// remain explicit
+    /// partitioned fast path, while implicit components are accepted only after
+    /// exact closed-domain, critical-point, cell-orientation, singular-incidence,
+    /// and selected-branch certification. Axis-wide and boundary-coincident
+    /// factors are replayed as point-image parameter components rather than
+    /// false curve overlaps. Both authored residual equations remain in the
+    /// same recursive engine. Unsupported coefficient towers and other
+    /// positive-dimensional derivative sharing remain explicit
     /// [`BezierParallelIntersectionSet2::incomplete_candidates`] evidence; no
     /// projected root is promoted without exact replay.
     pub fn intersections(
@@ -1702,6 +1825,15 @@ impl BezierParallel2 {
         other: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionSet2>> {
+        match self.replay_constant_parameter_components(other, policy)? {
+            Classification::Decided(Some(result)) => {
+                return Ok(Classification::Decided(result));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
         let exact_parallel = match self.exact_rational_parallel_component(policy)? {
             Classification::Decided(Some(exact_parallel)) => Some(exact_parallel),
             Classification::Decided(None) => None,
@@ -1758,6 +1890,95 @@ impl BezierParallel2 {
                 )
             }
         }))
+    }
+
+    /// Replays axis-wide common factors as parameter components with point image.
+    ///
+    /// Under the certified finite parallel equations, fixing one parameter while
+    /// leaving the other arbitrary forces the arbitrary operand to be constant:
+    /// the orthogonality relation confines it to one normal line and the signed
+    /// distance relation confines it to one selected point on that line. This
+    /// geometric replay is both cheaper and more informative than treating the
+    /// corresponding axis factor as a positive-length image overlap.
+    fn replay_constant_parameter_components(
+        &self,
+        other: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierParallelIntersectionSet2>>> {
+        let other_point = other.start().clone();
+        match other.point_incidence_classified(&other_point, policy)? {
+            Classification::Decided(crate::RationalBezierPointIncidence2::EntireCurve) => {
+                let incidence = match self.point_incidence(&other_point, policy)? {
+                    Classification::Decided(incidence) => incidence,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let components = match incidence {
+                    BezierParallelIncidence2::EntireCurve => Arc::from([
+                        BezierParallelIntersectionParameterComponent2::entire_parameter_square(
+                            other_point,
+                        ),
+                    ]),
+                    BezierParallelIncidence2::Parameters(parameters) => parameters
+                        .into_iter()
+                        .map(|parameter| {
+                            BezierParallelIntersectionParameterComponent2::fixed_parallel_parameter(
+                                parameter,
+                                other_point.clone(),
+                            )
+                        })
+                        .collect(),
+                };
+                return Ok(Classification::Decided(Some(
+                    BezierParallelIntersectionSet2::complete_parameter_components(components),
+                )));
+            }
+            Classification::Decided(crate::RationalBezierPointIncidence2::Parameters(_)) => {}
+            // This is only a constant-curve probe. Preserve the established
+            // exact-rational/component replay when constancy is not decidable.
+            Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
+        }
+
+        let parallel_point = match self.point_at(&Real::zero(), policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
+        };
+        match self.point_incidence(&parallel_point, policy)? {
+            Classification::Decided(BezierParallelIncidence2::Parameters(_)) => {
+                Ok(Classification::Decided(None))
+            }
+            Classification::Decided(BezierParallelIncidence2::EntireCurve) => {
+                let incidence = match other.point_incidence_classified(&parallel_point, policy)? {
+                    Classification::Decided(incidence) => incidence,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let components = match incidence {
+                    crate::RationalBezierPointIncidence2::EntireCurve => Arc::from([
+                        BezierParallelIntersectionParameterComponent2::entire_parameter_square(
+                            parallel_point,
+                        ),
+                    ]),
+                    crate::RationalBezierPointIncidence2::Parameters(parameters) => parameters
+                        .into_iter()
+                        .map(|parameter| {
+                            BezierParallelIntersectionParameterComponent2::fixed_other_parameter(
+                                parameter,
+                                parallel_point.clone(),
+                            )
+                        })
+                        .collect(),
+                };
+                Ok(Classification::Decided(Some(
+                    BezierParallelIntersectionSet2::complete_parameter_components(components),
+                )))
+            }
+            // As above, undecidable constancy falls through. Incidence after
+            // `EntireCurve` is proved remains authoritative and may be uncertain.
+            Classification::Uncertain(_) => Ok(Classification::Decided(None)),
+        }
     }
 
     fn exact_rational_parallel_component(
@@ -4808,9 +5029,10 @@ fn parameter_component_system(
 /// square boundaries, proves every event incidence through isolated exact
 /// fiber tubes, and emits one doubly monotone oriented overlap cell per edge.
 /// Projection folds, transverse domain crossings, isolated boundary touches,
-/// and isolated singular vertices are accepted. Positive-dimensional
-/// derivative sharing and boundary-coincident topology remains an explicit
-/// boundary.
+/// and isolated singular vertices are accepted. The parent intersection engine
+/// replays axis-wide and boundary-coincident components against constant-image
+/// geometry; other positive-dimensional derivative sharing remains an explicit
+/// boundary here.
 fn certify_regular_implicit_parameter_component(
     component: &BivariatePolynomial,
     branch: &BivariatePolynomial,
@@ -6368,6 +6590,37 @@ fn bivariate_parameter_derivative(
             .collect(),
     };
     BivariatePolynomial::new(coefficients)
+}
+
+fn bivariate_polynomial_is_independent_of_parameter(
+    polynomial: &BivariatePolynomial,
+    parameter: CurveResultantParameter,
+    policy: &CurveContext,
+) -> Classification<bool> {
+    let mut uncertain = false;
+    for (first_power, row) in polynomial.coefficients.iter().enumerate() {
+        for (second_power, coefficient) in row.iter().enumerate() {
+            let depends = match parameter {
+                CurveResultantParameter::First => first_power != 0,
+                CurveResultantParameter::Second => second_power != 0,
+            };
+            if !depends {
+                continue;
+            }
+            match real_sign(coefficient, policy) {
+                Some(RealSign::Zero) => {}
+                Some(RealSign::Positive | RealSign::Negative) => {
+                    return Classification::Decided(false);
+                }
+                None => uncertain = true,
+            }
+        }
+    }
+    if uncertain {
+        Classification::Uncertain(UncertaintyReason::RealSign)
+    } else {
+        Classification::Decided(true)
+    }
 }
 
 fn bivariate_system_has_unit_square_solution(
@@ -9960,9 +10213,11 @@ mod conversion_tests {
     }
 
     #[test]
-    fn implicit_parameter_cells_reject_a_boundary_coincident_component() {
+    fn implicit_parameter_cells_defer_a_boundary_coincident_component() {
         // H(t,u)=u coincides with an authored square edge and cannot be
-        // represented by ordinary two-nondegenerate-range overlap cells.
+        // represented by ordinary two-nondegenerate-range overlap cells. The
+        // parent intersection replay publishes it as a point-image parameter
+        // component after proving which geometric operand is constant.
         let boundary_coincident = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]);
         let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
         let config = CurveIntersectionResultantConfig {

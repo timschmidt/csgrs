@@ -110,10 +110,11 @@ pub use bezier_offset::{
     BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOffsetRisk, BezierParallel2,
     BezierParallelApproximationCurve2, BezierParallelIncidence2,
     BezierParallelIntersectionCandidates2, BezierParallelIntersectionContact2,
-    BezierParallelIntersectionSet2, BezierParallelSingularityAnalysis2,
-    BezierParallelVerificationOptions, Blend2dCubicQuadraticReduction2,
-    Blend2dQuadraticOffsetCandidate2, CertifiedBezierParallelApproximation2,
-    CertifiedBezierParallelPath2, CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
+    BezierParallelIntersectionParameterComponent2, BezierParallelIntersectionSet2,
+    BezierParallelSingularityAnalysis2, BezierParallelVerificationOptions,
+    Blend2dCubicQuadraticReduction2, Blend2dQuadraticOffsetCandidate2,
+    CertifiedBezierParallelApproximation2, CertifiedBezierParallelPath2,
+    CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
     CertifiedPythagoreanHodographOffset2, LevienCubicOffsetCandidate2,
 };
 pub use bezier_parameter::{

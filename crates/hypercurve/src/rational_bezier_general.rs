@@ -1712,7 +1712,7 @@ impl RationalBezier2 {
         }
     }
 
-    fn point_incidence_classified(
+    pub(crate) fn point_incidence_classified(
         &self,
         point: &Point2,
         policy: &CurveContext,

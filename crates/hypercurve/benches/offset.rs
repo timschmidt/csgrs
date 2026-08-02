@@ -600,6 +600,53 @@ fn implicit_cusp_parabolas() -> CurveResult<(RationalBezier2, RationalBezier2)> 
     Ok((source, target))
 }
 
+fn bench_bezier_parallel_boundary_parameter_fiber(iterations: u32) -> CurveResult<()> {
+    let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).parallel_left(s(1))?;
+    let constant = RationalBezier2::try_new(vec![p(0, 1); 5], vec![s(1); 5])?;
+    let policy = CurveContext::STRICT;
+
+    let started = Instant::now();
+    let mut candidate_count = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(candidates) =
+            parallel.intersection_candidates(black_box(&constant), black_box(&policy))?
+        else {
+            panic!("boundary parameter-fiber candidate projection became uncertain");
+        };
+        candidate_count += black_box(usize::from(matches!(
+            candidates,
+            BezierParallelIntersectionCandidates2::DegenerateResultant
+        )));
+    }
+    let candidate_elapsed = started.elapsed();
+    println!(
+        "bezier_parallel_boundary_parameter_fiber_candidates: {iterations} iterations in {candidate_elapsed:?} ({:?}/iter), checksum={candidate_count}",
+        candidate_elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut contact_count = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(contacts) =
+            parallel.intersections(black_box(&constant), black_box(&policy))?
+        else {
+            panic!("boundary parameter-fiber contact replay became uncertain");
+        };
+        contact_count += black_box(
+            contacts.contacts().len()
+                + contacts.overlaps().len()
+                + usize::from(!contacts.is_complete())
+                + usize::from(!contacts.is_empty()),
+        );
+    }
+    let contact_elapsed = started.elapsed();
+    println!(
+        "bezier_parallel_boundary_parameter_fiber_contacts: {iterations} iterations in {contact_elapsed:?} ({:?}/iter), checksum={contact_count}",
+        contact_elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     let exact_parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).parallel_left(s(1))?;
     let exact_target = RationalBezier2::try_new(vec![p(1, 0), p(1, 2)], vec![s(1), s(1)])?;
@@ -747,6 +794,8 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
         &cusp_target,
         5,
     )?;
+
+    bench_bezier_parallel_boundary_parameter_fiber(100)?;
 
     let cold_iterations = 10_u32;
     let started = Instant::now();

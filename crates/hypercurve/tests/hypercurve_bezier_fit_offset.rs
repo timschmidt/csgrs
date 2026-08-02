@@ -1357,6 +1357,110 @@ fn parallel_rational_intersection_candidates_report_disjoint_and_shared_componen
 }
 
 #[test]
+fn parallel_rational_intersections_retain_a_boundary_parameter_fiber() {
+    let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
+        .parallel_left(r(1))
+        .unwrap();
+    let constant = RationalBezier2::try_new(vec![p(0, 1); 5], vec![r(1); 5]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let candidates = parallel
+            .intersection_candidates(&constant, &policy)
+            .unwrap();
+        assert!(
+            matches!(
+                candidates,
+                Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+            ),
+            "{candidates:?}"
+        );
+        let intersections =
+            decided_parallel_set(parallel.intersections(&constant, &policy).unwrap());
+        assert!(intersections.is_complete());
+        assert!(intersections.contacts().is_empty());
+        assert!(intersections.overlaps().is_empty());
+        assert!(!intersections.is_empty());
+        let [component] = intersections.parameter_components() else {
+            panic!("the constant target must retain one complete parameter fiber");
+        };
+        assert_eq!(
+            component.parallel_parameter(),
+            Some(&BezierParameter2::Exact(r(0)))
+        );
+        assert_eq!(component.other_parameter(), None);
+        assert_eq!(
+            component.point(),
+            &RationalBezierIntersectionPointEvidence2::Exact(p(0, 1))
+        );
+        assert!(!component.is_entire_parameter_square());
+    }
+}
+
+#[test]
+fn collapsed_parallel_retain_a_fixed_other_parameter_fiber() {
+    let source =
+        RationalQuadraticBezier2::try_new(p(1, 0), p(1, 1), p(0, 1), r(1), r(1), r(2)).unwrap();
+    let parallel = source.parallel_left(r(1)).unwrap();
+    let crossing = RationalBezier2::try_new(vec![p(-1, 0), p(1, 0)], vec![r(1), r(1)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let intersections =
+            decided_parallel_set(parallel.intersections(&crossing, &policy).unwrap());
+        assert!(intersections.is_complete());
+        assert!(intersections.contacts().is_empty());
+        assert!(intersections.overlaps().is_empty());
+        let [component] = intersections.parameter_components() else {
+            panic!("the collapsed parallel must retain one complete parameter fiber");
+        };
+        assert_eq!(component.parallel_parameter(), None);
+        assert_eq!(
+            component.other_parameter(),
+            Some(&BezierParameter2::Exact(q(1, 2)))
+        );
+        assert_eq!(
+            component.point(),
+            &RationalBezierIntersectionPointEvidence2::Exact(p(0, 0))
+        );
+        assert!(!component.is_entire_parameter_square());
+    }
+}
+
+#[test]
+fn coincident_constant_curves_retain_the_entire_parameter_square() {
+    let parallel = QuadraticBezier2::new(p(3, 4), p(3, 4), p(3, 4))
+        .parallel_left(r(0))
+        .unwrap();
+    let constant = RationalBezier2::try_new(vec![p(3, 4); 3], vec![r(1); 3]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let intersections =
+            decided_parallel_set(parallel.intersections(&constant, &policy).unwrap());
+        assert!(intersections.is_complete());
+        assert!(intersections.contacts().is_empty());
+        assert!(intersections.overlaps().is_empty());
+        let [component] = intersections.parameter_components() else {
+            panic!("coincident constant curves must retain the full parameter square");
+        };
+        assert_eq!(component.parallel_parameter(), None);
+        assert_eq!(component.other_parameter(), None);
+        assert_eq!(
+            component.point(),
+            &RationalBezierIntersectionPointEvidence2::Exact(p(3, 4))
+        );
+        assert!(component.is_entire_parameter_square());
+    }
+}
+
+#[test]
+fn parallel_intersection_parameter_components_reuse_the_supplement_pointer() {
+    assert_eq!(
+        std::mem::size_of::<BezierParallelIntersectionSet2>(),
+        2 * std::mem::size_of::<std::sync::Arc<[u8]>>()
+            + std::mem::size_of::<Option<std::sync::Arc<()>>>()
+    );
+}
+
+#[test]
 fn parallel_rational_intersections_saturate_rootless_homogeneous_axis_content() {
     let factored_parallel = rootless_homogeneous_factor_parabola()
         .parallel_left(r(1))
