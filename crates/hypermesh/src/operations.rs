@@ -1945,8 +1945,12 @@ impl ProjectivePointCache {
         entries.sort_unstable_by(|left, right| left.0.cmp(&right.0));
 
         let mut sets = AtomicDisjointSets::new(entries.len());
+        // Construction can retain multiple identities for the same coordinate.
+        // Three quarters avoids selecting the next table size when coincidences
+        // are present; an all-unique input needs at most one growth.
+        let fingerprint_capacity = entries.len().saturating_sub(entries.len() / 4);
         let mut fingerprint_buckets: StorageHashMap<[u64; 3], (usize, Vec<usize>)> =
-            StorageHashMap::default();
+            StorageHashMap::with_capacity_and_hasher(fingerprint_capacity, Default::default());
         let mut unkeyed: Vec<usize> = Vec::new();
         for right in 0..entries.len() {
             let exact_key = exact_projective_affine_fingerprint(self.point(entries[right].1));
