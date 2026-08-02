@@ -1359,7 +1359,15 @@ impl PolygonSoup {
 
 struct AdjacentSupportEdges {
     heads: Vec<usize>,
-    entries: Vec<[usize; 5]>,
+    entries: Vec<AdjacentSupportEdge>,
+}
+
+#[derive(Clone, Copy)]
+struct AdjacentSupportEdge {
+    other: usize,
+    stored_start: usize,
+    triangle: usize,
+    next: usize,
 }
 
 impl AdjacentSupportEdges {
@@ -1373,7 +1381,7 @@ impl AdjacentSupportEdges {
     }
 
     #[inline]
-    fn get(&self, start: usize, end: usize) -> Option<(usize, usize, usize)> {
+    fn get(&self, start: usize, end: usize) -> Option<(bool, usize)> {
         let (head, other) = if start < end {
             (start, end)
         } else {
@@ -1381,20 +1389,19 @@ impl AdjacentSupportEdges {
         };
         let mut entry_index = self.heads[head];
         while entry_index != Self::NONE {
-            let [stored_other, stored_start, stored_end, polygon, next] = self.entries[entry_index];
-            if stored_other == other {
-                return Some((stored_start, stored_end, polygon));
+            let entry = self.entries[entry_index];
+            if entry.other == other {
+                let inverted = start != end && entry.stored_start == start;
+                return Some((inverted, entry.triangle));
             }
-            entry_index = next;
+            entry_index = entry.next;
         }
         None
     }
 
     #[inline]
-    fn insert_if_absent(&mut self, start: usize, end: usize, polygon: usize) {
-        if self.get(start, end).is_some() {
-            return;
-        }
+    fn insert_absent(&mut self, start: usize, end: usize, polygon: usize) {
+        debug_assert!(self.get(start, end).is_none());
         let (head, other) = if start < end {
             (start, end)
         } else {
@@ -1402,7 +1409,12 @@ impl AdjacentSupportEdges {
         };
         let next = self.heads[head];
         self.heads[head] = self.entries.len();
-        self.entries.push([other, start, end, polygon, next]);
+        self.entries.push(AdjacentSupportEdge {
+            other,
+            stored_start: start,
+            triangle: polygon,
+            next,
+        });
     }
 }
 
@@ -1569,6 +1581,7 @@ pub(crate) fn build_projective_input_soup(
                 .and_then(|planes| planes.get(mesh_index))
                 .and_then(|planes| planes.get(triangle_index))
                 .map(|planes| planes.support.clone());
+            let mut occupied_adjacent_edges = 0u8;
             let mut support_requires_validation = false;
             let support_plane = if let Some(support) = supplied_support {
                 let index = support_planes.len();
@@ -1625,14 +1638,16 @@ pub(crate) fn build_projective_input_soup(
                 if let Some(support) = axis_support {
                     support
                 } else if let Some(adjacent) = adjacent_support_planes.as_ref() {
-                    match adjacent_coplanar_support_index(
+                    let (support, occupied) = adjacent_coplanar_support_index(
                         decisions,
                         mesh.positions,
                         indices,
                         &triangles,
                         &support_planes,
                         adjacent,
-                    )? {
+                    )?;
+                    occupied_adjacent_edges = occupied;
+                    match support {
                         Some((support, false)) => support,
                         Some((support, true)) => {
                             let inverted = support_planes[support].inverted();
@@ -1673,8 +1688,17 @@ pub(crate) fn build_projective_input_soup(
                 support_plane,
             });
             if let Some(adjacent) = adjacent_support_planes.as_mut() {
-                for [start, end] in [[i0, i1], [i1, i2], [i2, i0]] {
-                    adjacent.insert_if_absent(start, end, stored_triangle);
+                // Adjacency storage is mutually exclusive with both the
+                // mesh-level axis cache and supplied planes, so every path
+                // reaching this block obtained a complete occupancy snapshot
+                // above. Certified source triangles also have three distinct
+                // undirected edges, so that snapshot remains valid while each
+                // missing edge is installed once.
+                for (edge, [start, end]) in [[i0, i1], [i1, i2], [i2, i0]].into_iter().enumerate() {
+                    let edge_bit = 1 << edge;
+                    if occupied_adjacent_edges & edge_bit == 0 {
+                        adjacent.insert_absent(start, end, stored_triangle);
+                    }
                 }
             }
             polygon_index = polygon_index
@@ -1829,17 +1853,24 @@ fn adjacent_coplanar_support_index(
     triangles: &[ProjectiveInputTriangle],
     support_planes: &[Plane],
     adjacent: &AdjacentSupportEdges,
-) -> HypermeshResult<Option<(usize, bool)>> {
+) -> HypermeshResult<(Option<(usize, bool)>, u8)> {
     let [Some(p0), Some(p1), Some(p2)] = triangle.map(|index| positions.get(index)) else {
-        return Ok(None);
+        return Ok((None, 0));
     };
     let points = [p0, p1, p2];
+    let mut support = None;
+    let mut occupied_edges = 0u8;
     for edge in 0..3 {
+        let edge_bit = 1 << edge;
         let start = triangle[edge];
         let end = triangle[(edge + 1) % 3];
-        let Some((stored_start, stored_end, triangle_index)) = adjacent.get(start, end) else {
+        let Some((inverted, triangle_index)) = adjacent.get(start, end) else {
             continue;
         };
+        occupied_edges |= edge_bit;
+        if support.is_some() {
+            continue;
+        }
         let Some((support_index, candidate)) = triangles.get(triangle_index).and_then(|triangle| {
             support_planes
                 .get(triangle.support_plane)
@@ -1852,14 +1883,9 @@ fn adjacent_coplanar_support_index(
         {
             continue;
         }
-        if stored_start == end && stored_end == start {
-            return Ok(Some((support_index, false)));
-        }
-        if stored_start == start && stored_end == end {
-            return Ok(Some((support_index, true)));
-        }
+        support = Some((support_index, inverted));
     }
-    Ok(None)
+    Ok((support, occupied_edges))
 }
 
 fn approximate_triangle_axis(positions: &[Point3], indices: [usize; 3]) -> Option<usize> {
@@ -2320,6 +2346,10 @@ mod tests {
             std::mem::size_of::<ProjectiveInputTriangle>(),
             4 * std::mem::size_of::<usize>()
         );
+        assert_eq!(
+            std::mem::size_of::<AdjacentSupportEdge>(),
+            4 * std::mem::size_of::<usize>()
+        );
         let positions = vec![
             Point3::new(Real::zero(), Real::zero(), Real::zero()),
             Point3::new(Real::one(), Real::zero(), Real::zero()),
@@ -2382,15 +2412,52 @@ mod tests {
     }
 
     #[test]
+    fn projective_input_mixed_axis_triangle_preserves_first_edge_owner() {
+        let positions = vec![
+            Point3::new(Real::from(0), Real::from(0), Real::from(0)),
+            Point3::new(Real::from(1), Real::from(0), Real::from(1)),
+            Point3::new(Real::from(0), Real::from(1), Real::from(2)),
+            Point3::new(Real::from(0), Real::from(0), Real::from(3)),
+            Point3::new(Real::from(1), Real::from(1), Real::from(3)),
+        ];
+        let mesh = TriangleMesh::new(
+            positions,
+            vec![
+                Triangle::new(0, 1, 2),
+                Triangle::new(1, 0, 3),
+                Triangle::new(1, 0, 4),
+            ],
+        );
+
+        let soup = build_projective_input_soup(
+            &crate::test_support::approximate_decisions(),
+            &[mesh.as_ref()],
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(soup.meshes[0].triangles.len(), 3);
+        assert_eq!(soup.meshes[0].support_planes.len(), 2);
+        assert_eq!(
+            soup.meshes[0].triangles[0].support_plane,
+            soup.meshes[0].triangles[2].support_plane
+        );
+    }
+
+    #[test]
     fn adjacent_support_edges_retain_first_directed_use() {
         let mut adjacent = AdjacentSupportEdges::new(5, 3);
-        adjacent.insert_if_absent(3, 1, 7);
-        adjacent.insert_if_absent(1, 3, 9);
-        adjacent.insert_if_absent(1, 4, 11);
+        adjacent.insert_absent(3, 1, 7);
+        if adjacent.get(1, 3).is_none() {
+            adjacent.insert_absent(1, 3, 9);
+        }
+        adjacent.insert_absent(1, 4, 11);
+        adjacent.insert_absent(2, 2, 6);
 
-        assert_eq!(adjacent.get(1, 3), Some((3, 1, 7)));
-        assert_eq!(adjacent.get(3, 1), Some((3, 1, 7)));
-        assert_eq!(adjacent.get(4, 1), Some((1, 4, 11)));
+        assert_eq!(adjacent.get(1, 3), Some((false, 7)));
+        assert_eq!(adjacent.get(3, 1), Some((true, 7)));
+        assert_eq!(adjacent.get(4, 1), Some((false, 11)));
+        assert_eq!(adjacent.get(2, 2), Some((false, 6)));
         assert_eq!(adjacent.get(0, 2), None);
     }
 
