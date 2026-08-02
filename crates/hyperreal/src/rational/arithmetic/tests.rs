@@ -2083,6 +2083,71 @@ mod tests {
     }
 
     #[test]
+    fn exact_word_dyadic_view_is_bit_exact_across_the_fast_path() {
+        for numerator in [
+            1_u64,
+            3,
+            (1_u64 << 16) + 1,
+            (1_u64 << 32) + 1,
+            (1_u64 << 52) + 1,
+            (1_u64 << 53) - 1,
+        ] {
+            for denominator_shift in [0_u64, 1, 17, 40, 511, 1022] {
+                let numerator_bits = u64::from(64 - numerator.leading_zeros());
+                if i128::from(numerator_bits - 1) - i128::from(denominator_shift) < -1022 {
+                    continue;
+                }
+                let value = Rational::from_fraction_parts(
+                    Plus,
+                    BigUint::from(numerator),
+                    BigUint::one() << denominator_shift,
+                );
+                let scale = f64::from_bits((1023 - denominator_shift) << 52);
+                let expected = (numerator as f64) * scale;
+
+                assert_eq!(
+                    value
+                        .exact_word_dyadic_f64_magnitude(denominator_shift)
+                        .map(f64::to_bits),
+                    Some(expected.to_bits())
+                );
+                assert_eq!(
+                    value.to_f64_lossy().map(f64::to_bits),
+                    Some(expected.to_bits())
+                );
+                assert_eq!(value.to_f64_enclosure(), Some([expected, expected]));
+
+                let negative = -value;
+                assert_eq!(
+                    negative.to_f64_lossy().map(f64::to_bits),
+                    Some((-expected).to_bits())
+                );
+                assert_eq!(negative.to_f64_enclosure(), Some([-expected, -expected]));
+            }
+        }
+
+        let too_wide = Rational::from_fraction_parts(
+            Plus,
+            BigUint::from((1_u64 << 53) + 1),
+            BigUint::one(),
+        );
+        assert_eq!(too_wide.exact_word_dyadic_f64_magnitude(0), None);
+        assert_eq!(too_wide.to_f64_lossy(), Some(((1_u64 << 53) + 1) as f64));
+
+        let deep_denominator = Rational::from_fraction_parts(
+            Plus,
+            BigUint::from(3_u8),
+            BigUint::one() << 1023_u64,
+        );
+        let deep_expected = 3.0 * f64::from_bits(1_u64 << 51);
+        assert_eq!(
+            deep_denominator.exact_word_dyadic_f64_magnitude(1023),
+            None
+        );
+        assert_eq!(deep_denominator.to_f64_lossy(), Some(deep_expected));
+    }
+
+    #[test]
     fn normal_dyadic_view_matches_gmp_rounding() {
         use rug::{Float, Integer, Rational as GmpRational, integer::Order};
 

@@ -321,7 +321,9 @@ impl Rational {
         // numerator and denominator exponents before scaling so normal results
         // avoid an exact shifted-magnitude comparison, `powi`, and division.
         if let Some(denominator_shift) = self.dyadic_denominator_shift_from_retained(retained)
-            && let Some(value) = self.normal_dyadic_f64_magnitude(denominator_shift)
+            && let Some(value) = self
+                .exact_word_dyadic_f64_magnitude(denominator_shift)
+                .or_else(|| self.normal_dyadic_f64_magnitude(denominator_shift))
         {
             return Some(match self.sign {
                 Minus => -value,
@@ -350,6 +352,19 @@ impl Rational {
             NoSign => 0.0,
             Plus => value,
         })
+    }
+
+    #[inline]
+    fn exact_word_dyadic_f64_magnitude(&self, denominator_shift: u64) -> Option<f64> {
+        let numerator_bits = self.numerator.bits();
+        if numerator_bits > 53 || denominator_shift > 1022 {
+            return None;
+        }
+        // Both conversions and the normal power-of-two scaling are exact
+        // under these bounds; the signed cast avoids the wider u64 lowering.
+        let numerator = self.numerator.iter_u64_digits().next()? as i64;
+        let scale = f64::from_bits((1023 - denominator_shift) << 52);
+        Some((numerator as f64) * scale)
     }
 
     #[inline]
