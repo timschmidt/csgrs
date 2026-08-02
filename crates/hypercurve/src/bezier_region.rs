@@ -2510,6 +2510,117 @@ fn exact_offset_span_from_analytic_parallel(
     }))
 }
 
+fn analytic_parallel_traversal_start(
+    fragment: &crate::BezierParallelFragment2,
+) -> &BezierParameter2 {
+    if fragment.is_reversed() {
+        fragment.range().end()
+    } else {
+        fragment.range().start()
+    }
+}
+
+fn analytic_parallel_traversal_end(fragment: &crate::BezierParallelFragment2) -> &BezierParameter2 {
+    if fragment.is_reversed() {
+        fragment.range().start()
+    } else {
+        fragment.range().end()
+    }
+}
+
+/// Coalesces one traversal-contiguous run whose only non-represented
+/// boundaries are internal arrangement partitions.
+///
+/// A retained analytic parallel can be split at an algebraic self-contact or
+/// Boolean contact even though the selected traversal continues on the same
+/// branch. Offsetting each split independently would require constructing a
+/// join at an algebraic point. The join does not geometrically exist when the
+/// derivative scale keeps the same sign, so recover the maximal represented-
+/// endpoint range and compose it once. A scale-sign change is deliberately
+/// not coalesced: it is an old cusp and its two limiting normals can require
+/// different composed distances and an exact algebraic join.
+fn coalesced_analytic_parallel_offset_run(
+    fragments: &[BezierSplitFragment2],
+    first_index: usize,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<(crate::BezierParallelFragment2, usize)>>> {
+    let Some(BezierSplitFragment2::AnalyticParallel(first)) = fragments.get(first_index) else {
+        return Ok(Classification::Decided(None));
+    };
+    if first.range().exact_endpoints().is_some()
+        || !analytic_parallel_traversal_start(first).is_exact()
+    {
+        return Ok(Classification::Decided(None));
+    }
+    let scale = match first
+        .parallel()
+        .regular_fragment_derivative_scale_sign(first.range(), policy)?
+    {
+        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    let mut last = first;
+    for (next_index, candidate) in fragments.iter().enumerate().skip(first_index + 1) {
+        let BezierSplitFragment2::AnalyticParallel(next) = candidate else {
+            break;
+        };
+        if first.parallel() != next.parallel() || first.is_reversed() != next.is_reversed() {
+            break;
+        }
+        match analytic_parallel_traversal_end(last)
+            .cmp_by_refinement(analytic_parallel_traversal_start(next), policy)?
+        {
+            Classification::Decided(std::cmp::Ordering::Equal) => {}
+            Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => {
+                break;
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let next_scale = match next
+            .parallel()
+            .regular_fragment_derivative_scale_sign(next.range(), policy)?
+        {
+            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if next_scale != scale {
+            break;
+        }
+        last = next;
+        if analytic_parallel_traversal_end(last).is_exact() {
+            let range = if first.is_reversed() {
+                BezierParameterRange2::new_validated(
+                    last.range().start().clone(),
+                    first.range().end().clone(),
+                )
+            } else {
+                BezierParameterRange2::new_validated(
+                    first.range().start().clone(),
+                    last.range().end().clone(),
+                )
+            };
+            return Ok(Classification::Decided(Some((
+                crate::BezierParallelFragment2::from_certified_range(
+                    first.parallel().clone(),
+                    range,
+                    first.is_reversed(),
+                ),
+                next_index - first_index + 1,
+            ))));
+        }
+    }
+    Ok(Classification::Decided(None))
+}
+
 fn exact_parallel_limiting_tangent(
     parallel: &BezierParallel2,
     parameter: &Real,
@@ -5162,8 +5273,12 @@ impl CurveRegion2 {
             } else {
                 distance.clone()
             };
+            let source_fragments = boundary_loop.fragments();
             let mut spans = Vec::with_capacity(boundary_loop.len());
-            for fragment in boundary_loop.fragments() {
+            let mut fragment_index = 0;
+            while fragment_index < source_fragments.len() {
+                let fragment = &source_fragments[fragment_index];
+                let mut consumed = 1;
                 let offset = match fragment {
                     BezierSplitFragment2::Materialized { curve, .. } => {
                         exact_offset_span_from_materialized_curve(
@@ -5173,11 +5288,32 @@ impl CurveRegion2 {
                         )
                     }
                     BezierSplitFragment2::AnalyticParallel(fragment) => {
-                        exact_offset_span_from_analytic_parallel(
-                            fragment,
-                            &signed_left_distance,
+                        match coalesced_analytic_parallel_offset_run(
+                            source_fragments,
+                            fragment_index,
                             policy,
                         )
+                        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+                        {
+                            Classification::Decided(Some((coalesced, run_length))) => {
+                                consumed = run_length;
+                                exact_offset_span_from_analytic_parallel(
+                                    &coalesced,
+                                    &signed_left_distance,
+                                    policy,
+                                )
+                            }
+                            Classification::Decided(None) => {
+                                exact_offset_span_from_analytic_parallel(
+                                    fragment,
+                                    &signed_left_distance,
+                                    policy,
+                                )
+                            }
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
                     }
                     BezierSplitFragment2::AlgebraicEndpointImages { .. }
                     | BezierSplitFragment2::Unresolved { .. } => {
@@ -5192,6 +5328,7 @@ impl CurveRegion2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
+                fragment_index += consumed;
             }
             if spans.is_empty() {
                 return Err(curve_region_edit_error(
@@ -8732,6 +8869,33 @@ mod tests {
         Point2::new(Real::from(x), Real::from(y))
     }
 
+    #[cfg(feature = "predicates")]
+    fn sqrt_half_algebraic_parameter(policy: &CurveContext) -> BezierParameter2 {
+        let polynomial = BezierParameterPolynomial::try_new_power_basis(
+            vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],
+            policy,
+        )
+        .expect("the quadratic parameter polynomial is valid");
+        let Classification::Decided(polynomial) = polynomial else {
+            panic!("the exact polynomial must be decided");
+        };
+        let interval = BezierParameterInterval::try_new(
+            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+            (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+            policy,
+        )
+        .expect("the isolating interval is valid");
+        let Classification::Decided(interval) = interval else {
+            panic!("the exact interval must be decided");
+        };
+        let parameter = BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+            .expect("sqrt(1/2) has one root in the supplied interval");
+        let Classification::Decided(parameter) = parameter else {
+            panic!("the exact algebraic parameter must be decided");
+        };
+        BezierParameter2::algebraic(parameter)
+    }
+
     #[test]
     fn retained_parallel_offset_composition_respects_traversal_orientation() {
         let policy = CurveContext::STRICT;
@@ -8815,6 +8979,212 @@ mod tests {
                 assert_eq!(composed[1].start(), &BezierParameter2::Exact(half.clone()));
                 assert_eq!(composed[1].end(), &BezierParameter2::Exact(Real::one()));
             }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions() {
+        let construction_policy = CurveContext::STRICT;
+        let algebraic = sqrt_half_algebraic_parameter(&construction_policy);
+        let zero = BezierParameter2::Exact(Real::zero());
+        let one = BezierParameter2::Exact(Real::one());
+        let range = |start: BezierParameter2, end: BezierParameter2| {
+            let range = BezierParameterRange2::try_new(start, end, &construction_policy)
+                .expect("the retained parameter range is valid");
+            let Classification::Decided(range) = range else {
+                panic!("the isolated range ordering must be decided");
+            };
+            range
+        };
+        let parallel = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0))
+            .parallel_left(Real::zero())
+            .expect("the source has an exact analytic parallel");
+        let fragment = |range| {
+            let fragment = crate::BezierParallelFragment2::try_new(
+                parallel.clone(),
+                range,
+                &construction_policy,
+            )
+            .expect("the regular parallel range is valid");
+            let Classification::Decided(fragment) = fragment else {
+                panic!("the regular parallel range must be decided");
+            };
+            fragment
+        };
+        let first = fragment(range(zero.clone(), algebraic.clone()));
+        let second = fragment(range(algebraic, one.clone()));
+        assert!(matches!(
+            exact_offset_span_from_analytic_parallel(
+                &first,
+                &(Real::one() / Real::from(10_i8)).unwrap(),
+                &construction_policy,
+            ),
+            Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+        ));
+
+        let split_fragments = vec![
+            BezierSplitFragment2::AnalyticParallel(first.clone()),
+            BezierSplitFragment2::AnalyticParallel(second.clone()),
+        ];
+        let Classification::Decided(Some((coalesced, consumed))) =
+            coalesced_analytic_parallel_offset_run(&split_fragments, 0, &construction_policy)
+                .expect("the arrangement-only partition is exactly coalescible")
+        else {
+            panic!("the arrangement-only partition must coalesce");
+        };
+        assert_eq!(consumed, 2);
+        assert!(!coalesced.is_reversed());
+        assert_eq!(
+            coalesced.range().exact_endpoints(),
+            Some((&Real::zero(), &Real::one()))
+        );
+
+        let reversed_split_fragments = vec![
+            BezierSplitFragment2::AnalyticParallel(second.reversed()),
+            BezierSplitFragment2::AnalyticParallel(first.reversed()),
+        ];
+        let Classification::Decided(Some((coalesced_reversed, consumed))) =
+            coalesced_analytic_parallel_offset_run(
+                &reversed_split_fragments,
+                0,
+                &construction_policy,
+            )
+            .expect("the reversed arrangement-only partition is exactly coalescible")
+        else {
+            panic!("the reversed arrangement-only partition must coalesce");
+        };
+        assert_eq!(consumed, 2);
+        assert!(coalesced_reversed.is_reversed());
+        assert_eq!(
+            coalesced_reversed.range().exact_endpoints(),
+            Some((&Real::zero(), &Real::one()))
+        );
+
+        let closed_loop = |mut fragments: Vec<BezierSplitFragment2>, reversed: bool| {
+            fragments.push(if reversed {
+                quadratic_fragment(p(0, 0), p(1, 0), p(2, 0))
+            } else {
+                quadratic_fragment(p(2, 0), p(1, 0), p(0, 0))
+            });
+            CurveRegion2::try_new_with_loop_topology(
+                vec![
+                    CurveRegionBoundaryLoop2::new(fragments, &construction_policy)
+                        .expect("the algebraic partition retains exact connectivity"),
+                ],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![if reversed {
+                    CurveBoundaryInteriorSide2::Left
+                } else {
+                    CurveBoundaryInteriorSide2::Right
+                }],
+            )
+            .expect("the exact cap topology is authored")
+        };
+        let unsplit = fragment(range(zero, one));
+        let region_pairs = [
+            (
+                closed_loop(split_fragments, false),
+                closed_loop(
+                    vec![BezierSplitFragment2::AnalyticParallel(unsplit.clone())],
+                    false,
+                ),
+            ),
+            (
+                closed_loop(reversed_split_fragments, true),
+                closed_loop(
+                    vec![BezierSplitFragment2::AnalyticParallel(unsplit.reversed())],
+                    true,
+                ),
+            ),
+        ];
+        let distance = (Real::one() / Real::from(10_i8)).unwrap();
+        for (split_region, unsplit_region) in region_pairs {
+            let mut reference = None;
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let split_offset = split_region
+                    .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+                    .expect("the algebraically partitioned exact offset must complete");
+                let unsplit_offset = unsplit_region
+                    .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+                    .expect("the equivalent unsplit exact offset must complete");
+                assert_eq!(split_offset.certainty, unsplit_offset.certainty);
+                if policy == CurveContext::STRICT {
+                    assert_eq!(split_offset.certainty, CurveCertainty::Certified);
+                }
+                assert_eq!(split_offset.value, unsplit_offset.value);
+                if let Some(reference) = &reference {
+                    assert_eq!(&split_offset.value, reference);
+                } else {
+                    reference = Some(split_offset.value);
+                }
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn retained_parallel_offset_preserves_algebraic_cusp_partition() {
+        let construction_policy = CurveContext::STRICT;
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(half, Real::zero()), p(1, 1))
+            .parallel_left(Real::one())
+            .expect("the source has an exact analytic parallel");
+        let analysis = parallel
+            .singularity_analysis(&construction_policy)
+            .expect("the parallel cusp analysis is valid");
+        let Classification::Decided(analysis) = analysis else {
+            panic!("the exact cusp analysis must be decided");
+        };
+        let [cusp] = analysis.parallel_cusps() else {
+            panic!("the selected parallel must have one cusp");
+        };
+        assert!(!cusp.is_exact());
+        let make_fragment = |start: BezierParameter2, end: BezierParameter2| {
+            let range = BezierParameterRange2::try_new(start, end, &construction_policy)
+                .expect("the cusp range is valid");
+            let Classification::Decided(range) = range else {
+                panic!("the cusp range ordering must be decided");
+            };
+            let fragment = crate::BezierParallelFragment2::try_new(
+                parallel.clone(),
+                range,
+                &construction_policy,
+            )
+            .expect("a cusp is permitted at a retained range endpoint");
+            let Classification::Decided(fragment) = fragment else {
+                panic!("the cusp-bounded regular fragment must be decided");
+            };
+            fragment
+        };
+        let first = make_fragment(BezierParameter2::Exact(Real::zero()), cusp.clone());
+        let second = make_fragment(cusp.clone(), BezierParameter2::Exact(Real::one()));
+        let fragments = vec![
+            BezierSplitFragment2::AnalyticParallel(first.clone()),
+            BezierSplitFragment2::AnalyticParallel(second.clone()),
+        ];
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first_scale = first
+                .parallel()
+                .regular_fragment_derivative_scale_sign(first.range(), &policy)
+                .expect("the first limiting branch scale is valid");
+            let second_scale = second
+                .parallel()
+                .regular_fragment_derivative_scale_sign(second.range(), &policy)
+                .expect("the second limiting branch scale is valid");
+            let (Classification::Decided(first_scale), Classification::Decided(second_scale)) =
+                (first_scale, second_scale)
+            else {
+                panic!("both cusp-side derivative scales must be decided");
+            };
+            assert_ne!(first_scale, second_scale);
+            assert_eq!(
+                coalesced_analytic_parallel_offset_run(&fragments, 0, &policy)
+                    .expect("the cusp partition decision is exact"),
+                Classification::Decided(None),
+            );
         }
     }
 

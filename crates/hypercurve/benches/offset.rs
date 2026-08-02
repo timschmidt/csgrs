@@ -2,10 +2,13 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierFlatteningOptions, BezierParallelIntersectionCandidates2,
-    BezierParallelPairIntersectionCandidates2, BezierParallelVerificationOptions, BulgeVertex2,
-    CircularArc2, Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2,
-    CurveRegion2, CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2, OffsetCap,
+    BezierAlgebraicParameter2, BezierFlatteningOptions, BezierParallelFragment2,
+    BezierParallelIntersectionCandidates2, BezierParallelPairIntersectionCandidates2,
+    BezierParallelVerificationOptions, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CubicBezier2, Curve2,
+    CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2, OffsetCap,
     OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
 };
 
@@ -1112,6 +1115,108 @@ fn bench_curve_region_repeated_bezier_offset_lanes(
     Ok(())
 }
 
+fn curve_region_algebraic_partition_fixture(
+    partitioned: bool,
+) -> Result<CurveRegion2, Box<dyn std::error::Error>> {
+    let policy = CurveContext::STRICT;
+    let parallel = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0)).parallel_left(Real::zero())?;
+    let zero = BezierParameter2::Exact(Real::zero());
+    let one = BezierParameter2::Exact(Real::one());
+    let mut fragments = if partitioned {
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![s(-1), Real::zero(), s(2)],
+            &policy,
+        )?
+        else {
+            panic!("the benchmark parameter polynomial must be decided");
+        };
+        let Classification::Decided(interval) =
+            BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?
+        else {
+            panic!("the benchmark isolating interval must be decided");
+        };
+        let Classification::Decided(parameter) =
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)?
+        else {
+            panic!("the benchmark algebraic parameter must be decided");
+        };
+        let algebraic = BezierParameter2::algebraic(parameter);
+        [(zero.clone(), algebraic.clone()), (algebraic, one.clone())]
+            .into_iter()
+            .map(|(start, end)| {
+                let Classification::Decided(range) =
+                    BezierParameterRange2::try_new(start, end, &policy)?
+                else {
+                    panic!("the benchmark partition range must be decided");
+                };
+                let Classification::Decided(fragment) =
+                    BezierParallelFragment2::try_new(parallel.clone(), range, &policy)?
+                else {
+                    panic!("the benchmark parallel fragment must be decided");
+                };
+                Ok(BezierSplitFragment2::AnalyticParallel(fragment))
+            })
+            .collect::<CurveResult<Vec<_>>>()?
+    } else {
+        let Classification::Decided(range) = BezierParameterRange2::try_new(zero, one, &policy)?
+        else {
+            panic!("the benchmark full parameter range must be decided");
+        };
+        let Classification::Decided(fragment) =
+            BezierParallelFragment2::try_new(parallel, range, &policy)?
+        else {
+            panic!("the benchmark full parallel fragment must be decided");
+        };
+        vec![BezierSplitFragment2::AnalyticParallel(fragment)]
+    };
+    fragments.push(BezierSplitFragment2::Materialized {
+        start: BezierParameter2::Exact(Real::zero()),
+        end: BezierParameter2::Exact(Real::one()),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(1, 0), p(0, 0))),
+    });
+    Ok(CurveRegion2::try_new_with_loop_topology(
+        vec![CurveRegionBoundaryLoop2::new(fragments, &policy)?],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Right],
+    )?)
+}
+
+fn bench_curve_region_algebraic_partition_offset_lanes(
+    iterations: u32,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let policy = CurveContext::STRICT;
+    let partitioned = curve_region_algebraic_partition_fixture(true)?;
+    let unsplit = curve_region_algebraic_partition_fixture(false)?;
+    let partitioned_check = partitioned
+        .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
+        .into_value();
+    let unsplit_check = unsplit
+        .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
+        .into_value();
+    assert_eq!(partitioned_check, unsplit_check);
+
+    for (name, source) in [
+        ("curve_region_algebraic_partition_offset", &partitioned),
+        ("curve_region_unsplit_equivalent_offset", &unsplit),
+    ] {
+        let started = Instant::now();
+        let mut loops = 0_usize;
+        for _ in 0..iterations {
+            let result = source
+                .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
+                .into_value();
+            loops += black_box(result.boundary_loops().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
+            elapsed / iterations
+        );
+    }
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Ok(group) = std::env::var("HYPERCURVE_OFFSET_BENCH_GROUP") {
         match group.as_str() {
@@ -1129,6 +1234,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "bezier-pair-intersection" => bench_bezier_parallel_pair_intersection_lanes()?,
             "curve-region-exact" => bench_curve_region_bezier_offset_lanes(10)?,
             "curve-region-repeated" => bench_curve_region_repeated_bezier_offset_lanes(100)?,
+            "curve-region-algebraic-partition" => {
+                bench_curve_region_algebraic_partition_offset_lanes(20)?
+            }
             _ => panic!("unknown HYPERCURVE_OFFSET_BENCH_GROUP={group:?}"),
         }
         return Ok(());

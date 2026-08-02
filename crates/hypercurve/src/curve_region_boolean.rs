@@ -4763,6 +4763,101 @@ mod certified_successor_tests {
         .expect("valid rational line")
     }
 
+    fn assert_monotone_parallel_pair_proofs_match_complete_solver(
+        context: &CurveRegionBooleanContext,
+        filled_side_is_left: bool,
+    ) {
+        assert_eq!(context.data.pairs.len(), 6);
+        assert!(context.data.pairs.iter().all(|pair| {
+            context.parallel_pair_is_coordinate_disjoint(pair)
+                || context.adjacent_parallel_pair_is_endpoint_only(pair)
+        }));
+        assert!(
+            context
+                .data
+                .pairs
+                .iter()
+                .all(|pair| { !matches!(pair.context, RegionCarrierPairContext::ParallelSelf) })
+        );
+        assert_eq!(
+            context.certified_simple_single_loop_filled_side(),
+            Some(filled_side_is_left)
+        );
+
+        // Differentially replay the complete pair solver behind every
+        // structural omission. Coordinate separation must remove all retained
+        // contacts; an adjacent-range proof may leave only the loop vertex
+        // that construction already seeded. This keeps the fast proof a
+        // specialization of the same authority rather than an alternate
+        // intersection definition.
+        for replay_policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for pair in &context.data.pairs {
+                let first = &context.data.carriers[pair.first_carrier_index];
+                let second = &context.data.carriers[pair.second_carrier_index];
+                let coordinate_disjoint = context.parallel_pair_is_coordinate_disjoint(pair);
+                let adjacent_endpoint = context.adjacent_parallel_pair_is_endpoint_only(pair);
+                assert!(coordinate_disjoint || adjacent_endpoint);
+                let intersections = first
+                    .geometry
+                    .parallel()
+                    .parallel_intersections(second.geometry.parallel(), &replay_policy)
+                    .expect("the complete analytic-parallel replay is valid");
+                let Classification::Decided(intersections) = intersections else {
+                    panic!("a structurally omitted pair must have a complete exact replay");
+                };
+                assert!(intersections.is_complete(), "{intersections:?}");
+                assert!(intersections.parameter_components().is_empty());
+                assert!(intersections.overlaps().iter().all(|overlap| {
+                    !(ranges_intersect(overlap.first_range(), first, &replay_policy)
+                        .expect("the first overlap range comparison is decided")
+                        && ranges_intersect(overlap.second_range(), second, &replay_policy)
+                            .expect("the second overlap range comparison is decided"))
+                }));
+                let retained_contacts = intersections
+                    .contacts()
+                    .iter()
+                    .filter(|contact| {
+                        parameter_in_carrier(contact.first_parameter(), first, &replay_policy)
+                            .expect("the first contact range comparison is decided")
+                            && parameter_in_carrier(
+                                contact.second_parameter(),
+                                second,
+                                &replay_policy,
+                            )
+                            .expect("the second contact range comparison is decided")
+                    })
+                    .collect::<Vec<_>>();
+                if coordinate_disjoint {
+                    assert!(retained_contacts.is_empty(), "{retained_contacts:?}");
+                    continue;
+                }
+
+                let fragment_count = context.data.first.boundary_loops()[first.loop_index]
+                    .fragments()
+                    .len();
+                let expected = if first.fragment_index.checked_add(1) == Some(second.fragment_index)
+                {
+                    (
+                        carrier_traversal_end_parameter(first),
+                        carrier_traversal_start_parameter(second),
+                    )
+                } else {
+                    assert_eq!(first.fragment_index, 0);
+                    assert_eq!(second.fragment_index.checked_add(1), Some(fragment_count));
+                    (
+                        carrier_traversal_start_parameter(first),
+                        carrier_traversal_end_parameter(second),
+                    )
+                };
+                assert!(retained_contacts.len() <= 1, "{retained_contacts:?}");
+                assert!(retained_contacts.iter().all(|contact| {
+                    contact.first_parameter() == expected.0
+                        && contact.second_parameter() == expected.1
+                }));
+            }
+        }
+    }
+
     #[test]
     fn monotone_parallel_ranges_remove_only_proven_unary_pairs() {
         let policy = CurveContext::STRICT;
@@ -4819,28 +4914,26 @@ mod certified_successor_tests {
         let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
             .expect("valid unary arrangement");
 
-        assert_eq!(context.data.pairs.len(), 6);
-        let resultant_free = context
-            .data
-            .pairs
+        assert_monotone_parallel_pair_proofs_match_complete_solver(&context, true);
+
+        let reversed_fragments = region.boundary_loops()[0]
+            .fragments()
             .iter()
-            .filter(|pair| {
-                context.parallel_pair_is_coordinate_disjoint(pair)
-                    || context.adjacent_parallel_pair_is_endpoint_only(pair)
-            })
-            .count();
-        assert_eq!(resultant_free, 6);
-        assert!(
-            context
-                .data
-                .pairs
-                .iter()
-                .all(|pair| { !matches!(pair.context, RegionCarrierPairContext::ParallelSelf) })
-        );
-        assert_eq!(
-            context.certified_simple_single_loop_filled_side(),
-            Some(true)
-        );
+            .rev()
+            .map(|fragment| fragment.reversed().expect("exact traversal reversal"))
+            .collect();
+        let reversed_region = CurveRegion2::new(vec![
+            CurveRegionBoundaryLoop2::new(reversed_fragments, &policy)
+                .expect("connected reversed exact parallel loop"),
+        ])
+        .expect("valid reversed raw region")
+        .with_certified_loop_roles(vec![CurveRegionLoopRole::Material])
+        .expect("valid reversed material role")
+        .with_certified_filled_side_is_left(vec![false])
+        .expect("valid reversed filled-side evidence");
+        let reversed_context = CurveRegionBooleanContext::try_new_unary(&reversed_region, &policy)
+            .expect("valid reversed unary arrangement");
+        assert_monotone_parallel_pair_proofs_match_complete_solver(&reversed_context, false);
     }
 
     fn square_region(min_x: i8, min_y: i8, max_x: i8, max_y: i8) -> CurveRegion2 {
