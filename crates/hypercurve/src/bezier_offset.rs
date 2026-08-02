@@ -16,7 +16,6 @@
 
 use std::sync::{Arc, OnceLock};
 
-#[cfg(feature = "predicates")]
 use crate::bezier_algebraic_image::parameter_representation;
 use crate::bezier_parameter::{
     BezierParameterRefinement2, bernstein_to_power_coefficients, power_to_bernstein_coefficients,
@@ -27,16 +26,17 @@ use crate::rational_bezier_general::{
 };
 use crate::{
     Aabb2, BezierCuspClassification, BezierDegree, BezierEndpoint, BezierInflectionClassification,
-    BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, CertifiedBezierLineImageOffset2, Classification, CubicBezier2,
-    Curve2, CurveContext, CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2,
-    CurvePath2, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
-    RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
-    RationalQuadraticBezier2, Real, Similarity2, UncertaintyReason,
+    BezierLineContact, BezierLineContactKind, BezierLineContactRelation,
+    BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
+    BezierParameterInterval, BezierParameterPolynomial, CertifiedBezierLineImageOffset2,
+    Classification, CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError,
+    CurveGeometry2, CurveOperation2, CurvePath2, CurveResult, ExactCurveError, ExactCurveResult,
+    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionCandidates2,
+    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
+    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, Similarity2,
+    UncertaintyReason,
 };
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
-#[cfg(feature = "predicates")]
 use hypersolve::{
     AlgebraicFiberRootCountStatus, PredicateCertainty,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
@@ -1854,6 +1854,89 @@ impl BezierParallel2 {
         }
     }
 
+    /// Returns complete supporting-line contacts with exact crossing direction.
+    ///
+    /// Incidence is first isolated by [`Self::supporting_line_incidence`]. The
+    /// selected radical branch is then evaluated on each adjacent parameter
+    /// interval. Opposite exact side signs certify a crossing; equal signs
+    /// certify tangency. Endpoint roots use the analytic continuation of the
+    /// same polynomial/radical expression, so half-open winding ownership does
+    /// not guess from a sampled endpoint coordinate.
+    pub fn relation_to_supporting_line_with_contacts(
+        &self,
+        line: &LineSeg2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierLineContactRelation>> {
+        let parameters = match self.supporting_line_incidence(line, policy)? {
+            Classification::Decided(BezierParallelIncidence2::EntireCurve) => {
+                return Ok(Classification::Decided(
+                    BezierLineContactRelation::OnSupportingLine,
+                ));
+            }
+            Classification::Decided(BezierParallelIncidence2::Parameters(parameters)) => parameters,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if parameters.is_empty() {
+            return Ok(Classification::Decided(
+                BezierLineContactRelation::NoContact,
+            ));
+        }
+
+        let mut contacts = Vec::with_capacity(parameters.len());
+        for (index, parameter) in parameters.iter().enumerate() {
+            let before =
+                match parallel_line_neighbor_sign(self, line, &parameters, index, false, policy)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let after =
+                match parallel_line_neighbor_sign(self, line, &parameters, index, true, policy)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let (kind, direction) = if before == after {
+                (BezierLineContactKind::Tangent, None)
+            } else {
+                let direction = if after == RealSign::Positive {
+                    BezierLineCrossingDirection::NegativeToPositive
+                } else {
+                    BezierLineCrossingDirection::PositiveToNegative
+                };
+                (BezierLineContactKind::Crossing, Some(direction))
+            };
+            contacts.push(BezierLineContact::with_crossing_direction(
+                parameter.clone(),
+                kind,
+                direction,
+            )?);
+        }
+        Ok(Classification::Decided(
+            BezierLineContactRelation::Contacts { contacts },
+        ))
+    }
+
+    pub(crate) fn supporting_line_parameter_order(
+        &self,
+        parameter: &BezierParameter2,
+        line: &LineSeg2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        Ok(
+            signed_parallel_linear_projection_at_parameter(self, parameter, line, false, policy)?
+                .map(|sign| match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                }),
+        )
+    }
+
     /// Constructs complete polynomial parameter projections against another parallel.
     ///
     /// Let `Delta=Q-P`, homogeneous tangent numerators be `Hp,Hq`, squared
@@ -2873,7 +2956,7 @@ impl BezierParallel2 {
         }
     }
 
-    fn exact_rational_parallel_component(
+    pub(crate) fn exact_rational_parallel_component(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<RationalBezier2>>> {
@@ -7321,54 +7404,37 @@ fn implicit_parameter_fiber_root_count(
         return Ok(Classification::Decided(Some(count)));
     }
 
-    #[cfg(feature = "predicates")]
-    {
-        let BezierParameter2::Algebraic(retained_parameter) = retained_parameter else {
-            unreachable!("exact retained fibers returned above")
-        };
-        if lifted_lower.exact_rational_ref().is_none()
-            || lifted_upper.exact_rational_ref().is_none()
-        {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-        }
-        let representation = parameter_representation(retained_parameter, policy);
-        let report = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
-            component,
-            CurveResultantParameter::First,
-            &representation,
-            lifted_lower,
-            lifted_upper,
-            policy.predicate_policy(),
-        );
-        if report.certainty == PredicateCertainty::Approximate {
-            policy.observe_approximate_512();
-        }
-        Ok(match report.status {
-            AlgebraicFiberRootCountStatus::Counted => {
-                Classification::Decided(report.distinct_root_count)
-            }
-            AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => Classification::Decided(None),
-            AlgebraicFiberRootCountStatus::EndpointRoot
-            | AlgebraicFiberRootCountStatus::InvalidEvidence
-            | AlgebraicFiberRootCountStatus::InvalidInterval
-            | AlgebraicFiberRootCountStatus::UnsupportedCoefficient
-            | AlgebraicFiberRootCountStatus::Undecided => {
-                Classification::Uncertain(UncertaintyReason::Predicate)
-            }
-        })
+    let BezierParameter2::Algebraic(retained_parameter) = retained_parameter else {
+        unreachable!("exact retained fibers returned above")
+    };
+    if lifted_lower.exact_rational_ref().is_none() || lifted_upper.exact_rational_ref().is_none() {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }
-
-    #[cfg(not(feature = "predicates"))]
-    {
-        let _ = (
-            component,
-            retained_parameter,
-            lifted_lower,
-            lifted_upper,
-            policy,
-        );
-        Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+    let representation = parameter_representation(retained_parameter, policy);
+    let report = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+        component,
+        CurveResultantParameter::First,
+        &representation,
+        lifted_lower,
+        lifted_upper,
+        policy.predicate_policy(),
+    );
+    if report.certainty == PredicateCertainty::Approximate {
+        policy.observe_approximate_512();
     }
+    Ok(match report.status {
+        AlgebraicFiberRootCountStatus::Counted => {
+            Classification::Decided(report.distinct_root_count)
+        }
+        AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => Classification::Decided(None),
+        AlgebraicFiberRootCountStatus::EndpointRoot
+        | AlgebraicFiberRootCountStatus::InvalidEvidence
+        | AlgebraicFiberRootCountStatus::InvalidInterval
+        | AlgebraicFiberRootCountStatus::UnsupportedCoefficient
+        | AlgebraicFiberRootCountStatus::Undecided => {
+            Classification::Uncertain(UncertaintyReason::Predicate)
+        }
+    })
 }
 
 fn implicit_parameter_fiber_incidence(
@@ -7790,108 +7856,95 @@ fn parameter_component_point_root_rank(
         return Ok(blocker.map_or(Classification::Decided(None), Classification::Uncertain));
     }
 
-    #[cfg(feature = "predicates")]
-    {
-        let BezierParameter2::Algebraic(retained_parameter) = &point.parallel_parameter else {
-            unreachable!("exact retained parameters returned above")
-        };
-        let retained_representation = parameter_representation(retained_parameter, policy);
-        let rank = match &point.other_parameter {
-            BezierParameter2::Exact(lifted_parameter) => {
-                match compare_reals(lifted_parameter, &Real::zero(), policy) {
-                    Some(std::cmp::Ordering::Equal) => return Ok(Classification::Decided(Some(0))),
-                    Some(std::cmp::Ordering::Less) | None => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-                    }
-                    Some(std::cmp::Ordering::Greater) => {}
-                }
-                match compare_reals(lifted_parameter, &Real::one(), policy) {
-                    Some(std::cmp::Ordering::Equal) => {
-                        return Ok(Classification::Decided(Some(branch_count - 1)));
-                    }
-                    Some(std::cmp::Ordering::Greater) | None => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-                    }
-                    Some(std::cmp::Ordering::Less) => {}
-                }
-                if lifted_parameter.exact_rational_ref().is_none() {
+    let BezierParameter2::Algebraic(retained_parameter) = &point.parallel_parameter else {
+        unreachable!("exact retained parameters returned above")
+    };
+    let retained_representation = parameter_representation(retained_parameter, policy);
+    let rank = match &point.other_parameter {
+        BezierParameter2::Exact(lifted_parameter) => {
+            match compare_reals(lifted_parameter, &Real::zero(), policy) {
+                Some(std::cmp::Ordering::Equal) => return Ok(Classification::Decided(Some(0))),
+                Some(std::cmp::Ordering::Less) | None => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                 }
-                let mut lower = (lifted_parameter / Real::from(2_i8))?;
-                let mut upper = ((lifted_parameter + Real::one()) / Real::from(2_i8))?;
-                loop {
-                    match algebraic_fiber_root_rank_in_isolator(
-                        component,
-                        &retained_representation,
-                        &lower,
-                        &upper,
-                        branch_count,
-                        policy,
-                    )? {
-                        Classification::Decided(Some(rank)) => break rank,
-                        Classification::Decided(None) => {
-                            lower = ((lower + lifted_parameter) / Real::from(2_i8))?;
-                            upper = ((upper + lifted_parameter) / Real::from(2_i8))?;
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
+                Some(std::cmp::Ordering::Greater) => {}
+            }
+            match compare_reals(lifted_parameter, &Real::one(), policy) {
+                Some(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(Some(branch_count - 1)));
+                }
+                Some(std::cmp::Ordering::Greater) | None => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
+                Some(std::cmp::Ordering::Less) => {}
+            }
+            if lifted_parameter.exact_rational_ref().is_none() {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+            let mut lower = (lifted_parameter / Real::from(2_i8))?;
+            let mut upper = ((lifted_parameter + Real::one()) / Real::from(2_i8))?;
+            loop {
+                match algebraic_fiber_root_rank_in_isolator(
+                    component,
+                    &retained_representation,
+                    &lower,
+                    &upper,
+                    branch_count,
+                    policy,
+                )? {
+                    Classification::Decided(Some(rank)) => break rank,
+                    Classification::Decided(None) => {
+                        lower = ((lower + lifted_parameter) / Real::from(2_i8))?;
+                        upper = ((upper + lifted_parameter) / Real::from(2_i8))?;
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
                     }
                 }
             }
-            BezierParameter2::Algebraic(_) => {
-                let mut refinement =
-                    BezierParameterRefinement2::new(&point.other_parameter, policy);
-                let mut refinement_steps = 0_usize;
-                loop {
-                    let refined = refinement.refine_to(refinement_steps);
-                    match refined {
-                        BezierParameter2::Exact(lifted_parameter) => {
-                            return parameter_component_point_root_rank(
-                                component,
-                                &BezierParallelIntersectionParameterPair2 {
-                                    parallel_parameter: point.parallel_parameter.clone(),
-                                    other_parameter: BezierParameter2::Exact(
-                                        lifted_parameter.clone(),
-                                    ),
-                                },
-                                branch_count,
-                                policy,
-                            );
-                        }
-                        BezierParameter2::Algebraic(lifted_parameter) => {
-                            match algebraic_fiber_root_rank_in_isolator(
-                                component,
-                                &retained_representation,
-                                lifted_parameter.interval().start(),
-                                lifted_parameter.interval().end(),
-                                branch_count,
-                                policy,
-                            )? {
-                                Classification::Decided(Some(rank)) => break rank,
-                                Classification::Decided(None) => {
-                                    refinement_steps = refinement_steps.saturating_add(8);
-                                }
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
+        }
+        BezierParameter2::Algebraic(_) => {
+            let mut refinement = BezierParameterRefinement2::new(&point.other_parameter, policy);
+            let mut refinement_steps = 0_usize;
+            loop {
+                let refined = refinement.refine_to(refinement_steps);
+                match refined {
+                    BezierParameter2::Exact(lifted_parameter) => {
+                        return parameter_component_point_root_rank(
+                            component,
+                            &BezierParallelIntersectionParameterPair2 {
+                                parallel_parameter: point.parallel_parameter.clone(),
+                                other_parameter: BezierParameter2::Exact(lifted_parameter.clone()),
+                            },
+                            branch_count,
+                            policy,
+                        );
+                    }
+                    BezierParameter2::Algebraic(lifted_parameter) => {
+                        match algebraic_fiber_root_rank_in_isolator(
+                            component,
+                            &retained_representation,
+                            lifted_parameter.interval().start(),
+                            lifted_parameter.interval().end(),
+                            branch_count,
+                            policy,
+                        )? {
+                            Classification::Decided(Some(rank)) => break rank,
+                            Classification::Decided(None) => {
+                                refinement_steps = refinement_steps.saturating_add(8);
+                            }
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
                             }
                         }
                     }
                 }
             }
-        };
-        Ok(Classification::Decided(Some(rank)))
-    }
-
-    #[cfg(not(feature = "predicates"))]
-    {
-        let _ = (component, point, branch_count, policy);
-        Ok(Classification::Uncertain(UncertaintyReason::Predicate))
-    }
+        }
+    };
+    Ok(Classification::Decided(Some(rank)))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_fiber_root_rank_in_isolator(
     component: &BivariatePolynomial,
     retained_parameter: &hypersolve::AlgebraicRootRepresentation,
@@ -10040,58 +10093,42 @@ fn parameter_pair_matches_specialized_fiber(
     fiber_parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BivariateParameterPairReplay>> {
-    #[cfg(feature = "predicates")]
-    {
-        let (
-            BezierParameter2::Algebraic(retained_parameter),
-            BezierParameter2::Algebraic(fiber_parameter),
-        ) = (retained_parameter, fiber_parameter)
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-        };
-        let report = count_bivariate_common_fiber_roots_at_algebraic_parameter(
-            first,
-            second,
-            retained_axis,
-            &parameter_representation(retained_parameter, policy),
-            fiber_parameter.interval().start(),
-            fiber_parameter.interval().end(),
-            policy.predicate_policy(),
-        );
-        if report.certainty == PredicateCertainty::Approximate {
-            policy.observe_approximate_512();
+    let (
+        BezierParameter2::Algebraic(retained_parameter),
+        BezierParameter2::Algebraic(fiber_parameter),
+    ) = (retained_parameter, fiber_parameter)
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    };
+    let report = count_bivariate_common_fiber_roots_at_algebraic_parameter(
+        first,
+        second,
+        retained_axis,
+        &parameter_representation(retained_parameter, policy),
+        fiber_parameter.interval().start(),
+        fiber_parameter.interval().end(),
+        policy.predicate_policy(),
+    );
+    if report.certainty == PredicateCertainty::Approximate {
+        policy.observe_approximate_512();
+    }
+    Ok(match report.status {
+        AlgebraicFiberRootCountStatus::Counted => match report.distinct_root_count {
+            Some(0) => Classification::Decided(BivariateParameterPairReplay::Rejected),
+            Some(_) => Classification::Decided(BivariateParameterPairReplay::Direct),
+            None => Classification::Uncertain(UncertaintyReason::Predicate),
+        },
+        AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => {
+            Classification::Uncertain(UncertaintyReason::Boundary)
         }
-        Ok(match report.status {
-            AlgebraicFiberRootCountStatus::Counted => match report.distinct_root_count {
-                Some(0) => Classification::Decided(BivariateParameterPairReplay::Rejected),
-                Some(_) => Classification::Decided(BivariateParameterPairReplay::Direct),
-                None => Classification::Uncertain(UncertaintyReason::Predicate),
-            },
-            AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => {
-                Classification::Uncertain(UncertaintyReason::Boundary)
-            }
-            AlgebraicFiberRootCountStatus::EndpointRoot
-            | AlgebraicFiberRootCountStatus::InvalidEvidence
-            | AlgebraicFiberRootCountStatus::InvalidInterval
-            | AlgebraicFiberRootCountStatus::UnsupportedCoefficient
-            | AlgebraicFiberRootCountStatus::Undecided => {
-                Classification::Uncertain(UncertaintyReason::Predicate)
-            }
-        })
-    }
-
-    #[cfg(not(feature = "predicates"))]
-    {
-        let _ = (
-            first,
-            second,
-            retained_axis,
-            retained_parameter,
-            fiber_parameter,
-            policy,
-        );
-        Ok(Classification::Uncertain(UncertaintyReason::Predicate))
-    }
+        AlgebraicFiberRootCountStatus::EndpointRoot
+        | AlgebraicFiberRootCountStatus::InvalidEvidence
+        | AlgebraicFiberRootCountStatus::InvalidInterval
+        | AlgebraicFiberRootCountStatus::UnsupportedCoefficient
+        | AlgebraicFiberRootCountStatus::Undecided => {
+            Classification::Uncertain(UncertaintyReason::Predicate)
+        }
+    })
 }
 
 fn signed_bivariate_on_parameter_lift(
@@ -10864,6 +10901,218 @@ const fn real_signs_are_opposite(first: RealSign, second: RealSign) -> bool {
         (first, second),
         (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive)
     )
+}
+
+fn parallel_line_neighbor_sign(
+    parallel: &BezierParallel2,
+    line: &LineSeg2,
+    roots: &[BezierParameter2],
+    root_index: usize,
+    after: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let root = &roots[root_index];
+    let domain_boundary = BezierParameter2::Exact(if after { Real::one() } else { Real::zero() });
+    let boundary_order = match root.cmp_by_refinement(&domain_boundary, policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let has_interior_side = if after {
+        boundary_order == std::cmp::Ordering::Less
+    } else {
+        boundary_order == std::cmp::Ordering::Greater
+    };
+    let sample = if has_interior_side {
+        let neighbor = if after {
+            roots.get(root_index + 1).unwrap_or(&domain_boundary)
+        } else if root_index == 0 {
+            &domain_boundary
+        } else {
+            &roots[root_index - 1]
+        };
+        let sample = if after {
+            root.strict_rational_between_ordered(neighbor, policy)?
+        } else {
+            neighbor.strict_rational_between_ordered(root, policy)?
+        };
+        match sample {
+            Classification::Decided(sample) => sample,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    } else if boundary_order == std::cmp::Ordering::Equal {
+        let mut step = (Real::one() / Real::from(2_u8))?;
+        loop {
+            let sample = if after {
+                Real::one() + &step
+            } else {
+                -step.clone()
+            };
+            match signed_parallel_linear_projection_at_parameter(
+                parallel,
+                &BezierParameter2::Exact(sample),
+                line,
+                true,
+                policy,
+            )? {
+                Classification::Decided(RealSign::Zero) => {
+                    step = (step / Real::from(2_u8))?;
+                }
+                decided => return Ok(decided),
+            }
+        }
+    } else {
+        return Err(CurveError::Topology(
+            "parallel supporting-line root lies outside the unit domain".into(),
+        ));
+    };
+
+    match signed_parallel_linear_projection_at_parameter(
+        parallel,
+        &BezierParameter2::Exact(sample),
+        line,
+        true,
+        policy,
+    )? {
+        Classification::Decided(RealSign::Zero) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+        }
+        decided => Ok(decided),
+    }
+}
+
+fn signed_parallel_linear_projection_at_parameter(
+    parallel: &BezierParallel2,
+    parameter: &BezierParameter2,
+    line: &LineSeg2,
+    oriented_side: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let source = parallel.source_power_basis()?;
+    let differential = parallel.differential()?;
+    let weight = source
+        .weight
+        .map_or_else(|| vec![Real::one()], ToOwned::to_owned);
+    let weighted_origin_x = polynomial_scale(&weight, line.start().x());
+    let weighted_origin_y = polynomial_scale(&weight, line.start().y());
+    let delta_x = polynomial_subtract(source.x_numerator, &weighted_origin_x);
+    let delta_y = polynomial_subtract(source.y_numerator, &weighted_origin_y);
+    let (direction_x, direction_y) = line.delta();
+    let source_projection = if oriented_side {
+        polynomial_subtract(
+            &polynomial_scale(&delta_y, &direction_x),
+            &polynomial_scale(&delta_x, &direction_y),
+        )
+    } else {
+        polynomial_add(
+            &polynomial_scale(&delta_x, &direction_x),
+            &polynomial_scale(&delta_y, &direction_y),
+        )
+    };
+    let weight_sign = match signed_coefficients_at_parameter(weight.clone(), parameter, policy)? {
+        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let source_sign =
+        match signed_coefficients_at_parameter(source_projection.clone(), parameter, policy)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    if real_sign(parallel.distance(), policy) == Some(RealSign::Zero) {
+        return Ok(Classification::Decided(product_sign(
+            source_sign,
+            weight_sign,
+        )));
+    }
+
+    let normal_projection = if oriented_side {
+        polynomial_add(
+            &polynomial_scale(&differential.tangent_x, &direction_x),
+            &polynomial_scale(&differential.tangent_y, &direction_y),
+        )
+    } else {
+        polynomial_subtract(
+            &polynomial_scale(&differential.tangent_x, &direction_y),
+            &polynomial_scale(&differential.tangent_y, &direction_x),
+        )
+    };
+    let normal_projection = polynomial_multiply(
+        &polynomial_scale(&normal_projection, parallel.distance()),
+        &weight,
+    );
+    let normal_sign =
+        match signed_coefficients_at_parameter(normal_projection.clone(), parameter, policy)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    let speed_squared = polynomial_add(
+        &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
+        &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
+    );
+    match signed_coefficients_at_parameter(speed_squared.clone(), parameter, policy)? {
+        Classification::Decided(RealSign::Positive) => {}
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Decided(RealSign::Negative) => {
+            return Err(CurveError::Topology(
+                "parallel tangent squared norm was certified negative".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+
+    let radical_sum_sign = match (source_sign, normal_sign) {
+        (RealSign::Zero, sign) | (sign, RealSign::Zero) => sign,
+        (first, second) if first == second => first,
+        (source_sign, normal_sign) => {
+            let squared_difference = polynomial_subtract(
+                &polynomial_multiply(
+                    &polynomial_multiply(&source_projection, &source_projection),
+                    &speed_squared,
+                ),
+                &polynomial_multiply(&normal_projection, &normal_projection),
+            );
+            match signed_coefficients_at_parameter(squared_difference, parameter, policy)? {
+                Classification::Decided(RealSign::Positive) => source_sign,
+                Classification::Decided(RealSign::Negative) => normal_sign,
+                Classification::Decided(RealSign::Zero) => RealSign::Zero,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+    };
+    Ok(Classification::Decided(product_sign(
+        radical_sum_sign,
+        weight_sign,
+    )))
+}
+
+const fn product_sign(first: RealSign, second: RealSign) -> RealSign {
+    match (first, second) {
+        (RealSign::Zero, _) | (_, RealSign::Zero) => RealSign::Zero,
+        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
+            RealSign::Positive
+        }
+        (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive) => {
+            RealSign::Negative
+        }
+    }
 }
 
 fn parameter_matches_any(

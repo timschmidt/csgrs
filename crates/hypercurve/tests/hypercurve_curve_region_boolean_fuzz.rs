@@ -348,9 +348,9 @@ fn exact_boolean_results(
                     contact.first().family(),
                     contact.second().carrier_index(),
                     contact.second().family(),
-                    contact.contact().first().exact_curve_parameter(),
-                    contact.contact().second().exact_curve_parameter(),
-                    contact.contact().is_certified_transverse(),
+                    contact.first_parameter().as_exact().cloned(),
+                    contact.second_parameter().as_exact().cloned(),
+                    contact.is_certified_transverse(),
                 )
             })
             .collect::<Vec<_>>();
@@ -1410,10 +1410,10 @@ fn deterministic_tangent_curve_family_pair_matrix_completes() {
                 assert!(
                     evidence.contacts().iter().any(|contact| {
                         matches!(
-                            contact.contact().point(),
-                            hypercurve::RationalBezierIntersectionPointEvidence2::Exact(point)
+                            contact.point(),
+                            Some(hypercurve::RationalBezierIntersectionPointEvidence2::Exact(point))
                                 if point == &origin
-                        ) && !contact.contact().is_certified_transverse()
+                        ) && !contact.is_certified_transverse()
                     }),
                     "{label}: the selected pair must retain its nontransverse contact"
                 );

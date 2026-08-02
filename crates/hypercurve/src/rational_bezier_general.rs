@@ -309,7 +309,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         }
     }
 
-    fn for_overlap(
+    pub(crate) fn for_overlap(
         first: &RationalBezier2,
         second: &RationalBezier2,
         overlap: &RationalBezierIntersectionOverlap2,

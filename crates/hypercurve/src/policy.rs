@@ -237,25 +237,17 @@ impl CurveContext {
     pub const APPROXIMATE_512: Self = Self(APPROXIMATE_512_CONTEXT);
 
     /// Return the selected Hyperlimit predicate policy.
-    #[cfg(feature = "predicates")]
-    pub const fn predicate_policy(self) -> hyperlimit::PredicatePolicy {
+    pub const fn predicate_policy(self) -> hypersolve::PredicatePolicy {
         if self.0 & APPROXIMATE_512_CONTEXT == 0 {
-            hyperlimit::PredicatePolicy::STRICT
+            hypersolve::PredicatePolicy::STRICT
         } else {
-            hyperlimit::PredicatePolicy::APPROXIMATE_512
+            hypersolve::PredicatePolicy::APPROXIMATE_512
         }
     }
 
     #[inline]
     pub(crate) const fn permits_approximate_512(&self) -> bool {
-        #[cfg(feature = "predicates")]
-        {
-            self.0 & APPROXIMATE_512_CONTEXT != 0
-        }
-        #[cfg(not(feature = "predicates"))]
-        {
-            false
-        }
+        self.0 & APPROXIMATE_512_CONTEXT != 0
     }
 
     const fn with_edge_preview(self) -> Self {

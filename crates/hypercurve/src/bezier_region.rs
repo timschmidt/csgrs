@@ -2867,6 +2867,41 @@ impl CurveRegion2 {
         Ok(Self::from_certified_boundary_loops(boundary_loops))
     }
 
+    /// Constructs retained exact loops with explicit role, fill, and interior-side topology.
+    ///
+    /// This is the authoritative constructor for procedural carriers whose
+    /// Green integral is not represented as a native [`Real`], including
+    /// analytic Bezier parallels. The interior side is authored topology
+    /// evidence; it is never inferred from a finite projection.
+    pub fn try_new_with_loop_topology(
+        boundary_loops: Vec<CurveRegionBoundaryLoop2>,
+        roles: Vec<CurveRegionLoopRole>,
+        fill_rules: Vec<FillRule>,
+        interior_sides: Vec<CurveBoundaryInteriorSide2>,
+    ) -> CurveResult<Self> {
+        let loop_count = boundary_loops.len();
+        if roles.len() != loop_count
+            || fill_rules.len() != loop_count
+            || interior_sides.len() != loop_count
+        {
+            return Err(CurveError::Topology(
+                "retained curved-region loop topology must match the boundary-loop count".into(),
+            ));
+        }
+        let mut region = Self::new(boundary_loops)?;
+        {
+            let data = region.data_mut_for_construction();
+            data.certified_loop_roles = Some(Arc::from(roles));
+            data.certified_loop_fill_rules = Some(Arc::from(fill_rules));
+        }
+        region.with_certified_filled_side_is_left(
+            interior_sides
+                .into_iter()
+                .map(|side| side == CurveBoundaryInteriorSide2::Left)
+                .collect(),
+        )
+    }
+
     fn from_certified_boundary_loops(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> Self {
         if boundary_loops.is_empty() {
             return Self::default();
@@ -6022,8 +6057,50 @@ fn retained_line_fragment_endpoints(
                 source: RetainedLineFragmentSource::AlgebraicEndpoints,
             }))
         }
-        BezierSplitFragment2::AnalyticParallel(_) => {
-            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            let relation = match fragment.parallel().source() {
+                crate::BezierParallelSource2::Quadratic(source) => {
+                    source.fit_exact_line_image(policy)?
+                }
+                crate::BezierParallelSource2::Cubic(source) => {
+                    source.fit_exact_line_image(policy)?
+                }
+                crate::BezierParallelSource2::Rational(source) => {
+                    source.fit_exact_line_image(policy)?
+                }
+            };
+            match relation {
+                Classification::Decided(BezierLineImageFitRelation::Fit(_)) => {}
+                Classification::Decided(BezierLineImageFitRelation::NotLine) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let Some((start_parameter, end_parameter)) = fragment.range().exact_endpoints() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            };
+            let start = match fragment.parallel().point_at(start_parameter, policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let end = match fragment.parallel().point_at(end_parameter, policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            Ok(Classification::Decided(RetainedLineFragmentEndpoints {
+                points: if fragment.is_reversed() {
+                    (end, start)
+                } else {
+                    (start, end)
+                },
+                source: RetainedLineFragmentSource::AlgebraicEndpoints,
+            }))
         }
         BezierSplitFragment2::Unresolved { .. } => {
             Ok(Classification::Uncertain(UncertaintyReason::Boundary))
@@ -6595,6 +6672,69 @@ fn classify_point_with_retained_ray(
     let direction_y = &ray.direction_y;
     let mut winding = 0_i32;
     for fragment in boundary_loop.fragments() {
+        if let BezierSplitFragment2::AnalyticParallel(fragment) = fragment {
+            let relation = match fragment
+                .parallel()
+                .relation_to_supporting_line_with_contacts(&ray.line, policy)?
+            {
+                Classification::Decided(relation) => relation,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            match relation {
+                BezierLineContactRelation::ControlHullDisjoint { .. }
+                | BezierLineContactRelation::NoContact => {}
+                BezierLineContactRelation::OnSupportingLine => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                BezierLineContactRelation::Contacts { contacts } => {
+                    for contact in contacts {
+                        match retained_parameter_contains(
+                            contact.parameter(),
+                            fragment.range().start(),
+                            fragment.range().end(),
+                            true,
+                            fragment.is_reversed(),
+                            policy,
+                        )? {
+                            Classification::Decided(true) => {}
+                            Classification::Decided(false) => continue,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                        match fragment.parallel().supporting_line_parameter_order(
+                            contact.parameter(),
+                            &ray.line,
+                            policy,
+                        )? {
+                            Classification::Decided(std::cmp::Ordering::Greater) => {
+                                if contact.kind() != BezierLineContactKind::Crossing {
+                                    continue;
+                                }
+                                let Some(delta) =
+                                    line_contact_winding_delta(&contact, fragment.is_reversed())
+                                else {
+                                    return Ok(Classification::Uncertain(
+                                        UncertaintyReason::Unsupported,
+                                    ));
+                                };
+                                winding += delta;
+                            }
+                            Classification::Decided(std::cmp::Ordering::Equal) => {
+                                return Ok(Classification::Decided(ContourPointLocation::Boundary));
+                            }
+                            Classification::Decided(std::cmp::Ordering::Less) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                }
+            }
+            continue;
+        }
         let (curve, range) = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => (curve, None),
             BezierSplitFragment2::AlgebraicEndpointImages {
@@ -6610,9 +6750,7 @@ fn classify_point_with_retained_ray(
             | BezierSplitFragment2::Unresolved { .. } => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
-            BezierSplitFragment2::AnalyticParallel(_) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
+            BezierSplitFragment2::AnalyticParallel(_) => unreachable!(),
         };
         if !subcurve_control_hull_may_be_ahead(curve, point, direction_x, direction_y, policy) {
             continue;

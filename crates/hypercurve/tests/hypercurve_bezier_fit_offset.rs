@@ -2115,31 +2115,21 @@ fn parallel_rational_contacts_handle_higher_nullity_algebraic_fibers() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let replay = parallel.intersections(&target, &policy).unwrap();
-        #[cfg(feature = "predicates")]
-        {
-            let intersections = decided_parallel_set(replay.clone());
-            let contacts = only_parallel_contacts(&intersections);
-            assert_eq!(contacts.len(), 1);
-            assert!(matches!(
-                contacts[0].parallel_parameter(),
-                BezierParameter2::Algebraic(_)
-            ));
-            assert!(matches!(
-                contacts[0].other_parameter(),
-                BezierParameter2::Algebraic(_)
-            ));
-            assert!(matches!(
-                contacts[0].point(),
-                RationalBezierIntersectionPointEvidence2::Algebraic(_)
-            ));
-        }
-        #[cfg(not(feature = "predicates"))]
-        {
-            let intersections = decided_parallel_set(replay);
-            assert!(!intersections.is_complete());
-            assert!(intersections.contacts().is_empty());
-            assert!(intersections.overlaps().is_empty());
-        }
+        let intersections = decided_parallel_set(replay);
+        let contacts = only_parallel_contacts(&intersections);
+        assert_eq!(contacts.len(), 1);
+        assert!(matches!(
+            contacts[0].parallel_parameter(),
+            BezierParameter2::Algebraic(_)
+        ));
+        assert!(matches!(
+            contacts[0].other_parameter(),
+            BezierParameter2::Algebraic(_)
+        ));
+        assert!(matches!(
+            contacts[0].point(),
+            RationalBezierIntersectionPointEvidence2::Algebraic(_)
+        ));
     }
 }
 
