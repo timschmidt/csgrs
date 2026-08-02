@@ -1,8 +1,8 @@
 use hypercurve::{
-    BezierFlatteningOptions, CircularArc2, Classification, Contour2, CubicBezier2, Curve2,
-    CurveCertainty, CurveContext, CurveError, CurveOutcome, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, ExactCurveError, FillRule, FiniteProjectionOptions, LineArcRegion2,
-    LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
+    BezierFlatteningOptions, BezierSplitFragment2, CircularArc2, Classification, Contour2,
+    CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveError, CurveOutcome, CurvePath2,
+    CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule, FiniteProjectionOptions,
+    LineArcRegion2, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
     RegionPointLocation, Segment2, Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
@@ -366,6 +366,79 @@ fn unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement(
     assert_eq!(offset.evidence().max_source_chord_error(), &q(1, 32));
     assert!(offset.evidence().loop_evidence().is_empty());
     assert!(offset.region().has_algebraic_fragments());
+}
+
+#[test]
+fn repeated_region_offsets_compose_retained_exact_parallels_under_both_policies() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(1, 0), p(1, 1), p(0, 1))),
+        Curve2::from(QuadraticBezier2::new(p(0, 1), p(-1, 1), p(-1, 0))),
+        Curve2::from(QuadraticBezier2::new(p(-1, 0), p(-1, -1), p(0, -1))),
+        Curve2::from(QuadraticBezier2::new(p(0, -1), p(1, -1), p(1, 0))),
+    ])
+    .unwrap();
+    let source = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        &[path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::EvenOdd],
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
+
+    let strict_first = source
+        .offset(q(1, 10), &OffsetCornerStyle2::Round, &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    assert!(
+        strict_first.boundary_loops()[0]
+            .fragments()
+            .iter()
+            .all(|fragment| matches!(fragment, BezierSplitFragment2::AnalyticParallel(_)))
+    );
+    assert_eq!(
+        decided(strict_first.loop_roles(&CurveContext::STRICT).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    let strict_repeated = strict_first
+        .offset(q(1, 5), &OffsetCornerStyle2::Round, &CurveContext::STRICT)
+        .unwrap();
+    let strict_direct = source
+        .offset(q(3, 10), &OffsetCornerStyle2::Round, &CurveContext::STRICT)
+        .unwrap();
+    assert_eq!(strict_repeated.certainty, CurveCertainty::Certified);
+    assert_eq!(strict_repeated.value, strict_direct.value);
+    let strict_partially_reversed = strict_first
+        .offset(-q(1, 20), &OffsetCornerStyle2::Round, &CurveContext::STRICT)
+        .unwrap();
+    let strict_smaller_direct = source
+        .offset(q(1, 20), &OffsetCornerStyle2::Round, &CurveContext::STRICT)
+        .unwrap();
+    assert_eq!(strict_partially_reversed.value, strict_smaller_direct.value);
+
+    let approximate_first = source
+        .offset(
+            q(1, 10),
+            &OffsetCornerStyle2::Round,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap()
+        .into_value();
+    let approximate_repeated = approximate_first
+        .offset(
+            q(1, 5),
+            &OffsetCornerStyle2::Round,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap();
+    assert_eq!(approximate_repeated.certainty, CurveCertainty::Certified);
+    assert_eq!(approximate_repeated.value, strict_direct.value);
+    for fragment in approximate_repeated.value.boundary_loops()[0].fragments() {
+        let BezierSplitFragment2::AnalyticParallel(fragment) = fragment else {
+            panic!("the composed non-PH quadratic parallel must stay analytic");
+        };
+        assert_eq!(fragment.parallel().distance(), &-q(3, 10));
+    }
 }
 
 #[test]

@@ -28,7 +28,7 @@ use crate::{
     Aabb2, Axis2, BezierCuspClassification, BezierDegree, BezierEndpoint,
     BezierInflectionClassification, BezierLineContact, BezierLineContactKind,
     BezierLineContactRelation, BezierLineCrossingDirection, BezierLineImageFitRelation,
-    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
     CertifiedBezierLineImageOffset2, Classification, CubicBezier2, Curve2, CurveContext,
     CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2, CurvePath2, CurveResult,
     ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
@@ -1481,6 +1481,82 @@ impl BezierParallel2 {
         self.source()
             .to_rational_bezier()
             .is_ok_and(|source| source.has_certified_injective_axis_on(axis, policy))
+    }
+
+    /// Returns the orientation of this parallel's derivative relative to its
+    /// retained source on one certified regular fragment.
+    ///
+    /// The two derivatives are collinear on a regular parallel.  The fragment
+    /// invariant excludes every interior parallel cusp, so their nonzero dot
+    /// product has one sign throughout the open range.  One exact rational
+    /// interior parameter therefore certifies whether a subsequent signed
+    /// left offset adds to or subtracts from the retained source distance.
+    pub(crate) fn regular_fragment_derivative_scale_sign(
+        &self,
+        range: &BezierParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let parameter = match range
+            .start()
+            .strict_rational_between_ordered(range.end(), policy)?
+        {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let derivative = match self.derivative_at(&parameter, policy)? {
+            Classification::Decided(derivative) => derivative,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let source_tangent = match self.source_tangent_at(&parameter, policy)? {
+            Classification::Decided(tangent) => tangent,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let alignment = derivative.dx() * &source_tangent.0 + derivative.dy() * &source_tangent.1;
+        Ok(match real_sign(&alignment, policy) {
+            Some(RealSign::Positive) => Classification::Decided(RealSign::Positive),
+            Some(RealSign::Negative) => Classification::Decided(RealSign::Negative),
+            Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
+            None => Classification::Uncertain(UncertaintyReason::RealSign),
+        })
+    }
+
+    /// Evaluates a nonzero tangent direction of the retained source.
+    ///
+    /// Rational sources use their homogeneous derivative numerator.  Its
+    /// orientation agrees with the affine derivative because the omitted
+    /// denominator is a positive square.
+    pub(crate) fn source_tangent_at(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<(Real, Real)>> {
+        match in_closed_unit_interval(parameter, policy) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        let differential = self.differential()?;
+        let tangent = (
+            polynomial_evaluate(&differential.tangent_x, parameter),
+            polynomial_evaluate(&differential.tangent_y, parameter),
+        );
+        let speed_squared = &tangent.0 * &tangent.0 + &tangent.1 * &tangent.1;
+        Ok(match real_sign(&speed_squared, policy) {
+            Some(RealSign::Positive) => Classification::Decided(tangent),
+            Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "Bezier source tangent squared norm was certified negative".to_owned(),
+                ));
+            }
+            None => Classification::Uncertain(UncertaintyReason::RealSign),
+        })
     }
 
     /// Returns the same exact parallel image with traversal direction reversed.

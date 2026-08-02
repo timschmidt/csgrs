@@ -2295,18 +2295,30 @@ impl<'a> CurveRegionBooleanContext<'a> {
             Classification::Decided(traversal) => traversal,
             Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
         };
-        let region =
+        let mut region =
             match CurveRegion2::from_certified_retained_arrangement_traversal(&graph, &traversal) {
                 Classification::Decided(region) => region,
                 Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
             }
-            .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
+            .with_certified_regularized_filled_left_topology()
             .map_err(|cause| self.invalid(0, cause))?;
         if affine_line_output || self.strict_line_image_only() {
-            self.compact_line_image_result(region)
-        } else {
-            Ok(region)
+            return self.compact_line_image_result(region);
         }
+        if simple_loop_filled_side.is_some() {
+            if traversal.chains().len() != 1 {
+                return Err(self.invalid(
+                    0,
+                    CurveError::Topology(
+                        "a certified simple material loop produced multiple retained chains".into(),
+                    ),
+                ));
+            }
+            region = region
+                .with_certified_loop_roles(vec![CurveRegionLoopRole::Material])
+                .map_err(|cause| self.invalid(0, cause))?;
+        }
+        Ok(region)
     }
 
     fn certified_simple_single_loop_filled_side(&self) -> Option<bool> {
@@ -2660,7 +2672,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
             };
         region = region
-            .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
+            .with_certified_regularized_filled_left_topology()
             .map_err(|cause| self.invalid(0, cause))?;
         if affine_line_output || self.strict_line_image_only() {
             self.compact_line_image_result(region)

@@ -127,6 +127,7 @@ struct CurveRegionData2 {
     certified_loop_roles: Option<Arc<[CurveRegionLoopRole]>>,
     certified_loop_fill_rules: Option<Arc<[FillRule]>>,
     signed_loop_composition: bool,
+    certified_regularized_filled_left_topology: bool,
     strict_materialized_connectivity_certified: bool,
     filled_side_is_left: PolicyClassificationCache<Arc<[bool]>>,
     native_boundary_loops: OnceLock<Option<Arc<[BezierBoundaryLoop2]>>>,
@@ -145,6 +146,7 @@ impl CurveRegionData2 {
             certified_loop_roles: None,
             certified_loop_fill_rules: None,
             signed_loop_composition: false,
+            certified_regularized_filled_left_topology: false,
             strict_materialized_connectivity_certified,
             filled_side_is_left: PolicyClassificationCache::new(),
             native_boundary_loops: OnceLock::new(),
@@ -691,6 +693,10 @@ impl std::fmt::Debug for CurveRegion2 {
                 "signed_loop_composition",
                 &self.data.signed_loop_composition,
             )
+            .field(
+                "certified_regularized_filled_left_topology",
+                &self.data.certified_regularized_filled_left_topology,
+            )
             .finish()
     }
 }
@@ -701,7 +707,9 @@ impl PartialEq for CurveRegion2 {
             || (self.data.boundary_loops == other.data.boundary_loops
                 && self.data.certified_loop_roles == other.data.certified_loop_roles
                 && self.data.certified_loop_fill_rules == other.data.certified_loop_fill_rules
-                && self.data.signed_loop_composition == other.data.signed_loop_composition)
+                && self.data.signed_loop_composition == other.data.signed_loop_composition
+                && self.data.certified_regularized_filled_left_topology
+                    == other.data.certified_regularized_filled_left_topology)
     }
 }
 
@@ -2289,11 +2297,11 @@ fn exact_offset_span_from_materialized_curve(
                 BezierSubcurve2::Rational(offset.curve().clone()),
             )],
             Classification::Decided(None) | Classification::Uncertain(_) => {
-                exact_parallel_fragments(&parallel, &boundaries)
+                exact_parallel_fragments(&parallel, &boundaries, false)
             }
         }
     } else {
-        exact_parallel_fragments(&parallel, &boundaries)
+        exact_parallel_fragments(&parallel, &boundaries, false)
     };
     let offset_start = match parallel.point_at(&Real::zero(), policy)? {
         Classification::Decided(point) => point,
@@ -2322,22 +2330,217 @@ fn exact_offset_span_from_materialized_curve(
     }))
 }
 
+fn exact_offset_span_from_analytic_parallel(
+    fragment: &crate::BezierParallelFragment2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactOffsetSpan2>> {
+    let Some((range_start, range_end)) = fragment.range().exact_endpoints() else {
+        // The composed carrier itself remains exact at algebraic parameters,
+        // but a distinct adjacent carrier can require a join whose center and
+        // endpoints live in a not-yet-supported algebraic coordinate tower.
+        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+    };
+    let source_scale = match fragment
+        .parallel()
+        .regular_fragment_derivative_scale_sign(fragment.range(), policy)?
+    {
+        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let traversal_agrees_with_source =
+        (source_scale == RealSign::Positive) != fragment.is_reversed();
+    let composed_distance = if traversal_agrees_with_source {
+        fragment.parallel().distance() + distance
+    } else {
+        fragment.parallel().distance() - distance
+    };
+    let composed =
+        BezierParallel2::from_source(fragment.parallel().source().clone(), composed_distance);
+    let composed_distance_sign = match real_sign(composed.distance(), policy) {
+        Some(sign) => sign,
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+
+    let mut boundaries = Vec::new();
+    boundaries.push(fragment.range().start().clone());
+    if composed_distance_sign != RealSign::Zero {
+        let analysis = match composed.singularity_analysis(policy)? {
+            Classification::Decided(analysis) => analysis,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        for singularity in analysis.source_singularities() {
+            let after_start =
+                match singularity.cmp_by_refinement(fragment.range().start(), policy)? {
+                    Classification::Decided(order) => !order.is_lt(),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let before_end = match singularity.cmp_by_refinement(fragment.range().end(), policy)? {
+                Classification::Decided(order) => !order.is_gt(),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if after_start && before_end {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+        }
+        for cusp in analysis.parallel_cusps() {
+            let after_start = match cusp.cmp_by_refinement(fragment.range().start(), policy)? {
+                Classification::Decided(order) => order.is_gt(),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let before_end = match cusp.cmp_by_refinement(fragment.range().end(), policy)? {
+                Classification::Decided(order) => order.is_lt(),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if after_start && before_end {
+                let order = cusp.cmp_by_refinement(
+                    boundaries
+                        .last()
+                        .expect("composed parallel boundaries begin at the retained range start"),
+                    policy,
+                )?;
+                match order {
+                    Classification::Decided(std::cmp::Ordering::Greater) => {
+                        boundaries.push(cusp.clone());
+                    }
+                    Classification::Decided(std::cmp::Ordering::Equal) => {}
+                    Classification::Decided(std::cmp::Ordering::Less) => {
+                        return Err(CurveError::Topology(
+                            "composed parallel cusp isolators are not ordered".into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
+    }
+    boundaries.push(fragment.range().end().clone());
+    let ranges = boundaries
+        .windows(2)
+        .map(|pair| BezierParameterRange2::new_validated(pair[0].clone(), pair[1].clone()))
+        .collect::<Vec<_>>();
+    let fragments = exact_parallel_fragments(&composed, &boundaries, fragment.is_reversed());
+    let first_range = ranges
+        .first()
+        .expect("a retained parallel range produces at least one composed range");
+    let last_range = ranges
+        .last()
+        .expect("a retained parallel range produces at least one composed range");
+    let (start_parameter, end_parameter, start_range, end_range) = if fragment.is_reversed() {
+        (range_end, range_start, last_range, first_range)
+    } else {
+        (range_start, range_end, first_range, last_range)
+    };
+    let source_start = match fragment.parallel().point_at(start_parameter, policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let source_end = match fragment.parallel().point_at(end_parameter, policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let offset_start = match composed.point_at(start_parameter, policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let offset_end = match composed.point_at(end_parameter, policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let start_tangent = match exact_parallel_limiting_tangent(
+        &composed,
+        start_parameter,
+        start_range,
+        fragment.is_reversed(),
+        policy,
+    )? {
+        Classification::Decided(tangent) => tangent,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end_tangent = match exact_parallel_limiting_tangent(
+        &composed,
+        end_parameter,
+        end_range,
+        fragment.is_reversed(),
+        policy,
+    )? {
+        Classification::Decided(tangent) => tangent,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(ExactOffsetSpan2 {
+        fragments,
+        source_start,
+        source_end,
+        offset_start,
+        offset_end,
+        start_tangent,
+        end_tangent,
+    }))
+}
+
+fn exact_parallel_limiting_tangent(
+    parallel: &BezierParallel2,
+    parameter: &Real,
+    regular_range: &BezierParameterRange2,
+    reversed: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<(Real, Real)>> {
+    let scale = match parallel.regular_fragment_derivative_scale_sign(regular_range, policy)? {
+        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let tangent = match parallel.source_tangent_at(parameter, policy)? {
+        Classification::Decided(tangent) => tangent,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(
+        if (scale == RealSign::Positive) != reversed {
+            tangent
+        } else {
+            (-tangent.0, -tangent.1)
+        },
+    ))
+}
+
 fn exact_parallel_fragments(
     parallel: &BezierParallel2,
     boundaries: &[BezierParameter2],
+    reversed: bool,
 ) -> Vec<BezierSplitFragment2> {
-    boundaries
+    let mut fragments = boundaries
         .windows(2)
         .map(|pair| {
             BezierSplitFragment2::AnalyticParallel(
                 crate::BezierParallelFragment2::from_certified_range(
                     parallel.clone(),
                     BezierParameterRange2::new_validated(pair[0].clone(), pair[1].clone()),
-                    false,
+                    reversed,
                 ),
             )
         })
-        .collect()
+        .collect::<Vec<_>>();
+    if reversed {
+        fragments.reverse();
+    }
+    fragments
 }
 
 fn materialized_offset_fragment(curve: BezierSubcurve2) -> BezierSplitFragment2 {
@@ -2610,6 +2813,8 @@ impl CurveRegion2 {
             data.certified_loop_roles = self.data.certified_loop_roles.clone();
             data.certified_loop_fill_rules = self.data.certified_loop_fill_rules.clone();
             data.signed_loop_composition = self.data.signed_loop_composition;
+            data.certified_regularized_filled_left_topology =
+                self.data.certified_regularized_filled_left_topology;
             self.data = Arc::new(data);
         }
         Arc::get_mut(&mut self.data).expect("CurveRegion2 construction data is uniquely owned")
@@ -3212,6 +3417,8 @@ impl CurveRegion2 {
             data.certified_loop_roles = self.data.certified_loop_roles.clone();
             data.certified_loop_fill_rules = self.data.certified_loop_fill_rules.clone();
             data.signed_loop_composition = self.data.signed_loop_composition;
+            data.certified_regularized_filled_left_topology =
+                self.data.certified_regularized_filled_left_topology;
         }
         let sides = match self
             .filled_side_is_left_raw(policy)
@@ -3306,6 +3513,28 @@ impl CurveRegion2 {
         self.data
             .filled_side_is_left
             .certify(Arc::from(filled_side_is_left));
+        Ok(self)
+    }
+
+    /// Publishes the topology proven by an authoritative filled-left face walk.
+    ///
+    /// Unlike authored boundary provenance, this marker certifies that every
+    /// retained chain is a noncrossing regularized boundary.  Expensive exact
+    /// nesting may therefore be deferred until a caller actually needs loop
+    /// roles.
+    pub(crate) fn with_certified_regularized_filled_left_topology(mut self) -> CurveResult<Self> {
+        if self.data.boundary_loops.iter().any(|boundary_loop| {
+            !boundary_loop.has_arrangement_sources() || boundary_loop.is_empty()
+        }) {
+            return Err(CurveError::Topology(
+                "regularized filled-left topology requires arrangement provenance".into(),
+            ));
+        }
+        let loop_count = self.data.boundary_loops.len();
+        let data = self.data_mut_for_construction();
+        data.filled_side_is_left
+            .certify(Arc::from(vec![true; loop_count]));
+        data.certified_regularized_filled_left_topology = true;
         Ok(self)
     }
 
@@ -3811,8 +4040,98 @@ impl CurveRegion2 {
             }
             Classification::Uncertain(_) => {}
         }
-        self.line_image_role_evidence_raw(policy)
-            .map(|roles| roles.map(|evidence| evidence.roles().to_vec()))
+        match self.line_image_role_evidence_raw(policy)? {
+            Classification::Decided(evidence) => {
+                Ok(Classification::Decided(evidence.roles().to_vec()))
+            }
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+                if self.data.certified_regularized_filled_left_topology =>
+            {
+                self.regularized_retained_loop_roles_raw(policy)
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    /// Assigns roles to already-regularized retained boundary loops by exact nesting.
+    ///
+    /// The authoritative unary arrangement guarantees that distinct output
+    /// chains are noncrossing simple boundaries with fill on their left.  A
+    /// represented interior point of one retained fragment is therefore
+    /// inside exactly the loops that contain that complete boundary.  Nesting
+    /// parity assigns material and hole roles without requiring a Green
+    /// integral for procedural analytic parallels.
+    pub(crate) fn regularized_retained_loop_roles_raw(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<CurveRegionLoopRole>>> {
+        match self.data.boundary_loops.len() {
+            0 => return Ok(Classification::Decided(Vec::new())),
+            1 => {
+                return Ok(Classification::Decided(vec![CurveRegionLoopRole::Material]));
+            }
+            _ => {}
+        }
+        let evaluators = self.retained_rational_evaluators()?;
+        let mut samples = Vec::with_capacity(self.data.boundary_loops.len());
+        let mut bounds = Vec::with_capacity(self.data.boundary_loops.len());
+        for boundary_loop in &self.data.boundary_loops {
+            match retained_loop_sample_point(boundary_loop, policy)? {
+                Classification::Decided(point) => samples.push(point),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            bounds.push(match retained_loop_query_bounds(boundary_loop, policy) {
+                Classification::Decided(bounds) => Some(bounds),
+                Classification::Uncertain(_) => None,
+            });
+        }
+
+        let mut roles = Vec::with_capacity(self.data.boundary_loops.len());
+        for (candidate_index, sample) in samples.iter().enumerate() {
+            let mut depth = 0_usize;
+            for (container_index, (boundary_loop, evaluators)) in self
+                .data
+                .boundary_loops
+                .iter()
+                .zip(evaluators.iter())
+                .enumerate()
+            {
+                if candidate_index == container_index {
+                    continue;
+                }
+                if bounds[container_index].as_ref().is_some_and(|bounds| {
+                    matches!(
+                        bounds.contains_point(sample, policy),
+                        Classification::Decided(false)
+                    )
+                }) {
+                    continue;
+                }
+                match classify_point_against_retained_loop(
+                    boundary_loop,
+                    evaluators,
+                    sample,
+                    policy,
+                )? {
+                    Classification::Decided(ContourPointLocation::Inside) => depth += 1,
+                    Classification::Decided(ContourPointLocation::Outside) => {}
+                    Classification::Decided(ContourPointLocation::Boundary) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            roles.push(if depth.is_multiple_of(2) {
+                CurveRegionLoopRole::Material
+            } else {
+                CurveRegionLoopRole::Hole
+            });
+        }
+        Ok(Classification::Decided(roles))
     }
 
     /// Returns the number of material and hole loops in authoritative topology.
@@ -4834,15 +5153,28 @@ impl CurveRegion2 {
             };
             let mut spans = Vec::with_capacity(boundary_loop.len());
             for fragment in boundary_loop.fragments() {
-                let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                let offset = match fragment {
+                    BezierSplitFragment2::Materialized { curve, .. } => {
+                        exact_offset_span_from_materialized_curve(
+                            curve,
+                            &signed_left_distance,
+                            policy,
+                        )
+                    }
+                    BezierSplitFragment2::AnalyticParallel(fragment) => {
+                        exact_offset_span_from_analytic_parallel(
+                            fragment,
+                            &signed_left_distance,
+                            policy,
+                        )
+                    }
+                    BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                    | BezierSplitFragment2::Unresolved { .. } => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    }
                 };
-                match exact_offset_span_from_materialized_curve(
-                    curve,
-                    &signed_left_distance,
-                    policy,
-                )
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+                match offset
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
                 {
                     Classification::Decided(span) => spans.push(span),
                     Classification::Uncertain(reason) => {
@@ -7711,6 +8043,54 @@ fn native_loop_bounds(
     Classification::Decided(bounds)
 }
 
+fn retained_loop_query_bounds(
+    boundary_loop: &CurveRegionBoundaryLoop2,
+    policy: &CurveContext,
+) -> Classification<Aabb2> {
+    let mut fragments = boundary_loop.fragments().iter();
+    let Some(first) = fragments.next() else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let mut bounds = match retained_fragment_query_bounds(first, policy) {
+        Classification::Decided(bounds) => bounds,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    for fragment in fragments {
+        let fragment_bounds = match retained_fragment_query_bounds(fragment, policy) {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        bounds = match bounds.union(&fragment_bounds, policy) {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+    }
+    Classification::Decided(bounds)
+}
+
+fn retained_fragment_query_bounds(
+    fragment: &BezierSplitFragment2,
+    policy: &CurveContext,
+) -> Classification<Aabb2> {
+    match fragment {
+        BezierSplitFragment2::Materialized { curve, .. } => subcurve_query_bounds(curve, policy),
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            source_curve: Some(curve),
+            ..
+        } => subcurve_query_bounds(curve, policy),
+        BezierSplitFragment2::AnalyticParallel(fragment) => fragment
+            .parallel()
+            .conservative_bounds(policy)
+            .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            source_curve: None, ..
+        }
+        | BezierSplitFragment2::Unresolved { .. } => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
+    }
+}
+
 fn classify_point_with_ray(
     boundary_loop: &BezierBoundaryLoop2,
     point: &Point2,
@@ -8339,6 +8719,182 @@ mod tests {
 
     fn p(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn retained_parallel_offset_composition_respects_traversal_orientation() {
+        let policy = CurveContext::STRICT;
+        let tenth = (Real::one() / Real::from(10_i8)).unwrap();
+        let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+        let source = QuadraticBezier2::new(p(1, 0), p(1, 1), p(0, 1));
+        let parallel = source.parallel_left(-tenth.clone()).unwrap();
+        let range = BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        );
+
+        for (reversed, next_distance, expected_distance) in [
+            (false, -fifth.clone(), -Real::from(3_i8) * tenth.clone()),
+            (true, fifth, -Real::from(3_i8) * tenth),
+        ] {
+            let fragment = crate::BezierParallelFragment2::from_certified_range(
+                parallel.clone(),
+                range.clone(),
+                reversed,
+            );
+            let Classification::Decided(span) =
+                exact_offset_span_from_analytic_parallel(&fragment, &next_distance, &policy)
+                    .unwrap()
+            else {
+                panic!("regular retained parallel composition must be decided");
+            };
+            assert_eq!(span.fragments.len(), 1);
+            let BezierSplitFragment2::AnalyticParallel(composed) = &span.fragments[0] else {
+                panic!("a non-PH quadratic composition remains analytic");
+            };
+            assert_eq!(composed.is_reversed(), reversed);
+            assert_eq!(composed.parallel().distance(), &expected_distance);
+        }
+    }
+
+    #[test]
+    fn retained_parallel_offset_composition_splits_new_cusps_in_traversal_order() {
+        let policy = CurveContext::STRICT;
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let source =
+            QuadraticBezier2::new(p(0, 0), Point2::new(half.clone(), Real::zero()), p(1, 1));
+        let parallel = source.parallel_left(Real::zero()).unwrap();
+        let range = BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        );
+        let cusp_distance = Real::from(2_i8).sqrt().unwrap();
+
+        for (reversed, distance) in [(false, cusp_distance.clone()), (true, -cusp_distance)] {
+            let fragment = crate::BezierParallelFragment2::from_certified_range(
+                parallel.clone(),
+                range.clone(),
+                reversed,
+            );
+            let Classification::Decided(span) =
+                exact_offset_span_from_analytic_parallel(&fragment, &distance, &policy).unwrap()
+            else {
+                panic!("the represented composed cusp must split exactly");
+            };
+            assert_eq!(span.fragments.len(), 2);
+            let composed = span
+                .fragments
+                .iter()
+                .map(|fragment| {
+                    let BezierSplitFragment2::AnalyticParallel(fragment) = fragment else {
+                        panic!("a general quadratic cusp split remains analytic");
+                    };
+                    assert_eq!(fragment.is_reversed(), reversed);
+                    fragment.range()
+                })
+                .collect::<Vec<_>>();
+            if reversed {
+                assert_eq!(composed[0].start(), &BezierParameter2::Exact(half.clone()));
+                assert_eq!(composed[0].end(), &BezierParameter2::Exact(Real::one()));
+                assert_eq!(composed[1].start(), &BezierParameter2::Exact(Real::zero()));
+                assert_eq!(composed[1].end(), &BezierParameter2::Exact(half.clone()));
+            } else {
+                assert_eq!(composed[0].start(), &BezierParameter2::Exact(Real::zero()));
+                assert_eq!(composed[0].end(), &BezierParameter2::Exact(half.clone()));
+                assert_eq!(composed[1].start(), &BezierParameter2::Exact(half.clone()));
+                assert_eq!(composed[1].end(), &BezierParameter2::Exact(Real::one()));
+            }
+        }
+    }
+
+    #[test]
+    fn regularized_analytic_loop_roles_follow_exact_nesting() {
+        fn analytic_loop(
+            radius: i32,
+            center_x: i32,
+            source_base: usize,
+            policy: &CurveContext,
+        ) -> CurveRegionBoundaryLoop2 {
+            let sources = [
+                QuadraticBezier2::new(
+                    p(center_x + radius, 0),
+                    p(center_x + radius, radius),
+                    p(center_x, radius),
+                ),
+                QuadraticBezier2::new(
+                    p(center_x, radius),
+                    p(center_x - radius, radius),
+                    p(center_x - radius, 0),
+                ),
+                QuadraticBezier2::new(
+                    p(center_x - radius, 0),
+                    p(center_x - radius, -radius),
+                    p(center_x, -radius),
+                ),
+                QuadraticBezier2::new(
+                    p(center_x, -radius),
+                    p(center_x + radius, -radius),
+                    p(center_x + radius, 0),
+                ),
+            ];
+            let range = BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            );
+            let fragments = sources
+                .into_iter()
+                .map(|source| {
+                    BezierSplitFragment2::AnalyticParallel(
+                        crate::BezierParallelFragment2::from_certified_range(
+                            source.parallel_left(Real::zero()).unwrap(),
+                            range.clone(),
+                            false,
+                        ),
+                    )
+                })
+                .collect::<Vec<_>>();
+            CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
+                fragments,
+                (0..4)
+                    .map(|index| {
+                        CurveRegionFragmentSource2::new(source_base + index, source_base + index, 0)
+                    })
+                    .collect(),
+                policy,
+            )
+            .unwrap()
+        }
+
+        let policy = CurveContext::STRICT;
+        let nested = CurveRegion2::new(vec![
+            analytic_loop(4, 0, 0, &policy),
+            analytic_loop(2, 0, 4, &policy),
+        ])
+        .unwrap()
+        .with_certified_regularized_filled_left_topology()
+        .unwrap();
+        assert_eq!(
+            nested.loop_roles_raw(&policy),
+            Ok(Classification::Decided(vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Hole,
+            ]))
+        );
+
+        let disjoint = CurveRegion2::new(vec![
+            analytic_loop(4, 0, 0, &policy),
+            analytic_loop(2, 10, 4, &policy),
+        ])
+        .unwrap()
+        .with_certified_regularized_filled_left_topology()
+        .unwrap();
+        assert_eq!(
+            disjoint.loop_roles_raw(&policy),
+            Ok(Classification::Decided(vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Material,
+            ]))
+        );
     }
 
     #[cfg(feature = "predicates")]
