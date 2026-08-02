@@ -2630,6 +2630,48 @@ mod tests {
     }
 
     #[test]
+    fn finite_float_imports_reuse_small_canonical_storage() {
+        let positive_one = Rational::try_from(1.0_f64).unwrap();
+        let negative_one = Rational::try_from(-1.0_f64).unwrap();
+        let positive_integer = Rational::try_from(4.0_f64).unwrap();
+        let canonical_integer = Rational::from(4_u8);
+        let positive_dyadic = Rational::try_from(0.375_f64).unwrap();
+        let positive_dyadic_f32 = Rational::try_from(0.375_f32).unwrap();
+        let canonical_dyadic = Rational::from_reduced_word_parts(Plus, 3, 8);
+        let negative_dyadic = Rational::try_from(-0.375_f64).unwrap();
+        let canonical_negative = Rational::from_reduced_word_parts(Minus, 3, 8);
+
+        assert!(Arc::ptr_eq(&positive_one.0, &Rational::one().0));
+        assert!(Arc::ptr_eq(&negative_one.0, &Rational::minus_one().0));
+        assert!(Arc::ptr_eq(&positive_integer.0, &canonical_integer.0));
+        assert!(Arc::ptr_eq(&positive_dyadic.0, &canonical_dyadic.0));
+        assert!(Arc::ptr_eq(&positive_dyadic_f32.0, &canonical_dyadic.0));
+        assert!(Arc::ptr_eq(&negative_dyadic.0, &canonical_negative.0));
+        assert!(!Arc::ptr_eq(&positive_dyadic.0, &negative_dyadic.0));
+        assert!(positive_integer.has_exact_f64_view());
+        assert!(positive_dyadic.has_exact_f64_view());
+
+        let outside_integer = Rational::try_from(65.0_f64).unwrap();
+        let repeated_outside_integer = Rational::try_from(65.0_f64).unwrap();
+        let outside_magnitude = Rational::try_from(32.5_f64).unwrap();
+        let repeated_outside_magnitude = Rational::try_from(32.5_f64).unwrap();
+        let outside_shift = Rational::try_from(3.0_f64 * 2.0_f64.powi(-64)).unwrap();
+        let repeated_outside_shift = Rational::try_from(3.0_f64 * 2.0_f64.powi(-64)).unwrap();
+        assert!(!Arc::ptr_eq(
+            &outside_integer.0,
+            &repeated_outside_integer.0
+        ));
+        assert!(!Arc::ptr_eq(
+            &outside_magnitude.0,
+            &repeated_outside_magnitude.0
+        ));
+        assert!(!Arc::ptr_eq(
+            &outside_shift.0,
+            &repeated_outside_shift.0
+        ));
+    }
+
+    #[test]
     fn repeated_negation_reuses_exact_storage_without_a_cycle() {
         let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
         let owner = Arc::downgrade(&value.0);

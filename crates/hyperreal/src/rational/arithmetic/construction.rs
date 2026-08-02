@@ -372,6 +372,38 @@ impl Rational {
         debug_assert_ne!(sign, NoSign);
         debug_assert_ne!(numerator, 0);
         debug_assert!(denominator_shift == 0 || numerator.trailing_zeros() == 0);
+        let retained = RETAINED_DYADIC_KNOWN
+            | RETAINED_DYADIC_VALUE
+            | Self::encoded_dyadic_denominator_shift(u64::from(denominator_shift));
+        // Primitive float decoding reaches this constructor with a reduced
+        // word numerator. Reuse the existing bounded canonical values before
+        // allocating a duplicate RationalData and two duplicate BigUints.
+        let cached = if denominator_shift == 0 {
+            if numerator == 1 {
+                Some(if sign == Minus {
+                    Self::minus_one()
+                } else {
+                    Self::one()
+                })
+            } else {
+                Self::small_integer(sign, u128::from(numerator))
+            }
+        } else if numerator <= 63
+            && denominator_shift
+                <= u32::try_from(SMALL_DYADIC_MAX_SHIFT).expect("small dyadic shift fits u32")
+        {
+            Self::small_reduced_dyadic(
+                sign,
+                u128::from(numerator),
+                1_u128 << denominator_shift,
+            )
+        } else {
+            None
+        };
+        if let Some(value) = cached {
+            value.retain_fact(retained);
+            return value;
+        }
         // IEEE-754 decoding has already stripped every common power of two.
         // Entering through the general fraction constructor would rebuild a
         // signed BigInt and re-check reduction facts that are known here.
@@ -380,11 +412,7 @@ impl Rational {
             BigUint::from(numerator),
             BigUint::one() << denominator_shift,
         );
-        value.retain_fact(
-            RETAINED_DYADIC_KNOWN
-                | RETAINED_DYADIC_VALUE
-                | Self::encoded_dyadic_denominator_shift(u64::from(denominator_shift)),
-        );
+        value.retain_fact(retained);
         trace_rational_temporary!();
         value
     }
