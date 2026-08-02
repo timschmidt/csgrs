@@ -3007,7 +3007,12 @@ fn isolate_unit_roots(
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierRootIsolationResult2>> {
     let mut trace = BezierRootIsolationTrace2::default();
-    if let Some(result) = exact_nonrational_low_degree_unit_roots(&coefficients, policy)? {
+    if coefficients.len() <= 3
+        && coefficients
+            .iter()
+            .any(|coefficient| coefficient.exact_rational_ref().is_none())
+        && let Some(result) = exact_nonrational_low_degree_unit_roots(&coefficients, policy)?
+    {
         return Ok(result);
     }
     let mut tried_nonrational_quartic = false;
@@ -3121,19 +3126,14 @@ fn isolate_unit_roots(
 /// identity falls through to the established algebraic carrier. The formula
 /// uses no approximate root or inferred coefficient. APPROXIMATE_512 may only
 /// terminate the replay equality, as it does elsewhere in Hypercurve.
+#[cold]
+#[inline(never)]
 fn exact_nonrational_low_degree_unit_roots(
     coefficients: &[Real],
     policy: &CurveContext,
 ) -> CurveResult<Option<Classification<BezierRootIsolationResult2>>> {
     const EXACT_REFINEMENT_PRECISION: i32 = -512;
 
-    if coefficients.len() > 3
-        || coefficients
-            .iter()
-            .all(|coefficient| coefficient.exact_rational_ref().is_some())
-    {
-        return Ok(None);
-    }
     let mut candidates = match coefficients {
         [_constant] => Vec::new(),
         [constant, linear] => {
