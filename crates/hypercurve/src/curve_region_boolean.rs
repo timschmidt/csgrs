@@ -980,6 +980,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         contacts.iter().map(contact_evidence).collect(),
                         vec![RegionPairBlocker::IncompleteReplay],
                     ),
+                    RationalBezierIntersectionContacts2::ContactsAndOverlap {
+                        contacts, ..
+                    } => (
+                        contacts.iter().map(contact_evidence).collect(),
+                        vec![RegionPairBlocker::Uncertain(UncertaintyReason::Boundary)],
+                    ),
                     RationalBezierIntersectionContacts2::Overlap(_)
                     | RationalBezierIntersectionContacts2::DegenerateResultant => (
                         Vec::new(),

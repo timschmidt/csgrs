@@ -2994,7 +2994,8 @@ fn materialized_overlap_relation(
             Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
         };
         return match contacts {
-            RationalBezierIntersectionContacts2::Overlap(overlap) => {
+            RationalBezierIntersectionContacts2::Overlap(overlap)
+            | RationalBezierIntersectionContacts2::ContactsAndOverlap { overlap, .. } => {
                 let relation = if rational_overlap_covers_both_fragments(&overlap, policy) {
                     BezierRetainedOverlapRelation2::SameCurveImage
                 } else {

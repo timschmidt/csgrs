@@ -1630,6 +1630,41 @@ impl CurveIntersectionContext {
                         },
                     });
                 }
+                RationalBezierIntersectionContacts2::ContactsAndOverlap {
+                    contacts: span_contacts,
+                    overlap,
+                } => {
+                    if let Classification::Uncertain(reason) = append_unique_contacts(
+                        &mut contacts,
+                        &span_contacts,
+                        &first_span_range,
+                        &second_span_range,
+                        pair.first_span_index,
+                        pair.second_span_index,
+                        &self.data.policy,
+                    ) {
+                        blockers.push(CurveIntersectionPairBlocker2 {
+                            first_span_index: pair.first_span_index,
+                            second_span_index: pair.second_span_index,
+                            kind: CurveIntersectionPairBlockerKind2::Uncertain(reason),
+                        });
+                        continue;
+                    }
+                    overlaps.push(CurveIntersectionOverlap2 {
+                        first_span_index: pair.first_span_index,
+                        second_span_index: pair.second_span_index,
+                        first_range: overlap.first_range().clone(),
+                        second_range: overlap.second_range().clone(),
+                        orientation: overlap.orientation(),
+                        endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
+                        parameter_correspondence: match &pair.state {
+                            CurveSpanPairState::Rational(intersection) => {
+                                Some(intersection.overlap_parameter_correspondence(&overlap))
+                            }
+                            _ => None,
+                        },
+                    });
+                }
                 RationalBezierIntersectionContacts2::Incomplete {
                     contacts: span_contacts,
                     candidates,

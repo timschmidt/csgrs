@@ -921,7 +921,8 @@ fn certified_parallel_source_overlap(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let overlap = match contacts {
-        RationalBezierIntersectionContacts2::Overlap(overlap) => overlap,
+        RationalBezierIntersectionContacts2::Overlap(overlap)
+        | RationalBezierIntersectionContacts2::ContactsAndOverlap { overlap, .. } => overlap,
         RationalBezierIntersectionContacts2::NoIntersection
         | RationalBezierIntersectionContacts2::Contacts(_) => {
             return Ok(Classification::Decided(
@@ -2581,11 +2582,10 @@ impl BezierParallel2 {
                             BezierParallelIntersectionCandidateSystem2::projected(candidates, None),
                         ));
                     }
-                    if let Classification::Decided(RationalBezierIntersectionContacts2::Overlap(
-                        overlap,
-                    )) = offset
+                    if let Classification::Decided(contacts) = offset
                         .curve()
                         .intersection_contacts_classified(other, policy)?
+                        && let Some(overlap) = contacts.overlap().cloned()
                     {
                         return Ok(Classification::Decided(
                             BezierParallelIntersectionCandidateSystem2::overlaps(Arc::from([
@@ -2664,9 +2664,9 @@ impl BezierParallel2 {
             if bivariate_system_may_have_component(component_equations) {
                 if let Classification::Decided(Some(exact_parallel)) =
                     self.exact_rational_parallel_component(policy)?
-                    && let Classification::Decided(RationalBezierIntersectionContacts2::Overlap(
-                        overlap,
-                    )) = exact_parallel.intersection_contacts_classified(other, policy)?
+                    && let Classification::Decided(contacts) =
+                        exact_parallel.intersection_contacts_classified(other, policy)?
+                    && let Some(overlap) = contacts.overlap().cloned()
                 {
                     return Ok(Classification::Decided(
                         BezierParallelIntersectionCandidateSystem2::overlaps(Arc::from([overlap])),
@@ -3081,6 +3081,12 @@ impl BezierParallel2 {
             }
             RationalBezierIntersectionContacts2::Overlap(overlap) => {
                 BezierParallelIntersectionSet2::complete(Arc::from([]), Arc::from([overlap]))
+            }
+            RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, overlap } => {
+                BezierParallelIntersectionSet2::complete(
+                    map_contacts(&contacts),
+                    Arc::from([overlap]),
+                )
             }
             RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => {
                 BezierParallelIntersectionSet2::incomplete(

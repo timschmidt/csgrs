@@ -404,6 +404,9 @@ fn main() {
             RationalBezierIntersectionContacts2::NoIntersection => 0,
             RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.len(),
             RationalBezierIntersectionContacts2::Overlap(_) => 1,
+            RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, .. } => {
+                contacts.len() + 1
+            }
             RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => contacts.len(),
             RationalBezierIntersectionContacts2::DegenerateResultant => 1,
         }));
@@ -440,6 +443,9 @@ fn main() {
             RationalBezierIntersectionContacts2::NoIntersection => 0,
             RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.len(),
             RationalBezierIntersectionContacts2::Overlap(_) => 1,
+            RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, .. } => {
+                contacts.len() + 1
+            }
             RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => contacts.len(),
             RationalBezierIntersectionContacts2::DegenerateResultant => 1,
         }));
@@ -539,6 +545,9 @@ fn main() {
             RationalBezierIntersectionContacts2::NoIntersection => 0,
             RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.len(),
             RationalBezierIntersectionContacts2::Overlap(_) => 1,
+            RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, .. } => {
+                contacts.len() + 1
+            }
             RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => contacts.len(),
             RationalBezierIntersectionContacts2::DegenerateResultant => 1,
         }));

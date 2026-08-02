@@ -495,6 +495,16 @@ pub enum RationalBezierIntersectionContacts2 {
     /// Exact shared-component replay certified a positive-length full or
     /// partial shared image and retained both oriented parameter ranges.
     Overlap(RationalBezierIntersectionOverlap2),
+    /// The complete set contains both isolated contacts and a positive-length
+    /// shared image. This occurs, for example, when overlapping retained
+    /// subranges of one non-injective carrier also meet across distinct
+    /// branches of that carrier.
+    ContactsAndOverlap {
+        /// Isolated contacts outside the same-source overlap correspondence.
+        contacts: Arc<[RationalBezierIntersectionContact2]>,
+        /// Certified positive-length shared image.
+        overlap: RationalBezierIntersectionOverlap2,
+    },
     /// Some contacts were certified, but at least one candidate comparison
     /// remained unresolved under the exact algebraic comparison budget.
     Incomplete {
@@ -505,6 +515,29 @@ pub enum RationalBezierIntersectionContacts2 {
     },
     /// A resultant vanished identically and overlap replay is required.
     DegenerateResultant,
+}
+
+impl RationalBezierIntersectionContacts2 {
+    /// Returns the completely replayed isolated contacts retained by this result.
+    pub fn isolated_contacts(&self) -> &[RationalBezierIntersectionContact2] {
+        match self {
+            Self::Contacts(contacts)
+            | Self::Incomplete { contacts, .. }
+            | Self::ContactsAndOverlap { contacts, .. } => contacts,
+            Self::NoIntersection | Self::Overlap(_) | Self::DegenerateResultant => &[],
+        }
+    }
+
+    /// Returns the certified positive-length overlap, when present.
+    pub const fn overlap(&self) -> Option<&RationalBezierIntersectionOverlap2> {
+        match self {
+            Self::Overlap(overlap) | Self::ContactsAndOverlap { overlap, .. } => Some(overlap),
+            Self::NoIntersection
+            | Self::Contacts(_)
+            | Self::Incomplete { .. }
+            | Self::DegenerateResultant => None,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -686,7 +719,10 @@ impl RationalBezierIntersectionContext {
             Ok(Classification::Decided(RationalBezierIntersectionContacts2::Contacts(
                 contacts,
             ))) => Arc::clone(contacts),
-            Ok(Classification::Decided(RationalBezierIntersectionContacts2::Overlap(_))) => {
+            Ok(Classification::Decided(
+                RationalBezierIntersectionContacts2::Overlap(_)
+                | RationalBezierIntersectionContacts2::ContactsAndOverlap { .. },
+            )) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
             Ok(Classification::Decided(RationalBezierIntersectionContacts2::Incomplete {
@@ -768,8 +804,18 @@ fn rational_self_intersection_residual_system(
         vec![Real::zero(), Real::one()],
         vec![Real::from(-1_i8)],
     ]);
-    let x = rational_coordinate_parameter_difference(&basis.x_numerator, &basis.weight);
-    let y = rational_coordinate_parameter_difference(&basis.y_numerator, &basis.weight);
+    let x = rational_coordinate_parameter_difference(
+        &basis.x_numerator,
+        &basis.weight,
+        &basis.x_numerator,
+        &basis.weight,
+    );
+    let y = rational_coordinate_parameter_difference(
+        &basis.y_numerator,
+        &basis.weight,
+        &basis.y_numerator,
+        &basis.weight,
+    );
     Some([
         divide_bivariate_polynomial_exact(&x, &diagonal)?,
         divide_bivariate_polynomial_exact(&y, &diagonal)?,
@@ -777,27 +823,116 @@ fn rational_self_intersection_residual_system(
 }
 
 fn rational_coordinate_parameter_difference(
-    numerator: &[Real],
-    weight: &[Real],
+    first_numerator: &[Real],
+    first_weight: &[Real],
+    second_numerator: &[Real],
+    second_weight: &[Real],
 ) -> BivariatePolynomial {
-    let coefficient_count = numerator.len().max(weight.len());
-    let mut coefficients = vec![vec![Real::zero(); coefficient_count]; coefficient_count];
+    let first_coefficient_count = first_numerator.len().max(first_weight.len());
+    let second_coefficient_count = second_numerator.len().max(second_weight.len());
+    let mut coefficients =
+        vec![vec![Real::zero(); second_coefficient_count]; first_coefficient_count];
     for (first_power, row) in coefficients.iter_mut().enumerate() {
-        let first_numerator = numerator
+        let first_numerator = first_numerator
             .get(first_power)
             .cloned()
             .unwrap_or_else(Real::zero);
-        let first_weight = weight.get(first_power).cloned().unwrap_or_else(Real::zero);
+        let first_weight = first_weight
+            .get(first_power)
+            .cloned()
+            .unwrap_or_else(Real::zero);
         for (second_power, coefficient) in row.iter_mut().enumerate() {
-            let second_numerator = numerator
+            let second_numerator = second_numerator
                 .get(second_power)
                 .cloned()
                 .unwrap_or_else(Real::zero);
-            let second_weight = weight.get(second_power).cloned().unwrap_or_else(Real::zero);
+            let second_weight = second_weight
+                .get(second_power)
+                .cloned()
+                .unwrap_or_else(Real::zero);
             *coefficient = &first_numerator * second_weight - &first_weight * second_numerator;
         }
     }
     BivariatePolynomial::new(coefficients)
+}
+
+fn rational_retained_lineage_residual_system(
+    first: &RationalBezier2,
+    second: &RationalBezier2,
+) -> CurveResult<Option<[BivariatePolynomial; 2]>> {
+    let first_basis = first.homogeneous_power_basis()?;
+    let second_basis = second.homogeneous_power_basis()?;
+    let first_range = first.source_parameter_range();
+    let second_range = second.source_parameter_range();
+    let first_delta = first_range.end() - first_range.start();
+    let second_delta = second_range.end() - second_range.start();
+    let same_source_parameter = BivariatePolynomial::new(vec![
+        vec![second_range.start() - first_range.start(), second_delta],
+        vec![-first_delta],
+    ]);
+    let x = rational_coordinate_parameter_difference(
+        &first_basis.x_numerator,
+        &first_basis.weight,
+        &second_basis.x_numerator,
+        &second_basis.weight,
+    );
+    let y = rational_coordinate_parameter_difference(
+        &first_basis.y_numerator,
+        &first_basis.weight,
+        &second_basis.y_numerator,
+        &second_basis.weight,
+    );
+    let Some(x) = divide_bivariate_polynomial_exact(&x, &same_source_parameter) else {
+        return Ok(None);
+    };
+    let Some(y) = divide_bivariate_polynomial_exact(&y, &same_source_parameter) else {
+        return Ok(None);
+    };
+    Ok(Some([x, y]))
+}
+
+fn project_retained_lineage_residual_system(
+    equations: &[BivariatePolynomial; 2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
+    let project = |parameter| {
+        resultant_parameter_projection(
+            resultant_bivariate_polynomial_system(
+                &equations[0],
+                &equations[1],
+                parameter,
+                CurveIntersectionResultantConfig {
+                    min_precision: RATIONAL_INTERSECTION_RESULTANT_PRECISION,
+                    max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
+                },
+            ),
+            policy,
+        )
+    };
+    let first = match project(CurveResultantParameter::First)? {
+        Classification::Decided(projection) => projection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let second = match project(CurveResultantParameter::Second)? {
+        Classification::Decided(projection) => projection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(match (first, second) {
+        (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
+            RationalBezierIntersectionCandidates2::NoIntersection
+        }
+        (ResultantParameterProjection::Degenerate, _)
+        | (_, ResultantParameterProjection::Degenerate) => {
+            RationalBezierIntersectionCandidates2::DegenerateResultant
+        }
+        (
+            ResultantParameterProjection::Parameters(first_parameters),
+            ResultantParameterProjection::Parameters(second_parameters),
+        ) => RationalBezierIntersectionCandidates2::Candidates {
+            first_parameters,
+            second_parameters,
+        },
+    }))
 }
 
 fn project_symmetric_self_intersection_system(
@@ -836,25 +971,38 @@ fn project_symmetric_self_intersection_system(
 fn rational_tangent_cross_polynomial(
     basis: &RationalParametricCurve2,
 ) -> Option<BivariatePolynomial> {
-    let tangent_x = rational_coordinate_tangent_numerator(&basis.x_numerator, &basis.weight)?;
-    let tangent_y = rational_coordinate_tangent_numerator(&basis.y_numerator, &basis.weight)?;
-    let coefficient_count = tangent_x.len().max(tangent_y.len());
-    let mut coefficients = vec![vec![Real::zero(); coefficient_count]; coefficient_count];
+    rational_pair_tangent_cross_polynomial(basis, basis)
+}
+
+fn rational_pair_tangent_cross_polynomial(
+    first: &RationalParametricCurve2,
+    second: &RationalParametricCurve2,
+) -> Option<BivariatePolynomial> {
+    let first_tangent_x = rational_coordinate_tangent_numerator(&first.x_numerator, &first.weight)?;
+    let first_tangent_y = rational_coordinate_tangent_numerator(&first.y_numerator, &first.weight)?;
+    let second_tangent_x =
+        rational_coordinate_tangent_numerator(&second.x_numerator, &second.weight)?;
+    let second_tangent_y =
+        rational_coordinate_tangent_numerator(&second.y_numerator, &second.weight)?;
+    let first_coefficient_count = first_tangent_x.len().max(first_tangent_y.len());
+    let second_coefficient_count = second_tangent_x.len().max(second_tangent_y.len());
+    let mut coefficients =
+        vec![vec![Real::zero(); second_coefficient_count]; first_coefficient_count];
     for (first_power, row) in coefficients.iter_mut().enumerate() {
-        let first_x = tangent_x
+        let first_x = first_tangent_x
             .get(first_power)
             .cloned()
             .unwrap_or_else(Real::zero);
-        let first_y = tangent_y
+        let first_y = first_tangent_y
             .get(first_power)
             .cloned()
             .unwrap_or_else(Real::zero);
         for (second_power, coefficient) in row.iter_mut().enumerate() {
-            let second_x = tangent_x
+            let second_x = second_tangent_x
                 .get(second_power)
                 .cloned()
                 .unwrap_or_else(Real::zero);
-            let second_y = tangent_y
+            let second_y = second_tangent_y
                 .get(second_power)
                 .cloned()
                 .unwrap_or_else(Real::zero);
@@ -889,12 +1037,20 @@ fn retain_unordered_rational_self_contacts(
     basis: &RationalParametricCurve2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
+    let tangent_cross = rational_tangent_cross_polynomial(basis);
+    retain_rational_contact_tangent_cross_signs(replayed, tangent_cross.as_ref(), policy)
+}
+
+fn retain_rational_contact_tangent_cross_signs(
+    replayed: RationalBezierIntersectionContacts2,
+    tangent_cross: Option<&BivariatePolynomial>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
     let retain = |contacts: &Arc<[RationalBezierIntersectionContact2]>|
      -> CurveResult<Classification<Arc<[RationalBezierIntersectionContact2]>>> {
-        let tangent_cross = rational_tangent_cross_polynomial(basis);
         let mut retained = Vec::with_capacity(contacts.len());
         for contact in contacts.iter() {
-            let tangent_cross_sign = match tangent_cross.as_ref() {
+            let tangent_cross_sign = match tangent_cross {
                 Some(tangent_cross) => {
                     crate::bezier_offset::bivariate_parameter_pair_strict_sign_by_refinement(
                         tangent_cross,
@@ -932,9 +1088,58 @@ fn retain_unordered_rational_self_contacts(
             },
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         },
+        RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, overlap } => {
+            match retain(&contacts)? {
+                Classification::Decided(contacts) => {
+                    RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, overlap }
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
         result => result,
     };
     Ok(Classification::Decided(result))
+}
+
+fn append_complete_rational_contacts(
+    replayed: RationalBezierIntersectionContacts2,
+    additional: Vec<RationalBezierIntersectionContact2>,
+) -> RationalBezierIntersectionContacts2 {
+    if additional.is_empty() {
+        return replayed;
+    }
+    let append = |contacts: Arc<[RationalBezierIntersectionContact2]>| {
+        contacts
+            .iter()
+            .cloned()
+            .chain(additional.iter().cloned())
+            .collect::<Arc<[_]>>()
+    };
+    match replayed {
+        RationalBezierIntersectionContacts2::NoIntersection => {
+            RationalBezierIntersectionContacts2::Contacts(additional.into())
+        }
+        RationalBezierIntersectionContacts2::Contacts(contacts) => {
+            RationalBezierIntersectionContacts2::Contacts(append(contacts))
+        }
+        RationalBezierIntersectionContacts2::Incomplete {
+            contacts,
+            candidates,
+        } => RationalBezierIntersectionContacts2::Incomplete {
+            contacts: append(contacts),
+            candidates,
+        },
+        RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, overlap } => {
+            RationalBezierIntersectionContacts2::ContactsAndOverlap {
+                contacts: append(contacts),
+                overlap,
+            }
+        }
+        replayed @ (RationalBezierIntersectionContacts2::Overlap(_)
+        | RationalBezierIntersectionContacts2::DegenerateResultant) => replayed,
+    }
 }
 
 impl PartialEq for RationalBezier2 {
@@ -2114,6 +2319,26 @@ impl RationalBezier2 {
                 },
             }));
         }
+        if let Some(contacts) = self.retained_lineage_intersection_contacts(other, policy)? {
+            let contacts = match contacts {
+                Classification::Decided(contacts) => contacts,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let candidates = intersection_candidates_from_contacts(&contacts);
+            let contact_cache = OnceLock::new();
+            let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
+            return Ok(Classification::Decided(RationalBezierIntersectionContext {
+                data: RationalBezierIntersectionContextData {
+                    first: self.clone(),
+                    second: other.clone(),
+                    policy: *policy,
+                    candidates,
+                    contacts: contact_cache,
+                },
+            }));
+        }
         if let Some(contacts) = self.circular_conic_intersection_contacts(
             other,
             policy,
@@ -2443,6 +2668,9 @@ impl RationalBezier2 {
                 RationalBezierIntersectionContacts2::NoIntersection,
             ));
         }
+        if let Some(contacts) = self.retained_lineage_intersection_contacts(other, policy)? {
+            return Ok(contacts);
+        }
         if let Some(Classification::Decided(contacts)) =
             self.certified_linear_image_contacts(other, policy)?
         {
@@ -2599,6 +2827,215 @@ impl RationalBezier2 {
             },
         };
         retain_unordered_rational_self_contacts(replayed, basis, policy)
+    }
+
+    fn retained_lineage_intersection_contacts(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
+        if !Arc::ptr_eq(&self.data.lineage.root, &other.data.lineage.root)
+            || self == other
+            || (self
+                .control_points()
+                .iter()
+                .rev()
+                .eq(other.control_points().iter())
+                && self.weights().iter().rev().eq(other.weights().iter()))
+        {
+            return Ok(None);
+        }
+        self.retain_root_image_injectivity(policy);
+        other.retain_root_image_injectivity(policy);
+        if self.data.lineage.root.image_is_injective.get() == Some(&true) {
+            return Ok(None);
+        }
+
+        let source_overlap = match self.retained_source_parameter_overlap(other, policy) {
+            Classification::Decided(overlap) => overlap,
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
+        let Some(equations) = rational_retained_lineage_residual_system(self, other)? else {
+            return Ok(Some(Classification::Uncertain(
+                UncertaintyReason::Unsupported,
+            )));
+        };
+        let candidates = match project_retained_lineage_residual_system(&equations, policy)? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
+        let replayed = if matches!(
+            candidates,
+            RationalBezierIntersectionCandidates2::DegenerateResultant
+        ) {
+            RationalBezierIntersectionContacts2::DegenerateResultant
+        } else {
+            match self.replay_intersection_candidate_set(other, &candidates, policy)? {
+                Classification::Decided(replayed) => replayed,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            }
+        };
+        let replayed = match self.remove_same_source_parameter_contacts(other, replayed, policy)? {
+            Classification::Decided(replayed) => replayed,
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
+        let replayed = if replayed.isolated_contacts().is_empty() {
+            replayed
+        } else {
+            let tangent_cross = rational_pair_tangent_cross_polynomial(
+                self.homogeneous_power_basis()?,
+                other.homogeneous_power_basis()?,
+            );
+            match retain_rational_contact_tangent_cross_signs(
+                replayed,
+                tangent_cross.as_ref(),
+                policy,
+            )? {
+                Classification::Decided(replayed) => replayed,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            }
+        };
+
+        let replayed = if source_overlap.is_none() {
+            let identity_contacts = match self.retained_lineage_touch_contacts(other, policy)? {
+                Classification::Decided(contacts) => contacts,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            append_complete_rational_contacts(replayed, identity_contacts)
+        } else {
+            replayed
+        };
+        let result = match (source_overlap, replayed) {
+            (None, replayed) => replayed,
+            (Some(overlap), RationalBezierIntersectionContacts2::NoIntersection) => {
+                RationalBezierIntersectionContacts2::Overlap(overlap)
+            }
+            (Some(overlap), RationalBezierIntersectionContacts2::Contacts(contacts)) => {
+                RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, overlap }
+            }
+            (
+                Some(_),
+                RationalBezierIntersectionContacts2::Incomplete { .. }
+                | RationalBezierIntersectionContacts2::DegenerateResultant,
+            ) => RationalBezierIntersectionContacts2::DegenerateResultant,
+            (Some(_), RationalBezierIntersectionContacts2::Overlap(_))
+            | (Some(_), RationalBezierIntersectionContacts2::ContactsAndOverlap { .. }) => {
+                unreachable!("residual replay cannot produce an image overlap")
+            }
+        };
+        Ok(Some(Classification::Decided(result)))
+    }
+
+    fn remove_same_source_parameter_contacts(
+        &self,
+        other: &Self,
+        replayed: RationalBezierIntersectionContacts2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
+        let first_range = self.source_parameter_range();
+        let second_range = other.source_parameter_range();
+        let numerator = vec![
+            first_range.start() - second_range.start(),
+            first_range.end() - first_range.start(),
+        ];
+        let denominator = vec![second_range.end() - second_range.start()];
+        if is_zero(&denominator[0], policy) != Some(false) {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        let retain = |contacts: Arc<[RationalBezierIntersectionContact2]>|
+         -> CurveResult<Classification<Arc<[RationalBezierIntersectionContact2]>>> {
+            let mut retained = Vec::with_capacity(contacts.len());
+            for contact in contacts.iter() {
+                match rational_parameter_image_matches(
+                    contact.first_parameter(),
+                    contact.second_parameter(),
+                    &numerator,
+                    &denominator,
+                    policy,
+                )? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => retained.push(contact.clone()),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            Ok(Classification::Decided(retained.into()))
+        };
+        Ok(match replayed {
+            RationalBezierIntersectionContacts2::Contacts(contacts) => match retain(contacts)? {
+                Classification::Decided(contacts) if contacts.is_empty() => {
+                    Classification::Decided(RationalBezierIntersectionContacts2::NoIntersection)
+                }
+                Classification::Decided(contacts) => {
+                    Classification::Decided(RationalBezierIntersectionContacts2::Contacts(contacts))
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+            RationalBezierIntersectionContacts2::Incomplete {
+                contacts,
+                candidates,
+            } => match retain(contacts)? {
+                Classification::Decided(contacts) => {
+                    Classification::Decided(RationalBezierIntersectionContacts2::Incomplete {
+                        contacts,
+                        candidates,
+                    })
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+            replayed => Classification::Decided(replayed),
+        })
+    }
+
+    fn retained_lineage_touch_contacts(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<RationalBezierIntersectionContact2>>> {
+        let mut contacts = Vec::with_capacity(1);
+        for (first_parameter, first_source) in [
+            (Real::zero(), self.source_parameter_range().start()),
+            (Real::one(), self.source_parameter_range().end()),
+        ] {
+            for (second_parameter, second_source) in [
+                (Real::zero(), other.source_parameter_range().start()),
+                (Real::one(), other.source_parameter_range().end()),
+            ] {
+                match compare_reals(first_source, second_source, policy) {
+                    Some(Ordering::Equal) => {
+                        let point = match self.point_at_classified(&first_parameter, policy) {
+                            Classification::Decided(point) => point,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        contacts.push(RationalBezierIntersectionContact2 {
+                            first_parameter: BezierParameter2::Exact(first_parameter.clone()),
+                            second_parameter: BezierParameter2::Exact(second_parameter.clone()),
+                            point: RationalBezierIntersectionPointEvidence2::Exact(point),
+                            certified_transverse: false,
+                            tangent_cross_sign: None,
+                        });
+                    }
+                    Some(_) => {}
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+                }
+            }
+        }
+        Ok(Classification::Decided(contacts))
     }
 
     fn implicit_conic_intersection_contacts(
@@ -4292,6 +4729,17 @@ impl RationalBezier2 {
             return Classification::Decided(None);
         }
 
+        self.retained_source_parameter_overlap(other, policy)
+    }
+
+    fn retained_source_parameter_overlap(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> Classification<Option<RationalBezierIntersectionOverlap2>> {
+        if !Arc::ptr_eq(&self.data.lineage.root, &other.data.lineage.root) {
+            return Classification::Decided(None);
+        }
         oriented_param_range_overlap(&self.data.lineage.range, &other.data.lineage.range, policy)
             .map(|overlap| {
                 overlap.map(|overlap| RationalBezierIntersectionOverlap2 {
@@ -6733,6 +7181,27 @@ fn reverse_rational_intersection_contacts(
                 endpoint_inclusion: overlap.endpoint_inclusion,
             })
         }
+        RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, overlap } => {
+            RationalBezierIntersectionContacts2::ContactsAndOverlap {
+                contacts: contacts
+                    .iter()
+                    .map(|contact| RationalBezierIntersectionContact2 {
+                        first_parameter: contact.second_parameter.clone(),
+                        second_parameter: contact.first_parameter.clone(),
+                        point: contact.point.clone(),
+                        certified_transverse: contact.certified_transverse,
+                        tangent_cross_sign: contact.tangent_cross_sign.map(negated_real_sign),
+                    })
+                    .collect::<Vec<_>>()
+                    .into(),
+                overlap: RationalBezierIntersectionOverlap2 {
+                    first_range: overlap.second_range,
+                    second_range: overlap.first_range,
+                    orientation: overlap.orientation,
+                    endpoint_inclusion: overlap.endpoint_inclusion,
+                },
+            }
+        }
         RationalBezierIntersectionContacts2::Incomplete {
             contacts,
             candidates,
@@ -6794,6 +7263,7 @@ fn intersection_candidates_from_contacts(
         }
         RationalBezierIntersectionContacts2::Incomplete { candidates, .. } => candidates.clone(),
         RationalBezierIntersectionContacts2::Overlap(_)
+        | RationalBezierIntersectionContacts2::ContactsAndOverlap { .. }
         | RationalBezierIntersectionContacts2::DegenerateResultant => {
             RationalBezierIntersectionCandidates2::DegenerateResultant
         }
@@ -7456,6 +7926,80 @@ mod tests {
                 BezierParameter2::Algebraic(_)
             ));
             assert_eq!(contacts[0].tangent_cross_sign(), Some(RealSign::Negative));
+        }
+    }
+
+    #[test]
+    fn retained_noninjective_subranges_replay_cross_branch_contacts() {
+        let controls = vec![
+            Point2::new(Real::from(9_i8), Real::zero()),
+            Point2::new(Real::from(-7_i8), Real::from(3_i8)),
+            Point2::new(Real::from(-7_i8), Real::from(-10_i8)),
+            Point2::new(Real::from(9_i8), Real::from(9_i8)),
+        ];
+        let ratio = |numerator: i8, denominator: i8| {
+            (Real::from(numerator) / Real::from(denominator)).unwrap()
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for weights in [
+                vec![Real::one(); 4],
+                vec![
+                    Real::one(),
+                    Real::from(2_i8),
+                    Real::from(4_i8),
+                    Real::from(8_i8),
+                ],
+            ] {
+                let curve = RationalBezier2::try_new(controls.clone(), weights).unwrap();
+                let Classification::Decided((left, _)) =
+                    curve.split_at_exact(&ratio(49, 100), &policy).unwrap()
+                else {
+                    panic!("retained lower split was not decided");
+                };
+                let Classification::Decided((_, right)) =
+                    curve.split_at_exact(&ratio(51, 100), &policy).unwrap()
+                else {
+                    panic!("retained upper split was not decided");
+                };
+                let RationalBezierIntersectionContacts2::Contacts(contacts) =
+                    left.intersection_contacts(&right, &policy).unwrap()
+                else {
+                    panic!("disjoint retained branches did not replay isolated contacts");
+                };
+                assert_eq!(contacts.len(), 1);
+                assert!(contacts[0].is_certified_transverse());
+            }
+
+            let curve = RationalBezier2::try_new(controls.clone(), vec![Real::one(); 4]).unwrap();
+            let Classification::Decided((left, right)) =
+                curve.split_at_exact(&ratio(1, 2), &policy).unwrap()
+            else {
+                panic!("retained midpoint split was not decided");
+            };
+            let RationalBezierIntersectionContacts2::Contacts(contacts) =
+                left.intersection_contacts(&right, &policy).unwrap()
+            else {
+                panic!("touching retained branches did not replay all point contacts");
+            };
+            assert_eq!(contacts.len(), 2, "crossing plus shared split endpoint");
+
+            let Classification::Decided(middle) = curve
+                .subcurve_between_exact(&ratio(1, 10), &ratio(9, 10), &policy)
+                .unwrap()
+            else {
+                panic!("retained middle subrange was not decided");
+            };
+            let RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, overlap } =
+                curve.intersection_contacts(&middle, &policy).unwrap()
+            else {
+                panic!("overlapping retained branches lost their isolated contacts");
+            };
+            assert_eq!(contacts.len(), 2);
+            assert_eq!(
+                overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same
+            );
         }
     }
 

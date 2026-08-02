@@ -107,6 +107,32 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
 }
 
 #[test]
+fn top_level_retained_noninjective_overlap_keeps_isolated_branch_contacts() {
+    let controls = vec![p(9, 0), p(-7, 3), p(-7, -10), p(9, 9)];
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let curve = RationalBezier2::try_new(controls.clone(), vec![Real::one(); 4]).unwrap();
+        let middle = decided(
+            curve
+                .subcurve_between_exact(&q(1, 10), &q(9, 10), &policy)
+                .unwrap(),
+        );
+        let result = Curve2::from(curve)
+            .intersect_curve(&Curve2::from(middle), &policy)
+            .unwrap()
+            .into_value();
+        assert!(result.is_complete(), "{:#?}", result.blockers());
+        assert_eq!(result.contacts().len(), 2);
+        assert_eq!(result.overlaps().len(), 1);
+        assert!(
+            result
+                .contacts()
+                .iter()
+                .all(|contact| contact.is_certified_transverse())
+        );
+    }
+}
+
+#[test]
 #[cfg(feature = "predicates")]
 fn top_level_intersection_retains_implicit_conic_transversality() {
     let conic = Curve2::from(
