@@ -5027,9 +5027,9 @@ fn parameter_component_system(
 /// Projection folds, transverse domain crossings, isolated boundary touches,
 /// and isolated singular vertices are accepted. The parent intersection engine
 /// replays axis-wide and boundary-coincident components against constant-image
-/// geometry. When ordinary certification exposes derivative sharing, the same
-/// engine retries after Hypersolve exactly removes selected-branch-zero factors
-/// and component multiplicity.
+/// geometry. When ordinary certification fails, a cold fallback first removes
+/// component multiplicity. Exact projection degeneration then gates removal of
+/// selected-branch-zero factors before the same topology proof is retried.
 fn certify_regular_implicit_parameter_component(
     component: &BivariatePolynomial,
     branch: &BivariatePolynomial,
@@ -5047,20 +5047,37 @@ fn certify_regular_implicit_parameter_component(
     if matches!(initial, Classification::Decided(Some(_))) {
         return Ok(initial);
     }
-
-    let mut fallback = initial;
-    let mut support = component.clone();
-    if let Some(reduced) = remove_implicit_parameter_component_zero_branch_factors(
+    certify_regular_implicit_parameter_component_fallback(
         component,
         branch,
         retained_parameter,
+        policy,
         config,
-    ) {
-        if bivariate_storage_bidegree_sum(&reduced) == 0 {
-            return Ok(Classification::Decided(Some(
-                ParameterComponentEvidence2::default(),
-            )));
-        }
+        initial,
+    )
+}
+
+#[cold]
+#[inline(never)]
+fn certify_regular_implicit_parameter_component_fallback(
+    component: &BivariatePolynomial,
+    branch: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    policy: &CurveContext,
+    config: CurveIntersectionResultantConfig,
+    initial: Classification<Option<ParameterComponentEvidence2>>,
+) -> CurveResult<Classification<Option<ParameterComponentEvidence2>>> {
+    if divide_bivariate_polynomial_exact(branch, component).is_some() {
+        return Ok(Classification::Decided(Some(
+            ParameterComponentEvidence2::default(),
+        )));
+    }
+    let mut fallback = initial;
+    let mut multiplicity_reduced = None;
+    if let Some(reduced) =
+        reduce_implicit_parameter_component_multiplicity(component, retained_parameter, config)
+        && reduced != *component
+    {
         fallback = certify_implicit_parameter_component_once(
             &reduced,
             branch,
@@ -5071,18 +5088,56 @@ fn certify_regular_implicit_parameter_component(
         if matches!(fallback, Classification::Decided(Some(_))) {
             return Ok(fallback);
         }
-        support = reduced;
+        multiplicity_reduced = Some(reduced);
     }
 
-    let Some(reduced) =
-        reduce_implicit_parameter_component_multiplicity(&support, retained_parameter, config)
+    let support = multiplicity_reduced.as_ref().unwrap_or(component);
+    match bivariate_system_has_positive_dimensional_relation(support, branch, policy)? {
+        Classification::Decided(true) => {}
+        Classification::Decided(false) => return Ok(fallback),
+        // The gate is only an optimization. A capped equality decision must
+        // not suppress the exact component extractor that the prior path ran.
+        Classification::Uncertain(_) => {}
+    }
+    let Some(reduced) = remove_implicit_parameter_component_zero_branch_factors(
+        support,
+        branch,
+        retained_parameter,
+        config,
+    ) else {
+        return Ok(fallback);
+    };
+    if bivariate_storage_bidegree_sum(&reduced) == 0 {
+        return Ok(Classification::Decided(Some(
+            ParameterComponentEvidence2::default(),
+        )));
+    }
+    fallback = certify_implicit_parameter_component_once(
+        &reduced,
+        branch,
+        retained_parameter,
+        policy,
+        config,
+    )?;
+    if matches!(fallback, Classification::Decided(Some(_))) {
+        return Ok(fallback);
+    }
+
+    let Some(square_free) =
+        reduce_implicit_parameter_component_multiplicity(&reduced, retained_parameter, config)
     else {
         return Ok(fallback);
     };
-    if reduced == support {
+    if square_free == reduced {
         return Ok(fallback);
     }
-    certify_implicit_parameter_component_once(&reduced, branch, retained_parameter, policy, config)
+    certify_implicit_parameter_component_once(
+        &square_free,
+        branch,
+        retained_parameter,
+        policy,
+        config,
+    )
 }
 
 /// Removes every positive-dimensional factor on which `branch > 0` is false.
@@ -6833,6 +6888,29 @@ fn bivariate_system_has_unit_square_solution(
     Ok(blocker.map_or(Classification::Decided(false), Classification::Uncertain))
 }
 
+#[cold]
+#[inline(never)]
+fn bivariate_system_has_positive_dimensional_relation(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    if bivariate_unit_square_has_strict_bernstein_sign(second, policy)?
+        || bivariate_unit_square_has_strict_bernstein_sign(first, policy)?
+    {
+        return Ok(Classification::Decided(false));
+    }
+    Ok(
+        match project_parallel_intersection_system(first, second, policy)? {
+            Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant) => {
+                Classification::Decided(true)
+            }
+            Classification::Decided(_) => Classification::Decided(false),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+    )
+}
+
 fn bivariate_system_unit_square_solution_pairs(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
@@ -6913,20 +6991,6 @@ fn certify_rational_parameter_component_map(
 
     let (branch_coefficients, _) =
         bivariate_on_parameter_lift_cleared(branch, retained_parameter, map);
-    match polynomial_from_coefficients(branch_coefficients.clone(), policy)? {
-        Classification::Decided(None) => {
-            // Selection is the strict predicate `branch > 0`. A component on
-            // which that predicate is identically zero contributes no point,
-            // but its exact division residual must continue through the
-            // authoritative candidate engine.
-            return Ok(Classification::Decided(Some(
-                ParameterComponentEvidence2::default(),
-            )));
-        }
-        Classification::Decided(Some(_)) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-
     let derivative_numerator = polynomial_subtract(
         &polynomial_multiply(
             &polynomial_derivative(&map.numerator_coefficients),
@@ -6943,11 +7007,33 @@ fn certify_rational_parameter_component_map(
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
+    if partition.domains.is_empty() && partition.isolated_points.is_empty() {
+        return Ok(Classification::Decided(Some(
+            ParameterComponentEvidence2::default(),
+        )));
+    }
+    let branch_polynomial = match polynomial_from_coefficients(branch_coefficients, policy)? {
+        Classification::Decided(Some(polynomial)) => polynomial,
+        Classification::Decided(None) => {
+            // Selection is the strict predicate `branch > 0`. A component on
+            // which that predicate is identically zero contributes no point,
+            // but its exact division residual must continue through the
+            // authoritative candidate engine.
+            return Ok(Classification::Decided(Some(
+                ParameterComponentEvidence2::default(),
+            )));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let branch_roots = match branch_polynomial.isolate_unit_interval_roots(policy)? {
+        Classification::Decided(roots) => roots,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
 
     let mut overlaps = Vec::with_capacity(partition.domains.len());
     for (domain, direction) in partition.domains {
-        match polynomial_is_rootless_on_parameter_range(
-            &branch_coefficients,
+        match parameter_roots_are_outside_range(
+            &branch_roots,
             &domain.retained_start,
             &domain.retained_end,
             policy,
@@ -7388,6 +7474,7 @@ fn rational_parameter_component_pair(
     }
 }
 
+#[cfg(test)]
 fn polynomial_is_rootless_on_parameter_range(
     coefficients: &[Real],
     start: &BezierParameter2,
@@ -7403,6 +7490,15 @@ fn polynomial_is_rootless_on_parameter_range(
         Classification::Decided(roots) => roots,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
+    parameter_roots_are_outside_range(&roots, start, end, policy)
+}
+
+fn parameter_roots_are_outside_range(
+    roots: &[BezierParameter2],
+    start: &BezierParameter2,
+    end: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
     for root in roots {
         let start_order = match root.cmp_by_refinement(start, policy)? {
             Classification::Decided(order) => order,
@@ -10360,6 +10456,46 @@ mod conversion_tests {
                     })
                     .count(),
                 4
+            );
+        }
+    }
+
+    #[test]
+    fn positive_dimensional_branch_gate_distinguishes_shared_support_from_crossings() {
+        let lower = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(19_i8) / Real::from(64_i8)).unwrap(),
+                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                Real::one(),
+            ],
+            vec![Real::from(-1_i8)],
+            vec![Real::one()],
+        ]);
+        let upper = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(51_i8) / Real::from(64_i8)).unwrap(),
+                (Real::from(-3_i8) / Real::from(2_i8)).unwrap(),
+                Real::one(),
+            ],
+            vec![Real::from(-1_i8)],
+            vec![Real::one()],
+        ]);
+        let component = bivariate_multiply(&lower, &upper);
+        let crossing = BivariatePolynomial::new(vec![vec![
+            (Real::from(-1_i8) / Real::from(4_i8)).unwrap(),
+            Real::one(),
+        ]]);
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                bivariate_system_has_positive_dimensional_relation(&component, &lower, &policy)
+                    .unwrap(),
+                Classification::Decided(true)
+            );
+            assert_eq!(
+                bivariate_system_has_positive_dimensional_relation(&lower, &crossing, &policy)
+                    .unwrap(),
+                Classification::Decided(false)
             );
         }
     }
