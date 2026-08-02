@@ -19,7 +19,7 @@ use hyperreal::{RationalLine2Filter, RationalPoint3Query, RealSign};
 pub(crate) const ARRANGEMENT_CLASSIFICATION: i8 = 2;
 
 type SplitEdgeCache = StorageHashMap<[usize; 2], SplitEdgeChain>;
-type ApproximateOutputVertex = [[f64; 2]; 3];
+type ApproximateOutputVertex = RationalPoint3Query;
 type ApproximateEdgeBounds = [[f64; 2]; 3];
 const MIN_ADAPTIVE_CROSSING_SWEEP_EDGES: usize = 256;
 // Cache all enclosure bounds once the adaptive sweep has enough edges to
@@ -2026,7 +2026,7 @@ fn exact_output_vertex_enclosures(
         else {
             return None;
         };
-        approximate.push([x, y, z]);
+        approximate.push(RationalPoint3Query::from_certified_enclosures([x, y, z])?);
     }
     Some(approximate)
 }
@@ -2041,15 +2041,17 @@ fn build_split_edge_chain(
     let mut on_edge = Vec::new();
     match search {
         SplitEdgeSearch::Approximate(approximate_vertices) => {
-            let start = approximate_vertices[edge[0]];
-            let end = approximate_vertices[edge[1]];
+            let start =
+                [0, 1, 2].map(|axis| approximate_vertices[edge[0]].certified_enclosure(axis));
+            let end = [0, 1, 2].map(|axis| approximate_vertices[edge[1]].certified_enclosure(axis));
             for (vertex_index, point) in approximate_vertices.iter().enumerate() {
                 if vertex_index == edge[0] || vertex_index == edge[1] {
                     continue;
                 }
                 if (0..3).all(|axis| {
-                    point[axis][1] >= start[axis][0].min(end[axis][0])
-                        && point[axis][0] <= start[axis][1].max(end[axis][1])
+                    let point = point.certified_enclosure(axis);
+                    point[1] >= start[axis][0].min(end[axis][0])
+                        && point[0] <= start[axis][1].max(end[axis][1])
                 }) && point_on_segment_exact(
                     decisions,
                     &vertices[vertex_index],
@@ -2678,15 +2680,11 @@ fn split_edge_crossing_events(
     for left_index in 0..bounded_edges.len() {
         let left = &bounded_edges[left_index];
         let left_edge = left.edge;
-        // Certified query data depends only on this edge and its immutable
-        // enclosures. A failed construction selects the same exact fallback
-        // for every paired edge, so it is safe to reuse the result here.
-        let left_rational_queries = approximate_vertices.and_then(|vertices| {
-            Some([
-                RationalPoint3Query::from_certified_enclosures(vertices[left_edge[0]])?,
-                RationalPoint3Query::from_certified_enclosures(vertices[left_edge[1]])?,
-            ])
-        });
+        // The immutable retained query is also this vertex's certified
+        // enclosure carrier, so the filter can borrow it without rebuilding
+        // another 48-byte view for every paired edge.
+        let left_rational_queries =
+            approximate_vertices.map(|vertices| [&vertices[left_edge[0]], &vertices[left_edge[1]]]);
         let approximate_left_bounds = match (approximate_vertices, approximate_bounds.as_deref()) {
             (Some(_), Some(bounds)) => {
                 Some(ApproximateLeftBounds::Cached(bounds, &bounds[left_index]))
@@ -2756,15 +2754,12 @@ fn split_edge_crossing_events(
 
             let right_rational_queries = left_rational_queries.as_ref().and_then(|_| {
                 let vertices = approximate_vertices?;
-                Some([
-                    RationalPoint3Query::from_certified_enclosures(vertices[right_edge[0]])?,
-                    RationalPoint3Query::from_certified_enclosures(vertices[right_edge[1]])?,
-                ])
+                Some([&vertices[right_edge[0]], &vertices[right_edge[1]]])
             });
             let rational_queries = left_rational_queries
                 .as_ref()
                 .zip(right_rational_queries.as_ref())
-                .map(|(left, right)| [&left[0], &left[1], &right[0], &right[1]]);
+                .map(|(left, right)| [left[0], left[1], right[0], right[1]]);
             let Some(projection_axis) = proper_segment_intersection_after_bounds_overlap(
                 decisions,
                 &soup.vertices[left_edge[0]],
@@ -4179,7 +4174,8 @@ fn approximate_edge_min(
     edge: [usize; 2],
     axis: usize,
 ) -> f64 {
-    vertices[edge[0]][axis][0].min(vertices[edge[1]][axis][0])
+    vertices[edge[0]].certified_enclosure(axis)[0]
+        .min(vertices[edge[1]].certified_enclosure(axis)[0])
 }
 
 fn approximate_edge_max(
@@ -4187,7 +4183,8 @@ fn approximate_edge_max(
     edge: [usize; 2],
     axis: usize,
 ) -> f64 {
-    vertices[edge[0]][axis][1].max(vertices[edge[1]][axis][1])
+    vertices[edge[0]].certified_enclosure(axis)[1]
+        .max(vertices[edge[1]].certified_enclosure(axis)[1])
 }
 
 fn approximate_edge_bounds(
@@ -4299,14 +4296,14 @@ fn approximate_projection_axis(
     // This normal only chooses which complete exact projection is tried first;
     // a zero or non-finite component never proves or rejects a crossing.
     let left = [
-        vertices[left[1]][0][0] - vertices[left[0]][0][0],
-        vertices[left[1]][1][0] - vertices[left[0]][1][0],
-        vertices[left[1]][2][0] - vertices[left[0]][2][0],
+        vertices[left[1]].certified_enclosure(0)[0] - vertices[left[0]].certified_enclosure(0)[0],
+        vertices[left[1]].certified_enclosure(1)[0] - vertices[left[0]].certified_enclosure(1)[0],
+        vertices[left[1]].certified_enclosure(2)[0] - vertices[left[0]].certified_enclosure(2)[0],
     ];
     let right = [
-        vertices[right[1]][0][0] - vertices[right[0]][0][0],
-        vertices[right[1]][1][0] - vertices[right[0]][1][0],
-        vertices[right[1]][2][0] - vertices[right[0]][2][0],
+        vertices[right[1]].certified_enclosure(0)[0] - vertices[right[0]].certified_enclosure(0)[0],
+        vertices[right[1]].certified_enclosure(1)[0] - vertices[right[0]].certified_enclosure(1)[0],
+        vertices[right[1]].certified_enclosure(2)[0] - vertices[right[0]].certified_enclosure(2)[0],
     ];
     let normal = [
         left[1] * right[2] - left[2] * right[1],
@@ -4336,8 +4333,8 @@ fn exact_edge_bounds(
     let (first_axis, end_axis) = only_axis.map_or((0, 3), |axis| (axis, axis + 1));
     for axis in first_axis..end_axis {
         let approximate_order = approximate_vertices.and_then(|vertices| {
-            let left = vertices[edge[0]][axis];
-            let right = vertices[edge[1]][axis];
+            let left = vertices[edge[0]].certified_enclosure(axis);
+            let right = vertices[edge[1]].certified_enclosure(axis);
             if left[1] < right[0] {
                 Some(std::cmp::Ordering::Less)
             } else if right[1] < left[0] {
@@ -5027,6 +5024,11 @@ mod tests {
         }
     }
 
+    fn approximate_point(bounds: [[f64; 2]; 3]) -> ApproximateOutputVertex {
+        RationalPoint3Query::from_certified_enclosures(bounds)
+            .expect("finite certified point bounds should construct")
+    }
+
     fn for_each_policy(mut test: impl FnMut(&DecisionContext)) {
         for policy in [
             crate::PredicatePolicy::STRICT,
@@ -5343,10 +5345,13 @@ mod tests {
             sources: vec![TriangleSource::default()],
         };
         let approximate = exact_output_vertex_enclosures(&soup.vertices).unwrap();
-        assert!(approximate[0][0][1] >= approximate[1][0][0]);
-        assert!(approximate[1][0][1] >= approximate[0][0][0]);
-        assert!(approximate[0][0][1] >= approximate[3][0][0]);
-        assert!(approximate[3][0][1] >= approximate[0][0][0]);
+        let overlaps = |left: usize, right: usize| {
+            let left = approximate[left].certified_enclosure(0);
+            let right = approximate[right].certified_enclosure(0);
+            left[1] >= right[0] && right[1] >= left[0]
+        };
+        assert!(overlaps(0, 1));
+        assert!(overlaps(0, 3));
 
         for_each_policy(|decisions| {
             let mut resolved = soup.clone();
@@ -5489,8 +5494,16 @@ mod tests {
         for index in 0..MIN_ADAPTIVE_CROSSING_SWEEP_EDGES {
             let coordinate = index as f64;
             let start = vertices.len();
-            vertices.push([[0.0, 0.0], [coordinate, coordinate], [0.0, 0.0]]);
-            vertices.push([[1.0, 1.0], [coordinate, coordinate], [0.0, 0.0]]);
+            vertices.push(approximate_point([
+                [0.0, 0.0],
+                [coordinate, coordinate],
+                [0.0, 0.0],
+            ]));
+            vertices.push(approximate_point([
+                [1.0, 1.0],
+                [coordinate, coordinate],
+                [0.0, 0.0],
+            ]));
             edges.push([start, start + 1]);
         }
 
@@ -5504,7 +5517,8 @@ mod tests {
 
     #[test]
     fn crossing_overlap_reuses_the_established_sweep_axis() {
-        let point = |coordinates: [f64; 3]| coordinates.map(|value| [value, value]);
+        let point =
+            |coordinates: [f64; 3]| approximate_point(coordinates.map(|value| [value, value]));
         for sweep_axis in 0..3 {
             let separated_axis = (sweep_axis + 1) % 3;
             let mut right_min = [0.5; 3];
@@ -5541,7 +5555,7 @@ mod tests {
 
     #[test]
     fn approximate_crossing_projection_keeps_ties_and_nonfinite_components_conservative() {
-        let point = |x, y, z| [[x, x], [y, y], [z, z]];
+        let point = |x, y, z| approximate_point([[x, x], [y, y], [z, z]]);
         let vertices = [
             point(0.0, 0.0, 0.0),
             point(1.0, 0.0, 0.0),
@@ -5639,10 +5653,13 @@ mod tests {
             sources: vec![TriangleSource::default(); 2],
         };
         let approximate = exact_output_vertex_enclosures(&soup.vertices).unwrap();
-        assert!(approximate[0][0][1] >= approximate[1][0][0]);
-        assert!(approximate[1][0][1] >= approximate[0][0][0]);
-        assert!(approximate[0][0][1] >= approximate[3][0][0]);
-        assert!(approximate[3][0][1] >= approximate[0][0][0]);
+        let overlaps = |left: usize, right: usize| {
+            let left = approximate[left].certified_enclosure(0);
+            let right = approximate[right].certified_enclosure(0);
+            left[1] >= right[0] && right[1] >= left[0]
+        };
+        assert!(overlaps(0, 1));
+        assert!(overlaps(0, 3));
 
         for_each_policy(|decisions| {
             let mut resolved = soup.clone();
@@ -5692,9 +5709,6 @@ mod tests {
                 exact_edge_bounds(decisions, [2, 3], &vertices, Some(&approximate), None).unwrap();
             assert!(!edge_bounds_overlap_exact(decisions, &left, &right, &vertices, 0).unwrap());
 
-            let queries = [0, 1, 2, 3].map(|index| {
-                RationalPoint3Query::from_certified_enclosures(approximate[index]).unwrap()
-            });
             assert!(
                 proper_segment_intersection_after_bounds_overlap(
                     decisions,
@@ -5703,7 +5717,12 @@ mod tests {
                     &c,
                     &d,
                     approximate_projection_axis(&approximate, [0, 1], [2, 3]),
-                    Some(queries.each_ref()),
+                    Some([
+                        &approximate[0],
+                        &approximate[1],
+                        &approximate[2],
+                        &approximate[3],
+                    ]),
                 )
                 .unwrap()
                 .is_none()
