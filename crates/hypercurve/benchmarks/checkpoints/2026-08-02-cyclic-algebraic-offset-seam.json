@@ -1,0 +1,131 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "cyclic algebraic-partition exact CurveRegion2 offsets",
+  "source_revision": "0dfa2c5ecd6d3fc0cbb8ad011ce0579751c505a8",
+  "semantic_revisions": [
+    "0dfa2c5"
+  ],
+  "benchmark_revision": "a64680fe342cb9c8b48fa7dd006c5e87d0205bc3",
+  "comparison_revision": "34b07174108a373cabb982e2a5adf14f779c92a7",
+  "previous_checkpoint": "2026-08-02-radical-cusp-exact-offset-topology.json",
+  "scope": {
+    "included": [
+      "exact rotation of a closed CurveRegion2 traversal whose vector seam lies at an arrangement-only algebraic analytic-parallel partition",
+      "bounded borrowed cyclic scanning without fragment cloning or a replacement collection",
+      "exact same-carrier, traversal-direction, parameter-adjacency, and derivative-scale-sign proof before partition elision",
+      "forward and reversed traversal with both ordinary and cyclic seam placement",
+      "STRICT and APPROXIMATE_512 replay against the same exact composed carrier and authoritative unary arrangement",
+      "matched exact-peer performance, allocation, release-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "genuine algebraic cusp joins whose adjacent derivative scales have opposite signs",
+      "joins between distinct carriers at nonrepresented algebraic points",
+      "algebraic point and tangent coordinates for general analytic parallels",
+      "finite projection or export of general analytic offsets",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "cyclic_rotation": "A closed boundary has no distinguished geometric vector seam. If and only if the first analytic fragment begins at a nonrepresented parameter, the offset authority searches the existing borrowed fragment slice for a represented analytic traversal start, then processes exactly the original fragment count with modular indices. The bounded remaining-run length prevents revisiting or consuming a fragment twice.",
+    "partition_elision": "The rotated run is composed only when every consecutive fragment has the same exact analytic carrier, traversal direction, adjacent retained parameter ranges, and the same nonzero derivative-scale sign. Its internal algebraic endpoint is then an arrangement partition rather than a geometric join, and the maximal represented outer range denotes the same exact branch.",
+    "cusp_guard": "A derivative-scale sign change remains a hard coalescing boundary. Such a parameter is an old cusp whose limiting traversal normals may select different composed distances, so no cyclic rotation may erase it or synthesize finite coordinates.",
+    "fast_path": "Materialized starts and analytic starts with represented parameters retain the original constant-time entry path. The cyclic search is paid only by the previously failing nonrepresented-seam case and allocates no fragments or auxiliary index storage.",
+    "policy": "STRICT and APPROXIMATE_512 return structurally identical exact CurveRegion2 values for ordinary and cyclic partition placement in both traversal directions. APPROXIMATE_512 remains only a final unresolved equality/sign terminal and never approximates the carrier, partition, or topology."
+  },
+  "capability": {
+    "34b0717": "The same exact non-cusp analytic partition succeeds when it lies inside the fragment vector but returns Boundary when the equivalent closed-loop vector seam begins at the nonrepresented partition endpoint.",
+    "0dfa2c5": "The authority rotates only its borrowed traversal indices, composes the same maximal represented range once, and exactly matches the unsplit control for forward and reversed loops under both policies.",
+    "intentional_boundary": "Opposite-scale old cusps and true joins at general algebraic coordinates remain explicit Boundary outcomes pending an exact algebraic join/image carrier."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "method": "release executable pinned to CPU 11; eleven alternating independent process pairs; twenty timed offsets per selected lane; fixture construction and two untimed exact equality-check offsets are excluded from timing",
+    "commands": [
+      "taskset -c 11 env HYPERCURVE_OFFSET_BENCH_GROUP=curve-region-cyclic-algebraic-partition-only target/release/deps/offset-ea116fee283cd918",
+      "taskset -c 11 env HYPERCURVE_OFFSET_BENCH_GROUP=curve-region-cyclic-algebraic-partition-control target/release/deps/offset-ea116fee283cd918"
+    ],
+    "fixture": "The exact quadratic cap is retained as two analytic-parallel ranges partitioned at t=sqrt(1/2), followed cyclically by its materialized chord. Rotating the fragment vector places the nonrepresented endpoint at index zero without changing the closed geometry. The control retains the same cap as one exact [0,1] analytic fragment.",
+    "cyclic_partition": {
+      "samples_ms": [18.846243, 18.313161, 17.799945, 18.819514, 18.430518, 17.992489, 18.508482, 18.307267, 18.436056, 18.073486, 18.172863],
+      "median_ms": 18.313161,
+      "unsplit_control_samples_ms": [18.491238, 18.147838, 18.389444, 18.082497, 18.305267, 18.123442, 18.683706, 19.555585, 18.103322, 18.117537, 18.433645],
+      "unsplit_control_median_ms": 18.305267,
+      "cyclic_overhead_percent": 0.0431242,
+      "interpretation": "The newly supported cyclic partition is within 0.05% of the structurally identical unsplit exact computation and is treated as neutral process noise. The matched parent returns Boundary for the cyclic operation, so no historical exact timing peer exists."
+    },
+    "historical_and_competitive_controls": {
+      "34b0717_cyclic_partitioned_exact": "Boundary",
+      "exact_peer": "The unsplit canonical-Real carrier is the only like-for-like geometry and exactness peer.",
+      "most_recent_open_cubic_control": "At the preceding radical-cusp checkpoint, Hypercurve's certified open-cubic lane was 30,775,728.5 ns versus Curvo's 8,575.4 ns heuristic binary64 lane.",
+      "most_recent_line_arc_control": "At the preceding radical-cusp checkpoint, Hypercurve's exact line/arc capsule lane was 18,001.0 ns versus Cavalier's 957.7 ns binary64 lane.",
+      "contract_note": "Neither competitive finite kernel retains the algebraic parameter, canonical-Real carrier, or exact closed-region topology exercised here."
+    }
+  },
+  "memory": {
+    "allocation_profile": {
+      "tool": "Heaptrack direct release-application traces",
+      "cyclic_profile": "/tmp/hypercurve-cyclic-algebraic-partition-only-app-20260802.zst",
+      "unsplit_control_profile": "/tmp/hypercurve-cyclic-algebraic-partition-control-app-20260802.zst",
+      "workload": "twenty selected timed offsets plus identical fixture construction and two untimed exact equality-check offsets in each trace",
+      "cyclic_allocation_calls": 5868325,
+      "unsplit_control_allocation_calls": 5868325,
+      "cyclic_temporary_allocations": 278033,
+      "unsplit_control_temporary_allocations": 278033,
+      "cyclic_peak_heap": "462.23 KiB",
+      "unsplit_control_peak_heap": "462.23 KiB",
+      "interpretation": "The borrowed cyclic scan adds no observable allocation call, temporary allocation, or live-heap cost. Heaptrack's analyzed application traces are used; an earlier trace that accidentally profiled /usr/bin/env was rejected."
+    }
+  },
+  "release_size": {
+    "method": "matched all-feature curve_region_boolean_batch release executables built from the implementation and its parent against the same live dependency worktrees",
+    "file_bytes": 7830064,
+    "text_bytes": 5927970,
+    "data_bytes": 266360,
+    "bss_bytes": 4832,
+    "prior_file_bytes": 7830080,
+    "prior_text_bytes": 5927982,
+    "prior_data_bytes": 266360,
+    "prior_bss_bytes": 4816,
+    "file_change_bytes": -16,
+    "text_change_bytes": -12,
+    "file_change_percent": -0.00020434,
+    "text_change_percent": -0.00020243,
+    "interpretation": "The production repair is byte-neutral to slightly smaller. The benchmark-only revision does not enter the representative application artifact."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-cyclic-algebraic-seam-20260802 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 31617,
+    "edges": 58066,
+    "prior_nodes": 31606,
+    "prior_edges": 58054,
+    "artifact": "/tmp/hypercurve-callgraph-cyclic-algebraic-seam-20260802/callgraph.json",
+    "confirmed_paths": [
+      "CurveRegion2::offset_exact_general_raw -> coalesced_analytic_parallel_offset_run"
+    ]
+  },
+  "verification": {
+    "all_feature_library": "passed: 350 tests",
+    "no_default_library": "passed: 312 tests",
+    "focused_regression": "passed forward/reversed, ordinary/cyclic-seam, STRICT/APPROXIMATE_512 structural equality against the exact unsplit control",
+    "strict_and_approximate": "passed identical exact CurveRegion2 values for every new cyclic partition case; the existing opposite-scale cusp refusal remains exact",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_benchmarks": "passed offset benchmark build and both selected cyclic/control lanes",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "represent genuine joins at general algebraic cusp and distinct-carrier coordinates without approximation",
+    "reduce bigint and certified-interval allocation churn on general rational-image recovery",
+    "extend structural parallel-pair differential coverage beyond the monotone simple-loop proof",
+    "complete expansion, erosion, collapse, cusp, and offset self-contact differential coverage",
+    "complete finite projection/export for exact analytic offsets",
+    "implement radius-driven fillet and two-setback chamfer solvers",
+    "delete displaced historical region-offset machinery after differential coverage passes"
+  ]
+}
