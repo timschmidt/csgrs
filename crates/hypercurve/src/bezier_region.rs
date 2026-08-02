@@ -2358,8 +2358,7 @@ fn exact_offset_span_from_analytic_parallel(
     } else {
         fragment.parallel().distance() - distance
     };
-    let composed =
-        BezierParallel2::from_source(fragment.parallel().source().clone(), composed_distance);
+    let composed = fragment.parallel().with_distance(composed_distance);
     let composed_distance_sign = match real_sign(composed.distance(), policy) {
         Some(sign) => sign,
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
@@ -2462,10 +2461,28 @@ fn exact_offset_span_from_analytic_parallel(
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
+    let start_scale = match composed.regular_fragment_derivative_scale_sign(start_range, policy)? {
+        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end_scale = if ranges.len() == 1 {
+        start_scale
+    } else {
+        match composed.regular_fragment_derivative_scale_sign(end_range, policy)? {
+            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    };
     let start_tangent = match exact_parallel_limiting_tangent(
         &composed,
         start_parameter,
-        start_range,
+        start_scale,
         fragment.is_reversed(),
         policy,
     )? {
@@ -2475,7 +2492,7 @@ fn exact_offset_span_from_analytic_parallel(
     let end_tangent = match exact_parallel_limiting_tangent(
         &composed,
         end_parameter,
-        end_range,
+        end_scale,
         fragment.is_reversed(),
         policy,
     )? {
@@ -2496,17 +2513,11 @@ fn exact_offset_span_from_analytic_parallel(
 fn exact_parallel_limiting_tangent(
     parallel: &BezierParallel2,
     parameter: &Real,
-    regular_range: &BezierParameterRange2,
+    scale: RealSign,
     reversed: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<(Real, Real)>> {
-    let scale = match parallel.regular_fragment_derivative_scale_sign(regular_range, policy)? {
-        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-        Classification::Decided(RealSign::Zero) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-        }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    debug_assert_ne!(scale, RealSign::Zero);
     let tangent = match parallel.source_tangent_at(parameter, policy)? {
         Classification::Decided(tangent) => tangent,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),

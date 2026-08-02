@@ -210,11 +210,16 @@ impl BezierParallelSource2 {
 }
 
 #[derive(Debug)]
-struct BezierParallelData2 {
+struct BezierParallelSourceData2 {
     source: BezierParallelSource2,
-    distance: Real,
     polynomial_power_basis: OnceLock<(Vec<Real>, Vec<Real>)>,
     differential: OnceLock<BezierParallelDifferential2>,
+}
+
+#[derive(Debug)]
+struct BezierParallelData2 {
+    source: Arc<BezierParallelSourceData2>,
+    distance: Real,
     certified_ph_offset: OnceLock<Option<Arc<CertifiedPythagoreanHodographOffset2>>>,
 }
 
@@ -1044,7 +1049,7 @@ impl std::fmt::Debug for BezierParallel2 {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter
             .debug_struct("BezierParallel2")
-            .field("source", &self.data.source)
+            .field("source", self.source())
             .field("distance", &self.data.distance)
             .finish()
     }
@@ -1053,7 +1058,7 @@ impl std::fmt::Debug for BezierParallel2 {
 impl PartialEq for BezierParallel2 {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
-            || (self.data.source == other.data.source && self.data.distance == other.data.distance)
+            || (self.source() == other.source() && self.data.distance == other.data.distance)
     }
 }
 
@@ -1429,25 +1434,43 @@ impl BezierParallel2 {
     /// [`Self::source`] and [`Self::distance`] provide the inverse structural
     /// view for exact serialization and diagnostics.
     pub fn from_source(source: BezierParallelSource2, distance: Real) -> Self {
+        Self::from_shared_source(
+            Arc::new(BezierParallelSourceData2 {
+                source,
+                polynomial_power_basis: OnceLock::new(),
+                differential: OnceLock::new(),
+            }),
+            distance,
+        )
+    }
+
+    fn from_shared_source(source: Arc<BezierParallelSourceData2>, distance: Real) -> Self {
         Self {
             data: Arc::new(BezierParallelData2 {
                 source,
                 distance,
-                polynomial_power_basis: OnceLock::new(),
-                differential: OnceLock::new(),
                 certified_ph_offset: OnceLock::new(),
             }),
         }
     }
 
+    /// Returns the same exact source kernel at another signed normal distance.
+    ///
+    /// Source power-basis and differential caches are distance-independent and
+    /// remain clone-shared.  Distance-dependent PH materialization keeps its
+    /// own cache in the new one-word carrier.
+    pub(crate) fn with_distance(&self, distance: Real) -> Self {
+        Self::from_shared_source(Arc::clone(&self.data.source), distance)
+    }
+
     /// Returns the exact source representation retained by this parallel.
     pub fn source(&self) -> &BezierParallelSource2 {
-        &self.data.source
+        &self.data.source.source
     }
 
     /// Returns the degree of the retained source span.
     pub fn source_degree(&self) -> usize {
-        match &self.data.source {
+        match self.source() {
             BezierParallelSource2::Quadratic(_) => 2,
             BezierParallelSource2::Cubic(_) => 3,
             BezierParallelSource2::Rational(source) => source.degree(),
@@ -1505,25 +1528,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let derivative = match self.derivative_at(&parameter, policy)? {
-            Classification::Decided(derivative) => derivative,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let source_tangent = match self.source_tangent_at(&parameter, policy)? {
-            Classification::Decided(tangent) => tangent,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let alignment = derivative.dx() * &source_tangent.0 + derivative.dy() * &source_tangent.1;
-        Ok(match real_sign(&alignment, policy) {
-            Some(RealSign::Positive) => Classification::Decided(RealSign::Positive),
-            Some(RealSign::Negative) => Classification::Decided(RealSign::Negative),
-            Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
-            None => Classification::Uncertain(UncertaintyReason::RealSign),
-        })
+        self.parallel_derivative_scale_sign_at_exact(&parameter, policy)
     }
 
     /// Evaluates a nonzero tangent direction of the retained source.
@@ -1565,7 +1570,7 @@ impl BezierParallel2 {
     /// signed distance is negated so this carrier still traces the original
     /// parallel image, now from end to start.
     pub fn reversed(&self) -> Self {
-        Self::from_source(self.data.source.reversed(), -self.distance().clone())
+        Self::from_source(self.source().reversed(), -self.distance().clone())
     }
 
     /// Applies a certified planar similarity without materializing a finite
@@ -1580,7 +1585,7 @@ impl BezierParallel2 {
             distance = -distance;
         }
         Ok(Self::from_source(
-            self.data.source.transform_similarity(transform)?,
+            self.source().transform_similarity(transform)?,
             distance,
         ))
     }
@@ -1602,8 +1607,7 @@ impl BezierParallel2 {
             }
         }
         Ok(self
-            .data
-            .source
+            .source()
             .split_at_exact(parameter, policy)?
             .map(|(left, right)| {
                 (
@@ -1638,8 +1642,7 @@ impl BezierParallel2 {
             }
         }
         Ok(self
-            .data
-            .source
+            .source()
             .subcurve_between_exact(start, end, policy)?
             .map(|source| Self::from_source(source, self.distance().clone())))
     }
@@ -1650,7 +1653,7 @@ impl BezierParallel2 {
     /// so expanding a certified source box by that amount is exact broad-phase
     /// evidence without sampling the parallel or materializing a finite curve.
     pub fn conservative_bounds(&self, policy: &CurveContext) -> CurveResult<Classification<Aabb2>> {
-        let source = match self.data.source.certified_bounds(policy) {
+        let source = match self.source().certified_bounds(policy) {
             Classification::Decided(source) => source,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -2653,6 +2656,17 @@ impl BezierParallel2 {
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
+        if let Some(parameter) = parameter.as_exact() {
+            return self.parallel_derivative_scale_sign_at_exact(parameter, policy);
+        }
+        self.parallel_derivative_scale_sign_from_polynomials(parameter, policy)
+    }
+
+    fn parallel_derivative_scale_sign_from_polynomials(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
             return Ok(Classification::Decided(RealSign::Positive));
         }
@@ -2712,6 +2726,73 @@ impl BezierParallel2 {
                 )
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    /// Evaluates the parallel/source derivative scale without constructing the
+    /// normalized derivative or its square root.
+    ///
+    /// For homogeneous tangent numerator `H`, the scale can change sign only
+    /// on the selected negative-curvature branch where
+    /// `(d W^2 (H' x_rev H))^2 - |H|^6` changes sign.  This is the same exact
+    /// polynomial certificate used for algebraic parameters, evaluated
+    /// directly at a represented scalar with bounded temporary storage.
+    fn parallel_derivative_scale_sign_at_exact(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
+            return Ok(Classification::Decided(RealSign::Positive));
+        }
+        let source = self.source_power_basis()?;
+        let differential = self.differential()?;
+        let tangent_x = polynomial_evaluate(&differential.tangent_x, parameter);
+        let tangent_y = polynomial_evaluate(&differential.tangent_y, parameter);
+        let tangent_derivative_x =
+            polynomial_evaluate(&differential.tangent_derivative_x, parameter);
+        let tangent_derivative_y =
+            polynomial_evaluate(&differential.tangent_derivative_y, parameter);
+        let speed_squared = &tangent_x * &tangent_x + &tangent_y * &tangent_y;
+        match real_sign(&speed_squared, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => return Ok(Classification::Decided(RealSign::Zero)),
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "parallel source speed squared was certified negative".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let curvature_cross =
+            &tangent_derivative_x * &tangent_y - &tangent_derivative_y * &tangent_x;
+        let mut signed_curvature = curvature_cross * self.distance();
+        if let Some(weight) = source.weight {
+            let weight = polynomial_evaluate(weight, parameter);
+            match real_sign(&weight, policy) {
+                Some(RealSign::Positive | RealSign::Negative) => {}
+                Some(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            signed_curvature = signed_curvature * &weight * weight;
+        }
+        match real_sign(&signed_curvature, policy) {
+            Some(RealSign::Positive | RealSign::Zero) => {
+                Ok(Classification::Decided(RealSign::Positive))
+            }
+            Some(RealSign::Negative) => {
+                let squared_difference = &signed_curvature * &signed_curvature
+                    - &speed_squared * &speed_squared * &speed_squared;
+                Ok(match real_sign(&squared_difference, policy) {
+                    Some(RealSign::Positive) => Classification::Decided(RealSign::Negative),
+                    Some(RealSign::Negative) => Classification::Decided(RealSign::Positive),
+                    Some(RealSign::Zero) => Classification::Decided(RealSign::Zero),
+                    None => Classification::Uncertain(UncertaintyReason::RealSign),
+                })
+            }
+            None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
     }
 
@@ -3417,7 +3498,7 @@ impl BezierParallel2 {
     ) -> CurveResult<Classification<Option<RationalBezier2>>> {
         match real_sign(self.distance(), policy) {
             Some(RealSign::Zero) => Ok(Classification::Decided(Some(
-                self.data.source.to_rational_bezier()?,
+                self.source().to_rational_bezier()?,
             ))),
             Some(RealSign::Positive | RealSign::Negative) => {
                 if let Some(cached) = self.data.certified_ph_offset.get() {
@@ -3472,10 +3553,10 @@ impl BezierParallel2 {
     }
 
     fn polynomial_power_basis(&self) -> CurveResult<&(Vec<Real>, Vec<Real>)> {
-        if let Some(power_basis) = self.data.polynomial_power_basis.get() {
+        if let Some(power_basis) = self.data.source.polynomial_power_basis.get() {
             return Ok(power_basis);
         }
-        let power_basis = match &self.data.source {
+        let power_basis = match self.source() {
             BezierParallelSource2::Quadratic(source) => {
                 polynomial_control_power_basis(&source.control_points())?
             }
@@ -3488,16 +3569,17 @@ impl BezierParallel2 {
                 ));
             }
         };
-        let _ = self.data.polynomial_power_basis.set(power_basis);
+        let _ = self.data.source.polynomial_power_basis.set(power_basis);
         Ok(self
             .data
+            .source
             .polynomial_power_basis
             .get()
             .expect("parallel polynomial basis was initialized"))
     }
 
     fn source_power_basis(&self) -> CurveResult<BezierParallelPowerBasisRef<'_>> {
-        match &self.data.source {
+        match self.source() {
             BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => {
                 let (x_numerator, y_numerator) = self.polynomial_power_basis()?;
                 Ok(BezierParallelPowerBasisRef {
@@ -3584,10 +3666,10 @@ impl BezierParallel2 {
     }
 
     fn differential(&self) -> CurveResult<&BezierParallelDifferential2> {
-        if let Some(differential) = self.data.differential.get() {
+        if let Some(differential) = self.data.source.differential.get() {
             return Ok(differential);
         }
-        let (tangent_x, tangent_y) = match &self.data.source {
+        let (tangent_x, tangent_y) = match self.source() {
             BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => {
                 let (source_x, source_y) = self.polynomial_power_basis()?;
                 (
@@ -3621,9 +3703,10 @@ impl BezierParallel2 {
             tangent_x,
             tangent_y,
         };
-        let _ = self.data.differential.set(differential);
+        let _ = self.data.source.differential.set(differential);
         Ok(self
             .data
+            .source
             .differential
             .get()
             .expect("parallel differential was initialized"))
@@ -3635,7 +3718,7 @@ impl BezierParallel2 {
     }
 
     fn rational_source(&self) -> Option<&RationalBezier2> {
-        match &self.data.source {
+        match self.source() {
             BezierParallelSource2::Rational(source) => Some(source),
             BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => None,
         }
@@ -3653,7 +3736,7 @@ impl BezierParallel2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
-            return Ok(match &self.data.source {
+            return Ok(match self.source() {
                 BezierParallelSource2::Quadratic(source) => {
                     Classification::Decided(source.point_at(parameter.clone()))
                 }
@@ -3723,7 +3806,7 @@ impl BezierParallel2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
-            return match &self.data.source {
+            return match self.source() {
                 BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => {
                     let differential = self.differential()?;
                     Ok(Classification::Decided(CurveDerivative2::new(
@@ -4289,7 +4372,7 @@ impl BezierParallel2 {
         if !analysis.source_is_regular() {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
-        let source = match &self.data.source {
+        let source = match self.source() {
             BezierParallelSource2::Quadratic(source) => {
                 PolynomialBezierNode2::Quadratic(source.clone())
             }
@@ -11817,7 +11900,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn exact_parallel_is_one_word_and_clones_share_lazy_differential() {
+    fn exact_parallel_is_one_word_and_distances_share_lazy_source_kernel() {
         let source = QuadraticBezier2::new(
             Point2::new(Real::zero(), Real::zero()),
             Point2::new(Real::one(), Real::one()),
@@ -11825,19 +11908,71 @@ mod conversion_tests {
         );
         let parallel = source.parallel_left(Real::one()).unwrap();
         let clone = parallel.clone();
+        let redistanced = parallel.with_distance(Real::from(2_i8));
 
         assert_eq!(
             std::mem::size_of::<BezierParallel2>(),
             std::mem::size_of::<usize>()
         );
         assert!(Arc::ptr_eq(&parallel.data, &clone.data));
-        assert!(parallel.data.differential.get().is_none());
+        assert!(!Arc::ptr_eq(&parallel.data, &redistanced.data));
+        assert!(Arc::ptr_eq(&parallel.data.source, &redistanced.data.source));
+        assert!(parallel.data.source.differential.get().is_none());
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         assert!(matches!(
             clone.point_at(&half, &CurveContext::STRICT).unwrap(),
             Classification::Decided(_)
         ));
-        assert!(parallel.data.differential.get().is_some());
+        assert!(parallel.data.source.differential.get().is_some());
+        assert!(redistanced.data.source.differential.get().is_some());
+        assert!(redistanced.data.certified_ph_offset.get().is_none());
+    }
+
+    #[test]
+    fn represented_derivative_scale_fast_path_matches_polynomial_certificate() {
+        let point = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let sources = [
+            BezierParallelSource2::Quadratic(QuadraticBezier2::new(
+                point(0, 0),
+                point(1, 2),
+                point(3, 0),
+            )),
+            BezierParallelSource2::Cubic(CubicBezier2::new(
+                point(0, 0),
+                point(1, 3),
+                point(3, -2),
+                point(5, 1),
+            )),
+            BezierParallelSource2::Rational(
+                RationalBezier2::try_new(
+                    vec![point(0, 0), point(1, 2), point(3, -1), point(4, 1)],
+                    vec![Real::one(), Real::from(2_i8), Real::from(3_i8), Real::one()],
+                )
+                .unwrap(),
+            ),
+        ];
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let radical = Real::from(2_i8).sqrt().unwrap();
+        let distances = [-radical.clone(), -half.clone(), Real::zero(), half, radical];
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for source in &sources {
+                for distance in &distances {
+                    let parallel = BezierParallel2::from_source(source.clone(), distance.clone());
+                    for numerator in 0..=4_u8 {
+                        let parameter = (Real::from(numerator) / Real::from(4_u8)).unwrap();
+                        let retained = BezierParameter2::Exact(parameter.clone());
+                        assert_eq!(
+                            parallel.parallel_derivative_scale_sign_at_exact(&parameter, &policy),
+                            parallel.parallel_derivative_scale_sign_from_polynomials(
+                                &retained, &policy,
+                            ),
+                            "source={source:?}, distance={distance:?}, parameter={parameter:?}, policy={policy:?}",
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]

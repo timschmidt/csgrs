@@ -1065,6 +1065,53 @@ fn bench_curve_region_bezier_offset_lanes(
     Ok(())
 }
 
+fn bench_curve_region_repeated_bezier_offset_lanes(
+    iterations: u32,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let policy = CurveContext::STRICT;
+    let composed_source = curve_region_bezier_offset_fixture()?
+        .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
+        .into_value();
+    let direct_source = curve_region_bezier_offset_fixture()?;
+
+    let composed_check = composed_source
+        .offset(q(1, 5), &OffsetCornerStyle2::Round, &policy)?
+        .into_value();
+    let direct_check = direct_source
+        .offset(q(3, 10), &OffsetCornerStyle2::Round, &policy)?
+        .into_value();
+    assert_eq!(composed_check, direct_check);
+
+    let started = Instant::now();
+    let mut composed_loops = 0_usize;
+    for _ in 0..iterations {
+        let result = composed_source
+            .offset(q(1, 5), &OffsetCornerStyle2::Round, &policy)?
+            .into_value();
+        composed_loops += black_box(result.boundary_loops().len());
+    }
+    let composed_elapsed = started.elapsed();
+    println!(
+        "curve_region_bezier_parallel_repeated: {iterations} iterations in {composed_elapsed:?} ({:?}/iter), loops={composed_loops}",
+        composed_elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut direct_loops = 0_usize;
+    for _ in 0..iterations {
+        let result = direct_source
+            .offset(q(3, 10), &OffsetCornerStyle2::Round, &policy)?
+            .into_value();
+        direct_loops += black_box(result.boundary_loops().len());
+    }
+    let direct_elapsed = started.elapsed();
+    println!(
+        "curve_region_bezier_parallel_direct_equivalent: {iterations} iterations in {direct_elapsed:?} ({:?}/iter), loops={direct_loops}",
+        direct_elapsed / iterations
+    );
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Ok(group) = std::env::var("HYPERCURVE_OFFSET_BENCH_GROUP") {
         match group.as_str() {
@@ -1081,6 +1128,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "bezier-pair-general" => bench_bezier_parallel_pair_general_contact()?,
             "bezier-pair-intersection" => bench_bezier_parallel_pair_intersection_lanes()?,
             "curve-region-exact" => bench_curve_region_bezier_offset_lanes(10)?,
+            "curve-region-repeated" => bench_curve_region_repeated_bezier_offset_lanes(100)?,
             _ => panic!("unknown HYPERCURVE_OFFSET_BENCH_GROUP={group:?}"),
         }
         return Ok(());
