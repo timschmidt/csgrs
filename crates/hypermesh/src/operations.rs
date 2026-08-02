@@ -1,6 +1,7 @@
 //! Public boolean operation entry points.
 
 use std::borrow::Borrow;
+use std::collections::hash_map::Entry;
 use std::sync::Arc;
 
 use hyperlattice::{
@@ -3221,8 +3222,8 @@ fn compute_projective_input_soup(
     let mut support_planes: [Vec<&Plane>; 2] = std::array::from_fn(|_| Vec::new());
     let mut storage_support_planes: [StorageHashMap<[usize; 4], usize>; 2] =
         std::array::from_fn(|_| StorageHashMap::default());
-    let mut approximate_support_planes: [StorageHashMap<[u64; 4], Vec<usize>>; 2] =
-        std::array::from_fn(|_| StorageHashMap::default());
+    let mut approximate_support_planes: [ApproximateSupportPlaneIndex; 2] =
+        std::array::from_fn(|_| ApproximateSupportPlaneIndex::default());
     let mut non_exact_support_planes: [Vec<usize>; 2] = std::array::from_fn(|_| Vec::new());
     let mut support_plane_f64_values: [Vec<Option<[f64; 4]>>; 2] =
         std::array::from_fn(|_| Vec::new());
@@ -3237,24 +3238,15 @@ fn compute_projective_input_soup(
                 index
             } else if let Some(values) = exact_plane_f64(decisions, support) {
                 let key = values.map(f64::to_bits);
-                if let Some(index) = approximate_support_planes[mesh]
-                    .get(&key)
-                    .into_iter()
-                    .flatten()
-                    .copied()
-                    .find(|&index| support_planes[mesh][index] == support)
-                {
-                    index
-                } else {
-                    let index = support_planes[mesh].len();
-                    support_planes[mesh].push(support);
+                let (index, inserted) = approximate_support_planes[mesh].intern(
+                    key,
+                    &mut support_planes[mesh],
+                    support,
+                );
+                if inserted {
                     support_plane_f64_values[mesh].push(Some(values));
-                    approximate_support_planes[mesh]
-                        .entry(key)
-                        .or_default()
-                        .push(index);
-                    index
                 }
+                index
             } else if let Some(index) =
                 non_exact_support_planes[mesh]
                     .iter()
@@ -3578,8 +3570,8 @@ fn compute_two_convex_inputs_projectively(
     let mut support_planes: [Vec<&Plane>; 2] = std::array::from_fn(|_| Vec::new());
     let mut storage_support_planes: [StorageHashMap<[usize; 4], usize>; 2] =
         std::array::from_fn(|_| StorageHashMap::default());
-    let mut approximate_support_planes: [StorageHashMap<[u64; 4], Vec<usize>>; 2] =
-        std::array::from_fn(|_| StorageHashMap::default());
+    let mut approximate_support_planes: [ApproximateSupportPlaneIndex; 2] =
+        std::array::from_fn(|_| ApproximateSupportPlaneIndex::default());
     let mut support_plane_f64_values: [Vec<Option<[f64; 4]>>; 2] =
         std::array::from_fn(|_| Vec::new());
     let mut polygon_support_planes = Vec::with_capacity(polygons.len());
@@ -3596,24 +3588,15 @@ fn compute_two_convex_inputs_projectively(
             index
         } else if let Some(values) = exact_plane_f64(decisions, &polygon.support) {
             let key = values.map(f64::to_bits);
-            if let Some(index) = approximate_support_planes[mesh]
-                .get(&key)
-                .into_iter()
-                .flatten()
-                .copied()
-                .find(|&index| support_planes[mesh][index] == &polygon.support)
-            {
-                index
-            } else {
-                let index = support_planes[mesh].len();
-                support_planes[mesh].push(&polygon.support);
+            let (index, inserted) = approximate_support_planes[mesh].intern(
+                key,
+                &mut support_planes[mesh],
+                &polygon.support,
+            );
+            if inserted {
                 support_plane_f64_values[mesh].push(Some(values));
-                approximate_support_planes[mesh]
-                    .entry(key)
-                    .or_default()
-                    .push(index);
-                index
             }
+            index
         } else if let Some(index) = support_planes[mesh].iter().position(|existing| {
             certifiably_same_oriented_plane(decisions, existing, &polygon.support).unwrap_or(false)
         }) {
@@ -4868,6 +4851,87 @@ fn exact_plane_storage_key(plane: &Plane) -> Option<[usize; 4]> {
         return None;
     };
     Some([a, b, c, d].map(Rational::storage_identity))
+}
+
+// A non-ZST Vec cannot reach usize::MAX, so this cannot name an arena entry.
+const NO_APPROXIMATE_SUPPORT_COLLISION: usize = usize::MAX;
+
+// The floating-point key only proposes candidates. Every returned support is
+// still verified by exact Plane equality. Keep the common unique-key case
+// inline so it needs neither a child allocation nor a three-word Vec value.
+#[derive(Default)]
+struct ApproximateSupportPlaneIndex {
+    buckets: StorageHashMap<[u64; 4], ApproximateSupportPlaneBucket>,
+    collisions: Vec<ApproximateSupportPlaneCollision>,
+}
+
+struct ApproximateSupportPlaneBucket {
+    first: usize,
+    collision_head: usize,
+}
+
+struct ApproximateSupportPlaneCollision {
+    support: usize,
+    next: usize,
+}
+
+impl ApproximateSupportPlaneBucket {
+    fn find(
+        &self,
+        collisions: &[ApproximateSupportPlaneCollision],
+        support_planes: &[&Plane],
+        support: &Plane,
+    ) -> Option<usize> {
+        if support_planes[self.first] == support {
+            return Some(self.first);
+        }
+        let mut collision = self.collision_head;
+        while collision != NO_APPROXIMATE_SUPPORT_COLLISION {
+            let entry = &collisions[collision];
+            if support_planes[entry.support] == support {
+                return Some(entry.support);
+            }
+            collision = entry.next;
+        }
+        None
+    }
+}
+
+impl ApproximateSupportPlaneIndex {
+    fn intern<'a>(
+        &mut self,
+        key: [u64; 4],
+        support_planes: &mut Vec<&'a Plane>,
+        support: &'a Plane,
+    ) -> (usize, bool) {
+        let collisions = &mut self.collisions;
+        match self.buckets.entry(key) {
+            Entry::Occupied(mut entry) => {
+                if let Some(index) = entry.get().find(collisions, support_planes, support) {
+                    return (index, false);
+                }
+                let bucket = entry.get_mut();
+                let index = support_planes.len();
+                support_planes.push(support);
+                let collision = collisions.len();
+                collisions.push(ApproximateSupportPlaneCollision {
+                    support: index,
+                    next: bucket.collision_head,
+                });
+                bucket.collision_head = collision;
+                (index, true)
+            }
+            Entry::Vacant(entry) => {
+                let index = support_planes.len();
+                support_planes.push(support);
+                entry.insert(ApproximateSupportPlaneBucket {
+                    first: index,
+                    collision_head: NO_APPROXIMATE_SUPPORT_COLLISION,
+                });
+                (index, true)
+            }
+        }
+    }
 }
 
 fn exact_plane_f64(decisions: &DecisionContext, plane: &Plane) -> Option<[f64; 4]> {
@@ -6765,6 +6829,66 @@ mod tests {
         assert_eq!(identities[0][0], identities[1][0]);
         assert_eq!(identities[0][0], identities[1][1]);
         assert_ne!(identities[0][0], identities[0][1]);
+    }
+
+    #[test]
+    fn approximate_support_buckets_verify_every_exact_collision() {
+        assert_eq!(
+            std::mem::size_of::<ApproximateSupportPlaneBucket>(),
+            2 * std::mem::size_of::<usize>()
+        );
+        assert_eq!(
+            std::mem::size_of::<ApproximateSupportPlaneCollision>(),
+            2 * std::mem::size_of::<usize>()
+        );
+
+        let rounded = |shift: u32| {
+            let denominator = 1_u64 << shift;
+            Plane::from_coefficients(
+                Real::from(
+                    Rational::fraction(i64::try_from(denominator + 1).unwrap(), denominator)
+                        .unwrap(),
+                ),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+            )
+        };
+        let first = Plane::from_coefficients(Real::one(), Real::zero(), Real::zero(), Real::zero());
+        let second = rounded(54);
+        let third = rounded(55);
+        let decisions = crate::test_support::approximate_decisions();
+        let key = exact_plane_f64(&decisions, &first)
+            .unwrap()
+            .map(f64::to_bits);
+        assert_eq!(
+            exact_plane_f64(&decisions, &second)
+                .unwrap()
+                .map(f64::to_bits),
+            key
+        );
+        assert_eq!(
+            exact_plane_f64(&decisions, &third)
+                .unwrap()
+                .map(f64::to_bits),
+            key
+        );
+        assert_ne!(first, second);
+        assert_ne!(first, third);
+        assert_ne!(second, third);
+
+        let mut supports = Vec::new();
+        let mut index = ApproximateSupportPlaneIndex::default();
+        assert_eq!(index.intern(key, &mut supports, &first), (0, true));
+        assert_eq!(index.collisions.capacity(), 0);
+        assert_eq!(index.intern(key, &mut supports, &first), (0, false));
+
+        assert_eq!(index.intern(key, &mut supports, &second), (1, true));
+        assert_eq!(index.intern(key, &mut supports, &third), (2, true));
+        assert_eq!(index.intern(key, &mut supports, &first), (0, false));
+        assert_eq!(index.intern(key, &mut supports, &second), (1, false));
+        assert_eq!(index.intern(key, &mut supports, &third), (2, false));
+        assert_eq!(supports.len(), 3);
     }
 
     #[test]
