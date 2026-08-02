@@ -23,9 +23,9 @@ use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
-    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierParameter2, Classification,
-    CubicBezier2, CurveContext, CurveError, CurveResult, Point2, QuadraticBezier2, RationalBezier2,
-    RationalQuadraticBezier2, UncertaintyReason,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierParallel2, BezierParameter2,
+    BezierParameterRange2, Classification, CubicBezier2, CurveContext, CurveError, CurveResult,
+    Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 
 /// A native Bezier subcurve produced by exact split materialization.
@@ -40,6 +40,20 @@ pub enum BezierSubcurve2 {
     RationalQuadratic(RationalQuadraticBezier2),
     /// General exact rational Bezier subcurve.
     Rational(RationalBezier2),
+}
+
+/// One exact analytic Bezier-parallel image restricted to a source-parameter range.
+///
+/// The carrier remains procedural: no fitted Bezier or sampled endpoint is
+/// introduced. `range` is stored in ascending source-parameter order and
+/// `reversed` records boundary traversal independently. This is important for
+/// algebraic endpoints, which remain isolating-root evidence rather than
+/// rounded coordinates.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierParallelFragment2 {
+    parallel: BezierParallel2,
+    range: BezierParameterRange2,
+    reversed: bool,
 }
 
 /// One fragment between adjacent split boundaries.
@@ -77,6 +91,8 @@ pub enum BezierSplitFragment2 {
         /// Exact point/tangent image when the end boundary is algebraic.
         end_image: Option<BezierAlgebraicEndpointImage2>,
     },
+    /// Exact analytic parallel retained over represented or algebraic source parameters.
+    AnalyticParallel(BezierParallelFragment2),
     /// At least one boundary is algebraic and must be carried forward.
     Unresolved {
         /// Start split boundary in the original parameter space.
@@ -142,8 +158,173 @@ impl BezierSplitFragment2 {
             Self::Materialized { start, end, .. }
             | Self::AlgebraicEndpointImages { start, end, .. }
             | Self::Unresolved { start, end } => (start, end),
+            Self::AnalyticParallel(fragment) => (fragment.range.start(), fragment.range.end()),
         }
     }
+}
+
+impl BezierParallelFragment2 {
+    /// Constructs a regular analytic parallel fragment from an oriented range.
+    ///
+    /// Source singularities are forbidden on a nonzero-distance fragment.
+    /// Parallel cusps may be range endpoints, where later arrangement splitting
+    /// owns the vertex, but may not remain in the open fragment interior.
+    pub fn try_new(
+        parallel: BezierParallel2,
+        range: BezierParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let order = match range.start().cmp_by_refinement(range.end(), policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let (range, reversed) = match order {
+            Ordering::Less => (range, false),
+            Ordering::Greater => (range.reversed(), true),
+            Ordering::Equal => return Err(CurveError::InvalidBezierRange),
+        };
+        let zero = BezierParameter2::Exact(Real::zero());
+        let one = BezierParameter2::Exact(Real::one());
+        for (parameter, boundary, invalid_when) in [
+            (range.start(), &zero, Ordering::Less),
+            (range.end(), &one, Ordering::Greater),
+        ] {
+            match parameter.cmp_by_refinement(boundary, policy)? {
+                Classification::Decided(order) if order == invalid_when => {
+                    return Err(CurveError::InvalidBezierRange);
+                }
+                Classification::Decided(_) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+
+        let distance_sign = match crate::classify::real_sign(parallel.distance(), policy) {
+            Some(sign) => sign,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        if distance_sign != RealSign::Zero {
+            let analysis = match parallel.singularity_analysis(policy)? {
+                Classification::Decided(analysis) => analysis,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            for singularity in analysis.source_singularities() {
+                match parameter_in_range(singularity, &range, true, policy)? {
+                    Classification::Decided(true) => {
+                        return Err(CurveError::Topology(
+                            "analytic parallel range contains an undefined source normal".into(),
+                        ));
+                    }
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            for cusp in analysis.parallel_cusps() {
+                match parameter_in_range(cusp, &range, false, policy)? {
+                    Classification::Decided(true) => {
+                        return Err(CurveError::Topology(
+                            "analytic parallel range contains an unsplit interior cusp".into(),
+                        ));
+                    }
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
+        Ok(Classification::Decided(Self {
+            parallel,
+            range,
+            reversed,
+        }))
+    }
+
+    pub(crate) fn from_certified_range(
+        parallel: BezierParallel2,
+        range: BezierParameterRange2,
+        reversed: bool,
+    ) -> Self {
+        Self {
+            parallel,
+            range,
+            reversed,
+        }
+    }
+
+    /// Returns the clone-shared exact analytic parallel.
+    pub const fn parallel(&self) -> &BezierParallel2 {
+        &self.parallel
+    }
+
+    /// Returns the ascending exact source-parameter range.
+    pub const fn range(&self) -> &BezierParameterRange2 {
+        &self.range
+    }
+
+    /// Returns whether boundary traversal opposes source-parameter order.
+    pub const fn is_reversed(&self) -> bool {
+        self.reversed
+    }
+
+    /// Returns this same exact range in the opposite boundary direction.
+    pub fn reversed(&self) -> Self {
+        Self {
+            parallel: self.parallel.clone(),
+            range: self.range.clone(),
+            reversed: !self.reversed,
+        }
+    }
+
+    /// Constructs an exact represented point strictly inside this range.
+    pub fn representative_point(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Point2>> {
+        let parameter = match self
+            .range
+            .start()
+            .strict_rational_between_ordered(self.range.end(), policy)?
+        {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.parallel.point_at(&parameter, policy)
+    }
+}
+
+fn parameter_in_range(
+    parameter: &BezierParameter2,
+    range: &BezierParameterRange2,
+    include_endpoints: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let start = match parameter.cmp_by_refinement(range.start(), policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let end = match parameter.cmp_by_refinement(range.end(), policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    Ok(Classification::Decided(if include_endpoints {
+        !start.is_lt() && !end.is_gt()
+    } else {
+        start.is_gt() && end.is_lt()
+    }))
 }
 
 impl BezierSubcurve2 {
@@ -363,6 +544,7 @@ impl BezierSplitFragment2 {
                 let half = (Real::one() / Real::from(2_i8))?;
                 Ok(curve.point_at(&half, policy))
             }
+            Self::AnalyticParallel(fragment) => fragment.representative_point(policy),
             Self::AlgebraicEndpointImages {
                 start,
                 end,
@@ -414,6 +596,7 @@ impl BezierSplitFragment2 {
                 start_image: start_image.clone(),
                 end_image: end_image.clone(),
             }),
+            Self::AnalyticParallel(fragment) => Ok(Self::AnalyticParallel(fragment.reversed())),
             Self::Unresolved { .. } => Err(CurveError::Topology(
                 "reversing an unresolved Bezier split fragment requires endpoint evidence"
                     .to_owned(),
@@ -521,6 +704,12 @@ fn validate_bezier_split_fragment(
                 policy,
             )?;
         }
+        BezierSplitFragment2::AnalyticParallel(_) => {
+            return Err(CurveError::Topology(
+                "analytic parallel fragments are region carriers, not native Bezier split materialization"
+                    .into(),
+            ));
+        }
         BezierSplitFragment2::Unresolved { start, end } => {
             if start.is_exact() && end.is_exact() {
                 return Err(CurveError::Topology(
@@ -575,6 +764,9 @@ fn bezier_split_fragment_range(
         BezierSplitFragment2::Materialized { start, end, .. }
         | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
         | BezierSplitFragment2::Unresolved { start, end } => (start, end),
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            (fragment.range().start(), fragment.range().end())
+        }
     }
 }
 

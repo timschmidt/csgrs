@@ -689,6 +689,7 @@ fn project_curve_region_loop_to_curve_path(
             BezierSplitFragment2::AlgebraicEndpointImages {
                 source_curve: None, ..
             }
+            | BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::Unresolved { .. } => return Ok(None),
         };
         subcurves.push(curve);
@@ -974,6 +975,12 @@ fn project_curve_region_loop(
             | BezierSplitFragment2::Unresolved { .. } => {
                 return Err(CurveError::Topology(
                     "finite projection requires a retained source curve for algebraic fragments"
+                        .into(),
+                ));
+            }
+            BezierSplitFragment2::AnalyticParallel(_) => {
+                return Err(CurveError::Topology(
+                    "finite projection of exact analytic parallel fragments is not implemented"
                         .into(),
                 ));
             }

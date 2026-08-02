@@ -530,6 +530,28 @@ fn validate_arrangement_fragment_source_range(
                 )));
             }
         },
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            match fragment
+                .range()
+                .start()
+                .cmp_by_interval(fragment.range().end(), policy)?
+            {
+                Classification::Decided(std::cmp::Ordering::Less) => {}
+                Classification::Decided(
+                    std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
+                ) => {
+                    return Err(CurveError::Topology(
+                        "retained analytic parallel arrangement range must be certified strictly increasing"
+                            .to_owned(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(CurveError::Topology(format!(
+                        "retained analytic parallel arrangement range ordering is uncertain: {reason:?}"
+                    )));
+                }
+            }
+        }
         BezierSplitFragment2::AlgebraicEndpointImages {
             source_curve: None, ..
         }
@@ -643,6 +665,9 @@ fn arrangement_fragment_source_range(
         BezierSplitFragment2::Materialized { start, end, .. }
         | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
         | BezierSplitFragment2::Unresolved { start, end } => (start, end),
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            (fragment.range().start(), fragment.range().end())
+        }
     }
 }
 
@@ -772,6 +797,9 @@ fn decided_arrangement_traversal(
 fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Point2)> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => Some(curve.endpoints()),
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            analytic_parallel_exact_endpoints(fragment, &CurveContext::STRICT)
+        }
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
         | BezierSplitFragment2::Unresolved { .. } => None,
     }
@@ -1018,6 +1046,9 @@ fn materialized_endpoint_data(
 ) -> Option<Classification<EndpointData>> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => Some(curve.endpoint_data(policy)),
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            Some(analytic_parallel_endpoint_data(fragment, policy))
+        }
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
         | BezierSplitFragment2::Unresolved { .. } => None,
     }
@@ -1163,8 +1194,104 @@ fn retained_endpoint_data(
                 end_derivative_source,
             }))
         }
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            let data = match analytic_parallel_endpoint_data(fragment, policy) {
+                Classification::Decided(data) => data,
+                Classification::Uncertain(reason) => {
+                    return Some(Classification::Uncertain(reason));
+                }
+            };
+            Some(Classification::Decided(RetainedEndpointData {
+                start: Some(RetainedEndpointKey::Exact(Box::new(data.start))),
+                end: Some(RetainedEndpointKey::Exact(Box::new(data.end))),
+                start_topology_vertex: arrangement_fragment.start_topology_vertex(),
+                end_topology_vertex: arrangement_fragment.end_topology_vertex(),
+                start_tangent: (scope == RetainedEndpointScope::TangentOrder)
+                    .then(|| RetainedTangentVector::Native(Box::new(data.start_tangent))),
+                end_tangent: (scope == RetainedEndpointScope::TangentOrder)
+                    .then(|| RetainedTangentVector::Native(Box::new(data.end_tangent))),
+                start_second_derivative: None,
+                start_third_derivative: None,
+                start_derivative_source: None,
+                end_derivative_source: None,
+            }))
+        }
         BezierSplitFragment2::Unresolved { .. } => None,
     }
+}
+
+fn analytic_parallel_exact_endpoints(
+    fragment: &crate::BezierParallelFragment2,
+    policy: &CurveContext,
+) -> Option<(Point2, Point2)> {
+    match analytic_parallel_endpoint_data(fragment, policy) {
+        Classification::Decided(data) => Some((data.start, data.end)),
+        Classification::Uncertain(_) => None,
+    }
+}
+
+fn analytic_parallel_endpoint_data(
+    fragment: &crate::BezierParallelFragment2,
+    policy: &CurveContext,
+) -> Classification<EndpointData> {
+    let Some((source_start, source_end)) = fragment.range().exact_endpoints() else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    let source_start_point = match fragment.parallel().point_at(source_start, policy) {
+        Ok(Classification::Decided(point)) => point,
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let source_end_point = match fragment.parallel().point_at(source_end, policy) {
+        Ok(Classification::Decided(point)) => point,
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let source_start_tangent = match fragment.parallel().derivative_at(source_start, policy) {
+        Ok(Classification::Decided(tangent)) => TangentVector {
+            dx: tangent.dx().clone(),
+            dy: tangent.dy().clone(),
+        },
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let source_end_tangent = match fragment.parallel().derivative_at(source_end, policy) {
+        Ok(Classification::Decided(tangent)) => TangentVector {
+            dx: tangent.dx().clone(),
+            dy: tangent.dy().clone(),
+        },
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let (start, end, start_tangent, end_tangent) = if fragment.is_reversed() {
+        (
+            source_end_point,
+            source_start_point,
+            TangentVector {
+                dx: -source_end_tangent.dx,
+                dy: -source_end_tangent.dy,
+            },
+            TangentVector {
+                dx: -source_start_tangent.dx,
+                dy: -source_start_tangent.dy,
+            },
+        )
+    } else {
+        (
+            source_start_point,
+            source_end_point,
+            source_start_tangent,
+            source_end_tangent,
+        )
+    };
+    Classification::Decided(EndpointData {
+        start,
+        end,
+        start_tangent,
+        end_tangent,
+        start_second_derivative: None,
+        start_third_derivative: None,
+    })
 }
 
 fn retained_endpoint_side_data(

@@ -292,6 +292,19 @@ impl CurveEnvelopeAccumulator {
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
             }
+            BezierSplitFragment2::AnalyticParallel(fragment) => {
+                match fragment.parallel().conservative_bounds(policy) {
+                    Ok(Classification::Decided(curve_box)) => {
+                        (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
+                    }
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                }
+            }
             BezierSplitFragment2::Unresolved { .. } => {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             }
@@ -665,6 +678,37 @@ impl EndpointEnvelopeAccumulator {
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
                 self.include_endpoint(end, policy)
+            }
+            BezierSplitFragment2::AnalyticParallel(fragment) => {
+                let Some((start_parameter, end_parameter)) = fragment.range().exact_endpoints()
+                else {
+                    return Classification::Uncertain(UncertaintyReason::Boundary);
+                };
+                let start = match fragment.parallel().point_at(start_parameter, policy) {
+                    Ok(Classification::Decided(point)) => point,
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                };
+                let end = match fragment.parallel().point_at(end_parameter, policy) {
+                    Ok(Classification::Decided(point)) => point,
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                };
+                match self.include_endpoint(native_endpoint_interval(&start), policy) {
+                    Classification::Decided(()) => {}
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                }
+                self.include_endpoint(native_endpoint_interval(&end), policy)
             }
             BezierSplitFragment2::Unresolved { .. } => {
                 Classification::Uncertain(UncertaintyReason::Boundary)

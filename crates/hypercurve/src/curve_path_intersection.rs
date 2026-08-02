@@ -1334,6 +1334,9 @@ fn split_fragment_parameter_range(
         BezierSplitFragment2::Materialized { start, end, .. }
         | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
         | BezierSplitFragment2::Unresolved { start, end } => (start, end),
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            (fragment.range().start(), fragment.range().end())
+        }
     }
 }
 

@@ -148,7 +148,9 @@ pub use bezier_retained_overlap::{
     BezierRetainedRationalOverlapTraversal2, BezierRetainedResolvedLinearOverlap2,
     BezierRetainedResolvedRationalOverlap2,
 };
-pub use bezier_split::{BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2};
+pub use bezier_split::{
+    BezierParallelFragment2, BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2,
+};
 pub use bezier_split_endpoint::{
     BezierAlgebraicEndpointImage2, BezierEndpointPointImage2, BezierEndpointTangentImage2,
 };

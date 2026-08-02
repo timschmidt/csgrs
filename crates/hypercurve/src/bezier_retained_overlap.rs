@@ -2780,6 +2780,30 @@ fn oriented_materialized_endpoints_equal(
 fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Point2)> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => Some(curve.endpoints()),
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            let (start, end) = fragment.range().exact_endpoints()?;
+            let start = match fragment
+                .parallel()
+                .point_at(start, &CurveContext::STRICT)
+                .ok()?
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(_) => return None,
+            };
+            let end = match fragment
+                .parallel()
+                .point_at(end, &CurveContext::STRICT)
+                .ok()?
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(_) => return None,
+            };
+            Some(if fragment.is_reversed() {
+                (end, start)
+            } else {
+                (start, end)
+            })
+        }
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
         | BezierSplitFragment2::Unresolved { .. } => None,
     }

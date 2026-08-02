@@ -1558,6 +1558,13 @@ fn build_region_carriers(
                         UncertaintyReason::Unsupported,
                     ));
                 }
+                BezierSplitFragment2::AnalyticParallel(_) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Boolean,
+                        CurveFamily2::RationalBezier,
+                        UncertaintyReason::Unsupported,
+                    ));
+                }
             };
             let family = subcurve_family(&curve);
             if matches!(
@@ -2637,6 +2644,9 @@ fn fragment_range(fragment: &BezierSplitFragment2) -> (&BezierParameter2, &Bezie
         BezierSplitFragment2::Materialized { start, end, .. }
         | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
         | BezierSplitFragment2::Unresolved { start, end } => (start, end),
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            (fragment.range().start(), fragment.range().end())
+        }
     }
 }
 

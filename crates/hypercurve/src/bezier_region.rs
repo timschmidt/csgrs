@@ -1285,6 +1285,7 @@ impl BezierRegion2 {
                         fragments.push(curve.clone());
                     }
                     BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                    | BezierSplitFragment2::AnalyticParallel(_)
                     | BezierSplitFragment2::Unresolved { .. } => {
                         return Classification::Uncertain(UncertaintyReason::Boundary);
                     }
@@ -1543,12 +1544,13 @@ impl CurveRegionBoundaryLoop2 {
         self.fragments.is_empty()
     }
 
-    /// Returns true when any retained fragment has algebraic endpoint images.
+    /// Returns true when any retained fragment carries non-native algebraic geometry.
     pub fn has_algebraic_fragments(&self) -> bool {
         self.fragments.iter().any(|fragment| {
             matches!(
                 fragment,
                 BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                    | BezierSplitFragment2::AnalyticParallel(_)
             )
         })
     }
@@ -1648,6 +1650,23 @@ fn validate_retained_fragment_provenance(
                 policy,
             )?;
             validate_retained_source_endpoint_image(end, source_curve, end_image.as_ref(), policy)
+        }
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            validate_retained_fragment_parameter_order(
+                fragment.range().start(),
+                fragment.range().end(),
+                policy,
+            )?;
+            match crate::BezierParallelFragment2::try_new(
+                fragment.parallel().clone(),
+                fragment.range().clone(),
+                policy,
+            )? {
+                Classification::Decided(_) => Ok(()),
+                Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+                    "analytic parallel fragment validation remained uncertain: {reason:?}"
+                ))),
+            }
         }
         BezierSplitFragment2::Unresolved { .. } => Err(CurveError::Topology(
             "retained Bezier region boundary loops must not contain unresolved carriers".into(),
@@ -1894,6 +1913,25 @@ fn retained_fragment_endpoint_evidence(
                 point,
                 algebraic,
                 source,
+            })
+        }
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            let parameter = if start_endpoint != fragment.is_reversed() {
+                fragment.range().start()
+            } else {
+                fragment.range().end()
+            };
+            let point = match parameter.as_exact() {
+                Some(parameter) => match fragment.parallel().point_at(parameter, policy)? {
+                    Classification::Decided(point) => Some(point),
+                    Classification::Uncertain(_) => None,
+                },
+                None => None,
+            };
+            Ok(RetainedEndpointEvidence {
+                point,
+                algebraic: None,
+                source: None,
             })
         }
         BezierSplitFragment2::Unresolved { .. } => Err(CurveError::Topology(
@@ -3030,7 +3068,8 @@ impl CurveRegion2 {
                 };
                 match fragment.fragment() {
                     BezierSplitFragment2::Materialized { .. }
-                    | BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
+                    | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                    | BezierSplitFragment2::AnalyticParallel(_) => {
                         fragments.push(fragment.fragment().clone());
                     }
                     BezierSplitFragment2::Unresolved { .. } => {
@@ -5021,7 +5060,7 @@ impl CurveRegion2 {
         self.data.boundary_loops.len()
     }
 
-    /// Returns true when any boundary loop retains algebraic endpoint images.
+    /// Returns true when any boundary loop retains non-native algebraic geometry.
     pub fn has_algebraic_fragments(&self) -> bool {
         self.data
             .boundary_loops
@@ -5484,6 +5523,34 @@ fn transform_retained_region_fragment(
                 end_image: transform_region_endpoint_image(end, &source, policy)?,
                 source_curve: Some(source),
             })
+        }
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            let similarity = crate::Similarity2::try_from_real_affine(
+                m00.clone(),
+                m01.clone(),
+                m10.clone(),
+                m11.clone(),
+                tx.clone(),
+                ty.clone(),
+            )
+            .map_err(|_| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Transformation,
+                    CurveFamily2::RationalBezier,
+                    UncertaintyReason::Unsupported,
+                )
+            })?;
+            let parallel = fragment
+                .parallel()
+                .transform_similarity(&similarity)
+                .map_err(affine_region_error)?;
+            Ok(BezierSplitFragment2::AnalyticParallel(
+                crate::BezierParallelFragment2::from_certified_range(
+                    parallel,
+                    fragment.range().clone(),
+                    fragment.is_reversed(),
+                ),
+            ))
         }
         BezierSplitFragment2::AlgebraicEndpointImages {
             source_curve: None, ..
@@ -5955,6 +6022,9 @@ fn retained_line_fragment_endpoints(
                 source: RetainedLineFragmentSource::AlgebraicEndpoints,
             }))
         }
+        BezierSplitFragment2::AnalyticParallel(_) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
         BezierSplitFragment2::Unresolved { .. } => {
             Ok(Classification::Uncertain(UncertaintyReason::Boundary))
         }
@@ -6226,6 +6296,7 @@ fn retained_loop_sample_point(
                 Classification::Decided,
             ))
         }
+        BezierSplitFragment2::AnalyticParallel(fragment) => fragment.representative_point(policy),
         BezierSplitFragment2::Unresolved { .. } => {
             Ok(Classification::Uncertain(UncertaintyReason::Boundary))
         }
@@ -6473,6 +6544,37 @@ fn retained_fragment_contains_point(
                 Err(ExactCurveError::Invalid { cause, .. }) => Err(cause),
             }
         }
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            match fragment.parallel().point_incidence(point, policy)? {
+                Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
+                    Ok(Classification::Decided(true))
+                }
+                Classification::Decided(crate::BezierParallelIncidence2::Parameters(
+                    parameters,
+                )) => {
+                    for parameter in parameters {
+                        match retained_parameter_contains(
+                            &parameter,
+                            fragment.range().start(),
+                            fragment.range().end(),
+                            false,
+                            false,
+                            policy,
+                        )? {
+                            Classification::Decided(true) => {
+                                return Ok(Classification::Decided(true));
+                            }
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    Ok(Classification::Decided(false))
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
+        }
         BezierSplitFragment2::AlgebraicEndpointImages {
             source_curve: None, ..
         }
@@ -6506,6 +6608,9 @@ fn classify_point_with_retained_ray(
                 source_curve: None, ..
             }
             | BezierSplitFragment2::Unresolved { .. } => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            BezierSplitFragment2::AnalyticParallel(_) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
         };
