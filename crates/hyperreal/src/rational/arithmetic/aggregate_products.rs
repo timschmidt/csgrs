@@ -5120,58 +5120,14 @@ impl Rational {
         Self::from_signed_magnitude_difference(positive, negative, common_denominator)
     }
 
-    /// Compare a fixed signed sum of products with zero without materializing
-    /// or reducing the resulting rational.
-    pub fn signed_product_sum_ordering<const TERMS: usize, const FACTORS: usize>(
-        positive_terms: [bool; TERMS],
+    // Keep complete planning and arbitrary-precision reduction out of the
+    // common exact word-accumulator dispatchers. This helper is deliberately
+    // shared only after every direct path declines.
+    #[inline(never)]
+    fn signed_product_sum_ordering_fallback<const TERMS: usize, const FACTORS: usize>(
         terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
     ) -> Ordering {
-        debug_assert!(FACTORS > 0);
-        let signs = std::array::from_fn(|i| Self::product_term_sign(positive_terms[i], terms[i]));
-        let mut nonzero_count = 0_usize;
-        let mut nonzero_index = 0_usize;
-        for (index, sign) in signs.iter().copied().enumerate() {
-            if sign != NoSign {
-                nonzero_count += 1;
-                nonzero_index = index;
-            }
-            if nonzero_count == 2 {
-                break;
-            }
-        }
-        match nonzero_count {
-            0 => {
-                crate::trace_dispatch!("rational", "product_sum_ordering", "all-zero");
-                return Ordering::Equal;
-            }
-            1 => {
-                crate::trace_dispatch!("rational", "product_sum_ordering", "single-term-product");
-                return match signs[nonzero_index] {
-                    Minus => Ordering::Less,
-                    Plus => Ordering::Greater,
-                    NoSign => unreachable!("the retained product term is nonzero"),
-                };
-            }
-            _ => {}
-        }
-        // Expanded affine and 2D orientation determinants have four or six
-        // pair products and overwhelmingly stay in the word-sized dyadic
-        // envelope. Use the fourth affine factor as a conservative admission
-        // guard; a rejected probe simply continues to the complete bit-width
-        // plan.
-        if FACTORS == 2
-            && (TERMS == 6
-                || (TERMS == 4 && terms[3][0].numerator.to_u128().is_some()))
-            && let Some((positive, negative)) =
-                Self::signed_product_sum_dyadic_word_totals_unplanned(terms, signs)
-        {
-            crate::trace_dispatch!(
-                "rational",
-                "product_sum_ordering",
-                "dyadic-word-accumulator"
-            );
-            return positive.cmp(&negative);
-        }
         let dyadic_plan = Self::product_sum_dyadic_plan(terms, signs);
         let prefer_wide_dyadic = dyadic_plan
             .as_ref()
@@ -5306,6 +5262,61 @@ impl Rational {
             "arbitrary-precision-lcm"
         );
         positive.cmp(&negative)
+    }
+
+    /// Compare a fixed signed sum of products with zero without materializing
+    /// or reducing the resulting rational.
+    pub fn signed_product_sum_ordering<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; FACTORS]; TERMS],
+    ) -> Ordering {
+        debug_assert!(FACTORS > 0);
+        let signs = std::array::from_fn(|i| Self::product_term_sign(positive_terms[i], terms[i]));
+        let mut nonzero_count = 0_usize;
+        let mut nonzero_index = 0_usize;
+        for (index, sign) in signs.iter().copied().enumerate() {
+            if sign != NoSign {
+                nonzero_count += 1;
+                nonzero_index = index;
+            }
+            if nonzero_count == 2 {
+                break;
+            }
+        }
+        match nonzero_count {
+            0 => {
+                crate::trace_dispatch!("rational", "product_sum_ordering", "all-zero");
+                return Ordering::Equal;
+            }
+            1 => {
+                crate::trace_dispatch!("rational", "product_sum_ordering", "single-term-product");
+                return match signs[nonzero_index] {
+                    Minus => Ordering::Less,
+                    Plus => Ordering::Greater,
+                    NoSign => unreachable!("the retained product term is nonzero"),
+                };
+            }
+            _ => {}
+        }
+        // Expanded affine and 2D orientation determinants have four or six
+        // pair products and overwhelmingly stay in the word-sized dyadic
+        // envelope. Use the fourth affine factor as a conservative admission
+        // guard; a rejected probe simply continues to the complete bit-width
+        // plan.
+        if FACTORS == 2
+            && (TERMS == 6
+                || (TERMS == 4 && terms[3][0].numerator.to_u128().is_some()))
+            && let Some((positive, negative)) =
+                Self::signed_product_sum_dyadic_word_totals_unplanned(terms, signs)
+        {
+            crate::trace_dispatch!(
+                "rational",
+                "product_sum_ordering",
+                "dyadic-word-accumulator"
+            );
+            return positive.cmp(&negative);
+        }
+        Self::signed_product_sum_ordering_fallback(terms, signs)
     }
 
     /// Compare a dynamically sized signed sum of two-factor products with
