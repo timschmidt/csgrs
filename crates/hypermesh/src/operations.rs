@@ -3235,7 +3235,7 @@ fn compute_projective_input_soup(
                 storage_key.and_then(|key| storage_support_planes[mesh].get(&key).copied());
             let plane = if let Some(index) = stored_plane {
                 index
-            } else if let Some(values) = exact_plane_f64(support) {
+            } else if let Some(values) = exact_plane_f64(decisions, support) {
                 let key = values.map(f64::to_bits);
                 if let Some(index) = approximate_support_planes[mesh]
                     .get(&key)
@@ -3594,7 +3594,7 @@ fn compute_two_convex_inputs_projectively(
             storage_key.and_then(|key| storage_support_planes[mesh].get(&key).copied());
         let plane = if let Some(index) = stored_plane {
             index
-        } else if let Some(values) = exact_plane_f64(&polygon.support) {
+        } else if let Some(values) = exact_plane_f64(decisions, &polygon.support) {
             let key = values.map(f64::to_bits);
             if let Some(index) = approximate_support_planes[mesh]
                 .get(&key)
@@ -4870,19 +4870,19 @@ fn exact_plane_storage_key(plane: &Plane) -> Option<[usize; 4]> {
     Some([a, b, c, d].map(Rational::storage_identity))
 }
 
-fn exact_plane_f64(plane: &Plane) -> Option<[f64; 4]> {
+fn exact_plane_f64(decisions: &DecisionContext, plane: &Plane) -> Option<[f64; 4]> {
+    let evidence = RationalPlane4PredicateEvidence::new(decisions, plane)?;
+    // Reuse the certified filter's positive-scale normalization for the
+    // floating proposal only; every proposed cycle is verified exactly.
+    if let Some(coefficients) = evidence.normalized_coefficients() {
+        return Some(coefficients);
+    }
     let coefficients = [
         &plane.normal.x,
         &plane.normal.y,
         &plane.normal.z,
         &plane.offset,
     ];
-    if coefficients
-        .iter()
-        .any(|coefficient| coefficient.exact_rational_ref().is_none())
-    {
-        return None;
-    }
     let [Some(a), Some(b), Some(c), Some(d)] = coefficients.map(Real::to_f64_lossy) else {
         return None;
     };
@@ -6768,12 +6768,34 @@ mod tests {
     }
 
     #[test]
-    fn cached_exact_plane_normalization_matches_direct_conversion() {
+    fn exact_plane_f64_reuses_filter_normalization_for_both_policies() {
         let plane =
             Plane::from_coefficients(Real::from(3), Real::from(-4), Real::from(12), Real::from(7));
-        let raw = exact_plane_f64(&plane).unwrap();
+        for policy in [
+            crate::PredicatePolicy::STRICT,
+            crate::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let values = exact_plane_f64(&DecisionContext::new(&context), &plane).unwrap();
+            assert_eq!(values, [0.375, -0.5, 1.5, 0.875]);
+            assert_eq!(normalize_plane_f64(values), plane_f64(&plane));
+        }
+    }
 
-        assert_eq!(normalize_plane_f64(raw), plane_f64(&plane));
+    #[test]
+    fn exact_plane_f64_preserves_filter_unavailable_and_nonexact_paths() {
+        let huge = Real::try_from(f64::MAX).unwrap();
+        let tiny = Real::try_from(f64::MIN_POSITIVE).unwrap();
+        let unsafe_span = Plane::from_coefficients(huge, tiny, Real::zero(), Real::zero());
+        let decisions = crate::test_support::approximate_decisions();
+        assert_eq!(
+            exact_plane_f64(&decisions, &unsafe_span),
+            Some([f64::MAX, f64::MIN_POSITIVE, 0.0, 0.0]),
+        );
+
+        let nonexact =
+            Plane::from_coefficients(Real::pi(), Real::zero(), Real::zero(), Real::zero());
+        assert_eq!(exact_plane_f64(&decisions, &nonexact), None);
     }
 
     #[test]

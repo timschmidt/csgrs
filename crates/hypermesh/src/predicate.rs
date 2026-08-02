@@ -345,6 +345,10 @@ impl<'a> RationalPlane4PredicateEvidence<'a> {
             filter: rational_linear_form4_filter(decisions, plane, coefficients),
         })
     }
+
+    pub(crate) fn normalized_coefficients(&self) -> Option<[f64; 4]> {
+        self.filter.map(|filter| filter.normalized_coefficients())
+    }
 }
 
 impl<'a> ProjectivePoint3PredicateEvidence<'a> {
@@ -694,6 +698,35 @@ mod tests {
             grown_keys
                 .into_iter()
                 .all(|key| matches!(cache.find(key), Some(None)))
+        );
+    }
+
+    #[test]
+    fn linear_form_filter_cache_clears_at_bounded_capacity() {
+        let mut cache = RationalLinearForm4FilterCache::default();
+        let mut first_key = None;
+        for value in 0..=RATIONAL_LINEAR_FORM4_FILTER_CACHE_CAPACITY {
+            let base = i64::try_from(value).unwrap() * 4;
+            let owners = std::array::from_fn(|offset| Rational::new(base + offset as i64));
+            let key = owners.each_ref().map(|owner| owner.storage_identity());
+            first_key.get_or_insert(key);
+            cache.insert(CachedRationalLinearForm4Filter {
+                fingerprint: RationalLinearForm4FilterCache::fingerprint(key),
+                owners,
+                filter: None,
+            });
+        }
+
+        assert_eq!(cache.entries.len(), 1);
+        let retained_key = cache.entries[0]
+            .owners
+            .each_ref()
+            .map(|owner| owner.storage_identity());
+        assert!(cache.find(first_key.unwrap()).is_none());
+        assert!(matches!(cache.find(retained_key), Some(None)));
+        assert_eq!(
+            cache.slots.len(),
+            RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY
         );
     }
 
