@@ -5638,8 +5638,18 @@ fn certify_regular_implicit_parameter_cells(
         critical_points.push((point, singular));
     }
     let branch_zeros =
-        match bivariate_system_unit_square_solution_pairs(component, branch, policy, config)? {
-            Classification::Decided(points) => points,
+        match bivariate_system_has_unit_square_solution(component, branch, policy, config)? {
+            Classification::Decided(false) => Vec::new(),
+            Classification::Decided(true) => {
+                match bivariate_system_unit_square_solution_pairs(
+                    component, branch, policy, config,
+                )? {
+                    Classification::Decided(points) => points,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
     let excluded_pairs = branch_zeros
