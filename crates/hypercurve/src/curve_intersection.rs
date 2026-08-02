@@ -41,6 +41,9 @@ pub struct CurveIntersectionContact2 {
 }
 
 /// Certified positive-length overlap between two promoted top-level spans.
+///
+/// The oriented ranges bound the overlap closure. Endpoint inclusion remains
+/// explicit because a strict exact branch predicate can select an open end.
 #[derive(Clone, Debug)]
 pub struct CurveIntersectionOverlap2 {
     first_span_index: usize,
@@ -48,6 +51,7 @@ pub struct CurveIntersectionOverlap2 {
     first_range: BezierParameterRange2,
     second_range: BezierParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
+    endpoint_inclusion: [bool; 2],
     parameter_correspondence: Option<RationalBezierOverlapParameterCorrespondence2>,
 }
 
@@ -58,6 +62,7 @@ impl PartialEq for CurveIntersectionOverlap2 {
             && self.first_range == other.first_range
             && self.second_range == other.second_range
             && self.orientation == other.orientation
+            && self.endpoint_inclusion == other.endpoint_inclusion
     }
 }
 
@@ -625,6 +630,7 @@ fn build_native_line_evidence(
                         b_range.end().clone(),
                     ),
                     orientation,
+                    endpoint_inclusion: [true, true],
                     parameter_correspondence: None,
                 }],
             )
@@ -1069,6 +1075,7 @@ fn build_native_coincident_arc_evidence(
                         first_range,
                         second_range,
                         orientation,
+                        endpoint_inclusion: [true, true],
                         parameter_correspondence: None,
                     });
                 }
@@ -1551,6 +1558,7 @@ impl CurveIntersectionContext {
                         second_range.end().clone(),
                     ),
                     orientation: *orientation,
+                    endpoint_inclusion: [true, true],
                     parameter_correspondence: None,
                 });
                 continue;
@@ -1613,6 +1621,7 @@ impl CurveIntersectionContext {
                         first_range: overlap.first_range().clone(),
                         second_range: overlap.second_range().clone(),
                         orientation: overlap.orientation(),
+                        endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
                         parameter_correspondence: match &pair.state {
                             CurveSpanPairState::Rational(intersection) => {
                                 Some(intersection.overlap_parameter_correspondence(&overlap))
@@ -1811,12 +1820,12 @@ impl CurveIntersectionOverlap2 {
         self.second_span_index
     }
 
-    /// Returns the exact local overlap range on the first promoted span.
+    /// Returns the exact local closure bounds on the first promoted span.
     pub const fn first_range(&self) -> &BezierParameterRange2 {
         &self.first_range
     }
 
-    /// Returns the exact local overlap range on the second promoted span.
+    /// Returns the exact local closure bounds on the second promoted span.
     ///
     /// A descending range records reversed image orientation.
     pub const fn second_range(&self) -> &BezierParameterRange2 {
@@ -1826,6 +1835,16 @@ impl CurveIntersectionOverlap2 {
     /// Returns relative traversal orientation on the shared image.
     pub const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
         self.orientation
+    }
+
+    /// Returns whether the paired starts of both oriented ranges belong to the overlap.
+    pub const fn includes_start(&self) -> bool {
+        self.endpoint_inclusion[0]
+    }
+
+    /// Returns whether the paired ends of both oriented ranges belong to the overlap.
+    pub const fn includes_end(&self) -> bool {
+        self.endpoint_inclusion[1]
     }
 
     pub(crate) const fn parameter_correspondence(

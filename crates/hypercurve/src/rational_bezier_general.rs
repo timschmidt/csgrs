@@ -179,12 +179,17 @@ pub enum RationalBezierOverlapOrientation2 {
     Reversed,
 }
 
-/// Certified complete-image overlap between two rational Bezier curves.
+/// Certified positive-length image overlap between two rational Bezier curves.
+///
+/// The oriented parameter ranges bound the overlap closure. The endpoint
+/// inclusion flags distinguish ordinary closed shared images from strict
+/// branch selections that exclude one or both paired boundary points.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalBezierIntersectionOverlap2 {
     first_range: BezierParameterRange2,
     second_range: BezierParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
+    endpoint_inclusion: [bool; 2],
 }
 
 #[derive(Clone, Debug)]
@@ -218,21 +223,23 @@ impl RationalBezierIntersectionOverlap2 {
         second_start: BezierParameter2,
         second_end: BezierParameter2,
         orientation: RationalBezierOverlapOrientation2,
+        endpoint_inclusion: [bool; 2],
     ) -> Self {
         Self {
             first_range: BezierParameterRange2::new_validated(first_start, first_end),
             second_range: BezierParameterRange2::new_validated(second_start, second_end),
             orientation,
+            endpoint_inclusion,
         }
     }
 
-    /// Returns the exact overlap range on the first curve.
+    /// Returns the exact oriented closure bounds on the first curve.
     pub const fn first_range(&self) -> &BezierParameterRange2 {
         &self.first_range
     }
 
-    /// Returns the exact overlap range on the second curve, oriented to match
-    /// traversal of [`Self::first_range`].
+    /// Returns the exact oriented closure bounds on the second curve, arranged
+    /// to match traversal of [`Self::first_range`].
     pub const fn second_range(&self) -> &BezierParameterRange2 {
         &self.second_range
     }
@@ -240,6 +247,16 @@ impl RationalBezierIntersectionOverlap2 {
     /// Returns relative parameter orientation on the shared image.
     pub const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
         self.orientation
+    }
+
+    /// Returns whether the paired starts of both oriented ranges belong to the overlap.
+    pub const fn includes_start(&self) -> bool {
+        self.endpoint_inclusion[0]
+    }
+
+    /// Returns whether the paired ends of both oriented ranges belong to the overlap.
+    pub const fn includes_end(&self) -> bool {
+        self.endpoint_inclusion[1]
     }
 }
 
@@ -1850,6 +1867,7 @@ impl RationalBezier2 {
                     BezierParameter2::Exact(Real::one()),
                 ),
                 orientation: RationalBezierOverlapOrientation2::Same,
+                endpoint_inclusion: [true, true],
             };
             let contacts = RationalBezierIntersectionContacts2::Overlap(overlap);
             let candidates = intersection_candidates_from_contacts(&contacts);
@@ -1882,6 +1900,7 @@ impl RationalBezier2 {
                     BezierParameter2::Exact(Real::zero()),
                 ),
                 orientation: RationalBezierOverlapOrientation2::Reversed,
+                endpoint_inclusion: [true, true],
             };
             let contacts = RationalBezierIntersectionContacts2::Overlap(overlap);
             let candidates = intersection_candidates_from_contacts(&contacts);
@@ -3990,6 +4009,7 @@ impl RationalBezier2 {
                     } else {
                         RationalBezierOverlapOrientation2::Reversed
                     },
+                    endpoint_inclusion: [true, true],
                 })
             })
     }
@@ -4303,6 +4323,7 @@ impl RationalBezier2 {
             } else {
                 RationalBezierOverlapOrientation2::Reversed
             },
+            endpoint_inclusion: [true, true],
         }))
     }
 
@@ -4788,6 +4809,7 @@ impl RationalBezier2 {
                 second_range.end().clone(),
             ),
             orientation,
+            endpoint_inclusion: [true, true],
         }))
     }
 }
@@ -5033,6 +5055,7 @@ fn overlap_from_parameter_contacts(
         } else {
             RationalBezierOverlapOrientation2::Reversed
         },
+        endpoint_inclusion: [true, true],
     }))
 }
 
@@ -5119,6 +5142,7 @@ fn complete_rational_bezier_image_overlap(
             } else {
                 RationalBezierOverlapOrientation2::Same
             },
+            endpoint_inclusion: [true, true],
         },
     ))
 }
@@ -6406,6 +6430,7 @@ fn reverse_rational_intersection_contacts(
                 first_range: overlap.second_range,
                 second_range: overlap.first_range,
                 orientation: overlap.orientation,
+                endpoint_inclusion: overlap.endpoint_inclusion,
             })
         }
         RationalBezierIntersectionContacts2::Incomplete {

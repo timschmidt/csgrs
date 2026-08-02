@@ -229,6 +229,7 @@ struct BezierParallelIntersectionCandidateSystem2 {
     replay_equations: Option<[BivariatePolynomial; 2]>,
     overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
     component_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
+    selected_component_pair_count: usize,
 }
 
 #[derive(Clone, PartialEq)]
@@ -247,6 +248,7 @@ impl BezierParallelIntersectionCandidateSystem2 {
             replay_equations,
             overlaps: Arc::from([]),
             component_pairs: Arc::from([]),
+            selected_component_pair_count: 0,
         }
     }
 
@@ -256,6 +258,7 @@ impl BezierParallelIntersectionCandidateSystem2 {
             replay_equations: None,
             overlaps,
             component_pairs: Arc::from([]),
+            selected_component_pair_count: 0,
         }
     }
 }
@@ -513,6 +516,30 @@ fn parallel_parameter_pair_is_overlap_boundary(
                 (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
                     uncertain = Some(reason)
                 }
+            }
+        }
+    }
+    Ok(uncertain.map_or(Classification::Decided(false), Classification::Uncertain))
+}
+
+fn parallel_parameter_pair_is_excluded(
+    excluded: &[BezierParallelIntersectionParameterPair2],
+    parallel_parameter: &BezierParameter2,
+    other_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let mut uncertain = None;
+    for pair in excluded {
+        match (
+            parallel_parameter.same_value(&pair.parallel_parameter, policy)?,
+            other_parameter.same_value(&pair.other_parameter, policy)?,
+        ) {
+            (Classification::Decided(true), Classification::Decided(true)) => {
+                return Ok(Classification::Decided(true));
+            }
+            (Classification::Decided(false), _) | (_, Classification::Decided(false)) => {}
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                uncertain = Some(reason);
             }
         }
     }
@@ -1621,7 +1648,10 @@ impl BezierParallel2 {
             replay_equations,
             overlaps,
             component_pairs,
+            selected_component_pair_count,
         } = candidate_system;
+        let (component_pairs, excluded_component_pairs) =
+            component_pairs.split_at(selected_component_pair_count);
         let residual_degenerate = matches!(
             candidates,
             BezierParallelIntersectionCandidates2::DegenerateResultant
@@ -1638,7 +1668,8 @@ impl BezierParallel2 {
             }
             BezierParallelIntersectionCandidates2::DegenerateResultant => {
                 if component_pairs.is_empty() {
-                    if !overlaps.is_empty() {
+                    // Replaying the original system would lose strict-zero exclusions.
+                    if !overlaps.is_empty() || !excluded_component_pairs.is_empty() {
                         return Ok(Classification::Decided(
                             BezierParallelIntersectionSet2::incomplete(
                                 Arc::from([]),
@@ -1686,6 +1717,19 @@ impl BezierParallel2 {
         };
         for parallel_parameter in parallel_parameters {
             for other_parameter in other_parameters {
+                match parallel_parameter_pair_is_excluded(
+                    excluded_component_pairs,
+                    parallel_parameter,
+                    other_parameter,
+                    policy,
+                )? {
+                    Classification::Decided(true) => continue,
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(_) => {
+                        incomplete = true;
+                        continue;
+                    }
+                }
                 if matches!(
                     parallel_parameter_pair_is_overlap_boundary(
                         &overlaps,
@@ -4812,8 +4856,41 @@ fn bivariate_system_may_have_component(equations: &[BivariatePolynomial; 2]) -> 
 
 struct ParameterComponentSystem2 {
     overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
-    isolated_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
+    component_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
+    selected_component_pair_count: usize,
     residual_equations: [BivariatePolynomial; 2],
+}
+
+impl ParameterComponentSystem2 {
+    fn from_partitioned_pairs(
+        overlaps: Vec<RationalBezierIntersectionOverlap2>,
+        mut selected_pairs: Vec<BezierParallelIntersectionParameterPair2>,
+        excluded_pairs: Vec<BezierParallelIntersectionParameterPair2>,
+        residual_equations: [BivariatePolynomial; 2],
+    ) -> Self {
+        let selected_component_pair_count = selected_pairs.len();
+        if selected_pairs.is_empty() {
+            selected_pairs = excluded_pairs;
+        } else {
+            selected_pairs.extend(excluded_pairs);
+        }
+        Self {
+            overlaps: overlaps.into(),
+            component_pairs: selected_pairs.into(),
+            selected_component_pair_count,
+            residual_equations,
+        }
+    }
+
+    #[cfg(test)]
+    fn selected_pairs(&self) -> &[BezierParallelIntersectionParameterPair2] {
+        &self.component_pairs[..self.selected_component_pair_count]
+    }
+
+    #[cfg(test)]
+    fn excluded_pairs(&self) -> &[BezierParallelIntersectionParameterPair2] {
+        &self.component_pairs[self.selected_component_pair_count..]
+    }
 }
 
 fn parallel_candidate_system_from_parameter_components(
@@ -4827,7 +4904,9 @@ fn parallel_candidate_system_from_parameter_components(
                 None,
             );
             candidate_system.overlaps = component.overlaps;
-            candidate_system.component_pairs = component.isolated_pairs;
+            candidate_system.component_pairs = component.component_pairs;
+            candidate_system.selected_component_pair_count =
+                component.selected_component_pair_count;
             return Ok(Classification::Decided(candidate_system));
         }
     }
@@ -4843,7 +4922,9 @@ fn parallel_candidate_system_from_parameter_components(
     {
         Classification::Decided(mut candidate_system) => {
             candidate_system.overlaps = component.overlaps;
-            candidate_system.component_pairs = component.isolated_pairs;
+            candidate_system.component_pairs = component.component_pairs;
+            candidate_system.selected_component_pair_count =
+                component.selected_component_pair_count;
             Ok(Classification::Decided(candidate_system))
         }
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
@@ -4908,6 +4989,7 @@ fn parameter_component_system(
     let mut residual_equations = equations.clone();
     let mut overlaps = Vec::new();
     let mut isolated_pairs = Vec::new();
+    let mut excluded_pairs = Vec::new();
     let mut extracted_component = false;
     loop {
         let mut blocker = None;
@@ -4988,31 +5070,42 @@ fn parameter_component_system(
                 return Ok(blocker
                     .map_or_else(|| Classification::Decided(None), Classification::Uncertain));
             }
-            return Ok(Classification::Decided(Some(ParameterComponentSystem2 {
-                overlaps: overlaps.into(),
-                isolated_pairs: isolated_pairs.into(),
-                residual_equations,
-            })));
+            return Ok(Classification::Decided(Some(
+                ParameterComponentSystem2::from_partitioned_pairs(
+                    overlaps,
+                    isolated_pairs,
+                    excluded_pairs,
+                    residual_equations,
+                ),
+            )));
         };
         for overlap in evidence.overlaps.iter() {
             if !overlaps.contains(overlap) {
                 overlaps.push(overlap.clone());
             }
         }
-        for pair in evidence.isolated_pairs.iter() {
+        for pair in evidence.selected_pairs() {
             if !isolated_pairs.contains(pair) {
                 isolated_pairs.push(pair.clone());
+            }
+        }
+        for pair in evidence.excluded_pairs() {
+            if !excluded_pairs.contains(pair) {
+                excluded_pairs.push(pair.clone());
             }
         }
         residual_equations = reduced_equations;
         extracted_component = true;
         for equation in &residual_equations {
             if bivariate_unit_square_has_strict_bernstein_sign(equation, policy)? {
-                return Ok(Classification::Decided(Some(ParameterComponentSystem2 {
-                    overlaps: overlaps.into(),
-                    isolated_pairs: isolated_pairs.into(),
-                    residual_equations,
-                })));
+                return Ok(Classification::Decided(Some(
+                    ParameterComponentSystem2::from_partitioned_pairs(
+                        overlaps,
+                        isolated_pairs,
+                        excluded_pairs,
+                        residual_equations,
+                    ),
+                )));
             }
         }
     }
@@ -5458,7 +5551,7 @@ fn certify_regular_implicit_parameter_graph(
     }
     Ok(Classification::Decided(Some(ParameterComponentEvidence2 {
         overlaps: overlaps.into(),
-        isolated_pairs: Arc::from([]),
+        ..ParameterComponentEvidence2::default()
     })))
 }
 
@@ -5544,11 +5637,23 @@ fn certify_regular_implicit_parameter_cells(
         };
         critical_points.push((point, singular));
     }
-    match bivariate_system_has_unit_square_solution(component, branch, policy, config)? {
-        Classification::Decided(false) => {}
-        Classification::Decided(true) => return Ok(Classification::Decided(None)),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
+    let branch_zeros =
+        match bivariate_system_unit_square_solution_pairs(component, branch, policy, config)? {
+            Classification::Decided(points) => points,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+    let excluded_pairs = branch_zeros
+        .iter()
+        .map(|point| {
+            rational_parameter_component_pair(
+                retained_parameter,
+                ParameterComponentPoint {
+                    retained_parameter: point.parallel_parameter.clone(),
+                    lifted_parameter: point.other_parameter.clone(),
+                },
+            )
+        })
+        .collect::<Vec<_>>();
 
     let mut fibers = Vec::new();
     for retained_boundary in [Real::zero(), Real::one()] {
@@ -5568,6 +5673,24 @@ fn certify_regular_implicit_parameter_cells(
             },
             domain_boundary: false,
             singular,
+            branch_zero: false,
+        };
+        match insert_implicit_parameter_component_event(&mut fibers, event, policy)? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    for point in branch_zeros {
+        let event = ImplicitParameterComponentEvent {
+            point: ParameterComponentPoint {
+                retained_parameter: point.parallel_parameter,
+                lifted_parameter: point.other_parameter,
+            },
+            domain_boundary: false,
+            singular: false,
+            branch_zero: true,
         };
         match insert_implicit_parameter_component_event(&mut fibers, event, policy)? {
             Classification::Decided(()) => {}
@@ -5595,6 +5718,7 @@ fn certify_regular_implicit_parameter_cells(
                 },
                 domain_boundary: true,
                 singular: false,
+                branch_zero: false,
             };
             match insert_implicit_parameter_component_event(&mut fibers, event, policy)? {
                 Classification::Decided(()) => {}
@@ -5623,6 +5747,7 @@ fn certify_regular_implicit_parameter_cells(
                 },
                 domain_boundary: true,
                 singular: false,
+                branch_zero: false,
             };
             match insert_implicit_parameter_component_event(&mut fibers, event, policy)? {
                 Classification::Decided(()) => {}
@@ -5702,6 +5827,7 @@ fn certify_regular_implicit_parameter_cells(
                 match finish_implicit_parameter_track(
                     track,
                     &event.point,
+                    !event.branch_zero,
                     retained_parameter,
                     &mut overlaps,
                     policy,
@@ -5724,6 +5850,7 @@ fn certify_regular_implicit_parameter_cells(
                     &event.point,
                     right,
                     rank,
+                    !event.branch_zero,
                     policy,
                 )? {
                     Classification::Decided(Some(track)) => track,
@@ -5739,6 +5866,9 @@ fn certify_regular_implicit_parameter_cells(
                 }
             }
             if left_ranks.is_empty() && right_ranks.is_empty() {
+                if event.branch_zero {
+                    continue;
+                }
                 let selected = match signed_bivariate_at_parameter_pair(
                     branch,
                     &event.point.retained_parameter,
@@ -5770,10 +5900,13 @@ fn certify_regular_implicit_parameter_cells(
     if !active_tracks.is_empty() {
         return Ok(Classification::Decided(None));
     }
-    Ok(Classification::Decided(Some(ParameterComponentEvidence2 {
-        overlaps: overlaps.into(),
-        isolated_pairs: isolated_pairs.into(),
-    })))
+    Ok(Classification::Decided(Some(
+        ParameterComponentEvidence2::from_partitioned_pairs(
+            overlaps,
+            isolated_pairs,
+            excluded_pairs,
+        ),
+    )))
 }
 
 fn polynomial_coefficients_are_identically_zero(
@@ -5858,6 +5991,7 @@ fn insert_implicit_parameter_component_event(
             Classification::Decided(std::cmp::Ordering::Equal) => {
                 events[index].domain_boundary |= event.domain_boundary;
                 events[index].singular |= event.singular;
+                events[index].branch_zero |= event.branch_zero;
                 return Ok(Classification::Decided(()));
             }
             Classification::Decided(std::cmp::Ordering::Greater) => {}
@@ -6384,6 +6518,7 @@ fn implicit_parameter_track_from_side(
     start: &ParameterComponentPoint,
     side: &ImplicitParameterFiberSide,
     rank: usize,
+    start_included: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<ImplicitParameterTrack>>> {
     let retained_sample = BezierParameter2::Exact(side.sample.clone());
@@ -6403,12 +6538,14 @@ fn implicit_parameter_track_from_side(
     Ok(Classification::Decided(Some(ImplicitParameterTrack {
         start: start.clone(),
         selected,
+        start_included,
     })))
 }
 
 fn finish_implicit_parameter_track(
     track: ImplicitParameterTrack,
     end: &ParameterComponentPoint,
+    end_included: bool,
     retained_parameter: CurveResultantParameter,
     overlaps: &mut Vec<RationalBezierIntersectionOverlap2>,
     policy: &CurveContext,
@@ -6435,16 +6572,19 @@ fn finish_implicit_parameter_track(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     if track.selected {
-        overlaps.push(parameter_component_overlap_from_domain(
-            retained_parameter,
-            ParameterComponentDomain {
-                retained_start: track.start.retained_parameter,
-                retained_end: end.retained_parameter.clone(),
-                lifted_start: track.start.lifted_parameter,
-                lifted_end: end.lifted_parameter.clone(),
-            },
-            direction,
-        ));
+        overlaps.push(
+            parameter_component_overlap_from_domain_with_endpoint_inclusion(
+                retained_parameter,
+                ParameterComponentDomain {
+                    retained_start: track.start.retained_parameter,
+                    retained_end: end.retained_parameter.clone(),
+                    lifted_start: track.start.lifted_parameter,
+                    lifted_end: end.lifted_parameter.clone(),
+                },
+                direction,
+                [track.start_included, end_included],
+            ),
+        );
     }
     Ok(Classification::Decided(Some(())))
 }
@@ -7030,49 +7170,115 @@ fn certify_rational_parameter_component_map(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
 
-    let mut overlaps = Vec::with_capacity(partition.domains.len());
+    let mut overlaps =
+        Vec::with_capacity(partition.domains.len().saturating_add(branch_roots.len()));
+    let mut excluded_pairs = Vec::with_capacity(branch_roots.len());
     for (domain, direction) in partition.domains {
-        match parameter_roots_are_outside_range(
-            &branch_roots,
-            &domain.retained_start,
-            &domain.retained_end,
-            policy,
-        )? {
-            Classification::Decided(true) => {}
-            Classification::Decided(false) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        let branch_sample = match domain
-            .retained_start
-            .strict_rational_between_ordered(&domain.retained_end, policy)?
-        {
-            Classification::Decided(sample) => BezierParameter2::Exact(sample),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+        let mut segment_start = ParameterComponentPoint {
+            retained_parameter: domain.retained_start.clone(),
+            lifted_parameter: domain.lifted_start.clone(),
         };
-        let branch_sign = match signed_bivariate_on_parameter_lift(
+        let mut start_included = true;
+        let mut end_included = true;
+        for root in &branch_roots {
+            match root.cmp_by_refinement(&domain.retained_start, policy)? {
+                Classification::Decided(std::cmp::Ordering::Less) => continue,
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    push_unique_parameter_component_pair(
+                        &mut excluded_pairs,
+                        retained_parameter,
+                        ParameterComponentPoint {
+                            retained_parameter: domain.retained_start.clone(),
+                            lifted_parameter: domain.lifted_start.clone(),
+                        },
+                    );
+                    start_included = false;
+                    continue;
+                }
+                Classification::Decided(std::cmp::Ordering::Greater) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            match root.cmp_by_refinement(&domain.retained_end, policy)? {
+                Classification::Decided(std::cmp::Ordering::Greater) => break,
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    push_unique_parameter_component_pair(
+                        &mut excluded_pairs,
+                        retained_parameter,
+                        ParameterComponentPoint {
+                            retained_parameter: domain.retained_end.clone(),
+                            lifted_parameter: domain.lifted_end.clone(),
+                        },
+                    );
+                    end_included = false;
+                    break;
+                }
+                Classification::Decided(std::cmp::Ordering::Less) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let lifted_parameter = match rational_parameter_image(
+                root,
+                &map.numerator_coefficients,
+                &map.denominator_coefficients,
+                policy,
+            )? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let segment_end = ParameterComponentPoint {
+                retained_parameter: root.clone(),
+                lifted_parameter,
+            };
+            push_unique_parameter_component_pair(
+                &mut excluded_pairs,
+                retained_parameter,
+                segment_end.clone(),
+            );
+            match append_selected_rational_parameter_component_domain(
+                &mut overlaps,
+                branch,
+                retained_parameter,
+                map,
+                segment_start,
+                segment_end.clone(),
+                direction,
+                [start_included, false],
+                policy,
+            )? {
+                Classification::Decided(Some(())) => {}
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            segment_start = segment_end;
+            start_included = false;
+        }
+        match append_selected_rational_parameter_component_domain(
+            &mut overlaps,
             branch,
-            &branch_sample,
             retained_parameter,
             map,
+            segment_start,
+            ParameterComponentPoint {
+                retained_parameter: domain.retained_end,
+                lifted_parameter: domain.lifted_end,
+            },
+            direction,
+            [start_included, end_included],
             policy,
         )? {
-            Classification::Decided(sign) => sign,
+            Classification::Decided(Some(())) => {}
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
-        };
-        match branch_sign {
-            RealSign::Positive => overlaps.push(parameter_component_overlap_from_domain(
-                retained_parameter,
-                domain,
-                direction,
-            )),
-            RealSign::Negative => {}
-            RealSign::Zero => return Ok(Classification::Decided(None)),
         }
     }
     let mut isolated_pairs = Vec::with_capacity(partition.isolated_points.len());
@@ -7094,19 +7300,101 @@ fn certify_rational_parameter_component_map(
                 isolated_pairs.push(rational_parameter_component_pair(retained_parameter, point))
             }
             RealSign::Negative => {}
-            RealSign::Zero => return Ok(Classification::Decided(None)),
+            RealSign::Zero => {
+                push_unique_parameter_component_pair(&mut excluded_pairs, retained_parameter, point)
+            }
         }
     }
-    Ok(Classification::Decided(Some(ParameterComponentEvidence2 {
-        overlaps: overlaps.into(),
-        isolated_pairs: isolated_pairs.into(),
-    })))
+    Ok(Classification::Decided(Some(
+        ParameterComponentEvidence2::from_partitioned_pairs(
+            overlaps,
+            isolated_pairs,
+            excluded_pairs,
+        ),
+    )))
+}
+
+fn append_selected_rational_parameter_component_domain(
+    overlaps: &mut Vec<RationalBezierIntersectionOverlap2>,
+    branch: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    map: &CurveIntersectionParameterLiftMap,
+    start: ParameterComponentPoint,
+    end: ParameterComponentPoint,
+    direction: std::cmp::Ordering,
+    endpoint_inclusion: [bool; 2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<()>>> {
+    let branch_sample = match start
+        .retained_parameter
+        .strict_rational_between_ordered(&end.retained_parameter, policy)?
+    {
+        Classification::Decided(sample) => BezierParameter2::Exact(sample),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let branch_sign = match signed_bivariate_on_parameter_lift(
+        branch,
+        &branch_sample,
+        retained_parameter,
+        map,
+        policy,
+    )? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    match branch_sign {
+        RealSign::Positive => overlaps.push(
+            parameter_component_overlap_from_domain_with_endpoint_inclusion(
+                retained_parameter,
+                ParameterComponentDomain {
+                    retained_start: start.retained_parameter,
+                    retained_end: end.retained_parameter,
+                    lifted_start: start.lifted_parameter,
+                    lifted_end: end.lifted_parameter,
+                },
+                direction,
+                endpoint_inclusion,
+            ),
+        ),
+        RealSign::Negative => {}
+        RealSign::Zero => return Ok(Classification::Decided(None)),
+    }
+    Ok(Classification::Decided(Some(())))
 }
 
 #[derive(Default)]
 struct ParameterComponentEvidence2 {
     overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
-    isolated_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
+    component_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
+    selected_component_pair_count: usize,
+}
+
+impl ParameterComponentEvidence2 {
+    fn from_partitioned_pairs(
+        overlaps: Vec<RationalBezierIntersectionOverlap2>,
+        mut selected_pairs: Vec<BezierParallelIntersectionParameterPair2>,
+        excluded_pairs: Vec<BezierParallelIntersectionParameterPair2>,
+    ) -> Self {
+        let selected_component_pair_count = selected_pairs.len();
+        if selected_pairs.is_empty() {
+            selected_pairs = excluded_pairs;
+        } else {
+            selected_pairs.extend(excluded_pairs);
+        }
+        Self {
+            overlaps: overlaps.into(),
+            component_pairs: selected_pairs.into(),
+            selected_component_pair_count,
+        }
+    }
+
+    fn selected_pairs(&self) -> &[BezierParallelIntersectionParameterPair2] {
+        &self.component_pairs[..self.selected_component_pair_count]
+    }
+
+    fn excluded_pairs(&self) -> &[BezierParallelIntersectionParameterPair2] {
+        &self.component_pairs[self.selected_component_pair_count..]
+    }
 }
 
 #[derive(Clone)]
@@ -7128,6 +7416,7 @@ struct ImplicitParameterComponentEvent {
     point: ParameterComponentPoint,
     domain_boundary: bool,
     singular: bool,
+    branch_zero: bool,
 }
 
 struct ImplicitParameterComponentFiber {
@@ -7162,6 +7451,7 @@ struct ImplicitParameterFiberIncidence {
 struct ImplicitParameterTrack {
     start: ParameterComponentPoint,
     selected: bool,
+    start_included: bool,
 }
 
 struct RationalParameterComponentPartition {
@@ -7419,6 +7709,20 @@ fn parameter_component_overlap_from_domain(
     domain: ParameterComponentDomain,
     direction: std::cmp::Ordering,
 ) -> RationalBezierIntersectionOverlap2 {
+    parameter_component_overlap_from_domain_with_endpoint_inclusion(
+        retained_parameter,
+        domain,
+        direction,
+        [true, true],
+    )
+}
+
+fn parameter_component_overlap_from_domain_with_endpoint_inclusion(
+    retained_parameter: CurveResultantParameter,
+    domain: ParameterComponentDomain,
+    direction: std::cmp::Ordering,
+    endpoint_inclusion: [bool; 2],
+) -> RationalBezierIntersectionOverlap2 {
     let orientation = match direction {
         std::cmp::Ordering::Less => RationalBezierOverlapOrientation2::Same,
         std::cmp::Ordering::Greater => RationalBezierOverlapOrientation2::Reversed,
@@ -7432,6 +7736,7 @@ fn parameter_component_overlap_from_domain(
                 domain.lifted_start,
                 domain.lifted_end,
                 orientation,
+                endpoint_inclusion,
             )
         }
         (CurveResultantParameter::Second, std::cmp::Ordering::Less) => {
@@ -7441,6 +7746,7 @@ fn parameter_component_overlap_from_domain(
                 domain.retained_start,
                 domain.retained_end,
                 orientation,
+                endpoint_inclusion,
             )
         }
         (CurveResultantParameter::Second, std::cmp::Ordering::Greater) => {
@@ -7450,6 +7756,7 @@ fn parameter_component_overlap_from_domain(
                 domain.retained_end,
                 domain.retained_start,
                 orientation,
+                [endpoint_inclusion[1], endpoint_inclusion[0]],
             )
         }
         (CurveResultantParameter::Second, std::cmp::Ordering::Equal) => {
@@ -7474,6 +7781,17 @@ fn rational_parameter_component_pair(
     }
 }
 
+fn push_unique_parameter_component_pair(
+    pairs: &mut Vec<BezierParallelIntersectionParameterPair2>,
+    retained_parameter: CurveResultantParameter,
+    point: ParameterComponentPoint,
+) {
+    let pair = rational_parameter_component_pair(retained_parameter, point);
+    if !pairs.contains(&pair) {
+        pairs.push(pair);
+    }
+}
+
 #[cfg(test)]
 fn polynomial_is_rootless_on_parameter_range(
     coefficients: &[Real],
@@ -7493,6 +7811,7 @@ fn polynomial_is_rootless_on_parameter_range(
     parameter_roots_are_outside_range(&roots, start, end, policy)
 }
 
+#[cfg(test)]
 fn parameter_roots_are_outside_range(
     roots: &[BezierParameter2],
     start: &BezierParameter2,
@@ -9195,7 +9514,7 @@ mod conversion_tests {
             .unwrap() else {
                 panic!("selected identity component was not certified");
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             let [overlap] = evidence.overlaps.as_ref() else {
                 panic!("identity component did not produce exactly one overlap");
             };
@@ -9207,6 +9526,8 @@ mod conversion_tests {
                 overlap.second_range().exact_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
+            assert!(overlap.includes_start());
+            assert!(overlap.includes_end());
             let Classification::Decided(Some(opposite)) = certify_rational_parameter_component_map(
                 &equations,
                 &opposite_branch,
@@ -9218,8 +9539,8 @@ mod conversion_tests {
                 panic!("opposite component was not decided");
             };
             assert!(opposite.overlaps.is_empty());
-            assert!(opposite.isolated_pairs.is_empty());
-            assert!(matches!(
+            assert!(opposite.selected_pairs().is_empty());
+            let Classification::Decided(Some(vanishing)) =
                 certify_rational_parameter_component_map(
                     &equations,
                     &vanishing_branch,
@@ -9227,9 +9548,26 @@ mod conversion_tests {
                     &identity,
                     &policy,
                 )
-                .unwrap(),
-                Classification::Decided(None)
-            ));
+                .unwrap()
+            else {
+                panic!("an isolated branch zero did not partition the rational component");
+            };
+            assert!(vanishing.selected_pairs().is_empty());
+            assert_eq!(vanishing.excluded_pairs().len(), 1);
+            let [overlap] = vanishing.overlaps.as_ref() else {
+                panic!("the positive half of the rational component was not retained");
+            };
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&half, &Real::one()))
+            );
+            assert_eq!(
+                overlap.second_range().exact_endpoints(),
+                Some((&half, &Real::one()))
+            );
+            assert!(!overlap.includes_start());
+            assert!(overlap.includes_end());
             let Classification::Decided(Some(zero_branch)) =
                 certify_rational_parameter_component_map(
                     &equations,
@@ -9243,7 +9581,8 @@ mod conversion_tests {
                 panic!("an identically zero selected branch was not decided");
             };
             assert!(zero_branch.overlaps.is_empty());
-            assert!(zero_branch.isolated_pairs.is_empty());
+            assert!(zero_branch.selected_pairs().is_empty());
+            assert!(zero_branch.excluded_pairs().is_empty());
 
             let pole_equations = [pole_equation.clone(), pole_equation.clone()];
             let Classification::Decided(Some(evidence)) = certify_rational_parameter_component_map(
@@ -9256,7 +9595,7 @@ mod conversion_tests {
             .unwrap() else {
                 panic!("finite component domain before a pole was not retained");
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             let [overlap] = evidence.overlaps.as_ref() else {
                 panic!("pole-split map did not produce one finite overlap");
             };
@@ -9268,6 +9607,134 @@ mod conversion_tests {
                 overlap.second_range().exact_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
+        }
+    }
+
+    #[test]
+    fn rational_component_partitions_odd_even_and_endpoint_branch_zeros() {
+        let identity_equation = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let identity = parameter_lift_map(vec![Real::zero(), Real::one()], vec![Real::one()]);
+        let punctured_branch =
+            BivariatePolynomial::new(vec![vec![Real::one(), Real::from(-4_i8), Real::from(4_i8)]]);
+        let start_branch = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]);
+        let end_branch = BivariatePolynomial::new(vec![vec![Real::one(), Real::from(-1_i8)]]);
+        let negative_punctured_branch = BivariatePolynomial::new(vec![vec![
+            Real::from(-1_i8),
+            Real::from(4_i8),
+            Real::from(-4_i8),
+        ]]);
+        let reversed_equation = BivariatePolynomial::new(vec![
+            vec![Real::from(-1_i8), Real::one()],
+            vec![Real::one()],
+        ]);
+        let reversed = parameter_lift_map(vec![Real::one(), Real::from(-1_i8)], vec![Real::one()]);
+        let crossing_branch = BivariatePolynomial::new(vec![vec![
+            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+            Real::one(),
+        ]]);
+        let zero = Real::zero();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let one = Real::one();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let equations = [identity_equation.clone(), identity_equation.clone()];
+            let Classification::Decided(Some(punctured)) =
+                certify_rational_parameter_component_map(
+                    &equations,
+                    &punctured_branch,
+                    CurveResultantParameter::First,
+                    &identity,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("an even branch zero did not partition the rational component");
+            };
+            assert!(punctured.selected_pairs().is_empty());
+            assert_eq!(punctured.excluded_pairs().len(), 1);
+            let [before, after] = punctured.overlaps.as_ref() else {
+                panic!("an interior puncture must produce two open-sided overlaps");
+            };
+            assert_eq!(before.first_range().exact_endpoints(), Some((&zero, &half)));
+            assert_eq!(after.first_range().exact_endpoints(), Some((&half, &one)));
+            assert!(before.includes_start());
+            assert!(!before.includes_end());
+            assert!(!after.includes_start());
+            assert!(after.includes_end());
+
+            for (branch, expected_inclusion) in
+                [(&start_branch, [false, true]), (&end_branch, [true, false])]
+            {
+                let Classification::Decided(Some(endpoint)) =
+                    certify_rational_parameter_component_map(
+                        &equations,
+                        branch,
+                        CurveResultantParameter::First,
+                        &identity,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("an endpoint branch zero was not retained as an open boundary");
+                };
+                assert_eq!(endpoint.excluded_pairs().len(), 1);
+                let [overlap] = endpoint.overlaps.as_ref() else {
+                    panic!("an endpoint branch zero must retain one positive-length overlap");
+                };
+                assert_eq!(
+                    [overlap.includes_start(), overlap.includes_end()],
+                    expected_inclusion
+                );
+            }
+
+            let Classification::Decided(Some(negative)) = certify_rational_parameter_component_map(
+                &equations,
+                &negative_punctured_branch,
+                CurveResultantParameter::First,
+                &identity,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the negative punctured branch was not decided");
+            };
+            assert!(negative.overlaps.is_empty());
+            assert!(negative.selected_pairs().is_empty());
+            assert_eq!(negative.excluded_pairs().len(), 1);
+
+            let reversed_equations = [reversed_equation.clone(), reversed_equation.clone()];
+            let Classification::Decided(Some(reversed_evidence)) =
+                certify_rational_parameter_component_map(
+                    &reversed_equations,
+                    &crossing_branch,
+                    CurveResultantParameter::Second,
+                    &reversed,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the reversed branch-zero domain was not certified");
+            };
+            assert_eq!(reversed_evidence.excluded_pairs().len(), 1);
+            let [overlap] = reversed_evidence.overlaps.as_ref() else {
+                panic!("the reversed branch-zero domain must produce one overlap");
+            };
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&zero, &half))
+            );
+            assert_eq!(
+                overlap.second_range().exact_endpoints(),
+                Some((&one, &half))
+            );
+            assert_eq!(
+                overlap.orientation(),
+                RationalBezierOverlapOrientation2::Reversed
+            );
+            assert!(overlap.includes_start());
+            assert!(!overlap.includes_end());
         }
     }
 
@@ -9305,7 +9772,7 @@ mod conversion_tests {
             else {
                 panic!("the residual selected component was not transported");
             };
-            assert!(system.isolated_pairs.is_empty());
+            assert!(system.selected_pairs().is_empty());
             let [overlap] = system.overlaps.as_ref() else {
                 panic!("only the positive shifted component may survive");
             };
@@ -9377,6 +9844,80 @@ mod conversion_tests {
     }
 
     #[test]
+    fn branch_zero_component_pair_suppresses_the_same_residual_candidate() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::from(-1_i8)],
+            vec![Real::one()],
+        ]);
+        let first_residual = BivariatePolynomial::new(vec![vec![-half.clone()], vec![Real::one()]]);
+        let second_residual = BivariatePolynomial::new(vec![vec![-half.clone(), Real::one()]]);
+        let equations = [
+            bivariate_multiply(&component, &first_residual),
+            bivariate_multiply(&component, &second_residual),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![
+            Real::from(-1_i8),
+            Real::from(4_i8),
+            Real::from(-4_i8),
+        ]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("the branch-zero residual coincidence was not decomposed");
+            };
+            assert!(system.overlaps.is_empty());
+            assert!(system.selected_pairs().is_empty());
+            let [excluded] = system.excluded_pairs() else {
+                panic!("the strict branch zero was not retained as exclusion evidence");
+            };
+            assert!(
+                excluded
+                    == &BezierParallelIntersectionParameterPair2 {
+                        parallel_parameter: BezierParameter2::Exact(half.clone()),
+                        other_parameter: BezierParameter2::Exact(half.clone()),
+                    },
+                "the excluded component pair changed"
+            );
+
+            let Classification::Decided(candidate_system) =
+                parallel_candidate_system_from_parameter_components(system, &policy).unwrap()
+            else {
+                panic!("the residual candidate projection was undecidable");
+            };
+            let BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters,
+                other_parameters,
+            } = &candidate_system.candidates
+            else {
+                panic!("the residual branch-zero pair was not projected");
+            };
+            assert_eq!(
+                parallel_parameters,
+                &[BezierParameter2::Exact(half.clone())]
+            );
+            assert_eq!(other_parameters, &[BezierParameter2::Exact(half.clone())]);
+            assert!(matches!(
+                parallel_parameter_pair_is_excluded(
+                    &candidate_system.component_pairs
+                        [candidate_system.selected_component_pair_count..],
+                    &parallel_parameters[0],
+                    &other_parameters[0],
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(true)
+            ));
+        }
+    }
+
+    #[test]
     fn nonrational_rational_parameter_component_uses_exact_real_coefficients() {
         let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
         let component =
@@ -9432,7 +9973,7 @@ mod conversion_tests {
         let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
         let component = BivariatePolynomial::new(vec![
             vec![Real::zero(), Real::one(), Real::one()],
-            vec![-alpha],
+            vec![-alpha.clone()],
         ]);
         let equations = [
             bivariate_multiply(
@@ -9445,6 +9986,8 @@ mod conversion_tests {
             ),
         ];
         let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let crossing_branch =
+            BivariatePolynomial::new(vec![vec![-alpha.clone()], vec![Real::one()]]);
         let config = CurveIntersectionResultantConfig {
             min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
             max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
@@ -9476,6 +10019,37 @@ mod conversion_tests {
             assert_eq!(
                 overlap.orientation(),
                 RationalBezierOverlapOrientation2::Same
+            );
+
+            let Classification::Decided(Some(partitioned)) =
+                parameter_component_system(&equations, &crossing_branch, &policy, config).unwrap()
+            else {
+                panic!("the exact non-rational branch zero was not partitioned");
+            };
+            assert!(partitioned.selected_pairs().is_empty());
+            assert_eq!(partitioned.excluded_pairs().len(), 1);
+            let [overlap] = partitioned.overlaps.as_ref() else {
+                panic!("the positive non-rational tail was not retained");
+            };
+            assert!(matches!(
+                overlap
+                    .first_range()
+                    .start()
+                    .same_value(&BezierParameter2::Exact(alpha.clone()), &policy)
+                    .unwrap(),
+                Classification::Decided(true)
+            ));
+            assert!(!overlap.includes_start());
+            assert!(overlap.includes_end());
+            assert_eq!(
+                signed_bivariate_at_parameter_pair(
+                    &component,
+                    overlap.first_range().start(),
+                    overlap.second_range().start(),
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(RealSign::Zero)
             );
         }
     }
@@ -9513,7 +10087,7 @@ mod conversion_tests {
                 panic!("two rational components were not enumerated");
             };
             assert_eq!(system.overlaps.len(), 2);
-            assert!(system.isolated_pairs.is_empty());
+            assert!(system.selected_pairs().is_empty());
             assert!(system.overlaps.iter().any(|overlap| {
                 overlap.orientation() == RationalBezierOverlapOrientation2::Same
             }));
@@ -9574,7 +10148,7 @@ mod conversion_tests {
                 panic!("repeated rational component was not extracted");
             };
             assert_eq!(system.overlaps.len(), 1);
-            assert!(system.isolated_pairs.is_empty());
+            assert!(system.selected_pairs().is_empty());
         }
     }
 
@@ -9612,7 +10186,7 @@ mod conversion_tests {
                 panic!("repeated cubic common fiber was not enumerated");
             };
             assert_eq!(system.overlaps.len(), 2);
-            assert!(system.isolated_pairs.is_empty());
+            assert!(system.selected_pairs().is_empty());
             assert!(system.overlaps.iter().any(|overlap| {
                 overlap.orientation() == RationalBezierOverlapOrientation2::Same
             }));
@@ -9652,7 +10226,7 @@ mod conversion_tests {
                 panic!("triple cubic common fiber was not enumerated");
             };
             assert_eq!(system.overlaps.len(), 1);
-            assert!(system.isolated_pairs.is_empty());
+            assert!(system.selected_pairs().is_empty());
             assert_eq!(
                 system.overlaps[0].orientation(),
                 RationalBezierOverlapOrientation2::Same
@@ -9689,7 +10263,7 @@ mod conversion_tests {
             else {
                 panic!("the regular quarter-circle component was not transported");
             };
-            assert!(system.isolated_pairs.is_empty());
+            assert!(system.selected_pairs().is_empty());
             let [overlap] = system.overlaps.as_ref() else {
                 panic!("the quarter-circle correspondence must have one exact cell");
             };
@@ -10174,7 +10748,7 @@ mod conversion_tests {
             else {
                 panic!("the smooth oval was not decomposed into exact cells");
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             let [lower_left, upper_left, lower_right, upper_right] = evidence.overlaps.as_ref()
             else {
                 panic!("the oval must have four doubly monotone cells");
@@ -10243,7 +10817,7 @@ mod conversion_tests {
             else {
                 panic!("the algebraic oval was not decomposed into exact cells");
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             let [lower_left, upper_left, lower_right, upper_right] = evidence.overlaps.as_ref()
             else {
                 panic!("the algebraic oval must have four exact cells");
@@ -10374,7 +10948,7 @@ mod conversion_tests {
                     Classification::Decided(Some(_)) => unreachable!(),
                 }
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             assert_eq!(evidence.overlaps.len(), 4);
         }
     }
@@ -10425,7 +10999,7 @@ mod conversion_tests {
             else {
                 panic!("the two disjoint ovals were not connected independently");
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             assert_eq!(evidence.overlaps.len(), 8);
             assert_eq!(
                 evidence
@@ -10541,7 +11115,7 @@ mod conversion_tests {
                 panic!("the entirely zero selected branch was not removed");
             };
             assert!(empty.overlaps.is_empty());
-            assert!(empty.isolated_pairs.is_empty());
+            assert!(empty.selected_pairs().is_empty());
 
             let Classification::Decided(Some(selected)) =
                 certify_regular_implicit_parameter_component(
@@ -10555,7 +11129,7 @@ mod conversion_tests {
             else {
                 panic!("the nonzero quotient component was not retained");
             };
-            assert!(selected.isolated_pairs.is_empty());
+            assert!(selected.selected_pairs().is_empty());
             assert_eq!(selected.overlaps.len(), 4);
             for overlap in selected.overlaps.iter() {
                 for endpoint in [overlap.second_range().start(), overlap.second_range().end()] {
@@ -10597,7 +11171,7 @@ mod conversion_tests {
             else {
                 panic!("the transverse square crossing was not clipped");
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             let [overlap] = evidence.overlaps.as_ref() else {
                 panic!("the clipped line must produce one component cell");
             };
@@ -10650,7 +11224,7 @@ mod conversion_tests {
                 panic!("the isolated square-boundary point was not retained");
             };
             assert!(evidence.overlaps.is_empty());
-            let [pair] = evidence.isolated_pairs.as_ref() else {
+            let [pair] = evidence.selected_pairs() else {
                 panic!("the boundary touch must produce one isolated pair");
             };
             assert_eq!(pair.parallel_parameter.as_exact(), Some(&half));
@@ -10693,7 +11267,7 @@ mod conversion_tests {
             else {
                 panic!("the interior cusp was not partitioned");
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             let [descending, ascending] = evidence.overlaps.as_ref() else {
                 panic!("the cusp must produce two monotone branches");
             };
@@ -10765,7 +11339,7 @@ mod conversion_tests {
             else {
                 panic!("the repeated cusp was not reduced to geometric support");
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             let [descending, ascending] = evidence.overlaps.as_ref() else {
                 panic!("cusp multiplicity must not duplicate either branch");
             };
@@ -10808,7 +11382,7 @@ mod conversion_tests {
             else {
                 panic!("the corner cusp was not clipped");
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             let [overlap] = evidence.overlaps.as_ref() else {
                 panic!("the clipped corner cusp must have one cell");
             };
@@ -10861,7 +11435,7 @@ mod conversion_tests {
             else {
                 panic!("the interior node was not split into exact cells");
             };
-            assert!(evidence.isolated_pairs.is_empty());
+            assert!(evidence.selected_pairs().is_empty());
             assert_eq!(evidence.overlaps.len(), 4);
             assert_eq!(
                 evidence
@@ -10920,7 +11494,7 @@ mod conversion_tests {
                 panic!("the isolated singular point was not retained");
             };
             assert!(evidence.overlaps.is_empty());
-            let [point] = evidence.isolated_pairs.as_ref() else {
+            let [point] = evidence.selected_pairs() else {
                 panic!("the singular real locus must contain one point");
             };
             assert_eq!(point.parallel_parameter.as_exact(), Some(&half));
@@ -11094,7 +11668,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn regular_implicit_parameter_component_rejects_a_branch_zero() {
+    fn regular_implicit_parameter_component_partitions_at_an_isolated_branch_zero() {
         let component = BivariatePolynomial::new(vec![
             vec![Real::zero(), Real::from(2_i8), Real::from(2_i8)],
             vec![Real::from(-3_i8)],
@@ -11114,10 +11688,159 @@ mod conversion_tests {
         };
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            assert!(matches!(
-                parameter_component_system(&equations, &branch, &policy, config).unwrap(),
-                Classification::Uncertain(UncertaintyReason::Boundary)
-            ));
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("the implicit selected set was not partitioned at its branch zero");
+            };
+            assert!(system.selected_pairs().is_empty());
+            assert_eq!(system.excluded_pairs().len(), 1);
+            let [overlap] = system.overlaps.as_ref() else {
+                panic!("the positive implicit branch did not produce one overlap");
+            };
+            assert_eq!(overlap.first_range().end().as_exact(), Some(&Real::one()));
+            assert_eq!(
+                overlap.second_range().exact_endpoints().map(|(_, end)| end),
+                Some(&Real::one())
+            );
+            assert_eq!(
+                overlap.second_range().start().as_exact(),
+                Some(&(Real::one() / Real::from(2_i8)).unwrap())
+            );
+            assert!(!overlap.includes_start());
+            assert!(overlap.includes_end());
+        }
+    }
+
+    #[test]
+    fn implicit_component_partitions_even_endpoint_and_singular_branch_zeros() {
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::from(2_i8), Real::from(2_i8)],
+            vec![Real::from(-3_i8)],
+            vec![Real::from(-1_i8)],
+        ]);
+        let punctured_branch = BivariatePolynomial::new(vec![vec![
+            (Real::one() / Real::from(4_i8)).unwrap(),
+            Real::from(-1_i8),
+            Real::one(),
+        ]]);
+        let start_branch = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]);
+        let negative_punctured_branch =
+            bivariate_scale(punctured_branch.clone(), &Real::from(-1_i8));
+        let cusp = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(3_i8) / Real::from(8_i8)).unwrap(),
+                Real::from(-1_i8),
+                Real::one(),
+            ],
+            vec![(Real::from(-3_i8) / Real::from(4_i8)).unwrap()],
+            vec![(Real::from(3_i8) / Real::from(2_i8)).unwrap()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let cusp_branch = BivariatePolynomial::new(vec![
+            vec![(Real::from(-1_i8) / Real::from(2_i8)).unwrap()],
+            vec![Real::one()],
+        ]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let zero = Real::zero();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let one = Real::one();
+        #[cfg(feature = "predicates")]
+        let regular_retained_parameter = CurveResultantParameter::First;
+        #[cfg(not(feature = "predicates"))]
+        let regular_retained_parameter = CurveResultantParameter::Second;
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let punctured = match certify_regular_implicit_parameter_component(
+                &component,
+                &punctured_branch,
+                regular_retained_parameter,
+                &policy,
+                config,
+            )
+            .unwrap()
+            {
+                Classification::Decided(Some(evidence)) => evidence,
+                Classification::Decided(None) => {
+                    panic!("an even branch zero declined implicit component certification")
+                }
+                Classification::Uncertain(reason) => {
+                    panic!("an even branch zero was uncertain under {policy:?}: {reason:?}")
+                }
+            };
+            assert_eq!(punctured.excluded_pairs().len(), 1);
+            let [before, after] = punctured.overlaps.as_ref() else {
+                panic!("an implicit puncture must produce two open-sided overlaps");
+            };
+            assert_eq!(
+                before.second_range().exact_endpoints(),
+                Some((&zero, &half))
+            );
+            assert_eq!(after.second_range().exact_endpoints(), Some((&half, &one)));
+            assert!(before.includes_start());
+            assert!(!before.includes_end());
+            assert!(!after.includes_start());
+            assert!(after.includes_end());
+
+            let Classification::Decided(Some(endpoint)) =
+                certify_regular_implicit_parameter_component(
+                    &component,
+                    &start_branch,
+                    regular_retained_parameter,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("the boundary branch zero was not certified");
+            };
+            assert_eq!(endpoint.excluded_pairs().len(), 1);
+            let [overlap] = endpoint.overlaps.as_ref() else {
+                panic!("the boundary branch zero must retain one overlap");
+            };
+            assert!(!overlap.includes_start());
+            assert!(overlap.includes_end());
+
+            let Classification::Decided(Some(negative)) =
+                certify_regular_implicit_parameter_component(
+                    &component,
+                    &negative_punctured_branch,
+                    regular_retained_parameter,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("the negative punctured implicit branch was not decided");
+            };
+            assert!(negative.overlaps.is_empty());
+            assert!(negative.selected_pairs().is_empty());
+            assert_eq!(negative.excluded_pairs().len(), 1);
+
+            let Classification::Decided(Some(cusp_evidence)) =
+                certify_regular_implicit_parameter_component(
+                    &cusp,
+                    &cusp_branch,
+                    CurveResultantParameter::First,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("a branch zero coincident with a singular event was not certified");
+            };
+            assert_eq!(cusp_evidence.excluded_pairs().len(), 1);
+            let [descending, ascending] = cusp_evidence.overlaps.as_ref() else {
+                panic!("the selected cusp must retain both right half-branches");
+            };
+            for overlap in [descending, ascending] {
+                assert_eq!(overlap.first_range().exact_endpoints(), Some((&half, &one)));
+                assert!(!overlap.includes_start());
+                assert!(overlap.includes_end());
+            }
         }
     }
 
@@ -11145,7 +11868,7 @@ mod conversion_tests {
                 panic!("opposite regular implicit graph was not decided");
             };
             assert!(system.overlaps.is_empty());
-            assert!(system.isolated_pairs.is_empty());
+            assert!(system.selected_pairs().is_empty());
         }
     }
 
