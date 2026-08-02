@@ -14,6 +14,41 @@ mod tests {
         SymbolicDependencyMask, ZeroKnowledge, ZeroOneMinusOneStatus,
     };
 
+    fn rational_linear_form4_filter_matches_exact_sum(
+        coefficients: [Rational; 4],
+        point: [Rational; 4],
+    ) -> bool {
+        let coefficient_reals = coefficients.clone().map(Real::new);
+        let filter = RationalLinearForm4Filter::from_reals([
+            &coefficient_reals[0],
+            &coefficient_reals[1],
+            &coefficient_reals[2],
+            &coefficient_reals[3],
+        ])
+        .expect("the test corpus stays within the normalized filter range");
+        let query =
+            RationalLinearForm4Query::from_rationals([&point[0], &point[1], &point[2], &point[3]])
+                .expect("the test corpus stays within the normalized query range");
+        let Some(actual) = filter.sign(&query) else {
+            return false;
+        };
+        let expected = match Rational::signed_product_sum_ordering(
+            [true; 4],
+            [
+                [&coefficients[0], &point[0]],
+                [&coefficients[1], &point[1]],
+                [&coefficients[2], &point[2]],
+                [&coefficients[3], &point[3]],
+            ],
+        ) {
+            Ordering::Less => RealSign::Negative,
+            Ordering::Equal => RealSign::Zero,
+            Ordering::Greater => RealSign::Positive,
+        };
+        assert_eq!(actual, expected);
+        true
+    }
+
     #[test]
     fn zero() {
         assert_eq!(Real::zero(), Real::zero());
@@ -30,8 +65,6 @@ mod tests {
 
     #[test]
     fn rational_linear_form4_filter_never_disagrees_with_exact_sum() {
-        use std::cmp::Ordering;
-
         fn next_rational(state: &mut u64) -> Rational {
             *state ^= *state << 13;
             *state ^= *state >> 7;
@@ -49,38 +82,49 @@ mod tests {
         for _ in 0..4096 {
             let coefficients: [Rational; 4] = std::array::from_fn(|_| next_rational(&mut state));
             let point: [Rational; 4] = std::array::from_fn(|_| next_rational(&mut state));
-            let coefficient_reals = coefficients.clone().map(Real::new);
-            let filter = RationalLinearForm4Filter::from_reals([
-                &coefficient_reals[0],
-                &coefficient_reals[1],
-                &coefficient_reals[2],
-                &coefficient_reals[3],
-            ])
-            .unwrap();
-            let query = RationalLinearForm4Query::from_rationals([
-                &point[0], &point[1], &point[2], &point[3],
-            ])
-            .unwrap();
-            let Some(actual) = filter.sign(&query) else {
-                continue;
-            };
-            certified += 1;
-            let expected = match Rational::signed_product_sum_ordering(
-                [true; 4],
-                [
-                    [&coefficients[0], &point[0]],
-                    [&coefficients[1], &point[1]],
-                    [&coefficients[2], &point[2]],
-                    [&coefficients[3], &point[3]],
-                ],
-            ) {
-                Ordering::Less => RealSign::Negative,
-                Ordering::Equal => RealSign::Zero,
-                Ordering::Greater => RealSign::Positive,
-            };
-            assert_eq!(actual, expected);
+            certified += usize::from(rational_linear_form4_filter_matches_exact_sum(
+                coefficients,
+                point,
+            ));
         }
         assert!(certified > 4000);
+    }
+
+    #[test]
+    fn rational_linear_form4_filter_never_disagrees_at_low_normal_scales() {
+        fn next_rational(state: &mut u64) -> Rational {
+            *state ^= *state << 13;
+            *state ^= *state >> 7;
+            *state ^= *state << 17;
+            let magnitude = i64::try_from(64 + *state % 64).unwrap();
+            let numerator = if *state & 128 == 0 {
+                magnitude
+            } else {
+                -magnitude
+            };
+            Rational::fraction(numerator, 64).unwrap()
+        }
+
+        let mut state = 0xd1b5_4a32_d192_ed03;
+        let mut certified = 0;
+        for (coefficient_exponent, point_exponent) in
+            [(1, 1), (1, 47), (47, 1), (17, 31), (48, 2), (256, 17)]
+        {
+            let coefficient_scale =
+                Rational::try_from(f64::from_bits(coefficient_exponent << 52)).unwrap();
+            let point_scale = Rational::try_from(f64::from_bits(point_exponent << 52)).unwrap();
+            for _ in 0..256 {
+                let coefficients: [Rational; 4] =
+                    std::array::from_fn(|_| next_rational(&mut state) * &coefficient_scale);
+                let point: [Rational; 4] =
+                    std::array::from_fn(|_| next_rational(&mut state) * &point_scale);
+                certified += usize::from(rational_linear_form4_filter_matches_exact_sum(
+                    coefficients,
+                    point,
+                ));
+            }
+        }
+        assert!(certified > 1_500);
     }
 
     #[test]

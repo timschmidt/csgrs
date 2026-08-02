@@ -763,6 +763,42 @@ mod tests {
     }
 
     #[test]
+    fn rational_linear_form4_relative_conversion_normalizes_minimum_normal() {
+        let minimum = Real::try_from(f64::MIN_POSITIVE).unwrap();
+        let minimum_rational = minimum.exact_rational_ref().unwrap();
+        assert!(Real::rational_f64_with_error(minimum_rational).is_none());
+
+        let zero = Real::zero();
+        let zero_rational = zero.exact_rational_ref().unwrap();
+        let filter = RationalLinearForm4Filter::from_reals([
+            &minimum,
+            &zero,
+            &zero,
+            &zero,
+        ])
+        .expect("relative normalization rescales the minimum normal");
+        let query = RationalLinearForm4Query::from_rationals([
+            minimum_rational,
+            zero_rational,
+            zero_rational,
+            zero_rational,
+        ])
+        .expect("relative normalization rescales the minimum normal");
+        assert_eq!(filter.coefficients, [1.0, 0.0, 0.0, 0.0]);
+        assert_eq!(query.values, [1.0, 0.0, 0.0, 0.0]);
+        assert_eq!(filter.sign(&query), Some(RealSign::Positive));
+
+        let subnormal = Real::try_from(f64::from_bits(1)).unwrap();
+        assert!(RationalLinearForm4Query::from_rationals([
+            subnormal.exact_rational_ref().unwrap(),
+            zero_rational,
+            zero_rational,
+            zero_rational,
+        ])
+        .is_none());
+    }
+
+    #[test]
     fn rational_linear_form4_normalization_handles_every_normal_exponent() {
         fn reference(mut values: [f64; 4]) -> Option<[f64; 4]> {
             const EXPONENT_MASK: u64 = 0x7ff0_0000_0000_0000;

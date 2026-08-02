@@ -556,7 +556,7 @@ impl RationalLinearForm4Query {
     pub fn from_rationals(point: [&Rational; 4]) -> Option<Self> {
         let mut values = [0.0; 4];
         for (index, coordinate) in point.into_iter().enumerate() {
-            (values[index], _) = Real::rational_f64_with_error(coordinate)?;
+            values[index] = Real::rational_f64_for_relative_filter(coordinate)?;
         }
         Some(Self {
             values: Real::normalize_rational_linear_form4_values(values)?,
@@ -568,7 +568,7 @@ impl RationalLinearForm4Query {
     pub fn from_affine_point3(point: [&Rational; 3]) -> Option<Self> {
         let mut values = [0.0; 4];
         for (index, coordinate) in point.into_iter().enumerate() {
-            (values[index], _) = Real::rational_f64_with_error(coordinate)?;
+            values[index] = Real::rational_f64_for_relative_filter(coordinate)?;
         }
         values[3] = 1.0;
         Some(Self {
@@ -583,9 +583,9 @@ impl RationalLinearForm4Filter {
     pub fn from_reals(coefficients: [&Real; 4]) -> Option<Self> {
         let mut values = [0.0; 4];
         for (index, coefficient) in coefficients.into_iter().enumerate() {
-            let (value, _) =
-                Real::rational_f64_with_error(coefficient.exact_rational_ref()?)?;
-            values[index] = value;
+            values[index] = Real::rational_f64_for_relative_filter(
+                coefficient.exact_rational_ref()?,
+            )?;
         }
         Some(Self {
             coefficients: Real::normalize_rational_linear_form4_values(values)?,
@@ -899,15 +899,9 @@ impl Real {
     fn rational_f64_with_error(
         value: &Rational,
     ) -> Option<(f64, f64)> {
-        let approximation = value.to_f64_lossy()?;
-        if !approximation.is_finite() {
-            return None;
-        }
+        let approximation = Self::rational_f64_for_relative_filter(value)?;
         if approximation == 0.0 {
-            return value.is_zero().then_some((0.0, 0.0));
-        }
-        if !approximation.is_normal() {
-            return None;
+            return Some((0.0, 0.0));
         }
 
         // `BigUint::to_f64` retains the high significand bits and introduces
@@ -919,6 +913,22 @@ impl Real {
         let error =
             approximation.abs() * (32.0 * f64::EPSILON);
         error.is_normal().then_some((approximation, error))
+    }
+
+    #[inline]
+    fn rational_f64_for_relative_filter(value: &Rational) -> Option<f64> {
+        // Four-term filters consume only the proved relative conversion bound;
+        // their shared normalizer rejects every exponent span that could make
+        // a nonzero product subnormal. Interval filters call the wrapper above
+        // to additionally require a representable absolute-error radius.
+        let approximation = value.to_f64_lossy()?;
+        if !approximation.is_finite() {
+            return None;
+        }
+        if approximation == 0.0 {
+            return value.is_zero().then_some(0.0);
+        }
+        approximation.is_normal().then_some(approximation)
     }
 
     #[inline]
