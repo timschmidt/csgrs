@@ -1,0 +1,236 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact polynomial and rational Bezier self-contact regularization",
+  "source_revision": "be8635d602fb3f7248d6cb69e8b8d3173e2b5a8b",
+  "semantic_revisions": [
+    "c131935",
+    "3e901ac"
+  ],
+  "historical_revision": "6763a0d",
+  "immediate_parent_revision": "c131935",
+  "previous_checkpoint_revision": "620b183",
+  "dependency_revisions": {
+    "hyperreal": "22c3a445538c5bf6669d7a8bd0bc1bb04c414394",
+    "hyperlimit": "3e5d8816cd32bba46f48e0c6c13ab7a9da227784",
+    "hypersolve": "339d4d8b6109da2c814febce3da9f725c44d8e56"
+  },
+  "scope": {
+    "included": [
+      "one exact off-diagonal self-contact authority for polynomial and general rational Bezier carriers",
+      "same-carrier branch topology in the authoritative CurveRegion2 unary arrangement",
+      "exact saturation of the known affine source-parameter component between retained subranges",
+      "coexisting positive-length overlap and isolated cross-branch contact evidence",
+      "STRICT and APPROXIMATE_512 execution through one proof graph",
+      "historical capability, competitive throughput, allocation, peak-memory, linked-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "positive-dimensional retracing correspondences whose divided residual system remains degenerate",
+      "raw signed exact parallel span and join generation",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "whole_carrier": "For homogeneous C(t)=(X(t),Y(t),W(t)), both affine equality equations X(t)W(u)-W(t)X(u)=0 and Y(t)W(u)-W(t)Y(u)=0 are divided exactly by the universal u-t component before elimination.",
+    "symmetric_projection": "The divided whole-carrier system is symmetric, so one complete parameter-axis projection is cloned for the other axis; exact replay considers only t<u before constructing affine point evidence.",
+    "retained_subranges": "For retained source maps s1(t)=a1+d1*t and s2(u)=a2+d2*u, both equality equations are divided exactly by s2(u)-s1(t). The residual system supplies all off-correspondence contacts, while touching source endpoints and positive-length source-range overlap are retained independently.",
+    "contact_replay": "No resultant root becomes topology until exact affine point replay succeeds. Same-source pairs are removed by exact affine algebraic-parameter comparison, not by finite sampling.",
+    "transversality": "The homogeneous affine derivative numerators Dx=X'W-XW' and Dy=Y'W-YW' form an exact bivariate tangent-cross polynomial; refined Bernstein sign proof retains orientation for both whole-carrier and related-subrange contacts.",
+    "composite_result": "RationalBezierIntersectionContacts2::ContactsAndOverlap represents the complete case where a positive-length same-source image and isolated cross-branch contacts coexist; top-level CurveIntersectionResult2 publishes both collections.",
+    "failure_semantics": "A remaining positive-dimensional divided residual, unsupported coefficient division, or incomplete overlap-plus-residual replay remains an explicit degenerate or policy blocker; it is never reported as an empty contact set.",
+    "policy": "STRICT and APPROXIMATE_512 construct and replay identical exact equations and return identical exact geometry. APPROXIMATE_512 may differ only where the inherited 512-bit equality terminal is consumed."
+  },
+  "implementation": {
+    "whole_carrier_fast_path": [
+      "exact u-t division through Hypersolve divide_bivariate_polynomial_exact",
+      "one resultant_bivariate_polynomial_system projection instead of two",
+      "t<u filtering before affine point construction",
+      "lazy tangent-cross polynomial construction only when a contact survives"
+    ],
+    "region_integration": [
+      "BezierSelf replaces UnsupportedSelf in unary scheduling",
+      "one operation-scoped cache exists only for scheduled distinct Bezier self carriers",
+      "same-carrier transition evidence retains both branch parameters and branch identity",
+      "a certified middle self-loop fragment may close through itself"
+    ],
+    "related_subrange_repair": [
+      "known affine lineage factor saturation prevents a shared algebraic component from hiding nodal branch intersections",
+      "disjoint subranges retain isolated contacts",
+      "touching subranges retain the identity endpoint plus isolated contacts",
+      "overlapping subranges retain one overlap and every isolated cross-branch contact"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "historical_capability": {
+    "revision": "6763a0d",
+    "state": "CurveRegion unary scheduling selects UnsupportedSelf for polynomial/general-rational carriers, and RationalBezier2 has no whole-carrier self_intersection_contacts API.",
+    "timing_rule": "No failed historical call is presented as a successful-operation timing.",
+    "immediate_parent_defect": "At c131935 the new whole-carrier authority succeeds, but two retained outer subranges of the same nodal cubic yield DegenerateResultant candidates followed by NoIntersection because endpoint-only shared-component replay omits their interior branch crossing."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "method": "release comparative binary pinned to CPU 11; eleven calibrated samples with a 100 ms target; fixture construction and one warm execution excluded from each measured loop",
+    "command": "HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=rational_bezier_self_contact target/release/deps/comparative-b2bf500a69174bc4",
+    "contract_note": "Curvo 0.1.91 has no whole-carrier self-contact or exact CurveRegion regularization authority. Its numerical f64 comparison intersects two pre-split disjoint outer parameter ranges and is a throughput target under a weaker contract, not an exactness oracle.",
+    "polynomial_cubic": {
+      "hypercurve_exact_self": {
+        "median_ns": 47720.2,
+        "min_ns": 45715.7,
+        "max_ns": 48452.1,
+        "iterations_per_sample": 3584
+      },
+      "hypercurve_exact_disjoint_pair": {
+        "median_ns": 2804811.8,
+        "min_ns": 2779470.2,
+        "max_ns": 2934140.2,
+        "iterations_per_sample": 48,
+        "whole_carrier_speedup": 58.7762
+      },
+      "hypercurve_exact_region_regularization": {
+        "median_ns": 545605.5,
+        "min_ns": 532492.1,
+        "max_ns": 557534.0,
+        "iterations_per_sample": 192,
+        "result_boundary_loops": 2,
+        "result_fragments": 4
+      },
+      "curvo_f64_disjoint_pair": {
+        "median_ns": 58334.1,
+        "min_ns": 57450.7,
+        "max_ns": 60715.2,
+        "iterations_per_sample": 1792,
+        "hypercurve_exact_self_speedup": 1.2224
+      }
+    },
+    "projective_rational_cubic": {
+      "weights": [1, 2, 4, 8],
+      "hypercurve_exact_self": {
+        "median_ns": 244052.0,
+        "min_ns": 238430.1,
+        "max_ns": 253957.3,
+        "iterations_per_sample": 512
+      },
+      "hypercurve_exact_disjoint_pair": {
+        "median_ns": 65527730.0,
+        "min_ns": 65091455.0,
+        "max_ns": 66018226.5,
+        "iterations_per_sample": 2,
+        "whole_carrier_speedup": 268.4990
+      },
+      "hypercurve_exact_region_regularization": {
+        "median_ns": 1989292.6,
+        "min_ns": 1967270.2,
+        "max_ns": 2041261.7,
+        "iterations_per_sample": 64,
+        "result_boundary_loops": 2,
+        "result_fragments": 4
+      },
+      "curvo_f64_disjoint_pair": {
+        "median_ns": 48237.9,
+        "min_ns": 47981.4,
+        "max_ns": 50279.9,
+        "iterations_per_sample": 4096,
+        "hypercurve_exact_self_slowdown": 5.0593
+      }
+    },
+    "matched_unrelated_control": {
+      "operation": "one exact CurveRegion arrangement computes all four capsule Boolean results",
+      "previous_checkpoint_median_ns": 441999.4,
+      "current_median_ns": 432920.1,
+      "change_percent": -2.0541,
+      "interpretation": "unrelated line/arc fast-path performance remains neutral within ordinary run-to-run noise"
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct application traces",
+    "exact_polynomial_self": {
+      "workload": "5000 fixed measured calls plus benchmark validation and warmup",
+      "profile": "/tmp/hypercurve-rational-self-contact-direct.c131935.heaptrack.zst",
+      "runtime_seconds": 1.75,
+      "allocation_calls": 2939036,
+      "temporary_allocations": 174181,
+      "peak_heap_kib": 214.71,
+      "recorder_peak_rss_mib": 11.97,
+      "interpretation": "live memory is compact, while roughly 588 allocation calls per measured operation identify resultant polynomial storage as an optimization target"
+    },
+    "exact_projective_region_regularization": {
+      "workload": "500 fixed measured calls plus benchmark validation and warmup",
+      "profile": "/tmp/hypercurve-rational-self-region-direct.c131935.heaptrack.zst",
+      "runtime_seconds": 11.90,
+      "allocation_calls": 19439418,
+      "temporary_allocations": 604132,
+      "peak_heap_kib": 351.10,
+      "recorder_peak_rss_mib": 14.22,
+      "interpretation": "peak live memory stays below 0.35 MiB, but complete region replay remains allocation-heavy and should gain operation-arena reuse after offset correctness closes"
+    }
+  },
+  "release_size": {
+    "method": "byte-identical curve_region_boolean_batch source at c131935 and 3e901ac with the same shared dependency revisions",
+    "default_features": {
+      "parent_file_bytes": 7397240,
+      "current_file_bytes": 7424000,
+      "file_change_bytes": 26760,
+      "file_change_percent": 0.361757,
+      "parent_text_bytes": 5590273,
+      "current_text_bytes": 5610701,
+      "text_change_bytes": 20428,
+      "text_change_percent": 0.365420,
+      "data_change_bytes": -24,
+      "bss_change_bytes": 88
+    },
+    "no_default_features": {
+      "parent_file_bytes": 7268120,
+      "current_file_bytes": 7302560,
+      "file_change_bytes": 34440,
+      "file_change_percent": 0.473850,
+      "parent_text_bytes": 5490941,
+      "current_text_bytes": 5518369,
+      "text_change_bytes": 27428,
+      "text_change_percent": 0.499514,
+      "data_change_bytes": 400,
+      "bss_change_bytes": 848
+    },
+    "interpretation": "the complete shared-lineage result shape and exact residual replay add less than 0.5% representative text, but remain explicit size debt for Phase 7 outlining and consolidation"
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-rational-self-callgraph-be8635d --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 9,
+    "previous_checkpoint_nodes": 30715,
+    "current_nodes": 30938,
+    "node_change": 223,
+    "previous_checkpoint_edges": 55574,
+    "current_edges": 56362,
+    "edge_change": 788,
+    "artifact": "/tmp/hypercurve-rational-self-callgraph-be8635d/callgraph.json",
+    "confirmed_authoritative_paths": [
+      "CurveRegionBooleanContext::pair_result -> bezier_self_intersections -> RationalBezier2::self_intersection_contacts_classified",
+      "RationalBezier2::self_intersection_contacts_classified -> rational_self_intersection_residual_system -> divide_bivariate_polynomial_exact",
+      "RationalBezier2::self_intersection_contacts_classified -> project_symmetric_self_intersection_system -> resultant_bivariate_polynomial_system",
+      "RationalBezier2::retained_lineage_intersection_contacts -> rational_retained_lineage_residual_system -> divide_bivariate_polynomial_exact",
+      "RationalBezier2::retained_lineage_intersection_contacts -> project_retained_lineage_residual_system -> resultant_bivariate_polynomial_system"
+    ],
+    "tool_limit": "Imported Hypersolve calls are represented under the Hypercurve module alias by the static approximation; source inspection confirms their Hypersolve ownership."
+  },
+  "verification": {
+    "focused_matrix": "passed: 335 library tests, 3 analytic-parallel region tests, 29 curve-intersection tests, 29 CurveRegion Boolean tests, and 39 CurveRegion promotion/regularization tests",
+    "strict_and_approximate_cases": "passed: rational and polynomial whole-carrier contacts, disjoint retained branches, touching retained branches, overlap-plus-isolated contacts, algebraic self parameters, and public two-loop CurveRegion regularization",
+    "no_default_focused": "passed retained noninjective subrange regression; 303-test minimal library inventory compiled",
+    "clippy_all_features": "passed with -D warnings",
+    "clippy_no_default_features": "passed with -D warnings",
+    "benchmark_check": "passed with comparative-benchmarks",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "generate signed raw exact parallel spans and exact round, bevel, and bounded-miter joins",
+    "regularize expansion, erosion, collapse, cusp, and offset self-contact exclusively through CurveRegion2",
+    "retain explicit DegenerateResultant for positive-dimensional rational retracing until complete correspondence decomposition is implemented",
+    "implement solver-driven fillet and chamfer",
+    "reduce resultant and region-replay allocation churn and outline cold shared-component machinery",
+    "delete displaced historical offset/Boolean machinery after differential coverage passes"
+  ]
+}
