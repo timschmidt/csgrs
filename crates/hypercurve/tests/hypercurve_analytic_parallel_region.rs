@@ -2,7 +2,7 @@ use hypercurve::{
     BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
     BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CurveBoundaryInteriorSide2, CurveContext, CurveRegion2, CurveRegionBoundaryLoop2,
+    CubicBezier2, CurveBoundaryInteriorSide2, CurveContext, CurveRegion2, CurveRegionBoundaryLoop2,
     CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Real, RegionPointLocation,
 };
 
@@ -344,6 +344,62 @@ fn check_algebraic_cusp_connectivity(policy: CurveContext) {
     assert_eq!(boundary.len(), 3);
 }
 
+fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
+    let source = CubicBezier2::new(point(0, 0), point(0, 4), point(4, -4), point(4, 0));
+    let parallel = source
+        .parallel_left((Real::one() / Real::from(2_u8)).unwrap())
+        .unwrap();
+    let analysis = match parallel.singularity_analysis(policy).unwrap() {
+        Classification::Decided(analysis) => analysis,
+        Classification::Uncertain(reason) => panic!("cusp analysis: {reason:?}"),
+    };
+    let [first_cusp, second_cusp] = analysis.parallel_cusps() else {
+        panic!("expected two algebraic parallel cusps");
+    };
+    let boundaries = [
+        exact_parameter(0, policy),
+        first_cusp.clone(),
+        second_cusp.clone(),
+        exact_parameter(1, policy),
+    ];
+    let mut fragments = boundaries
+        .windows(2)
+        .map(|window| {
+            let range =
+                match BezierParameterRange2::try_new(window[0].clone(), window[1].clone(), policy)
+                    .unwrap()
+                {
+                    Classification::Decided(range) => range,
+                    Classification::Uncertain(reason) => panic!("parallel span: {reason:?}"),
+                };
+            match BezierParallelFragment2::try_new(parallel.clone(), range, policy).unwrap() {
+                Classification::Decided(fragment) => {
+                    BezierSplitFragment2::AnalyticParallel(fragment)
+                }
+                Classification::Uncertain(reason) => {
+                    panic!("analytic parallel span: {reason:?}")
+                }
+            }
+        })
+        .collect::<Vec<_>>();
+    let start = match parallel.point_at(&Real::zero(), policy).unwrap() {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => panic!("parallel start: {reason:?}"),
+    };
+    let end = match parallel.point_at(&Real::one(), policy).unwrap() {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
+    };
+    fragments.push(materialized_line(end, start, policy));
+    CurveRegion2::try_new_with_loop_topology(
+        vec![CurveRegionBoundaryLoop2::new(fragments, policy).unwrap()],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )
+    .unwrap()
+}
+
 #[test]
 fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies() {
     check_policy(CurveContext::STRICT);
@@ -354,4 +410,14 @@ fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies(
 fn algebraic_parallel_cusp_spans_connect_under_both_policies() {
     check_algebraic_cusp_connectivity(CurveContext::STRICT);
     check_algebraic_cusp_connectivity(CurveContext::APPROXIMATE_512);
+}
+
+#[test]
+fn cusp_split_analytic_self_crossing_regularizes_under_both_policies() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let raw = self_crossing_cusp_split_parallel_region(&policy);
+        let regularized = raw.regularized_region(&policy).unwrap().into_value();
+        assert!(!regularized.is_empty());
+        assert_eq!(regularized.boundary_loops().len(), 3);
+    }
 }

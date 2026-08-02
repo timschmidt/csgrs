@@ -11,14 +11,14 @@ use crate::policy::resolve_certified_operation;
 use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2;
 use crate::{
     Aabb2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
-    BezierLineImageFitRelation, BezierParallel2, BezierParameter2, BezierParameterRange2,
-    BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Curve2, CurveContext,
-    CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionContact2,
-    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
-    CurvePathBooleanOperand2, CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
-    FillRule, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionOverlap2,
-    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RegionPointLocation, UncertaintyReason,
+    BezierLineImageFitRelation, BezierParallel2, BezierParallelPairIntersectionSet2,
+    BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
+    Classification, Curve2, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
+    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
+    CurveOperation2, CurveOutcome, CurvePathBooleanOperand2, CurveRegion2, CurveResult,
+    ExactCurveError, ExactCurveResult, FillRule, QuadraticBezier2, RationalBezier2,
+    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, RealSign, RegionPointLocation, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -97,7 +97,14 @@ struct CurveRegionBooleanContextData<'a> {
     first_carrier_count: usize,
     authored_carrier_pair_count: usize,
     pairs: Vec<RegionCarrierPair>,
+    parallel_self_intersections: Vec<ParallelSelfIntersectionCache>,
     strict_line_image_only: OnceLock<bool>,
+}
+
+#[derive(Debug)]
+struct ParallelSelfIntersectionCache {
+    parallel: BezierParallel2,
+    result: OnceLock<CurveResult<Classification<BezierParallelPairIntersectionSet2>>>,
 }
 
 #[derive(Clone, Debug)]
@@ -133,6 +140,9 @@ enum RegionCarrierPairContext {
     Bezier(CurveIntersectionContext),
     ParallelRational { parallel_is_first: bool },
     ParallelPair,
+    ParallelSameImage,
+    ParallelSelf,
+    UnsupportedSelf,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -143,6 +153,7 @@ enum RegionPairContactEvidence {
         second_parameter: BezierParameter2,
         point: Option<RationalBezierIntersectionPointEvidence2>,
         certified_transverse: bool,
+        tangent_cross_sign: Option<RealSign>,
     },
 }
 
@@ -203,6 +214,7 @@ struct TransitionContactCandidate {
     first_carrier: usize,
     second_carrier: usize,
     certified_transverse: bool,
+    cross_is_positive: Option<bool>,
 }
 
 #[derive(Clone, Debug)]
@@ -424,6 +436,19 @@ impl RegionPairContactEvidence {
                 certified_transverse,
                 ..
             } => *certified_transverse,
+        }
+    }
+
+    const fn tangent_cross_is_positive(&self) -> Option<bool> {
+        match self {
+            Self::Bezier(_) => None,
+            Self::Analytic {
+                tangent_cross_sign, ..
+            } => match tangent_cross_sign {
+                Some(RealSign::Positive) => Some(true),
+                Some(RealSign::Negative) => Some(false),
+                Some(RealSign::Zero) | None => None,
+            },
         }
     }
 }
@@ -681,6 +706,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             }
         }
+        let parallel_self_intersections = build_parallel_self_intersection_caches(&carriers);
 
         Ok(Self {
             data: CurveRegionBooleanContextData {
@@ -691,6 +717,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count,
                 authored_carrier_pair_count,
                 pairs,
+                parallel_self_intersections,
                 strict_line_image_only: OnceLock::new(),
             },
         })
@@ -707,7 +734,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         )?;
         let carrier_count = carriers.len();
         let authored_carrier_pair_count =
-            carrier_count.saturating_mul(carrier_count.saturating_sub(1)) / 2;
+            carrier_count.saturating_mul(carrier_count.saturating_add(1)) / 2;
         let curves = carriers
             .iter()
             .map(|carrier| match &carrier.geometry {
@@ -730,7 +757,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     pairs.push(pair);
                 }
             }
+            let carrier = &carriers[first_carrier_index];
+            if !carrier.geometry.has_certified_injective_axis(policy) {
+                pairs.push(RegionCarrierPair {
+                    first_carrier_index,
+                    second_carrier_index: first_carrier_index,
+                    context: match &carrier.geometry {
+                        RegionCarrierGeometry::AnalyticParallel(_) => {
+                            RegionCarrierPairContext::ParallelSelf
+                        }
+                        RegionCarrierGeometry::Bezier(_) => {
+                            RegionCarrierPairContext::UnsupportedSelf
+                        }
+                    },
+                });
+            }
         }
+        let parallel_self_intersections = build_parallel_self_intersection_caches(&carriers);
 
         Ok(Self {
             data: CurveRegionBooleanContextData {
@@ -741,6 +784,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count: carrier_count,
                 authored_carrier_pair_count,
                 pairs,
+                parallel_self_intersections,
                 strict_line_image_only: OnceLock::new(),
             },
         })
@@ -816,6 +860,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
     }
 
+    fn parallel_self_intersections(
+        &self,
+        parallel: &BezierParallel2,
+    ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
+        self.data
+            .parallel_self_intersections
+            .iter()
+            .find(|cache| cache.parallel == *parallel)
+            .expect("every analytic carrier has an operation-scoped self-intersection cache")
+            .result
+            .get_or_init(|| parallel.self_intersections(&self.data.policy))
+            .clone()
+    }
+
     fn pair_result(&self, pair: &RegionCarrierPair) -> ExactCurveResult<RegionPairResult> {
         let first = &self.data.carriers[pair.first_carrier_index];
         let second = &self.data.carriers[pair.second_carrier_index];
@@ -873,22 +931,30 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .contacts()
                     .iter()
                     .map(|contact| {
-                        let (first_parameter, second_parameter) = if *parallel_is_first {
-                            (
-                                contact.parallel_parameter().clone(),
-                                contact.other_parameter().clone(),
-                            )
-                        } else {
-                            (
-                                contact.other_parameter().clone(),
-                                contact.parallel_parameter().clone(),
-                            )
-                        };
+                        let (first_parameter, second_parameter, tangent_cross_sign) =
+                            if *parallel_is_first {
+                                (
+                                    contact.parallel_parameter().clone(),
+                                    contact.other_parameter().clone(),
+                                    contact.tangent_cross_sign(),
+                                )
+                            } else {
+                                (
+                                    contact.other_parameter().clone(),
+                                    contact.parallel_parameter().clone(),
+                                    contact.tangent_cross_sign().map(|sign| match sign {
+                                        RealSign::Positive => RealSign::Negative,
+                                        RealSign::Negative => RealSign::Positive,
+                                        RealSign::Zero => RealSign::Zero,
+                                    }),
+                                )
+                            };
                         RegionPairContactEvidence::Analytic {
                             first_parameter,
                             second_parameter,
                             point: Some(contact.point().clone()),
                             certified_transverse: contact.is_certified_transverse(),
+                            tangent_cross_sign,
                         }
                     })
                     .collect();
@@ -928,48 +994,89 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     blockers,
                 })
             }
-            RegionCarrierPairContext::ParallelPair => {
-                let result = match first
-                    .geometry
-                    .parallel()
-                    .parallel_intersections(second.geometry.parallel(), &self.data.policy)
-                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
-                {
-                    Classification::Decided(result) => result,
-                    Classification::Uncertain(reason) => {
-                        return Ok(RegionPairResult {
-                            contacts: Vec::new(),
-                            overlaps: Vec::new(),
-                            blockers: vec![RegionPairBlocker::Uncertain(reason)],
+            RegionCarrierPairContext::ParallelPair
+            | RegionCarrierPairContext::ParallelSameImage
+            | RegionCarrierPairContext::ParallelSelf => {
+                let parallel = first.geometry.parallel();
+                let mut intersections = Vec::with_capacity(2);
+                match &pair.context {
+                    RegionCarrierPairContext::ParallelPair => intersections.push((
+                        parallel
+                            .parallel_intersections(second.geometry.parallel(), &self.data.policy),
+                        false,
+                    )),
+                    RegionCarrierPairContext::ParallelSameImage => {
+                        intersections.push((
+                            parallel.parallel_intersections(
+                                second.geometry.parallel(),
+                                &self.data.policy,
+                            ),
+                            false,
+                        ));
+                        intersections.push((self.parallel_self_intersections(parallel), true));
+                    }
+                    RegionCarrierPairContext::ParallelSelf => {
+                        intersections.push((self.parallel_self_intersections(parallel), true));
+                    }
+                    RegionCarrierPairContext::Bezier(_)
+                    | RegionCarrierPairContext::ParallelRational { .. }
+                    | RegionCarrierPairContext::UnsupportedSelf => unreachable!(),
+                }
+                let mut contacts = Vec::new();
+                let mut overlaps = Vec::new();
+                let mut blockers = Vec::new();
+                for (intersection, self_contacts) in intersections {
+                    let result = match intersection
+                        .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                    {
+                        Classification::Decided(result) => result,
+                        Classification::Uncertain(reason) => {
+                            blockers.push(RegionPairBlocker::Uncertain(reason));
+                            continue;
+                        }
+                    };
+                    for contact in result.contacts() {
+                        let (mut first_parameter, mut second_parameter) = (
+                            contact.first_parameter().clone(),
+                            contact.second_parameter().clone(),
+                        );
+                        let mut tangent_cross_sign = contact.tangent_cross_sign();
+                        if self_contacts
+                            && pair.first_carrier_index != pair.second_carrier_index
+                            && !(parameter_in_carrier(&first_parameter, first, &self.data.policy)?
+                                && parameter_in_carrier(
+                                    &second_parameter,
+                                    second,
+                                    &self.data.policy,
+                                )?)
+                        {
+                            std::mem::swap(&mut first_parameter, &mut second_parameter);
+                            tangent_cross_sign = tangent_cross_sign.map(|sign| match sign {
+                                RealSign::Positive => RealSign::Negative,
+                                RealSign::Negative => RealSign::Positive,
+                                RealSign::Zero => RealSign::Zero,
+                            });
+                        }
+                        contacts.push(RegionPairContactEvidence::Analytic {
+                            first_parameter,
+                            second_parameter,
+                            point: None,
+                            certified_transverse: contact.is_certified_transverse(),
+                            tangent_cross_sign,
                         });
                     }
-                };
-                let contacts = result
-                    .contacts()
-                    .iter()
-                    .map(|contact| RegionPairContactEvidence::Analytic {
-                        first_parameter: contact.first_parameter().clone(),
-                        second_parameter: contact.second_parameter().clone(),
-                        point: None,
-                        certified_transverse: contact.is_certified_transverse(),
-                    })
-                    .collect();
-                let overlaps = result
-                    .overlaps()
-                    .iter()
-                    .map(|overlap| RegionPairOverlap {
+                    overlaps.extend(result.overlaps().iter().map(|overlap| RegionPairOverlap {
                         source: None,
                         first_range: overlap.first_range().clone(),
                         second_range: overlap.second_range().clone(),
                         orientation: overlap.orientation(),
-                    })
-                    .collect();
-                let mut blockers = Vec::with_capacity(2);
-                if !result.parameter_components().is_empty() {
-                    blockers.push(RegionPairBlocker::PointImageParameterComponent);
-                }
-                if !result.is_complete() {
-                    blockers.push(RegionPairBlocker::IncompleteAnalyticReplay);
+                    }));
+                    if !result.parameter_components().is_empty() {
+                        blockers.push(RegionPairBlocker::PointImageParameterComponent);
+                    }
+                    if !result.is_complete() {
+                        blockers.push(RegionPairBlocker::IncompleteAnalyticReplay);
+                    }
                 }
                 Ok(RegionPairResult {
                     contacts,
@@ -977,6 +1084,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     blockers,
                 })
             }
+            RegionCarrierPairContext::UnsupportedSelf => Ok(RegionPairResult {
+                contacts: Vec::new(),
+                overlaps: Vec::new(),
+                blockers: vec![RegionPairBlocker::Uncertain(UncertaintyReason::Unsupported)],
+            }),
         }
     }
 
@@ -1258,6 +1370,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         first_carrier: pair.first_carrier_index,
                         second_carrier: pair.second_carrier_index,
                         certified_transverse: contact.is_certified_transverse(),
+                        cross_is_positive: contact.tangent_cross_is_positive(),
                     })
                 } else {
                     None
@@ -1517,16 +1630,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
     }
 
     fn build_regularized_region(&self) -> ExactCurveResult<CurveRegion2> {
-        for (carrier_index, carrier) in self.data.carriers.iter().enumerate() {
-            if !carrier
-                .geometry
-                .has_certified_injective_axis(&self.data.policy)
-            {
-                return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
-            }
-        }
         let topology = self.build_split_topology()?;
         let mut arrangement_fragments = Vec::new();
+        let mut arrangement_directions = Vec::new();
         for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
             for (split_fragment_index, split) in splits.iter().enumerate() {
                 let action = self.regularized_fragment_action(
@@ -1554,6 +1660,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                     RegionFragmentAction::Discard => unreachable!(),
                 };
+                arrangement_directions.push(BooleanArrangementFragmentDirection {
+                    carrier_index,
+                    follows_carrier: action == RegionFragmentAction::Keep,
+                });
                 arrangement_fragments.push(
                     BezierArrangementFragment2::new(carrier_index, split_fragment_index, fragment)
                         .with_topology_vertices(start_topology_vertex, end_topology_vertex),
@@ -1567,9 +1677,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .iter()
             .all(|fragment| split_fragment_is_affine_line(fragment.fragment()));
         let graph = BezierArrangementGraph2::from_certified_fragments(arrangement_fragments);
-        let traversal = match graph
-            .traverse_retained_filled_left_faces_with_certified_successors(&[], &self.data.policy)
-        {
+        let certified_successors = certified_regularization_successors(
+            &graph,
+            &arrangement_directions,
+            &topology.transverse_contacts,
+        );
+        let traversal = match graph.traverse_retained_filled_left_faces_with_certified_successors(
+            &certified_successors,
+            &self.data.policy,
+        ) {
             Classification::Decided(traversal) => traversal,
             Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
         };
@@ -1686,21 +1802,44 @@ impl<'a> CurveRegionBooleanContext<'a> {
         } else {
             -tangent_x.clone()
         };
+        let x_axis = match crate::classify::compare_reals(
+            &normal_x,
+            &crate::Real::zero(),
+            &self.data.policy,
+        ) {
+            Some(Ordering::Greater) => Some((crate::Real::one(), crate::Real::zero())),
+            Some(Ordering::Less) => Some((-crate::Real::one(), crate::Real::zero())),
+            Some(Ordering::Equal) | None => None,
+        };
+        let y_axis = match crate::classify::compare_reals(
+            &normal_y,
+            &crate::Real::zero(),
+            &self.data.policy,
+        ) {
+            Some(Ordering::Greater) => Some((crate::Real::zero(), crate::Real::one())),
+            Some(Ordering::Less) => Some((crate::Real::zero(), -crate::Real::one())),
+            Some(Ordering::Equal) | None => None,
+        };
+        // Axis rays keep the analytic line-incidence coefficients smallest;
+        // the tangent-derived directions remain exact fallbacks when an axis
+        // contact lands on a harder algebraic ordering boundary.
         let directions = [
-            (normal_x.clone(), normal_y.clone()),
-            (&normal_x + tangent_x, &normal_y + tangent_y),
-            (&normal_x - tangent_x, &normal_y - tangent_y),
-            (
+            x_axis,
+            y_axis,
+            Some((normal_x.clone(), normal_y.clone())),
+            Some((&normal_x + tangent_x, &normal_y + tangent_y)),
+            Some((&normal_x - tangent_x, &normal_y - tangent_y)),
+            Some((
                 &normal_x * crate::Real::from(2_u8) + tangent_x,
                 &normal_y * crate::Real::from(2_u8) + tangent_y,
-            ),
-            (
+            )),
+            Some((
                 &normal_x * crate::Real::from(2_u8) - tangent_x,
                 &normal_y * crate::Real::from(2_u8) - tangent_y,
-            ),
+            )),
         ];
         let mut last_reason = UncertaintyReason::Boundary;
-        for (direction_x, direction_y) in directions {
+        for (direction_x, direction_y) in directions.into_iter().flatten() {
             match self
                 .data
                 .first
@@ -2152,15 +2291,40 @@ fn build_candidate_carrier_pair(
             }
         }
         (
-            RegionCarrierGeometry::AnalyticParallel(_),
-            RegionCarrierGeometry::AnalyticParallel(_),
-        ) => RegionCarrierPairContext::ParallelPair,
+            RegionCarrierGeometry::AnalyticParallel(first),
+            RegionCarrierGeometry::AnalyticParallel(second),
+        ) => {
+            if first == second {
+                RegionCarrierPairContext::ParallelSameImage
+            } else {
+                RegionCarrierPairContext::ParallelPair
+            }
+        }
     };
     Ok(Some(RegionCarrierPair {
         first_carrier_index,
         second_carrier_index,
         context,
     }))
+}
+
+fn build_parallel_self_intersection_caches(
+    carriers: &[RegionCarrier],
+) -> Vec<ParallelSelfIntersectionCache> {
+    let mut caches = Vec::<ParallelSelfIntersectionCache>::new();
+    for carrier in carriers {
+        let RegionCarrierGeometry::AnalyticParallel(parallel) = &carrier.geometry else {
+            continue;
+        };
+        if caches.iter().any(|cache| cache.parallel == *parallel) {
+            continue;
+        }
+        caches.push(ParallelSelfIntersectionCache {
+            parallel: parallel.clone(),
+            result: OnceLock::new(),
+        });
+    }
+    caches
 }
 
 fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
@@ -2668,12 +2832,36 @@ fn certified_boolean_successors(
     topology: &CurveRegionBooleanTopology,
     carriers: &[RegionCarrier],
 ) -> Vec<Option<usize>> {
+    certified_transverse_successors(
+        graph,
+        directions,
+        &topology.transverse_contacts,
+        |contact, vertex| transverse_carrier_cross_is_positive(topology, contact, vertex, carriers),
+    )
+}
+
+fn certified_regularization_successors(
+    graph: &BezierArrangementGraph2,
+    directions: &[BooleanArrangementFragmentDirection],
+    contacts: &HashMap<usize, TransitionContactCandidate>,
+) -> Vec<Option<usize>> {
+    certified_transverse_successors(graph, directions, contacts, |contact, _| {
+        contact.cross_is_positive
+    })
+}
+
+fn certified_transverse_successors(
+    graph: &BezierArrangementGraph2,
+    directions: &[BooleanArrangementFragmentDirection],
+    contacts: &HashMap<usize, TransitionContactCandidate>,
+    mut crossing_is_positive: impl FnMut(&TransitionContactCandidate, usize) -> Option<bool>,
+) -> Vec<Option<usize>> {
     // Index starts once so retaining branch certificates stays linear in the
     // emitted graph size even for large curved regions.
     let mut starts_by_vertex = HashMap::<usize, Vec<usize>>::new();
     for (fragment_index, fragment) in graph.fragments().iter().enumerate() {
         if let Some(vertex) = fragment.start_topology_vertex()
-            && topology.transverse_contacts.contains_key(&vertex)
+            && contacts.contains_key(&vertex)
         {
             starts_by_vertex
                 .entry(vertex)
@@ -2687,9 +2875,8 @@ fn certified_boolean_successors(
         .enumerate()
         .map(|(current_index, current)| {
             let vertex = current.end_topology_vertex()?;
-            let contact = topology.transverse_contacts.get(&vertex)?;
-            let crossing_is_positive =
-                transverse_carrier_cross_is_positive(topology, contact, vertex, carriers)?;
+            let contact = contacts.get(&vertex)?;
+            let crossing_is_positive = crossing_is_positive(contact, vertex)?;
             let mut candidates = starts_by_vertex
                 .get(&vertex)?
                 .iter()
@@ -4055,6 +4242,7 @@ mod certified_successor_tests {
             first_carrier: 3,
             second_carrier: 7,
             certified_transverse: true,
+            cross_is_positive: None,
         };
         for crossing_is_positive in [false, true] {
             for base_carrier in [3, 7] {
