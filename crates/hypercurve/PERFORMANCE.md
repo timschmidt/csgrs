@@ -7829,6 +7829,61 @@ formatting, and both warning-denied Clippy matrices pass. Hypermesh was not
 modified. Complete raw samples and evidence are in
 [`2026-07-31-exact-rational-bezier-parallel-carrier.json`](benchmarks/checkpoints/2026-07-31-exact-rational-bezier-parallel-carrier.json).
 
+## Exact parallel-pair component checkpoint (2026-08-02)
+
+`BezierParallel2::parallel_intersections` now completes general exact
+parallel/parallel interaction through one authority. Same-direction source
+overlap is selected only when the signed distances are equal; reversed source
+overlap requires opposite signed distances. Partial source ranges retain their
+exact reparameterization. Other positive-dimensional parameter components are
+extracted through Hypersolve, divided exactly from both equations, and the
+residual system is projected again so isolated contacts are not lost beside a
+shared component. A component fast probe is deliberately nonauthoritative:
+degenerate resultants always retain the exact component path.
+
+Coupled algebraic candidates first use exact affine box restriction and
+tensor-Bernstein signs for rejection. An exact midpoint-Jacobian adjugate
+preconditions rotated transverse systems for a Poincare-Miranda existence
+certificate. Progressive isolator refinement is now identical with and
+without the predicate feature. For independent regular tangents, the two
+selected signed projection equations uniquely determine the separation vector,
+so the squared-norm eliminant need not be replayed. STRICT and
+APPROXIMATE_512 traverse this same proof graph; the latter may terminate only
+an inherited equality decision at 512 bits and never substitutes approximate
+geometry.
+
+The accompanying Hypersolve cuts accelerate bounded rational resultants and
+replace equal-degree eliminated systems through degree 12 with an `n` by `n`
+polynomial Bezout matrix instead of a `2n` by `2n` Sylvester matrix. Direct
+resultant orientation tests and deterministic Bezout/Sylvester cross-checks
+cover both retained axes through degree five.
+
+Pinned release timings for the complete new group are 31.676 ms for the
+general quadratic contacts, 292.014 us for partial source overlap, 1.451 ms
+for removal and residual handling of a false source component, and 730.318 ms
+for the deliberately hard cubic residual algebraic contact. The corresponding
+candidate projections take 30.012 ms, 292.304 us, 210.474 us, and 2.707 ms.
+Against `ea99fe6`, three alternating pinned pairs put the already-supported
+general candidate at 29.851 versus 29.346 ms (+1.72%) and complete contact
+replay at 31.015 versus 30.402 ms (+2.02%). The historical revision cannot
+produce complete results for the newly measured overlap/component cases, so
+those rows are completion costs rather than like-for-like regressions.
+
+Heaptrack over the mixed-iteration group records 187,853,454 allocation calls,
+7.33 MiB peak heap, and 20.37 MiB recorder-inclusive peak RSS. Live memory is
+bounded, but the short-lived exact resultant/component allocation traffic is a
+clear later optimization target. The matched release image adds 45,288 file
+bytes and 36,572 text bytes (0.64% text), with no per-carrier growth. The
+workspace graph contains 30,433 nodes and 55,096 edges, up 202 and 525 from
+the exact-similarity checkpoint including its new tests and benchmark lanes.
+
+All 334 all-feature library tests and every integration, adversarial,
+fuzz-corpus, and documentation target pass. The no-default matrix passes all
+298 library tests and every available integration target. Both warning-denied
+Clippy matrices, benchmark compilation, formatting, and diff checks pass.
+Hypermesh was not modified. Complete machine-readable evidence is in
+[`2026-08-02-exact-parallel-pair-components.json`](benchmarks/checkpoints/2026-08-02-exact-parallel-pair-components.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

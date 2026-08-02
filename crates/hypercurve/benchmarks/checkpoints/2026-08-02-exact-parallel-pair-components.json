@@ -1,0 +1,149 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact parallel-pair components and residual replay",
+  "source_revision": "fa838bd22e210dcf1c125fa96ec909101f6d788f",
+  "previous_checkpoint_revision": "8fc9a70",
+  "historical_binary_revision": "ea99fe6",
+  "hypersolve_revision": "339d4d8b6109da2c814febce3da9f725c44d8e56",
+  "scope": {
+    "included": [
+      "general BezierParallel2 versus BezierParallel2 exact contacts",
+      "same, reversed, and partial exact source-overlap transport",
+      "positive-dimensional parameter-component saturation",
+      "residual isolated-contact recovery after exact component division",
+      "algebraic-pair replay with refined tensor-Bernstein rejection",
+      "exactly preconditioned Poincare-Miranda box existence proofs",
+      "STRICT and APPROXIMATE_512 policy matrices",
+      "historical wall-time, release-size, heap, and call-graph guards"
+    ],
+    "excluded": [
+      "CurveRegion2 traversal of algebraic-endpoint parallel fragments",
+      "raw offset join construction",
+      "offset arrangement regularization",
+      "fillet and chamfer",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "carrier_pair": "q1(t)=p(t)+d*Np(t), q2(u)=r(u)+e*Nr(u), with selected signed unit normals and exact source/rational differential data",
+    "source_overlap_selection": "same-direction source overlap is selected exactly iff d=e; reversed overlap is selected exactly iff d=-e",
+    "component_rule": "a common parameter component is removed only after exact division from both equations; the divided residual system remains authoritative for isolated contacts",
+    "non_ph_rule": "source-overlap component disposal is allowed only after both regular rational sources are decisively non-PH",
+    "projected_pairing": "each retained coordinate interval isolates exactly one projected resultant root; exact box existence plus equation replay fixes the coupled pair",
+    "box_certificate": "affine restriction, strict tensor-Bernstein face signs, and an exact nonzero midpoint-Jacobian adjugate preconditioner establish Poincare-Miranda existence without sampling",
+    "independent_tangent_shortcut": "when source tangents are provably independent, the two selected signed projection equations uniquely determine the separation vector, so their squared norm eliminant is redundant",
+    "policy": "STRICT and APPROXIMATE_512 execute the same exact projection, saturation, isolation, and replay graph; only an inherited equality predicate may terminate at the 512-bit policy boundary, and returned geometry remains exact"
+  },
+  "implementation": {
+    "hypersolve_substrate": [
+      "fde0d28: accelerated bounded rational-curve resultants",
+      "339d4d8: equal-degree eliminated systems through degree 12 use an n-by-n polynomial Bezout matrix instead of a 2n-by-2n Sylvester matrix"
+    ],
+    "exact_replay": [
+      "structural u-t and t+u-1 source components",
+      "generic Hypersolve bivariate component extraction and repeated exact division",
+      "residual projection and coupled algebraic replay",
+      "progressive exact isolator refinement shared by all feature modes",
+      "selected-branch box sign before heavier algebraic lift replay"
+    ],
+    "probe_safety": "bivariate_pair_may_have_component remains a nonauthoritative fast probe and is permitted false negatives; a degenerate resultant still enters exact component authority",
+    "compatibility_shims": 0,
+    "public_carrier_growth_bytes": 0
+  },
+  "benchmark": {
+    "method": "all-feature release offset benchmark pinned to CPU 11; timings are elapsed wall time per exact operation",
+    "representative_complete_group": {
+      "general_quadratic_candidates_milliseconds": 30.012359,
+      "general_quadratic_contacts_milliseconds": 31.676382,
+      "partial_source_overlap_candidates_microseconds": 292.304,
+      "partial_source_overlap_contacts_microseconds": 292.014,
+      "false_source_component_candidates_microseconds": 210.474,
+      "false_source_component_contacts_milliseconds": 1.450538,
+      "residual_algebraic_contact_candidates_milliseconds": 2.706617,
+      "residual_algebraic_contact_contacts_milliseconds": 730.318452
+    },
+    "matched_historical_guard": {
+      "method": "three alternating pinned pairs with byte-identical benchmark source and a shared Hypersolve substrate",
+      "historical_curve_revision": "ea99fe6",
+      "general_candidates_historical_median_milliseconds": 29.346,
+      "general_candidates_current_median_milliseconds": 29.851,
+      "general_candidates_change_percent": 1.72,
+      "general_contacts_historical_median_milliseconds": 30.402,
+      "general_contacts_current_median_milliseconds": 31.015,
+      "general_contacts_change_percent": 2.02,
+      "interpretation": "the already-supported isolated general contact remains near-neutral; the new exact component probe and box replay add about two percent while closing component and overlap classes the historical revision could not return completely"
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct application trace",
+    "artifact": "/tmp/hypercurve-pair-current-direct.heaptrack.zst",
+    "workload": "complete mixed-iteration bezier-pair-intersection benchmark group under instrumentation",
+    "runtime_seconds": 90.706,
+    "allocation_calls": 187853454,
+    "peak_heap_mib": 7.33,
+    "recorder_inclusive_peak_rss_mib": 20.37,
+    "interpretation": "peak live memory is bounded, but exact resultant/component replay still creates substantial short-lived allocation churn and remains a measured optimization target"
+  },
+  "release_size": {
+    "artifact": "all-feature release offset benchmark with byte-identical benchmark source",
+    "historical_file_bytes": 7488504,
+    "current_file_bytes": 7533792,
+    "file_change_bytes": 45288,
+    "file_change_percent": 0.6048,
+    "historical_text_bytes": 5720702,
+    "current_text_bytes": 5757274,
+    "text_change_bytes": 36572,
+    "text_change_percent": 0.6393,
+    "historical_data_bytes": 266216,
+    "current_data_bytes": 267024,
+    "data_change_bytes": 808,
+    "historical_bss_bytes": 3080,
+    "current_bss_bytes": 2576,
+    "bss_change_bytes": -504,
+    "interpretation": "the accepted completion class adds 0.64 percent text and no per-carrier storage"
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-parallel-pair-callgraph --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 9,
+    "previous_nodes": 30231,
+    "current_nodes": 30433,
+    "node_change": 202,
+    "previous_edges": 54571,
+    "current_edges": 55096,
+    "edge_change": 525,
+    "artifact": "/tmp/hypercurve-parallel-pair-callgraph/callgraph.json"
+  },
+  "competitive_context": {
+    "direct_guarantee_equivalent": false,
+    "reason": "floating curve-offset libraries do not expose exact procedural parallel-pair contacts, positive-dimensional component saturation, or policy-identical algebraic replay",
+    "historical_capability_gap": "ea99fe6 times the already-supported isolated general contact but cannot completely return the new partial-overlap and residual-after-component classes",
+    "retained_controls": "the existing capsule and open-cubic floating offset comparisons remain end-to-end speed references; their weaker guarantees do not make them correctness oracles"
+  },
+  "verification": {
+    "all_features": "passed: 334 library tests plus every integration, adversarial, fuzz-corpus, documentation, and feature target",
+    "no_default_features": "passed: 298 library tests plus every available integration and documentation target",
+    "clippy_all_features": "passed with -D warnings",
+    "clippy_no_default_features": "passed with -D warnings",
+    "bench_check": "passed with all features",
+    "format": "passed",
+    "diff_check": "passed",
+    "policy_regressions": [
+      "partial source overlap and exact reparameterization",
+      "false same-source component removal",
+      "residual isolated contact after component saturation",
+      "coupled algebraic parallel/rational branch replay",
+      "rotated transverse Poincare-Miranda preconditioning"
+    ]
+  },
+  "remaining": [
+    "retain represented and algebraic parameter ranges as canonical parallel fragments",
+    "admit exact parallel carriers to CurveRegion2 traversal and Boolean dispatch",
+    "construct round, bevel, and bounded-miter raw pieces",
+    "regularize raw expansion, erosion, collapse, and self-contact topology through the sole arrangement",
+    "solver-driven fillet and chamfer",
+    "reduce exact resultant/component allocation churn",
+    "remaining scalar towers and caller cutover"
+  ]
+}
