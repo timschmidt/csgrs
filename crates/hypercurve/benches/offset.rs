@@ -1184,6 +1184,7 @@ fn curve_region_algebraic_partition_fixture(
 
 fn bench_curve_region_algebraic_partition_offset_lanes(
     iterations: u32,
+    partitioned_only: Option<bool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
     let partitioned = curve_region_algebraic_partition_fixture(true)?;
@@ -1196,10 +1197,17 @@ fn bench_curve_region_algebraic_partition_offset_lanes(
         .into_value();
     assert_eq!(partitioned_check, unsplit_check);
 
-    for (name, source) in [
-        ("curve_region_algebraic_partition_offset", &partitioned),
-        ("curve_region_unsplit_equivalent_offset", &unsplit),
+    for (is_partitioned, name, source) in [
+        (
+            true,
+            "curve_region_algebraic_partition_offset",
+            &partitioned,
+        ),
+        (false, "curve_region_unsplit_equivalent_offset", &unsplit),
     ] {
+        if partitioned_only.is_some_and(|selected| selected != is_partitioned) {
+            continue;
+        }
         let started = Instant::now();
         let mut loops = 0_usize;
         for _ in 0..iterations {
@@ -1235,7 +1243,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "curve-region-exact" => bench_curve_region_bezier_offset_lanes(10)?,
             "curve-region-repeated" => bench_curve_region_repeated_bezier_offset_lanes(100)?,
             "curve-region-algebraic-partition" => {
-                bench_curve_region_algebraic_partition_offset_lanes(20)?
+                bench_curve_region_algebraic_partition_offset_lanes(20, None)?
+            }
+            "curve-region-algebraic-partition-only" => {
+                bench_curve_region_algebraic_partition_offset_lanes(20, Some(true))?
+            }
+            "curve-region-algebraic-partition-control" => {
+                bench_curve_region_algebraic_partition_offset_lanes(20, Some(false))?
             }
             _ => panic!("unknown HYPERCURVE_OFFSET_BENCH_GROUP={group:?}"),
         }

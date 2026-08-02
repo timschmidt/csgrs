@@ -1,0 +1,152 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "algebraically partitioned exact CurveRegion2 offsets",
+  "source_revision": "52a41324aac3d349180a983e3d8ab8e9a80d8ef3",
+  "semantic_revisions": [
+    "52a4132"
+  ],
+  "comparison_revision": "107a07144639c1b64742abb238f07905891ccb5b",
+  "previous_checkpoint": "2026-08-02-represented-range-repeated-exact-offset.json",
+  "scope": {
+    "included": [
+      "exact offset composition across traversal-contiguous analytic-parallel fragments split at internal algebraic arrangement parameters",
+      "forward and reversed traversal run recovery with represented outer endpoints",
+      "exact derivative-scale continuity proof before removing an artificial algebraic join",
+      "explicit preservation of algebraic cusp partitions whose scale sign changes",
+      "complete-resultant differential replay for every monotone unary pair omitted by coordinate separation or adjacent-endpoint proofs",
+      "STRICT and APPROXIMATE_512 replay against the same exact partition and complete pair authorities",
+      "release performance and allocation comparison against the structurally equivalent unsplit exact carrier"
+    ],
+    "excluded": [
+      "joins at algebraic cusp centers whose limiting branches require different combined distances",
+      "runs whose outer traversal boundary is itself a nonrepresented algebraic point",
+      "algebraic point and tangent coordinates for general analytic parallels",
+      "finite projection or export of general analytic offsets",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "partition_elision": "An arrangement split is removable for a subsequent offset only when consecutive fragments retain the same exact analytic carrier, traversal direction, parameter adjacency, and nonzero derivative-scale sign. The enclosing run then denotes one branch D(t)=C(t)+d*N_C(t), so composing once removes a nonexistent join without evaluating the internal algebraic point.",
+    "cusp_guard": "If the derivative scale signs on the two sides differ, the internal parameter is an old cusp. Its traversal normals select different d+e or d-e source distances, so the run is not coalesced and the unsupported algebraic join remains an explicit boundary blocker.",
+    "orientation": "Traversal start/end selection is reversed independently of the ascending retained parameter range. Both forward [0,a],[a,1] and reversed [a,1],[0,a] runs recover exactly [0,1] while retaining the correct traversal flag.",
+    "structural_pair_proofs": "Every coordinate-disjoint or adjacent-endpoint pair skipped by the monotone unary arrangement is replayed through the complete analytic-parallel intersection solver. Coordinate-disjoint ranges retain no contact or overlap; adjacent ranges retain at most their already-seeded shared loop vertex.",
+    "policy": "STRICT and APPROXIMATE_512 build identical exact CurveRegion2 geometry. APPROXIMATE_512 may record a terminal decision made elsewhere in arrangement regularization, but it never replaces the algebraic parameter or composed carrier with finite coordinates."
+  },
+  "capability": {
+    "107a071": "Offsetting either algebraic subrange independently returns Boundary because its join coordinates are not represented.",
+    "52a4132": "A traversal-contiguous non-cusp algebraic partition with represented outer endpoints is composed once, regularized by the authoritative CurveRegion2 arrangement, and matches the equivalent unsplit exact carrier under both policies.",
+    "intentional_boundary": "An algebraic cusp with opposite derivative-scale signs is still not coalesced; completing that case requires exact algebraic coordinate and join carriers rather than a topological shortcut."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "method": "release executable pinned to CPU 11; eleven independent process samples; twenty operations per algebraic/control lane and one hundred operations per represented-range guard lane; fixture construction and one structural equality check are excluded from timing",
+    "commands": [
+      "taskset -c 11 env HYPERCURVE_OFFSET_BENCH_GROUP=curve-region-algebraic-partition target/release/deps/offset-ea116fee283cd918",
+      "taskset -c 11 env HYPERCURVE_OFFSET_BENCH_GROUP=curve-region-repeated target/release/deps/offset-ea116fee283cd918"
+    ],
+    "fixture": "A quadratic cap and its exact chord are retained once as a single zero-distance analytic parallel and once as two ranges partitioned at t=sqrt(1/2). Both regions are offset outward by 1/10 with exact round joins under STRICT and must return structurally equal authoritative CurveRegion2 values.",
+    "algebraic_partition": {
+      "partitioned_samples_ms": [21.743015, 21.838363, 21.499802, 20.775025, 20.723529, 20.625607, 20.859196, 20.915077, 20.743784, 20.849208, 20.528611],
+      "partitioned_median_ms": 20.849208,
+      "unsplit_equivalent_samples_ms": [20.991995, 20.800328, 20.982907, 20.873297, 20.799650, 20.752721, 21.064691, 20.741643, 20.689816, 20.914512, 20.598486],
+      "unsplit_equivalent_median_ms": 20.800328,
+      "partition_overhead_percent": 0.234996,
+      "interpretation": "The newly supported algebraic partition is within 0.24% of the identical unsplit exact computation. Revision 107a071 returns Boundary for this partitioned operation, so there is no historical exact timing peer."
+    },
+    "represented_range_guard": {
+      "composed_samples_us": [217.799, 281.658, 222.182, 227.158, 281.821, 248.745, 224.816, 218.838, 222.136, 225.459, 221.685],
+      "composed_median_us": 224.816,
+      "previous_composed_median_us": 224.011,
+      "change_percent": 0.359357,
+      "direct_equivalent_samples_us": [227.474, 238.473, 229.436, 234.437, 229.574, 230.223, 231.119, 232.007, 242.530, 235.266, 247.234],
+      "direct_equivalent_median_us": 232.007,
+      "previous_direct_equivalent_median_us": 231.279,
+      "direct_control_change_percent": 0.314771,
+      "composed_time_reduction_percent": 3.099475,
+      "interpretation": "The common represented-range path moves by the same narrow process noise as its direct control and retains its roughly 3.1% composition advantage."
+    },
+    "historical_and_competitive_controls": {
+      "107a071_partitioned_exact": "Boundary",
+      "a88da70_repeated_exact": "Unsupported",
+      "9740a95_exact": "Even the first general curved region offset is Unsupported.",
+      "historical_certified_fitted_median_ms": 3.235874,
+      "historical_chord_fallback_median_ms": 5.407297,
+      "line_arc_capsule": "Hypercurve exact 19,760.2 ns versus Cavalier f64 956.6 ns",
+      "open_cubic": "Hypercurve certified 29,650,296.2 ns and chord fallback 981,952.2 ns versus Curvo heuristic f64 8,366.9 ns",
+      "contract_note": "The unsplit lane is the only geometric and exactness peer. Historical adapters and competitive f64 lanes do not retain an algebraic partition or canonical-Real exact closed-region result."
+    }
+  },
+  "memory": {
+    "application_peak_rss": {
+      "tool": "/usr/bin/time",
+      "partitioned_peak_kib": 7636,
+      "unsplit_control_peak_kib": 7728,
+      "interpretation": "The 92 KiB process-RSS difference favors the partitioned lane and is below run-to-run loader noise."
+    },
+    "allocation_profile": {
+      "tool": "Heaptrack direct application traces",
+      "partitioned_profile": "/tmp/hypercurve-algebraic-partition-only.zst.zst",
+      "unsplit_control_profile": "/tmp/hypercurve-algebraic-partition-control.zst.zst",
+      "workload": "twenty selected timed offsets plus identical fixture construction and two untimed exact equality-check offsets in each trace",
+      "partitioned_allocation_calls": 6829148,
+      "unsplit_control_allocation_calls": 6829148,
+      "partitioned_temporary_allocations": 361659,
+      "unsplit_control_temporary_allocations": 361659,
+      "partitioned_peak_heap_kib": 498.65,
+      "unsplit_control_peak_heap_kib": 498.66,
+      "interpretation": "The partition recovery adds no observable allocation call, temporary-allocation, or live-heap cost relative to the exact unsplit authority. Most work belongs to the shared exact general arrangement."
+    }
+  },
+  "release_size": {
+    "method": "same all-feature curve_region_boolean_batch release executable as the prior checkpoint",
+    "file_bytes": 7693712,
+    "text_bytes": 5825646,
+    "prior_file_bytes": 7697352,
+    "prior_text_bytes": 5826222,
+    "file_change_bytes": -3640,
+    "text_change_bytes": -576,
+    "file_change_percent": -0.047289,
+    "text_change_percent": -0.009886,
+    "interpretation": "The production cut is representative-text neutral to slightly smaller after optimization; benchmark and test-only coverage does not enter this artifact."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-algebraic-partition-20260802 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 31317,
+    "edges": 57359,
+    "prior_nodes": 31238,
+    "prior_edges": 57207,
+    "artifact": "/tmp/hypercurve-callgraph-algebraic-partition-20260802/callgraph.json",
+    "confirmed_paths": [
+      "CurveRegion2::offset_exact_general_raw -> coalesced_analytic_parallel_offset_run",
+      "CurveRegion2::offset_exact_general_raw -> exact_offset_span_from_analytic_parallel",
+      "coalesced_analytic_parallel_offset_run -> BezierParallel2::regular_fragment_derivative_scale_sign",
+      "CurveRegionBooleanContext::pair_result -> parallel_pair_is_coordinate_disjoint",
+      "CurveRegionBooleanContext::pair_result -> adjacent_parallel_pair_is_endpoint_only",
+      "differential structural proof test -> BezierParallel2::parallel_intersections"
+    ]
+  },
+  "verification": {
+    "all_feature_library": "passed: 346 tests",
+    "no_default_library": "passed: 308 tests",
+    "focused_integrations": "passed: 3 analytic-parallel region, 98 Bezier fit/offset, and 43 CurveRegion promotion/regularization tests",
+    "strict_and_approximate": "passed forward/reversed algebraic non-cusp coalescing, explicit algebraic cusp refusal, and complete structural pair replay under both policies",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_benchmarks": "passed: offset and curve_region_boolean_batch",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "represent exact analytic-parallel points and limiting tangents at algebraic parameters so old cusp joins can be constructed without approximation",
+    "support offset runs whose true outer join boundary remains algebraic",
+    "complete expansion, erosion, collapse, cusp, and offset self-contact differential coverage",
+    "complete finite projection/export for exact analytic offsets",
+    "implement radius-driven fillet and two-setback chamfer solvers",
+    "delete displaced historical region-offset machinery after differential coverage passes"
+  ]
+}
