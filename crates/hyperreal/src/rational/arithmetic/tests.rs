@@ -86,7 +86,10 @@ mod tests {
                 plan.denominator_shifts,
                 plan.max_shift,
             );
-            let actual = Rational::signed_product_sum_dyadic_word_totals_unplanned(terms, signs);
+            let actual = Rational::signed_product_sum_dyadic_word_totals_unplanned(
+                [true, false, true, false, true, false],
+                terms,
+            );
             assert_eq!(actual, expected, "case {case}");
             assert!(!narrow || expected.is_some());
             saw_fallback |= expected.is_none();
@@ -101,7 +104,10 @@ mod tests {
                 plan.denominator_shifts,
                 plan.max_shift,
             );
-            let actual = Rational::signed_product_sum_dyadic_word_totals_unplanned(terms, signs);
+            let actual = Rational::signed_product_sum_dyadic_word_totals_unplanned(
+                [true, false, true, false],
+                terms,
+            );
             assert_eq!(actual, expected, "four-term case {case}");
             assert!(!narrow || expected.is_some());
             saw_fallback |= expected.is_none();
@@ -3992,6 +3998,48 @@ mod tests {
         assert_eq!(
             Rational::signed_product_sum_ordering(dyadic_signs, dyadic_terms),
             materialized.partial_cmp(&Rational::zero()).unwrap(),
+        );
+    }
+
+    #[test]
+    fn fused_unplanned_signs_preserve_zero_single_and_mixed_product_ordering() {
+        let zero = Rational::zero();
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let minus_three = Rational::new(-3);
+        let five = Rational::new(5);
+        let minus_seven = Rational::new(-7);
+
+        let all_zero = [[&zero, &one]; 4];
+        assert_eq!(
+            Rational::signed_product_sum_ordering([true, false, true, false], all_zero),
+            Ordering::Equal,
+        );
+
+        let single = [
+            [&zero, &one],
+            [&zero, &five],
+            [&minus_three, &two],
+            [&zero, &minus_seven],
+        ];
+        assert_eq!(
+            Rational::signed_product_sum_ordering([true; 4], single),
+            Ordering::Less,
+        );
+
+        let mixed = [
+            [&minus_three, &two],
+            [&five, &minus_seven],
+            [&two, &five],
+            [&minus_seven, &minus_three],
+            [&zero, &five],
+            [&one, &minus_seven],
+        ];
+        let positive_terms = [true, false, true, false, true, false];
+        let materialized = Rational::signed_product_sum(positive_terms, mixed);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(positive_terms, mixed),
+            materialized.partial_cmp(&zero).unwrap(),
         );
     }
 
