@@ -1512,19 +1512,19 @@ pub(crate) fn build_projective_input_soup(
         });
         let (approximate_positions, approximate_positions_are_exact_dyadic) =
             if predominantly_axis_aligned {
-                let exact_dyadic = mesh
-                    .positions
-                    .iter()
-                    .map(|point| {
+                let exact_dyadic = 'exact_dyadic: {
+                    let mut positions = Vec::with_capacity(mesh.positions.len());
+                    for point in mesh.positions {
                         let coordinates = [&point.x, &point.y, &point.z];
                         let [Some(x), Some(y), Some(z)] =
                             coordinates.map(Real::to_f64_exact_dyadic)
                         else {
-                            return None;
+                            break 'exact_dyadic None;
                         };
-                        Some([x, y, z])
-                    })
-                    .collect::<Option<Vec<_>>>();
+                        positions.push([x, y, z]);
+                    }
+                    Some(positions)
+                };
                 match exact_dyadic {
                     Some(positions) => (Some(positions), true),
                     None => (
@@ -1544,7 +1544,14 @@ pub(crate) fn build_projective_input_soup(
             } else {
                 (None, false)
             };
-        let mut support_planes = Vec::new();
+        // Seed common box input exactly and skip the small general growth
+        // steps without retaining one support slot per source triangle.
+        let support_capacity = if predominantly_axis_aligned {
+            6
+        } else {
+            mesh.triangles.len().min(256)
+        };
+        let mut support_planes = Vec::with_capacity(support_capacity);
         let mut triangles = Vec::with_capacity(mesh.triangles.len());
         let mut axis_support_planes: Vec<((usize, u64, bool), usize)> = Vec::with_capacity(6);
         let mut adjacent_support_planes = (!predominantly_axis_aligned && input_planes.is_none())
@@ -2338,6 +2345,37 @@ mod tests {
                 Point3::new(Real::from(4), Real::from(5), Real::from(9)),
             ),
         );
+    }
+
+    #[test]
+    fn projective_input_axis_cache_falls_back_after_late_nondyadic_coordinate() {
+        let one_third = Real::new(Rational::fraction(1, 3).unwrap());
+        let mesh = TriangleMesh::new(
+            vec![
+                Point3::new(Real::zero(), Real::zero(), Real::zero()),
+                Point3::new(Real::zero(), Real::one(), Real::zero()),
+                Point3::new(Real::zero(), Real::zero(), one_third),
+            ],
+            vec![Triangle::new(0, 1, 2)],
+        );
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let soup = build_projective_input_soup(&decisions, &[mesh.as_ref()], None).unwrap();
+            let support = &soup.meshes[0].support_planes[soup.meshes[0].triangles[0].support_plane];
+
+            for point in mesh.positions.iter() {
+                assert_eq!(
+                    classify_point_decision(&decisions, point, support).unwrap(),
+                    Classification::On
+                );
+            }
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
     }
 
     #[test]
