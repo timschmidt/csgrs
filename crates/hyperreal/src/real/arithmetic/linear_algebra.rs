@@ -572,6 +572,16 @@ impl RationalLinearForm4Filter {
         })
     }
 
+    /// Return this filter's positive-power-of-two normalized binary64 coefficients.
+    ///
+    /// Conversion error remains governed by the filter proof; these values are
+    /// not exact coefficients.
+    #[inline]
+    #[doc(hidden)]
+    pub fn normalized_coefficients(&self) -> [f64; 4] {
+        self.coefficients
+    }
+
     /// Try to certify the homogeneous linear-form sign for an exact-rational
     /// query.
     #[inline]

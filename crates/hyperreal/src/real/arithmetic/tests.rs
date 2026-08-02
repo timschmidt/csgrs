@@ -741,6 +741,28 @@ mod tests {
     }
 
     #[test]
+    fn rational_linear_form4_filter_exposes_positive_scale_normalization() {
+        let coefficients = [
+            Real::from(3_i32),
+            Real::from(-4_i32),
+            Real::from(12_i32),
+            Real::from(7_i32),
+        ];
+        let filter = RationalLinearForm4Filter::from_reals([
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ])
+        .expect("small integer coefficients should fit");
+
+        assert_eq!(
+            filter.normalized_coefficients(),
+            [0.375, -0.5, 1.5, 0.875],
+        );
+    }
+
+    #[test]
     fn rational_linear_form4_normalization_handles_every_normal_exponent() {
         fn reference(mut values: [f64; 4]) -> Option<[f64; 4]> {
             const EXPONENT_MASK: u64 = 0x7ff0_0000_0000_0000;

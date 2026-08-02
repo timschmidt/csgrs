@@ -123,6 +123,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "materialize_first_parameter",
     "materialize",
     "materialize_second_parameter",
+    "normalized_coefficients",
     "intersection_point",
     "intersection_point_f64",
     "from_point3",
