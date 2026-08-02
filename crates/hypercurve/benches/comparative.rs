@@ -9,14 +9,15 @@ use cavalier_contours::polyline::{
     BooleanOp as CavalierBooleanOp, PlineSource, PlineSourceMut, Polyline,
 };
 use curvo::prelude::{
-    CurveOffsetOption as CurvoCurveOffsetOption, Interpolation as _,
-    NurbsCurve2D as CurvoNurbsCurve2D, Offset as CurvoOffset,
+    CurveOffsetOption as CurvoCurveOffsetOption, Interpolation as _, Intersects as _,
+    NurbsCurve2D as CurvoNurbsCurve2D, Offset as CurvoOffset, Split as _,
 };
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelVerificationOptions, BooleanOp, BulgeVertex2,
-    Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurveRegion2, CurveString2,
-    FillRule, LineArcRegion2, LineSeg2, NurbsCurve2, Point2, Real, Segment2,
+    Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, CurveString2, FillRule, LineArcRegion2, LineSeg2, NurbsCurve2, Point2,
+    RationalBezier2, RationalBezierIntersectionContacts2, Real, Segment2,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -691,6 +692,173 @@ fn benchmark_bezier_offset(runner: &Runner) {
     });
 }
 
+fn exact_rational_bezier_contact_count(result: RationalBezierIntersectionContacts2) -> usize {
+    match result {
+        RationalBezierIntersectionContacts2::NoIntersection => 0,
+        RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.len(),
+        RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, .. } => contacts.len(),
+        RationalBezierIntersectionContacts2::Overlap(_)
+        | RationalBezierIntersectionContacts2::Incomplete { .. }
+        | RationalBezierIntersectionContacts2::DegenerateResultant => {
+            panic!("isolated-loop benchmark did not produce a complete contact set")
+        }
+    }
+}
+
+fn benchmark_rational_bezier_self_contact_case(
+    runner: &Runner,
+    name: &str,
+    controls: &[[f64; 2]; 4],
+    weights: &[f64; 4],
+) {
+    if !runner.group_enabled(name) {
+        return;
+    }
+
+    let policy = CurveContext::STRICT;
+    let hypercurve_curve = RationalBezier2::try_new(
+        controls
+            .iter()
+            .map(|point| Point2::new(real(point[0]), real(point[1])))
+            .collect(),
+        weights.iter().copied().map(real).collect(),
+    )
+    .expect("valid exact self-contact fixture");
+    let curvo_curve = CurvoNurbsCurve2D::<f64>::try_new(
+        3,
+        controls
+            .iter()
+            .zip(weights)
+            .map(|(point, weight)| Point3::new(point[0] * weight, point[1] * weight, *weight))
+            .collect(),
+        vec![0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+    )
+    .expect("valid finite self-contact fixture");
+    let raw_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        &[CurvePath2::try_new(vec![
+            Curve2::from(hypercurve_curve.clone()),
+            Curve2::from(
+                LineSeg2::try_new(
+                    Point2::new(real(controls[3][0]), real(controls[3][1])),
+                    Point2::new(real(controls[0][0]), real(controls[0][1])),
+                )
+                .expect("self-contact fixture closes with a nondegenerate line"),
+            ),
+        ])
+        .expect("self-contact benchmark path is connected")],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &policy,
+    )
+    .expect("self-contact benchmark region is valid")
+    .into_value();
+
+    // Curvo has no whole-carrier self-contact operation. Give both pairwise
+    // solvers the same disjoint outer parameter ranges, which retain the loop
+    // crossing while excluding the artificial shared endpoint introduced by
+    // a single midpoint split. Fixture construction stays outside timing.
+    let lower_cut = real(0.49);
+    let upper_cut = real(0.51);
+    let Classification::Decided((hypercurve_left, _)) = hypercurve_curve
+        .split_at_exact(&lower_cut, &policy)
+        .expect("exact lower benchmark split completes")
+    else {
+        panic!("exact lower benchmark split became uncertain");
+    };
+    let Classification::Decided((_, hypercurve_right)) = hypercurve_curve
+        .split_at_exact(&upper_cut, &policy)
+        .expect("exact upper benchmark split completes")
+    else {
+        panic!("exact upper benchmark split became uncertain");
+    };
+    let (curvo_left, _) = curvo_curve
+        .try_split(0.49)
+        .expect("finite lower benchmark split completes");
+    let (_, curvo_right) = curvo_curve
+        .try_split(0.51)
+        .expect("finite upper benchmark split completes");
+
+    assert_eq!(
+        exact_rational_bezier_contact_count(
+            hypercurve_curve
+                .self_intersection_contacts(&policy)
+                .expect("exact whole-carrier self contact completes"),
+        ),
+        1,
+    );
+    assert_eq!(
+        exact_rational_bezier_contact_count(
+            hypercurve_left
+                .intersection_contacts(&hypercurve_right, &policy)
+                .expect("exact disjoint-pair contact completes"),
+        ),
+        1,
+    );
+    assert_eq!(
+        curvo_left
+            .find_intersection(&curvo_right, None)
+            .expect("finite disjoint-pair contact completes")
+            .len(),
+        1,
+    );
+    assert_eq!(
+        raw_region
+            .regularized_region(&policy)
+            .expect("exact region regularization completes")
+            .into_value()
+            .boundary_loops()
+            .len(),
+        2,
+    );
+
+    runner.measure(name, "hypercurve_exact_self", || {
+        exact_rational_bezier_contact_count(
+            hypercurve_curve
+                .self_intersection_contacts(black_box(&policy))
+                .expect("exact whole-carrier self contact replays"),
+        )
+    });
+    runner.measure(name, "hypercurve_exact_pair", || {
+        exact_rational_bezier_contact_count(
+            hypercurve_left
+                .intersection_contacts(black_box(&hypercurve_right), black_box(&policy))
+                .expect("exact disjoint-pair contact replays"),
+        )
+    });
+    runner.measure(name, "hypercurve_exact_region", || {
+        raw_region
+            .regularized_region(black_box(&policy))
+            .expect("exact region regularization replays")
+            .into_value()
+            .boundary_loops()
+            .iter()
+            .map(|boundary| boundary.len())
+            .sum()
+    });
+    runner.measure(name, "curvo_f64_pair", || {
+        curvo_left
+            .find_intersection(black_box(&curvo_right), None)
+            .expect("finite disjoint-pair contact replays")
+            .len()
+    });
+}
+
+fn benchmark_rational_bezier_self_contacts(runner: &Runner) {
+    let controls = [[9.0, 0.0], [-7.0, 3.0], [-7.0, -10.0], [9.0, 9.0]];
+    benchmark_rational_bezier_self_contact_case(
+        runner,
+        "rational_bezier_self_contact/polynomial_cubic",
+        &controls,
+        &[1.0; 4],
+    );
+    benchmark_rational_bezier_self_contact_case(
+        runner,
+        "rational_bezier_self_contact/projective_cubic",
+        &controls,
+        &[1.0, 2.0, 4.0, 8.0],
+    );
+}
+
 fn benchmark_nurbs_evaluation(runner: &Runner) {
     if !runner.group_enabled("nurbs_evaluation/rational_cubic_three_parameters") {
         return;
@@ -1016,6 +1184,7 @@ fn main() {
     benchmark_line_arc_boolean(&runner);
     benchmark_contour_offset(&runner);
     benchmark_bezier_offset(&runner);
+    benchmark_rational_bezier_self_contacts(&runner);
     benchmark_nurbs_evaluation(&runner);
     benchmark_nurbs_interpolation(&runner);
     benchmark_nurbs_editing(&runner);
