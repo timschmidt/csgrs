@@ -2655,7 +2655,12 @@ fn split_edge_crossing_events(
                 None
             } else {
                 for edge in &bounded_edges {
-                    bounds.push(approximate_edge_bounds(vertices, edge.edge));
+                    bounds.push(approximate_crossing_bounds(
+                        vertices,
+                        edge.edge,
+                        approximate_sweep_axis,
+                        approximate_overlap_axes,
+                    ));
                 }
                 Some(bounds)
             }
@@ -2698,13 +2703,14 @@ fn split_edge_crossing_events(
                 approximate_left_bounds
             {
                 let right_bounds = &approximate_bounds[right_index];
-                // Disjoint outward-rounded enclosures prove exact separation;
-                // every survivor is checked against the exact bounds below.
-                if right_bounds[approximate_sweep_axis][0] > left_bounds[approximate_sweep_axis][1]
-                {
+                // Sorting by the sweep minimum and the break below establish
+                // overlap on that axis. Disjoint outward-rounded enclosures
+                // on either remaining axis prove exact separation; every
+                // survivor is checked against the exact bounds below.
+                if right_bounds[0][0] > left_bounds[0][1] {
                     break;
                 }
-                if !approximate_bounds_overlap(left_bounds, right_bounds) {
+                if !approximate_crossing_bounds_overlap(left_bounds, right_bounds) {
                     continue;
                 }
             } else if let Some(ApproximateLeftBounds::Direct(vertices, left_bounds)) =
@@ -4196,8 +4202,29 @@ fn approximate_edge_bounds(
     })
 }
 
-fn approximate_bounds_overlap(left: &ApproximateEdgeBounds, right: &ApproximateEdgeBounds) -> bool {
-    (0..3).all(|axis| left[axis][1] >= right[axis][0] && right[axis][1] >= left[axis][0])
+fn approximate_crossing_bounds(
+    vertices: &[ApproximateOutputVertex],
+    edge: [usize; 2],
+    sweep_axis: usize,
+    overlap_axes: [usize; 2],
+) -> ApproximateEdgeBounds {
+    // Keep the sweep interval first so every candidate pair uses fixed offsets;
+    // the remaining slots follow the two projection axes.
+    [sweep_axis, overlap_axes[0], overlap_axes[1]].map(|axis| {
+        [
+            approximate_edge_min(vertices, edge, axis),
+            approximate_edge_max(vertices, edge, axis),
+        ]
+    })
+}
+
+fn approximate_crossing_bounds_overlap(
+    left: &ApproximateEdgeBounds,
+    right: &ApproximateEdgeBounds,
+) -> bool {
+    let overlaps =
+        |index: usize| left[index][1] >= right[index][0] && right[index][1] >= left[index][0];
+    overlaps(1) && overlaps(2)
 }
 
 // The direct crossing scan calls this only after sorting by the excluded-axis
@@ -5491,15 +5518,23 @@ mod tests {
                 point(right_max),
             ];
             let left = approximate_edge_bounds(&vertices, [0, 1]);
-            let right = approximate_edge_bounds(&vertices, [2, 3]);
+            let overlap_axes = projection_axes(sweep_axis).unwrap();
+            let crossing_left =
+                approximate_crossing_bounds(&vertices, [0, 1], sweep_axis, overlap_axes);
+            let crossing_right =
+                approximate_crossing_bounds(&vertices, [2, 3], sweep_axis, overlap_axes);
 
-            assert!(right[sweep_axis][0] >= left[sweep_axis][0]);
-            assert!(right[sweep_axis][0] <= left[sweep_axis][1]);
+            assert!(crossing_right[0][0] >= crossing_left[0][0]);
+            assert!(crossing_right[0][0] <= crossing_left[0][1]);
+            assert!(!approximate_crossing_bounds_overlap(
+                &crossing_left,
+                &crossing_right,
+            ));
             assert!(!approximate_edge_overlaps_bounds_on_axes(
                 &vertices,
                 [2, 3],
                 &left,
-                projection_axes(sweep_axis).unwrap(),
+                overlap_axes,
             ));
         }
     }
@@ -5645,7 +5680,10 @@ mod tests {
         let approximate = exact_output_vertex_enclosures(&vertices).unwrap();
         let left_bounds = approximate_edge_bounds(&approximate, [0, 1]);
         let right_bounds = approximate_edge_bounds(&approximate, [2, 3]);
-        assert!(approximate_bounds_overlap(&left_bounds, &right_bounds));
+        for axis in 0..3 {
+            assert!(left_bounds[axis][1] >= right_bounds[axis][0]);
+            assert!(right_bounds[axis][1] >= left_bounds[axis][0]);
+        }
 
         for_each_policy(|decisions| {
             let left =
