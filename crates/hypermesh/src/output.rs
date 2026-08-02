@@ -22,8 +22,9 @@ type SplitEdgeCache = StorageHashMap<[usize; 2], SplitEdgeChain>;
 type ApproximateOutputVertex = [[f64; 2]; 3];
 type ApproximateEdgeBounds = [[f64; 2]; 3];
 const MIN_ADAPTIVE_CROSSING_SWEEP_EDGES: usize = 256;
-// Small sweeps repay one left-bound computation, but not a full side cache.
-const MIN_CACHED_CROSSING_BOUNDS_EDGES: usize = 1024;
+// Cache all enclosure bounds once the adaptive sweep has enough edges to
+// amortize its complete side vector.
+const MIN_CACHED_CROSSING_BOUNDS_EDGES: usize = MIN_ADAPTIVE_CROSSING_SWEEP_EDGES;
 
 struct SplitEdgeChain(Vec<usize>);
 
