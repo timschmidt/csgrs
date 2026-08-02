@@ -1,0 +1,190 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-01",
+  "checkpoint": "point-image-parameter-components",
+  "source_revision": "6e27c0a0a0ee9ff137e5f07228a050c2ce211255",
+  "previous_checkpoint_revision": "c4200a5048c8a30e61488d750e780fc184b601a7",
+  "hypersolve_revision": "aa085f9ef0dee13384856febb3b57efa99bb2a51",
+  "scope": {
+    "operation": "exact replay of axis-wide and square-boundary-coincident BezierParallel2 parameter components with point image",
+    "completed_families": [
+      "one fixed analytic-parallel parameter crossed with the complete rational-curve parameter domain",
+      "the complete analytic-parallel parameter domain crossed with one fixed rational-curve parameter",
+      "the complete authored parameter square for coincident constant images",
+      "constant rational targets of arbitrary authored degree",
+      "collapsed analytic parallels intersecting nonconstant rational curves",
+      "STRICT and APPROXIMATE_512 through one proof graph"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "authority": "BezierParallel2::intersection_candidate_system remains the sole equation constructor and BezierParallel2::replay_degenerate_component remains the sole degenerate-component replay authority",
+    "independence_detection": "after constructing the exact orthogonality and selected signed-distance equations, coefficient classification detects when both equations are independent of one authored parameter instead of accepting a false zero resultant as proof of disjointness",
+    "geometric_replay": "under those two certified finite equations, an arbitrary operand is confined first to one source-normal line and then to one selected signed-distance point; exact point incidence therefore proves which geometric operand is constant",
+    "parameter_topology": "a point-image component records fixed-t/full-u, full-t/fixed-u, or full-t/full-u without fabricating an isolated contact or discarding infinitely many parameter pairs",
+    "image_topology": "zero-dimensional point images are represented separately from RationalBezierIntersectionOverlap2, whose contract remains a positive-length shared image",
+    "point_evidence": "every published component retains RationalBezierIntersectionPointEvidence2::Exact and exact BezierParameter2 evidence for every fixed coordinate",
+    "closed_domains": "a missing component coordinate denotes the complete authored closed unit interval, including both endpoints",
+    "fallback_semantics": "constant detection is a speculative fast path until constancy is proved; uncertainty during the probe falls through to existing exact-rational or implicit replay, while uncertainty in incidence after constancy is proved remains authoritative",
+    "representation": "BezierParallelIntersectionSet2 retains its two fat Arc slice pointers plus one optional thin Arc; the rare parameter-component payload reuses the former incomplete-evidence pointer and the common result remains 40 bytes on the benchmark target",
+    "strict": "STRICT uses exact coefficient zero classification and exact point-incidence/root replay without a fixed refinement cap",
+    "approximate_512": "APPROXIMATE_512 follows the identical equation, constancy, incidence, and result-construction path; only inherited Hyperreal equality terminals may stop at 512 bits, and no approximate parameter or point is synthesized",
+    "failure_semantics": "non-axis repeated or non-square-free positive-dimensional derivative sharing and unsupported coefficient towers remain explicit rather than guessed"
+  },
+  "matched_historical_benchmark": {
+    "method": "five all-feature release processes per revision pinned to CPU 11; the identical boundary-parameter-fiber fixture was added to detached parent revision c4200a5 and both revisions used Hypersolve aa085f9",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "fixture": "the selected left parallel y=1 of the polynomial line (0,0)-(2,0) against a degree-four constant rational target at (0,1), whose exact solution is {t=0} crossed with the complete target domain",
+    "historical_candidates_microseconds": [
+      39.576,
+      40.208,
+      39.110,
+      39.451,
+      39.480
+    ],
+    "historical_contacts_microseconds": [
+      39.141,
+      39.718,
+      39.145,
+      39.171,
+      39.118
+    ],
+    "current_candidates_microseconds": [
+      26.156,
+      26.336,
+      26.064,
+      25.515,
+      26.128
+    ],
+    "current_contacts_microseconds": [
+      33.663,
+      33.373,
+      34.050,
+      33.531,
+      33.758
+    ],
+    "historical_candidate_median_microseconds": 39.480,
+    "historical_contact_median_microseconds": 39.145,
+    "current_candidate_median_microseconds": 26.128,
+    "current_contact_median_microseconds": 33.663,
+    "candidate_change_percent": -33.819656,
+    "contact_change_percent": -14.004343,
+    "candidate_speedup": 1.511023,
+    "contact_speedup": 1.162849,
+    "historical_outcome": "all candidate iterations returned NoIntersection and all contact iterations returned a complete empty set, losing the exact positive-dimensional parameter solution",
+    "current_outcome": "all candidate iterations returned DegenerateResultant and all contact iterations returned one complete nonempty exact parameter component; candidate and contact checksums were both 100",
+    "interpretation": "the exact independence fast path both repairs the historical false negative and avoids unnecessary resultant projection work"
+  },
+  "existing_lane_guards": [
+    {
+      "lane": "bezier_parallel_implicit_quadratic_component",
+      "historical_candidate_median_milliseconds": 2.672397,
+      "historical_contact_median_milliseconds": 2.665824,
+      "current_candidate_median_milliseconds": 2.668160,
+      "current_contact_median_milliseconds": 2.666275,
+      "candidate_change_percent": -0.158547,
+      "contact_change_percent": 0.016918,
+      "interpretation": "the smooth quadratic implicit route is flat"
+    },
+    {
+      "lane": "bezier_parallel_two_turning_implicit_graphs",
+      "historical_candidate_median_milliseconds": 82.483366,
+      "historical_contact_median_milliseconds": 81.122971,
+      "current_candidate_median_milliseconds": 82.396854,
+      "current_contact_median_milliseconds": 81.441657,
+      "candidate_change_percent": -0.104884,
+      "contact_change_percent": 0.392843,
+      "interpretation": "the multi-graph route remains within sub-percent run noise"
+    },
+    {
+      "lane": "bezier_parallel_closed_implicit_oval",
+      "historical_candidate_median_milliseconds": 74.920455,
+      "historical_contact_median_milliseconds": 74.796157,
+      "current_candidate_median_milliseconds": 74.341537,
+      "current_contact_median_milliseconds": 74.372938,
+      "candidate_change_percent": -0.772710,
+      "contact_change_percent": -0.565830,
+      "interpretation": "the closed-component route improves slightly"
+    }
+  ],
+  "memory": {
+    "method": "three interleaved fresh pinned processes per revision under /usr/bin/time, running the complete Bezier-intersection benchmark group",
+    "historical_max_rss_kib": [
+      12460,
+      12380,
+      12680
+    ],
+    "current_max_rss_kib": [
+      12540,
+      12728,
+      12772
+    ],
+    "historical_median_max_rss_kib": 12460,
+    "current_median_max_rss_kib": 12728,
+    "change_kib": 268,
+    "change_percent": 2.150883,
+    "interpretation": "whole-process peak RSS rises by 268 KiB while the repaired lane constructs exact component evidence instead of returning an empty set; the common intersection result remains statically unchanged at 40 bytes"
+  },
+  "competitive_context": {
+    "direct_peer_lane": "none",
+    "reason": "the pinned finite competitors do not expose complete positive-dimensional parameter fibers, exact point-image evidence, or STRICT/APPROXIMATE_512 semantics",
+    "policy": "sampled floating-point curve intersection is not treated as a correctness or throughput substitute; the established CurveRegion2 finite competitive corpus remains the broader throughput reference"
+  },
+  "release_size": {
+    "binary": "target/release/deps/offset-ea116fee283cd918",
+    "matched_historical_file_bytes": 7532600,
+    "current_file_bytes": 7595952,
+    "matched_historical_text_bytes": 5739055,
+    "current_text_bytes": 5794911,
+    "matched_historical_loadable_bytes": 6005247,
+    "current_loadable_bytes": 6061247,
+    "matched_historical_total_memory_bytes": 6010623,
+    "current_total_memory_bytes": 6063871,
+    "file_change_bytes": 63352,
+    "text_change_bytes": 55856,
+    "loadable_change_bytes": 56000,
+    "total_memory_change_bytes": 53248,
+    "file_change_percent": 0.841038,
+    "text_change_percent": 0.973261,
+    "loadable_change_percent": 0.932518,
+    "total_memory_change_percent": 0.885898,
+    "interpretation": "with byte-identical benchmark source, exact point incidence and parameter-component replay add less than one percent to every code/image size measure; the hot repaired lane is materially faster"
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "scope": "hypercurve and hypersolve with examples, tests, benchmarks, and fuzz targets",
+    "nodes": 30064,
+    "edges": 54152,
+    "change_from_previous_checkpoint": {
+      "nodes": 33,
+      "edges": 93
+    },
+    "artifact": "/tmp/hypercurve-point-image-parameter-components-stack-callgraph/callgraph.json",
+    "interpretation": "the production surface remains concentrated in the existing candidate-system and degenerate-replay authority; most graph growth is the public evidence shape, exact incidence reuse, fixtures, and benchmark lane"
+  },
+  "verification": {
+    "all_features_library_tests": 315,
+    "no_default_features_library_tests": 279,
+    "public_policy_fixtures": [
+      "fixed analytic-parallel parameter crossed with a complete constant-target domain",
+      "complete collapsed-parallel domain crossed with a fixed target parameter",
+      "coincident constant images retaining the complete parameter square"
+    ],
+    "policy_matrix": "all three public fixtures pass under STRICT and APPROXIMATE_512 in both feature configurations",
+    "full_all_features": "passed",
+    "full_no_default_features": "passed",
+    "quality": [
+      "cargo clippy --all-features --all-targets -- -D warnings",
+      "cargo clippy --no-default-features --all-targets -- -D warnings",
+      "cargo fmt --all -- --check",
+      "git diff --check"
+    ]
+  },
+  "remaining": [
+    "non-axis repeated and non-square-free positive-dimensional component/derivative sharing",
+    "supported non-rational coefficient towers",
+    "remaining exact parallel carrier surfaces and authoritative CurveRegion2 offset regularization",
+    "solver-driven CurveRegion2 fillet and chamfer"
+  ]
+}
