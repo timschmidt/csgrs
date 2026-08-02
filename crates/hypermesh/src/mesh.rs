@@ -1359,6 +1359,7 @@ impl PolygonSoup {
 
 struct AdjacentSupportEdges {
     heads: Vec<usize>,
+    neighbor_filters: Vec<u16>,
     entries: Vec<AdjacentSupportEdge>,
 }
 
@@ -1376,6 +1377,7 @@ impl AdjacentSupportEdges {
     fn new(vertex_count: usize, edge_capacity: usize) -> Self {
         Self {
             heads: vec![Self::NONE; vertex_count],
+            neighbor_filters: vec![0; vertex_count],
             entries: Vec::with_capacity(edge_capacity),
         }
     }
@@ -1387,6 +1389,12 @@ impl AdjacentSupportEdges {
         } else {
             (end, start)
         };
+        let neighbor_bit = 1_u16 << (other & 15);
+        // Every insertion monotonically sets this bit. A missing bit proves
+        // absence; a collision retains the complete owner-chain search.
+        if self.neighbor_filters[head] & neighbor_bit == 0 {
+            return None;
+        }
         let mut entry_index = self.heads[head];
         while entry_index != Self::NONE {
             let entry = self.entries[entry_index];
@@ -1407,6 +1415,7 @@ impl AdjacentSupportEdges {
         } else {
             (end, start)
         };
+        self.neighbor_filters[head] |= 1_u16 << (other & 15);
         let next = self.heads[head];
         self.heads[head] = self.entries.len();
         self.entries.push(AdjacentSupportEdge {
@@ -1556,10 +1565,12 @@ pub(crate) fn build_projective_input_soup(
         let mut axis_support_planes: Vec<((usize, u64, bool), usize)> = Vec::with_capacity(6);
         let mut adjacent_support_planes = (!predominantly_axis_aligned && input_planes.is_none())
             .then(|| {
-                AdjacentSupportEdges::new(
+                // Keep the disabled axis/supplied-plane paths' optional
+                // carrier to one word while adjacency owns its filter arena.
+                Box::new(AdjacentSupportEdges::new(
                     mesh.positions.len(),
                     mesh.triangles.len().saturating_mul(3).div_ceil(2),
-                )
+                ))
             });
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let indices @ [i0, i1, i2] = triangle.indices();
@@ -2497,6 +2508,8 @@ mod tests {
         assert_eq!(adjacent.get(4, 1), Some((false, 11)));
         assert_eq!(adjacent.get(2, 2), Some((false, 6)));
         assert_eq!(adjacent.get(0, 2), None);
+        // A filter collision must retain the complete linked-list lookup.
+        assert_eq!(adjacent.get(1, 19), None);
     }
 
     #[test]
