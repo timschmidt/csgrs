@@ -278,8 +278,80 @@ fn check_policy(policy: CurveContext) {
     }
 }
 
+fn check_algebraic_cusp_connectivity(policy: CurveContext) {
+    let half = (Real::one() / Real::from(2_u8)).unwrap();
+    let parallel = QuadraticBezier2::new(point(0, 0), Point2::new(half, Real::zero()), point(1, 1))
+        .parallel_left(Real::one())
+        .unwrap();
+    let analysis = match parallel.singularity_analysis(&policy).unwrap() {
+        Classification::Decided(analysis) => analysis,
+        Classification::Uncertain(reason) => panic!("cusp analysis: {reason:?}"),
+    };
+    let [cusp] = analysis.parallel_cusps() else {
+        panic!("expected one algebraic parallel cusp");
+    };
+    assert!(!cusp.is_exact());
+
+    let zero = exact_parameter(0, &policy);
+    let one = exact_parameter(1, &policy);
+    let make_range =
+        |start: BezierParameter2, end: BezierParameter2| match BezierParameterRange2::try_new(
+            start, end, &policy,
+        )
+        .unwrap()
+        {
+            Classification::Decided(range) => range,
+            Classification::Uncertain(reason) => panic!("cusp range: {reason:?}"),
+        };
+    let first = match BezierParallelFragment2::try_new(
+        parallel.clone(),
+        make_range(zero, cusp.clone()),
+        &policy,
+    )
+    .unwrap()
+    {
+        Classification::Decided(fragment) => fragment,
+        Classification::Uncertain(reason) => panic!("first cusp span: {reason:?}"),
+    };
+    let second = match BezierParallelFragment2::try_new(
+        parallel.clone(),
+        make_range(cusp.clone(), one),
+        &policy,
+    )
+    .unwrap()
+    {
+        Classification::Decided(fragment) => fragment,
+        Classification::Uncertain(reason) => panic!("second cusp span: {reason:?}"),
+    };
+    let start = match parallel.point_at(&Real::zero(), &policy).unwrap() {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => panic!("parallel start: {reason:?}"),
+    };
+    let end = match parallel.point_at(&Real::one(), &policy).unwrap() {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
+    };
+
+    let boundary = CurveRegionBoundaryLoop2::new(
+        vec![
+            BezierSplitFragment2::AnalyticParallel(first),
+            BezierSplitFragment2::AnalyticParallel(second),
+            materialized_line(end, start, &policy),
+        ],
+        &policy,
+    )
+    .expect("the shared analytic carrier and cusp parameter certify connectivity");
+    assert_eq!(boundary.len(), 3);
+}
+
 #[test]
 fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies() {
     check_policy(CurveContext::STRICT);
     check_policy(CurveContext::APPROXIMATE_512);
+}
+
+#[test]
+fn algebraic_parallel_cusp_spans_connect_under_both_policies() {
+    check_algebraic_cusp_connectivity(CurveContext::STRICT);
+    check_algebraic_cusp_connectivity(CurveContext::APPROXIMATE_512);
 }

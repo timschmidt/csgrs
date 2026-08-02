@@ -34,8 +34,8 @@ use crate::{
     Aabb2, Axis2, BezierAlgebraicEndpointImage2, BezierAreaMoments2, BezierArrangementGraph2,
     BezierArrangementTraversal2, BezierEndpointPointImage2, BezierFlatteningOptions,
     BezierLineContact, BezierLineContactKind, BezierLineContactRelation,
-    BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallelVerificationOptions,
-    BezierParameter2, BezierRetainedLinearOverlapTraversal2,
+    BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallel2,
+    BezierParallelVerificationOptions, BezierParameter2, BezierRetainedLinearOverlapTraversal2,
     BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
     CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveError, CurveFamily2,
@@ -1790,6 +1790,7 @@ struct RetainedEndpointEvidence {
         Box<AlgebraicRootRepresentation>,
     )>,
     source: Option<(BezierSubcurve2, BezierParameter2)>,
+    analytic_source: Option<(BezierParallel2, BezierParameter2)>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1887,6 +1888,7 @@ fn retained_fragment_endpoint_evidence(
                 point: Some(if start_endpoint { start } else { end }),
                 algebraic: None,
                 source: None,
+                analytic_source: None,
             })
         }
         BezierSplitFragment2::AlgebraicEndpointImages {
@@ -1913,6 +1915,7 @@ fn retained_fragment_endpoint_evidence(
                 point,
                 algebraic,
                 source,
+                analytic_source: None,
             })
         }
         BezierSplitFragment2::AnalyticParallel(fragment) => {
@@ -1932,6 +1935,7 @@ fn retained_fragment_endpoint_evidence(
                 point,
                 algebraic: None,
                 source: None,
+                analytic_source: Some((fragment.parallel().clone(), parameter.clone())),
             })
         }
         BezierSplitFragment2::Unresolved { .. } => Err(CurveError::Topology(
@@ -2010,6 +2014,12 @@ fn retained_endpoint_equality(
     }
 
     if let (Some(left), Some(right)) = (&left.source, &right.source)
+        && left == right
+    {
+        return RetainedEndpointEquality::Equal;
+    }
+
+    if let (Some(left), Some(right)) = (&left.analytic_source, &right.analytic_source)
         && left == right
     {
         return RetainedEndpointEquality::Equal;
