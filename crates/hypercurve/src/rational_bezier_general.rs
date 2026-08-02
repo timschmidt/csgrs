@@ -6803,6 +6803,7 @@ fn determinant_linear_power_polynomial(
 
 #[cfg(feature = "predicates")]
 #[derive(Clone)]
+#[cfg_attr(test, derive(Debug, PartialEq))]
 struct CertifiedRationalInterval {
     lower: HyperRational,
     upper: HyperRational,
@@ -6821,42 +6822,101 @@ impl CertifiedRationalInterval {
         }
     }
 
-    fn add(&self, other: &Self) -> Self {
-        Self {
-            lower: &self.lower + &other.lower,
-            upper: &self.upper + &other.upper,
-        }
-    }
-
-    fn negated(&self) -> Self {
-        Self {
-            lower: -self.upper.clone(),
-            upper: -self.lower.clone(),
-        }
+    fn add_assign(&mut self, other: &Self) {
+        self.lower = &self.lower + &other.lower;
+        self.upper = &self.upper + &other.upper;
     }
 
     fn subtract(&self, other: &Self) -> Self {
-        self.add(&other.negated())
+        Self {
+            lower: &self.lower - &other.upper,
+            upper: &self.upper - &other.lower,
+        }
+    }
+
+    fn subtract_assign(&mut self, other: &Self) {
+        self.lower = &self.lower - &other.upper;
+        self.upper = &self.upper - &other.lower;
+    }
+
+    fn multiply_scalar(&self, scalar: &HyperRational) -> Self {
+        if scalar >= &HyperRational::zero() {
+            Self {
+                lower: &self.lower * scalar,
+                upper: &self.upper * scalar,
+            }
+        } else {
+            Self {
+                lower: &self.upper * scalar,
+                upper: &self.lower * scalar,
+            }
+        }
     }
 
     fn multiply(&self, other: &Self) -> Self {
-        let products = [
-            &self.lower * &other.lower,
-            &self.lower * &other.upper,
-            &self.upper * &other.lower,
-            &self.upper * &other.upper,
-        ];
-        let mut lower = products[0].clone();
-        let mut upper = products[0].clone();
-        for product in products.into_iter().skip(1) {
-            if product < lower {
-                lower = product.clone();
+        let zero = HyperRational::zero();
+        if self.lower >= zero {
+            if other.lower >= zero {
+                Self {
+                    lower: &self.lower * &other.lower,
+                    upper: &self.upper * &other.upper,
+                }
+            } else if other.upper <= zero {
+                Self {
+                    lower: &self.upper * &other.lower,
+                    upper: &self.lower * &other.upper,
+                }
+            } else {
+                Self {
+                    lower: &self.upper * &other.lower,
+                    upper: &self.upper * &other.upper,
+                }
             }
-            if product > upper {
-                upper = product;
+        } else if self.upper <= zero {
+            if other.lower >= zero {
+                Self {
+                    lower: &self.lower * &other.upper,
+                    upper: &self.upper * &other.lower,
+                }
+            } else if other.upper <= zero {
+                Self {
+                    lower: &self.upper * &other.upper,
+                    upper: &self.lower * &other.lower,
+                }
+            } else {
+                Self {
+                    lower: &self.lower * &other.upper,
+                    upper: &self.lower * &other.lower,
+                }
+            }
+        } else if other.lower >= zero {
+            Self {
+                lower: &self.lower * &other.upper,
+                upper: &self.upper * &other.upper,
+            }
+        } else if other.upper <= zero {
+            Self {
+                lower: &self.upper * &other.lower,
+                upper: &self.lower * &other.lower,
+            }
+        } else {
+            let lower_left = &self.lower * &other.upper;
+            let lower_right = &self.upper * &other.lower;
+            let upper_left = &self.lower * &other.lower;
+            let upper_right = &self.upper * &other.upper;
+            Self {
+                lower: if lower_left < lower_right {
+                    lower_left
+                } else {
+                    lower_right
+                },
+                upper: if upper_left > upper_right {
+                    upper_left
+                } else {
+                    upper_right
+                },
             }
         }
-        Self { lower, upper }
     }
 
     fn sign(&self) -> Option<RealSign> {
@@ -6897,16 +6957,15 @@ fn determinant_local_bernstein_signs_from_enclosures(
         .iter()
         .map(enclose)
         .collect::<Option<Vec<_>>>()?;
-    let lower = CertifiedRationalInterval::point(lower.clone());
-    let span = CertifiedRationalInterval::point(upper - &lower.lower);
+    let span = upper - lower;
     let constants = numerator
         .iter()
         .zip(&denominator)
-        .map(|(numerator, denominator)| numerator.subtract(&lower.multiply(denominator)))
+        .map(|(numerator, denominator)| numerator.subtract(&denominator.multiply_scalar(lower)))
         .collect::<Vec<_>>();
     let linear = denominator
         .iter()
-        .map(|coefficient| span.multiply(coefficient))
+        .map(|coefficient| coefficient.multiply_scalar(&span))
         .collect::<Vec<_>>();
 
     let state_count = 1_usize.checked_shl(u32::try_from(matrices.degree).ok()?)?;
@@ -6933,11 +6992,11 @@ fn determinant_local_bernstein_signs_from_enclosures(
                 let constant = coefficient.multiply(&constants[entry_index]);
                 let linear = coefficient.multiply(&linear[entry_index]);
                 if negative {
-                    next[power] = next[power].subtract(&constant);
-                    next[power + 1] = next[power + 1].add(&linear);
+                    next[power].subtract_assign(&constant);
+                    next[power + 1].add_assign(&linear);
                 } else {
-                    next[power] = next[power].add(&constant);
-                    next[power + 1] = next[power + 1].subtract(&linear);
+                    next[power].add_assign(&constant);
+                    next[power + 1].subtract_assign(&linear);
                 }
             }
         }
@@ -6956,8 +7015,7 @@ fn determinant_local_bernstein_signs_from_enclosures(
             let denominator = checked_binomial(matrices.degree, power_index)?;
             let weight =
                 HyperRational::fraction(i64::try_from(numerator).ok()?, denominator).ok()?;
-            coefficient = coefficient
-                .add(&power_coefficient.multiply(&CertifiedRationalInterval::point(weight)));
+            coefficient.add_assign(&power_coefficient.multiply_scalar(&weight));
         }
         signs.push(coefficient.sign()?);
     }
@@ -8375,6 +8433,55 @@ mod tests {
     #[cfg(feature = "predicates")]
     fn exact_f64(value: f64) -> Real {
         Real::try_from(value).expect("finite binary rational")
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn certified_rational_interval_sign_products_match_four_corner_enclosure() {
+        for first_lower in -3_i64..=3 {
+            for first_upper in first_lower..=3 {
+                let first = CertifiedRationalInterval {
+                    lower: HyperRational::new(first_lower),
+                    upper: HyperRational::new(first_upper),
+                };
+                for second_lower in -3_i64..=3 {
+                    for second_upper in second_lower..=3 {
+                        let second = CertifiedRationalInterval {
+                            lower: HyperRational::new(second_lower),
+                            upper: HyperRational::new(second_upper),
+                        };
+                        let products = [
+                            &first.lower * &second.lower,
+                            &first.lower * &second.upper,
+                            &first.upper * &second.lower,
+                            &first.upper * &second.upper,
+                        ];
+                        let mut expected_lower = products[0].clone();
+                        let mut expected_upper = products[0].clone();
+                        for product in products.into_iter().skip(1) {
+                            if product < expected_lower {
+                                expected_lower = product.clone();
+                            }
+                            if product > expected_upper {
+                                expected_upper = product;
+                            }
+                        }
+
+                        let product = first.multiply(&second);
+                        assert_eq!(product.lower, expected_lower);
+                        assert_eq!(product.upper, expected_upper);
+                        for scalar in -3_i64..=3 {
+                            assert_eq!(
+                                first.multiply_scalar(&HyperRational::new(scalar)),
+                                first.multiply(&CertifiedRationalInterval::point(
+                                    HyperRational::new(scalar),
+                                ))
+                            );
+                        }
+                    }
+                }
+            }
+        }
     }
 
     #[test]
