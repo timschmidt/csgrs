@@ -4525,12 +4525,7 @@ fn construct_cubic_reduced_half(
 }
 
 fn polynomial_evaluate(coefficients: &[Real], parameter: &Real) -> Real {
-    coefficients
-        .iter()
-        .rev()
-        .fold(Real::zero(), |accumulator, coefficient| {
-            accumulator * parameter + coefficient
-        })
+    crate::bezier_parameter::evaluate_coefficients(coefficients, parameter)
 }
 
 fn polynomial_trim_structural_zeros(mut coefficients: Vec<Real>) -> Vec<Real> {
@@ -5804,18 +5799,13 @@ fn implicit_parameter_event_neighborhood(
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<ImplicitParameterEventNeighborhood>>> {
     match parameter {
-        BezierParameter2::Exact(value) => {
-            if value.exact_rational_ref().is_none() {
-                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-            }
-            Ok(Classification::Decided(Some(
-                ImplicitParameterEventNeighborhood {
-                    parameter: parameter.clone(),
-                    lower: Real::zero(),
-                    upper: Real::one(),
-                },
-            )))
-        }
+        BezierParameter2::Exact(_) => Ok(Classification::Decided(Some(
+            ImplicitParameterEventNeighborhood {
+                parameter: parameter.clone(),
+                lower: Real::zero(),
+                upper: Real::one(),
+            },
+        ))),
         BezierParameter2::Algebraic(algebraic) => {
             let lower = algebraic.interval().start().clone();
             let upper = algebraic.interval().end().clone();
@@ -5867,11 +5857,7 @@ fn refine_implicit_parameter_event_neighborhood(
                 .clone()
                 .refined_isolating_interval(8, policy);
             match &neighborhood.parameter {
-                BezierParameter2::Exact(value) => {
-                    if value.exact_rational_ref().is_none() {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-                    }
-                }
+                BezierParameter2::Exact(_) => {}
                 BezierParameter2::Algebraic(algebraic) => {
                     neighborhood.lower = algebraic.interval().start().clone();
                     neighborhood.upper = algebraic.interval().end().clone();
@@ -8115,6 +8101,20 @@ fn bivariate_specialize_first(polynomial: &BivariatePolynomial, value: &Real) ->
         .unwrap_or(0);
     (0..second_count)
         .map(|second_power| {
+            if polynomial.coefficients.len() == 3 && value.exact_rational_ref().is_none() {
+                let coefficients: [Real; 3] = std::array::from_fn(|first_power| {
+                    polynomial.coefficients[first_power]
+                        .get(second_power)
+                        .cloned()
+                        .unwrap_or_else(Real::zero)
+                });
+                if coefficients
+                    .iter()
+                    .any(|coefficient| coefficient.exact_rational_ref().is_none())
+                {
+                    return polynomial_evaluate(&coefficients, value);
+                }
+            }
             polynomial
                 .coefficients
                 .iter()
@@ -9117,6 +9117,110 @@ mod conversion_tests {
     }
 
     #[test]
+    fn nonrational_rational_parameter_component_uses_exact_real_coefficients() {
+        let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+        let component =
+            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![-alpha.clone()]]);
+        let equations = [
+            bivariate_multiply(
+                &component,
+                &BivariatePolynomial::new(vec![vec![Real::from(2_i8)], vec![Real::one()]]),
+            ),
+            bivariate_multiply(
+                &component,
+                &BivariatePolynomial::new(vec![vec![Real::from(3_i8), Real::one()]]),
+            ),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("the non-rational rational component was not transported");
+            };
+            let [overlap] = system.overlaps.as_ref() else {
+                panic!("the non-rational rational component must publish once");
+            };
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&Real::zero(), &Real::one()))
+            );
+            let Some(second_end) = overlap.second_range().end().as_exact() else {
+                panic!("the represented non-rational image endpoint was discarded");
+            };
+            assert_eq!(
+                real_sign(&(second_end - &alpha), &policy),
+                Some(RealSign::Zero)
+            );
+            assert_eq!(
+                overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same
+            );
+        }
+    }
+
+    #[test]
+    fn nonrational_implicit_parameter_component_uses_exact_real_coefficients() {
+        // u^2 + u - sqrt(1/2)t = 0 has one smooth branch in the authored
+        // square. Its endpoint and defining component are non-rational, but
+        // all topology remains exact Real arithmetic.
+        let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+        let component = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one(), Real::one()],
+            vec![-alpha],
+        ]);
+        let equations = [
+            bivariate_multiply(
+                &component,
+                &BivariatePolynomial::new(vec![vec![Real::from(2_i8)], vec![Real::one()]]),
+            ),
+            bivariate_multiply(
+                &component,
+                &BivariatePolynomial::new(vec![vec![Real::from(3_i8), Real::one()]]),
+            ),
+        ];
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &branch, &policy, config).unwrap()
+            else {
+                panic!("the non-rational implicit component was not transported");
+            };
+            let [overlap] = system.overlaps.as_ref() else {
+                panic!("the non-rational implicit graph must publish once");
+            };
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&Real::zero(), &Real::one()))
+            );
+            assert_eq!(
+                signed_bivariate_at_parameter_pair(
+                    &component,
+                    overlap.first_range().end(),
+                    overlap.second_range().end(),
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+            assert_eq!(
+                overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same
+            );
+        }
+    }
+
+    #[test]
     fn rational_component_system_enumerates_split_quadratic_components() {
         let first_component = BivariatePolynomial::new(vec![
             vec![Real::zero(), Real::one()],
@@ -9918,6 +10022,100 @@ mod conversion_tests {
                         || !overlap.second_range().end().is_exact()
                 );
             }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn regular_implicit_parameter_cells_partition_a_nonrational_coefficient_oval() {
+        let alpha = (Real::one() / Real::from(8_i8)).unwrap().sqrt().unwrap();
+        let component = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(5_i8) / Real::from(16_i8)).unwrap(),
+                Real::from(-1_i8),
+                Real::one(),
+            ],
+            vec![Real::from(-2_i8) * &alpha],
+            vec![Real::one()],
+        ]);
+        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let event_polynomial = vec![
+            (Real::one() / Real::from(16_i8)).unwrap(),
+            Real::from(-2_i8) * alpha,
+            Real::one(),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(event_roots)) =
+                polynomial_unit_interval_roots(&event_polynomial, &policy).unwrap()
+            else {
+                panic!("the non-rational critical fibers were not isolated");
+            };
+            assert_eq!(event_roots.len(), 2);
+            assert!(event_roots.iter().all(BezierParameter2::is_exact));
+            for event_root in &event_roots {
+                let specialized = bivariate_specialize_first(
+                    &component,
+                    event_root.as_exact().expect("event root is represented"),
+                );
+                assert_eq!(
+                    real_sign(
+                        &(&specialized[0] - (Real::one() / Real::from(4_i8)).unwrap()),
+                        &policy,
+                    ),
+                    Some(RealSign::Zero),
+                    "the exact critical fiber did not specialize to (u - 1/2)^2"
+                );
+                match polynomial_unit_interval_roots(&specialized, &policy).unwrap() {
+                    Classification::Decided(Some(roots)) => assert_eq!(roots.len(), 1),
+                    Classification::Decided(None) => {
+                        panic!("the non-rational event fiber vanished")
+                    }
+                    Classification::Uncertain(reason) => {
+                        panic!("the non-rational event fiber was uncertain: {reason:?}")
+                    }
+                }
+            }
+            let retained_derivative =
+                bivariate_parameter_derivative(&component, CurveResultantParameter::First);
+            let lifted_derivative =
+                bivariate_parameter_derivative(&component, CurveResultantParameter::Second);
+            for derivative in [&retained_derivative, &lifted_derivative] {
+                match bivariate_system_unit_square_solution_pairs(
+                    &component, derivative, &policy, config,
+                )
+                .unwrap()
+                {
+                    Classification::Decided(points) => assert_eq!(points.len(), 2),
+                    Classification::Uncertain(reason) => {
+                        panic!("the non-rational critical system was uncertain: {reason:?}")
+                    }
+                }
+            }
+            let result = certify_regular_implicit_parameter_component(
+                &component,
+                &branch,
+                CurveResultantParameter::First,
+                &policy,
+                config,
+            )
+            .unwrap();
+            let Classification::Decided(Some(evidence)) = result else {
+                match result {
+                    Classification::Decided(None) => {
+                        panic!("the non-rational coefficient oval was declined")
+                    }
+                    Classification::Uncertain(reason) => {
+                        panic!("the non-rational coefficient oval was uncertain: {reason:?}")
+                    }
+                    Classification::Decided(Some(_)) => unreachable!(),
+                }
+            };
+            assert!(evidence.isolated_pairs.is_empty());
+            assert_eq!(evidence.overlaps.len(), 4);
         }
     }
 
@@ -11006,6 +11204,19 @@ mod conversion_tests {
             BivariatePolynomial::new(vec![vec![Real::one(), Real::one()]]),
             BivariatePolynomial::new(vec![vec![Real::from(2_i8), Real::one()]]),
         ];
+        let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+        let nonrational_rootless_factor =
+            BivariatePolynomial::new(vec![vec![alpha.clone()], vec![Real::one()]]);
+        let nonrational_rootful_factor =
+            BivariatePolynomial::new(vec![vec![-alpha], vec![Real::one()]]);
+        let nonrational_rootless = [
+            bivariate_multiply(&nonrational_rootless_factor, &expected[0]),
+            bivariate_multiply(&nonrational_rootless_factor, &expected[1]),
+        ];
+        let nonrational_rootful = [
+            bivariate_multiply(&nonrational_rootful_factor, &expected[0]),
+            bivariate_multiply(&nonrational_rootful_factor, &expected[1]),
+        ];
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             assert_eq!(
@@ -11014,6 +11225,14 @@ mod conversion_tests {
             );
             assert_eq!(
                 rootless_axis_primitive_system(&rootful, &policy).unwrap(),
+                None
+            );
+            assert_eq!(
+                rootless_axis_primitive_system(&nonrational_rootless, &policy).unwrap(),
+                Some(expected.clone())
+            );
+            assert_eq!(
+                rootless_axis_primitive_system(&nonrational_rootful, &policy).unwrap(),
                 None
             );
         }

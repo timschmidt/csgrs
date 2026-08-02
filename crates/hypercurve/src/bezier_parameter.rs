@@ -23,7 +23,7 @@ use std::cmp::Ordering;
 use std::sync::Arc;
 use std::sync::{Mutex, OnceLock};
 
-use hyperreal::{Rational as HyperRational, Real, RealSign};
+use hyperreal::{CertifiedRealSign, Rational as HyperRational, Real, RealSign};
 #[cfg(feature = "predicates")]
 use hypersolve::AlgebraicRootRepresentation;
 use num::{BigInt, BigRational, BigUint, Integer, One, ToPrimitive, Zero};
@@ -2617,7 +2617,7 @@ fn derivative_coefficients(coefficients: &[Real]) -> Vec<Real> {
     derivative
 }
 
-fn evaluate_coefficients(coefficients: &[Real], parameter: &Real) -> Real {
+pub(crate) fn evaluate_coefficients(coefficients: &[Real], parameter: &Real) -> Real {
     if let Some(parameter) = parameter.exact_rational_ref() {
         if parameter == &HyperRational::zero() {
             return coefficients.first().cloned().unwrap_or_else(Real::zero);
@@ -2652,6 +2652,21 @@ fn evaluate_coefficients(coefficients: &[Real], parameter: &Real) -> Real {
         }
         if parameter == &HyperRational::one() {
             return Real::sum_refs(coefficients);
+        }
+    }
+    if let [constant, linear, quadratic] = coefficients
+        && parameter.exact_rational_ref().is_none()
+        && coefficients
+            .iter()
+            .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        let twice_quadratic = Real::from(2_i8) * quadratic;
+        let vertex = (-linear.clone()) / &twice_quadratic;
+        let correction = (linear * linear) / (&twice_quadratic * Real::from(2_i8));
+        if let (Ok(vertex), Ok(correction)) = (vertex, correction) {
+            let vertex_value = constant - correction;
+            let offset = parameter - vertex;
+            return quadratic * &offset * offset + vertex_value;
         }
     }
     coefficients
@@ -2992,6 +3007,9 @@ fn isolate_unit_roots(
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierRootIsolationResult2>> {
     let mut trace = BezierRootIsolationTrace2::default();
+    if let Some(result) = exact_nonrational_low_degree_unit_roots(&coefficients, policy)? {
+        return Ok(result);
+    }
     let mut tried_nonrational_quartic = false;
     if coefficients.len() == 5
         && coefficients
@@ -3092,6 +3110,97 @@ fn isolate_unit_roots(
     }
 
     ordered_root_isolation_result(represented, trace, policy)
+}
+
+/// Materializes roots already representable by the canonical scalar tower.
+///
+/// Rational-coefficient polynomials retain the established Sturm carrier. For
+/// a non-rational linear or quadratic, exact field division and square root
+/// can produce roots directly as `Real`. Each candidate must replay its
+/// defining polynomial to zero; a scalar tower that cannot certify that
+/// identity falls through to the established algebraic carrier. The formula
+/// uses no approximate root or inferred coefficient. APPROXIMATE_512 may only
+/// terminate the replay equality, as it does elsewhere in Hypercurve.
+fn exact_nonrational_low_degree_unit_roots(
+    coefficients: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Option<Classification<BezierRootIsolationResult2>>> {
+    const EXACT_REFINEMENT_PRECISION: i32 = -512;
+
+    if coefficients.len() > 3
+        || coefficients
+            .iter()
+            .all(|coefficient| coefficient.exact_rational_ref().is_some())
+    {
+        return Ok(None);
+    }
+    let mut candidates = match coefficients {
+        [_constant] => Vec::new(),
+        [constant, linear] => {
+            if !matches!(
+                linear.certified_sign_until(EXACT_REFINEMENT_PRECISION),
+                CertifiedRealSign::Known {
+                    sign: RealSign::Positive | RealSign::Negative,
+                    ..
+                }
+            ) {
+                return Ok(None);
+            }
+            vec![((-constant.clone()) / linear)?]
+        }
+        [constant, linear, quadratic] => {
+            match quadratic.certified_sign_until(EXACT_REFINEMENT_PRECISION) {
+                CertifiedRealSign::Known {
+                    sign: RealSign::Positive | RealSign::Negative,
+                    ..
+                } => {}
+                CertifiedRealSign::Known {
+                    sign: RealSign::Zero,
+                    ..
+                }
+                | CertifiedRealSign::Unknown { .. } => return Ok(None),
+            };
+            let discriminant = linear * linear - Real::from(4_i8) * quadratic * constant;
+            match discriminant.certified_sign_until(EXACT_REFINEMENT_PRECISION) {
+                CertifiedRealSign::Known {
+                    sign: RealSign::Negative,
+                    ..
+                } => Vec::new(),
+                CertifiedRealSign::Known {
+                    sign: RealSign::Zero,
+                    ..
+                } => vec![((-linear.clone()) / (Real::from(2_i8) * quadratic))?],
+                CertifiedRealSign::Known {
+                    sign: RealSign::Positive,
+                    ..
+                } => {
+                    let denominator = Real::from(2_i8) * quadratic;
+                    let vertex = ((-linear.clone()) / &denominator)?;
+                    let delta = (discriminant / (&denominator * &denominator))?.sqrt()?;
+                    vec![&vertex - &delta, vertex + delta]
+                }
+                CertifiedRealSign::Unknown { .. } => return Ok(None),
+            }
+        }
+        _ => return Ok(None),
+    };
+
+    let mut roots = Vec::with_capacity(candidates.len());
+    for candidate in candidates.drain(..) {
+        match real_sign(&evaluate_coefficients(coefficients, &candidate), policy) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Positive | RealSign::Negative) | None => return Ok(None),
+        }
+        match in_closed_unit_interval(&candidate, policy) {
+            Some(true) => roots.push(BezierParameter2::Exact(candidate)),
+            Some(false) => {}
+            None => return Ok(None),
+        }
+    }
+    Ok(Some(Classification::Decided(BezierRootIsolationResult2 {
+        roots,
+        trace: BezierRootIsolationTrace2::default(),
+    })))
 }
 
 fn ordered_root_isolation_result(
@@ -4062,6 +4171,111 @@ mod conversion_tests {
             evaluate_coefficients(&coefficients, &Real::one()),
             Real::sum_refs(&coefficients)
         );
+    }
+
+    #[test]
+    fn nonrational_low_degree_roots_materialize_without_sturm_work() {
+        let alpha = (Real::one() / Real::from(8_i8)).unwrap().sqrt().unwrap();
+        let half = rational(1, 2);
+        let quarter = rational(1, 4);
+        let cases = [
+            (
+                vec![-(&alpha * &half), alpha.clone()],
+                vec![half.clone()],
+                vec![Classification::Decided(true)],
+            ),
+            (
+                vec![rational(1, 16), Real::from(-2_i8) * &alpha, Real::one()],
+                vec![&alpha - &quarter, &alpha + &quarter],
+                vec![Classification::Decided(true), Classification::Decided(true)],
+            ),
+            (
+                vec![rational(1, 8), Real::from(-2_i8) * &alpha, Real::one()],
+                vec![alpha.clone()],
+                vec![Classification::Decided(false)],
+            ),
+            (
+                vec![rational(3, 16), Real::from(-2_i8) * &alpha, Real::one()],
+                Vec::new(),
+                Vec::new(),
+            ),
+            (
+                vec![rational(-7, 8), Real::from(-2_i8) * &alpha, Real::one()],
+                Vec::new(),
+                Vec::new(),
+            ),
+        ];
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (coefficients, expected_roots, expected_simple) in &cases {
+                let polynomial = decided(
+                    BezierParameterPolynomial::try_new_power_basis(coefficients.clone(), &policy)
+                        .unwrap(),
+                    "non-rational low-degree polynomial",
+                );
+                let result = decided(
+                    polynomial
+                        .isolate_unit_interval_roots_with_trace(&policy)
+                        .unwrap(),
+                    "non-rational low-degree roots",
+                );
+                assert_eq!(result.trace(), &BezierRootIsolationTrace2::default());
+                assert_eq!(result.roots().len(), expected_roots.len());
+                for (root, expected) in result.roots().iter().zip(expected_roots) {
+                    let BezierParameter2::Exact(root) = root else {
+                        panic!("a scalar-tower root retained an algebraic wrapper");
+                    };
+                    assert_eq!(real_sign(&(root - expected), &policy), Some(RealSign::Zero));
+                    assert_eq!(
+                        real_sign(&polynomial.evaluate(root), &policy),
+                        Some(RealSign::Zero)
+                    );
+                }
+                assert_eq!(
+                    polynomial
+                        .simple_root_classifications(result.roots(), &policy)
+                        .unwrap(),
+                    *expected_simple
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn nested_nonrational_quadratic_root_retains_its_polynomial_certificate() {
+        let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+        let coefficients = vec![-alpha, Real::one(), Real::one()];
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let polynomial = decided(
+                BezierParameterPolynomial::try_new_power_basis(coefficients.clone(), &policy)
+                    .unwrap(),
+                "nested-radical polynomial",
+            );
+            let roots = decided(
+                polynomial.isolate_unit_interval_roots(&policy).unwrap(),
+                "nested-radical root",
+            );
+            let [root] = roots.as_slice() else {
+                panic!("the nested-radical polynomial must have one unit root");
+            };
+            match root {
+                BezierParameter2::Exact(root) => assert_eq!(
+                    real_sign(&polynomial.evaluate(root), &policy),
+                    Some(RealSign::Zero)
+                ),
+                BezierParameter2::Algebraic(_) => {}
+            }
+            if policy == CurveContext::STRICT {
+                assert!(matches!(root, BezierParameter2::Algebraic(_)));
+            }
+            assert_eq!(
+                polynomial
+                    .simple_root_classifications(&roots, &policy)
+                    .unwrap(),
+                vec![Classification::Decided(true)]
+            );
+        }
     }
 
     #[test]
