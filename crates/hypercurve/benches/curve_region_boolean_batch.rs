@@ -2,13 +2,24 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, CircularArc2, Contour2, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2, LineSeg2, Point2,
-    QuadraticBezier2, RationalBezier2, Real,
+    BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
+    BezierSubcurve2, BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CubicBezier2,
+    Curve2, CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2,
+    CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2,
+    RationalBezier2, Real,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
     Point2::from_values(x, y)
+}
+
+fn decided<T>(classification: Classification<T>) -> T {
+    match classification {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => {
+            panic!("benchmark construction is uncertain: {reason:?}")
+        }
+    }
 }
 
 fn rectangle(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Contour2 {
@@ -90,6 +101,97 @@ fn rectangle_path(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurvePath2 
                 )
             })
             .collect(),
+    )
+    .unwrap()
+}
+
+fn exact_parameter(value: i32, policy: &CurveContext) -> BezierParameter2 {
+    decided(BezierParameter2::exact(Real::from(value), policy).unwrap())
+}
+
+fn analytic_parallel_fragment(
+    start: Point2,
+    midpoint: Point2,
+    end: Point2,
+    distance: i32,
+    reversed: bool,
+    policy: &CurveContext,
+) -> BezierSplitFragment2 {
+    let (start_parameter, end_parameter) = if reversed { (1, 0) } else { (0, 1) };
+    let range = decided(
+        BezierParameterRange2::try_new(
+            exact_parameter(start_parameter, policy),
+            exact_parameter(end_parameter, policy),
+            policy,
+        )
+        .unwrap(),
+    );
+    let parallel = QuadraticBezier2::new(start, midpoint, end)
+        .parallel_left(Real::from(distance))
+        .unwrap();
+    BezierSplitFragment2::AnalyticParallel(decided(
+        BezierParallelFragment2::try_new(parallel, range, policy).unwrap(),
+    ))
+}
+
+fn analytic_square(min_x: i32, max_x: i32, policy: &CurveContext) -> CurveRegion2 {
+    let midpoint_x = (min_x + max_x) / 2;
+    let edges = [
+        (point(min_x, 0), point(midpoint_x, 0), point(max_x, 0)),
+        (point(max_x, 0), point(max_x, 2), point(max_x, 4)),
+        (point(max_x, 4), point(midpoint_x, 4), point(min_x, 4)),
+        (point(min_x, 4), point(min_x, 2), point(min_x, 0)),
+    ];
+    let fragments = edges
+        .into_iter()
+        .map(|(start, midpoint, end)| {
+            analytic_parallel_fragment(start, midpoint, end, 0, false, policy)
+        })
+        .collect();
+    CurveRegion2::try_new_with_loop_topology(
+        vec![CurveRegionBoundaryLoop2::new(fragments, policy).unwrap()],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )
+    .unwrap()
+}
+
+fn materialized_line(start: Point2, end: Point2, policy: &CurveContext) -> BezierSplitFragment2 {
+    let midpoint = start.lerp(
+        &end,
+        (Real::one() / Real::from(2_u8)).expect("one half is represented"),
+    );
+    BezierSplitFragment2::Materialized {
+        start: exact_parameter(0, policy),
+        end: exact_parameter(1, policy),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, midpoint, end)),
+    }
+}
+
+fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
+    let parallel = QuadraticBezier2::new(point(0, 0), point(2, 2), point(4, 0))
+        .parallel_left(Real::one())
+        .unwrap();
+    let right = decided(parallel.point_at(&Real::one(), policy).unwrap());
+    let left = decided(parallel.point_at(&Real::zero(), policy).unwrap());
+    let lower_left = Point2::new(left.x().clone(), Real::from(-2));
+    let lower_right = Point2::new(right.x().clone(), Real::from(-2));
+    let boundary = CurveRegionBoundaryLoop2::new(
+        vec![
+            analytic_parallel_fragment(point(0, 0), point(2, 2), point(4, 0), 1, true, policy),
+            materialized_line(left, lower_left.clone(), policy),
+            materialized_line(lower_left, lower_right.clone(), policy),
+            materialized_line(lower_right, right, policy),
+        ],
+        policy,
+    )
+    .unwrap();
+    CurveRegion2::try_new_with_loop_topology(
+        vec![boundary],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
     )
     .unwrap()
 }
@@ -253,7 +355,11 @@ fn measure(operation: &mut impl FnMut() -> usize, iterations: u32) -> (u128, usi
 }
 
 fn main() {
-    let policy = CurveContext::STRICT;
+    let policy = match std::env::var("HYPERCURVE_CURVE_REGION_BATCH_POLICY").as_deref() {
+        Ok("approximate-512") => CurveContext::APPROXIMATE_512,
+        Ok("strict") | Err(_) => CurveContext::STRICT,
+        Ok(policy) => panic!("unknown batch benchmark policy {policy}"),
+    };
     let native_regions = |contours: (Contour2, Contour2)| {
         [contours.0, contours.1].map(|contour| {
             CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
@@ -280,6 +386,11 @@ fn main() {
         Ok("mobius-overlap") => conic_overlap_regions(true, &policy).into(),
         Ok("mobius-cubic-overlap") => cubic_mobius_overlap_regions(&policy).into(),
         Ok("nonlinear-line-overlap") => nonlinear_line_overlap_regions(&policy).into(),
+        Ok("analytic-squares") => [
+            analytic_square(0, 4, &policy),
+            analytic_square(2, 6, &policy),
+        ],
+        Ok("analytic-curved-cap") => [curved_parallel_cap(&policy), analytic_square(1, 5, &policy)],
         Ok(fixture) => panic!("unknown batch benchmark fixture {fixture}"),
         Err(_) => native_regions((rectangle(0, 0, 4, 4), rectangle(2, 0, 6, 4))),
     };
