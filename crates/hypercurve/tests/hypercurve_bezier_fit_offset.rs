@@ -3,11 +3,12 @@ use hypercurve::{
     BezierLineImageFitRelation, BezierOffsetCandidate2, BezierParallelApproximationCurve2,
     BezierParallelIncidence2, BezierParallelIntersectionCandidates2,
     BezierParallelIntersectionContact2, BezierParallelIntersectionSet2,
-    BezierParallelVerificationOptions, BezierParameter2, Classification, CubicBezier2, Curve2,
-    CurveContext, CurveError, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
-    Point2, QuadraticBezier2, Rational, RationalBezier2, RationalBezierIntersectionOverlap2,
-    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RationalQuadraticBezier2, Real,
+    BezierParallelPairIntersectionCandidates2, BezierParallelPairIntersectionContact2,
+    BezierParallelPairIntersectionSet2, BezierParallelVerificationOptions, BezierParameter2,
+    Classification, CubicBezier2, Curve2, CurveContext, CurveError, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Rational, RationalBezier2,
+    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real,
 };
 use num::bigint::{BigInt, BigUint};
 use proptest::prelude::*;
@@ -35,6 +36,26 @@ fn decided_parallel_set(
         panic!("parallel intersections remained uncertain");
     };
     result
+}
+
+fn decided_parallel_pair_set(
+    result: Classification<BezierParallelPairIntersectionSet2>,
+) -> BezierParallelPairIntersectionSet2 {
+    let Classification::Decided(result) = result else {
+        panic!("parallel/parallel intersections remained uncertain");
+    };
+    result
+}
+
+fn pair_has_exact_parameters(
+    contacts: &[BezierParallelPairIntersectionContact2],
+    first: Real,
+    second: Real,
+) -> bool {
+    contacts.iter().any(|contact| {
+        contact.first_parameter() == &BezierParameter2::Exact(first.clone())
+            && contact.second_parameter() == &BezierParameter2::Exact(second.clone())
+    })
 }
 
 fn only_parallel_contacts(
@@ -1284,6 +1305,137 @@ fn supporting_line_incidence_rejects_projective_poles_and_source_singularities()
             singular.supporting_line_incidence(&line, &policy).unwrap(),
             Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
         );
+    }
+}
+
+#[test]
+fn parallel_pair_replays_a_general_non_ph_contact_under_both_policies() {
+    let first = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1))
+        .parallel_left(r(1))
+        .unwrap();
+    let second = QuadraticBezier2::new(p(1, 1), p(1, 2), p(2, 3))
+        .parallel_left(r(1))
+        .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let candidates = first
+            .parallel_intersection_candidates(&second, &policy)
+            .unwrap();
+        assert!(matches!(
+            candidates,
+            Classification::Decided(BezierParallelPairIntersectionCandidates2::Candidates { .. })
+        ));
+        let intersections =
+            decided_parallel_pair_set(first.parallel_intersections(&second, &policy).unwrap());
+        assert!(intersections.is_complete(), "{intersections:?}");
+        assert!(pair_has_exact_parameters(
+            intersections.contacts(),
+            r(0),
+            r(0)
+        ));
+        let contact = intersections
+            .contacts()
+            .iter()
+            .find(|contact| {
+                contact.first_parameter() == &BezierParameter2::Exact(r(0))
+                    && contact.second_parameter() == &BezierParameter2::Exact(r(0))
+            })
+            .unwrap();
+        assert!(contact.is_certified_transverse());
+    }
+}
+
+#[test]
+fn parallel_pair_rejects_the_opposite_normal_square_branch() {
+    let first = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1))
+        .parallel_left(r(1))
+        .unwrap();
+    // At (0,0), the opposite right-normal branch of `second` meets the
+    // selected first parallel at (0,1); its selected left branch does not.
+    let second = QuadraticBezier2::new(p(-1, 1), p(-1, 2), p(0, 3))
+        .parallel_left(r(1))
+        .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let intersections =
+            decided_parallel_pair_set(first.parallel_intersections(&second, &policy).unwrap());
+        assert!(intersections.is_complete(), "{intersections:?}");
+        assert!(!pair_has_exact_parameters(
+            intersections.contacts(),
+            r(0),
+            r(0)
+        ));
+    }
+}
+
+#[test]
+fn parallel_pair_structural_overlap_preserves_relative_orientation() {
+    let first = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1))
+        .parallel_left(r(1))
+        .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let same = decided_parallel_pair_set(
+            first
+                .parallel_intersections(&first.clone(), &policy)
+                .unwrap(),
+        );
+        let [same_overlap] = same.overlaps() else {
+            panic!("identical carriers did not retain one overlap");
+        };
+        assert_eq!(
+            same_overlap.orientation(),
+            RationalBezierOverlapOrientation2::Same
+        );
+        assert_eq!(
+            same_overlap.second_range().exact_endpoints(),
+            Some((&r(0), &r(1)))
+        );
+
+        let reversed = decided_parallel_pair_set(
+            first
+                .parallel_intersections(&first.reversed(), &policy)
+                .unwrap(),
+        );
+        let [reversed_overlap] = reversed.overlaps() else {
+            panic!("reversed carrier did not retain one overlap");
+        };
+        assert_eq!(
+            reversed_overlap.orientation(),
+            RationalBezierOverlapOrientation2::Reversed
+        );
+        assert_eq!(
+            reversed_overlap.second_range().exact_endpoints(),
+            Some((&r(1), &r(0)))
+        );
+    }
+}
+
+#[test]
+fn parallel_pair_rational_delegate_preserves_operand_parameter_order() {
+    let rational_first = QuadraticBezier2::new(p(0, 1), p(0, 2), p(1, 3))
+        .parallel_left(r(0))
+        .unwrap();
+    let general_second = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1))
+        .parallel_left(r(1))
+        .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let forward = decided_parallel_pair_set(
+            rational_first
+                .parallel_intersections(&general_second, &policy)
+                .unwrap(),
+        );
+        assert!(forward.is_complete(), "{forward:?}");
+        assert!(pair_has_exact_parameters(forward.contacts(), r(0), r(0)));
+
+        let reverse = decided_parallel_pair_set(
+            general_second
+                .parallel_intersections(&rational_first, &policy)
+                .unwrap(),
+        );
+        assert!(reverse.is_complete(), "{reverse:?}");
+        assert!(pair_has_exact_parameters(reverse.contacts(), r(0), r(0)));
     }
 }
 
