@@ -47,7 +47,7 @@ use hypersolve::{
     BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentStatus,
     CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
     CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
-    CurveResultantParameter, RationalParametricCurve2,
+    CurveResultantParameter, RationalParametricCurve2, divide_bivariate_polynomial_exact,
     extract_bivariate_polynomial_system_axis_factors,
     linear_parameter_lifts_bivariate_polynomial_system,
     parameter_component_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
@@ -5028,7 +5028,8 @@ fn parameter_component_system(
 /// and isolated singular vertices are accepted. The parent intersection engine
 /// replays axis-wide and boundary-coincident components against constant-image
 /// geometry. When ordinary certification exposes derivative sharing, the same
-/// engine retries after Hypersolve exactly removes component multiplicity.
+/// engine retries after Hypersolve exactly removes selected-branch-zero factors
+/// and component multiplicity.
 fn certify_regular_implicit_parameter_component(
     component: &BivariatePolynomial,
     branch: &BivariatePolynomial,
@@ -5047,15 +5048,96 @@ fn certify_regular_implicit_parameter_component(
         return Ok(initial);
     }
 
+    let mut fallback = initial;
+    let mut support = component.clone();
+    if let Some(reduced) = remove_implicit_parameter_component_zero_branch_factors(
+        component,
+        branch,
+        retained_parameter,
+        config,
+    ) {
+        if bivariate_storage_bidegree_sum(&reduced) == 0 {
+            return Ok(Classification::Decided(Some(
+                ParameterComponentEvidence2::default(),
+            )));
+        }
+        fallback = certify_implicit_parameter_component_once(
+            &reduced,
+            branch,
+            retained_parameter,
+            policy,
+            config,
+        )?;
+        if matches!(fallback, Classification::Decided(Some(_))) {
+            return Ok(fallback);
+        }
+        support = reduced;
+    }
+
     let Some(reduced) =
-        reduce_implicit_parameter_component_multiplicity(component, retained_parameter, config)
+        reduce_implicit_parameter_component_multiplicity(&support, retained_parameter, config)
     else {
-        return Ok(initial);
+        return Ok(fallback);
     };
-    if reduced == *component {
-        return Ok(initial);
+    if reduced == support {
+        return Ok(fallback);
     }
     certify_implicit_parameter_component_once(&reduced, branch, retained_parameter, policy, config)
+}
+
+/// Removes every positive-dimensional factor on which `branch > 0` is false.
+///
+/// Direct exact division catches a branch that vanishes on the complete
+/// component. For a reducible component, the existing Hypersolve common-factor
+/// authority repeatedly divides factors shared by the component and branch.
+/// Only a strict bidegree decrease is accepted. The remaining quotient retains
+/// the authored branch polynomial, so its sign on every surviving component is
+/// still certified rather than canceled or inferred.
+#[cold]
+#[inline(never)]
+fn remove_implicit_parameter_component_zero_branch_factors(
+    component: &BivariatePolynomial,
+    branch: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> Option<BivariatePolynomial> {
+    let alternate_parameter = match retained_parameter {
+        CurveResultantParameter::First => CurveResultantParameter::Second,
+        CurveResultantParameter::Second => CurveResultantParameter::First,
+    };
+    let mut reduced = component.clone();
+    let mut changed = false;
+    loop {
+        if divide_bivariate_polynomial_exact(branch, &reduced).is_some() {
+            return Some(BivariatePolynomial::new(vec![vec![Real::one()]]));
+        }
+        let degree = bivariate_storage_bidegree_sum(&reduced);
+        let mut next = None;
+        for parameter in [retained_parameter, alternate_parameter] {
+            let report = parameter_component_bivariate_polynomial_system(
+                &reduced, branch, parameter, config,
+            );
+            if !matches!(
+                report.status,
+                BivariatePolynomialComponentStatus::Rational
+                    | BivariatePolynomialComponentStatus::Implicit
+            ) {
+                continue;
+            }
+            let Some([candidate, _]) = report.reduced_equations else {
+                continue;
+            };
+            if bivariate_storage_bidegree_sum(&candidate) < degree {
+                next = Some(candidate);
+                break;
+            }
+        }
+        let Some(next) = next else {
+            return changed.then_some(reduced);
+        };
+        reduced = next;
+        changed = true;
+    }
 }
 
 /// Removes every exactly extractable repeated factor before topology replay.
@@ -6829,6 +6911,22 @@ fn certify_rational_parameter_component_map(
         }
     }
 
+    let (branch_coefficients, _) =
+        bivariate_on_parameter_lift_cleared(branch, retained_parameter, map);
+    match polynomial_from_coefficients(branch_coefficients.clone(), policy)? {
+        Classification::Decided(None) => {
+            // Selection is the strict predicate `branch > 0`. A component on
+            // which that predicate is identically zero contributes no point,
+            // but its exact division residual must continue through the
+            // authoritative candidate engine.
+            return Ok(Classification::Decided(Some(
+                ParameterComponentEvidence2::default(),
+            )));
+        }
+        Classification::Decided(Some(_)) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
     let derivative_numerator = polynomial_subtract(
         &polynomial_multiply(
             &polynomial_derivative(&map.numerator_coefficients),
@@ -6846,8 +6944,6 @@ fn certify_rational_parameter_component_map(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
 
-    let (branch_coefficients, _) =
-        bivariate_on_parameter_lift_cleared(branch, retained_parameter, map);
     let mut overlaps = Vec::with_capacity(partition.domains.len());
     for (domain, direction) in partition.domains {
         match polynomial_is_rootless_on_parameter_range(
@@ -6921,6 +7017,7 @@ fn certify_rational_parameter_component_map(
     })))
 }
 
+#[derive(Default)]
 struct ParameterComponentEvidence2 {
     overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
     isolated_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
@@ -9037,6 +9134,20 @@ mod conversion_tests {
                 .unwrap(),
                 Classification::Decided(None)
             ));
+            let Classification::Decided(Some(zero_branch)) =
+                certify_rational_parameter_component_map(
+                    &equations,
+                    &identity_equation,
+                    CurveResultantParameter::First,
+                    &identity,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("an identically zero selected branch was not decided");
+            };
+            assert!(zero_branch.overlaps.is_empty());
+            assert!(zero_branch.isolated_pairs.is_empty());
 
             let pole_equations = [pole_equation.clone(), pole_equation.clone()];
             let Classification::Decided(Some(evidence)) = certify_rational_parameter_component_map(
@@ -9060,6 +9171,59 @@ mod conversion_tests {
             assert_eq!(
                 overlap.second_range().exact_endpoints(),
                 Some((&Real::zero(), &Real::one()))
+            );
+        }
+    }
+
+    #[test]
+    fn rational_component_system_discards_only_the_identically_zero_branch() {
+        let zero_branch = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let selected = BivariatePolynomial::new(vec![
+            vec![-quarter.clone(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let component = bivariate_multiply(&zero_branch, &selected);
+        let equations = [
+            bivariate_multiply(
+                &component,
+                &BivariatePolynomial::new(vec![vec![Real::from(2_i8)], vec![Real::one()]]),
+            ),
+            bivariate_multiply(
+                &component,
+                &BivariatePolynomial::new(vec![vec![Real::from(3_i8), Real::one()]]),
+            ),
+        ];
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parameter_component_system(&equations, &zero_branch, &policy, config).unwrap()
+            else {
+                panic!("the residual selected component was not transported");
+            };
+            assert!(system.isolated_pairs.is_empty());
+            let [overlap] = system.overlaps.as_ref() else {
+                panic!("only the positive shifted component may survive");
+            };
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&Real::zero(), &three_quarters))
+            );
+            assert_eq!(
+                overlap.second_range().exact_endpoints(),
+                Some((&quarter, &Real::one()))
+            );
+            assert_eq!(
+                overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same
             );
         }
     }
@@ -10197,6 +10361,74 @@ mod conversion_tests {
                     .count(),
                 4
             );
+        }
+    }
+
+    #[test]
+    fn implicit_component_discards_zero_branch_factors_and_keeps_the_quotient() {
+        let lower = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(19_i8) / Real::from(64_i8)).unwrap(),
+                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                Real::one(),
+            ],
+            vec![Real::from(-1_i8)],
+            vec![Real::one()],
+        ]);
+        let upper = BivariatePolynomial::new(vec![
+            vec![
+                (Real::from(51_i8) / Real::from(64_i8)).unwrap(),
+                (Real::from(-3_i8) / Real::from(2_i8)).unwrap(),
+                Real::one(),
+            ],
+            vec![Real::from(-1_i8)],
+            vec![Real::one()],
+        ]);
+        let component = bivariate_multiply(&lower, &upper);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let half = BezierParameter2::Exact((Real::one() / Real::from(2_i8)).unwrap());
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(empty)) =
+                certify_regular_implicit_parameter_component(
+                    &component,
+                    &component,
+                    CurveResultantParameter::First,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("the entirely zero selected branch was not removed");
+            };
+            assert!(empty.overlaps.is_empty());
+            assert!(empty.isolated_pairs.is_empty());
+
+            let Classification::Decided(Some(selected)) =
+                certify_regular_implicit_parameter_component(
+                    &component,
+                    &lower,
+                    CurveResultantParameter::First,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("the nonzero quotient component was not retained");
+            };
+            assert!(selected.isolated_pairs.is_empty());
+            assert_eq!(selected.overlaps.len(), 4);
+            for overlap in selected.overlaps.iter() {
+                for endpoint in [overlap.second_range().start(), overlap.second_range().end()] {
+                    assert_eq!(
+                        endpoint.cmp_by_refinement(&half, &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Greater)
+                    );
+                }
+            }
         }
     }
 
