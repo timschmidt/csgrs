@@ -110,7 +110,7 @@ fn cubic_point_and_tangent_images_use_power_basis_resultants() {
 }
 
 #[test]
-fn nonmonotone_coordinate_image_is_reported_instead_of_sampled() {
+fn nonmonotone_coordinate_image_is_certified_without_sampling() {
     let curve = QuadraticBezier2::new(
         Point2::new(q(9, 16), r(0)),
         Point2::new(q(-3, 16), r(1)),
@@ -118,14 +118,26 @@ fn nonmonotone_coordinate_image_is_reported_instead_of_sampled() {
     );
     let parameter = sqrt_half_parameter();
 
-    let point = curve
-        .point_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let point = curve
+            .point_at_algebraic_parameter(&parameter, &policy)
+            .unwrap();
 
-    assert_eq!(point.status(), BezierAlgebraicImageStatus::XImageFailed);
-    assert!(point.x().is_none());
-    assert!(point.y().is_none());
-    assert!(point.message().unwrap().contains("x coordinate"));
+        assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
+        let x = point.x().unwrap();
+        assert_eq!(x.coefficients(), &[q(9, 16), q(-3, 2), r(1)]);
+        assert!(x.representation().unwrap().is_valid());
+        assert_eq!(
+            x.compare_to_real(&Real::zero(), &policy),
+            Classification::Decided(std::cmp::Ordering::Greater)
+        );
+        assert_eq!(
+            x.compare_to_real(&q(1, 16), &policy),
+            Classification::Decided(std::cmp::Ordering::Less)
+        );
+        assert_eq!(point.y().unwrap().coefficients(), &[r(0), r(2), r(0)]);
+        assert!(point.message().is_none());
+    }
 }
 
 #[test]
