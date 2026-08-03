@@ -13,8 +13,10 @@ use crate::clip::clip_polygon_decision;
 use crate::context::DecisionContext;
 use crate::geometry::compare_real_decision;
 #[cfg(test)]
+use crate::intersection::PairwiseIntersectionType;
+#[cfg(test)]
 use crate::intersection::intersect_polygons_with_vertices;
-use crate::intersection::{IntersectionSegment, PairwiseIntersectionType};
+use crate::intersection::{IntersectionSegment, PairwiseIntersectionEventRef};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -1145,14 +1147,19 @@ fn split_intersection_segments_with_pairwise_cache_and_certified_embedded_inputs
     let mut segments = Vec::new();
     for (polygon_idx, intersections) in by_polygon.iter().enumerate() {
         for intersection in intersections {
-            if intersection.kind != PairwiseIntersectionType::Segment {
-                continue;
-            }
-            let Some(segment) = &intersection.segment else {
+            let PairwiseIntersectionEventRef::Segment {
+                segment,
+                other_polygon_idx,
+            } = intersection
+            else {
                 continue;
             };
-            if polygon_idx < segment.other_polygon_idx {
-                segments.push(segment.clone());
+            if polygon_idx < other_polygon_idx {
+                segments.push(IntersectionSegment {
+                    v0: segment.v0.clone(),
+                    v1: segment.v1.clone(),
+                    other_polygon_idx,
+                });
             }
         }
     }

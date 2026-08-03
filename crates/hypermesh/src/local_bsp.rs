@@ -5,9 +5,6 @@ use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 use crate::context::DecisionContext;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane};
-use crate::intersection::IntersectionSegment;
-#[cfg(test)]
-use crate::intersection::OverlapInfo;
 use crate::polygon::ConvexPolygon;
 use crate::predicate::{
     classify_point_decision, classify_projective_point_decision, classify_real,
@@ -81,18 +78,13 @@ impl LocalBsp {
     pub(crate) fn add_segment(
         &mut self,
         decisions: &DecisionContext,
-        segment: &IntersectionSegment,
+        v0: &Point3,
+        v1: &Point3,
+        split_plane: &Plane,
     ) -> HypermeshResult<()> {
         if let Some(root) = self.root {
-            let inverted = segment.split_plane.inverted();
-            self.add_segment_recursive(
-                decisions,
-                root,
-                &segment.v0,
-                &segment.v1,
-                &segment.split_plane,
-                &inverted,
-            )?;
+            let inverted = split_plane.inverted();
+            self.add_segment_recursive(decisions, root, v0, v1, split_plane, &inverted)?;
         }
         Ok(())
     }
@@ -104,9 +96,8 @@ impl LocalBsp {
         &mut self,
         decisions: &DecisionContext,
         other: &ConvexPolygon,
-        overlap: &OverlapInfo,
     ) -> HypermeshResult<()> {
-        self.add_overlap_edges(decisions, &overlap.other_edges)?;
+        self.add_overlap_edges(decisions, &other.edges)?;
         self.mark_overlap(decisions, other)
     }
 
@@ -577,26 +568,13 @@ mod tests {
     fn repeated_overlap_plane_splits_do_not_grow_bsp_again() {
         let host = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
         let other = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 1, 0);
-        let overlap = OverlapInfo {
-            other_polygon_idx: 0,
-            other_edges: other.edges.as_ref().clone(),
-            other_support: other.support.clone(),
-        };
         let mut bsp = LocalBsp::new(&crate::test_support::approximate_decisions(), &host).unwrap();
 
-        bsp.add_overlap(
-            &crate::test_support::approximate_decisions(),
-            &other,
-            &overlap,
-        )
-        .unwrap();
+        bsp.add_overlap(&crate::test_support::approximate_decisions(), &other)
+            .unwrap();
         let first_node_count = bsp.node_count();
-        bsp.add_overlap(
-            &crate::test_support::approximate_decisions(),
-            &other,
-            &overlap,
-        )
-        .unwrap();
+        bsp.add_overlap(&crate::test_support::approximate_decisions(), &other)
+            .unwrap();
 
         assert_eq!(bsp.node_count(), first_node_count);
     }
@@ -611,8 +589,13 @@ mod tests {
             .unwrap();
 
         let mut bsp = LocalBsp::new(&crate::test_support::approximate_decisions(), &host).unwrap();
-        bsp.add_segment(&crate::test_support::approximate_decisions(), &segment)
-            .unwrap();
+        bsp.add_segment(
+            &crate::test_support::approximate_decisions(),
+            &segment.v0,
+            &segment.v1,
+            &cutter.support,
+        )
+        .unwrap();
         let leaves = bsp.collect_leaves();
 
         assert_eq!(leaves.len(), 2);
@@ -625,16 +608,12 @@ mod tests {
         let lower = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
         let higher = approximate_convex_triangle(&p(1, 1, 0), &p(2, 1, 0), &p(1, 2, 0), 1, 2);
         let intersection = approximate_intersect_polygons(&higher, &lower, 0).unwrap();
-        let overlap = intersection.overlap.as_ref().unwrap();
+        assert!(intersection.overlap.is_some());
 
         let mut bsp =
             LocalBsp::new(&crate::test_support::approximate_decisions(), &higher).unwrap();
-        bsp.add_overlap(
-            &crate::test_support::approximate_decisions(),
-            &lower,
-            overlap,
-        )
-        .unwrap();
+        bsp.add_overlap(&crate::test_support::approximate_decisions(), &lower)
+            .unwrap();
 
         assert!(bsp.collect_leaves().is_empty());
     }

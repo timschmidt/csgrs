@@ -1,6 +1,6 @@
 use super::*;
 use crate::geometry::Plane;
-use crate::intersection::{IntersectionSegment, OverlapInfo, pairwise_intersections_by_polygon};
+use crate::intersection::pairwise_intersections_by_polygon;
 use crate::mesh::{OutputVertex, PolygonSoup};
 use crate::operations::EmberConfig;
 use crate::output::{BooleanMesh, BooleanResult};
@@ -86,19 +86,6 @@ fn assert_certified_reference_result(
             .iter()
             .all(|definition| affine_from_planes(definition).as_ref() == Ok(expected_point))
     );
-}
-
-fn sample_segment_intersection(other_polygon_idx: usize) -> PairwiseIntersection {
-    PairwiseIntersection {
-        kind: PairwiseIntersectionType::Segment,
-        segment: Some(IntersectionSegment {
-            v0: p(0, 0, 0),
-            v1: p(1, 0, 0),
-            split_plane: Plane::axis_aligned(0, r(0)),
-            other_polygon_idx,
-        }),
-        overlap: None,
-    }
 }
 
 fn quadrilateral_reference_cell_fixture() -> (Aabb, Vec<LimitPlane3>, Point3) {
@@ -4571,15 +4558,9 @@ fn ordered_split_attempt_children_prefers_smaller_changed_child_family() {
 #[test]
 fn ordered_leaf_polygon_indices_prefers_intersecting_hosts_before_direct_hosts() {
     let mut intersections = crate::intersection::PairwiseIntersectionGraphBuilder::new(3);
-    intersections
-        .append(0, sample_segment_intersection(1))
-        .unwrap();
-    intersections
-        .append(2, sample_segment_intersection(2))
-        .unwrap();
-    intersections
-        .append(2, sample_segment_intersection(3))
-        .unwrap();
+    intersections.append_overlap(0, 1).unwrap();
+    intersections.append_overlap(2, 0).unwrap();
+    intersections.append_overlap(2, 1).unwrap();
     let intersections = intersections.finish();
 
     let indices = ordered_leaf_polygon_indices_by_intersections(&intersections);
@@ -4590,12 +4571,8 @@ fn ordered_leaf_polygon_indices_prefers_intersecting_hosts_before_direct_hosts()
 #[test]
 fn ordered_leaf_polygon_indices_keeps_original_order_for_equal_intersection_counts() {
     let mut intersections = crate::intersection::PairwiseIntersectionGraphBuilder::new(3);
-    intersections
-        .append(0, sample_segment_intersection(1))
-        .unwrap();
-    intersections
-        .append(1, sample_segment_intersection(2))
-        .unwrap();
+    intersections.append_overlap(0, 1).unwrap();
+    intersections.append_overlap(1, 0).unwrap();
     let intersections = intersections.finish();
 
     let indices = ordered_leaf_polygon_indices_by_intersections(&intersections);
@@ -14161,33 +14138,22 @@ fn unique_overlap_edge_planes_preserve_first_occurrence_and_skip_inverted_duplic
     let y0 = Plane::axis_aligned(1, r(0));
     let y1 = Plane::axis_aligned(1, r(1));
     let support = Plane::axis_aligned(2, r(0));
-    let intersections = [
-        PairwiseIntersection {
-            kind: PairwiseIntersectionType::Overlap,
-            segment: None,
-            overlap: Some(OverlapInfo {
-                other_polygon_idx: 0,
-                other_edges: vec![x0.clone(), y0.clone()],
-                other_support: support.clone(),
-            }),
-        },
-        PairwiseIntersection {
-            kind: PairwiseIntersectionType::Overlap,
-            segment: None,
-            overlap: Some(OverlapInfo {
-                other_polygon_idx: 1,
-                other_edges: vec![x0.inverted(), y1.clone()],
-                other_support: support,
-            }),
-        },
-    ];
-    let mut graph = crate::intersection::PairwiseIntersectionGraphBuilder::new(1);
-    for intersection in intersections {
-        graph.append(0, intersection).unwrap();
-    }
+    let mut first = ConvexPolygon::empty();
+    first.support = support.clone();
+    first.edges = Arc::new(vec![x0.clone(), y0.clone()]);
+    let mut second = ConvexPolygon::empty();
+    second.support = support;
+    second.edges = Arc::new(vec![x0.inverted(), y1.clone()]);
+    let polygons = vec![ConvexPolygon::empty(), first, second];
+    let mut graph = crate::intersection::PairwiseIntersectionGraphBuilder::new(polygons.len());
+    graph.append_overlap(0, 1).unwrap();
+    graph.append_overlap(0, 2).unwrap();
     let graph = graph.finish();
 
-    assert_eq!(unique_overlap_edge_planes(graph.row(0)), vec![x0, y0, y1]);
+    assert_eq!(
+        unique_overlap_edge_planes(&polygons, graph.row(0)).unwrap(),
+        vec![x0, y0, y1]
+    );
 }
 
 #[test]

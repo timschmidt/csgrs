@@ -10,8 +10,7 @@ use crate::polygon::ConvexPolygon;
 use crate::predicate::compare_real_decision;
 use crate::test_support::{
     approximate_classify_leaf_polygon, approximate_classify_point, approximate_convex_quad,
-    approximate_convex_triangle, approximate_intersect_polygons, approximate_polygon_soup,
-    approximate_trace_axis_segment,
+    approximate_convex_triangle, approximate_polygon_soup, approximate_trace_axis_segment,
 };
 use hyperlimit::Plane3 as LimitPlane3;
 
@@ -13588,28 +13587,24 @@ fn ordered_interior_points_for_probe_search_with_support_prefers_retained_defini
         approximate_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = soup.polygons.clone();
     let host = face_at(&polygons, 0, 1);
-    let intersections = polygons
-        .iter()
-        .enumerate()
-        .filter_map(|(index, polygon)| {
-            if polygon.mesh_index == host.mesh_index && polygon.polygon_index == host.polygon_index
-            {
-                return None;
-            }
-            let intersection = approximate_intersect_polygons(&host, polygon, index).ok()?;
-            Some(intersection)
-        })
-        .collect::<Vec<_>>();
-    let mut intersection_graph = crate::intersection::PairwiseIntersectionGraphBuilder::new(1);
-    for intersection in intersections {
-        intersection_graph.append(0, intersection).unwrap();
-    }
-    let intersection_graph = intersection_graph.finish();
+    let intersection_graph = crate::intersection::pairwise_intersections_by_polygon(
+        &crate::test_support::approximate_decisions(),
+        &polygons,
+    )
+    .unwrap();
     let bsp_leaves = crate::subdivision::build_host_bsp_leaves(
         &crate::test_support::approximate_decisions(),
         &host,
         &polygons,
-        intersection_graph.row(0),
+        intersection_graph.row(
+            polygons
+                .iter()
+                .position(|polygon| {
+                    polygon.mesh_index == host.mesh_index
+                        && polygon.polygon_index == host.polygon_index
+                })
+                .unwrap(),
+        ),
     )
     .unwrap();
 
@@ -15124,22 +15119,11 @@ fn probe_hot_leaf_probe_family_breakdown() {
     let ref_wnv = vec![0; soup.num_meshes];
 
     let host = &polygons[0];
-    let intersections = polygons
-        .iter()
-        .enumerate()
-        .filter_map(|(index, polygon)| {
-            if index == 0 {
-                return None;
-            }
-            let intersection = approximate_intersect_polygons(host, polygon, index).ok()?;
-            Some(intersection)
-        })
-        .collect::<Vec<_>>();
-    let mut intersection_graph = crate::intersection::PairwiseIntersectionGraphBuilder::new(1);
-    for intersection in intersections {
-        intersection_graph.append(0, intersection).unwrap();
-    }
-    let intersection_graph = intersection_graph.finish();
+    let intersection_graph = crate::intersection::pairwise_intersections_by_polygon(
+        &crate::test_support::approximate_decisions(),
+        &polygons,
+    )
+    .unwrap();
     let bsp_leaves = crate::subdivision::build_host_bsp_leaves(
         &crate::test_support::approximate_decisions(),
         host,

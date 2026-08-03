@@ -14,8 +14,8 @@ use crate::halfspace::{
     support_side_halfspace,
 };
 use crate::intersection::{
-    PairwiseIntersection, PairwiseIntersectionGraph, PairwiseIntersectionRow,
-    PairwiseIntersectionType, intersect_polygons_with_vertices,
+    PairwiseIntersection, PairwiseIntersectionEventRef, PairwiseIntersectionGraph,
+    PairwiseIntersectionRow, intersect_polygons_with_vertices,
     pairwise_intersections_by_polygon_with_certified_embedded_inputs,
     segment_has_strict_interior_point_in_both,
 };
@@ -517,9 +517,9 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 })
                 .transpose()?
                 .flatten()
-                && host_intersections
-                    .clone()
-                    .all(|intersection| intersection.kind != PairwiseIntersectionType::Overlap)
+                && host_intersections.clone().all(|intersection| {
+                    !matches!(intersection, PairwiseIntersectionEventRef::Overlap { .. })
+                })
             {
                 let w_back = propagate_wnv(&w_front, 1, &polygon.delta_w)?;
                 let classification = if emit_all_transitions && w_front != w_back {
@@ -2620,20 +2620,27 @@ pub(crate) fn build_host_bsp_leaves(
     intersections: PairwiseIntersectionRow<'_>,
 ) -> HypermeshResult<Vec<BspLeaf>> {
     let mut bsp = LocalBsp::new(decisions, polygon)?;
-    bsp.add_overlap_edges(decisions, &unique_overlap_edge_planes(intersections))?;
+    bsp.add_overlap_edges(
+        decisions,
+        &unique_overlap_edge_planes(polygons, intersections)?,
+    )?;
     for intersection in intersections {
-        match intersection.kind {
-            PairwiseIntersectionType::Segment => {
-                if let Some(segment) = &intersection.segment {
-                    bsp.add_segment(decisions, segment)?;
-                }
+        match intersection {
+            PairwiseIntersectionEventRef::Segment {
+                segment,
+                other_polygon_idx,
+            } => {
+                let other = polygons
+                    .get(other_polygon_idx)
+                    .ok_or(HypermeshError::UnknownClassification)?;
+                bsp.add_segment(decisions, segment.v0, segment.v1, &other.support)?;
             }
-            PairwiseIntersectionType::Overlap => {
-                if let Some(overlap) = &intersection.overlap {
-                    bsp.mark_overlap(decisions, &polygons[overlap.other_polygon_idx])?;
-                }
+            PairwiseIntersectionEventRef::Overlap { other_polygon_idx } => {
+                let other = polygons
+                    .get(other_polygon_idx)
+                    .ok_or(HypermeshError::UnknownClassification)?;
+                bsp.mark_overlap(decisions, other)?;
             }
-            PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {}
         }
     }
     Ok(bsp.collect_leaves().into_iter().cloned().collect())
@@ -2799,9 +2806,9 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
     };
     let may_use_single_point = single_convex_interior_point
         && host_intersections.is_some_and(|intersections| {
-            intersections
-                .iter()
-                .all(|intersection| intersection.kind != PairwiseIntersectionType::Overlap)
+            intersections.iter().all(|intersection| {
+                !matches!(intersection, PairwiseIntersectionEventRef::Overlap { .. })
+            })
         });
     let interior_points = if may_use_single_point {
         vec![if let Some(point) = interior_point
@@ -2838,7 +2845,21 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
         // would repeat the proof already encoded by the BSP.
     } else if let Some(host_intersections) = host_intersections {
         for intersection in host_intersections {
-            let other_index = pairwise_intersection_other_polygon_idx(intersection)?;
+            let (other_index, candidate) = match intersection {
+                PairwiseIntersectionEventRef::Segment {
+                    segment,
+                    other_polygon_idx,
+                } => (
+                    other_polygon_idx,
+                    LeafCandidateIntersection::Segment {
+                        v0: segment.v0,
+                        v1: segment.v1,
+                    },
+                ),
+                PairwiseIntersectionEventRef::Overlap { other_polygon_idx } => {
+                    (other_polygon_idx, LeafCandidateIntersection::Overlap)
+                }
+            };
             let other = polygons
                 .get(other_index)
                 .ok_or(crate::error::HypermeshError::UnknownClassification)?;
@@ -2853,7 +2874,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
                 &leaf_polygon,
                 &leaf_test_points,
                 other,
-                intersection,
+                candidate,
                 &mut delta_w,
             )?;
         }
@@ -2880,7 +2901,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
                 &leaf_polygon,
                 &leaf_test_points,
                 other,
-                &intersection,
+                LeafCandidateIntersection::from_pairwise(&intersection)?,
                 &mut delta_w,
             )?;
         }
@@ -2938,36 +2959,56 @@ fn point_is_strictly_inside_convex_leaf(
     Ok(true)
 }
 
+#[derive(Clone, Copy)]
+enum LeafCandidateIntersection<'a> {
+    None,
+    Segment { v0: &'a Point3, v1: &'a Point3 },
+    Overlap,
+}
+
+impl<'a> LeafCandidateIntersection<'a> {
+    fn from_pairwise(intersection: &'a PairwiseIntersection) -> HypermeshResult<Self> {
+        match intersection.kind {
+            crate::intersection::PairwiseIntersectionType::None
+            | crate::intersection::PairwiseIntersectionType::Point => Ok(Self::None),
+            crate::intersection::PairwiseIntersectionType::Segment => intersection
+                .segment
+                .as_ref()
+                .map(|segment| Self::Segment {
+                    v0: &segment.v0,
+                    v1: &segment.v1,
+                })
+                .ok_or(HypermeshError::UnknownClassification),
+            crate::intersection::PairwiseIntersectionType::Overlap => intersection
+                .overlap
+                .as_ref()
+                .map(|_| Self::Overlap)
+                .ok_or(HypermeshError::UnknownClassification),
+        }
+    }
+}
+
 fn certify_bsp_leaf_against_candidate(
     decisions: &DecisionContext,
     host: &ConvexPolygon,
     leaf: &ConvexPolygon,
     leaf_test_points: &[HomogeneousPoint3],
     other: &ConvexPolygon,
-    intersection: &PairwiseIntersection,
+    intersection: LeafCandidateIntersection<'_>,
     delta_w: &mut [i32],
 ) -> HypermeshResult<()> {
     if delta_w.len() != other.delta_w.len() {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
-    match intersection.kind {
-        PairwiseIntersectionType::None | PairwiseIntersectionType::Point => return Ok(()),
-        PairwiseIntersectionType::Segment => {
-            let Some(segment) = intersection.segment.as_ref() else {
-                return Err(crate::error::HypermeshError::UnknownClassification);
-            };
-            if segment_has_strict_interior_point_in_both(
-                decisions,
-                &segment.v0,
-                &segment.v1,
-                leaf,
-                other,
-            )? {
+    match intersection {
+        LeafCandidateIntersection::None => return Ok(()),
+        LeafCandidateIntersection::Segment { v0, v1 } => {
+            if segment_has_strict_interior_point_in_both(decisions, v0, v1, leaf, other)? {
                 return Err(crate::error::HypermeshError::UnknownClassification);
             }
             return Ok(());
         }
-        PairwiseIntersectionType::Overlap => {
+        LeafCandidateIntersection::Overlap => {
             let relation = classify_leaf_test_relation(decisions, leaf_test_points, other)?;
             let Some(strictly_inside) = relation else {
                 return Err(crate::error::HypermeshError::UnknownClassification);
@@ -2998,7 +3039,12 @@ fn bsp_leaf_certification_candidate_indices(
     if let Some(host_intersections) = host_intersections {
         let mut indices = Vec::new();
         for intersection in host_intersections {
-            let other_index = pairwise_intersection_other_polygon_idx(intersection)?;
+            let other_index = match intersection {
+                PairwiseIntersectionEventRef::Segment {
+                    other_polygon_idx, ..
+                }
+                | PairwiseIntersectionEventRef::Overlap { other_polygon_idx } => other_polygon_idx,
+            };
             if polygons.get(other_index).is_some_and(|other| {
                 other.mesh_index == polygon.mesh_index
                     && other.polygon_index == polygon.polygon_index
@@ -3021,26 +3067,6 @@ fn bsp_leaf_certification_candidate_indices(
                 .then_some(index)
         })
         .collect())
-}
-
-fn pairwise_intersection_other_polygon_idx(
-    intersection: &PairwiseIntersection,
-) -> HypermeshResult<usize> {
-    match intersection.kind {
-        PairwiseIntersectionType::Segment => intersection
-            .segment
-            .as_ref()
-            .map(|segment| segment.other_polygon_idx)
-            .ok_or(crate::error::HypermeshError::UnknownClassification),
-        PairwiseIntersectionType::Overlap => intersection
-            .overlap
-            .as_ref()
-            .map(|overlap| overlap.other_polygon_idx)
-            .ok_or(crate::error::HypermeshError::UnknownClassification),
-        PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {
-            Err(crate::error::HypermeshError::UnknownClassification)
-        }
-    }
 }
 
 fn classify_leaf_test_relation(
@@ -3113,16 +3139,22 @@ fn push_unique_overlap_edge_plane(edges: &mut Vec<Plane>, candidate: &Plane) {
     edges.push(candidate.clone());
 }
 
-fn unique_overlap_edge_planes(intersections: PairwiseIntersectionRow<'_>) -> Vec<Plane> {
+fn unique_overlap_edge_planes(
+    polygons: &[ConvexPolygon],
+    intersections: PairwiseIntersectionRow<'_>,
+) -> HypermeshResult<Vec<Plane>> {
     let mut edges = Vec::new();
     for intersection in intersections {
-        if let Some(overlap) = &intersection.overlap {
-            for edge in &overlap.other_edges {
+        if let PairwiseIntersectionEventRef::Overlap { other_polygon_idx } = intersection {
+            let other = polygons
+                .get(other_polygon_idx)
+                .ok_or(HypermeshError::UnknownClassification)?;
+            for edge in other.edges.iter() {
                 push_unique_overlap_edge_plane(&mut edges, edge);
             }
         }
     }
-    edges
+    Ok(edges)
 }
 
 fn direct_leaf_polygon_components(
@@ -3321,40 +3353,7 @@ fn remap_pairwise_intersections_for_polygon_order(
     intersections: &PairwiseIntersectionGraph,
     query_to_cached: &[usize],
 ) -> HypermeshResult<PairwiseIntersectionGraph> {
-    if intersections.len() != query_to_cached.len() {
-        return Err(crate::error::HypermeshError::UnknownClassification);
-    }
-
-    let mut cached_to_query = vec![usize::MAX; query_to_cached.len()];
-    for (query_index, &cached_index) in query_to_cached.iter().enumerate() {
-        if cached_index >= cached_to_query.len() || cached_to_query[cached_index] != usize::MAX {
-            return Err(crate::error::HypermeshError::UnknownClassification);
-        }
-        cached_to_query[cached_index] = query_index;
-    }
-
-    let mut remapped =
-        crate::intersection::PairwiseIntersectionGraphBuilder::new(query_to_cached.len());
-    for (query_index, &cached_index) in query_to_cached.iter().enumerate() {
-        for intersection in intersections.row(cached_index) {
-            let mut remapped_intersection = intersection.clone();
-            if let Some(segment) = &mut remapped_intersection.segment {
-                if segment.other_polygon_idx >= cached_to_query.len() {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                }
-                segment.other_polygon_idx = cached_to_query[segment.other_polygon_idx];
-            }
-            if let Some(overlap) = &mut remapped_intersection.overlap {
-                if overlap.other_polygon_idx >= cached_to_query.len() {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                }
-                overlap.other_polygon_idx = cached_to_query[overlap.other_polygon_idx];
-            }
-            remapped.append(query_index, remapped_intersection)?;
-        }
-    }
-
-    Ok(remapped.finish())
+    intersections.remap_polygon_order(query_to_cached)
 }
 
 fn normalize_surface_reference(
