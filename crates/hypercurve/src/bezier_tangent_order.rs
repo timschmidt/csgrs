@@ -13,20 +13,14 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::Real;
-use hypersolve::{
-    AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
-    AlgebraicRootRepresentation, arithmetic_algebraic_root_representations,
-};
-#[cfg(feature = "predicates")]
-use hypersolve::{
-    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
-    compare_algebraic_root_representations_by_difference,
-};
-
 use crate::classify::compare_reals;
 use crate::{
     BezierAlgebraicImageStatus, BezierEndpointTangentImage2, Classification, CurveContext,
+};
+use hyperreal::Real;
+use hypersolve::{
+    AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
+    AlgebraicRootRepresentation,
 };
 
 /// A represented algebraic tangent vector with exact coordinate evidence.
@@ -793,13 +787,14 @@ fn cross_sign(
             "cross-product sign certified from rational root enclosures",
         );
     }
-    let left_x_right_y = multiply(left.dx(), right.dy());
-    let left_y_right_x = multiply(left.dy(), right.dx());
+    let left_x_right_y = multiply(left.dx(), right.dy(), policy);
+    let left_y_right_x = multiply(left.dy(), right.dx(), policy);
     let scalar = subtract(
         left_x_right_y.result_representation.as_ref(),
         left_x_right_y.exact_result.as_ref(),
         left_y_right_x.result_representation.as_ref(),
         left_y_right_x.exact_result.as_ref(),
+        policy,
     );
     let mut evidence = scalar_sign_evidence(vec![left_x_right_y, left_y_right_x, scalar], policy);
     if evidence.sign.is_none() {
@@ -828,13 +823,14 @@ fn dot_sign(
             "dot-product sign certified from rational root enclosures",
         );
     }
-    let left_x_right_x = multiply(left.dx(), right.dx());
-    let left_y_right_y = multiply(left.dy(), right.dy());
+    let left_x_right_x = multiply(left.dx(), right.dx(), policy);
+    let left_y_right_y = multiply(left.dy(), right.dy(), policy);
     let scalar = add(
         left_x_right_x.result_representation.as_ref(),
         left_x_right_x.exact_result.as_ref(),
         left_y_right_y.result_representation.as_ref(),
         left_y_right_y.exact_result.as_ref(),
+        policy,
     );
     let mut evidence = scalar_sign_evidence(vec![left_x_right_x, left_y_right_y, scalar], policy);
     if evidence.sign.is_none() {
@@ -852,13 +848,14 @@ fn norm_squared_sign(
     vector: &BezierAlgebraicTangentVector2,
     policy: &CurveContext,
 ) -> BezierAlgebraicScalarSignEvidence {
-    let dx_squared = multiply(vector.dx(), vector.dx());
-    let dy_squared = multiply(vector.dy(), vector.dy());
+    let dx_squared = multiply(vector.dx(), vector.dx(), policy);
+    let dy_squared = multiply(vector.dy(), vector.dy(), policy);
     let scalar = add(
         dx_squared.result_representation.as_ref(),
         dx_squared.exact_result.as_ref(),
         dy_squared.result_representation.as_ref(),
         dy_squared.exact_result.as_ref(),
+        policy,
     );
     let mut evidence = scalar_sign_evidence(vec![dx_squared, dy_squared, scalar], policy);
     if evidence.sign.is_none() {
@@ -1111,17 +1108,19 @@ fn same_side_magnitude_difference(
         );
     };
 
-    let first_cross_squared = multiply(first_cross_scalar, first_cross_scalar);
-    let second_cross_squared = multiply(second_cross_scalar, second_cross_scalar);
-    let first_speed_power = power_representation(first_speed_scalar, speed_power);
-    let second_speed_power = power_representation(second_speed_scalar, speed_power);
-    let first_scaled = multiply_evidence_results(&first_cross_squared, &second_speed_power);
-    let second_scaled = multiply_evidence_results(&second_cross_squared, &first_speed_power);
+    let first_cross_squared = multiply(first_cross_scalar, first_cross_scalar, policy);
+    let second_cross_squared = multiply(second_cross_scalar, second_cross_scalar, policy);
+    let first_speed_power = power_representation(first_speed_scalar, speed_power, policy);
+    let second_speed_power = power_representation(second_speed_scalar, speed_power, policy);
+    let first_scaled = multiply_evidence_results(&first_cross_squared, &second_speed_power, policy);
+    let second_scaled =
+        multiply_evidence_results(&second_cross_squared, &first_speed_power, policy);
     let difference = subtract(
         first_scaled.result_representation.as_ref(),
         first_scaled.exact_result.as_ref(),
         second_scaled.result_representation.as_ref(),
         second_scaled.exact_result.as_ref(),
+        policy,
     );
 
     let mut arithmetic = Vec::new();
@@ -1144,6 +1143,7 @@ struct AlgebraicPowerEvidence {
 fn power_representation(
     value: &AlgebraicRootRepresentation,
     power: usize,
+    policy: &CurveContext,
 ) -> AlgebraicPowerEvidence {
     assert!(power >= 1, "algebraic power must be positive");
     let mut arithmetic = Vec::new();
@@ -1156,6 +1156,7 @@ fn power_representation(
             Some(value),
             None,
             AlgebraicRootArithmeticOp::Multiply,
+            policy,
         );
         representation = product.result_representation.clone();
         exact = product.exact_result.clone();
@@ -1171,6 +1172,7 @@ fn power_representation(
 fn multiply_evidence_results(
     left: &AlgebraicRootArithmeticReport,
     right: &AlgebraicPowerEvidence,
+    policy: &CurveContext,
 ) -> AlgebraicRootArithmeticReport {
     binary_from_evidence_values(
         left.result_representation.as_ref(),
@@ -1178,17 +1180,20 @@ fn multiply_evidence_results(
         right.representation.as_ref(),
         right.exact.as_ref(),
         AlgebraicRootArithmeticOp::Multiply,
+        policy,
     )
 }
 
 fn multiply(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
+    policy: &CurveContext,
 ) -> AlgebraicRootArithmeticReport {
-    arithmetic_algebraic_root_representations(
+    crate::bezier_algebraic_image::arithmetic_algebraic_representations_with_policy(
         left,
         Some(right),
         AlgebraicRootArithmeticOp::Multiply,
+        policy,
     )
 }
 
@@ -1197,6 +1202,7 @@ fn add(
     left_exact: Option<&Real>,
     right_representation: Option<&AlgebraicRootRepresentation>,
     right_exact: Option<&Real>,
+    policy: &CurveContext,
 ) -> AlgebraicRootArithmeticReport {
     binary_from_evidence_values(
         left_representation,
@@ -1204,6 +1210,7 @@ fn add(
         right_representation,
         right_exact,
         AlgebraicRootArithmeticOp::Add,
+        policy,
     )
 }
 
@@ -1212,6 +1219,7 @@ fn subtract(
     left_exact: Option<&Real>,
     right_representation: Option<&AlgebraicRootRepresentation>,
     right_exact: Option<&Real>,
+    policy: &CurveContext,
 ) -> AlgebraicRootArithmeticReport {
     binary_from_evidence_values(
         left_representation,
@@ -1219,6 +1227,7 @@ fn subtract(
         right_representation,
         right_exact,
         AlgebraicRootArithmeticOp::Subtract,
+        policy,
     )
 }
 
@@ -1228,6 +1237,7 @@ fn binary_from_evidence_values(
     right_representation: Option<&AlgebraicRootRepresentation>,
     right_exact: Option<&Real>,
     op: AlgebraicRootArithmeticOp,
+    policy: &CurveContext,
 ) -> AlgebraicRootArithmeticReport {
     let left = match representation_or_exact(left_representation, left_exact) {
         Some(value) => value,
@@ -1237,7 +1247,12 @@ fn binary_from_evidence_values(
         Some(value) => value,
         None => return missing_operand_evidence(op, "right arithmetic operand was absent"),
     };
-    arithmetic_algebraic_root_representations(&left, Some(&right), op)
+    crate::bezier_algebraic_image::arithmetic_algebraic_representations_with_policy(
+        &left,
+        Some(&right),
+        op,
+        policy,
+    )
 }
 
 fn representation_or_exact(
@@ -1350,31 +1365,14 @@ fn represented_sign(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn refined_represented_sign(
     value: &AlgebraicRootRepresentation,
     policy: &CurveContext,
 ) -> Option<Ordering> {
     let zero = exact_value_representation(&Real::zero());
-    let evidence = compare_algebraic_root_representations_by_difference(
-        value,
-        &zero,
-        AlgebraicRootRefinementComparisonConfig {
-            policy: policy.predicate_policy(),
-            ..AlgebraicRootRefinementComparisonConfig::default()
-        },
-    );
-    (evidence.comparison.status == AlgebraicRootComparisonStatus::Compared)
-        .then_some(evidence.comparison.ordering)
-        .flatten()
-}
-
-#[cfg(not(feature = "predicates"))]
-fn refined_represented_sign(
-    _value: &AlgebraicRootRepresentation,
-    _policy: &CurveContext,
-) -> Option<Ordering> {
-    None
+    crate::bezier_algebraic_image::compare_algebraic_representations_with_policy(
+        value, &zero, policy,
+    )
 }
 
 fn sign_status(evidence: &BezierAlgebraicScalarSignEvidence) -> ScalarSignStatus {

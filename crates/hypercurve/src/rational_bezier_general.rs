@@ -12,10 +12,6 @@ use hypersolve::{
     AlgebraicPolynomialValueInterval, AlgebraicRootRationalImageStatus, AlgebraicRootRationalMap,
     resultant_univariate_polynomials,
 };
-#[cfg(feature = "predicates")]
-use hypersolve::{
-    AlgebraicRootRefinementComparisonConfig, compare_algebraic_root_representations_by_difference,
-};
 use hypersolve::{
     AlgebraicRootRepresentation, BivariatePolynomial, CurveIntersectionResultantConfig,
     CurveIntersectionResultantReport, CurveIntersectionResultantStatus, CurveResultantParameter,
@@ -24,8 +20,9 @@ use hypersolve::{
 };
 
 use crate::bezier_algebraic_image::{
-    exact_real_algebraic_representation, parameter_representation,
-    rational_derivative_images_from_power_basis, rational_point_image_from_power_basis,
+    compare_algebraic_representations_with_policy, exact_real_algebraic_representation,
+    parameter_representation, rational_derivative_images_from_power_basis,
+    rational_point_image_from_power_basis,
 };
 use crate::bezier_parameter::{BezierParameterRefinement2, bernstein_to_power_coefficients};
 use crate::bezier_topology::{
@@ -8091,33 +8088,13 @@ fn algebraic_coordinates_equal(
     compare_algebraic_coordinates(first, second, policy)
 }
 
-#[cfg(feature = "predicates")]
 fn compare_algebraic_coordinates(
     first: &AlgebraicRootRepresentation,
     second: &AlgebraicRootRepresentation,
     policy: &CurveContext,
 ) -> Option<bool> {
-    let evidence = compare_algebraic_root_representations_by_difference(
-        first,
-        second,
-        AlgebraicRootRefinementComparisonConfig {
-            policy: policy.predicate_policy(),
-            ..AlgebraicRootRefinementComparisonConfig::default()
-        },
-    );
-    evidence
-        .comparison
-        .ordering
+    compare_algebraic_representations_with_policy(first, second, policy)
         .map(|ordering| ordering.is_eq())
-}
-
-#[cfg(not(feature = "predicates"))]
-fn compare_algebraic_coordinates(
-    _first: &AlgebraicRootRepresentation,
-    _second: &AlgebraicRootRepresentation,
-    _policy: &CurveContext,
-) -> Option<bool> {
-    None
 }
 
 pub(crate) fn resultant_parameter_projection(

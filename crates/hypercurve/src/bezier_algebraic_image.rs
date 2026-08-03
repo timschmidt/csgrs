@@ -13,15 +13,20 @@
 
 use hyperreal::{Real, RealSign};
 use hypersolve::{
+    AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
     AlgebraicRootKind, AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
     AlgebraicRootRationalImageReport, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
     AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
+    arithmetic_algebraic_root_representations,
+};
+#[cfg(feature = "predicates")]
+use hypersolve::{
+    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
+    compare_algebraic_root_representations_by_difference,
 };
 use hypersolve::{
-    AlgebraicRootRationalImageStatus, AlgebraicRootRefinementComparisonConfig,
-    compare_algebraic_root_representations_by_difference,
-    transform_algebraic_root_polynomial_image, transform_algebraic_root_rational_images,
-    validate_algebraic_root_representation,
+    AlgebraicRootRationalImageStatus, transform_algebraic_root_polynomial_image,
+    transform_algebraic_root_rational_images, validate_algebraic_root_representation,
 };
 
 use crate::bezier_parameter::signed_coefficients_at_parameter;
@@ -123,6 +128,75 @@ impl BezierAlgebraicCoordinateImage {
     }
 }
 
+#[cfg(test)]
+mod policy_tests {
+    use hyperreal::{Rational, Real};
+    use hypersolve::{
+        AlgebraicRootArithmeticOp, AlgebraicRootArithmeticStatus, AlgebraicRootKind,
+        AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
+        IsolatedRootInterval, SymbolId,
+    };
+    use num::{BigInt, BigUint};
+
+    use super::arithmetic_algebraic_representations_with_policy;
+    use crate::{CurveCertainty, CurveContext, policy::resolve_certified_operation};
+
+    #[test]
+    fn arithmetic_adapter_retries_policy_dependent_validation() {
+        let epsilon = Real::new(
+            Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 1200)
+                .expect("positive dyadic epsilon"),
+        );
+        let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
+        let lower = (&half - &epsilon).sqrt().expect("positive lower endpoint");
+        let upper = (&half + &epsilon).sqrt().expect("positive upper endpoint");
+        let root = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-half, Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower,
+                upper,
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+
+        let strict = arithmetic_algebraic_representations_with_policy(
+            &root,
+            None,
+            AlgebraicRootArithmeticOp::Negate,
+            &CurveContext::STRICT,
+        );
+        assert!(!matches!(
+            strict.status,
+            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+                | AlgebraicRootArithmeticStatus::ComputedRepresentation
+        ));
+
+        let outcome = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |policy| {
+            Ok::<_, ()>(arithmetic_algebraic_representations_with_policy(
+                &root,
+                None,
+                AlgebraicRootArithmeticOp::Negate,
+                policy,
+            ))
+        })
+        .expect("infallible operation");
+        assert_eq!(
+            outcome.value.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
+    }
+}
+
 fn compare_root_representation_to_real(
     representation: &AlgebraicRootRepresentation,
     value: &Real,
@@ -144,21 +218,101 @@ fn compare_algebraic_representation_to_real(
     policy: &CurveContext,
 ) -> crate::Classification<Ordering> {
     let exact = exact_real_algebraic_representation(value);
-    let evidence = compare_algebraic_root_representations_by_difference(
-        representation,
-        &exact,
-        AlgebraicRootRefinementComparisonConfig {
-            policy: policy.predicate_policy(),
-            ..AlgebraicRootRefinementComparisonConfig::default()
-        },
-    );
-    evidence
-        .comparison
-        .ordering
+    compare_algebraic_representations_with_policy(representation, &exact, policy)
         .map(crate::Classification::Decided)
         .unwrap_or(crate::Classification::Uncertain(
             crate::UncertaintyReason::Ordering,
         ))
+}
+
+/// Compares represented roots through Hypersolve without hiding a policy
+/// terminal from Hypercurve's aggregate certainty.
+///
+/// A strict comparison is always attempted first. If only
+/// `APPROXIMATE_512` decides, the caller's operation frame is marked before
+/// the ordering is returned.
+#[cfg(feature = "predicates")]
+pub(crate) fn compare_algebraic_representations_with_policy(
+    first: &AlgebraicRootRepresentation,
+    second: &AlgebraicRootRepresentation,
+    policy: &CurveContext,
+) -> Option<Ordering> {
+    let compare = |predicate_policy| {
+        let evidence = compare_algebraic_root_representations_by_difference(
+            first,
+            second,
+            AlgebraicRootRefinementComparisonConfig {
+                policy: predicate_policy,
+                ..AlgebraicRootRefinementComparisonConfig::default()
+            },
+        );
+        matches!(
+            evidence.comparison.status,
+            AlgebraicRootComparisonStatus::Compared
+                | AlgebraicRootComparisonStatus::SameRepresentation
+        )
+        .then_some(evidence.comparison.ordering)
+        .flatten()
+    };
+    if let Some(ordering) = compare(hypersolve::PredicatePolicy::STRICT) {
+        return Some(ordering);
+    }
+    if !policy.permits_approximate_512() {
+        return None;
+    }
+    let ordering = compare(hypersolve::PredicatePolicy::APPROXIMATE_512);
+    if ordering.is_some() {
+        policy.observe_approximate_512();
+    }
+    ordering
+}
+
+/// Constructs represented-root arithmetic through a strict-first policy
+/// adapter and records the terminal when only `APPROXIMATE_512` succeeds.
+pub(crate) fn arithmetic_algebraic_representations_with_policy(
+    left: &AlgebraicRootRepresentation,
+    right: Option<&AlgebraicRootRepresentation>,
+    operation: AlgebraicRootArithmeticOp,
+    policy: &CurveContext,
+) -> AlgebraicRootArithmeticReport {
+    let strict = arithmetic_algebraic_root_representations(
+        left,
+        right,
+        operation,
+        hypersolve::PredicatePolicy::STRICT,
+    );
+    if matches!(
+        strict.status,
+        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+            | AlgebraicRootArithmeticStatus::ComputedRepresentation
+            | AlgebraicRootArithmeticStatus::NonRationalInput
+    ) || !policy.permits_approximate_512()
+    {
+        return strict;
+    }
+    let approximate = arithmetic_algebraic_root_representations(
+        left,
+        right,
+        operation,
+        hypersolve::PredicatePolicy::APPROXIMATE_512,
+    );
+    if matches!(
+        approximate.status,
+        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+            | AlgebraicRootArithmeticStatus::ComputedRepresentation
+    ) {
+        policy.observe_approximate_512();
+    }
+    approximate
+}
+
+#[cfg(not(feature = "predicates"))]
+pub(crate) fn compare_algebraic_representations_with_policy(
+    _first: &AlgebraicRootRepresentation,
+    _second: &AlgebraicRootRepresentation,
+    _policy: &CurveContext,
+) -> Option<Ordering> {
+    None
 }
 
 impl BezierAlgebraicCoordinateImage {

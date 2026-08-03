@@ -5786,6 +5786,40 @@ mod certified_successor_tests {
         ))
     }
 
+    fn shifted_nested_radical_parameter(shift: Real, policy: &CurveContext) -> BezierParameter2 {
+        let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
+        let alpha = half.sqrt().expect("positive square root");
+        let polynomial = decided(
+            crate::BezierParameterPolynomial::try_new_power_basis(
+                vec![
+                    &shift * &shift - &shift - alpha,
+                    Real::one() - &shift * Real::from(2_i8),
+                    Real::one(),
+                ],
+                policy,
+            )
+            .expect("valid translated nested-radical quadratic"),
+        );
+        let interval = decided(
+            crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), policy)
+                .expect("valid unit parameter interval"),
+        );
+        BezierParameter2::Algebraic(decided(
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+                .expect("isolated translated nested-radical root"),
+        ))
+    }
+
+    fn dyadic_epsilon(exponent: usize) -> Real {
+        Real::new(
+            crate::Rational::from_bigint_fraction(
+                BigInt::from(1_u8),
+                BigUint::from(1_u8) << exponent,
+            )
+            .expect("positive dyadic epsilon"),
+        )
+    }
+
     fn injective_test_carrier() -> RegionCarrier {
         RegionCarrier {
             operand: CurvePathBooleanOperand2::First,
@@ -5827,12 +5861,8 @@ mod certified_successor_tests {
     #[test]
     fn injective_carrier_topology_vertex_canonicalizes_unorderable_parameter_aliases() {
         let policy = CurveContext::STRICT;
-        let first = shifted_sqrt_half_parameter(Real::zero(), &policy);
-        let epsilon = Real::new(
-            crate::Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 600)
-                .expect("positive dyadic epsilon"),
-        );
-        let second = shifted_sqrt_half_parameter(epsilon, &policy);
+        let first = shifted_nested_radical_parameter(Real::zero(), &policy);
+        let second = shifted_nested_radical_parameter(dyadic_epsilon(600), &policy);
         assert_eq!(
             first.cmp_by_refinement(&second, &policy).unwrap(),
             Classification::Uncertain(UncertaintyReason::Ordering),
@@ -5851,17 +5881,58 @@ mod certified_successor_tests {
         ));
 
         let approximate = CurveContext::APPROXIMATE_512;
-        let first = shifted_sqrt_half_parameter(Real::zero(), &approximate);
-        let epsilon = Real::new(
-            crate::Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 600)
-                .expect("positive dyadic epsilon"),
-        );
-        let second = shifted_sqrt_half_parameter(epsilon, &approximate);
+        let first = shifted_nested_radical_parameter(Real::zero(), &approximate);
+        let second = shifted_nested_radical_parameter(dyadic_epsilon(600), &approximate);
         let carrier = injective_test_carrier();
         let mut events = Vec::new();
         push_carrier_event(&mut events, first, Some(7), &carrier, &approximate).unwrap();
         push_carrier_event(&mut events, second, Some(7), &carrier, &approximate).unwrap();
         assert_eq!(events.len(), 1);
+    }
+
+    #[test]
+    fn parameter_order_uses_exact_translation_before_approximate_512_terminal() {
+        let strict = CurveContext::STRICT;
+        let first = shifted_sqrt_half_parameter(Real::zero(), &strict);
+        let second = shifted_sqrt_half_parameter(dyadic_epsilon(600), &strict);
+        assert_eq!(
+            first.cmp_by_refinement(&second, &strict).unwrap(),
+            Classification::Decided(Ordering::Less),
+        );
+
+        let approximate = CurveContext::APPROXIMATE_512;
+        let first = shifted_sqrt_half_parameter(Real::zero(), &approximate);
+        let second = shifted_sqrt_half_parameter(dyadic_epsilon(600), &approximate);
+        let outcome = crate::policy::resolve_certified_operation(&approximate, |attempt| {
+            first.cmp_by_refinement(&second, attempt)
+        })
+        .unwrap();
+        assert_eq!(outcome.value, Classification::Decided(Ordering::Less));
+        assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+    }
+
+    #[test]
+    fn unsupported_parameter_order_obeys_strict_and_approximate_512_policies() {
+        let strict = CurveContext::STRICT;
+        let first = shifted_nested_radical_parameter(Real::zero(), &strict);
+        let second = shifted_nested_radical_parameter(dyadic_epsilon(600), &strict);
+        assert_eq!(
+            first.cmp_by_refinement(&second, &strict).unwrap(),
+            Classification::Uncertain(UncertaintyReason::Ordering),
+        );
+
+        let approximate = CurveContext::APPROXIMATE_512;
+        let first = shifted_nested_radical_parameter(Real::zero(), &approximate);
+        let second = shifted_nested_radical_parameter(dyadic_epsilon(600), &approximate);
+        let outcome = crate::policy::resolve_certified_operation(&approximate, |attempt| {
+            first.cmp_by_refinement(&second, attempt)
+        })
+        .unwrap();
+        assert_eq!(outcome.value, Classification::Decided(Ordering::Equal));
+        assert_eq!(
+            outcome.certainty,
+            crate::CurveCertainty::Approximate512Consumed
+        );
     }
 
     #[test]
@@ -5919,12 +5990,8 @@ mod certified_successor_tests {
     #[test]
     fn transitive_topology_merge_canonicalizes_deferred_injective_aliases() {
         let policy = CurveContext::STRICT;
-        let first = shifted_sqrt_half_parameter(Real::zero(), &policy);
-        let epsilon = Real::new(
-            crate::Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 600)
-                .expect("positive dyadic epsilon"),
-        );
-        let second = shifted_sqrt_half_parameter(epsilon, &policy);
+        let first = shifted_nested_radical_parameter(Real::zero(), &policy);
+        let second = shifted_nested_radical_parameter(dyadic_epsilon(600), &policy);
         let carriers = [
             injective_test_carrier(),
             injective_test_carrier(),

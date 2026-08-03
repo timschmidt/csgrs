@@ -24,8 +24,10 @@ use std::sync::Arc;
 use std::sync::{Mutex, OnceLock};
 
 use hyperreal::{CertifiedRealSign, Rational as HyperRational, Real, RealSign};
-#[cfg(feature = "predicates")]
-use hypersolve::AlgebraicRootRepresentation;
+use hypersolve::{
+    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootRepresentation, compare_algebraic_root_representations_by_difference,
+};
 use num::{BigInt, BigRational, BigUint, Integer, One, ToPrimitive, Zero};
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
@@ -1572,11 +1574,32 @@ impl BezierParameter2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Ordering>> {
+        if policy.permits_approximate_512() {
+            match self.cmp_by_refinement_once(other, &policy.strict_counterpart())? {
+                Classification::Decided(ordering) => {
+                    return Ok(Classification::Decided(ordering));
+                }
+                Classification::Uncertain(_) => {}
+            }
+        }
+        self.cmp_by_refinement_once(other, policy)
+    }
+
+    fn cmp_by_refinement_once(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Ordering>> {
         match self.cmp_by_interval(other, policy)? {
             Classification::Decided(ordering) => {
                 return Ok(Classification::Decided(ordering));
             }
             Classification::Uncertain(reason) if reason != UncertaintyReason::Ordering => {
+                if let Some(ordering) =
+                    compare_parameters_by_exact_difference(self, other, None, None, policy)
+                {
+                    return Ok(Classification::Decided(ordering));
+                }
                 return Ok(Classification::Uncertain(reason));
             }
             Classification::Uncertain(_) => {}
@@ -1584,7 +1607,15 @@ impl BezierParameter2 {
         match self.same_value(other, policy)? {
             Classification::Decided(true) => Ok(Classification::Decided(Ordering::Equal)),
             Classification::Decided(false) => compare_distinct_parameters(self, other, policy),
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            Classification::Uncertain(reason) => {
+                if let Some(ordering) =
+                    compare_parameters_by_exact_difference(self, other, None, None, policy)
+                {
+                    Ok(Classification::Decided(ordering))
+                } else {
+                    Ok(Classification::Uncertain(reason))
+                }
+            }
         }
     }
 
@@ -2074,21 +2105,50 @@ impl<'a> RefinedParameter<'a> {
 }
 
 fn compare_distinct_parameters(
-    first: &BezierParameter2,
-    second: &BezierParameter2,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Ordering>> {
-    const MAX_ORDERING_REFINEMENTS: usize = 64;
+    const EXACT_DIFFERENCE_REFINEMENTS: usize = 64;
+    const APPROXIMATE_MAX_ORDERING_REFINEMENTS: usize =
+        (-hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION) as usize;
+    // STRICT has no finite precision terminal: after the historical 64 exact
+    // bisections, transfer the remaining proof obligation to exact algebraic
+    // difference construction and otherwise report uncertainty. Approximate
+    // policy alone continues to its specified 512-bit equality terminal.
+    let max_ordering_refinements = if policy.permits_approximate_512() {
+        APPROXIMATE_MAX_ORDERING_REFINEMENTS
+    } else {
+        EXACT_DIFFERENCE_REFINEMENTS
+    };
 
-    let mut first = match RefinedParameter::from_parameter(first, policy)? {
+    let mut first = match RefinedParameter::from_parameter(first_parameter, policy)? {
         Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        Classification::Uncertain(reason) => {
+            return Ok(exact_difference_or_uncertain(
+                first_parameter,
+                second_parameter,
+                None,
+                None,
+                policy,
+                reason,
+            ));
+        }
     };
-    let mut second = match RefinedParameter::from_parameter(second, policy)? {
+    let mut second = match RefinedParameter::from_parameter(second_parameter, policy)? {
         Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        Classification::Uncertain(reason) => {
+            return Ok(exact_difference_or_uncertain(
+                first_parameter,
+                second_parameter,
+                Some(&first),
+                None,
+                policy,
+                reason,
+            ));
+        }
     };
-    for _ in 0..MAX_ORDERING_REFINEMENTS {
+    for refinement_count in 0..=max_ordering_refinements {
         let (first_start, first_end) = first.bounds();
         let (second_start, second_end) = second.bounds();
         if matches!(
@@ -2110,11 +2170,37 @@ fn compare_distinct_parameters(
                     .map(Classification::Decided)
                     .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
             }
+            _ if refinement_count == EXACT_DIFFERENCE_REFINEMENTS => {
+                if let Some(ordering) = compare_parameters_by_exact_difference(
+                    first_parameter,
+                    second_parameter,
+                    Some(&first),
+                    Some(&second),
+                    policy,
+                ) {
+                    return Ok(Classification::Decided(ordering));
+                }
+            }
+            _ => {}
+        }
+        if refinement_count == max_ordering_refinements {
+            break;
+        }
+
+        match (&first, &second) {
+            (RefinedParameter::Exact(_), RefinedParameter::Exact(_)) => break,
             (RefinedParameter::Exact(_), RefinedParameter::Algebraic { .. }) => {
                 second = match second.refine_once(policy)? {
                     Classification::Decided(second) => second,
                     Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                        return Ok(exact_difference_or_uncertain(
+                            first_parameter,
+                            second_parameter,
+                            Some(&first),
+                            None,
+                            policy,
+                            reason,
+                        ));
                     }
                 };
             }
@@ -2122,7 +2208,14 @@ fn compare_distinct_parameters(
                 first = match first.refine_once(policy)? {
                     Classification::Decided(first) => first,
                     Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                        return Ok(exact_difference_or_uncertain(
+                            first_parameter,
+                            second_parameter,
+                            None,
+                            Some(&second),
+                            policy,
+                            reason,
+                        ));
                     }
                 };
             }
@@ -2130,19 +2223,116 @@ fn compare_distinct_parameters(
                 first = match first.refine_once(policy)? {
                     Classification::Decided(first) => first,
                     Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                        return Ok(exact_difference_or_uncertain(
+                            first_parameter,
+                            second_parameter,
+                            None,
+                            Some(&second),
+                            policy,
+                            reason,
+                        ));
                     }
                 };
                 second = match second.refine_once(policy)? {
                     Classification::Decided(second) => second,
                     Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                        return Ok(exact_difference_or_uncertain(
+                            first_parameter,
+                            second_parameter,
+                            Some(&first),
+                            None,
+                            policy,
+                            reason,
+                        ));
                     }
                 };
             }
         }
     }
+    if policy.permits_approximate_512() {
+        policy.observe_approximate_512();
+        return Ok(Classification::Decided(Ordering::Equal));
+    }
     Ok(Classification::Uncertain(UncertaintyReason::Ordering))
+}
+
+#[cold]
+#[inline(never)]
+fn exact_difference_or_uncertain(
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    first_refined: Option<&RefinedParameter<'_>>,
+    second_refined: Option<&RefinedParameter<'_>>,
+    policy: &CurveContext,
+    reason: UncertaintyReason,
+) -> Classification<Ordering> {
+    compare_parameters_by_exact_difference(
+        first_parameter,
+        second_parameter,
+        first_refined,
+        second_refined,
+        policy,
+    )
+    .map(Classification::Decided)
+    .unwrap_or(Classification::Uncertain(reason))
+}
+
+#[cold]
+#[inline(never)]
+fn compare_parameters_by_exact_difference(
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    first_refined: Option<&RefinedParameter<'_>>,
+    second_refined: Option<&RefinedParameter<'_>>,
+    policy: &CurveContext,
+) -> Option<Ordering> {
+    if policy.permits_approximate_512() {
+        return None;
+    }
+    let first = parameter_algebraic_representation(first_parameter, first_refined, policy)?;
+    let second = parameter_algebraic_representation(second_parameter, second_refined, policy)?;
+    let comparison = compare_algebraic_root_representations_by_difference(
+        &first,
+        &second,
+        AlgebraicRootRefinementComparisonConfig {
+            policy: hypersolve::PredicatePolicy::STRICT,
+            max_refinement_rounds: 0,
+            steps_per_round: 1,
+        },
+    )
+    .comparison;
+    matches!(
+        comparison.status,
+        AlgebraicRootComparisonStatus::Compared | AlgebraicRootComparisonStatus::SameRepresentation
+    )
+    .then_some(comparison.ordering)
+    .flatten()
+}
+
+fn parameter_algebraic_representation(
+    parameter: &BezierParameter2,
+    refined: Option<&RefinedParameter<'_>>,
+    policy: &CurveContext,
+) -> Option<AlgebraicRootRepresentation> {
+    if let Some(RefinedParameter::Exact(value)) = refined {
+        return Some(crate::bezier_algebraic_image::exact_real_algebraic_representation(value));
+    }
+    match parameter {
+        BezierParameter2::Exact(value) => {
+            Some(crate::bezier_algebraic_image::exact_real_algebraic_representation(value))
+        }
+        BezierParameter2::Algebraic(parameter) => {
+            let mut representation =
+                crate::bezier_algebraic_image::parameter_representation(parameter, policy);
+            if let Some(RefinedParameter::Algebraic { interval, .. }) = refined {
+                representation.interval.lower = interval.start().clone();
+                representation.interval.upper = interval.end().clone();
+                representation.interval.exact_root = None;
+                representation.interval.distinct_root_count = 1;
+            }
+            representation.is_valid().then_some(representation)
+        }
+    }
 }
 
 fn refine_algebraic_upper_gap(

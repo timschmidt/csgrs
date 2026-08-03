@@ -19,17 +19,6 @@
 
 use std::{cmp::Ordering, collections::HashMap, fmt, sync::OnceLock};
 
-use hyperreal::{Rational, Real, RealSign};
-use hypersolve::{
-    AlgebraicRootArithmeticOp, AlgebraicRootArithmeticStatus, AlgebraicRootRepresentation,
-    arithmetic_algebraic_root_representations,
-};
-#[cfg(feature = "predicates")]
-use hypersolve::{
-    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
-    compare_algebraic_root_representations_by_difference,
-};
-
 use crate::bezier_tangent_order::{
     compare_algebraic_tangent_filled_left_face_sign_only,
     compare_algebraic_tangent_turn_from_base_sign_only,
@@ -43,6 +32,10 @@ use crate::{
     BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurveContext, CurveError,
     CurveResult, Point2, UncertaintyReason, ZeroStatus,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
+};
+use hyperreal::{Rational, Real, RealSign};
+use hypersolve::{
+    AlgebraicRootArithmeticOp, AlgebraicRootArithmeticStatus, AlgebraicRootRepresentation,
 };
 
 /// One retained Bezier arrangement fragment with source provenance.
@@ -1161,11 +1154,11 @@ fn retained_endpoint_data(
                 }
             };
             let (start, end) = if *reversed {
-                let start = match reverse_retained_endpoint_side_option(source_end) {
+                let start = match reverse_retained_endpoint_side_option(source_end, policy) {
                     Some(data) => data,
                     None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
                 };
-                let end = match reverse_retained_endpoint_side_option(source_start) {
+                let end = match reverse_retained_endpoint_side_option(source_start, policy) {
                     Some(data) => data,
                     None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
                 };
@@ -1432,7 +1425,7 @@ fn retained_exact_source_endpoint_side_data(
         derivative_source: None,
     };
     if restore_source_orientation {
-        match reversed_retained_endpoint_side(side) {
+        match reversed_retained_endpoint_side(side, policy) {
             Some(side) => Classification::Decided(side),
             None => Classification::Uncertain(UncertaintyReason::Boundary),
         }
@@ -1464,22 +1457,24 @@ fn retained_endpoint_side_parts(
 
 fn reverse_retained_endpoint_side_option(
     side: Option<RetainedEndpointSideData>,
+    policy: &CurveContext,
 ) -> Option<Option<RetainedEndpointSideData>> {
     match side {
-        Some(side) => Some(Some(reversed_retained_endpoint_side(side)?)),
+        Some(side) => Some(Some(reversed_retained_endpoint_side(side, policy)?)),
         None => Some(None),
     }
 }
 
 fn reversed_retained_endpoint_side(
     mut side: RetainedEndpointSideData,
+    policy: &CurveContext,
 ) -> Option<RetainedEndpointSideData> {
     side.tangent = match side.tangent {
-        Some(tangent) => Some(negate_retained_tangent(tangent)?),
+        Some(tangent) => Some(negate_retained_tangent(tangent, policy)?),
         None => None,
     };
     side.third_derivative = match side.third_derivative {
-        Some(derivative) => Some(negate_retained_tangent(derivative)?),
+        Some(derivative) => Some(negate_retained_tangent(derivative, policy)?),
         None => None,
     };
     if let Some(source) = &mut side.derivative_source {
@@ -1526,7 +1521,10 @@ fn retained_algebraic_tangent(
         .map(RetainedTangentVector::Algebraic)
 }
 
-fn negate_retained_tangent(tangent: RetainedTangentVector) -> Option<RetainedTangentVector> {
+fn negate_retained_tangent(
+    tangent: RetainedTangentVector,
+    policy: &CurveContext,
+) -> Option<RetainedTangentVector> {
     match tangent {
         RetainedTangentVector::Native(tangent) => {
             let TangentVector { dx, dy } = *tangent;
@@ -1537,8 +1535,8 @@ fn negate_retained_tangent(tangent: RetainedTangentVector) -> Option<RetainedTan
         }
         RetainedTangentVector::Algebraic(tangent) => Some(RetainedTangentVector::Algebraic(
             Box::new(BezierAlgebraicTangentVector2::new(
-                negate_algebraic_root(tangent.dx())?,
-                negate_algebraic_root(tangent.dy())?,
+                negate_algebraic_root(tangent.dx(), policy)?,
+                negate_algebraic_root(tangent.dy(), policy)?,
             )),
         )),
     }
@@ -1546,9 +1544,14 @@ fn negate_retained_tangent(tangent: RetainedTangentVector) -> Option<RetainedTan
 
 fn negate_algebraic_root(
     value: &AlgebraicRootRepresentation,
+    policy: &CurveContext,
 ) -> Option<AlgebraicRootRepresentation> {
-    let evidence =
-        arithmetic_algebraic_root_representations(value, None, AlgebraicRootArithmeticOp::Negate);
+    let evidence = crate::bezier_algebraic_image::arithmetic_algebraic_representations_with_policy(
+        value,
+        None,
+        AlgebraicRootArithmeticOp::Negate,
+        policy,
+    );
     if !matches!(
         evidence.status,
         AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
@@ -2625,7 +2628,7 @@ fn retained_algebraic_derivative(
     };
     if source.reversed && order % 2 == 1 {
         derivative = match derivative {
-            Some(derivative) => match negate_retained_tangent(derivative) {
+            Some(derivative) => match negate_retained_tangent(derivative, policy) {
                 Some(derivative) => Some(derivative),
                 None => return Classification::Uncertain(UncertaintyReason::Unsupported),
             },
@@ -2928,37 +2931,15 @@ pub(crate) fn represented_roots_equal(
     compare_represented_roots_by_difference(left, right, policy)
 }
 
-#[cfg(feature = "predicates")]
 fn compare_represented_roots_by_difference(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
     policy: &CurveContext,
 ) -> Option<bool> {
-    let comparison = compare_algebraic_root_representations_by_difference(
-        left,
-        right,
-        AlgebraicRootRefinementComparisonConfig {
-            policy: policy.predicate_policy(),
-            ..AlgebraicRootRefinementComparisonConfig::default()
-        },
-    );
-    (comparison.comparison.status == AlgebraicRootComparisonStatus::Compared)
-        .then_some(
-            comparison
-                .comparison
-                .ordering
-                .map(|ordering| ordering.is_eq()),
-        )
-        .flatten()
-}
-
-#[cfg(not(feature = "predicates"))]
-fn compare_represented_roots_by_difference(
-    _left: &AlgebraicRootRepresentation,
-    _right: &AlgebraicRootRepresentation,
-    _policy: &CurveContext,
-) -> Option<bool> {
-    None
+    crate::bezier_algebraic_image::compare_algebraic_representations_with_policy(
+        left, right, policy,
+    )
+    .map(|ordering| ordering.is_eq())
 }
 
 impl BezierSubcurve2 {
