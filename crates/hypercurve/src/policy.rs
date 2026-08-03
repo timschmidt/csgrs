@@ -263,21 +263,20 @@ impl CurveContext {
         APPROXIMATE_512_CONSUMED.with(|consumed| consumed.set(true));
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn consume_predicate<T>(
         &self,
-        outcome: hyperlimit::PredicateOutcome<T>,
+        outcome: hypersolve::PredicateOutcome<T>,
     ) -> Option<T> {
         match outcome {
-            hyperlimit::PredicateOutcome::Decided {
+            hypersolve::PredicateOutcome::Decided {
                 value, certainty, ..
             } => {
-                if certainty == hyperlimit::Certainty::Approximate {
+                if certainty == hypersolve::PredicateCertainty::Approximate {
                     self.observe_approximate_512();
                 }
                 Some(value)
             }
-            hyperlimit::PredicateOutcome::Unknown { .. } => None,
+            hypersolve::PredicateOutcome::Unknown { .. } => None,
         }
     }
 

@@ -81,11 +81,11 @@ impl LineSide {
     }
 
     #[cfg(feature = "predicates")]
-    pub(crate) const fn from_predicate_sign(sign: hyperlimit::Sign) -> Self {
+    pub(crate) const fn from_predicate_sign(sign: hypersolve::PredicateSign) -> Self {
         match sign {
-            hyperlimit::Sign::Positive => Self::Left,
-            hyperlimit::Sign::Negative => Self::Right,
-            hyperlimit::Sign::Zero => Self::On,
+            hypersolve::PredicateSign::Positive => Self::Left,
+            hypersolve::PredicateSign::Negative => Self::Right,
+            hypersolve::PredicateSign::Zero => Self::On,
         }
     }
 }
@@ -174,25 +174,16 @@ pub(crate) fn real_sign(value: &Real, policy: &CurveContext) -> Option<RealSign>
         };
     }
 
-    #[cfg(feature = "predicates")]
-    {
-        policy
-            .consume_predicate(hyperlimit::classify_real_sign(
-                value,
-                policy.predicate_policy(),
-            ))
-            .map(|sign| match sign {
-                hyperlimit::Sign::Negative => RealSign::Negative,
-                hyperlimit::Sign::Zero => RealSign::Zero,
-                hyperlimit::Sign::Positive => RealSign::Positive,
-            })
-    }
-
-    #[cfg(not(feature = "predicates"))]
-    value
-        .structural_facts()
-        .sign
-        .or_else(|| value.refine_sign_until(-512))
+    policy
+        .consume_predicate(hypersolve::classify_real_sign_predicate(
+            value,
+            policy.predicate_policy(),
+        ))
+        .map(|sign| match sign {
+            hypersolve::PredicateSign::Negative => RealSign::Negative,
+            hypersolve::PredicateSign::Zero => RealSign::Zero,
+            hypersolve::PredicateSign::Positive => RealSign::Positive,
+        })
 }
 
 pub(crate) fn is_zero(value: &Real, policy: &CurveContext) -> Option<bool> {
@@ -211,7 +202,6 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurveContext) ->
         return left.partial_cmp(right);
     }
 
-    #[cfg(feature = "predicates")]
     if !policy.is_edge_preview() {
         // Curve parameter ordering is a topology predicate: it decides whether
         // an intersection root lies on a segment, whether two split markers
@@ -220,7 +210,7 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurveContext) ->
         // ordering has the same certified/unknown boundary as orientation.
         // This follows the exactness model's exact geometric computation split between exact
         // predicate decisions and approximate edge views.
-        if let Some(ordering) = policy.consume_predicate(hyperlimit::compare_reals(
+        if let Some(ordering) = policy.consume_predicate(hypersolve::compare_real_predicate(
             left,
             right,
             policy.predicate_policy(),
