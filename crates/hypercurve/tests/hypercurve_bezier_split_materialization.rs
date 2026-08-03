@@ -686,26 +686,55 @@ fn rational_algebraic_boundary_with_zero_denominator_stays_unresolved() {
 }
 
 #[test]
-fn broad_singleton_isolator_orders_against_nonroot_domain_endpoints() {
+#[cfg(feature = "predicates")]
+fn broad_singleton_isolator_materializes_exact_endpoint_images() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
-    let split = curve
-        .split_at_parameters(
-            &[algebraic_sqrt_half_interval_between(r(0), r(1))],
-            &policy(),
-        )
-        .unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let split = curve
+            .split_at_parameters(&[algebraic_sqrt_half_interval_between(r(0), r(1))], &policy)
+            .unwrap();
 
-    let Classification::Decided(split) = split else {
-        panic!("validated nonroot domain endpoints must order the singleton isolator");
-    };
-    assert_eq!(split.fragments().len(), 2);
-    assert!(split.has_unresolved_fragments());
-    assert!(
-        split
-            .fragments()
-            .iter()
-            .all(|fragment| matches!(fragment, BezierSplitFragment2::Unresolved { .. }))
-    );
+        let Classification::Decided(split) = split else {
+            panic!("validated nonroot domain endpoints must order the singleton isolator");
+        };
+        assert_eq!(split.fragments().len(), 2);
+        assert!(!split.has_unresolved_fragments());
+        assert!(split.has_algebraic_endpoint_images());
+
+        let BezierSplitFragment2::AlgebraicEndpointImages {
+            start,
+            end,
+            source_curve,
+            start_image,
+            end_image,
+            ..
+        } = &split.fragments()[0]
+        else {
+            panic!("left fragment must retain exact endpoint images");
+        };
+        assert_eq!(start.as_exact(), Some(&Real::zero()));
+        assert!(matches!(end, BezierParameter2::Algebraic(_)));
+        assert!(source_curve.is_some());
+        assert!(start_image.is_none());
+        assert_polynomial_endpoint_image(end_image);
+
+        let BezierSplitFragment2::AlgebraicEndpointImages {
+            start,
+            end,
+            source_curve,
+            start_image,
+            end_image,
+            ..
+        } = &split.fragments()[1]
+        else {
+            panic!("right fragment must retain exact endpoint images");
+        };
+        assert!(matches!(start, BezierParameter2::Algebraic(_)));
+        assert_eq!(end.as_exact(), Some(&Real::one()));
+        assert!(source_curve.is_some());
+        assert_polynomial_endpoint_image(start_image);
+        assert!(end_image.is_none());
+    }
 }
 
 proptest! {
