@@ -505,6 +505,8 @@ pub(crate) struct BezierAlgebraicCuspSemicircleParallelOverlap2 {
     cusp_start: BezierAlgebraicCuspSemicircleParameter2,
     cusp_end: BezierAlgebraicCuspSemicircleParameter2,
     orientation: RationalBezierOverlapOrientation2,
+    parameter_map: BezierAlgebraicCuspSemicircleParallelParameterMap2,
+    map_reversed: bool,
 }
 
 impl PartialEq for BezierAlgebraicCuspSemicircleParallelOverlap2 {
@@ -532,6 +534,249 @@ impl BezierAlgebraicCuspSemicircleParallelOverlap2 {
 
     pub(crate) const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
         self.orientation
+    }
+
+    fn cusp_parameter_at_parallel_endpoint(
+        &self,
+        parallel_start: bool,
+    ) -> BezierAlgebraicCuspSemicircleParameter2 {
+        let cusp_start =
+            parallel_start == (self.orientation == RationalBezierOverlapOrientation2::Same);
+        if cusp_start {
+            self.cusp_start_parameter()
+        } else {
+            self.cusp_end_parameter()
+        }
+    }
+
+    fn parallel_parameter_at_cusp_endpoint(&self, cusp_start: bool) -> BezierParameter2 {
+        let parallel_start =
+            cusp_start == (self.orientation == RationalBezierOverlapOrientation2::Same);
+        if parallel_start {
+            self.parallel_range.start().clone()
+        } else {
+            self.parallel_range.end().clone()
+        }
+    }
+
+    /// Maps one parameter on this published analytic overlap to its compact
+    /// cusp-circle parameter without constructing another selected-root field.
+    pub(crate) fn cusp_parameter_for_parallel(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
+        if self.parameter_map.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "cusp/parallel overlap was replayed under a different predicate policy".into(),
+            ));
+        }
+        for (endpoint, parallel_start) in [
+            (self.parallel_range.start(), true),
+            (self.parallel_range.end(), false),
+        ] {
+            match parameter.same_value(endpoint, policy)? {
+                Classification::Decided(true) => {
+                    return Ok(Classification::Decided(
+                        self.cusp_parameter_at_parallel_endpoint(parallel_start),
+                    ));
+                }
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        let map_parameter = if self.map_reversed {
+            parameter.unit_complement()
+        } else {
+            parameter.clone()
+        };
+        let contact = BezierAlgebraicCuspSemicircleParallelContact2 {
+            parallel_parameter: map_parameter,
+            tangent_cross_sign: None,
+            location: BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            correlated: false,
+        };
+        Ok(Classification::Decided(
+            self.parameter_map.contact_parameter(&contact),
+        ))
+    }
+
+    /// Inverts this overlap at one compact cusp parameter.
+    ///
+    /// Cuts authored by this same map reuse their retained analytic parameter.
+    /// An independently represented `Real` cut projects the exact radial-dot
+    /// equality in the retained cusp field and replays its unsquared branch.
+    /// General unrelated mapped fields remain explicit until the region
+    /// carrier can retain their cross-field correspondence directly.
+    pub(crate) fn parallel_parameter_for_cusp(
+        &self,
+        parameter: &BezierAlgebraicCuspSemicircleParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParameter2>> {
+        parameter.validate_policy(policy)?;
+        if self.parameter_map.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "cusp/parallel overlap was replayed under a different predicate policy".into(),
+            ));
+        }
+        for (endpoint, cusp_start) in [(&self.cusp_start, true), (&self.cusp_end, false)] {
+            match parameter.cmp_by_refinement(endpoint, policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(
+                        self.parallel_parameter_at_cusp_endpoint(cusp_start),
+                    ));
+                }
+                Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => {
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+
+        if let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter
+            && let BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { map, contact } =
+                data.as_ref()
+            && Arc::ptr_eq(&map.data, &self.parameter_map.data)
+        {
+            let parameter = if self.map_reversed {
+                contact.parallel_parameter.unit_complement()
+            } else {
+                contact.parallel_parameter.clone()
+            };
+            return Ok(Classification::Decided(parameter));
+        }
+
+        let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) = parameter else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let map = &self.parameter_map.data;
+        let BezierParameter2::Algebraic(cusp_parameter) = &map.cusp_parameter else {
+            return Err(CurveError::Topology(
+                "cusp/parallel map lost its retained cusp root".into(),
+            ));
+        };
+        let one_minus = Real::one() - parameter;
+        let denominator = &one_minus * &one_minus + parameter * parameter;
+        match real_sign(&denominator, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "semicircle inverse-map denominator was not positive".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radial_coefficient = Real::one() - Real::from(2_i8) * parameter;
+        let predicate = BezierAlgebraicCuspTwoTermExpression2 {
+            rational: bivariate_scaled_difference(
+                &map.diameter_side.rational,
+                &denominator,
+                &map.radius_squared_denominator,
+                &radial_coefficient,
+            ),
+            radical: bivariate_scale(map.diameter_side.radical.clone(), &denominator),
+        };
+        let incidence = bivariate_subtract(
+            &bivariate_multiply(
+                &bivariate_multiply(&predicate.rational, &predicate.rational),
+                &map.speed_squared,
+            ),
+            &bivariate_multiply(&predicate.radical, &predicate.radical),
+        );
+        let incidence = match reduce_algebraic_cusp_bivariate(incidence, cusp_parameter, policy)? {
+            Classification::Decided(incidence) => incidence,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let cusp_root = parameter_representation(cusp_parameter, policy);
+        let quotient =
+            algebraic_cusp_quotient_ring_fiber_projection(&incidence, &cusp_root, policy)?;
+        // The quotient norm includes candidates contributed by conjugate cusp
+        // roots. The unsquared replay below evaluates every candidate at the
+        // selected cusp root, so it rejects both those foreign candidates and
+        // the opposite radical branch in one exact predicate. Running the
+        // general selected-fiber membership pass first would duplicate that
+        // proof and can dominate reversal-heavy clipping.
+        let candidates = match quotient {
+            Classification::Decided(ResultantParameterProjection::Empty) => Vec::new(),
+            Classification::Decided(ResultantParameterProjection::Parameters(candidates)) => {
+                candidates
+            }
+            Classification::Decided(ResultantParameterProjection::Degenerate)
+            | Classification::Uncertain(_) => {
+                match algebraic_cusp_projected_fiber_parameters(&incidence, cusp_parameter, policy)?
+                {
+                    Classification::Decided(BezierAlgebraicCuspFiberProjection2::Parameters(
+                        candidates,
+                    )) => candidates,
+                    Classification::Decided(
+                        BezierAlgebraicCuspFiberProjection2::IdenticallyZero
+                        | BezierAlgebraicCuspFiberProjection2::Degenerate,
+                    ) => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        };
+        let mut retained = None;
+        for map_parameter in candidates {
+            let sign = match algebraic_cusp_correlated_radical_sum_sign(
+                &incidence,
+                &predicate,
+                &map.speed_squared,
+                &map.cusp_parameter,
+                &map_parameter,
+                policy,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if sign != RealSign::Zero {
+                continue;
+            }
+            let candidate = if self.map_reversed {
+                map_parameter.unit_complement()
+            } else {
+                map_parameter
+            };
+            let after_start =
+                match candidate.cmp_by_refinement(self.parallel_range.start(), policy)? {
+                    Classification::Decided(std::cmp::Ordering::Less) => false,
+                    Classification::Decided(
+                        std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
+                    ) => true,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let before_end = match candidate.cmp_by_refinement(self.parallel_range.end(), policy)? {
+                Classification::Decided(std::cmp::Ordering::Greater) => false,
+                Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Less) => {
+                    true
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if after_start && before_end && retained.replace(candidate).is_some() {
+                return Err(CurveError::Topology(
+                    "one cusp cut mapped to multiple parameters in one regular overlap cell".into(),
+                ));
+            }
+        }
+        match retained {
+            Some(parameter) => Ok(Classification::Decided(parameter)),
+            None => Err(CurveError::Topology(
+                "cusp cut had no parameter on its published analytic overlap".into(),
+            )),
+        }
     }
 }
 
@@ -1595,6 +1840,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                                                 RationalBezierOverlapOrientation2::Same
                                             }
                                         },
+                                        parameter_map: overlap.parameter_map.clone(),
+                                        map_reversed: !overlap.map_reversed,
                                     }
                                 })
                                 .collect(),
@@ -2420,6 +2667,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                 cusp_start,
                 cusp_end,
                 orientation,
+                parameter_map: parameter_map.clone(),
+                map_reversed: false,
             });
         }
         if !overlaps.is_empty() {
@@ -18860,6 +19109,55 @@ mod conversion_tests {
                 Classification::Decided(std::cmp::Ordering::Equal),
             );
 
+            let cusp_cut = BezierAlgebraicCuspSemicircleParameter2::Exact(quarter.clone());
+            let Classification::Decided(forward_cut) = overlap
+                .parallel_parameter_for_cusp(&cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("an exact interior cusp cut must invert onto the analytic overlap");
+            };
+            let Classification::Decided(reversed_cut) = reversed_overlap
+                .parallel_parameter_for_cusp(&cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the same cusp cut must invert through source reversal");
+            };
+            assert_eq!(
+                reversed_cut
+                    .same_value(&forward_cut.unit_complement(), &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            let Classification::Decided(round_trip) = overlap
+                .cusp_parameter_for_parallel(&forward_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the projected analytic cut must map back to its compact cusp value");
+            };
+            assert_eq!(
+                round_trip.order_to_real(&quarter, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            let authored_parallel_cut = BezierParameter2::Exact(quarter.clone());
+            let Classification::Decided(mapped_cusp_cut) = overlap
+                .cusp_parameter_for_parallel(&authored_parallel_cut, &policy)
+                .unwrap()
+            else {
+                panic!("an authored analytic cut must retain a compact cusp parameter");
+            };
+            let Classification::Decided(mapped_parallel_round_trip) = overlap
+                .parallel_parameter_for_cusp(&mapped_cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("a same-map compact cusp cut must invert without projection");
+            };
+            assert_eq!(
+                mapped_parallel_round_trip
+                    .same_value(&authored_parallel_cut, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
             let cusp_start = semicircle
                 .start_point_image(&policy)
                 .unwrap()
@@ -18882,13 +19180,49 @@ mod conversion_tests {
                     BezierSplitFragment2::AlgebraicCuspSemicircle(
                         BezierAlgebraicCuspSemicircleFragment2::full(semicircle.clone(), &policy),
                     ),
-                    line_fragment(cusp_end, cusp_start),
+                    line_fragment(cusp_end, cusp_start.clone()),
                 ],
                 &policy,
             )
             .unwrap();
             let cusp_region = CurveRegion2::try_new_with_loop_topology(
                 vec![cusp_boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+
+            let Classification::Decided(partial_cusp_fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    semicircle.clone(),
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    cusp_cut.clone(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the exact cusp cut must construct a retained subfragment");
+            };
+            let Classification::Decided(partial_cusp_end) =
+                semicircle.point_at(&quarter, &policy).unwrap()
+            else {
+                panic!("the exact cusp cut must retain its point image");
+            };
+            let partial_cusp_end = partial_cusp_end
+                .exact_rational_point(&policy)
+                .expect("the reducible exact cusp cut must have a rational point image");
+            let partial_cusp_boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(partial_cusp_fragment),
+                    line_fragment(partial_cusp_end, cusp_start.clone()),
+                ],
+                &policy,
+            )
+            .unwrap();
+            let partial_cusp_region = CurveRegion2::try_new_with_loop_topology(
+                vec![partial_cusp_boundary],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
                 vec![CurveBoundaryInteriorSide2::Left],
@@ -18951,6 +19285,135 @@ mod conversion_tests {
             assert!(!booleans.intersection().is_empty());
             assert!(!booleans.difference().is_empty());
             assert!(!booleans.xor().is_empty());
+
+            let clipped_evidence = partial_cusp_region
+                .intersect_region(&parallel_region, &policy)
+                .expect("an exact cusp-side cut must clip the shared circle component")
+                .into_value();
+            assert!(clipped_evidence.blockers().is_empty());
+            let [clipped_overlap] = clipped_evidence.overlaps() else {
+                panic!("the partial cusp carrier must publish one clipped overlap");
+            };
+            let clipped_cusp_end = clipped_overlap
+                .first_range()
+                .end()
+                .as_algebraic_cusp()
+                .expect("the first clipped range must retain the cusp domain");
+            assert_eq!(
+                clipped_cusp_end.order_to_real(&quarter, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            assert_eq!(
+                clipped_overlap
+                    .second_range()
+                    .start()
+                    .as_bezier_parameter()
+                    .expect("the second clipped range must retain the analytic domain")
+                    .same_value(&BezierParameter2::Exact(Real::zero()), &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                clipped_overlap
+                    .second_range()
+                    .end()
+                    .as_bezier_parameter()
+                    .expect("the second clipped range must retain the analytic domain")
+                    .same_value(&forward_cut, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            let partial_booleans = partial_cusp_region
+                .boolean_regions(&parallel_region, &policy)
+                .expect("the clipped cusp/parallel overlap must regularize")
+                .into_value();
+            assert!(!partial_booleans.union().is_empty());
+            assert!(!partial_booleans.intersection().is_empty());
+
+            let swapped_evidence = parallel_region
+                .intersect_region(&partial_cusp_region, &policy)
+                .expect("cusp/parallel clipping must be operand-order independent")
+                .into_value();
+            assert!(swapped_evidence.blockers().is_empty());
+            let [swapped_overlap] = swapped_evidence.overlaps() else {
+                panic!("swapping the partial carriers must preserve one overlap");
+            };
+            assert!(swapped_overlap.second_range().start().is_algebraic_cusp());
+
+            let reversed_source_range = BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            );
+            let Classification::Decided(reversed_parallel_fragment) =
+                BezierParallelFragment2::try_new(
+                    reversed_parallel.clone(),
+                    reversed_source_range,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the reversed selected quarter parallel must retain its full range");
+            };
+            let Classification::Decided(reversed_parallel_start) =
+                reversed_parallel.point_at(&Real::zero(), &policy).unwrap()
+            else {
+                panic!("the reversed parallel start must be represented");
+            };
+            let Classification::Decided(reversed_parallel_end) =
+                reversed_parallel.point_at(&Real::one(), &policy).unwrap()
+            else {
+                panic!("the reversed parallel end must be represented");
+            };
+            let reversed_parallel_boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AnalyticParallel(reversed_parallel_fragment),
+                    line_fragment(
+                        reversed_parallel_end,
+                        Point2::new(Real::zero(), Real::zero()),
+                    ),
+                    line_fragment(
+                        Point2::new(Real::zero(), Real::zero()),
+                        reversed_parallel_start,
+                    ),
+                ],
+                &policy,
+            )
+            .unwrap();
+            let reversed_parallel_region = CurveRegion2::try_new_with_loop_topology(
+                vec![reversed_parallel_boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Right],
+            )
+            .unwrap();
+            let reversed_clipped_evidence = partial_cusp_region
+                .intersect_region(&reversed_parallel_region, &policy)
+                .expect("partial clipping must transport through analytic-source reversal")
+                .into_value();
+            assert!(reversed_clipped_evidence.blockers().is_empty());
+            let [reversed_clipped_overlap] = reversed_clipped_evidence.overlaps() else {
+                panic!("the reversed partial carriers must retain one overlap");
+            };
+            assert_eq!(
+                reversed_clipped_overlap
+                    .second_range()
+                    .start()
+                    .as_bezier_parameter()
+                    .expect("the reversed overlap must retain analytic parameters")
+                    .same_value(&reversed_cut, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                reversed_clipped_overlap
+                    .second_range()
+                    .end()
+                    .as_bezier_parameter()
+                    .expect("the reversed overlap must retain analytic parameters")
+                    .same_value(&BezierParameter2::Exact(Real::one()), &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
 
             let opposite = source.parallel_left(Real::from(-1_i8)).unwrap();
             assert!(opposite.data.certified_ph_offset.set(None).is_ok());
