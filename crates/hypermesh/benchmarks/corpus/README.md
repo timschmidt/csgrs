@@ -26,6 +26,14 @@ assets, competitive cases absent from the Rust benchmark corpus, and heap rows
 without a large size tier. The implementation-test migration ledger is filled
 before subdivision/trace tests are deleted.
 
+`tests/intersection_corpus.rs` permanently exercises every public pairwise
+intersection class across both predicate policies, both operand orders, and
+both polygon orientations. Its exact rectangle oracle distinguishes disjoint,
+point, segment, and positive-area coplanar intersections, and the
+`polygon_predicates` fuzz target mutates the same dimensional contract while
+checking geometry, order/orientation invariance, policy certainty, and payload
+indices.
+
 `large_mesh_heap_probe` exposes both `boxes-3072` and
 `boxes-3072-general`. They contain the same 6,144 exact input triangles; the
 first retains certified-convex input facts while the second deliberately omits

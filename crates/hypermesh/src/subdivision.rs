@@ -447,7 +447,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
     for index in ordered_leaf_polygon_indices_by_intersections(&intersections) {
         let polygon = &polygons[index];
         let host_intersections = intersections.row(index);
-        if host_intersections.is_empty() {
+        if host_intersections.open_face_partition_count() == 0 {
             let component = direct_polygon_components[index].unwrap_or(index);
             let emitted = if let Some(w_front) = direct_component_winding[component].as_ref() {
                 emit_one_direct_from_w_front(
@@ -517,9 +517,9 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 })
                 .transpose()?
                 .flatten()
-                && host_intersections.clone().all(|intersection| {
-                    !matches!(intersection, PairwiseIntersectionEventRef::Overlap { .. })
-                })
+                && host_intersections
+                    .clone()
+                    .all(|intersection| !intersection.is_coplanar_overlap())
             {
                 let w_back = propagate_wnv(&w_front, 1, &polygon.delta_w)?;
                 let classification = if emit_all_transitions && w_front != w_back {
@@ -664,9 +664,10 @@ fn ordered_leaf_polygon_indices_by_intersections(
 ) -> Vec<usize> {
     let mut indices = (0..intersections.len()).collect::<Vec<_>>();
     indices.sort_by_key(|&index| {
+        let partition_count = intersections.row(index).open_face_partition_count();
         (
-            intersections.row(index).is_empty(),
-            std::cmp::Reverse(intersections.row(index).len()),
+            partition_count == 0,
+            std::cmp::Reverse(partition_count),
             index,
         )
     });
@@ -2625,22 +2626,23 @@ pub(crate) fn build_host_bsp_leaves(
         &unique_overlap_edge_planes(polygons, intersections)?,
     )?;
     for intersection in intersections {
+        let other_polygon_idx = intersection.other_polygon_idx();
         match intersection {
-            PairwiseIntersectionEventRef::Segment {
-                segment,
-                other_polygon_idx,
-            } => {
+            PairwiseIntersectionEventRef::NonCoplanarSegment { segment, .. } => {
                 let other = polygons
                     .get(other_polygon_idx)
                     .ok_or(HypermeshError::UnknownClassification)?;
                 bsp.add_segment(decisions, segment.v0, segment.v1, &other.support)?;
             }
-            PairwiseIntersectionEventRef::Overlap { other_polygon_idx } => {
+            PairwiseIntersectionEventRef::CoplanarOverlap { .. } => {
                 let other = polygons
                     .get(other_polygon_idx)
                     .ok_or(HypermeshError::UnknownClassification)?;
                 bsp.mark_overlap(decisions, other)?;
             }
+            PairwiseIntersectionEventRef::NonCoplanarPoint { .. }
+            | PairwiseIntersectionEventRef::CoplanarPoint { .. }
+            | PairwiseIntersectionEventRef::CoplanarSegment { .. } => {}
         }
     }
     Ok(bsp.collect_leaves().into_iter().cloned().collect())
@@ -2806,9 +2808,9 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
     };
     let may_use_single_point = single_convex_interior_point
         && host_intersections.is_some_and(|intersections| {
-            intersections.iter().all(|intersection| {
-                !matches!(intersection, PairwiseIntersectionEventRef::Overlap { .. })
-            })
+            intersections
+                .iter()
+                .all(|intersection| !intersection.is_coplanar_overlap())
         });
     let interior_points = if may_use_single_point {
         vec![if let Some(point) = interior_point
@@ -2846,7 +2848,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
     } else if let Some(host_intersections) = host_intersections {
         for intersection in host_intersections {
             let (other_index, candidate) = match intersection {
-                PairwiseIntersectionEventRef::Segment {
+                PairwiseIntersectionEventRef::NonCoplanarSegment {
                     segment,
                     other_polygon_idx,
                 } => (
@@ -2856,9 +2858,12 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
                         v1: segment.v1,
                     },
                 ),
-                PairwiseIntersectionEventRef::Overlap { other_polygon_idx } => {
+                PairwiseIntersectionEventRef::CoplanarOverlap { other_polygon_idx } => {
                     (other_polygon_idx, LeafCandidateIntersection::Overlap)
                 }
+                PairwiseIntersectionEventRef::NonCoplanarPoint { .. }
+                | PairwiseIntersectionEventRef::CoplanarPoint { .. }
+                | PairwiseIntersectionEventRef::CoplanarSegment { .. } => continue,
             };
             let other = polygons
                 .get(other_index)
@@ -2901,7 +2906,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
                 &leaf_polygon,
                 &leaf_test_points,
                 other,
-                LeafCandidateIntersection::from_pairwise(&intersection)?,
+                LeafCandidateIntersection::from_pairwise(&intersection),
                 &mut delta_w,
             )?;
         }
@@ -2967,23 +2972,17 @@ enum LeafCandidateIntersection<'a> {
 }
 
 impl<'a> LeafCandidateIntersection<'a> {
-    fn from_pairwise(intersection: &'a PairwiseIntersection) -> HypermeshResult<Self> {
-        match intersection.kind {
-            crate::intersection::PairwiseIntersectionType::None
-            | crate::intersection::PairwiseIntersectionType::Point => Ok(Self::None),
-            crate::intersection::PairwiseIntersectionType::Segment => intersection
-                .segment
-                .as_ref()
-                .map(|segment| Self::Segment {
-                    v0: &segment.v0,
-                    v1: &segment.v1,
-                })
-                .ok_or(HypermeshError::UnknownClassification),
-            crate::intersection::PairwiseIntersectionType::Overlap => intersection
-                .overlap
-                .as_ref()
-                .map(|_| Self::Overlap)
-                .ok_or(HypermeshError::UnknownClassification),
+    fn from_pairwise(intersection: &'a PairwiseIntersection) -> Self {
+        match intersection {
+            PairwiseIntersection::Disjoint
+            | PairwiseIntersection::NonCoplanarPoint(_)
+            | PairwiseIntersection::CoplanarPoint(_)
+            | PairwiseIntersection::CoplanarSegment(_) => Self::None,
+            PairwiseIntersection::NonCoplanarSegment(segment) => Self::Segment {
+                v0: &segment.v0,
+                v1: &segment.v1,
+            },
+            PairwiseIntersection::CoplanarOverlap(_) => Self::Overlap,
         }
     }
 }
@@ -3039,12 +3038,7 @@ fn bsp_leaf_certification_candidate_indices(
     if let Some(host_intersections) = host_intersections {
         let mut indices = Vec::new();
         for intersection in host_intersections {
-            let other_index = match intersection {
-                PairwiseIntersectionEventRef::Segment {
-                    other_polygon_idx, ..
-                }
-                | PairwiseIntersectionEventRef::Overlap { other_polygon_idx } => other_polygon_idx,
-            };
+            let other_index = intersection.other_polygon_idx();
             if polygons.get(other_index).is_some_and(|other| {
                 other.mesh_index == polygon.mesh_index
                     && other.polygon_index == polygon.polygon_index
@@ -3145,7 +3139,7 @@ fn unique_overlap_edge_planes(
 ) -> HypermeshResult<Vec<Plane>> {
     let mut edges = Vec::new();
     for intersection in intersections {
-        if let PairwiseIntersectionEventRef::Overlap { other_polygon_idx } = intersection {
+        if let PairwiseIntersectionEventRef::CoplanarOverlap { other_polygon_idx } = intersection {
             let other = polygons
                 .get(other_polygon_idx)
                 .ok_or(HypermeshError::UnknownClassification)?;
@@ -3166,7 +3160,7 @@ fn direct_leaf_polygon_components(
         .iter()
         .zip(intersections.iter())
         .map(|(polygon, row)| {
-            row.is_empty()
+            (row.open_face_partition_count() == 0)
                 .then(|| polygon.vertices_decision(decisions))
                 .transpose()
         })

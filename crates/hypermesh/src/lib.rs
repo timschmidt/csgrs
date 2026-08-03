@@ -122,8 +122,7 @@ pub use gpu::{
 pub use hyperlattice::{Point3, Real, Vector3};
 pub use hyperlimit::PredicatePolicy;
 pub use intersection::{
-    IntersectionSegment, OverlapInfo, PairwiseIntersection, PairwiseIntersectionType,
-    intersect_polygons,
+    IntersectionPoint, IntersectionSegment, OverlapInfo, PairwiseIntersection, intersect_polygons,
 };
 pub use mesh::{
     OutputVertex, PolygonSoup, Triangle, TriangleMesh, TriangleMeshRef, certify_convex_mesh,

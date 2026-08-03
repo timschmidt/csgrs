@@ -4,7 +4,9 @@ mod support;
 
 use hypermesh::clip::{clip_polygon, clip_polygon_to_aabb};
 use hypermesh::{
-    Aabb, Classification, Plane, Point3, Real, classify_point, convex_quad, convex_triangle,
+    Aabb, Classification, ConvexPolygon, MeshCertainty, MeshContext, PairwiseIntersection, Plane,
+    Point3, PredicatePolicy, Real, classify_point, convex_quad, convex_triangle,
+    intersect_polygons,
 };
 use libfuzzer_sys::fuzz_target;
 use support::{CONTEXT, value};
@@ -15,6 +17,72 @@ fn r(value: i64) -> Real {
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(r(x), r(y), r(z))
+}
+
+fn rectangle(context: &MeshContext, bounds: [i64; 4], reverse: bool) -> ConvexPolygon {
+    let [x0, x1, y0, y1] = bounds;
+    let polygon = convex_quad(
+        context,
+        &p(x0, y0, 0),
+        &p(x1, y0, 0),
+        &p(x1, y1, 0),
+        &p(x0, y1, 0),
+        0,
+        0,
+    )
+    .unwrap()
+    .into_value();
+    if reverse { polygon.inverted() } else { polygon }
+}
+
+fn unordered_segment_matches(actual: [&Point3; 2], expected: [Point3; 2]) -> bool {
+    (actual[0] == &expected[0] && actual[1] == &expected[1])
+        || (actual[0] == &expected[1] && actual[1] == &expected[0])
+}
+
+fn assert_rectangle_intersection(
+    context: &MeshContext,
+    left: &ConvexPolygon,
+    right: &ConvexPolygon,
+    left_bounds: [i64; 4],
+    right_bounds: [i64; 4],
+) {
+    const OTHER_POLYGON: usize = 73;
+    let outcome = intersect_polygons(context, left, right, OTHER_POLYGON).unwrap();
+    assert_eq!(outcome.certainty, MeshCertainty::Certified);
+
+    let [ax0, ax1, ay0, ay1] = left_bounds;
+    let [bx0, bx1, by0, by1] = right_bounds;
+    let x0 = ax0.max(bx0);
+    let x1 = ax1.min(bx1);
+    let y0 = ay0.max(by0);
+    let y1 = ay1.min(by1);
+    match outcome.value {
+        PairwiseIntersection::Disjoint => assert!(x0 > x1 || y0 > y1),
+        PairwiseIntersection::CoplanarPoint(contact) => {
+            assert_eq!(contact.other_polygon_idx, OTHER_POLYGON);
+            assert_eq!((x0, y0), (x1, y1));
+            assert_eq!(contact.point, p(x0, y0, 0));
+        }
+        PairwiseIntersection::CoplanarSegment(segment) => {
+            assert_eq!(segment.other_polygon_idx, OTHER_POLYGON);
+            let expected = if x0 == x1 {
+                [p(x0, y0, 0), p(x0, y1, 0)]
+            } else {
+                assert_eq!(y0, y1);
+                [p(x0, y0, 0), p(x1, y0, 0)]
+            };
+            assert!(unordered_segment_matches([&segment.v0, &segment.v1], expected));
+        }
+        PairwiseIntersection::CoplanarOverlap(overlap) => {
+            assert_eq!(overlap.other_polygon_idx, OTHER_POLYGON);
+            assert!(x0 < x1 && y0 < y1);
+        }
+        PairwiseIntersection::NonCoplanarPoint(_)
+        | PairwiseIntersection::NonCoplanarSegment(_) => {
+            panic!("coplanar rectangles produced a non-coplanar intersection")
+        }
+    }
 }
 
 fuzz_target!(|data: [u8; 8]| {
@@ -95,4 +163,27 @@ fuzz_target!(|data: [u8; 8]| {
         inverted.inverted().vertices(&CONTEXT).unwrap().into_value(),
         triangle.vertices(&CONTEXT).unwrap().into_value()
     );
+
+    let left_bounds = [
+        i64::from(data[0] % 11) - 5,
+        i64::from(data[0] % 11) - 4 + i64::from(data[1] % 5),
+        i64::from(data[2] % 11) - 5,
+        i64::from(data[2] % 11) - 4 + i64::from(data[3] % 5),
+    ];
+    let right_bounds = [
+        i64::from(data[4] % 11) - 5,
+        i64::from(data[4] % 11) - 4 + i64::from(data[5] % 5),
+        i64::from(data[6] % 11) - 5,
+        i64::from(data[6] % 11) - 4 + i64::from(data[7] % 5),
+    ];
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let context = MeshContext::new(policy);
+        let left = rectangle(&context, left_bounds, data[0] & 1 != 0);
+        let right = rectangle(&context, right_bounds, data[1] & 1 != 0);
+        if data[2] & 1 == 0 {
+            assert_rectangle_intersection(&context, &left, &right, left_bounds, right_bounds);
+        } else {
+            assert_rectangle_intersection(&context, &right, &left, right_bounds, left_bounds);
+        }
+    }
 });

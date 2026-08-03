@@ -225,6 +225,45 @@ cgal_eligible = false
 expected_certainty = "policy-dependent"
 
 [[fixture]]
+id = "exact_pairwise_intersection_microcases"
+status = "permanent"
+provenance = "tests/intersection_corpus.rs"
+license = "MIT"
+source_kind = "unit-generator-matrix"
+generator = "intersection_corpus::exact_pairwise_intersection_corpus_covers_policy_order_and_orientation"
+coordinate_class = "integer"
+topology = ["triangle-pair", "parallel-support-disjoint", "transverse-point", "transverse-segment", "shared-feature", "coplanar-disjoint", "coplanar-vertex-contact", "coplanar-edge-contact", "t-junction", "coplanar-area-overlap", "coincident-face", "orientation-inversion"]
+operations = ["pairwise-intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+case_count = 12
+orientation_order_variants_per_case = 8
+exact_rectangle_oracle_cases = 256
+rectangle_orientation_order_variants_per_case = 8
+expected_pairwise_classes = ["Disjoint", "NonCoplanarPoint", "NonCoplanarSegment", "CoplanarPoint", "CoplanarSegment", "CoplanarOverlap"]
+
+[[fixture]]
+id = "symbolic_terminal_pairwise_contact"
+status = "permanent"
+provenance = "tests/predicate_policy.rs::pairwise_contact_classification_obeys_terminal_equality_policy"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "pi + e versus e + pi coplanar vertex contact"
+coordinate_class = "symbolic-computable"
+topology = ["triangle-pair", "coplanar-vertex-contact", "terminal-equality"]
+operations = ["pairwise-intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "policy-dependent"
+strict_result = "PredicateUndecided"
+approximate_512_result = "CoplanarPoint"
+
+[[fixture]]
 id = "general_nonconvex_regression_suite"
 status = "migration-required"
 provenance = "tests/regression.rs and behavior-level tests/core.rs"

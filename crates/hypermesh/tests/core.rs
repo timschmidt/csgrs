@@ -482,11 +482,9 @@ fn intersecting_non_coplanar_triangles_produce_segment() {
     let yz = approximate_convex_triangle(&p(0, 0, -1), &p(0, 0, 1), &p(0, 2, 0), 1, 0);
 
     let intersection = approximate_intersect_polygons(&xy, &yz, 1).unwrap();
-    assert_eq!(
-        intersection.kind,
-        hypermesh::PairwiseIntersectionType::Segment
-    );
-    let segment = intersection.segment.unwrap();
+    let hypermesh::PairwiseIntersection::NonCoplanarSegment(segment) = intersection else {
+        panic!("expected a non-coplanar segment");
+    };
     assert_eq!(segment.other_polygon_idx, 1);
     assert!(
         [segment.v0, segment.v1]
@@ -501,11 +499,10 @@ fn coplanar_overlapping_triangles_report_overlap() {
     let b = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 1, 0);
 
     let intersection = approximate_intersect_polygons(&a, &b, 3).unwrap();
-    assert_eq!(
-        intersection.kind,
-        hypermesh::PairwiseIntersectionType::Overlap
-    );
-    assert_eq!(intersection.overlap.unwrap().other_polygon_idx, 3);
+    let hypermesh::PairwiseIntersection::CoplanarOverlap(overlap) = intersection else {
+        panic!("expected positive-area coplanar overlap");
+    };
+    assert_eq!(overlap.other_polygon_idx, 3);
 }
 
 #[test]
@@ -517,11 +514,10 @@ fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
 
     let intersection = approximate_intersect_polygons(&horizontal, &vertical, 7).unwrap();
 
-    assert_eq!(
-        intersection.kind,
-        hypermesh::PairwiseIntersectionType::Overlap
-    );
-    assert_eq!(intersection.overlap.unwrap().other_polygon_idx, 7);
+    let hypermesh::PairwiseIntersection::CoplanarOverlap(overlap) = intersection else {
+        panic!("expected positive-area coplanar overlap");
+    };
+    assert_eq!(overlap.other_polygon_idx, 7);
 }
 
 #[test]
@@ -531,10 +527,10 @@ fn coplanar_corner_overlap_is_not_missed_by_single_witness_sampling() {
 
     for (candidate, other) in [(&left, &right), (&right, &left)] {
         let intersection = approximate_intersect_polygons(candidate, other, 13).unwrap();
-        assert_eq!(
-            intersection.kind,
-            hypermesh::PairwiseIntersectionType::Overlap
-        );
+        assert!(matches!(
+            intersection,
+            hypermesh::PairwiseIntersection::CoplanarOverlap(_)
+        ));
     }
 }
 
@@ -547,26 +543,130 @@ fn coplanar_identical_quads_report_overlap_from_interior_witness() {
 
     let intersection = approximate_intersect_polygons(&left, &right, 11).unwrap();
 
-    assert_eq!(
-        intersection.kind,
-        hypermesh::PairwiseIntersectionType::Overlap
-    );
-    assert_eq!(intersection.overlap.unwrap().other_polygon_idx, 11);
+    let hypermesh::PairwiseIntersection::CoplanarOverlap(overlap) = intersection else {
+        panic!("expected positive-area coplanar overlap");
+    };
+    assert_eq!(overlap.other_polygon_idx, 11);
 }
 
 #[test]
-fn coplanar_edge_and_vertex_contacts_do_not_report_positive_area() {
+fn coplanar_edge_and_vertex_contacts_retain_exact_dimension_and_geometry() {
     let host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let edge_touch = approximate_convex_triangle(&p(0, 0, 0), &p(0, -2, 0), &p(2, 0, 0), 1, 0);
     let vertex_touch = approximate_convex_triangle(&p(2, 0, 0), &p(3, -1, 0), &p(3, 0, 0), 1, 1);
 
-    for (index, other) in [edge_touch, vertex_touch].iter().enumerate() {
-        let intersection = approximate_intersect_polygons(&host, other, index).unwrap();
+    for policy in [
+        hypermesh::PredicatePolicy::STRICT,
+        hypermesh::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let context = hypermesh::MeshContext::new(policy);
+        let edge = hypermesh::intersect_polygons(&context, &host, &edge_touch, 4)
+            .unwrap()
+            .into_value();
+        let hypermesh::PairwiseIntersection::CoplanarSegment(segment) = edge else {
+            panic!("edge contact must remain a zero-area segment under {policy:?}");
+        };
+        assert_eq!(segment.other_polygon_idx, 4);
+        assert_eq!([segment.v0, segment.v1], [p(0, 0, 0), p(2, 0, 0)]);
+
+        let vertex = hypermesh::intersect_polygons(&context, &host, &vertex_touch, 9)
+            .unwrap()
+            .into_value();
+        let hypermesh::PairwiseIntersection::CoplanarPoint(contact) = vertex else {
+            panic!("vertex contact must remain a point under {policy:?}");
+        };
+        assert_eq!(contact.other_polygon_idx, 9);
+        assert_eq!(contact.point, p(2, 0, 0));
+    }
+}
+
+#[test]
+fn coplanar_partial_edge_and_t_junction_contacts_are_complete() {
+    let host = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let partial_edge = approximate_convex_triangle(&p(1, 0, 0), &p(1, -2, 0), &p(3, 0, 0), 1, 0);
+    let t_junction = approximate_convex_triangle(&p(2, 0, 0), &p(1, -1, 0), &p(3, -1, 0), 1, 1);
+
+    for policy in [
+        hypermesh::PredicatePolicy::STRICT,
+        hypermesh::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let context = hypermesh::MeshContext::new(policy);
+        let partial = hypermesh::intersect_polygons(&context, &host, &partial_edge, 2)
+            .unwrap()
+            .into_value();
+        let hypermesh::PairwiseIntersection::CoplanarSegment(segment) = partial else {
+            panic!("partial shared edge must remain a segment under {policy:?}");
+        };
+        assert_eq!([segment.v0, segment.v1], [p(1, 0, 0), p(3, 0, 0)]);
+
+        let junction = hypermesh::intersect_polygons(&context, &host, &t_junction, 3)
+            .unwrap()
+            .into_value();
+        let hypermesh::PairwiseIntersection::CoplanarPoint(contact) = junction else {
+            panic!("T-junction must remain a point under {policy:?}");
+        };
+        assert_eq!(contact.point, p(2, 0, 0));
+    }
+}
+
+#[test]
+fn coplanar_disjoint_polygons_remain_disjoint_under_both_policies() {
+    let left = approximate_convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let right = approximate_convex_triangle(&p(3, 0, 0), &p(4, 0, 0), &p(3, 1, 0), 1, 0);
+
+    for policy in [
+        hypermesh::PredicatePolicy::STRICT,
+        hypermesh::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let context = hypermesh::MeshContext::new(policy);
         assert_eq!(
-            intersection.kind,
-            hypermesh::PairwiseIntersectionType::None,
-            "contact {index} must not be promoted to an area overlap"
+            hypermesh::intersect_polygons(&context, &left, &right, 1)
+                .unwrap()
+                .into_value(),
+            hypermesh::PairwiseIntersection::Disjoint
         );
+    }
+}
+
+#[test]
+fn non_coplanar_single_point_contact_retains_exact_point() {
+    let xy = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let touching = approximate_convex_triangle(&p(2, 0, 0), &p(3, 0, 1), &p(3, 0, -1), 1, 0);
+
+    for policy in [
+        hypermesh::PredicatePolicy::STRICT,
+        hypermesh::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let context = hypermesh::MeshContext::new(policy);
+        let intersection = hypermesh::intersect_polygons(&context, &xy, &touching, 6)
+            .unwrap()
+            .into_value();
+        let hypermesh::PairwiseIntersection::NonCoplanarPoint(contact) = intersection else {
+            panic!("non-coplanar contact must remain a point under {policy:?}");
+        };
+        assert_eq!(contact.other_polygon_idx, 6);
+        assert_eq!(contact.point, p(2, 0, 0));
+    }
+}
+
+#[test]
+fn non_coplanar_shared_edge_retains_the_complete_segment() {
+    let xy = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let tilted = approximate_convex_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(1, 0, 2), 1, 0);
+
+    for policy in [
+        hypermesh::PredicatePolicy::STRICT,
+        hypermesh::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let context = hypermesh::MeshContext::new(policy);
+        let intersection = hypermesh::intersect_polygons(&context, &xy, &tilted, 8)
+            .unwrap()
+            .into_value();
+        let hypermesh::PairwiseIntersection::NonCoplanarSegment(segment) = intersection else {
+            panic!("shared non-coplanar edge must remain a segment under {policy:?}");
+        };
+        assert_eq!(segment.other_polygon_idx, 8);
+        assert_eq!([segment.v0, segment.v1], [p(0, 0, 0), p(2, 0, 0)]);
     }
 }
 

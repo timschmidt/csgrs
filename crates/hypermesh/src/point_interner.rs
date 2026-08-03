@@ -199,6 +199,38 @@ where
         Ok([first_index, second_index])
     }
 
+    /// Interns one exact-rational point or appends one general `Real` point.
+    ///
+    /// Exact-only intersection arenas do not introduce a policy-sensitive
+    /// equality decision for symbolic points. This mirrors the pair operation
+    /// above while avoiding a duplicate symbolic point solely to represent an
+    /// isolated intersection event.
+    pub(crate) fn intern_exact_or_append<P>(
+        &mut self,
+        points: &mut Vec<P>,
+        point: P,
+    ) -> HypermeshResult<usize>
+    where
+        P: PointCoordinates,
+    {
+        debug_assert!(self.exact_only);
+        debug_assert!(self.identities.is_none());
+        if point.has_exact_rational_coordinates() {
+            reserve(points.try_reserve(1))?;
+            reserve(self.next_exact.try_reserve(1))?;
+            reserve(self.exact_storage.try_reserve(1))?;
+            reserve(self.exact_heads.try_reserve(1))?;
+            return Ok(self.intern_exact_prepared(points, point));
+        }
+
+        reserve(points.try_reserve(1))?;
+        reserve(self.next_exact.try_reserve(1))?;
+        let index = points.len();
+        points.push(point);
+        self.next_exact.push(None);
+        Ok(index)
+    }
+
     pub(crate) fn register_unindexed_existing(&mut self, additional: usize) -> HypermeshResult<()> {
         debug_assert!(self.exact_only);
         let new_len = self.next_exact.len().checked_add(additional).ok_or(

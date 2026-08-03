@@ -2,8 +2,9 @@ use std::num::NonZeroU32;
 
 use hyperlattice::Matrix4;
 use hypermesh::{
-    Aabb, Classification, HypermeshError, MeshCertainty, MeshContext, Plane, Point3,
-    PredicatePolicy, Real, Triangle, TriangleMesh, classify_point,
+    Aabb, Classification, HypermeshError, MeshCertainty, MeshContext, PairwiseIntersection, Plane,
+    Point3, PredicatePolicy, Real, Triangle, TriangleMesh, classify_point, convex_triangle,
+    intersect_polygons,
 };
 
 const STRICT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
@@ -45,6 +46,46 @@ fn multi_comparison_geometry_aggregates_terminal_certainty() {
 
     let outcome = bounds.contains_point(&APPROXIMATE, &point).unwrap();
     assert!(outcome.value);
+    assert_eq!(outcome.certainty, MeshCertainty::Approximate512Consumed);
+}
+
+#[test]
+fn pairwise_contact_classification_obeys_terminal_equality_policy() {
+    let (left, right) = terminal_equality();
+    let zero = Real::zero();
+    let host_contact = &left + &Real::from(2);
+    let other_contact = &right + &Real::from(2);
+    let host = convex_triangle(
+        &APPROXIMATE,
+        &Point3::new(left.clone(), zero.clone(), zero.clone()),
+        &Point3::new(host_contact, zero.clone(), zero.clone()),
+        &Point3::new(left, Real::from(2), zero.clone()),
+        0,
+        0,
+    )
+    .unwrap()
+    .into_value();
+    let other = convex_triangle(
+        &APPROXIMATE,
+        &Point3::new(other_contact.clone(), zero.clone(), zero.clone()),
+        &Point3::new(&other_contact + &Real::one(), Real::from(-1), zero.clone()),
+        &Point3::new(&other_contact + &Real::one(), zero.clone(), zero),
+        1,
+        0,
+    )
+    .unwrap()
+    .into_value();
+
+    assert!(matches!(
+        intersect_polygons(&STRICT, &host, &other, 1),
+        Err(HypermeshError::PredicateUndecided { .. })
+    ));
+
+    let outcome = intersect_polygons(&APPROXIMATE, &host, &other, 1).unwrap();
+    assert!(matches!(
+        outcome.value,
+        PairwiseIntersection::CoplanarPoint(_)
+    ));
     assert_eq!(outcome.certainty, MeshCertainty::Approximate512Consumed);
 }
 

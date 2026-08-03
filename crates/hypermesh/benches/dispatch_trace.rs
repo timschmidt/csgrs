@@ -263,7 +263,13 @@ fn main() {
         let mut pair_count = 0;
         left.intersect_pairs(&CONTEXT, &right, |_, _| pair_count += 1)?;
         assert_eq!(pair_count, 1);
-        Ok((intersection.segment.is_some(), pair_count))
+        Ok((
+            matches!(
+                intersection,
+                hypermesh::PairwiseIntersection::NonCoplanarSegment(_)
+            ),
+            pair_count,
+        ))
     });
 
     let mut wall = convex_triangle(&CONTEXT, &p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0)

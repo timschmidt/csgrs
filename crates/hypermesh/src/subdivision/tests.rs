@@ -4558,9 +4558,9 @@ fn ordered_split_attempt_children_prefers_smaller_changed_child_family() {
 #[test]
 fn ordered_leaf_polygon_indices_prefers_intersecting_hosts_before_direct_hosts() {
     let mut intersections = crate::intersection::PairwiseIntersectionGraphBuilder::new(3).unwrap();
-    intersections.append_overlap(0, 1).unwrap();
-    intersections.append_overlap(2, 0).unwrap();
-    intersections.append_overlap(2, 1).unwrap();
+    intersections.append_coplanar_overlap(0, 1).unwrap();
+    intersections.append_coplanar_overlap(2, 0).unwrap();
+    intersections.append_coplanar_overlap(2, 1).unwrap();
     let intersections = intersections.finish().unwrap();
 
     let indices = ordered_leaf_polygon_indices_by_intersections(&intersections);
@@ -4571,8 +4571,8 @@ fn ordered_leaf_polygon_indices_prefers_intersecting_hosts_before_direct_hosts()
 #[test]
 fn ordered_leaf_polygon_indices_keeps_original_order_for_equal_intersection_counts() {
     let mut intersections = crate::intersection::PairwiseIntersectionGraphBuilder::new(3).unwrap();
-    intersections.append_overlap(0, 1).unwrap();
-    intersections.append_overlap(1, 0).unwrap();
+    intersections.append_coplanar_overlap(0, 1).unwrap();
+    intersections.append_coplanar_overlap(1, 0).unwrap();
     let intersections = intersections.finish().unwrap();
 
     let indices = ordered_leaf_polygon_indices_by_intersections(&intersections);
@@ -14147,8 +14147,8 @@ fn unique_overlap_edge_planes_preserve_first_occurrence_and_skip_inverted_duplic
     let polygons = vec![ConvexPolygon::empty(), first, second];
     let mut graph =
         crate::intersection::PairwiseIntersectionGraphBuilder::new(polygons.len()).unwrap();
-    graph.append_overlap(0, 1).unwrap();
-    graph.append_overlap(0, 2).unwrap();
+    graph.append_coplanar_overlap(0, 1).unwrap();
+    graph.append_coplanar_overlap(0, 2).unwrap();
     let graph = graph.finish().unwrap();
 
     assert_eq!(

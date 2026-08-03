@@ -583,10 +583,11 @@ mod tests {
     fn intersection_segment_splits_host_leaf() {
         let host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
         let cutter = approximate_convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
-        let segment = approximate_intersect_polygons(&host, &cutter, 1)
-            .unwrap()
-            .segment
-            .unwrap();
+        let crate::intersection::PairwiseIntersection::NonCoplanarSegment(segment) =
+            approximate_intersect_polygons(&host, &cutter, 1).unwrap()
+        else {
+            panic!("expected a non-coplanar segment");
+        };
 
         let mut bsp = LocalBsp::new(&crate::test_support::approximate_decisions(), &host).unwrap();
         bsp.add_segment(
@@ -608,7 +609,10 @@ mod tests {
         let lower = approximate_convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
         let higher = approximate_convex_triangle(&p(1, 1, 0), &p(2, 1, 0), &p(1, 2, 0), 1, 2);
         let intersection = approximate_intersect_polygons(&higher, &lower, 0).unwrap();
-        assert!(intersection.overlap.is_some());
+        assert!(matches!(
+            intersection,
+            crate::intersection::PairwiseIntersection::CoplanarOverlap(_)
+        ));
 
         let mut bsp =
             LocalBsp::new(&crate::test_support::approximate_decisions(), &higher).unwrap();

@@ -33,7 +33,7 @@ fn fixture_manifest_is_complete_unique_and_reproducible() {
     let fixtures = manifest["fixture"]
         .as_array()
         .expect("fixture manifest must contain [[fixture]] records");
-    assert!(fixtures.len() >= 14, "fixture registry unexpectedly shrank");
+    assert!(fixtures.len() >= 16, "fixture registry unexpectedly shrank");
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut ids = BTreeSet::new();
@@ -129,9 +129,52 @@ fn corpus_spans_initial_replacement_path_classes() {
         "nonconvex",
         "terminal-equality",
         "empty-result",
+        "transverse-point",
+        "transverse-segment",
+        "shared-feature",
+        "coplanar-disjoint",
+        "coplanar-vertex-contact",
+        "coplanar-edge-contact",
+        "orientation-inversion",
     ] {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }
+}
+
+#[test]
+fn exact_pairwise_microcases_cover_every_public_intersection_variant() {
+    let manifest = manifest();
+    let fixture = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .find(|fixture| fixture["id"].as_str() == Some("exact_pairwise_intersection_microcases"))
+        .expect("exact pairwise intersection microcase fixture");
+
+    assert_eq!(fixture["case_count"].as_integer(), Some(12));
+    assert_eq!(
+        fixture["orientation_order_variants_per_case"].as_integer(),
+        Some(8)
+    );
+    assert_eq!(
+        fixture["exact_rectangle_oracle_cases"].as_integer(),
+        Some(256)
+    );
+    assert_eq!(
+        fixture["rectangle_orientation_order_variants_per_case"].as_integer(),
+        Some(8)
+    );
+    assert_eq!(
+        string_array(fixture, "expected_pairwise_classes"),
+        [
+            "Disjoint",
+            "NonCoplanarPoint",
+            "NonCoplanarSegment",
+            "CoplanarPoint",
+            "CoplanarSegment",
+            "CoplanarOverlap",
+        ]
+    );
 }
 
 #[test]

@@ -501,17 +501,14 @@ impl ConvexPolygon {
             .collect()
     }
 
-    /// Returns an inverted polygon with reversed edge winding.
+    /// Returns a polygon with inverted support orientation and vertex winding.
+    ///
+    /// Edge planes retain their interior-facing halfspaces: polygon interior
+    /// remains on every edge's non-positive side after orientation reversal.
     pub fn inverted(&self) -> Self {
         let mut result = self.clone();
         result.support = self.support.inverted();
-        result.edges = Arc::new(
-            self.edges
-                .iter()
-                .rev()
-                .map(Plane::inverted)
-                .collect::<Vec<_>>(),
-        );
+        result.edges = Arc::new(self.edges.iter().rev().cloned().collect::<Vec<_>>());
         result.known_vertices = self.known_vertices.as_ref().map(|vertices| {
             RetainedVertexCycle::Owned(Arc::from(
                 vertices.iter().rev().cloned().collect::<Vec<_>>(),
@@ -1166,6 +1163,33 @@ mod tests {
             [[2, 9], [2, 5], [5, 9]]
                 .map(|endpoints| { ConstructionEdgeIdentity::Source { mesh: 3, endpoints } })
         );
+    }
+
+    #[test]
+    fn inverted_polygon_preserves_interior_edge_halfspaces() {
+        let context = crate::test_support::APPROXIMATE_CONTEXT;
+        let polygon = convex_quad(
+            &context,
+            &point(-2, -1, 0),
+            &point(3, -1, 0),
+            &point(3, 2, 0),
+            &point(-2, 2, 0),
+            0,
+            0,
+        )
+        .unwrap()
+        .into_value();
+        let inverted = polygon.inverted();
+        let interior =
+            HomogeneousPoint3::new(Real::zero(), Real::zero(), Real::zero(), Real::one());
+
+        assert!(
+            inverted
+                .contains_point_strictly(&context, &interior)
+                .unwrap()
+                .into_value()
+        );
+        assert_eq!(inverted.inverted(), polygon);
     }
 
     #[cfg(target_pointer_width = "64")]
