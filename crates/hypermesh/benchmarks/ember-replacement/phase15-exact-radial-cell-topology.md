@@ -8,6 +8,8 @@ Seed-scheduling optimization: `a8e4a0e9169883aecc78de16423880891eaf97946`
 
 Single-bound BVH optimization: `a727778eac25435dc6bf299b498497bfaf41484c`
 
+Topology-corpus expansion: `3020c2b1f554101c29a09784e7bc7580994c2049`
+
 Status: retained, test-gated Phase 15 core. This checkpoint does not claim a
 Phase 15 exit, production ownership, an EMBER cutover, output certification, or
 CGAL parity. `surface_arrangement` remains compiled only for tests, so no
@@ -60,7 +62,7 @@ intersection graph, corefinement, cells, and winding table.
 
 ## Topology and failure-path corpus
 
-Twelve Phase 15 cases, together with the eight Phase 14 cases, now cover:
+Seventeen Phase 15 cases, together with the eight Phase 14 cases, now cover:
 
 1. one tetrahedron producing exactly two reciprocal cells and windings 0/1;
 2. disconnected nested shells receiving global rather than component-local
@@ -81,9 +83,21 @@ Twelve Phase 15 cases, together with the eight Phase 14 cases, now cover:
 11. coincident transition overflow reported without wrapping; and
 12. symbolic radial equality proving strict indeterminacy versus
     approximate-512 terminal certainty.
+13. a nested negative-winding shell producing an exact cavity and two repeated
+    global winding states;
+14. a 64-triangle integer voxel ring producing one genus-one inside/outside
+    radial component with 32 points and 96 edges;
+15. transversely self-intersecting shells in one PWN operand, preserving the
+    full `0/1/1/2` winding multiplicity;
+16. exact scale-7 reflected embedding, complete face-order reversal, and
+    operand permutation preserving cell truth and closed selections; and
+17. 40 disjoint operands evaluating union, intersection, and parity roots from
+    one 80-cell winding table and one arrangement.
 
-The focused matrix passes 20 tests. The complete all-feature matrix passes
-1,110 unit and 134 integration tests with seven expected manual/benchmark
+Five corresponding permanent manifest records carry generators, policy and
+CGAL eligibility, topology tags, and property oracles. The focused matrix
+passes 25 tests. The complete all-feature matrix passes 1,115 unit and 134
+integration tests with seven expected manual/benchmark
 ignores.
 
 ## Large-fixture runtime and scaling
@@ -205,13 +219,13 @@ Phase 16 cutover. The historical deficit stays open until then.
 
 ## Remaining work
 
-Phase 15 still needs production ownership and permanent high-genus,
-self-intersecting/PWN, cavity, operand-count, and transform/scale metamorphic
-families. The production orchestrator should build the source BVH once and
-transfer ownership between intersection and seed classification. Phase 16 must
-materialize and independently certify selected facets, migrate all controlled
-callers directly, and delete EMBER atomically. No compatibility shim or dual
-engine will be added.
+Phase 15 still needs production ownership and larger real-world/pathological
+siblings for the newly permanent high-genus, self-intersecting/PWN, cavity,
+high-operand, and exact-embedding microcases. The production orchestrator
+should build the source BVH once and transfer ownership between intersection
+and seed classification. Phase 16 must materialize and independently certify
+selected facets, migrate all controlled callers directly, and delete EMBER
+atomically. No compatibility shim or dual engine will be added.
 
 ## Reproduction
 

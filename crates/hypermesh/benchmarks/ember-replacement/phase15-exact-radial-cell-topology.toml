@@ -6,6 +6,7 @@ checkpoint = "exact-radial-cell-topology"
 implementation_commit = "c512e7f959c085fe4a68dc652dbe5f33c7236f01"
 scheduler_commit = "a8e4a0e9169883aecc78de16423880891eaf97946"
 bvh_compaction_commit = "a727778eac25435dc6bf299b498497bfaf41484c"
+corpus_expansion_commit = "3020c2b1f554101c29a09784e7bc7580994c2049"
 source_parent_commit = "c8b042d915e703e7796bf1fddf8a141d30ae0310"
 hyperreal_commit = "6c7b8325382135e424dfdb1d7442d454c9665d75"
 hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
@@ -50,8 +51,8 @@ aggregate_certainty_absorbed = true
 large_exact_fixture_certainty = "Certified"
 
 [corpus]
-focused_surface_arrangement_tests = 20
-phase_15_topology_tests = 12
+focused_surface_arrangement_tests = 25
+phase_15_topology_tests = 17
 tetrahedron_reciprocal_cells = true
 disconnected_nested_absolute_winding = true
 coincident_multiplicity = true
@@ -65,12 +66,19 @@ malformed_incidence_rejection = true
 winding_dimension_rejection = true
 winding_overflow_rejection = true
 strict_approximate_radial_equality = true
-high_genus_open = true
-self_intersecting_pwn_open = true
-transform_scale_metamorphic_open = true
+negative_winding_cavity = true
+genus_one_radial_topology = true
+self_intersecting_pwn_winding_multiplicity = true
+exact_reflection_scale_face_order_operand_permutation = true
+high_operand_batched_truth = true
+high_operand_count = 40
+manifest_records_added = 5
+high_genus_open = false
+self_intersecting_pwn_open = false
+transform_scale_metamorphic_open = false
 
 [tests.all_features]
-unit_passed = 1110
+unit_passed = 1115
 integration_passed = 134
 failed = 0
 ignored = 7
