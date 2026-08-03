@@ -525,6 +525,88 @@ pub(crate) fn intersect_polygons_with_vertices(
     }
 }
 
+/// Operation-local affine vertices in one checked face-indexed range arena.
+///
+/// Retained points are cloned structurally and derived points use the caller's
+/// policy-aware decision context. The arena records no topology conclusion.
+struct PolygonVertexArena {
+    offsets: Vec<u32>,
+    points: Vec<Point3>,
+}
+
+impl PolygonVertexArena {
+    fn build(decisions: &DecisionContext, polygons: &[ConvexPolygon]) -> HypermeshResult<Self> {
+        u32::try_from(polygons.len()).map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "pairwise polygon vertex face arena",
+        })?;
+        let offset_capacity =
+            polygons
+                .len()
+                .checked_add(1)
+                .ok_or(HypermeshError::CapacityOverflow {
+                    operation: "pairwise polygon vertex offsets",
+                })?;
+        let point_capacity = polygons
+            .iter()
+            .try_fold(0usize, |total, polygon| {
+                total.checked_add(polygon.vertex_count())
+            })
+            .filter(|&total| total <= u32::MAX as usize)
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "pairwise polygon vertex arena",
+            })?;
+
+        let mut offsets = Vec::new();
+        offsets.try_reserve_exact(offset_capacity).map_err(|_| {
+            HypermeshError::CapacityOverflow {
+                operation: "pairwise polygon vertex offsets",
+            }
+        })?;
+        let mut points = Vec::new();
+        points
+            .try_reserve_exact(point_capacity)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "pairwise polygon vertex arena",
+            })?;
+        offsets.push(0);
+
+        for polygon in polygons {
+            if let Some(vertices) = polygon.known_vertices.as_ref() {
+                points.extend(vertices.iter().cloned());
+            } else {
+                for index in 0..polygon.vertex_count() {
+                    points.push(polygon.vertex_point_decision(decisions, index)?);
+                }
+            }
+            offsets.push(
+                u32::try_from(points.len())
+                    .expect("pairwise polygon vertex capacity was checked before construction"),
+            );
+        }
+        debug_assert_eq!(points.len(), point_capacity);
+        Ok(Self { offsets, points })
+    }
+
+    fn row(&self, polygon: usize) -> HypermeshResult<&[Point3]> {
+        let next = polygon
+            .checked_add(1)
+            .ok_or(HypermeshError::UnknownClassification)?;
+        let start = self
+            .offsets
+            .get(polygon)
+            .copied()
+            .ok_or(HypermeshError::UnknownClassification)? as usize;
+        let end = self
+            .offsets
+            .get(next)
+            .copied()
+            .ok_or(HypermeshError::UnknownClassification)? as usize;
+        self.points
+            .get(start..end)
+            .ok_or(HypermeshError::UnknownClassification)
+    }
+}
+
 /// Builds exact symmetric intersection rows for one polygon arrangement.
 ///
 /// The BVH callback is consumed directly so the broad phase never materializes
@@ -538,10 +620,7 @@ pub(crate) fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
 ) -> HypermeshResult<PairwiseIntersectionGraph> {
     let mut graph = PairwiseIntersectionGraphBuilder::new(polygons.len());
     let bvh = ExactBvh::build_decision(decisions, polygons)?;
-    let vertices = polygons
-        .iter()
-        .map(|polygon| polygon.vertices_decision(decisions))
-        .collect::<HypermeshResult<Vec<_>>>()?;
+    let vertices = PolygonVertexArena::build(decisions, polygons)?;
     let mut failure = None;
 
     bvh.intersect_pairs_decision(decisions, &bvh, |global_i, global_j| {
@@ -577,7 +656,7 @@ pub(crate) fn pairwise_intersections_by_polygon(
 fn append_pairwise_intersection(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
-    vertices: &[Vec<Point3>],
+    vertices: &PolygonVertexArena,
     certified_embedded_inputs: &[bool],
     graph: &mut PairwiseIntersectionGraphBuilder,
     global_i: usize,
@@ -595,12 +674,14 @@ fn append_pairwise_intersection(
         return Ok(());
     }
     let same_mesh = polygons[global_i].mesh_index == polygons[global_j].mesh_index;
+    let left_vertices = vertices.row(global_i)?;
+    let right_vertices = vertices.row(global_j)?;
     let shares_manifold_edge = if same_mesh {
         polygon_cycles_share_reversed_noncoplanar_triangle_edge(
             decisions,
-            &vertices[global_i],
+            left_vertices,
             &polygons[global_i].support,
-            &vertices[global_j],
+            right_vertices,
             &polygons[global_j].support,
         )?
     } else {
@@ -621,9 +702,9 @@ fn append_pairwise_intersection(
     let intersection = intersect_polygons_with_vertices(
         decisions,
         &polygons[global_i],
-        &vertices[global_i],
+        left_vertices,
         &polygons[global_j],
-        &vertices[global_j],
+        right_vertices,
         global_j,
     )
     .inspect_err(|_error| {
@@ -1243,8 +1324,61 @@ mod tests {
 
     use super::{
         PairwiseIntersection, PairwiseIntersectionEventRef, PairwiseIntersectionGraphBuilder,
-        PairwiseIntersectionNode,
+        PairwiseIntersectionNode, PolygonVertexArena,
     };
+
+    #[test]
+    fn polygon_vertex_arena_flattens_known_empty_and_constructed_rows() {
+        let decisions = crate::test_support::approximate_decisions();
+        let first = crate::test_support::approximate_convex_triangle(
+            &Point3::origin(),
+            &Point3::new(Real::one(), Real::zero(), Real::zero()),
+            &Point3::new(Real::zero(), Real::one(), Real::zero()),
+            0,
+            0,
+        );
+        let mut constructed = crate::test_support::approximate_convex_triangle(
+            &Point3::new(Real::zero(), Real::zero(), Real::one()),
+            &Point3::new(Real::one(), Real::zero(), Real::one()),
+            &Point3::new(Real::zero(), Real::one(), Real::one()),
+            1,
+            1,
+        );
+        constructed.known_vertices = None;
+        let expected_constructed = constructed.vertices_decision(&decisions).unwrap();
+
+        let arena = PolygonVertexArena::build(
+            &decisions,
+            &[
+                first.clone(),
+                crate::polygon::ConvexPolygon::empty(),
+                constructed,
+            ],
+        )
+        .unwrap();
+
+        assert_eq!(arena.offsets, [0, 3, 3, 6]);
+        assert_eq!(
+            arena.row(0).unwrap(),
+            first.vertices_decision(&decisions).unwrap()
+        );
+        assert!(arena.row(1).unwrap().is_empty());
+        assert!(arena.row(2).unwrap().iter().zip(expected_constructed).all(
+            |(actual, expected)| {
+                crate::predicate::points_equal(&decisions, actual, &expected).unwrap()
+            }
+        ));
+        assert!(arena.row(3).is_err());
+        assert!(arena.row(usize::MAX).is_err());
+        assert_eq!(arena.offsets.len() * size_of::<u32>(), 16);
+        assert!(arena.offsets.len() * size_of::<u32>() < 3 * size_of::<Vec<Point3>>());
+
+        let invalid = PolygonVertexArena {
+            offsets: vec![0, 2],
+            points: vec![Point3::origin()],
+        };
+        assert!(invalid.row(0).is_err());
+    }
 
     #[test]
     fn compact_graph_preserves_stream_order_without_per_face_vectors() {
