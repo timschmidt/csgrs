@@ -6,9 +6,9 @@ use std::sync::{Arc, OnceLock};
 
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_offset::{
-    BezierAlgebraicCuspSemicircleContactLocation2, BezierAlgebraicCuspSemicirclePairIntersections2,
-    BezierAlgebraicCuspSemicirclePairOverlap2, BezierAlgebraicCuspSemicircleParallelIntersections2,
-    BezierAlgebraicCuspSemicircleParallelOverlap2, BezierAlgebraicCuspSemicircleParameter2,
+    BezierAlgebraicCuspSemicircleContactLocation2, BezierAlgebraicCuspSemicircleMappedOverlap2,
+    BezierAlgebraicCuspSemicirclePairIntersections2, BezierAlgebraicCuspSemicirclePairOverlap2,
+    BezierAlgebraicCuspSemicircleParallelIntersections2, BezierAlgebraicCuspSemicircleParameter2,
     BezierAlgebraicCuspSemicircleRationalIntersections2,
 };
 use crate::bezier_tangent_order::algebraic_endpoint_tangent_cross_sign;
@@ -191,7 +191,7 @@ struct RegionPairOverlap {
 enum RegionPairOverlapSource {
     Bezier(CurveIntersectionOverlap2),
     AlgebraicCusp(BezierAlgebraicCuspSemicirclePairOverlap2),
-    AlgebraicCuspParallel(BezierAlgebraicCuspSemicircleParallelOverlap2),
+    AlgebraicCuspMapped(BezierAlgebraicCuspSemicircleMappedOverlap2),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -907,7 +907,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     source: overlap.source.and_then(|source| match source {
                         RegionPairOverlapSource::Bezier(source) => Some(source),
                         RegionPairOverlapSource::AlgebraicCusp(_)
-                        | RegionPairOverlapSource::AlgebraicCuspParallel(_) => None,
+                        | RegionPairOverlapSource::AlgebraicCuspMapped(_) => None,
                     }),
                     first_range,
                     second_range,
@@ -1726,62 +1726,93 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         });
                     }
                 };
-                let BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) =
-                    intersections
-                else {
-                    return Ok(RegionPairResult {
-                        contacts: Vec::new(),
-                        overlaps: Vec::new(),
-                        blockers: vec![RegionPairBlocker::Uncertain(match intersections {
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle => {
-                                UncertaintyReason::Boundary
-                            }
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
-                                UncertaintyReason::Unsupported
-                            }
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_) => {
-                                unreachable!()
-                            }
-                        })],
-                    });
-                };
-                let mut retained = Vec::with_capacity(contacts.len());
-                for contact in contacts {
-                    let cusp_parameter =
-                        cusp_contact_parameter(contact.location).unwrap_or_else(|| {
-                            parameter_map
-                                .as_ref()
-                                .expect(
-                                    "an interior cusp/rational contact retains its parameter map",
+                match intersections {
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) => {
+                        let mut retained = Vec::with_capacity(contacts.len());
+                        for contact in contacts {
+                            let cusp_parameter = cusp_contact_parameter(contact.location)
+                                .unwrap_or_else(|| {
+                                    parameter_map
+                                        .as_ref()
+                                        .expect(
+                                            "an interior cusp/rational contact retains its parameter map",
+                                        )
+                                        .contact_parameter(&contact)
+                                });
+                            let tangent_cross_sign = oriented_cusp_cross_sign(
+                                contact.tangent_cross_sign,
+                                *cusp_is_first,
+                            );
+                            let (first_parameter, second_parameter) = if *cusp_is_first {
+                                (
+                                    CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                                    CurveRegionParameter2::from_bezier(contact.other_parameter),
                                 )
-                                .contact_parameter(&contact)
-                        });
-                    let tangent_cross_sign =
-                        oriented_cusp_cross_sign(contact.tangent_cross_sign, *cusp_is_first);
-                    let (first_parameter, second_parameter) = if *cusp_is_first {
-                        (
-                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
-                            CurveRegionParameter2::from_bezier(contact.other_parameter),
-                        )
-                    } else {
-                        (
-                            CurveRegionParameter2::from_bezier(contact.other_parameter),
-                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
-                        )
-                    };
-                    retained.push(RegionPairContactEvidence::direct(
-                        first_parameter,
-                        second_parameter,
-                        Some(contact.point),
-                        tangent_cross_sign != RealSign::Zero,
-                        Some(tangent_cross_sign),
-                    ));
+                            } else {
+                                (
+                                    CurveRegionParameter2::from_bezier(contact.other_parameter),
+                                    CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                                )
+                            };
+                            retained.push(RegionPairContactEvidence::direct(
+                                first_parameter,
+                                second_parameter,
+                                Some(contact.point),
+                                tangent_cross_sign != RealSign::Zero,
+                                Some(tangent_cross_sign),
+                            ));
+                        }
+                        Ok(RegionPairResult {
+                            contacts: retained,
+                            overlaps: Vec::new(),
+                            blockers: Vec::new(),
+                        })
+                    }
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps) => {
+                        Ok(RegionPairResult {
+                            contacts: Vec::new(),
+                            overlaps: overlaps
+                                .into_iter()
+                                .map(|overlap| {
+                                    let cusp_range = CurveRegionParameterRange2::new_validated(
+                                        CurveRegionParameter2::from_algebraic_cusp(
+                                            overlap.cusp_start_parameter(),
+                                        ),
+                                        CurveRegionParameter2::from_algebraic_cusp(
+                                            overlap.cusp_end_parameter(),
+                                        ),
+                                    );
+                                    let other_range = CurveRegionParameterRange2::from_bezier_range(
+                                        overlap.other_range().clone(),
+                                    );
+                                    let (first_range, second_range) = if *cusp_is_first {
+                                        (cusp_range, other_range)
+                                    } else {
+                                        (other_range, cusp_range)
+                                    };
+                                    RegionPairOverlap {
+                                        source: Some(RegionPairOverlapSource::AlgebraicCuspMapped(
+                                            overlap.clone(),
+                                        )),
+                                        first_range,
+                                        second_range,
+                                        orientation: overlap.orientation(),
+                                    }
+                                })
+                                .collect(),
+                            blockers: Vec::new(),
+                        })
+                    }
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
+                        Ok(RegionPairResult {
+                            contacts: Vec::new(),
+                            overlaps: Vec::new(),
+                            blockers: vec![RegionPairBlocker::Uncertain(
+                                UncertaintyReason::Unsupported,
+                            )],
+                        })
+                    }
                 }
-                Ok(RegionPairResult {
-                    contacts: retained,
-                    overlaps: Vec::new(),
-                    blockers: Vec::new(),
-                })
             }
             RegionCarrierPairContext::CuspParallel { cusp_is_first } => {
                 let (cusp, parallel, parallel_carrier) = if *cusp_is_first {
@@ -1843,7 +1874,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     ),
                                 );
                                 let parallel_range = CurveRegionParameterRange2::from_bezier_range(
-                                    overlap.parallel_range().clone(),
+                                    overlap.other_range().clone(),
                                 );
                                 let (first_range, second_range) = if *cusp_is_first {
                                     (cusp_range, parallel_range)
@@ -1851,7 +1882,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     (parallel_range, cusp_range)
                                 };
                                 RegionPairOverlap {
-                                    source: Some(RegionPairOverlapSource::AlgebraicCuspParallel(
+                                    source: Some(RegionPairOverlapSource::AlgebraicCuspMapped(
                                         overlap.clone(),
                                     )),
                                     first_range,
@@ -2235,11 +2266,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 &self.data.policy,
             );
         }
-        if let Some(RegionPairOverlapSource::AlgebraicCuspParallel(source)) =
-            overlap.source.as_ref()
+        if let Some(RegionPairOverlapSource::AlgebraicCuspMapped(source)) = overlap.source.as_ref()
         {
             debug_assert_eq!(source.orientation(), overlap.orientation);
-            return self.clip_cusp_parallel_overlap(pair, overlap, source);
+            return self.clip_cusp_mapped_overlap(pair, overlap, source);
         }
         let Some((first_start, first_end)) = overlap.first_range.as_bezier_parameters() else {
             return Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported));
@@ -2254,7 +2284,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let correspondence = overlap.source.as_ref().and_then(|source| match source {
             RegionPairOverlapSource::Bezier(source) => source.parameter_correspondence(),
             RegionPairOverlapSource::AlgebraicCusp(_)
-            | RegionPairOverlapSource::AlgebraicCuspParallel(_) => None,
+            | RegionPairOverlapSource::AlgebraicCuspMapped(_) => None,
         });
         if let Some(correspondence) = correspondence {
             if let Some(reversed) = correspondence.projective_reversal() {
@@ -2350,11 +2380,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
     }
 
-    fn clip_cusp_parallel_overlap(
+    fn clip_cusp_mapped_overlap(
         &self,
         pair: &RegionCarrierPair,
         overlap: &RegionPairOverlap,
-        source: &BezierAlgebraicCuspSemicircleParallelOverlap2,
+        source: &BezierAlgebraicCuspSemicircleMappedOverlap2,
     ) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
         let first_is_cusp = overlap.first_range.start().is_algebraic_cusp();
         let second_is_cusp = overlap.second_range.start().is_algebraic_cusp();
@@ -2362,7 +2392,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return Err(self.invalid(
                 pair.first_carrier_index,
                 CurveError::Topology(
-                    "cusp/parallel overlap did not retain exactly one cusp parameter range".into(),
+                    "mapped cusp overlap did not retain exactly one cusp parameter range".into(),
                 ),
             ));
         }
@@ -2417,7 +2447,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Err(self.blocked(cusp_carrier_index, UncertaintyReason::Unsupported));
             };
             match source
-                .parallel_parameter_for_cusp(parameter, &self.data.policy)
+                .other_parameter_for_cusp(parameter, &self.data.policy)
                 .map_err(|cause| self.invalid(cusp_carrier_index, cause))?
             {
                 Classification::Decided(parameter) => {
@@ -2469,7 +2499,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         );
                     };
                     match source
-                        .cusp_parameter_for_parallel(parameter, &self.data.policy)
+                        .cusp_parameter_for_other(parameter, &self.data.policy)
                         .map_err(|cause| self.invalid(parallel_carrier_index, cause))?
                     {
                         Classification::Decided(parameter) => {
@@ -2801,7 +2831,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     overlap.source,
                     Some(
                         RegionPairOverlapSource::AlgebraicCusp(_)
-                            | RegionPairOverlapSource::AlgebraicCuspParallel(_)
+                            | RegionPairOverlapSource::AlgebraicCuspMapped(_)
                     )
                 ) {
                     let mut first_parameters =

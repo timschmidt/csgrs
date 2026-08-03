@@ -4569,7 +4569,7 @@ impl RationalBezier2 {
         }
     }
 
-    fn common_weight_sign(&self, policy: &CurveContext) -> Classification<RealSign> {
+    pub(crate) fn common_weight_sign(&self, policy: &CurveContext) -> Classification<RealSign> {
         let Some(first) = real_sign(&self.weights()[0], policy) else {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         };
