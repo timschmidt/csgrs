@@ -259,6 +259,137 @@ pub(crate) fn quotient_ring_resultant_polynomial(
     )
 }
 
+/// Constructs the norm of a polynomial fiber over one quotient ring.
+///
+/// `fiber_coefficients[k]` is the source-variable polynomial multiplying the
+/// `k`th power of the fiber parameter. The returned polynomial is the
+/// determinant of multiplication by that complete fiber in `Q[x] / (source)`
+/// and therefore has the same fiber roots as the corresponding resultant, up
+/// to one nonzero constant scale. Matrix dimension is `deg(source)`; the fiber
+/// degree affects only polynomial-entry multiplication, not determinant size.
+pub(crate) fn quotient_ring_fiber_resultant_polynomial(
+    source: &[Real],
+    fiber_coefficients: &[Vec<Real>],
+) -> Option<Vec<Real>> {
+    let degree = source.len().checked_sub(1)?;
+    // The subset determinant is exponential only in the selected root's
+    // defining degree. Keep that dimension deliberately small; larger fields
+    // must use interval/local-field specialization rather than risking an
+    // allocation cliff.
+    if degree == 0 || degree > 8 || fiber_coefficients.is_empty() {
+        return None;
+    }
+    let rational_coefficients = source
+        .iter()
+        .chain(fiber_coefficients.iter().flatten())
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let mut integers = Rational::primitive_integer_ratio(&rational_coefficients)
+        .into_iter()
+        .map(|coefficient| coefficient.to_big_integer())
+        .collect::<Option<Vec<_>>>()?
+        .into_iter();
+    let source = integers.by_ref().take(source.len()).collect::<Vec<_>>();
+    if source.len() != degree + 1 || source.last().is_none_or(BigInt::is_zero) {
+        return None;
+    }
+    let mut relations = Vec::with_capacity(fiber_coefficients.len());
+    for coefficients in fiber_coefficients {
+        let mut relation = integers
+            .by_ref()
+            .take(coefficients.len())
+            .collect::<Vec<_>>();
+        if relation.is_empty() {
+            relation.push(BigInt::zero());
+        }
+        relations.push(relation);
+    }
+    if integers.next().is_some() {
+        return None;
+    }
+    let relation_degree = relations
+        .iter()
+        .map(|relation| relation.len().saturating_sub(1))
+        .max()?;
+    let matrix_entries = degree.checked_mul(degree)?;
+    let mut polynomial_entries = vec![Vec::<BigInt>::new(); matrix_entries];
+    for (fiber_power, relation) in relations.iter().enumerate() {
+        let matrix = pseudo_quotient_multiplication_matrix(&source, relation, relation_degree)?;
+        if matrix.len() != matrix_entries {
+            return None;
+        }
+        for (entry, coefficient) in polynomial_entries.iter_mut().zip(matrix) {
+            if entry.len() <= fiber_power {
+                entry.resize(fiber_power + 1, BigInt::zero());
+            }
+            entry[fiber_power] = coefficient;
+        }
+    }
+    let mut polynomial = determinant_polynomial_matrix(&polynomial_entries, degree)?;
+    while polynomial.len() > 1 && polynomial.last().is_some_and(BigInt::is_zero) {
+        polynomial.pop();
+    }
+    Some(
+        polynomial
+            .into_iter()
+            .map(Rational::from_bigint)
+            .map(Real::from)
+            .collect(),
+    )
+}
+
+fn determinant_polynomial_matrix(entries: &[Vec<BigInt>], dimension: usize) -> Option<Vec<BigInt>> {
+    if entries.len() != dimension.checked_mul(dimension)? {
+        return None;
+    }
+    let state_count = 1usize.checked_shl(u32::try_from(dimension).ok()?)?;
+    let mut partials = vec![None; state_count];
+    partials[0] = Some(vec![BigInt::one()]);
+    for mask in 0..state_count {
+        let row = usize::try_from(mask.count_ones()).ok()?;
+        if row == dimension {
+            continue;
+        }
+        let Some(partial) = partials[mask].take() else {
+            continue;
+        };
+        for column in 0..dimension {
+            let column_bit = 1usize.checked_shl(u32::try_from(column).ok()?)?;
+            if mask & column_bit != 0 {
+                continue;
+            }
+            let entry = &entries[row * dimension + column];
+            if entry.iter().all(BigInt::is_zero) {
+                continue;
+            }
+            let sign_is_negative = (mask >> (column + 1)).count_ones() % 2 != 0;
+            let next_mask = mask | column_bit;
+            let next_length = partial.len().checked_add(entry.len())?.checked_sub(1)?;
+            let next = partials[next_mask].get_or_insert_with(|| vec![BigInt::zero(); next_length]);
+            if next.len() < next_length {
+                next.resize(next_length, BigInt::zero());
+            }
+            for (left_power, left) in partial.iter().enumerate() {
+                if left.is_zero() {
+                    continue;
+                }
+                for (right_power, right) in entry.iter().enumerate() {
+                    if right.is_zero() {
+                        continue;
+                    }
+                    let term = left * right;
+                    if sign_is_negative {
+                        next[left_power + right_power] -= term;
+                    } else {
+                        next[left_power + right_power] += term;
+                    }
+                }
+            }
+        }
+    }
+    partials.pop()?.or_else(|| Some(vec![BigInt::zero()]))
+}
+
 fn determinant_linear_polynomial_matrix(
     constants: &[BigInt],
     negative_linear_coefficients: &[BigInt],

@@ -95,11 +95,14 @@ pub use algebraic_binary::{
     transform_algebraic_roots_binary,
 };
 pub use algebraic_fiber::{
-    AlgebraicFiberRootCountReport, AlgebraicFiberRootCountStatus,
-    count_bivariate_common_fiber_roots_at_algebraic_parameter,
+    AlgebraicFiberDiagonalDeflationReport, AlgebraicFiberDiagonalDeflationStatus,
+    AlgebraicFiberProjectionReport, AlgebraicFiberProjectionStatus, AlgebraicFiberRootCountReport,
+    AlgebraicFiberRootCountStatus, count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter_closed,
     count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
+    deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter,
+    project_bivariate_fiber_at_algebraic_parameter,
 };
 pub use algebraic_mobius::{
     AlgebraicRootMobiusTransformReport, AlgebraicRootMobiusTransformStatus,

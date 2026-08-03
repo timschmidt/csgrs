@@ -19,6 +19,7 @@ use crate::algebraic::{
     evaluate_polynomial_at_algebraic_root, validate_algebraic_root_representation,
 };
 use crate::curve_resultant::{BivariatePolynomial, CurveResultantParameter};
+use crate::resultant::quotient_ring_fiber_resultant_polynomial;
 use crate::root_isolation::{
     IsolatedRootRefinementStatus, RootIsolationConfig, polynomial_div_rem,
     polynomials_share_one_root_in_interval, refine_isolated_univariate_polynomial_interval,
@@ -62,6 +63,60 @@ pub struct AlgebraicFiberRootCountReport {
     pub certainty: Certainty,
     /// Compact diagnostic reason for a non-counted result.
     pub message: Option<&'static str>,
+}
+
+/// Final status for exact diagonal-root deflation in one algebraic fiber.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AlgebraicFiberDiagonalDeflationStatus {
+    /// One or more copies of `fiber_parameter - retained_parameter` were
+    /// removed in the selected local field.
+    Deflated,
+    /// The selected diagonal value is not a root of the specialized fiber.
+    NotARoot,
+    /// Every specialized fiber coefficient vanishes at the retained root.
+    IdenticallyZeroFiber,
+    /// The retained algebraic-root representation is invalid.
+    InvalidEvidence,
+    /// Exact-rational coefficient arithmetic is required by this package.
+    UnsupportedCoefficient,
+    /// Exact local-field arithmetic or a predicate did not complete.
+    Undecided,
+}
+
+/// Exact residual after removing a known correlated diagonal fiber root.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicFiberDiagonalDeflationReport {
+    /// Final construction status.
+    pub status: AlgebraicFiberDiagonalDeflationStatus,
+    /// Exact multiplicity removed from the selected fiber.
+    pub multiplicity: usize,
+    /// Fiber polynomial reduced modulo the retained root's defining
+    /// polynomial after maximal diagonal deflation.
+    pub reduced_polynomial: Option<BivariatePolynomial>,
+    /// Weakest predicate certainty consumed by the local-field zero tests.
+    pub certainty: Certainty,
+}
+
+/// Final status for quotient-ring projection of one algebraic fiber.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AlgebraicFiberProjectionStatus {
+    /// The exact rational-coefficient projection polynomial was constructed.
+    Constructed,
+    /// The retained algebraic-root representation is invalid.
+    InvalidEvidence,
+    /// Exact-rational coefficient arithmetic is required by this package.
+    UnsupportedCoefficient,
+    /// The bounded quotient-ring determinant construction did not complete.
+    Undecided,
+}
+
+/// Exact rational projection polynomial for one algebraic fiber.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicFiberProjectionReport {
+    /// Final construction status.
+    pub status: AlgebraicFiberProjectionStatus,
+    /// Resultant coefficients in ascending powers of the fiber parameter.
+    pub coefficients: Vec<Real>,
 }
 
 /// Count distinct roots of one exact bivariate fiber over a represented root.
@@ -295,6 +350,222 @@ pub fn count_bivariate_common_fiber_roots_at_algebraic_parameter(
         FiberIntervalEndpoints::RejectRoots,
         policy,
     )
+}
+
+/// Maximally deflates the correlated root where both system parameters agree.
+///
+/// For a bivariate polynomial `F(s, t)` and a selected algebraic value
+/// `s = alpha`, this divides the specialized fiber by `(t - alpha)` until the
+/// remainder is nonzero in `Q(alpha)`. The quotient is exported again as a
+/// bivariate polynomial reduced modulo alpha's defining polynomial, so a
+/// caller can project only the residual contacts and retain the diagonal
+/// contact separately. The symmetric `retained_parameter = Second` case
+/// divides the first-parameter fiber by `(s - alpha)`.
+///
+/// Division is synthetic by a monic linear factor. It therefore introduces no
+/// local-field denominator and does not construct a primitive-element tower.
+pub fn deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
+    polynomial: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    retained_root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> AlgebraicFiberDiagonalDeflationReport {
+    let mut field = match LocalAlgebraicField::new(retained_root, policy) {
+        Ok(field) => field,
+        Err(error) => return diagonal_deflation_error_report(error, Certainty::Exact),
+    };
+    let mut fiber = match local_fiber_polynomial(polynomial, retained_parameter, &mut field) {
+        Ok(fiber) => fiber,
+        Err(error) => return diagonal_deflation_error_report(error, field.certainty),
+    };
+    match local_polynomial_is_zero(&fiber, &mut field) {
+        Ok(true) => {
+            return AlgebraicFiberDiagonalDeflationReport {
+                status: AlgebraicFiberDiagonalDeflationStatus::IdenticallyZeroFiber,
+                multiplicity: 0,
+                reduced_polynomial: None,
+                certainty: field.certainty,
+            };
+        }
+        Ok(false) => {}
+        Err(error) => return diagonal_deflation_error_report(error, field.certainty),
+    }
+
+    let diagonal_root =
+        match LocalFieldElement::from_polynomial(vec![Real::zero(), Real::one()], &field) {
+            Ok(root) => root,
+            Err(error) => return diagonal_deflation_error_report(error, field.certainty),
+        };
+    let mut multiplicity = 0_usize;
+    while fiber.len() > 1 {
+        let degree = fiber.len() - 1;
+        let mut quotient = vec![LocalFieldElement::zero(); degree];
+        quotient[degree - 1] = fiber[degree].clone();
+        for power in (1..degree).rev() {
+            let product = match diagonal_root.multiply(&quotient[power], &field) {
+                Ok(product) => product,
+                Err(error) => return diagonal_deflation_error_report(error, field.certainty),
+            };
+            quotient[power - 1] = match fiber[power].add(&product, &field) {
+                Ok(coefficient) => coefficient,
+                Err(error) => return diagonal_deflation_error_report(error, field.certainty),
+            };
+        }
+        let product = match diagonal_root.multiply(&quotient[0], &field) {
+            Ok(product) => product,
+            Err(error) => return diagonal_deflation_error_report(error, field.certainty),
+        };
+        let remainder = match fiber[0].add(&product, &field) {
+            Ok(remainder) => remainder,
+            Err(error) => return diagonal_deflation_error_report(error, field.certainty),
+        };
+        match remainder.is_zero(&mut field) {
+            Ok(true) => {
+                fiber = quotient;
+                multiplicity += 1;
+            }
+            Ok(false) => break,
+            Err(error) => return diagonal_deflation_error_report(error, field.certainty),
+        }
+    }
+
+    let reduced_polynomial = match local_fiber_to_bivariate(&fiber, retained_parameter) {
+        Some(polynomial) => polynomial,
+        None => {
+            return AlgebraicFiberDiagonalDeflationReport {
+                status: AlgebraicFiberDiagonalDeflationStatus::UnsupportedCoefficient,
+                multiplicity,
+                reduced_polynomial: None,
+                certainty: field.certainty,
+            };
+        }
+    };
+    AlgebraicFiberDiagonalDeflationReport {
+        status: if multiplicity == 0 {
+            AlgebraicFiberDiagonalDeflationStatus::NotARoot
+        } else {
+            AlgebraicFiberDiagonalDeflationStatus::Deflated
+        },
+        multiplicity,
+        reduced_polynomial: Some(reduced_polynomial),
+        certainty: field.certainty,
+    }
+}
+
+/// Projects one bivariate fiber through a low-degree algebraic quotient ring.
+///
+/// This is the bounded-memory fallback for systems whose generic bivariate
+/// resultant has a large interpolation-degree bound. It computes the norm of
+/// the specialized fiber directly; its determinant dimension is the retained
+/// root's defining-polynomial degree. As with any resultant, roots contributed
+/// by other defining-polynomial branches remain candidates that the caller
+/// must replay against the selected root.
+pub fn project_bivariate_fiber_at_algebraic_parameter(
+    polynomial: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    retained_root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> AlgebraicFiberProjectionReport {
+    let field = match LocalAlgebraicField::new(retained_root, policy) {
+        Ok(field) => field,
+        Err(LocalFieldError::InvalidEvidence | LocalFieldError::InvalidInterval) => {
+            return AlgebraicFiberProjectionReport {
+                status: AlgebraicFiberProjectionStatus::InvalidEvidence,
+                coefficients: Vec::new(),
+            };
+        }
+        Err(LocalFieldError::UnsupportedCoefficient) => {
+            return AlgebraicFiberProjectionReport {
+                status: AlgebraicFiberProjectionStatus::UnsupportedCoefficient,
+                coefficients: Vec::new(),
+            };
+        }
+        Err(LocalFieldError::DivisionByZero | LocalFieldError::Undecided) => {
+            return AlgebraicFiberProjectionReport {
+                status: AlgebraicFiberProjectionStatus::Undecided,
+                coefficients: Vec::new(),
+            };
+        }
+    };
+    let fiber_coefficients = fiber_coefficient_polynomials(polynomial, retained_parameter);
+    match quotient_ring_fiber_resultant_polynomial(&field.modulus, &fiber_coefficients) {
+        Some(coefficients) => AlgebraicFiberProjectionReport {
+            status: AlgebraicFiberProjectionStatus::Constructed,
+            coefficients,
+        },
+        None if polynomial
+            .coefficients
+            .iter()
+            .flatten()
+            .any(|coefficient| coefficient.exact_rational_ref().is_none()) =>
+        {
+            AlgebraicFiberProjectionReport {
+                status: AlgebraicFiberProjectionStatus::UnsupportedCoefficient,
+                coefficients: Vec::new(),
+            }
+        }
+        None => AlgebraicFiberProjectionReport {
+            status: AlgebraicFiberProjectionStatus::Undecided,
+            coefficients: Vec::new(),
+        },
+    }
+}
+
+fn local_fiber_to_bivariate(
+    fiber: &[LocalFieldElement],
+    retained_parameter: CurveResultantParameter,
+) -> Option<BivariatePolynomial> {
+    let coefficients = fiber
+        .iter()
+        .map(|coefficient| {
+            coefficient
+                .denominator
+                .is_none()
+                .then(|| coefficient.numerator.clone())
+        })
+        .collect::<Option<Vec<_>>>()?;
+    Some(BivariatePolynomial::new(match retained_parameter {
+        CurveResultantParameter::First => {
+            let retained_count = coefficients.iter().map(Vec::len).max().unwrap_or(0);
+            (0..retained_count)
+                .map(|retained_power| {
+                    coefficients
+                        .iter()
+                        .map(|coefficient| {
+                            coefficient
+                                .get(retained_power)
+                                .cloned()
+                                .unwrap_or_else(Real::zero)
+                        })
+                        .collect()
+                })
+                .collect()
+        }
+        CurveResultantParameter::Second => coefficients,
+    }))
+}
+
+fn diagonal_deflation_error_report(
+    error: LocalFieldError,
+    certainty: Certainty,
+) -> AlgebraicFiberDiagonalDeflationReport {
+    let status = match error {
+        LocalFieldError::InvalidEvidence | LocalFieldError::InvalidInterval => {
+            AlgebraicFiberDiagonalDeflationStatus::InvalidEvidence
+        }
+        LocalFieldError::UnsupportedCoefficient => {
+            AlgebraicFiberDiagonalDeflationStatus::UnsupportedCoefficient
+        }
+        LocalFieldError::DivisionByZero | LocalFieldError::Undecided => {
+            AlgebraicFiberDiagonalDeflationStatus::Undecided
+        }
+    };
+    AlgebraicFiberDiagonalDeflationReport {
+        status,
+        multiplicity: 0,
+        reduced_polynomial: None,
+        certainty,
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1427,6 +1698,69 @@ mod tests {
         root.validation = validate_algebraic_root_representation(&root, policy);
         assert!(root.is_valid());
         root
+    }
+
+    #[test]
+    fn diagonal_fiber_deflation_removes_the_exact_local_multiplicity() {
+        // F(x, y) = (y - x)^3 (y + 1). At every selected x = alpha the
+        // correlated root y = alpha has multiplicity three and leaves y + 1.
+        let polynomial = BivariatePolynomial::new(vec![
+            vec![real(0), real(0), real(0), real(1), real(1)],
+            vec![real(0), real(0), real(-3), real(-3)],
+            vec![real(0), real(3), real(3)],
+            vec![real(-1), real(-1)],
+        ]);
+        let expected = BivariatePolynomial::new(vec![vec![real(1), real(1)]]);
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                vec![real(-1), real(0), real(2)],
+                rational(2, 3),
+                rational(3, 4),
+                policy,
+            );
+            let report = deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
+                &polynomial,
+                CurveResultantParameter::First,
+                &alpha,
+                policy,
+            );
+            assert_eq!(
+                report.status,
+                AlgebraicFiberDiagonalDeflationStatus::Deflated
+            );
+            assert_eq!(report.multiplicity, 3);
+            assert_eq!(report.reduced_polynomial, Some(expected.clone()));
+            assert_eq!(report.certainty, Certainty::Exact);
+        }
+    }
+
+    #[test]
+    fn quotient_ring_fiber_projection_retains_the_complete_norm_roots() {
+        // For 2 alpha^2 - 1 = 0 and F(alpha, y) = y - alpha, the norm is a
+        // nonzero scalar multiple of 2 y^2 - 1.
+        let polynomial = BivariatePolynomial::new(vec![vec![real(0), real(1)], vec![real(-1)]]);
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                vec![real(-1), real(0), real(2)],
+                rational(2, 3),
+                rational(3, 4),
+                policy,
+            );
+            let report = project_bivariate_fiber_at_algebraic_parameter(
+                &polynomial,
+                CurveResultantParameter::First,
+                &alpha,
+                policy,
+            );
+            assert_eq!(report.status, AlgebraicFiberProjectionStatus::Constructed);
+            assert_eq!(report.coefficients.len(), 3);
+            assert_ne!(report.coefficients[0], Real::zero());
+            assert_eq!(report.coefficients[1], Real::zero());
+            assert_eq!(
+                real(2) * report.coefficients[0].clone() + report.coefficients[2].clone(),
+                Real::zero()
+            );
+        }
     }
 
     #[test]
