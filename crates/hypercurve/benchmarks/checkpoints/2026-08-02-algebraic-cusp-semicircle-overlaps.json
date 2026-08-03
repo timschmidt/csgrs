@@ -1,0 +1,171 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact algebraic-cusp semicircle overlap topology",
+  "source_revision": "d1edc5ca5b4d97dbc191a9e6f1fb1dda0451178d",
+  "comparison_revision": "86c81f4602c5cfbaa2cc96ad81fd5c06f57a6131",
+  "previous_checkpoint": "2026-08-02-algebraic-cusp-semicircle-pairs.json",
+  "scope": {
+    "included": [
+      "exact coincident-circle classification into full, partial, endpoint-only, and disjoint selected-half relations",
+      "ordered overlap boundaries on both semicircle domains and exact same/reversed orientation",
+      "one-word clone-shared overlap evidence with endpoint-only and correlated parameter maps",
+      "shared-frame full-overlap and complementary-half fast paths without polynomial construction",
+      "STRICT and APPROXIMATE_512 coverage for independent selected cusp roots",
+      "focused performance, allocation, release-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "algebraic cusp subfragments and arrangement admission",
+      "selected positive-dimensional analytic-parallel radical replay",
+      "finite projection or export",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "support_axes": "For signed radial endpoint vectors R1 and R2 on an already-proved common nonzero circle, exact signs of cross(R1,R2) and dot(R1,R2) determine every closed-semicircle relation without angle evaluation.",
+    "collinear_axes": "When cross(R1,R2)=0, dot(R1,R2) distinguishes equal and antipodal radial axes. Equal selected halves are exactly the cases where radial-axis agreement equals traversal agreement; the other cases are complementary halves with both antipodal endpoints and no positive-length overlap.",
+    "noncollinear_axes": "When cross(R1,R2) is nonzero, its sign combined with each traversal sign identifies the one foreign endpoint strictly inside each selected half. Those two endpoints are the complete positive-length overlap boundaries and are ordered independently on both parameter domains.",
+    "parameter_map": "Own endpoints map to exact zero or one. A foreign boundary is ordered through dot(R1,R2)/|R_i|^2 against the strictly monotone rational diameter coordinate (1-2u)/((1-u)^2+u^2), retaining one correlated selected-root witness rather than constructing a primitive element.",
+    "fast_path": "Semicircles sharing the same retained frame allocation and equal or opposite signed radii resolve full overlap or complementary endpoints structurally; synthetic but algebraically equal frames deliberately fall through to exact correlated predicates.",
+    "policy": "STRICT accepts only exact correlated signs and selected-root equality. APPROXIMATE_512 executes the same topology graph and may terminate only through the existing recorded 512-bit predicate boundary."
+  },
+  "capability": {
+    "comparison_revision": "Equal supporting circles produced one undifferentiated CoincidentSupportingCircle result.",
+    "source_revision": "Coincident supports now return an exact full or partial overlap with ordered dual-domain boundaries, two endpoint-only contacts for complementary halves, or no contacts for unequal concentric radii.",
+    "fixtures": [
+      "same-frame full overlap with same traversal",
+      "same-frame full overlap with reversed traversal",
+      "independent selected roots with a quarter-circle partial overlap",
+      "independent selected roots with an exact 3-4-5 oblique boundary at u=1/3",
+      "swapped operands and reversed partial traversal",
+      "both radial/traversal forms of complementary endpoint-only halves",
+      "concentric unequal radii"
+    ],
+    "intentional_boundary": "The complete pair result remains crate-internal until its correlated cuts can be retained as editable subfragments and admitted through every CurveRegion2 arrangement operation."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "complete_three_fixture_group": {
+      "method": "eleven release unit-test processes pinned to CPU 11 under perf stat; each process executes the zero-dimensional and overlap pair fixtures under both policies",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses <release-lib-test> algebraic_cusp_semicircle_pair",
+      "task_clock_ms": 4.60,
+      "cycles": 13903237,
+      "instructions": 27759601,
+      "branches": 5748669,
+      "branch_misses": 103286,
+      "elapsed_seconds": 0.005003809,
+      "interpretation": "This is the complete current algebraic-cusp pair baseline, including process and test-harness startup."
+    },
+    "focused_new_overlap_fixture": {
+      "method": "eleven release unit-test processes pinned to CPU 11 under perf stat; each process executes every new overlap topology under both policies",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses <release-lib-test> --exact bezier_offset::conversion_tests::algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap",
+      "task_clock_ms": 2.75,
+      "cycles": 6708275,
+      "instructions": 10246360,
+      "branches": 2151948,
+      "branch_misses": 53697,
+      "elapsed_seconds": 0.003050560,
+      "interpretation": "The fixture includes cheap shared-frame full/complement cases and exact independent-root partial-overlap predicates; startup is a material fraction of the result."
+    },
+    "matched_existing_pair_guard": {
+      "workload": "the unchanged two-policy transverse, swapped, tangent, disjoint, opposite-half, coincident-support, contact-map, and bracket fixtures",
+      "method": "the new overlap fixture is skipped from the source binary; comparison numbers are the immediately preceding checkpoint on the same host and toolchain",
+      "comparison_revision": {
+        "task_clock_ms": 3.35,
+        "cycles": 9215548,
+        "instructions": 19414352,
+        "branches": 3989356,
+        "branch_misses": 63747,
+        "elapsed_seconds": 0.003627363
+      },
+      "source_revision": {
+        "task_clock_ms": 3.22,
+        "cycles": 8686851,
+        "instructions": 18483660,
+        "branches": 3794377,
+        "branch_misses": 61163,
+        "elapsed_seconds": 0.003633931
+      },
+      "change_percent": {
+        "task_clock": -3.88060,
+        "cycles": -5.73702,
+        "instructions": -4.79384,
+        "branches": -4.88747,
+        "branch_misses": -4.05352,
+        "elapsed": 0.18106
+      },
+      "interpretation": "The shared-frame coincident-support fast path removes exact polynomial construction from the existing guard. Deterministic instructions and branches fall about 4.8%; elapsed time is unchanged within sub-4-ms process-startup noise."
+    },
+    "historical_and_competitive_controls": {
+      "source": "inherited from 2026-08-02-algebraic-cusp-semicircle-pairs.json because the representative production .text section remains byte-size identical",
+      "exact_open_cubic_offset_ns": 29761941.2,
+      "native_line_arc_offset_ns": 18854.4,
+      "current_curvo_open_cubic_ns": 8310.4,
+      "current_cavalier_line_arc_ns": 913.5,
+      "interpretation": "The binary64 competitors remain throughput controls only: neither provides selected-root exact coincident-support classification or correlated dual-domain overlap boundaries."
+    }
+  },
+  "memory": {
+    "allocation_profile": {
+      "tool": "Heaptrack direct release-unit-test trace",
+      "profile": "/tmp/hypercurve-algebraic-cusp-overlap-d1edc5c.zst.zst",
+      "workload": "all three two-policy algebraic-cusp pair fixtures",
+      "allocation_calls": 52947,
+      "temporary_allocations": 1873,
+      "peak_heap": "357.92 KiB",
+      "instrumented_runtime_seconds": 0.07,
+      "interpretation": "Full overlaps retain only endpoint tags; partial overlaps allocate one shared correlated map. Exact polynomial and selected-root arithmetic still dominate the fixture."
+    },
+    "retained_handle": {
+      "bytes": 8,
+      "interpretation": "Each retained overlap is one Arc pointer regardless of polynomial degree or refinement history."
+    }
+  },
+  "release_size": {
+    "method": "representative all-feature curve_region_boolean_batch release executable compared with the immediately preceding checkpoint",
+    "source_file_bytes": 7875288,
+    "comparison_file_bytes": 7875776,
+    "file_change_bytes": -488,
+    "source_aggregate_text_bytes": 5961398,
+    "comparison_aggregate_text_bytes": 5961398,
+    "aggregate_data_bytes": 266400,
+    "aggregate_bss_bytes": 4136,
+    "source_actual_text_section_bytes": 4436295,
+    "comparison_actual_text_section_bytes": 4436295,
+    "source_allocated_section_bytes": 6232690,
+    "comparison_allocated_section_bytes": 6232690,
+    "interpretation": "The unadmitted overlap kernel is dead-stripped. Every allocated section is byte-size identical; the raw file is 488 metadata bytes smaller."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-algebraic-cusp-overlap-d1edc5c-clean --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 32061,
+    "edges": 59317,
+    "confirmed_paths": [
+      "BezierAlgebraicCuspSemicircle2::pair_intersections -> exact_full_pair_overlap",
+      "BezierAlgebraicCuspSemicircle2::pair_intersections -> coincident_pair_intersections -> coincident_pair_system",
+      "BezierAlgebraicCuspSemicirclePairOverlap2::endpoint_parameter_bracket -> endpoint_order_to_real",
+      "BezierAlgebraicCuspSemicirclePairOverlap2::endpoint_order_to_real -> algebraic_cusp_correlated_predicate_sign"
+    ]
+  },
+  "verification": {
+    "focused_fixtures": "passed every pair and overlap relation under STRICT and APPROXIMATE_512",
+    "all_feature_library": "passed: 368 tests",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_builds": "passed all-feature focused unit and curve_region_boolean_batch builds",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "define compact algebraic cusp contact cuts and subfragments",
+    "admit the complete carrier to CurveRegion2 pair dispatch, splitting, winding, and traversal",
+    "replay selected positive-dimensional analytic-parallel/circle components into exact overlap ranges",
+    "route general algebraic U-turn and distinct-carrier joins through the authoritative raw-offset graph",
+    "complete finite projection/export and solver-driven fillet/chamfer work",
+    "continue reducing exact polynomial and local-field allocation churn"
+  ]
+}
