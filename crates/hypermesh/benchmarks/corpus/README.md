@@ -25,3 +25,10 @@ Current tiers are intentionally explicit:
 assets, competitive cases absent from the Rust benchmark corpus, and heap rows
 without a large size tier. The implementation-test migration ledger is filled
 before subdivision/trace tests are deleted.
+
+`large_mesh_heap_probe` exposes both `boxes-3072` and
+`boxes-3072-general`. They contain the same 6,144 exact input triangles; the
+first retains certified-convex input facts while the second deliberately omits
+them so heap measurements exercise the general arrangement path. Every heap
+gate runs both `STRICT` and `APPROXIMATE_512` and records output certainty and
+topology with the process-memory result.

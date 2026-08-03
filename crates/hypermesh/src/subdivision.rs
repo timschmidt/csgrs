@@ -14,7 +14,8 @@ use crate::halfspace::{
     support_side_halfspace,
 };
 use crate::intersection::{
-    PairwiseIntersection, PairwiseIntersectionType, intersect_polygons_with_vertices,
+    PairwiseIntersection, PairwiseIntersectionGraph, PairwiseIntersectionRow,
+    PairwiseIntersectionType, intersect_polygons_with_vertices,
     pairwise_intersections_by_polygon_with_certified_embedded_inputs,
     segment_has_strict_interior_point_in_both,
 };
@@ -217,7 +218,7 @@ struct PairwiseIntersectionsCacheEntry {
     polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     certified_embedded_inputs: Vec<bool>,
-    result: HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>>,
+    result: HypermeshResult<Arc<PairwiseIntersectionGraph>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -401,19 +402,17 @@ fn process_leaf_into_inner_with_pairwise_cache(
     output: &mut Vec<ClassifiedPolygon>,
     leaf_classification_cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
     leaf_point_classification_cache: &RefCell<Vec<LeafPointClassificationCacheEntry>>,
-    pairwise_query: impl FnOnce(
-        &[ConvexPolygon],
-    ) -> HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>>,
-    bsp_leaves_query: impl Fn(
+    pairwise_query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Arc<PairwiseIntersectionGraph>>,
+    bsp_leaves_query: impl for<'a> Fn(
         &ConvexPolygon,
         &[ConvexPolygon],
-        &[PairwiseIntersection],
+        PairwiseIntersectionRow<'a>,
     ) -> HypermeshResult<Arc<Vec<BspLeaf>>>,
-    certify_bsp_leaf: impl Fn(
+    certify_bsp_leaf: impl for<'a> Fn(
         &ConvexPolygon,
         &[crate::geometry::Plane],
         &[ConvexPolygon],
-        &[PairwiseIntersection],
+        PairwiseIntersectionRow<'a>,
         bool,
         Option<&Point3>,
     ) -> HypermeshResult<
@@ -443,11 +442,12 @@ fn process_leaf_into_inner_with_pairwise_cache(
     let direct_polygon_components =
         direct_leaf_polygon_components(decisions, polygons, &intersections)?;
     let mut direct_component_winding: Vec<Option<WindingNumberVector>> = vec![None; polygons.len()];
-    stats.intersection_count = intersections.iter().map(Vec::len).sum();
+    stats.intersection_count = intersections.event_count();
 
     for index in ordered_leaf_polygon_indices_by_intersections(&intersections) {
         let polygon = &polygons[index];
-        if intersections[index].is_empty() {
+        let host_intersections = intersections.row(index);
+        if host_intersections.is_empty() {
             let component = direct_polygon_components[index].unwrap_or(index);
             let emitted = if let Some(w_front) = direct_component_winding[component].as_ref() {
                 emit_one_direct_from_w_front(
@@ -485,7 +485,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
             continue;
         }
 
-        let bsp_leaves = bsp_leaves_query(polygon, polygons, &intersections[index])?;
+        let bsp_leaves = bsp_leaves_query(polygon, polygons, host_intersections)?;
         let mut seen_bsp_leaf_edges = Vec::new();
         for leaf_index in ordered_bsp_leaf_indices_by_complexity(&bsp_leaves) {
             let leaf = &bsp_leaves[leaf_index];
@@ -517,8 +517,8 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 })
                 .transpose()?
                 .flatten()
-                && intersections[index]
-                    .iter()
+                && host_intersections
+                    .clone()
                     .all(|intersection| intersection.kind != PairwiseIntersectionType::Overlap)
             {
                 let w_back = propagate_wnv(&w_front, 1, &polygon.delta_w)?;
@@ -549,7 +549,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 polygon,
                 &leaf.edges,
                 polygons,
-                &intersections[index],
+                host_intersections,
                 certified_convex_host_mesh.is_some(),
                 leaf.interior_point.as_ref(),
             )?;
@@ -660,13 +660,13 @@ fn classify_projective_point_against_certified_convex_inputs(
 }
 
 fn ordered_leaf_polygon_indices_by_intersections(
-    intersections: &[Vec<PairwiseIntersection>],
+    intersections: &PairwiseIntersectionGraph,
 ) -> Vec<usize> {
     let mut indices = (0..intersections.len()).collect::<Vec<_>>();
     indices.sort_by_key(|&index| {
         (
-            intersections[index].is_empty(),
-            std::cmp::Reverse(intersections[index].len()),
+            intersections.row(index).is_empty(),
+            std::cmp::Reverse(intersections.row(index).len()),
             index,
         )
     });
@@ -2261,7 +2261,7 @@ fn process_leaf_task_into_with_caches(
     };
     let bsp_leaves_query = |polygon: &ConvexPolygon,
                             polygons: &[ConvexPolygon],
-                            intersections: &[PairwiseIntersection]| {
+                            intersections: PairwiseIntersectionRow<'_>| {
         cached_host_bsp_leaves_with(
             decisions,
             host_bsp_cache,
@@ -2274,7 +2274,7 @@ fn process_leaf_task_into_with_caches(
     let bsp_leaf_query = |polygon: &ConvexPolygon,
                           leaf_edges: &[crate::geometry::Plane],
                           polygons: &[ConvexPolygon],
-                          intersections: &[PairwiseIntersection],
+                          intersections: PairwiseIntersectionRow<'_>,
                           single_convex_interior_point: bool,
                           interior_point: Option<&Point3>| {
         cached_bsp_leaf_certification_with(
@@ -2617,7 +2617,7 @@ pub(crate) fn build_host_bsp_leaves(
     decisions: &DecisionContext,
     polygon: &ConvexPolygon,
     polygons: &[ConvexPolygon],
-    intersections: &[PairwiseIntersection],
+    intersections: PairwiseIntersectionRow<'_>,
 ) -> HypermeshResult<Vec<BspLeaf>> {
     let mut bsp = LocalBsp::new(decisions, polygon)?;
     bsp.add_overlap_edges(decisions, &unique_overlap_edge_planes(intersections))?;
@@ -2645,7 +2645,7 @@ fn cached_host_bsp_leaves_with(
     retain_cache_miss: bool,
     polygon: &ConvexPolygon,
     polygons: &[ConvexPolygon],
-    intersections: &[PairwiseIntersection],
+    intersections: PairwiseIntersectionRow<'_>,
 ) -> HypermeshResult<Arc<Vec<BspLeaf>>> {
     if !retain_cache_miss {
         crate::trace_dispatch!("host-bsp-cache", "one-shot-bypass");
@@ -2677,7 +2677,7 @@ fn cached_bsp_leaf_certification_with(
     host: &ConvexPolygon,
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
-    intersections: &[PairwiseIntersection],
+    intersections: PairwiseIntersectionRow<'_>,
     single_convex_interior_point: bool,
     interior_point: Option<&Point3>,
 ) -> HypermeshResult<Arc<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>> {
@@ -2783,7 +2783,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
     polygon: &ConvexPolygon,
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
-    host_intersections: Option<&[PairwiseIntersection]>,
+    host_intersections: Option<PairwiseIntersectionRow<'_>>,
     single_convex_interior_point: bool,
     interior_point: Option<&Point3>,
 ) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
@@ -2993,7 +2993,7 @@ fn certify_bsp_leaf_against_candidate(
 fn bsp_leaf_certification_candidate_indices(
     polygon: &ConvexPolygon,
     polygons: &[ConvexPolygon],
-    host_intersections: Option<&[PairwiseIntersection]>,
+    host_intersections: Option<PairwiseIntersectionRow<'_>>,
 ) -> HypermeshResult<Vec<usize>> {
     if let Some(host_intersections) = host_intersections {
         let mut indices = Vec::new();
@@ -3113,7 +3113,7 @@ fn push_unique_overlap_edge_plane(edges: &mut Vec<Plane>, candidate: &Plane) {
     edges.push(candidate.clone());
 }
 
-fn unique_overlap_edge_planes(intersections: &[PairwiseIntersection]) -> Vec<Plane> {
+fn unique_overlap_edge_planes(intersections: PairwiseIntersectionRow<'_>) -> Vec<Plane> {
     let mut edges = Vec::new();
     for intersection in intersections {
         if let Some(overlap) = &intersection.overlap {
@@ -3128,14 +3128,13 @@ fn unique_overlap_edge_planes(intersections: &[PairwiseIntersection]) -> Vec<Pla
 fn direct_leaf_polygon_components(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
-    intersections: &[Vec<PairwiseIntersection>],
+    intersections: &PairwiseIntersectionGraph,
 ) -> HypermeshResult<Vec<Option<usize>>> {
     let vertices = polygons
         .iter()
-        .zip(intersections)
-        .map(|(polygon, intersections)| {
-            intersections
-                .is_empty()
+        .zip(intersections.iter())
+        .map(|(polygon, row)| {
+            row.is_empty()
                 .then(|| polygon.vertices_decision(decisions))
                 .transpose()
         })
@@ -3200,7 +3199,7 @@ fn union_component_roots(parents: &mut [usize], left: usize, right: usize) {
 fn cached_pairwise_intersections_by_polygon_with(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>> {
+) -> HypermeshResult<Arc<PairwiseIntersectionGraph>> {
     cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
         &crate::test_support::approximate_decisions(),
         cache,
@@ -3214,7 +3213,7 @@ fn cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
     certified_embedded_inputs: &[bool],
-) -> HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>> {
+) -> HypermeshResult<Arc<PairwiseIntersectionGraph>> {
     if let Some(result) = cache
         .borrow()
         .iter()
@@ -3276,7 +3275,7 @@ fn cache_pairwise_intersections_result(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
     certified_embedded_inputs: &[bool],
-    result: &HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>>,
+    result: &HypermeshResult<Arc<PairwiseIntersectionGraph>>,
 ) {
     if cache.borrow().iter().any(|existing| {
         existing.polygons == polygons
@@ -3319,9 +3318,9 @@ fn polygon_family_order_mapping(
 }
 
 fn remap_pairwise_intersections_for_polygon_order(
-    intersections: &[Vec<PairwiseIntersection>],
+    intersections: &PairwiseIntersectionGraph,
     query_to_cached: &[usize],
-) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
+) -> HypermeshResult<PairwiseIntersectionGraph> {
     if intersections.len() != query_to_cached.len() {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
@@ -3334,10 +3333,10 @@ fn remap_pairwise_intersections_for_polygon_order(
         cached_to_query[cached_index] = query_index;
     }
 
-    let mut remapped = Vec::with_capacity(query_to_cached.len());
-    for &cached_index in query_to_cached {
-        let mut query_intersections = Vec::with_capacity(intersections[cached_index].len());
-        for intersection in &intersections[cached_index] {
+    let mut remapped =
+        crate::intersection::PairwiseIntersectionGraphBuilder::new(query_to_cached.len());
+    for (query_index, &cached_index) in query_to_cached.iter().enumerate() {
+        for intersection in intersections.row(cached_index) {
             let mut remapped_intersection = intersection.clone();
             if let Some(segment) = &mut remapped_intersection.segment {
                 if segment.other_polygon_idx >= cached_to_query.len() {
@@ -3351,12 +3350,11 @@ fn remap_pairwise_intersections_for_polygon_order(
                 }
                 overlap.other_polygon_idx = cached_to_query[overlap.other_polygon_idx];
             }
-            query_intersections.push(remapped_intersection);
+            remapped.append(query_index, remapped_intersection)?;
         }
-        remapped.push(query_intersections);
     }
 
-    Ok(remapped)
+    Ok(remapped.finish())
 }
 
 fn normalize_surface_reference(

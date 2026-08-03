@@ -13600,11 +13600,16 @@ fn ordered_interior_points_for_probe_search_with_support_prefers_retained_defini
             Some(intersection)
         })
         .collect::<Vec<_>>();
+    let mut intersection_graph = crate::intersection::PairwiseIntersectionGraphBuilder::new(1);
+    for intersection in intersections {
+        intersection_graph.append(0, intersection).unwrap();
+    }
+    let intersection_graph = intersection_graph.finish();
     let bsp_leaves = crate::subdivision::build_host_bsp_leaves(
         &crate::test_support::approximate_decisions(),
         &host,
         &polygons,
-        &intersections,
+        intersection_graph.row(0),
     )
     .unwrap();
 
@@ -15130,11 +15135,16 @@ fn probe_hot_leaf_probe_family_breakdown() {
             Some(intersection)
         })
         .collect::<Vec<_>>();
+    let mut intersection_graph = crate::intersection::PairwiseIntersectionGraphBuilder::new(1);
+    for intersection in intersections {
+        intersection_graph.append(0, intersection).unwrap();
+    }
+    let intersection_graph = intersection_graph.finish();
     let bsp_leaves = crate::subdivision::build_host_bsp_leaves(
         &crate::test_support::approximate_decisions(),
         host,
         &polygons,
-        &intersections,
+        intersection_graph.row(0),
     )
     .unwrap();
     let (leaf, interior_points, effective_delta_w) = bsp_leaves

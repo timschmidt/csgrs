@@ -515,7 +515,7 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
         &host,
         &host.edges,
         &first_polygons,
-        &first_intersections[0],
+        first_intersections.row(0),
         false,
         None,
     )
@@ -534,7 +534,7 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
         &host,
         &host.edges,
         &second_polygons,
-        &second_intersections[1],
+        second_intersections.row(1),
         false,
         None,
     )
@@ -552,7 +552,7 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
         &host,
         &host.edges,
         &first_polygons,
-        &first_intersections[0],
+        first_intersections.row(0),
         false,
         None,
     )
@@ -578,7 +578,7 @@ fn bsp_leaf_certification_candidate_indices_use_host_segment_and_overlap_only() 
             .unwrap();
 
     let indices =
-        bsp_leaf_certification_candidate_indices(&host, &polygons, Some(&intersections[0]))
+        bsp_leaf_certification_candidate_indices(&host, &polygons, Some(intersections.row(0)))
             .unwrap();
 
     assert_eq!(indices, vec![1, 2]);
@@ -604,7 +604,7 @@ fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
         true,
         &host,
         &first_polygons,
-        &first_intersections[0],
+        first_intersections.row(0),
     )
     .unwrap();
 
@@ -620,7 +620,7 @@ fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
         true,
         &host,
         &second_polygons,
-        &second_intersections[1],
+        second_intersections.row(1),
     )
     .unwrap();
 
@@ -635,7 +635,7 @@ fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
         false,
         &host,
         &first_polygons,
-        &first_intersections[0],
+        first_intersections.row(0),
     )
     .unwrap();
     assert_eq!(one_shot, first);
@@ -2135,7 +2135,7 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
                 let polygon = &child_task.polygons[index];
                 if polygon.mesh_index != 0
                     || polygon.polygon_index != 3
-                    || intersections[index].is_empty()
+                    || intersections.row(index).is_empty()
                 {
                     continue;
                 }
@@ -2143,7 +2143,7 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
                     &crate::test_support::approximate_decisions(),
                     polygon,
                     &child_task.polygons,
-                    &intersections[index],
+                    intersections.row(index),
                 )
                 .unwrap();
                 for leaf in bsp_leaves {
@@ -2156,7 +2156,7 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
                             polygon,
                             &leaf.edges,
                             &child_task.polygons,
-                            Some(&intersections[index]),
+                            Some(intersections.row(index)),
                             false,
                             None,
                         )
@@ -2324,7 +2324,7 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
             let polygon = &child_task.polygons[index];
             if polygon.mesh_index != 2
                 || polygon.polygon_index != 9
-                || intersections[index].is_empty()
+                || intersections.row(index).is_empty()
             {
                 continue;
             }
@@ -2332,7 +2332,7 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
                 &crate::test_support::approximate_decisions(),
                 polygon,
                 &child_task.polygons,
-                &intersections[index],
+                intersections.row(index),
             )
             .unwrap();
             for (leaf_index, leaf) in bsp_leaves.iter().enumerate() {
@@ -2342,7 +2342,7 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
                         polygon,
                         &leaf.edges,
                         &child_task.polygons,
-                        Some(&intersections[index]),
+                        Some(intersections.row(index)),
                         false,
                         None,
                     )
@@ -4570,14 +4570,17 @@ fn ordered_split_attempt_children_prefers_smaller_changed_child_family() {
 
 #[test]
 fn ordered_leaf_polygon_indices_prefers_intersecting_hosts_before_direct_hosts() {
-    let intersections = vec![
-        vec![sample_segment_intersection(1)],
-        vec![],
-        vec![
-            sample_segment_intersection(2),
-            sample_segment_intersection(3),
-        ],
-    ];
+    let mut intersections = crate::intersection::PairwiseIntersectionGraphBuilder::new(3);
+    intersections
+        .append(0, sample_segment_intersection(1))
+        .unwrap();
+    intersections
+        .append(2, sample_segment_intersection(2))
+        .unwrap();
+    intersections
+        .append(2, sample_segment_intersection(3))
+        .unwrap();
+    let intersections = intersections.finish();
 
     let indices = ordered_leaf_polygon_indices_by_intersections(&intersections);
 
@@ -4586,11 +4589,14 @@ fn ordered_leaf_polygon_indices_prefers_intersecting_hosts_before_direct_hosts()
 
 #[test]
 fn ordered_leaf_polygon_indices_keeps_original_order_for_equal_intersection_counts() {
-    let intersections = vec![
-        vec![sample_segment_intersection(1)],
-        vec![sample_segment_intersection(2)],
-        vec![],
-    ];
+    let mut intersections = crate::intersection::PairwiseIntersectionGraphBuilder::new(3);
+    intersections
+        .append(0, sample_segment_intersection(1))
+        .unwrap();
+    intersections
+        .append(1, sample_segment_intersection(2))
+        .unwrap();
+    let intersections = intersections.finish();
 
     let indices = ordered_leaf_polygon_indices_by_intersections(&intersections);
 
@@ -14155,7 +14161,7 @@ fn unique_overlap_edge_planes_preserve_first_occurrence_and_skip_inverted_duplic
     let y0 = Plane::axis_aligned(1, r(0));
     let y1 = Plane::axis_aligned(1, r(1));
     let support = Plane::axis_aligned(2, r(0));
-    let intersections = vec![
+    let intersections = [
         PairwiseIntersection {
             kind: PairwiseIntersectionType::Overlap,
             segment: None,
@@ -14175,8 +14181,13 @@ fn unique_overlap_edge_planes_preserve_first_occurrence_and_skip_inverted_duplic
             }),
         },
     ];
+    let mut graph = crate::intersection::PairwiseIntersectionGraphBuilder::new(1);
+    for intersection in intersections {
+        graph.append(0, intersection).unwrap();
+    }
+    let graph = graph.finish();
 
-    assert_eq!(unique_overlap_edge_planes(&intersections), vec![x0, y0, y1]);
+    assert_eq!(unique_overlap_edge_planes(graph.row(0)), vec![x0, y0, y1]);
 }
 
 #[test]

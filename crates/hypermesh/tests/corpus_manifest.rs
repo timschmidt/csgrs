@@ -133,3 +133,20 @@ fn corpus_spans_initial_replacement_path_classes() {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }
 }
+
+#[test]
+fn large_box_heap_fixture_covers_certified_and_general_paths() {
+    let manifest = manifest();
+    let fixture = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .find(|fixture| fixture["id"].as_str() == Some("subdivided_overlapping_boxes_3072_each"))
+        .expect("large subdivided-box heap fixture");
+
+    assert_eq!(
+        string_array(fixture, "heap_probe_modes"),
+        ["boxes-3072", "boxes-3072-general"]
+    );
+    assert_eq!(fixture["input_triangles"].as_integer(), Some(6144));
+}

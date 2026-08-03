@@ -15,9 +15,9 @@ use hypermesh::{BooleanOp, EmberConfig, MeshContext, PredicatePolicy, boolean_me
 
 fn main() {
     let mut args = std::env::args().skip(1);
-    let fixture = args
-        .next()
-        .expect("expected <boxes-3072|yeahright|yeahright-4|yeahright-8> <policy>");
+    let fixture = args.next().expect(
+        "expected <boxes-3072|boxes-3072-general|yeahright|yeahright-4|yeahright-8> <policy>",
+    );
     let (policy_name, policy) = match args.next().as_deref() {
         Some("strict") => ("STRICT", PredicatePolicy::STRICT),
         Some("approximate-512") => ("APPROXIMATE_512", PredicatePolicy::APPROXIMATE_512),
@@ -27,10 +27,20 @@ fn main() {
         args.next().is_none(),
         "expected exactly one fixture and one policy"
     );
-    let (name, left, right, exact_subdivision_levels) = match fixture.as_str() {
+    let (name, left, right, exact_subdivision_levels, certify_convex) = match fixture.as_str() {
         "boxes-3072" => {
             let case = large_boolean_case();
-            (case.name, case.left, case.right, 0)
+            (case.name, case.left, case.right, 0, true)
+        }
+        "boxes-3072-general" => {
+            let case = large_boolean_case();
+            (
+                "subdivided_boxes_3072_each_general_path",
+                case.left,
+                case.right,
+                0,
+                false,
+            )
         }
         "yeahright" => {
             let case = match std::env::var_os("YEAHRIGHT_HULL_OBJ") {
@@ -48,22 +58,37 @@ fn main() {
             };
             let exact_subdivision_levels =
                 usize::from(case.name == "yeahright_retained_1140_facet_arrangement");
-            (case.name, case.left, case.right, exact_subdivision_levels)
+            (
+                case.name,
+                case.left,
+                case.right,
+                exact_subdivision_levels,
+                true,
+            )
         }
         "yeahright-4" => {
             let case = yeahright_boolean_case_with_subdivisions(4);
-            (case.name, case.left, case.right, 0)
+            (case.name, case.left, case.right, 0, true)
         }
         "yeahright-8" => {
             let case = yeahright_boolean_case_with_subdivisions(8);
-            (case.name, case.left, case.right, 0)
+            (case.name, case.left, case.right, 0, true)
         }
-        _ => panic!("expected boxes-3072, yeahright, yeahright-4, or yeahright-8"),
+        _ => panic!(
+            "expected boxes-3072, boxes-3072-general, yeahright, yeahright-4, or yeahright-8"
+        ),
     };
     let exact_left =
         mesh_common::subdivide_triangles(to_hypermesh(&left), exact_subdivision_levels);
-    let exact_left = exact_left.with_certified_convexity();
-    let exact_right = to_hypermesh(&right).with_certified_convexity();
+    let exact_right = to_hypermesh(&right);
+    let (exact_left, exact_right) = if certify_convex {
+        (
+            exact_left.with_certified_convexity(),
+            exact_right.with_certified_convexity(),
+        )
+    } else {
+        (exact_left, exact_right)
+    };
     drop((left, right));
     let meshes = [exact_left, exact_right];
     let input_triangles = meshes[0].triangles.len() + meshes[1].triangles.len();
