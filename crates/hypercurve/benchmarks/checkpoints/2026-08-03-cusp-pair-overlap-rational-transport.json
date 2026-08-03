@@ -1,0 +1,210 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-03",
+  "checkpoint": "exact rational cusp cuts through certified pair-overlap maps",
+  "source_revision": "88af5fc673c83f982ef9418ce24c68874fffbde9",
+  "comparison_revision": "9644e2038a33e323cf3ccdbe387eff4147442bf0",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "d6014be5cc3ee4961929430d40b5cba83efc4813",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "recursive recovery of an exact RationalBezier2 source carrier beneath one or more certified coincident cusp-pair overlap transports",
+      "transport from an independently selected and reversed cusp field into a genuinely nonlinear degree-four rational target",
+      "exact target cut s^4=1/2 recovered from the source cut t^2=1/2 through t=s^2",
+      "STRICT and APPROXIMATE_512 execution of the same proof graph",
+      "matched historical source, unchanged-path guards, allocation, linked-size, competitive context, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "standalone Pair contact values without a retained rational source",
+      "standalone PairOverlap endpoint values without a retained rational source",
+      "pair-to-analytic and analytic-to-pair nonlinear correspondence",
+      "general primitive-element construction or finite parameter and point projection",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "wrapper_invariant": "PairOverlapMap is created only after exact supporting-circle coincidence and positive-length overlap have been certified. Mapping changes the owning cusp semicircle and parameter orientation while preserving the represented geometric point.",
+    "carrier_recovery": "The implementation recursively peels only PairOverlapMap wrappers and stops at an exact Rational map/contact record. Parallel, Pair, and PairOverlap evidence is never treated as rational-source evidence.",
+    "correspondence": "The recovered source and rational target enter the single RationalBezierOverlapParameterCorrespondence2 authority. That authority independently certifies a common rational image, isolates a unique target preimage, replays exact incidence, and validates the destination overlap range before publication.",
+    "policy": "The recovered source policy must equal the active CurveContext policy. STRICT accepts only exact evidence. APPROXIMATE_512 follows the same proof graph and may terminate only at the common 512-bit predicate boundary.",
+    "failure": "Missing rational lineage, policy mismatch, absent shared-image proof, non-unique preimage, failed incidence, or unresolved range remains explicit. No sampling, f64 conversion, tolerance, uncorrelated resultant-root matching, or finite projection is used."
+  },
+  "capability": {
+    "comparison_revision": "A non-rational cut wrapped by PairOverlapMap had no represented rational value and therefore remained Unsupported when offered to a nonlinear rational target, even when the wrapper's source was an exact rational carrier.",
+    "source_revision": "A certified pair-overlap wrapper now preserves and recovers its exact rational lineage, allowing the existing rational correspondence authority to transport the cut across independent selected cusp fields and nonlinear rational parameterizations.",
+    "new_work_per_expanded_fixture": "Across the two policies, the source fixture adds two exact reversed pair-overlap constructions and two exact nonlinear parameter transports while retaining all comparison-revision work.",
+    "historical_exact_peer": true,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "matched default-feature release unit-test executables pinned to CPU 11 under seven perf-stat repetitions; both revisions used the identical dependency tree; retired instructions and branches are primary",
+    "expanded_policy_matrix": {
+      "workload": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+      "comparison_filtered_tests": 378,
+      "current_filtered_tests": 378,
+      "comparison_task_clock_ms": 135.95,
+      "current_task_clock_ms": 136.37,
+      "task_clock_change_percent": 0.308937,
+      "comparison_cycles": 562678145,
+      "current_cycles": 564866710,
+      "cycle_change_percent": 0.388952,
+      "comparison_instructions": 1455619499,
+      "current_instructions": 1461320323,
+      "instruction_change_percent": 0.391646,
+      "comparison_branches": 262234150,
+      "current_branches": 263405147,
+      "branch_change_percent": 0.446552,
+      "comparison_branch_misses": 3432725,
+      "current_branch_misses": 3479622,
+      "interpretation": "This is a capability-expanded workload, not an equal-work throughput comparison. The additional exact pair-overlap construction and nonlinear transport per policy cost 0.39% more retired instructions across the complete fixture."
+    },
+    "unchanged_rational_overlap_guard": {
+      "workload": "algebraic_cusp_circle_degenerate_projection_is_filtered_at_the_selected_root",
+      "comparison_instructions": 30603639,
+      "current_instructions": 30603562,
+      "instruction_change_percent": -0.000252,
+      "comparison_branches": 6097455,
+      "current_branches": 6097440,
+      "branch_change_percent": -0.000246,
+      "interpretation": "The existing rational projection path is instruction- and branch-neutral to measurement resolution."
+    },
+    "unchanged_analytic_contact_guard": {
+      "workload": "algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "comparison_instructions": 27858741,
+      "current_instructions": 27858324,
+      "instruction_change_percent": -0.001497,
+      "comparison_branches": 5239510,
+      "current_branches": 5239402,
+      "branch_change_percent": -0.002061,
+      "interpretation": "The analytic contact path is instruction- and branch-neutral to measurement resolution."
+    },
+    "competitive_context": {
+      "method": "retained immediately preceding current comparative-benchmark runs, 11 samples at a 100 ms target per sample on CPU 11; this carrier-only change does not enter either competitive lane and both unchanged guards are neutral",
+      "direct_guarantee_equivalent": false,
+      "retained_open_cubic_offset_ns": {
+        "hypercurve_certified_stabilized": 29919627.0,
+        "hypercurve_certified_transient_first_run": 47786867.7,
+        "hypercurve_chord_fallback": 991577.8,
+        "curvo_heuristic": 8474.9,
+        "certified_to_curvo_ratio": 3530.381125,
+        "chord_fallback_to_curvo_ratio": 117.001711
+      },
+      "retained_line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 17944.0,
+        "cavalier_contours": 935.7,
+        "hypercurve_to_cavalier_ratio": 19.177087
+      },
+      "interpretation": "Neither finite competitor retains algebraic parameter fields or exposes a STRICT/APPROXIMATE_512-equivalent result. These remain throughput targets, not correctness peers for exact carrier transport."
+    }
+  },
+  "memory": {
+    "tool": "matched Heaptrack direct default-feature release-unit-test traces; heaptrack_print summaries are authoritative",
+    "expanded_policy_matrix": {
+      "comparison_allocation_calls": 2433309,
+      "current_allocation_calls": 2444876,
+      "allocation_call_change_percent": 0.475354,
+      "comparison_temporary_allocations": 348527,
+      "current_temporary_allocations": 349181,
+      "temporary_allocation_change_percent": 0.187646,
+      "comparison_peak_heap_reported_mib": 2.02,
+      "current_peak_heap_reported_mib": 2.05,
+      "peak_heap_change_percent": 1.485149,
+      "comparison_recorder_peak_rss_reported_mib": 44.10,
+      "current_recorder_peak_rss_reported_mib": 44.62,
+      "interpretation": "The expanded fixture performs one additional exact pair-overlap construction and transport per policy. The wrapper itself retains an existing shared value and introduces no production allocation."
+    },
+    "unchanged_rational_overlap_guard": {
+      "comparison_allocation_calls": 57841,
+      "current_allocation_calls": 57841,
+      "comparison_temporary_allocations": 6102,
+      "current_temporary_allocations": 6102,
+      "comparison_peak_heap_reported_kib": 371.38,
+      "current_peak_heap_reported_kib": 371.38,
+      "interpretation": "Recursive rational-lineage recovery adds no allocation call, temporary allocation, or measured peak-heap cost to the unchanged path."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "matched representative curve_region_boolean_batch release executables from 9644e20 and 88af5fc with identical dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8184856,
+      "current_file_bytes": 8185312,
+      "file_change_bytes": 456,
+      "file_change_percent": 0.005571,
+      "comparison_text_bytes": 6233481,
+      "current_text_bytes": 6233721,
+      "text_change_bytes": 240,
+      "text_change_percent": 0.003850,
+      "comparison_actual_text_section_bytes": 4706199,
+      "current_actual_text_section_bytes": 4706359,
+      "actual_text_change_bytes": 160,
+      "actual_text_change_percent": 0.003400
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7964632,
+      "current_file_bytes": 7965184,
+      "file_change_bytes": 552,
+      "file_change_percent": 0.006931,
+      "comparison_text_bytes": 6051545,
+      "current_text_bytes": 6051785,
+      "text_change_bytes": 240,
+      "text_change_percent": 0.003966,
+      "comparison_actual_text_section_bytes": 4550935,
+      "current_actual_text_section_bytes": 4551095,
+      "actual_text_change_bytes": 160,
+      "actual_text_change_percent": 0.003516
+    },
+    "interpretation": "The wrapper recovery adds 160 bytes of linked .text in both representative feature configurations, less than 0.004% in either artifact."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir target/hypercurve-pair-overlap-rational-88af5fc --crate-name hypercurve,hypersolve,hyperreal,hyperlimit --format json --per-library",
+    "artifact": "target/hypercurve-pair-overlap-rational-88af5fc/callgraph.json",
+    "comparison_nodes": 34210,
+    "current_nodes": 34215,
+    "node_change_percent": 0.014616,
+    "comparison_edges": 60508,
+    "current_edges": 60514,
+    "edge_change_percent": 0.009916,
+    "confirmed_paths": [
+      "BezierAlgebraicCuspSemicircleMappedOverlap2::other_parameter_for_cusp -> BezierAlgebraicCuspSemicircleMappedParameterData2::coincident_rational_source",
+      "coincident_rational_source -> recursive PairOverlapMap source peeling",
+      "recovered Rational source -> RationalBezierOverlapParameterCorrespondence2::map_parameter_between_curves",
+      "rational correspondence -> exact shared-image, target-preimage, incidence, and destination-range proof",
+      "unproved or non-rational pair evidence -> existing exact fallbacks or explicit Uncertain"
+    ]
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed: 383 tests",
+    "hypercurve_default_features_library": "passed: 379 tests",
+    "hypercurve_no_default_features_library": "passed: 320 tests",
+    "hypercurve_default_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_no_default_curve_region_boolean_integration": "passed: 12 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_default_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "release_builds": "passed all-feature and default-feature unit tests plus matched default/minimal batch artifacts",
+    "strict_and_approximate": "passed reversed independent-field pair-overlap transport into a nonlinear degree-four rational carrier under both policies",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "project standalone Pair and PairOverlap algebraic values across exact carriers without losing root correlation",
+    "construct arbitrary nonlinear algebraic cut transport involving analytic-parallel carriers",
+    "generalize independent selected-field transport beyond exact rational lineage without equating independent resultant roots",
+    "support independent algebraic endpoint ranges and direct cusp-carrier winding",
+    "broaden exact differential coverage for repeated stationary roots, multiplicities, and unrelated selected fields",
+    "reduce remaining local-field, resultant, Sturm, bigint, and retained-proof memory",
+    "complete finite projection/export and distinct-carrier general algebraic joins",
+    "implement radius-driven fillet and corner-enum chamfer solvers in the authoritative CurveRegion2 engine",
+    "delete displaced historical Boolean, offset, and corner machinery after differential coverage passes"
+  ]
+}
