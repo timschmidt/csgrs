@@ -4029,7 +4029,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     #[cfg(feature = "predicates")]
                     {
                         other
-                            .classify_algebraic_point_raw(&point, &self.data.policy)
+                            .classify_algebraic_point_off_boundary_raw(&point, &self.data.policy)
                             .map_err(|cause| self.invalid(carrier_index, cause))?
                     }
                     #[cfg(not(feature = "predicates"))]
@@ -7438,6 +7438,40 @@ mod certified_successor_tests {
                 Classification::Decided(RegionPointLocation::Outside),
             );
 
+            let curved_cap = |control_y: i8| {
+                let left = Point2::from_values(-10, -10);
+                let right = Point2::from_values(10, -10);
+                CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                    &[CurvePath2::try_new(vec![
+                        Curve2::from(LineSeg2::try_new(left.clone(), right.clone()).unwrap()),
+                        Curve2::from(QuadraticBezier2::new(
+                            right,
+                            Point2::from_values(0, control_y),
+                            left,
+                        )),
+                    ])
+                    .unwrap()],
+                    &[CurveRegionLoopRole::Material],
+                    &[FillRule::NonZero],
+                    &[crate::CurveBoundaryInteriorSide2::Left],
+                    &policy,
+                )
+                .unwrap()
+                .into_value()
+            };
+            assert_eq!(
+                curved_cap(30)
+                    .classify_algebraic_point_off_boundary_raw(&point, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+            assert_eq!(
+                curved_cap(0)
+                    .classify_algebraic_point_off_boundary_raw(&point, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Outside),
+            );
+
             let parameter = sqrt_half_parameter(&policy);
             let boundary = RationalBezierAlgebraicPointImage2::from_parametric_source(
                 rational_line(0, 1),
@@ -7449,6 +7483,117 @@ mod certified_successor_tests {
                     .classify_algebraic_point_raw(&boundary, &policy)
                     .unwrap(),
                 Classification::Decided(RegionPointLocation::Boundary),
+            );
+            let parabola = RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(0, 0),
+                    Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::zero()),
+                    Point2::from_values(1, 1),
+                ],
+                vec![Real::one(); 3],
+            )
+            .unwrap();
+            let parabola_boundary = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                parabola.clone(),
+                parameter.clone(),
+                &policy,
+            );
+            let parabola_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                &[CurvePath2::try_new(vec![
+                    Curve2::from(parabola),
+                    Curve2::from(
+                        LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(0, 1))
+                            .unwrap(),
+                    ),
+                    Curve2::from(
+                        LineSeg2::try_new(Point2::from_values(0, 1), Point2::from_values(0, 0))
+                            .unwrap(),
+                    ),
+                ])
+                .unwrap()],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &[crate::CurveBoundaryInteriorSide2::Left],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            assert_eq!(
+                parabola_region
+                    .classify_algebraic_point_raw(&parabola_boundary, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Boundary),
+            );
+            let dyadic_ray_point = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                rational_line(0, 1),
+                parameter.clone(),
+                &policy,
+            );
+            let lower_left = Point2::from_values(-2, -1);
+            let lower_right = Point2::from_values(2, -1);
+            let upper_right = Point2::from_values(2, 1);
+            let upper_left = Point2::from_values(-2, 1);
+            let dyadic_crossing_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                &[CurvePath2::try_new(vec![
+                    Curve2::from(
+                        LineSeg2::try_new(lower_left.clone(), lower_right.clone()).unwrap(),
+                    ),
+                    Curve2::from(QuadraticBezier2::new(
+                        lower_right,
+                        Point2::from_values(0, 0),
+                        upper_right.clone(),
+                    )),
+                    Curve2::from(LineSeg2::try_new(upper_right, upper_left.clone()).unwrap()),
+                    Curve2::from(LineSeg2::try_new(upper_left, lower_left).unwrap()),
+                ])
+                .unwrap()],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &[crate::CurveBoundaryInteriorSide2::Left],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            assert_eq!(
+                dyadic_crossing_region
+                    .classify_algebraic_point_off_boundary_raw(&dyadic_ray_point, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+            let ninth = (Real::one() / Real::from(9_i8)).unwrap();
+            let tangent_start = Point2::new(Real::from(2_i8), ninth.clone());
+            let tangent_end = Point2::new(Real::from(2_i8), &ninth * Real::from(4_i8));
+            let tangent_upper_right = Point2::new(Real::from(3_i8), &ninth * Real::from(4_i8));
+            let tangent_lower_right = Point2::new(Real::from(3_i8), ninth.clone());
+            let tangent_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                &[CurvePath2::try_new(vec![
+                    Curve2::from(QuadraticBezier2::new(
+                        tangent_start.clone(),
+                        Point2::new(Real::zero(), -(&ninth * Real::from(2_i8))),
+                        tangent_end.clone(),
+                    )),
+                    Curve2::from(
+                        LineSeg2::try_new(tangent_end, tangent_upper_right.clone()).unwrap(),
+                    ),
+                    Curve2::from(
+                        LineSeg2::try_new(tangent_upper_right, tangent_lower_right.clone())
+                            .unwrap(),
+                    ),
+                    Curve2::from(LineSeg2::try_new(tangent_lower_right, tangent_start).unwrap()),
+                ])
+                .unwrap()],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &[crate::CurveBoundaryInteriorSide2::Right],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            assert_eq!(
+                tangent_region
+                    .classify_algebraic_point_off_boundary_raw(&dyadic_ray_point, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Outside),
             );
             let line_extension = RationalBezierAlgebraicPointImage2::from_parametric_source(
                 rational_line(2, 4),

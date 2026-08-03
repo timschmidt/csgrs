@@ -409,6 +409,7 @@ struct RetainedRationalPointParametricSource {
 
 #[cfg(feature = "predicates")]
 pub(crate) struct RationalBezierAlgebraicPointPredicate2<'a> {
+    root: &'a AlgebraicRootRepresentation,
     x_numerator: &'a [Real],
     y_numerator: &'a [Real],
     denominator: &'a [Real],
@@ -784,6 +785,7 @@ impl RationalBezierAlgebraicPointImage2 {
             };
         Ok(Classification::Decided(
             RationalBezierAlgebraicPointPredicate2 {
+                root: image.parameter(),
                 x_numerator,
                 y_numerator,
                 denominator,
@@ -851,6 +853,66 @@ impl RationalBezierAlgebraicPointPredicate2<'_> {
                 RealSign::Zero => Ordering::Equal,
                 RealSign::Positive => Ordering::Greater,
             }))
+    }
+
+    pub(crate) const fn retained_root(&self) -> &AlgebraicRootRepresentation {
+        self.root
+    }
+
+    pub(crate) const fn coordinate_polynomials(&self) -> (&[Real], &[Real], &[Real]) {
+        (self.x_numerator, self.y_numerator, self.denominator)
+    }
+
+    pub(crate) fn homogeneous_linear_difference_sign(
+        &self,
+        x_numerator: &Real,
+        y_numerator: &Real,
+        weight: &Real,
+        x_factor: &Real,
+        y_factor: &Real,
+        curve_weight_sign: RealSign,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let curve_linear = x_factor * x_numerator + y_factor * y_numerator;
+        let coefficient_count = self
+            .x_numerator
+            .len()
+            .max(self.y_numerator.len())
+            .max(self.denominator.len());
+        let difference = (0..coefficient_count)
+            .map(|index| {
+                let query_linear = x_factor
+                    * self
+                        .x_numerator
+                        .get(index)
+                        .cloned()
+                        .unwrap_or_else(Real::zero)
+                    + y_factor
+                        * self
+                            .y_numerator
+                            .get(index)
+                            .cloned()
+                            .unwrap_or_else(Real::zero);
+                &curve_linear
+                    * self
+                        .denominator
+                        .get(index)
+                        .cloned()
+                        .unwrap_or_else(Real::zero)
+                    - weight * query_linear
+            })
+            .collect();
+        Ok(self.geometric_sign(difference, policy)?.map(|sign| {
+            if curve_weight_sign == RealSign::Negative {
+                match sign {
+                    RealSign::Negative => RealSign::Positive,
+                    RealSign::Zero => RealSign::Zero,
+                    RealSign::Positive => RealSign::Negative,
+                }
+            } else {
+                sign
+            }
+        }))
     }
 
     pub(crate) fn oriented_line_side(
