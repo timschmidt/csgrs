@@ -774,35 +774,21 @@ fn rational_overlap_parameter_for_exact_cusp(
         Classification::Decided(incidence) => incidence,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let cusp_root = parameter_representation(cusp_parameter, policy);
-    let quotient = algebraic_cusp_quotient_ring_fiber_projection(&incidence, &cusp_root, policy)?;
-    let candidates = match quotient {
-        Classification::Decided(ResultantParameterProjection::Empty) => Vec::new(),
-        Classification::Decided(ResultantParameterProjection::Parameters(candidates)) => candidates,
-        Classification::Decided(ResultantParameterProjection::Degenerate)
-        | Classification::Uncertain(_) => {
-            match algebraic_cusp_projected_fiber_parameters(&incidence, cusp_parameter, policy)? {
-                Classification::Decided(BezierAlgebraicCuspFiberProjection2::Parameters(
-                    candidates,
-                )) => candidates,
-                Classification::Decided(
-                    BezierAlgebraicCuspFiberProjection2::IdenticallyZero
-                    | BezierAlgebraicCuspFiberProjection2::Degenerate,
-                ) => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+    let candidates =
+        match algebraic_cusp_reduced_fiber_parameters(&incidence, cusp_parameter, policy)? {
+            Classification::Decided(BezierAlgebraicCuspFiberProjection2::Parameters(
+                candidates,
+            )) => candidates,
+            Classification::Decided(
+                BezierAlgebraicCuspFiberProjection2::IdenticallyZero
+                | BezierAlgebraicCuspFiberProjection2::Degenerate,
+            ) => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
-        }
-    };
-    retain_unique_overlap_parameter(candidates, range, map_reversed, policy, |candidate| {
-        algebraic_cusp_correlated_predicate_sign(
-            &incidence,
-            &incidence,
-            &map.cusp_parameter,
-            candidate,
-            policy,
-        )
+        };
+    retain_unique_overlap_parameter(candidates, range, map_reversed, policy, |_| {
+        Ok(Classification::Decided(RealSign::Zero))
     })
 }
 
@@ -3857,7 +3843,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
 
         let projected = |polynomial: &BivariatePolynomial| {
-            algebraic_cusp_projected_fiber_parameters(polynomial, self.cusp_parameter(), policy)
+            algebraic_cusp_reduced_fiber_parameters(polynomial, self.cusp_parameter(), policy)
         };
         let selected_roots = match projected(&selected_half_plane)? {
             Classification::Decided(BezierAlgebraicCuspFiberProjection2::Parameters(roots)) => {
@@ -6191,6 +6177,49 @@ fn algebraic_cusp_quotient_ring_fiber_projection(
         )),
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
+}
+
+/// Projects a polynomial that is already reduced in the retained cusp field,
+/// then rejects norm roots contributed only by conjugate cusp roots. The same
+/// unsquared polynomial is both incidence and predicate, so one correlated
+/// replay proves selected-fiber membership without the general resultant plus
+/// batched Sturm pass. Any degenerate or undecided quotient falls back to that
+/// complete authority.
+fn algebraic_cusp_reduced_fiber_parameters(
+    incidence: &BivariatePolynomial,
+    cusp: &BezierAlgebraicParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicCuspFiberProjection2>> {
+    let cusp_root = parameter_representation(cusp, policy);
+    let projection = algebraic_cusp_quotient_ring_fiber_projection(incidence, &cusp_root, policy)?;
+    let candidates = match projection {
+        Classification::Decided(ResultantParameterProjection::Empty) => Vec::new(),
+        Classification::Decided(ResultantParameterProjection::Parameters(candidates)) => candidates,
+        Classification::Decided(ResultantParameterProjection::Degenerate)
+        | Classification::Uncertain(_) => {
+            return algebraic_cusp_projected_fiber_parameters(incidence, cusp, policy);
+        }
+    };
+    let cusp_parameter = BezierParameter2::Algebraic(cusp.clone());
+    let mut retained = Vec::with_capacity(candidates.len());
+    for candidate in candidates {
+        match algebraic_cusp_correlated_predicate_sign(
+            incidence,
+            incidence,
+            &cusp_parameter,
+            &candidate,
+            policy,
+        )? {
+            Classification::Decided(RealSign::Zero) => retained.push(candidate),
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+            Classification::Uncertain(_) => {
+                return algebraic_cusp_projected_fiber_parameters(incidence, cusp, policy);
+            }
+        }
+    }
+    Ok(Classification::Decided(
+        BezierAlgebraicCuspFiberProjection2::Parameters(retained),
+    ))
 }
 
 fn algebraic_cusp_fiber_contains_parameter(
