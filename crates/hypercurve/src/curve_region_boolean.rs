@@ -1937,6 +1937,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
     fn build_split_topology(&self) -> ExactCurveResult<CurveRegionSplitTopology> {
         let mut events = vec![Vec::new(); self.data.carriers.len()];
         let mut contact_points = Vec::<ContactVertex>::new();
+        let mut deferred_contact_matches = Vec::<(usize, usize, UncertaintyReason)>::new();
+        let mut merge_vertices = Vec::new();
+        let mut uncertain_contact_matches = Vec::new();
+        let mut deferred_event_ordering = false;
         let mut next_topology_vertex = 0_usize;
         let mut contact_vertex_counts = Vec::<usize>::new();
         let mut transition_candidates = Vec::<Option<TransitionContactCandidate>>::new();
@@ -1985,24 +1989,31 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 )? {
                     continue;
                 }
-                let first_existing = existing_event_vertex(
+                let first_existing = existing_event_vertex_if_decided(
                     &events[pair.first_carrier_index],
                     first_parameter,
                     &self.data.policy,
-                )?;
-                let second_existing = existing_event_vertex(
+                )
+                .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
+                let second_existing = existing_event_vertex_if_decided(
                     &events[pair.second_carrier_index],
                     second_parameter,
                     &self.data.policy,
-                )?;
+                )
+                .map_err(|cause| self.invalid(pair.second_carrier_index, cause))?;
+                let mut topology_vertex = first_existing.or(second_existing);
+                merge_vertices.clear();
+                if let (Some(first_vertex), Some(second_vertex)) = (first_existing, second_existing)
+                    && first_vertex != second_vertex
+                {
+                    merge_vertices.push(second_vertex);
+                }
+                uncertain_contact_matches.clear();
                 let mut matching_contact_index = None;
-                let mut uncertain_contact_match = None;
                 for (existing_index, existing) in contact_points.iter().enumerate() {
-                    if first_existing == Some(existing.topology_vertex)
-                        || second_existing == Some(existing.topology_vertex)
-                    {
-                        matching_contact_index = Some(existing_index);
-                        break;
+                    if topology_vertex == Some(existing.topology_vertex) {
+                        matching_contact_index.get_or_insert(existing_index);
+                        continue;
                     }
                     if contacts_decided_same_from_shared_parallel(
                         existing,
@@ -2011,8 +2022,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         &self.data.carriers,
                         &self.data.policy,
                     )? {
-                        matching_contact_index = Some(existing_index);
-                        break;
+                        if let Some(vertex) = topology_vertex {
+                            if vertex != existing.topology_vertex
+                                && !merge_vertices.contains(&existing.topology_vertex)
+                            {
+                                merge_vertices.push(existing.topology_vertex);
+                            }
+                        } else {
+                            topology_vertex = Some(existing.topology_vertex);
+                        }
+                        matching_contact_index.get_or_insert(existing_index);
+                        continue;
                     }
                     let distinct = contacts_decided_distinct_from_carriers(
                         existing,
@@ -2032,8 +2052,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         &self.data.policy,
                     ) {
                         Classification::Decided(true) => {
-                            matching_contact_index = Some(existing_index);
-                            break;
+                            if let Some(vertex) = topology_vertex {
+                                if vertex != existing.topology_vertex
+                                    && !merge_vertices.contains(&existing.topology_vertex)
+                                {
+                                    merge_vertices.push(existing.topology_vertex);
+                                }
+                            } else {
+                                topology_vertex = Some(existing.topology_vertex);
+                            }
+                            matching_contact_index.get_or_insert(existing_index);
+                            continue;
                         }
                         Classification::Decided(false) => continue,
                         Classification::Uncertain(_) => {}
@@ -2080,34 +2109,32 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         };
                         match same {
                             Classification::Decided(true) => {
-                                matching_contact_index = Some(existing_index);
-                                break;
+                                if let Some(vertex) = topology_vertex {
+                                    if vertex != existing.topology_vertex
+                                        && !merge_vertices.contains(&existing.topology_vertex)
+                                    {
+                                        merge_vertices.push(existing.topology_vertex);
+                                    }
+                                } else {
+                                    topology_vertex = Some(existing.topology_vertex);
+                                }
+                                matching_contact_index.get_or_insert(existing_index);
                             }
                             Classification::Decided(false) => {}
                             Classification::Uncertain(reason) => {
-                                uncertain_contact_match.get_or_insert(reason);
+                                uncertain_contact_matches.push((existing_index, reason));
                             }
                         }
                     }
                 }
-                if matching_contact_index.is_none()
-                    && let Some(reason) = uncertain_contact_match
-                {
-                    return Err(self.blocked(pair.first_carrier_index, reason));
-                }
-                let matching_contact_vertex =
-                    matching_contact_index.map(|index| contact_points[index].topology_vertex);
-                let topology_vertex = first_existing
-                    .or(second_existing)
-                    .or(matching_contact_vertex)
-                    .unwrap_or_else(|| {
-                        let vertex = next_topology_vertex;
-                        next_topology_vertex += 1;
-                        vertex
-                    });
-                for previous_vertex in [first_existing, second_existing, matching_contact_vertex]
-                    .into_iter()
-                    .flatten()
+                let topology_vertex = topology_vertex.unwrap_or_else(|| {
+                    let vertex = next_topology_vertex;
+                    next_topology_vertex += 1;
+                    vertex
+                });
+                for previous_vertex in merge_vertices
+                    .iter()
+                    .copied()
                     .filter(|previous| *previous != topology_vertex)
                 {
                     replace_topology_vertex(
@@ -2125,23 +2152,33 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     transition_candidates[topology_vertex] = None;
                     transition_candidates[previous_vertex] = None;
                 }
-                if let Some(index) = matching_contact_index {
-                    if matches!(
-                        contact_points[index].point,
-                        Some(RationalBezierIntersectionPointEvidence2::Algebraic(_))
-                    ) && matches!(
-                        contact.point(),
-                        Some(RationalBezierIntersectionPointEvidence2::Exact(_))
-                    ) {
-                        contact_points[index].point = contact.point().cloned();
+                let contact_index = contact_points.len();
+                let point = if let Some(existing_index) = matching_contact_index {
+                    if contact_points[existing_index].point.is_none()
+                        || matches!(
+                            contact_points[existing_index].point,
+                            Some(RationalBezierIntersectionPointEvidence2::Algebraic(_))
+                        ) && matches!(
+                            contact.point(),
+                            Some(RationalBezierIntersectionPointEvidence2::Exact(_))
+                        )
+                    {
+                        contact_points[existing_index].point = contact.point().cloned();
                     }
+                    // The point representative above owns geometric evidence;
+                    // this record only needs the additional carrier incidence.
+                    None
                 } else {
-                    contact_points.push(ContactVertex {
-                        point: contact.point().cloned(),
-                        topology_vertex,
-                        carrier_indices: [pair.first_carrier_index, pair.second_carrier_index],
-                        parameters: [first_parameter.clone(), second_parameter.clone()],
-                    });
+                    contact.point().cloned()
+                };
+                contact_points.push(ContactVertex {
+                    point,
+                    topology_vertex,
+                    carrier_indices: [pair.first_carrier_index, pair.second_carrier_index],
+                    parameters: [first_parameter.clone(), second_parameter.clone()],
+                });
+                for &(existing_index, reason) in &uncertain_contact_matches {
+                    deferred_contact_matches.push((existing_index, contact_index, reason));
                 }
                 if contact_vertex_counts.len() <= topology_vertex {
                     contact_vertex_counts.resize(topology_vertex + 1, 0);
@@ -2173,16 +2210,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 } else {
                     None
                 };
-                push_carrier_event(
+                deferred_event_ordering |= push_contact_carrier_event(
                     &mut events[pair.first_carrier_index],
                     first_parameter.clone(),
                     Some(topology_vertex),
+                    &self.data.carriers[pair.first_carrier_index],
                     &self.data.policy,
                 )?;
-                push_carrier_event(
+                deferred_event_ordering |= push_contact_carrier_event(
                     &mut events[pair.second_carrier_index],
                     second_parameter.clone(),
                     Some(topology_vertex),
+                    &self.data.carriers[pair.second_carrier_index],
                     &self.data.policy,
                 )?;
             }
@@ -2202,12 +2241,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         &mut events[pair.first_carrier_index],
                         parameter.clone(),
                         None,
+                        &self.data.carriers[pair.first_carrier_index],
                         &self.data.policy,
                     )?;
                     push_carrier_event(
                         &mut events[pair.second_carrier_index],
                         second_parameter.clone(),
                         None,
+                        &self.data.carriers[pair.second_carrier_index],
                         &self.data.policy,
                     )?;
                 }
@@ -2218,6 +2259,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     second_range,
                     orientation: overlap.orientation,
                 });
+            }
+        }
+        if deferred_event_ordering {
+            canonicalize_injective_topology_events(
+                &mut events,
+                &self.data.carriers,
+                &self.data.policy,
+            );
+        }
+        for (first_index, second_index, reason) in deferred_contact_matches {
+            let first = &contact_points[first_index];
+            let second = &contact_points[second_index];
+            if first.topology_vertex != second.topology_vertex {
+                return Err(self.blocked(second.carrier_indices[0], reason));
             }
         }
         for overlap in &overlaps {
@@ -2235,6 +2290,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                 }
             }
+        }
+        if deferred_event_ordering {
+            validate_carrier_event_separation(&events, &self.data.carriers, &self.data.policy)?;
         }
 
         let mut exact_contact_point_index_by_vertex = vec![usize::MAX; next_topology_vertex];
@@ -4273,29 +4331,64 @@ fn push_carrier_event(
     events: &mut Vec<CarrierEvent>,
     parameter: BezierParameter2,
     topology_vertex: Option<usize>,
+    carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<()> {
+    push_carrier_event_internal(events, parameter, topology_vertex, carrier, false, policy)
+        .map(|_| ())
+}
+
+fn push_contact_carrier_event(
+    events: &mut Vec<CarrierEvent>,
+    parameter: BezierParameter2,
+    topology_vertex: Option<usize>,
+    carrier: &RegionCarrier,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    push_carrier_event_internal(events, parameter, topology_vertex, carrier, true, policy)
+}
+
+fn push_carrier_event_internal(
+    events: &mut Vec<CarrierEvent>,
+    parameter: BezierParameter2,
+    topology_vertex: Option<usize>,
+    carrier: &RegionCarrier,
+    defer_unordered: bool,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    let mut deferred_ordering = false;
     for event in events.iter_mut() {
+        let same_topology_vertex =
+            topology_vertex.is_some() && event.topology_vertex == topology_vertex;
         match parameter
             .cmp_by_refinement(&event.parameter, policy)
             .map_err(|cause| {
-                ExactCurveError::invalid(
-                    CurveOperation2::Boolean,
-                    CurveFamily2::RationalBezier,
-                    cause,
-                )
+                ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
             })? {
             Classification::Decided(Ordering::Equal) => {
                 if event.topology_vertex.is_none() {
                     event.topology_vertex = topology_vertex;
                 }
-                return Ok(());
+                return Ok(deferred_ordering);
+            }
+            Classification::Decided(_)
+                if same_topology_vertex
+                    && carrier_has_certified_injective_image(carrier, policy) =>
+            {
+                return Ok(deferred_ordering);
             }
             Classification::Decided(_) => {}
+            Classification::Uncertain(_)
+                if same_topology_vertex
+                    && carrier_has_certified_injective_image(carrier, policy) =>
+            {
+                return Ok(deferred_ordering);
+            }
+            Classification::Uncertain(_) if defer_unordered => deferred_ordering = true,
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Boolean,
-                    CurveFamily2::RationalBezier,
+                    carrier.family,
                     reason,
                 ));
             }
@@ -4305,7 +4398,7 @@ fn push_carrier_event(
         parameter,
         topology_vertex,
     });
-    Ok(())
+    Ok(deferred_ordering)
 }
 
 fn seed_loop_topology_vertices(
@@ -4337,12 +4430,14 @@ fn seed_loop_topology_vertices(
                 &mut events[current_index],
                 carrier_traversal_end(&carriers[current_index]).clone(),
                 Some(vertex),
+                &carriers[current_index],
                 policy,
             )?;
             push_carrier_event(
                 &mut events[next_index],
                 carrier_traversal_start(&carriers[next_index]).clone(),
                 Some(vertex),
+                &carriers[next_index],
                 policy,
             )?;
         }
@@ -4379,6 +4474,81 @@ fn existing_event_vertex(
         }
     }
     Ok(None)
+}
+
+fn existing_event_vertex_if_decided(
+    events: &[CarrierEvent],
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Option<usize>> {
+    for event in events {
+        match parameter.cmp_by_refinement(&event.parameter, policy)? {
+            Classification::Decided(Ordering::Equal) => return Ok(event.topology_vertex),
+            Classification::Decided(Ordering::Less | Ordering::Greater)
+            | Classification::Uncertain(_) => {}
+        }
+    }
+    Ok(None)
+}
+
+fn carrier_has_certified_injective_image(carrier: &RegionCarrier, policy: &CurveContext) -> bool {
+    if let Some(&injective) = carrier.image_is_injective.get() {
+        return injective;
+    }
+    let injective = carrier.geometry.has_certified_injective_image(policy);
+    let _ = carrier.image_is_injective.set(injective);
+    injective
+}
+
+fn canonicalize_injective_topology_events(
+    events: &mut [Vec<CarrierEvent>],
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) {
+    for (carrier_events, carrier) in events.iter_mut().zip(carriers) {
+        if !carrier_has_certified_injective_image(carrier, policy) {
+            continue;
+        }
+        let mut index = 0;
+        while index < carrier_events.len() {
+            let duplicate = carrier_events[index].topology_vertex.is_some()
+                && carrier_events[..index].iter().any(|previous| {
+                    previous.topology_vertex == carrier_events[index].topology_vertex
+                });
+            if duplicate {
+                carrier_events.remove(index);
+            } else {
+                index += 1;
+            }
+        }
+    }
+}
+
+fn validate_carrier_event_separation(
+    events: &[Vec<CarrierEvent>],
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) -> ExactCurveResult<()> {
+    for (carrier_events, carrier) in events.iter().zip(carriers) {
+        for (index, event) in carrier_events.iter().enumerate() {
+            for other in &carrier_events[index + 1..] {
+                if let Classification::Uncertain(reason) = event
+                    .parameter
+                    .cmp_by_refinement(&other.parameter, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
+                    })?
+                {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Boolean,
+                        carrier.family,
+                        reason,
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 fn replace_topology_vertex(
@@ -4419,11 +4589,16 @@ fn contacts_decided_distinct_from_carriers(
                 continue;
             };
             if existing_parallel == current_parallel
-                && decided_parameter_cmp(
-                    &existing.parameters[existing_slot],
-                    parameters[current_slot],
-                    policy,
-                )? != Ordering::Equal
+                && matches!(
+                    existing.parameters[existing_slot]
+                        .cmp_by_refinement(parameters[current_slot], policy)
+                        .map_err(|cause| ExactCurveError::invalid(
+                            CurveOperation2::Boolean,
+                            carriers[existing_carrier].family,
+                            cause,
+                        ))?,
+                    Classification::Decided(order) if order != Ordering::Equal
+                )
                 && existing_parallel.regular_fragment_has_certified_injective_axis(policy)
             {
                 return Ok(true);
@@ -4455,19 +4630,21 @@ fn contacts_decided_distinct_from_carriers(
     }
     for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
         let carrier = &carriers[existing_carrier];
-        let image_is_injective = carrier.image_is_injective.get() == Some(&true)
-            || carrier.geometry.has_certified_injective_image(policy);
-        if !image_is_injective {
+        if !carrier_has_certified_injective_image(carrier, policy) {
             continue;
         }
-        let _ = carrier.image_is_injective.set(true);
         for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
             if existing_carrier == current_carrier
-                && decided_parameter_cmp(
-                    &existing.parameters[existing_slot],
-                    parameters[current_slot],
-                    policy,
-                )? != Ordering::Equal
+                && matches!(
+                    existing.parameters[existing_slot]
+                        .cmp_by_refinement(parameters[current_slot], policy)
+                        .map_err(|cause| ExactCurveError::invalid(
+                            CurveOperation2::Boolean,
+                            carrier.family,
+                            cause,
+                        ))?,
+                    Classification::Decided(order) if order != Ordering::Equal
+                )
             {
                 return Ok(true);
             }
@@ -4496,11 +4673,16 @@ fn contacts_decided_same_from_shared_parallel(
                 continue;
             };
             if existing_parallel == current_parallel
-                && decided_parameter_cmp(
-                    &existing.parameters[existing_slot],
-                    parameters[current_slot],
-                    policy,
-                )? == Ordering::Equal
+                && matches!(
+                    existing.parameters[existing_slot]
+                        .cmp_by_refinement(parameters[current_slot], policy)
+                        .map_err(|cause| ExactCurveError::invalid(
+                            CurveOperation2::Boolean,
+                            carriers[existing_carrier].family,
+                            cause,
+                        ))?,
+                    Classification::Decided(Ordering::Equal)
+                )
             {
                 return Ok(true);
             }
@@ -5485,6 +5667,7 @@ mod certified_successor_tests {
         LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicPointImage2,
         Real,
     };
+    use num::bigint::{BigInt, BigUint};
 
     fn decided<T>(classification: Classification<T>) -> T {
         match classification {
@@ -5526,6 +5709,217 @@ mod certified_successor_tests {
             vec![Real::one(); 2],
         )
         .expect("valid rational line")
+    }
+
+    fn shifted_sqrt_half_parameter(shift: Real, policy: &CurveContext) -> BezierParameter2 {
+        let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
+        let polynomial = decided(
+            crate::BezierParameterPolynomial::try_new_power_basis(
+                vec![
+                    &shift * &shift - half,
+                    Real::zero() - &shift * Real::from(2_i8),
+                    Real::one(),
+                ],
+                policy,
+            )
+            .expect("valid shifted quadratic"),
+        );
+        let interval = decided(
+            crate::BezierParameterInterval::try_new(
+                (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
+                Real::one(),
+                policy,
+            )
+            .expect("valid positive-root interval"),
+        );
+        BezierParameter2::Algebraic(decided(
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+                .expect("isolated shifted positive root"),
+        ))
+    }
+
+    fn injective_test_carrier() -> RegionCarrier {
+        RegionCarrier {
+            operand: CurvePathBooleanOperand2::First,
+            loop_index: 0,
+            fragment_index: 0,
+            family: CurveFamily2::RationalBezier,
+            geometry: RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(rational_line(0, 1))),
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            reversed: false,
+            filled_side_is_left: true,
+            image_is_injective: OnceLock::new(),
+            bounds: OnceLock::new(),
+        }
+    }
+
+    fn noninjective_test_carrier() -> RegionCarrier {
+        RegionCarrier {
+            operand: CurvePathBooleanOperand2::First,
+            loop_index: 0,
+            fragment_index: 0,
+            family: CurveFamily2::QuadraticBezier,
+            geometry: RegionCarrierGeometry::Bezier(BezierSubcurve2::Quadratic(
+                QuadraticBezier2::new(
+                    Point2::from_values(0, 0),
+                    Point2::from_values(1, 0),
+                    Point2::from_values(0, 0),
+                ),
+            )),
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            reversed: false,
+            filled_side_is_left: true,
+            image_is_injective: OnceLock::new(),
+            bounds: OnceLock::new(),
+        }
+    }
+
+    #[test]
+    fn injective_carrier_topology_vertex_canonicalizes_unorderable_parameter_aliases() {
+        let policy = CurveContext::STRICT;
+        let first = shifted_sqrt_half_parameter(Real::zero(), &policy);
+        let epsilon = Real::new(
+            crate::Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 600)
+                .expect("positive dyadic epsilon"),
+        );
+        let second = shifted_sqrt_half_parameter(epsilon, &policy);
+        assert_eq!(
+            first.cmp_by_refinement(&second, &policy).unwrap(),
+            Classification::Uncertain(UncertaintyReason::Ordering),
+        );
+
+        let carrier = injective_test_carrier();
+        let mut events = Vec::new();
+        push_carrier_event(&mut events, first.clone(), Some(7), &carrier, &policy).unwrap();
+        push_carrier_event(&mut events, second.clone(), Some(7), &carrier, &policy).unwrap();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].parameter, first);
+
+        assert!(matches!(
+            push_carrier_event(&mut events, second, Some(8), &carrier, &policy),
+            Err(ExactCurveError::Blocked(_)),
+        ));
+
+        let approximate = CurveContext::APPROXIMATE_512;
+        let first = shifted_sqrt_half_parameter(Real::zero(), &approximate);
+        let epsilon = Real::new(
+            crate::Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 600)
+                .expect("positive dyadic epsilon"),
+        );
+        let second = shifted_sqrt_half_parameter(epsilon, &approximate);
+        let carrier = injective_test_carrier();
+        let mut events = Vec::new();
+        push_carrier_event(&mut events, first, Some(7), &carrier, &approximate).unwrap();
+        push_carrier_event(&mut events, second, Some(7), &carrier, &approximate).unwrap();
+        assert_eq!(events.len(), 1);
+    }
+
+    #[test]
+    fn noninjective_carrier_retains_distinct_branches_at_one_topology_vertex() {
+        let policy = CurveContext::STRICT;
+        let carrier = noninjective_test_carrier();
+        let mut events = Vec::new();
+        push_carrier_event(
+            &mut events,
+            BezierParameter2::Exact((Real::one() / Real::from(4_i8)).expect("nonzero denominator")),
+            Some(7),
+            &carrier,
+            &policy,
+        )
+        .unwrap();
+        push_carrier_event(
+            &mut events,
+            BezierParameter2::Exact(
+                (Real::from(3_i8) / Real::from(4_i8)).expect("nonzero denominator"),
+            ),
+            Some(7),
+            &carrier,
+            &policy,
+        )
+        .unwrap();
+        assert_eq!(events.len(), 2);
+
+        let mut all_events = vec![events];
+        canonicalize_injective_topology_events(
+            &mut all_events,
+            std::slice::from_ref(&carrier),
+            &policy,
+        );
+        assert_eq!(all_events[0].len(), 2);
+    }
+
+    #[test]
+    fn transitive_topology_merge_canonicalizes_deferred_injective_aliases() {
+        let policy = CurveContext::STRICT;
+        let first = shifted_sqrt_half_parameter(Real::zero(), &policy);
+        let epsilon = Real::new(
+            crate::Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 600)
+                .expect("positive dyadic epsilon"),
+        );
+        let second = shifted_sqrt_half_parameter(epsilon, &policy);
+        let carriers = [
+            injective_test_carrier(),
+            injective_test_carrier(),
+            injective_test_carrier(),
+        ];
+        let quarter =
+            BezierParameter2::Exact((Real::one() / Real::from(4_i8)).expect("nonzero denominator"));
+        let mut events = vec![Vec::new(), Vec::new(), Vec::new()];
+        push_contact_carrier_event(
+            &mut events[0],
+            first.clone(),
+            Some(1),
+            &carriers[0],
+            &policy,
+        )
+        .unwrap();
+        push_contact_carrier_event(
+            &mut events[1],
+            quarter.clone(),
+            Some(1),
+            &carriers[1],
+            &policy,
+        )
+        .unwrap();
+        push_contact_carrier_event(
+            &mut events[0],
+            second.clone(),
+            Some(2),
+            &carriers[0],
+            &policy,
+        )
+        .unwrap();
+        push_contact_carrier_event(
+            &mut events[2],
+            quarter.clone(),
+            Some(2),
+            &carriers[2],
+            &policy,
+        )
+        .unwrap();
+        assert_eq!(events[0].len(), 2);
+
+        let mut contacts = vec![
+            ContactVertex {
+                point: None,
+                topology_vertex: 1,
+                carrier_indices: [0, 1],
+                parameters: [first, quarter.clone()],
+            },
+            ContactVertex {
+                point: None,
+                topology_vertex: 2,
+                carrier_indices: [0, 2],
+                parameters: [second, quarter],
+            },
+        ];
+        replace_topology_vertex(&mut events, &mut contacts, 2, 1);
+        canonicalize_injective_topology_events(&mut events, &carriers, &policy);
+        validate_carrier_event_separation(&events, &carriers, &policy).unwrap();
+        assert_eq!(events[0].len(), 1);
+        assert!(contacts.iter().all(|contact| contact.topology_vertex == 1));
     }
 
     fn assert_monotone_parallel_pair_proofs_match_complete_solver(
