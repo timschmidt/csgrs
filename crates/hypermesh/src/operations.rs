@@ -2193,6 +2193,32 @@ fn exact_projective_affine_fingerprint(point: &HomogeneousPoint3) -> Option<[u64
     ])
 }
 
+/// Return an order-independent exact modular fingerprint of a retained affine
+/// vertex set. Different fingerprints certify that two rational polygon
+/// cycles cannot be equal; matching fingerprints remain collision candidates
+/// for the complete policy-aware cycle comparison.
+fn exact_polygon_vertex_set_fingerprint(polygon: &ConvexPolygon) -> Option<[u64; 4]> {
+    let vertices = polygon.known_vertices.as_ref()?;
+    let mut fingerprint = [u64::try_from(vertices.len()).ok()?, 0, 0, 0];
+    for point in vertices.iter() {
+        let [x, y, z] = [
+            exact_rational_modulus(point.x.exact_rational_ref()?)?,
+            exact_rational_modulus(point.y.exact_rational_ref()?)?,
+            exact_rational_modulus(point.z.exact_rational_ref()?)?,
+        ];
+        let mut mixed = x
+            .wrapping_add(y.rotate_left(21))
+            .wrapping_add(z.rotate_left(42));
+        mixed = (mixed ^ (mixed >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        mixed = (mixed ^ (mixed >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+        mixed ^= mixed >> 31;
+        fingerprint[1] = fingerprint[1].wrapping_add(mixed);
+        fingerprint[2] ^= mixed;
+        fingerprint[3] = fingerprint[3].wrapping_add(mixed.wrapping_mul(mixed));
+    }
+    Some(fingerprint)
+}
+
 fn exact_rational_modulus(value: &Rational) -> Option<u64> {
     let mut numerator = 0_u64;
     for digit in value.numerator().iter_u64_digits().rev() {
@@ -4157,45 +4183,91 @@ fn projective_output_has_coincident_polygons(
     classified: &[ClassifiedPolygon],
     operation: BooleanOp,
 ) -> HypermeshResult<bool> {
-    let orientations = classified
-        .iter()
-        .map(|fragment| {
-            let orientation = fragment
-                .winding()
-                .map_or(fragment.classification, |winding| {
+    let fingerprint_capacity = classified.len().saturating_sub(classified.len() / 4);
+    let mut fingerprint_buckets: StorageHashMap<[u64; 4], (usize, Vec<usize>)> =
+        StorageHashMap::with_capacity_and_hasher(fingerprint_capacity, Default::default());
+    let mut unkeyed: Vec<usize> = Vec::new();
+
+    for (right_index, fragment) in classified.iter().enumerate() {
+        let orientation = fragment
+            .winding()
+            .map_or(fragment.classification, |winding| {
+                crate::winding::classify_polygon_output(
+                    &winding.w_front,
+                    &winding.w_back,
+                    operation,
+                )
+            });
+        if !matches!(orientation, -1..=1) {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        if orientation == 0 {
+            continue;
+        }
+
+        let right = &fragment.polygon;
+        if let Some(fingerprint) = exact_polygon_vertex_set_fingerprint(right) {
+            if let Some((first, collisions)) = fingerprint_buckets.get(&fingerprint) {
+                for left_index in std::iter::once(*first).chain(collisions.iter().copied()) {
+                    if projective_output_polygons_coincide(
+                        decisions,
+                        &classified[left_index].polygon,
+                        right,
+                    )? {
+                        return Ok(true);
+                    }
+                }
+            }
+            for &left_index in &unkeyed {
+                if projective_output_polygons_coincide(
+                    decisions,
+                    &classified[left_index].polygon,
+                    right,
+                )? {
+                    return Ok(true);
+                }
+            }
+            if let Some((_, collisions)) = fingerprint_buckets.get_mut(&fingerprint) {
+                collisions.push(right_index);
+            } else {
+                fingerprint_buckets.insert(fingerprint, (right_index, Vec::new()));
+            }
+        } else {
+            for (left_index, left) in classified[..right_index].iter().enumerate() {
+                let orientation = left.winding().map_or(left.classification, |winding| {
                     crate::winding::classify_polygon_output(
                         &winding.w_front,
                         &winding.w_back,
                         operation,
                     )
                 });
-            matches!(orientation, -1..=1)
-                .then_some(orientation)
-                .ok_or(crate::error::HypermeshError::UnknownClassification)
-        })
-        .collect::<HypermeshResult<Vec<_>>>()?;
-
-    for left_index in 0..classified.len() {
-        if orientations[left_index] == 0 {
-            continue;
-        }
-        let left = &classified[left_index].polygon;
-        for right_index in (left_index + 1)..classified.len() {
-            if orientations[right_index] == 0 {
-                continue;
+                if orientation != 0
+                    && projective_output_polygons_coincide(
+                        decisions,
+                        &classified[left_index].polygon,
+                        right,
+                    )?
+                {
+                    return Ok(true);
+                }
             }
-            let right = &classified[right_index].polygon;
-            if left.vertex_count() != right.vertex_count()
-                || !certifiably_proportional_plane(decisions, &left.support, &right.support)?
-            {
-                continue;
-            }
-            if polygon_vertex_cycles_match_unoriented(decisions, left, right)? {
-                return Ok(true);
-            }
+            unkeyed.push(right_index);
         }
     }
     Ok(false)
+}
+
+fn projective_output_polygons_coincide(
+    decisions: &DecisionContext,
+    left: &ConvexPolygon,
+    right: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    if left.vertex_count() != right.vertex_count()
+        || !certifiably_proportional_plane(decisions, &left.support, &right.support)?
+    {
+        return Ok(false);
+    }
+    polygon_vertex_cycles_match_unoriented(decisions, left, right)
 }
 
 fn polygon_vertex_cycles_match_unoriented(
@@ -7260,6 +7332,57 @@ mod tests {
         assert!(exact_projective_affine_fingerprint(&modular_zero_weight).is_none());
         assert!(exact_projective_affine_fingerprint(&modular_denominator).is_none());
         assert!(exact_projective_affine_fingerprint(&symbolic).is_none());
+    }
+
+    #[test]
+    fn polygon_vertex_fingerprint_is_unoriented_and_collisions_are_rechecked() {
+        let polygon = |vertices: Vec<Point3>| {
+            let mut polygon = ConvexPolygon::empty();
+            polygon.known_vertices = Some(crate::polygon::RetainedVertexCycle::Owned(Arc::from(
+                vertices,
+            )));
+            polygon
+        };
+        let original = polygon(vec![p(1, 2, 3), p(4, 5, 6), p(7, 8, 9)]);
+        let reversed = polygon(vec![p(7, 8, 9), p(4, 5, 6), p(1, 2, 3)]);
+        let modular_collision = polygon(vec![
+            p(PROJECTIVE_FINGERPRINT_MODULUS as i64 + 1, 2, 3),
+            p(4, 5, 6),
+            p(7, 8, 9),
+        ]);
+
+        assert_eq!(
+            exact_polygon_vertex_set_fingerprint(&original),
+            exact_polygon_vertex_set_fingerprint(&reversed)
+        );
+        assert_eq!(
+            exact_polygon_vertex_set_fingerprint(&original),
+            exact_polygon_vertex_set_fingerprint(&modular_collision)
+        );
+
+        let decisions = crate::test_support::approximate_decisions();
+        assert!(
+            projective_output_has_coincident_polygons(
+                &decisions,
+                &[
+                    ClassifiedPolygon::new(original.clone(), 1),
+                    ClassifiedPolygon::new(reversed, 1),
+                ],
+                BooleanOp::Union,
+            )
+            .unwrap()
+        );
+        assert!(
+            !projective_output_has_coincident_polygons(
+                &decisions,
+                &[
+                    ClassifiedPolygon::new(original, 1),
+                    ClassifiedPolygon::new(modular_collision, 1),
+                ],
+                BooleanOp::Union,
+            )
+            .unwrap()
+        );
     }
 
     #[test]
