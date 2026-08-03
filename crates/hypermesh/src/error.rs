@@ -126,6 +126,11 @@ pub enum HypermeshError {
         /// Planar triangulation stage that could not be completed.
         reason: &'static str,
     },
+    /// Exact source-face arrangement or bounded-cell triangulation failed.
+    SurfaceArrangementFailed {
+        /// Arrangement invariant or triangulation stage that failed.
+        reason: &'static str,
+    },
     /// A homogeneous point had zero or unknown homogeneous scale.
     PointAtInfinity,
 }
@@ -212,6 +217,9 @@ impl fmt::Display for HypermeshError {
             ),
             Self::OutputPlanarizationFailed { reason } => {
                 write!(f, "could not planarize coplanar output faces: {reason}")
+            }
+            Self::SurfaceArrangementFailed { reason } => {
+                write!(f, "could not construct exact surface arrangement: {reason}")
             }
             Self::PointAtInfinity => f.write_str("homogeneous point is at infinity"),
         }

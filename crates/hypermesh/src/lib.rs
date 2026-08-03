@@ -84,6 +84,8 @@ pub(crate) use trace::trace_dispatch;
 pub mod context;
 mod storage_hash;
 #[cfg(test)]
+mod surface_arrangement;
+#[cfg(test)]
 mod test_support;
 
 pub mod bvh;

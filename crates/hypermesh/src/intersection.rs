@@ -294,6 +294,30 @@ pub(crate) struct PairwiseIntersectionSegmentRef<'a> {
     pub(crate) v1: &'a Point3,
 }
 
+#[cfg(test)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum PairwiseIntersectionEventIds {
+    NonCoplanarPoint {
+        point: u32,
+        other_polygon: u32,
+    },
+    NonCoplanarSegment {
+        endpoints: [u32; 2],
+        other_polygon: u32,
+    },
+    CoplanarPoint {
+        point: u32,
+        other_polygon: u32,
+    },
+    CoplanarSegment {
+        endpoints: [u32; 2],
+        other_polygon: u32,
+    },
+    CoplanarOverlap {
+        other_polygon: u32,
+    },
+}
+
 /// Compact face-indexed intersection adjacency backed by contiguous rows.
 ///
 /// Empty faces cost one 32-bit offset rather than a separately allocated `Vec`
@@ -335,6 +359,92 @@ impl PairwiseIntersectionGraph {
 
     pub(crate) fn iter(&self) -> impl ExactSizeIterator<Item = PairwiseIntersectionRow<'_>> + '_ {
         (0..self.len()).map(|face| self.row(face))
+    }
+
+    #[cfg(test)]
+    pub(crate) fn event_ids(
+        &self,
+        face: usize,
+    ) -> HypermeshResult<impl ExactSizeIterator<Item = PairwiseIntersectionEventIds> + '_> {
+        let end_face = face
+            .checked_add(1)
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "source-face intersection row index overflowed",
+            })?;
+        let start =
+            self.offsets
+                .get(face)
+                .copied()
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "source-face intersection row is absent",
+                })?;
+        let end = self.offsets.get(end_face).copied().ok_or(
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "source-face intersection row terminal is absent",
+            },
+        )?;
+        Ok(self.events[start as usize..end as usize]
+            .iter()
+            .map(|event| {
+                let (kind, index) = decode_intersection_geometry(event.geometry);
+                match kind {
+                    StoredIntersectionKind::NonCoplanarPoint => {
+                        PairwiseIntersectionEventIds::NonCoplanarPoint {
+                            point: u32::try_from(index.expect("point events carry an index"))
+                                .expect("intersection point indices fit the compact arena"),
+                            other_polygon: event.other_polygon,
+                        }
+                    }
+                    StoredIntersectionKind::NonCoplanarSegment => {
+                        PairwiseIntersectionEventIds::NonCoplanarSegment {
+                            endpoints: self.segments[index.expect("segment events carry an index")]
+                                .endpoints,
+                            other_polygon: event.other_polygon,
+                        }
+                    }
+                    StoredIntersectionKind::CoplanarPoint => {
+                        PairwiseIntersectionEventIds::CoplanarPoint {
+                            point: u32::try_from(index.expect("point events carry an index"))
+                                .expect("intersection point indices fit the compact arena"),
+                            other_polygon: event.other_polygon,
+                        }
+                    }
+                    StoredIntersectionKind::CoplanarSegment => {
+                        PairwiseIntersectionEventIds::CoplanarSegment {
+                            endpoints: self.segments[index.expect("segment events carry an index")]
+                                .endpoints,
+                            other_polygon: event.other_polygon,
+                        }
+                    }
+                    StoredIntersectionKind::CoplanarOverlap => {
+                        PairwiseIntersectionEventIds::CoplanarOverlap {
+                            other_polygon: event.other_polygon,
+                        }
+                    }
+                }
+            }))
+    }
+
+    #[cfg(test)]
+    pub(crate) fn construction_point(
+        &self,
+        point: u32,
+    ) -> HypermeshResult<(&Point3, &ConstructionVertexIdentity)> {
+        let index = point as usize;
+        let point = self
+            .points
+            .get(index)
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "intersection event references an absent construction point",
+            })?;
+        let identity = self
+            .point_identities
+            .get(index)
+            .and_then(Option::as_ref)
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "intersection construction point has no canonical recipe",
+            })?;
+        Ok((point, identity))
     }
 
     pub(crate) fn remap_polygon_order(&self, query_to_cached: &[usize]) -> HypermeshResult<Self> {
@@ -1500,7 +1610,9 @@ fn append_pairwise_intersection(
     }
 }
 
-fn pairwise_support_identity(face: usize) -> HypermeshResult<Option<ConstructionPlaneIdentity>> {
+pub(crate) fn pairwise_support_identity(
+    face: usize,
+) -> HypermeshResult<Option<ConstructionPlaneIdentity>> {
     Ok(Some(ConstructionPlaneIdentity {
         mesh: PAIRWISE_FACE_PLANE_NAMESPACE,
         plane: u32::try_from(face).map_err(|_| HypermeshError::CapacityOverflow {
