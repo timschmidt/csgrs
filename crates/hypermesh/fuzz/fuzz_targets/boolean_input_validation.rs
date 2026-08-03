@@ -115,13 +115,14 @@ fuzz_target!(|data: [u8; 4]| {
             triangles.pop();
             let invalid_mesh = TriangleMesh::new(mesh.positions.to_vec(), triangles)
                 .with_certified_convexity();
+            let error = rejection(&invalid_mesh, op, immediate);
             assert!(matches!(
-                rejection(&invalid_mesh, op, immediate),
+                &error,
                 HypermeshError::OpenInput {
                     mesh_index: 0,
                     boundary_edges: 3,
                 }
-            ));
+            ), "{error:?}");
         }
     }
 });

@@ -109,9 +109,11 @@ pub(crate) fn clip_polygon_decision(
     let mut left = poly.clone();
     left.edges = Arc::new(left_edges);
     left.known_vertices = None;
+    left.known_identities = None;
     let mut right = poly.clone();
     right.edges = Arc::new(right_edges);
     right.known_vertices = None;
+    right.known_identities = None;
 
     Ok(ClipResult {
         left,
@@ -151,6 +153,8 @@ pub(crate) fn clip_polygon_to_aabb_decision(
                 ClipSide::Left => {
                     let mut empty = current;
                     Arc::make_mut(&mut empty.edges).clear();
+                    empty.known_vertices = None;
+                    empty.known_identities = None;
                     empty
                 }
                 ClipSide::Right => current,
@@ -170,6 +174,8 @@ pub(crate) fn clip_polygon_to_aabb_decision(
                 ClipSide::Right => {
                     let mut empty = current;
                     Arc::make_mut(&mut empty.edges).clear();
+                    empty.known_vertices = None;
+                    empty.known_identities = None;
                     empty
                 }
                 ClipSide::Left => current,

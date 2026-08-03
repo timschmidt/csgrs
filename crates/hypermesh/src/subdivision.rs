@@ -524,6 +524,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                     let mut fragment = polygon.clone();
                     fragment.edges = Arc::new(leaf.edges.clone());
                     fragment.known_vertices = None;
+                    fragment.known_identities = None;
                     let mut classified = ClassifiedPolygon::new(fragment, classification);
                     classified.winding = Some(WindingPair { w_front, w_back });
                     classified.is_bsp_fragment = true;
@@ -583,6 +584,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 let mut fragment = polygon.clone();
                 fragment.edges = Arc::new(leaf.edges.clone());
                 fragment.known_vertices = None;
+                fragment.known_identities = None;
                 fragment.delta_w = effective_delta_w.clone();
                 let mut classified = ClassifiedPolygon::new(fragment, classification);
                 classified.winding = Some(WindingPair { w_front, w_back });

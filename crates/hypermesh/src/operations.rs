@@ -216,15 +216,25 @@ pub fn boolean_operation(
 ) -> HypermeshResult<MeshOutcome<BooleanResult>> {
     let decisions = DecisionContext::new(context);
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = if let Some(native) = native_meshes(meshes) {
-        compute_native_boolean(&decisions, &native, operation, config, true)?
-    } else {
-        compute_boolean(
-            &decisions, meshes, operation, None, None, None, config, true,
+    let result = if let Some(native) = native_meshes(meshes) {
+        compute_native_boolean_with_raw_retry(
+            &decisions,
+            &native,
+            operation,
+            config,
+            true,
+            |computation| {
+                crate::trace_dispatch!("boolean-operation", "certify-output-closure");
+                computation.into_result(&decisions, operation)
+            },
         )?
+    } else {
+        let computation = compute_boolean(
+            &decisions, meshes, operation, None, None, None, config, true,
+        )?;
+        crate::trace_dispatch!("boolean-operation", "certify-output-closure");
+        computation.into_result(&decisions, operation)?
     };
-    crate::trace_dispatch!("boolean-operation", "certify-output-closure");
-    let result = computation.into_result(&decisions, operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
     Ok(decisions.finish(result))
 }
@@ -250,15 +260,25 @@ pub fn boolean_mesh(
         crate::trace_dispatch!("boolean-operation", "complete");
         return Ok(decisions.finish(soup));
     }
-    let computation = if let Some(native) = native_meshes(meshes) {
-        compute_native_boolean(&decisions, &native, operation, config, false)?
-    } else {
-        compute_boolean(
-            &decisions, meshes, operation, None, None, None, config, false,
+    let soup = if let Some(native) = native_meshes(meshes) {
+        compute_native_boolean_with_raw_retry(
+            &decisions,
+            &native,
+            operation,
+            config,
+            false,
+            |computation| {
+                crate::trace_dispatch!("boolean-operation", "triangulate-output");
+                computation.into_boolean_mesh(&decisions, operation)
+            },
         )?
+    } else {
+        let computation = compute_boolean(
+            &decisions, meshes, operation, None, None, None, config, false,
+        )?;
+        crate::trace_dispatch!("boolean-operation", "triangulate-output");
+        computation.into_boolean_mesh(&decisions, operation)?
     };
-    crate::trace_dispatch!("boolean-operation", "triangulate-output");
-    let soup = computation.into_boolean_mesh(&decisions, operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
     Ok(decisions.finish(soup))
 }
@@ -270,21 +290,19 @@ fn compute_native_boolean(
     config: EmberConfig,
     retain_winding: bool,
 ) -> HypermeshResult<BooleanComputation> {
-    match compute_native_boolean_with_polygon_reuse(
+    let has_retained_polygons = meshes
+        .iter()
+        .any(|mesh| mesh.retained_input_polygons(decisions).is_some());
+    let result = compute_native_boolean_with_polygon_reuse(
         decisions,
         meshes,
         operation,
         config,
         retain_winding,
         true,
-    ) {
-        Ok(computation) => Ok(computation),
-        Err(error)
-            if meshes
-                .iter()
-                .any(|mesh| mesh.retained_input_polygons(decisions).is_some())
-                && is_retryable_boolean_path_error(&error) =>
-        {
+    );
+    match result {
+        Err(error) if has_retained_polygons && is_retryable_boolean_path_error(&error) => {
             compute_native_boolean_with_polygon_reuse(
                 decisions,
                 meshes,
@@ -294,7 +312,37 @@ fn compute_native_boolean(
                 false,
             )
         }
-        Err(error) => Err(error),
+        result => result,
+    }
+}
+
+fn compute_native_boolean_with_raw_retry<T>(
+    decisions: &DecisionContext,
+    meshes: &[&TriangleMesh],
+    operation: BooleanOp,
+    config: EmberConfig,
+    retain_winding: bool,
+    finish: impl Fn(BooleanComputation) -> HypermeshResult<T>,
+) -> HypermeshResult<T> {
+    let result = compute_native_boolean(decisions, meshes, operation, config, retain_winding)
+        .and_then(&finish);
+    match result {
+        Err(error) if is_retryable_boolean_path_error(&error) => {
+            crate::trace_dispatch!("boolean-operation", "retry-without-native-facts");
+            let views = meshes.iter().map(|mesh| mesh.as_ref()).collect::<Vec<_>>();
+            compute_boolean(
+                decisions,
+                &views,
+                operation,
+                None,
+                None,
+                None,
+                config,
+                retain_winding,
+            )
+            .and_then(finish)
+        }
+        result => result,
     }
 }
 
@@ -457,31 +505,18 @@ fn boolean_triangle_meshes_decision(
             return Ok(box_from_bounds(&bounds));
         }
     }
-    let computation =
-        match compute_native_boolean(decisions, &[left, right], operation, config, false) {
-            Ok(computation) => computation,
-            Err(error) if is_retryable_boolean_path_error(&error) => {
-                // Retained construction identities are an optimization. If they
-                // cannot certify a sign, retry from the exact native triangles
-                // before reporting the Boolean itself as indeterminate.
-                let computation = compute_boolean(
-                    decisions,
-                    &[left.as_ref(), right.as_ref()],
-                    operation,
-                    None,
-                    None,
-                    None,
-                    config,
-                    false,
-                )?;
-                return Ok(computation
-                    .into_boolean_mesh(decisions, operation)?
-                    .into_triangle_mesh());
-            }
-            Err(error) => return Err(error),
-        };
-    let (mesh, provenance) = computation.into_native_materialization(decisions, operation)?;
-    materialize_boolean_mesh(decisions, mesh, provenance)
+    compute_native_boolean_with_raw_retry(
+        decisions,
+        &[left, right],
+        operation,
+        config,
+        false,
+        |computation| {
+            let (mesh, provenance) =
+                computation.into_native_materialization(decisions, operation)?;
+            materialize_boolean_mesh(decisions, mesh, provenance)
+        },
+    )
 }
 
 fn certify_nonempty_shortcut_operand(
@@ -1223,6 +1258,7 @@ fn compute_boolean(
     }
     let certified_convex_inputs = certified_convex_inputs.unwrap_or(&[]);
     let use_two_convex_candidate = meshes.len() == 2 && certified_convex_inputs == [true, true];
+    let mut retryable_convex_candidate_error = None;
     if use_two_convex_candidate && retained_polygons.is_none() {
         match build_projective_input_soup(decisions, meshes, input_planes) {
             Ok(projective_input) => {
@@ -1252,6 +1288,7 @@ fn compute_boolean(
                                 "[DEBUG] compact projective convex candidate failed: {error}"
                             );
                         }
+                        retryable_convex_candidate_error = Some(error);
                     }
                     Err(error) => return Err(error),
                 }
@@ -1289,6 +1326,7 @@ fn compute_boolean(
                 if cfg!(debug_assertions) {
                     eprintln!("[DEBUG] projective convex candidate failed: {error}");
                 }
+                retryable_convex_candidate_error = Some(error);
                 None
             }
             Err(error) => return Err(error),
@@ -1296,6 +1334,11 @@ fn compute_boolean(
     } else {
         None
     };
+    if convex_candidate.is_none()
+        && let Some(error) = retryable_convex_candidate_error
+    {
+        return Err(error);
+    }
     let (classified, boolean_mesh, input_edges_deferred) = if let Some(candidate) = convex_candidate
     {
         (candidate.classified, Some(candidate.boolean_mesh), true)
@@ -4022,19 +4065,23 @@ fn compute_projective_convex_faces(
         }
     }
 
-    let boolean_mesh = {
-        if retain_winding && operation != BooleanOp::SymmetricDifference {
-            for fragment in &mut classified {
-                let winding = fragment
-                    .winding()
-                    .ok_or(crate::error::HypermeshError::UnknownClassification)?;
-                fragment.classification = crate::winding::classify_polygon_output(
-                    &winding.w_front,
-                    &winding.w_back,
-                    operation,
-                );
-            }
+    if retain_winding && operation != BooleanOp::SymmetricDifference {
+        for fragment in &mut classified {
+            let winding = fragment
+                .winding()
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            fragment.classification = crate::winding::classify_polygon_output(
+                &winding.w_front,
+                &winding.w_back,
+                operation,
+            );
         }
+    }
+    if projective_output_has_coincident_polygons(decisions, &classified, operation)? {
+        crate::trace_dispatch!("convex-candidate", "coincident-output-fallback");
+        return Err(crate::error::HypermeshError::UnknownClassification);
+    }
+    let boolean_mesh = {
         let triangulate_fallback = || {
             if retain_winding {
                 crate::output::triangulate_classified_arrangement_precomputed_f64_scan(
@@ -4103,6 +4150,88 @@ fn compute_projective_convex_faces(
         classified,
         boolean_mesh,
     }))
+}
+
+fn projective_output_has_coincident_polygons(
+    decisions: &DecisionContext,
+    classified: &[ClassifiedPolygon],
+    operation: BooleanOp,
+) -> HypermeshResult<bool> {
+    let orientations = classified
+        .iter()
+        .map(|fragment| {
+            let orientation = fragment
+                .winding()
+                .map_or(fragment.classification, |winding| {
+                    crate::winding::classify_polygon_output(
+                        &winding.w_front,
+                        &winding.w_back,
+                        operation,
+                    )
+                });
+            matches!(orientation, -1..=1)
+                .then_some(orientation)
+                .ok_or(crate::error::HypermeshError::UnknownClassification)
+        })
+        .collect::<HypermeshResult<Vec<_>>>()?;
+
+    for left_index in 0..classified.len() {
+        if orientations[left_index] == 0 {
+            continue;
+        }
+        let left = &classified[left_index].polygon;
+        for right_index in (left_index + 1)..classified.len() {
+            if orientations[right_index] == 0 {
+                continue;
+            }
+            let right = &classified[right_index].polygon;
+            if left.vertex_count() != right.vertex_count()
+                || !certifiably_proportional_plane(decisions, &left.support, &right.support)?
+            {
+                continue;
+            }
+            if polygon_vertex_cycles_match_unoriented(decisions, left, right)? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+fn polygon_vertex_cycles_match_unoriented(
+    decisions: &DecisionContext,
+    left: &ConvexPolygon,
+    right: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    let left = left.vertices_decision(decisions)?;
+    let right = right.vertices_decision(decisions)?;
+    if left.len() != right.len() || left.is_empty() {
+        return Ok(false);
+    }
+    let count = left.len();
+    for offset in 0..count {
+        if !crate::predicate::points_equal(decisions, &left[0], &right[offset])? {
+            continue;
+        }
+        for reverse in [false, true] {
+            let mut equal = true;
+            for (index, point) in left.iter().enumerate().skip(1) {
+                let right_index = if reverse {
+                    (offset + count - index) % count
+                } else {
+                    (offset + index) % count
+                };
+                if !crate::predicate::points_equal(decisions, point, &right[right_index])? {
+                    equal = false;
+                    break;
+                }
+            }
+            if equal {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
 }
 
 fn exact_rational_product_sum_classification<const TERMS: usize, const FACTORS: usize>(
@@ -5574,6 +5703,147 @@ mod tests {
                 .unwrap()
         );
         assert!(crate::output::boolean_mesh_closure_evidence(&certified).is_closed());
+    }
+
+    #[test]
+    fn touching_certified_convex_intersection_regularizes_to_empty() {
+        let tetrahedron = TriangleMesh::new(
+            vec![p(0, 1, 2), p(4, 1, 2), p(0, 2, 2), p(0, 1, 4)],
+            vec![
+                Triangle::new(0, 2, 1),
+                Triangle::new(0, 1, 3),
+                Triangle::new(0, 3, 2),
+                Triangle::new(1, 2, 3),
+            ],
+        )
+        .with_certified_convexity();
+        let box_mesh = box_from_bounds(&hyperlattice::Aabb::new(p(-1, -3, 2), p(3, 1, 3)))
+            .with_certified_convexity();
+        let raw = [
+            TriangleMeshRef::new(&tetrahedron.positions, &tetrahedron.triangles),
+            TriangleMeshRef::new(&box_mesh.positions, &box_mesh.triangles),
+        ];
+        let certified = [tetrahedron.as_ref(), box_mesh.as_ref()];
+
+        for policy in [
+            crate::PredicatePolicy::STRICT,
+            crate::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            for meshes in [&raw, &certified] {
+                let result = boolean_operation(
+                    &context,
+                    meshes,
+                    BooleanOp::Intersection,
+                    EmberConfig::default(),
+                )
+                .unwrap();
+                assert_eq!(result.certainty, crate::MeshCertainty::Certified);
+                let materialized =
+                    crate::triangulate_and_resolve_certified(&context, &result.into_value())
+                        .unwrap()
+                        .into_value();
+                assert!(materialized.triangles.is_empty(), "{materialized:#?}");
+            }
+
+            let immediate = boolean_mesh(
+                &context,
+                &certified,
+                BooleanOp::Intersection,
+                EmberConfig::default(),
+            )
+            .unwrap();
+            assert_eq!(immediate.certainty, crate::MeshCertainty::Certified);
+            assert!(
+                immediate.value.triangles.is_empty(),
+                "{:#?}",
+                immediate.value
+            );
+        }
+    }
+
+    #[test]
+    fn native_finalization_revalidates_a_structurally_invalid_convex_fact() {
+        let box_mesh = box_from_bounds(&hyperlattice::Aabb::new(p(-2, -2, -2), p(2, 2, 2)));
+        let mut triangles = box_mesh.triangles.to_vec();
+        triangles.pop();
+        let invalid =
+            TriangleMesh::new(box_mesh.positions.to_vec(), triangles).with_certified_convexity();
+
+        for policy in [
+            crate::PredicatePolicy::STRICT,
+            crate::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            for operation in [
+                BooleanOp::Union,
+                BooleanOp::Intersection,
+                BooleanOp::Difference,
+                BooleanOp::SymmetricDifference,
+            ] {
+                let meshes = [invalid.as_ref()];
+                for error in [
+                    boolean_operation(&context, &meshes, operation, EmberConfig::default())
+                        .unwrap_err(),
+                    boolean_mesh(&context, &meshes, operation, EmberConfig::default()).unwrap_err(),
+                ] {
+                    assert_eq!(
+                        error,
+                        HypermeshError::OpenInput {
+                            mesh_index: 0,
+                            boundary_edges: 3,
+                        }
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn symbolically_translated_box_xor_obeys_terminal_policy() {
+        let base = Real::e();
+        let point = |offset: i64| {
+            Point3::new(
+                &base + Real::from(offset),
+                &base + Real::from(offset),
+                &base + Real::from(offset),
+            )
+        };
+        let left = box_from_bounds(&hyperlattice::Aabb::new(point(0), point(3)));
+        let right = box_from_bounds(&hyperlattice::Aabb::new(point(-1), point(2)));
+        let meshes = [
+            TriangleMeshRef::new(&left.positions, &left.triangles),
+            TriangleMeshRef::new(&right.positions, &right.triangles),
+        ];
+
+        let operation = |context| {
+            boolean_operation(
+                context,
+                &meshes,
+                BooleanOp::SymmetricDifference,
+                EmberConfig::default(),
+            )
+        };
+        let strict = MeshContext::new(crate::PredicatePolicy::STRICT);
+        assert!(matches!(
+            operation(&strict),
+            Err(HypermeshError::PredicateUndecided { .. })
+        ));
+
+        let context = MeshContext::new(crate::PredicatePolicy::APPROXIMATE_512);
+        let result = operation(&context).unwrap();
+        assert_eq!(
+            result.certainty,
+            crate::MeshCertainty::Approximate512Consumed
+        );
+        let soup = crate::triangulate_and_resolve_certified(&context, &result.into_value())
+            .unwrap()
+            .into_value();
+        assert!(crate::output::boolean_mesh_closure_evidence(&soup).has_no_boundary());
+        assert!(
+            soup.has_unique_nondegenerate_triangles_decision(&DecisionContext::new(&context))
+                .unwrap()
+        );
     }
 
     #[test]

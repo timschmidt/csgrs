@@ -259,7 +259,7 @@ impl RenderScene {
     fn empty() -> Self {
         let grid_color = Color3::new(0.18, 0.21, 0.25).expect("finite grid color");
         Self {
-            grid: grid_mesh(10, real_ratio(1, 2), grid_color),
+            grid: grid_mesh(10, real_ratio(1, 2), grid_color).expect("valid grid mesh"),
             axes: axes_mesh(Real::from(3), Real::zero()).expect("valid axes mesh"),
             input_a_faces: ExactMesh::empty(Primitive::Triangles),
             input_b_faces: ExactMesh::empty(Primitive::Triangles),
@@ -745,7 +745,12 @@ fn flat_shaded_color(base: Color3, [a, b, c]: [&Point3; 3]) -> Color3 {
     let diffuse =
         ((normal[0] * LIGHT[0] + normal[1] * LIGHT[1] + normal[2] * LIGHT[2]) / length).max(0.0);
     let intensity = (AMBIENT + DIFFUSE * diffuse) as f32;
-    Color3::new(base.r * intensity, base.g * intensity, base.b * intensity).unwrap_or(base)
+    Color3::new(
+        base.r() * intensity,
+        base.g() * intensity,
+        base.b() * intensity,
+    )
+    .unwrap_or(base)
 }
 
 fn boolean_mesh_wire(soup: &BooleanMesh, color: Color3) -> ExactMesh {

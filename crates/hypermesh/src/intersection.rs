@@ -145,7 +145,7 @@ pub(crate) fn intersect_polygons_with_vertices(
     collect_edge_plane_crossings(decisions, polygon, polygon_vertices, other, &mut points)?;
     crate::trace_dispatch!("intersect-polygons", "edge-crossings-reverse");
     collect_edge_plane_crossings(decisions, other, other_vertices, polygon, &mut points)?;
-    dedup_points(&mut points);
+    dedup_points(decisions, &mut points)?;
 
     match points.len() {
         0 => Ok(PairwiseIntersection::none()),
@@ -727,12 +727,20 @@ fn supports_are_parallel(
     }
 }
 
-fn dedup_points(points: &mut Vec<Point3>) {
+fn dedup_points(decisions: &DecisionContext, points: &mut Vec<Point3>) -> HypermeshResult<()> {
     let mut unique = Vec::with_capacity(points.len());
     for point in points.drain(..) {
-        if !unique.iter().any(|existing| existing == &point) {
+        let mut duplicate = false;
+        for existing in &unique {
+            if existing == &point || crate::predicate::points_equal(decisions, existing, &point)? {
+                duplicate = true;
+                break;
+            }
+        }
+        if !duplicate {
             unique.push(point);
         }
     }
     *points = unique;
+    Ok(())
 }
