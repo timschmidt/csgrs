@@ -7518,10 +7518,15 @@ mod certified_successor_tests {
             )
             .unwrap()
             .into_value();
+            let parabola_classification = parabola_region
+                .classify_algebraic_point(&parabola_boundary, &policy)
+                .unwrap();
             assert_eq!(
-                parabola_region
-                    .classify_algebraic_point_raw(&parabola_boundary, &policy)
-                    .unwrap(),
+                parabola_classification.certainty,
+                crate::CurveCertainty::Certified,
+            );
+            assert_eq!(
+                parabola_classification.value,
                 Classification::Decided(RegionPointLocation::Boundary),
             );
             let dyadic_ray_point = RationalBezierAlgebraicPointImage2::from_parametric_source(

@@ -29,6 +29,8 @@ use hypersolve::{
     transform_algebraic_root_rational_images, validate_algebraic_root_representation,
 };
 
+#[cfg(feature = "predicates")]
+use crate::bezier_parameter::strict_coefficients_sign_on_parameter_interval;
 use crate::bezier_parameter::{evaluate_coefficients, signed_coefficients_at_parameter};
 use crate::classify::compare_reals;
 use crate::{
@@ -789,7 +791,7 @@ impl RationalBezierAlgebraicPointImage2 {
                 x_numerator,
                 y_numerator,
                 denominator,
-                parameter,
+                parameter: parameter.refined_isolating_interval(1, &CurveContext::STRICT),
                 denominator_sign,
             },
         ))
@@ -808,19 +810,20 @@ impl RationalBezierAlgebraicPointPredicate2<'_> {
         coefficients: Vec<Real>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        Ok(
-            match signed_coefficients_at_parameter(coefficients, &self.parameter, policy)? {
-                Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-                Classification::Decided(sign) => {
-                    Classification::Decided(if sign == self.denominator_sign {
-                        RealSign::Positive
-                    } else {
-                        RealSign::Negative
-                    })
-                }
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
-        )
+        let fast = strict_coefficients_sign_on_parameter_interval(
+            &coefficients,
+            &self.parameter,
+            &CurveContext::STRICT,
+        )?;
+        let sign = match fast {
+            Some(sign) => Classification::Decided(sign),
+            None => signed_coefficients_at_parameter(coefficients, &self.parameter, policy)?,
+        };
+        Ok(sign.map(|sign| match sign {
+            RealSign::Zero => RealSign::Zero,
+            sign if sign == self.denominator_sign => RealSign::Positive,
+            RealSign::Positive | RealSign::Negative => RealSign::Negative,
+        }))
     }
 
     pub(crate) fn coordinate_order_to_real(

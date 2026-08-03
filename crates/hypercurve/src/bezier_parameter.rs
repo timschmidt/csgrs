@@ -1903,29 +1903,40 @@ fn strict_polynomial_sign_on_refined_parameter_interval(
     // Bernstein control would have to acquire the same strict sign.
     let mut refinement = BezierParameterRefinement2::new(parameter, policy);
     for target_steps in [0, 1, 2, 4, 8, 16, 32] {
-        match refinement.refine_to(target_steps) {
-            BezierParameter2::Exact(parameter) => {
-                return Ok(real_sign(
-                    &evaluate_coefficients(coefficients, parameter),
-                    policy,
-                ));
-            }
-            BezierParameter2::Algebraic(parameter) => {
-                let interval = parameter.interval();
-                let restricted = restrict_power_basis_to_interval(
-                    coefficients,
-                    interval.start(),
-                    interval.end(),
-                );
-                if let Some(sign) =
-                    univariate_unit_interval_strict_bernstein_sign(&restricted, policy)?
-                {
-                    return Ok(Some(sign));
-                }
-            }
+        if let Some(sign) = strict_coefficients_sign_on_parameter_interval(
+            coefficients,
+            refinement.refine_to(target_steps),
+            policy,
+        )? {
+            return Ok(Some(sign));
         }
     }
     Ok(None)
+}
+
+/// Attempts a nonzero sign proof over one already-selected parameter bracket.
+///
+/// This is the allocation-bounded front end for callers that reuse a refined
+/// isolator across many related predicates. A mixed Bernstein hull says only
+/// that this bracket is insufficient; equality and difficult signs still go
+/// through the complete algebraic-root authority.
+pub(crate) fn strict_coefficients_sign_on_parameter_interval(
+    coefficients: &[Real],
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Option<RealSign>> {
+    match parameter {
+        BezierParameter2::Exact(parameter) => Ok(real_sign(
+            &evaluate_coefficients(coefficients, parameter),
+            policy,
+        )),
+        BezierParameter2::Algebraic(parameter) => {
+            let interval = parameter.interval();
+            let restricted =
+                restrict_power_basis_to_interval(coefficients, interval.start(), interval.end());
+            univariate_unit_interval_strict_bernstein_sign(&restricted, policy)
+        }
+    }
 }
 
 /// Returns a strict common Bernstein-control sign on `[0, 1]`, if one exists.
