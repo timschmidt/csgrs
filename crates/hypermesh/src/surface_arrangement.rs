@@ -14,7 +14,7 @@ use hyperlattice::{Point3, Real, Vector3};
 use crate::bvh::ExactBvh;
 use crate::context::{DecisionContext, MeshCertainty};
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Classification, Plane, compare_real_decision};
+use crate::geometry::{Classification, Plane, axis_mut, axis_ref, compare_real_decision};
 use crate::intersection::{
     PairwiseIntersectionEventIds, PairwiseIntersectionGraph, pairwise_support_identity,
 };
@@ -547,13 +547,13 @@ fn assemble_surface_cells(
         })
         .collect::<Vec<_>>();
     let source_bvh = ExactBvh::build_decision(decisions, polygons)?;
-    let maximum_x = maximum_surface_x(decisions, &surface.points)?;
+    let bounds = surface_bounds(decisions, &surface.points)?;
     let (cell_windings, component_count) = classify_surface_cells(
         decisions,
         polygons,
         surface,
         &source_bvh,
-        &maximum_x,
+        &bounds,
         &surface.points,
         &facets,
         &transitions,
@@ -953,20 +953,29 @@ fn point_by_id(points: &[Point3], point: u32) -> HypermeshResult<&Point3> {
         })
 }
 
-fn maximum_surface_x(decisions: &DecisionContext, points: &[Point3]) -> HypermeshResult<Real> {
-    let mut maximum = points
+fn surface_bounds(decisions: &DecisionContext, points: &[Point3]) -> HypermeshResult<ApproxBounds> {
+    let first = points
         .first()
         .ok_or(HypermeshError::SurfaceArrangementFailed {
             reason: "surface cell complex has no arrangement points",
-        })?
-        .x
-        .clone();
+        })?;
+    let mut minimum = first.clone();
+    let mut maximum = first.clone();
     for point in &points[1..] {
-        if compare_real_decision(decisions, &point.x, &maximum)?.is_gt() {
-            maximum = point.x.clone();
+        for axis in 0..3 {
+            if compare_real_decision(decisions, axis_ref(point, axis), axis_ref(&minimum, axis))?
+                .is_lt()
+            {
+                *axis_mut(&mut minimum, axis) = axis_ref(point, axis).clone();
+            }
+            if compare_real_decision(decisions, axis_ref(point, axis), axis_ref(&maximum, axis))?
+                .is_gt()
+            {
+                *axis_mut(&mut maximum, axis) = axis_ref(point, axis).clone();
+            }
         }
     }
-    Ok(maximum)
+    Ok(ApproxBounds::new(minimum, maximum))
 }
 
 fn classify_surface_cells(
@@ -974,7 +983,7 @@ fn classify_surface_cells(
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
     source_bvh: &ExactBvh,
-    maximum_x: &Real,
+    bounds: &ApproxBounds,
     points: &[Point3],
     facets: &[SurfaceFacet],
     transitions: &[i32],
@@ -1039,7 +1048,7 @@ fn classify_surface_cells(
             polygons,
             surface,
             source_bvh,
-            maximum_x,
+            bounds,
             points,
             facets,
             operand_count,
@@ -1114,7 +1123,7 @@ fn seed_surface_cell_winding(
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
     source_bvh: &ExactBvh,
-    maximum_x: &Real,
+    bounds: &ApproxBounds,
     points: &[Point3],
     facets: &[SurfaceFacet],
     operand_count: usize,
@@ -1140,39 +1149,62 @@ fn seed_surface_cell_winding(
             operation: "surface cell seed direction candidates",
         })?;
     let mut saw_unknown = false;
-    for candidate in 0..candidate_count {
+    let mut try_direction =
+        |primary_axis: usize, direction: &Vector3| -> HypermeshResult<Option<(u32, Vec<i32>)>> {
+            let local = decisions.isolated();
+            match try_seed_surface_cell_winding(
+                &local,
+                polygons,
+                surface,
+                source_bvh,
+                bounds,
+                primary_axis,
+                points,
+                facets,
+                operand_count,
+                seed_facet,
+                &point,
+                direction,
+            ) {
+                Ok(Some(result)) => {
+                    decisions.absorb(local.certainty());
+                    Ok(Some(result))
+                }
+                Ok(None) => Ok(None),
+                Err(HypermeshError::PredicateUndecided { .. }) => {
+                    saw_unknown = true;
+                    Ok(None)
+                }
+                Err(error) => Err(error),
+            }
+        };
+    let axes = seed_ray_axis_order(bounds, &point);
+    for primary_axis in axes {
+        let mut coordinates = [Real::zero(), Real::zero(), Real::zero()];
+        coordinates[primary_axis] = Real::one();
+        let direction = Vector3::new(coordinates);
+        if let Some(result) = try_direction(primary_axis, &direction)? {
+            return Ok(result);
+        }
+    }
+
+    let primary_axis = axes[0];
+    let linear_axis = (primary_axis + 1) % 3;
+    let quadratic_axis = (primary_axis + 2) % 3;
+    for candidate in 1..=candidate_count {
         let parameter =
             Real::from(
                 u64::try_from(candidate).map_err(|_| HypermeshError::CapacityOverflow {
                     operation: "surface cell seed direction parameter",
                 })?,
             );
-        let direction = Vector3::new([
-            Real::one(),
-            parameter.clone(),
-            parameter.clone() * parameter,
-        ]);
-        let local = decisions.isolated();
-        match try_seed_surface_cell_winding(
-            &local,
-            polygons,
-            surface,
-            source_bvh,
-            maximum_x,
-            points,
-            facets,
-            operand_count,
-            seed_facet,
-            &point,
-            &direction,
-        ) {
-            Ok(Some(result)) => {
-                decisions.absorb(local.certainty());
-                return Ok(result);
-            }
-            Ok(None) => {}
-            Err(HypermeshError::PredicateUndecided { .. }) => saw_unknown = true,
-            Err(error) => return Err(error),
+        let mut coordinates = [Real::zero(), Real::zero(), Real::zero()];
+        coordinates[primary_axis] = Real::one();
+        coordinates[linear_axis] = parameter.clone();
+        coordinates[quadratic_axis] = parameter.clone() * parameter;
+        let direction = Vector3::new(coordinates);
+        if let Some(result) = try_direction(primary_axis, &direction)? {
+            return Ok(result);
         }
     }
     if saw_unknown {
@@ -1183,6 +1215,27 @@ fn seed_surface_cell_winding(
         Err(HypermeshError::SurfaceArrangementFailed {
             reason: "finite exact seed direction family did not avoid every facet and edge",
         })
+    }
+}
+
+fn seed_ray_axis_order(bounds: &ApproxBounds, point: &Point3) -> [usize; 3] {
+    let mut axes = [0_usize, 1, 2];
+    axes.sort_unstable_by(|&left, &right| {
+        approximate_positive_axis_distance(bounds, point, left)
+            .total_cmp(&approximate_positive_axis_distance(bounds, point, right))
+            .then_with(|| left.cmp(&right))
+    });
+    axes
+}
+
+fn approximate_positive_axis_distance(bounds: &ApproxBounds, point: &Point3, axis: usize) -> f64 {
+    let distance = axis_ref(&bounds.max, axis)
+        .to_f64_lossy()
+        .zip(axis_ref(point, axis).to_f64_lossy())
+        .map(|(maximum, coordinate)| maximum - coordinate);
+    match distance {
+        Some(distance) if distance.is_finite() && distance >= 0.0 => distance,
+        _ => f64::INFINITY,
     }
 }
 
@@ -1209,7 +1262,8 @@ fn try_seed_surface_cell_winding(
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
     source_bvh: &ExactBvh,
-    maximum_x: &Real,
+    bounds: &ApproxBounds,
+    primary_axis: usize,
     points: &[Point3],
     facets: &[SurfaceFacet],
     operand_count: usize,
@@ -1227,7 +1281,9 @@ fn try_seed_surface_cell_winding(
             });
         }
     };
-    let distance = maximum_x.clone() - point.x.clone() + Real::one();
+    let distance = axis_ref(&bounds.max, primary_axis).clone()
+        - axis_ref(point, primary_axis).clone()
+        + Real::one();
     let endpoint = Point3::new(
         point.x.clone() + distance.clone() * direction.0[0].clone(),
         point.y.clone() + distance.clone() * direction.0[1].clone(),
