@@ -1,0 +1,351 @@
+schema = 1
+status = "retained"
+captured_at = "2026-08-03"
+phases = [12, 13]
+checkpoint = "canonical-intersection-recipes"
+source_parent_commit = "43f9c85385f34ca541e0afc554e69d6ae316a3fb"
+evidence_parent_commit = "96c4619d"
+implementation_commit = "61dab4dd44bd146609a1e1158897c34de66ccd31"
+parent_executable_sha256 = "853caa6c409adb8b5b125ab609044a7394d2c3dad1bb28dce07906f530315241"
+candidate_executable_sha256 = "5fe2b5555e96d02cf66c59d5743375e64f36bcbdf216ab5e17c3110b826eee6c"
+hyperreal_commit = "6c7b8325382135e424dfdb1d7442d454c9665d75"
+hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+hypertri_commit = "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+
+[scope]
+canonical_scalar = "hyperreal::Real"
+public_intersection_api_changed = false
+compatibility_shim = false
+dual_boolean_engine = false
+ember_removed = false
+phase_12_complete = false
+phase_13_complete = false
+phase_14_consumer_complete = false
+cgal_parity = false
+
+[representation]
+construction_identity_variants = ["Source", "SourceEdgePlane", "PlaneTriple"]
+source_edge_plane_recipe = true
+split_edge_plane_recipe = "sorted PlaneTriple"
+operation_local_face_plane_namespace = 4294967295
+point_identity_slots_align_with_point_arena = true
+affine_point_materialization_is_single_cache = true
+duplicate_affine_coordinate_arena = false
+fully_lazy_materialization = false
+derived_legacy_polygon_recipe_may_be_absent = true
+coplanar_positive_area_overlay_recipes_complete = false
+unchecked_index_truncation = false
+
+[builder]
+structural_fingerprint = "StorageIdentityHasher"
+fingerprint_head_map_key = "u64"
+fingerprint_head_map_value = "usize"
+collision_resolution = "exact ConstructionVertexIdentity linked-list comparison"
+symbolic_structural_reuse_adds_equality_decision = false
+exact_numeric_aliasing = "existing exact-rational PointInterner"
+canonical_numeric_alias = "lexicographically minimum ConstructionVertexIdentity"
+canonical_numeric_alias_order_independent = true
+same_recipe_exact_rational_contradiction = "UnknownClassification"
+builder_index_retained_after_finish = false
+builder_alias_arena_retained_after_finish = false
+identity_slots_retained_after_finish = true
+
+[cache]
+geometric_match_required = true
+construction_cycle_match_required = true
+different_provenance_reuse = false
+permuted_polygon_order_supported = true
+operation_local_face_planes_remapped = true
+plane_triples_resorted_after_remap = true
+persistent_source_planes_remapped = false
+operation_local = true
+
+[policy]
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_approximation_owner = "hyperlimit"
+strict_undecided_is_error = true
+approximate_512_terminal_only = true
+aggregate_certainty_preserved = true
+public_classifier_identity_retention = false
+structural_identity_is_proof_not_predicate = true
+exact_rational_aliasing_consumes_terminal_policy = false
+graph_packing_performs_scalar_decisions = false
+graph_finalization_performs_scalar_decisions = false
+strict_cache_can_reuse_approximate_operation = false
+
+[source]
+production_insertions = 676
+production_deletions = 153
+production_net_lines = 523
+embedded_and_integration_test_insertions = 290
+embedded_and_integration_test_deletions = 2
+embedded_and_integration_test_net_lines = 288
+total_insertions = 966
+total_deletions = 155
+
+[proof_tests]
+normalized_transverse_crossings_retain_recipes = true
+source_edge_plane_remap = true
+plane_triple_remap_and_resort = true
+symbolic_structural_reuse = true
+simulated_fingerprint_collision = true
+exact_materialization_contradiction = true
+numeric_alias_reverse_order = true
+different_cache_provenance = true
+dimension_complete_corpus_preserved = true
+
+[fuzz]
+target = "polygon_predicates"
+sanitizer = "address"
+leak_detection = false
+seed_files = 516
+executions = 37703
+failures = 0
+
+[tests.default]
+passed = 1222
+failed = 0
+ignored = 7
+
+[tests.minimal]
+passed = 1222
+failed = 0
+ignored = 7
+
+[tests.all_features]
+passed = 1224
+failed = 0
+ignored = 7
+
+[gates]
+fmt = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+bench_all_features_no_run = true
+dispatch_trace_bench_compiled = true
+fuzz_bins_check = true
+fuzz_campaign = true
+wasm_minimal_and_all_features = true
+size_harness_native_and_wasm = true
+ui_native_tests = 8
+trunk_release_demo = true
+diff_check = true
+
+[callgraph.production]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 20208
+edges = 40316
+
+[callgraph.evidence]
+includes = ["tests", "bench", "examples", "fuzz"]
+nodes = 26665
+edges = 50333
+
+[fixture.general]
+probe_mode = "boxes-3072-general"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 2410
+output_triangles = 4816
+
+[fixture.certified]
+probe_mode = "boxes-3072"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 27
+output_triangles = 50
+
+[heap.tool]
+name = "Massif"
+version = "3.27.0"
+args = "--time-unit=B --detailed-freq=1"
+
+[heap.general_strict.parent]
+useful_bytes = 28726424
+total_bytes = 29953232
+
+[heap.general_strict.candidate]
+useful_bytes = 28730032
+total_bytes = 29955736
+
+[heap.general_approximate_512.parent]
+useful_bytes = 28726424
+total_bytes = 29953280
+
+[heap.general_approximate_512.candidate]
+useful_bytes = 28730032
+total_bytes = 29956664
+
+[heap.certified_strict.parent]
+useful_bytes = 1063718
+total_bytes = 1064976
+
+[heap.certified_strict.candidate]
+useful_bytes = 1063718
+total_bytes = 1064976
+
+[heap.certified_approximate_512.parent]
+useful_bytes = 1063718
+total_bytes = 1064976
+
+[heap.certified_approximate_512.candidate]
+useful_bytes = 1063718
+total_bytes = 1064976
+
+[heap.delta]
+general_useful_bytes = 3608
+general_useful_percent = 0.012560
+general_strict_total_bytes = 2504
+general_strict_total_percent = 0.008360
+general_approximate_512_total_bytes = 3384
+general_approximate_512_total_percent = 0.011298
+certified_useful_bytes = 0
+
+[runtime.callgrind]
+version = "3.27.0"
+args = "--cache-sim=no --branch-sim=yes"
+cpu = 11
+fixture = "boxes-3072-general"
+policy = "STRICT"
+parent_instructions = 22834571470
+candidate_instructions = 22879506782
+instruction_delta = 44935312
+instruction_delta_percent = 0.196786
+parent_total_branches = 3416018761
+candidate_total_branches = 3422749912
+total_branch_delta = 6731151
+total_branch_delta_percent = 0.197047
+parent_total_mispredicts = 103193291
+candidate_total_mispredicts = 103568749
+total_mispredict_delta = 375458
+total_mispredict_delta_percent = 0.363840
+
+[runtime.hardware]
+cpu = 11
+fixture = "boxes-3072-general"
+policy = "STRICT"
+order = "parent,candidate,candidate,parent"
+repetitions_per_batch = 10
+parent_task_clock_ms_mean = 1836.310
+candidate_task_clock_ms_mean = 1825.815
+task_clock_delta_percent = -0.571527
+parent_cycles_mean = 7566162197.5
+candidate_cycles_mean = 7505350050.0
+cycle_delta_percent = -0.803738
+parent_instructions_mean = 22814905333.0
+candidate_instructions_mean = 22875555339.0
+instruction_delta_percent = 0.265835
+parent_branches_mean = 4424823727.5
+candidate_branches_mean = 4461240624.5
+branch_delta_percent = 0.823014
+parent_branch_misses_mean = 14150329.5
+candidate_branch_misses_mean = 14608833.5
+branch_miss_delta_percent = 3.240236
+wall_clock_speed_claim = false
+
+[size.probe]
+parent_text_bytes = 5148662
+candidate_text_bytes = 5164890
+text_delta_bytes = 16228
+text_delta_percent = 0.315189
+parent_file_bytes = 6470896
+candidate_file_bytes = 6491768
+file_delta_bytes = 20872
+file_delta_percent = 0.322552
+
+[[size.consumer]]
+consumer = "general"
+profile = "release"
+target = "native-text"
+parent_bytes = 4111564
+candidate_bytes = 4118684
+delta_bytes = 7120
+delta_percent = 0.173170
+
+[[size.consumer]]
+consumer = "general"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2770580
+candidate_bytes = 2780083
+delta_bytes = 9503
+delta_percent = 0.342997
+
+[[size.consumer]]
+consumer = "immediate"
+profile = "release"
+target = "native-text"
+parent_bytes = 4144780
+candidate_bytes = 4151900
+delta_bytes = 7120
+delta_percent = 0.171782
+
+[[size.consumer]]
+consumer = "immediate"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2785134
+candidate_bytes = 2794642
+delta_bytes = 9508
+delta_percent = 0.341384
+
+[[size.consumer]]
+consumer = "general"
+profile = "size"
+target = "native-text"
+parent_bytes = 1891578
+candidate_bytes = 1899770
+delta_bytes = 8192
+delta_percent = 0.433078
+
+[[size.consumer]]
+consumer = "general"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1183507
+candidate_bytes = 1189673
+delta_bytes = 6166
+delta_percent = 0.520994
+
+[[size.consumer]]
+consumer = "immediate"
+profile = "size"
+target = "native-text"
+parent_bytes = 1903606
+candidate_bytes = 1911902
+delta_bytes = 8296
+delta_percent = 0.435804
+
+[[size.consumer]]
+consumer = "immediate"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1193551
+candidate_bytes = 1199830
+delta_bytes = 6279
+delta_percent = 0.526077
+
+[competitive.shared_exact_boxes]
+rerun = false
+reason = "The specialized exact-cell path is unchanged; retain the pinned Phase 13 shared-contract context"
+hypermesh_union_us = 8.1114
+cgal_epeck_union_us = 156.159
+boolmesh_union_us = 73.329
+manifold_rust_union_us = 60.191
+
+[competitive.full_resolution_pinned]
+rerun = false
+reason = "The multi-hour legacy output path is unchanged and remains a Phase 17 adversarial gate"
+hypermesh_seconds = 3312.66
+cgal_epeck_seconds = 0.09
+cgal_rss_advantage = 21.23
+parity_achieved = false
+
+[decision]
+retained = true
+reason = "Canonical construction recipes are required for shared corefinement; structural proof reuse, exact collision disambiguation, deterministic aliasing, cache provenance checks, and both-policy validation close the intended checkpoint paths with only 0.197% deterministic instruction, 0.0126% useful-heap, and at most 0.5261% linked-size growth. Fully lazy materialization, legacy-derived missing recipes, coplanar overlay incidences, Phase 14 consumption, EMBER cutover, and per-case CGAL parity remain open."
