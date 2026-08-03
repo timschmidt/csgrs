@@ -84,6 +84,27 @@ pub enum BezierParallelSource2 {
 }
 
 impl BezierParallelSource2 {
+    fn is_reversal_of(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Quadratic(first), Self::Quadratic(second)) => first
+                .control_points()
+                .into_iter()
+                .eq(second.control_points().into_iter().rev()),
+            (Self::Cubic(first), Self::Cubic(second)) => first
+                .control_points()
+                .into_iter()
+                .eq(second.control_points().into_iter().rev()),
+            (Self::Rational(first), Self::Rational(second)) => {
+                first
+                    .control_points()
+                    .iter()
+                    .eq(second.control_points().iter().rev())
+                    && first.weights().iter().eq(second.weights().iter().rev())
+            }
+            (Self::Quadratic(_) | Self::Cubic(_) | Self::Rational(_), _) => false,
+        }
+    }
+
     fn reversed(&self) -> Self {
         match self {
             Self::Quadratic(source) => {
@@ -1453,63 +1474,46 @@ impl BezierAlgebraicCuspSemicircle2 {
         range: Option<&BezierParameterRange2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelIntersections2>> {
-        let start_parallel = self.start_parallel();
-        let end_parallel = self.end_parallel();
-        let same_parallel = |first: &BezierParallel2, second: &BezierParallel2| {
-            first.source() == second.source()
-                && compare_reals(first.distance(), second.distance(), policy)
-                    == Some(std::cmp::Ordering::Equal)
-        };
-        let direct_source_join =
-            same_parallel(other, &start_parallel) || same_parallel(other, &end_parallel);
-        if !direct_source_join {
+        let frame_parallel = &self.data.frame.data.parallel;
+        let same_source = other.source() == frame_parallel.source();
+        if !same_source && other.source().is_reversal_of(frame_parallel.source()) {
             let normalized = other.reversed();
-            if same_parallel(&normalized, &start_parallel)
-                || same_parallel(&normalized, &end_parallel)
-            {
-                let normalized_range = range.map(|range| {
-                    BezierParameterRange2::new_validated(
-                        range.end().unit_complement(),
-                        range.start().unit_complement(),
-                    )
-                });
-                return Ok(self
-                    .parallel_intersections_with_range(
-                        &normalized,
-                        normalized_range.as_ref(),
-                        policy,
-                    )?
-                    .map(|intersections| match intersections {
-                        BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) => {
-                            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(
-                                contacts
-                                    .into_iter()
-                                    .map(|contact| {
-                                        BezierAlgebraicCuspSemicircleParallelContact2 {
-                                            parallel_parameter: contact
-                                                .parallel_parameter
-                                                .unit_complement(),
-                                            tangent_cross_sign: contact.tangent_cross_sign.map(
-                                                |sign| match sign {
-                                                    RealSign::Positive => RealSign::Negative,
-                                                    RealSign::Negative => RealSign::Positive,
-                                                    RealSign::Zero => RealSign::Zero,
-                                                },
-                                            ),
-                                            location: contact.location,
+            let normalized_range = range.map(|range| {
+                BezierParameterRange2::new_validated(
+                    range.end().unit_complement(),
+                    range.start().unit_complement(),
+                )
+            });
+            return Ok(self
+                .parallel_intersections_with_range(&normalized, normalized_range.as_ref(), policy)?
+                .map(|intersections| match intersections {
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) => {
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(
+                            contacts
+                                .into_iter()
+                                .map(|contact| BezierAlgebraicCuspSemicircleParallelContact2 {
+                                    parallel_parameter: contact
+                                        .parallel_parameter
+                                        .unit_complement(),
+                                    tangent_cross_sign: contact.tangent_cross_sign.map(|sign| {
+                                        match sign {
+                                            RealSign::Positive => RealSign::Negative,
+                                            RealSign::Negative => RealSign::Positive,
+                                            RealSign::Zero => RealSign::Zero,
                                         }
-                                    })
-                                    .collect(),
-                            )
-                        }
-                        BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircle => {
-                            BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircle
-                        }
-                        BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
-                            BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection
-                        }
-                    }));
-            }
+                                    }),
+                                    location: contact.location,
+                                })
+                                .collect(),
+                        )
+                    }
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircle => {
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircle
+                    }
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection
+                    }
+                }));
         }
         match other.exact_rational_parallel_component(policy)? {
             Classification::Decided(Some(curve)) => {
@@ -1607,10 +1611,20 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let diagonal_location = if same_parallel(other, &start_parallel) {
-            Some(BezierAlgebraicCuspSemicircleContactLocation2::Start)
-        } else if same_parallel(other, &end_parallel) {
-            Some(BezierAlgebraicCuspSemicircleContactLocation2::End)
+        let diagonal_location = if same_source {
+            let start_distance = frame_parallel.distance() + &self.data.radial_distance;
+            let end_distance = frame_parallel.distance() - &self.data.radial_distance;
+            if compare_reals(other.distance(), &start_distance, policy)
+                == Some(std::cmp::Ordering::Equal)
+            {
+                Some(BezierAlgebraicCuspSemicircleContactLocation2::Start)
+            } else if compare_reals(other.distance(), &end_distance, policy)
+                == Some(std::cmp::Ordering::Equal)
+            {
+                Some(BezierAlgebraicCuspSemicircleContactLocation2::End)
+            } else {
+                None
+            }
         } else {
             None
         };
