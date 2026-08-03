@@ -72,12 +72,22 @@ impl<I> PointInterner<I>
 where
     I: Clone + Eq + Hash,
 {
+    pub(crate) fn new_exact_unreserved() -> Self {
+        Self::new_unreserved(true, false)
+    }
+
     pub(crate) fn try_with_capacity(
         capacity: usize,
         exact_only: bool,
         retain_identities: bool,
     ) -> HypermeshResult<Self> {
-        let mut interner = Self {
+        let mut interner = Self::new_unreserved(exact_only, retain_identities);
+        interner.reserve_base(capacity)?;
+        Ok(interner)
+    }
+
+    fn new_unreserved(exact_only: bool, retain_identities: bool) -> Self {
+        Self {
             exact_only,
             exact_storage: StorageHashMap::default(),
             exact_heads: StorageHashMap::default(),
@@ -90,9 +100,7 @@ where
             candidates: Vec::new(),
             candidate_marks: Vec::new(),
             candidate_epoch: 0,
-        };
-        interner.reserve_base(capacity)?;
-        Ok(interner)
+        }
     }
 
     pub(crate) fn try_from_unique<P>(points: &[P], exact_only: bool) -> HypermeshResult<Self>
@@ -154,6 +162,55 @@ where
         self.insert(points, point, identity)
     }
 
+    /// Interns one exact-rational point pair as a single transaction.
+    ///
+    /// If either point is not exact rational, both are appended without a new
+    /// equality decision. All fallible reservations precede mutation, so an
+    /// allocation failure cannot leave a single endpoint behind.
+    pub(crate) fn intern_exact_pair_or_append<P>(
+        &mut self,
+        points: &mut Vec<P>,
+        pair: [P; 2],
+    ) -> HypermeshResult<[usize; 2]>
+    where
+        P: PointCoordinates,
+    {
+        debug_assert!(self.exact_only);
+        debug_assert!(self.identities.is_none());
+        let [first, second] = pair;
+        if first.has_exact_rational_coordinates() && second.has_exact_rational_coordinates() {
+            reserve(points.try_reserve(2))?;
+            reserve(self.next_exact.try_reserve(2))?;
+            reserve(self.exact_storage.try_reserve(2))?;
+            reserve(self.exact_heads.try_reserve(2))?;
+            let first = self.intern_exact_prepared(points, first);
+            let second = self.intern_exact_prepared(points, second);
+            return Ok([first, second]);
+        }
+
+        reserve(points.try_reserve(2))?;
+        reserve(self.next_exact.try_reserve(2))?;
+        let first_index = points.len();
+        points.push(first);
+        self.next_exact.push(None);
+        let second_index = points.len();
+        points.push(second);
+        self.next_exact.push(None);
+        Ok([first_index, second_index])
+    }
+
+    pub(crate) fn register_unindexed_existing(&mut self, additional: usize) -> HypermeshResult<()> {
+        debug_assert!(self.exact_only);
+        let new_len = self.next_exact.len().checked_add(additional).ok_or(
+            HypermeshError::CapacityOverflow {
+                operation: OPERATION,
+            },
+        )?;
+        reserve(self.next_exact.try_reserve(additional))?;
+        self.next_exact.resize(new_len, None);
+        Ok(())
+    }
+
     #[inline]
     pub(crate) fn intern_with<P, Q>(
         &mut self,
@@ -210,15 +267,32 @@ where
     where
         P: PointCoordinates,
     {
-        let index = points.len();
         self.reserve_exact_point(points)?;
+        Ok(self.insert_exact_prepared(points, point))
+    }
+
+    fn intern_exact_prepared<P>(&mut self, points: &mut Vec<P>, point: P) -> usize
+    where
+        P: PointCoordinates,
+    {
+        match self.find_exact(points, &point) {
+            Some(index) => index,
+            None => self.insert_exact_prepared(points, point),
+        }
+    }
+
+    fn insert_exact_prepared<P>(&mut self, points: &mut Vec<P>, point: P) -> usize
+    where
+        P: PointCoordinates,
+    {
+        let index = points.len();
         points.push(point);
         let exact = exact_point_profile(&points[index])
             .expect("the exact-only interner path requires rational coordinates");
         self.exact_storage.entry(exact.storage).or_insert(index);
         self.next_exact
             .push(self.exact_heads.insert(exact.fingerprint, index));
-        Ok(index)
+        index
     }
 
     fn find<P, Q>(

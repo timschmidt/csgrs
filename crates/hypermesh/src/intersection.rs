@@ -9,6 +9,7 @@ use crate::clip::{ClipSide, clip_polygon_decision};
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, compare_real_decision};
+use crate::point_interner::PointInterner;
 use crate::polygon::ConvexPolygon;
 use crate::predicate::{
     classify_point_decision, classify_projective_point_decision, classify_real,
@@ -88,8 +89,7 @@ struct PairwiseIntersectionNode {
 
 #[derive(Clone, Debug, PartialEq)]
 struct PairwiseIntersectionSegment {
-    v0: Point3,
-    v1: Point3,
+    endpoints: [u32; 2],
 }
 
 #[derive(Clone, Copy)]
@@ -119,6 +119,7 @@ pub(crate) struct PairwiseIntersectionSegmentRef<'a> {
 pub(crate) struct PairwiseIntersectionGraph {
     heads: Box<[u32]>,
     counts: Box<[u32]>,
+    points: Vec<Point3>,
     segments: Vec<PairwiseIntersectionSegment>,
     nodes: Vec<PairwiseIntersectionNode>,
 }
@@ -166,12 +167,31 @@ impl PairwiseIntersectionGraph {
 
         let mut remapped = PairwiseIntersectionGraphBuilder::new(query_to_cached.len());
         remapped
+            .points
+            .try_reserve(self.points.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "pairwise intersection point remapping",
+            })?;
+        remapped
+            .point_interner
+            .register_unindexed_existing(self.points.len())?;
+        remapped.points.extend(self.points.iter().cloned());
+        remapped
             .segments
             .try_reserve(self.segments.len())
             .map_err(|_| HypermeshError::CapacityOverflow {
                 operation: "pairwise intersection segment remapping",
             })?;
         remapped.segments.extend(self.segments.iter().cloned());
+        for segment in &remapped.segments {
+            if segment
+                .endpoints
+                .iter()
+                .any(|&point| remapped.points.get(point as usize).is_none())
+            {
+                return Err(HypermeshError::UnknownClassification);
+            }
+        }
         remapped.reserve_nodes(self.nodes.len())?;
         for (query_index, &cached_index) in query_to_cached.iter().enumerate() {
             let mut node = self.heads[cached_index];
@@ -237,8 +257,8 @@ impl<'a> Iterator for PairwiseIntersectionRow<'a> {
             let segment = &self.graph.segments[node.segment as usize];
             PairwiseIntersectionEventRef::Segment {
                 segment: PairwiseIntersectionSegmentRef {
-                    v0: &segment.v0,
-                    v1: &segment.v1,
+                    v0: &self.graph.points[segment.endpoints[0] as usize],
+                    v1: &self.graph.points[segment.endpoints[1] as usize],
                 },
                 other_polygon_idx: node.other_polygon as usize,
             }
@@ -261,6 +281,8 @@ pub(crate) struct PairwiseIntersectionGraphBuilder {
     heads: Box<[u32]>,
     tails: Box<[u32]>,
     counts: Box<[u32]>,
+    points: Vec<Point3>,
+    point_interner: PointInterner<()>,
     segments: Vec<PairwiseIntersectionSegment>,
     nodes: Vec<PairwiseIntersectionNode>,
 }
@@ -271,6 +293,8 @@ impl PairwiseIntersectionGraphBuilder {
             heads: vec![NO_INTERSECTION_NODE; face_count].into_boxed_slice(),
             tails: vec![NO_INTERSECTION_NODE; face_count].into_boxed_slice(),
             counts: vec![0; face_count].into_boxed_slice(),
+            points: Vec::new(),
+            point_interner: PointInterner::new_exact_unreserved(),
             segments: Vec::new(),
             nodes: Vec::new(),
         }
@@ -380,8 +404,23 @@ impl PairwiseIntersectionGraphBuilder {
         self.check_row_capacity(right, 1)?;
         self.reserve_segments(1)?;
         self.reserve_nodes(2)?;
+        self.points
+            .len()
+            .checked_add(2)
+            .filter(|&len| len <= u32::MAX as usize)
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "pairwise intersection point arena",
+            })?;
+        let endpoints = self
+            .point_interner
+            .intern_exact_pair_or_append(&mut self.points, [v0, v1])?;
+        debug_assert!(endpoints.iter().all(|&point| point < u32::MAX as usize));
+        let endpoints = endpoints.map(|point| {
+            u32::try_from(point).expect("intersection point capacity was checked before insertion")
+        });
         let segment_id = self.segments.len() as u32;
-        self.segments.push(PairwiseIntersectionSegment { v0, v1 });
+        self.segments
+            .push(PairwiseIntersectionSegment { endpoints });
         self.append_prechecked(left, right_id, segment_id);
         self.append_prechecked(right, left_id, segment_id);
         Ok(())
@@ -405,6 +444,7 @@ impl PairwiseIntersectionGraphBuilder {
         PairwiseIntersectionGraph {
             heads: self.heads,
             counts: self.counts,
+            points: self.points,
             segments: self.segments,
             nodes: self.nodes,
         }
@@ -1243,7 +1283,7 @@ mod tests {
     }
 
     #[test]
-    fn symmetric_segment_events_share_one_endpoint_record() {
+    fn symmetric_segment_events_share_one_segment_and_endpoint_record() {
         let mut graph = PairwiseIntersectionGraphBuilder::new(2);
         graph
             .append_segment_pair(
@@ -1255,7 +1295,9 @@ mod tests {
             .unwrap();
         let graph = graph.finish();
 
+        assert_eq!(graph.points.len(), 2);
         assert_eq!(graph.segments.len(), 1);
+        assert_eq!(size_of::<super::PairwiseIntersectionSegment>(), 8);
         assert_eq!(graph.event_count(), 2);
         assert!(matches!(
             graph.row(0).next(),
@@ -1271,6 +1313,84 @@ mod tests {
                 ..
             })
         ));
+    }
+
+    #[test]
+    fn exact_segment_endpoints_share_one_compact_point_arena() {
+        let origin = Point3::origin();
+        let mut graph = PairwiseIntersectionGraphBuilder::new(3);
+        graph
+            .append_segment_pair(
+                0,
+                1,
+                origin.clone(),
+                Point3::new(Real::one(), Real::zero(), Real::zero()),
+            )
+            .unwrap();
+        graph
+            .append_segment_pair(
+                0,
+                2,
+                origin,
+                Point3::new(Real::zero(), Real::one(), Real::zero()),
+            )
+            .unwrap();
+        let graph = graph.finish();
+
+        assert_eq!(graph.points.len(), 3);
+        assert_eq!(graph.segments.len(), 2);
+        assert_eq!(
+            graph.segments[0].endpoints[0],
+            graph.segments[1].endpoints[0]
+        );
+    }
+
+    #[test]
+    fn symbolic_segment_endpoints_do_not_add_an_equality_decision() {
+        let symbolic = Point3::new(Real::from(2).sqrt().unwrap(), Real::zero(), Real::zero());
+        let mut graph = PairwiseIntersectionGraphBuilder::new(3);
+        graph
+            .append_segment_pair(0, 1, symbolic.clone(), Point3::origin())
+            .unwrap();
+        graph
+            .append_segment_pair(0, 2, symbolic, Point3::origin())
+            .unwrap();
+        let graph = graph.finish();
+
+        assert_eq!(graph.points.len(), 4);
+        assert_ne!(
+            graph.segments[0].endpoints[0],
+            graph.segments[1].endpoints[0]
+        );
+    }
+
+    #[test]
+    fn polygon_order_remap_preserves_compact_endpoint_ids() {
+        let mut graph = PairwiseIntersectionGraphBuilder::new(3);
+        graph
+            .append_segment_pair(
+                0,
+                2,
+                Point3::origin(),
+                Point3::new(Real::one(), Real::zero(), Real::zero()),
+            )
+            .unwrap();
+        let graph = graph.finish().remap_polygon_order(&[2, 1, 0]).unwrap();
+
+        assert_eq!(graph.points.len(), 2);
+        let Some(PairwiseIntersectionEventRef::Segment {
+            segment,
+            other_polygon_idx,
+        }) = graph.row(2).next()
+        else {
+            panic!("remapped source face must retain its segment");
+        };
+        assert_eq!(other_polygon_idx, 0);
+        assert_eq!(segment.v0, &Point3::origin());
+        assert_eq!(
+            segment.v1,
+            &Point3::new(Real::one(), Real::zero(), Real::zero())
+        );
     }
 
     #[test]
@@ -1297,6 +1417,7 @@ mod tests {
         );
         assert!(graph.append_overlap_pair(0, 1).is_err());
         assert!(graph.nodes.is_empty());
+        assert!(graph.points.is_empty());
         assert!(graph.segments.is_empty());
         assert_eq!(graph.counts[0], 0);
         assert_eq!(graph.heads[0], super::NO_INTERSECTION_NODE);
@@ -1314,6 +1435,7 @@ mod tests {
         );
         let graph = graph.finish();
         assert_eq!(graph.event_count(), 0);
+        assert!(graph.points.is_empty());
         assert!(graph.segments.is_empty());
     }
 }
