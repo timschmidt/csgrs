@@ -220,6 +220,20 @@ pub struct AlgebraicRootAffineTransformReport {
     pub message: Option<String>,
 }
 
+/// Exact rational affine relation between two selected algebraic roots.
+///
+/// A returned relation certifies `right = scale * left + offset`.  The
+/// coefficients are inferred from translation-invariant normalized
+/// polynomial coefficients, but are accepted only after constructing the
+/// affine image and replaying exact selected-root equality.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootAffineRelation {
+    /// Nonzero exact-rational scale from the left root to the right root.
+    pub scale: Real,
+    /// Exact-rational offset from the scaled left root to the right root.
+    pub offset: Real,
+}
+
 /// Status for evaluating a polynomial at a represented algebraic root.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AlgebraicRootPolynomialEvaluationStatus {
@@ -825,6 +839,101 @@ pub fn translated_algebraic_root_difference(
     let translated = translated.representation.as_ref()?;
     (represented_roots_share_isolated_common_root(translated, right, policy) == Some(true))
         .then(|| -offset)
+}
+
+/// Finds an exact rational affine relation between two selected roots.
+///
+/// The defining polynomials are first centered at the mean of all of their
+/// complex roots.  If `right = scale * left + offset`, corresponding centered
+/// monic coefficients of codimension `m` differ by `scale^m`.  The first
+/// informative coefficient therefore supplies at most two rational scale
+/// candidates.  A candidate is returned only after [`transform_algebraic_root_affine`]
+/// and an exact common-root proof certify the selected isolating intervals;
+/// coefficient inference alone is never accepted as evidence.
+pub fn algebraic_root_affine_relation(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<AlgebraicRootAffineRelation> {
+    let left_coefficients = &left.polynomial_coefficients;
+    let right_coefficients = &right.polynomial_coefficients;
+    if !left.is_valid()
+        || !right.is_valid()
+        || left_coefficients.len() != right_coefficients.len()
+        || left_coefficients.len() < 2
+        || left_coefficients
+            .iter()
+            .chain(right_coefficients)
+            .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return None;
+    }
+
+    let degree = left_coefficients.len() - 1;
+    let degree_real = Real::from(u64::try_from(degree).ok()?);
+    let left_leading = left_coefficients.last()?;
+    let right_leading = right_coefficients.last()?;
+    let left_mean = -((left_coefficients[degree - 1].clone() / left_leading.clone()).ok()?
+        / degree_real.clone())
+    .ok()?;
+    let right_mean = -((right_coefficients[degree - 1].clone() / right_leading.clone()).ok()?
+        / degree_real)
+        .ok()?;
+    let left_centered = affine_transformed_polynomial(
+        left_coefficients,
+        &Real::one(),
+        &(-left_mean.clone()),
+        policy,
+    )?;
+    let right_centered = affine_transformed_polynomial(
+        right_coefficients,
+        &Real::one(),
+        &(-right_mean.clone()),
+        policy,
+    )?;
+    if left_centered.len() != degree + 1 || right_centered.len() != degree + 1 {
+        return None;
+    }
+
+    let mut scales = Vec::with_capacity(2);
+    for coefficient_index in (0..degree.saturating_sub(1)).rev() {
+        let left = (left_centered[coefficient_index].clone() / left_leading.clone()).ok()?;
+        let right = (right_centered[coefficient_index].clone() / right_leading.clone()).ok()?;
+        let left_zero = left.exact_rational_ref()?.is_zero();
+        let right_zero = right.exact_rational_ref()?.is_zero();
+        if left_zero || right_zero {
+            if left_zero != right_zero {
+                return None;
+            }
+            continue;
+        }
+        let exponent = degree.checked_sub(coefficient_index)?;
+        let exponent_u32 = u32::try_from(exponent).ok()?;
+        let scale = (right / left).ok()?.root_n(exponent_u32).ok()?;
+        scale.exact_rational_ref()?;
+        scales.push(scale.clone());
+        if exponent.is_multiple_of(2) {
+            scales.push(-scale);
+        }
+        break;
+    }
+    if scales.is_empty() {
+        scales.push(Real::one());
+    }
+
+    for scale in scales {
+        let offset = &right_mean - &scale * &left_mean;
+        let transformed =
+            transform_algebraic_root_affine(left, scale.clone(), offset.clone(), policy);
+        if transformed.status != AlgebraicRootAffineTransformStatus::Transformed {
+            continue;
+        }
+        let transformed = transformed.representation.as_ref()?;
+        if represented_roots_share_isolated_common_root(transformed, right, policy) == Some(true) {
+            return Some(AlgebraicRootAffineRelation { scale, offset });
+        }
+    }
+    None
 }
 
 fn represented_roots_share_isolated_common_root(
@@ -2997,6 +3106,13 @@ mod tests {
                 translated_algebraic_root_difference(&right, &left, policy),
                 Some(epsilon.clone())
             );
+            assert_eq!(
+                algebraic_root_affine_relation(&left, &right, policy),
+                Some(AlgebraicRootAffineRelation {
+                    scale: Real::one(),
+                    offset: epsilon.clone(),
+                })
+            );
             let report = compare_algebraic_root_representations_by_difference(
                 &left,
                 &right,
@@ -3017,6 +3133,62 @@ mod tests {
                 AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
             );
             assert_eq!(difference.exact_result, Some(-epsilon.clone()));
+        }
+    }
+
+    #[test]
+    fn algebraic_root_affine_relation_certifies_scale_and_offset_beyond_512_bits() {
+        let epsilon = dyadic(600);
+        let half = ratio(1, 2);
+        let scale = ratio(1, 2);
+        let left = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-half.clone(), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: half,
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let right = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(1),
+            interval_index: 0,
+            polynomial_coefficients: vec![
+                &epsilon * &epsilon - ratio(1, 8),
+                -(&epsilon * Real::from(2_i8)),
+                Real::one(),
+            ],
+            interval: IsolatedRootInterval {
+                lower: ratio(1, 4) + epsilon.clone(),
+                upper: ratio(1, 2) + epsilon.clone(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            assert_eq!(
+                algebraic_root_affine_relation(&left, &right, policy),
+                Some(AlgebraicRootAffineRelation {
+                    scale: scale.clone(),
+                    offset: epsilon.clone(),
+                })
+            );
+            assert_eq!(
+                algebraic_root_affine_relation(&right, &left, policy),
+                Some(AlgebraicRootAffineRelation {
+                    scale: Real::from(2_i8),
+                    offset: -(Real::from(2_i8) * epsilon.clone()),
+                })
+            );
         }
     }
 
