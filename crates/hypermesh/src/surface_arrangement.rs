@@ -5,11 +5,13 @@
 //! scalar, predicate-policy, intersection-graph, and Hypertri paths while
 //! adding no shipped second engine.
 
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
-use hyperlattice::{Point3, Real};
+use hyperlattice::{Point3, Real, Vector3};
 
+use crate::bvh::ExactBvh;
 use crate::context::{DecisionContext, MeshCertainty};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, compare_real_decision};
@@ -18,7 +20,8 @@ use crate::intersection::{
 };
 use crate::point_interner::PointInterner;
 use crate::polygon::{
-    ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
+    ApproxBounds, ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity,
+    ConvexPolygon,
 };
 use crate::predicate::{
     classify_point_decision, classify_projective_point_decision, classify_real,
@@ -159,6 +162,1181 @@ impl SurfaceCorefinement {
         let start = self.contact_offsets[face] as usize;
         let end = self.contact_offsets[face + 1] as usize;
         &self.contacts[start..end]
+    }
+}
+
+const FRONT: usize = 0;
+const BACK: usize = 1;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct FacetContribution {
+    face: u32,
+    orientation: i8,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct SurfaceFacet {
+    vertices: [u32; 3],
+    cells: [u32; 2],
+}
+
+#[derive(Debug)]
+struct SurfaceCellComplex {
+    facets: Vec<SurfaceFacet>,
+    contribution_offsets: Box<[u32]>,
+    contributions: Vec<FacetContribution>,
+    transitions: Box<[i32]>,
+    cell_windings: Box<[i32]>,
+    operand_count: usize,
+    cell_count: u32,
+    component_count: u32,
+    radial_edge_count: u32,
+    max_radial_degree: u32,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CellTruthNode {
+    False,
+    True,
+    Operand(u32),
+    Not(u32),
+    And([u32; 2]),
+    Or([u32; 2]),
+    Xor([u32; 2]),
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct ExpressionClassifications {
+    expression_count: usize,
+    facet_count: usize,
+    classifications: Vec<i8>,
+}
+
+impl ExpressionClassifications {
+    fn classification(&self, expression: usize, facet: usize) -> i8 {
+        self.classifications[expression * self.facet_count + facet]
+    }
+}
+
+impl SurfaceCellComplex {
+    fn facet_contributions(&self, facet: usize) -> &[FacetContribution] {
+        let start = self.contribution_offsets[facet] as usize;
+        let end = self.contribution_offsets[facet + 1] as usize;
+        &self.contributions[start..end]
+    }
+
+    fn facet_transition(&self, facet: usize) -> &[i32] {
+        let start = facet * self.operand_count;
+        &self.transitions[start..start + self.operand_count]
+    }
+
+    fn cell_winding(&self, cell: u32) -> &[i32] {
+        let start = cell as usize * self.operand_count;
+        &self.cell_windings[start..start + self.operand_count]
+    }
+
+    fn facet_classification(&self, facet: usize, operation: crate::winding::BooleanOp) -> i8 {
+        let cells = self.facets[facet].cells;
+        crate::winding::classify_polygon_output(
+            self.cell_winding(cells[FRONT]),
+            self.cell_winding(cells[BACK]),
+            operation,
+        )
+    }
+
+    fn classify_expressions(
+        &self,
+        nodes: &[CellTruthNode],
+        roots: &[u32],
+    ) -> HypermeshResult<ExpressionClassifications> {
+        validate_cell_truth_program(nodes, roots, self.operand_count)?;
+        let truth_len = (self.cell_count as usize).checked_mul(roots.len()).ok_or(
+            HypermeshError::CapacityOverflow {
+                operation: "surface cell expression truth table",
+            },
+        )?;
+        let mut root_truth = vec![0_u8; truth_len];
+        let mut node_truth = vec![0_u8; nodes.len()];
+        for cell in 0..self.cell_count {
+            let winding = self.cell_winding(cell);
+            for (node, instruction) in nodes.iter().enumerate() {
+                node_truth[node] = match *instruction {
+                    CellTruthNode::False => 0,
+                    CellTruthNode::True => 1,
+                    CellTruthNode::Operand(operand) => u8::from(winding[operand as usize] != 0),
+                    CellTruthNode::Not(input) => 1 - node_truth[input as usize],
+                    CellTruthNode::And([left, right]) => {
+                        node_truth[left as usize] & node_truth[right as usize]
+                    }
+                    CellTruthNode::Or([left, right]) => {
+                        node_truth[left as usize] | node_truth[right as usize]
+                    }
+                    CellTruthNode::Xor([left, right]) => {
+                        node_truth[left as usize] ^ node_truth[right as usize]
+                    }
+                };
+            }
+            let start = cell as usize * roots.len();
+            for (expression, root) in roots.iter().copied().enumerate() {
+                root_truth[start + expression] = node_truth[root as usize];
+            }
+        }
+
+        let classification_len =
+            roots
+                .len()
+                .checked_mul(self.facets.len())
+                .ok_or(HypermeshError::CapacityOverflow {
+                    operation: "surface facet expression classifications",
+                })?;
+        let mut classifications = Vec::new();
+        classifications
+            .try_reserve_exact(classification_len)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "surface facet expression classifications",
+            })?;
+        for expression in 0..roots.len() {
+            for facet in &self.facets {
+                let front = root_truth[facet.cells[FRONT] as usize * roots.len() + expression] != 0;
+                let back = root_truth[facet.cells[BACK] as usize * roots.len() + expression] != 0;
+                classifications.push(match (front, back) {
+                    (false, true) => 1,
+                    (true, false) => -1,
+                    _ => 0,
+                });
+            }
+        }
+        Ok(ExpressionClassifications {
+            expression_count: roots.len(),
+            facet_count: self.facets.len(),
+            classifications,
+        })
+    }
+}
+
+fn validate_cell_truth_program(
+    nodes: &[CellTruthNode],
+    roots: &[u32],
+    operand_count: usize,
+) -> HypermeshResult<()> {
+    for (node, instruction) in nodes.iter().enumerate() {
+        let dependency_is_valid = |dependency: u32| (dependency as usize) < node;
+        let valid = match *instruction {
+            CellTruthNode::False | CellTruthNode::True => true,
+            CellTruthNode::Operand(operand) => (operand as usize) < operand_count,
+            CellTruthNode::Not(input) => dependency_is_valid(input),
+            CellTruthNode::And([left, right])
+            | CellTruthNode::Or([left, right])
+            | CellTruthNode::Xor([left, right]) => {
+                dependency_is_valid(left) && dependency_is_valid(right)
+            }
+        };
+        if !valid {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface cell truth program is not a valid topological DAG",
+            });
+        }
+    }
+    if roots.iter().any(|root| *root as usize >= nodes.len()) {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell truth program references an absent root",
+        });
+    }
+    Ok(())
+}
+
+#[derive(Clone, Copy)]
+struct PendingFacet {
+    vertices: [u32; 3],
+}
+
+#[derive(Clone, Copy)]
+struct PendingContribution {
+    facet: u32,
+    contribution: FacetContribution,
+}
+
+#[derive(Clone, Copy)]
+struct EdgeUse {
+    edge: [u32; 2],
+    facet: u32,
+    opposite: u32,
+}
+
+#[derive(Clone, Copy)]
+struct RadialUse {
+    facet: u32,
+    opposite: u32,
+    half: u8,
+}
+
+struct CellDisjointSets {
+    parents: Vec<u32>,
+}
+
+impl CellDisjointSets {
+    fn new(node_count: usize) -> HypermeshResult<Self> {
+        if node_count > u32::MAX as usize {
+            return Err(HypermeshError::CapacityOverflow {
+                operation: "surface cell side nodes",
+            });
+        }
+        Ok(Self {
+            parents: (0..node_count as u32).collect(),
+        })
+    }
+
+    fn find(&mut self, node: usize) -> usize {
+        let mut root = node;
+        while self.parents[root] as usize != root {
+            root = self.parents[root] as usize;
+        }
+        let mut cursor = node;
+        while self.parents[cursor] as usize != root {
+            let next = self.parents[cursor] as usize;
+            self.parents[cursor] = root as u32;
+            cursor = next;
+        }
+        root
+    }
+
+    fn union(&mut self, left: usize, right: usize) {
+        let left = self.find(left);
+        let right = self.find(right);
+        if left == right {
+            return;
+        }
+        let (root, child) = if left < right {
+            (left, right)
+        } else {
+            (right, left)
+        };
+        self.parents[child] = root as u32;
+    }
+
+    fn into_cells(mut self) -> HypermeshResult<(Vec<u32>, u32)> {
+        for node in 0..self.parents.len() {
+            self.find(node);
+        }
+        let mut root_cells = vec![u32::MAX; self.parents.len()];
+        let mut cell_count = 0_u32;
+        for node in 0..self.parents.len() {
+            let root = self.parents[node] as usize;
+            if root_cells[root] == u32::MAX {
+                root_cells[root] = cell_count;
+                cell_count = cell_count
+                    .checked_add(1)
+                    .ok_or(HypermeshError::CapacityOverflow {
+                        operation: "surface arrangement cells",
+                    })?;
+            }
+            self.parents[node] = root_cells[root];
+        }
+        Ok((self.parents, cell_count))
+    }
+}
+
+fn assemble_surface_cells(
+    decisions: &DecisionContext,
+    polygons: &[ConvexPolygon],
+    surface: &SurfaceCorefinement,
+) -> HypermeshResult<SurfaceCellComplex> {
+    if surface.face_offsets.len() != polygons.len().saturating_add(1)
+        || surface.identities.len() != surface.points.len()
+    {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface corefinement topology is not aligned with its sources",
+        });
+    }
+    let operand_count = polygons.first().map_or(0, |polygon| polygon.delta_w.len());
+    if polygons
+        .iter()
+        .any(|polygon| polygon.delta_w.len() != operand_count)
+    {
+        return Err(HypermeshError::WindingDimensionMismatch {
+            expected: operand_count,
+            actual: polygons
+                .iter()
+                .find(|polygon| polygon.delta_w.len() != operand_count)
+                .map_or(operand_count, |polygon| polygon.delta_w.len()),
+        });
+    }
+
+    let (pending, contribution_offsets, contributions, transitions) =
+        bundle_surface_facets(polygons, surface, operand_count)?;
+    if pending.is_empty() {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface corefinement contains no facets",
+        });
+    }
+
+    let side_count = pending
+        .len()
+        .checked_mul(2)
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "surface cell side nodes",
+        })?;
+    let mut sets = CellDisjointSets::new(side_count)?;
+    let edge_use_capacity =
+        pending
+            .len()
+            .checked_mul(3)
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "surface radial edge uses",
+            })?;
+    let mut edge_uses = Vec::new();
+    edge_uses
+        .try_reserve_exact(edge_use_capacity)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface radial edge uses",
+        })?;
+    for (facet, pending_facet) in pending.iter().enumerate() {
+        let facet = compact_len(facet, "surface radial facet IDs")?;
+        let [a, b, c] = pending_facet.vertices;
+        for (start, end, opposite) in [(a, b, c), (b, c, a), (c, a, b)] {
+            edge_uses.push(EdgeUse {
+                edge: sorted_edge([start, end]),
+                facet,
+                opposite,
+            });
+        }
+    }
+    edge_uses.sort_unstable_by_key(|edge_use| {
+        [
+            edge_use.edge[0],
+            edge_use.edge[1],
+            edge_use.facet,
+            edge_use.opposite,
+        ]
+    });
+
+    let mut edges = Vec::new();
+    let mut radial = Vec::<RadialUse>::new();
+    let mut ray_starts = Vec::<usize>::new();
+    let mut edge_start = 0;
+    let mut max_radial_degree = 0_u32;
+    while edge_start < edge_uses.len() {
+        let edge = edge_uses[edge_start].edge;
+        let mut edge_end = edge_start + 1;
+        while edge_end < edge_uses.len() && edge_uses[edge_end].edge == edge {
+            edge_end += 1;
+        }
+        edges.push(edge);
+        max_radial_degree =
+            max_radial_degree.max(compact_len(edge_end - edge_start, "surface radial degree")?);
+        assemble_radial_ring(
+            decisions,
+            &surface.points,
+            &pending,
+            edge,
+            &edge_uses[edge_start..edge_end],
+            &mut radial,
+            &mut ray_starts,
+            &mut sets,
+        )?;
+        edge_start = edge_end;
+    }
+
+    let (side_cells, cell_count) = sets.into_cells()?;
+    let facets = pending
+        .into_iter()
+        .enumerate()
+        .map(|(facet, pending)| SurfaceFacet {
+            vertices: pending.vertices,
+            cells: [side_cells[facet * 2], side_cells[facet * 2 + 1]],
+        })
+        .collect::<Vec<_>>();
+    let source_bvh = ExactBvh::build_decision(decisions, polygons)?;
+    let maximum_x = maximum_surface_x(decisions, &surface.points)?;
+    let (cell_windings, component_count) = classify_surface_cells(
+        decisions,
+        polygons,
+        surface,
+        &source_bvh,
+        &maximum_x,
+        &surface.points,
+        &facets,
+        &transitions,
+        operand_count,
+        cell_count,
+        &edges,
+    )?;
+
+    Ok(SurfaceCellComplex {
+        facets,
+        contribution_offsets,
+        contributions,
+        transitions: transitions.into_boxed_slice(),
+        cell_windings: cell_windings.into_boxed_slice(),
+        operand_count,
+        cell_count,
+        component_count,
+        radial_edge_count: compact_len(edges.len(), "surface radial edge count")?,
+        max_radial_degree,
+    })
+}
+
+fn bundle_surface_facets(
+    polygons: &[ConvexPolygon],
+    surface: &SurfaceCorefinement,
+    operand_count: usize,
+) -> HypermeshResult<(
+    Vec<PendingFacet>,
+    Box<[u32]>,
+    Vec<FacetContribution>,
+    Vec<i32>,
+)> {
+    let transition_capacity = surface.triangles.len().checked_mul(operand_count).ok_or(
+        HypermeshError::CapacityOverflow {
+            operation: "surface facet winding transitions",
+        },
+    )?;
+    let mut facet_lookup = StorageHashMap::<[u32; 3], u32>::default();
+    facet_lookup
+        .try_reserve(surface.triangles.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface facet bundle index",
+        })?;
+    let mut facets = Vec::<PendingFacet>::new();
+    let mut transitions = Vec::<i32>::new();
+    transitions
+        .try_reserve_exact(transition_capacity)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface facet winding transitions",
+        })?;
+    let mut pending_contributions = Vec::<PendingContribution>::new();
+    pending_contributions
+        .try_reserve_exact(surface.triangles.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface facet contributions",
+        })?;
+
+    for (face, polygon) in polygons.iter().enumerate() {
+        for &triangle in surface.face_triangles(face) {
+            if triangle
+                .iter()
+                .any(|&point| point as usize >= surface.points.len())
+            {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface facet references an absent arrangement point",
+                });
+            }
+            let mut canonical = triangle;
+            canonical.sort_unstable();
+            if canonical[0] == canonical[1] || canonical[1] == canonical[2] {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface corefinement contains a degenerate facet",
+                });
+            }
+            let orientation = triangle_orientation(triangle, canonical)?;
+            let facet = if let Some(&facet) = facet_lookup.get(&canonical) {
+                facet
+            } else {
+                let facet = compact_len(facets.len(), "surface facet bundle IDs")?;
+                facets.push(PendingFacet {
+                    vertices: canonical,
+                });
+                transitions.extend(std::iter::repeat_n(0, operand_count));
+                facet_lookup.insert(canonical, facet);
+                facet
+            };
+            let start = facet as usize * operand_count;
+            for (component, delta) in polygon.delta_w.iter().copied().enumerate() {
+                let signed = i32::from(orientation)
+                    .checked_mul(delta)
+                    .ok_or(HypermeshError::WindingOverflow)?;
+                transitions[start + component] = transitions[start + component]
+                    .checked_add(signed)
+                    .ok_or(HypermeshError::WindingOverflow)?;
+            }
+            pending_contributions.push(PendingContribution {
+                facet,
+                contribution: FacetContribution {
+                    face: compact_len(face, "surface facet source face IDs")?,
+                    orientation,
+                },
+            });
+        }
+    }
+
+    pending_contributions.sort_unstable_by_key(|pending| {
+        (
+            pending.facet,
+            pending.contribution.face,
+            pending.contribution.orientation,
+        )
+    });
+    let mut contribution_offsets = Vec::new();
+    contribution_offsets
+        .try_reserve_exact(facets.len().saturating_add(1))
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface facet contribution offsets",
+        })?;
+    let mut contributions = Vec::new();
+    contributions
+        .try_reserve_exact(pending_contributions.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface facet contributions",
+        })?;
+    contribution_offsets.push(0_u32);
+    let mut next = 0;
+    for facet in 0..facets.len() {
+        while next < pending_contributions.len()
+            && pending_contributions[next].facet as usize == facet
+        {
+            contributions.push(pending_contributions[next].contribution);
+            next += 1;
+        }
+        contribution_offsets.push(compact_len(
+            contributions.len(),
+            "surface facet contribution offsets",
+        )?);
+    }
+    if next != pending_contributions.len()
+        || contribution_offsets.len() != facets.len().saturating_add(1)
+    {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface facet contributions are incomplete",
+        });
+    }
+    Ok((
+        facets,
+        contribution_offsets.into_boxed_slice(),
+        contributions,
+        transitions,
+    ))
+}
+
+fn triangle_orientation(source: [u32; 3], canonical: [u32; 3]) -> HypermeshResult<i8> {
+    if source == canonical
+        || source == [canonical[1], canonical[2], canonical[0]]
+        || source == [canonical[2], canonical[0], canonical[1]]
+    {
+        Ok(1)
+    } else if source == [canonical[0], canonical[2], canonical[1]]
+        || source == [canonical[2], canonical[1], canonical[0]]
+        || source == [canonical[1], canonical[0], canonical[2]]
+    {
+        Ok(-1)
+    } else {
+        Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface facet orientation does not match its vertex set",
+        })
+    }
+}
+
+fn assemble_radial_ring(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    facets: &[PendingFacet],
+    edge: [u32; 2],
+    uses: &[EdgeUse],
+    radial: &mut Vec<RadialUse>,
+    ray_starts: &mut Vec<usize>,
+    sets: &mut CellDisjointSets,
+) -> HypermeshResult<()> {
+    radial.clear();
+    radial
+        .try_reserve(uses.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface radial ring scratch",
+        })?;
+    for edge_use in uses {
+        radial.push(RadialUse {
+            facet: edge_use.facet,
+            opposite: edge_use.opposite,
+            half: 0,
+        });
+    }
+    let reference = radial[0].opposite;
+    for radial_use in radial.iter_mut().skip(1) {
+        radial_use.half = radial_half(decisions, points, edge, reference, radial_use.opposite)?;
+    }
+    let mut failure = None;
+    radial.sort_unstable_by(|left, right| {
+        if left.half != right.half {
+            return left.half.cmp(&right.half);
+        }
+        if failure.is_some() {
+            return Ordering::Equal;
+        }
+        match compare_radial_rays(decisions, points, edge, left.opposite, right.opposite) {
+            Ok(ordering) => ordering,
+            Err(error) => {
+                failure = Some(error);
+                Ordering::Equal
+            }
+        }
+    });
+    if let Some(error) = failure {
+        return Err(error);
+    }
+
+    ray_starts.clear();
+    ray_starts.push(0);
+    for index in 1..radial.len() {
+        if !same_radial_ray(
+            decisions,
+            points,
+            edge,
+            radial[index - 1].opposite,
+            radial[index].opposite,
+        )? {
+            ray_starts.push(index);
+        }
+    }
+    if ray_starts.len() < 2 {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface radial edge has fewer than two geometric rays",
+        });
+    }
+
+    for ray in 0..ray_starts.len() {
+        let start = ray_starts[ray];
+        let end = ray_starts.get(ray + 1).copied().unwrap_or(radial.len());
+        let base_after = facet_side_node(facets, radial[start].facet, edge, true)?;
+        let base_before = facet_side_node(facets, radial[start].facet, edge, false)?;
+        for radial_use in &radial[start + 1..end] {
+            sets.union(
+                base_after,
+                facet_side_node(facets, radial_use.facet, edge, true)?,
+            );
+            sets.union(
+                base_before,
+                facet_side_node(facets, radial_use.facet, edge, false)?,
+            );
+        }
+    }
+    for ray in 0..ray_starts.len() {
+        let next = (ray + 1) % ray_starts.len();
+        let after = facet_side_node(facets, radial[ray_starts[ray]].facet, edge, true)?;
+        let before = facet_side_node(facets, radial[ray_starts[next]].facet, edge, false)?;
+        sets.union(after, before);
+    }
+    Ok(())
+}
+
+fn facet_side_node(
+    facets: &[PendingFacet],
+    facet: u32,
+    edge: [u32; 2],
+    after: bool,
+) -> HypermeshResult<usize> {
+    let vertices = facets
+        .get(facet as usize)
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface radial ring references an absent facet",
+        })?
+        .vertices;
+    let mut directed_forward = None;
+    for index in 0..3 {
+        let from = vertices[index];
+        let to = vertices[(index + 1) % 3];
+        if sorted_edge([from, to]) == edge {
+            directed_forward = Some(from == edge[0]);
+            break;
+        }
+    }
+    let directed_forward = directed_forward.ok_or(HypermeshError::SurfaceArrangementFailed {
+        reason: "surface radial facet does not contain its indexed edge",
+    })?;
+    let after_side = if directed_forward { FRONT } else { BACK };
+    let side = if after { after_side } else { 1 - after_side };
+    (facet as usize)
+        .checked_mul(2)
+        .and_then(|node| node.checked_add(side))
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "surface cell side node IDs",
+        })
+}
+
+fn radial_half(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    edge: [u32; 2],
+    reference: u32,
+    candidate: u32,
+) -> HypermeshResult<u8> {
+    match radial_triple_classification(decisions, points, edge, reference, candidate)? {
+        Classification::Positive => Ok(0),
+        Classification::Negative => Ok(1),
+        Classification::On => {
+            match radial_dot_classification(decisions, points, edge, reference, candidate)? {
+                Classification::Positive => Ok(0),
+                Classification::Negative => Ok(1),
+                Classification::On => Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface radial ray is degenerate on its edge",
+                }),
+            }
+        }
+    }
+}
+
+fn compare_radial_rays(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    edge: [u32; 2],
+    left: u32,
+    right: u32,
+) -> HypermeshResult<Ordering> {
+    match radial_triple_classification(decisions, points, edge, left, right)? {
+        Classification::Positive => Ok(Ordering::Less),
+        Classification::Negative => Ok(Ordering::Greater),
+        Classification::On => {
+            match radial_dot_classification(decisions, points, edge, left, right)? {
+                Classification::Positive => Ok(Ordering::Equal),
+                Classification::Negative => Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "antipodal surface rays occupied one angular half",
+                }),
+                Classification::On => Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface radial ray is degenerate on its edge",
+                }),
+            }
+        }
+    }
+}
+
+fn same_radial_ray(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    edge: [u32; 2],
+    left: u32,
+    right: u32,
+) -> HypermeshResult<bool> {
+    if radial_triple_classification(decisions, points, edge, left, right)? != Classification::On {
+        return Ok(false);
+    }
+    match radial_dot_classification(decisions, points, edge, left, right)? {
+        Classification::Positive => Ok(true),
+        Classification::Negative => Ok(false),
+        Classification::On => Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface radial ray is degenerate on its edge",
+        }),
+    }
+}
+
+fn radial_triple_classification(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    edge: [u32; 2],
+    left: u32,
+    right: u32,
+) -> HypermeshResult<Classification> {
+    let origin = point_by_id(points, edge[0])?;
+    let direction = point_by_id(points, edge[1])? - origin;
+    let left = point_by_id(points, left)? - origin;
+    let right = point_by_id(points, right)? - origin;
+    classify_real(decisions, &direction.dot(&left.cross(&right)))
+}
+
+fn radial_dot_classification(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    edge: [u32; 2],
+    left: u32,
+    right: u32,
+) -> HypermeshResult<Classification> {
+    let origin = point_by_id(points, edge[0])?;
+    let direction = point_by_id(points, edge[1])? - origin;
+    let left = point_by_id(points, left)? - origin;
+    let right = point_by_id(points, right)? - origin;
+    let perpendicular_dot =
+        direction.dot(&direction) * left.dot(&right) - direction.dot(&left) * direction.dot(&right);
+    classify_real(decisions, &perpendicular_dot)
+}
+
+fn point_by_id(points: &[Point3], point: u32) -> HypermeshResult<&Point3> {
+    points
+        .get(point as usize)
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface topology references an absent arrangement point",
+        })
+}
+
+fn maximum_surface_x(decisions: &DecisionContext, points: &[Point3]) -> HypermeshResult<Real> {
+    let mut maximum = points
+        .first()
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell complex has no arrangement points",
+        })?
+        .x
+        .clone();
+    for point in &points[1..] {
+        if compare_real_decision(decisions, &point.x, &maximum)?.is_gt() {
+            maximum = point.x.clone();
+        }
+    }
+    Ok(maximum)
+}
+
+fn classify_surface_cells(
+    decisions: &DecisionContext,
+    polygons: &[ConvexPolygon],
+    surface: &SurfaceCorefinement,
+    source_bvh: &ExactBvh,
+    maximum_x: &Real,
+    points: &[Point3],
+    facets: &[SurfaceFacet],
+    transitions: &[i32],
+    operand_count: usize,
+    cell_count: u32,
+    edges: &[[u32; 2]],
+) -> HypermeshResult<(Vec<i32>, u32)> {
+    if transitions.len() != facets.len().saturating_mul(operand_count) {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface facet transition dimensions are incomplete",
+        });
+    }
+    let incidence_count = facets
+        .len()
+        .checked_mul(2)
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "surface cell incidences",
+        })?;
+    if incidence_count > u32::MAX as usize {
+        return Err(HypermeshError::CapacityOverflow {
+            operation: "surface cell incidences",
+        });
+    }
+    let mut heads = vec![u32::MAX; cell_count as usize];
+    let mut next = vec![u32::MAX; incidence_count];
+    for (facet, surface_facet) in facets.iter().enumerate() {
+        for side in [FRONT, BACK] {
+            let cell = surface_facet.cells[side] as usize;
+            let head = heads
+                .get_mut(cell)
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface facet references an absent cell",
+                })?;
+            let incidence = facet * 2 + side;
+            next[incidence] = *head;
+            *head = incidence as u32;
+        }
+    }
+
+    let winding_len = (cell_count as usize).checked_mul(operand_count).ok_or(
+        HypermeshError::CapacityOverflow {
+            operation: "surface cell winding vectors",
+        },
+    )?;
+    let mut windings = vec![0_i32; winding_len];
+    let mut visited = vec![false; cell_count as usize];
+    let mut queue = Vec::<u32>::new();
+    let mut component_count = 0_u32;
+    for cell in 0..cell_count {
+        if visited[cell as usize] {
+            continue;
+        }
+        let incidence = heads[cell as usize];
+        if incidence == u32::MAX {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface cell has no incident facet",
+            });
+        }
+        let seed_facet = incidence as usize / 2;
+        let (seed_cell, seed_winding) = seed_surface_cell_winding(
+            decisions,
+            polygons,
+            surface,
+            source_bvh,
+            maximum_x,
+            points,
+            facets,
+            operand_count,
+            edges,
+            seed_facet,
+        )?;
+        if visited[seed_cell as usize] {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface cell component seed aliases an earlier component",
+            });
+        }
+        let seed_start = seed_cell as usize * operand_count;
+        windings[seed_start..seed_start + operand_count].copy_from_slice(&seed_winding);
+        visited[seed_cell as usize] = true;
+        queue.clear();
+        queue.push(seed_cell);
+        let mut queue_head = 0;
+        while queue_head < queue.len() {
+            let current = queue[queue_head];
+            queue_head += 1;
+            let mut incidence = heads[current as usize];
+            while incidence != u32::MAX {
+                let facet = incidence as usize / 2;
+                let side = incidence as usize & 1;
+                let neighbor = facets[facet].cells[1 - side];
+                let sign = if side == FRONT { 1_i32 } else { -1_i32 };
+                let current_start = current as usize * operand_count;
+                let neighbor_start = neighbor as usize * operand_count;
+                let transition_start = facet * operand_count;
+                for component in 0..operand_count {
+                    let delta = sign
+                        .checked_mul(transitions[transition_start + component])
+                        .ok_or(HypermeshError::WindingOverflow)?;
+                    let expected = windings[current_start + component]
+                        .checked_add(delta)
+                        .ok_or(HypermeshError::WindingOverflow)?;
+                    if visited[neighbor as usize]
+                        && windings[neighbor_start + component] != expected
+                    {
+                        return Err(HypermeshError::SurfaceArrangementFailed {
+                            reason: "surface cell winding propagation is inconsistent",
+                        });
+                    }
+                }
+                if !visited[neighbor as usize] {
+                    for component in 0..operand_count {
+                        let delta = sign
+                            .checked_mul(transitions[transition_start + component])
+                            .expect("surface winding arithmetic was checked above");
+                        windings[neighbor_start + component] = windings[current_start + component]
+                            .checked_add(delta)
+                            .expect("surface winding arithmetic was checked above");
+                    }
+                    visited[neighbor as usize] = true;
+                    queue.push(neighbor);
+                }
+                incidence = next[incidence as usize];
+            }
+        }
+        component_count =
+            component_count
+                .checked_add(1)
+                .ok_or(HypermeshError::CapacityOverflow {
+                    operation: "surface cell components",
+                })?;
+    }
+    Ok((windings, component_count))
+}
+
+fn seed_surface_cell_winding(
+    decisions: &DecisionContext,
+    polygons: &[ConvexPolygon],
+    surface: &SurfaceCorefinement,
+    source_bvh: &ExactBvh,
+    maximum_x: &Real,
+    points: &[Point3],
+    facets: &[SurfaceFacet],
+    operand_count: usize,
+    edges: &[[u32; 2]],
+    seed_facet: usize,
+) -> HypermeshResult<(u32, Vec<i32>)> {
+    let triangle = facets
+        .get(seed_facet)
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell seed references an absent facet",
+        })?
+        .vertices;
+    let point = surface_facet_centroid(points, triangle)?;
+    let constraint_count = surface.triangles.len().checked_add(edges.len()).ok_or(
+        HypermeshError::CapacityOverflow {
+            operation: "surface cell seed direction constraints",
+        },
+    )?;
+    let candidate_count = constraint_count
+        .checked_mul(2)
+        .and_then(|count| count.checked_add(1))
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "surface cell seed direction candidates",
+        })?;
+    let mut saw_unknown = false;
+    for candidate in 0..candidate_count {
+        let parameter =
+            Real::from(
+                u64::try_from(candidate).map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "surface cell seed direction parameter",
+                })?,
+            );
+        let direction = Vector3::new([
+            Real::one(),
+            parameter.clone(),
+            parameter.clone() * parameter,
+        ]);
+        let local = decisions.isolated();
+        match try_seed_surface_cell_winding(
+            &local,
+            polygons,
+            surface,
+            source_bvh,
+            maximum_x,
+            points,
+            facets,
+            operand_count,
+            seed_facet,
+            &point,
+            &direction,
+        ) {
+            Ok(Some(result)) => {
+                decisions.absorb(local.certainty());
+                return Ok(result);
+            }
+            Ok(None) => {}
+            Err(HypermeshError::PredicateUndecided { .. }) => saw_unknown = true,
+            Err(error) => return Err(error),
+        }
+    }
+    if saw_unknown {
+        Err(HypermeshError::PredicateUndecided {
+            predicate: "surface cell seed direction separation",
+        })
+    } else {
+        Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "finite exact seed direction family did not avoid every facet and edge",
+        })
+    }
+}
+
+fn surface_facet_centroid(points: &[Point3], triangle: [u32; 3]) -> HypermeshResult<Point3> {
+    let [a, b, c] = triangle
+        .map(|point| point_by_id(points, point))
+        .map(|point| point.cloned());
+    let [a, b, c] = [a?, b?, c?];
+    let denominator = Real::from(3_u8);
+    let coordinate = |a: Real, b: Real, c: Real| {
+        ((a + b + c) / denominator.clone()).map_err(|_| HypermeshError::SurfaceArrangementFailed {
+            reason: "surface facet centroid denominator is not invertible",
+        })
+    };
+    Ok(Point3::new(
+        coordinate(a.x, b.x, c.x)?,
+        coordinate(a.y, b.y, c.y)?,
+        coordinate(a.z, b.z, c.z)?,
+    ))
+}
+
+fn try_seed_surface_cell_winding(
+    decisions: &DecisionContext,
+    polygons: &[ConvexPolygon],
+    surface: &SurfaceCorefinement,
+    source_bvh: &ExactBvh,
+    maximum_x: &Real,
+    points: &[Point3],
+    facets: &[SurfaceFacet],
+    operand_count: usize,
+    seed_facet: usize,
+    point: &Point3,
+    direction: &Vector3,
+) -> HypermeshResult<Option<(u32, Vec<i32>)>> {
+    let seed = &facets[seed_facet];
+    let frontward = match ray_facet_relation(decisions, points, seed.vertices, point, direction)? {
+        RayFacetRelation::Origin { frontward } => frontward,
+        RayFacetRelation::Degenerate => return Ok(None),
+        RayFacetRelation::Miss | RayFacetRelation::Ahead { .. } => {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface seed does not lie inside its source facet",
+            });
+        }
+    };
+    let distance = maximum_x.clone() - point.x.clone() + Real::one();
+    let endpoint = Point3::new(
+        point.x.clone() + distance.clone() * direction.0[0].clone(),
+        point.y.clone() + distance.clone() * direction.0[1].clone(),
+        point.z.clone() + distance * direction.0[2].clone(),
+    );
+    let bounds = ApproxBounds::new(point.clone(), endpoint);
+    let mut candidate_faces = Vec::new();
+    source_bvh.query_bounds_decision(decisions, &bounds, |face| {
+        candidate_faces.push(face);
+    })?;
+
+    let mut winding = vec![0_i32; operand_count];
+    let mut saw_origin = false;
+    for face in candidate_faces {
+        let polygon = polygons
+            .get(face)
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface seed broad phase returned an absent source face",
+            })?;
+        for &triangle in surface.face_triangles(face) {
+            match ray_facet_relation(decisions, points, triangle, point, direction)? {
+                RayFacetRelation::Miss => {}
+                RayFacetRelation::Degenerate => return Ok(None),
+                RayFacetRelation::Ahead { frontward } => {
+                    crate::winding::apply_transition_in_place(
+                        &mut winding,
+                        if frontward { 1 } else { -1 },
+                        &polygon.delta_w,
+                    )?;
+                }
+                RayFacetRelation::Origin { .. } => {
+                    let mut canonical = triangle;
+                    canonical.sort_unstable();
+                    if canonical != seed.vertices {
+                        return Err(HypermeshError::SurfaceArrangementFailed {
+                            reason: "surface seed lies inside more than one geometric facet",
+                        });
+                    }
+                    saw_origin = true;
+                }
+            }
+        }
+    }
+    if !saw_origin {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface seed broad phase omitted its source facet",
+        });
+    }
+    Ok(Some((
+        seed.cells[if frontward { FRONT } else { BACK }],
+        winding,
+    )))
+}
+
+enum RayFacetRelation {
+    Miss,
+    Degenerate,
+    Ahead { frontward: bool },
+    Origin { frontward: bool },
+}
+
+fn ray_facet_relation(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    triangle: [u32; 3],
+    origin: &Point3,
+    direction: &Vector3,
+) -> HypermeshResult<RayFacetRelation> {
+    let [a, b, c] = triangle
+        .map(|vertex| point_by_id(points, vertex))
+        .map(|vertex| vertex.cloned());
+    let [a, b, c] = [a?, b?, c?];
+    let edge_ab = &b - &a;
+    let edge_ac = &c - &a;
+    let cross = direction.cross(&edge_ac);
+    let determinant = edge_ab.dot(&cross);
+    let determinant_sign = classify_real(decisions, &determinant)?;
+    if determinant_sign == Classification::On {
+        return Ok(RayFacetRelation::Degenerate);
+    }
+    let from_a = origin - &a;
+    let u = from_a.dot(&cross);
+    let u_sign = classify_real(decisions, &u)?;
+    let cross_from_a = from_a.cross(&edge_ab);
+    let v = direction.dot(&cross_from_a);
+    let v_sign = classify_real(decisions, &v)?;
+    let remainder = determinant.clone() - u - v;
+    let remainder_sign = classify_real(decisions, &remainder)?;
+    if [u_sign, v_sign, remainder_sign]
+        .into_iter()
+        .any(|sign| sign != Classification::On && sign != determinant_sign)
+    {
+        return Ok(RayFacetRelation::Miss);
+    }
+    if [u_sign, v_sign, remainder_sign]
+        .into_iter()
+        .any(|sign| sign == Classification::On)
+    {
+        return Ok(RayFacetRelation::Degenerate);
+    }
+    let ray_parameter = edge_ac.dot(&cross_from_a);
+    let parameter_sign = classify_real(decisions, &ray_parameter)?;
+    let frontward = determinant_sign == Classification::Negative;
+    if parameter_sign == Classification::On {
+        Ok(RayFacetRelation::Origin { frontward })
+    } else if parameter_sign == determinant_sign {
+        Ok(RayFacetRelation::Ahead { frontward })
+    } else {
+        Ok(RayFacetRelation::Miss)
     }
 }
 
@@ -1311,6 +2489,101 @@ mod tests {
         polygon
     }
 
+    fn tetrahedron(
+        origin: [i64; 3],
+        extent: i64,
+        mesh: usize,
+        face_start: usize,
+        vertex_start: usize,
+        operand: usize,
+        operand_count: usize,
+    ) -> Vec<ConvexPolygon> {
+        let [x, y, z] = origin;
+        let vertices = [
+            p(x, y, z),
+            p(x + extent, y, z),
+            p(x, y + extent, z),
+            p(x, y, z + extent),
+        ];
+        let source_vertices = [
+            vertex_start,
+            vertex_start + 1,
+            vertex_start + 2,
+            vertex_start + 3,
+        ];
+        let faces = [
+            [0_usize, 2, 1],
+            [0_usize, 1, 3],
+            [0_usize, 3, 2],
+            [1_usize, 2, 3],
+        ];
+        faces
+            .into_iter()
+            .enumerate()
+            .map(|(local_face, face)| {
+                let mut polygon = triangle(
+                    face.map(|vertex| vertices[vertex].clone()),
+                    mesh,
+                    face_start + local_face,
+                    face.map(|vertex| source_vertices[vertex]),
+                );
+                polygon.delta_w = vec![0; operand_count];
+                polygon.delta_w[operand] = 1;
+                polygon
+            })
+            .collect()
+    }
+
+    fn tetrahedron_from_vertices(
+        vertices: [Point3; 4],
+        mesh: usize,
+        face_start: usize,
+        vertex_start: usize,
+        operand: usize,
+        operand_count: usize,
+    ) -> Vec<ConvexPolygon> {
+        let decisions = crate::test_support::approximate_decisions();
+        [
+            ([1_usize, 2, 3], 0_usize),
+            ([0_usize, 3, 2], 1_usize),
+            ([0_usize, 1, 3], 2_usize),
+            ([0_usize, 2, 1], 3_usize),
+        ]
+        .into_iter()
+        .enumerate()
+        .map(|(local_face, (mut face, interior))| {
+            let support =
+                Plane::from_points(&vertices[face[0]], &vertices[face[1]], &vertices[face[2]]);
+            match classify_point_decision(&decisions, &vertices[interior], &support).unwrap() {
+                Classification::Positive => face.swap(1, 2),
+                Classification::Negative => {}
+                Classification::On => panic!("test tetrahedron is degenerate"),
+            }
+            let mut polygon = triangle(
+                face.map(|vertex| vertices[vertex].clone()),
+                mesh,
+                face_start + local_face,
+                face.map(|vertex| vertex_start + vertex),
+            );
+            polygon.delta_w = vec![0; operand_count];
+            polygon.delta_w[operand] = 1;
+            polygon
+        })
+        .collect()
+    }
+
+    fn arranged_cells(
+        polygons: &[ConvexPolygon],
+        policy: hyperlimit::PredicatePolicy,
+    ) -> (MeshCertainty, SurfaceCorefinement, SurfaceCellComplex) {
+        let context = MeshContext::new(policy);
+        let decisions = DecisionContext::new(&context);
+        let graph = pairwise_intersections_by_polygon(&decisions, polygons).unwrap();
+        let surface = corefine_surface(&decisions, polygons, &graph).unwrap();
+        let cells = assemble_surface_cells(&decisions, polygons, &surface).unwrap();
+        (decisions.certainty(), surface, cells)
+    }
+
     fn triangle_edges(triangle: [u32; 3]) -> [[u32; 2]; 3] {
         [
             sorted_edge([triangle[0], triangle[1]]),
@@ -1344,6 +2617,476 @@ mod tests {
                 .constraints
                 .iter()
                 .all(|constraint| edges.contains(constraint))
+        );
+    }
+
+    fn selected_facets_are_closed(
+        cells: &SurfaceCellComplex,
+        operation: crate::winding::BooleanOp,
+    ) -> bool {
+        facet_classifications_are_closed(
+            cells,
+            &(0..cells.facets.len())
+                .map(|facet| cells.facet_classification(facet, operation))
+                .collect::<Vec<_>>(),
+        )
+    }
+
+    fn facet_classifications_are_closed(
+        cells: &SurfaceCellComplex,
+        classifications: &[i8],
+    ) -> bool {
+        if classifications.len() != cells.facets.len() {
+            return false;
+        }
+        let mut edge_uses = BTreeMap::<[u32; 2], [u32; 2]>::new();
+        for (facet, &classification) in classifications.iter().enumerate() {
+            if classification == 0 {
+                continue;
+            }
+            let mut triangle = cells.facets[facet].vertices;
+            if classification == -1 {
+                triangle.swap(1, 2);
+            }
+            for [start, end] in [
+                [triangle[0], triangle[1]],
+                [triangle[1], triangle[2]],
+                [triangle[2], triangle[0]],
+            ] {
+                edge_uses.entry(sorted_edge([start, end])).or_default()
+                    [usize::from(start > end)] += 1;
+            }
+        }
+        !edge_uses.is_empty() && edge_uses.values().all(|uses| uses[0] == uses[1])
+    }
+
+    #[test]
+    fn exact_radial_tetrahedron_builds_two_reciprocal_cells() {
+        let polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 1);
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, surface, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(surface.points.len(), 4);
+            assert_eq!(cells.facets.len(), 4);
+            assert_eq!(cells.contributions.len(), 4);
+            assert_eq!(cells.operand_count, 1);
+            assert_eq!(cells.cell_count, 2);
+            assert_eq!(cells.component_count, 1);
+            assert_eq!(cells.radial_edge_count, 6);
+            assert_eq!(cells.max_radial_degree, 2);
+
+            let mut windings = (0..cells.cell_count)
+                .map(|cell| cells.cell_winding(cell).to_vec())
+                .collect::<Vec<_>>();
+            windings.sort_unstable();
+            assert_eq!(windings, [vec![0], vec![1]]);
+            for facet in 0..cells.facets.len() {
+                assert_eq!(cells.facet_contributions(facet).len(), 1);
+                assert_eq!(cells.facet_transition(facet).len(), 1);
+                assert_eq!(
+                    cells.facet_classification(facet, crate::winding::BooleanOp::Union)
+                        * cells.facet_contributions(facet)[0].orientation,
+                    1
+                );
+                assert!(
+                    cells.facets[facet]
+                        .vertices
+                        .iter()
+                        .all(|vertex| (*vertex as usize) < surface.points.len())
+                );
+                assert!((cells.facet_contributions(facet)[0].face as usize) < polygons.len());
+            }
+        }
+    }
+
+    #[test]
+    fn disconnected_nested_shells_receive_global_absolute_windings() {
+        let mut polygons = tetrahedron([0, 0, 0], 10, 0, 0, 0, 0, 2);
+        polygons.extend(tetrahedron([2, 2, 2], 1, 1, 4, 0, 1, 2));
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, _, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(cells.facets.len(), 8);
+            assert_eq!(cells.cell_count, 4);
+            assert_eq!(cells.component_count, 2);
+            let mut windings = (0..cells.cell_count)
+                .map(|cell| cells.cell_winding(cell).to_vec())
+                .collect::<Vec<_>>();
+            windings.sort_unstable();
+            assert_eq!(windings, [vec![0, 0], vec![1, 0], vec![1, 0], vec![1, 1]]);
+
+            let selected = |operation| {
+                (0..cells.facets.len())
+                    .filter(|&facet| cells.facet_classification(facet, operation) != 0)
+                    .count()
+            };
+            assert_eq!(selected(crate::winding::BooleanOp::Union), 4);
+            assert_eq!(selected(crate::winding::BooleanOp::Intersection), 4);
+            assert_eq!(selected(crate::winding::BooleanOp::Difference), 8);
+            assert_eq!(selected(crate::winding::BooleanOp::SymmetricDifference), 8);
+        }
+    }
+
+    #[test]
+    fn coincident_shells_bundle_multiplicity_before_cell_assembly() {
+        let mut polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 2);
+        polygons.extend(tetrahedron([0, 0, 0], 4, 1, 4, 0, 1, 2));
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, surface, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(surface.points.len(), 4);
+            assert_eq!(cells.facets.len(), 4);
+            assert_eq!(cells.contributions.len(), 8);
+            assert_eq!(cells.cell_count, 2);
+            assert_eq!(cells.component_count, 1);
+            assert_eq!(cells.max_radial_degree, 2);
+            assert!(
+                (0..cells.facets.len()).all(|facet| cells.facet_contributions(facet).len() == 2)
+            );
+            let mut windings = (0..cells.cell_count)
+                .map(|cell| cells.cell_winding(cell).to_vec())
+                .collect::<Vec<_>>();
+            windings.sort_unstable();
+            assert_eq!(windings, [vec![0, 0], vec![1, 1]]);
+
+            let selected = |operation| {
+                (0..cells.facets.len())
+                    .filter(|&facet| cells.facet_classification(facet, operation) != 0)
+                    .count()
+            };
+            assert_eq!(selected(crate::winding::BooleanOp::Union), 4);
+            assert_eq!(selected(crate::winding::BooleanOp::Intersection), 4);
+            assert_eq!(selected(crate::winding::BooleanOp::Difference), 0);
+            assert_eq!(selected(crate::winding::BooleanOp::SymmetricDifference), 0);
+        }
+    }
+
+    #[test]
+    fn transverse_overlapping_shells_form_all_four_winding_cells() {
+        let mut polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 2);
+        polygons.extend(tetrahedron([1, 1, -1], 4, 1, 4, 0, 1, 2));
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, _, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(cells.component_count, 1);
+            assert_eq!(cells.cell_count, 4);
+            assert!(cells.max_radial_degree >= 4);
+            let mut windings = (0..cells.cell_count)
+                .map(|cell| cells.cell_winding(cell).to_vec())
+                .collect::<Vec<_>>();
+            windings.sort_unstable();
+            assert_eq!(windings, [vec![0, 0], vec![0, 1], vec![1, 0], vec![1, 1]]);
+            for operation in [
+                crate::winding::BooleanOp::Union,
+                crate::winding::BooleanOp::Intersection,
+                crate::winding::BooleanOp::Difference,
+                crate::winding::BooleanOp::SymmetricDifference,
+            ] {
+                assert!(selected_facets_are_closed(&cells, operation));
+            }
+        }
+    }
+
+    #[test]
+    fn one_cell_table_evaluates_batched_arbitrary_multi_operand_expressions() {
+        let mut polygons = tetrahedron([0, 0, 0], 12, 0, 0, 0, 0, 3);
+        polygons.extend(tetrahedron([1, 1, 1], 6, 1, 4, 0, 1, 3));
+        polygons.extend(tetrahedron([2, 2, 2], 1, 2, 8, 0, 2, 3));
+        let nodes = [
+            CellTruthNode::False,        // 0
+            CellTruthNode::True,         // 1
+            CellTruthNode::Operand(0),   // 2: A
+            CellTruthNode::Operand(1),   // 3: B
+            CellTruthNode::Operand(2),   // 4: C
+            CellTruthNode::Not(3),       // 5: !B
+            CellTruthNode::And([2, 5]),  // 6: A && !B
+            CellTruthNode::Or([6, 4]),   // 7: (A && !B) || C
+            CellTruthNode::Or([2, 3]),   // 8
+            CellTruthNode::Or([8, 4]),   // 9: union
+            CellTruthNode::And([2, 3]),  // 10
+            CellTruthNode::And([10, 4]), // 11: intersection
+            CellTruthNode::Not(4),       // 12: !C
+            CellTruthNode::And([6, 12]), // 13: A - B - C
+            CellTruthNode::Xor([2, 3]),  // 14
+            CellTruthNode::Xor([14, 4]), // 15: parity
+        ];
+        let roots = [0_u32, 1, 9, 11, 13, 15, 7];
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, _, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(cells.component_count, 3);
+            assert_eq!(cells.cell_count, 6);
+            let classified = cells.classify_expressions(&nodes, &roots).unwrap();
+            assert_eq!(classified.expression_count, roots.len());
+            assert_eq!(classified.facet_count, cells.facets.len());
+            let selected = (0..classified.expression_count)
+                .map(|expression| {
+                    (0..classified.facet_count)
+                        .filter(|&facet| classified.classification(expression, facet) != 0)
+                        .count()
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(selected, [0, 0, 4, 4, 8, 12, 12]);
+            for expression in 2..classified.expression_count {
+                let classifications = (0..classified.facet_count)
+                    .map(|facet| classified.classification(expression, facet))
+                    .collect::<Vec<_>>();
+                assert!(facet_classifications_are_closed(&cells, &classifications));
+            }
+
+            assert!(matches!(
+                cells.classify_expressions(&[CellTruthNode::Operand(3)], &[0]),
+                Err(HypermeshError::SurfaceArrangementFailed { .. })
+            ));
+            assert!(matches!(
+                cells.classify_expressions(&[CellTruthNode::Not(0)], &[0]),
+                Err(HypermeshError::SurfaceArrangementFailed { .. })
+            ));
+            assert!(matches!(
+                cells.classify_expressions(&nodes, &[u32::MAX]),
+                Err(HypermeshError::SurfaceArrangementFailed { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn edge_tangent_closed_shells_build_one_nonmanifold_radial_component() {
+        let mut polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 2);
+        polygons.extend(tetrahedron_from_vertices(
+            [p(0, 0, 0), p(4, 0, 0), p(0, -4, 0), p(0, 0, -4)],
+            1,
+            4,
+            0,
+            1,
+            2,
+        ));
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, _, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(cells.component_count, 1);
+            assert_eq!(cells.cell_count, 3);
+            assert_eq!(cells.max_radial_degree, 4);
+            let mut windings = (0..cells.cell_count)
+                .map(|cell| cells.cell_winding(cell).to_vec())
+                .collect::<Vec<_>>();
+            windings.sort_unstable();
+            assert_eq!(windings, [vec![0, 0], vec![0, 1], vec![1, 0]]);
+            assert_eq!(
+                (0..cells.facets.len())
+                    .filter(|&facet| {
+                        cells.facet_classification(facet, crate::winding::BooleanOp::Union) != 0
+                    })
+                    .count(),
+                8
+            );
+            assert!(selected_facets_are_closed(
+                &cells,
+                crate::winding::BooleanOp::Union
+            ));
+            assert_eq!(
+                (0..cells.facets.len())
+                    .filter(|&facet| {
+                        cells.facet_classification(facet, crate::winding::BooleanOp::Intersection)
+                            != 0
+                    })
+                    .count(),
+                0
+            );
+        }
+    }
+
+    #[test]
+    fn opposite_side_face_coincidence_classifies_shared_interface_once() {
+        let a = p(4, 0, 0);
+        let b = p(0, 4, 0);
+        let c = p(0, 0, 4);
+        let mut polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 2);
+        polygons.extend(tetrahedron_from_vertices(
+            [a, b, c, p(4, 4, 4)],
+            1,
+            4,
+            0,
+            1,
+            2,
+        ));
+        let b_minus_a = [
+            CellTruthNode::Operand(0),
+            CellTruthNode::Operand(1),
+            CellTruthNode::Not(0),
+            CellTruthNode::And([1, 2]),
+        ];
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, _, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(cells.facets.len(), 7);
+            assert_eq!(cells.contributions.len(), 8);
+            assert_eq!(cells.component_count, 1);
+            assert_eq!(cells.cell_count, 3);
+            let selected = |operation| {
+                (0..cells.facets.len())
+                    .filter(|&facet| cells.facet_classification(facet, operation) != 0)
+                    .count()
+            };
+            assert_eq!(selected(crate::winding::BooleanOp::Union), 6);
+            assert_eq!(selected(crate::winding::BooleanOp::Intersection), 0);
+            assert_eq!(selected(crate::winding::BooleanOp::Difference), 4);
+            assert_eq!(selected(crate::winding::BooleanOp::SymmetricDifference), 6);
+            let reverse = cells.classify_expressions(&b_minus_a, &[3]).unwrap();
+            let reverse_classifications = (0..reverse.facet_count)
+                .map(|facet| reverse.classification(0, facet))
+                .collect::<Vec<_>>();
+            assert_eq!(
+                reverse_classifications
+                    .iter()
+                    .filter(|classification| **classification != 0)
+                    .count(),
+                4
+            );
+            assert!(facet_classifications_are_closed(
+                &cells,
+                &reverse_classifications
+            ));
+            assert!(selected_facets_are_closed(
+                &cells,
+                crate::winding::BooleanOp::Union
+            ));
+            assert!(selected_facets_are_closed(
+                &cells,
+                crate::winding::BooleanOp::Difference
+            ));
+        }
+    }
+
+    #[test]
+    fn disconnected_shell_scaling_preserves_every_exact_component() {
+        let shell_count = std::env::var("HYPERMESH_TOPOLOGY_SHELLS")
+            .ok()
+            .and_then(|value| value.parse::<usize>().ok())
+            .unwrap_or(32);
+        assert!(shell_count > 0);
+        let mut polygons = Vec::with_capacity(shell_count.saturating_mul(4));
+        for shell in 0..shell_count {
+            let x = i64::try_from(shell).unwrap().checked_mul(3).unwrap();
+            polygons.extend(tetrahedron([x, 0, 0], 1, 0, shell * 4, shell * 4, 0, 1));
+        }
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, surface, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(surface.points.len(), shell_count * 4);
+            assert_eq!(cells.facets.len(), shell_count * 4);
+            assert_eq!(cells.cell_count as usize, shell_count * 2);
+            assert_eq!(cells.component_count as usize, shell_count);
+            assert_eq!(cells.radial_edge_count as usize, shell_count * 6);
+            assert_eq!(cells.max_radial_degree, 2);
+            assert_eq!(
+                (0..cells.facets.len())
+                    .filter(|&facet| {
+                        cells.facet_classification(facet, crate::winding::BooleanOp::Union) != 0
+                    })
+                    .count(),
+                shell_count * 4
+            );
+            assert!(selected_facets_are_closed(
+                &cells,
+                crate::winding::BooleanOp::Union
+            ));
+        }
+    }
+
+    #[test]
+    fn open_surface_is_rejected_by_exact_radial_topology() {
+        let polygons = vec![triangle(
+            [p(0, 0, 0), p(4, 0, 0), p(0, 4, 0)],
+            0,
+            0,
+            [0, 1, 2],
+        )];
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
+            let surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+            assert_eq!(
+                assemble_surface_cells(&decisions, &polygons, &surface).unwrap_err(),
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface radial edge has fewer than two geometric rays",
+                }
+            );
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn surface_topology_rejects_malformed_incidence_and_winding_dimensions() {
+        let mut polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 2);
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+        let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
+        let mut surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+
+        polygons[1].delta_w.pop();
+        assert_eq!(
+            assemble_surface_cells(&decisions, &polygons, &surface).unwrap_err(),
+            HypermeshError::WindingDimensionMismatch {
+                expected: 2,
+                actual: 1,
+            }
+        );
+        polygons[1].delta_w.push(0);
+
+        surface.triangles[0][0] = u32::MAX;
+        assert_eq!(
+            assemble_surface_cells(&decisions, &polygons, &surface).unwrap_err(),
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "surface facet references an absent arrangement point",
+            }
+        );
+    }
+
+    #[test]
+    fn coincident_facet_transition_overflow_is_reported_atomically() {
+        let mut polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 1);
+        polygons.extend(tetrahedron([0, 0, 0], 4, 1, 4, 0, 0, 1));
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+        let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
+        let surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+        for polygon in &mut polygons[..4] {
+            polygon.delta_w[0] = i32::MAX;
+        }
+        for polygon in &mut polygons[4..] {
+            polygon.delta_w[0] = 1;
+        }
+        assert_eq!(
+            assemble_surface_cells(&decisions, &polygons, &surface).unwrap_err(),
+            HypermeshError::WindingOverflow
         );
     }
 
@@ -1662,6 +3405,33 @@ mod tests {
             .insert(&approximate, second_identity, symbolic_right)
             .unwrap();
         assert_eq!(first, second);
+        assert_eq!(
+            approximate.certainty(),
+            MeshCertainty::Approximate512Consumed
+        );
+    }
+
+    #[test]
+    fn radial_equality_obeys_strict_and_approximate_512_terminal_policy() {
+        let symbolic_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let points = [
+            p(0, 0, 0),
+            p(1, 0, 0),
+            p(0, 1, 0),
+            Point3::new(Real::zero(), Real::one(), symbolic_zero),
+        ];
+
+        let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let strict = DecisionContext::new(&strict_context);
+        assert!(matches!(
+            same_radial_ray(&strict, &points, [0, 1], 2, 3),
+            Err(HypermeshError::PredicateUndecided { .. })
+        ));
+        assert_eq!(strict.certainty(), MeshCertainty::Certified);
+
+        let approximate_context = MeshContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
+        let approximate = DecisionContext::new(&approximate_context);
+        assert!(same_radial_ray(&approximate, &points, [0, 1], 2, 3).unwrap());
         assert_eq!(
             approximate.certainty(),
             MeshCertainty::Approximate512Consumed
