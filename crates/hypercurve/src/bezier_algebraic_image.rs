@@ -285,8 +285,7 @@ impl RationalBezierAlgebraicPointImage2 {
         }
     }
 
-    // Consumed by the algebraic cusp carrier in the next offset tranche.
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Consumed when the algebraic cusp carrier enters the arrangement graph.
     pub(crate) fn from_retained_expression(
         parameter: BezierAlgebraicParameter2,
         parameter_root: AlgebraicRootRepresentation,
@@ -481,7 +480,16 @@ struct RationalBezierAlgebraicTangentImageData {
     parameter: AlgebraicRootRepresentation,
     dx: Option<BezierAlgebraicRationalCoordinateImage>,
     dy: Option<BezierAlgebraicRationalCoordinateImage>,
+    retained_expression: Option<RetainedRationalTangentExpression>,
     message: Option<String>,
+}
+
+#[derive(Debug, PartialEq)]
+struct RetainedRationalTangentExpression {
+    parameter: BezierAlgebraicParameter2,
+    dx_numerator: Vec<Real>,
+    dy_numerator: Vec<Real>,
+    denominator: Vec<Real>,
 }
 
 impl PartialEq for RationalBezierAlgebraicTangentImage2 {
@@ -496,6 +504,7 @@ impl RationalBezierAlgebraicTangentImage2 {
         parameter: AlgebraicRootRepresentation,
         dx: Option<BezierAlgebraicRationalCoordinateImage>,
         dy: Option<BezierAlgebraicRationalCoordinateImage>,
+        retained_expression: Option<RetainedRationalTangentExpression>,
         message: Option<String>,
     ) -> Self {
         Self {
@@ -504,9 +513,33 @@ impl RationalBezierAlgebraicTangentImage2 {
                 parameter,
                 dx,
                 dy,
+                retained_expression,
                 message,
             }),
         }
+    }
+
+    pub(crate) fn from_retained_expression(
+        parameter: BezierAlgebraicParameter2,
+        parameter_root: AlgebraicRootRepresentation,
+        dx_numerator: Vec<Real>,
+        dy_numerator: Vec<Real>,
+        denominator: Vec<Real>,
+        message: &'static str,
+    ) -> Self {
+        Self::new(
+            BezierAlgebraicImageStatus::RetainedRationalExpression,
+            parameter_root,
+            None,
+            None,
+            Some(RetainedRationalTangentExpression {
+                parameter,
+                dx_numerator,
+                dy_numerator,
+                denominator,
+            }),
+            Some(message.to_owned()),
+        )
     }
 
     /// Returns the final construction status.
@@ -527,6 +560,27 @@ impl RationalBezierAlgebraicTangentImage2 {
     /// Returns the derivative y rational image when construction reached it.
     pub fn dy(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
         self.data.dy.as_ref()
+    }
+
+    /// Returns the exact isolated source parameter retained for a derivative
+    /// rational expression that did not fit the bounded coordinate-image path.
+    pub fn retained_parameter(&self) -> Option<&BezierAlgebraicParameter2> {
+        self.data
+            .retained_expression
+            .as_ref()
+            .map(|expression| &expression.parameter)
+    }
+
+    /// Returns the exact derivative numerators and their shared denominator
+    /// when the bounded coordinate-image path retained the source expression.
+    pub fn retained_coordinate_polynomials(&self) -> Option<(&[Real], &[Real], &[Real])> {
+        self.data.retained_expression.as_ref().map(|expression| {
+            (
+                expression.dx_numerator.as_slice(),
+                expression.dy_numerator.as_slice(),
+                expression.denominator.as_slice(),
+            )
+        })
     }
 
     /// Returns a compact diagnostic message for failed construction.
@@ -1038,6 +1092,7 @@ fn rational_tangent_image(
             parameter_root,
             None,
             None,
+            None,
             Some("Bezier algebraic parameter evidence did not validate".to_owned()),
         ));
     }
@@ -1054,6 +1109,7 @@ fn rational_tangent_image(
             parameter_root,
             None,
             None,
+            None,
             Some("dx rational coordinate image failed".to_owned()),
         ));
     };
@@ -1062,6 +1118,7 @@ fn rational_tangent_image(
             BezierAlgebraicImageStatus::YImageFailed,
             parameter_root,
             Some(dx),
+            None,
             None,
             Some("dy rational coordinate image failed".to_owned()),
         ));
@@ -1072,7 +1129,46 @@ fn rational_tangent_image(
         Some(dx),
         Some(dy),
         None,
+        None,
     ))
+}
+
+#[allow(dead_code)] // Consumed when the algebraic cusp carrier enters the arrangement graph.
+pub(crate) fn rational_tangent_image_from_power_basis(
+    parameter: &BezierAlgebraicParameter2,
+    dx_numerator: Vec<Real>,
+    dy_numerator: Vec<Real>,
+    denominator: Vec<Real>,
+    policy: &CurveContext,
+) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
+    let dx_numerator = reduce_algebraic_image_polynomial(parameter, dx_numerator, policy)?;
+    let dy_numerator = reduce_algebraic_image_polynomial(parameter, dy_numerator, policy)?;
+    let denominator = reduce_algebraic_image_polynomial(parameter, denominator, policy)?;
+    let image = rational_tangent_image(
+        parameter,
+        RationalTangentPolynomials {
+            dx_numerator: dx_numerator.clone(),
+            dy_numerator: dy_numerator.clone(),
+            denominator: denominator.clone(),
+        },
+        policy,
+    )?;
+    Ok(match image.status() {
+        BezierAlgebraicImageStatus::Transformed
+        | BezierAlgebraicImageStatus::RetainedRationalExpression => image,
+        BezierAlgebraicImageStatus::InvalidParameterEvidence
+        | BezierAlgebraicImageStatus::XImageFailed
+        | BezierAlgebraicImageStatus::YImageFailed => {
+            RationalBezierAlgebraicTangentImage2::from_retained_expression(
+                parameter.clone(),
+                image.parameter().clone(),
+                dx_numerator,
+                dy_numerator,
+                denominator,
+                "retained an exact Real-coefficient rational tangent expression",
+            )
+        }
+    })
 }
 
 fn coordinate_image(
