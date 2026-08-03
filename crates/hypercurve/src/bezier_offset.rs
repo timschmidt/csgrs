@@ -16,8 +16,6 @@
 
 use std::sync::{Arc, OnceLock};
 
-#[cfg(test)]
-use crate::BezierParameterInterval;
 use crate::bezier_algebraic_image::{
     parameter_representation, rational_point_image_from_power_basis,
     rational_tangent_image_from_power_basis,
@@ -38,15 +36,15 @@ use crate::{
     Aabb2, Axis2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierCuspClassification,
     BezierDegree, BezierEndpoint, BezierInflectionClassification, BezierLineContact,
     BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
-    BezierLineImageFitRelation, BezierParameter2, BezierParameterPolynomial, BezierParameterRange2,
-    CertifiedBezierLineImageOffset2, Classification, CubicBezier2, Curve2, CurveContext,
-    CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2, CurvePath2, CurveResult,
-    ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
-    RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
-    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, Similarity2,
-    UncertaintyReason,
+    BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierParameterRange2, CertifiedBezierLineImageOffset2,
+    Classification, CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError,
+    CurveGeometry2, CurveOperation2, CurvePath2, CurveResult, ExactCurveError, ExactCurveResult,
+    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicPointImage2,
+    RationalBezierAlgebraicTangentImage2, RationalBezierIntersectionCandidates2,
+    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
+    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    RationalQuadraticBezier2, Real, Similarity2, UncertaintyReason,
 };
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 use hypersolve::{
@@ -336,8 +334,37 @@ pub(crate) struct BezierAlgebraicCuspCircleRationalSystem2 {
     pub(crate) selected_half_plane: BivariatePolynomial,
     /// Positive at the start diameter endpoint and negative at the end.
     pub(crate) diameter_side: BivariatePolynomial,
+    /// The squared radius over the same positive squared common denominator.
+    pub(crate) radius_squared_denominator: BivariatePolynomial,
     /// Signed tangent cross product after multiplication by a positive square.
     pub(crate) tangent_cross: BivariatePolynomial,
+}
+
+/// A certified rational bracket or represented witness for one semicircle
+/// contact parameter.
+#[derive(Clone, Debug, PartialEq)]
+#[allow(dead_code)]
+pub(crate) enum BezierAlgebraicCuspSemicircleParameterBracket2 {
+    Exact(Real),
+    Interval(BezierParameterInterval),
+}
+
+/// Pair-shared local-field map from rational-curve contacts to the algebraic
+/// semicircle's monotone parameter.
+#[derive(Clone, Debug)]
+#[allow(dead_code)]
+pub(crate) struct BezierAlgebraicCuspSemicircleRationalParameterMap2 {
+    data: Arc<BezierAlgebraicCuspSemicircleRationalParameterMapData2>,
+}
+
+#[derive(Debug)]
+#[allow(dead_code)]
+struct BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+    cusp_parameter: BezierParameter2,
+    incidence: BivariatePolynomial,
+    diameter_side: BivariatePolynomial,
+    radius_squared_denominator: BivariatePolynomial,
+    policy: CurveContext,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -783,6 +810,60 @@ impl BezierAlgebraicCuspSemicircle2 {
         Ok(Classification::Decided(winding))
     }
 
+    /// Builds one pair-shared exact map from contacts on `other` to this
+    /// semicircle's monotone `[0,1]` parameter.
+    ///
+    /// The map does not construct a third algebraic-number tower. On the half
+    /// circle, the normalized diameter coordinate is the strictly decreasing
+    /// rational function `A(u)=(1-2u)/((1-u)^2+u^2)`. Comparing the correlated
+    /// contact's exact diameter coordinate with `A(u)` therefore orders the
+    /// contact parameter. The three reduced bivariate polynomials are shared
+    /// by every contact in the pair.
+    pub(crate) fn rational_parameter_map(
+        &self,
+        other: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalParameterMap2>> {
+        let system = self.rational_system(other)?;
+        let reduce = |polynomial: &BivariatePolynomial| {
+            bivariate_reduce_axis(
+                polynomial,
+                self.cusp_parameter().polynomial(),
+                CurveResultantParameter::First,
+                policy,
+            )
+        };
+        let incidence = match reduce(&system.incidence)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let diameter_side = match reduce(&system.diameter_side)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radius_squared_denominator = match reduce(&system.radius_squared_denominator)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleRationalParameterMap2 {
+                data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+                    cusp_parameter: BezierParameter2::Algebraic(self.cusp_parameter().clone()),
+                    incidence,
+                    diameter_side,
+                    radius_squared_denominator,
+                    policy: *policy,
+                }),
+            },
+        ))
+    }
+
     /// Builds the exact equations needed to intersect this selected half circle
     /// with one finite rational Bezier. The first variable is the retained cusp
     /// parameter; the second is the rational curve parameter.
@@ -809,12 +890,13 @@ impl BezierAlgebraicCuspSemicircle2 {
             &other.weight,
         );
         let common_denominator = bivariate_outer_product(&frame.denominator, &other.weight);
+        let radius_squared_denominator = bivariate_scale(
+            bivariate_multiply(&common_denominator, &common_denominator),
+            &(&self.data.radial_distance * &self.data.radial_distance),
+        );
         let incidence = bivariate_subtract(
             &bivariate_add(&bivariate_multiply(&dx, &dx), &bivariate_multiply(&dy, &dy)),
-            &bivariate_scale(
-                bivariate_multiply(&common_denominator, &common_denominator),
-                &(&self.data.radial_distance * &self.data.radial_distance),
-            ),
+            &radius_squared_denominator,
         );
 
         // Multiplication by W changes `cross(R, Q-C)` into a quantity with
@@ -864,6 +946,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             incidence,
             selected_half_plane,
             diameter_side,
+            radius_squared_denominator,
             tangent_cross,
         })
     }
@@ -1164,6 +1247,124 @@ impl BezierAlgebraicCuspSemicircle2 {
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
         ))
+    }
+}
+
+#[allow(dead_code)]
+impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
+    /// Orders one exact contact parameter against a represented parameter.
+    pub(crate) fn contact_order_to_real(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleRationalContact2,
+        parameter: &Real,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        let policy = &self.data.policy;
+        match contact.location {
+            BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                return Ok(compare_reals(&Real::zero(), parameter, policy)
+                    .map(Classification::Decided)
+                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
+            }
+            BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                return Ok(compare_reals(&Real::one(), parameter, policy)
+                    .map(Classification::Decided)
+                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
+            }
+            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {}
+        }
+        match in_closed_unit_interval(parameter, policy) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        let one_minus = Real::one() - parameter;
+        let denominator = &one_minus * &one_minus + parameter * parameter;
+        match real_sign(&denominator, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "semicircle parameter-order denominator was not positive".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radial_coefficient = Real::one() - Real::from(2_i8) * parameter;
+        let predicate = bivariate_scaled_difference(
+            &self.data.diameter_side,
+            &denominator,
+            &self.data.radius_squared_denominator,
+            &radial_coefficient,
+        );
+        Ok(
+            match algebraic_cusp_correlated_predicate_sign(
+                &self.data.incidence,
+                &predicate,
+                &self.data.cusp_parameter,
+                &contact.other_parameter,
+                policy,
+            )? {
+                // A(u) is strictly decreasing: a larger diameter coordinate is an
+                // earlier semicircle parameter.
+                Classification::Decided(RealSign::Positive) => {
+                    Classification::Decided(std::cmp::Ordering::Less)
+                }
+                Classification::Decided(RealSign::Negative) => {
+                    Classification::Decided(std::cmp::Ordering::Greater)
+                }
+                Classification::Decided(RealSign::Zero) => {
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
+    /// Refines one contact to a represented witness or a certified rational
+    /// bracket in the semicircle's parameter domain.
+    pub(crate) fn contact_parameter_bracket(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleRationalContact2,
+        refinement_steps: usize,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
+        match contact.location {
+            BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleParameterBracket2::Exact(Real::zero()),
+                ));
+            }
+            BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleParameterBracket2::Exact(Real::one()),
+                ));
+            }
+            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {}
+        }
+        let policy = &self.data.policy;
+        let mut start = Real::zero();
+        let mut end = Real::one();
+        for _ in 0..refinement_steps {
+            let midpoint = ((&start + &end) / Real::from(2_i8))?;
+            match self.contact_order_to_real(contact, &midpoint)? {
+                Classification::Decided(std::cmp::Ordering::Less) => end = midpoint,
+                Classification::Decided(std::cmp::Ordering::Greater) => start = midpoint,
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicircleParameterBracket2::Exact(midpoint),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(
+            match BezierParameterInterval::try_new(start, end, policy)? {
+                Classification::Decided(interval) => Classification::Decided(
+                    BezierAlgebraicCuspSemicircleParameterBracket2::Interval(interval),
+                ),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 }
 
@@ -12848,6 +13049,34 @@ fn bivariate_combine(
     BivariatePolynomial::new(coefficients)
 }
 
+fn bivariate_scaled_difference(
+    first: &BivariatePolynomial,
+    first_scale: &Real,
+    second: &BivariatePolynomial,
+    second_scale: &Real,
+) -> BivariatePolynomial {
+    let first_count = first.coefficients.len().max(second.coefficients.len());
+    let second_count = first
+        .coefficients
+        .iter()
+        .chain(&second.coefficients)
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0);
+    let mut coefficients = vec![vec![Real::zero(); second_count]; first_count];
+    for (target, source) in coefficients.iter_mut().zip(&first.coefficients) {
+        for (target, source) in target.iter_mut().zip(source) {
+            *target += source * first_scale;
+        }
+    }
+    for (target, source) in coefficients.iter_mut().zip(&second.coefficients) {
+        for (target, source) in target.iter_mut().zip(source) {
+            *target -= source * second_scale;
+        }
+    }
+    BivariatePolynomial::new(coefficients)
+}
+
 fn bivariate_multiply_first_parameter(
     polynomial: &BivariatePolynomial,
     factor: &[Real],
@@ -13649,6 +13878,73 @@ mod conversion_tests {
                     expected,
                 );
             }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_rational_parameter_map_brackets_an_interior_contact() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let vertical = RationalBezier2::try_new(
+            vec![
+                Point2::new(half.clone(), Real::from(-2_i8)),
+                Point2::new(half.clone(), Real::from(2_i8)),
+            ],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            ) = semicircle
+                .rational_intersections(&vertical, &policy)
+                .unwrap()
+            else {
+                panic!("vertical-circle contacts must complete");
+            };
+            let [contact] = contacts.as_slice() else {
+                panic!("the selected upper semicircle has one vertical contact");
+            };
+            assert_eq!(
+                contact.location,
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            );
+            let Classification::Decided(map) = semicircle
+                .rational_parameter_map(&vertical, &policy)
+                .unwrap()
+            else {
+                panic!("the rational contact parameter map must complete");
+            };
+            assert_eq!(
+                std::mem::size_of::<BezierAlgebraicCuspSemicircleRationalParameterMap2>(),
+                std::mem::size_of::<usize>(),
+            );
+            let clone = map.clone();
+            assert!(Arc::ptr_eq(&map.data, &clone.data));
+            assert_eq!(
+                map.contact_order_to_real(contact, &quarter).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            );
+            assert_eq!(
+                map.contact_order_to_real(contact, &half).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
+            let Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Interval(
+                interval,
+            )) = map.contact_parameter_bracket(contact, 4).unwrap()
+            else {
+                panic!("the irrational semicircle parameter must retain a bracket");
+            };
+            assert!(matches!(
+                compare_reals(interval.start(), &quarter, &policy),
+                Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal)
+            ));
+            assert!(matches!(
+                compare_reals(interval.end(), &half, &policy),
+                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+            ));
         }
     }
 
