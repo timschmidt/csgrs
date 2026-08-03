@@ -2075,9 +2075,9 @@ struct BezierAlgebraicCuspSemicircleFragmentData2 {
 }
 
 /// Cached local-field geometry for classifying an algebraic ray against one
-/// exact-parameter cusp subarc. The three point images retain the cusp field;
-/// the query point keeps its own field, so pair predicates never construct a
-/// primitive element.
+/// cusp subarc whose endpoints are represented in the cusp field. The three
+/// point images retain that field; the query point keeps its own field, so
+/// pair predicates never construct a primitive element.
 #[cfg(feature = "predicates")]
 #[derive(Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleAlgebraicRay2 {
@@ -7276,29 +7276,40 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     ///
     /// Exact `Real` subrange cuts preserve a single cusp field, so the start,
     /// end, and center remain rational expressions of that selected root.
-    /// Mapped cuts can carry another independent selected field and therefore
-    /// stay explicit until the corresponding multi-field endpoint evaluator
-    /// is available.
+    /// A mapped cut enters the same fast path when its retained correspondence
+    /// proves an exact rational value; genuinely independent mapped fields stay
+    /// explicit until the multi-field endpoint evaluator is available.
     #[cfg(feature = "predicates")]
     pub(crate) fn algebraic_ray_evaluator(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleAlgebraicRay2>> {
         self.validate_policy(policy)?;
-        let (
-            BezierAlgebraicCuspSemicircleParameter2::Exact(start),
-            BezierAlgebraicCuspSemicircleParameter2::Exact(end),
-        ) = (&self.data.start, &self.data.end)
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        let start = match self.data.start.represented_rational_value(policy)? {
+            Classification::Decided(Some(parameter)) => parameter,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
-        let start = match self.data.semicircle.point_at(start, policy)? {
+        let end = match self.data.end.represented_rational_value(policy)? {
+            Classification::Decided(Some(parameter)) => parameter,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let start = match self.data.semicircle.point_at(&start, policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let end = match self.data.semicircle.point_at(end, policy)? {
+        let end = match self.data.semicircle.point_at(&end, policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -22165,6 +22176,12 @@ mod conversion_tests {
             else {
                 panic!("the rational-authored cusp cut must construct a retained fragment");
             };
+            assert!(matches!(
+                cross_field_cusp_fragment
+                    .algebraic_ray_evaluator(&policy)
+                    .unwrap(),
+                Classification::Decided(_)
+            ));
             assert_eq!(
                 cross_field_cusp_fragment
                     .endpoint_exact_point(false, &policy)
