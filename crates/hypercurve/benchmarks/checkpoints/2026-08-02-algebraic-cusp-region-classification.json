@@ -1,0 +1,251 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact retained-field classification for algebraic-cusp Boolean runs",
+  "source_revision": "7f2ca74abb625e67deb3afe51e5b84e2d1989d48",
+  "semantic_revisions": [
+    "8b2d98e0f850b076a322e2022a20e20316b531b7",
+    "7f2ca74abb625e67deb3afe51e5b84e2d1989d48"
+  ],
+  "comparison_revision": "d85408840b2a5a42fa8e9aea8540774c34b7d084",
+  "comparison_semantic_revision": "bf5b6c6cfe26d0d1fdadd4ec1614004d581dbef5",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+  },
+  "scope": {
+    "included": [
+      "bidirectional exact face-label propagation over each authored CurveRegion2 loop",
+      "ordinary-carrier seed preference with algebraic-cusp representatives used only for otherwise unclassified runs",
+      "topology-checked label preservation at ordinary joins and exact toggling at transverse crossings",
+      "runtime rejection of contradictory independently seeded face labels, including closed-loop closure",
+      "one prepared local-field evaluator per retained rational algebraic point with one shared denominator-sign proof",
+      "exact oriented-line side from correlated x/y numerators and their shared denominator",
+      "exact half-open winding against retained affine line loops with material, hole, EvenOdd, and NonZero semantics",
+      "conservative exact AABB rejection before nonlinear retained-loop classification",
+      "all four CurveRegion2 Booleans for a loop composed entirely of non-rational algebraic-cusp semicircles against an affine container",
+      "STRICT and APPROXIMATE_512 execution through the same exact carriers, topology, and predicate graph",
+      "matched historical, competitive, allocation, release-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "algebraic-point classification when the point lies inside the bounds of a genuinely nonlinear retained loop",
+      "selected positive-dimensional analytic radical overlap replay",
+      "distinct-carrier general algebraic outer joins",
+      "finite projection and export of algebraic-cusp carriers",
+      "solver-driven fillet and chamfer",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "topology_propagation": "A classified split fragment propagates in both traversal directions only across a shared certified topology vertex. Ordinary vertices preserve the other-region location; certified transverse vertices exchange Inside and Outside; overlap endpoints and every other reclassification vertex terminate the run. When two exact seeds meet, their labels must agree.",
+    "local_field_orientation": "For point coordinates x=Nx(a)/D(a), y=Ny(a)/D(a) over one retained selected source root a, the oriented line determinant is signed as dx*(Ny-y0*D)-dy*(Nx-x0*D), then divided by the separately certified sign of D(a). No independent-coordinate equality or primitive-element construction is used.",
+    "affine_winding": "Each exact retained line is consumed with a half-open horizontal-ray rule. Algebraic coordinate order and correlated line orientation decide crossings; a collinear point is Boundary only when both coordinate brackets place it on the finite segment. Per-loop fill rules are evaluated before certified material/hole roles compose signed depth.",
+    "bounds": "A retained loop is skipped only when its conservative exact bounds and a decided algebraic coordinate comparison prove strict separation. Uncertain bounds or comparisons never become a negative result.",
+    "policy": "STRICT accepts only exact local-field signs, exact ordering, or authored topology. APPROXIMATE_512 traverses the same graph and may terminate only through the shared Hyperlimit 512-bit predicate boundary; returned geometry remains exact."
+  },
+  "capability": {
+    "comparison_revision": "A Boolean run can be seeded only in its previous traversal direction, and a non-rational algebraic-cusp representative blocks face classification unless it happens to reduce to Point2.",
+    "source_revision": "One cheap ordinary representative can seed a connected cusp-containing run in either direction; an all-cusp loop can instead classify its retained algebraic representative exactly against affine regions and against any conservatively disjoint curved loop.",
+    "full_fixture": "A regularized two-semicircle loop whose representatives remain in a degree-12 local field intersects a containing exact square under both policies; intersection retains algebraic carriers and cusp-minus-container is empty.",
+    "historical_exact_peer": false,
+    "bounded_failure": "A retained algebraic representative inside the conservative bounds of a nonlinear other-region loop remains explicit Unsupported until curved local-field incidence is implemented."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "release executables pinned to CPU 11; seven perf-stat process repetitions; deterministic instruction and branch counts are authoritative because elapsed time varied with concurrent host load",
+    "all_cusp_affine_boolean": {
+      "workload": "regularize a complementary non-rational algebraic-cusp loop, then execute the complete containing-square Boolean batch under STRICT and APPROXIMATE_512",
+      "command": "taskset -c 11 perf stat -x, -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 --exact bezier_offset::conversion_tests::simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_field",
+      "task_clock_ms": 98.99,
+      "cycles": 394067448,
+      "instructions": 847485581,
+      "branches": 173564112,
+      "branch_misses": 1720730,
+      "prior_regularization_only_instructions": 823460541,
+      "expanded_workload_instruction_change_percent": 2.917570,
+      "historical_exact_boolean_peer": false
+    },
+    "topology_seed_and_curved_bounds": {
+      "workload": "seed one cusp/analytic/line loop from one ordinary representative, verify one point classification, and reject a distant algebraic point from the curved loop by exact conservative bounds under both policies",
+      "command": "taskset -c 11 perf stat -x, -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 --exact curve_region_boolean::certified_successor_tests::boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier",
+      "task_clock_ms": 18.18,
+      "cycles": 66907645,
+      "instructions": 142352354,
+      "branches": 24711149,
+      "branch_misses": 381249,
+      "historical_exact_peer": false
+    },
+    "affine_classifier_matrix": {
+      "workload": "inside, outside, finite-edge boundary, line-extension rejection, negative-denominator orientation, and explicit hole-role classification under both policies",
+      "command": "taskset -c 11 perf stat -x, -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 --exact curve_region_boolean::certified_successor_tests::affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field",
+      "task_clock_ms": 5.15,
+      "cycles": 14620750,
+      "instructions": 21349582,
+      "branches": 4299959,
+      "branch_misses": 68333,
+      "historical_exact_peer": false
+    },
+    "matched_correlated_overlap": {
+      "workload": "the unchanged correlated partial cusp-overlap fixture and all four Booleans under both policies",
+      "current_instructions": 1459614277,
+      "comparison_instructions": 1481077389,
+      "instruction_change_percent": -1.449155,
+      "current_branches": 270971367,
+      "comparison_branches": 274852532,
+      "branch_change_percent": -1.412090,
+      "interpretation": "Loop-aware classification removes redundant representative work from the existing exact overlap path."
+    },
+    "matched_existing_guard": {
+      "workload": "algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "current_instructions": 28769097,
+      "comparison_instructions": 28776078,
+      "instruction_change_percent": -0.024260,
+      "current_branches": 5416552,
+      "comparison_branches": 5420063,
+      "branch_change_percent": -0.064778
+    },
+    "fixed_work_historical_controls": {
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "current_instructions": 1985993364,
+        "comparison_instructions": 1984486878,
+        "instruction_change_percent": 0.075913,
+        "current_branches": 403013552,
+        "comparison_branches": 402581211,
+        "branch_change_percent": 0.107392
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "current_instructions": 3447256111,
+        "comparison_instructions": 3447698469,
+        "instruction_change_percent": -0.012831,
+        "current_branches": 649584462,
+        "comparison_branches": 649672453,
+        "branch_change_percent": -0.013544
+      },
+      "interpretation": "The unrelated exact offset controls remain within 0.11% in deterministic work."
+    },
+    "competitive_context": {
+      "method": "current release comparative executable pinned to CPU 14; eleven samples targeted at 100 ms; fixture construction excluded; finite libraries are throughput targets rather than guarantee-equivalent peers",
+      "open_cubic": {
+        "hypercurve_certified_median_ns": 31335116.0,
+        "hypercurve_chord_fallback_median_ns": 1011994.0,
+        "curvo_heuristic_median_ns": 9043.7
+      },
+      "line_arc_capsule_inward": {
+        "hypercurve_exact_median_ns": 18831.5,
+        "cavalier_contours_median_ns": 966.9
+      },
+      "direct_guarantee_equivalent": false
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct release-unit-test traces; heaptrack_print summaries are authoritative",
+    "all_cusp_affine_boolean": {
+      "profile": "/tmp/heaptrack.hypercurve-cusp-affine-7f2ca74.zst",
+      "allocation_calls": 1502669,
+      "temporary_allocations": 51870,
+      "peak_heap_mib": 1.66,
+      "recorder_peak_rss_mib": 17.59,
+      "instrumented_runtime_seconds": 0.584,
+      "interpretation": "The expanded fixture adds the complete Boolean batch to the earlier regularization-only workload; bigint Bernstein restriction remains the dominant allocation debt."
+    },
+    "affine_classifier_matrix": {
+      "profile": "/tmp/heaptrack.hypercurve-algebraic-affine-7f2ca74.zst",
+      "allocation_calls": 44947,
+      "temporary_allocations": 8228,
+      "peak_heap_kib": 231.43,
+      "instrumented_runtime_seconds": 0.068
+    },
+    "matched_correlated_overlap": {
+      "profile": "/tmp/heaptrack.hypercurve-cusp-overlap-7f2ca74.zst",
+      "current_allocation_calls": 2761176,
+      "comparison_allocation_calls": 2796336,
+      "allocation_change_percent": -1.257360,
+      "current_temporary_allocations": 253702,
+      "comparison_temporary_allocations": 255254,
+      "temporary_change_percent": -0.608022,
+      "current_peak_heap_kib": 412.26,
+      "comparison_peak_heap_kib": 395.35,
+      "peak_change_percent": 4.277223
+    },
+    "matched_existing_guard": {
+      "profile": "/tmp/heaptrack.hypercurve-guard-7f2ca74.zst",
+      "current_allocation_calls": 39201,
+      "comparison_allocation_calls": 39201,
+      "current_temporary_allocations": 2777,
+      "comparison_temporary_allocations": 2777,
+      "current_peak_heap_kib": 317.45,
+      "comparison_peak_heap_kib": 317.45
+    }
+  },
+  "release_size": {
+    "method": "matched default-feature and no-default-feature curve_region_boolean_batch release executables at this and the preceding semantic checkpoint",
+    "default_features": {
+      "current_file_bytes": 8034944,
+      "comparison_file_bytes": 7999240,
+      "file_change_percent": 0.446342,
+      "current_text_bytes": 6107373,
+      "comparison_text_bytes": 6089969,
+      "text_change_percent": 0.285781,
+      "current_data_bytes": 268624,
+      "current_bss_bytes": 3200
+    },
+    "no_default_features": {
+      "current_file_bytes": 7825784,
+      "comparison_file_bytes": 7821456,
+      "file_change_percent": 0.055335,
+      "current_text_bytes": 5940889,
+      "comparison_text_bytes": 5938305,
+      "text_change_percent": 0.043514,
+      "current_data_bytes": 267328,
+      "current_bss_bytes": 3056
+    },
+    "interpretation": "The exact predicate-enabled classifier adds 17.0 KiB of linked text; the shared topology refactor is nearly size-neutral in the minimal build. No compatibility layer or second Boolean engine is introduced."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-algebraic-region-7f2ca74 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "artifact": "/tmp/hypercurve-callgraph-algebraic-region-7f2ca74/callgraph.json",
+    "discovered_crates": 11,
+    "nodes": 32787,
+    "edges": 60860,
+    "confirmed_paths": [
+      "CurveRegionBooleanContext::build_boolean_regions -> CurveRegionBooleanContext::build_boolean_topology",
+      "CurveRegionBooleanContext::build_boolean_topology -> propagate_boolean_locations_from_seed",
+      "CurveRegionBooleanContext::build_boolean_topology -> CurveRegionBooleanContext::fragment_location",
+      "CurveRegionBooleanContext::fragment_location -> CurveRegion2::classify_algebraic_point_raw",
+      "CurveRegion2::classify_algebraic_point_raw -> RationalBezierAlgebraicPointImage2::predicate_evaluator",
+      "CurveRegion2::classify_algebraic_point_raw -> classify_algebraic_point_against_line_loop",
+      "classify_algebraic_point_against_line_loop -> RationalBezierAlgebraicPointPredicate2::oriented_line_side",
+      "RationalBezierAlgebraicPointPredicate2::oriented_line_side -> signed_coefficients_at_parameter"
+    ]
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed: 381 tests",
+    "hypercurve_no_default_features_library": "passed: 319 tests",
+    "hypercurve_all_features_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_all_features_integration_compile_matrix": "passed every test target",
+    "hypercurve_no_default_features_integration_compile_matrix": "passed every test target",
+    "hypercurve_clippy_all_features": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features": "passed with -D warnings",
+    "strict_and_approximate": "passed topology seeding, curved-bounds rejection, affine winding, negative-denominator orientation, explicit hole roles, all-cusp regularization, and all four Booleans",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "classify retained algebraic representative points inside the bounds of genuinely nonlinear other-region loops without finite demotion",
+    "replay selected positive-dimensional analytic radical overlaps before accepting or rejecting coincident support",
+    "construct exact distinct-carrier algebraic joins in the sole raw-offset graph",
+    "reduce local-field polynomial-sign and bigint allocation churn",
+    "complete expansion, erosion, collapse, cusp, and offset self-contact differential coverage",
+    "complete finite projection and export for exact analytic and algebraic offsets",
+    "implement radius-driven fillet and corner-option chamfer solving through Hypersolve",
+    "delete displaced historical Boolean, offset, and editing machinery after differential coverage closes",
+    "outline cold exact paths and repay measured linked-text debt"
+  ]
+}
