@@ -900,7 +900,7 @@ pub fn arithmetic_algebraic_root_representations(
     }
     let Some(left_value) = left.exact_rational_witness() else {
         if operation == AlgebraicRootArithmeticOp::Negate {
-            let representation = negate_algebraic_root_representation(left);
+            let representation = negate_algebraic_root_representation(left, policy);
             let status = if representation.is_valid() {
                 AlgebraicRootArithmeticStatus::ComputedRepresentation
             } else {
@@ -1822,6 +1822,7 @@ fn rational_expression_evaluation_from_polynomial_reports(
 
 fn negate_algebraic_root_representation(
     root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
 ) -> AlgebraicRootRepresentation {
     // If p(r)=0, then q(x)=p(-x) has root -r. Reflecting the isolating
     // interval avoids a numeric midpoint estimate and preserves the exact
@@ -1862,8 +1863,7 @@ fn negate_algebraic_root_representation(
         kind,
         validation: AlgebraicRootValidationReport::valid(),
     };
-    representation.validation =
-        validate_algebraic_root_representation(&representation, PredicatePolicy::APPROXIMATE_512);
+    representation.validation = validate_algebraic_root_representation(&representation, policy);
     representation
 }
 
@@ -2431,6 +2431,22 @@ fn represented_root_sign(
     if lower == Ordering::Greater {
         return Some(Ordering::Greater);
     }
+    // A unit isolator that touches zero still certifies a strict sign when
+    // zero is not a root of the defining polynomial. Conversely, if the
+    // constant coefficient is zero, uniqueness makes zero the selected root.
+    // This avoids arbitrarily deep bisection merely to move an endpoint away
+    // from zero while preserving an exact proof in every case.
+    let zero_is_root =
+        compare_reals(root.polynomial_coefficients.first()?, &Real::zero(), policy).value()?;
+    if zero_is_root == Ordering::Equal {
+        return Some(Ordering::Equal);
+    }
+    if upper == Ordering::Equal && lower == Ordering::Less {
+        return Some(Ordering::Less);
+    }
+    if lower == Ordering::Equal && upper == Ordering::Greater {
+        return Some(Ordering::Greater);
+    }
     None
 }
 
@@ -2993,6 +3009,66 @@ mod tests {
                 AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
             );
             assert_eq!(difference.exact_result, Some(-epsilon.clone()));
+        }
+    }
+
+    #[test]
+    fn represented_root_sign_uses_exact_zero_endpoint_evidence() {
+        let negative_sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(-2),
+                upper: Real::zero(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let positive_sqrt_two = AlgebraicRootRepresentation {
+            interval: IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..negative_sqrt_two.clone()
+        };
+        let zero = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(-1),
+                upper: real(1),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..negative_sqrt_two.clone()
+        };
+        let crossing_nonzero = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![real(-1), real(1), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(-1),
+                upper: real(1),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..negative_sqrt_two.clone()
+        };
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            assert_eq!(
+                represented_root_sign(&negative_sqrt_two, policy),
+                Some(Ordering::Less)
+            );
+            assert_eq!(
+                represented_root_sign(&positive_sqrt_two, policy),
+                Some(Ordering::Greater)
+            );
+            assert_eq!(represented_root_sign(&zero, policy), Some(Ordering::Equal));
+            assert_eq!(represented_root_sign(&crossing_nonzero, policy), None);
         }
     }
 
