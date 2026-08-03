@@ -392,6 +392,73 @@ pub(crate) enum BezierAlgebraicCuspSemicircleRationalIntersections2 {
     DegenerateProjection,
 }
 
+enum BezierAlgebraicCuspFiberProjection2 {
+    Parameters(Vec<BezierParameter2>),
+    IdenticallyZero,
+    Degenerate,
+}
+
+#[derive(Debug)]
+#[allow(dead_code)]
+struct BezierAlgebraicCuspRadicalExpression2 {
+    /// Rational term `A` in `A + B/sqrt(S)`.
+    rational: BivariatePolynomial,
+    /// Radical numerator `B` in `A + B/sqrt(S)`.
+    radical: BivariatePolynomial,
+}
+
+#[derive(Debug)]
+#[allow(dead_code)]
+struct BezierAlgebraicCuspSemicircleParallelSystem2 {
+    /// Squared circle incidence used only for complete candidate projection.
+    incidence: BivariatePolynomial,
+    /// Unsquared circle equation; zero selects the geometric radical branch.
+    circle: BezierAlgebraicCuspRadicalExpression2,
+    /// Nonnegative exactly on the selected closed semicircle.
+    selected_half_plane: BezierAlgebraicCuspRadicalExpression2,
+    /// Positive at the traversal start diameter endpoint and negative at end.
+    diameter_side: BezierAlgebraicCuspRadicalExpression2,
+    /// Squared radius over the positive common denominator.
+    radius_squared_denominator: BivariatePolynomial,
+    /// Squared speed of the analytic parallel's source tangent.
+    speed_squared: BivariatePolynomial,
+    /// Tangent cross sign before the parallel derivative-scale correction.
+    tangent_cross_source: BivariatePolynomial,
+}
+
+#[derive(Clone, Debug)]
+#[allow(dead_code)]
+pub(crate) struct BezierAlgebraicCuspSemicircleParallelParameterMap2 {
+    data: Arc<BezierAlgebraicCuspSemicircleParallelParameterMapData2>,
+}
+
+#[derive(Debug)]
+#[allow(dead_code)]
+struct BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
+    cusp_parameter: BezierParameter2,
+    incidence: BivariatePolynomial,
+    diameter_side: BezierAlgebraicCuspRadicalExpression2,
+    radius_squared_denominator: BivariatePolynomial,
+    speed_squared: BivariatePolynomial,
+    policy: CurveContext,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+#[allow(dead_code)]
+pub(crate) struct BezierAlgebraicCuspSemicircleParallelContact2 {
+    pub(crate) parallel_parameter: BezierParameter2,
+    pub(crate) tangent_cross_sign: Option<RealSign>,
+    pub(crate) location: BezierAlgebraicCuspSemicircleContactLocation2,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+#[allow(dead_code)]
+pub(crate) enum BezierAlgebraicCuspSemicircleParallelIntersections2 {
+    Contacts(Vec<BezierAlgebraicCuspSemicircleParallelContact2>),
+    CoincidentCircle,
+    DegenerateProjection,
+}
+
 #[allow(dead_code)]
 impl BezierParallelAlgebraicCuspFrame2 {
     fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
@@ -1024,6 +1091,478 @@ impl BezierAlgebraicCuspSemicircle2 {
         })
     }
 
+    fn parallel_system(
+        &self,
+        other: &BezierParallel2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelSystem2>> {
+        let source = other.source_power_basis()?;
+        if let Classification::Uncertain(reason) =
+            BezierParallel2::certify_finite_source(&source, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let differential = other.differential()?;
+        let distance_sign = match real_sign(other.distance(), policy) {
+            Some(sign) => sign,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        if distance_sign != RealSign::Zero
+            && let Classification::Uncertain(reason) =
+                BezierParallel2::certify_regular_differential(differential, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+
+        let unit_weight = [Real::one()];
+        let weight = source.weight.unwrap_or(&unit_weight);
+        let frame = &self.data.frame.data;
+        let (center_x, center_y) = self
+            .data
+            .frame
+            .point_numerators_at_parallel_distance(frame.parallel.distance());
+        let delta_x = bivariate_parameter_difference(
+            &frame.denominator,
+            source.x_numerator,
+            &center_x,
+            weight,
+        );
+        let delta_y = bivariate_parameter_difference(
+            &frame.denominator,
+            source.y_numerator,
+            &center_y,
+            weight,
+        );
+        let common_denominator = bivariate_outer_product(&frame.denominator, weight);
+        let common_denominator_squared =
+            bivariate_multiply(&common_denominator, &common_denominator);
+        let speed_squared = polynomial_add(
+            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
+            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
+        );
+        let speed_squared = bivariate_outer_product(&unit_weight, &speed_squared);
+        let tangent_x = bivariate_outer_product(&unit_weight, &differential.tangent_x);
+        let tangent_y = bivariate_outer_product(&unit_weight, &differential.tangent_y);
+        let squared_delta = bivariate_add(
+            &bivariate_multiply(&delta_x, &delta_x),
+            &bivariate_multiply(&delta_y, &delta_y),
+        );
+        let distance_square_delta = other.distance() * other.distance()
+            - &self.data.radial_distance * &self.data.radial_distance;
+        let circle_rational = bivariate_add(
+            &squared_delta,
+            &bivariate_scale(common_denominator_squared.clone(), &distance_square_delta),
+        );
+        let delta_dot_normal_numerator = bivariate_subtract(
+            &bivariate_multiply(&delta_x, &tangent_y),
+            &bivariate_multiply(&delta_y, &tangent_x),
+        );
+        let circle_radical = bivariate_scale(
+            bivariate_multiply(&delta_dot_normal_numerator, &common_denominator),
+            &(Real::from(2_i8) * other.distance()),
+        );
+        let incidence = bivariate_subtract(
+            &bivariate_multiply(
+                &bivariate_multiply(&circle_rational, &circle_rational),
+                &speed_squared,
+            ),
+            &bivariate_multiply(&circle_radical, &circle_radical),
+        );
+
+        let weight_polynomial = bivariate_outer_product(&unit_weight, weight);
+        let weight_squared = polynomial_multiply(weight, weight);
+        let frame_denominator_weight_squared =
+            bivariate_outer_product(&frame.denominator, &weight_squared);
+        let frame_normal_cross_delta = bivariate_subtract(
+            &bivariate_multiply_first_parameter(&delta_y, &frame.normal_x_numerator),
+            &bivariate_multiply_first_parameter(&delta_x, &frame.normal_y_numerator),
+        );
+        let frame_normal_dot_tangent = bivariate_add(
+            &bivariate_outer_product(&frame.normal_x_numerator, &differential.tangent_x),
+            &bivariate_outer_product(&frame.normal_y_numerator, &differential.tangent_y),
+        );
+        let half_scale = &self.turn_sign() * &self.data.radial_distance;
+        let selected_half_plane = BezierAlgebraicCuspRadicalExpression2 {
+            rational: bivariate_scale(
+                bivariate_multiply(&frame_normal_cross_delta, &weight_polynomial),
+                &half_scale,
+            ),
+            radical: bivariate_scale(
+                bivariate_multiply(&frame_normal_dot_tangent, &frame_denominator_weight_squared),
+                &(-other.distance() * &half_scale),
+            ),
+        };
+
+        let frame_normal_dot_delta = bivariate_add(
+            &bivariate_multiply_first_parameter(&delta_x, &frame.normal_x_numerator),
+            &bivariate_multiply_first_parameter(&delta_y, &frame.normal_y_numerator),
+        );
+        let frame_normal_cross_tangent = bivariate_subtract(
+            &bivariate_outer_product(&frame.normal_x_numerator, &differential.tangent_y),
+            &bivariate_outer_product(&frame.normal_y_numerator, &differential.tangent_x),
+        );
+        let diameter_side = BezierAlgebraicCuspRadicalExpression2 {
+            rational: bivariate_scale(
+                bivariate_multiply(&frame_normal_dot_delta, &weight_polynomial),
+                &self.data.radial_distance,
+            ),
+            radical: bivariate_scale(
+                bivariate_multiply(
+                    &frame_normal_cross_tangent,
+                    &frame_denominator_weight_squared,
+                ),
+                &(other.distance() * &self.data.radial_distance),
+            ),
+        };
+        let radius_squared_denominator = bivariate_scale(
+            common_denominator_squared,
+            &(&self.data.radial_distance * &self.data.radial_distance),
+        );
+        let delta_dot_tangent = bivariate_add(
+            &bivariate_multiply(&delta_x, &tangent_x),
+            &bivariate_multiply(&delta_y, &tangent_y),
+        );
+        let tangent_cross_source = bivariate_scale(
+            bivariate_multiply(&delta_dot_tangent, &common_denominator),
+            &(-self.turn_sign()),
+        );
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleParallelSystem2 {
+                incidence,
+                circle: BezierAlgebraicCuspRadicalExpression2 {
+                    rational: circle_rational,
+                    radical: circle_radical,
+                },
+                selected_half_plane,
+                diameter_side,
+                radius_squared_denominator,
+                speed_squared,
+                tangent_cross_source,
+            },
+        ))
+    }
+
+    /// Intersects this selected algebraic half circle with one exact analytic
+    /// parallel. Rationally materializable parallels reuse the rational-curve
+    /// authority; general parallels project one squared circle equation and
+    /// replay its unsquared radical branch at the retained cusp root.
+    pub(crate) fn parallel_intersections(
+        &self,
+        other: &BezierParallel2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelIntersections2>> {
+        match other.exact_rational_parallel_component(policy)? {
+            Classification::Decided(Some(curve)) => {
+                return Ok(self.rational_intersections(&curve, policy)?.map(|result| {
+                    match result {
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) => {
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(
+                                contacts
+                                    .into_iter()
+                                    .map(|contact| {
+                                        BezierAlgebraicCuspSemicircleParallelContact2 {
+                                            parallel_parameter: contact.other_parameter,
+                                            tangent_cross_sign: Some(contact.tangent_cross_sign),
+                                            location: contact.location,
+                                        }
+                                    })
+                                    .collect(),
+                            )
+                        }
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle => {
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircle
+                        }
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection
+                        }
+                    }
+                }));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        if let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
+            self.conservative_bounds(policy)?,
+            other.conservative_bounds(policy)?,
+        ) && first_bounds.overlaps(&second_bounds, policy) == Classification::Decided(false)
+        {
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(Vec::new()),
+            ));
+        }
+
+        let system = match self.parallel_system(other, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let incidence =
+            match reduce_algebraic_cusp_bivariate(system.incidence, self.cusp_parameter(), policy)?
+            {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let circle = match reduce_algebraic_cusp_radical_expression(
+            system.circle,
+            self.cusp_parameter(),
+            policy,
+        )? {
+            Classification::Decided(expression) => expression,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let selected_half_plane = match reduce_algebraic_cusp_radical_expression(
+            system.selected_half_plane,
+            self.cusp_parameter(),
+            policy,
+        )? {
+            Classification::Decided(expression) => expression,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let speed_squared = match reduce_algebraic_cusp_bivariate(
+            system.speed_squared,
+            self.cusp_parameter(),
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let tangent_cross_source = match reduce_algebraic_cusp_bivariate(
+            system.tangent_cross_source,
+            self.cusp_parameter(),
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let candidates = match algebraic_cusp_projected_fiber_parameters(
+            &incidence,
+            self.cusp_parameter(),
+            policy,
+        )? {
+            Classification::Decided(BezierAlgebraicCuspFiberProjection2::Parameters(
+                parameters,
+            )) => parameters,
+            Classification::Decided(BezierAlgebraicCuspFiberProjection2::IdenticallyZero) => {
+                return Ok(Classification::Decided(
+                    // This projection used a squared radical equation. An
+                    // identically zero selected fiber can describe either
+                    // normal branch (or branch switching), so only the exact
+                    // rational fast path may promote it to circle overlap.
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection,
+                ));
+            }
+            Classification::Decided(BezierAlgebraicCuspFiberProjection2::Degenerate) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let cusp_parameter = BezierParameter2::Algebraic(self.cusp_parameter().clone());
+        let mut diameter_side = Some(system.diameter_side);
+        let mut contacts = Vec::new();
+        for candidate in candidates {
+            let circle_sign = match algebraic_cusp_correlated_radical_sum_sign(
+                &incidence,
+                &circle,
+                &speed_squared,
+                &cusp_parameter,
+                &candidate,
+                policy,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if circle_sign != RealSign::Zero {
+                continue;
+            }
+            let selected_sign = match algebraic_cusp_correlated_radical_sum_sign(
+                &incidence,
+                &selected_half_plane,
+                &speed_squared,
+                &cusp_parameter,
+                &candidate,
+                policy,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if selected_sign == RealSign::Negative {
+                continue;
+            }
+            let location = if selected_sign == RealSign::Zero {
+                let expression = diameter_side
+                    .take()
+                    .expect("diameter-side expression is reduced at most once");
+                let reduced = match reduce_algebraic_cusp_radical_expression(
+                    expression,
+                    self.cusp_parameter(),
+                    policy,
+                )? {
+                    Classification::Decided(expression) => expression,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                diameter_side = Some(reduced);
+                match algebraic_cusp_correlated_radical_sum_sign(
+                    &incidence,
+                    diameter_side
+                        .as_ref()
+                        .expect("reduced diameter-side expression was retained"),
+                    &speed_squared,
+                    &cusp_parameter,
+                    &candidate,
+                    policy,
+                )? {
+                    Classification::Decided(RealSign::Positive) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::Start
+                    }
+                    Classification::Decided(RealSign::Negative) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::End
+                    }
+                    Classification::Decided(RealSign::Zero) => {
+                        return Err(CurveError::Topology(
+                            "nonzero algebraic semicircle radius had an indeterminate diameter endpoint"
+                                .into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            } else {
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior
+            };
+            let source_cross = match algebraic_cusp_correlated_predicate_sign(
+                &incidence,
+                &tangent_cross_source,
+                &cusp_parameter,
+                &candidate,
+                policy,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let tangent_cross_sign = if source_cross == RealSign::Zero {
+                Some(RealSign::Zero)
+            } else {
+                other.apply_parallel_derivative_scale_to_cross_sign(
+                    Classification::Decided(source_cross),
+                    &candidate,
+                    policy,
+                )?
+            };
+            contacts.push(BezierAlgebraicCuspSemicircleParallelContact2 {
+                parallel_parameter: candidate,
+                tangent_cross_sign,
+                location,
+            });
+        }
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+        ))
+    }
+
+    /// Builds one pair-shared exact contact-to-semicircle parameter map for an
+    /// analytic parallel without introducing another algebraic-number tower.
+    pub(crate) fn parallel_parameter_map(
+        &self,
+        other: &BezierParallel2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelParameterMap2>> {
+        let system = match self.parallel_system(other, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let incidence =
+            match reduce_algebraic_cusp_bivariate(system.incidence, self.cusp_parameter(), policy)?
+            {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let diameter_rational = match reduce_algebraic_cusp_bivariate(
+            system.diameter_side.rational,
+            self.cusp_parameter(),
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let diameter_radical = match reduce_algebraic_cusp_bivariate(
+            system.diameter_side.radical,
+            self.cusp_parameter(),
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radius_squared_denominator = match reduce_algebraic_cusp_bivariate(
+            system.radius_squared_denominator,
+            self.cusp_parameter(),
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let speed_squared = match reduce_algebraic_cusp_bivariate(
+            system.speed_squared,
+            self.cusp_parameter(),
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleParallelParameterMap2 {
+                data: Arc::new(BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
+                    cusp_parameter: BezierParameter2::Algebraic(self.cusp_parameter().clone()),
+                    incidence,
+                    diameter_side: BezierAlgebraicCuspRadicalExpression2 {
+                        rational: diameter_rational,
+                        radical: diameter_radical,
+                    },
+                    radius_squared_denominator,
+                    speed_squared,
+                    policy: *policy,
+                }),
+            },
+        ))
+    }
+
     /// Intersects this selected algebraic half circle with a finite rational
     /// Bezier without constructing algebraic control points for the circle.
     ///
@@ -1065,165 +1604,31 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         };
         let mut diameter_side = None;
-        let cusp_root = parameter_representation(self.cusp_parameter(), policy);
-        let defining = BivariatePolynomial::new(
-            self.cusp_parameter()
-                .polynomial()
-                .coefficients()
-                .iter()
-                .map(|coefficient| vec![coefficient.clone()])
-                .collect(),
-        );
-        let report = resultant_bivariate_polynomial_system(
-            &defining,
+        let candidates = match algebraic_cusp_projected_fiber_parameters(
             &incidence,
-            CurveResultantParameter::Second,
-            CurveIntersectionResultantConfig {
-                min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
-                max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-            },
-        );
-        let projection = match resultant_parameter_projection(report, policy)? {
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+            self.cusp_parameter(),
+            policy,
+        )? {
+            Classification::Decided(BezierAlgebraicCuspFiberProjection2::Parameters(
+                parameters,
+            )) => parameters,
+            Classification::Decided(BezierAlgebraicCuspFiberProjection2::IdenticallyZero) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle,
+                ));
             }
-        };
-        let candidates = match projection {
-            ResultantParameterProjection::Empty => Vec::new(),
-            ResultantParameterProjection::Parameters(parameters) => parameters,
-            ResultantParameterProjection::Degenerate => {
-                // A nondegenerate resultant already contains every parameter
-                // of the selected fiber. Only a degenerate projection needs
-                // the local field to distinguish a circle component at this
-                // particular cusp root from a component contributed by one of
-                // the defining polynomial's foreign roots.
-                let full_fiber = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
-                    &incidence,
-                    CurveResultantParameter::First,
-                    &cusp_root,
-                    &Real::zero(),
-                    &Real::one(),
-                    policy.predicate_policy(),
-                );
-                if full_fiber.certainty == PredicateCertainty::Approximate {
-                    policy.observe_approximate_512();
-                }
-                if full_fiber.status == AlgebraicFiberRootCountStatus::IdenticallyZeroFiber {
-                    return Ok(Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle,
-                    ));
-                }
-                if full_fiber.status == AlgebraicFiberRootCountStatus::Counted
-                    && full_fiber.distinct_root_count == Some(0)
-                {
-                    return Ok(Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(Vec::new()),
-                    ));
-                }
+            Classification::Decided(BezierAlgebraicCuspFiberProjection2::Degenerate) => {
                 return Ok(Classification::Decided(
                     BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
                 ));
             }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
         let cusp_parameter = BezierParameter2::Algebraic(self.cusp_parameter().clone());
-        // Projection isolators are ordered and contain every selected-fiber
-        // root. Partition [0,1] at exact midpoints of their certified rootless
-        // gaps. Each open cell then owns exactly one projected root while its
-        // boundaries stay as far as the current evidence permits from either
-        // root. This both shares one Sturm variation between adjacent cells and
-        // avoids the excessive algebraic-field refinement caused by signing an
-        // incidence polynomial at a tightly isolated root endpoint.
-        let mut candidate_cell_boundaries = Vec::with_capacity(candidates.len() + 1);
-        candidate_cell_boundaries.push(Real::zero());
-        for pair in candidates.windows(2) {
-            let left = match &pair[0] {
-                BezierParameter2::Exact(parameter) => parameter,
-                BezierParameter2::Algebraic(parameter) => parameter.interval().end(),
-            };
-            let right = match &pair[1] {
-                BezierParameter2::Exact(parameter) => parameter,
-                BezierParameter2::Algebraic(parameter) => parameter.interval().start(),
-            };
-            match compare_reals(left, right, policy) {
-                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {}
-                Some(std::cmp::Ordering::Greater) => {
-                    return Err(CurveError::Topology(
-                        "algebraic cusp projection isolators are not ordered".into(),
-                    ));
-                }
-                None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-            }
-            candidate_cell_boundaries.push(((left + right) / Real::from(2_i8)).map_err(|_| {
-                CurveError::Topology("algebraic cusp projection midpoint division failed".into())
-            })?);
-        }
-        candidate_cell_boundaries.push(Real::one());
-        let candidate_intervals = candidates
-            .iter()
-            .enumerate()
-            .filter_map(|(index, candidate)| match candidate {
-                BezierParameter2::Algebraic(_) => Some((
-                    &candidate_cell_boundaries[index],
-                    &candidate_cell_boundaries[index + 1],
-                )),
-                BezierParameter2::Exact(_) => None,
-            })
-            .collect::<Vec<_>>();
-        let candidate_reports = count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
-            &incidence,
-            CurveResultantParameter::First,
-            &cusp_root,
-            &candidate_intervals,
-            policy.predicate_policy(),
-        );
-        drop(candidate_intervals);
-        let mut candidate_report_index = 0_usize;
         let mut contacts = Vec::new();
         for candidate in candidates {
-            let batched_membership = if matches!(&candidate, BezierParameter2::Algebraic(_)) {
-                let report = candidate_reports
-                    .get(candidate_report_index)
-                    .ok_or_else(|| {
-                        CurveError::Topology("algebraic cusp candidate report mismatch".into())
-                    })?;
-                candidate_report_index += 1;
-                if report.certainty == PredicateCertainty::Approximate {
-                    policy.observe_approximate_512();
-                }
-                match report.status {
-                    AlgebraicFiberRootCountStatus::Counted => match report.distinct_root_count {
-                        Some(0) => Some(false),
-                        Some(1) => Some(true),
-                        Some(_) | None => None,
-                    },
-                    AlgebraicFiberRootCountStatus::IdenticallyZeroFiber
-                    | AlgebraicFiberRootCountStatus::EndpointRoot
-                    | AlgebraicFiberRootCountStatus::InvalidEvidence
-                    | AlgebraicFiberRootCountStatus::InvalidInterval
-                    | AlgebraicFiberRootCountStatus::UnsupportedCoefficient
-                    | AlgebraicFiberRootCountStatus::Undecided => None,
-                }
-            } else {
-                None
-            };
-            let belongs = match match batched_membership {
-                Some(belongs) => Classification::Decided(belongs),
-                None => algebraic_cusp_fiber_contains_parameter(
-                    &incidence,
-                    &cusp_parameter,
-                    &candidate,
-                    policy,
-                )?,
-            } {
-                Classification::Decided(belongs) => belongs,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            if !belongs {
-                continue;
-            }
             let selected_sign = match algebraic_cusp_correlated_predicate_sign(
                 &incidence,
                 &selected_half_plane,
@@ -1312,15 +1717,73 @@ impl BezierAlgebraicCuspSemicircle2 {
                 location,
             });
         }
-        if candidate_report_index != candidate_reports.len() {
-            return Err(CurveError::Topology(
-                "algebraic cusp candidate report mismatch".into(),
-            ));
-        }
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
         ))
     }
+}
+
+fn algebraic_cusp_semicircle_endpoint_contact_order(
+    location: BezierAlgebraicCuspSemicircleContactLocation2,
+    parameter: &Real,
+    policy: &CurveContext,
+) -> Option<Classification<std::cmp::Ordering>> {
+    let endpoint = match location {
+        BezierAlgebraicCuspSemicircleContactLocation2::Start => Real::zero(),
+        BezierAlgebraicCuspSemicircleContactLocation2::End => Real::one(),
+        BezierAlgebraicCuspSemicircleContactLocation2::Interior => return None,
+    };
+    Some(
+        compare_reals(&endpoint, parameter, policy)
+            .map(Classification::Decided)
+            .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)),
+    )
+}
+
+fn algebraic_cusp_semicircle_contact_parameter_bracket(
+    location: BezierAlgebraicCuspSemicircleContactLocation2,
+    refinement_steps: usize,
+    policy: &CurveContext,
+    mut contact_order_to_real: impl FnMut(&Real) -> CurveResult<Classification<std::cmp::Ordering>>,
+) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
+    match location {
+        BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspSemicircleParameterBracket2::Exact(Real::zero()),
+            ));
+        }
+        BezierAlgebraicCuspSemicircleContactLocation2::End => {
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspSemicircleParameterBracket2::Exact(Real::one()),
+            ));
+        }
+        BezierAlgebraicCuspSemicircleContactLocation2::Interior => {}
+    }
+    let mut start = Real::zero();
+    let mut end = Real::one();
+    for _ in 0..refinement_steps {
+        let midpoint = ((&start + &end) / Real::from(2_i8))?;
+        match contact_order_to_real(&midpoint)? {
+            Classification::Decided(std::cmp::Ordering::Less) => end = midpoint,
+            Classification::Decided(std::cmp::Ordering::Greater) => start = midpoint,
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleParameterBracket2::Exact(midpoint),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(
+        match BezierParameterInterval::try_new(start, end, policy)? {
+            Classification::Decided(interval) => Classification::Decided(
+                BezierAlgebraicCuspSemicircleParameterBracket2::Interval(interval),
+            ),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+    )
 }
 
 #[allow(dead_code)]
@@ -1332,18 +1795,10 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         parameter: &Real,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let policy = &self.data.policy;
-        match contact.location {
-            BezierAlgebraicCuspSemicircleContactLocation2::Start => {
-                return Ok(compare_reals(&Real::zero(), parameter, policy)
-                    .map(Classification::Decided)
-                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
-            }
-            BezierAlgebraicCuspSemicircleContactLocation2::End => {
-                return Ok(compare_reals(&Real::one(), parameter, policy)
-                    .map(Classification::Decided)
-                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
-            }
-            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {}
+        if let Some(order) =
+            algebraic_cusp_semicircle_endpoint_contact_order(contact.location, parameter, policy)
+        {
+            return Ok(order);
         }
         match in_closed_unit_interval(parameter, policy) {
             Some(true) => {}
@@ -1399,46 +1854,255 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         contact: &BezierAlgebraicCuspSemicircleRationalContact2,
         refinement_steps: usize,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        match contact.location {
-            BezierAlgebraicCuspSemicircleContactLocation2::Start => {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParameterBracket2::Exact(Real::zero()),
-                ));
-            }
-            BezierAlgebraicCuspSemicircleContactLocation2::End => {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParameterBracket2::Exact(Real::one()),
-                ));
-            }
-            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {}
-        }
+        algebraic_cusp_semicircle_contact_parameter_bracket(
+            contact.location,
+            refinement_steps,
+            &self.data.policy,
+            |parameter| self.contact_order_to_real(contact, parameter),
+        )
+    }
+}
+
+#[allow(dead_code)]
+impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
+    /// Orders one analytic-parallel contact against a represented semicircle parameter.
+    pub(crate) fn contact_order_to_real(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleParallelContact2,
+        parameter: &Real,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let policy = &self.data.policy;
-        let mut start = Real::zero();
-        let mut end = Real::one();
-        for _ in 0..refinement_steps {
-            let midpoint = ((&start + &end) / Real::from(2_i8))?;
-            match self.contact_order_to_real(contact, &midpoint)? {
-                Classification::Decided(std::cmp::Ordering::Less) => end = midpoint,
-                Classification::Decided(std::cmp::Ordering::Greater) => start = midpoint,
-                Classification::Decided(std::cmp::Ordering::Equal) => {
-                    return Ok(Classification::Decided(
-                        BezierAlgebraicCuspSemicircleParameterBracket2::Exact(midpoint),
-                    ));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+        if let Some(order) =
+            algebraic_cusp_semicircle_endpoint_contact_order(contact.location, parameter, policy)
+        {
+            return Ok(order);
         }
+        match in_closed_unit_interval(parameter, policy) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        let one_minus = Real::one() - parameter;
+        let denominator = &one_minus * &one_minus + parameter * parameter;
+        match real_sign(&denominator, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "semicircle parameter-order denominator was not positive".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radial_coefficient = Real::one() - Real::from(2_i8) * parameter;
+        let predicate = BezierAlgebraicCuspRadicalExpression2 {
+            rational: bivariate_scaled_difference(
+                &self.data.diameter_side.rational,
+                &denominator,
+                &self.data.radius_squared_denominator,
+                &radial_coefficient,
+            ),
+            radical: bivariate_scale(self.data.diameter_side.radical.clone(), &denominator),
+        };
         Ok(
-            match BezierParameterInterval::try_new(start, end, policy)? {
-                Classification::Decided(interval) => Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParameterBracket2::Interval(interval),
-                ),
+            match algebraic_cusp_correlated_radical_sum_sign(
+                &self.data.incidence,
+                &predicate,
+                &self.data.speed_squared,
+                &self.data.cusp_parameter,
+                &contact.parallel_parameter,
+                policy,
+            )? {
+                // The normalized diameter coordinate decreases strictly with u.
+                Classification::Decided(RealSign::Positive) => {
+                    Classification::Decided(std::cmp::Ordering::Less)
+                }
+                Classification::Decided(RealSign::Negative) => {
+                    Classification::Decided(std::cmp::Ordering::Greater)
+                }
+                Classification::Decided(RealSign::Zero) => {
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
         )
     }
+
+    /// Refines one analytic-parallel contact to an exact witness or rational bracket.
+    pub(crate) fn contact_parameter_bracket(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleParallelContact2,
+        refinement_steps: usize,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
+        algebraic_cusp_semicircle_contact_parameter_bracket(
+            contact.location,
+            refinement_steps,
+            &self.data.policy,
+            |parameter| self.contact_order_to_real(contact, parameter),
+        )
+    }
+}
+
+fn algebraic_cusp_projected_fiber_parameters(
+    incidence: &BivariatePolynomial,
+    cusp: &BezierAlgebraicParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicCuspFiberProjection2>> {
+    let cusp_root = parameter_representation(cusp, policy);
+    let defining = BivariatePolynomial::new(
+        cusp.polynomial()
+            .coefficients()
+            .iter()
+            .map(|coefficient| vec![coefficient.clone()])
+            .collect(),
+    );
+    let report = resultant_bivariate_polynomial_system(
+        &defining,
+        incidence,
+        CurveResultantParameter::Second,
+        CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        },
+    );
+    let projection = match resultant_parameter_projection(report, policy)? {
+        Classification::Decided(projection) => projection,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let candidates = match projection {
+        ResultantParameterProjection::Empty => Vec::new(),
+        ResultantParameterProjection::Parameters(parameters) => parameters,
+        ResultantParameterProjection::Degenerate => {
+            let full_fiber = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+                incidence,
+                CurveResultantParameter::First,
+                &cusp_root,
+                &Real::zero(),
+                &Real::one(),
+                policy.predicate_policy(),
+            );
+            if full_fiber.certainty == PredicateCertainty::Approximate {
+                policy.observe_approximate_512();
+            }
+            if full_fiber.status == AlgebraicFiberRootCountStatus::IdenticallyZeroFiber {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspFiberProjection2::IdenticallyZero,
+                ));
+            }
+            if full_fiber.status == AlgebraicFiberRootCountStatus::Counted
+                && full_fiber.distinct_root_count == Some(0)
+            {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspFiberProjection2::Parameters(Vec::new()),
+                ));
+            }
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspFiberProjection2::Degenerate,
+            ));
+        }
+    };
+
+    // Projection isolators are ordered and contain every selected-fiber root.
+    // Midpoints of certified rootless gaps give disjoint cells whose boundary
+    // variations are shared by the batch local-field Sturm count.
+    let mut cell_boundaries = Vec::with_capacity(candidates.len() + 1);
+    cell_boundaries.push(Real::zero());
+    for pair in candidates.windows(2) {
+        let left = match &pair[0] {
+            BezierParameter2::Exact(parameter) => parameter,
+            BezierParameter2::Algebraic(parameter) => parameter.interval().end(),
+        };
+        let right = match &pair[1] {
+            BezierParameter2::Exact(parameter) => parameter,
+            BezierParameter2::Algebraic(parameter) => parameter.interval().start(),
+        };
+        match compare_reals(left, right, policy) {
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {}
+            Some(std::cmp::Ordering::Greater) => {
+                return Err(CurveError::Topology(
+                    "algebraic cusp projection isolators are not ordered".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        cell_boundaries.push(((left + right) / Real::from(2_i8)).map_err(|_| {
+            CurveError::Topology("algebraic cusp projection midpoint division failed".into())
+        })?);
+    }
+    cell_boundaries.push(Real::one());
+    let candidate_intervals = candidates
+        .iter()
+        .enumerate()
+        .filter_map(|(index, candidate)| match candidate {
+            BezierParameter2::Algebraic(_) => {
+                Some((&cell_boundaries[index], &cell_boundaries[index + 1]))
+            }
+            BezierParameter2::Exact(_) => None,
+        })
+        .collect::<Vec<_>>();
+    let candidate_reports = count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+        incidence,
+        CurveResultantParameter::First,
+        &cusp_root,
+        &candidate_intervals,
+        policy.predicate_policy(),
+    );
+    drop(candidate_intervals);
+    let cusp_parameter = BezierParameter2::Algebraic(cusp.clone());
+    let mut report_index = 0_usize;
+    let mut retained = Vec::with_capacity(candidates.len());
+    for candidate in candidates {
+        let batched_membership = if matches!(&candidate, BezierParameter2::Algebraic(_)) {
+            let report = candidate_reports.get(report_index).ok_or_else(|| {
+                CurveError::Topology("algebraic cusp candidate report mismatch".into())
+            })?;
+            report_index += 1;
+            if report.certainty == PredicateCertainty::Approximate {
+                policy.observe_approximate_512();
+            }
+            match report.status {
+                AlgebraicFiberRootCountStatus::Counted => match report.distinct_root_count {
+                    Some(0) => Some(false),
+                    Some(1) => Some(true),
+                    Some(_) | None => None,
+                },
+                AlgebraicFiberRootCountStatus::IdenticallyZeroFiber
+                | AlgebraicFiberRootCountStatus::EndpointRoot
+                | AlgebraicFiberRootCountStatus::InvalidEvidence
+                | AlgebraicFiberRootCountStatus::InvalidInterval
+                | AlgebraicFiberRootCountStatus::UnsupportedCoefficient
+                | AlgebraicFiberRootCountStatus::Undecided => None,
+            }
+        } else {
+            None
+        };
+        let belongs = match match batched_membership {
+            Some(belongs) => Classification::Decided(belongs),
+            None => algebraic_cusp_fiber_contains_parameter(
+                incidence,
+                &cusp_parameter,
+                &candidate,
+                policy,
+            )?,
+        } {
+            Classification::Decided(belongs) => belongs,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if belongs {
+            retained.push(candidate);
+        }
+    }
+    if report_index != candidate_reports.len() {
+        return Err(CurveError::Topology(
+            "algebraic cusp candidate report mismatch".into(),
+        ));
+    }
+    Ok(Classification::Decided(
+        BezierAlgebraicCuspFiberProjection2::Parameters(retained),
+    ))
 }
 
 fn algebraic_cusp_fiber_contains_parameter(
@@ -1589,6 +2253,110 @@ fn algebraic_cusp_correlated_predicate_sign(
                 CurveError::Topology("algebraic cusp sign refinement overflow".into())
             })?;
     }
+}
+
+fn algebraic_cusp_correlated_radical_sum_sign(
+    incidence: &BivariatePolynomial,
+    expression: &BezierAlgebraicCuspRadicalExpression2,
+    speed_squared: &BivariatePolynomial,
+    cusp_parameter: &BezierParameter2,
+    other_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let sign = |polynomial: &BivariatePolynomial| {
+        algebraic_cusp_correlated_predicate_sign(
+            incidence,
+            polynomial,
+            cusp_parameter,
+            other_parameter,
+            policy,
+        )
+    };
+    let rational = match sign(&expression.rational)? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let radical = match sign(&expression.radical)? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    match (rational, radical) {
+        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
+            return Ok(Classification::Decided(sign));
+        }
+        (first, second) if first == second => {
+            return Ok(Classification::Decided(first));
+        }
+        _ => {}
+    }
+
+    let magnitude = bivariate_subtract(
+        &bivariate_multiply(
+            &bivariate_multiply(&expression.rational, &expression.rational),
+            speed_squared,
+        ),
+        &bivariate_multiply(&expression.radical, &expression.radical),
+    );
+    let magnitude = if let BezierParameter2::Algebraic(cusp) = cusp_parameter {
+        match bivariate_reduce_axis(
+            &magnitude,
+            cusp.polynomial(),
+            CurveResultantParameter::First,
+            policy,
+        )? {
+            Classification::Decided(magnitude) => magnitude,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    } else {
+        magnitude
+    };
+    Ok(match sign(&magnitude)? {
+        Classification::Decided(RealSign::Positive) => Classification::Decided(rational),
+        Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
+        Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    })
+}
+
+fn reduce_algebraic_cusp_bivariate(
+    polynomial: BivariatePolynomial,
+    cusp: &BezierAlgebraicParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BivariatePolynomial>> {
+    bivariate_reduce_axis(
+        &polynomial,
+        cusp.polynomial(),
+        CurveResultantParameter::First,
+        policy,
+    )
+}
+
+fn reduce_algebraic_cusp_radical_expression(
+    expression: BezierAlgebraicCuspRadicalExpression2,
+    cusp: &BezierAlgebraicParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicCuspRadicalExpression2>> {
+    let rational = match reduce_algebraic_cusp_bivariate(expression.rational, cusp, policy)? {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let radical = match reduce_algebraic_cusp_bivariate(expression.radical, cusp, policy)? {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    Ok(Classification::Decided(
+        BezierAlgebraicCuspRadicalExpression2 { rational, radical },
+    ))
 }
 
 /// Complete exact parameter evidence for incidence on an analytic parallel.
@@ -14095,6 +14863,149 @@ mod conversion_tests {
                 compare_reals(interval.end(), &half, &policy),
                 Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
             ));
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn non_ph_parallel_touching_upper_unit_circle(at_top: bool) -> BezierParallel2 {
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let five_quarters = Real::one() + &quarter;
+        let nine_quarters = Real::from(2_i8) + &quarter;
+        let source = if at_top {
+            QuadraticBezier2::new(
+                Point2::new(Real::zero(), five_quarters.clone()),
+                Point2::new(half, five_quarters),
+                Point2::new(Real::one(), nine_quarters),
+            )
+        } else {
+            QuadraticBezier2::new(
+                Point2::new(Real::one(), quarter.clone()),
+                Point2::new((Real::from(3_i8) / Real::from(2_i8)).unwrap(), quarter),
+                Point2::new(Real::from(2_i8), five_quarters),
+            )
+        };
+        source
+            .parallel_left((Real::one() / Real::from(4_i8)).unwrap())
+            .unwrap()
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly() {
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let three_quarters = Real::one() - &quarter;
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let parallel = non_ph_parallel_touching_upper_unit_circle(true);
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+            ) = semicircle
+                .parallel_intersections(&parallel, &policy)
+                .unwrap()
+            else {
+                panic!("algebraic cusp/general-parallel contacts must complete");
+            };
+            let [contact] = contacts.as_slice() else {
+                panic!("the tangent fixture must have one selected contact");
+            };
+            assert_eq!(
+                contact
+                    .parallel_parameter
+                    .same_value(&BezierParameter2::Exact(Real::zero()), &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                contact.location,
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            );
+            assert_eq!(contact.tangent_cross_sign, Some(RealSign::Zero));
+
+            let Classification::Decided(map) = semicircle
+                .parallel_parameter_map(&parallel, &policy)
+                .unwrap()
+            else {
+                panic!("analytic-parallel contact parameter map must complete");
+            };
+            assert_eq!(
+                std::mem::size_of::<BezierAlgebraicCuspSemicircleParallelParameterMap2>(),
+                std::mem::size_of::<usize>(),
+            );
+            let clone = map.clone();
+            assert!(Arc::ptr_eq(&map.data, &clone.data));
+            assert_eq!(
+                map.contact_order_to_real(contact, &quarter).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            );
+            assert_eq!(
+                map.contact_order_to_real(contact, &half).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            assert_eq!(
+                map.contact_order_to_real(contact, &three_quarters).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
+            assert_eq!(
+                map.contact_parameter_bracket(contact, 4).unwrap(),
+                Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
+                    half.clone()
+                )),
+            );
+
+            // Squared incidence also vanishes at t=0 on the opposite normal
+            // branch, whose actual parallel lies outside the circle.
+            let opposite_branch = parallel.with_distance(-quarter.clone());
+            assert_eq!(
+                semicircle
+                    .parallel_intersections(&opposite_branch, &policy)
+                    .unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(Vec::new())
+                ),
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_semicircle_parallel_endpoint_respects_reversal() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let parallel = non_ph_parallel_touching_upper_unit_circle(false);
+            for (carrier, expected_location, expected_cross) in [
+                (
+                    semicircle.clone(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                    RealSign::Negative,
+                ),
+                (
+                    semicircle.reversed(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::End,
+                    RealSign::Positive,
+                ),
+            ] {
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                ) = carrier.parallel_intersections(&parallel, &policy).unwrap()
+                else {
+                    panic!("algebraic cusp/general-parallel endpoint must complete");
+                };
+                let contact = contacts
+                    .iter()
+                    .find(|contact| {
+                        matches!(
+                            contact
+                                .parallel_parameter
+                                .same_value(&BezierParameter2::Exact(Real::zero()), &policy,),
+                            Ok(Classification::Decided(true))
+                        )
+                    })
+                    .expect("the constructed endpoint contact must be retained");
+                assert_eq!(contact.location, expected_location);
+                assert_eq!(contact.tangent_cross_sign, Some(expected_cross));
+            }
         }
     }
 
