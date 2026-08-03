@@ -166,6 +166,7 @@ pub fn count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
                 .collect();
         }
     };
+    let mut sturm_boundary_cache = Vec::with_capacity(fiber_intervals.len() + 1);
 
     fiber_intervals
         .iter()
@@ -210,7 +211,31 @@ pub fn count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
                     sequence_length: 1,
                 }),
                 LocalOpenIntervalRootCount::Sturm(sequence) => {
-                    count_local_sturm_sequence_roots(sequence, fiber_lower, fiber_upper, &mut field)
+                    let lower = cached_local_sturm_boundary_variations(
+                        &mut sturm_boundary_cache,
+                        sequence,
+                        fiber_lower,
+                        &mut field,
+                    );
+                    let upper = cached_local_sturm_boundary_variations(
+                        &mut sturm_boundary_cache,
+                        sequence,
+                        fiber_upper,
+                        &mut field,
+                    );
+                    match (lower, upper) {
+                        (Ok(Some(lower)), Ok(Some(upper))) => lower
+                            .checked_sub(upper)
+                            .map(|count| LocalRootCountOutcome::Counted {
+                                count,
+                                sequence_length: sequence.len(),
+                            })
+                            .ok_or(LocalFieldError::Undecided),
+                        (Ok(None), _) | (_, Ok(None)) => Ok(LocalRootCountOutcome::EndpointRoot {
+                            sequence_length: sequence.len(),
+                        }),
+                        (Err(error), _) | (_, Err(error)) => Err(error),
+                    }
                 }
             };
             fiber_root_count_outcome_report(outcome, &field)
@@ -567,14 +592,10 @@ fn count_local_polynomial_roots(
     }
 
     let sequence = local_sturm_sequence(first, field)?;
-
-    let sequence_length = sequence.len();
-    if endpoints == FiberIntervalEndpoints::RejectRoots
-        && (local_polynomial_sign_at(&sequence[0], fiber_lower, field)? == Ordering::Equal
-            || local_polynomial_sign_at(&sequence[0], fiber_upper, field)? == Ordering::Equal)
-    {
-        return Ok(LocalRootCountOutcome::EndpointRoot { sequence_length });
+    if endpoints == FiberIntervalEndpoints::RejectRoots {
+        return count_local_sturm_sequence_roots(&sequence, fiber_lower, fiber_upper, field);
     }
+    let sequence_length = sequence.len();
     let lower_variations = local_sign_variations(&sequence, fiber_lower, field)?;
     let upper_variations = local_sign_variations(&sequence, fiber_upper, field)?;
     let count = lower_variations
@@ -638,13 +659,14 @@ fn count_local_sturm_sequence_roots(
     field: &mut LocalAlgebraicField,
 ) -> Result<LocalRootCountOutcome, LocalFieldError> {
     let sequence_length = sequence.len();
-    if local_polynomial_sign_at(&sequence[0], fiber_lower, field)? == Ordering::Equal
-        || local_polynomial_sign_at(&sequence[0], fiber_upper, field)? == Ordering::Equal
-    {
+    let Some(lower_variations) = local_sturm_boundary_variations(sequence, fiber_lower, field)?
+    else {
         return Ok(LocalRootCountOutcome::EndpointRoot { sequence_length });
-    }
-    let lower_variations = local_sign_variations(sequence, fiber_lower, field)?;
-    let upper_variations = local_sign_variations(sequence, fiber_upper, field)?;
+    };
+    let Some(upper_variations) = local_sturm_boundary_variations(sequence, fiber_upper, field)?
+    else {
+        return Ok(LocalRootCountOutcome::EndpointRoot { sequence_length });
+    };
     let count = lower_variations
         .checked_sub(upper_variations)
         .ok_or(LocalFieldError::Undecided)?;
@@ -652,6 +674,50 @@ fn count_local_sturm_sequence_roots(
         count,
         sequence_length,
     })
+}
+
+fn cached_local_sturm_boundary_variations<'a>(
+    cache: &mut Vec<(&'a Real, Option<usize>)>,
+    sequence: &[Vec<LocalFieldElement>],
+    parameter: &'a Real,
+    field: &mut LocalAlgebraicField,
+) -> Result<Option<usize>, LocalFieldError> {
+    if let Some((_, variations)) = cache
+        .iter()
+        .find(|(cached_parameter, _)| *cached_parameter == parameter)
+    {
+        return Ok(*variations);
+    }
+    let variations = local_sturm_boundary_variations(sequence, parameter, field)?;
+    cache.push((parameter, variations));
+    Ok(variations)
+}
+
+fn local_sturm_boundary_variations(
+    sequence: &[Vec<LocalFieldElement>],
+    parameter: &Real,
+    field: &mut LocalAlgebraicField,
+) -> Result<Option<usize>, LocalFieldError> {
+    let Some(first) = sequence.first() else {
+        return Err(LocalFieldError::Undecided);
+    };
+    let first_sign = local_polynomial_sign_at(first, parameter, field)?;
+    if first_sign == Ordering::Equal {
+        return Ok(None);
+    }
+    let mut previous = first_sign;
+    let mut variations = 0_usize;
+    for polynomial in &sequence[1..] {
+        let sign = local_polynomial_sign_at(polynomial, parameter, field)?;
+        if sign == Ordering::Equal {
+            continue;
+        }
+        if sign != previous {
+            variations += 1;
+        }
+        previous = sign;
+    }
+    Ok(Some(variations))
 }
 
 fn deflate_local_polynomial_at_rational_root(
