@@ -2569,6 +2569,39 @@ struct ExactSurfaceArrangement {
     cells: SurfaceCellComplex,
 }
 
+#[derive(Debug, PartialEq)]
+struct MaterializedSurfaceOutput {
+    triangles: Vec<[usize; 3]>,
+    sources: Vec<TriangleSource>,
+}
+
+#[derive(Debug, PartialEq)]
+struct MaterializedSurfaceOutputs {
+    vertices: Vec<OutputVertex>,
+    outputs: Vec<MaterializedSurfaceOutput>,
+}
+
+impl MaterializedSurfaceOutputs {
+    fn into_single(mut self) -> HypermeshResult<BooleanMesh> {
+        if self.outputs.len() != 1 {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "single surface output materialization produced the wrong result count",
+            });
+        }
+        let output = self
+            .outputs
+            .pop()
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "single surface output materialization produced no result",
+            })?;
+        Ok(BooleanMesh {
+            vertices: self.vertices,
+            triangles: output.triangles,
+            sources: output.sources,
+        })
+    }
+}
+
 fn build_surface_arrangement(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
@@ -2615,26 +2648,55 @@ impl ExactSurfaceArrangement {
         polygons: &[ConvexPolygon],
         classifications: &[i8],
     ) -> HypermeshResult<BooleanMesh> {
-        materialize_surface_output(
+        materialize_surface_outputs(
             decisions,
             polygons,
             &self.corefinement,
             &self.cells,
+            1,
             classifications,
+        )
+        .and_then(MaterializedSurfaceOutputs::into_single)
+    }
+
+    fn materialize_expression_classifications(
+        &self,
+        decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+        classifications: &ExpressionClassifications,
+    ) -> HypermeshResult<MaterializedSurfaceOutputs> {
+        if classifications.facet_count != self.cells.facets.len() {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface expression classifications and facets differ",
+            });
+        }
+        materialize_surface_outputs(
+            decisions,
+            polygons,
+            &self.corefinement,
+            &self.cells,
+            classifications.expression_count,
+            &classifications.classifications,
         )
     }
 }
 
-fn materialize_surface_output(
+fn materialize_surface_outputs(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
     cells: &SurfaceCellComplex,
+    expression_count: usize,
     classifications: &[i8],
-) -> HypermeshResult<BooleanMesh> {
-    if classifications.len() != cells.facets.len() {
+) -> HypermeshResult<MaterializedSurfaceOutputs> {
+    let classification_count = expression_count.checked_mul(cells.facets.len()).ok_or(
+        HypermeshError::CapacityOverflow {
+            operation: "surface output classification matrix",
+        },
+    )?;
+    if classifications.len() != classification_count {
         return Err(HypermeshError::SurfaceArrangementFailed {
-            reason: "surface output classifications and facets differ",
+            reason: "surface output classification matrix has invalid dimensions",
         });
     }
     let mut used = Vec::new();
@@ -2643,28 +2705,39 @@ fn materialize_surface_output(
             operation: "surface output used points",
         })?;
     used.resize(surface.points.len(), false);
-    let mut triangle_count = 0_usize;
-    for (facet, &classification) in cells.facets.iter().zip(classifications) {
-        if !matches!(classification, -1..=1) {
-            return Err(HypermeshError::SurfaceArrangementFailed {
-                reason: "surface output classification is invalid",
-            });
+    let mut triangle_counts = Vec::new();
+    triangle_counts
+        .try_reserve_exact(expression_count)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface output triangle counts",
+        })?;
+    triangle_counts.resize(expression_count, 0_usize);
+    for expression in 0..expression_count {
+        let start = expression * cells.facets.len();
+        let row = &classifications[start..start + cells.facets.len()];
+        for (facet, &classification) in cells.facets.iter().zip(row) {
+            if !matches!(classification, -1..=1) {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface output classification is invalid",
+                });
+            }
+            if classification == 0 {
+                continue;
+            }
+            triangle_counts[expression] = triangle_counts[expression].checked_add(1).ok_or(
+                HypermeshError::CapacityOverflow {
+                    operation: "surface output triangles",
+                },
+            )?;
+            for &point in &facet.vertices {
+                *used.get_mut(point as usize).ok_or(
+                    HypermeshError::SurfaceArrangementFailed {
+                        reason: "surface output facet references an absent point",
+                    },
+                )? = true;
+            }
         }
-        if classification == 0 {
-            continue;
-        }
-        triangle_count = triangle_count
-            .checked_add(1)
-            .ok_or(HypermeshError::CapacityOverflow {
-                operation: "surface output triangles",
-            })?;
-        for &point in &facet.vertices {
-            *used
-                .get_mut(point as usize)
-                .ok_or(HypermeshError::SurfaceArrangementFailed {
-                    reason: "surface output facet references an absent point",
-                })? = true;
-        }
+        certify_selected_surface_output(decisions, surface, cells, row)?;
     }
 
     let vertex_count = used.iter().filter(|is_used| **is_used).count();
@@ -2693,69 +2766,81 @@ fn materialize_surface_output(
         });
     }
 
-    let mut triangles = Vec::new();
-    triangles
-        .try_reserve_exact(triangle_count)
+    let mut outputs = Vec::new();
+    outputs
+        .try_reserve_exact(expression_count)
         .map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "surface output triangles",
+            operation: "surface outputs",
         })?;
-    let mut sources = Vec::new();
-    sources
-        .try_reserve_exact(triangle_count)
-        .map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "surface output provenance",
+    for &triangle_count in &triangle_counts {
+        let mut triangles = Vec::new();
+        triangles.try_reserve_exact(triangle_count).map_err(|_| {
+            HypermeshError::CapacityOverflow {
+                operation: "surface output triangles",
+            }
         })?;
-    for (facet_index, (facet, &classification)) in
-        cells.facets.iter().zip(classifications).enumerate()
-    {
-        if classification == 0 {
-            continue;
-        }
-        let triangle = facet.vertices.map(|point| {
-            remap
-                .get(point as usize)
-                .copied()
-                .filter(|&output| output != u32::MAX)
-                .map(|output| output as usize)
+        let mut sources = Vec::new();
+        sources.try_reserve_exact(triangle_count).map_err(|_| {
+            HypermeshError::CapacityOverflow {
+                operation: "surface output provenance",
+            }
+        })?;
+        outputs.push(MaterializedSurfaceOutput { triangles, sources });
+    }
+
+    for expression in 0..expression_count {
+        let start = expression * cells.facets.len();
+        let row = &classifications[start..start + cells.facets.len()];
+        let output =
+            outputs
+                .get_mut(expression)
                 .ok_or(HypermeshError::SurfaceArrangementFailed {
-                    reason: "surface output point has no compact vertex",
-                })
-        });
-        let [a, b, c] = triangle;
-        let mut triangle = [a?, b?, c?];
-        if classification == -1 {
-            triangle.swap(1, 2);
-        }
-        let contribution = cells
-            .checked_facet_contributions(facet_index)?
-            .first()
-            .ok_or(HypermeshError::SurfaceArrangementFailed {
-                reason: "surface output facet has no source contribution",
-            })?;
-        if !matches!(contribution.orientation, -1 | 1) {
-            return Err(HypermeshError::SurfaceArrangementFailed {
-                reason: "surface output contribution orientation is invalid",
+                    reason: "surface output row is absent",
+                })?;
+        for (facet_index, (facet, &classification)) in cells.facets.iter().zip(row).enumerate() {
+            if classification == 0 {
+                continue;
+            }
+            let triangle = facet.vertices.map(|point| {
+                remap
+                    .get(point as usize)
+                    .copied()
+                    .filter(|&output| output != u32::MAX)
+                    .map(|output| output as usize)
+                    .ok_or(HypermeshError::SurfaceArrangementFailed {
+                        reason: "surface output point has no compact vertex",
+                    })
+            });
+            let [a, b, c] = triangle;
+            let mut triangle = [a?, b?, c?];
+            if classification == -1 {
+                triangle.swap(1, 2);
+            }
+            let contribution = cells
+                .checked_facet_contributions(facet_index)?
+                .first()
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface output facet has no source contribution",
+                })?;
+            if !matches!(contribution.orientation, -1 | 1) {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface output contribution orientation is invalid",
+                });
+            }
+            let polygon = polygons.get(contribution.face as usize).ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface output contribution references an absent face",
+                },
+            )?;
+            output.triangles.push(triangle);
+            output.sources.push(TriangleSource {
+                mesh: polygon.mesh_index,
+                triangle: polygon.polygon_index,
+                orientation: classification * contribution.orientation,
             });
         }
-        let polygon = polygons.get(contribution.face as usize).ok_or(
-            HypermeshError::SurfaceArrangementFailed {
-                reason: "surface output contribution references an absent face",
-            },
-        )?;
-        triangles.push(triangle);
-        sources.push(TriangleSource {
-            mesh: polygon.mesh_index,
-            triangle: polygon.polygon_index,
-            orientation: classification * contribution.orientation,
-        });
     }
-    let output = BooleanMesh {
-        vertices,
-        triangles,
-        sources,
-    };
-    certify_selected_surface_output(decisions, surface, cells, classifications)?;
-    Ok(output)
+    Ok(MaterializedSurfaceOutputs { vertices, outputs })
 }
 
 fn certify_selected_surface_output(
@@ -3155,6 +3240,36 @@ mod tests {
         assert!(evidence.has_no_boundary());
     }
 
+    fn assert_materialized_batch_output(
+        _decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+        vertices: &[OutputVertex],
+        output: &MaterializedSurfaceOutput,
+        selected_facets: usize,
+    ) {
+        assert_eq!(output.triangles.len(), selected_facets);
+        assert_eq!(output.sources.len(), selected_facets);
+        assert!(
+            output
+                .triangles
+                .iter()
+                .flatten()
+                .all(|&vertex| vertex < vertices.len())
+        );
+        assert!(output.sources.iter().all(|source| {
+            matches!(source.orientation, -1 | 1)
+                && polygons.iter().any(|polygon| {
+                    polygon.mesh_index == source.mesh && polygon.polygon_index == source.triangle
+                })
+        }));
+        let view = BooleanMesh {
+            vertices: vertices.to_vec(),
+            triangles: output.triangles.clone(),
+            sources: output.sources.clone(),
+        };
+        assert!(crate::output::boolean_mesh_closure_evidence(&view).has_no_boundary());
+    }
+
     fn signed_six_volume(mesh: &BooleanMesh) -> Real {
         let mut volume = Real::zero();
         for triangle in &mesh.triangles {
@@ -3269,9 +3384,52 @@ mod tests {
                 &classifications[..classifications.len() - 1],
             ),
             Err(HypermeshError::SurfaceArrangementFailed {
-                reason: "surface output classifications and facets differ"
+                reason: "surface output classification matrix has invalid dimensions"
             })
         ));
+        let malformed_matrix = ExpressionClassifications {
+            expression_count: 2,
+            facet_count: arrangement.cells.facets.len(),
+            classifications: classifications.clone(),
+        };
+        assert!(matches!(
+            arrangement.materialize_expression_classifications(
+                &decisions,
+                &polygons,
+                &malformed_matrix,
+            ),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface output classification matrix has invalid dimensions"
+            })
+        ));
+        let wrong_facet_count = ExpressionClassifications {
+            expression_count: 1,
+            facet_count: arrangement.cells.facets.len() + 1,
+            classifications: classifications.clone(),
+        };
+        assert!(matches!(
+            arrangement.materialize_expression_classifications(
+                &decisions,
+                &polygons,
+                &wrong_facet_count,
+            ),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface expression classifications and facets differ"
+            })
+        ));
+        let no_outputs = arrangement
+            .materialize_expression_classifications(
+                &decisions,
+                &polygons,
+                &ExpressionClassifications {
+                    expression_count: 0,
+                    facet_count: arrangement.cells.facets.len(),
+                    classifications: Vec::new(),
+                },
+            )
+            .unwrap();
+        assert!(no_outputs.vertices.is_empty());
+        assert!(no_outputs.outputs.is_empty());
         let mut invalid_classification = classifications.clone();
         invalid_classification[0] = 2;
         assert!(matches!(
@@ -3630,6 +3788,12 @@ mod tests {
                 })
                 .collect::<Vec<_>>();
             assert_eq!(selected, [0, 0, 4, 4, 8, 12, 12]);
+            let batch = arrangement
+                .materialize_expression_classifications(&decisions, &polygons, &classified)
+                .unwrap();
+            assert_eq!(batch.outputs.len(), roots.len());
+            assert_eq!(batch.vertices.len(), 12);
+            let mut used = vec![false; batch.vertices.len()];
             for (expression, &selected_count) in selected.iter().enumerate() {
                 let classifications = (0..classified.facet_count)
                     .map(|facet| classified.classification(expression, facet))
@@ -3637,11 +3801,19 @@ mod tests {
                 if selected_count != 0 {
                     assert!(facet_classifications_are_closed(cells, &classifications));
                 }
-                let output = arrangement
-                    .materialize_classifications(&decisions, &polygons, &classifications)
-                    .unwrap();
-                assert_materialized_output(&decisions, &polygons, &output, selected_count);
+                let output = &batch.outputs[expression];
+                for &vertex in output.triangles.iter().flatten() {
+                    used[vertex] = true;
+                }
+                assert_materialized_batch_output(
+                    &decisions,
+                    &polygons,
+                    &batch.vertices,
+                    output,
+                    selected_count,
+                );
             }
+            assert!(used.into_iter().all(|is_used| is_used));
 
             assert!(matches!(
                 cells.classify_expressions(&[CellTruthNode::Operand(3)], &[0]),
@@ -4051,6 +4223,11 @@ mod tests {
                 })
                 .collect::<Vec<_>>();
             assert_eq!(selected, [OPERAND_COUNT * 4, 0, OPERAND_COUNT * 4]);
+            let batch = arrangement
+                .materialize_expression_classifications(&decisions, &polygons, &classified)
+                .unwrap();
+            assert_eq!(batch.outputs.len(), 3);
+            assert_eq!(batch.vertices.len(), OPERAND_COUNT * 4);
             for (expression, &selected_count) in selected.iter().enumerate() {
                 let classifications = (0..classified.facet_count)
                     .map(|facet| classified.classification(expression, facet))
@@ -4058,10 +4235,13 @@ mod tests {
                 if selected_count != 0 {
                     assert!(facet_classifications_are_closed(cells, &classifications));
                 }
-                let output = arrangement
-                    .materialize_classifications(&decisions, &polygons, &classifications)
-                    .unwrap();
-                assert_materialized_output(&decisions, &polygons, &output, selected_count);
+                assert_materialized_batch_output(
+                    &decisions,
+                    &polygons,
+                    &batch.vertices,
+                    &batch.outputs[expression],
+                    selected_count,
+                );
             }
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
         }
