@@ -4854,6 +4854,33 @@ fn cached_pairwise_intersections_reuse_identical_polygon_sequence() {
 }
 
 #[test]
+fn cached_pairwise_intersections_do_not_reuse_different_construction_provenance() {
+    let mut horizontal = approximate_convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let mut vertical = approximate_convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    horizontal
+        .set_source_triangle_edge_identities(0, [0, 1, 2])
+        .unwrap();
+    vertical
+        .set_source_triangle_edge_identities(1, [0, 1, 2])
+        .unwrap();
+    let first_polygons = vec![horizontal.clone(), vertical.clone()];
+    horizontal
+        .set_source_triangle_edge_identities(0, [3, 4, 5])
+        .unwrap();
+    vertical
+        .set_source_triangle_edge_identities(1, [3, 4, 5])
+        .unwrap();
+    let second_polygons = vec![horizontal, vertical];
+    let cache = RefCell::new(Vec::new());
+
+    let first = cached_pairwise_intersections_by_polygon_with(&cache, &first_polygons).unwrap();
+    let second = cached_pairwise_intersections_by_polygon_with(&cache, &second_polygons).unwrap();
+
+    assert!(!Arc::ptr_eq(&first, &second));
+    assert_eq!(cache.borrow().len(), 2);
+}
+
+#[test]
 fn cached_pairwise_intersections_reuse_permuted_polygon_sequence() {
     let horizontal = approximate_convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
     let vertical = approximate_convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);

@@ -3245,7 +3245,7 @@ fn cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
         .iter()
         .rev()
         .find(|existing| {
-            existing.polygons == polygons
+            polygon_families_match_in_order_with_construction(&existing.polygons, polygons)
                 && existing.certified_embedded_inputs == certified_embedded_inputs
         })
         .map(|existing| existing.result.clone())
@@ -3304,7 +3304,7 @@ fn cache_pairwise_intersections_result(
     result: &HypermeshResult<Arc<PairwiseIntersectionGraph>>,
 ) {
     if cache.borrow().iter().any(|existing| {
-        existing.polygons == polygons
+        polygon_families_match_in_order_with_construction(&existing.polygons, polygons)
             && existing.certified_embedded_inputs == certified_embedded_inputs
     }) {
         return;
@@ -3334,13 +3334,29 @@ fn polygon_family_order_mapping(
                 .iter()
                 .enumerate()
                 .find(|(cached_index, cached_polygon)| {
-                    !cached_used[*cached_index] && *cached_polygon == query_polygon
+                    !cached_used[*cached_index]
+                        && polygons_match_with_construction(cached_polygon, query_polygon)
                 })?;
         cached_used[cached_index] = true;
         query_to_cached.push(cached_index);
     }
 
     Some(query_to_cached)
+}
+
+fn polygon_families_match_in_order_with_construction(
+    left: &[ConvexPolygon],
+    right: &[ConvexPolygon],
+) -> bool {
+    left.len() == right.len()
+        && left
+            .iter()
+            .zip(right)
+            .all(|(left, right)| polygons_match_with_construction(left, right))
+}
+
+fn polygons_match_with_construction(left: &ConvexPolygon, right: &ConvexPolygon) -> bool {
+    left == right && left.known_identities == right.known_identities
 }
 
 fn remap_pairwise_intersections_for_polygon_order(

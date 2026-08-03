@@ -1,5 +1,7 @@
 //! Pairwise convex polygon intersection primitives.
 
+use std::hash::{Hash, Hasher};
+
 use hyperlattice::{
     HomogeneousPoint3, Point3, Real, intersect_homogeneous_line_plane, intersect_two_planes,
 };
@@ -9,10 +11,11 @@ use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, compare_real_decision};
 use crate::point_interner::PointInterner;
-use crate::polygon::ConvexPolygon;
+use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon};
 use crate::predicate::{
     classify_point_decision, classify_projective_point_decision, classify_real,
 };
+use crate::storage_hash::{StorageHashMap, StorageIdentityHasher};
 
 /// Intersection segment between two polygons.
 #[derive(Clone, Debug, PartialEq)]
@@ -61,11 +64,72 @@ pub enum PairwiseIntersection {
     CoplanarOverlap(OverlapInfo),
 }
 
+#[derive(Clone, Debug)]
+struct ConstructedIntersectionPoint {
+    point: Point3,
+    identity: Option<ConstructionVertexIdentity>,
+}
+
+#[derive(Clone, Debug)]
+struct ConstructedIntersectionSegment {
+    v0: ConstructedIntersectionPoint,
+    v1: ConstructedIntersectionPoint,
+}
+
+#[derive(Clone, Debug)]
+enum ConstructedPairwiseIntersection {
+    Disjoint,
+    NonCoplanarPoint(ConstructedIntersectionPoint),
+    NonCoplanarSegment(ConstructedIntersectionSegment),
+    CoplanarPoint(ConstructedIntersectionPoint),
+    CoplanarSegment(ConstructedIntersectionSegment),
+    CoplanarOverlap,
+}
+
+impl ConstructedPairwiseIntersection {
+    fn into_public(self, other_polygon_idx: usize) -> PairwiseIntersection {
+        match self {
+            Self::Disjoint => PairwiseIntersection::Disjoint,
+            Self::NonCoplanarPoint(point) => {
+                PairwiseIntersection::NonCoplanarPoint(IntersectionPoint {
+                    point: point.point,
+                    other_polygon_idx,
+                })
+            }
+            Self::NonCoplanarSegment(segment) => {
+                PairwiseIntersection::NonCoplanarSegment(IntersectionSegment {
+                    v0: segment.v0.point,
+                    v1: segment.v1.point,
+                    other_polygon_idx,
+                })
+            }
+            Self::CoplanarPoint(point) => PairwiseIntersection::CoplanarPoint(IntersectionPoint {
+                point: point.point,
+                other_polygon_idx,
+            }),
+            Self::CoplanarSegment(segment) => {
+                PairwiseIntersection::CoplanarSegment(IntersectionSegment {
+                    v0: segment.v0.point,
+                    v1: segment.v1.point,
+                    other_polygon_idx,
+                })
+            }
+            Self::CoplanarOverlap => {
+                PairwiseIntersection::CoplanarOverlap(OverlapInfo { other_polygon_idx })
+            }
+        }
+    }
+}
+
 const INTERSECTION_EVENT_POINT: u32 = 1 << 31;
 const INTERSECTION_EVENT_COPLANAR: u32 = 1 << 30;
 const INTERSECTION_EVENT_INDEX_MASK: u32 = INTERSECTION_EVENT_COPLANAR - 1;
 const INTERSECTION_EVENT_INDEX_LIMIT: usize = INTERSECTION_EVENT_INDEX_MASK as usize;
 const COPLANAR_OVERLAP_EVENT: u32 = u32::MAX;
+// A source mesh cannot occupy this index in a realizable in-memory operand
+// list. Pairwise construction recipes use it to distinguish face-indexed
+// support planes from persistent source/projective plane namespaces.
+const PAIRWISE_FACE_PLANE_NAMESPACE: u32 = u32::MAX;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum StoredIntersectionKind {
@@ -240,6 +304,7 @@ pub(crate) struct PairwiseIntersectionSegmentRef<'a> {
 pub(crate) struct PairwiseIntersectionGraph {
     offsets: Box<[u32]>,
     points: Vec<Point3>,
+    point_identities: Vec<Option<ConstructionVertexIdentity>>,
     segments: Vec<PairwiseIntersectionSegment>,
     events: Vec<PairwiseIntersectionEvent>,
 }
@@ -297,6 +362,22 @@ impl PairwiseIntersectionGraph {
             .register_unindexed_existing(self.points.len())?;
         remapped.points.extend(self.points.iter().cloned());
         remapped
+            .point_identities
+            .try_reserve_exact(self.point_identities.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "pairwise intersection construction remapping",
+            })?;
+        for identity in &self.point_identities {
+            remapped.point_identities.push(
+                identity
+                    .as_ref()
+                    .map(|identity| {
+                        remap_pairwise_construction_identity(identity, &cached_to_query)
+                    })
+                    .transpose()?,
+            );
+        }
+        remapped
             .segments
             .try_reserve(self.segments.len())
             .map_err(|_| HypermeshError::CapacityOverflow {
@@ -349,6 +430,49 @@ fn remapped_face_id(cached_to_query: &[usize], cached: u32) -> HypermeshResult<u
     })
 }
 
+fn remap_pairwise_construction_plane(
+    plane: ConstructionPlaneIdentity,
+    cached_to_query: &[usize],
+) -> HypermeshResult<ConstructionPlaneIdentity> {
+    if plane.mesh != PAIRWISE_FACE_PLANE_NAMESPACE {
+        return Ok(plane);
+    }
+    Ok(ConstructionPlaneIdentity {
+        mesh: PAIRWISE_FACE_PLANE_NAMESPACE,
+        plane: remapped_face_id(cached_to_query, plane.plane)?,
+    })
+}
+
+fn remap_pairwise_construction_identity(
+    identity: &ConstructionVertexIdentity,
+    cached_to_query: &[usize],
+) -> HypermeshResult<ConstructionVertexIdentity> {
+    Ok(match identity {
+        ConstructionVertexIdentity::Source { mesh, vertex } => ConstructionVertexIdentity::Source {
+            mesh: *mesh,
+            vertex: *vertex,
+        },
+        ConstructionVertexIdentity::SourceEdgePlane {
+            mesh,
+            endpoints,
+            plane,
+        } => ConstructionVertexIdentity::SourceEdgePlane {
+            mesh: *mesh,
+            endpoints: *endpoints,
+            plane: remap_pairwise_construction_plane(*plane, cached_to_query)?,
+        },
+        ConstructionVertexIdentity::PlaneTriple { planes } => {
+            let mut planes = [
+                remap_pairwise_construction_plane(planes[0], cached_to_query)?,
+                remap_pairwise_construction_plane(planes[1], cached_to_query)?,
+                remap_pairwise_construction_plane(planes[2], cached_to_query)?,
+            ];
+            planes.sort_unstable();
+            ConstructionVertexIdentity::PlaneTriple { planes }
+        }
+    })
+}
+
 #[derive(Clone, Copy)]
 pub(crate) struct PairwiseIntersectionRow<'a> {
     graph: &'a PairwiseIntersectionGraph,
@@ -385,8 +509,9 @@ impl<'a> Iterator for PairwiseIntersectionRow<'a> {
         let (kind, index) = decode_intersection_geometry(event.geometry);
         Some(match kind {
             StoredIntersectionKind::NonCoplanarPoint => {
+                let index = index.expect("point events carry an index");
                 PairwiseIntersectionEventRef::NonCoplanarPoint {
-                    point: &self.graph.points[index.expect("point events carry an index")],
+                    point: &self.graph.points[index],
                     other_polygon_idx,
                 }
             }
@@ -400,10 +525,13 @@ impl<'a> Iterator for PairwiseIntersectionRow<'a> {
                     other_polygon_idx,
                 }
             }
-            StoredIntersectionKind::CoplanarPoint => PairwiseIntersectionEventRef::CoplanarPoint {
-                point: &self.graph.points[index.expect("point events carry an index")],
-                other_polygon_idx,
-            },
+            StoredIntersectionKind::CoplanarPoint => {
+                let index = index.expect("point events carry an index");
+                PairwiseIntersectionEventRef::CoplanarPoint {
+                    point: &self.graph.points[index],
+                    other_polygon_idx,
+                }
+            }
             StoredIntersectionKind::CoplanarSegment => {
                 let segment = &self.graph.segments[index.expect("segment events carry an index")];
                 PairwiseIntersectionEventRef::CoplanarSegment {
@@ -428,9 +556,18 @@ impl<'a> Iterator for PairwiseIntersectionRow<'a> {
 
 impl ExactSizeIterator for PairwiseIntersectionRow<'_> {}
 
+struct ConstructionPointAlias {
+    identity: ConstructionVertexIdentity,
+    point: u32,
+    next: u32,
+}
+
 pub(crate) struct PairwiseIntersectionGraphBuilder {
     counts: Box<[u32]>,
     points: Vec<Point3>,
+    point_identities: Vec<Option<ConstructionVertexIdentity>>,
+    construction_heads: StorageHashMap<u64, usize>,
+    construction_aliases: Vec<ConstructionPointAlias>,
     point_interner: PointInterner<()>,
     segments: Vec<PairwiseIntersectionSegment>,
     events: Vec<PendingIntersectionEvent>,
@@ -451,6 +588,9 @@ impl PairwiseIntersectionGraphBuilder {
         Ok(Self {
             counts: counts.into_boxed_slice(),
             points: Vec::new(),
+            point_identities: Vec::new(),
+            construction_heads: StorageHashMap::default(),
+            construction_aliases: Vec::new(),
             point_interner: PointInterner::new_exact_unreserved(),
             segments: Vec::new(),
             events: Vec::new(),
@@ -536,6 +676,7 @@ impl PairwiseIntersectionGraphBuilder {
         self.append(face, other_polygon, COPLANAR_OVERLAP_EVENT)
     }
 
+    #[cfg(test)]
     pub(crate) fn append_non_coplanar_segment_pair(
         &mut self,
         left: usize,
@@ -543,15 +684,24 @@ impl PairwiseIntersectionGraphBuilder {
         v0: Point3,
         v1: Point3,
     ) -> HypermeshResult<()> {
-        self.append_segment_pair(
+        self.append_constructed_segment_pair(
             left,
             right,
-            v0,
-            v1,
+            ConstructedIntersectionSegment {
+                v0: ConstructedIntersectionPoint {
+                    point: v0,
+                    identity: None,
+                },
+                v1: ConstructedIntersectionPoint {
+                    point: v1,
+                    identity: None,
+                },
+            },
             StoredIntersectionKind::NonCoplanarSegment,
         )
     }
 
+    #[cfg(test)]
     pub(crate) fn append_coplanar_segment_pair(
         &mut self,
         left: usize,
@@ -559,15 +709,28 @@ impl PairwiseIntersectionGraphBuilder {
         v0: Point3,
         v1: Point3,
     ) -> HypermeshResult<()> {
-        self.append_segment_pair(left, right, v0, v1, StoredIntersectionKind::CoplanarSegment)
+        self.append_constructed_segment_pair(
+            left,
+            right,
+            ConstructedIntersectionSegment {
+                v0: ConstructedIntersectionPoint {
+                    point: v0,
+                    identity: None,
+                },
+                v1: ConstructedIntersectionPoint {
+                    point: v1,
+                    identity: None,
+                },
+            },
+            StoredIntersectionKind::CoplanarSegment,
+        )
     }
 
-    fn append_segment_pair(
+    fn append_constructed_segment_pair(
         &mut self,
         left: usize,
         right: usize,
-        v0: Point3,
-        v1: Point3,
+        segment: ConstructedIntersectionSegment,
         kind: StoredIntersectionKind,
     ) -> HypermeshResult<()> {
         debug_assert!(matches!(
@@ -590,9 +753,10 @@ impl PairwiseIntersectionGraphBuilder {
             .ok_or(HypermeshError::CapacityOverflow {
                 operation: "pairwise intersection point arena",
             })?;
-        let endpoints = self
-            .point_interner
-            .intern_exact_pair_or_append(&mut self.points, [v0, v1])?;
+        let endpoints = self.intern_constructed_point_pair([segment.v0, segment.v1])?;
+        if endpoints[0] == endpoints[1] {
+            return Err(HypermeshError::UnknownClassification);
+        }
         debug_assert!(
             endpoints
                 .iter()
@@ -609,29 +773,47 @@ impl PairwiseIntersectionGraphBuilder {
         Ok(())
     }
 
+    #[cfg(test)]
     pub(crate) fn append_non_coplanar_point_pair(
         &mut self,
         left: usize,
         right: usize,
         point: Point3,
     ) -> HypermeshResult<()> {
-        self.append_point_pair(left, right, point, StoredIntersectionKind::NonCoplanarPoint)
+        self.append_constructed_point_pair(
+            left,
+            right,
+            ConstructedIntersectionPoint {
+                point,
+                identity: None,
+            },
+            StoredIntersectionKind::NonCoplanarPoint,
+        )
     }
 
+    #[cfg(test)]
     pub(crate) fn append_coplanar_point_pair(
         &mut self,
         left: usize,
         right: usize,
         point: Point3,
     ) -> HypermeshResult<()> {
-        self.append_point_pair(left, right, point, StoredIntersectionKind::CoplanarPoint)
+        self.append_constructed_point_pair(
+            left,
+            right,
+            ConstructedIntersectionPoint {
+                point,
+                identity: None,
+            },
+            StoredIntersectionKind::CoplanarPoint,
+        )
     }
 
-    fn append_point_pair(
+    fn append_constructed_point_pair(
         &mut self,
         left: usize,
         right: usize,
-        point: Point3,
+        point: ConstructedIntersectionPoint,
         kind: StoredIntersectionKind,
     ) -> HypermeshResult<()> {
         debug_assert!(matches!(
@@ -653,13 +835,175 @@ impl PairwiseIntersectionGraphBuilder {
             .ok_or(HypermeshError::CapacityOverflow {
                 operation: "pairwise intersection point arena",
             })?;
-        let point = self
-            .point_interner
-            .intern_exact_or_append(&mut self.points, point)?;
+        let point = self.intern_constructed_point(point)?;
         let geometry = encode_intersection_geometry(kind, point)?;
         self.append_prechecked(left, left_id, right_id, geometry);
         self.append_prechecked(right, right_id, left_id, geometry);
         Ok(())
+    }
+
+    fn reserve_construction_points(
+        &mut self,
+        additional_points: usize,
+        additional_identities: usize,
+    ) -> HypermeshResult<()> {
+        self.point_identities
+            .try_reserve(additional_points)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "pairwise intersection construction arena",
+            })?;
+        if additional_identities == 0 {
+            return Ok(());
+        }
+        self.construction_heads
+            .try_reserve(additional_identities)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "pairwise intersection construction arena",
+            })?;
+        self.construction_aliases
+            .try_reserve(additional_identities)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "pairwise intersection construction arena",
+            })
+    }
+
+    fn structurally_interned_point(
+        &self,
+        point: &ConstructedIntersectionPoint,
+    ) -> HypermeshResult<Option<usize>> {
+        let Some(identity) = point.identity.as_ref() else {
+            return Ok(None);
+        };
+        let fingerprint = construction_identity_fingerprint(identity);
+        let mut alias = self.construction_heads.get(&fingerprint).copied();
+        while let Some(index) = alias {
+            let entry = self
+                .construction_aliases
+                .get(index)
+                .ok_or(HypermeshError::UnknownClassification)?;
+            if &entry.identity == identity {
+                let point_index = entry.point as usize;
+                let existing = self
+                    .points
+                    .get(point_index)
+                    .ok_or(HypermeshError::UnknownClassification)?;
+                if exact_rational_points_contradict(existing, &point.point) {
+                    return Err(HypermeshError::UnknownClassification);
+                }
+                return Ok(Some(point_index));
+            }
+            alias = (entry.next != u32::MAX).then_some(entry.next as usize);
+        }
+        Ok(None)
+    }
+
+    fn record_constructed_point(
+        &mut self,
+        index: usize,
+        identity: Option<ConstructionVertexIdentity>,
+    ) -> HypermeshResult<()> {
+        if index >= self.point_identities.len() {
+            if index != self.point_identities.len() || index >= self.points.len() {
+                return Err(HypermeshError::UnknownClassification);
+            }
+            self.point_identities.push(identity.clone());
+        } else if let Some(identity) = identity.as_ref() {
+            let canonical = &mut self.point_identities[index];
+            if canonical
+                .as_ref()
+                .is_none_or(|existing| identity < existing)
+            {
+                *canonical = Some(identity.clone());
+            }
+        }
+        if let Some(identity) = identity {
+            let compact = u32::try_from(index).map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "pairwise intersection construction arena",
+            })?;
+            let alias = u32::try_from(self.construction_aliases.len()).map_err(|_| {
+                HypermeshError::CapacityOverflow {
+                    operation: "pairwise intersection construction arena",
+                }
+            })?;
+            let fingerprint = construction_identity_fingerprint(&identity);
+            let next = self
+                .construction_heads
+                .insert(fingerprint, alias as usize)
+                .map_or(u32::MAX, |next| {
+                    u32::try_from(next)
+                        .expect("construction alias capacity is checked before insertion")
+                });
+            self.construction_aliases.push(ConstructionPointAlias {
+                identity,
+                point: compact,
+                next,
+            });
+        }
+        Ok(())
+    }
+
+    fn intern_constructed_point(
+        &mut self,
+        point: ConstructedIntersectionPoint,
+    ) -> HypermeshResult<usize> {
+        if let Some(index) = self.structurally_interned_point(&point)? {
+            return Ok(index);
+        }
+        self.reserve_construction_points(1, point.identity.is_some() as usize)?;
+        let identity = point.identity;
+        let index = self
+            .point_interner
+            .intern_exact_or_append(&mut self.points, point.point)?;
+        self.record_constructed_point(index, identity)?;
+        Ok(index)
+    }
+
+    fn intern_constructed_point_pair(
+        &mut self,
+        points: [ConstructedIntersectionPoint; 2],
+    ) -> HypermeshResult<[usize; 2]> {
+        let structural = [
+            self.structurally_interned_point(&points[0])?,
+            self.structurally_interned_point(&points[1])?,
+        ];
+        let [first_point, second_point] = points;
+        match structural {
+            [Some(first), Some(second)] => return Ok([first, second]),
+            [Some(first), None] => {
+                return Ok([first, self.intern_constructed_point(second_point)?]);
+            }
+            [None, Some(second)] => {
+                return Ok([self.intern_constructed_point(first_point)?, second]);
+            }
+            [None, None] => {}
+        }
+        if first_point.identity.is_some() && first_point.identity == second_point.identity {
+            let second_materialization = second_point.point;
+            let first = self.intern_constructed_point(first_point)?;
+            if exact_rational_points_contradict(&self.points[first], &second_materialization) {
+                return Err(HypermeshError::UnknownClassification);
+            }
+            return Ok([first, first]);
+        }
+
+        let identity_count =
+            first_point.identity.is_some() as usize + second_point.identity.is_some() as usize;
+        self.reserve_construction_points(2, identity_count)?;
+        let ConstructedIntersectionPoint {
+            point: first_materialization,
+            identity: first_identity,
+        } = first_point;
+        let ConstructedIntersectionPoint {
+            point: second_materialization,
+            identity: second_identity,
+        } = second_point;
+        let endpoints = self.point_interner.intern_exact_pair_or_append(
+            &mut self.points,
+            [first_materialization, second_materialization],
+        )?;
+        self.record_constructed_point(endpoints[0], first_identity)?;
+        self.record_constructed_point(endpoints[1], second_identity)?;
+        Ok(endpoints)
     }
 
     pub(crate) fn append_coplanar_overlap_pair(
@@ -684,11 +1028,19 @@ impl PairwiseIntersectionGraphBuilder {
         let Self {
             mut counts,
             points,
+            point_identities,
+            construction_heads,
+            construction_aliases,
             point_interner,
             segments,
             events,
         } = self;
         drop(point_interner);
+        drop(construction_heads);
+        drop(construction_aliases);
+        if point_identities.len() != points.len() {
+            return Err(HypermeshError::UnknownClassification);
+        }
 
         let offset_capacity =
             counts
@@ -761,6 +1113,7 @@ impl PairwiseIntersectionGraphBuilder {
         Ok(PairwiseIntersectionGraph {
             offsets: offsets.into_boxed_slice(),
             points,
+            point_identities,
             segments,
             events: ordered,
         })
@@ -800,9 +1153,32 @@ pub(crate) fn intersect_polygons_with_vertices(
     other_vertices: &[Point3],
     other_polygon_idx: usize,
 ) -> HypermeshResult<PairwiseIntersection> {
+    intersect_polygons_with_vertices_constructed(
+        decisions,
+        polygon,
+        polygon_vertices,
+        None,
+        other,
+        other_vertices,
+        None,
+    )
+    .map(|intersection| intersection.into_public(other_polygon_idx))
+}
+
+fn intersect_polygons_with_vertices_constructed(
+    decisions: &DecisionContext,
+    polygon: &ConvexPolygon,
+    polygon_vertices: &[Point3],
+    polygon_support_identity: Option<ConstructionPlaneIdentity>,
+    other: &ConvexPolygon,
+    other_vertices: &[Point3],
+    other_support_identity: Option<ConstructionPlaneIdentity>,
+) -> HypermeshResult<ConstructedPairwiseIntersection> {
     if polygon.vertex_count() == 0 || other.vertex_count() == 0 {
-        return Ok(PairwiseIntersection::Disjoint);
+        return Ok(ConstructedPairwiseIntersection::Disjoint);
     }
+    let retain_construction =
+        polygon_support_identity.is_some() && other_support_identity.is_some();
 
     let supports_parallel = supports_are_parallel(decisions, &polygon.support, &other.support)?;
     if supports_parallel {
@@ -813,41 +1189,50 @@ pub(crate) fn intersect_polygons_with_vertices(
         return if classify_point_decision(decisions, other_vertex, &polygon.support)?
             == Classification::On
         {
-            intersect_coplanar(
+            intersect_coplanar_constructed(
                 decisions,
                 polygon,
                 polygon_vertices,
                 other,
                 other_vertices,
-                other_polygon_idx,
+                retain_construction,
             )
         } else {
-            Ok(PairwiseIntersection::Disjoint)
+            Ok(ConstructedPairwiseIntersection::Disjoint)
         };
     }
 
     let mut points = Vec::new();
     crate::trace_dispatch!("intersect-polygons", "edge-crossings-forward");
-    collect_edge_plane_crossings(decisions, polygon, polygon_vertices, other, &mut points)?;
+    collect_edge_plane_crossings(
+        decisions,
+        polygon,
+        polygon_vertices,
+        other,
+        other_support_identity,
+        &mut points,
+    )?;
     crate::trace_dispatch!("intersect-polygons", "edge-crossings-reverse");
-    collect_edge_plane_crossings(decisions, other, other_vertices, polygon, &mut points)?;
-    dedup_points(decisions, &mut points)?;
+    collect_edge_plane_crossings(
+        decisions,
+        other,
+        other_vertices,
+        polygon,
+        polygon_support_identity,
+        &mut points,
+    )?;
+    dedup_constructed_points(decisions, &mut points)?;
 
-    match exact_intersection_span(decisions, &polygon.support, &points)? {
-        IntersectionSpan::Empty => Ok(PairwiseIntersection::Disjoint),
-        IntersectionSpan::Point(point) => {
-            Ok(PairwiseIntersection::NonCoplanarPoint(IntersectionPoint {
-                point,
-                other_polygon_idx,
-            }))
+    match exact_constructed_intersection_span(decisions, &polygon.support, &points)? {
+        ConstructedIntersectionSpan::Empty => Ok(ConstructedPairwiseIntersection::Disjoint),
+        ConstructedIntersectionSpan::Point(point) => {
+            Ok(ConstructedPairwiseIntersection::NonCoplanarPoint(point))
         }
-        IntersectionSpan::Segment { v0, v1 } => Ok(PairwiseIntersection::NonCoplanarSegment(
-            IntersectionSegment {
-                v0,
-                v1,
-                other_polygon_idx,
-            },
-        )),
+        ConstructedIntersectionSpan::Segment { v0, v1 } => {
+            Ok(ConstructedPairwiseIntersection::NonCoplanarSegment(
+                ConstructedIntersectionSegment { v0, v1 },
+            ))
+        }
     }
 }
 
@@ -1025,13 +1410,16 @@ fn append_pairwise_intersection(
             "cross-mesh-polygon-test"
         }
     );
-    let intersection = intersect_polygons_with_vertices(
+    let left_support_identity = pairwise_support_identity(global_i)?;
+    let right_support_identity = pairwise_support_identity(global_j)?;
+    let intersection = intersect_polygons_with_vertices_constructed(
         decisions,
         &polygons[global_i],
         left_vertices,
+        left_support_identity,
         &polygons[global_j],
         right_vertices,
-        global_j,
+        right_support_identity,
     )
     .inspect_err(|_error| {
         crate::trace_dispatch!("pairwise-intersection", "polygon-test-failed");
@@ -1056,16 +1444,21 @@ fn append_pairwise_intersection(
         return Ok(());
     }
     match intersection {
-        PairwiseIntersection::NonCoplanarPoint(point) => {
+        ConstructedPairwiseIntersection::NonCoplanarPoint(point) => {
             crate::trace_dispatch!("pairwise-intersection", "nonempty-contact");
-            graph.append_non_coplanar_point_pair(global_i, global_j, point.point)
+            graph.append_constructed_point_pair(
+                global_i,
+                global_j,
+                point,
+                StoredIntersectionKind::NonCoplanarPoint,
+            )
         }
-        PairwiseIntersection::NonCoplanarSegment(segment) => {
+        ConstructedPairwiseIntersection::NonCoplanarSegment(segment) => {
             if same_mesh
                 && !segment_has_strict_interior_point_in_both(
                     decisions,
-                    &segment.v0,
-                    &segment.v1,
+                    &segment.v0.point,
+                    &segment.v1.point,
                     &polygons[global_i],
                     &polygons[global_j],
                 )?
@@ -1074,53 +1467,82 @@ fn append_pairwise_intersection(
                 return Ok(());
             }
             crate::trace_dispatch!("pairwise-intersection", "nonempty-cut");
-            graph.append_non_coplanar_segment_pair(global_i, global_j, segment.v0, segment.v1)
+            graph.append_constructed_segment_pair(
+                global_i,
+                global_j,
+                segment,
+                StoredIntersectionKind::NonCoplanarSegment,
+            )
         }
-        PairwiseIntersection::CoplanarPoint(point) => {
+        ConstructedPairwiseIntersection::CoplanarPoint(point) => {
             crate::trace_dispatch!("pairwise-intersection", "nonempty-contact");
-            graph.append_coplanar_point_pair(global_i, global_j, point.point)
+            graph.append_constructed_point_pair(
+                global_i,
+                global_j,
+                point,
+                StoredIntersectionKind::CoplanarPoint,
+            )
         }
-        PairwiseIntersection::CoplanarSegment(segment) => {
+        ConstructedPairwiseIntersection::CoplanarSegment(segment) => {
             crate::trace_dispatch!("pairwise-intersection", "nonempty-contact");
-            graph.append_coplanar_segment_pair(global_i, global_j, segment.v0, segment.v1)
+            graph.append_constructed_segment_pair(
+                global_i,
+                global_j,
+                segment,
+                StoredIntersectionKind::CoplanarSegment,
+            )
         }
-        PairwiseIntersection::CoplanarOverlap(_) => {
+        ConstructedPairwiseIntersection::CoplanarOverlap => {
             crate::trace_dispatch!("pairwise-intersection", "nonempty-cut");
             graph.append_coplanar_overlap_pair(global_i, global_j)
         }
-        PairwiseIntersection::Disjoint => Ok(()),
+        ConstructedPairwiseIntersection::Disjoint => Ok(()),
     }
+}
+
+fn pairwise_support_identity(face: usize) -> HypermeshResult<Option<ConstructionPlaneIdentity>> {
+    Ok(Some(ConstructionPlaneIdentity {
+        mesh: PAIRWISE_FACE_PLANE_NAMESPACE,
+        plane: u32::try_from(face).map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "pairwise construction support plane",
+        })?,
+    }))
 }
 
 fn pairwise_intersection_is_shared_input_feature(
     decisions: &DecisionContext,
-    intersection: &PairwiseIntersection,
+    intersection: &ConstructedPairwiseIntersection,
     left: &ConvexPolygon,
     left_vertices: &[Point3],
     right: &ConvexPolygon,
     right_vertices: &[Point3],
 ) -> HypermeshResult<bool> {
     match intersection {
-        PairwiseIntersection::NonCoplanarPoint(contact)
-        | PairwiseIntersection::CoplanarPoint(contact) => shared_vertex_identity_at_point(
-            decisions,
-            left,
-            left_vertices,
-            right,
-            right_vertices,
-            &contact.point,
-        ),
-        PairwiseIntersection::NonCoplanarSegment(segment)
-        | PairwiseIntersection::CoplanarSegment(segment) => shared_edge_identity_for_segment(
-            decisions,
-            left,
-            left_vertices,
-            right,
-            right_vertices,
-            &segment.v0,
-            &segment.v1,
-        ),
-        PairwiseIntersection::Disjoint | PairwiseIntersection::CoplanarOverlap(_) => Ok(false),
+        ConstructedPairwiseIntersection::NonCoplanarPoint(contact)
+        | ConstructedPairwiseIntersection::CoplanarPoint(contact) => {
+            shared_vertex_identity_at_point(
+                decisions,
+                left,
+                left_vertices,
+                right,
+                right_vertices,
+                &contact.point,
+            )
+        }
+        ConstructedPairwiseIntersection::NonCoplanarSegment(segment)
+        | ConstructedPairwiseIntersection::CoplanarSegment(segment) => {
+            shared_edge_identity_for_segment(
+                decisions,
+                left,
+                left_vertices,
+                right,
+                right_vertices,
+                &segment.v0.point,
+                &segment.v1.point,
+            )
+        }
+        ConstructedPairwiseIntersection::Disjoint
+        | ConstructedPairwiseIntersection::CoplanarOverlap => Ok(false),
     }
 }
 
@@ -1347,18 +1769,16 @@ fn update_open_segment_upper(
     Ok(compare_real_decision(decisions, &Real::zero(), upper)?.is_lt())
 }
 
-fn intersect_coplanar(
+fn intersect_coplanar_constructed(
     decisions: &DecisionContext,
     polygon: &ConvexPolygon,
     polygon_vertices: &[Point3],
     other: &ConvexPolygon,
     other_vertices: &[Point3],
-    other_polygon_idx: usize,
-) -> HypermeshResult<PairwiseIntersection> {
+    retain_construction: bool,
+) -> HypermeshResult<ConstructedPairwiseIntersection> {
     if polygons_share_area(decisions, polygon, polygon_vertices, other, other_vertices)? {
-        return Ok(PairwiseIntersection::CoplanarOverlap(OverlapInfo {
-            other_polygon_idx,
-        }));
+        return Ok(ConstructedPairwiseIntersection::CoplanarOverlap);
     }
 
     // The intersection of two closed convex polygons is convex. Once the exact
@@ -1379,40 +1799,48 @@ fn intersect_coplanar(
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "coplanar polygon contact candidates",
         })?;
-    for point in polygon_vertices {
+    for (index, point) in polygon_vertices.iter().enumerate() {
         if affine_point_in_polygon_on_support(decisions, point, other)? {
-            points.push(point.clone());
+            points.push(ConstructedIntersectionPoint {
+                point: point.clone(),
+                identity: retain_construction
+                    .then(|| polygon_vertex_identity(polygon, index))
+                    .flatten(),
+            });
         }
     }
-    for point in other_vertices {
+    for (index, point) in other_vertices.iter().enumerate() {
         if affine_point_in_polygon_on_support(decisions, point, polygon)? {
-            points.push(point.clone());
+            points.push(ConstructedIntersectionPoint {
+                point: point.clone(),
+                identity: retain_construction
+                    .then(|| polygon_vertex_identity(other, index))
+                    .flatten(),
+            });
         }
     }
-    dedup_points(decisions, &mut points)?;
+    dedup_constructed_points(decisions, &mut points)?;
 
-    match exact_intersection_span(decisions, &polygon.support, &points)? {
-        IntersectionSpan::Empty => Ok(PairwiseIntersection::Disjoint),
-        IntersectionSpan::Point(point) => {
-            Ok(PairwiseIntersection::CoplanarPoint(IntersectionPoint {
-                point,
-                other_polygon_idx,
-            }))
+    match exact_constructed_intersection_span(decisions, &polygon.support, &points)? {
+        ConstructedIntersectionSpan::Empty => Ok(ConstructedPairwiseIntersection::Disjoint),
+        ConstructedIntersectionSpan::Point(point) => {
+            Ok(ConstructedPairwiseIntersection::CoplanarPoint(point))
         }
-        IntersectionSpan::Segment { v0, v1 } => {
-            Ok(PairwiseIntersection::CoplanarSegment(IntersectionSegment {
-                v0,
-                v1,
-                other_polygon_idx,
-            }))
+        ConstructedIntersectionSpan::Segment { v0, v1 } => {
+            Ok(ConstructedPairwiseIntersection::CoplanarSegment(
+                ConstructedIntersectionSegment { v0, v1 },
+            ))
         }
     }
 }
 
-enum IntersectionSpan {
+enum ConstructedIntersectionSpan {
     Empty,
-    Point(Point3),
-    Segment { v0: Point3, v1: Point3 },
+    Point(ConstructedIntersectionPoint),
+    Segment {
+        v0: ConstructedIntersectionPoint,
+        v1: ConstructedIntersectionPoint,
+    },
 }
 
 /// Canonicalizes any nonempty zero- or one-dimensional convex intersection.
@@ -1421,18 +1849,18 @@ enum IntersectionSpan {
 /// an otherwise valid polygon retains collinear boundary vertices. Selecting
 /// exact lexicographic extrema preserves the whole interval instead of
 /// silently truncating it to the first two discovery-order points.
-fn exact_intersection_span(
+fn exact_constructed_intersection_span(
     decisions: &DecisionContext,
     support: &Plane,
-    points: &[Point3],
-) -> HypermeshResult<IntersectionSpan> {
+    points: &[ConstructedIntersectionPoint],
+) -> HypermeshResult<ConstructedIntersectionSpan> {
     let Some(first) = points.first() else {
-        return Ok(IntersectionSpan::Empty);
+        return Ok(ConstructedIntersectionSpan::Empty);
     };
     match points {
-        [_] => return Ok(IntersectionSpan::Point(first.clone())),
+        [_] => return Ok(ConstructedIntersectionSpan::Point(first.clone())),
         [v0, v1] => {
-            return Ok(IntersectionSpan::Segment {
+            return Ok(ConstructedIntersectionSpan::Segment {
                 v0: v0.clone(),
                 v1: v1.clone(),
             });
@@ -1443,19 +1871,24 @@ fn exact_intersection_span(
     let mut minimum = first;
     let mut maximum = first;
     for point in &points[1..] {
-        if compare_points_lexicographically(decisions, point, minimum)?.is_lt() {
+        if compare_points_lexicographically(decisions, &point.point, &minimum.point)?.is_lt() {
             minimum = point;
         }
-        if compare_points_lexicographically(decisions, point, maximum)?.is_gt() {
+        if compare_points_lexicographically(decisions, &point.point, &maximum.point)?.is_gt() {
             maximum = point;
         }
     }
     for point in points {
-        if !support.points_are_collinear_on_support(decisions, minimum, maximum, point)? {
+        if !support.points_are_collinear_on_support(
+            decisions,
+            &minimum.point,
+            &maximum.point,
+            &point.point,
+        )? {
             return Err(HypermeshError::UnknownClassification);
         }
     }
-    Ok(IntersectionSpan::Segment {
+    Ok(ConstructedIntersectionSpan::Segment {
         v0: minimum.clone(),
         v1: maximum.clone(),
     })
@@ -1528,7 +1961,8 @@ fn collect_edge_plane_crossings(
     edge_polygon: &ConvexPolygon,
     vertices: &[Point3],
     plane_polygon: &ConvexPolygon,
-    points: &mut Vec<Point3>,
+    plane_identity: Option<ConstructionPlaneIdentity>,
+    points: &mut Vec<ConstructedIntersectionPoint>,
 ) -> HypermeshResult<()> {
     if let [v0, v1, v2] = vertices {
         let c0 = classify_point_decision(decisions, v0, &plane_polygon.support)?;
@@ -1543,6 +1977,7 @@ fn collect_edge_plane_crossings(
             c0,
             c1,
             plane_polygon,
+            plane_identity,
             points,
         )?;
         collect_edge_plane_crossing(
@@ -1554,6 +1989,7 @@ fn collect_edge_plane_crossings(
             c1,
             c2,
             plane_polygon,
+            plane_identity,
             points,
         )?;
         collect_edge_plane_crossing(
@@ -1565,6 +2001,7 @@ fn collect_edge_plane_crossings(
             c2,
             c0,
             plane_polygon,
+            plane_identity,
             points,
         )?;
         return Ok(());
@@ -1584,6 +2021,7 @@ fn collect_edge_plane_crossings(
             start_class,
             end_class,
             plane_polygon,
+            plane_identity,
             points,
         )?;
     }
@@ -1600,15 +2038,31 @@ fn collect_edge_plane_crossing(
     start_class: Classification,
     end_class: Classification,
     plane_polygon: &ConvexPolygon,
-    points: &mut Vec<Point3>,
+    plane_identity: Option<ConstructionPlaneIdentity>,
+    points: &mut Vec<ConstructedIntersectionPoint>,
 ) -> HypermeshResult<()> {
     let candidate = match (start_class, end_class) {
         (Classification::On, _) => {
-            affine_point_in_polygon_on_support(decisions, start, plane_polygon)?
-                .then(|| start.clone())
+            affine_point_in_polygon_on_support(decisions, start, plane_polygon)?.then(|| {
+                ConstructedIntersectionPoint {
+                    point: start.clone(),
+                    identity: plane_identity
+                        .and_then(|_| polygon_vertex_identity(edge_polygon, edge_index)),
+                }
+            })
         }
         (_, Classification::On) => {
-            affine_point_in_polygon_on_support(decisions, end, plane_polygon)?.then(|| end.clone())
+            affine_point_in_polygon_on_support(decisions, end, plane_polygon)?.then(|| {
+                ConstructedIntersectionPoint {
+                    point: end.clone(),
+                    identity: plane_identity.and_then(|_| {
+                        polygon_vertex_identity(
+                            edge_polygon,
+                            (edge_index + 1) % edge_polygon.vertex_count(),
+                        )
+                    }),
+                }
+            })
         }
         (Classification::Negative, Classification::Positive)
         | (Classification::Positive, Classification::Negative) => {
@@ -1638,7 +2092,14 @@ fn collect_edge_plane_crossing(
                     }
                     Err(error) => return Err(error),
                 };
-            contained.then_some(point)
+            contained.then(|| ConstructedIntersectionPoint {
+                point,
+                identity: edge_plane_intersection_identity(
+                    edge_polygon,
+                    edge_index,
+                    plane_identity,
+                ),
+            })
         }
         _ => None,
     };
@@ -1647,6 +2108,26 @@ fn collect_edge_plane_crossing(
         points.push(point);
     }
     Ok(())
+}
+
+fn polygon_vertex_identity(
+    polygon: &ConvexPolygon,
+    vertex: usize,
+) -> Option<ConstructionVertexIdentity> {
+    polygon.known_vertex_identities()?.get(vertex)
+}
+
+fn edge_plane_intersection_identity(
+    polygon: &ConvexPolygon,
+    edge: usize,
+    plane: Option<ConstructionPlaneIdentity>,
+) -> Option<ConstructionVertexIdentity> {
+    Some(
+        polygon
+            .known_edge_identities()?
+            .get(edge)?
+            .intersection_identity(plane?),
+    )
 }
 
 fn projective_edge_plane_intersection_in_polygon(
@@ -1898,17 +2379,45 @@ fn supports_are_parallel(
     }
 }
 
-fn dedup_points(decisions: &DecisionContext, points: &mut Vec<Point3>) -> HypermeshResult<()> {
-    let mut unique = Vec::with_capacity(points.len());
+fn exact_rational_points_contradict(left: &Point3, right: &Point3) -> bool {
+    let left = [&left.x, &left.y, &left.z].map(Real::exact_rational_ref);
+    let right = [&right.x, &right.y, &right.z].map(Real::exact_rational_ref);
+    left.into_iter()
+        .zip(right)
+        .any(|(left, right)| matches!((left, right), (Some(left), Some(right)) if left != right))
+}
+
+fn construction_identity_fingerprint(identity: &ConstructionVertexIdentity) -> u64 {
+    let mut hasher = StorageIdentityHasher::default();
+    identity.hash(&mut hasher);
+    hasher.finish()
+}
+
+fn dedup_constructed_points(
+    decisions: &DecisionContext,
+    points: &mut Vec<ConstructedIntersectionPoint>,
+) -> HypermeshResult<()> {
+    let mut unique: Vec<ConstructedIntersectionPoint> = Vec::with_capacity(points.len());
     for point in points.drain(..) {
-        let mut duplicate = false;
-        for existing in &unique {
-            if existing == &point || crate::predicate::points_equal(decisions, existing, &point)? {
-                duplicate = true;
+        let mut duplicate = None;
+        for (index, existing) in unique.iter().enumerate() {
+            if existing.point == point.point
+                || crate::predicate::points_equal(decisions, &existing.point, &point.point)?
+            {
+                duplicate = Some(index);
                 break;
             }
         }
-        if !duplicate {
+        if let Some(index) = duplicate {
+            if point.identity.as_ref().is_some_and(|identity| {
+                unique[index]
+                    .identity
+                    .as_ref()
+                    .is_none_or(|existing| identity < existing)
+            }) {
+                unique[index].identity = point.identity;
+            }
+        } else {
             unique.push(point);
         }
     }
@@ -1921,9 +2430,11 @@ mod tests {
     use hyperlattice::{Point3, Real};
 
     use super::{
-        PairwiseIntersection, PairwiseIntersectionEvent, PairwiseIntersectionEventRef,
-        PairwiseIntersectionGraphBuilder, PolygonVertexArena,
+        ConstructedIntersectionPoint, ConstructedIntersectionSegment, PairwiseIntersection,
+        PairwiseIntersectionEvent, PairwiseIntersectionEventRef, PairwiseIntersectionGraphBuilder,
+        PolygonVertexArena, StoredIntersectionKind,
     };
+    use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity};
 
     #[test]
     fn polygon_vertex_arena_flattens_known_empty_and_constructed_rows() {
@@ -2075,6 +2586,7 @@ mod tests {
             Some(PairwiseIntersectionEventRef::NonCoplanarPoint {
                 point,
                 other_polygon_idx: 1,
+                ..
             }) if point == &Point3::origin()
         ));
         assert!(matches!(
@@ -2089,6 +2601,7 @@ mod tests {
             Some(PairwiseIntersectionEventRef::CoplanarPoint {
                 point: contact,
                 other_polygon_idx: 3,
+                ..
             }) if contact == &p2(3, 0)
         ));
         assert!(matches!(
@@ -2206,6 +2719,263 @@ mod tests {
         assert_eq!(
             graph.segments[0].endpoints[0],
             graph.segments[1].endpoints[0]
+        );
+    }
+
+    #[test]
+    fn retained_graph_points_carry_canonical_crossing_recipes() {
+        let decisions = crate::test_support::approximate_decisions();
+        let p = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));
+        let mut horizontal = crate::test_support::approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(2, 0, 0),
+            &p(0, 2, 0),
+            0,
+            0,
+        );
+        horizontal
+            .set_source_triangle_edge_identities(0, [0, 1, 2])
+            .unwrap();
+        let mut vertical = crate::test_support::approximate_convex_triangle(
+            &p(1, -1, -1),
+            &p(1, 3, -1),
+            &p(1, -1, 3),
+            1,
+            1,
+        );
+        vertical
+            .set_source_triangle_edge_identities(1, [0, 1, 2])
+            .unwrap();
+
+        let graph =
+            super::pairwise_intersections_by_polygon(&decisions, &[horizontal, vertical]).unwrap();
+
+        assert_eq!(graph.points.len(), 2);
+        assert_eq!(graph.point_identities.len(), graph.points.len());
+        let support = ConstructionPlaneIdentity {
+            mesh: super::PAIRWISE_FACE_PLANE_NAMESPACE,
+            plane: 1,
+        };
+        let mut identities = graph
+            .point_identities
+            .iter()
+            .cloned()
+            .collect::<Option<Vec<_>>>()
+            .expect("normalized source triangles give every crossing a recipe");
+        identities.sort_unstable();
+        assert_eq!(
+            identities,
+            vec![
+                ConstructionVertexIdentity::SourceEdgePlane {
+                    mesh: 0,
+                    endpoints: [0, 1],
+                    plane: support,
+                },
+                ConstructionVertexIdentity::SourceEdgePlane {
+                    mesh: 0,
+                    endpoints: [1, 2],
+                    plane: support,
+                },
+            ]
+        );
+
+        let remapped = graph.remap_polygon_order(&[1, 0]).unwrap();
+        let remapped_support = ConstructionPlaneIdentity {
+            mesh: super::PAIRWISE_FACE_PLANE_NAMESPACE,
+            plane: 0,
+        };
+        assert!(remapped.point_identities.iter().all(|identity| matches!(
+            identity,
+            Some(ConstructionVertexIdentity::SourceEdgePlane { plane, .. })
+                if *plane == remapped_support
+        )));
+
+        let persistent = ConstructionPlaneIdentity { mesh: 3, plane: 7 };
+        let mut planes = [
+            persistent,
+            ConstructionPlaneIdentity { mesh: 4, plane: 2 },
+            support,
+        ];
+        planes.sort_unstable();
+        let remapped_triple = super::remap_pairwise_construction_identity(
+            &ConstructionVertexIdentity::PlaneTriple { planes },
+            &[1, 0],
+        )
+        .unwrap();
+        let mut expected = [
+            persistent,
+            ConstructionPlaneIdentity { mesh: 4, plane: 2 },
+            remapped_support,
+        ];
+        expected.sort_unstable();
+        assert_eq!(
+            remapped_triple,
+            ConstructionVertexIdentity::PlaneTriple { planes: expected }
+        );
+    }
+
+    #[test]
+    fn structural_recipe_interning_shares_symbolic_points_without_equality() {
+        let symbolic = Point3::new(Real::from(2).sqrt().unwrap(), Real::zero(), Real::zero());
+        let symbolic_identity = ConstructionVertexIdentity::Source { mesh: 0, vertex: 7 };
+        let origin_identity = ConstructionVertexIdentity::Source { mesh: 0, vertex: 8 };
+        let segment = |origin_vertex| ConstructedIntersectionSegment {
+            v0: ConstructedIntersectionPoint {
+                point: symbolic.clone(),
+                identity: Some(symbolic_identity.clone()),
+            },
+            v1: ConstructedIntersectionPoint {
+                point: Point3::origin(),
+                identity: Some(ConstructionVertexIdentity::Source {
+                    mesh: 0,
+                    vertex: origin_vertex,
+                }),
+            },
+        };
+        let mut graph = PairwiseIntersectionGraphBuilder::new(3).unwrap();
+        graph
+            .append_constructed_segment_pair(
+                0,
+                1,
+                segment(8),
+                StoredIntersectionKind::NonCoplanarSegment,
+            )
+            .unwrap();
+        graph
+            .append_constructed_segment_pair(
+                0,
+                2,
+                segment(8),
+                StoredIntersectionKind::NonCoplanarSegment,
+            )
+            .unwrap();
+        let graph = graph.finish().unwrap();
+
+        assert_eq!(graph.points.len(), 2);
+        assert_eq!(
+            graph.segments[0].endpoints[0],
+            graph.segments[1].endpoints[0]
+        );
+        assert_eq!(
+            graph.point_identities[graph.segments[0].endpoints[0] as usize],
+            Some(symbolic_identity)
+        );
+        assert_eq!(
+            graph.point_identities[graph.segments[0].endpoints[1] as usize],
+            Some(origin_identity)
+        );
+    }
+
+    #[test]
+    fn structural_recipe_interning_disambiguates_fingerprint_collisions() {
+        let first_identity = ConstructionVertexIdentity::Source { mesh: 0, vertex: 4 };
+        let second_identity = ConstructionVertexIdentity::Source { mesh: 0, vertex: 9 };
+        let point = |coordinate, identity| ConstructedIntersectionPoint {
+            point: Point3::new(Real::from(coordinate), Real::zero(), Real::zero()),
+            identity: Some(identity),
+        };
+        let mut graph = PairwiseIntersectionGraphBuilder::new(3).unwrap();
+        graph
+            .append_constructed_point_pair(
+                0,
+                1,
+                point(0, first_identity.clone()),
+                StoredIntersectionKind::NonCoplanarPoint,
+            )
+            .unwrap();
+
+        let first_fingerprint = super::construction_identity_fingerprint(&first_identity);
+        let second_fingerprint = super::construction_identity_fingerprint(&second_identity);
+        assert_ne!(first_fingerprint, second_fingerprint);
+        assert_eq!(graph.construction_heads.insert(second_fingerprint, 0), None);
+        graph
+            .append_constructed_point_pair(
+                0,
+                2,
+                point(1, second_identity.clone()),
+                StoredIntersectionKind::CoplanarPoint,
+            )
+            .unwrap();
+        let graph = graph.finish().unwrap();
+
+        assert_eq!(graph.points.len(), 2);
+        assert_eq!(
+            graph.point_identities,
+            [Some(first_identity), Some(second_identity)]
+        );
+    }
+
+    #[test]
+    fn structural_recipe_interning_rejects_exact_materialization_contradictions() {
+        let identity = ConstructionVertexIdentity::Source { mesh: 0, vertex: 4 };
+        let point = |coordinate| ConstructedIntersectionPoint {
+            point: Point3::new(Real::from(coordinate), Real::zero(), Real::zero()),
+            identity: Some(identity.clone()),
+        };
+        let mut graph = PairwiseIntersectionGraphBuilder::new(3).unwrap();
+        graph
+            .append_constructed_point_pair(0, 1, point(0), StoredIntersectionKind::NonCoplanarPoint)
+            .unwrap();
+
+        assert!(matches!(
+            graph.append_constructed_point_pair(
+                0,
+                2,
+                point(1),
+                StoredIntersectionKind::CoplanarPoint,
+            ),
+            Err(crate::HypermeshError::UnknownClassification)
+        ));
+        let graph = graph.finish().unwrap();
+        assert_eq!(graph.points.len(), 1);
+        assert_eq!(graph.event_count(), 2);
+    }
+
+    #[test]
+    fn exact_aliases_choose_order_independent_canonical_recipe() {
+        let point = |vertex| ConstructedIntersectionPoint {
+            point: Point3::origin(),
+            identity: Some(ConstructionVertexIdentity::Source { mesh: 0, vertex }),
+        };
+        let build = |first, second| {
+            let mut graph = PairwiseIntersectionGraphBuilder::new(3).unwrap();
+            graph
+                .append_constructed_point_pair(
+                    0,
+                    1,
+                    point(first),
+                    StoredIntersectionKind::NonCoplanarPoint,
+                )
+                .unwrap();
+            graph
+                .append_constructed_point_pair(
+                    0,
+                    2,
+                    point(second),
+                    StoredIntersectionKind::CoplanarPoint,
+                )
+                .unwrap();
+            graph.finish().unwrap()
+        };
+        let graph = build(9, 2);
+        let reversed = build(2, 9);
+
+        assert_eq!(graph.points.len(), 1);
+        assert_eq!(
+            graph.point_identities,
+            [Some(ConstructionVertexIdentity::Source {
+                mesh: 0,
+                vertex: 2,
+            })]
+        );
+        assert_eq!(reversed.point_identities, graph.point_identities);
+        let remapped = graph.remap_polygon_order(&[2, 1, 0]).unwrap();
+        assert_eq!(
+            remapped.point_identities,
+            [Some(ConstructionVertexIdentity::Source {
+                mesh: 0,
+                vertex: 2,
+            })]
         );
     }
 

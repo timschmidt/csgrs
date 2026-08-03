@@ -75,6 +75,24 @@ impl ConstructionEdgeIdentity {
             endpoints,
         })
     }
+
+    pub(crate) fn intersection_identity(
+        &self,
+        plane: ConstructionPlaneIdentity,
+    ) -> ConstructionVertexIdentity {
+        match self {
+            Self::Source { mesh, endpoints } => ConstructionVertexIdentity::SourceEdgePlane {
+                mesh: *mesh,
+                endpoints: *endpoints,
+                plane,
+            },
+            Self::Split { planes: existing } => {
+                let mut planes = [existing[0], existing[1], plane];
+                planes.sort_unstable();
+                ConstructionVertexIdentity::PlaneTriple { planes }
+            }
+        }
+    }
 }
 
 impl ConstructionVertexIdentity {
@@ -182,7 +200,7 @@ impl RetainedVertexCycle {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) enum RetainedIdentityCycles {
     SourceTriangle {
         mesh: u32,
