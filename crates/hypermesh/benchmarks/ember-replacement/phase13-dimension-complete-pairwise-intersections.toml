@@ -1,0 +1,378 @@
+schema = 1
+status = "retained"
+captured_at = "2026-08-03"
+phases = [12, 13]
+checkpoint = "dimension-complete-pairwise-intersections"
+source_parent_commit = "e04b73d32a5eab14a61b2c7c32e68d7fa34ff2ac"
+evidence_parent_commit = "9c383dd1"
+implementation_commit = "43f9c85385f34ca541e0afc554e69d6ae316a3fb"
+parent_executable_sha256 = "3cda9842a356a6112b4eccd0e04db5c9e82180e2efefbdd2cb9f5f3693f64465"
+candidate_executable_sha256 = "853caa6c409adb8b5b125ab609044a7394d2c3dad1bb28dce07906f530315241"
+hyperreal_commit = "6c7b8325382135e424dfdb1d7442d454c9665d75"
+hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+hypertri_commit = "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+
+[representation]
+public_variants = ["Disjoint", "NonCoplanarPoint", "NonCoplanarSegment", "CoplanarPoint", "CoplanarSegment", "CoplanarOverlap"]
+public_contradictory_states = false
+exact_point_payload_retained = true
+event_bytes = 8
+pending_event_bytes = 12
+tag_bits = 2
+arena_index_bits = 30
+point_arena_shared = true
+segment_arena_shared = true
+exact_rational_structural_interning = true
+symbolic_point_equality_added = false
+same_mesh_shared_source_feature_elision = true
+distinct_coincident_provenance_retained = true
+compatibility_adapter = false
+deprecated_duplicate_api = false
+dual_graph_representation = false
+unchecked_truncation = false
+
+[coplanar]
+positive_area_algorithm = "exact convex separating axis over both edge-plane sets"
+intermediate_clipped_polygon = false
+lower_dimension_algorithm = "closed containment candidates plus exact collinear extrema"
+tolerance = false
+orientation_invariant = true
+
+[policy]
+scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_approximation_owner = "hyperlimit"
+strict_undecided_is_error = true
+approximate_512_terminal_only = true
+aggregate_certainty_preserved = true
+graph_packing_performs_scalar_decisions = false
+graph_finalization_performs_scalar_decisions = false
+symbolic_contact_strict_result = "PredicateUndecided"
+symbolic_contact_approximate_512_result = "CoplanarPoint"
+symbolic_contact_approximate_512_certainty = "Approximate512Consumed"
+
+[source]
+production_insertions = 963
+production_deletions = 234
+evidence_insertions = 595
+evidence_deletions = 35
+
+[corpus]
+exact_pairwise_cases = 12
+class_matrix_variants_per_case = 8
+class_matrix_policies = 2
+class_matrix_executions = 192
+rectangle_oracle_cases = 256
+rectangle_variants_per_case = 8
+rectangle_policies = 2
+rectangle_executions = 4096
+all_public_variants = true
+partial_and_full_edge_contact = true
+t_junction = true
+coincident_area = true
+crossing_area_without_contained_vertex = true
+symbolic_terminal_equality = true
+orientation_inversion = true
+
+[fuzz]
+target = "polygon_predicates"
+sanitizer = "address"
+leak_detection = false
+leak_detection_reason = "LeakSanitizer is incompatible with the sandbox ptrace environment"
+initial_failure_input = [121, 112, 104, 1, 0, 114, 126, 0]
+initial_failure = "ConvexPolygon::inverted reversed edge halfspaces and downgraded positive-area overlap to a segment"
+promoted_to_deterministic_corpus = true
+post_fix_executions = 46891
+post_fix_failures = 0
+
+[tests.default]
+passed = 1216
+failed = 0
+ignored = 7
+
+[tests.minimal]
+passed = 1216
+failed = 0
+ignored = 7
+
+[tests.all_features]
+passed = 1218
+failed = 0
+ignored = 7
+
+[gates]
+fmt = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+bench_default_no_run = true
+bench_all_features_no_run = true
+dispatch_trace_bench_compiled = true
+fuzz_bins_check = true
+fuzz_campaign = true
+wasm_minimal_and_all_features = true
+size_harness_native_and_wasm = true
+ui_native_tests = 8
+trunk_release_demo = true
+diff_check = true
+
+[callgraph.production]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 20113
+edges = 40129
+
+[callgraph.evidence]
+includes = ["tests", "bench", "examples", "fuzz"]
+nodes = 26570
+edges = 50146
+
+[fixture.general]
+probe_mode = "boxes-3072-general"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 2410
+output_triangles = 4816
+
+[fixture.certified]
+probe_mode = "boxes-3072"
+input_triangles = 6144
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 27
+output_triangles = 50
+
+[heap.tool]
+name = "Massif"
+version = "3.27.0"
+args = "--time-unit=B --detailed-freq=1"
+
+[heap.rejected_naive_general]
+useful_bytes = 30014784
+parent_useful_bytes = 28707392
+delta_bytes = 1307392
+delta_percent = 4.554200
+retained = false
+
+[heap.general_strict.parent]
+useful_bytes = 28707392
+extra_bytes = 1228256
+total_bytes = 29935648
+
+[heap.general_strict.candidate]
+useful_bytes = 28726424
+extra_bytes = 1226808
+total_bytes = 29953232
+
+[heap.general_approximate_512.parent]
+useful_bytes = 28707392
+extra_bytes = 1227584
+total_bytes = 29934976
+
+[heap.general_approximate_512.candidate]
+useful_bytes = 28726424
+extra_bytes = 1226856
+total_bytes = 29953280
+
+[heap.certified_strict.parent]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_strict.candidate]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_approximate_512.parent]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.certified_approximate_512.candidate]
+useful_bytes = 1063718
+extra_bytes = 1258
+total_bytes = 1064976
+
+[heap.delta]
+general_useful_bytes = 19032
+general_useful_percent = 0.066297
+general_strict_total_bytes = 17584
+general_strict_total_percent = 0.058739
+general_approximate_512_total_bytes = 18304
+general_approximate_512_total_percent = 0.061146
+certified_useful_bytes = 0
+
+[runtime.callgrind]
+version = "3.27.0"
+args = "--cache-sim=no --branch-sim=yes"
+cpu = 11
+fixture = "boxes-3072-general"
+policy = "STRICT"
+parent_instructions = 23899825951
+candidate_instructions = 22834571470
+instruction_delta = -1065254481
+instruction_delta_percent = -4.457164
+parent_total_branches = 3570969378
+candidate_total_branches = 3416018761
+total_branch_delta = -154950617
+total_branch_delta_percent = -4.339175
+parent_total_mispredicts = 112565300
+candidate_total_mispredicts = 103193291
+total_mispredict_delta = -9372009
+total_mispredict_delta_percent = -8.325842
+
+[runtime.hardware]
+cpu = 11
+fixture = "boxes-3072-general"
+policy = "STRICT"
+candidate_instruction_range = [22829478412, 22829705652]
+parent_instruction_range = [23882631740, 23883269393]
+candidate_task_clock_ms_range = [1896.97, 2494.08]
+parent_task_clock_ms_range = [2322.42, 2438.68]
+maximum_internal_deviation_percent = 13.65
+wall_clock_claim = false
+
+[runtime.certified_callgrind]
+fixture = "boxes-3072"
+parent_instructions = 14973358
+candidate_instructions = 14987994
+instruction_delta_percent = 0.097747
+parent_total_branches = 2821776
+candidate_total_branches = 2818035
+total_branch_delta_percent = -0.132576
+parent_total_mispredicts = 105845
+candidate_total_mispredicts = 105875
+
+[runtime.small_union_callgrind]
+parent_instructions = 7692545
+candidate_instructions = 7586410
+instruction_delta_percent = -1.379712
+parent_total_branches = 1148285
+candidate_total_branches = 1131166
+total_branch_delta_percent = -1.490832
+parent_total_mispredicts = 102577
+candidate_total_mispredicts = 100098
+topology = "10 polygons, 10 vertices, 16 triangles"
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "native-text"
+parent_bytes = 4091844
+candidate_bytes = 4111564
+delta_bytes = 19720
+delta_percent = 0.481934
+
+[[size]]
+consumer = "general"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2760635
+candidate_bytes = 2770580
+delta_bytes = 9945
+delta_percent = 0.360243
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "native-text"
+parent_bytes = 4125060
+candidate_bytes = 4144780
+delta_bytes = 19720
+delta_percent = 0.478054
+
+[[size]]
+consumer = "immediate"
+profile = "release"
+target = "wasm-opt-Oz"
+parent_bytes = 2775185
+candidate_bytes = 2785134
+delta_bytes = 9949
+delta_percent = 0.358499
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "native-text"
+parent_bytes = 1885330
+candidate_bytes = 1891578
+delta_bytes = 6248
+delta_percent = 0.331401
+
+[[size]]
+consumer = "general"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1178835
+candidate_bytes = 1183507
+delta_bytes = 4672
+delta_percent = 0.396323
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "native-text"
+parent_bytes = 1897478
+candidate_bytes = 1903606
+delta_bytes = 6128
+delta_percent = 0.322955
+
+[[size]]
+consumer = "immediate"
+profile = "size"
+target = "wasm-opt-Oz"
+parent_bytes = 1188976
+candidate_bytes = 1193551
+delta_bytes = 4575
+delta_percent = 0.384785
+
+[competitive.shared_exact_boxes.hypermesh_us]
+union = 8.1114
+intersection = 1.7562
+difference = 4.2271
+
+[competitive.shared_exact_boxes.boolmesh_us]
+union = 73.329
+intersection = 40.740
+difference = 60.085
+
+[competitive.shared_exact_boxes.manifold_rust_us]
+union = 60.191
+intersection = 39.348
+difference = 92.946
+
+[competitive.shared_exact_boxes.cgal_epeck_us]
+version = "6.0.3"
+kernel = "Exact_predicates_exact_constructions_kernel"
+copy_timing = "outside"
+union_median = 156.159
+intersection_median = 149.119
+difference_median = 157.659
+reverse_difference_median = 154.050
+all_outputs_valid_closed_structurally_valid = true
+
+[competitive.dense_union]
+input_triangles_per_operand = 3072
+hypermesh_us = 780.22
+boolmesh_us = 8132.5
+manifold_rust_us = 4642.6
+hypermesh_vs_boolmesh_faster = 10.423
+hypermesh_vs_manifold_faster = 5.950
+
+[competitive.full_resolution_pinned]
+rerun = false
+reason = "Unchanged multi-hour output path; retained as the Phase 17 adversarial reference"
+hypermesh_seconds = 3312.66
+cgal_epeck_seconds = 0.09
+cgal_rss_advantage = 21.23
+parity_achieved = false
+
+[decision]
+retained = true
+phase_13_complete = false
+ember_removed = false
+cgal_parity = false
+reason = "The singular exact representation makes every pairwise dimension explicit, preserves strict/approximate-512 certainty, fixes orientation invariance, expands the permanent corpus, and cuts general-path deterministic work 4.46% with only 0.066% useful-heap and at most 0.482% linked-size growth. Canonical incidence recipes, the complete arrangement consumer, EMBER cutover, and per-case CGAL parity remain open."
