@@ -702,36 +702,6 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         };
         let cusp_root = parameter_representation(self.cusp_parameter(), policy);
-        let full_fiber = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
-            &incidence,
-            CurveResultantParameter::First,
-            &cusp_root,
-            &Real::zero(),
-            &Real::one(),
-            policy.predicate_policy(),
-        );
-        if full_fiber.certainty == PredicateCertainty::Approximate {
-            policy.observe_approximate_512();
-        }
-        let expected_contact_count = match full_fiber.status {
-            AlgebraicFiberRootCountStatus::Counted => full_fiber.distinct_root_count,
-            AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle,
-                ));
-            }
-            AlgebraicFiberRootCountStatus::EndpointRoot
-            | AlgebraicFiberRootCountStatus::InvalidEvidence
-            | AlgebraicFiberRootCountStatus::InvalidInterval
-            | AlgebraicFiberRootCountStatus::UnsupportedCoefficient
-            | AlgebraicFiberRootCountStatus::Undecided => None,
-        };
-        if expected_contact_count == Some(0) {
-            return Ok(Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(Vec::new()),
-            ));
-        }
-
         let defining = BivariatePolynomial::new(
             self.cusp_parameter()
                 .polynomial()
@@ -759,18 +729,80 @@ impl BezierAlgebraicCuspSemicircle2 {
             ResultantParameterProjection::Empty => Vec::new(),
             ResultantParameterProjection::Parameters(parameters) => parameters,
             ResultantParameterProjection::Degenerate => {
+                // A nondegenerate resultant already contains every parameter
+                // of the selected fiber. Only a degenerate projection needs
+                // the local field to distinguish a circle component at this
+                // particular cusp root from a component contributed by one of
+                // the defining polynomial's foreign roots.
+                let full_fiber = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+                    &incidence,
+                    CurveResultantParameter::First,
+                    &cusp_root,
+                    &Real::zero(),
+                    &Real::one(),
+                    policy.predicate_policy(),
+                );
+                if full_fiber.certainty == PredicateCertainty::Approximate {
+                    policy.observe_approximate_512();
+                }
+                if full_fiber.status == AlgebraicFiberRootCountStatus::IdenticallyZeroFiber {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle,
+                    ));
+                }
+                if full_fiber.status == AlgebraicFiberRootCountStatus::Counted
+                    && full_fiber.distinct_root_count == Some(0)
+                {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(Vec::new()),
+                    ));
+                }
                 return Ok(Classification::Decided(
                     BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
                 ));
             }
         };
         let cusp_parameter = BezierParameter2::Algebraic(self.cusp_parameter().clone());
+        // Projection isolators are ordered and contain every selected-fiber
+        // root. Partition [0,1] at exact midpoints of their certified rootless
+        // gaps. Each open cell then owns exactly one projected root while its
+        // boundaries stay as far as the current evidence permits from either
+        // root. This both shares one Sturm variation between adjacent cells and
+        // avoids the excessive algebraic-field refinement caused by signing an
+        // incidence polynomial at a tightly isolated root endpoint.
+        let mut candidate_cell_boundaries = Vec::with_capacity(candidates.len() + 1);
+        candidate_cell_boundaries.push(Real::zero());
+        for pair in candidates.windows(2) {
+            let left = match &pair[0] {
+                BezierParameter2::Exact(parameter) => parameter,
+                BezierParameter2::Algebraic(parameter) => parameter.interval().end(),
+            };
+            let right = match &pair[1] {
+                BezierParameter2::Exact(parameter) => parameter,
+                BezierParameter2::Algebraic(parameter) => parameter.interval().start(),
+            };
+            match compare_reals(left, right, policy) {
+                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {}
+                Some(std::cmp::Ordering::Greater) => {
+                    return Err(CurveError::Topology(
+                        "algebraic cusp projection isolators are not ordered".into(),
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+            }
+            candidate_cell_boundaries.push(((left + right) / Real::from(2_i8)).map_err(|_| {
+                CurveError::Topology("algebraic cusp projection midpoint division failed".into())
+            })?);
+        }
+        candidate_cell_boundaries.push(Real::one());
         let candidate_intervals = candidates
             .iter()
-            .filter_map(|candidate| match candidate {
-                BezierParameter2::Algebraic(parameter) => {
-                    Some((parameter.interval().start(), parameter.interval().end()))
-                }
+            .enumerate()
+            .filter_map(|(index, candidate)| match candidate {
+                BezierParameter2::Algebraic(_) => Some((
+                    &candidate_cell_boundaries[index],
+                    &candidate_cell_boundaries[index + 1],
+                )),
                 BezierParameter2::Exact(_) => None,
             })
             .collect::<Vec<_>>();
@@ -784,7 +816,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         drop(candidate_intervals);
         let mut candidate_report_index = 0_usize;
         let mut contacts = Vec::new();
-        let mut selected_fiber_count = 0_usize;
         for candidate in candidates {
             let batched_membership = if matches!(&candidate, BezierParameter2::Algebraic(_)) {
                 let report = candidate_reports
@@ -829,7 +860,6 @@ impl BezierAlgebraicCuspSemicircle2 {
             if !belongs {
                 continue;
             }
-            selected_fiber_count += 1;
             let selected_sign = match algebraic_cusp_correlated_predicate_sign(
                 &incidence,
                 &selected_half_plane,
@@ -884,14 +914,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         if candidate_report_index != candidate_reports.len() {
             return Err(CurveError::Topology(
                 "algebraic cusp candidate report mismatch".into(),
-            ));
-        }
-        // A local-field count is independent of the defining polynomial's
-        // foreign roots. Equality here proves the filtered resultant inventory
-        // contains every selected-circle contact before half-plane rejection.
-        if expected_contact_count.is_some_and(|expected| selected_fiber_count != expected) {
-            return Ok(Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
             ));
         }
         Ok(Classification::Decided(
@@ -13538,6 +13560,110 @@ mod conversion_tests {
                 .expect("the shared source cusp must be retained");
             assert!(cusp_contact.at_diameter_boundary);
             assert_eq!(cusp_contact.tangent_cross_sign, RealSign::Zero);
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn synthetic_reducible_cusp_semicircle(
+        selected_root: (i64, i64),
+        interval: ((i64, i64), (i64, i64)),
+        policy: &CurveContext,
+    ) -> BezierAlgebraicCuspSemicircle2 {
+        // P(a)=(a-1/4)(a-3/4). The retained frame center is
+        // 10(a-3/4), so the foreign root a=3/4 owns the unit circle at the
+        // origin while the selected a=1/4 circle is centered at (-5,0).
+        let rational = |numerator: i64, denominator: i64| {
+            (Real::from(numerator) / Real::from(denominator)).unwrap()
+        };
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![rational(3, 16), Real::from(-1_i8), Real::one()],
+            policy,
+        )
+        .unwrap() else {
+            panic!("reducible cusp polynomial must be exact");
+        };
+        let Classification::Decided(interval) = BezierParameterInterval::try_new(
+            rational(interval.0.0, interval.0.1),
+            rational(interval.1.0, interval.1.1),
+            policy,
+        )
+        .unwrap() else {
+            panic!("selected cusp interval must be exact");
+        };
+        let Classification::Decided(parameter) =
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap()
+        else {
+            panic!("selected cusp root must isolate");
+        };
+        let selected = rational(selected_root.0, selected_root.1);
+        assert_eq!(parameter.polynomial().evaluate(&selected), Real::zero());
+
+        let source = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::one(), Real::zero()),
+            )
+            .unwrap(),
+        );
+        let parallel = source.parallel_left(Real::zero()).unwrap();
+        BezierAlgebraicCuspSemicircle2 {
+            data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                frame: BezierParallelAlgebraicCuspFrame2 {
+                    data: Arc::new(BezierParallelAlgebraicCuspFrameData2 {
+                        parallel,
+                        parameter,
+                        source_x_numerator: vec![rational(-15, 2), Real::from(10_i8)],
+                        source_y_numerator: vec![Real::zero()],
+                        normal_x_numerator: vec![Real::one()],
+                        normal_y_numerator: vec![Real::zero()],
+                        denominator: vec![Real::one()],
+                    }),
+                },
+                radial_distance: Real::one(),
+                clockwise: false,
+            }),
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_circle_degenerate_projection_is_filtered_at_the_selected_root() {
+        // This rational reparameterization has homogeneous Bernstein controls
+        // X=[1,1,0], Y=[0,1,2], W=[1,1,2], hence
+        // x=(1-u^2)/(1+u^2), y=2u/(1+u^2) with rational coefficients.
+        let quarter_circle = RationalBezier2::from(
+            RationalQuadraticBezier2::try_new(
+                Point2::new(Real::one(), Real::zero()),
+                Point2::new(Real::one(), Real::one()),
+                Point2::new(Real::zero(), Real::one()),
+                Real::one(),
+                Real::one(),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let foreign_component =
+                synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy);
+            assert_eq!(
+                foreign_component
+                    .rational_intersections(&quarter_circle, &policy)
+                    .unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(Vec::new())
+                )
+            );
+
+            let selected_component =
+                synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            assert_eq!(
+                selected_component
+                    .rational_intersections(&quarter_circle, &policy)
+                    .unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle
+                )
+            );
         }
     }
 
