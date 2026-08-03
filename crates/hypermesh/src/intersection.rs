@@ -77,12 +77,17 @@ impl PairwiseIntersection {
     }
 }
 
-const NO_INTERSECTION_NODE: u32 = u32::MAX;
 const NO_INTERSECTION_SEGMENT: u32 = u32::MAX;
 
 #[derive(Clone, Debug, PartialEq)]
-struct PairwiseIntersectionNode {
-    next: u32,
+struct PendingIntersectionEvent {
+    face: u32,
+    other_polygon: u32,
+    segment: u32,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct PairwiseIntersectionEvent {
     other_polygon: u32,
     segment: u32,
 }
@@ -109,42 +114,41 @@ pub(crate) struct PairwiseIntersectionSegmentRef<'a> {
     pub(crate) v1: &'a Point3,
 }
 
-/// Compact face-indexed intersection adjacency backed by one node arena.
+/// Compact face-indexed intersection adjacency backed by contiguous rows.
 ///
-/// Empty faces cost eight bytes rather than a separately allocated `Vec`
+/// Empty faces cost one 32-bit offset rather than a separately allocated `Vec`
 /// header. The two directed events for a non-coplanar cut share one endpoint
-/// record. Events are appended directly from the BVH stream and retain their
-/// deterministic discovery order without a global candidate-pair buffer.
+/// record. Events retain their deterministic BVH discovery order within each
+/// row without retaining a global candidate-pair buffer.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct PairwiseIntersectionGraph {
-    heads: Box<[u32]>,
-    counts: Box<[u32]>,
+    offsets: Box<[u32]>,
     points: Vec<Point3>,
     segments: Vec<PairwiseIntersectionSegment>,
-    nodes: Vec<PairwiseIntersectionNode>,
+    events: Vec<PairwiseIntersectionEvent>,
 }
 
 impl PairwiseIntersectionGraph {
     pub(crate) fn len(&self) -> usize {
-        self.heads.len()
+        self.offsets.len().saturating_sub(1)
     }
 
     pub(crate) fn event_count(&self) -> usize {
-        self.nodes.len()
+        self.events.len()
     }
 
     pub(crate) fn row(&self, face: usize) -> PairwiseIntersectionRow<'_> {
         debug_assert!(face < self.len());
-        let next = self
-            .heads
-            .get(face)
+        let next_face = face.checked_add(1);
+        let next = self.offsets.get(face).copied().unwrap_or(0);
+        let end = next_face
+            .and_then(|next_face| self.offsets.get(next_face))
             .copied()
-            .unwrap_or(NO_INTERSECTION_NODE);
-        let remaining = self.counts.get(face).copied().unwrap_or(0);
+            .unwrap_or(next);
         PairwiseIntersectionRow {
             graph: self,
             next,
-            remaining,
+            end,
         }
     }
 
@@ -165,7 +169,7 @@ impl PairwiseIntersectionGraph {
             cached_to_query[cached_index] = query_index;
         }
 
-        let mut remapped = PairwiseIntersectionGraphBuilder::new(query_to_cached.len());
+        let mut remapped = PairwiseIntersectionGraphBuilder::new(query_to_cached.len())?;
         remapped
             .points
             .try_reserve(self.points.len())
@@ -192,14 +196,21 @@ impl PairwiseIntersectionGraph {
                 return Err(HypermeshError::UnknownClassification);
             }
         }
-        remapped.reserve_nodes(self.nodes.len())?;
+        remapped.reserve_events(self.events.len())?;
         for (query_index, &cached_index) in query_to_cached.iter().enumerate() {
-            let mut node = self.heads[cached_index];
-            while node != NO_INTERSECTION_NODE {
-                let entry = self
-                    .nodes
-                    .get(node as usize)
-                    .ok_or(HypermeshError::UnknownClassification)?;
+            let start = *self
+                .offsets
+                .get(cached_index)
+                .ok_or(HypermeshError::UnknownClassification)? as usize;
+            let end = *self
+                .offsets
+                .get(cached_index + 1)
+                .ok_or(HypermeshError::UnknownClassification)? as usize;
+            let row = self
+                .events
+                .get(start..end)
+                .ok_or(HypermeshError::UnknownClassification)?;
+            for entry in row {
                 if entry.segment != NO_INTERSECTION_SEGMENT
                     && self.segments.get(entry.segment as usize).is_none()
                 {
@@ -207,10 +218,9 @@ impl PairwiseIntersectionGraph {
                 }
                 let other_polygon = remapped_face_id(&cached_to_query, entry.other_polygon)?;
                 remapped.append(query_index, other_polygon, entry.segment)?;
-                node = entry.next;
             }
         }
-        Ok(remapped.finish())
+        remapped.finish()
     }
 }
 
@@ -229,12 +239,12 @@ fn remapped_face_id(cached_to_query: &[usize], cached: u32) -> HypermeshResult<u
 pub(crate) struct PairwiseIntersectionRow<'a> {
     graph: &'a PairwiseIntersectionGraph,
     next: u32,
-    remaining: u32,
+    end: u32,
 }
 
 impl PairwiseIntersectionRow<'_> {
     pub(crate) fn is_empty(&self) -> bool {
-        self.remaining == 0
+        self.next == self.end
     }
 
     pub(crate) fn iter(&self) -> Self {
@@ -246,31 +256,29 @@ impl<'a> Iterator for PairwiseIntersectionRow<'a> {
     type Item = PairwiseIntersectionEventRef<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.next == NO_INTERSECTION_NODE {
-            debug_assert_eq!(self.remaining, 0);
+        if self.next == self.end {
             return None;
         }
-        let node = &self.graph.nodes[self.next as usize];
-        self.next = node.next;
-        self.remaining -= 1;
-        Some(if node.segment != NO_INTERSECTION_SEGMENT {
-            let segment = &self.graph.segments[node.segment as usize];
+        let event = &self.graph.events[self.next as usize];
+        self.next += 1;
+        Some(if event.segment != NO_INTERSECTION_SEGMENT {
+            let segment = &self.graph.segments[event.segment as usize];
             PairwiseIntersectionEventRef::Segment {
                 segment: PairwiseIntersectionSegmentRef {
                     v0: &self.graph.points[segment.endpoints[0] as usize],
                     v1: &self.graph.points[segment.endpoints[1] as usize],
                 },
-                other_polygon_idx: node.other_polygon as usize,
+                other_polygon_idx: event.other_polygon as usize,
             }
         } else {
             PairwiseIntersectionEventRef::Overlap {
-                other_polygon_idx: node.other_polygon as usize,
+                other_polygon_idx: event.other_polygon as usize,
             }
         })
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let remaining = self.remaining as usize;
+        let remaining = (self.end - self.next) as usize;
         (remaining, Some(remaining))
     }
 }
@@ -278,30 +286,36 @@ impl<'a> Iterator for PairwiseIntersectionRow<'a> {
 impl ExactSizeIterator for PairwiseIntersectionRow<'_> {}
 
 pub(crate) struct PairwiseIntersectionGraphBuilder {
-    heads: Box<[u32]>,
-    tails: Box<[u32]>,
     counts: Box<[u32]>,
     points: Vec<Point3>,
     point_interner: PointInterner<()>,
     segments: Vec<PairwiseIntersectionSegment>,
-    nodes: Vec<PairwiseIntersectionNode>,
+    events: Vec<PendingIntersectionEvent>,
 }
 
 impl PairwiseIntersectionGraphBuilder {
-    pub(crate) fn new(face_count: usize) -> Self {
-        Self {
-            heads: vec![NO_INTERSECTION_NODE; face_count].into_boxed_slice(),
-            tails: vec![NO_INTERSECTION_NODE; face_count].into_boxed_slice(),
-            counts: vec![0; face_count].into_boxed_slice(),
+    pub(crate) fn new(face_count: usize) -> HypermeshResult<Self> {
+        u32::try_from(face_count).map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "pairwise intersection face arena",
+        })?;
+        let mut counts = Vec::new();
+        counts
+            .try_reserve_exact(face_count)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "pairwise intersection face arena",
+            })?;
+        counts.resize(face_count, 0);
+        Ok(Self {
+            counts: counts.into_boxed_slice(),
             points: Vec::new(),
             point_interner: PointInterner::new_exact_unreserved(),
             segments: Vec::new(),
-            nodes: Vec::new(),
-        }
+            events: Vec::new(),
+        })
     }
 
     fn face_id(&self, face: usize) -> HypermeshResult<u32> {
-        if face >= self.heads.len() {
+        if face >= self.counts.len() {
             return Err(HypermeshError::CapacityOverflow {
                 operation: "pairwise intersection graph face index",
             });
@@ -311,17 +325,17 @@ impl PairwiseIntersectionGraphBuilder {
         })
     }
 
-    fn reserve_nodes(&mut self, additional: usize) -> HypermeshResult<()> {
+    fn reserve_events(&mut self, additional: usize) -> HypermeshResult<()> {
         let new_len = self
-            .nodes
+            .events
             .len()
             .checked_add(additional)
-            .filter(|&len| len <= NO_INTERSECTION_NODE as usize)
+            .filter(|&len| len <= u32::MAX as usize)
             .ok_or(HypermeshError::CapacityOverflow {
                 operation: "pairwise intersection graph",
             })?;
-        debug_assert!(new_len >= self.nodes.len());
-        self.nodes
+        debug_assert!(new_len >= self.events.len());
+        self.events
             .try_reserve(additional)
             .map_err(|_| HypermeshError::CapacityOverflow {
                 operation: "pairwise intersection graph",
@@ -332,7 +346,7 @@ impl PairwiseIntersectionGraphBuilder {
         self.segments
             .len()
             .checked_add(additional)
-            .filter(|&len| len <= NO_INTERSECTION_NODE as usize)
+            .filter(|&len| len <= u32::MAX as usize)
             .ok_or(HypermeshError::CapacityOverflow {
                 operation: "pairwise intersection segment arena",
             })?;
@@ -352,29 +366,20 @@ impl PairwiseIntersectionGraphBuilder {
         Ok(())
     }
 
-    fn append_prechecked(&mut self, face: usize, other_polygon: u32, segment: u32) {
-        let node_index = self.nodes.len() as u32;
-        let head = &mut self.heads[face];
-        let tail = &mut self.tails[face];
+    fn append_prechecked(&mut self, face: usize, face_id: u32, other_polygon: u32, segment: u32) {
         self.counts[face] += 1;
-        self.nodes.push(PairwiseIntersectionNode {
-            next: NO_INTERSECTION_NODE,
+        self.events.push(PendingIntersectionEvent {
+            face: face_id,
             other_polygon,
             segment,
         });
-        if *tail == NO_INTERSECTION_NODE {
-            *head = node_index;
-        } else {
-            self.nodes[*tail as usize].next = node_index;
-        }
-        *tail = node_index;
     }
 
     fn append(&mut self, face: usize, other_polygon: u32, segment: u32) -> HypermeshResult<()> {
-        self.face_id(face)?;
+        let face_id = self.face_id(face)?;
         self.check_row_capacity(face, 1)?;
-        self.reserve_nodes(1)?;
-        self.append_prechecked(face, other_polygon, segment);
+        self.reserve_events(1)?;
+        self.append_prechecked(face, face_id, other_polygon, segment);
         Ok(())
     }
 
@@ -403,7 +408,7 @@ impl PairwiseIntersectionGraphBuilder {
         self.check_row_capacity(left, 1)?;
         self.check_row_capacity(right, 1)?;
         self.reserve_segments(1)?;
-        self.reserve_nodes(2)?;
+        self.reserve_events(2)?;
         self.points
             .len()
             .checked_add(2)
@@ -421,8 +426,8 @@ impl PairwiseIntersectionGraphBuilder {
         let segment_id = self.segments.len() as u32;
         self.segments
             .push(PairwiseIntersectionSegment { endpoints });
-        self.append_prechecked(left, right_id, segment_id);
-        self.append_prechecked(right, left_id, segment_id);
+        self.append_prechecked(left, left_id, right_id, segment_id);
+        self.append_prechecked(right, right_id, left_id, segment_id);
         Ok(())
     }
 
@@ -434,20 +439,97 @@ impl PairwiseIntersectionGraphBuilder {
         let right_id = self.face_id(right)?;
         self.check_row_capacity(left, 1)?;
         self.check_row_capacity(right, 1)?;
-        self.reserve_nodes(2)?;
-        self.append_prechecked(left, right_id, NO_INTERSECTION_SEGMENT);
-        self.append_prechecked(right, left_id, NO_INTERSECTION_SEGMENT);
+        self.reserve_events(2)?;
+        self.append_prechecked(left, left_id, right_id, NO_INTERSECTION_SEGMENT);
+        self.append_prechecked(right, right_id, left_id, NO_INTERSECTION_SEGMENT);
         Ok(())
     }
 
-    pub(crate) fn finish(self) -> PairwiseIntersectionGraph {
-        PairwiseIntersectionGraph {
-            heads: self.heads,
-            counts: self.counts,
-            points: self.points,
-            segments: self.segments,
-            nodes: self.nodes,
+    pub(crate) fn finish(self) -> HypermeshResult<PairwiseIntersectionGraph> {
+        let Self {
+            mut counts,
+            points,
+            point_interner,
+            segments,
+            events,
+        } = self;
+        drop(point_interner);
+
+        let offset_capacity =
+            counts
+                .len()
+                .checked_add(1)
+                .ok_or(HypermeshError::CapacityOverflow {
+                    operation: "pairwise intersection graph offsets",
+                })?;
+        let mut offsets = Vec::new();
+        offsets.try_reserve_exact(offset_capacity).map_err(|_| {
+            HypermeshError::CapacityOverflow {
+                operation: "pairwise intersection graph offsets",
+            }
+        })?;
+        offsets.push(0u32);
+        for &count in counts.iter() {
+            let next = offsets.last().copied().unwrap().checked_add(count).ok_or(
+                HypermeshError::CapacityOverflow {
+                    operation: "pairwise intersection graph offsets",
+                },
+            )?;
+            offsets.push(next);
         }
+        if offsets.last().copied().unwrap_or(0) as usize != events.len() {
+            return Err(HypermeshError::UnknownClassification);
+        }
+
+        let mut ordered = Vec::new();
+        ordered
+            .try_reserve_exact(events.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "pairwise intersection graph rows",
+            })?;
+        ordered.resize(
+            events.len(),
+            PairwiseIntersectionEvent {
+                other_polygon: 0,
+                segment: NO_INTERSECTION_SEGMENT,
+            },
+        );
+        for (face, cursor) in counts.iter_mut().enumerate() {
+            *cursor = offsets[face];
+        }
+        for event in events {
+            let face = event.face as usize;
+            if face >= counts.len()
+                || event.other_polygon as usize >= counts.len()
+                || (event.segment != NO_INTERSECTION_SEGMENT
+                    && segments.get(event.segment as usize).is_none())
+            {
+                return Err(HypermeshError::UnknownClassification);
+            }
+            let cursor = &mut counts[face];
+            if *cursor >= offsets[face + 1] {
+                return Err(HypermeshError::UnknownClassification);
+            }
+            ordered[*cursor as usize] = PairwiseIntersectionEvent {
+                other_polygon: event.other_polygon,
+                segment: event.segment,
+            };
+            *cursor += 1;
+        }
+        if counts
+            .iter()
+            .enumerate()
+            .any(|(face, &cursor)| cursor != offsets[face + 1])
+        {
+            return Err(HypermeshError::UnknownClassification);
+        }
+
+        Ok(PairwiseIntersectionGraph {
+            offsets: offsets.into_boxed_slice(),
+            points,
+            segments,
+            events: ordered,
+        })
     }
 }
 
@@ -618,7 +700,7 @@ pub(crate) fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
     polygons: &[ConvexPolygon],
     certified_embedded_inputs: &[bool],
 ) -> HypermeshResult<PairwiseIntersectionGraph> {
-    let mut graph = PairwiseIntersectionGraphBuilder::new(polygons.len());
+    let mut graph = PairwiseIntersectionGraphBuilder::new(polygons.len())?;
     let bvh = ExactBvh::build_decision(decisions, polygons)?;
     let vertices = PolygonVertexArena::build(decisions, polygons)?;
     let mut failure = None;
@@ -642,7 +724,7 @@ pub(crate) fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
     if let Some(error) = failure {
         return Err(error);
     }
-    Ok(graph.finish())
+    graph.finish()
 }
 
 #[cfg(test)]
@@ -1323,8 +1405,8 @@ mod tests {
     use hyperlattice::{Point3, Real};
 
     use super::{
-        PairwiseIntersection, PairwiseIntersectionEventRef, PairwiseIntersectionGraphBuilder,
-        PairwiseIntersectionNode, PolygonVertexArena,
+        PairwiseIntersection, PairwiseIntersectionEvent, PairwiseIntersectionEventRef,
+        PairwiseIntersectionGraphBuilder, PolygonVertexArena,
     };
 
     #[test]
@@ -1382,14 +1464,15 @@ mod tests {
 
     #[test]
     fn compact_graph_preserves_stream_order_without_per_face_vectors() {
-        let mut graph = PairwiseIntersectionGraphBuilder::new(4);
+        let mut graph = PairwiseIntersectionGraphBuilder::new(4).unwrap();
         graph.append_overlap(2, 0).unwrap();
         graph.append_overlap(0, 2).unwrap();
         graph.append_overlap(2, 1).unwrap();
-        let graph = graph.finish();
+        let graph = graph.finish().unwrap();
 
         assert_eq!(graph.len(), 4);
         assert_eq!(graph.event_count(), 3);
+        assert_eq!(&*graph.offsets, &[0, 1, 1, 3, 3]);
         assert!(graph.row(1).is_empty());
         assert!(graph.row(3).is_empty());
         assert_eq!(
@@ -1407,18 +1490,20 @@ mod tests {
     }
 
     #[test]
-    fn empty_face_index_uses_two_u32_words_per_face() {
-        let graph = PairwiseIntersectionGraphBuilder::new(64).finish();
-        assert_eq!(graph.heads.len() * size_of::<u32>(), 256);
-        assert_eq!(graph.counts.len() * size_of::<u32>(), 256);
-        assert!(graph.nodes.is_empty());
-        assert!(64 * 2 * size_of::<u32>() < 64 * size_of::<Vec<PairwiseIntersection>>());
-        assert!(size_of::<PairwiseIntersectionNode>() < size_of::<PairwiseIntersection>());
+    fn empty_face_index_uses_one_u32_offset_per_face_and_a_terminal() {
+        let graph = PairwiseIntersectionGraphBuilder::new(64)
+            .unwrap()
+            .finish()
+            .unwrap();
+        assert_eq!(graph.offsets.len() * size_of::<u32>(), 260);
+        assert!(graph.events.is_empty());
+        assert!(65 * size_of::<u32>() < 64 * size_of::<Vec<PairwiseIntersection>>());
+        assert!(size_of::<PairwiseIntersectionEvent>() < size_of::<PairwiseIntersection>());
     }
 
     #[test]
     fn symmetric_segment_events_share_one_segment_and_endpoint_record() {
-        let mut graph = PairwiseIntersectionGraphBuilder::new(2);
+        let mut graph = PairwiseIntersectionGraphBuilder::new(2).unwrap();
         graph
             .append_segment_pair(
                 0,
@@ -1427,7 +1512,7 @@ mod tests {
                 Point3::new(Real::one(), Real::zero(), Real::zero()),
             )
             .unwrap();
-        let graph = graph.finish();
+        let graph = graph.finish().unwrap();
 
         assert_eq!(graph.points.len(), 2);
         assert_eq!(graph.segments.len(), 1);
@@ -1452,7 +1537,7 @@ mod tests {
     #[test]
     fn exact_segment_endpoints_share_one_compact_point_arena() {
         let origin = Point3::origin();
-        let mut graph = PairwiseIntersectionGraphBuilder::new(3);
+        let mut graph = PairwiseIntersectionGraphBuilder::new(3).unwrap();
         graph
             .append_segment_pair(
                 0,
@@ -1469,7 +1554,7 @@ mod tests {
                 Point3::new(Real::zero(), Real::one(), Real::zero()),
             )
             .unwrap();
-        let graph = graph.finish();
+        let graph = graph.finish().unwrap();
 
         assert_eq!(graph.points.len(), 3);
         assert_eq!(graph.segments.len(), 2);
@@ -1482,14 +1567,14 @@ mod tests {
     #[test]
     fn symbolic_segment_endpoints_do_not_add_an_equality_decision() {
         let symbolic = Point3::new(Real::from(2).sqrt().unwrap(), Real::zero(), Real::zero());
-        let mut graph = PairwiseIntersectionGraphBuilder::new(3);
+        let mut graph = PairwiseIntersectionGraphBuilder::new(3).unwrap();
         graph
             .append_segment_pair(0, 1, symbolic.clone(), Point3::origin())
             .unwrap();
         graph
             .append_segment_pair(0, 2, symbolic, Point3::origin())
             .unwrap();
-        let graph = graph.finish();
+        let graph = graph.finish().unwrap();
 
         assert_eq!(graph.points.len(), 4);
         assert_ne!(
@@ -1500,7 +1585,7 @@ mod tests {
 
     #[test]
     fn polygon_order_remap_preserves_compact_endpoint_ids() {
-        let mut graph = PairwiseIntersectionGraphBuilder::new(3);
+        let mut graph = PairwiseIntersectionGraphBuilder::new(3).unwrap();
         graph
             .append_segment_pair(
                 0,
@@ -1509,7 +1594,11 @@ mod tests {
                 Point3::new(Real::one(), Real::zero(), Real::zero()),
             )
             .unwrap();
-        let graph = graph.finish().remap_polygon_order(&[2, 1, 0]).unwrap();
+        let graph = graph
+            .finish()
+            .unwrap()
+            .remap_polygon_order(&[2, 1, 0])
+            .unwrap();
 
         assert_eq!(graph.points.len(), 2);
         let Some(PairwiseIntersectionEventRef::Segment {
@@ -1529,14 +1618,16 @@ mod tests {
 
     #[test]
     fn invalid_face_append_fails_without_mutating_the_arena() {
-        let mut graph = PairwiseIntersectionGraphBuilder::new(0);
+        #[cfg(target_pointer_width = "64")]
+        assert!(PairwiseIntersectionGraphBuilder::new(usize::MAX).is_err());
+        let mut graph = PairwiseIntersectionGraphBuilder::new(0).unwrap();
         assert!(graph.append_overlap(0, 0).is_err());
-        assert_eq!(graph.finish().event_count(), 0);
+        assert_eq!(graph.finish().unwrap().event_count(), 0);
     }
 
     #[test]
     fn pair_append_failures_leave_no_half_edge_or_orphan_segment() {
-        let mut graph = PairwiseIntersectionGraphBuilder::new(2);
+        let mut graph = PairwiseIntersectionGraphBuilder::new(2).unwrap();
         graph.counts[1] = u32::MAX;
 
         assert!(
@@ -1550,24 +1641,23 @@ mod tests {
                 .is_err()
         );
         assert!(graph.append_overlap_pair(0, 1).is_err());
-        assert!(graph.nodes.is_empty());
+        assert!(graph.events.is_empty());
         assert!(graph.points.is_empty());
         assert!(graph.segments.is_empty());
         assert_eq!(graph.counts[0], 0);
-        assert_eq!(graph.heads[0], super::NO_INTERSECTION_NODE);
-        assert_eq!(graph.tails[0], super::NO_INTERSECTION_NODE);
+        assert!(graph.finish().is_err());
     }
 
     #[test]
     fn self_pair_is_rejected_without_mutation() {
-        let mut graph = PairwiseIntersectionGraphBuilder::new(1);
+        let mut graph = PairwiseIntersectionGraphBuilder::new(1).unwrap();
         assert!(graph.append_overlap_pair(0, 0).is_err());
         assert!(
             graph
                 .append_segment_pair(0, 0, Point3::origin(), Point3::origin())
                 .is_err()
         );
-        let graph = graph.finish();
+        let graph = graph.finish().unwrap();
         assert_eq!(graph.event_count(), 0);
         assert!(graph.points.is_empty());
         assert!(graph.segments.is_empty());
