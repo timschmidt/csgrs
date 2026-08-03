@@ -1,0 +1,272 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-03",
+  "checkpoint": "independent selected-field algebraic cusp winding and Boolean side classification",
+  "source_revision": "3cb9553e095359121aee55ae49f086f20a0279bc",
+  "semantic_revisions": [
+    "d83b76f",
+    "3cb9553"
+  ],
+  "comparison_revision": "75046aa",
+  "comparison_semantic_revision": "19b9849",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "d6014be5cc3ee4961929430d40b5cba83efc4813",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "direct exact winding for algebraic-cusp semicircle fragments whose retained subrange endpoints are Real values in the selected cusp field",
+      "query points and cusp-circle geometry retained in independent selected algebraic fields without constructing a primitive element",
+      "exact bivariate linear order, oriented chord side, and supporting-circle residual signs after projective denominator clearing",
+      "arbitrary exact rational ray directions and a deterministic 2n+1 endpoint-admissible integer-slope search",
+      "boundary incidence and half-open winding for mixed rational and algebraic-cusp retained loops",
+      "selected-field unary regularization side rays when neither the cusp representative nor tangent rationalizes",
+      "all four CurveRegion2 Booleans between nested all-cusp disks with independent selected roots",
+      "one shared minor-arc winding decision authority for native CircularArc2 and algebraic cusp-circle carriers",
+      "same-selected-field diagonal specialization, structural supporting-circle reuse, and lazy x-order predicates",
+      "STRICT and APPROXIMATE_512 execution through the same carrier and predicate graph",
+      "matched historical work, competitive sentinels, allocation, release-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "mapped algebraic cusp subrange endpoints carrying an additional independently selected field",
+      "generic composite-field zero equality beyond the selected-root, diagonal, rank-one, quotient reduction, and authored-topology authorities already supported",
+      "general noncircular independent-field shared-component correspondence",
+      "finite projection and export of algebraic cusp carriers",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "projective_pair_predicates": "For coordinates N(a)/D(a) and M(b)/E(b), every linear order, chord orientation, and circle residual clears D and E exactly. Physical signs are restored from certified denominator signs; squared circle denominators require no orientation correction.",
+    "selected_field_diagonal": "Structurally equal selected parameters denote the same isolated root, so a bivariate predicate is specialized on b=a before interval boxing or multi-field reduction. Unequal retained parameters continue through strict bivariate refinement and the existing exact selected-pair authority.",
+    "arc_membership": "A cusp fragment is a minor subarc of one certified semicircle. Supporting-circle incidence plus the traversal-aware endpoint chord half-plane selects that subarc exactly, including endpoints.",
+    "ray_selection": "Each retained fragment contributes at most two endpoint-collinear forbidden slopes. Testing 2n+1 exact integer slopes therefore finds an admissible ray for an off-boundary query whenever endpoint inequality is decidable.",
+    "winding": "Native and algebraic circular carriers share one half-open minor-arc decision table. The ray basis is x=dot(d,p), y=cross(d,p), so arbitrary rational d preserves the standard positive horizontal-ray winding proof.",
+    "boundary_side": "A unary side ray originates at a representative strictly inside its source cusp subarc. A line through one circle point meets that circle only there and at its antipode, which lies outside the same open semicircle. Skipping the certified source fragment removes exactly the origin contact and no forward crossing.",
+    "structural_support": "Cusp fragments sharing one retained frame and equal radius squared have the same supporting circle. A source-boundary representative therefore has zero circle residual on such a fragment without replaying a selected-root resultant.",
+    "policy": "STRICT accepts exact proof only. APPROXIMATE_512 traverses the identical graph and can terminate only at the shared Hyperlimit 512-bit predicate boundary; returned carriers and topology remain exact.",
+    "failure": "Mapped multi-field endpoints, an unresolved bivariate zero, a degenerate ray, contradictory loop semantics, or an unsupported coefficient tower remains explicit. No f64 projection, tolerance, uncorrelated root matching, or primitive-element approximation is used."
+  },
+  "capability": {
+    "comparison_revision": "All-cusp retained loops could classify against affine or bounds-disjoint curved loops, and rational/analytic mapped cusp cuts could cross supported circle carriers, but an algebraic query inside another cusp loop's bounds and selected-field unary side sampling remained Unsupported.",
+    "source_revision": "Exact-Real cusp subranges now participate directly in retained-loop boundary incidence and winding across independent selected fields. Nested all-cusp disks complete one authoritative topology and all four Booleans, while non-rational unary cusp representatives classify both boundary sides without materialization.",
+    "bounded_failure": "A cusp fragment whose endpoint is a mapped algebraic parameter rather than Exact(Real) remains explicit Unsupported in the ray evaluator pending a three-field endpoint authority.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "default-feature release unit-test or comparative executables pinned to CPU 11; seven perf-stat repetitions; retired instructions and branches are primary because elapsed time varied with host load",
+    "independent_point_classification": {
+      "workload": "inside, outside, and boundary classification under STRICT and APPROXIMATE_512 for a circle centered at alpha=sqrt(1/3) and a query x-coordinate beta=sqrt(1/2)",
+      "task_clock_ms": 2.64,
+      "cycles": 5943966,
+      "instructions": 11303221,
+      "branches": 2218554,
+      "branch_misses": 44743,
+      "historical_exact_peer": false
+    },
+    "nested_independent_cusp_boolean": {
+      "workload": "one all-cusp radius-1 disk centered at sqrt(1/3) against an all-cusp radius-3 disk centered at sqrt(1/2), including all four Booleans under both policies",
+      "task_clock_ms": 2.85,
+      "cycles": 6815002,
+      "instructions": 10913871,
+      "branches": 2204878,
+      "branch_misses": 55342,
+      "topology_point_classifications": 2,
+      "historical_exact_peer": false
+    },
+    "degree_12_unary_side_matrix": {
+      "workload": "forward and reversed two-cusp loops, both carriers, both boundary sides, and both policies for the general degree-12 cusp field",
+      "side_classifications": 16,
+      "task_clock_ms": 278.97,
+      "cycles": 1156832268,
+      "instructions": 2455943123,
+      "branches": 416916234,
+      "branch_misses": 6224607,
+      "development_candidate_before_selected_diagonal": {
+        "task_clock_ms": 602.02,
+        "cycles": 2505257612,
+        "instructions": 6059497179,
+        "branches": 1111024031,
+        "branch_misses": 12364731
+      },
+      "instruction_reduction_percent": 59.469523,
+      "branch_reduction_percent": 62.474598,
+      "interpretation": "The exact selected-field diagonal and structural circle support remove redundant zero-resultant work. Remaining time is dominated by required degree-12 quotient-ring and bigint signs."
+    },
+    "matched_analytic_contact_guard": {
+      "workload": "algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "comparison_instructions": 27859686,
+      "current_instructions": 27860645,
+      "instruction_change_percent": 0.003442,
+      "comparison_branches": 5239763,
+      "current_branches": 5239996,
+      "branch_change_percent": 0.004447,
+      "interpretation": "The existing analytic contact path is instruction- and branch-neutral to measurement resolution."
+    },
+    "fixed_work_historical_controls": {
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 1984475008,
+        "current_instructions": 1984584494,
+        "instruction_change_percent": 0.005517,
+        "comparison_branches": 402541458,
+        "current_branches": 402571345,
+        "branch_change_percent": 0.007425
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3447686768,
+        "current_instructions": 3447672146,
+        "instruction_change_percent": -0.000424,
+        "comparison_branches": 649667993,
+        "current_branches": 649666503,
+        "branch_change_percent": -0.000229
+      },
+      "interpretation": "The unified native/algebraic arc decision and the predicate-only capability are neutral on both fixed-work historical controls."
+    },
+    "competitive_context": {
+      "method": "matched parent/current release comparative executables pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded",
+      "direct_guarantee_equivalent": false,
+      "open_cubic_offset_ns": {
+        "comparison_hypercurve_certified": 29545330.5,
+        "current_hypercurve_certified": 29586670.2,
+        "certified_change_percent": 0.139920,
+        "current_hypercurve_chord_fallback": 987448.1,
+        "current_curvo_heuristic": 8481.6,
+        "certified_to_curvo_ratio": 3488.335951,
+        "chord_fallback_to_curvo_ratio": 116.422385
+      },
+      "line_arc_capsule_inward_ns": {
+        "comparison_hypercurve_exact": 17967.4,
+        "current_hypercurve_exact": 18270.1,
+        "hypercurve_change_percent": 1.684718,
+        "current_cavalier_contours": 932.3,
+        "hypercurve_to_cavalier_ratio": 19.596804
+      },
+      "interpretation": "Wall-clock changes are within the observed loaded-host spread while fixed-work instructions are neutral. The finite competitors do not retain algebraic parameter fields or expose STRICT/APPROXIMATE_512-equivalent topology guarantees, so they are throughput targets rather than correctness peers."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct default-feature release-unit-test traces; heaptrack_print summaries are authoritative",
+    "independent_point_classification": {
+      "allocation_calls": 18390,
+      "temporary_allocations": 1414,
+      "peak_heap_kib": 170.49,
+      "recorder_peak_rss_mib": 12.93
+    },
+    "nested_independent_cusp_boolean": {
+      "allocation_calls": 14892,
+      "temporary_allocations": 1161,
+      "peak_heap_kib": 182.53,
+      "recorder_peak_rss_mib": 13.49
+    },
+    "degree_12_unary_side_matrix": {
+      "allocation_calls": 2394783,
+      "temporary_allocations": 415838,
+      "peak_heap_mib": 1.43,
+      "recorder_peak_rss_mib": 17.91,
+      "interpretation": "Required selected-root polynomial evaluation and quotient-ring bigint arithmetic dominate this deliberately hard 16-side matrix; it remains an allocation-hardening target."
+    },
+    "matched_analytic_contact_guard": {
+      "comparison_allocation_calls": 39213,
+      "current_allocation_calls": 39213,
+      "comparison_temporary_allocations": 2777,
+      "current_temporary_allocations": 2777,
+      "comparison_peak_heap_kib": 317.49,
+      "current_peak_heap_kib": 317.49,
+      "interpretation": "The unchanged path has exactly neutral allocation count, temporary count, and peak heap."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "matched representative curve_region_boolean_batch release benchmark executables at 75046aa and 3cb9553 with identical dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8215304,
+      "current_file_bytes": 8242792,
+      "file_change_bytes": 27488,
+      "file_change_percent": 0.334595,
+      "comparison_size_text_bytes": 6255125,
+      "current_size_text_bytes": 6280781,
+      "size_text_change_bytes": 25656,
+      "size_text_change_percent": 0.410160,
+      "comparison_actual_text_section_bytes": 4723767,
+      "current_actual_text_section_bytes": 4744535,
+      "actual_text_change_bytes": 20768,
+      "actual_text_change_percent": 0.439649
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7966688,
+      "current_file_bytes": 7973240,
+      "file_change_bytes": 6552,
+      "file_change_percent": 0.082242,
+      "comparison_size_text_bytes": 6062637,
+      "current_size_text_bytes": 6066389,
+      "size_text_change_bytes": 3752,
+      "size_text_change_percent": 0.061887,
+      "comparison_actual_text_section_bytes": 4562039,
+      "current_actual_text_section_bytes": 4564919,
+      "actual_text_change_bytes": 2880,
+      "actual_text_change_percent": 0.063130
+    },
+    "interpretation": "Independent-field predicates add 20,768 bytes of linked .text in the predicate-enabled representative. The shared native arc authority costs 2,880 bytes in the minimal artifact; no compatibility layer or second Boolean engine is present."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "matched_hypercurve_with_tests": {
+      "comparison_command": "hyper-callgraph --root .hypercurve-bench-75046aa --out-dir target/callgraph-independent-cusp-75046aa --crate-name hypercurve --include-tests --format json --per-library",
+      "current_command": "hyper-callgraph --root hypercurve --out-dir target/callgraph-independent-cusp-3cb9553 --crate-name hypercurve --include-tests --format json --per-library",
+      "comparison_nodes": 23583,
+      "current_nodes": 23675,
+      "node_change_percent": 0.390112,
+      "comparison_edges": 44142,
+      "current_edges": 44409,
+      "edge_change_percent": 0.604866
+    },
+    "current_cross_stack_scope": {
+      "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir hypercurve/target/callgraph-independent-cusp-cross-stack-3cb9553 --crate-name hypercurve,hypersolve,hyperreal,hyperlimit --format json --per-library",
+      "artifact": "target/callgraph-independent-cusp-cross-stack-3cb9553/callgraph.json",
+      "nodes": 34390,
+      "edges": 60941
+    },
+    "confirmed_paths": [
+      "CurveRegion2::classify_algebraic_point_raw -> classify_algebraic_point_against_retained_loop_with_cusps -> prepare_algebraic_ray_retained_fragments",
+      "prepare_algebraic_ray_retained_fragments -> BezierAlgebraicCuspSemicircleFragment2::algebraic_ray_evaluator",
+      "algebraic_ray_retained_fragments_winding -> BezierAlgebraicCuspSemicircleAlgebraicRay2::forward_ray_winding_delta",
+      "forward_ray_winding_delta -> selected_bivariate_parameter_pair_sign -> exact selected-root signing",
+      "native process_minor_arc_winding and algebraic forward_ray_winding_delta -> contour::minor_arc_winding_decision",
+      "CurveRegionBooleanContext::regularized_algebraic_cusp_fragment_action -> regularized_algebraic_cusp_fragment_action_in_selected_field",
+      "regularized_algebraic_cusp_fragment_action_in_selected_field -> RationalBezierAlgebraicTangentImage2::coordinate_sign",
+      "algebraic_cusp_fragment_side_location -> CurveRegion2::classify_algebraic_point_from_cusp_boundary_side_ray"
+    ]
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed: 386 tests",
+    "hypercurve_default_features_library": "passed: 382 tests",
+    "hypercurve_no_default_features_library": "passed: 320 tests",
+    "hypercurve_default_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_no_default_features_curve_region_boolean_integration": "passed: 12 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_default_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "release_builds": "passed matched default-feature unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "strict_and_approximate": "passed independent inside/outside/boundary classification, nested all-cusp Boolean batch, and forward/reversed unary side sampling under STRICT and APPROXIMATE_512",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "support mapped algebraic cusp endpoint ranges and the required three-field endpoint predicates",
+    "broaden exact differential coverage for repeated stationary roots, multiplicities, tangencies, and independently represented boundary zeros",
+    "reduce degree-12 selected-root quotient-ring, bigint, and temporary-allocation cost without weakening exact signs",
+    "generalize exact shared-component correspondence beyond circular cusp carriers where arrangement topology requires it",
+    "complete finite projection/export and distinct-carrier general algebraic joins",
+    "implement radius-driven fillet and corner-enum chamfer solvers in the authoritative CurveRegion2 engine",
+    "delete displaced historical Boolean, offset, and corner machinery after differential coverage passes"
+  ]
+}
