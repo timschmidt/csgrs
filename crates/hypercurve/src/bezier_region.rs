@@ -6375,6 +6375,125 @@ impl CurveRegion2 {
         }))
     }
 
+    #[cfg(feature = "predicates")]
+    pub(crate) fn classify_algebraic_point_from_cusp_boundary_side_ray(
+        &self,
+        point: &RationalBezierAlgebraicPointImage2,
+        direction_x: Real,
+        direction_y: Real,
+        source_loop_index: usize,
+        source_fragment_index: usize,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RegionPointLocation>> {
+        let direction_squared = &direction_x * &direction_x + &direction_y * &direction_y;
+        match real_sign(&direction_squared, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "algebraic boundary-side ray has a negative squared norm".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let Some(source_loop) = self.data.boundary_loops.get(source_loop_index) else {
+            return Err(CurveError::Topology(
+                "algebraic boundary-side ray source loop is missing".into(),
+            ));
+        };
+        let Some(BezierSplitFragment2::AlgebraicCuspSemicircle(_)) =
+            source_loop.fragments().get(source_fragment_index)
+        else {
+            return Err(CurveError::Topology(
+                "algebraic boundary-side ray source is not a cusp fragment".into(),
+            ));
+        };
+        if self
+            .data
+            .certified_loop_roles
+            .as_ref()
+            .is_some_and(|roles| roles.len() != self.data.boundary_loops.len())
+            || self
+                .data
+                .certified_loop_fill_rules
+                .as_ref()
+                .is_some_and(|rules| rules.len() != self.data.boundary_loops.len())
+        {
+            return Err(CurveError::Topology(
+                "curve-region loop semantics are inconsistent with boundary loops".into(),
+            ));
+        }
+        let point = match point.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let side_x = -direction_y.clone();
+        let side_y = direction_x.clone();
+        let mut inside = false;
+        let mut signed_depth = 0_i32;
+        for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
+            let fragments = match prepare_algebraic_ray_retained_fragments(boundary_loop, policy)? {
+                Classification::Decided(fragments) => fragments,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            match algebraic_ray_retained_fragments_admit_direction(
+                &fragments, &point, &side_x, &side_y, policy,
+            )? {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let winding = match algebraic_ray_retained_fragments_winding(
+                &fragments,
+                &point,
+                &direction_x,
+                &direction_y,
+                (loop_index == source_loop_index).then_some(source_fragment_index),
+                policy,
+            )? {
+                Classification::Decided(winding) => winding,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let fill_rule = self
+                .data
+                .certified_loop_fill_rules
+                .as_ref()
+                .map_or(FillRule::EvenOdd, |rules| rules[loop_index]);
+            if winding_location(winding, fill_rule) == ContourPointLocation::Inside {
+                if let Some(roles) = &self.data.certified_loop_roles {
+                    signed_depth += match roles[loop_index] {
+                        CurveRegionLoopRole::Material => 1,
+                        CurveRegionLoopRole::Hole => -1,
+                    };
+                } else {
+                    inside = !inside;
+                }
+            }
+        }
+        let inside = self
+            .data
+            .certified_loop_roles
+            .as_ref()
+            .map_or(inside, |_| signed_depth > 0);
+        Ok(Classification::Decided(if inside {
+            RegionPointLocation::Inside
+        } else {
+            RegionPointLocation::Outside
+        }))
+    }
+
     /// Returns signed material-minus-hole containment depth for a non-boundary point.
     ///
     /// Explicit roles are authoritative. Otherwise the exact curved nesting
@@ -7989,6 +8108,12 @@ struct AlgebraicRayRationalFragment2 {
 }
 
 #[cfg(feature = "predicates")]
+enum AlgebraicRayRetainedFragment2 {
+    Rational(AlgebraicRayRationalFragment2),
+    AlgebraicCusp(crate::bezier_offset::BezierAlgebraicCuspSemicircleAlgebraicRay2),
+}
+
+#[cfg(feature = "predicates")]
 #[derive(Default)]
 struct AlgebraicRaySignHull2 {
     negative: bool,
@@ -8022,6 +8147,20 @@ fn classify_algebraic_point_against_retained_loop(
         decided @ Classification::Decided(_) => return Ok(decided),
         Classification::Uncertain(UncertaintyReason::Unsupported) => {}
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    if boundary_loop
+        .fragments()
+        .iter()
+        .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_)))
+    {
+        return classify_algebraic_point_against_retained_loop_with_cusps(
+            boundary_loop,
+            point,
+            fill_rule,
+            certify_boundary,
+            policy,
+        );
     }
 
     let mut fragments = Vec::with_capacity(boundary_loop.fragments().len());
@@ -8075,6 +8214,239 @@ fn classify_algebraic_point_against_retained_loop(
     Ok(Classification::Decided(winding_location(
         winding, fill_rule,
     )))
+}
+
+#[cfg(feature = "predicates")]
+fn classify_algebraic_point_against_retained_loop_with_cusps(
+    boundary_loop: &CurveRegionBoundaryLoop2,
+    point: &RationalBezierAlgebraicPointPredicate2<'_>,
+    fill_rule: FillRule,
+    certify_boundary: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ContourPointLocation>> {
+    let fragments = match prepare_algebraic_ray_retained_fragments(boundary_loop, policy)? {
+        Classification::Decided(fragments) => fragments,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+
+    if certify_boundary {
+        for fragment in &fragments {
+            let contains = match fragment {
+                AlgebraicRayRetainedFragment2::Rational(fragment) => {
+                    algebraic_point_on_rational_curve(&fragment.curve, point, policy)?
+                }
+                AlgebraicRayRetainedFragment2::AlgebraicCusp(fragment) => {
+                    fragment.contains_point(point, policy)?
+                }
+            };
+            match contains {
+                Classification::Decided(true) => {
+                    return Ok(Classification::Decided(ContourPointLocation::Boundary));
+                }
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+    }
+
+    // There are at most two endpoint-collinear slopes per retained fragment.
+    // Testing 2n+1 exact integer slopes therefore finds a nondegenerate ray
+    // whenever the promised off-boundary query is distinct from every vertex.
+    let candidate_count = fragments.len().saturating_mul(2).saturating_add(1);
+    let mut last_reason = UncertaintyReason::Predicate;
+    for slope in 0..candidate_count {
+        let Ok(slope) = u64::try_from(slope) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let direction_x = Real::one();
+        let direction_y = Real::from(slope);
+        let side_x = -direction_y.clone();
+        let side_y = direction_x.clone();
+        let mut admissible = match algebraic_ray_retained_fragments_admit_direction(
+            &fragments, point, &side_x, &side_y, policy,
+        )? {
+            Classification::Decided(admissible) => admissible,
+            Classification::Uncertain(reason) => {
+                last_reason = reason;
+                false
+            }
+        };
+        if !admissible {
+            continue;
+        }
+
+        let winding = match algebraic_ray_retained_fragments_winding(
+            &fragments,
+            point,
+            &direction_x,
+            &direction_y,
+            None,
+            policy,
+        )? {
+            Classification::Decided(winding) => winding,
+            Classification::Uncertain(reason) => {
+                last_reason = reason;
+                admissible = false;
+                0
+            }
+        };
+        if !admissible {
+            continue;
+        }
+        return Ok(Classification::Decided(winding_location(
+            winding, fill_rule,
+        )));
+    }
+    Ok(Classification::Uncertain(last_reason))
+}
+
+#[cfg(feature = "predicates")]
+fn prepare_algebraic_ray_retained_fragments(
+    boundary_loop: &CurveRegionBoundaryLoop2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<AlgebraicRayRetainedFragment2>>> {
+    let mut fragments = Vec::with_capacity(boundary_loop.fragments().len());
+    for fragment in boundary_loop.fragments() {
+        if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
+            let evaluator = match fragment.algebraic_ray_evaluator(policy)? {
+                Classification::Decided(evaluator) => evaluator,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            fragments.push(AlgebraicRayRetainedFragment2::AlgebraicCusp(evaluator));
+        } else {
+            let fragment = match retained_fragment_algebraic_ray_curve(fragment, policy)? {
+                Classification::Decided(fragment) => fragment,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            fragments.push(AlgebraicRayRetainedFragment2::Rational(fragment));
+        }
+    }
+    Ok(Classification::Decided(fragments))
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_ray_retained_fragments_admit_direction(
+    fragments: &[AlgebraicRayRetainedFragment2],
+    point: &RationalBezierAlgebraicPointPredicate2<'_>,
+    side_x: &Real,
+    side_y: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    for fragment in fragments {
+        match fragment {
+            AlgebraicRayRetainedFragment2::Rational(fragment) => {
+                for endpoint in [fragment.curve.start(), fragment.curve.end()] {
+                    match point.homogeneous_linear_difference_sign(
+                        endpoint.x(),
+                        endpoint.y(),
+                        &Real::one(),
+                        side_x,
+                        side_y,
+                        RealSign::Positive,
+                        policy,
+                    )? {
+                        Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                        Classification::Decided(RealSign::Zero) => {
+                            return Ok(Classification::Decided(false));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+            }
+            AlgebraicRayRetainedFragment2::AlgebraicCusp(fragment) => {
+                match fragment.endpoint_side_signs(point, side_x, side_y, policy)? {
+                    Classification::Decided(signs)
+                        if signs.into_iter().all(|sign| sign != RealSign::Zero) => {}
+                    Classification::Decided(_) => return Ok(Classification::Decided(false)),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
+    }
+    Ok(Classification::Decided(true))
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_ray_retained_fragments_winding(
+    fragments: &[AlgebraicRayRetainedFragment2],
+    point: &RationalBezierAlgebraicPointPredicate2<'_>,
+    direction_x: &Real,
+    direction_y: &Real,
+    skipped_fragment: Option<usize>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<i32>> {
+    let skipped_support = if let Some(fragment_index) = skipped_fragment {
+        match fragments.get(fragment_index) {
+            Some(AlgebraicRayRetainedFragment2::AlgebraicCusp(fragment)) => Some(fragment),
+            Some(AlgebraicRayRetainedFragment2::Rational(_)) => {
+                return Err(CurveError::Topology(
+                    "an algebraic side ray can skip only its retained cusp source".into(),
+                ));
+            }
+            None => {
+                return Err(CurveError::Topology(
+                    "the algebraic side-ray source fragment is missing".into(),
+                ));
+            }
+        }
+    } else {
+        None
+    };
+    let mut winding = 0_i32;
+    for (fragment_index, fragment) in fragments.iter().enumerate() {
+        // The side-ray origin lies strictly inside its source cusp subarc.
+        // A line through a circle point has only that point and its antipode;
+        // the antipode is outside the same open semicircle. Omitting this one
+        // certified source fragment therefore removes exactly the origin
+        // contact and no forward crossing.
+        if skipped_fragment == Some(fragment_index) {
+            continue;
+        }
+        let delta = match fragment {
+            AlgebraicRayRetainedFragment2::Rational(fragment) => {
+                algebraic_point_rational_curve_ray_winding(
+                    fragment,
+                    point,
+                    direction_x,
+                    direction_y,
+                    policy,
+                )?
+            }
+            AlgebraicRayRetainedFragment2::AlgebraicCusp(fragment) => {
+                let point_on_supporting_circle = skipped_support
+                    .is_some_and(|source| fragment.has_same_structural_support(source));
+                fragment.forward_ray_winding_delta(
+                    point,
+                    direction_x,
+                    direction_y,
+                    point_on_supporting_circle,
+                    policy,
+                )?
+            }
+        };
+        let delta = match delta {
+            Classification::Decided(delta) => delta,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        winding = winding.checked_add(delta).ok_or_else(|| {
+            CurveError::Topology("algebraic ray winding exceeds the region counter".into())
+        })?;
+    }
+    Ok(Classification::Decided(winding))
 }
 
 #[cfg(feature = "predicates")]

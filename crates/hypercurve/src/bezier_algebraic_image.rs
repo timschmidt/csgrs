@@ -862,6 +862,14 @@ impl RationalBezierAlgebraicPointPredicate2<'_> {
         self.root
     }
 
+    pub(crate) const fn retained_parameter(&self) -> &BezierParameter2 {
+        &self.parameter
+    }
+
+    pub(crate) const fn denominator_sign(&self) -> RealSign {
+        self.denominator_sign
+    }
+
     pub(crate) const fn coordinate_polynomials(&self) -> (&[Real], &[Real], &[Real]) {
         (self.x_numerator, self.y_numerator, self.denominator)
     }
@@ -1072,6 +1080,58 @@ impl RationalBezierAlgebraicTangentImage2 {
                 expression.denominator.as_slice(),
             )
         })
+    }
+
+    #[cfg(feature = "predicates")]
+    pub(crate) fn coordinate_sign(
+        &self,
+        use_x: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        if let Some(expression) = self.data.retained_expression.as_ref() {
+            let parameter = BezierParameter2::Algebraic(expression.parameter.clone());
+            let denominator = match signed_coefficients_at_parameter(
+                expression.denominator.clone(),
+                &parameter,
+                policy,
+            )? {
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let numerator = if use_x {
+                expression.dx_numerator.clone()
+            } else {
+                expression.dy_numerator.clone()
+            };
+            return Ok(
+                signed_coefficients_at_parameter(numerator, &parameter, policy)?.map(
+                    |sign| match (sign, denominator) {
+                        (RealSign::Zero, _) => RealSign::Zero,
+                        (first, second) if first == second => RealSign::Positive,
+                        (RealSign::Positive | RealSign::Negative, _) => RealSign::Negative,
+                    },
+                ),
+            );
+        }
+
+        let coordinate = if use_x { self.dx() } else { self.dy() };
+        Ok(coordinate.map_or(
+            Classification::Uncertain(UncertaintyReason::Unsupported),
+            |coordinate| {
+                coordinate
+                    .compare_to_real(&Real::zero(), policy)
+                    .map(|order| match order {
+                        Ordering::Less => RealSign::Negative,
+                        Ordering::Equal => RealSign::Zero,
+                        Ordering::Greater => RealSign::Positive,
+                    })
+            },
+        ))
     }
 
     /// Returns the derivative as two represented [`Real`] values when both

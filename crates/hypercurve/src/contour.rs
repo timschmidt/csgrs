@@ -1387,65 +1387,90 @@ fn process_minor_arc_winding(
     };
 
     let inside_circle = point_inside_circle(center, radius_squared, point, policy)?;
+    let decision = minor_arc_winding_decision(
+        compare_reals(start.y(), point.y(), policy)?,
+        compare_reals(end.y(), point.y(), policy)?,
+        point_is_left,
+        inside_circle,
+        is_ccw,
+    );
+    match decision {
+        MinorArcWindingDecision::Delta(delta) => Some(delta),
+        decision => Some(decision.resolve(
+            compare_reals(start.x(), point.x(), policy)?,
+            compare_reals(end.x(), point.x(), policy)?,
+        )),
+    }
+}
 
-    if le_real(start.y(), point.y(), policy)? {
-        if gt_real(end.y(), point.y(), policy)? {
-            if is_ccw {
-                if point_is_left || inside_circle {
-                    Some(1)
+/// The exact circular-arc winding state after all non-coordinate predicates.
+/// Endpoint x ordering is requested only for the two geometrically ambiguous
+/// branches, keeping the common native and algebraic paths allocation-free and
+/// avoiding independent-field predicates unless they affect the answer.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum MinorArcWindingDecision {
+    Delta(i32),
+    PointBetweenStartAndEnd(i32),
+    PointBetweenEndAndStart(i32),
+}
+
+impl MinorArcWindingDecision {
+    pub(crate) const fn resolve(self, start_x: Ordering, end_x: Ordering) -> i32 {
+        match self {
+            Self::Delta(delta) => delta,
+            Self::PointBetweenStartAndEnd(delta) => {
+                if matches!(start_x, Ordering::Less) && matches!(end_x, Ordering::Greater) {
+                    delta
                 } else {
-                    Some(0)
+                    0
                 }
-            } else if point_is_left && !inside_circle {
-                Some(1)
-            } else {
-                Some(0)
             }
-        } else if is_ccw
-            && !point_is_left
-            && lt_real(end.x(), point.x(), policy)?
-            && lt_real(point.x(), start.x(), policy)?
-            && inside_circle
-        {
-            Some(1)
-        } else if !is_ccw
-            && point_is_left
-            && lt_real(start.x(), point.x(), policy)?
-            && lt_real(point.x(), end.x(), policy)?
-            && inside_circle
-        {
-            Some(-1)
-        } else {
-            Some(0)
+            Self::PointBetweenEndAndStart(delta) => {
+                if matches!(end_x, Ordering::Less) && matches!(start_x, Ordering::Greater) {
+                    delta
+                } else {
+                    0
+                }
+            }
         }
-    } else if le_real(end.y(), point.y(), policy)? {
-        if is_ccw {
-            if !point_is_left && !inside_circle {
-                Some(-1)
+    }
+}
+
+pub(crate) const fn minor_arc_winding_decision(
+    start_y: Ordering,
+    end_y: Ordering,
+    point_is_left: bool,
+    inside_circle: bool,
+    is_ccw: bool,
+) -> MinorArcWindingDecision {
+    if !matches!(start_y, Ordering::Greater) {
+        if matches!(end_y, Ordering::Greater) {
+            MinorArcWindingDecision::Delta(if is_ccw {
+                (point_is_left || inside_circle) as i32
             } else {
-                Some(0)
-            }
+                (point_is_left && !inside_circle) as i32
+            })
+        } else if is_ccw && !point_is_left && inside_circle {
+            MinorArcWindingDecision::PointBetweenEndAndStart(1)
+        } else if !is_ccw && point_is_left && inside_circle {
+            MinorArcWindingDecision::PointBetweenStartAndEnd(-1)
+        } else {
+            MinorArcWindingDecision::Delta(0)
+        }
+    } else if !matches!(end_y, Ordering::Greater) {
+        MinorArcWindingDecision::Delta(if is_ccw {
+            -((!point_is_left && !inside_circle) as i32)
         } else if point_is_left {
-            if inside_circle { Some(-1) } else { Some(0) }
+            -(inside_circle as i32)
         } else {
-            Some(-1)
-        }
-    } else if is_ccw
-        && !point_is_left
-        && lt_real(start.x(), point.x(), policy)?
-        && lt_real(point.x(), end.x(), policy)?
-        && inside_circle
-    {
-        Some(1)
-    } else if !is_ccw
-        && point_is_left
-        && lt_real(end.x(), point.x(), policy)?
-        && lt_real(point.x(), start.x(), policy)?
-        && inside_circle
-    {
-        Some(-1)
+            -1
+        })
+    } else if is_ccw && !point_is_left && inside_circle {
+        MinorArcWindingDecision::PointBetweenStartAndEnd(1)
+    } else if !is_ccw && point_is_left && inside_circle {
+        MinorArcWindingDecision::PointBetweenEndAndStart(-1)
     } else {
-        Some(0)
+        MinorArcWindingDecision::Delta(0)
     }
 }
 
@@ -1485,13 +1510,6 @@ fn le_real(left: &Real, right: &Real, policy: &CurveContext) -> Option<bool> {
     Some(!matches!(
         compare_reals(left, right, policy)?,
         Ordering::Greater
-    ))
-}
-
-fn lt_real(left: &Real, right: &Real, policy: &CurveContext) -> Option<bool> {
-    Some(matches!(
-        compare_reals(left, right, policy)?,
-        Ordering::Less
     ))
 }
 

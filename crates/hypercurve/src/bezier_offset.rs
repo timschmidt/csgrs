@@ -16,6 +16,8 @@
 
 use std::sync::{Arc, Mutex, OnceLock};
 
+#[cfg(feature = "predicates")]
+use crate::bezier_algebraic_image::RationalBezierAlgebraicPointPredicate2;
 use crate::bezier_algebraic_image::{
     parameter_representation, rational_point_image_from_power_basis,
     rational_tangent_image_from_power_basis,
@@ -2072,6 +2074,21 @@ struct BezierAlgebraicCuspSemicircleFragmentData2 {
     policy: CurveContext,
 }
 
+/// Cached local-field geometry for classifying an algebraic ray against one
+/// exact-parameter cusp subarc. The three point images retain the cusp field;
+/// the query point keeps its own field, so pair predicates never construct a
+/// primitive element.
+#[cfg(feature = "predicates")]
+#[derive(Debug)]
+pub(crate) struct BezierAlgebraicCuspSemicircleAlgebraicRay2 {
+    frame: BezierParallelAlgebraicCuspFrame2,
+    start: RationalBezierAlgebraicPointImage2,
+    end: RationalBezierAlgebraicPointImage2,
+    center: RationalBezierAlgebraicPointImage2,
+    radius_squared: Real,
+    clockwise: bool,
+}
+
 #[derive(Debug)]
 #[allow(dead_code)]
 struct BezierAlgebraicCuspSemicirclePairOverlapData2 {
@@ -2306,6 +2323,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                 frame: self.data.frame.clone(),
                 radial_distance: -self.data.radial_distance.clone(),
                 clockwise: !self.data.clockwise,
+            }),
+        }
+    }
+
+    /// Returns the other oriented half of the same supporting circle while
+    /// preserving counterclockwise/clockwise traversal sense.
+    pub(crate) fn complementary_half(&self) -> Self {
+        Self {
+            data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                frame: self.data.frame.clone(),
+                radial_distance: -self.data.radial_distance.clone(),
+                clockwise: self.data.clockwise,
             }),
         }
     }
@@ -6761,6 +6790,349 @@ fn complement_cusp_parameter_bracket(
     }
 }
 
+#[cfg(feature = "predicates")]
+fn algebraic_point_linear_numerator(
+    point: &RationalBezierAlgebraicPointPredicate2<'_>,
+    x_factor: &Real,
+    y_factor: &Real,
+) -> Vec<Real> {
+    let (x, y, _) = point.coordinate_polynomials();
+    polynomial_add(
+        &polynomial_scale(x, x_factor),
+        &polynomial_scale(y, y_factor),
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn selected_bivariate_parameter_pair_sign(
+    polynomial: &BivariatePolynomial,
+    first: &RationalBezierAlgebraicPointPredicate2<'_>,
+    second: &RationalBezierAlgebraicPointPredicate2<'_>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    // Retained cusp points frequently share the identical selected local
+    // field. Collapse that certified diagonal before interval boxes, rank-one
+    // detection, or multi-field reduction; this is both exact and avoids a
+    // zero-resultant proof for supporting-circle incidence.
+    if first.retained_parameter() == second.retained_parameter() {
+        return signed_coefficients_at_parameter(
+            bivariate_substitute_second_equal_first(polynomial),
+            first.retained_parameter(),
+            policy,
+        );
+    }
+    if let Some(sign) = bivariate_parameter_pair_strict_sign_by_refinement(
+        polynomial,
+        first.retained_parameter(),
+        second.retained_parameter(),
+        policy,
+    )? {
+        return Ok(Classification::Decided(sign));
+    }
+    signed_bivariate_at_parameter_pair(
+        polynomial,
+        first.retained_parameter(),
+        second.retained_parameter(),
+        policy,
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn signed_algebraic_point_linear_difference(
+    first: &RationalBezierAlgebraicPointPredicate2<'_>,
+    second: &RationalBezierAlgebraicPointPredicate2<'_>,
+    x_factor: &Real,
+    y_factor: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let (_, _, first_denominator) = first.coordinate_polynomials();
+    let (_, _, second_denominator) = second.coordinate_polynomials();
+    let first_numerator = algebraic_point_linear_numerator(first, x_factor, y_factor);
+    let second_numerator = algebraic_point_linear_numerator(second, x_factor, y_factor);
+    let difference = bivariate_subtract(
+        &bivariate_outer_product(&first_numerator, second_denominator),
+        &bivariate_outer_product(first_denominator, &second_numerator),
+    );
+    Ok(
+        selected_bivariate_parameter_pair_sign(&difference, first, second, policy)?.map(|sign| {
+            product_sign(
+                sign,
+                product_sign(first.denominator_sign(), second.denominator_sign()),
+            )
+        }),
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_point_linear_order(
+    first: &RationalBezierAlgebraicPointPredicate2<'_>,
+    second: &RationalBezierAlgebraicPointPredicate2<'_>,
+    x_factor: &Real,
+    y_factor: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<std::cmp::Ordering>> {
+    Ok(
+        signed_algebraic_point_linear_difference(first, second, x_factor, y_factor, policy)?.map(
+            |sign| match sign {
+                RealSign::Negative => std::cmp::Ordering::Less,
+                RealSign::Zero => std::cmp::Ordering::Equal,
+                RealSign::Positive => std::cmp::Ordering::Greater,
+            },
+        ),
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_point_oriented_line_side(
+    start: &RationalBezierAlgebraicPointPredicate2<'_>,
+    end: &RationalBezierAlgebraicPointPredicate2<'_>,
+    point: &RationalBezierAlgebraicPointPredicate2<'_>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<crate::classify::LineSide>> {
+    let (start_x, start_y, start_denominator) = start.coordinate_polynomials();
+    let (end_x, end_y, end_denominator) = end.coordinate_polynomials();
+    let (point_x, point_y, point_denominator) = point.coordinate_polynomials();
+
+    // Start and end are rational images in one retained cusp field. Clear
+    // that shared field first, leaving one bivariate expression against the
+    // independent query field.
+    let line_x = polynomial_subtract(
+        &polynomial_multiply(end_x, start_denominator),
+        &polynomial_multiply(start_x, end_denominator),
+    );
+    let line_y = polynomial_subtract(
+        &polynomial_multiply(end_y, start_denominator),
+        &polynomial_multiply(start_y, end_denominator),
+    );
+    let point_delta_x = bivariate_subtract(
+        &bivariate_outer_product(start_denominator, point_x),
+        &bivariate_outer_product(start_x, point_denominator),
+    );
+    let point_delta_y = bivariate_subtract(
+        &bivariate_outer_product(start_denominator, point_y),
+        &bivariate_outer_product(start_y, point_denominator),
+    );
+    let determinant = bivariate_subtract(
+        &bivariate_multiply_first_parameter(&point_delta_y, &line_x),
+        &bivariate_multiply_first_parameter(&point_delta_x, &line_y),
+    );
+    let denominator_sign = product_sign(end.denominator_sign(), point.denominator_sign());
+    Ok(
+        selected_bivariate_parameter_pair_sign(&determinant, start, point, policy)?.map(|sign| {
+            crate::classify::LineSide::from_real_sign(product_sign(sign, denominator_sign))
+        }),
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_point_circle_residual_sign(
+    center: &RationalBezierAlgebraicPointPredicate2<'_>,
+    point: &RationalBezierAlgebraicPointPredicate2<'_>,
+    radius_squared: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let (center_x, center_y, center_denominator) = center.coordinate_polynomials();
+    let (point_x, point_y, point_denominator) = point.coordinate_polynomials();
+    let delta_x = bivariate_subtract(
+        &bivariate_outer_product(center_denominator, point_x),
+        &bivariate_outer_product(center_x, point_denominator),
+    );
+    let delta_y = bivariate_subtract(
+        &bivariate_outer_product(center_denominator, point_y),
+        &bivariate_outer_product(center_y, point_denominator),
+    );
+    let common_denominator = bivariate_outer_product(center_denominator, point_denominator);
+    let residual = bivariate_subtract(
+        &bivariate_add(
+            &bivariate_multiply(&delta_x, &delta_x),
+            &bivariate_multiply(&delta_y, &delta_y),
+        ),
+        &bivariate_scale(
+            bivariate_multiply(&common_denominator, &common_denominator),
+            radius_squared,
+        ),
+    );
+    // Both affine denominators are squared, so the cleared residual has the
+    // physical squared-distance sign regardless of projective orientation.
+    selected_bivariate_parameter_pair_sign(&residual, center, point, policy)
+}
+
+#[cfg(feature = "predicates")]
+impl BezierAlgebraicCuspSemicircleAlgebraicRay2 {
+    pub(crate) fn has_same_structural_support(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.frame.data, &other.frame.data)
+            && self.radius_squared == other.radius_squared
+    }
+
+    pub(crate) fn endpoint_side_signs(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        side_x: &Real,
+        side_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<[RealSign; 2]>> {
+        let mut signs = [RealSign::Zero; 2];
+        for (index, endpoint) in [&self.start, &self.end].into_iter().enumerate() {
+            let endpoint = match endpoint.predicate_evaluator(policy)? {
+                Classification::Decided(endpoint) => endpoint,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            signs[index] = match signed_algebraic_point_linear_difference(
+                &endpoint, point, side_x, side_y, policy,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        }
+        Ok(Classification::Decided(signs))
+    }
+
+    pub(crate) fn contains_point(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let start = match self.start.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match self.end.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let center = match self.center.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match algebraic_point_circle_residual_sign(&center, point, &self.radius_squared, policy)? {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                return Ok(Classification::Decided(false));
+            }
+            Classification::Decided(RealSign::Zero) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        Ok(
+            algebraic_point_oriented_line_side(&start, &end, point, policy)?.map(|side| {
+                if self.clockwise {
+                    side != crate::classify::LineSide::Right
+                } else {
+                    side != crate::classify::LineSide::Left
+                }
+            }),
+        )
+    }
+
+    pub(crate) fn forward_ray_winding_delta(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        direction_x: &Real,
+        direction_y: &Real,
+        point_on_supporting_circle: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
+        let start = match self.start.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match self.end.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let side_x = -direction_y.clone();
+        let side_y = direction_x.clone();
+        let order = |first: &RationalBezierAlgebraicPointPredicate2<'_>,
+                     second: &RationalBezierAlgebraicPointPredicate2<'_>,
+                     x_factor: &Real,
+                     y_factor: &Real| {
+            algebraic_point_linear_order(first, second, x_factor, y_factor, policy)
+        };
+        let start_y = match order(&start, point, &side_x, &side_y)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end_y = match order(&end, point, &side_x, &side_y)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let line_side = match algebraic_point_oriented_line_side(&start, &end, point, policy)? {
+            Classification::Decided(side) => side,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let inside_circle = if point_on_supporting_circle {
+            false
+        } else {
+            let center = match self.center.predicate_evaluator(policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            match algebraic_point_circle_residual_sign(
+                &center,
+                point,
+                &self.radius_squared,
+                policy,
+            )? {
+                Classification::Decided(sign) => sign == RealSign::Negative,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        };
+        let is_ccw = !self.clockwise;
+        let point_is_left = if is_ccw {
+            line_side == crate::classify::LineSide::Left
+        } else {
+            line_side != crate::classify::LineSide::Right
+        };
+        let decision = crate::contour::minor_arc_winding_decision(
+            start_y,
+            end_y,
+            point_is_left,
+            inside_circle,
+            is_ccw,
+        );
+        if let crate::contour::MinorArcWindingDecision::Delta(delta) = decision {
+            return Ok(Classification::Decided(delta));
+        }
+        let start_x = match order(&start, point, direction_x, direction_y)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end_x = match order(&end, point, direction_x, direction_y)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(decision.resolve(start_x, end_x)))
+    }
+}
+
 #[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleFragment2 {
     pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
@@ -6881,6 +7253,56 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
         };
         self.data.semicircle.point_at(&parameter, &self.data.policy)
+    }
+
+    /// Prepares one exact minor-arc evaluator for an algebraic query ray.
+    ///
+    /// Exact `Real` subrange cuts preserve a single cusp field, so the start,
+    /// end, and center remain rational expressions of that selected root.
+    /// Mapped cuts can carry another independent selected field and therefore
+    /// stay explicit until the corresponding multi-field endpoint evaluator
+    /// is available.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn algebraic_ray_evaluator(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleAlgebraicRay2>> {
+        self.validate_policy(policy)?;
+        let (
+            BezierAlgebraicCuspSemicircleParameter2::Exact(start),
+            BezierAlgebraicCuspSemicircleParameter2::Exact(end),
+        ) = (&self.data.start, &self.data.end)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let start = match self.data.semicircle.point_at(start, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match self.data.semicircle.point_at(end, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let (start, end) = if self.data.reversed {
+            (end, start)
+        } else {
+            (start, end)
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleAlgebraicRay2 {
+                frame: self.data.semicircle.data.frame.clone(),
+                start,
+                end,
+                center: self.data.semicircle.center_point_image(policy)?,
+                radius_squared: self.data.semicircle.radial_distance()
+                    * self.data.semicircle.radial_distance(),
+                clockwise: self.data.semicircle.is_clockwise() ^ self.data.reversed,
+            },
+        ))
     }
 
     pub(crate) fn conservative_bounds(&self) -> CurveResult<Classification<Aabb2>> {
@@ -23541,20 +23963,44 @@ mod conversion_tests {
     fn synthetic_independent_unit_cusp_semicircle(
         policy: &CurveContext,
     ) -> BezierAlgebraicCuspSemicircle2 {
+        synthetic_independent_unit_cusp_semicircle_with_center_x(vec![Real::zero()], policy)
+    }
+
+    #[cfg(feature = "predicates")]
+    fn synthetic_independent_unit_cusp_semicircle_with_center_x(
+        source_x_numerator: Vec<Real>,
+        policy: &CurveContext,
+    ) -> BezierAlgebraicCuspSemicircle2 {
         let third = (Real::one() / Real::from(3_i8)).unwrap();
+        synthetic_selected_cusp_semicircle(
+            source_x_numerator,
+            third,
+            (Real::one() / Real::from(2_i8)).unwrap(),
+            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+            Real::one(),
+            policy,
+        )
+    }
+
+    #[cfg(feature = "predicates")]
+    fn synthetic_selected_cusp_semicircle(
+        source_x_numerator: Vec<Real>,
+        root_square: Real,
+        lower: Real,
+        upper: Real,
+        radial_distance: Real,
+        policy: &CurveContext,
+    ) -> BezierAlgebraicCuspSemicircle2 {
         let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
-            vec![-third, Real::zero(), Real::one()],
+            vec![-root_square, Real::zero(), Real::one()],
             policy,
         )
         .unwrap() else {
             panic!("independent cusp polynomial must be exact");
         };
-        let Classification::Decided(interval) = BezierParameterInterval::try_new(
-            (Real::one() / Real::from(2_i8)).unwrap(),
-            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-            policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(interval) =
+            BezierParameterInterval::try_new(lower, upper, policy).unwrap()
+        else {
             panic!("independent cusp interval must be exact");
         };
         let Classification::Decided(parameter) =
@@ -23575,14 +24021,14 @@ mod conversion_tests {
                     data: Arc::new(BezierParallelAlgebraicCuspFrameData2 {
                         parallel: source.parallel_left(Real::zero()).unwrap(),
                         parameter,
-                        source_x_numerator: vec![Real::zero()],
+                        source_x_numerator,
                         source_y_numerator: vec![Real::zero()],
                         normal_x_numerator: vec![Real::one()],
                         normal_y_numerator: vec![Real::zero()],
                         denominator: vec![Real::one()],
                     }),
                 },
-                radial_distance: Real::one(),
+                radial_distance,
                 clockwise: false,
             }),
         }
@@ -24024,6 +24470,156 @@ mod conversion_tests {
                 .into_value();
             assert!(booleans.intersection().has_algebraic_fragments());
             assert!(booleans.difference().is_empty());
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_disk_classifies_an_independent_selected_root_directly() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // The circle center is alpha=sqrt(1/3). The query x-coordinate is
+            // the independently selected beta=sqrt(1/2), so no rationalized
+            // point or diagonal selected-root identity is available.
+            let upper = synthetic_independent_unit_cusp_semicircle_with_center_x(
+                vec![Real::zero(), Real::one()],
+                &policy,
+            );
+            let lower = BezierAlgebraicCuspSemicircle2 {
+                data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                    frame: upper.data.frame.clone(),
+                    radial_distance: -Real::one(),
+                    clockwise: false,
+                }),
+            };
+            let boundary = crate::CurveRegionBoundaryLoop2::new(
+                vec![
+                    crate::BezierSplitFragment2::AlgebraicCuspSemicircle(
+                        BezierAlgebraicCuspSemicircleFragment2::full(upper.clone(), &policy),
+                    ),
+                    crate::BezierSplitFragment2::AlgebraicCuspSemicircle(
+                        BezierAlgebraicCuspSemicircleFragment2::full(lower, &policy),
+                    ),
+                ],
+                &policy,
+            )
+            .expect("the two selected-field semicircles must close exactly");
+            let region = crate::CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![crate::CurveRegionLoopRole::Material],
+                vec![crate::FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+
+            let BezierParameter2::Algebraic(query_parameter) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                panic!("the independent query root must remain algebraic");
+            };
+            let query_line = |start: i8, end: i8| {
+                RationalBezier2::try_from_subcurve(&crate::BezierSubcurve2::Quadratic(
+                    QuadraticBezier2::from_line_segment(
+                        LineSeg2::try_new(
+                            Point2::from_values(start, 0),
+                            Point2::from_values(end, 0),
+                        )
+                        .unwrap(),
+                    ),
+                ))
+                .unwrap()
+            };
+            let inside = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                query_line(0, 1),
+                query_parameter.clone(),
+                &policy,
+            );
+            assert!(inside.exact_rational_point(&policy).is_none());
+            assert_eq!(
+                region
+                    .classify_algebraic_point_raw(&inside, &policy)
+                    .unwrap(),
+                Classification::Decided(crate::RegionPointLocation::Inside),
+            );
+
+            let outside = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                query_line(2, 3),
+                query_parameter,
+                &policy,
+            );
+            assert_eq!(
+                region
+                    .classify_algebraic_point_raw(&outside, &policy)
+                    .unwrap(),
+                Classification::Decided(crate::RegionPointLocation::Outside),
+            );
+
+            let Classification::Decided(boundary) = upper.point_at(&half, &policy).unwrap() else {
+                panic!("the selected-field boundary point must remain exact");
+            };
+            assert_eq!(
+                region
+                    .classify_algebraic_point_raw(&boundary, &policy)
+                    .unwrap(),
+                Classification::Decided(crate::RegionPointLocation::Boundary),
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn nested_independent_cusp_disks_complete_all_region_booleans() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let center_numerator = vec![Real::zero(), Real::one()];
+            let first = synthetic_selected_cusp_semicircle(
+                center_numerator.clone(),
+                (Real::one() / Real::from(3_i8)).unwrap(),
+                (Real::one() / Real::from(2_i8)).unwrap(),
+                (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+                Real::one(),
+                &policy,
+            );
+            let second = synthetic_selected_cusp_semicircle(
+                center_numerator,
+                (Real::one() / Real::from(2_i8)).unwrap(),
+                (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+                (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+                Real::from(3_i8),
+                &policy,
+            );
+            let disk = |upper: BezierAlgebraicCuspSemicircle2| {
+                let lower = upper.complementary_half();
+                let boundary = crate::CurveRegionBoundaryLoop2::new(
+                    vec![
+                        crate::BezierSplitFragment2::AlgebraicCuspSemicircle(
+                            BezierAlgebraicCuspSemicircleFragment2::full(upper, &policy),
+                        ),
+                        crate::BezierSplitFragment2::AlgebraicCuspSemicircle(
+                            BezierAlgebraicCuspSemicircleFragment2::full(lower, &policy),
+                        ),
+                    ],
+                    &policy,
+                )
+                .unwrap();
+                crate::CurveRegion2::try_new_with_loop_topology(
+                    vec![boundary],
+                    vec![crate::CurveRegionLoopRole::Material],
+                    vec![crate::FillRule::NonZero],
+                    vec![crate::CurveBoundaryInteriorSide2::Left],
+                )
+                .unwrap()
+            };
+            let inner = disk(first);
+            let outer = disk(second);
+            let booleans = inner
+                .boolean_regions(&outer, &policy)
+                .expect("independent selected-field disks must complete one Boolean topology")
+                .into_value();
+            assert_eq!(booleans.topology_point_classification_count(), 2);
+            assert!(booleans.union().has_algebraic_fragments());
+            assert!(booleans.intersection().has_algebraic_fragments());
+            assert!(booleans.difference().is_empty());
+            assert!(booleans.xor().has_algebraic_fragments());
         }
     }
 

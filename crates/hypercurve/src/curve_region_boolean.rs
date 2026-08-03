@@ -3795,9 +3795,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .point_at(&parameter, &self.data.policy)
             .map_err(|cause| self.invalid(carrier_index, cause))?
         {
-            Classification::Decided(point) => point
-                .exact_rational_point(&self.data.policy)
-                .ok_or_else(|| self.blocked(carrier_index, UncertaintyReason::Unsupported))?,
+            Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 return Err(self.blocked(carrier_index, reason));
             }
@@ -3812,9 +3810,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Err(self.blocked(carrier_index, reason));
             }
         };
-        let (mut tangent_x, mut tangent_y) = tangent
-            .exact_rational_vector(&self.data.policy)
-            .ok_or_else(|| self.blocked(carrier_index, UncertaintyReason::Unsupported))?;
+        let (Some(representative_point), Some((mut tangent_x, mut tangent_y))) = (
+            representative.exact_rational_point(&self.data.policy),
+            tangent.exact_rational_vector(&self.data.policy),
+        ) else {
+            #[cfg(feature = "predicates")]
+            {
+                return self.regularized_algebraic_cusp_fragment_action_in_selected_field(
+                    carrier_index,
+                    fragment,
+                    &representative,
+                    &tangent,
+                );
+            }
+            #[cfg(not(feature = "predicates"))]
+            {
+                return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+            }
+        };
         if fragment.is_reversed() {
             tangent_x = -tangent_x;
             tangent_y = -tangent_y;
@@ -3824,7 +3837,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         );
         let left = self.fragment_side_location(
             carrier_index,
-            &representative,
+            &representative_point,
             Some(&source_parameter),
             &tangent_x,
             &tangent_y,
@@ -3832,7 +3845,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         )?;
         let right = self.fragment_side_location(
             carrier_index,
-            &representative,
+            &representative_point,
             Some(&source_parameter),
             &tangent_x,
             &tangent_y,
@@ -3842,6 +3855,144 @@ impl<'a> CurveRegionBooleanContext<'a> {
             left == RegionPointLocation::Inside,
             right == RegionPointLocation::Inside,
         ))
+    }
+
+    #[cfg(feature = "predicates")]
+    fn regularized_algebraic_cusp_fragment_action_in_selected_field(
+        &self,
+        carrier_index: usize,
+        fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        representative: &crate::RationalBezierAlgebraicPointImage2,
+        tangent: &crate::RationalBezierAlgebraicTangentImage2,
+    ) -> ExactCurveResult<RegionFragmentAction> {
+        let tangent_x = tangent
+            .coordinate_sign(true, &self.data.policy)
+            .map_err(|cause| self.invalid(carrier_index, cause))?;
+        let tangent_y = tangent
+            .coordinate_sign(false, &self.data.policy)
+            .map_err(|cause| self.invalid(carrier_index, cause))?;
+        let reverse_sign = |sign| match sign {
+            RealSign::Negative => RealSign::Positive,
+            RealSign::Zero => RealSign::Zero,
+            RealSign::Positive => RealSign::Negative,
+        };
+        let tangent_x = tangent_x.map(|sign| {
+            if fragment.is_reversed() {
+                reverse_sign(sign)
+            } else {
+                sign
+            }
+        });
+        let tangent_y = tangent_y.map(|sign| {
+            if fragment.is_reversed() {
+                reverse_sign(sign)
+            } else {
+                sign
+            }
+        });
+        let left = self.algebraic_cusp_fragment_side_location(
+            carrier_index,
+            representative,
+            tangent_x,
+            tangent_y,
+            true,
+        )?;
+        let right = self.algebraic_cusp_fragment_side_location(
+            carrier_index,
+            representative,
+            tangent_x,
+            tangent_y,
+            false,
+        )?;
+        Ok(action_from_result_sides(
+            left == RegionPointLocation::Inside,
+            right == RegionPointLocation::Inside,
+        ))
+    }
+
+    #[cfg(feature = "predicates")]
+    fn algebraic_cusp_fragment_side_location(
+        &self,
+        carrier_index: usize,
+        representative: &crate::RationalBezierAlgebraicPointImage2,
+        tangent_x: Classification<RealSign>,
+        tangent_y: Classification<RealSign>,
+        left: bool,
+    ) -> ExactCurveResult<RegionPointLocation> {
+        let carrier = &self.data.carriers[carrier_index];
+        let reverse_sign = |sign| match sign {
+            RealSign::Negative => RealSign::Positive,
+            RealSign::Zero => RealSign::Zero,
+            RealSign::Positive => RealSign::Negative,
+        };
+        let mut last_reason = UncertaintyReason::RealSign;
+        let tangent_x = match tangent_x {
+            Classification::Decided(sign) => Some(sign),
+            Classification::Uncertain(reason) => {
+                last_reason = reason;
+                None
+            }
+        };
+        let tangent_y = match tangent_y {
+            Classification::Decided(sign) => Some(sign),
+            Classification::Uncertain(reason) => {
+                last_reason = reason;
+                None
+            }
+        };
+        let normal_x = tangent_y.map(reverse_sign);
+        let normal_y = tangent_x;
+        let normal_x = if left {
+            normal_x
+        } else {
+            normal_x.map(reverse_sign)
+        };
+        let normal_y = if left {
+            normal_y
+        } else {
+            normal_y.map(reverse_sign)
+        };
+        let unit = |sign: Option<RealSign>| match sign {
+            Some(RealSign::Negative) => -1_i8,
+            Some(RealSign::Positive) => 1_i8,
+            Some(RealSign::Zero) | None => 0_i8,
+        };
+        let x = unit(normal_x);
+        let y = unit(normal_y);
+        if x == 0 && y == 0 {
+            return Err(self.blocked(carrier_index, last_reason));
+        }
+        let directions = [
+            (x, 0_i8),
+            (0_i8, y),
+            (x, y),
+            (x.saturating_mul(2), y),
+            (x, y.saturating_mul(2)),
+            (x.saturating_mul(3), y),
+            (x, y.saturating_mul(3)),
+        ];
+        for (direction_x, direction_y) in directions {
+            if direction_x == 0 && direction_y == 0 {
+                continue;
+            }
+            match self
+                .data
+                .first
+                .classify_algebraic_point_from_cusp_boundary_side_ray(
+                    representative,
+                    Real::from(direction_x),
+                    Real::from(direction_y),
+                    carrier.loop_index,
+                    carrier.fragment_index,
+                    &self.data.policy,
+                )
+                .map_err(|cause| self.invalid(carrier_index, cause))?
+            {
+                Classification::Decided(location) => return Ok(location),
+                Classification::Uncertain(reason) => last_reason = reason,
+            }
+        }
+        Err(self.blocked(carrier_index, last_reason))
     }
 
     fn regularized_fragment_owns_overlap(
@@ -7539,6 +7690,65 @@ mod certified_successor_tests {
             filled_side_is_left: true,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn unary_cusp_regularization_samples_sides_in_the_selected_field() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = cusp_test_semicircle(&policy);
+            let second = first.complementary_half();
+            let forward = vec![
+                BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    BezierAlgebraicCuspSemicircleFragment2::full(first, &policy),
+                ),
+                BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    BezierAlgebraicCuspSemicircleFragment2::full(second, &policy),
+                ),
+            ];
+            let reversed = forward
+                .iter()
+                .rev()
+                .map(|fragment| fragment.reversed().unwrap())
+                .collect::<Vec<_>>();
+            for (fragments, interior_side, expected_action) in [
+                (
+                    forward,
+                    crate::CurveBoundaryInteriorSide2::Left,
+                    RegionFragmentAction::Keep,
+                ),
+                (
+                    reversed,
+                    crate::CurveBoundaryInteriorSide2::Right,
+                    RegionFragmentAction::KeepReversed,
+                ),
+            ] {
+                let boundary = CurveRegionBoundaryLoop2::new(fragments, &policy)
+                    .expect("complementary selected-field cusp halves must close");
+                let region = CurveRegion2::try_new_with_loop_topology(
+                    vec![boundary],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![interior_side],
+                )
+                .unwrap();
+                let context = CurveRegionBooleanContext::try_new_unary(&region, &policy).unwrap();
+                assert_eq!(context.data.carriers.len(), 2);
+                for carrier_index in 0..2 {
+                    let RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment) =
+                        &context.data.carriers[carrier_index].geometry
+                    else {
+                        panic!("the selected-field disk must retain both cusp carriers");
+                    };
+                    assert_eq!(
+                        context
+                            .regularized_algebraic_cusp_fragment_action(carrier_index, fragment)
+                            .expect("selected-field side rays must decide"),
+                        expected_action,
+                    );
+                }
+            }
         }
     }
 
