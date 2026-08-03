@@ -107,6 +107,12 @@ impl CurveRegionParameter2 {
         matches!(self.data, CurveRegionParameterData2::AlgebraicCusp(_))
     }
 
+    /// Returns true when this carrier parameter is represented directly by a
+    /// [`Real`] rather than retained algebraic evidence.
+    pub const fn is_exact(&self) -> bool {
+        self.as_exact().is_some()
+    }
+
     pub(crate) fn as_algebraic_cusp(&self) -> Option<&BezierAlgebraicCuspSemicircleParameter2> {
         match &self.data {
             CurveRegionParameterData2::AlgebraicCusp(parameter) => Some(parameter),
@@ -137,6 +143,16 @@ impl CurveRegionParameter2 {
         }
     }
 
+    pub(crate) fn same_value(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        Ok(self
+            .cmp_by_refinement(other, policy)?
+            .map(|ordering| ordering == Ordering::Equal))
+    }
+
     pub(crate) fn strict_rational_between_ordered(
         &self,
         other: &Self,
@@ -161,7 +177,7 @@ impl CurveRegionParameter2 {
     }
 }
 
-/// Ascending exact parameter range on one retained curved-region carrier.
+/// Oriented exact parameter range on one retained curved-region carrier.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionParameterRange2 {
     start: CurveRegionParameter2,
@@ -181,6 +197,27 @@ impl CurveRegionParameterRange2 {
     /// Returns the ascending range end.
     pub const fn end(&self) -> &CurveRegionParameter2 {
         &self.end
+    }
+
+    /// Returns both ordinary Bezier parameters when this range does not use an
+    /// algebraic-cusp local cut.
+    pub fn as_bezier_parameters(&self) -> Option<(&BezierParameter2, &BezierParameter2)> {
+        Some((
+            self.start.as_bezier_parameter()?,
+            self.end.as_bezier_parameter()?,
+        ))
+    }
+
+    /// Returns both directly represented endpoints.
+    pub fn exact_endpoints(&self) -> Option<(&Real, &Real)> {
+        Some((self.start.as_exact()?, self.end.as_exact()?))
+    }
+
+    pub(crate) fn from_bezier_range(range: BezierParameterRange2) -> Self {
+        Self::new_validated(
+            CurveRegionParameter2::from_bezier(range.start().clone()),
+            CurveRegionParameter2::from_bezier(range.end().clone()),
+        )
     }
 }
 

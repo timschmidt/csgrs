@@ -5,6 +5,11 @@ use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
+use crate::bezier_offset::{
+    BezierAlgebraicCuspSemicircleContactLocation2, BezierAlgebraicCuspSemicirclePairIntersections2,
+    BezierAlgebraicCuspSemicircleParallelIntersections2, BezierAlgebraicCuspSemicircleParameter2,
+    BezierAlgebraicCuspSemicircleRationalIntersections2,
+};
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
 use crate::classify::{compare_reals, real_sign};
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
@@ -21,8 +26,9 @@ use crate::{
     Classification, Curve2, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
     CurveOperation2, CurveOutcome, CurvePathBooleanOperand2, CurveRegion2, CurveRegionLoopRole,
-    CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, QuadraticBezier2,
-    RationalBezier2, RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
+    CurveRegionParameter2, CurveRegionParameterRange2, CurveResult, ExactCurveError,
+    ExactCurveResult, FillRule, LineSeg2, QuadraticBezier2, RationalBezier2,
+    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
     RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
     RationalBezierPointIncidence2, Real, RealSign, RegionPointLocation, Segment2,
     UncertaintyReason,
@@ -52,8 +58,8 @@ pub struct CurveRegionIntersectionOverlap2 {
     first: CurveRegionCarrierRef2,
     second: CurveRegionCarrierRef2,
     source: Option<CurveIntersectionOverlap2>,
-    first_range: BezierParameterRange2,
-    second_range: BezierParameterRange2,
+    first_range: CurveRegionParameterRange2,
+    second_range: CurveRegionParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
 }
 
@@ -128,8 +134,8 @@ struct RegionCarrier {
     fragment_index: usize,
     family: CurveFamily2,
     geometry: RegionCarrierGeometry,
-    start: BezierParameter2,
-    end: BezierParameter2,
+    start: CurveRegionParameter2,
+    end: CurveRegionParameter2,
     reversed: bool,
     filled_side_is_left: bool,
     image_is_injective: OnceLock<bool>,
@@ -147,6 +153,7 @@ struct RegionCarrierPair {
 enum RegionCarrierGeometry {
     Bezier(BezierSubcurve2),
     AnalyticParallel(BezierParallel2),
+    AlgebraicCuspSemicircle(crate::BezierAlgebraicCuspSemicircleFragment2),
 }
 
 #[derive(Debug)]
@@ -157,25 +164,25 @@ enum RegionCarrierPairContext {
     ParallelSameImage,
     ParallelSelf,
     BezierSelf,
+    CuspRational { cusp_is_first: bool },
+    CuspParallel { cusp_is_first: bool },
+    CuspPair,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum RegionPairContactEvidence {
-    Bezier(CurveIntersectionContact2),
-    Direct {
-        first_parameter: BezierParameter2,
-        second_parameter: BezierParameter2,
-        point: Option<RationalBezierIntersectionPointEvidence2>,
-        certified_transverse: bool,
-        tangent_cross_sign: Option<RealSign>,
-    },
+struct RegionPairContactEvidence {
+    first_parameter: CurveRegionParameter2,
+    second_parameter: CurveRegionParameter2,
+    point: Option<RationalBezierIntersectionPointEvidence2>,
+    certified_transverse: bool,
+    tangent_cross_sign: Option<RealSign>,
 }
 
 #[derive(Clone, Debug)]
 struct RegionPairOverlap {
     source: Option<CurveIntersectionOverlap2>,
-    first_range: BezierParameterRange2,
-    second_range: BezierParameterRange2,
+    first_range: CurveRegionParameterRange2,
+    second_range: CurveRegionParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
 }
 
@@ -196,7 +203,7 @@ struct RegionPairResult {
 
 #[derive(Clone, Debug)]
 struct CarrierEvent {
-    parameter: BezierParameter2,
+    parameter: CurveRegionParameter2,
     topology_vertex: Option<usize>,
 }
 
@@ -205,22 +212,22 @@ struct ContactVertex {
     point: Option<RationalBezierIntersectionPointEvidence2>,
     topology_vertex: usize,
     carrier_indices: [usize; 2],
-    parameters: [BezierParameter2; 2],
+    parameters: [CurveRegionParameter2; 2],
 }
 
 #[derive(Clone, Debug)]
 struct CarrierOverlap {
     first_carrier_index: usize,
     second_carrier_index: usize,
-    first_range: BezierParameterRange2,
-    second_range: BezierParameterRange2,
+    first_range: CurveRegionParameterRange2,
+    second_range: CurveRegionParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
 }
 
 #[derive(Debug)]
 enum CarrierOverlapClip {
     Unmatched,
-    Matched(Option<(BezierParameterRange2, BezierParameterRange2)>),
+    Matched(Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>),
 }
 
 #[derive(Clone, Debug)]
@@ -229,7 +236,7 @@ struct TransitionContactCandidate {
     second_carrier: usize,
     certified_transverse: bool,
     cross_is_positive: Option<bool>,
-    self_parameters: Option<[BezierParameter2; 2]>,
+    self_parameters: Option<[CurveRegionParameter2; 2]>,
 }
 
 #[derive(Clone, Debug)]
@@ -328,12 +335,12 @@ impl CurveRegionIntersectionContact2 {
     }
 
     /// Returns the exact parameter on the first retained carrier.
-    pub const fn first_parameter(&self) -> &BezierParameter2 {
+    pub const fn first_parameter(&self) -> &CurveRegionParameter2 {
         self.evidence.first_parameter()
     }
 
     /// Returns the exact parameter on the second retained carrier.
-    pub const fn second_parameter(&self) -> &BezierParameter2 {
+    pub const fn second_parameter(&self) -> &CurveRegionParameter2 {
         self.evidence.second_parameter()
     }
 
@@ -372,12 +379,12 @@ impl CurveRegionIntersectionOverlap2 {
     }
 
     /// Returns the exact overlap range clipped to the first retained carrier.
-    pub const fn first_range(&self) -> &BezierParameterRange2 {
+    pub const fn first_range(&self) -> &CurveRegionParameterRange2 {
         &self.first_range
     }
 
     /// Returns the exact overlap range clipped to the second retained carrier.
-    pub const fn second_range(&self) -> &BezierParameterRange2 {
+    pub const fn second_range(&self) -> &CurveRegionParameterRange2 {
         &self.second_range
     }
 
@@ -433,51 +440,73 @@ impl CurveRegionIntersectionBlocker2 {
 }
 
 impl RegionPairContactEvidence {
-    const fn first_parameter(&self) -> &BezierParameter2 {
-        match self {
-            Self::Bezier(contact) => contact.first().local_parameter(),
-            Self::Direct {
-                first_parameter, ..
-            } => first_parameter,
+    fn from_bezier(contact: &CurveIntersectionContact2) -> Self {
+        Self {
+            first_parameter: CurveRegionParameter2::from_bezier(
+                contact.first().local_parameter().clone(),
+            ),
+            second_parameter: CurveRegionParameter2::from_bezier(
+                contact.second().local_parameter().clone(),
+            ),
+            point: Some(contact.point().clone()),
+            certified_transverse: contact.is_certified_transverse(),
+            tangent_cross_sign: None,
         }
     }
 
-    const fn second_parameter(&self) -> &BezierParameter2 {
-        match self {
-            Self::Bezier(contact) => contact.second().local_parameter(),
-            Self::Direct {
-                second_parameter, ..
-            } => second_parameter,
+    fn direct_bezier(
+        first_parameter: BezierParameter2,
+        second_parameter: BezierParameter2,
+        point: Option<RationalBezierIntersectionPointEvidence2>,
+        certified_transverse: bool,
+        tangent_cross_sign: Option<RealSign>,
+    ) -> Self {
+        Self::direct(
+            CurveRegionParameter2::from_bezier(first_parameter),
+            CurveRegionParameter2::from_bezier(second_parameter),
+            point,
+            certified_transverse,
+            tangent_cross_sign,
+        )
+    }
+
+    fn direct(
+        first_parameter: CurveRegionParameter2,
+        second_parameter: CurveRegionParameter2,
+        point: Option<RationalBezierIntersectionPointEvidence2>,
+        certified_transverse: bool,
+        tangent_cross_sign: Option<RealSign>,
+    ) -> Self {
+        Self {
+            first_parameter,
+            second_parameter,
+            point,
+            certified_transverse,
+            tangent_cross_sign,
         }
+    }
+
+    const fn first_parameter(&self) -> &CurveRegionParameter2 {
+        &self.first_parameter
+    }
+
+    const fn second_parameter(&self) -> &CurveRegionParameter2 {
+        &self.second_parameter
     }
 
     const fn point(&self) -> Option<&RationalBezierIntersectionPointEvidence2> {
-        match self {
-            Self::Bezier(contact) => Some(contact.point()),
-            Self::Direct { point, .. } => point.as_ref(),
-        }
+        self.point.as_ref()
     }
 
     const fn is_certified_transverse(&self) -> bool {
-        match self {
-            Self::Bezier(contact) => contact.is_certified_transverse(),
-            Self::Direct {
-                certified_transverse,
-                ..
-            } => *certified_transverse,
-        }
+        self.certified_transverse
     }
 
     const fn tangent_cross_is_positive(&self) -> Option<bool> {
-        match self {
-            Self::Bezier(_) => None,
-            Self::Direct {
-                tangent_cross_sign, ..
-            } => match tangent_cross_sign {
-                Some(RealSign::Positive) => Some(true),
-                Some(RealSign::Negative) => Some(false),
-                Some(RealSign::Zero) | None => None,
-            },
+        match self.tangent_cross_sign {
+            Some(RealSign::Positive) => Some(true),
+            Some(RealSign::Negative) => Some(false),
+            Some(RealSign::Zero) | None => None,
         }
     }
 }
@@ -712,7 +741,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .iter()
             .map(|carrier| match &carrier.geometry {
                 RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
-                RegionCarrierGeometry::AnalyticParallel(_) => None,
+                RegionCarrierGeometry::AnalyticParallel(_)
+                | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
             })
             .collect::<Vec<_>>();
         let mut pairs = Vec::with_capacity(
@@ -770,7 +800,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .iter()
             .map(|carrier| match &carrier.geometry {
                 RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
-                RegionCarrierGeometry::AnalyticParallel(_) => None,
+                RegionCarrierGeometry::AnalyticParallel(_)
+                | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
             })
             .collect::<Vec<_>>();
         let mut pairs = Vec::with_capacity(carrier_count.saturating_mul(2));
@@ -798,6 +829,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             RegionCarrierPairContext::ParallelSelf
                         }
                         RegionCarrierGeometry::Bezier(_) => RegionCarrierPairContext::BezierSelf,
+                        RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => unreachable!(
+                            "an algebraic cusp semicircle is an injective retained carrier"
+                        ),
                     },
                 });
             }
@@ -1205,13 +1239,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 } else {
                     (other_parameter, parallel_parameter.clone())
                 };
-                contacts.push(RegionPairContactEvidence::Direct {
+                contacts.push(RegionPairContactEvidence::direct_bezier(
                     first_parameter,
                     second_parameter,
                     point,
-                    certified_transverse: *certified_transverse,
-                    tangent_cross_sign: None,
-                });
+                    *certified_transverse,
+                    None,
+                ));
             }
             return Ok(Classification::Decided(Some(RegionPairResult {
                 contacts,
@@ -1335,15 +1369,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 } else {
                     (other_parameter, parallel_parameter.clone())
                 };
-                result_contacts.push(RegionPairContactEvidence::Direct {
+                result_contacts.push(RegionPairContactEvidence::direct_bezier(
                     first_parameter,
                     second_parameter,
-                    point: Some(RationalBezierIntersectionPointEvidence2::Exact(
+                    Some(RationalBezierIntersectionPointEvidence2::Exact(
                         point.clone(),
                     )),
-                    certified_transverse: tangent_cross_sign.is_some(),
+                    tangent_cross_sign.is_some(),
                     tangent_cross_sign,
-                });
+                ));
             }
         }
         Ok(Classification::Decided(Some(RegionPairResult {
@@ -1363,16 +1397,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     contacts: result
                         .contacts()
                         .iter()
-                        .cloned()
-                        .map(RegionPairContactEvidence::Bezier)
+                        .map(RegionPairContactEvidence::from_bezier)
                         .collect(),
                     overlaps: result
                         .overlaps()
                         .iter()
                         .cloned()
                         .map(|source| RegionPairOverlap {
-                            first_range: source.first_range().clone(),
-                            second_range: source.second_range().clone(),
+                            first_range: CurveRegionParameterRange2::from_bezier_range(
+                                source.first_range().clone(),
+                            ),
+                            second_range: CurveRegionParameterRange2::from_bezier_range(
+                                source.second_range().clone(),
+                            ),
                             orientation: source.orientation(),
                             source: Some(source),
                         })
@@ -1400,13 +1437,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                 };
                 let contact_evidence = |contact: &crate::RationalBezierIntersectionContact2| {
-                    RegionPairContactEvidence::Direct {
-                        first_parameter: contact.first_parameter().clone(),
-                        second_parameter: contact.second_parameter().clone(),
-                        point: Some(contact.point().clone()),
-                        certified_transverse: contact.is_certified_transverse(),
-                        tangent_cross_sign: contact.tangent_cross_sign(),
-                    }
+                    RegionPairContactEvidence::direct_bezier(
+                        contact.first_parameter().clone(),
+                        contact.second_parameter().clone(),
+                        Some(contact.point().clone()),
+                        contact.is_certified_transverse(),
+                        contact.tangent_cross_sign(),
+                    )
                 };
                 let (contacts, blockers) = match result {
                     RationalBezierIntersectionContacts2::NoIntersection => (Vec::new(), Vec::new()),
@@ -1486,13 +1523,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     }),
                                 )
                             };
-                        RegionPairContactEvidence::Direct {
+                        RegionPairContactEvidence::direct_bezier(
                             first_parameter,
                             second_parameter,
-                            point: Some(contact.point().clone()),
-                            certified_transverse: contact.is_certified_transverse(),
+                            Some(contact.point().clone()),
+                            contact.is_certified_transverse(),
                             tangent_cross_sign,
-                        }
+                        )
                     })
                     .collect();
                 let overlaps = result
@@ -1512,8 +1549,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         };
                         RegionPairOverlap {
                             source: None,
-                            first_range,
-                            second_range,
+                            first_range: CurveRegionParameterRange2::from_bezier_range(first_range),
+                            second_range: CurveRegionParameterRange2::from_bezier_range(
+                                second_range,
+                            ),
                             orientation: overlap.orientation(),
                         }
                     })
@@ -1571,7 +1610,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                     RegionCarrierPairContext::Bezier(_)
                     | RegionCarrierPairContext::BezierSelf
-                    | RegionCarrierPairContext::ParallelRational { .. } => unreachable!(),
+                    | RegionCarrierPairContext::ParallelRational { .. }
+                    | RegionCarrierPairContext::CuspRational { .. }
+                    | RegionCarrierPairContext::CuspParallel { .. }
+                    | RegionCarrierPairContext::CuspPair => unreachable!(),
                 }
                 let mut contacts = Vec::new();
                 let mut overlaps = Vec::new();
@@ -1592,34 +1634,49 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             contact.second_parameter().clone(),
                         );
                         let mut tangent_cross_sign = contact.tangent_cross_sign();
+                        let mut first_region_parameter =
+                            CurveRegionParameter2::from_bezier(first_parameter.clone());
+                        let mut second_region_parameter =
+                            CurveRegionParameter2::from_bezier(second_parameter.clone());
                         if self_contacts
                             && pair.first_carrier_index != pair.second_carrier_index
-                            && !(parameter_in_carrier(&first_parameter, first, &self.data.policy)?
-                                && parameter_in_carrier(
-                                    &second_parameter,
-                                    second,
-                                    &self.data.policy,
-                                )?)
+                            && !(parameter_in_carrier(
+                                &first_region_parameter,
+                                first,
+                                &self.data.policy,
+                            )? && parameter_in_carrier(
+                                &second_region_parameter,
+                                second,
+                                &self.data.policy,
+                            )?)
                         {
                             std::mem::swap(&mut first_parameter, &mut second_parameter);
+                            std::mem::swap(
+                                &mut first_region_parameter,
+                                &mut second_region_parameter,
+                            );
                             tangent_cross_sign = tangent_cross_sign.map(|sign| match sign {
                                 RealSign::Positive => RealSign::Negative,
                                 RealSign::Negative => RealSign::Positive,
                                 RealSign::Zero => RealSign::Zero,
                             });
                         }
-                        contacts.push(RegionPairContactEvidence::Direct {
+                        contacts.push(RegionPairContactEvidence::direct_bezier(
                             first_parameter,
                             second_parameter,
-                            point: None,
-                            certified_transverse: contact.is_certified_transverse(),
+                            None,
+                            contact.is_certified_transverse(),
                             tangent_cross_sign,
-                        });
+                        ));
                     }
                     overlaps.extend(result.overlaps().iter().map(|overlap| RegionPairOverlap {
                         source: None,
-                        first_range: overlap.first_range().clone(),
-                        second_range: overlap.second_range().clone(),
+                        first_range: CurveRegionParameterRange2::from_bezier_range(
+                            overlap.first_range().clone(),
+                        ),
+                        second_range: CurveRegionParameterRange2::from_bezier_range(
+                            overlap.second_range().clone(),
+                        ),
                         orientation: overlap.orientation(),
                     }));
                     if !result.parameter_components().is_empty() {
@@ -1633,6 +1690,272 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     contacts,
                     overlaps,
                     blockers,
+                })
+            }
+            RegionCarrierPairContext::CuspRational { cusp_is_first } => {
+                let (cusp, curve) = if *cusp_is_first {
+                    (first.geometry.algebraic_cusp(), second.geometry.bezier())
+                } else {
+                    (second.geometry.algebraic_cusp(), first.geometry.bezier())
+                };
+                let rational = RationalBezier2::try_from_subcurve(curve)
+                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
+                let (intersections, parameter_map) = match cusp
+                    .semicircle()
+                    .rational_intersections_with_parameter_map(&rational, &self.data.policy)
+                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(reason) => {
+                        return Ok(RegionPairResult {
+                            contacts: Vec::new(),
+                            overlaps: Vec::new(),
+                            blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                        });
+                    }
+                };
+                let BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) =
+                    intersections
+                else {
+                    return Ok(RegionPairResult {
+                        contacts: Vec::new(),
+                        overlaps: Vec::new(),
+                        blockers: vec![RegionPairBlocker::Uncertain(match intersections {
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle => {
+                                UncertaintyReason::Boundary
+                            }
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
+                                UncertaintyReason::Unsupported
+                            }
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_) => {
+                                unreachable!()
+                            }
+                        })],
+                    });
+                };
+                let mut retained = Vec::with_capacity(contacts.len());
+                for contact in contacts {
+                    let cusp_parameter =
+                        cusp_contact_parameter(contact.location).unwrap_or_else(|| {
+                            parameter_map
+                                .as_ref()
+                                .expect(
+                                    "an interior cusp/rational contact retains its parameter map",
+                                )
+                                .contact_parameter(&contact)
+                        });
+                    let tangent_cross_sign =
+                        oriented_cusp_cross_sign(contact.tangent_cross_sign, *cusp_is_first);
+                    let (first_parameter, second_parameter) = if *cusp_is_first {
+                        (
+                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                            CurveRegionParameter2::from_bezier(contact.other_parameter),
+                        )
+                    } else {
+                        (
+                            CurveRegionParameter2::from_bezier(contact.other_parameter),
+                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                        )
+                    };
+                    retained.push(RegionPairContactEvidence::direct(
+                        first_parameter,
+                        second_parameter,
+                        Some(contact.point),
+                        tangent_cross_sign != RealSign::Zero,
+                        Some(tangent_cross_sign),
+                    ));
+                }
+                Ok(RegionPairResult {
+                    contacts: retained,
+                    overlaps: Vec::new(),
+                    blockers: Vec::new(),
+                })
+            }
+            RegionCarrierPairContext::CuspParallel { cusp_is_first } => {
+                let (cusp, parallel) = if *cusp_is_first {
+                    (first.geometry.algebraic_cusp(), second.geometry.parallel())
+                } else {
+                    (second.geometry.algebraic_cusp(), first.geometry.parallel())
+                };
+                let intersections = match cusp
+                    .semicircle()
+                    .parallel_intersections(parallel, &self.data.policy)
+                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(reason) => {
+                        return Ok(RegionPairResult {
+                            contacts: Vec::new(),
+                            overlaps: Vec::new(),
+                            blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                        });
+                    }
+                };
+                let BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) =
+                    intersections
+                else {
+                    return Ok(RegionPairResult {
+                        contacts: Vec::new(),
+                        overlaps: Vec::new(),
+                        blockers: vec![RegionPairBlocker::Uncertain(match intersections {
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircle => {
+                                UncertaintyReason::Boundary
+                            }
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
+                                UncertaintyReason::Unsupported
+                            }
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(_) => {
+                                unreachable!()
+                            }
+                        })],
+                    });
+                };
+                let parameter_map = if contacts.iter().any(|contact| {
+                    contact.location == BezierAlgebraicCuspSemicircleContactLocation2::Interior
+                }) {
+                    match cusp
+                        .semicircle()
+                        .parallel_parameter_map(parallel, &self.data.policy)
+                        .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                    {
+                        Classification::Decided(map) => Some(map),
+                        Classification::Uncertain(reason) => {
+                            return Ok(RegionPairResult {
+                                contacts: Vec::new(),
+                                overlaps: Vec::new(),
+                                blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                            });
+                        }
+                    }
+                } else {
+                    None
+                };
+                let mut retained = Vec::with_capacity(contacts.len());
+                for contact in contacts {
+                    let cusp_parameter =
+                        cusp_contact_parameter(contact.location).unwrap_or_else(|| {
+                            parameter_map
+                                .as_ref()
+                                .expect(
+                                    "an interior cusp/parallel contact retains its parameter map",
+                                )
+                                .contact_parameter(&contact)
+                        });
+                    let tangent_cross_sign = contact
+                        .tangent_cross_sign
+                        .map(|sign| oriented_cusp_cross_sign(sign, *cusp_is_first));
+                    let (first_parameter, second_parameter) = if *cusp_is_first {
+                        (
+                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                            CurveRegionParameter2::from_bezier(contact.parallel_parameter),
+                        )
+                    } else {
+                        (
+                            CurveRegionParameter2::from_bezier(contact.parallel_parameter),
+                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                        )
+                    };
+                    retained.push(RegionPairContactEvidence::direct(
+                        first_parameter,
+                        second_parameter,
+                        None,
+                        matches!(
+                            tangent_cross_sign,
+                            Some(RealSign::Positive | RealSign::Negative)
+                        ),
+                        tangent_cross_sign,
+                    ));
+                }
+                Ok(RegionPairResult {
+                    contacts: retained,
+                    overlaps: Vec::new(),
+                    blockers: Vec::new(),
+                })
+            }
+            RegionCarrierPairContext::CuspPair => {
+                let first_cusp = first.geometry.algebraic_cusp();
+                let second_cusp = second.geometry.algebraic_cusp();
+                let intersections = match first_cusp
+                    .semicircle()
+                    .pair_intersections(second_cusp.semicircle(), &self.data.policy)
+                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(reason) => {
+                        return Ok(RegionPairResult {
+                            contacts: Vec::new(),
+                            overlaps: Vec::new(),
+                            blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                        });
+                    }
+                };
+                let mut retained = Vec::new();
+                let mut overlaps = Vec::new();
+                match intersections {
+                    BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts => {}
+                    BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                        contacts,
+                        parameter_map,
+                    } => {
+                        retained.reserve(contacts.len());
+                        for contact in contacts {
+                            let tangent_cross_sign = contact.tangent_cross_sign;
+                            retained.push(RegionPairContactEvidence::direct(
+                                CurveRegionParameter2::from_algebraic_cusp(
+                                    parameter_map.first_contact_parameter(&contact),
+                                ),
+                                CurveRegionParameter2::from_algebraic_cusp(
+                                    parameter_map.second_contact_parameter(&contact),
+                                ),
+                                None,
+                                tangent_cross_sign != RealSign::Zero,
+                                Some(tangent_cross_sign),
+                            ));
+                        }
+                    }
+                    BezierAlgebraicCuspSemicirclePairIntersections2::EndpointContacts(contacts) => {
+                        retained.reserve(contacts.len());
+                        for contact in contacts {
+                            let first_parameter = cusp_contact_parameter(contact.first_location)
+                                .expect("an endpoint contact names a first cusp endpoint");
+                            let second_parameter = cusp_contact_parameter(contact.second_location)
+                                .expect("an endpoint contact names a second cusp endpoint");
+                            retained.push(RegionPairContactEvidence::direct(
+                                CurveRegionParameter2::from_algebraic_cusp(first_parameter),
+                                CurveRegionParameter2::from_algebraic_cusp(second_parameter),
+                                None,
+                                false,
+                                Some(RealSign::Zero),
+                            ));
+                        }
+                    }
+                    BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap) => {
+                        overlaps.push(RegionPairOverlap {
+                            source: None,
+                            first_range: CurveRegionParameterRange2::new_validated(
+                                CurveRegionParameter2::from_algebraic_cusp(
+                                    overlap.first_start_parameter(),
+                                ),
+                                CurveRegionParameter2::from_algebraic_cusp(
+                                    overlap.first_end_parameter(),
+                                ),
+                            ),
+                            second_range: CurveRegionParameterRange2::new_validated(
+                                CurveRegionParameter2::from_algebraic_cusp(
+                                    overlap.second_start_parameter(),
+                                ),
+                                CurveRegionParameter2::from_algebraic_cusp(
+                                    overlap.second_end_parameter(),
+                                ),
+                            ),
+                            orientation: overlap.orientation(),
+                        });
+                    }
+                }
+                Ok(RegionPairResult {
+                    contacts: retained,
+                    overlaps,
+                    blockers: Vec::new(),
                 })
             }
         }
@@ -1818,7 +2141,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         pair: &RegionCarrierPair,
         overlap: &RegionPairOverlap,
-    ) -> ExactCurveResult<Option<(BezierParameterRange2, BezierParameterRange2)>> {
+    ) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
         let first_carrier = &self.data.carriers[pair.first_carrier_index];
         let second_carrier = &self.data.carriers[pair.second_carrier_index];
         let first_intersects =
@@ -1836,6 +2159,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 overlap.second_range.clone(),
             )));
         }
+        let Some((first_start, first_end)) = overlap.first_range.as_bezier_parameters() else {
+            return Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported));
+        };
+        let Some((second_start, second_end)) = overlap.second_range.as_bezier_parameters() else {
+            return Err(self.blocked(pair.second_carrier_index, UncertaintyReason::Unsupported));
+        };
+        let first_range =
+            BezierParameterRange2::new_validated(first_start.clone(), first_end.clone());
+        let second_range =
+            BezierParameterRange2::new_validated(second_start.clone(), second_end.clone());
         let correspondence = overlap
             .source
             .as_ref()
@@ -1843,8 +2176,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if let Some(correspondence) = correspondence {
             if let Some(reversed) = correspondence.projective_reversal() {
                 return match clip_aligned_parameter_overlap(
-                    &overlap.first_range,
-                    &overlap.second_range,
+                    &first_range,
+                    &second_range,
                     reversed,
                     first_carrier,
                     second_carrier,
@@ -1857,8 +2190,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 };
             }
             return clip_corresponding_parameter_overlap(
-                &overlap.first_range,
-                &overlap.second_range,
+                &first_range,
+                &second_range,
                 correspondence,
                 first_carrier,
                 second_carrier,
@@ -1866,8 +2199,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             );
         }
         match clip_projectively_aligned_parameter_overlap(
-            &overlap.first_range,
-            &overlap.second_range,
+            &first_range,
+            &second_range,
             overlap.orientation,
             first_carrier,
             second_carrier,
@@ -1906,10 +2239,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                 };
                 let raw_overlap = RationalBezierIntersectionOverlap2::from_certified_parameters(
-                    overlap.first_range.start().clone(),
-                    overlap.first_range.end().clone(),
-                    overlap.second_range.start().clone(),
-                    overlap.second_range.end().clone(),
+                    first_range.start().clone(),
+                    first_range.end().clone(),
+                    second_range.start().clone(),
+                    second_range.end().clone(),
                     overlap.orientation,
                     [true, true],
                 );
@@ -1920,8 +2253,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     &self.data.policy,
                 );
                 clip_corresponding_parameter_overlap(
-                    &overlap.first_range,
-                    &overlap.second_range,
+                    &first_range,
+                    &second_range,
                     &correspondence,
                     first_carrier,
                     second_carrier,
@@ -2391,9 +2724,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let location = match propagated {
                     Some(location) => location,
                     None => {
-                        let Some((start, end)) = fragment_range(&split.fragment) else {
-                            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
-                        };
+                        let fragment_range = split.fragment.curve_region_parameter_range();
+                        let (start, end) = (fragment_range.start(), fragment_range.end());
                         let mut shared = false;
                         for overlap in &overlaps {
                             let range = if overlap.first_carrier_index == carrier_index {
@@ -2492,7 +2824,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         topology: &CurveRegionSplitTopology,
         carrier_index: usize,
         vertex: Option<usize>,
-        parameter: &BezierParameter2,
+        parameter: &CurveRegionParameter2,
     ) -> ExactCurveResult<Option<TransitionContactBranch>> {
         let Some(contact) = vertex.and_then(|vertex| topology.transverse_contacts.get(&vertex))
         else {
@@ -2526,9 +2858,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut arrangement_directions = Vec::new();
         for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
             for (split_fragment_index, split) in splits.iter().enumerate() {
-                let Some((source_start, source_end)) = split.fragment.parameter_range() else {
-                    return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
-                };
+                let source_range = split.fragment.curve_region_parameter_range();
+                let (source_start, source_end) = (source_range.start(), source_range.end());
                 let source_start_branch = self.transition_contact_branch(
                     &topology,
                     carrier_index,
@@ -2695,6 +3026,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if !self.regularized_fragment_owns_overlap(carrier_index, fragment, overlaps)? {
             return Ok(RegionFragmentAction::Discard);
         }
+        if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
+            return self.regularized_algebraic_cusp_fragment_action(carrier_index, fragment);
+        }
         let carrier = &self.data.carriers[carrier_index];
         let max_representatives = match &carrier.geometry {
             RegionCarrierGeometry::Bezier(
@@ -2705,6 +3039,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 curve.degree().saturating_mul(2).max(2)
             }
             RegionCarrierGeometry::AnalyticParallel(_) => 4,
+            RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => 4,
         };
         let Some((start, end)) = fragment_range(fragment) else {
             return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
@@ -2739,7 +3074,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 RegionCarrierGeometry::Bezier(curve) => {
                     RationalBezier2::try_from_subcurve(curve).ok()
                 }
-                RegionCarrierGeometry::AnalyticParallel(_) => None,
+                RegionCarrierGeometry::AnalyticParallel(_)
+                | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
             }
         };
         let isolator_touches =
@@ -2764,7 +3100,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // interior gap is cheaper and avoids an unnecessary boundary ray.
         let source_endpoint_witness = if local_circular_curve.is_none()
             && retained_regular_circle
-            && start == &carrier.start
+            && carrier.start.as_bezier_parameter() == Some(start)
             && start
                 .as_exact()
                 .is_some_and(|boundary| isolator_touches(end, boundary, true))
@@ -2772,7 +3108,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             start.as_exact().cloned()
         } else if local_circular_curve.is_none()
             && retained_regular_circle
-            && end == &carrier.end
+            && carrier.end.as_bezier_parameter() == Some(end)
             && end
                 .as_exact()
                 .is_some_and(|boundary| isolator_touches(start, boundary, false))
@@ -2844,7 +3180,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 Some(curve.endpoint_refs().1.clone())
                             }
                             RegionCarrierGeometry::Bezier(_)
-                            | RegionCarrierGeometry::AnalyticParallel(_) => None,
+                            | RegionCarrierGeometry::AnalyticParallel(_)
+                            | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
                         });
                     let representative = match retained_endpoint {
                         Some(point) => point,
@@ -2909,7 +3246,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 tangent_x = -tangent_x;
                 tangent_y = -tangent_y;
             }
-            let source_parameter = parameter.map(BezierParameter2::Exact);
+            let source_parameter = parameter.map(|parameter| {
+                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(parameter))
+            });
             let left = match self.fragment_side_location(
                 carrier_index,
                 &representative,
@@ -2948,15 +3287,84 @@ impl<'a> CurveRegionBooleanContext<'a> {
         Err(self.blocked(carrier_index, last_reason))
     }
 
+    fn regularized_algebraic_cusp_fragment_action(
+        &self,
+        carrier_index: usize,
+        fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    ) -> ExactCurveResult<RegionFragmentAction> {
+        let start = CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone());
+        let end = CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone());
+        let parameter = match start
+            .strict_rational_between_ordered(&end, &self.data.policy)
+            .map_err(|cause| self.invalid(carrier_index, cause))?
+        {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(carrier_index, reason));
+            }
+        };
+        let representative = match fragment
+            .semicircle()
+            .point_at(&parameter, &self.data.policy)
+            .map_err(|cause| self.invalid(carrier_index, cause))?
+        {
+            Classification::Decided(point) => point
+                .exact_rational_point(&self.data.policy)
+                .ok_or_else(|| self.blocked(carrier_index, UncertaintyReason::Unsupported))?,
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(carrier_index, reason));
+            }
+        };
+        let tangent = match fragment
+            .semicircle()
+            .tangent_at(&parameter, &self.data.policy)
+            .map_err(|cause| self.invalid(carrier_index, cause))?
+        {
+            Classification::Decided(tangent) => tangent,
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(carrier_index, reason));
+            }
+        };
+        let (mut tangent_x, mut tangent_y) = tangent
+            .exact_rational_vector(&self.data.policy)
+            .ok_or_else(|| self.blocked(carrier_index, UncertaintyReason::Unsupported))?;
+        if fragment.is_reversed() {
+            tangent_x = -tangent_x;
+            tangent_y = -tangent_y;
+        }
+        let source_parameter = CurveRegionParameter2::from_algebraic_cusp(
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
+        );
+        let left = self.fragment_side_location(
+            carrier_index,
+            &representative,
+            Some(&source_parameter),
+            &tangent_x,
+            &tangent_y,
+            true,
+        )?;
+        let right = self.fragment_side_location(
+            carrier_index,
+            &representative,
+            Some(&source_parameter),
+            &tangent_x,
+            &tangent_y,
+            false,
+        )?;
+        Ok(action_from_result_sides(
+            left == RegionPointLocation::Inside,
+            right == RegionPointLocation::Inside,
+        ))
+    }
+
     fn regularized_fragment_owns_overlap(
         &self,
         carrier_index: usize,
         fragment: &BezierSplitFragment2,
         overlaps: &[CarrierOverlap],
     ) -> ExactCurveResult<bool> {
-        let Some((start, end)) = fragment_range(fragment) else {
-            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
-        };
+        let fragment_range = fragment.curve_region_parameter_range();
+        let (start, end) = (fragment_range.start(), fragment_range.end());
         for overlap in overlaps {
             let (own_range, other_carrier_index) = if overlap.first_carrier_index == carrier_index {
                 (&overlap.first_range, overlap.second_carrier_index)
@@ -2978,7 +3386,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         carrier_index: usize,
         representative: &crate::Point2,
-        source_parameter: Option<&BezierParameter2>,
+        source_parameter: Option<&CurveRegionParameter2>,
         tangent_x: &crate::Real,
         tangent_y: &crate::Real,
         left: bool,
@@ -3226,7 +3634,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .iter()
                 .all(|carrier| match &carrier.geometry {
                     RegionCarrierGeometry::Bezier(curve) => subcurve_is_strict_line_image(curve),
-                    RegionCarrierGeometry::AnalyticParallel(_) => false,
+                    RegionCarrierGeometry::AnalyticParallel(_)
+                    | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => false,
                 })
         })
     }
@@ -3401,9 +3810,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         overlaps: &[CarrierOverlap],
         operation: BooleanOp,
     ) -> ExactCurveResult<RegionFragmentAction> {
-        let Some((start, end)) = fragment_range(fragment) else {
-            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
-        };
+        let fragment_range = fragment.curve_region_parameter_range();
+        let (start, end) = (fragment_range.start(), fragment_range.end());
         let mut matching_overlap = None;
         for overlap in overlaps {
             let range = if overlap.first_carrier_index == carrier_index {
@@ -3506,6 +3914,32 @@ fn build_candidate_carrier_pair(
                 RegionCarrierPairContext::ParallelPair
             }
         }
+        (RegionCarrierGeometry::AlgebraicCuspSemicircle(_), RegionCarrierGeometry::Bezier(_)) => {
+            RegionCarrierPairContext::CuspRational {
+                cusp_is_first: true,
+            }
+        }
+        (RegionCarrierGeometry::Bezier(_), RegionCarrierGeometry::AlgebraicCuspSemicircle(_)) => {
+            RegionCarrierPairContext::CuspRational {
+                cusp_is_first: false,
+            }
+        }
+        (
+            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
+            RegionCarrierGeometry::AnalyticParallel(_),
+        ) => RegionCarrierPairContext::CuspParallel {
+            cusp_is_first: true,
+        },
+        (
+            RegionCarrierGeometry::AnalyticParallel(_),
+            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
+        ) => RegionCarrierPairContext::CuspParallel {
+            cusp_is_first: false,
+        },
+        (
+            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
+            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
+        ) => RegionCarrierPairContext::CuspPair,
     };
     Ok(Some(RegionCarrierPair {
         first_carrier_index,
@@ -3739,8 +4173,10 @@ fn build_region_carriers(
             let (mut geometry, mut start, mut end, mut reversed) = match fragment {
                 BezierSplitFragment2::Materialized { curve, .. } => (
                     RegionCarrierGeometry::Bezier(curve.clone()),
-                    BezierParameter2::Exact(crate::Real::zero()),
-                    BezierParameter2::Exact(crate::Real::one()),
+                    CurveRegionParameter2::from_bezier(
+                        BezierParameter2::Exact(crate::Real::zero()),
+                    ),
+                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(crate::Real::one())),
                     false,
                 ),
                 BezierSplitFragment2::AlgebraicEndpointImages {
@@ -3751,8 +4187,8 @@ fn build_region_carriers(
                     ..
                 } => (
                     RegionCarrierGeometry::Bezier(curve.clone()),
-                    start.clone(),
-                    end.clone(),
+                    CurveRegionParameter2::from_bezier(start.clone()),
+                    CurveRegionParameter2::from_bezier(end.clone()),
                     *reversed,
                 ),
                 BezierSplitFragment2::AlgebraicEndpointImages {
@@ -3767,17 +4203,16 @@ fn build_region_carriers(
                 }
                 BezierSplitFragment2::AnalyticParallel(fragment) => (
                     RegionCarrierGeometry::AnalyticParallel(fragment.parallel().clone()),
-                    fragment.range().start().clone(),
-                    fragment.range().end().clone(),
+                    CurveRegionParameter2::from_bezier(fragment.range().start().clone()),
+                    CurveRegionParameter2::from_bezier(fragment.range().end().clone()),
                     fragment.is_reversed(),
                 ),
-                BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Boolean,
-                        CurveFamily2::RationalBezier,
-                        UncertaintyReason::Unsupported,
-                    ));
-                }
+                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => (
+                    RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment.clone()),
+                    CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
+                    CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
+                    fragment.is_reversed(),
+                ),
             };
             let family = geometry.family();
             if matches!(
@@ -3789,8 +4224,11 @@ fn build_region_carriers(
                 geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Quadratic(
                     QuadraticBezier2::from_line_segment(line),
                 ));
-                start = BezierParameter2::Exact(crate::Real::zero());
-                end = BezierParameter2::Exact(crate::Real::one());
+                start = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                    crate::Real::zero(),
+                ));
+                end =
+                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(crate::Real::one()));
                 reversed = false;
             }
             carriers.push(RegionCarrier {
@@ -3854,14 +4292,23 @@ fn split_carrier_with_refinement(
     if let RegionCarrierGeometry::AnalyticParallel(parallel) = &carrier.geometry {
         return split_analytic_carrier(carrier, parallel, events, max_refinement_steps, policy);
     }
+    if let RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment) = &carrier.geometry {
+        return split_algebraic_cusp_carrier(carrier, fragment, events, policy);
+    }
     let parameters = events
         .iter()
         .map(|event| {
             event
                 .parameter
-                .clone()
-                .refined_isolating_interval(max_refinement_steps, policy)
+                .as_bezier_parameter()
+                .ok_or_else(|| {
+                    CurveError::Topology("algebraic cusp cut reached the Bezier split path".into())
+                })
+                .map(|parameter| parameter.clone())
         })
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .map(|parameter| parameter.refined_isolating_interval(max_refinement_steps, policy))
         .collect::<Vec<_>>();
     let materialization = match carrier
         .geometry
@@ -3882,11 +4329,13 @@ fn split_carrier_with_refinement(
                 "algebraic cusp carrier reached the Bezier split path".into(),
             ));
         };
-        if !parameter_range_inside_carrier(start, end, carrier, policy)? {
+        let start_parameter = CurveRegionParameter2::from_bezier(start.clone());
+        let end_parameter = CurveRegionParameter2::from_bezier(end.clone());
+        if !parameter_range_inside_carrier(&start_parameter, &end_parameter, carrier, policy)? {
             continue;
         }
-        let start_topology_vertex = event_vertex(events, start, policy)?;
-        let end_topology_vertex = event_vertex(events, end, policy)?;
+        let start_topology_vertex = event_vertex(events, &start_parameter, policy)?;
+        let end_topology_vertex = event_vertex(events, &end_parameter, policy)?;
         let fragment = compact_retained_circular_fragment(
             fragment,
             carrier,
@@ -3918,6 +4367,101 @@ fn split_carrier_with_refinement(
     Ok(output)
 }
 
+fn split_algebraic_cusp_carrier(
+    carrier: &RegionCarrier,
+    fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    events: &[CarrierEvent],
+    policy: &CurveContext,
+) -> Result<Vec<SplitCarrierFragment>, CurveError> {
+    let mut boundaries = events.to_vec();
+    for index in 1..boundaries.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            let order = match boundaries[cursor]
+                .parameter
+                .cmp_by_refinement(&boundaries[cursor - 1].parameter, policy)?
+            {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Err(CurveError::Topology(format!(
+                        "algebraic cusp split ordering remained uncertain: {reason:?}"
+                    )));
+                }
+            };
+            if order != Ordering::Less {
+                break;
+            }
+            boundaries.swap(cursor, cursor - 1);
+            cursor -= 1;
+        }
+    }
+
+    let mut output = Vec::with_capacity(boundaries.len().saturating_sub(1));
+    for pair in boundaries.windows(2) {
+        match pair[0]
+            .parameter
+            .cmp_by_refinement(&pair[1].parameter, policy)?
+        {
+            Classification::Decided(Ordering::Less) => {}
+            Classification::Decided(Ordering::Equal) => continue,
+            Classification::Decided(Ordering::Greater) => {
+                return Err(CurveError::Topology(
+                    "algebraic cusp split boundaries are not increasing".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::Topology(format!(
+                    "algebraic cusp split interval remained uncertain: {reason:?}"
+                )));
+            }
+        }
+        if !parameter_range_inside_carrier(&pair[0].parameter, &pair[1].parameter, carrier, policy)?
+        {
+            continue;
+        }
+        let Some(start) = pair[0].parameter.as_algebraic_cusp() else {
+            return Err(CurveError::Topology(
+                "Bezier cut reached an algebraic cusp carrier".into(),
+            ));
+        };
+        let Some(end) = pair[1].parameter.as_algebraic_cusp() else {
+            return Err(CurveError::Topology(
+                "Bezier cut reached an algebraic cusp carrier".into(),
+            ));
+        };
+        let retained = match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+            fragment.semicircle().clone(),
+            start.clone(),
+            end.clone(),
+            false,
+            policy,
+        )? {
+            Classification::Decided(fragment) => fragment,
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::Topology(format!(
+                    "algebraic cusp split construction remained uncertain: {reason:?}"
+                )));
+            }
+        };
+        output.push(SplitCarrierFragment {
+            fragment: BezierSplitFragment2::AlgebraicCuspSemicircle(retained),
+            start_topology_vertex: pair[0].topology_vertex,
+            end_topology_vertex: pair[1].topology_vertex,
+        });
+    }
+    if carrier.reversed {
+        output.reverse();
+        for split in &mut output {
+            split.fragment = split.fragment.reversed()?;
+            std::mem::swap(
+                &mut split.start_topology_vertex,
+                &mut split.end_topology_vertex,
+            );
+        }
+    }
+    Ok(output)
+}
+
 fn split_analytic_carrier(
     carrier: &RegionCarrier,
     parallel: &BezierParallel2,
@@ -3927,14 +4471,20 @@ fn split_analytic_carrier(
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
     let mut boundaries = events
         .iter()
-        .map(|event| CarrierEvent {
-            parameter: event
-                .parameter
-                .clone()
-                .refined_isolating_interval(max_refinement_steps, policy),
-            topology_vertex: event.topology_vertex,
+        .map(|event| {
+            let parameter = event.parameter.as_bezier_parameter().ok_or_else(|| {
+                CurveError::Topology("algebraic cusp cut reached an analytic carrier".into())
+            })?;
+            Ok(CarrierEvent {
+                parameter: CurveRegionParameter2::from_bezier(
+                    parameter
+                        .clone()
+                        .refined_isolating_interval(max_refinement_steps, policy),
+                ),
+                topology_vertex: event.topology_vertex,
+            })
         })
-        .collect::<Vec<_>>();
+        .collect::<Result<Vec<_>, CurveError>>()?;
     for index in 1..boundaries.len() {
         let mut cursor = index;
         while cursor > 0 {
@@ -3959,8 +4509,16 @@ fn split_analytic_carrier(
 
     let mut output = Vec::with_capacity(boundaries.len().saturating_sub(1));
     for pair in boundaries.windows(2) {
-        let start = pair[0].parameter.clone();
-        let end = pair[1].parameter.clone();
+        let Some(start) = pair[0].parameter.as_bezier_parameter().cloned() else {
+            return Err(CurveError::Topology(
+                "algebraic cusp cut reached an analytic carrier".into(),
+            ));
+        };
+        let Some(end) = pair[1].parameter.as_bezier_parameter().cloned() else {
+            return Err(CurveError::Topology(
+                "algebraic cusp cut reached an analytic carrier".into(),
+            ));
+        };
         match start.cmp_by_refinement(&end, policy)? {
             Classification::Decided(Ordering::Less) => {}
             Classification::Decided(Ordering::Equal) => continue,
@@ -3975,7 +4533,8 @@ fn split_analytic_carrier(
                 )));
             }
         }
-        if !parameter_range_inside_carrier(&start, &end, carrier, policy)? {
+        if !parameter_range_inside_carrier(&pair[0].parameter, &pair[1].parameter, carrier, policy)?
+        {
             continue;
         }
         output.push(SplitCarrierFragment {
@@ -4401,7 +4960,7 @@ fn algebraic_endpoint_tangent_at_vertex(
 
 fn push_carrier_event(
     events: &mut Vec<CarrierEvent>,
-    parameter: BezierParameter2,
+    parameter: CurveRegionParameter2,
     topology_vertex: Option<usize>,
     carrier: &RegionCarrier,
     policy: &CurveContext,
@@ -4412,7 +4971,7 @@ fn push_carrier_event(
 
 fn push_contact_carrier_event(
     events: &mut Vec<CarrierEvent>,
-    parameter: BezierParameter2,
+    parameter: CurveRegionParameter2,
     topology_vertex: Option<usize>,
     carrier: &RegionCarrier,
     policy: &CurveContext,
@@ -4422,7 +4981,7 @@ fn push_contact_carrier_event(
 
 fn push_carrier_event_internal(
     events: &mut Vec<CarrierEvent>,
-    parameter: BezierParameter2,
+    parameter: CurveRegionParameter2,
     topology_vertex: Option<usize>,
     carrier: &RegionCarrier,
     defer_unordered: bool,
@@ -4518,7 +5077,7 @@ fn seed_loop_topology_vertices(
     Ok(())
 }
 
-fn carrier_traversal_start(carrier: &RegionCarrier) -> &BezierParameter2 {
+fn carrier_traversal_start(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
     if carrier.reversed {
         &carrier.end
     } else {
@@ -4526,7 +5085,7 @@ fn carrier_traversal_start(carrier: &RegionCarrier) -> &BezierParameter2 {
     }
 }
 
-fn carrier_traversal_end(carrier: &RegionCarrier) -> &BezierParameter2 {
+fn carrier_traversal_end(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
     if carrier.reversed {
         &carrier.start
     } else {
@@ -4536,7 +5095,7 @@ fn carrier_traversal_end(carrier: &RegionCarrier) -> &BezierParameter2 {
 
 fn existing_event_vertex(
     events: &[CarrierEvent],
-    parameter: &BezierParameter2,
+    parameter: &CurveRegionParameter2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<usize>> {
     for event in events {
@@ -4550,7 +5109,7 @@ fn existing_event_vertex(
 
 fn existing_event_vertex_if_decided(
     events: &[CarrierEvent],
-    parameter: &BezierParameter2,
+    parameter: &CurveRegionParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Option<usize>> {
     for event in events {
@@ -4644,7 +5203,7 @@ fn replace_topology_vertex(
 fn contacts_decided_distinct_from_carriers(
     existing: &ContactVertex,
     carrier_indices: [usize; 2],
-    parameters: [&BezierParameter2; 2],
+    parameters: [&CurveRegionParameter2; 2],
     carriers: &[RegionCarrier],
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -4728,7 +5287,7 @@ fn contacts_decided_distinct_from_carriers(
 fn contacts_decided_same_from_shared_parallel(
     existing: &ContactVertex,
     carrier_indices: [usize; 2],
-    parameters: [&BezierParameter2; 2],
+    parameters: [&CurveRegionParameter2; 2],
     carriers: &[RegionCarrier],
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -4764,10 +5323,13 @@ fn contacts_decided_same_from_shared_parallel(
 }
 
 fn parameter_matches_any(
-    parameter: &BezierParameter2,
+    parameter: &CurveRegionParameter2,
     candidates: &[BezierParameter2],
     policy: &CurveContext,
 ) -> Classification<bool> {
+    let Some(parameter) = parameter.as_bezier_parameter() else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
     let mut uncertainty = None;
     for candidate in candidates {
         match parameter.same_value(candidate, policy) {
@@ -4787,7 +5349,7 @@ fn parameter_matches_any(
 fn contacts_decided_same_from_circular_carriers(
     existing: &ContactVertex,
     carrier_indices: [usize; 2],
-    parameters: [&BezierParameter2; 2],
+    parameters: [&CurveRegionParameter2; 2],
     carriers: &[RegionCarrier],
     policy: &CurveContext,
 ) -> Classification<bool> {
@@ -4961,7 +5523,11 @@ fn exact_point_matches_existing_contact_parameter(
         }
         let mut parameter_uncertainty = None;
         for parameter in parameters {
-            match existing.parameters[slot].same_value(&parameter, policy) {
+            let Some(existing_parameter) = existing.parameters[slot].as_bezier_parameter() else {
+                uncertainty.get_or_insert(UncertaintyReason::Unsupported);
+                continue;
+            };
+            match existing_parameter.same_value(&parameter, policy) {
                 Ok(Classification::Decided(true)) => return Classification::Decided(true),
                 Ok(Classification::Decided(false)) => {}
                 Ok(Classification::Uncertain(reason)) => {
@@ -4982,7 +5548,7 @@ fn exact_point_matches_existing_contact_parameter(
 
 fn event_vertex(
     events: &[CarrierEvent],
-    parameter: &BezierParameter2,
+    parameter: &CurveRegionParameter2,
     policy: &CurveContext,
 ) -> Result<Option<usize>, CurveError> {
     for event in events {
@@ -5018,6 +5584,32 @@ fn action_for_sides(
     action_from_result_sides(result_left, result_right)
 }
 
+fn cusp_contact_parameter(
+    location: BezierAlgebraicCuspSemicircleContactLocation2,
+) -> Option<BezierAlgebraicCuspSemicircleParameter2> {
+    match location {
+        BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+            Some(BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()))
+        }
+        BezierAlgebraicCuspSemicircleContactLocation2::End => {
+            Some(BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()))
+        }
+        BezierAlgebraicCuspSemicircleContactLocation2::Interior => None,
+    }
+}
+
+const fn oriented_cusp_cross_sign(sign: RealSign, cusp_is_first: bool) -> RealSign {
+    if cusp_is_first {
+        sign
+    } else {
+        match sign {
+            RealSign::Positive => RealSign::Negative,
+            RealSign::Negative => RealSign::Positive,
+            RealSign::Zero => RealSign::Zero,
+        }
+    }
+}
+
 const fn action_from_result_sides(left: bool, right: bool) -> RegionFragmentAction {
     match (left, right) {
         (true, false) => RegionFragmentAction::Keep,
@@ -5026,7 +5618,7 @@ const fn action_from_result_sides(left: bool, right: bool) -> RegionFragmentActi
     }
 }
 
-const fn carrier_traversal_start_parameter(carrier: &RegionCarrier) -> &BezierParameter2 {
+const fn carrier_traversal_start_parameter(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
     if carrier.reversed {
         &carrier.end
     } else {
@@ -5034,7 +5626,7 @@ const fn carrier_traversal_start_parameter(carrier: &RegionCarrier) -> &BezierPa
     }
 }
 
-const fn carrier_traversal_end_parameter(carrier: &RegionCarrier) -> &BezierParameter2 {
+const fn carrier_traversal_end_parameter(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
     if carrier.reversed {
         &carrier.start
     } else {
@@ -5044,7 +5636,7 @@ const fn carrier_traversal_end_parameter(carrier: &RegionCarrier) -> &BezierPara
 
 fn exact_carrier_point(
     carrier: &RegionCarrier,
-    parameter: &BezierParameter2,
+    parameter: &CurveRegionParameter2,
     policy: &CurveContext,
 ) -> Option<crate::Point2> {
     let parameter = parameter.as_exact()?;
@@ -5096,7 +5688,7 @@ fn points_are_decided_distinct(
 }
 
 fn parameter_in_carrier(
-    parameter: &BezierParameter2,
+    parameter: &CurveRegionParameter2,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -5104,7 +5696,7 @@ fn parameter_in_carrier(
 }
 
 fn parameter_strictly_inside_carrier(
-    parameter: &BezierParameter2,
+    parameter: &CurveRegionParameter2,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> bool {
@@ -5118,9 +5710,9 @@ fn parameter_strictly_inside_carrier(
 }
 
 fn parameter_between(
-    parameter: &BezierParameter2,
-    start: &BezierParameter2,
-    end: &BezierParameter2,
+    parameter: &CurveRegionParameter2,
+    start: &CurveRegionParameter2,
+    end: &CurveRegionParameter2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let lower = decided_parameter_cmp(parameter, start, policy)?;
@@ -5129,8 +5721,8 @@ fn parameter_between(
 }
 
 fn parameter_range_inside_carrier(
-    start: &BezierParameter2,
-    end: &BezierParameter2,
+    start: &CurveRegionParameter2,
+    end: &CurveRegionParameter2,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> Result<bool, CurveError> {
@@ -5149,7 +5741,7 @@ fn parameter_range_inside_carrier(
 }
 
 fn ranges_intersect(
-    range: &BezierParameterRange2,
+    range: &CurveRegionParameterRange2,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -5159,7 +5751,7 @@ fn ranges_intersect(
 }
 
 fn range_inside_carrier(
-    range: &BezierParameterRange2,
+    range: &CurveRegionParameterRange2,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -5177,10 +5769,38 @@ fn clip_corresponding_parameter_overlap(
     first_carrier: &RegionCarrier,
     second_carrier: &RegionCarrier,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<(BezierParameterRange2, BezierParameterRange2)>> {
-    let (first_overlap_start, first_overlap_end) = ascending_range(first_range, policy)?;
-    let first_start = maximum_parameter([first_overlap_start, &first_carrier.start], policy)?;
-    let first_end = minimum_parameter([first_overlap_end, &first_carrier.end], policy)?;
+) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
+    let Some(first_carrier_start) = first_carrier.start.as_bezier_parameter() else {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            first_carrier.family,
+            UncertaintyReason::Unsupported,
+        ));
+    };
+    let Some(first_carrier_end) = first_carrier.end.as_bezier_parameter() else {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            first_carrier.family,
+            UncertaintyReason::Unsupported,
+        ));
+    };
+    let Some(second_carrier_start) = second_carrier.start.as_bezier_parameter() else {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            second_carrier.family,
+            UncertaintyReason::Unsupported,
+        ));
+    };
+    let Some(second_carrier_end) = second_carrier.end.as_bezier_parameter() else {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            second_carrier.family,
+            UncertaintyReason::Unsupported,
+        ));
+    };
+    let (first_overlap_start, first_overlap_end) = ascending_bezier_range(first_range, policy)?;
+    let first_start = maximum_parameter([first_overlap_start, first_carrier_start], policy)?;
+    let first_end = minimum_parameter([first_overlap_end, first_carrier_end], policy)?;
     match decided_parameter_cmp(&first_start, &first_end, policy)? {
         Ordering::Less => {}
         Ordering::Equal | Ordering::Greater => return Ok(None),
@@ -5209,13 +5829,13 @@ fn clip_corresponding_parameter_overlap(
         Ordering::Greater => (&mapped_end, &mapped_start),
         Ordering::Equal => return Ok(None),
     };
-    let (second_overlap_start, second_overlap_end) = ascending_range(second_range, policy)?;
+    let (second_overlap_start, second_overlap_end) = ascending_bezier_range(second_range, policy)?;
     let second_low = maximum_parameter(
-        [mapped_low, second_overlap_start, &second_carrier.start],
+        [mapped_low, second_overlap_start, second_carrier_start],
         policy,
     )?;
     let second_high = minimum_parameter(
-        [mapped_high, second_overlap_end, &second_carrier.end],
+        [mapped_high, second_overlap_end, second_carrier_end],
         policy,
     )?;
     match decided_parameter_cmp(&second_low, &second_high, policy)? {
@@ -5226,8 +5846,14 @@ fn clip_corresponding_parameter_overlap(
         && decided_parameter_cmp(&second_high, mapped_high, policy)? == Ordering::Equal
     {
         return Ok(Some((
-            BezierParameterRange2::new_validated(first_start, first_end),
-            BezierParameterRange2::new_validated(mapped_start, mapped_end),
+            CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+                first_start,
+                first_end,
+            )),
+            CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+                mapped_start,
+                mapped_end,
+            )),
         )));
     }
     let (second_start, second_end) = if mapped_order == Ordering::Less {
@@ -5254,8 +5880,14 @@ fn clip_corresponding_parameter_overlap(
         policy,
     )?;
     Ok(Some((
-        BezierParameterRange2::new_validated(first_start, first_end),
-        BezierParameterRange2::new_validated(second_start, second_end),
+        CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+            first_start,
+            first_end,
+        )),
+        CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+            second_start,
+            second_end,
+        )),
     )))
 }
 
@@ -5351,6 +5983,34 @@ fn clip_aligned_parameter_overlap(
     second_carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<CarrierOverlapClip> {
+    let Some(first_carrier_start) = first_carrier.start.as_bezier_parameter() else {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            first_carrier.family,
+            UncertaintyReason::Unsupported,
+        ));
+    };
+    let Some(first_carrier_end) = first_carrier.end.as_bezier_parameter() else {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            first_carrier.family,
+            UncertaintyReason::Unsupported,
+        ));
+    };
+    let Some(second_carrier_start) = second_carrier.start.as_bezier_parameter() else {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            second_carrier.family,
+            UncertaintyReason::Unsupported,
+        ));
+    };
+    let Some(second_carrier_end) = second_carrier.end.as_bezier_parameter() else {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            second_carrier.family,
+            UncertaintyReason::Unsupported,
+        ));
+    };
     let map_to_second = |parameter: &BezierParameter2| {
         if reversed {
             parameter.unit_complement()
@@ -5368,21 +6028,21 @@ fn clip_aligned_parameter_overlap(
         return Ok(CarrierOverlapClip::Unmatched);
     }
 
-    let (overlap_start, overlap_end) = ascending_range(first_range, policy)?;
+    let (overlap_start, overlap_end) = ascending_bezier_range(first_range, policy)?;
     let (second_start_in_first, second_end_in_first) = if reversed {
         (
-            second_carrier.end.unit_complement(),
-            second_carrier.start.unit_complement(),
+            second_carrier_end.unit_complement(),
+            second_carrier_start.unit_complement(),
         )
     } else {
-        (second_carrier.start.clone(), second_carrier.end.clone())
+        (second_carrier_start.clone(), second_carrier_end.clone())
     };
     let start = maximum_parameter(
-        [overlap_start, &first_carrier.start, &second_start_in_first],
+        [overlap_start, first_carrier_start, &second_start_in_first],
         policy,
     )?;
     let end = minimum_parameter(
-        [overlap_end, &first_carrier.end, &second_end_in_first],
+        [overlap_end, first_carrier_end, &second_end_in_first],
         policy,
     )?;
     match decided_parameter_cmp(&start, &end, policy)? {
@@ -5394,8 +6054,13 @@ fn clip_aligned_parameter_overlap(
     let second_start = map_to_second(&start);
     let second_end = map_to_second(&end);
     Ok(CarrierOverlapClip::Matched(Some((
-        BezierParameterRange2::new_validated(start, end),
-        BezierParameterRange2::new_validated(second_start, second_end),
+        CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+            start, end,
+        )),
+        CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+            second_start,
+            second_end,
+        )),
     ))))
 }
 
@@ -5405,8 +6070,8 @@ fn maximum_parameter<const N: usize>(
 ) -> ExactCurveResult<BezierParameter2> {
     let mut maximum = parameters[0];
     for parameter in &parameters[1..] {
-        if decided_parameter_cmp(parameter, maximum, policy)?.is_gt() {
-            maximum = parameter;
+        if decided_parameter_cmp(*parameter, maximum, policy)?.is_gt() {
+            maximum = *parameter;
         }
     }
     Ok(maximum.clone())
@@ -5418,17 +6083,17 @@ fn minimum_parameter<const N: usize>(
 ) -> ExactCurveResult<BezierParameter2> {
     let mut minimum = parameters[0];
     for parameter in &parameters[1..] {
-        if decided_parameter_cmp(parameter, minimum, policy)?.is_lt() {
-            minimum = parameter;
+        if decided_parameter_cmp(*parameter, minimum, policy)?.is_lt() {
+            minimum = *parameter;
         }
     }
     Ok(minimum.clone())
 }
 
 fn range_contains_fragment(
-    range: &BezierParameterRange2,
-    fragment_start: &BezierParameter2,
-    fragment_end: &BezierParameter2,
+    range: &CurveRegionParameterRange2,
+    fragment_start: &CurveRegionParameter2,
+    fragment_end: &CurveRegionParameter2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let (range_start, range_end) = ascending_range(range, policy)?;
@@ -5439,6 +6104,21 @@ fn range_contains_fragment(
 }
 
 fn ascending_range<'a>(
+    range: &'a CurveRegionParameterRange2,
+    policy: &CurveContext,
+) -> ExactCurveResult<(&'a CurveRegionParameter2, &'a CurveRegionParameter2)> {
+    match decided_parameter_cmp(range.start(), range.end(), policy)? {
+        Ordering::Less => Ok((range.start(), range.end())),
+        Ordering::Greater => Ok((range.end(), range.start())),
+        Ordering::Equal => Err(ExactCurveError::invalid(
+            CurveOperation2::Boolean,
+            CurveFamily2::RationalBezier,
+            CurveError::DegenerateOverlapRange,
+        )),
+    }
+}
+
+fn ascending_bezier_range<'a>(
     range: &'a BezierParameterRange2,
     policy: &CurveContext,
 ) -> ExactCurveResult<(&'a BezierParameter2, &'a BezierParameter2)> {
@@ -5453,18 +6133,48 @@ fn ascending_range<'a>(
     }
 }
 
-fn decided_parameter_cmp(
-    first: &BezierParameter2,
-    second: &BezierParameter2,
+trait BooleanParameterOrder {
+    fn boolean_cmp_by_refinement(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Ordering>>;
+}
+
+impl BooleanParameterOrder for BezierParameter2 {
+    fn boolean_cmp_by_refinement(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Ordering>> {
+        self.cmp_by_refinement(other, policy)
+    }
+}
+
+impl BooleanParameterOrder for CurveRegionParameter2 {
+    fn boolean_cmp_by_refinement(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Ordering>> {
+        self.cmp_by_refinement(other, policy)
+    }
+}
+
+fn decided_parameter_cmp<P: BooleanParameterOrder>(
+    first: &P,
+    second: &P,
     policy: &CurveContext,
 ) -> ExactCurveResult<Ordering> {
-    match first.cmp_by_refinement(second, policy).map_err(|cause| {
-        ExactCurveError::invalid(
-            CurveOperation2::Boolean,
-            CurveFamily2::RationalBezier,
-            cause,
-        )
-    })? {
+    match first
+        .boolean_cmp_by_refinement(second, policy)
+        .map_err(|cause| {
+            ExactCurveError::invalid(
+                CurveOperation2::Boolean,
+                CurveFamily2::RationalBezier,
+                cause,
+            )
+        })? {
         Classification::Decided(ordering) => Ok(ordering),
         Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
             CurveOperation2::Boolean,
@@ -5501,7 +6211,9 @@ impl RegionCarrierGeometry {
     const fn family(&self) -> CurveFamily2 {
         match self {
             Self::Bezier(curve) => subcurve_family(curve),
-            Self::AnalyticParallel(_) => CurveFamily2::RationalBezier,
+            Self::AnalyticParallel(_) | Self::AlgebraicCuspSemicircle(_) => {
+                CurveFamily2::RationalBezier
+            }
         }
     }
 
@@ -5511,6 +6223,9 @@ impl RegionCarrierGeometry {
             Self::AnalyticParallel(_) => {
                 unreachable!("parallel/rational dispatch requires a Bezier carrier")
             }
+            Self::AlgebraicCuspSemicircle(_) => {
+                unreachable!("cusp/rational dispatch requires a Bezier carrier")
+            }
         }
     }
 
@@ -5519,6 +6234,18 @@ impl RegionCarrierGeometry {
             Self::AnalyticParallel(parallel) => parallel,
             Self::Bezier(_) => {
                 unreachable!("analytic pair dispatch requires a parallel carrier")
+            }
+            Self::AlgebraicCuspSemicircle(_) => {
+                unreachable!("cusp/parallel dispatch requires a parallel carrier")
+            }
+        }
+    }
+
+    fn algebraic_cusp(&self) -> &crate::BezierAlgebraicCuspSemicircleFragment2 {
+        match self {
+            Self::AlgebraicCuspSemicircle(fragment) => fragment,
+            Self::Bezier(_) | Self::AnalyticParallel(_) => {
+                unreachable!("algebraic-cusp dispatch requires a cusp carrier")
             }
         }
     }
@@ -5531,6 +6258,15 @@ impl RegionCarrierGeometry {
         match self {
             Self::Bezier(curve) => Ok(curve.point_at(parameter, policy)),
             Self::AnalyticParallel(parallel) => parallel.point_at(parameter, policy),
+            Self::AlgebraicCuspSemicircle(fragment) => {
+                Ok(match fragment.semicircle().point_at(parameter, policy)? {
+                    Classification::Decided(point) => point.exact_rational_point(policy).map_or(
+                        Classification::Uncertain(UncertaintyReason::Unsupported),
+                        Classification::Decided,
+                    ),
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                })
+            }
         }
     }
 
@@ -5543,6 +6279,9 @@ impl RegionCarrierGeometry {
             Self::Bezier(curve) => RationalBezier2::try_from_subcurve(curve)
                 .map(|curve| curve.derivative_at_classified(parameter, policy)),
             Self::AnalyticParallel(parallel) => parallel.derivative_at(parameter, policy),
+            Self::AlgebraicCuspSemicircle(_) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
         }
     }
 
@@ -5550,6 +6289,10 @@ impl RegionCarrierGeometry {
         match self {
             Self::Bezier(curve) => subcurve_certified_outer_bounds(curve, policy),
             Self::AnalyticParallel(parallel) => match parallel.conservative_bounds(policy) {
+                Ok(bounds) => bounds,
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            },
+            Self::AlgebraicCuspSemicircle(fragment) => match fragment.conservative_bounds() {
                 Ok(bounds) => bounds,
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             },
@@ -5567,6 +6310,7 @@ impl RegionCarrierGeometry {
                             if curve.has_certified_injective_axis(policy)
                     )
             }
+            Self::AlgebraicCuspSemicircle(_) => false,
         }
     }
 
@@ -5574,6 +6318,7 @@ impl RegionCarrierGeometry {
         match self {
             Self::Bezier(curve) => subcurve_has_certified_injective_image(curve, policy),
             Self::AnalyticParallel(_) => self.has_certified_injective_axis(policy),
+            Self::AlgebraicCuspSemicircle(_) => true,
         }
     }
 
@@ -5586,6 +6331,7 @@ impl RegionCarrierGeometry {
                 .map(Some)
                 .map(Classification::Decided),
             Self::AnalyticParallel(parallel) => parallel.exact_rational_parallel_component(policy),
+            Self::AlgebraicCuspSemicircle(_) => Ok(Classification::Decided(None)),
         }
     }
 }
@@ -5753,6 +6499,14 @@ mod certified_successor_tests {
         }
     }
 
+    fn carrier_parameter(parameter: BezierParameter2) -> CurveRegionParameter2 {
+        CurveRegionParameter2::from_bezier(parameter)
+    }
+
+    fn carrier_range(range: &BezierParameterRange2) -> CurveRegionParameterRange2 {
+        CurveRegionParameterRange2::from_bezier_range(range.clone())
+    }
+
     fn sqrt_half_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {
         let polynomial = decided(
             crate::BezierParameterPolynomial::try_new_power_basis(
@@ -5854,8 +6608,8 @@ mod certified_successor_tests {
             fragment_index: 0,
             family: CurveFamily2::RationalBezier,
             geometry: RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(rational_line(0, 1))),
-            start: BezierParameter2::Exact(Real::zero()),
-            end: BezierParameter2::Exact(Real::one()),
+            start: carrier_parameter(BezierParameter2::Exact(Real::zero())),
+            end: carrier_parameter(BezierParameter2::Exact(Real::one())),
             reversed: false,
             filled_side_is_left: true,
             image_is_injective: OnceLock::new(),
@@ -5876,8 +6630,8 @@ mod certified_successor_tests {
                     Point2::from_values(0, 0),
                 ),
             )),
-            start: BezierParameter2::Exact(Real::zero()),
-            end: BezierParameter2::Exact(Real::one()),
+            start: carrier_parameter(BezierParameter2::Exact(Real::zero())),
+            end: carrier_parameter(BezierParameter2::Exact(Real::one())),
             reversed: false,
             filled_side_is_left: true,
             image_is_injective: OnceLock::new(),
@@ -5897,13 +6651,33 @@ mod certified_successor_tests {
 
         let carrier = injective_test_carrier();
         let mut events = Vec::new();
-        push_carrier_event(&mut events, first.clone(), Some(7), &carrier, &policy).unwrap();
-        push_carrier_event(&mut events, second.clone(), Some(7), &carrier, &policy).unwrap();
+        push_carrier_event(
+            &mut events,
+            carrier_parameter(first.clone()),
+            Some(7),
+            &carrier,
+            &policy,
+        )
+        .unwrap();
+        push_carrier_event(
+            &mut events,
+            carrier_parameter(second.clone()),
+            Some(7),
+            &carrier,
+            &policy,
+        )
+        .unwrap();
         assert_eq!(events.len(), 1);
-        assert_eq!(events[0].parameter, first);
+        assert_eq!(events[0].parameter.as_bezier_parameter(), Some(&first));
 
         assert!(matches!(
-            push_carrier_event(&mut events, second, Some(8), &carrier, &policy),
+            push_carrier_event(
+                &mut events,
+                carrier_parameter(second),
+                Some(8),
+                &carrier,
+                &policy
+            ),
             Err(ExactCurveError::Blocked(_)),
         ));
 
@@ -5912,8 +6686,22 @@ mod certified_successor_tests {
         let second = shifted_nested_radical_parameter(dyadic_epsilon(600), &approximate);
         let carrier = injective_test_carrier();
         let mut events = Vec::new();
-        push_carrier_event(&mut events, first, Some(7), &carrier, &approximate).unwrap();
-        push_carrier_event(&mut events, second, Some(7), &carrier, &approximate).unwrap();
+        push_carrier_event(
+            &mut events,
+            carrier_parameter(first),
+            Some(7),
+            &carrier,
+            &approximate,
+        )
+        .unwrap();
+        push_carrier_event(
+            &mut events,
+            carrier_parameter(second),
+            Some(7),
+            &carrier,
+            &approximate,
+        )
+        .unwrap();
         assert_eq!(events.len(), 1);
     }
 
@@ -5969,7 +6757,9 @@ mod certified_successor_tests {
         let mut events = Vec::new();
         push_carrier_event(
             &mut events,
-            BezierParameter2::Exact((Real::one() / Real::from(4_i8)).expect("nonzero denominator")),
+            carrier_parameter(BezierParameter2::Exact(
+                (Real::one() / Real::from(4_i8)).expect("nonzero denominator"),
+            )),
             Some(7),
             &carrier,
             &policy,
@@ -5977,9 +6767,9 @@ mod certified_successor_tests {
         .unwrap();
         push_carrier_event(
             &mut events,
-            BezierParameter2::Exact(
+            carrier_parameter(BezierParameter2::Exact(
                 (Real::from(3_i8) / Real::from(4_i8)).expect("nonzero denominator"),
-            ),
+            )),
             Some(7),
             &carrier,
             &policy,
@@ -6029,7 +6819,7 @@ mod certified_successor_tests {
         let mut events = vec![Vec::new(), Vec::new(), Vec::new()];
         push_contact_carrier_event(
             &mut events[0],
-            first.clone(),
+            carrier_parameter(first.clone()),
             Some(1),
             &carriers[0],
             &policy,
@@ -6037,7 +6827,7 @@ mod certified_successor_tests {
         .unwrap();
         push_contact_carrier_event(
             &mut events[1],
-            quarter.clone(),
+            carrier_parameter(quarter.clone()),
             Some(1),
             &carriers[1],
             &policy,
@@ -6045,7 +6835,7 @@ mod certified_successor_tests {
         .unwrap();
         push_contact_carrier_event(
             &mut events[0],
-            second.clone(),
+            carrier_parameter(second.clone()),
             Some(2),
             &carriers[0],
             &policy,
@@ -6053,7 +6843,7 @@ mod certified_successor_tests {
         .unwrap();
         push_contact_carrier_event(
             &mut events[2],
-            quarter.clone(),
+            carrier_parameter(quarter.clone()),
             Some(2),
             &carriers[2],
             &policy,
@@ -6066,13 +6856,13 @@ mod certified_successor_tests {
                 point: None,
                 topology_vertex: 1,
                 carrier_indices: [0, 1],
-                parameters: [first, quarter.clone()],
+                parameters: [carrier_parameter(first), carrier_parameter(quarter.clone())],
             },
             ContactVertex {
                 point: None,
                 topology_vertex: 2,
                 carrier_indices: [0, 2],
-                parameters: [second, quarter],
+                parameters: [carrier_parameter(second), carrier_parameter(quarter)],
             },
         ];
         replace_topology_vertex(&mut events, &mut contacts, 2, 1);
@@ -6127,19 +6917,31 @@ mod certified_successor_tests {
                 assert!(intersections.is_complete(), "{intersections:?}");
                 assert!(intersections.parameter_components().is_empty());
                 assert!(intersections.overlaps().iter().all(|overlap| {
-                    !(ranges_intersect(overlap.first_range(), first, &replay_policy)
-                        .expect("the first overlap range comparison is decided")
-                        && ranges_intersect(overlap.second_range(), second, &replay_policy)
-                            .expect("the second overlap range comparison is decided"))
+                    !(ranges_intersect(
+                        &carrier_range(overlap.first_range()),
+                        first,
+                        &replay_policy,
+                    )
+                    .expect("the first overlap range comparison is decided")
+                        && ranges_intersect(
+                            &carrier_range(overlap.second_range()),
+                            second,
+                            &replay_policy,
+                        )
+                        .expect("the second overlap range comparison is decided"))
                 }));
                 let retained_contacts = intersections
                     .contacts()
                     .iter()
                     .filter(|contact| {
-                        parameter_in_carrier(contact.first_parameter(), first, &replay_policy)
-                            .expect("the first contact range comparison is decided")
+                        parameter_in_carrier(
+                            &carrier_parameter(contact.first_parameter().clone()),
+                            first,
+                            &replay_policy,
+                        )
+                        .expect("the first contact range comparison is decided")
                             && parameter_in_carrier(
-                                contact.second_parameter(),
+                                &carrier_parameter(contact.second_parameter().clone()),
                                 second,
                                 &replay_policy,
                             )
@@ -6170,8 +6972,8 @@ mod certified_successor_tests {
                 };
                 assert!(retained_contacts.len() <= 1, "{retained_contacts:?}");
                 assert!(retained_contacts.iter().all(|contact| {
-                    contact.first_parameter() == expected.0
-                        && contact.second_parameter() == expected.1
+                    Some(contact.first_parameter()) == expected.0.as_bezier_parameter()
+                        && Some(contact.second_parameter()) == expected.1.as_bezier_parameter()
                 }));
             }
         }

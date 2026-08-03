@@ -844,6 +844,40 @@ impl RationalBezierAlgebraicTangentImage2 {
         })
     }
 
+    /// Returns the derivative as two represented [`Real`] values when both
+    /// exact rational witnesses are already present in the retained image.
+    ///
+    /// This is deliberately not an approximation or a request to construct a
+    /// larger algebraic-number tower. Retained Real-coefficient expressions
+    /// are evaluated directly when their shared source root is rational;
+    /// otherwise only rational witnesses already proved by Hypersolve are
+    /// accepted.
+    pub(crate) fn exact_rational_vector(&self, policy: &CurveContext) -> Option<(Real, Real)> {
+        if let Some(expression) = self.data.retained_expression.as_ref()
+            && let Ok(Classification::Decided(Some(parameter))) =
+                expression.parameter.represented_rational_root(policy)
+        {
+            let denominator = evaluate_coefficients(&expression.denominator, &parameter);
+            if let (Ok(dx), Ok(dy)) = (
+                evaluate_coefficients(&expression.dx_numerator, &parameter) / &denominator,
+                evaluate_coefficients(&expression.dy_numerator, &parameter) / denominator,
+            ) {
+                return Some((dx, dy));
+            }
+        }
+
+        Some((
+            self.dx()?
+                .representation()?
+                .exact_rational_witness()?
+                .clone(),
+            self.dy()?
+                .representation()?
+                .exact_rational_witness()?
+                .clone(),
+        ))
+    }
+
     /// Returns a compact diagnostic message for failed construction.
     pub fn message(&self) -> Option<&str> {
         self.data.message.as_deref()

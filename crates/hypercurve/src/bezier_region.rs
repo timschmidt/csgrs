@@ -41,11 +41,11 @@ use crate::{
     CircularArc2, Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
     CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveError, CurveFamily2,
     CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
-    CurvePathIntersectionContact2, CurveResult, ExactCurveError, ExactCurveResult, FillRule,
-    LineArcRegion2, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
-    RegionArrangementSummary2, RegionPointLocation, RetainedTopologyStatus, Segment2,
-    UncertaintyReason,
+    CurvePathIntersectionContact2, CurveRegionParameter2, CurveResult, ExactCurveError,
+    ExactCurveResult, FillRule, LineArcRegion2, LineSeg2, OffsetCornerStyle2, Point2,
+    QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2, RationalQuadraticBezier2,
+    RegionArrangement2, RegionArrangementSummary2, RegionPointLocation, RetainedTopologyStatus,
+    Segment2, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -6142,7 +6142,7 @@ impl CurveRegion2 {
         source_crossing_direction: BezierLineCrossingDirection,
         source_loop_index: usize,
         source_fragment_index: usize,
-        source_parameter: Option<&BezierParameter2>,
+        source_parameter: Option<&CurveRegionParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RegionPointLocation>> {
         let direction_squared = &direction_x * &direction_x + &direction_y * &direction_y;
@@ -7994,7 +7994,7 @@ fn retained_fragment_contains_point(
 #[derive(Clone, Copy)]
 struct RetainedRayOriginContact<'a> {
     fragment_index: Option<usize>,
-    parameter: Option<&'a BezierParameter2>,
+    parameter: Option<&'a CurveRegionParameter2>,
     crossing_direction: BezierLineCrossingDirection,
     tangent_contacts: Option<&'a [crate::rational_bezier::RationalQuadraticCircleTangentContact2]>,
 }
@@ -8072,7 +8072,36 @@ fn classify_point_with_retained_ray_skipping_origin(
             | BezierSplitFragment2::Unresolved { .. } => None,
         };
         if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
-            match fragment.forward_ray_winding_delta(point, direction_x, direction_y, policy)? {
+            let source_contact = skipped_origin.and_then(|origin| {
+                (origin.fragment_index == Some(fragment_index))
+                    .then_some(origin)
+                    .and_then(|origin| {
+                        Some((
+                            origin.parameter?.as_algebraic_cusp()?,
+                            origin.crossing_direction,
+                        ))
+                    })
+            });
+            let result = match source_contact {
+                Some((parameter, crossing_direction)) => {
+                    let result = fragment.forward_ray_winding_delta_skipping_origin(
+                        point,
+                        direction_x,
+                        direction_y,
+                        parameter,
+                        crossing_direction,
+                        policy,
+                    )?;
+                    if matches!(result, Classification::Decided(_)) {
+                        source_origin_contact_was_skipped = true;
+                    }
+                    result
+                }
+                None => {
+                    fragment.forward_ray_winding_delta(point, direction_x, direction_y, policy)?
+                }
+            };
+            match result {
                 Classification::Decided(delta) => winding += delta,
                 Classification::Uncertain(UncertaintyReason::Boundary) => {
                     return Ok(Classification::Decided(ContourPointLocation::Boundary));
@@ -8089,7 +8118,10 @@ fn classify_point_with_retained_ray_skipping_origin(
             let certified_origin_parameter =
                 skipped_origin.and_then(|origin| {
                     if origin.fragment_index == Some(fragment_index) {
-                        return origin.parameter.and_then(BezierParameter2::as_exact);
+                        return origin
+                            .parameter
+                            .and_then(CurveRegionParameter2::as_bezier_parameter)
+                            .and_then(BezierParameter2::as_exact);
                     }
                     let source_fragment_index = origin.fragment_index?;
                     let fragment_count = boundary_loop.fragments().len();
@@ -8271,6 +8303,7 @@ fn classify_point_with_retained_ray_skipping_origin(
                 .then(|| {
                     origin
                         .parameter
+                        .and_then(CurveRegionParameter2::as_bezier_parameter)
                         .and_then(BezierParameter2::as_exact)
                         .map(|parameter| (parameter, origin.crossing_direction))
                 })
@@ -8327,32 +8360,38 @@ fn classify_point_with_retained_ray_skipping_origin(
                     {
                         let is_origin = contact.supporting_line_parameter().map_or_else(
                             || {
-                                origin.parameter.map_or(
-                                    Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-                                    |parameter| {
-                                        retained_parameters_equal(
-                                            contact.parameter(),
-                                            parameter,
-                                            policy,
-                                        )
-                                    },
-                                )
+                                origin
+                                    .parameter
+                                    .and_then(CurveRegionParameter2::as_bezier_parameter)
+                                    .map_or(
+                                        Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+                                        |parameter| {
+                                            retained_parameters_equal(
+                                                contact.parameter(),
+                                                parameter,
+                                                policy,
+                                            )
+                                        },
+                                    )
                             },
                             |line_parameter| {
                                 compare_reals(line_parameter, &Real::zero(), policy).map_or_else(
                                     || {
-                                        origin.parameter.map_or(
-                                            Ok(Classification::Uncertain(
-                                                UncertaintyReason::Boundary,
-                                            )),
-                                            |parameter| {
-                                                retained_parameters_equal(
-                                                    contact.parameter(),
-                                                    parameter,
-                                                    policy,
-                                                )
-                                            },
-                                        )
+                                        origin
+                                            .parameter
+                                            .and_then(CurveRegionParameter2::as_bezier_parameter)
+                                            .map_or(
+                                                Ok(Classification::Uncertain(
+                                                    UncertaintyReason::Boundary,
+                                                )),
+                                                |parameter| {
+                                                    retained_parameters_equal(
+                                                        contact.parameter(),
+                                                        parameter,
+                                                        policy,
+                                                    )
+                                                },
+                                            )
                                     },
                                     |order| {
                                         Ok(Classification::Decided(

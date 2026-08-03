@@ -2358,6 +2358,19 @@ impl BezierAlgebraicCuspSemicircle2 {
             .map(|(intersections, _)| intersections))
     }
 
+    pub(crate) fn rational_intersections_with_parameter_map(
+        &self,
+        other: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<
+        Classification<(
+            BezierAlgebraicCuspSemicircleRationalIntersections2,
+            Option<BezierAlgebraicCuspSemicircleRationalParameterMap2>,
+        )>,
+    > {
+        self.rational_intersections_internal(other, true, policy)
+    }
+
     fn rational_intersections_internal(
         &self,
         other: &RationalBezier2,
@@ -3755,6 +3768,46 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         direction_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
+        self.forward_ray_winding_delta_with_origin_contact(
+            origin,
+            direction_x,
+            direction_y,
+            None,
+            policy,
+        )
+    }
+
+    /// Returns this subfragment's winding contribution while omitting its one
+    /// certified transverse contact at the ray origin.
+    pub(crate) fn forward_ray_winding_delta_skipping_origin(
+        &self,
+        origin: &Point2,
+        direction_x: &Real,
+        direction_y: &Real,
+        parameter: &BezierAlgebraicCuspSemicircleParameter2,
+        crossing_direction: BezierLineCrossingDirection,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
+        self.forward_ray_winding_delta_with_origin_contact(
+            origin,
+            direction_x,
+            direction_y,
+            Some((parameter, crossing_direction)),
+            policy,
+        )
+    }
+
+    fn forward_ray_winding_delta_with_origin_contact(
+        &self,
+        origin: &Point2,
+        direction_x: &Real,
+        direction_y: &Real,
+        skipped_origin: Option<(
+            &BezierAlgebraicCuspSemicircleParameter2,
+            BezierLineCrossingDirection,
+        )>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
         self.validate_policy(policy)?;
         let (_, contacts, parameter_map) = match self
             .data
@@ -3768,6 +3821,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         };
         let ray_start = BezierParameter2::Exact(Real::zero());
         let mut winding = 0_i32;
+        let mut origin_was_skipped = false;
         for contact in contacts {
             let parameter = algebraic_cusp_semicircle_endpoint_parameter(contact.location)
                 .unwrap_or_else(|| {
@@ -3785,7 +3839,44 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             if at_origin {
                 match self.contains_parameter(&parameter, true, true, policy)? {
                     Classification::Decided(true) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                        let Some((source_parameter, crossing_direction)) = skipped_origin else {
+                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                        };
+                        let is_source = match parameter
+                            .cmp_by_refinement(source_parameter, policy)?
+                        {
+                            Classification::Decided(order) => order == std::cmp::Ordering::Equal,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        if !is_source || origin_was_skipped {
+                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                        }
+                        let traversal_cross_sign = if self.data.reversed {
+                            match contact.tangent_cross_sign {
+                                RealSign::Positive => RealSign::Negative,
+                                RealSign::Negative => RealSign::Positive,
+                                RealSign::Zero => RealSign::Zero,
+                            }
+                        } else {
+                            contact.tangent_cross_sign
+                        };
+                        let certified_direction = match traversal_cross_sign {
+                            RealSign::Positive => BezierLineCrossingDirection::PositiveToNegative,
+                            RealSign::Negative => BezierLineCrossingDirection::NegativeToPositive,
+                            RealSign::Zero => {
+                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                            }
+                        };
+                        if certified_direction != crossing_direction {
+                            return Err(CurveError::Topology(
+                                "algebraic cusp origin crossing disagreed with its boundary tangent"
+                                    .into(),
+                            ));
+                        }
+                        origin_was_skipped = true;
+                        continue;
                     }
                     Classification::Decided(false) => continue,
                     Classification::Uncertain(reason) => {
@@ -3811,6 +3902,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 RealSign::Zero => 0,
             };
             winding += if self.data.reversed { -delta } else { delta };
+        }
+        if skipped_origin.is_some() && !origin_was_skipped {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
         Ok(Classification::Decided(winding))
     }
@@ -17907,6 +18001,16 @@ mod conversion_tests {
                 )),
             );
             assert!(region.has_algebraic_fragments());
+            let regularized = region
+                .regularized_region(&policy)
+                .expect("the retained cusp/diameter loop must regularize")
+                .into_value();
+            assert_eq!(
+                regularized
+                    .classify_point(&inside, &policy)
+                    .map(crate::CurveOutcome::into_value),
+                Ok(Classification::Decided(crate::RegionPointLocation::Inside)),
+            );
         }
     }
 

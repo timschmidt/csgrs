@@ -454,7 +454,8 @@ fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
                         },
                         BezierSplitFragment2::AlgebraicEndpointImages { .. } => 4,
                         BezierSplitFragment2::AnalyticParallel(_) => 5,
-                        BezierSplitFragment2::Unresolved { .. } => 6,
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => 6,
+                        BezierSplitFragment2::Unresolved { .. } => 7,
                     })
                     .collect::<Vec<_>>()
             })
