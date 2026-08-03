@@ -2075,9 +2075,10 @@ struct BezierAlgebraicCuspSemicircleFragmentData2 {
 }
 
 /// Cached local-field geometry for classifying an algebraic ray against one
-/// cusp subarc whose endpoints are represented in the cusp field. The three
-/// point images retain that field; the query point keeps its own field, so
-/// pair predicates never construct a primitive element.
+/// cusp subarc whose endpoints share one retained local field. Usually that is
+/// the cusp field; a nonrational mapped cut instead lends its carrier field to
+/// an exactly rational companion endpoint. The query point keeps its own
+/// field, so pair predicates never construct a primitive element.
 #[cfg(feature = "predicates")]
 #[derive(Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleAlgebraicRay2 {
@@ -6463,6 +6464,84 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         }
     }
 
+    /// Replays the geometric cut point on the smallest retained exact
+    /// carrier that already owns it.
+    ///
+    /// Rational overlap cuts use the other curve's selected parameter rather
+    /// than adjoining it to the cusp field. Coincident pair-overlap endpoints
+    /// similarly reuse the endpoint field of the participating semicircle.
+    /// This keeps each returned point in one local field; callers may align a
+    /// rational companion endpoint to that field without a primitive element.
+    #[cfg(feature = "predicates")]
+    fn coincident_point_image(
+        &self,
+        semicircle: &BezierAlgebraicCuspSemicircle2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalBezierAlgebraicPointImage2>>> {
+        self.validate_policy(policy)?;
+        match self.represented_rational_value(policy)? {
+            Classification::Decided(Some(parameter)) => {
+                return Ok(semicircle.point_at(&parameter, policy)?.map(Some));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let Self::Mapped(data) = self else {
+            unreachable!("an exact cusp parameter always has a represented rational value");
+        };
+        if let Some((map, contact)) = data.coincident_rational_source() {
+            return Ok(match &contact.other_parameter {
+                BezierParameter2::Algebraic(parameter) => Classification::Decided(Some(
+                    RationalBezierAlgebraicPointImage2::from_parametric_source(
+                        map.data.curve.clone(),
+                        parameter.clone(),
+                        policy,
+                    ),
+                )),
+                BezierParameter2::Exact(parameter) => map
+                    .data
+                    .curve
+                    .point_at_classified(parameter, policy)
+                    .map(|point| {
+                        Some(algebraic_constant_point_image(
+                            &point,
+                            semicircle.cusp_parameter(),
+                            policy,
+                        ))
+                    }),
+            });
+        }
+        if let Some((source, start, source_policy)) = data.coincident_pair_endpoint_source() {
+            if source_policy != *policy {
+                return Err(CurveError::Topology(
+                    "algebraic cusp endpoint source used a different predicate policy".into(),
+                ));
+            }
+            return Ok(Classification::Decided(Some(if start {
+                source.start_point_image(policy)?
+            } else {
+                source.end_point_image(policy)?
+            })));
+        }
+        if let Some(BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
+            parallel,
+            parameter: BezierParameter2::Exact(parameter),
+            ..
+        }) = data.coincident_tangent_source()
+        {
+            return Ok(parallel.point_at(parameter, policy)?.map(|point| {
+                Some(algebraic_constant_point_image(
+                    &point,
+                    semicircle.cusp_parameter(),
+                    policy,
+                ))
+            }));
+        }
+        Ok(Classification::Decided(None))
+    }
+
     pub(crate) fn shares_exact_evidence(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Exact(first), Self::Exact(second)) => first == second,
@@ -6752,6 +6831,22 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 })?;
         }
     }
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_constant_point_image(
+    point: &Point2,
+    parameter: &BezierAlgebraicParameter2,
+    policy: &CurveContext,
+) -> RationalBezierAlgebraicPointImage2 {
+    RationalBezierAlgebraicPointImage2::from_retained_expression(
+        parameter.clone(),
+        parameter_representation(parameter, policy),
+        vec![point.x().clone()],
+        vec![point.y().clone()],
+        vec![Real::one()],
+        "embedded an exact cusp endpoint in a retained local field",
+    )
 }
 
 fn cusp_semicircle_parameter_bracket_bounds(
@@ -7274,19 +7369,24 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
 
     /// Prepares one exact minor-arc evaluator for an algebraic query ray.
     ///
-    /// Exact `Real` subrange cuts preserve a single cusp field, so the start,
-    /// end, and center remain rational expressions of that selected root.
-    /// A mapped cut enters the same fast path when its retained correspondence
-    /// proves an exact rational value; genuinely independent mapped fields stay
-    /// explicit until the multi-field endpoint evaluator is available.
+    /// Exact `Real` subrange cuts preserve a single cusp field. A mapped cut
+    /// enters the same fast path when its correspondence proves a rational
+    /// value, or when its geometric point has one selected carrier field and
+    /// the companion endpoint is exactly rational. Genuinely distinct endpoint
+    /// fields stay explicit until the multi-field endpoint evaluator is
+    /// available.
     #[cfg(feature = "predicates")]
     pub(crate) fn algebraic_ray_evaluator(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleAlgebraicRay2>> {
         self.validate_policy(policy)?;
-        let start = match self.data.start.represented_rational_value(policy)? {
-            Classification::Decided(Some(parameter)) => parameter,
+        let mut start = match self
+            .data
+            .start
+            .coincident_point_image(&self.data.semicircle, policy)?
+        {
+            Classification::Decided(Some(point)) => point,
             Classification::Decided(None) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
@@ -7294,8 +7394,12 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let end = match self.data.end.represented_rational_value(policy)? {
-            Classification::Decided(Some(parameter)) => parameter,
+        let mut end = match self
+            .data
+            .end
+            .coincident_point_image(&self.data.semicircle, policy)?
+        {
+            Classification::Decided(Some(point)) => point,
             Classification::Decided(None) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
@@ -7303,18 +7407,37 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let start = match self.data.semicircle.point_at(&start, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        let endpoints_share_field = start.parameter() == end.parameter();
+        if !endpoints_share_field {
+            if let (Some(start_point), Some(end_point)) = (
+                start.exact_rational_point(policy),
+                end.exact_rational_point(policy),
+            ) {
+                start = algebraic_constant_point_image(
+                    &start_point,
+                    self.data.semicircle.cusp_parameter(),
+                    policy,
+                );
+                end = algebraic_constant_point_image(
+                    &end_point,
+                    self.data.semicircle.cusp_parameter(),
+                    policy,
+                );
+            } else if let (Some(point), Some(parameter)) =
+                (start.exact_rational_point(policy), end.retained_parameter())
+            {
+                start = algebraic_constant_point_image(&point, parameter, policy);
+            } else if let (Some(point), Some(parameter)) =
+                (end.exact_rational_point(policy), start.retained_parameter())
+            {
+                end = algebraic_constant_point_image(&point, parameter, policy);
+            } else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
-        };
-        let end = match self.data.semicircle.point_at(&end, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        }
+        if start.parameter() != end.parameter() {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
         let (start, end) = if self.data.reversed {
             (end, start)
         } else {
@@ -24591,6 +24714,154 @@ mod conversion_tests {
             let Classification::Decided(boundary) = upper.point_at(&half, &policy).unwrap() else {
                 panic!("the selected-field boundary point must remain exact");
             };
+            assert_eq!(
+                region
+                    .classify_algebraic_point_raw(&boundary, &policy)
+                    .unwrap(),
+                Classification::Decided(crate::RegionPointLocation::Boundary),
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn mapped_algebraic_cusp_cut_reuses_its_rational_carrier_field() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let upper = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let rational_quarter = RationalBezier2::from(
+                RationalQuadraticBezier2::try_new(
+                    Point2::new(Real::one(), Real::zero()),
+                    Point2::new(Real::one(), Real::one()),
+                    Point2::new(Real::zero(), Real::one()),
+                    Real::one(),
+                    Real::one(),
+                    Real::from(2_i8),
+                )
+                .unwrap(),
+            );
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+            ) = upper
+                .rational_intersections(&rational_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the rational quarter must publish its cusp correspondence");
+            };
+            let [overlap] = overlaps.as_slice() else {
+                panic!("the rational quarter must retain one monotone overlap");
+            };
+            let BezierParameter2::Algebraic(source_parameter) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                panic!("the rational-carrier cut must remain algebraic");
+            };
+            let Classification::Decided(cut) = overlap
+                .cusp_parameter_for_other(
+                    &BezierParameter2::Algebraic(source_parameter.clone()),
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the algebraic rational-carrier cut must map to the cusp");
+            };
+            assert_eq!(
+                cut.represented_rational_value(&policy).unwrap(),
+                Classification::Decided(None),
+            );
+
+            let Classification::Decided(first) = BezierAlgebraicCuspSemicircleFragment2::try_new(
+                upper.clone(),
+                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                cut.clone(),
+                false,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the mapped first cusp cell must be ordered");
+            };
+            let Classification::Decided(second) = BezierAlgebraicCuspSemicircleFragment2::try_new(
+                upper.clone(),
+                cut,
+                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+                false,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the mapped second cusp cell must be ordered");
+            };
+            assert!(matches!(
+                first.algebraic_ray_evaluator(&policy).unwrap(),
+                Classification::Decided(_)
+            ));
+            assert!(matches!(
+                second.algebraic_ray_evaluator(&policy).unwrap(),
+                Classification::Decided(_)
+            ));
+            let lower =
+                BezierAlgebraicCuspSemicircleFragment2::full(upper.complementary_half(), &policy);
+            let boundary = crate::CurveRegionBoundaryLoop2::new(
+                vec![
+                    crate::BezierSplitFragment2::AlgebraicCuspSemicircle(first),
+                    crate::BezierSplitFragment2::AlgebraicCuspSemicircle(second),
+                    crate::BezierSplitFragment2::AlgebraicCuspSemicircle(lower),
+                ],
+                &policy,
+            )
+            .expect("the mapped cusp cells must close one exact disk");
+            let region = crate::CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![crate::CurveRegionLoopRole::Material],
+                vec![crate::FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+
+            let BezierParameter2::Algebraic(query_parameter) =
+                algebraic_parameter(vec![-third.clone(), Real::zero(), Real::one()])
+            else {
+                panic!("the independent query must remain algebraic");
+            };
+            let query_line = |start: i8, end: i8| {
+                RationalBezier2::try_from_subcurve(&crate::BezierSubcurve2::Quadratic(
+                    QuadraticBezier2::from_line_segment(
+                        LineSeg2::try_new(
+                            Point2::from_values(start, 0),
+                            Point2::from_values(end, 0),
+                        )
+                        .unwrap(),
+                    ),
+                ))
+                .unwrap()
+            };
+            let inside = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                query_line(0, 1),
+                query_parameter.clone(),
+                &policy,
+            );
+            assert_eq!(
+                region
+                    .classify_algebraic_point_raw(&inside, &policy)
+                    .unwrap(),
+                Classification::Decided(crate::RegionPointLocation::Inside),
+            );
+            let outside = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                query_line(2, 3),
+                query_parameter,
+                &policy,
+            );
+            assert_eq!(
+                region
+                    .classify_algebraic_point_raw(&outside, &policy)
+                    .unwrap(),
+                Classification::Decided(crate::RegionPointLocation::Outside),
+            );
+            let boundary = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                rational_quarter.clone(),
+                source_parameter,
+                &policy,
+            );
             assert_eq!(
                 region
                     .classify_algebraic_point_raw(&boundary, &policy)
