@@ -136,6 +136,16 @@ fn corpus_spans_initial_replacement_path_classes() {
         "coplanar-vertex-contact",
         "coplanar-edge-contact",
         "orientation-inversion",
+        "negative-winding-cavity",
+        "genus-one",
+        "self-intersecting-pwn",
+        "winding-multiplicity-two",
+        "exact-embedding",
+        "reflection",
+        "face-permutation",
+        "operand-permutation",
+        "high-operand-count",
+        "batched-expression",
     ] {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }

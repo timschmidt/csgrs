@@ -2628,6 +2628,53 @@ mod tests {
         .collect()
     }
 
+    fn voxel_ring(operand: usize, operand_count: usize) -> Vec<ConvexPolygon> {
+        let occupied = (0_i64..3)
+            .flat_map(|x| (0_i64..3).map(move |y| (x, y, 0_i64)))
+            .filter(|&(x, y, _)| (x, y) != (1, 1))
+            .collect::<BTreeSet<_>>();
+        let faces = [
+            ((-1, 0, 0), [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 1, 0]]),
+            ((1, 0, 0), [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]]),
+            ((0, -1, 0), [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]]),
+            ((0, 1, 0), [[0, 1, 0], [0, 1, 1], [1, 1, 1], [1, 1, 0]]),
+            ((0, 0, -1), [[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]]),
+            ((0, 0, 1), [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]]),
+        ];
+        let mut vertex_ids = BTreeMap::<(i64, i64, i64), usize>::new();
+        let mut polygons = Vec::new();
+        for &(x, y, z) in &occupied {
+            for &((dx, dy, dz), offsets) in &faces {
+                if occupied.contains(&(x + dx, y + dy, z + dz)) {
+                    continue;
+                }
+                let grid = offsets.map(|[ox, oy, oz]| (x + ox, y + oy, z + oz));
+                let vertices = grid.map(|vertex| {
+                    if let Some(&id) = vertex_ids.get(&vertex) {
+                        id
+                    } else {
+                        let id = vertex_ids.len();
+                        vertex_ids.insert(vertex, id);
+                        id
+                    }
+                });
+                let points = grid.map(|(px, py, pz)| p(px, py, pz));
+                for local in [[0_usize, 1, 2], [0_usize, 2, 3]] {
+                    let mut polygon = triangle(
+                        local.map(|index| points[index].clone()),
+                        0,
+                        polygons.len(),
+                        local.map(|index| vertices[index]),
+                    );
+                    polygon.delta_w = vec![0; operand_count];
+                    polygon.delta_w[operand] = 1;
+                    polygons.push(polygon);
+                }
+            }
+        }
+        polygons
+    }
+
     fn arranged_cells(
         polygons: &[ConvexPolygon],
         policy: hyperlimit::PredicatePolicy,
@@ -3031,6 +3078,284 @@ mod tests {
                 &cells,
                 crate::winding::BooleanOp::Difference
             ));
+        }
+    }
+
+    #[test]
+    fn nested_negative_shell_forms_an_exact_cavity() {
+        let mut polygons = tetrahedron([0, 0, 0], 12, 0, 0, 0, 0, 1);
+        let mut cavity = tetrahedron([2, 2, 2], 2, 0, 4, 4, 0, 1);
+        for polygon in &mut cavity {
+            polygon.delta_w[0] = -1;
+        }
+        polygons.extend(cavity);
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, _, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(cells.facets.len(), 8);
+            assert_eq!(cells.cell_count, 4);
+            assert_eq!(cells.component_count, 2);
+            let mut windings = (0..cells.cell_count)
+                .map(|cell| cells.cell_winding(cell).to_vec())
+                .collect::<Vec<_>>();
+            windings.sort_unstable();
+            assert_eq!(windings, [vec![0], vec![0], vec![1], vec![1]]);
+            assert_eq!(
+                (0..cells.facets.len())
+                    .filter(|&facet| {
+                        cells.facet_classification(facet, crate::winding::BooleanOp::Union) != 0
+                    })
+                    .count(),
+                8
+            );
+            assert!(selected_facets_are_closed(
+                &cells,
+                crate::winding::BooleanOp::Union
+            ));
+        }
+    }
+
+    #[test]
+    fn genus_one_voxel_ring_has_one_inside_and_one_outside_cell() {
+        let polygons = voxel_ring(0, 1);
+        assert_eq!(polygons.len(), 64);
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, surface, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(surface.points.len(), 32);
+            assert_eq!(cells.facets.len(), 64);
+            assert_eq!(cells.cell_count, 2);
+            assert_eq!(cells.component_count, 1);
+            assert_eq!(cells.radial_edge_count, 96);
+            assert_eq!(cells.max_radial_degree, 2);
+            let mut windings = (0..cells.cell_count)
+                .map(|cell| cells.cell_winding(cell).to_vec())
+                .collect::<Vec<_>>();
+            windings.sort_unstable();
+            assert_eq!(windings, [vec![0], vec![1]]);
+            assert_eq!(
+                (0..cells.facets.len())
+                    .filter(|&facet| {
+                        cells.facet_classification(facet, crate::winding::BooleanOp::Union) != 0
+                    })
+                    .count(),
+                64
+            );
+            assert!(selected_facets_are_closed(
+                &cells,
+                crate::winding::BooleanOp::Union
+            ));
+        }
+    }
+
+    #[test]
+    fn same_operand_transverse_pwn_preserves_winding_multiplicity() {
+        let mut polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 1);
+        polygons.extend(tetrahedron([1, 1, -1], 4, 0, 4, 4, 0, 1));
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, _, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(cells.component_count, 1);
+            assert_eq!(cells.cell_count, 4);
+            assert!(cells.max_radial_degree >= 4);
+            let mut windings = (0..cells.cell_count)
+                .map(|cell| cells.cell_winding(cell).to_vec())
+                .collect::<Vec<_>>();
+            windings.sort_unstable();
+            assert_eq!(windings, [vec![0], vec![1], vec![1], vec![2]]);
+            let selected = (0..cells.facets.len())
+                .filter(|&facet| {
+                    cells.facet_classification(facet, crate::winding::BooleanOp::Union) != 0
+                })
+                .count();
+            assert!(selected > 0);
+            assert!(selected < cells.facets.len());
+            assert!(selected_facets_are_closed(
+                &cells,
+                crate::winding::BooleanOp::Union
+            ));
+        }
+    }
+
+    #[test]
+    fn exact_embedding_and_operand_permutation_preserve_cell_truth() {
+        let first = [p(0, 0, 0), p(4, 0, 0), p(0, 4, 0), p(0, 0, 4)];
+        let second = [p(1, 1, -1), p(5, 1, -1), p(1, 5, -1), p(1, 1, 3)];
+        let transform = |[x, y, z]: [i64; 3]| p(100 - 7 * z, -50 + 7 * x, 33 + 7 * y);
+        let transformed_first = [
+            transform([0, 0, 0]),
+            transform([4, 0, 0]),
+            transform([0, 4, 0]),
+            transform([0, 0, 4]),
+        ];
+        let transformed_second = [
+            transform([1, 1, -1]),
+            transform([5, 1, -1]),
+            transform([1, 5, -1]),
+            transform([1, 1, 3]),
+        ];
+
+        let build =
+            |left: [Point3; 4], right: [Point3; 4], left_operand: usize, right_operand: usize| {
+                let mut polygons = tetrahedron_from_vertices(left, 0, 0, 0, left_operand, 2);
+                polygons.extend(tetrahedron_from_vertices(right, 1, 4, 0, right_operand, 2));
+                polygons
+            };
+        let base = build(first.clone(), second.clone(), 0, 1);
+        let transformed = build(transformed_first, transformed_second, 0, 1);
+        let permuted = build(first, second, 1, 0);
+        let mut reordered = base.clone();
+        reordered.reverse();
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (base_certainty, base_surface, base_cells) = arranged_cells(&base, policy);
+            let (transformed_certainty, transformed_surface, transformed_cells) =
+                arranged_cells(&transformed, policy);
+            let (permuted_certainty, _, permuted_cells) = arranged_cells(&permuted, policy);
+            let (reordered_certainty, reordered_surface, reordered_cells) =
+                arranged_cells(&reordered, policy);
+            assert_eq!(base_certainty, MeshCertainty::Certified);
+            assert_eq!(transformed_certainty, base_certainty);
+            assert_eq!(permuted_certainty, base_certainty);
+            assert_eq!(reordered_certainty, base_certainty);
+            assert_eq!(transformed_surface.points.len(), base_surface.points.len());
+            assert_eq!(reordered_surface.points.len(), base_surface.points.len());
+            assert_eq!(transformed_cells.facets.len(), base_cells.facets.len());
+            assert_eq!(reordered_cells.facets.len(), base_cells.facets.len());
+            assert_eq!(transformed_cells.cell_count, base_cells.cell_count);
+            assert_eq!(reordered_cells.cell_count, base_cells.cell_count);
+            assert_eq!(
+                transformed_cells.component_count,
+                base_cells.component_count
+            );
+            assert_eq!(reordered_cells.component_count, base_cells.component_count);
+            assert_eq!(
+                transformed_cells.max_radial_degree,
+                base_cells.max_radial_degree
+            );
+            assert_eq!(
+                reordered_cells.max_radial_degree,
+                base_cells.max_radial_degree
+            );
+
+            let signature = |cells: &SurfaceCellComplex| {
+                let mut windings = (0..cells.cell_count)
+                    .map(|cell| cells.cell_winding(cell).to_vec())
+                    .collect::<Vec<_>>();
+                windings.sort_unstable();
+                windings
+            };
+            let base_signature = signature(&base_cells);
+            assert_eq!(signature(&transformed_cells), base_signature);
+            assert_eq!(signature(&reordered_cells), base_signature);
+            let mut swapped_signature = signature(&permuted_cells)
+                .into_iter()
+                .map(|winding| vec![winding[1], winding[0]])
+                .collect::<Vec<_>>();
+            swapped_signature.sort_unstable();
+            assert_eq!(swapped_signature, base_signature);
+
+            for operation in [
+                crate::winding::BooleanOp::Union,
+                crate::winding::BooleanOp::Intersection,
+                crate::winding::BooleanOp::SymmetricDifference,
+            ] {
+                let selected = |cells: &SurfaceCellComplex| {
+                    (0..cells.facets.len())
+                        .filter(|&facet| cells.facet_classification(facet, operation) != 0)
+                        .count()
+                };
+                assert_eq!(selected(&transformed_cells), selected(&base_cells));
+                assert_eq!(selected(&reordered_cells), selected(&base_cells));
+                assert_eq!(selected(&permuted_cells), selected(&base_cells));
+                assert!(selected_facets_are_closed(&base_cells, operation));
+                assert!(selected_facets_are_closed(&transformed_cells, operation));
+                assert!(selected_facets_are_closed(&reordered_cells, operation));
+                assert!(selected_facets_are_closed(&permuted_cells, operation));
+            }
+        }
+    }
+
+    #[test]
+    fn forty_operands_share_one_arrangement_and_batched_truth_table() {
+        const OPERAND_COUNT: usize = 40;
+        let mut polygons = Vec::with_capacity(OPERAND_COUNT * 4);
+        for operand in 0..OPERAND_COUNT {
+            let x = i64::try_from(operand).unwrap() * 3;
+            polygons.extend(tetrahedron(
+                [x, 0, 0],
+                1,
+                operand,
+                operand * 4,
+                0,
+                operand,
+                OPERAND_COUNT,
+            ));
+        }
+        let mut nodes = (0..OPERAND_COUNT)
+            .map(|operand| CellTruthNode::Operand(u32::try_from(operand).unwrap()))
+            .collect::<Vec<_>>();
+        let mut union = 0_u32;
+        for operand in 1..OPERAND_COUNT {
+            nodes.push(CellTruthNode::Or([union, u32::try_from(operand).unwrap()]));
+            union = u32::try_from(nodes.len() - 1).unwrap();
+        }
+        let mut intersection = 0_u32;
+        for operand in 1..OPERAND_COUNT {
+            nodes.push(CellTruthNode::And([
+                intersection,
+                u32::try_from(operand).unwrap(),
+            ]));
+            intersection = u32::try_from(nodes.len() - 1).unwrap();
+        }
+        let mut parity = 0_u32;
+        for operand in 1..OPERAND_COUNT {
+            nodes.push(CellTruthNode::Xor([
+                parity,
+                u32::try_from(operand).unwrap(),
+            ]));
+            parity = u32::try_from(nodes.len() - 1).unwrap();
+        }
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let (certainty, _, cells) = arranged_cells(&polygons, policy);
+            assert_eq!(certainty, MeshCertainty::Certified);
+            assert_eq!(cells.operand_count, OPERAND_COUNT);
+            assert_eq!(cells.component_count as usize, OPERAND_COUNT);
+            assert_eq!(cells.cell_count as usize, OPERAND_COUNT * 2);
+            let classified = cells
+                .classify_expressions(&nodes, &[union, intersection, parity])
+                .unwrap();
+            let selected = (0..classified.expression_count)
+                .map(|expression| {
+                    (0..classified.facet_count)
+                        .filter(|&facet| classified.classification(expression, facet) != 0)
+                        .count()
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(selected, [OPERAND_COUNT * 4, 0, OPERAND_COUNT * 4]);
+            for expression in [0, 2] {
+                let classifications = (0..classified.facet_count)
+                    .map(|facet| classified.classification(expression, facet))
+                    .collect::<Vec<_>>();
+                assert!(facet_classifications_are_closed(&cells, &classifications));
+            }
         }
     }
 

@@ -264,6 +264,100 @@ strict_result = "PredicateUndecided"
 approximate_512_result = "CoplanarPoint"
 
 [[fixture]]
+id = "surface_arrangement_negative_cavity"
+status = "permanent"
+provenance = "surface_arrangement::tests::nested_negative_shell_forms_an_exact_cavity"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "nested exact tetrahedral shells with inner winding transition -1"
+coordinate_class = "integer"
+topology = ["closed-pwn", "nested-shell", "negative-winding-cavity", "multi-component-radial"]
+operations = ["union", "cell-classification"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_facets = 8
+expected_cells = 4
+expected_windings = [0, 0, 1, 1]
+
+[[fixture]]
+id = "surface_arrangement_genus_one_voxel_ring"
+status = "permanent"
+provenance = "surface_arrangement::tests::genus_one_voxel_ring_has_one_inside_and_one_outside_cell"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "3x3x1 integer voxel ring with the center column absent"
+coordinate_class = "integer"
+topology = ["closed-pwn", "nonconvex", "high-genus", "genus-one", "tunnel"]
+operations = ["union", "cell-classification"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "scaling", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 64
+expected_points = 32
+expected_radial_edges = 96
+expected_cells = 2
+
+[[fixture]]
+id = "surface_arrangement_transverse_self_pwn"
+status = "permanent"
+provenance = "surface_arrangement::tests::same_operand_transverse_pwn_preserves_winding_multiplicity"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "two transversely overlapping exact tetrahedral shells in one operand"
+coordinate_class = "integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "winding-multiplicity-two", "nonmanifold-radial"]
+operations = ["union", "cell-classification"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_cells = 4
+expected_windings = [0, 1, 1, 2]
+
+[[fixture]]
+id = "surface_arrangement_embedding_permutation"
+status = "permanent"
+provenance = "surface_arrangement::tests::exact_embedding_and_operand_permutation_preserve_cell_truth"
+license = "MIT"
+source_kind = "unit-generator-matrix"
+generator = "overlapping tetrahedra under exact scale-7 reflected embedding, face reorder, and operand swap"
+coordinate_class = "integer"
+topology = ["closed-pwn", "transverse-face-intersection", "exact-embedding", "reflection", "face-permutation", "operand-permutation"]
+operations = ["union", "intersection", "xor", "cell-classification"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+metamorphic_variants = 4
+
+[[fixture]]
+id = "surface_arrangement_forty_operand_truth"
+status = "permanent"
+provenance = "surface_arrangement::tests::forty_operands_share_one_arrangement_and_batched_truth_table"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "40 disjoint exact tetrahedral operands with shared union/intersection/parity DAG"
+coordinate_class = "integer"
+topology = ["closed-pwn", "disjoint", "multi-component", "high-operand-count", "batched-expression"]
+operations = ["union", "intersection", "xor", "multi-expression"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "scaling", "fuzz-seed"]
+size = "medium"
+cgal_eligible = false
+expected_certainty = "Certified"
+operand_count = 40
+input_triangles = 160
+requested_expressions = 3
+expected_cells = 80
+
+[[fixture]]
 id = "general_nonconvex_regression_suite"
 status = "migration-required"
 provenance = "tests/regression.rs and behavior-level tests/core.rs"
