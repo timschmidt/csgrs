@@ -156,6 +156,24 @@ impl Similarity2 {
         &self.scale
     }
 
+    /// Applies the affine map to one homogeneous coordinate pair.
+    pub(crate) fn transform_homogeneous_coordinates(
+        &self,
+        x: &Real,
+        y: &Real,
+        weight: &Real,
+    ) -> (Real, Real) {
+        (
+            &self.a * x + &self.b * y + &self.xoff * weight,
+            &self.d * x + &self.e * y + &self.yoff * weight,
+        )
+    }
+
+    /// Applies only the similarity's linear part to one vector.
+    pub(crate) fn transform_vector_coordinates(&self, x: &Real, y: &Real) -> (Real, Real) {
+        (&self.a * x + &self.b * y, &self.d * x + &self.e * y)
+    }
+
     /// Transforms a point with hyperreal arithmetic.
     pub fn transform_point(&self, point: &Point2) -> Point2 {
         let point_is_exact =

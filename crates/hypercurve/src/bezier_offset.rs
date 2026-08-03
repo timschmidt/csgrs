@@ -394,6 +394,60 @@ pub(crate) enum BezierAlgebraicCuspSemicircleRationalIntersections2 {
 
 #[allow(dead_code)]
 impl BezierParallelAlgebraicCuspFrame2 {
+    fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
+        let zero = Real::zero();
+        let source_length = self
+            .data
+            .source_x_numerator
+            .len()
+            .max(self.data.source_y_numerator.len())
+            .max(self.data.denominator.len());
+        let mut source_x_numerator = Vec::with_capacity(source_length);
+        let mut source_y_numerator = Vec::with_capacity(source_length);
+        for index in 0..source_length {
+            let (x, y) = transform.transform_homogeneous_coordinates(
+                self.data.source_x_numerator.get(index).unwrap_or(&zero),
+                self.data.source_y_numerator.get(index).unwrap_or(&zero),
+                self.data.denominator.get(index).unwrap_or(&zero),
+            );
+            source_x_numerator.push(x * transform.scale());
+            source_y_numerator.push(y * transform.scale());
+        }
+
+        let normal_length = self
+            .data
+            .normal_x_numerator
+            .len()
+            .max(self.data.normal_y_numerator.len());
+        let orientation = Real::from(if transform.reverses_orientation() {
+            -1_i8
+        } else {
+            1_i8
+        });
+        let mut normal_x_numerator = Vec::with_capacity(normal_length);
+        let mut normal_y_numerator = Vec::with_capacity(normal_length);
+        for index in 0..normal_length {
+            let (x, y) = transform.transform_vector_coordinates(
+                self.data.normal_x_numerator.get(index).unwrap_or(&zero),
+                self.data.normal_y_numerator.get(index).unwrap_or(&zero),
+            );
+            normal_x_numerator.push(&orientation * x);
+            normal_y_numerator.push(&orientation * y);
+        }
+
+        Ok(Self {
+            data: Arc::new(BezierParallelAlgebraicCuspFrameData2 {
+                parallel: self.data.parallel.transform_similarity(transform)?,
+                parameter: self.data.parameter.clone(),
+                source_x_numerator: polynomial_trim_structural_zeros(source_x_numerator),
+                source_y_numerator: polynomial_trim_structural_zeros(source_y_numerator),
+                normal_x_numerator: polynomial_trim_structural_zeros(normal_x_numerator),
+                normal_y_numerator: polynomial_trim_structural_zeros(normal_y_numerator),
+                denominator: polynomial_scale(&self.data.denominator, transform.scale()),
+            }),
+        })
+    }
+
     fn point_numerators_at_parallel_distance(&self, distance: &Real) -> (Vec<Real>, Vec<Real>) {
         (
             polynomial_add(
@@ -518,6 +572,25 @@ impl BezierAlgebraicCuspSemicircle2 {
                 clockwise: !self.data.clockwise,
             }),
         }
+    }
+
+    /// Applies a certified similarity without reconstructing the cusp proof.
+    ///
+    /// The retained parameter remains valid because curve parameterization is
+    /// unchanged. Uniform scale multiplies the signed radius, while reflection
+    /// also reverses the transformed source's left normal and circle traversal.
+    pub(crate) fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
+        let mut radial_distance = &self.data.radial_distance * transform.scale();
+        if transform.reverses_orientation() {
+            radial_distance = -radial_distance;
+        }
+        Ok(Self {
+            data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                frame: self.data.frame.transform_similarity(transform)?,
+                radial_distance,
+                clockwise: self.data.clockwise ^ transform.reverses_orientation(),
+            }),
+        })
     }
 
     /// Evaluates an exact point at a represented rational-curve parameter.
@@ -13830,6 +13903,83 @@ mod conversion_tests {
                         assert_eq!(
                             carrier.contains_point(&excluded, &policy).unwrap(),
                             Classification::Decided(false),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_semicircle_similarities_transform_the_shared_frame_exactly() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let preserving = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-2_i8),
+            Real::from(2_i8),
+            Real::zero(),
+            Real::from(5_i8),
+            Real::from(-7_i8),
+        )
+        .unwrap();
+        let reversing = Similarity2::try_from_real_affine(
+            Real::from(-2_i8),
+            Real::zero(),
+            Real::zero(),
+            Real::from(2_i8),
+            Real::from(5_i8),
+            Real::from(-7_i8),
+        )
+        .unwrap();
+        for (transform, expected_radius, expected_clockwise, expected_points) in [
+            (
+                preserving,
+                Real::from(2_i8),
+                false,
+                [(5, -5), (3, -7), (5, -9)],
+            ),
+            (
+                reversing,
+                Real::from(-2_i8),
+                true,
+                [(3, -7), (5, -5), (7, -7)],
+            ),
+        ] {
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let semicircle =
+                    synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+                let transformed = semicircle.transform_similarity(&transform).unwrap();
+                assert_eq!(transformed.cusp_parameter(), semicircle.cusp_parameter());
+                assert_eq!(transformed.radial_distance(), &expected_radius);
+                assert_eq!(transformed.is_clockwise(), expected_clockwise);
+                assert_eq!(
+                    semicircle
+                        .reversed()
+                        .transform_similarity(&transform)
+                        .unwrap(),
+                    transformed.reversed(),
+                );
+
+                for (parameter, (expected_x, expected_y)) in
+                    [Real::zero(), half.clone(), Real::one()]
+                        .into_iter()
+                        .zip(expected_points)
+                {
+                    let Classification::Decided(point) =
+                        transformed.point_at(&parameter, &policy).unwrap()
+                    else {
+                        panic!("transformed algebraic cusp point must be decided");
+                    };
+                    for (use_x, expected) in [
+                        (true, Real::from(expected_x)),
+                        (false, Real::from(expected_y)),
+                    ] {
+                        assert_eq!(
+                            point
+                                .coordinate_order_to_real(use_x, &expected, &policy)
+                                .unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Equal),
                         );
                     }
                 }
