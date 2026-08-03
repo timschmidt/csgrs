@@ -407,6 +407,15 @@ struct RetainedRationalPointParametricSource {
     resolved: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,
 }
 
+#[cfg(feature = "predicates")]
+pub(crate) struct RationalBezierAlgebraicPointPredicate2<'a> {
+    x_numerator: &'a [Real],
+    y_numerator: &'a [Real],
+    denominator: &'a [Real],
+    parameter: BezierParameter2,
+    denominator_sign: RealSign,
+}
+
 impl PartialEq for RetainedRationalPointParametricSource {
     fn eq(&self, other: &Self) -> bool {
         self.curve == other.curve && self.parameter == other.parameter
@@ -723,9 +732,165 @@ impl RationalBezierAlgebraicPointImage2 {
         ))
     }
 
+    #[cfg(feature = "predicates")]
+    pub(crate) fn predicate_evaluator<'a>(
+        &'a self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RationalBezierAlgebraicPointPredicate2<'a>>> {
+        let Some(image) = self.resolved(policy) else {
+            return Err(CurveError::Topology(
+                "algebraic point image did not retain a replayable source".into(),
+            ));
+        };
+        let (x_numerator, y_numerator, denominator) =
+            if let Some(expression) = image.data.retained_expression.as_ref() {
+                (
+                    expression.x_numerator.as_slice(),
+                    expression.y_numerator.as_slice(),
+                    expression.denominator.as_slice(),
+                )
+            } else {
+                let (Some(x), Some(y)) = (image.x(), image.y()) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                if x.denominator_coefficients() != y.denominator_coefficients() {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                (
+                    x.numerator_coefficients(),
+                    y.numerator_coefficients(),
+                    x.denominator_coefficients(),
+                )
+            };
+        let parameter = if let Some(parameter) = image.retained_parameter() {
+            BezierParameter2::Algebraic(parameter.clone())
+        } else {
+            match BezierParameter2::from_algebraic_root_representation(image.parameter(), policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        };
+        let denominator_sign =
+            match signed_coefficients_at_parameter(denominator.to_vec(), &parameter, policy)? {
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        Ok(Classification::Decided(
+            RationalBezierAlgebraicPointPredicate2 {
+                x_numerator,
+                y_numerator,
+                denominator,
+                parameter,
+                denominator_sign,
+            },
+        ))
+    }
+
     /// Returns a compact diagnostic message for failed construction.
     pub fn message(&self) -> Option<&str> {
         self.data.message.as_deref()
+    }
+}
+
+#[cfg(feature = "predicates")]
+impl RationalBezierAlgebraicPointPredicate2<'_> {
+    fn geometric_sign(
+        &self,
+        coefficients: Vec<Real>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        Ok(
+            match signed_coefficients_at_parameter(coefficients, &self.parameter, policy)? {
+                Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
+                Classification::Decided(sign) => {
+                    Classification::Decided(if sign == self.denominator_sign {
+                        RealSign::Positive
+                    } else {
+                        RealSign::Negative
+                    })
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
+    pub(crate) fn coordinate_order_to_real(
+        &self,
+        use_x: bool,
+        value: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Ordering>> {
+        let numerator = if use_x {
+            self.x_numerator
+        } else {
+            self.y_numerator
+        };
+        let length = numerator.len().max(self.denominator.len());
+        let difference = (0..length)
+            .map(|index| {
+                numerator.get(index).cloned().unwrap_or_else(Real::zero)
+                    - value
+                        * self
+                            .denominator
+                            .get(index)
+                            .cloned()
+                            .unwrap_or_else(Real::zero)
+            })
+            .collect();
+        Ok(self
+            .geometric_sign(difference, policy)?
+            .map(|sign| match sign {
+                RealSign::Negative => Ordering::Less,
+                RealSign::Zero => Ordering::Equal,
+                RealSign::Positive => Ordering::Greater,
+            }))
+    }
+
+    pub(crate) fn oriented_line_side(
+        &self,
+        start: &Point2,
+        end: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<crate::classify::LineSide>> {
+        let direction_x = end.x() - start.x();
+        let direction_y = end.y() - start.y();
+        let coefficient_count = self
+            .x_numerator
+            .len()
+            .max(self.y_numerator.len())
+            .max(self.denominator.len());
+        let determinant = (0..coefficient_count)
+            .map(|index| {
+                let denominator = self
+                    .denominator
+                    .get(index)
+                    .cloned()
+                    .unwrap_or_else(Real::zero);
+                let x = self
+                    .x_numerator
+                    .get(index)
+                    .cloned()
+                    .unwrap_or_else(Real::zero)
+                    - start.x() * &denominator;
+                let y = self
+                    .y_numerator
+                    .get(index)
+                    .cloned()
+                    .unwrap_or_else(Real::zero)
+                    - start.y() * denominator;
+                &direction_x * y - &direction_y * x
+            })
+            .collect();
+        Ok(self
+            .geometric_sign(determinant, policy)?
+            .map(crate::classify::LineSide::from_real_sign))
     }
 }
 

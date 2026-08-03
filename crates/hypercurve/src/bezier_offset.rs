@@ -19199,6 +19199,36 @@ mod conversion_tests {
                         crate::BezierSplitFragment2::AlgebraicCuspSemicircle(_)
                     ))
             );
+
+            let corners = [
+                Point2::from_values(-10, -10),
+                Point2::from_values(10, -10),
+                Point2::from_values(10, 10),
+                Point2::from_values(-10, 10),
+            ];
+            let square = CurvePath2::try_new(
+                (0..corners.len())
+                    .map(|index| {
+                        Curve2::from(
+                            LineSeg2::try_new(
+                                corners[index].clone(),
+                                corners[(index + 1) % corners.len()].clone(),
+                            )
+                            .unwrap(),
+                        )
+                    })
+                    .collect(),
+            )
+            .unwrap();
+            let container = crate::CurveRegion2::try_from_boundary_paths(&[square], &policy)
+                .unwrap()
+                .into_value();
+            let booleans = region
+                .boolean_regions(&container, &policy)
+                .expect("the all-algebraic cusp loop must classify against an affine region")
+                .into_value();
+            assert!(booleans.intersection().has_algebraic_fragments());
+            assert!(booleans.difference().is_empty());
         }
     }
 

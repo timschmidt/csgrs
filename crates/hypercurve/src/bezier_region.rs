@@ -21,9 +21,15 @@ use std::sync::OnceLock;
 use hyperreal::{Real, RealSign};
 use hypersolve::AlgebraicRootRepresentation;
 
+#[cfg(feature = "predicates")]
+use crate::RationalBezierAlgebraicPointImage2;
+#[cfg(feature = "predicates")]
+use crate::bezier_algebraic_image::RationalBezierAlgebraicPointPredicate2;
 use crate::bezier_arrangement::represented_roots_equal;
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
+#[cfg(feature = "predicates")]
+use crate::classify::LineSide;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::policy::{
     PolicyClassificationCache, PolicyEvaluationCache, resolve_cached_classification,
@@ -6038,6 +6044,87 @@ impl CurveRegion2 {
         resolve_certified_operation(policy, |attempt| self.classify_point_raw(point, attempt))
     }
 
+    #[cfg(feature = "predicates")]
+    pub(crate) fn classify_algebraic_point_raw(
+        &self,
+        point: &RationalBezierAlgebraicPointImage2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RegionPointLocation>> {
+        if self
+            .data
+            .certified_loop_roles
+            .as_ref()
+            .is_some_and(|roles| roles.len() != self.data.boundary_loops.len())
+            || self
+                .data
+                .certified_loop_fill_rules
+                .as_ref()
+                .is_some_and(|rules| rules.len() != self.data.boundary_loops.len())
+        {
+            return Err(CurveError::Topology(
+                "curve-region loop semantics are inconsistent with boundary loops".into(),
+            ));
+        }
+        if self.data.boundary_loops.is_empty() {
+            return Ok(Classification::Decided(RegionPointLocation::Outside));
+        }
+        let predicates = match point.predicate_evaluator(policy)? {
+            Classification::Decided(predicates) => predicates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut inside = false;
+        let mut signed_depth = 0_i32;
+        for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
+            if let Classification::Decided(bounds) =
+                retained_loop_query_bounds(boundary_loop, policy)
+                && algebraic_point_is_decided_outside_bounds(&predicates, &bounds, policy)?
+            {
+                continue;
+            }
+            let fill_rule = self
+                .data
+                .certified_loop_fill_rules
+                .as_ref()
+                .map_or(FillRule::EvenOdd, |rules| rules[loop_index]);
+            match classify_algebraic_point_against_line_loop(
+                boundary_loop,
+                &predicates,
+                fill_rule,
+                policy,
+            )? {
+                Classification::Decided(ContourPointLocation::Inside) => {
+                    if let Some(roles) = &self.data.certified_loop_roles {
+                        signed_depth += match roles[loop_index] {
+                            CurveRegionLoopRole::Material => 1,
+                            CurveRegionLoopRole::Hole => -1,
+                        };
+                    } else {
+                        inside = !inside;
+                    }
+                }
+                Classification::Decided(ContourPointLocation::Outside) => {}
+                Classification::Decided(ContourPointLocation::Boundary) => {
+                    return Ok(Classification::Decided(RegionPointLocation::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        let inside = self
+            .data
+            .certified_loop_roles
+            .as_ref()
+            .map_or(inside, |_| signed_depth > 0);
+        Ok(Classification::Decided(if inside {
+            RegionPointLocation::Inside
+        } else {
+            RegionPointLocation::Outside
+        }))
+    }
+
     pub(crate) fn classify_point_raw(
         &self,
         point: &Point2,
@@ -7744,6 +7831,108 @@ fn classify_point_against_native_loop(
     classify_point_against_native_loop_after_bounds(boundary_loop, point, policy)
 }
 
+#[cfg(feature = "predicates")]
+fn algebraic_point_is_decided_outside_bounds(
+    point: &RationalBezierAlgebraicPointPredicate2<'_>,
+    bounds: &Aabb2,
+    policy: &CurveContext,
+) -> CurveResult<bool> {
+    for (use_x, minimum, maximum) in [
+        (true, bounds.min_x(), bounds.max_x()),
+        (false, bounds.min_y(), bounds.max_y()),
+    ] {
+        if matches!(
+            point.coordinate_order_to_real(use_x, minimum, policy)?,
+            Classification::Decided(std::cmp::Ordering::Less)
+        ) || matches!(
+            point.coordinate_order_to_real(use_x, maximum, policy)?,
+            Classification::Decided(std::cmp::Ordering::Greater)
+        ) {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+#[cfg(feature = "predicates")]
+fn classify_algebraic_point_against_line_loop(
+    boundary_loop: &CurveRegionBoundaryLoop2,
+    point: &RationalBezierAlgebraicPointPredicate2<'_>,
+    fill_rule: FillRule,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ContourPointLocation>> {
+    let mut winding = 0_i32;
+    for fragment in boundary_loop.fragments() {
+        let line = match retained_line_fragment_segment(fragment, policy)? {
+            Classification::Decided(line) => line,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let start_order = match point.coordinate_order_to_real(false, line.start().y(), policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end_order = match point.coordinate_order_to_real(false, line.end().y(), policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if matches!(
+            (start_order, end_order),
+            (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
+                | (std::cmp::Ordering::Greater, std::cmp::Ordering::Greater)
+        ) {
+            continue;
+        }
+        let side = match point.oriented_line_side(line.start(), line.end(), policy)? {
+            Classification::Decided(side) => side,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if side == LineSide::On {
+            let start_x = match point.coordinate_order_to_real(true, line.start().x(), policy)? {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let end_x = match point.coordinate_order_to_real(true, line.end().x(), policy)? {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if !matches!(
+                (start_x, end_x),
+                (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
+                    | (std::cmp::Ordering::Greater, std::cmp::Ordering::Greater)
+            ) {
+                return Ok(Classification::Decided(ContourPointLocation::Boundary));
+            }
+            continue;
+        }
+        if start_order != std::cmp::Ordering::Less
+            && end_order == std::cmp::Ordering::Less
+            && side == LineSide::Left
+        {
+            winding += 1;
+        } else if start_order == std::cmp::Ordering::Less
+            && end_order != std::cmp::Ordering::Less
+            && side == LineSide::Right
+        {
+            winding -= 1;
+        }
+    }
+    Ok(Classification::Decided(winding_location(
+        winding, fill_rule,
+    )))
+}
+
 fn classify_point_against_native_loop_after_bounds(
     boundary_loop: &BezierBoundaryLoop2,
     point: &Point2,
@@ -7874,6 +8063,11 @@ fn classify_point_against_retained_loop_with_fill_rule(
         return Err(CurveError::Topology(
             "retained region evaluator cache fragment count is inconsistent".into(),
         ));
+    }
+    if let Classification::Decided(bounds) = retained_loop_query_bounds(boundary_loop, policy)
+        && bounds.contains_point(point, policy) == Classification::Decided(false)
+    {
+        return Ok(Classification::Decided(ContourPointLocation::Outside));
     }
     for (fragment, evaluator) in boundary_loop.fragments().iter().zip(evaluators) {
         if let BezierSplitFragment2::Materialized { curve, .. } = fragment

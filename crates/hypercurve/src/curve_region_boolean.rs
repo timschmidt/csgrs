@@ -255,7 +255,7 @@ struct SplitCarrierFragment {
 #[derive(Clone, Debug)]
 struct ClassifiedSplitCarrierFragment {
     split: SplitCarrierFragment,
-    location: RegionPointLocation,
+    location: Option<RegionPointLocation>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -2818,78 +2818,142 @@ impl<'a> CurveRegionBooleanContext<'a> {
             transverse_vertices,
             reclassification_vertices,
         } = self.build_split_topology()?;
-        let mut classified_split_fragments = Vec::with_capacity(split_fragments.len());
+        let mut classified_split_fragments = split_fragments
+            .into_iter()
+            .map(|fragments| {
+                fragments
+                    .into_iter()
+                    .map(|split| ClassifiedSplitCarrierFragment {
+                        split,
+                        location: None,
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
         let mut point_classification_count = 0_usize;
-        let mut previous = None::<(
-            CurvePathBooleanOperand2,
-            usize,
-            Option<usize>,
-            RegionPointLocation,
-        )>;
-        for (carrier_index, fragments) in split_fragments.into_iter().enumerate() {
-            let carrier = &self.data.carriers[carrier_index];
-            let mut classified =
-                Vec::<ClassifiedSplitCarrierFragment>::with_capacity(fragments.len());
-            for split in fragments {
-                let propagated =
-                    previous.and_then(|(operand, loop_index, end_topology_vertex, location)| {
-                        (operand == carrier.operand
-                            && loop_index == carrier.loop_index
-                            && end_topology_vertex == split.start_topology_vertex)
-                            .then_some(split.start_topology_vertex)
-                            .flatten()
-                            .and_then(|vertex| {
-                                if transverse_vertices.get(vertex).copied().unwrap_or(false) {
-                                    toggled_region_location(location)
-                                } else if !reclassification_vertices
-                                    .get(vertex)
-                                    .copied()
-                                    .unwrap_or(false)
-                                {
-                                    Some(location)
-                                } else {
-                                    None
-                                }
-                            })
-                    });
-                let location = match propagated {
-                    Some(location) => location,
-                    None => {
-                        let fragment_range = split.fragment.curve_region_parameter_range();
-                        let (start, end) = (fragment_range.start(), fragment_range.end());
-                        let mut shared = false;
-                        for overlap in &overlaps {
-                            let range = if overlap.first_carrier_index == carrier_index {
-                                Some(&overlap.first_range)
-                            } else if overlap.second_carrier_index == carrier_index {
-                                Some(&overlap.second_range)
-                            } else {
-                                None
-                            };
-                            if let Some(range) = range
-                                && range_contains_fragment(range, start, end, &self.data.policy)?
-                            {
-                                shared = true;
-                                break;
-                            }
-                        }
-                        if shared {
-                            RegionPointLocation::Boundary
-                        } else {
-                            point_classification_count += 1;
-                            self.fragment_location(carrier_index, &split.fragment)?
+        for (carrier_index, fragments) in classified_split_fragments.iter_mut().enumerate() {
+            for classified in fragments {
+                let range = classified.split.fragment.curve_region_parameter_range();
+                let (start, end) = (range.start(), range.end());
+                for overlap in &overlaps {
+                    let overlap_range = if overlap.first_carrier_index == carrier_index {
+                        Some(&overlap.first_range)
+                    } else if overlap.second_carrier_index == carrier_index {
+                        Some(&overlap.second_range)
+                    } else {
+                        None
+                    };
+                    if let Some(overlap_range) = overlap_range
+                        && range_contains_fragment(overlap_range, start, end, &self.data.policy)?
+                    {
+                        classified.location = Some(RegionPointLocation::Boundary);
+                        break;
+                    }
+                }
+            }
+        }
+
+        let mut loop_start = 0_usize;
+        while loop_start < self.data.carriers.len() {
+            let first = &self.data.carriers[loop_start];
+            let mut loop_end = loop_start + 1;
+            while loop_end < self.data.carriers.len()
+                && self.data.carriers[loop_end].operand == first.operand
+                && self.data.carriers[loop_end].loop_index == first.loop_index
+            {
+                loop_end += 1;
+            }
+            let loop_range = loop_start..loop_end;
+            for carrier_index in loop_range.clone() {
+                for split_index in 0..classified_split_fragments[carrier_index].len() {
+                    if classified_split_fragments[carrier_index][split_index]
+                        .location
+                        .is_some()
+                    {
+                        if !propagate_boolean_locations_from_seed(
+                            &mut classified_split_fragments,
+                            loop_range.clone(),
+                            (carrier_index, split_index),
+                            &transverse_vertices,
+                            &reclassification_vertices,
+                        ) {
+                            return Err(self.invalid(
+                                carrier_index,
+                                CurveError::Topology(
+                                    "Boolean topology produced inconsistent face labels".into(),
+                                ),
+                            ));
                         }
                     }
-                };
-                previous = Some((
-                    carrier.operand,
-                    carrier.loop_index,
-                    split.end_topology_vertex,
-                    location,
-                ));
-                classified.push(ClassifiedSplitCarrierFragment { split, location });
+                }
             }
-            classified_split_fragments.push(classified);
+
+            // Prefer ordinary and analytic carriers. Their Cartesian
+            // representatives are cheaper and can classify a whole run that
+            // contains retained algebraic cusp fragments in either direction.
+            // A cusp representative remains the exact final seed when a run
+            // contains no other carrier.
+            for cusp_pass in [false, true] {
+                for carrier_index in loop_range.clone() {
+                    for split_index in 0..classified_split_fragments[carrier_index].len() {
+                        let classified = &classified_split_fragments[carrier_index][split_index];
+                        if classified.location.is_some()
+                            || matches!(
+                                classified.split.fragment,
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                            ) != cusp_pass
+                        {
+                            continue;
+                        }
+                        let location = match self
+                            .fragment_location(carrier_index, &classified.split.fragment)
+                        {
+                            Ok(location) => location,
+                            Err(ExactCurveError::Blocked(_)) => continue,
+                            Err(error) => return Err(error),
+                        };
+                        classified_split_fragments[carrier_index][split_index].location =
+                            Some(location);
+                        point_classification_count += 1;
+                        if !propagate_boolean_locations_from_seed(
+                            &mut classified_split_fragments,
+                            loop_range.clone(),
+                            (carrier_index, split_index),
+                            &transverse_vertices,
+                            &reclassification_vertices,
+                        ) {
+                            return Err(self.invalid(
+                                carrier_index,
+                                CurveError::Topology(
+                                    "Boolean topology produced inconsistent face labels".into(),
+                                ),
+                            ));
+                        }
+                    }
+                }
+            }
+
+            if let Some((carrier_index, split_index)) =
+                loop_range.clone().find_map(|carrier_index| {
+                    classified_split_fragments[carrier_index]
+                        .iter()
+                        .position(|classified| classified.location.is_none())
+                        .map(|split_index| (carrier_index, split_index))
+                })
+            {
+                // Replay one still-unclassified representative so the public
+                // blocker reports the actual remaining mathematical path,
+                // rather than an earlier candidate whose run was later
+                // classified from a different seed.
+                self.fragment_location(
+                    carrier_index,
+                    &classified_split_fragments[carrier_index][split_index]
+                        .split
+                        .fragment,
+                )?;
+                return Err(self.blocked(carrier_index, UncertaintyReason::Predicate));
+            }
+            loop_start = loop_end;
         }
         Ok(CurveRegionBooleanTopology {
             split_fragments: classified_split_fragments,
@@ -3696,7 +3760,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let action = self.fragment_action(
                     carrier_index,
                     &split.fragment,
-                    classified.location,
+                    classified
+                        .location
+                        .expect("Boolean topology classifies every split fragment"),
                     &topology.overlaps,
                     operation,
                 )?;
@@ -3886,16 +3952,55 @@ impl<'a> CurveRegionBooleanContext<'a> {
         carrier_index: usize,
         fragment: &BezierSplitFragment2,
     ) -> ExactCurveResult<RegionPointLocation> {
-        let (_, representative) = self.fragment_representative(carrier_index, fragment)?;
         let carrier = &self.data.carriers[carrier_index];
         let other = match carrier.operand {
             CurvePathBooleanOperand2::First => &self.data.second,
             CurvePathBooleanOperand2::Second => &self.data.first,
         };
-        match other
-            .classify_point_raw(&representative, &self.data.policy)
-            .map_err(|cause| self.invalid(carrier_index, cause))?
-        {
+        let classification =
+            if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
+                let parameter = match fragment
+                    .representative_parameter()
+                    .map_err(|cause| self.invalid(carrier_index, cause))?
+                {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Err(self.blocked(carrier_index, reason));
+                    }
+                };
+                let point = match fragment
+                    .semicircle()
+                    .point_at(&parameter, &self.data.policy)
+                    .map_err(|cause| self.invalid(carrier_index, cause))?
+                {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Err(self.blocked(carrier_index, reason));
+                    }
+                };
+                if let Some(point) = point.exact_rational_point(&self.data.policy) {
+                    other
+                        .classify_point_raw(&point, &self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?
+                } else {
+                    #[cfg(feature = "predicates")]
+                    {
+                        other
+                            .classify_algebraic_point_raw(&point, &self.data.policy)
+                            .map_err(|cause| self.invalid(carrier_index, cause))?
+                    }
+                    #[cfg(not(feature = "predicates"))]
+                    {
+                        Classification::Uncertain(UncertaintyReason::Unsupported)
+                    }
+                }
+            } else {
+                let (_, representative) = self.fragment_representative(carrier_index, fragment)?;
+                other
+                    .classify_point_raw(&representative, &self.data.policy)
+                    .map_err(|cause| self.invalid(carrier_index, cause))?
+            };
+        match classification {
             Classification::Decided(location) => Ok(location),
             Classification::Uncertain(reason) => Err(self.blocked(carrier_index, reason)),
         }
@@ -3907,31 +4012,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         fragment: &BezierSplitFragment2,
     ) -> ExactCurveResult<(crate::Real, crate::Point2)> {
         let carrier = &self.data.carriers[carrier_index];
-        if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
-            let parameter = match fragment
-                .representative_parameter()
-                .map_err(|cause| self.invalid(carrier_index, cause))?
-            {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Err(self.blocked(carrier_index, reason));
-                }
-            };
-            let point = match fragment
-                .semicircle()
-                .point_at(&parameter, &self.data.policy)
-                .map_err(|cause| self.invalid(carrier_index, cause))?
-            {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Err(self.blocked(carrier_index, reason));
-                }
-            };
-            return point
-                .exact_rational_point(&self.data.policy)
-                .map(|point| (parameter, point))
-                .ok_or_else(|| self.blocked(carrier_index, UncertaintyReason::Unsupported));
-        }
         let Some((start, end)) = fragment_range(fragment) else {
             return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
         };
@@ -4980,11 +5060,11 @@ fn transverse_carrier_cross_is_positive(
     let before = fragments
         .iter()
         .find(|fragment| fragment.split.end_topology_vertex == Some(vertex))?
-        .location;
+        .location?;
     let after = fragments
         .iter()
         .find(|fragment| fragment.split.start_topology_vertex == Some(vertex))?
-        .location;
+        .location?;
     // For a regular crossing, whether the second oriented carrier enters the
     // first region determines the sign of cross(first tangent, second
     // tangent), after accounting for which side of the first carrier is
@@ -5110,6 +5190,102 @@ const fn toggled_region_location(location: RegionPointLocation) -> Option<Region
         RegionPointLocation::Outside => Some(RegionPointLocation::Inside),
         RegionPointLocation::Boundary => None,
     }
+}
+
+fn propagated_boolean_location(
+    location: RegionPointLocation,
+    before: &ClassifiedSplitCarrierFragment,
+    after: &ClassifiedSplitCarrierFragment,
+    transverse_vertices: &[bool],
+    reclassification_vertices: &[bool],
+) -> Option<RegionPointLocation> {
+    let vertex = before.split.end_topology_vertex?;
+    (after.split.start_topology_vertex == Some(vertex)).then_some(())?;
+    if transverse_vertices.get(vertex).copied().unwrap_or(false) {
+        toggled_region_location(location)
+    } else if !reclassification_vertices
+        .get(vertex)
+        .copied()
+        .unwrap_or(false)
+    {
+        Some(location)
+    } else {
+        None
+    }
+}
+
+fn adjacent_boolean_loop_fragment(
+    fragments: &[Vec<ClassifiedSplitCarrierFragment>],
+    carrier_range: &std::ops::Range<usize>,
+    current: (usize, usize),
+    forward: bool,
+) -> Option<(usize, usize)> {
+    if forward {
+        if current.1 + 1 < fragments[current.0].len() {
+            return Some((current.0, current.1 + 1));
+        }
+        return (current.0 + 1..carrier_range.end)
+            .chain(carrier_range.start..=current.0)
+            .find_map(|carrier_index| {
+                (!fragments[carrier_index].is_empty()).then_some((carrier_index, 0))
+            });
+    }
+    if let Some(split_index) = current.1.checked_sub(1) {
+        return Some((current.0, split_index));
+    }
+    (carrier_range.start..current.0)
+        .rev()
+        .chain((current.0..carrier_range.end).rev())
+        .find_map(|carrier_index| {
+            fragments[carrier_index]
+                .len()
+                .checked_sub(1)
+                .map(|split_index| (carrier_index, split_index))
+        })
+}
+
+fn propagate_boolean_locations_from_seed(
+    fragments: &mut [Vec<ClassifiedSplitCarrierFragment>],
+    carrier_range: std::ops::Range<usize>,
+    seed: (usize, usize),
+    transverse_vertices: &[bool],
+    reclassification_vertices: &[bool],
+) -> bool {
+    for forward in [true, false] {
+        let mut current = seed;
+        while let Some(adjacent) =
+            adjacent_boolean_loop_fragment(fragments, &carrier_range, current, forward)
+        {
+            let (before, after) = if forward {
+                (current, adjacent)
+            } else {
+                (adjacent, current)
+            };
+            let Some(location) = fragments[current.0][current.1]
+                .location
+                .and_then(|location| {
+                    propagated_boolean_location(
+                        location,
+                        &fragments[before.0][before.1],
+                        &fragments[after.0][after.1],
+                        transverse_vertices,
+                        reclassification_vertices,
+                    )
+                })
+            else {
+                break;
+            };
+            if let Some(existing) = fragments[adjacent.0][adjacent.1].location {
+                if existing != location {
+                    return false;
+                }
+                break;
+            }
+            fragments[adjacent.0][adjacent.1].location = Some(location);
+            current = adjacent;
+        }
+    }
+    true
 }
 
 fn algebraic_endpoint_tangent_at_vertex(
@@ -7050,6 +7226,195 @@ mod certified_successor_tests {
             filled_side_is_left: true,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier() {
+        let local_start = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = cusp_test_semicircle(&policy);
+            let source_parameter = BezierParameter2::Algebraic(semicircle.cusp_parameter().clone());
+            let regular_span = |parallel: &BezierParallel2| {
+                let range = match BezierParameterRange2::try_new(
+                    BezierParameter2::Exact(local_start.clone()),
+                    source_parameter.clone(),
+                    &policy,
+                )
+                .unwrap()
+                {
+                    Classification::Decided(range) => range,
+                    Classification::Uncertain(reason) => panic!("local cusp range: {reason:?}"),
+                };
+                match BezierParallelFragment2::try_new(parallel.clone(), range, &policy).unwrap() {
+                    Classification::Decided(fragment) => fragment,
+                    Classification::Uncertain(reason) => {
+                        panic!("regular local cusp span: {reason:?}")
+                    }
+                }
+            };
+            let start_parallel = semicircle.start_parallel();
+            let end_parallel = semicircle.end_parallel();
+            let start_fragment = regular_span(&start_parallel);
+            let end_fragment = regular_span(&end_parallel);
+            let local_point = |parallel: &BezierParallel2| {
+                let Classification::Decided(point) =
+                    parallel.point_at(&local_start, &policy).unwrap()
+                else {
+                    panic!("a rational local parameter must have an exact parallel image");
+                };
+                point
+            };
+            let closing_line = BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(local_point(&end_parallel), local_point(&start_parallel))
+                        .unwrap(),
+                )),
+            };
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(
+                        BezierAlgebraicCuspSemicircleFragment2::full(semicircle, &policy),
+                    ),
+                    BezierSplitFragment2::AnalyticParallel(end_fragment)
+                        .reversed()
+                        .unwrap(),
+                    closing_line,
+                    BezierSplitFragment2::AnalyticParallel(start_fragment),
+                ],
+                &policy,
+            )
+            .expect("the algebraic cusp and adjacent carriers form one exact loop");
+            let region = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            let distant_algebraic_point =
+                RationalBezierAlgebraicPointImage2::from_parametric_source(
+                    rational_line(100, 101),
+                    sqrt_half_parameter(&policy),
+                    &policy,
+                );
+            assert_eq!(
+                region
+                    .classify_algebraic_point_raw(&distant_algebraic_point, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Outside),
+            );
+            let empty = CurveRegion2::default();
+            let topology = CurveRegionBooleanContext::try_new(&region, &empty, &policy)
+                .unwrap()
+                .build_boolean_topology()
+                .expect("an adjacent exact carrier must seed the non-rational cusp run");
+            assert_eq!(topology.point_classification_count, 1);
+            assert!(
+                topology
+                    .split_fragments
+                    .iter()
+                    .flatten()
+                    .all(|fragment| { fragment.location == Some(RegionPointLocation::Outside) })
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let fragment = BezierAlgebraicCuspSemicircleFragment2::full(
+                cusp_test_semicircle(&policy),
+                &policy,
+            );
+            let Classification::Decided(point) = fragment.representative_point().unwrap() else {
+                panic!("the selected cusp representative must retain an exact point image");
+            };
+            assert!(point.exact_rational_point(&policy).is_none());
+            assert_eq!(
+                square_region(-10, -10, 10, 10)
+                    .classify_algebraic_point_raw(&point, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+            assert_eq!(
+                square_region(20, 20, 30, 30)
+                    .classify_algebraic_point_raw(&point, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Outside),
+            );
+
+            let parameter = sqrt_half_parameter(&policy);
+            let boundary = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                rational_line(0, 1),
+                parameter.clone(),
+                &policy,
+            );
+            assert_eq!(
+                square_region(0, 0, 2, 2)
+                    .classify_algebraic_point_raw(&boundary, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Boundary),
+            );
+            let line_extension = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                rational_line(2, 4),
+                parameter.clone(),
+                &policy,
+            );
+            assert_eq!(
+                square_region(0, 0, 2, 2)
+                    .classify_algebraic_point_raw(&line_extension, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Outside),
+            );
+
+            let negative_denominator = RationalBezierAlgebraicPointImage2::from_retained_expression(
+                parameter.clone(),
+                crate::bezier_algebraic_image::parameter_representation(&parameter, &policy),
+                vec![Real::zero(), Real::from(-1_i8)],
+                vec![Real::zero(), Real::from(-1_i8)],
+                vec![Real::from(-1_i8)],
+                "test a correlated point with negative projective weight",
+            );
+            assert_eq!(
+                square_region(0, 0, 2, 2)
+                    .classify_algebraic_point_raw(&negative_denominator, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+
+            let outer = square_region(-2, -2, 2, 2);
+            let hole = square_region(0, 0, 1, 1);
+            let without_arrangement_provenance = |region: &CurveRegion2| {
+                CurveRegionBoundaryLoop2::new(
+                    region.boundary_loops()[0].fragments().to_vec(),
+                    &policy,
+                )
+                .unwrap()
+            };
+            let holed = CurveRegion2::try_new_with_loop_topology(
+                vec![
+                    without_arrangement_provenance(&outer),
+                    without_arrangement_provenance(&hole),
+                ],
+                vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+                vec![FillRule::NonZero; 2],
+                vec![
+                    crate::CurveBoundaryInteriorSide2::Left,
+                    crate::CurveBoundaryInteriorSide2::Right,
+                ],
+            )
+            .unwrap();
+            assert_eq!(
+                holed
+                    .classify_algebraic_point_raw(&negative_denominator, &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Outside),
+            );
         }
     }
 
