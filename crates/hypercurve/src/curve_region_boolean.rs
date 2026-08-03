@@ -10,7 +10,7 @@ use crate::bezier_offset::{
     BezierAlgebraicCuspSemicirclePairOverlap2, BezierAlgebraicCuspSemicircleParallelIntersections2,
     BezierAlgebraicCuspSemicircleParameter2, BezierAlgebraicCuspSemicircleRationalIntersections2,
 };
-use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
+use crate::bezier_tangent_order::algebraic_endpoint_tangent_cross_sign;
 use crate::classify::{compare_reals, real_sign};
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
 use crate::policy::resolve_certified_operation;
@@ -456,7 +456,7 @@ impl RegionPairContactEvidence {
             ),
             point: Some(contact.point().clone()),
             certified_transverse: contact.is_certified_transverse(),
-            tangent_cross_sign: None,
+            tangent_cross_sign: contact.tangent_cross_sign(),
         }
     }
 
@@ -2786,7 +2786,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .collect::<ExactCurveResult<Vec<_>>>()?;
         let transverse_vertices = certified_transverse_contact_vertices(
             &split_fragments,
-            &transition_candidates,
+            &mut transition_candidates,
             &self.data.policy,
         );
         let transverse_contacts = transition_candidates
@@ -2852,6 +2852,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             }
         }
+        self.seed_transverse_boolean_locations(
+            &mut classified_split_fragments,
+            &transverse_contacts,
+        )?;
 
         let mut loop_start = 0_usize;
         while loop_start < self.data.carriers.len() {
@@ -2960,6 +2964,46 @@ impl<'a> CurveRegionBooleanContext<'a> {
             transverse_contacts,
             point_classification_count,
         })
+    }
+
+    fn seed_transverse_boolean_locations(
+        &self,
+        fragments: &mut [Vec<ClassifiedSplitCarrierFragment>],
+        contacts: &HashMap<usize, TransitionContactCandidate>,
+    ) -> ExactCurveResult<()> {
+        for (&vertex, contact) in contacts {
+            let Some(source_cross_is_positive) = contact.cross_is_positive else {
+                continue;
+            };
+            let first = &self.data.carriers[contact.first_carrier];
+            let second = &self.data.carriers[contact.second_carrier];
+            if first.operand == second.operand {
+                continue;
+            }
+            let traversal_cross_is_positive =
+                source_cross_is_positive ^ first.reversed ^ second.reversed;
+            let first_before_inside = traversal_cross_is_positive == second.filled_side_is_left;
+            let second_before_inside = traversal_cross_is_positive != first.filled_side_is_left;
+            for (carrier_index, before_inside) in [
+                (contact.first_carrier, first_before_inside),
+                (contact.second_carrier, second_before_inside),
+            ] {
+                if !seed_transverse_carrier_locations(
+                    fragments,
+                    carrier_index,
+                    vertex,
+                    before_inside,
+                ) {
+                    return Err(self.invalid(
+                        carrier_index,
+                        CurveError::Topology(
+                            "transverse Boolean contact produced inconsistent face labels".into(),
+                        ),
+                    ));
+                }
+            }
+        }
+        Ok(())
     }
 
     fn build_boolean_regions(&self) -> ExactCurveResult<CurveRegionBooleanResults2> {
@@ -5150,35 +5194,43 @@ fn certified_direction_cross(
 
 fn certified_transverse_contact_vertices(
     split_fragments: &[Vec<SplitCarrierFragment>],
-    candidates: &[Option<TransitionContactCandidate>],
+    candidates: &mut [Option<TransitionContactCandidate>],
     policy: &CurveContext,
 ) -> Vec<bool> {
     candidates
-        .iter()
+        .iter_mut()
         .enumerate()
         .map(|(vertex, candidate)| {
             let Some(candidate) = candidate else {
                 return false;
             };
-            if candidate.certified_transverse {
+            if candidate.cross_is_positive.is_some() {
                 return true;
             }
             let Some(first) = algebraic_endpoint_tangent_at_vertex(
                 &split_fragments[candidate.first_carrier],
                 vertex,
             ) else {
-                return false;
+                return candidate.certified_transverse;
             };
             let Some(second) = algebraic_endpoint_tangent_at_vertex(
                 &split_fragments[candidate.second_carrier],
                 vertex,
             ) else {
-                return false;
+                return candidate.certified_transverse;
             };
-            matches!(
-                algebraic_endpoint_tangents_are_transverse(first, second, policy),
-                Classification::Decided(true)
-            )
+            match algebraic_endpoint_tangent_cross_sign(first, second, policy) {
+                Classification::Decided(RealSign::Positive) => {
+                    candidate.cross_is_positive = Some(true);
+                    true
+                }
+                Classification::Decided(RealSign::Negative) => {
+                    candidate.cross_is_positive = Some(false);
+                    true
+                }
+                Classification::Decided(RealSign::Zero) => false,
+                Classification::Uncertain(_) => candidate.certified_transverse,
+            }
         })
         .collect()
 }
@@ -5189,6 +5241,45 @@ const fn toggled_region_location(location: RegionPointLocation) -> Option<Region
         RegionPointLocation::Outside => Some(RegionPointLocation::Inside),
         RegionPointLocation::Boundary => None,
     }
+}
+
+const fn boolean_location(inside: bool) -> RegionPointLocation {
+    if inside {
+        RegionPointLocation::Inside
+    } else {
+        RegionPointLocation::Outside
+    }
+}
+
+fn seed_transverse_carrier_locations(
+    fragments: &mut [Vec<ClassifiedSplitCarrierFragment>],
+    carrier_index: usize,
+    vertex: usize,
+    before_inside: bool,
+) -> bool {
+    let Some(carrier_fragments) = fragments.get_mut(carrier_index) else {
+        return false;
+    };
+    let before = carrier_fragments
+        .iter()
+        .position(|fragment| fragment.split.end_topology_vertex == Some(vertex));
+    let after = carrier_fragments
+        .iter()
+        .position(|fragment| fragment.split.start_topology_vertex == Some(vertex));
+    let (Some(before), Some(after)) = (before, after) else {
+        return false;
+    };
+    for (fragment_index, location) in [
+        (before, boolean_location(before_inside)),
+        (after, boolean_location(!before_inside)),
+    ] {
+        match carrier_fragments[fragment_index].location {
+            Some(existing) if existing != location => return false,
+            Some(_) => {}
+            None => carrier_fragments[fragment_index].location = Some(location),
+        }
+    }
+    true
 }
 
 fn propagated_boolean_location(
@@ -8095,6 +8186,85 @@ mod certified_successor_tests {
             ),
             Some(true)
         );
+    }
+
+    #[test]
+    fn transverse_contact_certificates_seed_both_operand_faces() {
+        fn split(start: usize, end: usize) -> ClassifiedSplitCarrierFragment {
+            ClassifiedSplitCarrierFragment {
+                split: SplitCarrierFragment {
+                    fragment: BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0))
+                                .unwrap(),
+                        )),
+                    },
+                    start_topology_vertex: Some(start),
+                    end_topology_vertex: Some(end),
+                },
+                location: None,
+            }
+        }
+
+        let policy = CurveContext::STRICT;
+        let first_region = square_region(0, 0, 2, 2);
+        let second_region = square_region(1, 1, 3, 3);
+        let mut context =
+            CurveRegionBooleanContext::try_new(&first_region, &second_region, &policy).unwrap();
+        let first_carrier = 0;
+        let second_carrier = context.data.first_carrier_count;
+        let vertex = 17;
+        for source_cross_is_positive in [false, true] {
+            for first_reversed in [false, true] {
+                for second_reversed in [false, true] {
+                    for first_filled_left in [false, true] {
+                        for second_filled_left in [false, true] {
+                            context.data.carriers[first_carrier].reversed = first_reversed;
+                            context.data.carriers[second_carrier].reversed = second_reversed;
+                            context.data.carriers[first_carrier].filled_side_is_left =
+                                first_filled_left;
+                            context.data.carriers[second_carrier].filled_side_is_left =
+                                second_filled_left;
+                            let mut fragments = vec![Vec::new(); context.data.carriers.len()];
+                            fragments[first_carrier] = vec![split(1, vertex), split(vertex, 2)];
+                            fragments[second_carrier] = vec![split(3, vertex), split(vertex, 4)];
+                            let contacts = HashMap::from([(
+                                vertex,
+                                TransitionContactCandidate {
+                                    first_carrier,
+                                    second_carrier,
+                                    certified_transverse: true,
+                                    cross_is_positive: Some(source_cross_is_positive),
+                                    self_parameters: None,
+                                },
+                            )]);
+                            context
+                                .seed_transverse_boolean_locations(&mut fragments, &contacts)
+                                .unwrap();
+
+                            let traversal_cross_is_positive =
+                                source_cross_is_positive ^ first_reversed ^ second_reversed;
+                            let first_before =
+                                boolean_location(traversal_cross_is_positive == second_filled_left);
+                            let second_before =
+                                boolean_location(traversal_cross_is_positive != first_filled_left);
+                            assert_eq!(fragments[first_carrier][0].location, Some(first_before));
+                            assert_eq!(
+                                fragments[first_carrier][1].location,
+                                toggled_region_location(first_before),
+                            );
+                            assert_eq!(fragments[second_carrier][0].location, Some(second_before),);
+                            assert_eq!(
+                                fragments[second_carrier][1].location,
+                                toggled_region_location(second_before),
+                            );
+                        }
+                    }
+                }
+            }
+        }
     }
 
     #[test]

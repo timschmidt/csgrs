@@ -38,6 +38,7 @@ pub struct CurveIntersectionContact2 {
     second: CurveIntersectionParameter2,
     point: RationalBezierIntersectionPointEvidence2,
     certified_transverse: bool,
+    tangent_cross_sign: Option<hyperreal::RealSign>,
 }
 
 /// Certified positive-length overlap between two promoted top-level spans.
@@ -476,6 +477,7 @@ fn certified_singleton_aabb_endpoint_contact(
         second: second_parameter,
         point: RationalBezierIntersectionPointEvidence2::Exact(point),
         certified_transverse: false,
+        tangent_cross_sign: None,
     }))
 }
 
@@ -639,6 +641,7 @@ fn build_native_line_evidence(
             },
             point: RationalBezierIntersectionPointEvidence2::Exact(point),
             certified_transverse: false,
+            tangent_cross_sign: None,
         };
     let (contacts, overlaps) = match relation {
         LineLineIntersection::None => (Vec::new(), Vec::new()),
@@ -831,6 +834,7 @@ fn append_native_line_arc_contact(
             second: second_parameter,
             point: RationalBezierIntersectionPointEvidence2::Exact(hit.point.clone()),
             certified_transverse: false,
+            tangent_cross_sign: None,
         };
         match matching_contact_index(contacts, &candidate, policy) {
             Classification::Decided(Some(_)) => {}
@@ -1017,6 +1021,7 @@ fn build_native_arc_evidence(
                     },
                     point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
                     certified_transverse: false,
+                    tangent_cross_sign: None,
                 };
                 match matching_contact_index(&contacts, &candidate, policy) {
                     Classification::Decided(Some(_)) => {}
@@ -1265,6 +1270,7 @@ fn append_native_arc_span_contact(
         },
         point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
         certified_transverse: false,
+        tangent_cross_sign: None,
     };
     match matching_contact_index(contacts, &candidate, policy) {
         Classification::Decided(Some(_)) => {}
@@ -2012,6 +2018,11 @@ impl CurveIntersectionContact2 {
     pub const fn is_certified_transverse(&self) -> bool {
         self.certified_transverse
     }
+
+    /// Returns the certified sign of the first local tangent crossed with the second.
+    pub const fn tangent_cross_sign(&self) -> Option<hyperreal::RealSign> {
+        self.tangent_cross_sign
+    }
 }
 
 impl CurveIntersectionPairBlocker2 {
@@ -2203,12 +2214,16 @@ fn append_unique_contacts(
             },
             point: contact.point().clone(),
             certified_transverse: contact.is_certified_transverse(),
+            tangent_cross_sign: contact.tangent_cross_sign(),
         };
         match matching_contact_index(output, &candidate, policy) {
             Classification::Decided(Some(index)) => {
                 // A duplicate span-pair replay can contribute stronger evidence.
                 // Retain it even when the parameter pair is already present.
                 output[index].certified_transverse |= candidate.certified_transverse;
+                if output[index].tangent_cross_sign.is_none() {
+                    output[index].tangent_cross_sign = candidate.tangent_cross_sign;
+                }
             }
             Classification::Decided(None) => output.push(candidate),
             Classification::Uncertain(reason) => {

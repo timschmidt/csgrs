@@ -17,7 +17,7 @@ use crate::classify::compare_reals;
 use crate::{
     BezierAlgebraicImageStatus, BezierEndpointTangentImage2, Classification, CurveContext,
 };
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
     AlgebraicRootRepresentation,
@@ -240,11 +240,11 @@ pub(crate) fn compare_algebraic_tangent_filled_left_face_sign_only(
     compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, false, true)
 }
 
-pub(crate) fn algebraic_endpoint_tangents_are_transverse(
+pub(crate) fn algebraic_endpoint_tangent_cross_sign(
     first: &BezierEndpointTangentImage2,
     second: &BezierEndpointTangentImage2,
     policy: &CurveContext,
-) -> Classification<bool> {
+) -> Classification<RealSign> {
     let first = BezierAlgebraicTangentVector2::from_endpoint_image(first);
     let second = BezierAlgebraicTangentVector2::from_endpoint_image(second);
     let (Some(first), Some(second)) = (first.vector, second.vector) else {
@@ -252,8 +252,9 @@ pub(crate) fn algebraic_endpoint_tangents_are_transverse(
     };
     let cross = cross_sign(&first, &second, policy, false);
     match sign_status(&cross) {
-        ScalarSignStatus::Positive | ScalarSignStatus::Negative => Classification::Decided(true),
-        ScalarSignStatus::Zero => Classification::Decided(false),
+        ScalarSignStatus::Positive => Classification::Decided(RealSign::Positive),
+        ScalarSignStatus::Negative => Classification::Decided(RealSign::Negative),
+        ScalarSignStatus::Zero => Classification::Decided(RealSign::Zero),
         ScalarSignStatus::Undecided => {
             Classification::Uncertain(crate::UncertaintyReason::RealSign)
         }
