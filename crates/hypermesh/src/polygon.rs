@@ -14,15 +14,15 @@ use crate::winding::WindingNumberTransitionVector;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct ConstructionPlaneIdentity {
-    pub(crate) mesh: usize,
-    pub(crate) plane: usize,
+    pub(crate) mesh: u32,
+    pub(crate) plane: u32,
 }
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) enum ConstructionEdgeIdentity {
     Source {
-        mesh: usize,
-        endpoints: [usize; 2],
+        mesh: u32,
+        endpoints: [u32; 2],
     },
     Split {
         planes: [ConstructionPlaneIdentity; 2],
@@ -32,17 +32,62 @@ pub(crate) enum ConstructionEdgeIdentity {
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) enum ConstructionVertexIdentity {
     Source {
-        mesh: usize,
-        vertex: usize,
+        mesh: u32,
+        vertex: u32,
     },
     SourceEdgePlane {
-        mesh: usize,
-        endpoints: [usize; 2],
+        mesh: u32,
+        endpoints: [u32; 2],
         plane: ConstructionPlaneIdentity,
     },
     PlaneTriple {
         planes: [ConstructionPlaneIdentity; 3],
     },
+}
+
+impl ConstructionPlaneIdentity {
+    pub(crate) fn try_new(mesh: usize, plane: usize) -> HypermeshResult<Self> {
+        Ok(Self {
+            mesh: compact_construction_index(mesh, "construction plane mesh ID")?,
+            plane: compact_construction_index(plane, "construction plane ID")?,
+        })
+    }
+
+    pub(crate) const fn mesh(self) -> usize {
+        self.mesh as usize
+    }
+
+    pub(crate) const fn plane(self) -> usize {
+        self.plane as usize
+    }
+}
+
+impl ConstructionEdgeIdentity {
+    pub(crate) fn try_source(mesh: usize, endpoints: [usize; 2]) -> HypermeshResult<Self> {
+        let [start, end] = endpoints;
+        let mut endpoints = [
+            compact_construction_index(start, "construction edge vertex ID")?,
+            compact_construction_index(end, "construction edge vertex ID")?,
+        ];
+        endpoints.sort_unstable();
+        Ok(Self::Source {
+            mesh: compact_construction_index(mesh, "construction edge mesh ID")?,
+            endpoints,
+        })
+    }
+}
+
+impl ConstructionVertexIdentity {
+    pub(crate) fn try_source(mesh: usize, vertex: usize) -> HypermeshResult<Self> {
+        Ok(Self::Source {
+            mesh: compact_construction_index(mesh, "construction vertex mesh ID")?,
+            vertex: compact_construction_index(vertex, "construction vertex ID")?,
+        })
+    }
+}
+
+fn compact_construction_index(value: usize, operation: &'static str) -> HypermeshResult<u32> {
+    u32::try_from(value).map_err(|_| crate::error::HypermeshError::CapacityOverflow { operation })
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -111,7 +156,7 @@ impl RetainedVertexCycle {
                 else {
                     return None;
                 };
-                positions.get(*vertex)
+                positions.get(*vertex as usize)
             }
         }
     }
@@ -140,8 +185,8 @@ impl RetainedVertexCycle {
 #[derive(Clone, Debug)]
 pub(crate) enum RetainedIdentityCycles {
     SourceTriangle {
-        mesh: usize,
-        vertices: [usize; 3],
+        mesh: u32,
+        vertices: [u32; 3],
     },
     Owned {
         vertices: Arc<[ConstructionVertexIdentity]>,
@@ -554,8 +599,16 @@ impl ConvexPolygon {
         &mut self,
         mesh: usize,
         vertices: [usize; 3],
-    ) {
+    ) -> HypermeshResult<()> {
+        let [first, second, third] = vertices;
+        let mesh = compact_construction_index(mesh, "source triangle mesh ID")?;
+        let vertices = [
+            compact_construction_index(first, "source triangle vertex ID")?,
+            compact_construction_index(second, "source triangle vertex ID")?,
+            compact_construction_index(third, "source triangle vertex ID")?,
+        ];
         self.known_identities = Some(RetainedIdentityCycles::SourceTriangle { mesh, vertices });
+        Ok(())
     }
 
     pub(crate) fn from_certified_convex_face(
@@ -580,7 +633,7 @@ impl ConvexPolygon {
                     let ConstructionVertexIdentity::Source { vertex, .. } = identity else {
                         return false;
                     };
-                    positions.get(*vertex) == Some(*point)
+                    positions.get(*vertex as usize) == Some(*point)
                 })
         }));
         let vertex_identities = Arc::from(vertex_identities);
@@ -1088,9 +1141,14 @@ mod tests {
     fn source_triangle_identities_expand_from_compact_descriptor() {
         let mut polygon =
             approximate_convex_triangle(&point(0, 0, 0), &point(1, 0, 0), &point(0, 1, 0), 3, 7);
-        polygon.set_source_triangle_edge_identities(3, [9, 2, 5]);
+        polygon
+            .set_source_triangle_edge_identities(3, [9, 2, 5])
+            .unwrap();
 
-        assert!(std::mem::size_of::<RetainedIdentityCycles>() <= 5 * std::mem::size_of::<usize>());
+        assert_eq!(std::mem::size_of::<ConstructionPlaneIdentity>(), 8);
+        assert_eq!(std::mem::size_of::<ConstructionEdgeIdentity>(), 20);
+        assert_eq!(std::mem::size_of::<ConstructionVertexIdentity>(), 28);
+        assert_eq!(std::mem::size_of::<RetainedIdentityCycles>(), 32);
         assert_eq!(
             polygon
                 .known_vertex_identities()
@@ -1110,6 +1168,23 @@ mod tests {
         );
     }
 
+    #[cfg(target_pointer_width = "64")]
+    #[test]
+    fn compact_construction_identity_overflow_is_rejected_before_mutation() {
+        assert!(ConstructionPlaneIdentity::try_new(usize::MAX, 0).is_err());
+        assert!(ConstructionPlaneIdentity::try_new(0, usize::MAX).is_err());
+        assert!(ConstructionVertexIdentity::try_source(0, usize::MAX).is_err());
+        assert!(ConstructionEdgeIdentity::try_source(0, [0, usize::MAX]).is_err());
+
+        let mut polygon = ConvexPolygon::empty();
+        assert!(
+            polygon
+                .set_source_triangle_edge_identities(0, [0, 1, usize::MAX])
+                .is_err()
+        );
+        assert!(polygon.known_identities.is_none());
+    }
+
     #[test]
     fn certified_source_face_reuses_position_and_identity_arenas() {
         let positions: Arc<[Point3]> = Arc::new([
@@ -1118,7 +1193,7 @@ mod tests {
             point(1, 1, 0),
             point(0, 1, 0),
         ]);
-        let indices = [0, 1, 2, 3];
+        let indices = [0_u32, 1, 2, 3];
         let vertex_identities = indices
             .map(|vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex })
             .to_vec();
@@ -1127,7 +1202,7 @@ mod tests {
             .to_vec();
         let polygon = ConvexPolygon::from_certified_convex_face(
             Plane::axis_aligned(2, Real::zero()),
-            &indices.map(|index| &positions[index]),
+            &indices.map(|index| &positions[index as usize]),
             Some(Arc::clone(&positions)),
             vertex_identities,
             Vec::new(),

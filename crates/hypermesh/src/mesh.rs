@@ -1820,7 +1820,7 @@ pub(crate) fn build_polygon_soup_internal(
                     polygon_index,
                 )?,
             };
-            polygon.set_source_triangle_edge_identities(mesh_index, [i0, i1, i2]);
+            polygon.set_source_triangle_edge_identities(mesh_index, [i0, i1, i2])?;
             if !polygon.support.decide_is_valid(decisions)? {
                 return Err(HypermeshError::DegenerateTriangle {
                     mesh_index,
