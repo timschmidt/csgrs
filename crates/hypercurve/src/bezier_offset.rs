@@ -7108,28 +7108,45 @@ impl BezierAlgebraicCuspSemicircleAlgebraicRay2 {
             line_side != crate::classify::LineSide::Right
         };
         let decision = crate::contour::minor_arc_winding_decision(
-            start_y,
-            end_y,
+            start_y != std::cmp::Ordering::Greater,
+            end_y == std::cmp::Ordering::Greater,
             point_is_left,
             inside_circle,
             is_ccw,
         );
-        if let crate::contour::MinorArcWindingDecision::Delta(delta) = decision {
-            return Ok(Classification::Decided(delta));
+        let (lower, upper, delta) = match decision {
+            crate::contour::MinorArcWindingDecision::Delta(delta) => {
+                return Ok(Classification::Decided(delta));
+            }
+            crate::contour::MinorArcWindingDecision::PointBetweenStartAndEnd(delta) => {
+                (&start, &end, delta)
+            }
+            crate::contour::MinorArcWindingDecision::PointBetweenEndAndStart(delta) => {
+                (&end, &start, delta)
+            }
+        };
+        let lower_x = match order(lower, point, direction_x, direction_y)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if lower_x != std::cmp::Ordering::Less {
+            return Ok(Classification::Decided(0));
         }
-        let start_x = match order(&start, point, direction_x, direction_y)? {
+        let upper_x = match order(upper, point, direction_x, direction_y)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let end_x = match order(&end, point, direction_x, direction_y)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        Ok(Classification::Decided(decision.resolve(start_x, end_x)))
+        Ok(Classification::Decided(
+            if upper_x == std::cmp::Ordering::Greater {
+                delta
+            } else {
+                0
+            },
+        ))
     }
 }
 
