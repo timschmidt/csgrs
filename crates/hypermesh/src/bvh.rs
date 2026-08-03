@@ -37,19 +37,27 @@ struct BoundsBvh {
 }
 
 impl BoundsBvh {
-    fn build(decisions: &DecisionContext, bounds: &[ApproxBounds]) -> HypermeshResult<Self> {
-        if bounds.is_empty() {
+    fn build(decisions: &DecisionContext, primitives: &[PolygonBounds]) -> HypermeshResult<Self> {
+        if primitives.is_empty() {
             return Ok(Self::default());
         }
-        let approximate_centers = bounds
+        let approximate_centers = primitives
             .iter()
-            .map(|bounds| std::array::from_fn(|axis| approximate_center(bounds, axis)))
+            .map(|primitive| {
+                std::array::from_fn(|axis| approximate_center(&primitive.bounds, axis))
+            })
             .collect::<Vec<_>>();
         let mut tree = Self {
-            order: (0..bounds.len()).collect(),
-            nodes: Vec::with_capacity(bvh_node_capacity(bounds.len())),
+            order: (0..primitives.len()).collect(),
+            nodes: Vec::with_capacity(bvh_node_capacity(primitives.len())),
         };
-        tree.build_node(decisions, bounds, &approximate_centers, 0, bounds.len())?;
+        tree.build_node(
+            decisions,
+            primitives,
+            &approximate_centers,
+            0,
+            primitives.len(),
+        )?;
         Ok(tree)
     }
 
@@ -86,7 +94,7 @@ impl BoundsBvh {
     fn build_node(
         &mut self,
         decisions: &DecisionContext,
-        item_bounds: &[ApproxBounds],
+        primitives: &[PolygonBounds],
         approximate_centers: &[[f64; 3]],
         start: usize,
         end: usize,
@@ -95,7 +103,7 @@ impl BoundsBvh {
             decisions,
             self.order[start..end]
                 .iter()
-                .map(|&index| &item_bounds[index]),
+                .map(|&index| &primitives[index].bounds),
         )?;
         let children_axis = (end - start > LEAF_SIZE)
             .then(|| longest_axis(decisions, &bounds))
@@ -116,8 +124,8 @@ impl BoundsBvh {
                 .total_cmp(&approximate_centers[right][axis])
                 .then_with(|| left.cmp(&right))
         });
-        let left = self.build_node(decisions, item_bounds, approximate_centers, start, middle)?;
-        let right = self.build_node(decisions, item_bounds, approximate_centers, middle, end)?;
+        let left = self.build_node(decisions, primitives, approximate_centers, start, middle)?;
+        let right = self.build_node(decisions, primitives, approximate_centers, middle, end)?;
         self.nodes[node_index].children = Some([left, right]);
         Ok(node_index)
     }
@@ -160,7 +168,7 @@ impl BoundsBvh {
         &self,
         decisions: &DecisionContext,
         query_bounds: &ApproxBounds,
-        item_bounds: &[ApproxBounds],
+        primitives: &[PolygonBounds],
         mut callback: F,
     ) -> HypermeshResult<()>
     where
@@ -180,7 +188,11 @@ impl BoundsBvh {
                 stack.push(left);
             } else {
                 for &item_index in &self.order[node.range.clone()] {
-                    if bounds_overlap_decision(decisions, &item_bounds[item_index], query_bounds)? {
+                    if bounds_overlap_decision(
+                        decisions,
+                        &primitives[item_index].bounds,
+                        query_bounds,
+                    )? {
                         callback(item_index);
                     }
                 }
@@ -202,7 +214,6 @@ fn bvh_node_capacity(item_count: usize) -> usize {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ExactBvh {
     primitives: Vec<PolygonBounds>,
-    bounds: Vec<ApproxBounds>,
     tree: BoundsBvh,
 }
 
@@ -222,21 +233,15 @@ impl ExactBvh {
         polygons: &[ConvexPolygon],
     ) -> HypermeshResult<Self> {
         let mut primitives = Vec::with_capacity(polygons.len());
-        let mut bounds = Vec::with_capacity(polygons.len());
         for (polygon_index, polygon) in polygons.iter().enumerate() {
             let polygon_bounds = polygon_bounds(decisions, polygon)?;
-            bounds.push(polygon_bounds.clone());
             primitives.push(PolygonBounds {
                 polygon_index,
                 bounds: polygon_bounds,
             });
         }
-        let tree = BoundsBvh::build(decisions, &bounds)?;
-        Ok(Self {
-            primitives,
-            bounds,
-            tree,
-        })
+        let tree = BoundsBvh::build(decisions, &primitives)?;
+        Ok(Self { primitives, tree })
     }
 
     /// Returns the number of indexed primitives.
@@ -285,7 +290,7 @@ impl ExactBvh {
     {
         let mut matches = Vec::new();
         self.tree
-            .query(decisions, bounds, &self.bounds, |item_index| {
+            .query(decisions, bounds, &self.primitives, |item_index| {
                 matches.push(item_index);
             })?;
         matches.sort_unstable_by_key(|&item_index| self.primitives[item_index].polygon_index);
