@@ -1708,6 +1708,239 @@ impl<'a> BezierParameterRefinement2<'a> {
     }
 }
 
+/// Signs a Real-coefficient power-basis polynomial at one retained parameter.
+///
+/// The direct algebraic-field path proves equality through a polynomial GCD.
+/// When radical coefficients prevent that package from deciding a nonzero
+/// sign, strict Bernstein bounds over progressively refined isolators provide
+/// an independent exact certificate. Both paths honor the active predicate
+/// policy; an APPROXIMATE_512 decision is therefore observed by `policy` in
+/// the same way as every other Hypercurve predicate.
+pub(crate) fn signed_coefficients_at_parameter(
+    coefficients: Vec<Real>,
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let direct = match BezierParameterPolynomial::try_new_power_basis(coefficients.clone(), policy)
+    {
+        Ok(Classification::Decided(polynomial)) => {
+            signed_polynomial_at_root(Some(&polynomial), parameter, policy)?
+        }
+        Err(CurveError::InvalidBezierPolynomial) => Classification::Decided(RealSign::Zero),
+        Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+        Err(error) => return Err(error),
+    };
+    if direct.is_decided() {
+        return Ok(direct);
+    }
+    if let Some(sign) =
+        strict_polynomial_sign_on_refined_parameter_interval(&coefficients, parameter, policy)?
+    {
+        return Ok(Classification::Decided(sign));
+    }
+    Ok(direct)
+}
+
+/// Signs an optional nonzero parameter polynomial at a retained parameter.
+/// `None` is the structurally zero polynomial.
+pub(crate) fn signed_polynomial_at_root(
+    polynomial: Option<&BezierParameterPolynomial>,
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let Some(polynomial) = polynomial else {
+        return Ok(Classification::Decided(RealSign::Zero));
+    };
+    match parameter {
+        BezierParameter2::Exact(parameter) => {
+            match real_sign(&polynomial.evaluate(parameter), policy) {
+                Some(sign) => Ok(Classification::Decided(sign)),
+                None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+        BezierParameter2::Algebraic(parameter) => signed_polynomial_on_isolating_interval(
+            polynomial,
+            parameter.polynomial(),
+            parameter.interval(),
+            policy,
+        ),
+    }
+}
+
+pub(crate) fn signed_polynomial_on_isolating_interval(
+    filter: &BezierParameterPolynomial,
+    defining: &BezierParameterPolynomial,
+    interval: &BezierParameterInterval,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    match defining.greatest_common_divisor(filter, policy)? {
+        Classification::Decided(Some(common)) => {
+            match common.root_count_in_interval(interval, policy)? {
+                Classification::Decided(0) => {}
+                Classification::Decided(1) => {
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+                Classification::Decided(_) => {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    let mut interval = interval.clone();
+    loop {
+        match filter.root_count_in_interval(&interval, policy) {
+            Ok(Classification::Decided(0)) => {
+                return match real_sign(&filter.evaluate(interval.start()), policy) {
+                    Some(sign @ (RealSign::Positive | RealSign::Negative)) => {
+                        Ok(Classification::Decided(sign))
+                    }
+                    Some(RealSign::Zero) => Err(CurveError::InvalidBezierAlgebraicParameter),
+                    None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                };
+            }
+            Ok(Classification::Decided(_)) | Err(CurveError::InvalidBezierAlgebraicParameter) => {}
+            Ok(Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+            Err(error) => return Err(error),
+        }
+
+        let midpoint = ((interval.start() + interval.end()) / Real::from(2_i8))?;
+        match real_sign(&defining.evaluate(&midpoint), policy) {
+            Some(RealSign::Zero) => {
+                return match real_sign(&filter.evaluate(&midpoint), policy) {
+                    Some(sign) => Ok(Classification::Decided(sign)),
+                    None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                };
+            }
+            Some(RealSign::Positive | RealSign::Negative) => {}
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let left = match BezierParameterInterval::try_new(
+            interval.start().clone(),
+            midpoint.clone(),
+            policy,
+        )? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let right =
+            match BezierParameterInterval::try_new(midpoint, interval.end().clone(), policy)? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let left_count = match defining.root_count_in_interval(&left, policy)? {
+            Classification::Decided(count) => count,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        interval = if left_count == 1 {
+            left
+        } else {
+            let right_count = match defining.root_count_in_interval(&right, policy)? {
+                Classification::Decided(count) => count,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if right_count != 1 {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            right
+        };
+    }
+}
+
+fn strict_polynomial_sign_on_refined_parameter_interval(
+    coefficients: &[Real],
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Option<RealSign>> {
+    // Refinement eventually gives a strict enclosure for every nonzero
+    // continuous value. A true zero cannot be misclassified because every
+    // Bernstein control would have to acquire the same strict sign.
+    let mut refinement = BezierParameterRefinement2::new(parameter, policy);
+    for target_steps in [0, 1, 2, 4, 8, 16, 32] {
+        match refinement.refine_to(target_steps) {
+            BezierParameter2::Exact(parameter) => {
+                return Ok(real_sign(
+                    &evaluate_coefficients(coefficients, parameter),
+                    policy,
+                ));
+            }
+            BezierParameter2::Algebraic(parameter) => {
+                let interval = parameter.interval();
+                let restricted = restrict_power_basis_to_interval(
+                    coefficients,
+                    interval.start(),
+                    interval.end(),
+                );
+                if let Some(sign) =
+                    univariate_unit_interval_strict_bernstein_sign(&restricted, policy)?
+                {
+                    return Ok(Some(sign));
+                }
+            }
+        }
+    }
+    Ok(None)
+}
+
+/// Returns a strict common Bernstein-control sign on `[0, 1]`, if one exists.
+pub(crate) fn univariate_unit_interval_strict_bernstein_sign(
+    polynomial: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Option<RealSign>> {
+    if polynomial.is_empty() {
+        return Ok(None);
+    }
+    let mut strict_sign = None;
+    for control in power_to_bernstein_coefficients(polynomial, polynomial.len() - 1)? {
+        let Some(sign @ (RealSign::Positive | RealSign::Negative)) = real_sign(&control, policy)
+        else {
+            return Ok(None);
+        };
+        match strict_sign {
+            Some(previous) if previous != sign => return Ok(None),
+            Some(_) => {}
+            None => strict_sign = Some(sign),
+        }
+    }
+    Ok(strict_sign)
+}
+
+/// Composes `p(start + u * (end-start))` in power basis. Horner composition
+/// keeps only one degree-sized temporary instead of retaining every affine
+/// power used by the former offset-local implementation.
+fn restrict_power_basis_to_interval(coefficients: &[Real], start: &Real, end: &Real) -> Vec<Real> {
+    let Some((leading, remaining)) = coefficients.split_last() else {
+        return Vec::new();
+    };
+    let extent = end - start;
+    let mut restricted = vec![leading.clone()];
+    for coefficient in remaining.iter().rev() {
+        let mut next = vec![Real::zero(); restricted.len() + 1];
+        for (degree, value) in restricted.iter().enumerate() {
+            next[degree] = &next[degree] + value * start;
+            next[degree + 1] = &next[degree + 1] + value * &extent;
+        }
+        next[0] = &next[0] + coefficient;
+        restricted = next;
+    }
+    restricted
+}
+
 fn refine_algebraic_sign_change(
     algebraic: &BezierAlgebraicParameter2,
     max_refinement_steps: usize,

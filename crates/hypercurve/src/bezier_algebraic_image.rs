@@ -11,7 +11,7 @@
 //! branch only on certified predicates.  The coordinate polynomials are the
 //! standard Bernstein-to-power identities for Bezier curves; see the Bernstein and de Casteljau curve model.
 
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 use hypersolve::{
     AlgebraicRootKind, AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
     AlgebraicRootRationalImageReport, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
@@ -24,10 +24,12 @@ use hypersolve::{
     validate_algebraic_root_representation,
 };
 
+use crate::bezier_parameter::signed_coefficients_at_parameter;
 use crate::classify::compare_reals;
 use crate::{
-    Aabb2, BezierAlgebraicParameter2, Classification, CubicBezier2, CurveContext, CurveResult,
-    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
+    Aabb2, BezierAlgebraicParameter2, BezierParameter2, Classification, CubicBezier2, CurveContext,
+    CurveError, CurveResult, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
+    UncertaintyReason,
 };
 use std::cmp::Ordering;
 use std::sync::Arc;
@@ -460,6 +462,82 @@ impl RationalBezierAlgebraicPointImage2 {
                 expression.denominator.as_slice(),
             )
         })
+    }
+
+    /// Compares one affine coordinate with a represented Real without forcing
+    /// a retained rational expression into an independent algebraic-number
+    /// representation.
+    ///
+    /// Retained cusp and split images share one exact source root. Signing
+    /// `N(root) - value*D(root)` and `D(root)` in that local field is both
+    /// cheaper and more general than constructing a resultant image for each
+    /// coordinate. A certified zero denominator is rejected as invalid affine
+    /// evidence; predicate uncertainty remains explicit.
+    pub(crate) fn coordinate_order_to_real(
+        &self,
+        use_x: bool,
+        value: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Ordering>> {
+        if let Some(coordinate) = if use_x { self.x() } else { self.y() } {
+            return Ok(coordinate.compare_to_real(value, policy));
+        }
+
+        if let Some(expression) = self.data.retained_expression.as_ref() {
+            let parameter = BezierParameter2::Algebraic(expression.parameter.clone());
+            let denominator_sign = match signed_coefficients_at_parameter(
+                expression.denominator.clone(),
+                &parameter,
+                policy,
+            )? {
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let numerator = if use_x {
+                &expression.x_numerator
+            } else {
+                &expression.y_numerator
+            };
+            let difference_length = numerator.len().max(expression.denominator.len());
+            let difference = (0..difference_length)
+                .map(|index| {
+                    numerator.get(index).cloned().unwrap_or_else(Real::zero)
+                        - value
+                            * expression
+                                .denominator
+                                .get(index)
+                                .cloned()
+                                .unwrap_or_else(Real::zero)
+                })
+                .collect();
+            return Ok(
+                match signed_coefficients_at_parameter(difference, &parameter, policy)? {
+                    Classification::Decided(RealSign::Zero) => {
+                        Classification::Decided(Ordering::Equal)
+                    }
+                    Classification::Decided(numerator_sign) => {
+                        Classification::Decided(if numerator_sign == denominator_sign {
+                            Ordering::Greater
+                        } else {
+                            Ordering::Less
+                        })
+                    }
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                },
+            );
+        }
+
+        if let Some(resolved) = self.resolved(policy)
+            && !Arc::ptr_eq(&self.data, &resolved.data)
+        {
+            return resolved.coordinate_order_to_real(use_x, value, policy);
+        }
+        Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
     }
 
     /// Returns a compact diagnostic message for failed construction.

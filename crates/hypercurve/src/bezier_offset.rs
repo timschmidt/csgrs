@@ -16,13 +16,18 @@
 
 use std::sync::{Arc, OnceLock};
 
+#[cfg(test)]
+use crate::BezierParameterInterval;
 use crate::bezier_algebraic_image::{
     parameter_representation, rational_point_image_from_power_basis,
     rational_tangent_image_from_power_basis,
 };
+#[cfg(test)]
+use crate::bezier_parameter::signed_polynomial_on_isolating_interval;
 use crate::bezier_parameter::{
     BezierParameterRefinement2, bernstein_to_power_coefficients, divide_by_linear_root,
-    power_to_bernstein_coefficients,
+    power_to_bernstein_coefficients, signed_coefficients_at_parameter, signed_polynomial_at_root,
+    univariate_unit_interval_strict_bernstein_sign,
 };
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::rational_bezier_general::{
@@ -33,15 +38,15 @@ use crate::{
     Aabb2, Axis2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierCuspClassification,
     BezierDegree, BezierEndpoint, BezierInflectionClassification, BezierLineContact,
     BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
-    BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierParameterRange2, CertifiedBezierLineImageOffset2,
-    Classification, CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError,
-    CurveGeometry2, CurveOperation2, CurvePath2, CurveResult, ExactCurveError, ExactCurveResult,
-    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicPointImage2,
-    RationalBezierAlgebraicTangentImage2, RationalBezierIntersectionCandidates2,
-    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
-    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RationalQuadraticBezier2, Real, Similarity2, UncertaintyReason,
+    BezierLineImageFitRelation, BezierParameter2, BezierParameterPolynomial, BezierParameterRange2,
+    CertifiedBezierLineImageOffset2, Classification, CubicBezier2, Curve2, CurveContext,
+    CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2, CurvePath2, CurveResult,
+    ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, Similarity2,
+    UncertaintyReason,
 };
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 use hypersolve::{
@@ -581,6 +586,96 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.data
             .frame
             .point_image_at_parallel_distance(self.data.frame.data.parallel.distance(), policy)
+    }
+
+    /// Returns a conservative exact box for the complete selected half circle.
+    ///
+    /// The cusp center lies on the retained source parallel. Expanding the
+    /// source's certified box by `|parallel distance| + |radius|` therefore
+    /// contains the circle without materializing either algebraic center
+    /// coordinate. This intentionally favors a cheap safe broad phase over a
+    /// tight algebraic-coordinate box.
+    pub(crate) fn conservative_bounds(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Aabb2>> {
+        let source = match self
+            .data
+            .frame
+            .data
+            .parallel
+            .source()
+            .certified_bounds(policy)
+        {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let expansion =
+            self.data.frame.data.parallel.distance().abs() + self.data.radial_distance.abs();
+        Ok(Classification::Decided(Aabb2::new_unchecked(
+            Point2::new(source.min_x() - &expansion, source.min_y() - &expansion),
+            Point2::new(source.max_x() + &expansion, source.max_y() + expansion),
+        )))
+    }
+
+    /// Classifies incidence of a represented affine point on the selected
+    /// algebraic half circle.
+    ///
+    /// Circle incidence and half-plane selection are signed directly in the
+    /// cusp root's local field. All denominators enter squared, so this remains
+    /// valid regardless of the retained frame denominator's orientation and
+    /// avoids constructing an auxiliary line or algebraic circle controls.
+    pub(crate) fn contains_point(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let frame = &self.data.frame.data;
+        let (center_x, center_y) = self
+            .data
+            .frame
+            .point_numerators_at_parallel_distance(frame.parallel.distance());
+        let dx = polynomial_subtract(&polynomial_scale(&frame.denominator, point.x()), &center_x);
+        let dy = polynomial_subtract(&polynomial_scale(&frame.denominator, point.y()), &center_y);
+        let circle_residual = polynomial_subtract(
+            &polynomial_add(
+                &polynomial_multiply(&dx, &dx),
+                &polynomial_multiply(&dy, &dy),
+            ),
+            &polynomial_scale(
+                &polynomial_multiply(&frame.denominator, &frame.denominator),
+                &(&self.data.radial_distance * &self.data.radial_distance),
+            ),
+        );
+        let parameter = BezierParameter2::Algebraic(frame.parameter.clone());
+        match signed_coefficients_at_parameter(circle_residual, &parameter, policy)? {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                return Ok(Classification::Decided(false));
+            }
+            Classification::Decided(RealSign::Zero) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let selected_half_plane = polynomial_scale(
+            &polynomial_subtract(
+                &polynomial_multiply(&frame.normal_x_numerator, &dy),
+                &polynomial_multiply(&frame.normal_y_numerator, &dx),
+            ),
+            &(&self.turn_sign() * &self.data.radial_distance),
+        );
+        Ok(
+            match signed_coefficients_at_parameter(selected_half_plane, &parameter, policy)? {
+                Classification::Decided(RealSign::Negative) => Classification::Decided(false),
+                Classification::Decided(RealSign::Zero | RealSign::Positive) => {
+                    Classification::Decided(true)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 
     /// Builds the exact equations needed to intersect this selected half circle
@@ -7835,28 +7930,6 @@ fn bivariate_parameter_box_strict_sign(
     )
 }
 
-fn univariate_unit_interval_strict_bernstein_sign(
-    polynomial: &[Real],
-    policy: &CurveContext,
-) -> CurveResult<Option<RealSign>> {
-    if polynomial.is_empty() {
-        return Ok(None);
-    }
-    let mut strict_sign = None;
-    for control in power_to_bernstein_coefficients(polynomial, polynomial.len() - 1)? {
-        let Some(sign @ (RealSign::Positive | RealSign::Negative)) = real_sign(&control, policy)
-        else {
-            return Ok(None);
-        };
-        match strict_sign {
-            Some(previous) if previous != sign => return Ok(None),
-            Some(_) => {}
-            None => strict_sign = Some(sign),
-        }
-    }
-    Ok(strict_sign)
-}
-
 fn strict_signs_are_opposite(first: Option<RealSign>, second: Option<RealSign>) -> bool {
     matches!(
         (first, second),
@@ -12328,83 +12401,6 @@ fn signed_rank_one_bivariate_at_parameter_pair(
     })
 }
 
-fn signed_coefficients_at_parameter(
-    coefficients: Vec<Real>,
-    parameter: &BezierParameter2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<RealSign>> {
-    let direct = match polynomial_from_coefficients(coefficients.clone(), policy)? {
-        Classification::Decided(Some(polynomial)) => {
-            signed_polynomial_at_root(Some(&polynomial), parameter, policy)?
-        }
-        Classification::Decided(None) => Classification::Decided(RealSign::Zero),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
-    };
-    if direct.is_decided() {
-        return Ok(direct);
-    }
-    if let Some(sign) =
-        strict_polynomial_sign_on_refined_parameter_interval(&coefficients, parameter, policy)?
-    {
-        return Ok(Classification::Decided(sign));
-    }
-    Ok(direct)
-}
-
-fn strict_polynomial_sign_on_refined_parameter_interval(
-    coefficients: &[Real],
-    parameter: &BezierParameter2,
-    policy: &CurveContext,
-) -> CurveResult<Option<RealSign>> {
-    // A direct algebraic-field GCD can remain undecided when the filter's
-    // coefficients themselves contain exact radicals. A strict Bernstein sign
-    // over the complete retained root bracket is an independent exact proof;
-    // refinement must eventually expose every nonzero continuous value, while
-    // a true zero safely falls through as uncertainty.
-    let mut refinement = BezierParameterRefinement2::new(parameter, policy);
-    for target_steps in [0, 1, 2, 4, 8, 16, 32] {
-        let parameter = refinement.refine_to(target_steps);
-        match parameter {
-            BezierParameter2::Exact(parameter) => {
-                return Ok(real_sign(
-                    &polynomial_evaluate(coefficients, parameter),
-                    policy,
-                ));
-            }
-            BezierParameter2::Algebraic(parameter) => {
-                let interval = parameter.interval();
-                let restricted = restrict_univariate_power_basis_to_interval(
-                    coefficients,
-                    interval.start(),
-                    interval.end(),
-                );
-                if let Some(sign) =
-                    univariate_unit_interval_strict_bernstein_sign(&restricted, policy)?
-                {
-                    return Ok(Some(sign));
-                }
-            }
-        }
-    }
-    Ok(None)
-}
-
-fn restrict_univariate_power_basis_to_interval(
-    coefficients: &[Real],
-    start: &Real,
-    end: &Real,
-) -> Vec<Real> {
-    let powers = polynomial_powers(
-        &[start.clone(), end - start],
-        coefficients.len().saturating_sub(1),
-    );
-    let mut restricted = vec![Real::zero()];
-    for (coefficient, power) in coefficients.iter().zip(powers) {
-        restricted = polynomial_add(&restricted, &polynomial_scale(&power, coefficient));
-    }
-    restricted
-}
-
 fn bivariate_specialize_first(polynomial: &BivariatePolynomial, value: &Real) -> Vec<Real> {
     let second_count = polynomial
         .coefficients
@@ -13048,125 +13044,6 @@ fn parameter_matches_any(
     Ok(false)
 }
 
-fn signed_polynomial_at_root(
-    polynomial: Option<&BezierParameterPolynomial>,
-    parameter: &BezierParameter2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<RealSign>> {
-    let Some(polynomial) = polynomial else {
-        return Ok(Classification::Decided(RealSign::Zero));
-    };
-    match parameter {
-        BezierParameter2::Exact(parameter) => {
-            match real_sign(&polynomial.evaluate(parameter), policy) {
-                Some(sign) => Ok(Classification::Decided(sign)),
-                None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            }
-        }
-        BezierParameter2::Algebraic(parameter) => signed_polynomial_on_isolating_interval(
-            polynomial,
-            parameter.polynomial(),
-            parameter.interval(),
-            policy,
-        ),
-    }
-}
-
-fn signed_polynomial_on_isolating_interval(
-    filter: &BezierParameterPolynomial,
-    defining: &BezierParameterPolynomial,
-    interval: &BezierParameterInterval,
-    policy: &CurveContext,
-) -> CurveResult<Classification<RealSign>> {
-    match defining.greatest_common_divisor(filter, policy)? {
-        Classification::Decided(Some(common)) => {
-            match common.root_count_in_interval(interval, policy)? {
-                Classification::Decided(0) => {}
-                Classification::Decided(1) => {
-                    return Ok(Classification::Decided(RealSign::Zero));
-                }
-                Classification::Decided(_) => {
-                    return Err(CurveError::InvalidBezierAlgebraicParameter);
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-        Classification::Decided(None) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-
-    let mut interval = interval.clone();
-    loop {
-        match filter.root_count_in_interval(&interval, policy) {
-            Ok(Classification::Decided(0)) => {
-                return match real_sign(&filter.evaluate(interval.start()), policy) {
-                    Some(sign @ (RealSign::Positive | RealSign::Negative)) => {
-                        Ok(Classification::Decided(sign))
-                    }
-                    Some(RealSign::Zero) => Err(CurveError::InvalidBezierAlgebraicParameter),
-                    None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-                };
-            }
-            Ok(Classification::Decided(_)) | Err(CurveError::InvalidBezierAlgebraicParameter) => {}
-            Ok(Classification::Uncertain(reason)) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-            Err(error) => return Err(error),
-        }
-
-        let midpoint = ((interval.start() + interval.end()) / Real::from(2_i8))?;
-        match real_sign(&defining.evaluate(&midpoint), policy) {
-            Some(RealSign::Zero) => {
-                return match real_sign(&filter.evaluate(&midpoint), policy) {
-                    Some(sign) => Ok(Classification::Decided(sign)),
-                    None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-                };
-            }
-            Some(RealSign::Positive | RealSign::Negative) => {}
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-        let left = match BezierParameterInterval::try_new(
-            interval.start().clone(),
-            midpoint.clone(),
-            policy,
-        )? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let right =
-            match BezierParameterInterval::try_new(midpoint, interval.end().clone(), policy)? {
-                Classification::Decided(interval) => interval,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let left_count = match defining.root_count_in_interval(&left, policy)? {
-            Classification::Decided(count) => count,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        interval = if left_count == 1 {
-            left
-        } else {
-            let right_count = match defining.root_count_in_interval(&right, policy)? {
-                Classification::Decided(count) => count,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            if right_count != 1 {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
-            }
-            right
-        };
-    }
-}
-
 #[cfg(test)]
 mod conversion_tests {
     use super::*;
@@ -13498,6 +13375,133 @@ mod conversion_tests {
                     RealSign::Zero,
                     &policy,
                 );
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn retained_rational_image_coordinate_order_uses_the_shared_root_field() {
+        let BezierParameter2::Algebraic(parameter) =
+            algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)])
+        else {
+            panic!("the quadratic root must remain algebraic");
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for denominator_sign in [1_i8, -1_i8] {
+                let scale = Real::from(denominator_sign);
+                let image = RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    parameter.clone(),
+                    parameter_representation(&parameter, &policy),
+                    vec![Real::zero(), Real::zero(), scale.clone()],
+                    vec![Real::zero()],
+                    vec![scale],
+                    "test retained local-field coordinate",
+                );
+                assert_eq!(
+                    image
+                        .coordinate_order_to_real(true, &half, &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+                assert_eq!(
+                    image
+                        .coordinate_order_to_real(true, &Real::zero(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    image
+                        .coordinate_order_to_real(true, &Real::one(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less),
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (selected_root, interval, center_x) in [
+                ((1, 4), ((1, 5), (1, 3)), -5_i64),
+                ((3, 4), ((2, 3), (4, 5)), 0_i64),
+            ] {
+                let semicircle =
+                    synthetic_reducible_cusp_semicircle(selected_root, interval, &policy);
+                let point = |x, y| Point2::new(Real::from(x), Real::from(y));
+                for carrier in [semicircle.clone(), semicircle.reversed()] {
+                    for incident in [
+                        point(center_x - 1, 0),
+                        point(center_x, 1),
+                        point(center_x + 1, 0),
+                    ] {
+                        assert_eq!(
+                            carrier.contains_point(&incident, &policy).unwrap(),
+                            Classification::Decided(true),
+                        );
+                    }
+                    for excluded in [
+                        point(center_x, -1),
+                        point(center_x, 0),
+                        point(center_x + 2, 0),
+                    ] {
+                        assert_eq!(
+                            carrier.contains_point(&excluded, &policy).unwrap(),
+                            Classification::Decided(false),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_semicircle_conservative_bounds_contain_exact_images() {
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (_, _, semicircle) =
+                general_algebraic_cusp_semicircle(quarter.clone(), true, &policy);
+            let Classification::Decided(bounds) = semicircle.conservative_bounds(&policy).unwrap()
+            else {
+                panic!("the algebraic semicircle bounds must be decided");
+            };
+            for parameter in [
+                Real::zero(),
+                quarter.clone(),
+                (Real::one() / Real::from(2_i8)).unwrap(),
+                Real::one() - &quarter,
+                Real::one(),
+            ] {
+                let Classification::Decided(point) =
+                    semicircle.point_at(&parameter, &policy).unwrap()
+                else {
+                    panic!("the algebraic semicircle point must be decided");
+                };
+                for (use_x, minimum, maximum) in [
+                    (true, bounds.min_x(), bounds.max_x()),
+                    (false, bounds.min_y(), bounds.max_y()),
+                ] {
+                    assert!(matches!(
+                        point
+                            .coordinate_order_to_real(use_x, minimum, &policy)
+                            .unwrap(),
+                        Classification::Decided(
+                            std::cmp::Ordering::Equal | std::cmp::Ordering::Greater
+                        )
+                    ));
+                    assert!(matches!(
+                        point
+                            .coordinate_order_to_real(use_x, maximum, &policy)
+                            .unwrap(),
+                        Classification::Decided(
+                            std::cmp::Ordering::Equal | std::cmp::Ordering::Less
+                        )
+                    ));
+                }
             }
         }
     }

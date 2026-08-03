@@ -8815,18 +8815,18 @@ fn algebraic_contact_order_along_ray(
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };
     let ordering = match curve {
-        BezierSubcurve2::Quadratic(curve) => polynomial_image_coordinate_order(
+        BezierSubcurve2::Quadratic(curve) => Ok(polynomial_image_coordinate_order(
             &curve.point_at_algebraic_parameter(parameter, policy)?,
             use_x,
             origin_coordinate,
             policy,
-        ),
-        BezierSubcurve2::Cubic(curve) => polynomial_image_coordinate_order(
+        )),
+        BezierSubcurve2::Cubic(curve) => Ok(polynomial_image_coordinate_order(
             &curve.point_at_algebraic_parameter(parameter, policy)?,
             use_x,
             origin_coordinate,
             policy,
-        ),
+        )),
         BezierSubcurve2::RationalQuadratic(curve) => rational_image_coordinate_order(
             &curve.point_at_algebraic_parameter(parameter, policy)?,
             use_x,
@@ -8839,7 +8839,7 @@ fn algebraic_contact_order_along_ray(
             origin_coordinate,
             policy,
         ),
-    };
+    }?;
     Ok(ordering.map(|ordering| {
         if direction_sign == RealSign::Negative {
             ordering.reverse()
@@ -8867,12 +8867,8 @@ fn rational_image_coordinate_order(
     use_x: bool,
     origin: &Real,
     policy: &CurveContext,
-) -> Classification<std::cmp::Ordering> {
-    let coordinate = if use_x { image.x() } else { image.y() };
-    coordinate.map_or(
-        Classification::Uncertain(UncertaintyReason::Unsupported),
-        |coordinate| coordinate.compare_to_real(origin, policy),
-    )
+) -> CurveResult<Classification<std::cmp::Ordering>> {
+    image.coordinate_order_to_real(use_x, origin, policy)
 }
 
 struct BezierRay2 {
