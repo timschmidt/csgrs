@@ -29,8 +29,8 @@ use crate::bezier_parameter::{
 };
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::rational_bezier_general::{
-    RationalParameterImageMap2, ResultantParameterProjection, exact_contact_point_evidence,
-    resultant_parameter_projection,
+    RationalBezierOverlapParameterCorrespondence2, RationalParameterImageMap2,
+    ResultantParameterProjection, exact_contact_point_evidence, resultant_parameter_projection,
 };
 use crate::{
     Aabb2, Axis2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierCuspClassification,
@@ -387,6 +387,7 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRationalParameterMap2 {
 #[derive(Debug)]
 #[allow(dead_code)]
 struct BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+    curve: RationalBezier2,
     cusp_parameter: BezierParameter2,
     incidence: BivariatePolynomial,
     diameter_side: BivariatePolynomial,
@@ -714,6 +715,39 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 } else {
                     parameter
                 }));
+            }
+
+            if let (
+                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target),
+                BezierAlgebraicCuspSemicircleMappedParameterData2::Rational {
+                    map: source,
+                    contact,
+                },
+            ) = (&self.parameter_map, data.as_ref())
+            {
+                match RationalBezierOverlapParameterCorrespondence2::map_parameter_between_curves(
+                    &source.data.curve,
+                    &target.data.curve,
+                    &contact.other_parameter,
+                    policy,
+                )? {
+                    Classification::Decided(Some(parameter)) => {
+                        let parameter = if self.map_reversed {
+                            parameter.unit_complement()
+                        } else {
+                            parameter
+                        };
+                        return retain_direct_overlap_parameter(
+                            parameter,
+                            &self.other_range,
+                            policy,
+                        );
+                    }
+                    Classification::Decided(None) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
             }
 
             let equivalent_cross_map_parameter = match (&self.parameter_map, data.as_ref()) {
@@ -4242,6 +4276,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             Some(BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+                    curve: other.clone(),
                     cusp_parameter,
                     incidence,
                     diameter_side,
@@ -4406,6 +4441,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let cusp_parameter = BezierParameter2::Algebraic(self.cusp_parameter().clone());
         let parameter_map = BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+                curve: other.clone(),
                 cusp_parameter: cusp_parameter.clone(),
                 incidence: selected_half_plane.clone(),
                 diameter_side: diameter_side.clone(),
@@ -20552,6 +20588,33 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(None),
             );
+            let independent_semicircle = synthetic_independent_unit_cusp_semicircle(&policy);
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+                    independent_rational_overlaps,
+                ),
+            ) = independent_semicircle
+                .rational_intersections(&rational_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("an independent selected cusp field must retain the rational overlap");
+            };
+            let [independent_rational_overlap] = independent_rational_overlaps.as_slice() else {
+                panic!("the independent selected field must retain one rational cell");
+            };
+            let Classification::Decided(independent_field_rational_cut) =
+                independent_rational_overlap
+                    .other_parameter_for_cusp(&algebraic_rational_cusp_cut, &policy)
+                    .unwrap()
+            else {
+                panic!("rational carrier identity must transport across selected cusp fields");
+            };
+            assert_eq!(
+                independent_field_rational_cut
+                    .same_value(&algebraic_native_cut, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
             let Classification::Decided(
                 BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
                     rebuilt_rational_overlaps,
@@ -20618,6 +20681,225 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(true),
             );
+
+            // Geometric weights scaled by successive powers of two retain the
+            // same rational quadratic image under the non-affine projective
+            // reparameterization s=t/(2-t). Transport the irrational source
+            // cut through the rational-carrier correspondence itself instead
+            // of materializing its cusp coordinate or assuming equal native
+            // parameters. For t^2=1/2, s is the selected unit root of
+            // 7s^2-2s-1.
+            let projective_rational_quarter = RationalBezier2::from(
+                RationalQuadraticBezier2::try_new(
+                    Point2::new(Real::one(), Real::zero()),
+                    Point2::new(Real::one(), Real::one()),
+                    Point2::new(Real::zero(), Real::one()),
+                    Real::one(),
+                    Real::from(2_i8),
+                    Real::from(8_i8),
+                )
+                .unwrap(),
+            );
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+                    projective_rational_overlaps,
+                ),
+            ) = semicircle
+                .rational_intersections(&projective_rational_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the projectively parameterized rational circle must remain an overlap");
+            };
+            let [projective_rational_overlap] = projective_rational_overlaps.as_slice() else {
+                panic!("the projective rational circle must retain one selected cell");
+            };
+            let projective_expected =
+                algebraic_parameter(vec![Real::from(-1_i8), Real::from(-2_i8), Real::from(7_i8)]);
+            let Classification::Decided(projective_algebraic_rational_cut) =
+                projective_rational_overlap
+                    .other_parameter_for_cusp(&algebraic_rational_cusp_cut, &policy)
+                    .unwrap()
+            else {
+                panic!("a projective rational map must transport an algebraic cusp cut");
+            };
+            assert_eq!(
+                projective_algebraic_rational_cut
+                    .same_value(&projective_expected, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
+            let reversed_projective_rational_quarter = projective_rational_quarter.reversed();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+                    reversed_projective_rational_overlaps,
+                ),
+            ) = semicircle
+                .rational_intersections(&reversed_projective_rational_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the reversed projective rational circle must remain an overlap");
+            };
+            let [reversed_projective_rational_overlap] =
+                reversed_projective_rational_overlaps.as_slice()
+            else {
+                panic!("the reversed projective rational circle must retain one selected cell");
+            };
+            let Classification::Decided(reversed_projective_algebraic_rational_cut) =
+                reversed_projective_rational_overlap
+                    .other_parameter_for_cusp(&algebraic_rational_cusp_cut, &policy)
+                    .unwrap()
+            else {
+                panic!("source reversal must preserve projective algebraic cut transport");
+            };
+            assert_eq!(
+                reversed_projective_algebraic_rational_cut
+                    .same_value(&projective_expected.unit_complement(), &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
+            // Compose the same circle with t=s^2. Its degree-four homogeneous
+            // power basis is (1-s^4, 2s^2, 1+s^4), so this is a genuinely
+            // nonlinear correspondence rather than an affine or Mobius map.
+            // The retained implicit circle certifies the shared component;
+            // the target's injective coordinate then constructs the exact
+            // preimage. For t^2=1/2, the target cut satisfies s^4=1/2.
+            let third = (Real::one() / Real::from(3_i8)).unwrap();
+            let nonlinear_rational_quarter =
+                RationalBezier2::try_new_with_implicit_quadratic_conic(
+                    vec![
+                        Point2::new(Real::one(), Real::zero()),
+                        Point2::new(Real::one(), Real::zero()),
+                        Point2::new(Real::one(), third),
+                        Point2::new(Real::one(), Real::one()),
+                        Point2::new(Real::zero(), Real::one()),
+                    ],
+                    vec![
+                        Real::one(),
+                        Real::one(),
+                        Real::one(),
+                        Real::one(),
+                        Real::from(2_i8),
+                    ],
+                    Arc::new([
+                        Real::one(),
+                        Real::zero(),
+                        Real::one(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::from(-1_i8),
+                    ]),
+                    rational_quarter.retained_circular_conic().cloned(),
+                )
+                .unwrap();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+                    nonlinear_rational_overlaps,
+                ),
+            ) = semicircle
+                .rational_intersections(&nonlinear_rational_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the nonlinearly parameterized rational circle must remain an overlap");
+            };
+            let [nonlinear_rational_overlap] = nonlinear_rational_overlaps.as_slice() else {
+                panic!("the nonlinear rational circle must retain one selected cell");
+            };
+            let nonlinear_expected = algebraic_parameter(vec![
+                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+            ]);
+            let Classification::Decided(nonlinear_algebraic_rational_cut) =
+                nonlinear_rational_overlap
+                    .other_parameter_for_cusp(&algebraic_rational_cusp_cut, &policy)
+                    .unwrap()
+            else {
+                panic!("a nonlinear rational map must transport an algebraic cusp cut");
+            };
+            assert_eq!(
+                nonlinear_algebraic_rational_cut
+                    .same_value(&nonlinear_expected, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+                    independent_nonlinear_overlaps,
+                ),
+            ) = independent_semicircle
+                .rational_intersections(&nonlinear_rational_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("independent fields must retain the nonlinear rational overlap");
+            };
+            let [independent_nonlinear_overlap] = independent_nonlinear_overlaps.as_slice() else {
+                panic!("the independent nonlinear overlap must retain one selected cell");
+            };
+            let Classification::Decided(independent_nonlinear_cut) = independent_nonlinear_overlap
+                .other_parameter_for_cusp(&algebraic_rational_cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("nonlinear rational transport must cross independent selected fields");
+            };
+            assert_eq!(
+                independent_nonlinear_cut
+                    .same_value(&nonlinear_expected, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            let Classification::Decided(nonlinear_cusp_cut) = nonlinear_rational_overlap
+                .cusp_parameter_for_other(&nonlinear_algebraic_rational_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the nonlinear rational carrier must retain its mapped cusp cut");
+            };
+            let Classification::Decided(nonlinear_round_trip) = rational_source_overlap
+                .other_parameter_for_cusp(&nonlinear_cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("nonlinear rational transport must invert through the original carrier");
+            };
+            assert_eq!(
+                nonlinear_round_trip
+                    .same_value(&algebraic_native_cut, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
+            let reversed_nonlinear_rational_quarter = nonlinear_rational_quarter.reversed();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+                    reversed_nonlinear_rational_overlaps,
+                ),
+            ) = semicircle
+                .rational_intersections(&reversed_nonlinear_rational_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the reversed nonlinear rational circle must remain an overlap");
+            };
+            let [reversed_nonlinear_rational_overlap] =
+                reversed_nonlinear_rational_overlaps.as_slice()
+            else {
+                panic!("the reversed nonlinear rational circle must retain one selected cell");
+            };
+            let Classification::Decided(reversed_nonlinear_algebraic_rational_cut) =
+                reversed_nonlinear_rational_overlap
+                    .other_parameter_for_cusp(&algebraic_rational_cusp_cut, &policy)
+                    .unwrap()
+            else {
+                panic!("reversal must preserve nonlinear algebraic cut transport");
+            };
+            assert_eq!(
+                reversed_nonlinear_algebraic_rational_cut
+                    .same_value(&nonlinear_expected.unit_complement(), &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
             let reversed_rational_quarter = rational_quarter.reversed();
             let Classification::Decided(
                 BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
@@ -21937,6 +22219,57 @@ mod conversion_tests {
                 BezierAlgebraicCuspSemicircleContactLocation2::End,
             );
             assert_eq!(cusp_contact.tangent_cross_sign, RealSign::Zero);
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn synthetic_independent_unit_cusp_semicircle(
+        policy: &CurveContext,
+    ) -> BezierAlgebraicCuspSemicircle2 {
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![-third, Real::zero(), Real::one()],
+            policy,
+        )
+        .unwrap() else {
+            panic!("independent cusp polynomial must be exact");
+        };
+        let Classification::Decided(interval) = BezierParameterInterval::try_new(
+            (Real::one() / Real::from(2_i8)).unwrap(),
+            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+            policy,
+        )
+        .unwrap() else {
+            panic!("independent cusp interval must be exact");
+        };
+        let Classification::Decided(parameter) =
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap()
+        else {
+            panic!("independent cusp root must isolate");
+        };
+        let source = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::one(), Real::zero()),
+            )
+            .unwrap(),
+        );
+        BezierAlgebraicCuspSemicircle2 {
+            data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                frame: BezierParallelAlgebraicCuspFrame2 {
+                    data: Arc::new(BezierParallelAlgebraicCuspFrameData2 {
+                        parallel: source.parallel_left(Real::zero()).unwrap(),
+                        parameter,
+                        source_x_numerator: vec![Real::zero()],
+                        source_y_numerator: vec![Real::zero()],
+                        normal_x_numerator: vec![Real::one()],
+                        normal_y_numerator: vec![Real::zero()],
+                        denominator: vec![Real::one()],
+                    }),
+                },
+                radial_distance: Real::one(),
+                clockwise: false,
+            }),
         }
     }
 

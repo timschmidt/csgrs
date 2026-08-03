@@ -313,6 +313,61 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         }
     }
 
+    /// Maps one parameter between two rational carriers that are known by the
+    /// caller to represent the same local geometric point.
+    ///
+    /// This uses the global endpoint-projective fast paths when available and
+    /// otherwise falls through to the exact conic/graph/injective-coordinate
+    /// point-incidence authority. Unlike [`Self::for_overlap`], it does not
+    /// require an already materialized overlap range and therefore also serves
+    /// compact mapped cuts retained by another exact carrier.
+    pub(crate) fn map_parameter_between_curves(
+        source: &RationalBezier2,
+        target: &RationalBezier2,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+        match Self::new(source, target, policy) {
+            Self::Identity => Ok(Classification::Decided(Some(parameter.clone()))),
+            Self::UnitComplement => Ok(Classification::Decided(Some(parameter.unit_complement()))),
+            Self::EndpointProjective {
+                second_to_first_scale,
+                reversed,
+            } => endpoint_projective_parameter_image(
+                parameter,
+                &second_to_first_scale,
+                reversed,
+                true,
+                policy,
+            ),
+            Self::General {
+                first,
+                second,
+                unresolved,
+            } => match first.image_overlap(&second, policy) {
+                Classification::Decided(RationalBezierSharedComponentReplay::Overlap(overlap)) => {
+                    let correspondence = Self::for_overlap(&first, &second, &overlap, policy);
+                    correspondence.map_first_to_second(
+                        parameter,
+                        overlap.first_range(),
+                        overlap.second_range(),
+                        policy,
+                    )
+                }
+                Classification::Decided(RationalBezierSharedComponentReplay::Contacts(_)) => {
+                    Ok(Classification::Decided(None))
+                }
+                Classification::Decided(RationalBezierSharedComponentReplay::Unresolved) => Ok(
+                    Classification::Uncertain(unresolved.unwrap_or(UncertaintyReason::Unsupported)),
+                ),
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            },
+            Self::RangeProjective { .. } => {
+                unreachable!("a range-projective correspondence requires an authored overlap range")
+            }
+        }
+    }
+
     pub(crate) fn for_overlap(
         first: &RationalBezier2,
         second: &RationalBezier2,
@@ -4881,7 +4936,7 @@ impl RationalBezier2 {
                         }
                         continue;
                     }
-                    Classification::Decided(None) => continue,
+                    Classification::Decided(None) => {}
                     Classification::Uncertain(reason) => {
                         return Classification::Uncertain(reason);
                     }
@@ -4929,7 +4984,7 @@ impl RationalBezier2 {
                         }
                         continue;
                     }
-                    Classification::Decided(None) => continue,
+                    Classification::Decided(None) => {}
                     Classification::Uncertain(reason) => {
                         return Classification::Uncertain(reason);
                     }
@@ -5385,13 +5440,13 @@ impl RationalBezier2 {
         &self,
         policy: &CurveContext,
     ) -> Classification<Option<&[Real; 6]>> {
+        if let Some(coefficients) = self.data.lineage.root.implicit_quadratic_conic.get() {
+            return Classification::Decided(Some(coefficients));
+        }
         if self.degree() != 2 {
             return Classification::Decided(None);
         }
         self.retain_quadratic_conic_parameter_frame(policy);
-        if let Some(coefficients) = self.data.lineage.root.implicit_quadratic_conic.get() {
-            return Classification::Decided(Some(coefficients));
-        }
         let controls = quadratic_conic_parameter_frame(self);
         let first = homogeneous_control_vector(&controls[0]);
         let middle = homogeneous_control_vector(&controls[1]);
@@ -6179,28 +6234,25 @@ fn overlap_parameter_on_curve(
     mut unresolved: Option<UncertaintyReason>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    let target_is_conic = match target.implicit_quadratic_conic(policy) {
-        Classification::Decided(Some(_)) => true,
-        Classification::Decided(None) => {
-            target
-                .data
-                .lineage
-                .root
-                .quadratic_conic_parameter_frame
-                .get()
-                .is_some()
-                && target
-                    .data
-                    .lineage
-                    .root
-                    .implicit_quadratic_conic
-                    .get()
-                    .is_some()
+    let has_conic_parameter_frame = target.degree() == 2
+        || target
+            .data
+            .lineage
+            .root
+            .quadratic_conic_parameter_frame
+            .get()
+            .is_some();
+    let target_is_conic = if has_conic_parameter_frame {
+        match target.implicit_quadratic_conic(policy) {
+            Classification::Decided(Some(_)) => true,
+            Classification::Decided(None) => false,
+            Classification::Uncertain(reason) => {
+                unresolved = Some(reason);
+                false
+            }
         }
-        Classification::Uncertain(reason) => {
-            unresolved = Some(reason);
-            false
-        }
+    } else {
+        false
     };
     if target_is_conic {
         match conic_parameter_map(target, source, policy)? {
