@@ -461,7 +461,7 @@ enum BezierAlgebraicCuspParallelComponentReplay2 {
     Degenerate,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 struct BezierAlgebraicCuspTwoTermExpression2 {
     /// Rational term `A`.
@@ -695,13 +695,17 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 (
                     BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(overlap_map),
                     BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact },
-                ) if Arc::ptr_eq(&map.data, &overlap_map.data) => {
+                ) if Arc::ptr_eq(&map.data, &overlap_map.data)
+                    || map.shares_parameterization(overlap_map) =>
+                {
                     Some(contact.other_parameter.clone())
                 }
                 (
                     BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(overlap_map),
                     BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { map, contact },
-                ) if Arc::ptr_eq(&map.data, &overlap_map.data) => {
+                ) if Arc::ptr_eq(&map.data, &overlap_map.data)
+                    || map.shares_parameterization(overlap_map) =>
+                {
                     Some(contact.parallel_parameter.clone())
                 }
                 _ => None,
@@ -4501,6 +4505,17 @@ fn algebraic_cusp_semicircle_contact_parameter_bracket(
 
 #[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
+    /// Identifies a rebuilt copy of the same native-parameter-to-cusp map.
+    /// Cache identity and contact correlation are deliberately excluded: the
+    /// retained equations and policy completely define the monotone map.
+    fn shares_parameterization(&self, other: &Self) -> bool {
+        self.data.cusp_parameter == other.data.cusp_parameter
+            && self.data.incidence == other.data.incidence
+            && self.data.diameter_side == other.data.diameter_side
+            && self.data.radius_squared_denominator == other.data.radius_squared_denominator
+            && self.data.policy == other.data.policy
+    }
+
     /// Orders one exact contact parameter against a represented parameter.
     fn mapped_contact_order_to_real(
         &self,
@@ -4636,6 +4651,16 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
 
 #[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
+    /// Identifies a rebuilt copy of the same native-parameter-to-cusp map.
+    fn shares_parameterization(&self, other: &Self) -> bool {
+        self.data.cusp_parameter == other.data.cusp_parameter
+            && self.data.incidence == other.data.incidence
+            && self.data.diameter_side == other.data.diameter_side
+            && self.data.radius_squared_denominator == other.data.radius_squared_denominator
+            && self.data.speed_squared == other.data.speed_squared
+            && self.data.policy == other.data.policy
+    }
+
     /// Orders one analytic-parallel contact against a represented semicircle parameter.
     pub(crate) fn contact_order_to_real(
         &self,
@@ -20242,6 +20267,65 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(true),
             );
+            let algebraic_native_cut = algebraic_parameter(vec![
+                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                Real::zero(),
+                Real::one(),
+            ]);
+            let Classification::Decided(algebraic_rational_cusp_cut) = rational_source_overlap
+                .cusp_parameter_for_other(&algebraic_native_cut, &policy)
+                .unwrap()
+            else {
+                panic!("an algebraic rational-carrier cut must stay mapped");
+            };
+            assert_eq!(
+                algebraic_rational_cusp_cut
+                    .represented_rational_value(&policy)
+                    .unwrap(),
+                Classification::Decided(None),
+            );
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+                    rebuilt_rational_overlaps,
+                ),
+            ) = semicircle
+                .rational_intersections(&rational_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the rebuilt rational circle map must remain an overlap");
+            };
+            let [rebuilt_rational_overlap] = rebuilt_rational_overlaps.as_slice() else {
+                panic!("the rebuilt rational circle must retain one selected cell");
+            };
+            let (
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(source_data),
+                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(rebuilt_map),
+            ) = (
+                &algebraic_rational_cusp_cut,
+                &rebuilt_rational_overlap.parameter_map,
+            )
+            else {
+                panic!("the rational cut and overlap must retain rational maps");
+            };
+            let BezierAlgebraicCuspSemicircleMappedParameterData2::Rational {
+                map: source_map, ..
+            } = source_data.as_ref()
+            else {
+                panic!("the rational cut must retain its source map");
+            };
+            assert!(!Arc::ptr_eq(&source_map.data, &rebuilt_map.data));
+            let Classification::Decided(rebuilt_algebraic_rational_cut) = rebuilt_rational_overlap
+                .other_parameter_for_cusp(&algebraic_rational_cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("a rebuilt equivalent rational map must recover an algebraic cut");
+            };
+            assert_eq!(
+                rebuilt_algebraic_rational_cut
+                    .same_value(&algebraic_native_cut, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
             let rational_start = rational_quarter.start().clone();
             let rational_end = rational_quarter.end().clone();
             let rational_boundary = CurveRegionBoundaryLoop2::new(
@@ -20441,6 +20525,60 @@ mod conversion_tests {
                 vec![CurveBoundaryInteriorSide2::Left],
             )
             .unwrap();
+            let Classification::Decided(algebraic_parallel_cusp_cut) = overlap
+                .cusp_parameter_for_other(&algebraic_native_cut, &policy)
+                .unwrap()
+            else {
+                panic!("an algebraic analytic-carrier cut must stay mapped");
+            };
+            assert_eq!(
+                algebraic_parallel_cusp_cut
+                    .represented_rational_value(&policy)
+                    .unwrap(),
+                Classification::Decided(None),
+            );
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+                    rebuilt_parallel_overlaps,
+                ),
+            ) = semicircle
+                .parallel_intersections(&parallel, &policy)
+                .unwrap()
+            else {
+                panic!("the rebuilt analytic circle map must remain an overlap");
+            };
+            let [rebuilt_parallel_overlap] = rebuilt_parallel_overlaps.as_slice() else {
+                panic!("the rebuilt analytic circle must retain one selected cell");
+            };
+            let (
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(source_data),
+                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(rebuilt_map),
+            ) = (
+                &algebraic_parallel_cusp_cut,
+                &rebuilt_parallel_overlap.parameter_map,
+            )
+            else {
+                panic!("the analytic cut and overlap must retain parallel maps");
+            };
+            let BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel {
+                map: source_map, ..
+            } = source_data.as_ref()
+            else {
+                panic!("the analytic cut must retain its source map");
+            };
+            assert!(!Arc::ptr_eq(&source_map.data, &rebuilt_map.data));
+            let Classification::Decided(rebuilt_algebraic_parallel_cut) = rebuilt_parallel_overlap
+                .other_parameter_for_cusp(&algebraic_parallel_cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("a rebuilt equivalent analytic map must recover an algebraic cut");
+            };
+            assert_eq!(
+                rebuilt_algebraic_parallel_cut
+                    .same_value(&algebraic_native_cut, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
             let cross_field_parallel_evidence = cross_field_cusp_region
                 .intersect_region(&parallel_region, &policy)
                 .expect("a rational-authored cusp cut must clip an analytic overlap")
