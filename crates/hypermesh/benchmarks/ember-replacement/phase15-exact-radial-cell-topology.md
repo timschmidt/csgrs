@@ -10,6 +10,8 @@ Single-bound BVH optimization: `a727778eac25435dc6bf299b498497bfaf41484c`
 
 Topology-corpus expansion: `3020c2b1f554101c29a09784e7bc7580994c2049`
 
+Shared compact source hierarchy: `fa86ea482c65354cab834439c19e4c441ff48832`
+
 Status: retained, test-gated Phase 15 core. This checkpoint does not claim a
 Phase 15 exit, production ownership, an EMBER cutover, output certification, or
 CGAL parity. `surface_arrangement` remains compiled only for tests, so no
@@ -36,6 +38,14 @@ number of requested roots. Union, intersection, either difference, symmetric
 difference, and arbitrary multi-operand expressions therefore reuse the same
 intersection graph, corefinement, cells, and winding table.
 
+One staged orchestrator now builds the exact source BVH once. Pairwise
+intersection borrows it, after which ownership is converted into a compact
+query hierarchy used by absolute winding seeds. The conversion keeps checked
+`u32` face order, 12-byte preorder nodes, six source-face extremum IDs per
+node, and exact bounds only for the sparse faces that do not already own them.
+It does not rebuild a hierarchy or retain the full node `Real` bounds across
+corefinement.
+
 ## Exactness, termination, and policy
 
 - Every geometric coordinate remains `hyperreal::Real`. Radial triple products,
@@ -55,6 +65,11 @@ intersection graph, corefinement, cells, and winding table.
 - Exact source-face BVH bounds restrict winding-ray candidates. The ray ends
   beyond the exact scene maximum on its unit coordinate, so it cannot omit a
   positive-parameter surface hit.
+- Every compact node extremum is the source primitive ID recorded by the
+  original certified bound union. Compaction therefore performs no scalar
+  equality or ordering decision. In particular it does not rely on
+  `Real::PartialEq`, which is intentionally best-effort, and cannot consume an
+  `APPROXIMATE_512` terminal or change aggregate certainty.
 - Open radial incidence, malformed point IDs, inconsistent propagation cycles,
   winding dimension mismatch, winding overflow, malformed truth DAGs, and an
   exhausted exact direction family are typed failures. No partial output or
@@ -99,6 +114,13 @@ CGAL eligibility, topology tags, and property oracles. The focused matrix
 passes 25 tests. The complete all-feature matrix passes 1,115 unit and 134
 integration tests with seven expected manual/benchmark
 ignores.
+
+Four compact-hierarchy tests add 690 fixed/exhaustive query comparisons against
+the full exact BVH across both policies, including tied extrema and a face with
+no retained bounds. They also cover empty input, sparse-bound fallback,
+certainty preservation, count mismatch, absent primitive/polygon/node/extrema,
+invalid preorder/range, and stale bound storage. Every malformed path returns
+a typed error.
 
 ## Large-fixture runtime and scaling
 
@@ -145,6 +167,13 @@ row, Callgrind falls from 1,719,503,571 to 1,702,480,107 instructions: a
 still use the same `DecisionContext`; approximate centers remain scheduling
 hints only.
 
+The shared-hierarchy follow-up reduces the same 6,144-facet row from
+1,702,480,107 to 1,542,502,286 instructions, a further 159,977,821
+(9.3968%). Its current 1,024-facet row is 247,177,831 instructions, so six
+times the input retires 6.2405x the work and per-facet work grows 4.01%.
+Recorded extremum provenance removes the former descendant scans; compact
+preorder topology adds a smaller 160,375-instruction improvement on top.
+
 ## Large-fixture heap
 
 Massif 3.27.0 used `--stacks=yes` on the 6,144-facet row:
@@ -173,6 +202,21 @@ exactly 28,730,032 bytes and total changes from 29,956,456 to 29,957,160 bytes,
 a 704-byte allocator-metadata variation. This establishes a real stage-local
 heap win without moving either governing useful-heap maximum.
 
+The shared orchestrator and unique-source-identity arena capacity move the
+topology process-wide useful maximum from 28,587,215 to 21,858,803 bytes
+(-6,728,412, 23.5364%) and total peak from 30,217,216 to 23,533,872 bytes
+(-22.1177%). The retained-input useful snapshot remains 6,545,203 bytes, so
+the arrangement increment is now 15,313,600 bytes. Explicit fallible node
+compaction is material: iterator in-place collection had retained the original
+671,400-byte full-node allocation even after changing its logical element
+type.
+
+The separate shipped 6,144-triangle general path remains certified with
+2,410 vertices and 4,816 triangles under both policies. Its useful peak is
+28,721,584 bytes, 8,448 below the prior 28,730,032-byte checkpoint; strict and
+approximate-512 totals are 29,964,728 and 29,964,712 bytes. Thus the test-gated
+orchestrator adds no production heap burden.
+
 ## Source, binary size, and call graph
 
 Relative to the Phase 14 evidence commit, the topology checkpoint adds 1,829
@@ -193,11 +237,29 @@ is 0.0180%. The test-gated topology engine still contributes no production
 binary bytes, and no alternate public representation or compatibility path was
 introduced.
 
+Relative to the single-bound-BVH checkpoint, the shared-hierarchy follow-up
+moves the linked matrix only within 320 bytes:
+
+| Consumer/profile | Native text, before -> after | Optimized WASM, before -> after |
+| --- | ---: | ---: |
+| General/release | 4,118,236 -> 4,118,204 (-32) | 2,779,836 -> 2,779,870 (+34) |
+| Immediate/release | 4,151,460 -> 4,151,428 (-32) | 2,794,396 -> 2,794,424 (+28) |
+| General/size | 1,899,410 -> 1,899,546 (+136) | 1,189,546 -> 1,189,866 (+320) |
+| Immediate/size | 1,911,566 -> 1,911,694 (+128) | 1,199,714 -> 1,200,027 (+313) |
+
+The maximum movement is 0.0269%; performance is materially better and the
+arrangement remains test-gated, so this bounded size trade is retained.
+
 The workspace call-graph utility reports 20,770 nodes/41,280 edges for the five
 selected crate source graph and 27,227/51,297 with tests, benches, examples,
 and fuzz targets. It inventories 545 arrangement nodes and the unchanged 4,437
 historical subdivision/segment-trace/local-BSP nodes. There is no static edge
 between the staged arrangement and EMBER machinery.
+
+After the shared-hierarchy commit, the corresponding graphs contain
+20,884/41,505 and 27,341/51,522 nodes/edges. They inventory 575 arrangement
+nodes and the same 4,437 historical EMBER nodes, with zero edge in either
+direction between the two implementations.
 
 The incomplete first evidence serialization was deleted from `/tmp` after a
 temporary quota failure; the complete evidence graph was then regenerated
@@ -219,11 +281,12 @@ Phase 16 cutover. The historical deficit stays open until then.
 
 ## Remaining work
 
-Phase 15 still needs production ownership and larger real-world/pathological
+Phase 15 still needs production promotion and larger real-world/pathological
 siblings for the newly permanent high-genus, self-intersecting/PWN, cavity,
-high-operand, and exact-embedding microcases. The production orchestrator
-should build the source BVH once and transfer ownership between intersection
-and seed classification. Phase 16 must materialize and independently certify
+high-operand, and exact-embedding microcases. The staged orchestrator already
+builds the source BVH once and transfers compact ownership between intersection
+and seed classification; it must become the sole production owner only in the
+atomic Phase 16 cutover. Phase 16 must materialize and independently certify
 selected facets, migrate all controlled callers directly, and delete EMBER
 atomically. No compatibility shim or dual engine will be added.
 
@@ -250,4 +313,5 @@ HYPERMESH_TOPOLOGY_SHELLS=1536 taskset -c 11 \
 cargo run --manifest-path ../tools/hyper-callgraph/Cargo.toml --release -- \
   --root .. --out-dir /tmp/hypermesh-phase15-callgraph \
   --crate-name hyperreal,hyperlattice,hyperlimit,hypertri,hypermesh --format json
+./benchmarks/size-harness/measure.sh default
 ```

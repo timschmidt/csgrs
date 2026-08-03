@@ -7,6 +7,7 @@ implementation_commit = "c512e7f959c085fe4a68dc652dbe5f33c7236f01"
 scheduler_commit = "a8e4a0e9169883aecc78de16423880891eaf97946"
 bvh_compaction_commit = "a727778eac25435dc6bf299b498497bfaf41484c"
 corpus_expansion_commit = "3020c2b1f554101c29a09784e7bc7580994c2049"
+shared_hierarchy_commit = "fa86ea482c65354cab834439c19e4c441ff48832"
 source_parent_commit = "c8b042d915e703e7796bf1fddf8a141d30ae0310"
 hyperreal_commit = "6c7b8325382135e424dfdb1d7442d454c9665d75"
 hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
@@ -37,6 +38,13 @@ checked_winding_propagation = true
 batched_expression_dag = true
 source_bvh_seed_query = true
 exact_bvh_single_primitive_bounds = true
+single_arrangement_orchestrator = true
+source_bvh_shared_by_intersection_and_winding = true
+compact_query_hierarchy = true
+compact_query_node_bytes = 12
+node_extrema_use_recorded_build_provenance = true
+node_extrema_use_real_partial_eq = false
+sparse_missing_bounds_retained = true
 axis_schedule_is_nonsemantic = true
 finite_moment_curve_fallback = true
 recursive_subdivision = false
@@ -52,6 +60,8 @@ large_exact_fixture_certainty = "Certified"
 
 [corpus]
 focused_surface_arrangement_tests = 25
+compact_hierarchy_tests = 4
+compact_hierarchy_both_policy_query_comparisons = 690
 phase_15_topology_tests = 17
 tetrahedron_reciprocal_cells = true
 disconnected_nested_absolute_winding = true
@@ -78,7 +88,7 @@ self_intersecting_pwn_open = false
 transform_scale_metamorphic_open = false
 
 [tests.all_features]
-unit_passed = 1115
+unit_passed = 1119
 integration_passed = 134
 failed = 0
 ignored = 7
@@ -91,7 +101,7 @@ clippy_all_targets_all_features_deny_warnings = true
 rustdoc_all_features_deny_warnings = true
 large_fixture_both_policies = true
 callgraph = true
-production_size = "all-eight-artifacts-shrink-after-bvh-compaction"
+production_size = "shared-hierarchy follow-up moves all eight artifacts by at most 320 bytes"
 
 [runtime.scheduler_ab]
 fixture_facets = 6144
@@ -138,6 +148,27 @@ after_instructions = 1702480107
 delta_instructions = -17023464
 reduction_percent = 0.990022
 
+[runtime.shared_hierarchy_1024]
+tool = "Callgrind 3.27.0"
+cpu = 11
+facets = 1024
+policies = 2
+instructions = 247177831
+instructions_per_facet = 241384.600586
+
+[runtime.shared_hierarchy_6144]
+tool = "Callgrind 3.27.0"
+cpu = 11
+facets = 6144
+policies = 2
+before_instructions = 1702480107
+after_instructions = 1542502286
+delta_instructions = -159977821
+reduction_percent = 9.396751
+instructions_per_facet = 251058.314779
+ratio_vs_1024 = 6.240455626
+per_facet_growth_percent = 4.007594
+
 [heap.large_6144]
 tool = "Massif 3.27.0"
 args = "--stacks=yes"
@@ -169,6 +200,24 @@ after_peak_useful_bytes = 28587215
 before_peak_total_bytes = 30217232
 after_peak_total_bytes = 30217216
 
+[heap.shared_hierarchy_large_6144]
+tool = "Massif 3.27.0"
+args = "--stacks=yes"
+input_facets = 6144
+shells = 1536
+policies = 2
+before_peak_useful_bytes = 28587215
+after_peak_useful_bytes = 21858803
+delta_peak_useful_bytes = -6728412
+peak_useful_reduction_percent = 23.536438
+before_peak_total_bytes = 30217216
+after_peak_total_bytes = 23533872
+delta_peak_total_bytes = -6683344
+peak_total_reduction_percent = 22.117670
+fixture_useful_bytes = 6545203
+arrangement_increment_useful_bytes = 15313600
+former_in_place_collect_retained_capacity_bytes = 671400
+
 [heap.production_general_strict]
 input_facets = 6144
 before_peak_useful_bytes = 28730032
@@ -177,6 +226,21 @@ before_peak_total_bytes = 29956456
 after_peak_total_bytes = 29957160
 total_delta_bytes = 704
 
+[heap.shared_hierarchy_production_general]
+tool = "Massif 3.27.0"
+args = "--stacks=yes"
+input_facets = 6144
+policies = ["STRICT", "APPROXIMATE_512"]
+certainty = "Certified"
+output_vertices = 2410
+output_triangles = 4816
+before_peak_useful_bytes = 28730032
+after_peak_useful_bytes = 28721584
+delta_peak_useful_bytes = -8448
+peak_useful_reduction_percent = 0.029405
+strict_peak_total_bytes = 29964728
+approximate_512_peak_total_bytes = 29964712
+
 [source]
 insertions_vs_phase14 = 1829
 deletions_vs_phase14 = 3
@@ -184,6 +248,49 @@ production_linked = false
 production_native_wasm_effect = "topology module remains cfg(test); single-bound BVH shrinks all measured artifacts"
 bvh_compaction_insertions = 28
 bvh_compaction_deletions = 23
+shared_hierarchy_insertions = 676
+shared_hierarchy_deletions = 44
+shared_hierarchy_module_remains_cfg_test = true
+
+[size.shared_hierarchy_release_general]
+before_native_text = 4118236
+after_native_text = 4118204
+native_delta = -32
+native_delta_percent = -0.000777
+before_wasm_opt_oz = 2779836
+after_wasm_opt_oz = 2779870
+wasm_delta = 34
+wasm_delta_percent = 0.001223
+
+[size.shared_hierarchy_release_immediate]
+before_native_text = 4151460
+after_native_text = 4151428
+native_delta = -32
+native_delta_percent = -0.000771
+before_wasm_opt_oz = 2794396
+after_wasm_opt_oz = 2794424
+wasm_delta = 28
+wasm_delta_percent = 0.001002
+
+[size.shared_hierarchy_size_general]
+before_native_text = 1899410
+after_native_text = 1899546
+native_delta = 136
+native_delta_percent = 0.007160
+before_wasm_opt_oz = 1189546
+after_wasm_opt_oz = 1189866
+wasm_delta = 320
+wasm_delta_percent = 0.026901
+
+[size.shared_hierarchy_size_immediate]
+before_native_text = 1911566
+after_native_text = 1911694
+native_delta = 128
+native_delta_percent = 0.006696
+before_wasm_opt_oz = 1199714
+after_wasm_opt_oz = 1200027
+wasm_delta = 313
+wasm_delta_percent = 0.026090
 
 [size.release_general]
 before_native_text = 4118732
@@ -227,16 +334,17 @@ wasm_delta_percent = -0.015835
 
 [callgraph.source]
 crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
-nodes = 20770
-edges = 41280
-arrangement_nodes = 545
+nodes = 20884
+edges = 41505
+arrangement_nodes = 575
 historical_ember_nodes = 4437
 arrangement_to_ember_edges = 0
+ember_to_arrangement_edges = 0
 
 [callgraph.evidence]
 includes = ["tests", "bench", "examples", "fuzz"]
-nodes = 27227
-edges = 51297
+nodes = 27341
+edges = 51522
 
 [competitive.context]
 hypermesh_exact_box_union_us = 8.1114
