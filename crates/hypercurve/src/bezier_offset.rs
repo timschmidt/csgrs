@@ -1061,6 +1061,46 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         }
 
+        let (_, contacts, _) = match self.forward_ray_rational_contacts(
+            origin,
+            direction_x,
+            direction_y,
+            false,
+            policy,
+        )? {
+            Classification::Decided(result) => result,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut winding = 0_i32;
+        for contact in contacts {
+            if contact.location == BezierAlgebraicCuspSemicircleContactLocation2::End {
+                continue;
+            }
+            winding += match contact.tangent_cross_sign {
+                RealSign::Negative => 1,
+                RealSign::Positive => -1,
+                RealSign::Zero => 0,
+            };
+        }
+        Ok(Classification::Decided(winding))
+    }
+
+    fn forward_ray_rational_contacts(
+        &self,
+        origin: &Point2,
+        direction_x: &Real,
+        direction_y: &Real,
+        retain_parameter_map: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<
+        Classification<(
+            RationalBezier2,
+            Vec<BezierAlgebraicCuspSemicircleRationalContact2>,
+            Option<BezierAlgebraicCuspSemicircleRationalParameterMap2>,
+        )>,
+    > {
         let direction_squared = direction_x * direction_x + direction_y * direction_y;
         match real_sign(&direction_squared, policy) {
             Some(RealSign::Positive) => {}
@@ -1098,12 +1138,13 @@ impl BezierAlgebraicCuspSemicircle2 {
             vec![origin.clone(), endpoint],
             vec![Real::one(), Real::one()],
         )?;
-        let intersections = match self.rational_intersections(&ray, policy)? {
-            Classification::Decided(intersections) => intersections,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let (intersections, parameter_map) =
+            match self.rational_intersections_internal(&ray, retain_parameter_map, policy)? {
+                Classification::Decided(result) => result,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let contacts = match intersections {
             BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) => contacts,
             BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle => {
@@ -1115,72 +1156,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
         };
-        let mut winding = 0_i32;
-        for contact in contacts {
-            if contact.location == BezierAlgebraicCuspSemicircleContactLocation2::End {
-                continue;
-            }
-            winding += match contact.tangent_cross_sign {
-                RealSign::Negative => 1,
-                RealSign::Positive => -1,
-                RealSign::Zero => 0,
-            };
-        }
-        Ok(Classification::Decided(winding))
-    }
-
-    /// Builds one pair-shared exact map from contacts on `other` to this
-    /// semicircle's monotone `[0,1]` parameter.
-    ///
-    /// The map does not construct a third algebraic-number tower. On the half
-    /// circle, the normalized diameter coordinate is the strictly decreasing
-    /// rational function `A(u)=(1-2u)/((1-u)^2+u^2)`. Comparing the correlated
-    /// contact's exact diameter coordinate with `A(u)` therefore orders the
-    /// contact parameter. The three reduced bivariate polynomials are shared
-    /// by every contact in the pair.
-    pub(crate) fn rational_parameter_map(
-        &self,
-        other: &RationalBezier2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalParameterMap2>> {
-        let system = self.rational_system(other)?;
-        let reduce = |polynomial: &BivariatePolynomial| {
-            bivariate_reduce_axis(
-                polynomial,
-                self.cusp_parameter().polynomial(),
-                CurveResultantParameter::First,
-                policy,
-            )
-        };
-        let incidence = match reduce(&system.incidence)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let diameter_side = match reduce(&system.diameter_side)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let radius_squared_denominator = match reduce(&system.radius_squared_denominator)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleRationalParameterMap2 {
-                data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
-                    cusp_parameter: BezierParameter2::Algebraic(self.cusp_parameter().clone()),
-                    incidence,
-                    diameter_side,
-                    radius_squared_denominator,
-                    policy: *policy,
-                }),
-            },
-        ))
+        Ok(Classification::Decided((ray, contacts, parameter_map)))
     }
 
     /// Builds the exact equations needed to intersect this selected half circle
@@ -2352,6 +2328,22 @@ impl BezierAlgebraicCuspSemicircle2 {
         other: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
+        Ok(self
+            .rational_intersections_internal(other, false, policy)?
+            .map(|(intersections, _)| intersections))
+    }
+
+    fn rational_intersections_internal(
+        &self,
+        other: &RationalBezier2,
+        retain_parameter_map: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<
+        Classification<(
+            BezierAlgebraicCuspSemicircleRationalIntersections2,
+            Option<BezierAlgebraicCuspSemicircleRationalParameterMap2>,
+        )>,
+    > {
         let system = self.rational_system(other)?;
         let reduce = |polynomial: &BivariatePolynomial| {
             bivariate_reduce_axis(
@@ -2389,14 +2381,16 @@ impl BezierAlgebraicCuspSemicircle2 {
                 parameters,
             )) => parameters,
             Classification::Decided(BezierAlgebraicCuspFiberProjection2::IdenticallyZero) => {
-                return Ok(Classification::Decided(
+                return Ok(Classification::Decided((
                     BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle,
-                ));
+                    None,
+                )));
             }
             Classification::Decided(BezierAlgebraicCuspFiberProjection2::Degenerate) => {
-                return Ok(Classification::Decided(
+                return Ok(Classification::Decided((
                     BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
-                ));
+                    None,
+                )));
             }
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -2493,9 +2487,55 @@ impl BezierAlgebraicCuspSemicircle2 {
                 location,
             });
         }
-        Ok(Classification::Decided(
+        let parameter_map = if retain_parameter_map
+            && contacts.iter().any(|contact| {
+                contact.location == BezierAlgebraicCuspSemicircleContactLocation2::Interior
+            }) {
+            let diameter_side = match diameter_side {
+                Some(diameter_side) => diameter_side,
+                None => match reduce(&system.diameter_side)? {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+            };
+            let radius_squared_denominator = match reduce(&system.radius_squared_denominator)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            Some(BezierAlgebraicCuspSemicircleRationalParameterMap2 {
+                data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+                    cusp_parameter,
+                    incidence,
+                    diameter_side,
+                    radius_squared_denominator,
+                    policy: *policy,
+                }),
+            })
+        } else {
+            None
+        };
+        Ok(Classification::Decided((
             BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
-        ))
+            parameter_map,
+        )))
+    }
+}
+
+fn algebraic_cusp_semicircle_endpoint_parameter(
+    location: BezierAlgebraicCuspSemicircleContactLocation2,
+) -> Option<BezierAlgebraicCuspSemicircleParameter2> {
+    match location {
+        BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+            Some(BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()))
+        }
+        BezierAlgebraicCuspSemicircleContactLocation2::End => {
+            Some(BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()))
+        }
+        BezierAlgebraicCuspSemicircleContactLocation2::Interior => None,
     }
 }
 
@@ -2642,22 +2682,14 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         &self,
         contact: &BezierAlgebraicCuspSemicircleRationalContact2,
     ) -> BezierAlgebraicCuspSemicircleParameter2 {
-        match contact.location {
-            BezierAlgebraicCuspSemicircleContactLocation2::Start => {
-                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero())
-            }
-            BezierAlgebraicCuspSemicircleContactLocation2::End => {
-                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
-            }
-            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
-                BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
-                    BezierAlgebraicCuspSemicircleMappedParameterData2::Rational {
-                        map: self.clone(),
-                        contact: contact.clone(),
-                    },
-                ))
-            }
-        }
+        algebraic_cusp_semicircle_endpoint_parameter(contact.location).unwrap_or_else(|| {
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+                BezierAlgebraicCuspSemicircleMappedParameterData2::Rational {
+                    map: self.clone(),
+                    contact: contact.clone(),
+                },
+            ))
+        })
     }
 }
 
@@ -2743,22 +2775,14 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
         &self,
         contact: &BezierAlgebraicCuspSemicircleParallelContact2,
     ) -> BezierAlgebraicCuspSemicircleParameter2 {
-        match contact.location {
-            BezierAlgebraicCuspSemicircleContactLocation2::Start => {
-                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero())
-            }
-            BezierAlgebraicCuspSemicircleContactLocation2::End => {
-                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
-            }
-            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
-                BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
-                    BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel {
-                        map: self.clone(),
-                        contact: contact.clone(),
-                    },
-                ))
-            }
-        }
+        algebraic_cusp_semicircle_endpoint_parameter(contact.location).unwrap_or_else(|| {
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+                BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel {
+                    map: self.clone(),
+                    contact: contact.clone(),
+                },
+            ))
+        })
     }
 }
 
@@ -2911,23 +2935,15 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         } else {
             contact.second_location
         };
-        match location {
-            BezierAlgebraicCuspSemicircleContactLocation2::Start => {
-                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero())
-            }
-            BezierAlgebraicCuspSemicircleContactLocation2::End => {
-                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
-            }
-            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
-                BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
-                    BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
-                        map: self.clone(),
-                        contact: contact.clone(),
-                        first,
-                    },
-                ))
-            }
-        }
+        algebraic_cusp_semicircle_endpoint_parameter(location).unwrap_or_else(|| {
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+                BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
+                    map: self.clone(),
+                    contact: contact.clone(),
+                    first,
+                },
+            ))
+        })
     }
 }
 
@@ -3442,6 +3458,15 @@ fn cusp_semicircle_parameter_bracket_bounds(
 
 #[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleFragment2 {
+    fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
+        if self.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "algebraic cusp fragment was replayed under a different predicate policy".into(),
+            ));
+        }
+        Ok(())
+    }
+
     pub(crate) fn full(semicircle: BezierAlgebraicCuspSemicircle2, policy: &CurveContext) -> Self {
         Self {
             data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
@@ -3543,6 +3568,103 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
 
     pub(crate) fn conservative_bounds(&self) -> CurveResult<Classification<Aabb2>> {
         self.data.semicircle.conservative_bounds(&self.data.policy)
+    }
+
+    fn contains_parameter(
+        &self,
+        parameter: &BezierAlgebraicCuspSemicircleParameter2,
+        include_start: bool,
+        include_end: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        self.validate_policy(policy)?;
+        let start = match parameter.cmp_by_refinement(&self.data.start, policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match parameter.cmp_by_refinement(&self.data.end, policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let after_start = matches!(start, std::cmp::Ordering::Greater)
+            || include_start && start == std::cmp::Ordering::Equal;
+        let before_end = matches!(end, std::cmp::Ordering::Less)
+            || include_end && end == std::cmp::Ordering::Equal;
+        Ok(Classification::Decided(after_start && before_end))
+    }
+
+    /// Returns this subfragment's half-open winding contribution to one
+    /// represented forward ray. Boundary incidence is closed at both fragment
+    /// ends; crossing ownership includes only the traversal start.
+    pub(crate) fn forward_ray_winding_delta(
+        &self,
+        origin: &Point2,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
+        self.validate_policy(policy)?;
+        let (_, contacts, parameter_map) = match self
+            .data
+            .semicircle
+            .forward_ray_rational_contacts(origin, direction_x, direction_y, true, policy)?
+        {
+            Classification::Decided(result) => result,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let ray_start = BezierParameter2::Exact(Real::zero());
+        let mut winding = 0_i32;
+        for contact in contacts {
+            let parameter = algebraic_cusp_semicircle_endpoint_parameter(contact.location)
+                .unwrap_or_else(|| {
+                    parameter_map
+                        .as_ref()
+                        .expect("an interior ray contact retains its shared parameter map")
+                        .contact_parameter(&contact)
+                });
+            let at_origin = match contact.other_parameter.same_value(&ray_start, policy)? {
+                Classification::Decided(at_origin) => at_origin,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if at_origin {
+                match self.contains_parameter(&parameter, true, true, policy)? {
+                    Classification::Decided(true) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Decided(false) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            let (include_start, include_end) = if self.data.reversed {
+                (false, true)
+            } else {
+                (true, false)
+            };
+            match self.contains_parameter(&parameter, include_start, include_end, policy)? {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let delta = match contact.tangent_cross_sign {
+                RealSign::Negative => 1,
+                RealSign::Positive => -1,
+                RealSign::Zero => 0,
+            };
+            winding += if self.data.reversed { -delta } else { delta };
+        }
+        Ok(Classification::Decided(winding))
     }
 }
 
@@ -16600,13 +16722,14 @@ mod conversion_tests {
         .unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
-            let Classification::Decided(
+            let Classification::Decided((
                 BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
-            ) = semicircle
-                .rational_intersections(&vertical, &policy)
+                Some(map),
+            )) = semicircle
+                .rational_intersections_internal(&vertical, true, &policy)
                 .unwrap()
             else {
-                panic!("vertical-circle contacts must complete");
+                panic!("vertical-circle contacts and their shared map must complete");
             };
             let [contact] = contacts.as_slice() else {
                 panic!("the selected upper semicircle has one vertical contact");
@@ -16615,12 +16738,6 @@ mod conversion_tests {
                 contact.location,
                 BezierAlgebraicCuspSemicircleContactLocation2::Interior,
             );
-            let Classification::Decided(map) = semicircle
-                .rational_parameter_map(&vertical, &policy)
-                .unwrap()
-            else {
-                panic!("the rational contact parameter map must complete");
-            };
             assert_eq!(
                 std::mem::size_of::<BezierAlgebraicCuspSemicircleRationalParameterMap2>(),
                 std::mem::size_of::<usize>(),
@@ -17188,6 +17305,41 @@ mod conversion_tests {
                 reversed_fragment.conservative_bounds().unwrap(),
                 fragment.conservative_bounds().unwrap(),
             );
+            let point = |x, y| Point2::new(Real::from(x), Real::from(y));
+            let direction = |x, y| (Real::from(x), Real::from(y));
+            for (carrier, ray_direction, expected) in [
+                (&fragment, direction(1, 0), 0),
+                (&fragment, direction(-1, 0), 0),
+                (&fragment, direction(0, 1), 1),
+                (&reversed_fragment, direction(-1, 0), -1),
+                (&reversed_fragment, direction(0, 1), 0),
+            ] {
+                assert_eq!(
+                    carrier
+                        .forward_ray_winding_delta(
+                            &point(0, 0),
+                            &ray_direction.0,
+                            &ray_direction.1,
+                            &policy,
+                        )
+                        .unwrap(),
+                    Classification::Decided(expected),
+                );
+            }
+            assert_eq!(
+                fragment
+                    .forward_ray_winding_delta(&point(1, 0), &Real::zero(), &Real::one(), &policy,)
+                    .unwrap(),
+                Classification::Decided(0),
+            );
+            for origin in [point(0, 1), point(-1, 0)] {
+                assert_eq!(
+                    fragment
+                        .forward_ray_winding_delta(&origin, &Real::one(), &Real::zero(), &policy,)
+                        .unwrap(),
+                    Classification::Uncertain(UncertaintyReason::Boundary),
+                );
+            }
 
             let oblique = foreign().transform_similarity(&oblique_to_origin).unwrap();
             let Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(
