@@ -690,11 +690,33 @@ pub fn compare_algebraic_root_representations_by_difference(
             None,
         );
     }
+    if let Some(difference_value) = represented_root_translation_difference(
+        &refinement.refined_left,
+        &refinement.refined_right,
+        config.policy,
+    ) && let Some(ordering) =
+        compare_reals(&difference_value, &Real::zero(), config.policy).value()
+    {
+        let comparison = algebraic_comparison_report(
+            AlgebraicRootComparisonStatus::Compared,
+            Some(ordering),
+            Some("comparison decided by an exact translated-root difference".to_owned()),
+        );
+        let difference = algebraic_arithmetic_report(
+            AlgebraicRootArithmeticOp::Subtract,
+            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
+            Some(difference_value),
+            None,
+            Some("selected roots are exact translates of one another".to_owned()),
+        );
+        return algebraic_difference_comparison_report(comparison, refinement, Some(difference));
+    }
 
     let difference = arithmetic_algebraic_root_representations(
         left,
         Some(right),
         AlgebraicRootArithmeticOp::Subtract,
+        config.policy,
     );
     let comparison = match difference.status {
         AlgebraicRootArithmeticStatus::ComputedExactRationalWitness => {
@@ -762,6 +784,49 @@ pub fn compare_algebraic_root_representations_by_difference(
     algebraic_difference_comparison_report(comparison, refinement, Some(difference))
 }
 
+/// Finds `left - right` when the selected roots are related by an exact
+/// translation inferred from their defining polynomials.
+///
+/// For degree `n` polynomials, translating `P(x)` to `P(y - offset)` changes
+/// the normalized next-to-leading coefficient by `-n * offset`. The resulting
+/// candidate is accepted only after affine construction and an exact
+/// common-root proof on the translated isolator, so unrelated polynomials
+/// cannot turn the coefficient heuristic into topology evidence.
+fn represented_root_translation_difference(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let left_coefficients = &left.polynomial_coefficients;
+    let right_coefficients = &right.polynomial_coefficients;
+    if left_coefficients.len() != right_coefficients.len() || left_coefficients.len() < 2 {
+        return None;
+    }
+    if left_coefficients
+        .iter()
+        .chain(right_coefficients)
+        .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return None;
+    }
+    let degree = left_coefficients.len() - 1;
+    let left_leading = left_coefficients.last()?;
+    let right_leading = right_coefficients.last()?;
+    let left_next = &left_coefficients[degree - 1];
+    let right_next = &right_coefficients[degree - 1];
+    let left_normalized = (left_next.clone() / left_leading.clone()).ok()?;
+    let right_normalized = (right_next.clone() / right_leading.clone()).ok()?;
+    let degree = u64::try_from(degree).ok()?;
+    let offset = ((left_normalized - right_normalized) / Real::from(degree)).ok()?;
+    let translated = transform_algebraic_root_affine(left, Real::one(), offset.clone(), policy);
+    if translated.status != AlgebraicRootAffineTransformStatus::Transformed {
+        return None;
+    }
+    let translated = translated.representation.as_ref()?;
+    (represented_roots_share_isolated_common_root(translated, right, policy) == Some(true))
+        .then(|| -offset)
+}
+
 fn represented_roots_share_isolated_common_root(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
@@ -791,7 +856,8 @@ fn represented_roots_share_isolated_common_root(
     )
 }
 
-/// Compute exact arithmetic for represented roots with rational witnesses.
+/// Compute exact arithmetic for represented roots under an explicit predicate
+/// policy.
 ///
 /// This is deliberately a witness arithmetic package, not a full algebraic
 /// number field. When both required inputs carry exact rational witnesses, the
@@ -799,16 +865,18 @@ fn represented_roots_share_isolated_common_root(
 /// an exact rational witness, add/subtract/multiply/divide by that scalar is
 /// lowered to exact affine or linear-fractional construction; unary negation
 /// is the same structural operation specialized to `scale = -1`.
-/// These operations transform retained algebraic evidence rather than sampling
-/// approximations. Binary non-rational/non-rational arithmetic remains explicit
-/// [`AlgebraicRootArithmeticStatus::NonRationalInput`]. This follows the exact
-/// exact-object rule from the exact-geometric-computation model:
-/// unsupported algebraic arithmetic remains explicit until a true
-/// algebraic-number package exists.
+/// Independent represented roots use the bounded resultant construction when
+/// supported. These operations transform retained algebraic evidence rather
+/// than sampling approximations. Every comparison, validation, and refinement
+/// uses `policy`; in particular, a STRICT caller never crosses an implicit
+/// `APPROXIMATE_512` terminal. Unsupported algebraic arithmetic remains
+/// explicit. This follows the exact-object rule from the
+/// exact-geometric-computation model.
 pub fn arithmetic_algebraic_root_representations(
     left: &AlgebraicRootRepresentation,
     right: Option<&AlgebraicRootRepresentation>,
     operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
 ) -> AlgebraicRootArithmeticReport {
     if !left.is_valid() || right.is_some_and(|root| !root.is_valid()) {
         return algebraic_arithmetic_report(
@@ -819,28 +887,15 @@ pub fn arithmetic_algebraic_root_representations(
             Some("algebraic root arithmetic requires valid represented inputs".to_owned()),
         );
     }
-    if let Some(report) = arithmetic_with_one_rational_scalar(
-        left,
-        right,
-        operation,
-        PredicatePolicy::APPROXIMATE_512,
-    ) {
+    if let Some(report) = arithmetic_with_one_rational_scalar(left, right, operation, policy) {
         return report;
     }
-    if let Some(report) = arithmetic_with_same_representation(
-        left,
-        right,
-        operation,
-        PredicatePolicy::APPROXIMATE_512,
-    ) {
+    if let Some(report) = arithmetic_with_same_representation(left, right, operation, policy) {
         return report;
     }
-    if let Some(report) = arithmetic_with_independent_representations(
-        left,
-        right,
-        operation,
-        PredicatePolicy::APPROXIMATE_512,
-    ) {
+    if let Some(report) =
+        arithmetic_with_independent_representations(left, right, operation, policy)
+    {
         return report;
     }
     let Some(left_value) = left.exact_rational_witness() else {
@@ -2507,6 +2562,8 @@ fn representation_report(
 
 #[cfg(test)]
 mod tests {
+    use hyperreal::Rational;
+    use num::bigint::{BigInt, BigUint};
     use proptest::prelude::*;
 
     use super::*;
@@ -2518,6 +2575,13 @@ mod tests {
 
     fn ratio(numerator: i64, denominator: i64) -> Real {
         (real(numerator) / real(denominator)).unwrap()
+    }
+
+    fn dyadic(exponent: usize) -> Real {
+        Real::new(
+            Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << exponent)
+                .unwrap(),
+        )
     }
 
     #[test]
@@ -2880,6 +2944,101 @@ mod tests {
     }
 
     #[test]
+    fn algebraic_root_difference_certifies_exact_translation_beyond_512_bits() {
+        let epsilon = dyadic(600);
+        let half = ratio(1, 2);
+        let left = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-half.clone(), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: half.clone(),
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let right = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(1),
+            polynomial_coefficients: vec![
+                &epsilon * &epsilon - half,
+                -(&epsilon * Real::from(2_i8)),
+                Real::one(),
+            ],
+            ..left.clone()
+        };
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let report = compare_algebraic_root_representations_by_difference(
+                &left,
+                &right,
+                AlgebraicRootRefinementComparisonConfig {
+                    policy,
+                    max_refinement_rounds: 0,
+                    steps_per_round: 1,
+                },
+            );
+            assert_eq!(
+                report.comparison.status,
+                AlgebraicRootComparisonStatus::Compared
+            );
+            assert_eq!(report.comparison.ordering, Some(Ordering::Less));
+            let difference = report.difference.unwrap();
+            assert_eq!(
+                difference.status,
+                AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+            );
+            assert_eq!(difference.exact_result, Some(-epsilon.clone()));
+        }
+    }
+
+    #[test]
+    fn algebraic_root_arithmetic_uses_the_explicit_policy() {
+        let left = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(2),
+                upper: real(2),
+                exact_root: Some(real(2)),
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::ExactRationalWitness,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let right = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![real(-3), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(3),
+                upper: real(3),
+                exact_root: Some(real(3)),
+                distinct_root_count: 1,
+            },
+            ..left.clone()
+        };
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let report = arithmetic_algebraic_root_representations(
+                &left,
+                Some(&right),
+                AlgebraicRootArithmeticOp::Add,
+                policy,
+            );
+            assert_eq!(
+                report.status,
+                AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+            );
+            assert_eq!(report.exact_result, Some(real(5)));
+        }
+    }
+
+    #[test]
     fn algebraic_root_arithmetic_uses_exact_rational_witnesses_only() {
         let left = AlgebraicRootRepresentation {
             constraint_index: 0,
@@ -2911,6 +3070,7 @@ mod tests {
             &left,
             Some(&right),
             AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             sum.status,
@@ -2922,6 +3082,7 @@ mod tests {
             &left,
             Some(&right),
             AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(product.exact_result, Some(real(6)));
 
@@ -2929,6 +3090,7 @@ mod tests {
             &right,
             Some(&left),
             AlgebraicRootArithmeticOp::Divide,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(quotient.exact_result, Some((real(3) / real(2)).unwrap()));
 
@@ -2936,6 +3098,7 @@ mod tests {
             &left,
             None,
             AlgebraicRootArithmeticOp::Negate,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(negation.exact_result, Some(real(-2)));
     }
@@ -2960,6 +3123,7 @@ mod tests {
             &interval_only,
             None,
             AlgebraicRootArithmeticOp::Negate,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             report.status,
@@ -2983,6 +3147,7 @@ mod tests {
             &invalid,
             None,
             AlgebraicRootArithmeticOp::Negate,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             invalid_report.status,
@@ -3047,6 +3212,7 @@ mod tests {
             &sqrt_two,
             Some(&rational_three),
             AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             sum.status,
@@ -3064,6 +3230,7 @@ mod tests {
             &rational_three,
             Some(&sqrt_two),
             AlgebraicRootArithmeticOp::Subtract,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             difference.status,
@@ -3081,6 +3248,7 @@ mod tests {
             &sqrt_two,
             Some(&rational_two),
             AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             product.status,
@@ -3098,6 +3266,7 @@ mod tests {
             &sqrt_two,
             Some(&rational_zero),
             AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             zero_product.status,
@@ -3109,6 +3278,7 @@ mod tests {
             &sqrt_two,
             Some(&rational_two),
             AlgebraicRootArithmeticOp::Divide,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             divided_by_scalar.status,
@@ -3126,6 +3296,7 @@ mod tests {
             &rational_two,
             Some(&sqrt_two),
             AlgebraicRootArithmeticOp::Divide,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             scalar_divided_by_root.status,
@@ -3146,6 +3317,7 @@ mod tests {
             &sqrt_two,
             Some(&sqrt_two),
             AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             same_product.status,
@@ -3161,6 +3333,7 @@ mod tests {
             &sqrt_two,
             Some(&sqrt_two),
             AlgebraicRootArithmeticOp::Subtract,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(same_difference.exact_result, Some(Real::zero()));
 
@@ -3168,6 +3341,7 @@ mod tests {
             &sqrt_two,
             Some(&sqrt_two),
             AlgebraicRootArithmeticOp::Divide,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(same_quotient.exact_result, Some(Real::one()));
 
@@ -3181,6 +3355,7 @@ mod tests {
             &sqrt_two,
             Some(&sqrt_three),
             AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             independent_sum.status,
@@ -3205,6 +3380,7 @@ mod tests {
             &sqrt_two,
             Some(&sqrt_three),
             AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             independent_product.status,
@@ -3215,6 +3391,7 @@ mod tests {
             &sqrt_two,
             Some(&sqrt_three),
             AlgebraicRootArithmeticOp::Divide,
+            PredicatePolicy::APPROXIMATE_512,
         );
         assert_eq!(
             independent_quotient.status,
@@ -3585,17 +3762,20 @@ mod tests {
                 &left_root,
                 Some(&right_root),
                 AlgebraicRootArithmeticOp::Add,
+                PredicatePolicy::APPROXIMATE_512,
             );
             let difference = arithmetic_algebraic_root_representations(
                 &left_root,
                 Some(&right_root),
                 AlgebraicRootArithmeticOp::Subtract,
+                PredicatePolicy::APPROXIMATE_512,
             );
             let quotient = if right != 0 {
                 Some(arithmetic_algebraic_root_representations(
                     &left_root,
                     Some(&right_root),
                     AlgebraicRootArithmeticOp::Divide,
+                    PredicatePolicy::APPROXIMATE_512,
                 ))
             } else {
                 None
@@ -3643,6 +3823,7 @@ mod tests {
                 &root,
                 None,
                 AlgebraicRootArithmeticOp::Negate,
+                PredicatePolicy::APPROXIMATE_512,
             );
 
             prop_assert_eq!(
@@ -3708,6 +3889,7 @@ mod tests {
                 &root,
                 Some(&scalar),
                 AlgebraicRootArithmeticOp::Add,
+                PredicatePolicy::APPROXIMATE_512,
             );
             let affine = transform_algebraic_root_affine(
                 &root,

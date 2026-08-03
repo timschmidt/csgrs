@@ -4808,6 +4808,7 @@ fn certification(c: &mut Criterion) {
                 &rational_two,
                 Some(&rational_three),
                 AlgebraicRootArithmeticOp::Multiply,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
             )
         })
     });
@@ -4819,6 +4820,7 @@ fn certification(c: &mut Criterion) {
                     &sqrt_two,
                     Some(&rational_three),
                     AlgebraicRootArithmeticOp::Add,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
                 )
             })
         },

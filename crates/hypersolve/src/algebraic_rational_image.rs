@@ -540,6 +540,7 @@ fn transform_algebraic_root_rational_image_with_evaluation(
         numerator,
         Some(denominator),
         AlgebraicRootArithmeticOp::Divide,
+        policy,
     );
     match quotient.status {
         AlgebraicRootArithmeticStatus::ComputedRepresentation => {
