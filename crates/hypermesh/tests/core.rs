@@ -525,6 +525,20 @@ fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
 }
 
 #[test]
+fn coplanar_corner_overlap_is_not_missed_by_single_witness_sampling() {
+    let left = approximate_convex_triangle(&p(-1, 0, 0), &p(-1, 2, 0), &p(1, 2, 0), 0, 0);
+    let right = approximate_convex_triangle(&p(0, 1, 0), &p(0, 4, 0), &p(4, 4, 0), 1, 0);
+
+    for (candidate, other) in [(&left, &right), (&right, &left)] {
+        let intersection = approximate_intersect_polygons(candidate, other, 13).unwrap();
+        assert_eq!(
+            intersection.kind,
+            hypermesh::PairwiseIntersectionType::Overlap
+        );
+    }
+}
+
+#[test]
 fn coplanar_identical_quads_report_overlap_from_interior_witness() {
     let left =
         approximate_convex_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
@@ -538,6 +552,22 @@ fn coplanar_identical_quads_report_overlap_from_interior_witness() {
         hypermesh::PairwiseIntersectionType::Overlap
     );
     assert_eq!(intersection.overlap.unwrap().other_polygon_idx, 11);
+}
+
+#[test]
+fn coplanar_edge_and_vertex_contacts_do_not_report_positive_area() {
+    let host = approximate_convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let edge_touch = approximate_convex_triangle(&p(0, 0, 0), &p(0, -2, 0), &p(2, 0, 0), 1, 0);
+    let vertex_touch = approximate_convex_triangle(&p(2, 0, 0), &p(3, -1, 0), &p(3, 0, 0), 1, 1);
+
+    for (index, other) in [edge_touch, vertex_touch].iter().enumerate() {
+        let intersection = approximate_intersect_polygons(&host, other, index).unwrap();
+        assert_eq!(
+            intersection.kind,
+            hypermesh::PairwiseIntersectionType::None,
+            "contact {index} must not be promoted to an area overlap"
+        );
+    }
 }
 
 #[test]

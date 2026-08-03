@@ -1,19 +1,20 @@
 //! Exact split-basis construction, ranking, and child partitioning.
 
-#[cfg(test)]
-use super::ExactBvh;
 use super::{
-    Aabb, ClipSide, ConvexPolygon, HypermeshResult, IntersectionSegment, PairwiseIntersectionType,
-    PairwiseIntersectionsCacheEntry, Plane, PolygonFamilyProfile, Real, axis_mut, axis_ref,
+    Aabb, ClipSide, ConvexPolygon, HypermeshResult, PairwiseIntersectionsCacheEntry, Plane,
+    PolygonFamilyProfile, Real, axis_mut, axis_ref,
     cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs,
     polygon_families_match_as_multisets, polygon_family_profile,
     split_child_matches_parent_geometry,
 };
+#[cfg(test)]
+use crate::bvh::ExactBvh;
 use crate::clip::clip_polygon_decision;
 use crate::context::DecisionContext;
 use crate::geometry::compare_real_decision;
 #[cfg(test)]
 use crate::intersection::intersect_polygons_with_vertices;
+use crate::intersection::{IntersectionSegment, PairwiseIntersectionType};
 use std::cell::RefCell;
 use std::rc::Rc;
 

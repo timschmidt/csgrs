@@ -20,6 +20,7 @@ use super::path::{
 use super::{CrossingEvent, InteriorLeafPoint, LeafWitnessSeedFamilies};
 use crate::context::DecisionContext;
 use crate::error::{HypermeshError, HypermeshResult};
+pub(super) use crate::geometry::point_centroid as centroid;
 use crate::geometry::{
     Aabb, Classification, Plane, Point3PredicateEvidence, axis_mut, axis_ref, classify_real,
     compare_real_decision,
@@ -189,24 +190,6 @@ pub(super) fn dominant_normal_axis(
         }
     }
     Ok(best)
-}
-
-pub(super) fn centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
-    if points.is_empty() {
-        return Ok(None);
-    }
-    let mut sum = Point3::origin();
-    for point in points {
-        sum.x += point.x.clone();
-        sum.y += point.y.clone();
-        sum.z += point.z.clone();
-    }
-    let denom = Real::from(points.len() as u64);
-    Ok(Some(Point3::new(
-        (sum.x / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
-        (sum.y / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
-        (sum.z / denom).map_err(|_| HypermeshError::UnknownClassification)?,
-    )))
 }
 
 #[cfg(test)]

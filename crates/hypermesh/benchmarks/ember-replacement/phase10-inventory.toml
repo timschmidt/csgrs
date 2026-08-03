@@ -1,0 +1,118 @@
+schema = 1
+status = "in_progress"
+captured_at = "2026-08-03"
+hypermesh_commit = "f57526e05d9bad63f481695c289d2d743fd13d73"
+plan = "../../../HYPERMESH_PATH_COMPLETE_IMPLEMENTATION_PLAN.md"
+
+[contract]
+canonical_scalar = "hyperreal::Real"
+input_model = "finite closed piecewise-winding-number triangle meshes"
+strict_policy = "PredicatePolicy::STRICT"
+approximate_policy = "PredicatePolicy::APPROXIMATE_512"
+terminal_owner = "hyperlimit"
+terminal_precision_bits = 512
+compatibility_shims = false
+dual_general_engine = false
+
+[historical_source]
+production_lines = 30578
+dedicated_test_lines = 31599
+
+[historical_source.files]
+"src/subdivision.rs" = 11962
+"src/subdivision/split.rs" = 1575
+"src/segment_trace.rs" = 658
+"src/segment_trace/halfspace_witness.rs" = 805
+"src/segment_trace/leaf_probe.rs" = 2358
+"src/segment_trace/path.rs" = 4928
+"src/segment_trace/probe_cache.rs" = 153
+"src/segment_trace/probe_geometry.rs" = 2180
+"src/segment_trace/probe_reachability.rs" = 4128
+"src/segment_trace/witness.rs" = 1190
+"src/local_bsp.rs" = 641
+"src/subdivision/tests.rs" = 15151
+"src/segment_trace/tests.rs" = 16448
+
+[callgraph.production]
+command = "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir /tmp/hypermesh-ember-replacement-callgraph-production --crate-name hypermesh,hyperreal,hyperlimit,hyperlattice,hypertri,hypervoxel --format json,dot --per-library"
+nodes = 21266
+edges = 41499
+general_edges_entering_historical_modules = 1
+general_entry_edge = "hypermesh::operations::compute_boolean -> hypermesh::subdivision::subdivide_boolean_with_certified_convex_inputs"
+
+[callgraph.evidence]
+command = "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir /tmp/hypermesh-ember-replacement-callgraph-evidence --crate-name hypermesh,hyperreal,hyperlimit,hyperlattice,hypertri,hypervoxel --include-tests --include-bench --include-examples --include-fuzz --format json --per-library"
+nodes = 28062
+edges = 52049
+
+[tests]
+command = "cargo test --lib"
+passed = 1068
+failed = 0
+ignored = 0
+elapsed_seconds = 2.00
+
+[competitive.hard_case]
+fixture = "YeahRight full-resolution control mesh against rotated box"
+input_triangles_left = 11894
+input_triangles_right = 11894
+expected_output = "valid empty volumetric intersection"
+hypermesh_seconds = 3312.66
+hypermesh_max_rss_kib = 329352
+cgal_epeck_seconds = 0.09
+cgal_epeck_max_rss_kib = 15516
+runtime_ratio_hypermesh_over_cgal = 36807.0
+rss_ratio_hypermesh_over_cgal = 21.23
+source = "benchmarks/baselines/policy-complete-boolean-fallbacks-2026-08-03.md"
+
+[competitive.cgal]
+version = "6.0.3"
+git_hash = "cefe3007d59cf4292a09da4fa8a35f38478a4e0b"
+release_date = "2026-01-09"
+kernel = "CGAL::Exact_predicates_exact_constructions_kernel"
+compiler = "g++ 15.2.1"
+adapter = "competitive/cgal-epeck"
+
+[[public_removals]]
+name = "EmberConfig"
+owner = "src/operations.rs"
+
+[[public_removals]]
+name = "SubdivisionConfig"
+owner = "src/subdivision.rs"
+
+[[public_removals]]
+name = "SubdivisionTask"
+owner = "src/subdivision.rs"
+
+[[public_removals]]
+name = "LeafProcessingStats"
+owner = "src/subdivision.rs"
+
+[[public_removals]]
+name = "DEFAULT_MAX_DEPTH"
+owner = "src/subdivision.rs"
+
+[[public_removals]]
+name = "process_leaf/process_leaf_into/subdivide/subdivide_into"
+owner = "src/subdivision.rs"
+
+[[public_removals]]
+name = "TraceAxisSegmentResult/trace_segment/trace_axis_segment/classify_leaf_polygon"
+owner = "src/segment_trace.rs"
+
+[[controlled_callers]]
+crate = "csgrs"
+production_file = "src/solid.rs"
+surface = "EmberConfig::default() passed to boolean_triangle_meshes"
+migration = "consume the replacement API directly at atomic cutover"
+
+[[controlled_callers]]
+crate = "hypervoxel"
+production_file = "src/hypermesh_adapter.rs"
+surface = "polygon_soup validation only; no EMBER API"
+migration = "compile and validate; no expected source change"
+
+[exclusions]
+repositories = ["hypercurve", "hypersolve"]
+reason = "concurrent owner work"

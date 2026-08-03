@@ -176,6 +176,57 @@ pub fn corpus() -> Vec<Case> {
             ],
         },
         Case {
+            name: "identical_boxes",
+            left: box_mesh([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
+            right: box_mesh([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
+            expected_volumes: [64.0, 64.0, 0.0],
+            expected_bounds: [
+                Some(Bounds {
+                    min: [0.0, 0.0, 0.0],
+                    max: [4.0, 4.0, 4.0],
+                }),
+                Some(Bounds {
+                    min: [0.0, 0.0, 0.0],
+                    max: [4.0, 4.0, 4.0],
+                }),
+                None,
+            ],
+        },
+        Case {
+            name: "face_touching_boxes",
+            left: box_mesh([0.0, 0.0, 0.0], [2.0, 2.0, 2.0]),
+            right: box_mesh([2.0, 0.0, 0.0], [4.0, 2.0, 2.0]),
+            expected_volumes: [16.0, 0.0, 8.0],
+            expected_bounds: [
+                Some(Bounds {
+                    min: [0.0, 0.0, 0.0],
+                    max: [4.0, 2.0, 2.0],
+                }),
+                None,
+                Some(Bounds {
+                    min: [0.0, 0.0, 0.0],
+                    max: [2.0, 2.0, 2.0],
+                }),
+            ],
+        },
+        Case {
+            name: "partial_face_touching_boxes",
+            left: box_mesh([0.0, 0.0, 0.0], [2.0, 2.0, 2.0]),
+            right: box_mesh([2.0, 1.0, 0.0], [4.0, 3.0, 2.0]),
+            expected_volumes: [16.0, 0.0, 8.0],
+            expected_bounds: [
+                Some(Bounds {
+                    min: [0.0, 0.0, 0.0],
+                    max: [4.0, 3.0, 2.0],
+                }),
+                None,
+                Some(Bounds {
+                    min: [0.0, 0.0, 0.0],
+                    max: [2.0, 2.0, 2.0],
+                }),
+            ],
+        },
+        Case {
             name: "overlapping_tetrahedra",
             left: tetrahedron([0.0, 0.0, 0.0], 4.0),
             right: tetrahedron([1.0, 1.0, 1.0], 4.0),

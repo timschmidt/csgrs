@@ -13,6 +13,29 @@ pub use crate::predicate::{
 };
 pub(crate) use crate::predicate::{Point3PredicateEvidence, classify_real, compare_real_decision};
 
+/// Returns the exact equal-weight centroid of a nonempty point set.
+///
+/// A nondegenerate convex polygon's vertex centroid is in its relative
+/// interior, so arrangement code can use this single canonical witness instead
+/// of searching an implementation-specific family of leaf probes.
+pub(crate) fn point_centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
+    if points.is_empty() {
+        return Ok(None);
+    }
+    let mut sum = Point3::origin();
+    for point in points {
+        sum.x += point.x.clone();
+        sum.y += point.y.clone();
+        sum.z += point.z.clone();
+    }
+    let denominator = Real::from(points.len() as u64);
+    Ok(Some(Point3::new(
+        (sum.x / denominator.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
+        (sum.y / denominator.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
+        (sum.z / denominator).map_err(|_| HypermeshError::UnknownClassification)?,
+    )))
+}
+
 pub(crate) fn affine_projective_point_decision(
     decisions: &DecisionContext,
     point: &HomogeneousPoint3,

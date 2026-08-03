@@ -1,0 +1,240 @@
+schema = 1
+registry = "hypermesh-surface-arrangement"
+admission = "monotonic"
+
+[[fixture]]
+id = "overlapping_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "exact-asset-pair"
+left = "benchmarks/corpus/exact/overlapping-boxes-left.off"
+right = "benchmarks/corpus/exact/overlapping-boxes-right.off"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "transverse-face-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [84.0, 12.0, 52.0, 20.0, 72.0]
+
+[[fixture]]
+id = "disjoint_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::box_mesh"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "disjoint", "multi-component-output"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+
+[[fixture]]
+id = "nested_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::box_mesh"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "strict-containment", "nested-shell-output"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [216.0, 16.0, 200.0, 0.0, 200.0]
+
+[[fixture]]
+id = "identical_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::box_mesh"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "identical", "coplanar-coincident-faces"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [64.0, 64.0, 0.0, 0.0, 0.0]
+
+[[fixture]]
+id = "face_touching_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::box_mesh"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "full-face-contact", "zero-volume-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+
+[[fixture]]
+id = "partial_face_touching_boxes"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::box_mesh"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "partial-face-contact", "coplanar-overlay", "t-junction"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+
+[[fixture]]
+id = "overlapping_tetrahedra"
+status = "permanent"
+provenance = "Hypermesh exact competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::tetrahedron"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "transverse-edge-face-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+expected_volumes = [21.166666666666668, 0.16666666666666666, 10.5]
+
+[[fixture]]
+id = "subdivided_overlapping_boxes_3072_each"
+status = "permanent"
+provenance = "Hypermesh deterministic competitive scaling corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::large_boolean_case"
+coordinate_class = "dyadic"
+topology = ["closed-pwn", "dense-coplanar-input", "transverse-face-intersection"]
+operations = ["union", "intersection", "difference"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+
+[[fixture]]
+id = "yeahright_control_hull_subdivided_box"
+status = "permanent-opt-in"
+provenance = "YeahRight model repository; exact convex-hull derivation documented in competitive/yeahright.rs"
+license = "external"
+source_kind = "content-addressed-external-generator"
+generator = "competitive::support::yeahright_boolean_case"
+coordinate_class = "decimal-input-derived-dyadic"
+topology = ["closed-pwn", "high-genus-source", "convex-hull", "box-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+archive_sha256 = "b3a4f314bfb8c67e36eab5faa96a146ffac90524e120769b5adb8a71be8ba3dc"
+control_mesh_sha256 = "bf8768bf019ac505c39c92ae5d63808ee1773047aefd5d5d6700b88c1b5f1c3e"
+
+[[fixture]]
+id = "yeahright_control_hull_subdivided_4_box"
+status = "permanent-opt-in"
+provenance = "Deterministic scale sibling of the content-addressed YeahRight control"
+license = "external"
+source_kind = "content-addressed-external-generator"
+generator = "competitive::support::yeahright_boolean_case_with_subdivisions(4)"
+coordinate_class = "decimal-input-derived-dyadic"
+topology = ["closed-pwn", "convex-hull", "dense-input-subdivision", "box-intersection"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+
+[[fixture]]
+id = "yeahright_control_hull_subdivided_8_box"
+status = "permanent-opt-in"
+provenance = "Deterministic scale sibling of the content-addressed YeahRight control"
+license = "external"
+source_kind = "content-addressed-external-generator"
+generator = "competitive::support::yeahright_boolean_case_with_subdivisions(8)"
+coordinate_class = "decimal-input-derived-dyadic"
+topology = ["closed-pwn", "convex-hull", "dense-input-subdivision", "box-intersection"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["scaling", "heap"]
+size = "xl"
+cgal_eligible = true
+expected_certainty = "Certified"
+
+[[fixture]]
+id = "yeahright_full_resolution_rotated_box"
+status = "permanent-opt-in"
+provenance = "Content-addressed YeahRight control and exact rotated-box hard gate"
+license = "external"
+source_kind = "content-addressed-external-generator"
+generator = "tests::competitive::full_resolution_yeahright"
+coordinate_class = "decimal-input-and-symbolic-rotation"
+topology = ["closed-pwn", "high-genus", "nonconvex", "dense-intersection", "empty-result"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "competitive", "heap"]
+size = "xl"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 23788
+expected_output_triangles = 0
+
+[[fixture]]
+id = "symbolic_terminal_box_contact"
+status = "permanent"
+provenance = "operations::tests::exact_box_cell_boolean_obeys_terminal_equality_policy"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "pi + e versus e + pi box boundary"
+coordinate_class = "symbolic-computable"
+topology = ["closed-pwn", "face-contact", "terminal-equality"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "policy-dependent"
+
+[[fixture]]
+id = "general_nonconvex_regression_suite"
+status = "migration-required"
+provenance = "tests/regression.rs and behavior-level tests/core.rs"
+license = "MIT"
+source_kind = "test-family"
+generator = "tests::regression"
+coordinate_class = "integer-rational-symbolic"
+topology = ["closed-pwn", "concave", "multi-component", "coplanar", "tangent", "nonmanifold-incidence"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "fuzz-seed"]
+size = "small-medium"
+cgal_eligible = false
+expected_certainty = "case-specific"

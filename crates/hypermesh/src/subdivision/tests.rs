@@ -1,6 +1,6 @@
 use super::*;
 use crate::geometry::Plane;
-use crate::intersection::OverlapInfo;
+use crate::intersection::{IntersectionSegment, OverlapInfo, pairwise_intersections_by_polygon};
 use crate::mesh::{OutputVertex, PolygonSoup};
 use crate::operations::EmberConfig;
 use crate::output::{BooleanMesh, BooleanResult};
