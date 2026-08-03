@@ -334,8 +334,18 @@ pub(crate) struct BezierAlgebraicCuspCircleRationalSystem2 {
     pub(crate) incidence: BivariatePolynomial,
     /// Nonnegative exactly on the selected closed semicircle.
     pub(crate) selected_half_plane: BivariatePolynomial,
+    /// Positive at the start diameter endpoint and negative at the end.
+    pub(crate) diameter_side: BivariatePolynomial,
     /// Signed tangent cross product after multiplication by a positive square.
     pub(crate) tangent_cross: BivariatePolynomial,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[allow(dead_code)]
+pub(crate) enum BezierAlgebraicCuspSemicircleContactLocation2 {
+    Interior,
+    Start,
+    End,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -344,7 +354,7 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRationalContact2 {
     pub(crate) other_parameter: BezierParameter2,
     pub(crate) point: RationalBezierIntersectionPointEvidence2,
     pub(crate) tangent_cross_sign: RealSign,
-    pub(crate) at_diameter_boundary: bool,
+    pub(crate) location: BezierAlgebraicCuspSemicircleContactLocation2,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -678,6 +688,101 @@ impl BezierAlgebraicCuspSemicircle2 {
         )
     }
 
+    /// Returns this oriented half circle's winding contribution to a forward
+    /// ray from `origin` in `direction`.
+    ///
+    /// A conservative source envelope chooses a finite rational line long
+    /// enough to contain every possible forward contact. Intersecting that
+    /// line reuses the complete algebraic-cusp/rational kernel. The carrier's
+    /// traversal start is included and its end is excluded, matching the
+    /// arrangement's half-open fragment convention; tangent contacts do not
+    /// change winding. An incident origin remains explicit boundary
+    /// uncertainty rather than being assigned an arbitrary side.
+    pub(crate) fn forward_ray_winding_delta(
+        &self,
+        origin: &Point2,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
+        match self.contains_point(origin, policy)? {
+            Classification::Decided(true) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let direction_squared = direction_x * direction_x + direction_y * direction_y;
+        match real_sign(&direction_squared, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => return Err(CurveError::ZeroLengthLine),
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "ray direction had a negative squared norm".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let bounds = match self.conservative_bounds(policy)? {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        // `reach` dominates the absolute delta on either axis for every point
+        // in the box. Hence
+        //   |dot(Q-origin,d)| <= reach * (|dx|+|dy|).
+        // Dividing that bound by |d|^2 and adding one puts every positive line
+        // parameter strictly before the constructed endpoint.
+        let reach = (bounds.min_x() - origin.x()).abs()
+            + (bounds.max_x() - origin.x()).abs()
+            + (bounds.min_y() - origin.y()).abs()
+            + (bounds.max_y() - origin.y()).abs()
+            + Real::one();
+        let direction_l1 = direction_x.abs() + direction_y.abs();
+        let scale = Real::one() + (reach * direction_l1 / direction_squared)?;
+        let endpoint = Point2::new(
+            origin.x() + &scale * direction_x,
+            origin.y() + &scale * direction_y,
+        );
+        let ray = RationalBezier2::try_new(
+            vec![origin.clone(), endpoint],
+            vec![Real::one(), Real::one()],
+        )?;
+        let intersections = match self.rational_intersections(&ray, policy)? {
+            Classification::Decided(intersections) => intersections,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let contacts = match intersections {
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) => contacts,
+            BezierAlgebraicCuspSemicircleRationalIntersections2::CoincidentCircle => {
+                return Err(CurveError::Topology(
+                    "a nonzero rational line was classified as the cusp circle".into(),
+                ));
+            }
+            BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+        };
+        let mut winding = 0_i32;
+        for contact in contacts {
+            if contact.location == BezierAlgebraicCuspSemicircleContactLocation2::End {
+                continue;
+            }
+            winding += match contact.tangent_cross_sign {
+                RealSign::Negative => 1,
+                RealSign::Positive => -1,
+                RealSign::Zero => 0,
+            };
+        }
+        Ok(Classification::Decided(winding))
+    }
+
     /// Builds the exact equations needed to intersect this selected half circle
     /// with one finite rational Bezier. The first variable is the retained cusp
     /// parameter; the second is the rational curve parameter.
@@ -719,12 +824,18 @@ impl BezierAlgebraicCuspSemicircle2 {
             &bivariate_multiply_first_parameter(&dy, &frame.normal_x_numerator),
             &bivariate_multiply_first_parameter(&dx, &frame.normal_y_numerator),
         );
+        let other_weight = bivariate_outer_product(&[Real::one()], &other.weight);
         let selected_half_plane = bivariate_scale(
-            bivariate_multiply(
-                &radial_cross,
-                &bivariate_outer_product(&[Real::one()], &other.weight),
-            ),
+            bivariate_multiply(&radial_cross, &other_weight),
             &(&self.turn_sign() * &self.data.radial_distance),
+        );
+        let radial_dot = bivariate_add(
+            &bivariate_multiply_first_parameter(&dx, &frame.normal_x_numerator),
+            &bivariate_multiply_first_parameter(&dy, &frame.normal_y_numerator),
+        );
+        let diameter_side = bivariate_scale(
+            bivariate_multiply(&radial_dot, &other_weight),
+            &self.data.radial_distance,
         );
 
         let other_x_derivative = polynomial_subtract(
@@ -752,6 +863,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         Ok(BezierAlgebraicCuspCircleRationalSystem2 {
             incidence,
             selected_half_plane,
+            diameter_side,
             tangent_cross,
         })
     }
@@ -796,6 +908,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        let mut diameter_side = None;
         let cusp_root = parameter_representation(self.cusp_parameter(), policy);
         let defining = BivariatePolynomial::new(
             self.cusp_parameter()
@@ -970,6 +1083,43 @@ impl BezierAlgebraicCuspSemicircle2 {
             if selected_sign == RealSign::Negative {
                 continue;
             }
+            let location = if selected_sign == RealSign::Zero {
+                if diameter_side.is_none() {
+                    diameter_side = Some(match reduce(&system.diameter_side)? {
+                        Classification::Decided(polynomial) => polynomial,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    });
+                }
+                match algebraic_cusp_correlated_predicate_sign(
+                    &incidence,
+                    diameter_side
+                        .as_ref()
+                        .expect("diameter-side reduction was initialized"),
+                    &cusp_parameter,
+                    &candidate,
+                    policy,
+                )? {
+                    Classification::Decided(RealSign::Positive) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::Start
+                    }
+                    Classification::Decided(RealSign::Negative) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::End
+                    }
+                    Classification::Decided(RealSign::Zero) => {
+                        return Err(CurveError::Topology(
+                            "nonzero algebraic semicircle radius had an indeterminate diameter endpoint"
+                                .into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            } else {
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior
+            };
             let tangent_cross_sign = match algebraic_cusp_correlated_predicate_sign(
                 &incidence,
                 &tangent_cross,
@@ -1003,7 +1153,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 other_parameter: candidate,
                 point,
                 tangent_cross_sign,
-                at_diameter_boundary: selected_sign == RealSign::Zero,
+                location,
             });
         }
         if candidate_report_index != candidate_reports.len() {
@@ -13460,6 +13610,90 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    fn algebraic_cusp_semicircle_rational_contacts_distinguish_both_endpoints() {
+        let diameter = RationalBezier2::try_new(
+            vec![Point2::from_values(-2, 0), Point2::from_values(2, 0)],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            for (carrier, expected) in [
+                (
+                    semicircle.clone(),
+                    [
+                        BezierAlgebraicCuspSemicircleContactLocation2::End,
+                        BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                    ],
+                ),
+                (
+                    semicircle.reversed(),
+                    [
+                        BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                        BezierAlgebraicCuspSemicircleContactLocation2::End,
+                    ],
+                ),
+            ] {
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                ) = carrier.rational_intersections(&diameter, &policy).unwrap()
+                else {
+                    panic!("diameter contacts must be complete");
+                };
+                assert_eq!(contacts.len(), 2);
+                assert_eq!(
+                    contacts
+                        .iter()
+                        .map(|contact| contact.location)
+                        .collect::<Vec<_>>(),
+                    expected,
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_semicircle_forward_ray_obeys_half_open_winding() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let reversed = semicircle.reversed();
+            let point = |x, y| Point2::new(Real::from(x), Real::from(y));
+            let direction = |x, y| (Real::from(x), Real::from(y));
+
+            for (carrier, origin, ray_direction, expected) in [
+                (&semicircle, point(0, 0), direction(1, 0), 1),
+                (&semicircle, point(0, 0), direction(-1, 0), 0),
+                (&reversed, point(0, 0), direction(1, 0), 0),
+                (&reversed, point(0, 0), direction(-1, 0), -1),
+                (&semicircle, point(0, 2), direction(1, 0), 0),
+                (&semicircle, point(0, -2), direction(0, 1), 1),
+                (&reversed, point(0, -2), direction(0, 1), -1),
+                (&semicircle, point(-2, 1), direction(1, 0), 0),
+            ] {
+                assert_eq!(
+                    carrier
+                        .forward_ray_winding_delta(
+                            &origin,
+                            &ray_direction.0,
+                            &ray_direction.1,
+                            &policy,
+                        )
+                        .unwrap(),
+                    Classification::Decided(expected),
+                );
+            }
+            assert_eq!(
+                semicircle
+                    .forward_ray_winding_delta(&point(0, 1), &Real::one(), &Real::zero(), &policy,)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary),
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn algebraic_cusp_semicircle_conservative_bounds_contain_exact_images() {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -13562,7 +13796,10 @@ mod conversion_tests {
                     )
                 })
                 .expect("the shared source cusp must be retained");
-            assert!(cusp_contact.at_diameter_boundary);
+            assert_eq!(
+                cusp_contact.location,
+                BezierAlgebraicCuspSemicircleContactLocation2::End,
+            );
             assert_eq!(cusp_contact.tangent_cross_sign, RealSign::Zero);
         }
     }
