@@ -3601,6 +3601,28 @@ fn carrier_bounds_decided_disjoint(
 }
 
 fn subcurve_has_certified_injective_axis(curve: &BezierSubcurve2, policy: &CurveContext) -> bool {
+    match curve {
+        BezierSubcurve2::Quadratic(curve)
+            if polynomial_control_polygon_has_certified_injective_axis(
+                curve.control_points(),
+                policy,
+            ) =>
+        {
+            return true;
+        }
+        BezierSubcurve2::Cubic(curve)
+            if polynomial_control_polygon_has_certified_injective_axis(
+                curve.control_points(),
+                policy,
+            ) =>
+        {
+            return true;
+        }
+        BezierSubcurve2::Quadratic(_)
+        | BezierSubcurve2::Cubic(_)
+        | BezierSubcurve2::RationalQuadratic(_)
+        | BezierSubcurve2::Rational(_) => {}
+    }
     let rational = match curve {
         BezierSubcurve2::Quadratic(curve) => RationalBezier2::try_new(
             curve.control_points().into_iter().cloned().collect(),
@@ -3617,6 +3639,32 @@ fn subcurve_has_certified_injective_axis(curve: &BezierSubcurve2, policy: &Curve
         BezierSubcurve2::Rational(curve) => return curve.has_certified_injective_axis(policy),
     };
     rational.is_ok_and(|curve| curve.has_certified_injective_axis(policy))
+}
+
+fn polynomial_control_polygon_has_certified_injective_axis<const N: usize>(
+    control_points: [&crate::Point2; N],
+    policy: &CurveContext,
+) -> bool {
+    [Axis2::X, Axis2::Y].into_iter().any(|axis| {
+        let Some(direction) = compare_reals(
+            point_coordinate(control_points[0], axis),
+            point_coordinate(control_points[N - 1], axis),
+            policy,
+        ) else {
+            return false;
+        };
+        if direction == Ordering::Equal {
+            return false;
+        }
+        control_points.windows(2).all(|pair| {
+            compare_reals(
+                point_coordinate(pair[0], axis),
+                point_coordinate(pair[1], axis),
+                policy,
+            )
+            .is_some_and(|ordering| ordering == Ordering::Equal || ordering == direction)
+        })
+    })
 }
 
 fn subcurve_has_certified_injective_image(curve: &BezierSubcurve2, policy: &CurveContext) -> bool {
@@ -5848,6 +5896,24 @@ mod certified_successor_tests {
             &policy,
         );
         assert_eq!(all_events[0].len(), 2);
+    }
+
+    #[test]
+    fn polynomial_control_polygon_certifies_only_monotone_injective_axis() {
+        let monotone = BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 1),
+            Point2::from_values(2, 0),
+        ));
+        let retraced = BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+            Point2::from_values(0, 0),
+        ));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(subcurve_has_certified_injective_axis(&monotone, &policy));
+            assert!(!subcurve_has_certified_injective_axis(&retraced, &policy));
+        }
     }
 
     #[test]
