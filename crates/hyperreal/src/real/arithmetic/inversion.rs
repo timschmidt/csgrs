@@ -100,10 +100,20 @@ impl Real {
             return Self::new(rational);
         }
         if let Some((scale, radicand)) = computable.exact_pure_quadratic_surd() {
-            let radical = Self::new(radicand)
-                .sqrt()
-                .expect("a retained quadratic-surd radicand is nonnegative");
-            return radical.scaled_by_rational(&scale);
+            // Reconstruct only while `Real::sqrt` can take its bounded rational
+            // special-form path. An oversized residual would otherwise enter
+            // the generic path unchanged and rediscover this same surd forever.
+            if radicand.extract_square_will_succeed() {
+                let radical = Self::new(radicand)
+                    .sqrt()
+                    .expect("a retained quadratic-surd radicand is nonnegative");
+                return radical.scaled_by_rational(&scale);
+            }
+            crate::trace_dispatch!(
+                "real",
+                "make_computable",
+                "quadratic-surd-reconstruction-budget"
+            );
         }
 
         Self {

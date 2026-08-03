@@ -317,6 +317,16 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
     trace_row(&mut rows, filters, "real/sqrt_scaled_rational", || {
         black_box(Real::new(Rational::new(18)).sqrt().unwrap());
     });
+    trace_row(
+        &mut rows,
+        filters,
+        "real/sqrt_oversized_rational_fallback",
+        || {
+            let radicand =
+                Rational::from_bigint((BigInt::from(1_u8) << 5_001_usize) + BigInt::from(3_u8));
+            black_box(Real::new(radicand).sqrt().unwrap());
+        },
+    );
     trace_row(&mut rows, filters, "real/sqrt_scaled_exp", || {
         let value = Real::new(Rational::new(18)) * Real::new(Rational::new(2)).exp().unwrap();
         black_box(value.sqrt().unwrap());

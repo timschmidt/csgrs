@@ -1012,6 +1012,23 @@ mod tests {
     }
 
     #[test]
+    fn oversized_rational_sqrt_retains_exact_computable_without_recursive_reconstruction() {
+        let radicand = Rational::from_bigint(
+            (num::BigInt::from(1_u8) << 5_001_usize) + num::BigInt::from(3_u8),
+        );
+        assert!(!radicand.extract_square_will_succeed());
+
+        let root = Real::new(radicand.clone()).sqrt().unwrap();
+
+        assert_eq!(
+            root.detailed_facts().symbolic.kind,
+            StructuralKind::ComputableOpaque
+        );
+        assert_eq!(root.refine_sign_until(0), Some(RealSign::Positive));
+        assert_eq!(root.fold_ref().square().exact_rational(), Some(radicand));
+    }
+
+    #[test]
     fn certified_dyadic_interval_is_exact_for_rationals_and_bounds_symbolic_values() {
         let exact = Rational::fraction(7, 3).unwrap();
         assert_eq!(

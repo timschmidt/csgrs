@@ -144,6 +144,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/pow/small_integer_exponent` | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 1 |
 | `real/pow/symbolic_negative_one` | 18 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 2 | 0 | 0 |
 | `real/powi_i64/exact_17` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 1 |
+| `real/sqrt_oversized_rational_fallback` | 8 | 0 | 0 | 1 | 2 | 1 | 0 | 1 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 6 | 0 | 0 |
 | `real/sqrt_scaled_exp` | 16 | 0 | 0 | 1 | 3 | 1 | 0 | 0 | 4 | 8 | 0 | 0 | 0 | 0 | 0 | 2 | 2 | 9 | 0 | 0 |
 | `real/sqrt_scaled_rational` | 7 | 0 | 0 | 0 | 2 | 1 | 0 | 1 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
 | `real/stable_scalar_substrate` | 236 | 0 | 0 | 5 | 19 | 3 | 0 | 22 | 20 | 191 | 0 | 0 | 0 | 0 | 0 | 10 | 6 | 109 | 19 | 19 |
@@ -1644,6 +1645,14 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/powi_i64/exact_17` | `rational_algorithm` | `powering` | `word-checked-pow` | 1 |
 | `real/powi_i64/exact_17` | `real` | `constructor` | `rational` | 1 |
 | `real/powi_i64/exact_17` | `real` | `powi-i64` | `rational-exact` | 1 |
+| `real/sqrt_oversized_rational_fallback` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
+| `real/sqrt_oversized_rational_fallback` | `computable` | `sqrt` | `generic-sqrt-node` | 1 |
+| `real/sqrt_oversized_rational_fallback` | `computable` | `structural` | `quadratic-surd` | 1 |
+| `real/sqrt_oversized_rational_fallback` | `real` | `certified_sign_until` | `structural-facts` | 1 |
+| `real/sqrt_oversized_rational_fallback` | `real` | `constructor` | `rational` | 1 |
+| `real/sqrt_oversized_rational_fallback` | `real` | `make_computable` | `quadratic-surd-reconstruction-budget` | 1 |
+| `real/sqrt_oversized_rational_fallback` | `real` | `sqrt` | `generic-computable` | 1 |
+| `real/sqrt_oversized_rational_fallback` | `real` | `structural_facts` | `exact-rational` | 1 |
 | `real/sqrt_scaled_exp` | `computable` | `constructor` | `cached-e-internal` | 1 |
 | `real/sqrt_scaled_exp` | `computable` | `constructor` | `one` | 1 |
 | `real/sqrt_scaled_exp` | `computable` | `constructor` | `rational-integer-canonicalized` | 2 |
