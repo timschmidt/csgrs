@@ -1,0 +1,168 @@
+schema = 1
+status = "retained-test-gated"
+captured_at = "2026-08-03"
+phases = [11, 15]
+checkpoint = "exact-radial-cell-topology"
+implementation_commit = "c512e7f959c085fe4a68dc652dbe5f33c7236f01"
+scheduler_commit = "a8e4a0e9169883aecc78de16423880891eaf97946"
+source_parent_commit = "c8b042d915e703e7796bf1fddf8a141d30ae0310"
+hyperreal_commit = "6c7b8325382135e424dfdb1d7442d454c9665d75"
+hyperlattice_commit = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit_commit = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+hypertri_commit = "d6014be5cc3ee4961929430d40b5cba83efc4813"
+
+[scope]
+canonical_scalar = "hyperreal::Real"
+module_cfg_test = true
+production_orchestrator = false
+dual_shipped_engine = false
+compatibility_shim = false
+ember_removed = false
+phase_15_complete = false
+phase_16_complete = false
+cgal_parity = false
+
+[architecture]
+canonical_facet_bundles = true
+flat_contribution_csr = true
+flat_transition_vectors = true
+exact_cyclic_radial_order = true
+coincident_ray_grouping = true
+nonmanifold_radial_incidence = true
+volumetric_cells = true
+absolute_component_seed_winding = true
+checked_winding_propagation = true
+batched_expression_dag = true
+source_bvh_seed_query = true
+axis_schedule_is_nonsemantic = true
+finite_moment_curve_fallback = true
+recursive_subdivision = false
+whole_mesh_segment_trace = false
+
+[policy]
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_owner = "hyperlimit"
+strict_undecided_is_error = true
+approximate_512_terminal_only = true
+aggregate_certainty_absorbed = true
+large_exact_fixture_certainty = "Certified"
+
+[corpus]
+focused_surface_arrangement_tests = 20
+phase_15_topology_tests = 12
+tetrahedron_reciprocal_cells = true
+disconnected_nested_absolute_winding = true
+coincident_multiplicity = true
+transverse_four_state_winding = true
+multi_operand_expression_dag = true
+nonmanifold_edge_tangency = true
+opposite_side_face_coincidence = true
+configurable_disconnected_scaling = true
+open_surface_rejection = true
+malformed_incidence_rejection = true
+winding_dimension_rejection = true
+winding_overflow_rejection = true
+strict_approximate_radial_equality = true
+high_genus_open = true
+self_intersecting_pwn_open = true
+transform_scale_metamorphic_open = true
+
+[tests.all_features]
+unit_passed = 1110
+integration_passed = 134
+failed = 0
+ignored = 7
+
+[gates]
+focused_tests = true
+all_feature_tests = true
+fmt = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+large_fixture_both_policies = true
+callgraph = true
+production_size = "unchanged-by-cfg-test"
+
+[runtime.scheduler_ab]
+fixture_facets = 6144
+policies = 2
+fixed_positive_x_seconds = 7.29
+axis_first_seconds = 0.18
+speedup = 40.5
+reduction_percent = 97.530864
+fixed_positive_x_rss_kib = 37908
+axis_first_rss_kib = 38420
+
+[runtime.callgrind_1024]
+tool = "Callgrind 3.27.0"
+cpu = 11
+facets = 1024
+policies = 2
+instructions = 271903497
+instructions_per_facet = 265531
+
+[runtime.callgrind_6144]
+tool = "Callgrind 3.27.0"
+cpu = 11
+facets = 6144
+policies = 2
+instructions = 1719503571
+instructions_per_facet = 279867
+ratio_vs_1024 = 6.323947981
+per_facet_growth_percent = 5.399133
+corefine_inclusive_instructions = 711357006
+assemble_cells_inclusive_instructions = 528294615
+pairwise_inclusive_instructions = 265249016
+
+[runtime.transverse]
+policies = 2
+initial_instructions = 10656974
+axis_scheduled_instructions = 8947999
+
+[heap.large_6144]
+tool = "Massif 3.27.0"
+args = "--stacks=yes"
+input_facets = 6144
+shells = 1536
+policies = 2
+fixture_useful_bytes = 6545203
+fixture_total_bytes = 6970224
+topology_snapshot_useful_bytes = 25957087
+topology_snapshot_total_bytes = 27417712
+peak_useful_bytes = 28587215
+peak_total_bytes = 30217232
+topology_increment_useful_bytes = 19411884
+peak_increment_useful_bytes = 22042012
+maximum_rss_kib = 38420
+swaps = 0
+
+[source]
+insertions_vs_phase14 = 1829
+deletions_vs_phase14 = 3
+production_linked = false
+production_native_wasm_effect = "none; module remains cfg(test)"
+
+[callgraph.source]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 20770
+edges = 41280
+arrangement_nodes = 545
+historical_ember_nodes = 4437
+arrangement_to_ember_edges = 0
+
+[callgraph.evidence]
+includes = ["tests", "bench", "examples", "fuzz"]
+nodes = 27227
+edges = 51297
+
+[competitive.context]
+hypermesh_exact_box_union_us = 8.1114
+boolmesh_exact_box_union_us = 73.329
+manifold_exact_box_union_us = 60.191
+cgal_epeck_exact_box_union_us = 156.159
+historical_full_resolution_hypermesh_seconds = 3312.66
+historical_full_resolution_hypermesh_rss_kib = 329352
+historical_full_resolution_cgal_seconds = 0.09
+historical_full_resolution_cgal_rss_kib = 15516
+new_disconnected_row_is_common_contract_cgal_comparison = false
+per_case_parity_open = true
