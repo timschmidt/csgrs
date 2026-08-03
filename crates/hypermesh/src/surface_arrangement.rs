@@ -1557,7 +1557,7 @@ mod tests {
                 .unwrap();
             let mut vertex = 0;
             for coordinate in 1..=LINE_COUNT {
-                let endpoints = [p(coordinate.into(), 1, 0), p(coordinate.into(), 17, 0)]
+                let endpoints = [p(coordinate.into(), 0, 0), p(coordinate.into(), 18, 0)]
                     .map(|point| insert_test_point(&decisions, &mut arena, &mut vertex, point));
                 work.constraints.push(RawConstraint {
                     endpoints,
@@ -1565,7 +1565,7 @@ mod tests {
                 });
             }
             for coordinate in 1..=LINE_COUNT {
-                let endpoints = [p(1, coordinate.into(), 0), p(17, coordinate.into(), 0)]
+                let endpoints = [p(0, coordinate.into(), 0), p(18, coordinate.into(), 0)]
                     .map(|point| insert_test_point(&decisions, &mut arena, &mut vertex, point));
                 work.constraints.push(RawConstraint {
                     endpoints,
@@ -1575,10 +1575,13 @@ mod tests {
             work.changed = true;
 
             let result = corefine_face(&decisions, 0, &polygon, &work, &mut arena).unwrap();
-            assert_eq!(arena.points.len(), 3 + (LINE_COUNT * LINE_COUNT) as usize);
+            assert_eq!(
+                arena.points.len(),
+                3 + (LINE_COUNT * LINE_COUNT + 4 * LINE_COUNT) as usize
+            );
             assert_eq!(
                 result.constraints.len(),
-                3 + (2 * LINE_COUNT * (LINE_COUNT - 1)) as usize
+                3 + (2 * LINE_COUNT) as usize + (2 * LINE_COUNT * (LINE_COUNT + 1)) as usize
             );
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
             assert_face_result_constraints_are_edges(&result);
