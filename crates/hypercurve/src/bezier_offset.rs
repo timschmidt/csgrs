@@ -48,18 +48,21 @@ use crate::{
 };
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 use hypersolve::{
+    AlgebraicFiberDiagonalDeflationStatus, AlgebraicFiberProjectionStatus,
     AlgebraicFiberRootCountStatus, PredicateCertainty,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter_closed,
     count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
+    deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter,
+    project_bivariate_fiber_at_algebraic_parameter,
 };
 use hypersolve::{
     BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentStatus,
     CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
     CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
-    CurveResultantParameter, RationalParametricCurve2, divide_bivariate_polynomial_exact,
-    extract_bivariate_polynomial_system_axis_factors,
+    CurveIntersectionResultantStatus, CurveResultantParameter, RationalParametricCurve2,
+    divide_bivariate_polynomial_exact, extract_bivariate_polynomial_system_axis_factors,
     linear_parameter_lifts_bivariate_polynomial_system,
     parameter_component_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
     subresultant_chain_univariate_polynomials,
@@ -391,6 +394,7 @@ pub(crate) enum BezierAlgebraicCuspSemicircleRationalIntersections2 {
     DegenerateProjection,
 }
 
+#[derive(Debug)]
 enum BezierAlgebraicCuspFiberProjection2 {
     Parameters(Vec<BezierParameter2>),
     IdenticallyZero,
@@ -1431,6 +1435,82 @@ impl BezierAlgebraicCuspSemicircle2 {
         other: &BezierParallel2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelIntersections2>> {
+        self.parallel_intersections_with_range(other, None, policy)
+    }
+
+    pub(crate) fn parallel_intersections_in_range(
+        &self,
+        other: &BezierParallel2,
+        range: &BezierParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelIntersections2>> {
+        self.parallel_intersections_with_range(other, Some(range), policy)
+    }
+
+    fn parallel_intersections_with_range(
+        &self,
+        other: &BezierParallel2,
+        range: Option<&BezierParameterRange2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelIntersections2>> {
+        let start_parallel = self.start_parallel();
+        let end_parallel = self.end_parallel();
+        let same_parallel = |first: &BezierParallel2, second: &BezierParallel2| {
+            first.source() == second.source()
+                && compare_reals(first.distance(), second.distance(), policy)
+                    == Some(std::cmp::Ordering::Equal)
+        };
+        let direct_source_join =
+            same_parallel(other, &start_parallel) || same_parallel(other, &end_parallel);
+        if !direct_source_join {
+            let normalized = other.reversed();
+            if same_parallel(&normalized, &start_parallel)
+                || same_parallel(&normalized, &end_parallel)
+            {
+                let normalized_range = range.map(|range| {
+                    BezierParameterRange2::new_validated(
+                        range.end().unit_complement(),
+                        range.start().unit_complement(),
+                    )
+                });
+                return Ok(self
+                    .parallel_intersections_with_range(
+                        &normalized,
+                        normalized_range.as_ref(),
+                        policy,
+                    )?
+                    .map(|intersections| match intersections {
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) => {
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(
+                                contacts
+                                    .into_iter()
+                                    .map(|contact| {
+                                        BezierAlgebraicCuspSemicircleParallelContact2 {
+                                            parallel_parameter: contact
+                                                .parallel_parameter
+                                                .unit_complement(),
+                                            tangent_cross_sign: contact.tangent_cross_sign.map(
+                                                |sign| match sign {
+                                                    RealSign::Positive => RealSign::Negative,
+                                                    RealSign::Negative => RealSign::Positive,
+                                                    RealSign::Zero => RealSign::Zero,
+                                                },
+                                            ),
+                                            location: contact.location,
+                                        }
+                                    })
+                                    .collect(),
+                            )
+                        }
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircle => {
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircle
+                        }
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection
+                        }
+                    }));
+            }
+        }
         match other.exact_rational_parallel_component(policy)? {
             Classification::Decided(Some(curve)) => {
                 return Ok(self.rational_intersections(&curve, policy)?.map(|result| {
@@ -1527,15 +1607,82 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let candidates = match algebraic_cusp_projected_fiber_parameters(
-            &incidence,
-            self.cusp_parameter(),
-            policy,
-        )? {
-            Classification::Decided(BezierAlgebraicCuspFiberProjection2::Parameters(
-                parameters,
-            )) => parameters,
-            Classification::Decided(BezierAlgebraicCuspFiberProjection2::IdenticallyZero) => {
+        let diagonal_location = if same_parallel(other, &start_parallel) {
+            Some(BezierAlgebraicCuspSemicircleContactLocation2::Start)
+        } else if same_parallel(other, &end_parallel) {
+            Some(BezierAlgebraicCuspSemicircleContactLocation2::End)
+        } else {
+            None
+        };
+        let projection_incidence = if diagonal_location.is_some() {
+            let report = deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
+                &incidence,
+                CurveResultantParameter::First,
+                &parameter_representation(self.cusp_parameter(), policy),
+                policy.predicate_policy(),
+            );
+            if report.certainty == PredicateCertainty::Approximate {
+                policy.observe_approximate_512();
+            }
+            match report.status {
+                AlgebraicFiberDiagonalDeflationStatus::Deflated => {
+                    report.reduced_polynomial.ok_or_else(|| {
+                        CurveError::Topology(
+                            "deflated cusp/parallel diagonal did not retain its residual".into(),
+                        )
+                    })?
+                }
+                AlgebraicFiberDiagonalDeflationStatus::NotARoot => {
+                    return Err(CurveError::Topology(
+                        "source-related cusp/parallel endpoint was not on the squared circle"
+                            .into(),
+                    ));
+                }
+                AlgebraicFiberDiagonalDeflationStatus::IdenticallyZeroFiber => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection,
+                    ));
+                }
+                AlgebraicFiberDiagonalDeflationStatus::InvalidEvidence => {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                AlgebraicFiberDiagonalDeflationStatus::UnsupportedCoefficient => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                AlgebraicFiberDiagonalDeflationStatus::Undecided => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
+            }
+        } else {
+            incidence.clone()
+        };
+        let residual_is_rootless = match (diagonal_location, range) {
+            (Some(_), Some(range)) => bivariate_fiber_strict_sign_on_parameter_range(
+                &projection_incidence,
+                self.cusp_parameter(),
+                range,
+                policy,
+            )?
+            .is_some(),
+            (Some(_), None) | (None, _) => false,
+        };
+        let projection = if residual_is_rootless {
+            BezierAlgebraicCuspFiberProjection2::Parameters(Vec::new())
+        } else {
+            match algebraic_cusp_projected_fiber_parameters(
+                &projection_incidence,
+                self.cusp_parameter(),
+                policy,
+            )? {
+                Classification::Decided(projection) => projection,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        };
+        let candidates = match projection {
+            BezierAlgebraicCuspFiberProjection2::Parameters(parameters) => parameters,
+            BezierAlgebraicCuspFiberProjection2::IdenticallyZero => {
                 return Ok(Classification::Decided(
                     // This projection used a squared radical equation. An
                     // identically zero selected fiber can describe either
@@ -1544,18 +1691,29 @@ impl BezierAlgebraicCuspSemicircle2 {
                     BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection,
                 ));
             }
-            Classification::Decided(BezierAlgebraicCuspFiberProjection2::Degenerate) => {
+            BezierAlgebraicCuspFiberProjection2::Degenerate => {
                 return Ok(Classification::Decided(
                     BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection,
                 ));
             }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
         };
         let cusp_parameter = BezierParameter2::Algebraic(self.cusp_parameter().clone());
         let mut diameter_side = Some(system.diameter_side);
-        let mut contacts = Vec::new();
+        // A source-related start/end parallel meets this semicircle at the
+        // retained cusp parameter by construction.  Its tangent is the same
+        // source-tangent line as the semicircle endpoint tangent, so this is
+        // an exact nontransverse contact.  Do not replay that deliberately
+        // correlated diagonal root through the independent-root radical
+        // predicate below: the latter is authoritative only for residual
+        // projection roots.
+        let mut contacts = diagonal_location
+            .map(|location| BezierAlgebraicCuspSemicircleParallelContact2 {
+                parallel_parameter: cusp_parameter.clone(),
+                tangent_cross_sign: Some(RealSign::Zero),
+                location,
+            })
+            .into_iter()
+            .collect::<Vec<_>>();
         for candidate in candidates {
             let circle_sign = match algebraic_cusp_correlated_radical_sum_sign(
                 &incidence,
@@ -3932,10 +4090,19 @@ fn algebraic_cusp_projected_fiber_parameters(
             max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
         },
     );
-    let projection = match resultant_parameter_projection(report, policy)? {
-        Classification::Decided(projection) => projection,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
+    let projection = if report.status == CurveIntersectionResultantStatus::DegreeBoundExceeded {
+        match algebraic_cusp_quotient_ring_fiber_projection(incidence, &cusp_root, policy)? {
+            Classification::Decided(projection) => projection,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    } else {
+        match resultant_parameter_projection(report, policy)? {
+            Classification::Decided(projection) => projection,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         }
     };
     let candidates = match projection {
@@ -4071,6 +4238,63 @@ fn algebraic_cusp_projected_fiber_parameters(
     Ok(Classification::Decided(
         BezierAlgebraicCuspFiberProjection2::Parameters(retained),
     ))
+}
+
+fn algebraic_cusp_quotient_ring_fiber_projection(
+    incidence: &BivariatePolynomial,
+    cusp_root: &hypersolve::AlgebraicRootRepresentation,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ResultantParameterProjection>> {
+    let report = project_bivariate_fiber_at_algebraic_parameter(
+        incidence,
+        CurveResultantParameter::First,
+        cusp_root,
+        policy.predicate_policy(),
+    );
+    match report.status {
+        AlgebraicFiberProjectionStatus::Constructed => {}
+        AlgebraicFiberProjectionStatus::InvalidEvidence => {
+            return Err(CurveError::InvalidBezierAlgebraicParameter);
+        }
+        AlgebraicFiberProjectionStatus::UnsupportedCoefficient => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        AlgebraicFiberProjectionStatus::Undecided => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+    }
+    if report
+        .coefficients
+        .iter()
+        .all(|coefficient| real_sign(coefficient, policy) == Some(RealSign::Zero))
+    {
+        return Ok(Classification::Decided(
+            ResultantParameterProjection::Degenerate,
+        ));
+    }
+    if report
+        .coefficients
+        .iter()
+        .all(|coefficient| real_sign(coefficient, policy).is_none())
+    {
+        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+    }
+    let polynomial =
+        match BezierParameterPolynomial::try_new_power_basis(report.coefficients, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    match polynomial.isolate_unit_interval_roots(policy)? {
+        Classification::Decided(parameters) if parameters.is_empty() => {
+            Ok(Classification::Decided(ResultantParameterProjection::Empty))
+        }
+        Classification::Decided(parameters) => Ok(Classification::Decided(
+            ResultantParameterProjection::Parameters(parameters),
+        )),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
 }
 
 fn algebraic_cusp_fiber_contains_parameter(
@@ -11223,6 +11447,24 @@ fn bivariate_restrict_to_parameter_box(
             parameter.interval().end().clone(),
         ),
     };
+    bivariate_restrict_to_box_bounds(
+        polynomial,
+        &first_start,
+        &first_end,
+        &second_start,
+        &second_end,
+        policy,
+    )
+}
+
+fn bivariate_restrict_to_box_bounds(
+    polynomial: &BivariatePolynomial,
+    first_start: &Real,
+    first_end: &Real,
+    second_start: &Real,
+    second_end: &Real,
+    policy: &CurveContext,
+) -> BivariatePolynomial {
     let first_degree = polynomial.coefficients.len().saturating_sub(1);
     let second_degree = polynomial
         .coefficients
@@ -11232,11 +11474,11 @@ fn bivariate_restrict_to_parameter_box(
         .unwrap_or_default()
         .saturating_sub(1);
     let first_powers = polynomial_powers(
-        &[first_start.clone(), first_end - &first_start],
+        &[first_start.clone(), first_end - first_start],
         first_degree,
     );
     let second_powers = polynomial_powers(
-        &[second_start.clone(), second_end - &second_start],
+        &[second_start.clone(), second_end - second_start],
         second_degree,
     );
     let mut restricted = BivariatePolynomial::new(vec![vec![Real::zero()]]);
@@ -11258,6 +11500,212 @@ fn bivariate_restrict_to_parameter_box(
         }
     }
     restricted
+}
+
+fn bivariate_fiber_strict_sign_on_parameter_range(
+    polynomial: &BivariatePolynomial,
+    retained: &BezierAlgebraicParameter2,
+    fiber_range: &BezierParameterRange2,
+    policy: &CurveContext,
+) -> CurveResult<Option<RealSign>> {
+    let retained = BezierParameter2::Algebraic(retained.clone());
+    fn bounds(parameter: &BezierParameter2) -> (&Real, &Real) {
+        match parameter {
+            BezierParameter2::Exact(parameter) => (parameter, parameter),
+            BezierParameter2::Algebraic(parameter) => {
+                (parameter.interval().start(), parameter.interval().end())
+            }
+        }
+    }
+    for refinement_steps in [0, 1, 2, 4, 8, 16] {
+        let retained = retained
+            .clone()
+            .refined_isolating_interval(refinement_steps, policy);
+        let fiber_start = fiber_range
+            .start()
+            .clone()
+            .refined_isolating_interval(refinement_steps, policy);
+        let fiber_end = fiber_range
+            .end()
+            .clone()
+            .refined_isolating_interval(refinement_steps, policy);
+        let (retained_start, retained_end) = bounds(&retained);
+        let (start_lower, start_upper) = bounds(&fiber_start);
+        let (end_lower, end_upper) = bounds(&fiber_end);
+        let fiber_lower = match compare_reals(start_lower, end_lower, policy) {
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => start_lower,
+            Some(std::cmp::Ordering::Greater) => end_lower,
+            None => continue,
+        };
+        let fiber_upper = match compare_reals(start_upper, end_upper, policy) {
+            Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => start_upper,
+            Some(std::cmp::Ordering::Less) => end_upper,
+            None => continue,
+        };
+        let restricted = bivariate_restrict_to_box_bounds(
+            polynomial,
+            retained_start,
+            retained_end,
+            fiber_lower,
+            fiber_upper,
+            policy,
+        );
+        if let Some(sign) = bivariate_unit_square_strict_bernstein_sign(&restricted, policy)? {
+            return Ok(Some(sign));
+        }
+    }
+
+    // A rectangular enclosure can remain inconclusive when the polynomial
+    // changes sign at nearby retained-parameter values.  Specialize only its
+    // Bernstein controls to the exact algebraic fiber before escalating to a
+    // resultant.  Uniform strict control signs prove the entire fiber range
+    // root-free while avoiding a Sturm sequence in Q(alpha).
+    let fiber_start = fiber_range
+        .start()
+        .clone()
+        .refined_isolating_interval(16, policy);
+    let fiber_end = fiber_range
+        .end()
+        .clone()
+        .refined_isolating_interval(16, policy);
+    let (start_lower, start_upper) = bounds(&fiber_start);
+    let (end_lower, end_upper) = bounds(&fiber_end);
+    let fiber_lower = match compare_reals(start_lower, end_lower, policy) {
+        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => start_lower,
+        Some(std::cmp::Ordering::Greater) => end_lower,
+        None => return Ok(None),
+    };
+    let fiber_upper = match compare_reals(start_upper, end_upper, policy) {
+        Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => start_upper,
+        Some(std::cmp::Ordering::Less) => end_upper,
+        None => return Ok(None),
+    };
+    let restricted = bivariate_restrict_to_box_bounds(
+        polynomial,
+        &Real::zero(),
+        &Real::one(),
+        fiber_lower,
+        fiber_upper,
+        policy,
+    );
+    let fiber_degree = restricted
+        .coefficients
+        .iter()
+        .map(Vec::len)
+        .max()
+        .unwrap_or_default()
+        .saturating_sub(1);
+    let controls_by_retained_power = restricted
+        .coefficients
+        .iter()
+        .map(|row| power_to_bernstein_coefficients(row, fiber_degree))
+        .collect::<CurveResult<Vec<_>>>()?;
+    let retained = match &retained {
+        BezierParameter2::Algebraic(retained) => retained,
+        BezierParameter2::Exact(_) => unreachable!("retained cusp parameter is algebraic"),
+    };
+    let mut controls = Vec::with_capacity(fiber_degree + 1);
+    for fiber_index in 0..=fiber_degree {
+        let coefficient = controls_by_retained_power
+            .iter()
+            .map(|row| row[fiber_index].clone())
+            .collect::<Vec<_>>();
+        let coefficient = match retained
+            .polynomial()
+            .reduce_power_basis(coefficient, policy)?
+        {
+            Classification::Decided(coefficient) => coefficient,
+            Classification::Uncertain(_) => return Ok(None),
+        };
+        controls.push(coefficient);
+    }
+
+    // Mixed controls can still bound a one-sign polynomial. Repeated
+    // de Casteljau subdivision converges to the exact fiber image; each
+    // accepted child requires weakly one-sign controls and strict endpoint
+    // controls, which also excludes a root on the closed child boundary.
+    // Bound the certificate work so genuinely intersecting fibers promptly
+    // return to the authoritative projection path.
+    let retained_parameter = BezierParameter2::Algebraic(retained.clone());
+    let mut pending = vec![(controls, 0_u8)];
+    let mut certified_sign = None;
+    let mut visited = 0_usize;
+    while let Some((controls, depth)) = pending.pop() {
+        visited += 1;
+        let mut signs = Vec::with_capacity(controls.len());
+        for control in &controls {
+            let polynomial = match polynomial_from_coefficients(control.clone(), policy)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            let sign = match signed_polynomial_at_root(
+                polynomial.as_ref(),
+                &retained_parameter,
+                policy,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            signs.push(sign);
+        }
+        let endpoints_are_positive =
+            signs.first() == Some(&RealSign::Positive) && signs.last() == Some(&RealSign::Positive);
+        let endpoints_are_negative =
+            signs.first() == Some(&RealSign::Negative) && signs.last() == Some(&RealSign::Negative);
+        if signs.first() == Some(&RealSign::Zero)
+            || signs.last() == Some(&RealSign::Zero)
+            || matches!(
+                (signs.first(), signs.last()),
+                (Some(RealSign::Positive), Some(RealSign::Negative))
+                    | (Some(RealSign::Negative), Some(RealSign::Positive))
+            )
+        {
+            // A zero endpoint or opposite strict endpoint signs certify an
+            // actual root on this closed child, so further subdivision cannot
+            // prove the fiber root-free.
+            return Ok(None);
+        }
+        let segment_sign = if endpoints_are_positive
+            && signs.iter().all(|sign| *sign != RealSign::Negative)
+        {
+            Some(RealSign::Positive)
+        } else if endpoints_are_negative && signs.iter().all(|sign| *sign != RealSign::Positive) {
+            Some(RealSign::Negative)
+        } else {
+            None
+        };
+        if let Some(segment_sign) = segment_sign {
+            match certified_sign {
+                Some(previous) if previous != segment_sign => return Ok(None),
+                Some(_) => {}
+                None => certified_sign = Some(segment_sign),
+            }
+            continue;
+        }
+        if depth == 8 || visited >= 64 {
+            return Ok(None);
+        }
+
+        let mut work = controls;
+        let degree = work.len().saturating_sub(1);
+        let mut left = Vec::with_capacity(work.len());
+        let mut right = Vec::with_capacity(work.len());
+        left.push(work[0].clone());
+        right.push(work[degree].clone());
+        let half = (Real::one() / Real::from(2_i8))?;
+        for level in 1..=degree {
+            for index in 0..=degree - level {
+                work[index] =
+                    polynomial_scale(&polynomial_add(&work[index], &work[index + 1]), &half);
+            }
+            left.push(work[0].clone());
+            right.push(work[degree - level].clone());
+        }
+        right.reverse();
+        pending.push((right, depth + 1));
+        pending.push((left, depth + 1));
+    }
+    Ok(certified_sign)
 }
 
 fn bivariate_parameter_box_strict_sign(
@@ -18010,6 +18458,155 @@ mod conversion_tests {
                     .classify_point(&inside, &policy)
                     .map(crate::CurveOutcome::into_value),
                 Ok(Classification::Decided(crate::RegionPointLocation::Inside)),
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_field() {
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (_parallel, source_parameter, semicircle) =
+                general_algebraic_cusp_semicircle(quarter.clone(), false, &policy);
+            let cusp_fragment =
+                BezierAlgebraicCuspSemicircleFragment2::full(semicircle.clone(), &policy);
+            let Classification::Decided(representative) =
+                cusp_fragment.representative_point().unwrap()
+            else {
+                panic!("the general cusp representative expression must be retained");
+            };
+            assert!(
+                representative.exact_rational_point(&policy).is_none(),
+                "the topology proof must not depend on a rationalized cusp field"
+            );
+
+            let source_parameter = BezierParameter2::Algebraic(source_parameter);
+            let start_parallel = semicircle.start_parallel();
+            let end_parallel = semicircle.end_parallel();
+            let local_start = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+            let regular_span = |parallel: &BezierParallel2| {
+                let range = match BezierParameterRange2::try_new(
+                    BezierParameter2::Exact(local_start.clone()),
+                    source_parameter.clone(),
+                    &policy,
+                )
+                .unwrap()
+                {
+                    Classification::Decided(range) => range,
+                    Classification::Uncertain(reason) => panic!("local cusp range: {reason:?}"),
+                };
+                match crate::BezierParallelFragment2::try_new(parallel.clone(), range, &policy)
+                    .unwrap()
+                {
+                    Classification::Decided(fragment) => fragment,
+                    Classification::Uncertain(reason) => {
+                        panic!("regular local cusp span: {reason:?}")
+                    }
+                }
+            };
+            let start_fragment = regular_span(&start_parallel);
+            let end_fragment = regular_span(&end_parallel);
+            for (parallel, fragment, expected_location) in [
+                (
+                    &start_parallel,
+                    &start_fragment,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                ),
+                (
+                    &end_parallel,
+                    &end_fragment,
+                    BezierAlgebraicCuspSemicircleContactLocation2::End,
+                ),
+            ] {
+                let classified = semicircle
+                    .parallel_intersections_in_range(parallel, fragment.range(), &policy)
+                    .unwrap();
+                let Classification::Decided(intersections) = classified else {
+                    panic!(
+                        "adjacent cusp/parallel range intersection at {expected_location:?} must decide: {classified:?}"
+                    );
+                };
+                let BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) =
+                    intersections
+                else {
+                    panic!("adjacent cusp/parallel range intersection: {intersections:?}");
+                };
+                assert!(
+                    contacts.iter().any(|contact| {
+                        contact.location == expected_location
+                            && contact
+                                .parallel_parameter
+                                .same_value(&source_parameter, &policy)
+                                == Ok(Classification::Decided(true))
+                    }),
+                    "adjacent contacts: {contacts:?}"
+                );
+            }
+            let reversed_start = start_parallel.reversed();
+            let reversed_range = BezierParameterRange2::new_validated(
+                start_fragment.range().end().unit_complement(),
+                start_fragment.range().start().unit_complement(),
+            );
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+            ) = semicircle
+                .parallel_intersections_in_range(&reversed_start, &reversed_range, &policy)
+                .unwrap()
+            else {
+                panic!("reversed adjacent cusp/parallel range intersection must decide");
+            };
+            let reversed_source_parameter = source_parameter.unit_complement();
+            assert!(contacts.iter().any(|contact| {
+                contact.location == BezierAlgebraicCuspSemicircleContactLocation2::Start
+                    && contact.tangent_cross_sign == Some(RealSign::Zero)
+                    && contact
+                        .parallel_parameter
+                        .same_value(&reversed_source_parameter, &policy)
+                        == Ok(Classification::Decided(true))
+            }));
+            let complement = BezierAlgebraicCuspSemicircle2 {
+                data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                    frame: semicircle.data.frame.clone(),
+                    radial_distance: -quarter.clone(),
+                    clockwise: semicircle.is_clockwise(),
+                }),
+            };
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::EndpointContacts(contacts),
+            ) = semicircle.pair_intersections(&complement, &policy).unwrap()
+            else {
+                panic!("complementary general cusp halves must meet only at their endpoints");
+            };
+            assert_eq!(contacts.len(), 2);
+            let fragments = vec![
+                crate::BezierSplitFragment2::AlgebraicCuspSemicircle(cusp_fragment),
+                crate::BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    BezierAlgebraicCuspSemicircleFragment2::full(complement, &policy),
+                ),
+            ];
+            let boundary = crate::CurveRegionBoundaryLoop2::new(fragments, &policy)
+                .expect("the correlated cusp endpoints must close the authored loop");
+            let region = crate::CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![crate::CurveRegionLoopRole::Material],
+                vec![crate::FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            let regularized = region
+                .regularized_region(&policy)
+                .expect("the simple general cusp topology must regularize")
+                .into_value();
+            assert_eq!(regularized.boundary_loops().len(), 1);
+            assert!(
+                regularized.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .any(|fragment| matches!(
+                        fragment,
+                        crate::BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                    ))
             );
         }
     }

@@ -1772,14 +1772,37 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 })
             }
             RegionCarrierPairContext::CuspParallel { cusp_is_first } => {
-                let (cusp, parallel) = if *cusp_is_first {
-                    (first.geometry.algebraic_cusp(), second.geometry.parallel())
+                let (cusp, parallel, parallel_carrier) = if *cusp_is_first {
+                    (
+                        first.geometry.algebraic_cusp(),
+                        second.geometry.parallel(),
+                        second,
+                    )
                 } else {
-                    (second.geometry.algebraic_cusp(), first.geometry.parallel())
+                    (
+                        second.geometry.algebraic_cusp(),
+                        first.geometry.parallel(),
+                        first,
+                    )
                 };
+                let (Some(parallel_start), Some(parallel_end)) = (
+                    parallel_carrier.start.as_bezier_parameter(),
+                    parallel_carrier.end.as_bezier_parameter(),
+                ) else {
+                    return Err(self.invalid(
+                        pair.first_carrier_index,
+                        CurveError::Topology(
+                            "analytic parallel carrier did not retain Bezier parameters".into(),
+                        ),
+                    ));
+                };
+                let parallel_range = BezierParameterRange2::new_validated(
+                    parallel_start.clone(),
+                    parallel_end.clone(),
+                );
                 let intersections = match cusp
                     .semicircle()
-                    .parallel_intersections(parallel, &self.data.policy)
+                    .parallel_intersections_in_range(parallel, &parallel_range, &self.data.policy)
                     .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
                 {
                     Classification::Decided(result) => result,
@@ -2853,7 +2876,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
 
     fn build_regularized_region(&self) -> ExactCurveResult<CurveRegion2> {
         let topology = self.build_split_topology()?;
-        let simple_loop_filled_side = self.certified_simple_single_loop_filled_side();
+        let simple_loop_filled_side = self.certified_simple_single_loop_filled_side(&topology);
         let mut arrangement_fragments = Vec::new();
         let mut arrangement_directions = Vec::new();
         for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
@@ -2973,15 +2996,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
         Ok(region)
     }
 
-    fn certified_simple_single_loop_filled_side(&self) -> Option<bool> {
+    fn certified_simple_single_loop_filled_side(
+        &self,
+        topology: &CurveRegionSplitTopology,
+    ) -> Option<bool> {
         if self.data.first.boundary_loops().len() != 1
             || self.data.carriers.is_empty()
+            || topology.split_fragments.len() != self.data.carriers.len()
+            || !topology.overlaps.is_empty()
             || self.data.carriers.iter().any(|carrier| {
                 carrier.operand != CurvePathBooleanOperand2::First
                     || carrier.loop_index != 0
                     || !carrier
                         .geometry
-                        .has_certified_injective_axis(&self.data.policy)
+                        .has_certified_injective_image(&self.data.policy)
             })
         {
             return None;
@@ -3001,17 +3029,38 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let [filled_side_is_left] = filled_sides else {
             return None;
         };
-        for pair in &self.data.pairs {
-            if pair.first_carrier_index == pair.second_carrier_index
-                || !matches!(
-                    pair.context,
-                    RegionCarrierPairContext::ParallelPair
-                        | RegionCarrierPairContext::ParallelSameImage
-                )
-                || !(self.parallel_pair_is_coordinate_disjoint(pair)
-                    || self.adjacent_parallel_pair_is_endpoint_only(pair))
-            {
+
+        // Complete pair replay and splitting have already run. A simple
+        // authored loop therefore has one unsplit fragment per injective
+        // carrier, each end joined only to the next authored start. Requiring
+        // every authored start vertex to be distinct excludes nonadjacent
+        // endpoint aliases and pinched walks without allocating a side sample
+        // or materializing an algebraic carrier coordinate.
+        for (index, splits) in topology.split_fragments.iter().enumerate() {
+            let [split] = splits.as_slice() else {
                 return None;
+            };
+            let start = split.start_topology_vertex?;
+            let end = split.end_topology_vertex?;
+            if start == end {
+                return None;
+            }
+            let next = topology
+                .split_fragments
+                .get((index + 1) % topology.split_fragments.len())?;
+            let [next] = next.as_slice() else {
+                return None;
+            };
+            if next.start_topology_vertex != Some(end) {
+                return None;
+            }
+            for previous in &topology.split_fragments[..index] {
+                let [previous] = previous.as_slice() else {
+                    return None;
+                };
+                if previous.start_topology_vertex == Some(start) {
+                    return None;
+                }
             }
         }
         Some(*filled_side_is_left)
@@ -4304,7 +4353,7 @@ fn split_carrier_with_refinement(
                 .ok_or_else(|| {
                     CurveError::Topology("algebraic cusp cut reached the Bezier split path".into())
                 })
-                .map(|parameter| parameter.clone())
+                .cloned()
         })
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
@@ -6888,8 +6937,11 @@ mod certified_successor_tests {
                 .iter()
                 .all(|pair| { !matches!(pair.context, RegionCarrierPairContext::ParallelSelf) })
         );
+        let topology = context
+            .build_split_topology()
+            .expect("the monotone loop topology must complete");
         assert_eq!(
-            context.certified_simple_single_loop_filled_side(),
+            context.certified_simple_single_loop_filled_side(&topology),
             Some(filled_side_is_left)
         );
 
