@@ -2075,10 +2075,10 @@ struct BezierAlgebraicCuspSemicircleFragmentData2 {
 }
 
 /// Cached local-field geometry for classifying an algebraic ray against one
-/// cusp subarc whose endpoints share one retained local field. Usually that is
-/// the cusp field; a nonrational mapped cut instead lends its carrier field to
-/// an exactly rational companion endpoint. The query point keeps its own
-/// field, so pair predicates never construct a primitive element.
+/// cusp subarc. Endpoints normally share the cusp field; a nonrational mapped
+/// cut can instead lend its carrier field to an exactly rational companion.
+/// Distinct endpoint fields stay separate and use the cold three-field chord
+/// predicate, so no path constructs a primitive element.
 #[cfg(feature = "predicates")]
 #[derive(Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleAlgebraicRay2 {
@@ -6978,12 +6978,320 @@ fn algebraic_point_linear_order(
 }
 
 #[cfg(feature = "predicates")]
+#[derive(Debug)]
+struct TrivariatePolynomial2 {
+    coefficients: Vec<Vec<Vec<Real>>>,
+}
+
+#[cfg(feature = "predicates")]
+const MAX_TRIVARIATE_BERNSTEIN_CONTROLS: usize = 16_384;
+
+#[cfg(feature = "predicates")]
+impl TrivariatePolynomial2 {
+    fn ab_ac_determinant(
+        positive_ab: &BivariatePolynomial,
+        positive_ac: &BivariatePolynomial,
+        negative_ab: &BivariatePolynomial,
+        negative_ac: &BivariatePolynomial,
+    ) -> Option<Self> {
+        let a_count = [(positive_ab, positive_ac), (negative_ab, negative_ac)]
+            .into_iter()
+            .map(|(ab, ac)| {
+                ab.coefficients
+                    .len()
+                    .saturating_add(ac.coefficients.len())
+                    .saturating_sub(1)
+            })
+            .max()
+            .unwrap_or(0);
+        let b_count = positive_ab
+            .coefficients
+            .iter()
+            .chain(&negative_ab.coefficients)
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0);
+        let c_count = positive_ac
+            .coefficients
+            .iter()
+            .chain(&negative_ac.coefficients)
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0);
+        let control_count = a_count.checked_mul(b_count)?.checked_mul(c_count)?;
+        if control_count > MAX_TRIVARIATE_BERNSTEIN_CONTROLS {
+            return None;
+        }
+        let mut coefficients = vec![vec![vec![Real::zero(); c_count]; b_count]; a_count];
+        for (ab, ac, sign) in [
+            (positive_ab, positive_ac, 1_i8),
+            (negative_ab, negative_ac, -1_i8),
+        ] {
+            let sign = Real::from(sign);
+            for (ab_a, row) in ab.coefficients.iter().enumerate() {
+                for (b, ab_coefficient) in row.iter().enumerate() {
+                    for (ac_a, column) in ac.coefficients.iter().enumerate() {
+                        for (c, ac_coefficient) in column.iter().enumerate() {
+                            coefficients[ab_a + ac_a][b][c] +=
+                                &sign * ab_coefficient * ac_coefficient;
+                        }
+                    }
+                }
+            }
+        }
+        Some(Self { coefficients })
+    }
+
+    fn dimensions(&self) -> (usize, usize, usize) {
+        (
+            self.coefficients.len(),
+            self.coefficients.iter().map(Vec::len).max().unwrap_or(0),
+            self.coefficients
+                .iter()
+                .flat_map(|rows| rows.iter())
+                .map(Vec::len)
+                .max()
+                .unwrap_or(0),
+        )
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn polynomial_restrict_to_interval(coefficients: &[Real], start: &Real, end: &Real) -> Vec<Real> {
+    let degree = coefficients.len().saturating_sub(1);
+    let powers = polynomial_powers(&[start.clone(), end - start], degree);
+    let mut restricted = vec![Real::zero(); degree + 1];
+    for (power, coefficient) in coefficients.iter().enumerate() {
+        for (index, factor) in powers[power].iter().enumerate() {
+            restricted[index] += coefficient * factor;
+        }
+    }
+    restricted
+}
+
+#[cfg(feature = "predicates")]
+fn parameter_bounds(parameter: &BezierParameter2) -> (&Real, &Real) {
+    match parameter {
+        BezierParameter2::Exact(parameter) => (parameter, parameter),
+        BezierParameter2::Algebraic(parameter) => {
+            (parameter.interval().start(), parameter.interval().end())
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn trivariate_restrict_to_parameter_box(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+) -> TrivariatePolynomial2 {
+    let (first_start, first_end) = parameter_bounds(first);
+    let (second_start, second_end) = parameter_bounds(second);
+    let (third_start, third_end) = parameter_bounds(third);
+
+    let mut restricted = polynomial.coefficients.clone();
+    for rows in &mut restricted {
+        for row in rows {
+            *row = polynomial_restrict_to_interval(row, third_start, third_end);
+        }
+    }
+    for rows in &mut restricted {
+        let first_row = rows.first().cloned().unwrap_or_default();
+        for (c, _) in first_row.iter().enumerate() {
+            let coefficients = rows.iter().map(|row| row[c].clone()).collect::<Vec<_>>();
+            for (row, coefficient) in rows.iter_mut().zip(polynomial_restrict_to_interval(
+                &coefficients,
+                second_start,
+                second_end,
+            )) {
+                row[c] = coefficient;
+            }
+        }
+    }
+    let first_plane = restricted.first().cloned().unwrap_or_default();
+    for (b, row) in first_plane.iter().enumerate() {
+        for (c, _) in row.iter().enumerate() {
+            let coefficients = restricted
+                .iter()
+                .map(|rows| rows[b][c].clone())
+                .collect::<Vec<_>>();
+            for (rows, coefficient) in restricted.iter_mut().zip(polynomial_restrict_to_interval(
+                &coefficients,
+                first_start,
+                first_end,
+            )) {
+                rows[b][c] = coefficient;
+            }
+        }
+    }
+    TrivariatePolynomial2 {
+        coefficients: restricted,
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn trivariate_unit_cube_strict_bernstein_sign(
+    polynomial: &TrivariatePolynomial2,
+    policy: &CurveContext,
+) -> CurveResult<Option<RealSign>> {
+    let (a_count, b_count, c_count) = polynomial.dimensions();
+    if a_count == 0 || b_count == 0 || c_count == 0 {
+        return Ok(None);
+    }
+    let mut controls = polynomial.coefficients.clone();
+    for rows in &mut controls {
+        for row in rows {
+            *row = power_to_bernstein_coefficients(row, c_count - 1)?;
+        }
+    }
+    for rows in &mut controls {
+        let first_row = rows.first().cloned().unwrap_or_default();
+        for (c, _) in first_row.iter().enumerate() {
+            let coefficients = rows.iter().map(|row| row[c].clone()).collect::<Vec<_>>();
+            for (row, coefficient) in rows
+                .iter_mut()
+                .zip(power_to_bernstein_coefficients(&coefficients, b_count - 1)?)
+            {
+                row[c] = coefficient;
+            }
+        }
+    }
+    let mut strict_sign = None;
+    for (b, row) in controls[0].iter().enumerate() {
+        for (c, _) in row.iter().enumerate() {
+            let coefficients = (0..a_count)
+                .map(|a| controls[a][b][c].clone())
+                .collect::<Vec<_>>();
+            for control in power_to_bernstein_coefficients(&coefficients, a_count - 1)? {
+                let Some(sign @ (RealSign::Negative | RealSign::Positive)) =
+                    real_sign(&control, policy)
+                else {
+                    return Ok(None);
+                };
+                match strict_sign {
+                    Some(previous) if previous != sign => return Ok(None),
+                    Some(_) => {}
+                    None => strict_sign = Some(sign),
+                }
+            }
+        }
+    }
+    Ok(strict_sign)
+}
+
+#[cfg(feature = "predicates")]
+#[cold]
+fn trivariate_parameter_triple_sign_by_refinement(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let mut structurally_zero = true;
+    'coefficients: for rows in &polynomial.coefficients {
+        for row in rows {
+            for coefficient in row {
+                match real_sign(coefficient, policy) {
+                    Some(RealSign::Zero) => {}
+                    Some(RealSign::Negative | RealSign::Positive) | None => {
+                        structurally_zero = false;
+                        break 'coefficients;
+                    }
+                }
+            }
+        }
+    }
+    if structurally_zero {
+        return Ok(Classification::Decided(RealSign::Zero));
+    }
+    let mut first_refinement = BezierParameterRefinement2::new(first, policy);
+    let mut second_refinement = BezierParameterRefinement2::new(second, policy);
+    let mut third_refinement = BezierParameterRefinement2::new(third, policy);
+    for target_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let restricted = trivariate_restrict_to_parameter_box(
+            polynomial,
+            first_refinement.refine_to(target_steps),
+            second_refinement.refine_to(target_steps),
+            third_refinement.refine_to(target_steps),
+        );
+        if let Some(sign) = trivariate_unit_cube_strict_bernstein_sign(&restricted, policy)? {
+            return Ok(Classification::Decided(sign));
+        }
+    }
+    if policy.permits_approximate_512() {
+        policy.observe_approximate_512();
+        Ok(Classification::Decided(RealSign::Zero))
+    } else {
+        Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_point_oriented_line_side_distinct_fields(
+    start: &RationalBezierAlgebraicPointPredicate2<'_>,
+    end: &RationalBezierAlgebraicPointPredicate2<'_>,
+    point: &RationalBezierAlgebraicPointPredicate2<'_>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<crate::classify::LineSide>> {
+    let one = Real::one();
+    let zero = Real::zero();
+    for endpoint in [start, end] {
+        let x = signed_algebraic_point_linear_difference(endpoint, point, &one, &zero, policy)?;
+        if x == Classification::Decided(RealSign::Zero)
+            && signed_algebraic_point_linear_difference(endpoint, point, &zero, &one, policy)?
+                == Classification::Decided(RealSign::Zero)
+        {
+            return Ok(Classification::Decided(crate::classify::LineSide::On));
+        }
+    }
+
+    let (start_x, start_y, start_denominator) = start.coordinate_polynomials();
+    let (end_x, end_y, end_denominator) = end.coordinate_polynomials();
+    let (point_x, point_y, point_denominator) = point.coordinate_polynomials();
+    let line_x = bivariate_subtract(
+        &bivariate_outer_product(start_denominator, end_x),
+        &bivariate_outer_product(start_x, end_denominator),
+    );
+    let line_y = bivariate_subtract(
+        &bivariate_outer_product(start_denominator, end_y),
+        &bivariate_outer_product(start_y, end_denominator),
+    );
+    let point_delta_x = bivariate_subtract(
+        &bivariate_outer_product(start_denominator, point_x),
+        &bivariate_outer_product(start_x, point_denominator),
+    );
+    let point_delta_y = bivariate_subtract(
+        &bivariate_outer_product(start_denominator, point_y),
+        &bivariate_outer_product(start_y, point_denominator),
+    );
+    let Some(determinant) =
+        TrivariatePolynomial2::ab_ac_determinant(&line_x, &point_delta_y, &line_y, &point_delta_x)
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let denominator_sign = product_sign(end.denominator_sign(), point.denominator_sign());
+    Ok(trivariate_parameter_triple_sign_by_refinement(
+        &determinant,
+        start.retained_parameter(),
+        end.retained_parameter(),
+        point.retained_parameter(),
+        policy,
+    )?
+    .map(|sign| crate::classify::LineSide::from_real_sign(product_sign(sign, denominator_sign))))
+}
+
+#[cfg(feature = "predicates")]
 fn algebraic_point_oriented_line_side(
     start: &RationalBezierAlgebraicPointPredicate2<'_>,
     end: &RationalBezierAlgebraicPointPredicate2<'_>,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<crate::classify::LineSide>> {
+    if start.retained_parameter() != end.retained_parameter() {
+        return algebraic_point_oriented_line_side_distinct_fields(start, end, point, policy);
+    }
     let (start_x, start_y, start_denominator) = start.coordinate_polynomials();
     let (end_x, end_y, end_denominator) = end.coordinate_polynomials();
     let (point_x, point_y, point_denominator) = point.coordinate_polynomials();
@@ -7373,8 +7681,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// enters the same fast path when its correspondence proves a rational
     /// value, or when its geometric point has one selected carrier field and
     /// the companion endpoint is exactly rational. Genuinely distinct endpoint
-    /// fields stay explicit until the multi-field endpoint evaluator is
-    /// available.
+    /// fields retain separate images for the cold multi-field chord predicate.
     #[cfg(feature = "predicates")]
     pub(crate) fn algebraic_ray_evaluator(
         &self,
@@ -7431,12 +7738,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 (end.exact_rational_point(policy), start.retained_parameter())
             {
                 end = algebraic_constant_point_image(&point, parameter, policy);
-            } else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
-        }
-        if start.parameter() != end.parameter() {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         let (start, end) = if self.data.reversed {
             (end, start)
@@ -24725,9 +25027,11 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
-    fn mapped_algebraic_cusp_cut_reuses_its_rational_carrier_field() {
+    fn distinct_mapped_algebraic_cusp_endpoint_fields_classify_directly() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+        let two_fifths = Real::from(2_i8) * &fifth;
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let upper = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
             let rational_quarter = RationalBezier2::from(
@@ -24752,59 +25056,70 @@ mod conversion_tests {
             let [overlap] = overlaps.as_slice() else {
                 panic!("the rational quarter must retain one monotone overlap");
             };
-            let BezierParameter2::Algebraic(source_parameter) =
-                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
-            else {
-                panic!("the rational-carrier cut must remain algebraic");
+            let mapped_cut = |root_square: Real| {
+                let BezierParameter2::Algebraic(source) =
+                    algebraic_parameter(vec![-root_square, Real::zero(), Real::one()])
+                else {
+                    panic!("the rational-carrier cut must remain algebraic");
+                };
+                let Classification::Decided(cut) = overlap
+                    .cusp_parameter_for_other(&BezierParameter2::Algebraic(source.clone()), &policy)
+                    .unwrap()
+                else {
+                    panic!("the algebraic rational-carrier cut must map to the cusp");
+                };
+                assert_eq!(
+                    cut.represented_rational_value(&policy).unwrap(),
+                    Classification::Decided(None),
+                );
+                (source, cut)
             };
-            let Classification::Decided(cut) = overlap
-                .cusp_parameter_for_other(
-                    &BezierParameter2::Algebraic(source_parameter.clone()),
-                    &policy,
-                )
-                .unwrap()
-            else {
-                panic!("the algebraic rational-carrier cut must map to the cusp");
-            };
-            assert_eq!(
-                cut.represented_rational_value(&policy).unwrap(),
-                Classification::Decided(None),
-            );
+            let (_, first_cut) = mapped_cut(third.clone());
+            let (_, second_cut) = mapped_cut(half.clone());
 
             let Classification::Decided(first) = BezierAlgebraicCuspSemicircleFragment2::try_new(
                 upper.clone(),
                 BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
-                cut.clone(),
+                first_cut.clone(),
                 false,
                 &policy,
             )
             .unwrap() else {
                 panic!("the mapped first cusp cell must be ordered");
             };
-            let Classification::Decided(second) = BezierAlgebraicCuspSemicircleFragment2::try_new(
+            let Classification::Decided(middle) = BezierAlgebraicCuspSemicircleFragment2::try_new(
                 upper.clone(),
-                cut,
+                first_cut,
+                second_cut.clone(),
+                false,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the distinct-field middle cusp cell must be ordered");
+            };
+            let Classification::Decided(last) = BezierAlgebraicCuspSemicircleFragment2::try_new(
+                upper.clone(),
+                second_cut,
                 BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
                 false,
                 &policy,
             )
             .unwrap() else {
-                panic!("the mapped second cusp cell must be ordered");
+                panic!("the mapped last cusp cell must be ordered");
             };
-            assert!(matches!(
-                first.algebraic_ray_evaluator(&policy).unwrap(),
-                Classification::Decided(_)
-            ));
-            assert!(matches!(
-                second.algebraic_ray_evaluator(&policy).unwrap(),
-                Classification::Decided(_)
-            ));
+            for fragment in [&first, &middle, &last] {
+                assert!(matches!(
+                    fragment.algebraic_ray_evaluator(&policy).unwrap(),
+                    Classification::Decided(_)
+                ));
+            }
             let lower =
                 BezierAlgebraicCuspSemicircleFragment2::full(upper.complementary_half(), &policy);
             let boundary = crate::CurveRegionBoundaryLoop2::new(
                 vec![
                     crate::BezierSplitFragment2::AlgebraicCuspSemicircle(first),
-                    crate::BezierSplitFragment2::AlgebraicCuspSemicircle(second),
+                    crate::BezierSplitFragment2::AlgebraicCuspSemicircle(middle),
+                    crate::BezierSplitFragment2::AlgebraicCuspSemicircle(last),
                     crate::BezierSplitFragment2::AlgebraicCuspSemicircle(lower),
                 ],
                 &policy,
@@ -24819,7 +25134,7 @@ mod conversion_tests {
             .unwrap();
 
             let BezierParameter2::Algebraic(query_parameter) =
-                algebraic_parameter(vec![-third.clone(), Real::zero(), Real::one()])
+                algebraic_parameter(vec![-fifth.clone(), Real::zero(), Real::one()])
             else {
                 panic!("the independent query must remain algebraic");
             };
@@ -24857,9 +25172,14 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(crate::RegionPointLocation::Outside),
             );
+            let BezierParameter2::Algebraic(boundary_parameter) =
+                algebraic_parameter(vec![-two_fifths.clone(), Real::zero(), Real::one()])
+            else {
+                panic!("the middle-cell boundary query must remain algebraic");
+            };
             let boundary = RationalBezierAlgebraicPointImage2::from_parametric_source(
                 rational_quarter.clone(),
-                source_parameter,
+                boundary_parameter,
                 &policy,
             );
             assert_eq!(
@@ -24867,6 +25187,80 @@ mod conversion_tests {
                     .classify_algebraic_point_raw(&boundary, &policy)
                     .unwrap(),
                 Classification::Decided(crate::RegionPointLocation::Boundary),
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn distinct_field_chord_zero_obeys_the_selected_terminal_policy() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        // alpha=sqrt(1/2), beta=1-alpha, gamma=alpha-1/2.
+        // The independently represented points (alpha,0), (0,beta), and
+        // (gamma,gamma) are collinear because alpha*beta=gamma and
+        // alpha+beta=1. No pair alone carries that three-field identity.
+        let roots = [
+            vec![-half.clone(), Real::zero(), Real::one()],
+            vec![half.clone(), Real::from(-2_i8), Real::one()],
+            vec![-quarter, Real::one(), Real::one()],
+        ]
+        .map(|coefficients| {
+            let BezierParameter2::Algebraic(parameter) = algebraic_parameter(coefficients) else {
+                unreachable!("the selected related root must remain algebraic");
+            };
+            parameter
+        });
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let points = roots
+                .clone()
+                .into_iter()
+                .enumerate()
+                .map(|(index, parameter)| {
+                    let (x, y) = match index {
+                        0 => (vec![Real::zero(), Real::one()], vec![Real::zero()]),
+                        1 => (vec![Real::zero()], vec![Real::zero(), Real::one()]),
+                        2 => (
+                            vec![Real::zero(), Real::one()],
+                            vec![Real::zero(), Real::one()],
+                        ),
+                        _ => unreachable!(),
+                    };
+                    RationalBezierAlgebraicPointImage2::from_retained_expression(
+                        parameter.clone(),
+                        parameter_representation(&parameter, &policy),
+                        x,
+                        y,
+                        vec![Real::one()],
+                        "test independent-field collinear point",
+                    )
+                })
+                .collect::<Vec<_>>();
+            let predicates = points
+                .iter()
+                .map(|point| {
+                    let Classification::Decided(predicate) =
+                        point.predicate_evaluator(&policy).unwrap()
+                    else {
+                        panic!("the retained collinear point must expose its predicate");
+                    };
+                    predicate
+                })
+                .collect::<Vec<_>>();
+            let actual = algebraic_point_oriented_line_side(
+                &predicates[0],
+                &predicates[1],
+                &predicates[2],
+                &policy,
+            )
+            .unwrap();
+            assert_eq!(
+                actual,
+                if policy == CurveContext::STRICT {
+                    Classification::Uncertain(UncertaintyReason::Predicate)
+                } else {
+                    Classification::Decided(crate::classify::LineSide::On)
+                },
             );
         }
     }
