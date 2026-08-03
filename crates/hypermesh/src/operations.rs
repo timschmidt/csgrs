@@ -2193,19 +2193,34 @@ fn exact_projective_affine_fingerprint(point: &HomogeneousPoint3) -> Option<[u64
     ])
 }
 
-/// Return an order-independent exact modular fingerprint of a retained affine
-/// vertex set. Different fingerprints certify that two rational polygon
-/// cycles cannot be equal; matching fingerprints remain collision candidates
-/// for the complete policy-aware cycle comparison.
+/// Return an order-independent finite-view fingerprint of a retained exact
+/// rational vertex set. Equal rationals have the same deterministic binary64
+/// view, so different fingerprints certify inequality; rounded collisions
+/// remain candidates for the complete policy-aware cycle comparison.
 fn exact_polygon_vertex_set_fingerprint(polygon: &ConvexPolygon) -> Option<[u64; 4]> {
     let vertices = polygon.known_vertices.as_ref()?;
     let mut fingerprint = [u64::try_from(vertices.len()).ok()?, 0, 0, 0];
     for point in vertices.iter() {
-        let [x, y, z] = [
-            exact_rational_modulus(point.x.exact_rational_ref()?)?,
-            exact_rational_modulus(point.y.exact_rational_ref()?)?,
-            exact_rational_modulus(point.z.exact_rational_ref()?)?,
-        ];
+        let coordinates = [&point.x, &point.y, &point.z];
+        if coordinates
+            .iter()
+            .any(|coordinate| coordinate.exact_rational_ref().is_none())
+        {
+            return None;
+        }
+        let [Some(x), Some(y), Some(z)] = coordinates.map(Real::to_f64_lossy) else {
+            return None;
+        };
+        if ![x, y, z].into_iter().all(f64::is_finite) {
+            return None;
+        }
+        let [x, y, z] = [x, y, z].map(|value| {
+            if value == 0.0 {
+                0.0_f64.to_bits()
+            } else {
+                value.to_bits()
+            }
+        });
         let mut mixed = x
             .wrapping_add(y.rotate_left(21))
             .wrapping_add(z.rotate_left(42));
@@ -7335,7 +7350,8 @@ mod tests {
     }
 
     #[test]
-    fn polygon_vertex_fingerprint_is_unoriented_and_collisions_are_rechecked() {
+    fn polygon_vertex_fingerprint_is_unoriented_and_rounded_collisions_are_rechecked() {
+        let decisions = crate::test_support::approximate_decisions();
         let polygon = |vertices: Vec<Point3>| {
             let mut polygon = ConvexPolygon::empty();
             polygon.known_vertices = Some(crate::polygon::RetainedVertexCycle::Owned(Arc::from(
@@ -7345,8 +7361,13 @@ mod tests {
         };
         let original = polygon(vec![p(1, 2, 3), p(4, 5, 6), p(7, 8, 9)]);
         let reversed = polygon(vec![p(7, 8, 9), p(4, 5, 6), p(1, 2, 3)]);
-        let modular_collision = polygon(vec![
-            p(PROJECTIVE_FINGERPRINT_MODULUS as i64 + 1, 2, 3),
+        let denominator = 1_u64 << 60;
+        let rounded_one = Real::new(
+            Rational::fraction((denominator + 1) as i64, denominator)
+                .expect("the positive denominator is valid"),
+        );
+        let rounded_collision = polygon(vec![
+            Point3::new(rounded_one, Real::from(2), Real::from(3)),
             p(4, 5, 6),
             p(7, 8, 9),
         ]);
@@ -7357,10 +7378,9 @@ mod tests {
         );
         assert_eq!(
             exact_polygon_vertex_set_fingerprint(&original),
-            exact_polygon_vertex_set_fingerprint(&modular_collision)
+            exact_polygon_vertex_set_fingerprint(&rounded_collision)
         );
 
-        let decisions = crate::test_support::approximate_decisions();
         assert!(
             projective_output_has_coincident_polygons(
                 &decisions,
@@ -7377,7 +7397,7 @@ mod tests {
                 &decisions,
                 &[
                     ClassifiedPolygon::new(original, 1),
-                    ClassifiedPolygon::new(modular_collision, 1),
+                    ClassifiedPolygon::new(rounded_collision, 1),
                 ],
                 BooleanOp::Union,
             )
