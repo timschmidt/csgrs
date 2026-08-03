@@ -6,6 +6,8 @@ Implementation: `c512e7f959c085fe4a68dc652dbe5f33c7236f01`
 
 Seed-scheduling optimization: `a8e4a0e9169883aecc78de16423880891eaf97946`
 
+Single-bound BVH optimization: `a727778eac25435dc6bf299b498497bfaf41484c`
+
 Status: retained, test-gated Phase 15 core. This checkpoint does not claim a
 Phase 15 exit, production ownership, an EMBER cutover, output certification, or
 CGAL parity. `surface_arrangement` remains compiled only for tests, so no
@@ -121,6 +123,14 @@ profile-guided ownership targets. The transverse two-shell both-policy case
 retires 8,947,999 instructions after scheduling, down from the initial
 10,656,974-instruction checkpoint measurement.
 
+The production `ExactBvh` follow-up removes its private second copy of every
+primitive's exact bounds and makes construction and leaf queries borrow the
+canonical `PolygonBounds` array. On the same 6,144-facet, both-policy topology
+row, Callgrind falls from 1,719,503,571 to 1,702,480,107 instructions: a
+17,023,464-instruction or 0.9900% reduction. Exact hierarchy and leaf rejection
+still use the same `DecisionContext`; approximate centers remain scheduling
+hints only.
+
 ## Large-fixture heap
 
 Massif 3.27.0 used `--stacks=yes` on the 6,144-facet row:
@@ -139,14 +149,35 @@ are the largest owners; the topology stage also rebuilds a source BVH, which
 should be retained from the production orchestrator rather than duplicated at
 cutover.
 
+The single-bound BVH follow-up reduces the topology-heavy useful snapshot from
+25,957,087 to 24,187,795 bytes (1,769,292 bytes, 6.8162%) and its total from
+27,417,712 to 25,651,352 bytes (1,766,360 bytes, 6.4424%). The process-wide
+useful maximum remains exactly 28,587,215 bytes because earlier corefinement,
+not that retained BVH, owns the peak; total peak changes by only -16 bytes.
+On the separate 6,144-triangle production general fixture, useful peak remains
+exactly 28,730,032 bytes and total changes from 29,956,456 to 29,957,160 bytes,
+a 704-byte allocator-metadata variation. This establishes a real stage-local
+heap win without moving either governing useful-heap maximum.
+
 ## Source, binary size, and call graph
 
-Relative to the Phase 14 evidence commit, this checkpoint adds 1,829 and
-removes three lines in the test-gated module. Consequently it adds no linked
-production general engine or compatibility surface; production native/WASM
-size remains governed by the unchanged Phase 14 residue until atomic cutover.
-The large test binary cost is reported separately and is not treated as a
-production-size regression.
+Relative to the Phase 14 evidence commit, the topology checkpoint adds 1,829
+and removes three lines in the test-gated module. It therefore adds no linked
+production general engine or compatibility surface. The later single-bound
+BVH change is production code (28 insertions, 23 deletions), but shrinks every
+measured native and optimized-WASM consumer relative to the Phase 14 artifacts:
+
+| Consumer/profile | Native text, before -> after | Optimized WASM, before -> after |
+| --- | ---: | ---: |
+| General/release | 4,118,732 -> 4,118,236 (-496) | 2,780,336 -> 2,779,836 (-500) |
+| Immediate/release | 4,151,956 -> 4,151,460 (-496) | 2,794,896 -> 2,794,396 (-500) |
+| General/size | 1,899,850 -> 1,899,410 (-440) | 1,189,737 -> 1,189,546 (-191) |
+| Immediate/size | 1,911,998 -> 1,911,566 (-432) | 1,199,904 -> 1,199,714 (-190) |
+
+The largest native reduction is 0.0232%; the largest optimized-WASM reduction
+is 0.0180%. The test-gated topology engine still contributes no production
+binary bytes, and no alternate public representation or compatibility path was
+introduced.
 
 The workspace call-graph utility reports 20,770 nodes/41,280 edges for the five
 selected crate source graph and 27,227/51,297 with tests, benches, examples,
